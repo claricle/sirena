@@ -1,0 +1,17 @@
+<svg
+ width="500.0"
+ height="460.0"
+ viewBox="0 0 500 460"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<text fill="#000000" x="250.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Market Share Distribution</text>
+<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 250 200 L 250.0 50.0 A 150 150 0 0 1 318.098574960932 333.6509786282552 Z"/>
+<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 250 200 L 318.098574960932 333.6509786282552 A 150 150 0 0 1 105.19275417500893 239.12622594348454 Z"/>
+<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 250 200 L 105.19275417500893 239.12622594348454 A 150 150 0 0 1 158.06394195205354 81.47674814364643 Z"/>
+<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 250 200 L 158.06394195205354 81.47674814364643 A 150 150 0 0 1 249.99999999999997 50.0 Z"/>
+<text fill="#000000" x="425.02658567158176" y="157.97983450593702" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Product A</text>
+<text fill="#000000" x="176.95964362008402" y="364.514760249331" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Product B</text>
+<text fill="#000000" x="79.34165733687422" y="142.7660059101661" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Product C</text>
+<text fill="#000000" x="191.69486472433294" y="29.70463541104192" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Product D</text>
+</svg>

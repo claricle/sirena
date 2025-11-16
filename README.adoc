@@ -1,0 +1,357 @@
+= Sirena
+
+image:https://img.shields.io/gem/v/sirena.svg[RubyGems Version,link=https://rubygems.org/gems/sirena]
+image:https://img.shields.io/github/license/claricle/sirena.svg[License,link=https://github.com/claricle/sirena/blob/main/LICENSE]
+image:https://github.com/claricle/sirena/actions/workflows/rake.yml/badge.svg["Build",link=https://github.com/claricle/sirena/actions/workflows/rake.yml]
+
+== Purpose
+
+Sirena is a pure Ruby implementation of Mermaid diagram generation that
+transforms Mermaid syntax into SVG output. Unlike the JavaScript-based
+mermaid-js, Sirena operates entirely in Ruby, making it ideal for server-side
+rendering, documentation generation, and integration with Ruby-based tools like
+Metanorma.
+
+The library follows strict object-oriented principles with a model-driven
+architecture, using `Lutaml::Model` for all data structures and providing clean
+separation between parsing, transformation, layout, and rendering phases.
+
+== Features
+
+=== Supported diagram types (24/24)
+
+Sirena supports all 24 Mermaid diagram types with complete parser, transform,
+and renderer implementations:
+
+* **Flowchart** - Directional graphs with various node shapes and edge types
+* **Sequence diagram** - Message flows between participants over time
+* **Class diagram** - UML class relationships and hierarchies
+* **State diagram** - State machine transitions and hierarchies
+* **Entity-relationship diagram** - Database schema relationships
+* **User journey** - User interaction flows with satisfaction levels
+* **Gantt chart** - Project timelines and task dependencies
+* **Pie chart** - Proportional data visualization
+* **Quadrant chart** - 2D data point categorization
+* **Requirement diagram** - Requirements and their relationships
+* **Git graph** - Git branching and commit history
+* **Mindmap** - Hierarchical mind mapping
+* **Timeline** - Event sequences over time
+* **Sankey diagram** - Flow quantities between nodes
+* **XY chart** - Line and bar charts with axes
+* **Block diagram** - Block-based architecture diagrams
+* **Packet diagram** - Network packet structure
+* **C4 diagram** - Software architecture contexts and containers
+* **Architecture diagram** - Service and component architecture
+* **Kanban board** - Workflow status tracking
+* **Radar chart** - Multi-dimensional data comparison
+* **Treemap** - Hierarchical data as nested rectangles
+* **Error diagram** - Error message display
+* **Info diagram** - Information display
+
+See link:examples/README.adoc[] for working examples of all diagram types.
+
+=== Core capabilities
+
+* **Pure Ruby implementation** - No JavaScript dependencies
+* **Parslet-based parsing** - Superior error messages and maintainability
+* **SVG output** - Standards-compliant SVG 1.2
+* **Theme support** - 4 built-in themes, custom theme support
+* **Auto-detection** - Automatic diagram type detection
+* **Batch processing** - Process multiple diagrams at once
+* **CLI tool** - Command-line interface for standalone usage
+* **Programmatic API** - Ruby library for custom workflows
+* **Metanorma integration** - Direct embedding in documentation
+
+== Architecture
+
+=== General
+
+Sirena implements a pipeline architecture that transforms Mermaid source
+code through distinct processing stages, each with clear responsibilities and
+well-defined interfaces.
+
+**All parsers use Parslet**, a powerful PEG (Parsing Expression Grammar) library
+that provides superior error messages, composability, and maintainability
+compared to traditional lexer-based approaches. The 3-layer Parslet architecture
+(Grammar → Transform → Parser) achieved ~80% code reduction during migration.
+
+The implementation uses the ELK layout engine via the elkrb gem for
+professional-quality graph layout and positioning. Sirena is a pure Ruby
+implementation with no JavaScript dependencies, generating standards-compliant
+SVG 1.2 output suitable for direct integration with Metanorma documentation
+frameworks.
+
+.Sirena processing pipeline
+[source]
+----
+Mermaid Syntax Input (String)
+         │
+         ▼
+    ┌─────────┐
+    │ Parser  │  Parslet Grammar → Transform → Parser
+    └────┬────┘  (3-layer architecture)
+         │
+         ▼
+   ┌───────────┐
+   │ Diagram   │  Lutaml::Model AST
+   │   Model   │  (Flowchart, Sequence, etc.)
+   └─────┬─────┘
+         │
+         ▼
+   ┌───────────┐
+   │Transform  │  Diagram → Graph Conversion
+   │  Layer    │
+   └─────┬─────┘
+         │
+         ▼
+   ┌───────────┐
+   │  Layout   │  Position Computation
+   │  Engine   │  (Node positions, edge routes)
+   └─────┬─────┘
+         │
+         ▼
+   ┌───────────┐
+   │    SVG    │  Graph → SVG Conversion
+   │ Renderer  │
+   └─────┬─────┘
+         │
+         ▼
+   ┌───────────┐
+   │    SVG    │  Lutaml::Model Structure
+   │  Builder  │
+   └─────┬─────┘
+         │
+         ▼
+  SVG XML Output (String)
+----
+
+.Component relationships
+[source]
+----
+Sirena (Root Module)
+    │
+    ├── Engine (Orchestrator)
+    │     ├── coordinates overall flow
+    │     ├── delegates to Parser
+    │     ├── delegates to Transform
+    │     └── delegates to Renderer
+    │
+    ├── Parser (Parslet-based Syntax Analysis)
+    │     ├── Grammars (Parslet rules)
+    │     ├── Transforms (tree conversion)
+    │     └── produces Diagram Models
+    │
+    ├── Diagram (Domain Models)
+    │     ├── Architecture
+    │     ├── Block
+    │     ├── C4
+    │     ├── ClassDiagram
+    │     ├── ErDiagram
+    │     ├── Error
+    │     ├── Flowchart
+    │     ├── Gantt
+    │     ├── GitGraph
+    │     ├── Info
+    │     ├── Kanban
+    │     ├── Mindmap
+    │     ├── Packet
+    │     ├── Pie
+    │     ├── Quadrant
+    │     ├── Radar
+    │     ├── Requirement
+    │     ├── Sankey
+    │     ├── Sequence
+    │     ├── StateDiagram
+    │     ├── Timeline
+    │     ├── Treemap
+    │     ├── UserJourney
+    │     └── XyChart
+    │
+    ├── Transform (Model Conversion)
+    │     └── diagram-specific converters
+    │
+    ├── Renderer (SVG Generation)
+    │     └── diagram-specific renderers
+    │
+    ├── Svg (SVG Models)
+    │     ├── Document, Element, Group
+    │     ├── Path, Text, Rect
+    │     └── Circle, Line, Polygon
+    │
+    └── DiagramRegistry (Type Registration)
+          └── maps types to handlers
+----
+
+=== Parslet-based parser architecture
+
+All 24 implemented diagram types use Parslet exclusively for parsing, following
+a consistent 3-layer pattern:
+
+. **Layer 1: Grammar** (Parslet::Parser) - Defines syntax rules using Parslet
+  DSL, parses text into intermediate tree structures
+. **Layer 2: Transform** (Parslet::Transform) - Converts intermediate trees to
+  typed Diagram models using pattern matching
+. **Layer 3: Parser** - Orchestrates Grammar and Transform, provides public API
+
+This architecture provides:
+
+* **Superior error messages** with detailed context and line numbers
+* **Composability** through shared grammar rules across diagram types
+* **Maintainability** via declarative, self-documenting syntax rules
+* **Type safety** through strongly-typed Lutaml::Model objects
+* **Code reduction** of ~80% compared to previous lexer-based approach
+
+See link:ARCHITECTURE.md[] for detailed architecture documentation.
+
+== Installation
+
+=== Via RubyGems
+
+Add Sirena to your Gemfile:
+
+[source,ruby]
+----
+gem 'sirena'
+----
+
+Then execute:
+
+[source,shell]
+----
+bundle install
+----
+
+Or install it directly:
+
+[source,shell]
+----
+gem install sirena
+----
+
+=== Requirements
+
+* Ruby 2.7 or higher
+* `elkrb` gem (for graph layout)
+
+== Quick start
+
+=== Command-line usage
+
+Render a single Mermaid diagram to SVG:
+
+[source,shell]
+----
+sirena render diagram.mmd -o output.svg
+----
+
+Render all Mermaid files in a directory:
+
+[source,shell]
+----
+sirena batch input_dir/ -o output_dir/
+----
+
+List all supported diagram types:
+
+[source,shell]
+----
+sirena types
+----
+
+=== Programmatic usage
+
+Use Sirena in your Ruby code:
+
+[source,ruby]
+----
+require 'sirena'
+
+# Render from a string
+mermaid_code = <<~MERMAID
+  graph TD
+    A[Start] --> B[Process]
+    B --> C[End]
+MERMAID
+
+svg = Sirena::Engine.render(mermaid_code)
+File.write('output.svg', svg)
+
+# Render from a file
+svg = Sirena::Engine.render_file('diagram.mmd')
+File.write('output.svg', svg)
+
+# Specify diagram type explicitly
+svg = Sirena::Engine.render(mermaid_code, type: :flowchart)
+----
+
+=== Examples
+
+Browse link:examples/README.adoc[] for 37 working examples across all 24
+diagram types, each with corresponding SVG output.
+
+== Documentation
+
+Comprehensive documentation is available at the https://claricle.github.io/sirena[Sirena Documentation Site].
+
+=== Quick Links
+
+* https://claricle.github.io/sirena/pages/comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
+* https://claricle.github.io/sirena/pages/compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
+* https://claricle.github.io/sirena/diagram_types/[Diagram Types Reference] - Complete syntax reference for all 24 diagram types
+* https://claricle.github.io/sirena/guides/migration-from-mermaid/[Migration Guide] - Step-by-step migration from Mermaid.js
+
+=== Documentation Structure
+
+The documentation uses a 6-collection architecture:
+
+. **Core Topics** - Installation, architecture, compatibility, comparison, configuration
+. **Tutorials** - Step-by-step learning paths
+. **Guides** - Task-oriented how-to documentation
+. **Diagram Types** - Complete reference for all 24 diagram types with examples
+. **Features** - Detailed capability documentation
+. **References** - API and CLI reference
+
+See the https://claricle.github.io/sirena[documentation site] for the complete guide.
+
+== Test coverage
+
+=== General
+
+Sirena implements comprehensive test coverage against the official mermaid-js
+test suite to ensure compatibility and correctness. The test suite validates
+all diagram types and syntax variations against reference outputs generated
+using mermaid-cli v11.12.0.
+
+=== Mermaid-js compatibility validation
+
+Sirena's test suite includes 715 test cases covering all 24 diagram types
+to ensure comprehensive compatibility and correctness:
+
+* Flowchart - Comprehensive node shapes and edge types
+* Sequence diagram - Message flows and activations
+* Class diagram - UML relationships and hierarchies
+* State diagram - State transitions and composite states
+* Entity-relationship diagram - Database relationships
+* User journey - User interaction flows
+* Gantt chart - Timeline and dependencies
+* Pie chart - Data proportions
+* Quadrant chart - 2D categorization
+* Requirement diagram - Requirement relationships
+* Git graph - Branching and commits
+* Mindmap - Hierarchical structures
+* Timeline - Event sequences
+* Sankey diagram - Flow visualization
+* XY chart - Line and bar charts
+* Block diagram - Architecture blocks
+* Packet diagram - Network packets
+* C4 diagram - Software architecture
+* Architecture diagram - Service architecture
+* Kanban board - Workflow tracking
+* Radar chart - Multi-dimensional comparison
+* Treemap - Hierarchical data
+* Error diagram - Error display
+* Info diagram - Information display
+
+=== SVG fixture validation
+
+The test suite generates 302 SVG reference fixtures using mermaid-cli v11.12.0

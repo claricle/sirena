@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_apply_a_cssClass_to_a_class_54",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 43,
+  "metadata": {
+    "test_name": "should be possible to apply a cssClass to a class"
+  }
+}

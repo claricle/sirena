@@ -1,0 +1,6 @@
+{
+  "name": "parser_should keep node label text (if already defined) when a style is applied_141",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-style.spec.js",
+  "line_number": 0
+}

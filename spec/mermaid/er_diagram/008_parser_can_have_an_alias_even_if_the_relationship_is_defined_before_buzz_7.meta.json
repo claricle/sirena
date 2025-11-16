@@ -1,0 +1,6 @@
+{
+  "name": "parser_can_have_an_alias_even_if_the_relationship_is_defined_before_buzz_7",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 146
+}

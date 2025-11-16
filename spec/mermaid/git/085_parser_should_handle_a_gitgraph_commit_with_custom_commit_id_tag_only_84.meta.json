@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_gitGraph_commit_with_custom_commit_id_tag_only_84",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 380,
+  "metadata": {
+    "test_name": "should handle a gitGraph commit with custom commit id, tag  only"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_simple_with_accDescription_8",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 36,
+  "metadata": {
+    "test_name": "simple with accDescription"
+  }
+}

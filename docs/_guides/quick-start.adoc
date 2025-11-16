@@ -1,0 +1,132 @@
+---
+layout: default
+title: Quick Start
+parent: Guides
+nav_order: 2
+---
+
+= Quick Start Guide
+
+This guide will help you create your first diagram with Sirena in 5 minutes.
+
+== Prerequisites
+
+Ensure Sirena is installed. If not, see the link:installation.html[Installation Guide].
+
+== Your First Diagram
+
+=== Step 1: Create a Mermaid File
+
+Create a file named `my-first-diagram.mmd`:
+
+[source,mermaid]
+----
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Process]
+    B -->|No| D[End]
+    C --> D
+----
+
+=== Step 2: Render to SVG
+
+Run Sirena to generate an SVG:
+
+[source,shell]
+----
+sirena render my-first-diagram.mmd -o output.svg
+----
+
+=== Step 3: View the Result
+
+Open `output.svg` in your browser or image viewer to see your flowchart!
+
+== Common Diagram Types
+
+=== Flowchart
+
+[source,mermaid]
+----
+graph LR
+    A[Input] --> B[Process]
+    B --> C[Output]
+----
+
+=== Sequence Diagram
+
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>Bob: Hello
+    Bob-->>Alice: Hi there!
+----
+
+=== Entity-Relationship Diagram
+
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+----
+
+== Programmatic Usage
+
+Use Sirena in your Ruby code:
+
+[source,ruby]
+----
+require 'sirena'
+
+# Render from a string
+mermaid_code = <<~MERMAID
+  graph TD
+    A --> B
+MERMAID
+
+svg = Sirena::Engine.render(mermaid_code)
+File.write('output.svg', svg)
+
+# Render from a file
+svg = Sirena::Engine.render_file('diagram.mmd')
+----
+
+== Batch Processing
+
+Render multiple diagrams at once:
+
+[source,shell]
+----
+sirena batch diagrams/ -o output/
+----
+
+This renders all `.mmd` files in `diagrams/` directory to SVG files in `output/`.
+
+== Next Steps
+
+* link:cli-reference.html[CLI Reference] - Learn all available commands and options
+* link:../diagram_types/index.html[Diagram Types Reference] - Explore all 24 diagram types
+* link:../../examples/README.html[Examples] - Browse 37+ working examples
+
+== Getting Help
+
+View available commands:
+
+[source,shell]
+----
+sirena help
+----
+
+View help for a specific command:
+
+[source,shell]
+----
+sirena help render
+----
+
+List all supported diagram types:
+
+[source,shell]
+----
+sirena types
+----

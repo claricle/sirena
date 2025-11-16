@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-4_should_handle_a_deeper_hierarchical_mindmap_definition_29",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 45,
+  "metadata": {
+    "test_name": "MMP-4 should handle a deeper hierarchical mindmap definition"
+  }
+}

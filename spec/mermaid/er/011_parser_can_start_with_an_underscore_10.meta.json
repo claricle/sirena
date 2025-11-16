@@ -1,0 +1,9 @@
+{
+  "name": "parser_can_start_with_an_underscore_10",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 174,
+  "metadata": {
+    "test_name": "can start with an underscore"
+  }
+}

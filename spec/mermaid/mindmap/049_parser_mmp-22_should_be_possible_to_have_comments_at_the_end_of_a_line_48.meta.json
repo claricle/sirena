@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-22_should_be_possible_to_have_comments_at_the_end_of_a_line_48",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 310,
+  "metadata": {
+    "test_name": "MMP-22 should be possible to have comments at the end of a line"
+  }
+}

@@ -1,0 +1,664 @@
+= Sequence diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Sequence diagrams in Sirena represent interactions between participants over time. They show how processes operate with one another and in what order, making them ideal for documenting system interactions, API calls, and message flows.
+
+Sequence diagrams are useful for:
+
+* Documenting API interactions and request/response flows
+* Visualizing authentication and authorization processes
+* Mapping multi-system communication patterns
+* Showing temporal relationships between components
+* Illustrating concurrent and asynchronous operations
+
+== Syntax specification
+
+=== Diagram declaration
+
+Sequence diagrams are declared using the `sequenceDiagram` keyword:
+
+[source,mermaid]
+----
+sequenceDiagram
+    <diagram-content>
+----
+
+=== Participants
+
+Participants can be declared explicitly or implicitly:
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello
+----
+
+==== Participant aliases
+
+Participants can have aliases for cleaner syntax:
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant A as Alice
+    participant B as Bob
+    A->>B: Hello
+----
+
+==== Actor syntax
+
+The `actor` keyword creates participant boxes with a stick figure icon:
+
+[source,mermaid]
+----
+sequenceDiagram
+    actor Alice
+    actor Bob
+    Alice->>Bob: Hello
+----
+
+=== Messages
+
+Messages connect participants and represent communication:
+
+[cols="2,2,3"]
+|===
+|Syntax |Style |Description
+
+|`A->>B: text`
+|Solid arrow
+|Synchronous message with arrowhead
+
+|`A-->>B: text`
+|Dotted arrow
+|Response or return message
+
+|`A->B: text`
+|Solid line
+|Async message without arrowhead
+
+|`A-->B: text`
+|Dotted line
+|Async response without arrowhead
+
+|`A-xB: text`
+|Solid with cross
+|Message with cross ending
+
+|`A--xB: text`
+|Dotted with cross
+|Response with cross ending
+
+|`A-)B: text`
+|Solid with open arrow
+|Async message with open arrow
+
+|`A--)B: text`
+|Dotted with open arrow
+|Async response with open arrow
+
+|`A<<->>B: text`
+|Bidirectional solid
+|Bidirectional synchronous message
+
+|`A<<-->>B: text`
+|Bidirectional dotted
+|Bidirectional async message
+|===
+
+=== Activation
+
+Activation boxes show when a participant is actively processing:
+
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>+Bob: Request
+    Bob-->>-Alice: Response
+----
+
+The `+` symbol activates a participant, and `-` deactivates it.
+
+Explicit activation syntax:
+
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>Bob: Request
+    activate Bob
+    Bob-->>Alice: Response
+    deactivate Bob
+----
+
+=== Notes
+
+Notes provide additional context and can be positioned relative to participants:
+
+[source,mermaid]
+----
+Note left of Alice: Left note
+Note right of Bob: Right note
+Note over Alice: Note over one participant
+Note over Alice,Bob: Note spanning participants
+----
+
+=== Loops
+
+Loops represent repeated interactions:
+
+[source,mermaid]
+----
+loop Loop label
+    Alice->>Bob: Message
+end
+----
+
+=== Conditional blocks
+
+==== Alt (alternative paths)
+
+The `alt` block represents conditional execution:
+
+[source,mermaid]
+----
+alt Condition description
+    Alice->>Bob: Message if true
+else Another condition
+    Alice->>Bob: Message if second condition
+else
+    Alice->>Bob: Default message
+end
+----
+
+==== Opt (optional)
+
+The `opt` block represents optional execution:
+
+[source,mermaid]
+----
+opt Optional condition
+    Alice->>Bob: Optional message
+end
+----
+
+==== Par (parallel)
+
+The `par` block represents parallel execution:
+
+[source,mermaid]
+----
+par Parallel task 1
+    Alice->>Bob: Message 1
+and Parallel task 2
+    Alice->>Charlie: Message 2
+end
+----
+
+==== Critical (critical region)
+
+The `critical` block represents critical sections:
+
+[source,mermaid]
+----
+critical Critical operation
+    Alice->>Bob: Critical message
+option Error handling
+    Bob->>Alice: Error response
+end
+----
+
+==== Break
+
+The `break` block represents breaking out of a flow:
+
+[source,mermaid]
+----
+break Break condition
+    Alice->>Bob: Break message
+end
+----
+
+=== Boxes
+
+Boxes group related participants:
+
+[source,mermaid]
+----
+box "Box Label"
+    participant A
+    participant B
+end
+----
+
+Boxes can have background colors:
+
+[source,mermaid]
+----
+box rgb(255,240,240) "Red Box"
+    participant A
+end
+----
+
+=== Sequence numbers
+
+Sequence numbers can be enabled:
+
+[source,mermaid]
+----
+sequenceDiagram
+    autonumber
+    Alice->>Bob: First message
+    Bob->>Alice: Second message
+----
+
+== Examples
+
+=== Basic sequence diagram
+
+.Simple message exchange
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>Bob: Hello Bob
+    Bob-->>Alice: Hello Alice
+----
+
+This creates a simple sequence diagram with two participants exchanging messages.
+====
+
+=== Sequence with activation
+
+.Request-response with activation
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    participant User
+    participant WebApp
+    participant API
+    participant Database
+
+    User->>+WebApp: Request Product Page
+    WebApp->>+API: GET /api/product/123
+    API->>+Database: SELECT * FROM products WHERE id=123
+    Database-->>-API: Product Data
+    API-->>-WebApp: JSON Response
+    WebApp-->>-User: Render Product Page
+----
+
+This example demonstrates:
+
+* Multiple participants
+* Activation boxes showing processing time
+* Nested activations
+* Request-response patterns
+====
+
+=== Loop and conditional example
+
+.Complex flow with loops and conditionals
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    participant User
+    participant System
+    participant Database
+
+    User->>+System: Login Request
+
+    loop Retry up to 3 times
+        System->>+Database: Verify Credentials
+        Database-->>-System: Result
+
+        alt Valid Credentials
+            System-->>User: Success
+        else Invalid Credentials
+            System-->>User: Error
+        end
+    end
+
+    System-->>-User: Final Response
+----
+
+This shows:
+
+* Loop blocks for repeated actions
+* Alt/else blocks for conditional logic
+* Nested control structures
+====
+
+=== Notes and documentation
+
+.Sequence with notes
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    participant User
+    participant Cache
+    participant API
+
+    Note over User,API: First request - cache miss
+
+    User->>+Cache: Check Cache
+    Cache-->>-User: Cache Miss
+
+    User->>+API: GET /data
+    API-->>-User: Data Response
+
+    User->>+Cache: Store in Cache
+    Cache-->>-User: Cached
+
+    Note right of Cache: Data now cached
+
+    Note over User,API: Second request - cache hit
+
+    User->>+Cache: Check Cache
+    Cache-->>-User: Cache Hit (Fast)
+----
+
+This demonstrates:
+
+* Notes over multiple participants
+* Notes to the left/right of participants
+* Using notes to explain flow sections
+====
+
+=== Participant boxes
+
+.Grouping participants in boxes
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    box "Frontend"
+        participant User
+        participant WebApp
+    end
+
+    box "Backend Services"
+        participant API
+        participant Database
+    end
+
+    User->>WebApp: Click Button
+    WebApp->>API: API Request
+    API->>Database: Query
+    Database-->>API: Result
+    API-->>WebApp: Response
+    WebApp-->>User: Update UI
+----
+
+This shows:
+
+* Grouping related participants in boxes
+* Visual organization of system layers
+* Clear separation of concerns
+====
+
+=== Parallel execution
+
+.Concurrent operations
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    participant User
+    participant App
+    participant Service1
+    participant Service2
+
+    User->>App: Request Data
+
+    par Fetch User Profile
+        App->>Service1: Get Profile
+        Service1-->>App: Profile Data
+    and Fetch User Posts
+        App->>Service2: Get Posts
+        Service2-->>App: Posts Data
+    end
+
+    App-->>User: Combined Response
+----
+
+This demonstrates:
+
+* Parallel execution using `par` blocks
+* Multiple concurrent operations
+* Joining results after parallel execution
+====
+
+=== Comprehensive example with multiple features
+
+.Real-world authentication flow
+[example]
+====
+[source,mermaid]
+----
+sequenceDiagram
+    autonumber
+    actor User
+    participant WebApp
+    participant API
+    participant Database
+    participant Cache
+
+    User->>+WebApp: Request Product Page
+    WebApp->>+Cache: Check Cache
+    Cache-->>-WebApp: Cache Miss
+
+    WebApp->>+API: GET /api/product/123
+    API->>+Database: SELECT * FROM products WHERE id=123
+    Database-->>-API: Product Data
+    API-->>-WebApp: JSON Response
+
+    WebApp->>+Cache: Store in Cache
+    Cache-->>-WebApp: Cached
+
+    WebApp-->>-User: Render Product Page
+
+    Note over User,Cache: Subsequent request will hit cache
+
+    User->>+WebApp: Refresh Page
+    WebApp->>+Cache: Check Cache
+    Cache-->>-WebApp: Cache Hit
+    WebApp-->>-User: Render Product Page (Fast)
+----
+
+This comprehensive example includes:
+
+* Sequence numbers with `autonumber`
+* Actor notation for human users
+* Activation boxes
+* Notes explaining behavior
+* Caching pattern
+* Multiple system interactions
+====
+
+== Features
+
+=== Participant declaration
+
+Participants can be declared in any order:
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant Alice
+    participant Bob
+    participant Charlie
+----
+
+Or defined implicitly when first used:
+
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>Bob: Hello
+    Bob->>Charlie: Hi Charlie
+----
+
+=== Special characters in names
+
+Participants can have spaces and special characters when quoted:
+
+[source,mermaid]
+----
+sequenceDiagram
+    participant "User Service"
+    participant "Payment API"
+    "User Service"->>"Payment API": Process payment
+----
+
+=== Message text
+
+Messages support long text that will be wrapped:
+
+[source,mermaid]
+----
+sequenceDiagram
+    Alice->>Bob: Extremely long message text that will be wrapped automatically to fit within the diagram boundaries
+----
+
+=== Nested activation
+
+Activations can be nested for complex call stacks:
+
+[source,mermaid]
+----
+sequenceDiagram
+    A->>+B: Request
+    B->>+C: Sub-request
+    C-->>-B: Sub-response
+    B-->>-A: Response
+----
+
+=== Multiple control structures
+
+Control structures can be combined and nested:
+
+[source,mermaid]
+----
+sequenceDiagram
+    loop Retry
+        alt Success
+            A->>B: Success path
+        else Failure
+            opt Log error
+                A->>Logger: Log
+            end
+        end
+    end
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid sequence diagram features are not yet supported in Sirena:
+
+* Styling with custom CSS classes
+* Click events and links
+* Background colors for messages
+* Custom line styles
+* Rect (background highlighting)
+* Links on participants
+
+=== Known issues
+
+* Very long participant names may cause layout issues
+* Deeply nested control structures may not render optimally
+* Complex parallel blocks may have spacing inconsistencies
+
+== Best practices
+
+=== Keep participants minimal
+
+Limit the number of participants to maintain readability:
+
+[source,mermaid]
+----
+%% Good - 4 participants
+sequenceDiagram
+    User->>API->>Database->>Cache
+
+%% Less readable - too many
+sequenceDiagram
+    A->>B->>C->>D->>E->>F->>G->>H
+----
+
+=== Use meaningful names
+
+Choose descriptive participant names:
+
+[source,mermaid]
+----
+%% Good
+sequenceDiagram
+    participant UserService
+    participant PaymentGateway
+
+%% Less clear
+sequenceDiagram
+    participant A
+    participant B
+----
+
+=== Group related interactions
+
+Use boxes to group related participants:
+
+[source,mermaid]
+----
+sequenceDiagram
+    box "Frontend"
+        participant UI
+        participant WebApp
+    end
+    box "Backend"
+        participant API
+        participant DB
+    end
+----
+
+=== Add notes for clarity
+
+Use notes to explain complex interactions:
+
+[source,mermaid]
+----
+sequenceDiagram
+    A->>B: Request
+    Note right of B: This validates the request before processing
+    B->>C: Process
+----
+
+=== Use activation consistently
+
+Always pair activation and deactivation:
+
+[source,mermaid]
+----
+sequenceDiagram
+    A->>+B: Request
+    B-->>-A: Response
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<flowchart.adoc#,Flowchart diagrams>>
+* link:https://mermaid.js.org/syntax/sequenceDiagram.html[Official Mermaid sequence diagram documentation]

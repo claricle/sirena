@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_associate_link_appropriately_140",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1592,
+  "metadata": {
+    "test_name": "should associate link appropriately"
+  }
+}

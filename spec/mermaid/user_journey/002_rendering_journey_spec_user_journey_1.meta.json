@@ -1,0 +1,7 @@
+{
+  "name": "rendering_journey.spec_user_journey_1",
+  "type": "user_journey",
+  "source_file": "/cypress/integration/rendering/journey.spec.js",
+  "line_number": 32,
+  "metadata": {}
+}

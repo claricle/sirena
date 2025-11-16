@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_parsing_of_separators_64",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 160,
+  "metadata": {
+    "test_name": "should handle parsing of separators"
+  }
+}

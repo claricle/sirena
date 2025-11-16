@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_inclusive_end_date_definition_10",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 22,
+  "metadata": {
+    "test_name": "should handle a inclusive end date definition"
+  }
+}

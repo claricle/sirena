@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_fail_cherry-picking_of_merge_commits_when_the_parent_provided_is_not_an_immediate_parent_of_cherry_picked_commit_116",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 1076,
+  "metadata": {
+    "test_name": "should fail cherry-picking of merge commits when the parent provided is not an immediate parent of cherry picked commit"
+  }
+}

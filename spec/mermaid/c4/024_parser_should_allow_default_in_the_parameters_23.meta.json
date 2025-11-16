@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_default_in_the_parameters_23",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Diagram.spec.js",
+  "line_number": 40,
+  "metadata": {
+    "test_name": "should allow default in the parameters"
+  }
+}

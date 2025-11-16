@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_throw_error_when_trying_to_merge_when_current_branch_has_no_commits_120",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 1160,
+  "metadata": {
+    "test_name": "should throw error when trying to merge, when current branch has no commits"
+  }
+}

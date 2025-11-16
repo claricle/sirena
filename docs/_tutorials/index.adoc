@@ -1,0 +1,57 @@
+---
+layout: default
+title: Tutorials
+nav_order: 3
+has_children: true
+---
+
+== Tutorials
+
+Step-by-step tutorials to help you accomplish specific tasks with Sirena.
+
+== What's in This Section
+
+Hands-on tutorials covering:
+
+* **Getting Started** - Installation and first diagram
+* **CLI Usage** - Command-line interface walkthrough
+* **Rails Integration** - Using Sirena in Rails applications
+* **Jekyll Integration** - Static site generation with Sirena
+* **Batch Processing** - Processing multiple diagrams at once
+* **Theme Customization** - Creating and applying custom themes
+
+== Tutorial Format
+
+Each tutorial includes:
+
+* **Prerequisites** - What you need before starting
+* **Step-by-step instructions** - Clear, actionable steps
+* **Code examples** - Copy-paste ready code
+* **Expected results** - What you should see
+* **Troubleshooting** - Common issues and solutions
+
+== Recommended Learning Path
+
+For beginners:
+
+. link:{% link _tutorials/getting-started.adoc %}[Getting Started]
+. link:{% link _tutorials/cli-usage.adoc %}[CLI Usage]
+. link:{% link _tutorials/creating-first-diagram.adoc %}[Creating Your First Diagram]
+
+For application integration:
+
+. link:{% link _tutorials/rails-integration.adoc %}[Rails Integration]
+. link:{% link _tutorials/jekyll-integration.adoc %}[Jekyll Integration]
+
+For advanced usage:
+
+. link:{% link _tutorials/batch-processing.adoc %}[Batch Processing]
+. link:{% link _tutorials/theme-customization.adoc %}[Theme Customization]
+
+== Next Steps
+
+After completing tutorials:
+
+* Explore link:{% link _guides/index.adoc %}[Guides] for in-depth topics
+* Reference link:{% link _diagram_types/index.adoc %}[Diagram Types] for syntax
+* Check link:{% link _references/index.adoc %}[API Reference] for programmatic use

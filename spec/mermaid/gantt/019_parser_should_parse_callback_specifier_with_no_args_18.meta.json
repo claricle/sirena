@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_callback_specifier_with_no_args_18",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 182,
+  "metadata": {
+    "test_name": "should parse callback specifier with no args"
+  }
+}

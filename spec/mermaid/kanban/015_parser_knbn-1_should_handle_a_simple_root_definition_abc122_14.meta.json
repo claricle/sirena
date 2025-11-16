@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-1_should_handle_a_simple_root_definition_abc122_14",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 14,
+  "metadata": {
+    "test_name": "KNBN-1 should handle a simple root definition abc122"
+  }
+}

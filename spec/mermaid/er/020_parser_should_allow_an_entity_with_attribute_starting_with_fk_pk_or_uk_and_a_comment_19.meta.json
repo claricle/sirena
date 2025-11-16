@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_entity_with_attribute_starting_with_fk_pk_or_uk_and_a_comment_19",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 274,
+  "metadata": {
+    "test_name": "should allow an entity with attribute starting with fk, pk or uk and a comment"
+  }
+}

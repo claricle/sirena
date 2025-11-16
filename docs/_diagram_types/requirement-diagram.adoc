@@ -1,0 +1,416 @@
+= Requirement Diagrams
+:toc:
+:toclevels: 3
+
+== General
+
+Requirement diagrams in Sirena provide visualization for system requirements, their relationships, and verification methods. These diagrams are commonly used in systems engineering and software requirements management to model requirements hierarchies, traceability, and validation approaches.
+
+Requirement diagrams are declared with the `requirementDiagram` keyword and support:
+
+* Requirements with multiple types (functional, performance, interface, etc.)
+* Requirement properties (ID, text, risk level, verification method)
+* Elements representing system components or external entities
+* Relationships between requirements and elements (satisfies, verifies, contains, etc.)
+* Styling and class definitions for customization
+* Risk level visualization through color coding
+
+== Basic requirement diagram
+
+The simplest requirement diagram contains requirements and elements with relationships:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement test_req {
+    id: 1
+    text: the test text.
+    risk: high
+    verifymethod: test
+    }
+
+    element test_entity {
+    type: simulation
+    }
+
+    test_entity - satisfies -> test_req
+----
+
+This creates a requirement with properties and an element that satisfies it.
+
+== Requirement declarations
+
+=== Basic requirements
+
+Requirements are declared with the `requirement` keyword:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement simple_req {
+    id: 1
+    text: A simple requirement
+    }
+----
+
+Without additional properties, a requirement needs at least an ID to be valid.
+
+=== Requirement types
+
+Requirements can have different types that indicate their category:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement basic_req {
+    id: 1
+    }
+
+    functionalRequirement func_req {
+    id: 2
+    text: Functional requirement
+    }
+
+    performanceRequirement perf_req {
+    id: 3
+    text: Performance requirement
+    }
+
+    interfaceRequirement int_req {
+    id: 4
+    }
+
+    physicalRequirement phys_req {
+    id: 5
+    }
+
+    designConstraint design_con {
+    id: 6
+    }
+----
+
+Where:
+
+`requirement`:: Generic requirement (default type)
+`functionalRequirement`:: Functional requirement
+`performanceRequirement`:: Performance requirement
+`interfaceRequirement`:: Interface requirement
+`physicalRequirement`:: Physical requirement
+`designConstraint`:: Design constraint
+
+=== Requirement properties
+
+Requirements support several properties:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement detailed_req {
+    id: 1
+    text: The system shall process requests within 100ms
+    risk: medium
+    verifymethod: test
+    }
+----
+
+Where:
+
+`id`:: Unique identifier for the requirement
+`text`:: Description of the requirement
+`risk`:: Risk level (low, medium, high)
+`verifymethod`:: Verification approach (Analysis, Inspection, Test, Demonstration)
+
+== Element declarations
+
+=== Basic elements
+
+Elements represent system components or external entities:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    element component {
+    type: software
+    }
+----
+
+Elements have a name and can have a type property.
+
+=== Element properties
+
+Elements support these properties:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    element api_service {
+    type: service
+    docref: /docs/api.html
+    }
+----
+
+Where:
+
+`type`:: Category of the element (software, hardware, service, etc.)
+`docref`:: Reference to documentation
+
+== Relationships
+
+=== Relationship types
+
+Requirements and elements can be connected with typed relationships:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement parent_req {
+    id: 1
+    }
+
+    requirement child_req {
+    id: 2
+    }
+
+    element system {
+    type: software
+    }
+
+    parent_req - contains -> child_req
+    parent_req - copies -> child_req
+    parent_req - derives -> child_req
+    system - satisfies -> parent_req
+    system - verifies -> parent_req
+    child_req - refines -> parent_req
+    child_req - traces -> parent_req
+----
+
+Where:
+
+`contains`:: Parent requirement contains child requirement
+`copies`:: Requirement is copied from another
+`derives`:: Requirement is derived from another
+`satisfies`:: Element satisfies a requirement
+`verifies`:: Element verifies a requirement
+`refines`:: Requirement refines another requirement
+`traces`:: Requirement traces to another requirement
+
+=== Relationship syntax
+
+Relationships follow this pattern:
+
+[source,mermaid]
+----
+source - relationship_type -> target
+----
+
+The arrow direction indicates the relationship flow.
+
+== Risk level visualization
+
+=== Risk colors
+
+Requirements are color-coded based on their risk level:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement low_risk {
+    id: 1
+    risk: low
+    }
+
+    requirement medium_risk {
+    id: 2
+    risk: medium
+    }
+
+    requirement high_risk {
+    id: 3
+    risk: high
+    }
+----
+
+Where:
+
+`low`:: Green border indicating low risk
+`medium`:: Yellow border indicating medium risk
+`high`:: Red border indicating high risk
+
+== Styling
+
+=== Inline styling
+
+Style individual requirements or elements using the `style` directive:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement styled_req {
+    id: 1
+    }
+
+    style styled_req fill:#f9f,stroke:#333
+----
+
+Where:
+
+`fill:#f9f`:: Background color
+`stroke:#333`:: Border color
+`stroke-width`:: Border width
+
+=== Class definitions
+
+Define reusable style classes:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement req1 {
+    id: 1
+    }
+
+    classDef criticalClass fill:#ff6,stroke:#f00,stroke-width:3px
+    class req1 criticalClass
+----
+
+=== Class assignment
+
+Assign classes to multiple items at once:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    requirement req1 {
+    id: 1
+    }
+
+    requirement req2 {
+    id: 2
+    }
+
+    classDef important fill:#faa
+    class req1,req2 important
+----
+
+=== Class shorthand
+
+Use inline class syntax during declaration:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    classDef special fill:#afa
+
+    requirement req1:::special {
+    id: 1
+    }
+----
+
+== Complete example
+
+Here's a comprehensive example showing various features:
+
+[source,mermaid]
+----
+requirementDiagram
+
+    functionalRequirement sys_req {
+    id: SYS-001
+    text: System shall provide user authentication
+    risk: high
+    verifymethod: test
+    }
+
+    functionalRequirement auth_req {
+    id: AUTH-001
+    text: System shall support OAuth 2.0
+    risk: medium
+    verifymethod: test
+    }
+
+    performanceRequirement perf_req {
+    id: PERF-001
+    text: Authentication shall complete within 2 seconds
+    risk: low
+    verifymethod: test
+    }
+
+    element auth_service {
+    type: microservice
+    docref: /docs/auth
+    }
+
+    element oauth_provider {
+    type: external
+    }
+
+    sys_req - contains -> auth_req
+    sys_req - contains -> perf_req
+    auth_service - satisfies -> auth_req
+    auth_service - verifies -> perf_req
+    oauth_provider - satisfies -> auth_req
+
+    classDef critical fill:#ffcccc
+    class sys_req critical
+----
+
+This creates a requirements hierarchy with:
+
+* Multiple requirement types
+* Hierarchical requirement relationships
+* Elements implementing requirements
+* Risk level visualization
+* Custom styling
+
+== Implementation notes
+
+=== Layout algorithm
+
+Requirements and elements are positioned using a level-based layout:
+
+. Elements are placed at level 0
+. Requirements without dependencies are placed at level 1
+. Requirements with dependencies are placed at higher levels based on their dependency depth
+
+This creates a hierarchical view showing requirement traceability.
+
+=== Requirement rendering
+
+Requirements are rendered as styled boxes with:
+
+* Header section showing type and name
+* Property lines for ID, text, risk, and verification method
+* Color-coded borders based on risk level
+* Auto-sizing based on text content
+
+=== Element rendering
+
+Elements are rendered as hexagonal shapes to visually distinguish them from requirements.
+
+=== Relationship routing
+
+Relationships use bezier curves for smooth connections between nodes, with labels showing the relationship type.
+
+== Theme integration
+
+Requirement diagrams support full theme integration:
+
+* Requirement box colors from theme palette
+* Border colors and styles
+* Text styling and fonts
+* Relationship colors and styles
+* Risk level colors (can be overridden in theme)
+
+All visual properties can be customized through themes or inline styling.

@@ -1,0 +1,203 @@
+---
+layout: default
+title: CLI Reference
+parent: Guides
+nav_order: 3
+---
+
+= CLI Reference
+
+Complete reference for all Sirena command-line interface commands.
+
+== Global Options
+
+These options are available for all commands:
+
+`--verbose, -v`::
+Enable verbose output for debugging
+
+`--help, -h`::
+Show help for the command
+
+== Commands
+
+=== render
+
+Render a single Mermaid diagram to SVG.
+
+[source,shell]
+----
+sirena render INPUT [OPTIONS]
+----
+
+==== Arguments
+
+`INPUT`:: Path to input Mermaid file (.mmd)
+
+==== Options
+
+`--output, -o PATH`:: Output SVG file path (default: stdout)
+
+`--type, -t TYPE`:: Explicitly specify diagram type (auto-detected if not provided)
+
+`--theme THEME`:: Theme to use: default, dark, light, high-contrast
+
+==== Examples
+
+Render to stdout:
+[source,shell]
+----
+sirena render diagram.mmd
+----
+
+Render to file:
+[source,shell]
+----
+sirena render diagram.mmd -o output.svg
+----
+
+Specify diagram type:
+[source,shell]
+----
+sirena render diagram.mmd -t flowchart -o output.svg
+----
+
+Use dark theme:
+[source,shell]
+----
+sirena render diagram.mmd --theme dark -o output.svg
+----
+
+=== batch
+
+Render multiple Mermaid diagrams in a directory.
+
+[source,shell]
+----
+sirena batch INPUT_DIR [OPTIONS]
+----
+
+==== Arguments
+
+`INPUT_DIR`:: Directory containing Mermaid files
+
+==== Options
+
+`--output, -o DIR`:: Output directory for SVG files (default: current directory)
+
+`--theme THEME`:: Theme to use for all diagrams
+
+`--recursive, -r`:: Process subdirectories recursively
+
+==== Examples
+
+Render all diagrams in a directory:
+[source,shell]
+----
+sirena batch diagrams/ -o output/
+----
+
+Process recursively:
+[source,shell]
+----
+sirena batch diagrams/ -o output/ --recursive
+----
+
+=== types
+
+List all supported diagram types.
+
+[source,shell]
+----
+sirena types
+----
+
+==== Output
+
+Displays all 24 supported diagram types with their identifiers.
+
+==== Example
+
+[source,shell]
+----
+sirena types
+----
+
+Output:
+----
+Supported diagram types:
+  - architecture
+  - block
+  - c4
+  - class
+  - er
+  - error
+  - flowchart
+  - gantt
+  - gitgraph
+  - info
+  - journey
+  - kanban
+  - mindmap
+  - packet
+  - pie
+  - quadrant
+  - radar
+  - requirement
+  - sankey
+  - sequence
+  - state
+  - timeline
+  - treemap
+  - xychart
+----
+
+=== version
+
+Display Sirena version.
+
+[source,shell]
+----
+sirena version
+----
+
+==== Example
+
+[source,shell]
+----
+sirena version
+----
+
+Output:
+----
+Sirena version 0.1.0
+----
+
+== Environment Variables
+
+`SIRENA_THEME`:: Default theme (overridden by --theme option)
+
+`SIRENA_VERBOSE`:: Enable verbose mode (set to 1 or true)
+
+==== Example
+
+[source,shell]
+----
+export SIRENA_THEME=dark
+export SIRENA_VERBOSE=1
+sirena render diagram.mmd -o output.svg
+----
+
+== Exit Codes
+
+`0`:: Success
+`1`:: General error
+`2`:: File not found
+`3`:: Parse error
+`4`:: Render error
+
+== Next Steps
+
+* link:../diagram_types/index.html[Diagram Types Reference] - Syntax for all 24 types
+* link:quick-start.html[Quick Start Guide] - Get started quickly
+* link:../../examples/README.html[Examples] - Browse working examples

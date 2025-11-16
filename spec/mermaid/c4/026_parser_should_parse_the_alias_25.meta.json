@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_the_alias_25",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Person.spec.js",
+  "line_number": 41,
+  "metadata": {
+    "test_name": "should parse the alias"
+  }
+}

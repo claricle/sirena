@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_nested_namespaces_and_relationships_147",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 62,
+  "metadata": {
+    "test_name": "should handle nested namespaces and relationships"
+  }
+}

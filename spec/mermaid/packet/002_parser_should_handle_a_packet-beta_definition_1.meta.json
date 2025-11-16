@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_packet-beta_definition_1",
+  "type": "packet",
+  "source_file": "/packages/mermaid/src/diagrams/packet/packet.spec.ts",
+  "line_number": 13,
+  "metadata": {
+    "test_name": "should handle a packet-beta definition"
+  }
+}

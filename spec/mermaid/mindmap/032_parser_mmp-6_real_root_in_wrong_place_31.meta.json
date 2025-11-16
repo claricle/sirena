@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-6_real_root_in_wrong_place_31",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 69,
+  "metadata": {
+    "test_name": "MMP-6 real root in wrong place"
+  }
+}

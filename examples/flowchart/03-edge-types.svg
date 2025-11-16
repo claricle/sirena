@@ -1,0 +1,53 @@
+<svg
+ width="667.0"
+ height="564.0"
+ viewBox="0 0 667.0 564.0"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="edge-A_to_B">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 82.5 67.0 L 318.5 67.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-B_to_C">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 67.0 L 568.5 67.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-C_to_D">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 67.0 L 75.5 267.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-E_to_F">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 332.5 267.0 L 568.5 267.0" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="450.5" y="262.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
+</g>
+<g id="edge-F_to_G">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 267.0 L 89.5 467.0" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="329.0" y="362.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
+</g>
+<g id="node-A">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="65.0" height="34.0"/>
+  <text fill="#000000" x="82.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Start</text>
+</g>
+<g id="node-B">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="318.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">B</text>
+</g>
+<g id="node-C">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="568.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">C</text>
+</g>
+<g id="node-D">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="51.0" height="34.0"/>
+  <text fill="#000000" x="75.5" y="267.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">End</text>
+</g>
+<g id="node-E">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="250.0" width="65.0" height="34.0"/>
+  <text fill="#000000" x="332.5" y="267.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Label</text>
+</g>
+<g id="node-F">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="250.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="568.5" y="267.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">F</text>
+</g>
+<g id="node-G">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="450.0" width="79.0" height="34.0"/>
+  <text fill="#000000" x="89.5" y="467.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Another</text>
+</g>
+</svg>

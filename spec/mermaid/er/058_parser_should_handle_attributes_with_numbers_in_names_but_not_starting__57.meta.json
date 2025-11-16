@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_attributes_with_numbers_in_names_but_not_starting__57",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 1076,
+  "metadata": {
+    "test_name": "should handle attributes with numbers in names (but not starting)"
+  }
+}

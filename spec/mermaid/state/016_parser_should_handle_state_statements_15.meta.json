@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_state_statements_15",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 176,
+  "metadata": {
+    "test_name": "should handle state statements"
+  }
+}

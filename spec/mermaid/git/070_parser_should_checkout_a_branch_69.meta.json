@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_checkout_a_branch_69",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 45,
+  "metadata": {
+    "test_name": "should checkout a branch"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_class_annotations_89",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 870,
+  "metadata": {
+    "test_name": "should handle class annotations"
+  }
+}

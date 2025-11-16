@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle dotted edges with length ${length}_65",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-edges.spec.js",
+  "line_number": 0
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_simple_pie_with_a_multiline_acc_description_accDescr__18",
+  "type": "pie",
+  "source_file": "/packages/mermaid/src/diagrams/pie/pie.spec.ts",
+  "line_number": 102,
+  "metadata": {
+    "test_name": "should handle simple pie with a multiline acc description (accDescr)"
+  }
+}

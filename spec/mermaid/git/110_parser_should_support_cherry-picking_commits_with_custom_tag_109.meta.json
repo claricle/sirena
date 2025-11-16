@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_support_cherry-picking_commits_with_custom_tag_109",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 931,
+  "metadata": {
+    "test_name": "should support cherry-picking commits with custom tag"
+  }
+}

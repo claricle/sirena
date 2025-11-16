@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_associate_click_and_href_link_and_css_appropriately_134",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1513,
+  "metadata": {
+    "test_name": "should associate click and href link and css appropriately"
+  }
+}

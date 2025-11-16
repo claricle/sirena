@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_refines_relationship_definition_11",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 554,
+  "metadata": {
+    "test_name": "will accept refines relationship definition"
+  }
+}

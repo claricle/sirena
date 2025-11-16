@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_class_names_with_dash_62",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 146,
+  "metadata": {
+    "test_name": "should handle class names with dash"
+  }
+}

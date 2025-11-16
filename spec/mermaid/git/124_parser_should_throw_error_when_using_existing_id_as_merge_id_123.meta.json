@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_throw_error_when_using_existing_id_as_merge_ID_123",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 1218,
+  "metadata": {
+    "test_name": "should throw error when using existing id as merge ID"
+  }
+}

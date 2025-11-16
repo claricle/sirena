@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_simple_radar_definition_8",
+  "type": "radar",
+  "source_file": "/packages/mermaid/src/diagrams/radar/radar.spec.ts",
+  "line_number": 23,
+  "metadata": {
+    "test_name": "should handle a simple radar definition"
+  }
+}

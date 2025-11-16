@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_and_the_init_directive_sets_the_theme_to_dark_and_fontFamily_to_Menlo_fontSize_to_18_and_fontWeight_to_800_21",
+  "type": "sequence",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/sequence/sequenceDiagram.spec.js",
+  "line_number": 2
+}

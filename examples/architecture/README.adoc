@@ -1,0 +1,79 @@
+= Architecture Diagram Examples
+
+== Purpose
+
+Architecture diagrams visualize system architecture, showing services, components, and their relationships in distributed systems.
+
+== When to Use
+
+* Microservices architecture documentation
+* Service mesh visualization
+* Cloud infrastructure diagrams
+* System component relationships
+* Deployment architecture
+
+== Syntax Overview
+
+[source,mermaid]
+----
+architecture-beta
+    service api(server)[API]
+    service db(database)[Database]
+    
+    api:R --> L:db
+----
+
+== Examples
+
+=== 01: Basic Services
+
+Demonstrates basic architecture with services and connections.
+
+**File**: link:01-basic-services.mmd[01-basic-services.mmd]
+
+[source,mermaid]
+----
+include::01-basic-services.mmd[]
+----
+
+image::01-basic-services.svg[]
+
+=== 02: Service Groups
+
+Showcases grouped services and complex relationships.
+
+**File**: link:02-service-groups.mmd[02-service-groups.mmd]
+
+[source,mermaid]
+----
+include::02-service-groups.mmd[]
+----
+
+image::02-service-groups.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Service definitions
+| 01, 02
+
+| Service connections
+| 01, 02
+
+| Service grouping
+| 02
+
+| Icon types
+| 01, 02
+
+| Directional connections
+| 01, 02
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]
+* https://mermaid.js.org/syntax/architecture.html[Mermaid Architecture Documentation]

@@ -1,0 +1,9 @@
+{
+  "name": "parser_5_Multiple_sections_are_ok_18",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 79,
+  "metadata": {
+    "test_name": "5 Multiple sections are ok"
+  }
+}

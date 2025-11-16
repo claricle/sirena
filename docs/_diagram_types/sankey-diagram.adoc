@@ -1,0 +1,357 @@
+= Sankey diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Sankey diagrams in Sirena visualize flow quantities between nodes, where the width of arrows or connections is proportional to the flow rate. Sankey diagrams are ideal for showing how quantities move through a system, making them excellent for energy flows, material flows, cost distributions, and other transfer visualizations.
+
+Sankey diagrams are useful for:
+
+* Visualizing energy flows in systems
+* Showing material flows in manufacturing processes
+* Illustrating budget allocations and spending
+* Mapping website traffic flows
+* Displaying data transfer in networks
+* Representing ecological cycles and resource flows
+
+== Syntax specification
+
+=== Diagram declaration
+
+Sankey diagrams are declared using the `sankey-beta` keyword:
+
+[source,mermaid]
+----
+sankey-beta
+    <diagram-content>
+----
+
+=== Flow syntax
+
+Flows are defined in CSV format: `source,target,value`
+
+[source,mermaid]
+----
+source,target,value
+----
+
+Where:
+
+* `source`: The ID of the source node
+* `target`: The ID of the target node
+* `value`: The flow value (numeric, can be integer or float)
+
+Example:
+
+[source,mermaid]
+----
+A,B,10
+B,C,7.5
+B,D,2.5
+----
+
+=== Node label declarations (optional)
+
+Nodes can have custom labels defined separately:
+
+[source,mermaid]
+----
+NodeID [Node Label]
+----
+
+Example:
+
+[source,mermaid]
+----
+Source [Energy Source]
+Process [Processing Plant]
+Output [Useful Energy]
+----
+
+== Examples
+
+=== Simple Sankey diagram
+
+.Basic flow visualization
+[example]
+====
+[source,mermaid]
+----
+sankey-beta
+A,B,10
+B,C,20
+A,D,5
+----
+
+This creates a simple Sankey diagram showing flows from node A to nodes B and D, and from B to C. The flow widths are proportional to the values.
+====
+
+=== Sankey with node labels
+
+.Energy flow with labeled nodes
+[example]
+====
+[source,mermaid]
+----
+sankey-beta
+Source [Energy Source]
+Process [Processing Plant]
+Output [Useful Energy]
+Waste [Waste Heat]
+
+Source,Process,100
+Process,Output,70
+Process,Waste,30
+----
+
+This demonstrates energy flow through a processing plant with custom labels for nodes.
+====
+
+=== Complex flow network
+
+.Multi-path flow distribution
+[example]
+====
+[source,mermaid]
+----
+sankey-beta
+A,B,10
+A,C,5
+B,D,8
+B,E,2
+C,D,3
+C,F,2
+----
+
+This shows a more complex network where flows split and merge across multiple paths.
+====
+
+=== Budget allocation example
+
+.Financial flow visualization
+[example]
+====
+[source,mermaid]
+----
+sankey-beta
+Revenue [Total Revenue],Operations,60
+Revenue,Marketing,25
+Revenue,Research,15
+Operations,Salaries,40
+Operations,Infrastructure,20
+Marketing,Digital,15
+Marketing,Events,10
+Research,Development,10
+Research,Innovation,5
+----
+
+This demonstrates using Sankey diagrams for visualizing budget allocations across departments and categories.
+====
+
+== Features
+
+=== Proportional flow widths
+
+The width of each flow path is automatically calculated proportional to its value:
+
+* Larger values result in wider flow paths
+* Smaller values result in narrower flow paths
+* Visual width helps quickly identify major vs minor flows
+
+=== Automatic node discovery
+
+Nodes are automatically discovered from flow definitions:
+
+[source,mermaid]
+----
+sankey-beta
+A,B,10
+B,C,20
+----
+
+Creates three nodes (A, B, C) automatically without explicit declaration.
+
+=== Layer-based layout
+
+The layout algorithm automatically:
+
+* Assigns nodes to layers (left to right)
+* Positions nodes vertically to minimize crossing flows
+* Calculates optimal spacing between nodes
+* Balances node positions based on flow magnitudes
+
+=== Source and sink detection
+
+The renderer automatically identifies:
+
+* **Source nodes**: Nodes with no incoming flows
+* **Sink nodes**: Nodes with no outgoing flows
+* **Intermediate nodes**: Nodes with both incoming and outgoing flows
+
+== Best practices
+
+=== Choose meaningful node IDs
+
+Use descriptive node identifiers:
+
+[source,mermaid]
+----
+%% Good
+Solar,Battery,100
+Battery,Home,80
+
+%% Less clear
+A,B,100
+B,C,80
+----
+
+=== Balance your flows
+
+For physically meaningful diagrams, ensure conservation of flow:
+
+[source,mermaid]
+----
+%% Good - balanced flows
+Input,Process,100
+Process,Output,70
+Process,Waste,30   %% 70 + 30 = 100
+
+%% Unbalanced - may be intentional or an error
+Input,Process,100
+Process,Output,120  %% Where did extra 20 come from?
+----
+
+=== Use appropriate value scales
+
+Choose flow values that represent the actual quantities:
+
+* Energy: use Watts, kWh, etc.
+* Materials: use tons, kg, liters, etc.
+* Money: use currency amounts
+* Data: use bytes, packets, etc.
+
+=== Add labels for clarity
+
+For complex diagrams, use node labels to make the visualization self-explanatory:
+
+[source,mermaid]
+----
+sankey-beta
+PV [Solar Panels]
+Batt [Battery Storage]
+Grid [Grid Connection]
+Load [House Load]
+
+PV,Batt,5
+PV,Load,3
+Batt,Load,2
+Grid,Load,4
+----
+
+=== Limit complexity
+
+For readability, keep diagrams focused:
+
+* Limit to 10-15 nodes for clarity
+* Avoid too many crossing flows
+* Consider breaking complex systems into multiple diagrams
+
+== Rendering behavior
+
+=== Flow width calculation
+
+Flow widths are calculated as:
+
+* Proportional to the flow value
+* Scaled between minimum and maximum widths
+* The largest flow gets the maximum width
+* The smallest flow gets the minimum width
+
+=== Node positioning
+
+Nodes are positioned using:
+
+* **Layer assignment**: Topological sort from sources to sinks
+* **Vertical positioning**: Based on total flow magnitudes
+* **Width calculation**: Proportional to total throughput
+
+=== Flow path rendering
+
+Flows are rendered as:
+
+* Bezier curves connecting nodes
+* Gradient or solid colors
+* Semi-transparent to show overlapping flows
+* Optional value labels at midpoints
+
+== Limitations
+
+=== Currently not supported
+
+The following features are not yet supported:
+
+* Custom colors for specific flows or nodes
+* Flow labels displayed on paths
+* Interactive tooltips
+* Animation of flows
+* Curved or custom path routing
+* Self-loops (flows from node to itself)
+
+=== Known issues
+
+* Very complex networks may have crossing flows
+* Extremely small values may be difficult to see
+* Node labels may overlap in dense diagrams
+
+== Use cases
+
+=== Energy systems
+
+Visualizing energy production, conversion, and consumption:
+
+[source,mermaid]
+----
+sankey-beta
+Coal,Electricity,40
+Gas,Electricity,30
+Solar,Electricity,20
+Wind,Electricity,10
+Electricity,Residential,30
+Electricity,Commercial,40
+Electricity,Industrial,30
+----
+
+=== Material flows
+
+Tracking materials through manufacturing:
+
+[source,mermaid]
+----
+sankey-beta
+RawMaterial,Processing,100
+Processing,ProductA,60
+Processing,ProductB,30
+Processing,Waste,10
+----
+
+=== Website analytics
+
+Showing user journey through a website:
+
+[source,mermaid]
+----
+sankey-beta
+Homepage,Products,500
+Homepage,About,200
+Products,Checkout,300
+Products,Back,200
+Checkout,Purchase,250
+Checkout,Abandon,50
+----
+
+== Related documentation
+
+* link:flowchart.adoc[Flowchart diagrams]
+* link:timeline.adoc[Timeline diagrams]
+* link:https://mermaid.js.org/syntax/sankey.html[Official Mermaid Sankey documentation]

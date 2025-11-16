@@ -1,0 +1,603 @@
+= Mindmap diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Mindmap diagrams in Sirena visualize hierarchical information and ideas in a
+radial tree structure. They help organize thoughts, concepts, and relationships
+in a visual format that mirrors how we naturally think and make connections.
+
+Mindmaps are useful for:
+
+* Brainstorming and idea generation
+* Organizing project requirements
+* Creating study guides and learning materials
+* Documenting system architectures
+* Planning and strategic thinking
+* Note-taking and knowledge mapping
+
+== Syntax specification
+
+=== Diagram declaration
+
+Mindmaps are declared using the `mindmap` keyword:
+
+[source,mermaid]
+----
+mindmap
+    <root-node>
+        <child-nodes>
+----
+
+=== Nodes
+
+==== Root node
+
+The root node is the central concept of the mindmap and must be defined first:
+
+[source,mermaid]
+----
+mindmap
+    Central Idea
+----
+
+==== Child nodes
+
+Child nodes are defined through indentation (2 or 4 spaces per level):
+
+[source,mermaid]
+----
+mindmap
+    Root
+      Child 1
+      Child 2
+        Grandchild 2.1
+        Grandchild 2.2
+      Child 3
+----
+
+=== Node shapes
+
+Nodes can have different visual shapes using special markers:
+
+[cols="2,2,3"]
+|===
+|Shape |Syntax |Description
+
+|Default (Rounded)
+|`Node text`
+|Plain text creates a rounded rectangle
+
+|Circle
+|`((Node text))`
+|Double parentheses create a circle
+
+|Cloud
+|`)Node text(`
+|Parentheses reversed create a cloud shape
+
+|Bang
+|`))Node text((`
+|Double reversed parentheses create an emphasized cloud
+
+|Hexagon
+|`{{Node text}}`
+|Double curly braces create a hexagon
+
+|Square
+|`[Node text]`
+|Square brackets create a rectangle
+|===
+
+==== Shape examples
+
+.Using different node shapes
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Central Idea))
+      Branch 1
+      )Cloud Branch(
+      {{Hexagon Branch}}
+      [Square Branch]
+      ))Important Branch((
+----
+====
+
+=== Icons and classes
+
+==== Icons
+
+Add icons to nodes using the `::icon()` syntax:
+
+[source,mermaid]
+----
+mindmap
+    root[Project]
+    ::icon(fa fa-folder)
+      Documentation
+        ::icon(fa fa-book)
+----
+
+Where:
+
+`::icon(name)`:: Icon identifier placed on the line after the node
+
+==== Classes
+
+Apply CSS classes to nodes using the `:::` syntax:
+
+[source,mermaid]
+----
+mindmap
+    root[Styled Node]
+    :::highlight important
+----
+
+Where:
+
+`:::class1 class2`:: Space-separated class names placed after the node
+
+==== Combined icons and classes
+
+.Using both icons and classes
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root[Main Topic]
+    :::primary-node
+    ::icon(star)
+      Subtopic
+        :::secondary-node
+        ::icon(check)
+----
+====
+
+== Examples
+
+=== Simple mindmap
+
+.Basic three-level mindmap
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    Central Idea
+      Branch 1
+        Detail 1.1
+        Detail 1.2
+      Branch 2
+        Detail 2.1
+      Branch 3
+----
+
+This creates a simple mindmap with:
+
+* One root node (Central Idea)
+* Three main branches
+* Various details under branches
+====
+
+=== Mindmap with shapes
+
+.Using different node shapes for visual hierarchy
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Project Goals))
+      Features
+        )Must Have(
+          Login
+          Dashboard
+        )Nice to Have(
+          Dark Mode
+          Notifications
+      Timeline
+        {{Q1}}
+          Planning
+          Design
+        {{Q2}}
+          Development
+        {{Q3}}
+          Testing
+        {{Q4}}
+          Launch
+      Resources
+        [Team]
+        [Budget]
+        [Tools]
+----
+
+This demonstrates:
+
+* Circle root for main concept
+* Cloud shapes for priority categories
+* Hexagons for time periods
+* Squares for resources
+* Plain text for details
+====
+
+=== Research topics mindmap
+
+.Organizing research with icons
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Research Topic))
+      Literature Review
+        ::icon(fa fa-book)
+        Historical Context
+        Current Studies
+        Key Authors
+      Methodology
+        ::icon(fa fa-flask)
+        Qualitative Methods
+        Quantitative Methods
+        Mixed Methods
+      Data Collection
+        ::icon(fa fa-database)
+        Surveys
+        Interviews
+        Observations
+      Analysis
+        ::icon(fa fa-chart-bar)
+        Statistical Tools
+        Coding Framework
+----
+
+This shows:
+
+* Icons indicating the type of content
+* Clear hierarchical organization
+* Subject-specific categorization
+====
+
+=== Software architecture mindmap
+
+.Documenting system architecture
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Application))
+      Frontend
+        {{React}}
+          Components
+          State Management
+          Routing
+        {{Styling}}
+          CSS Modules
+          Tailwind
+      Backend
+        {{Node.js}}
+          Express
+          APIs
+          Middleware
+        {{Database}}
+          PostgreSQL
+          Redis Cache
+      Infrastructure
+        {{Cloud}}
+          AWS EC2
+          S3 Storage
+        {{CI/CD}}
+          GitHub Actions
+          Docker
+----
+
+This illustrates:
+
+* Technology stack organization
+* Component relationships
+* Infrastructure layers
+====
+
+=== Learning roadmap
+
+.Creating a study plan
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Web Development))
+      Fundamentals
+        HTML
+          Semantic Markup
+          Forms
+          Accessibility
+        CSS
+          Layouts
+          Responsive Design
+          Animations
+        JavaScript
+          ES6+ Features
+          DOM Manipulation
+          Async Programming
+      Frameworks
+        React
+        Vue
+        Angular
+      Backend
+        Node.js
+        Python
+        Databases
+      DevOps
+        Git
+        CI/CD
+        Cloud Platforms
+----
+
+This shows:
+
+* Progressive learning path
+* Skill categorization
+* Topic dependencies
+====
+
+=== Project planning mindmap
+
+.Planning a project with mixed notation
+[example]
+====
+[source,mermaid]
+----
+mindmap
+    root((Website Redesign))
+      ))Phase 1: Discovery((
+        User Research
+          Surveys
+          Interviews
+        Competitor Analysis
+        Requirements
+      ))Phase 2: Design((
+        Wireframes
+        Mockups
+        Design System
+        Prototype
+      ))Phase 3: Development((
+        Frontend Build
+        Backend Integration
+        Testing
+        QA
+      ))Phase 4: Launch((
+        Deployment
+        Monitoring
+        User Training
+----
+
+This demonstrates:
+
+* Bang shapes for major phases
+* Sequential workflow visualization
+* Deliverables per phase
+====
+
+== Features
+
+=== Indentation-based hierarchy
+
+Hierarchy is determined by indentation level:
+
+[source,mermaid]
+----
+mindmap
+  root
+    level 1
+      level 2
+        level 3
+          level 4
+----
+
+Use consistent indentation (2 or 4 spaces per level).
+
+=== Flexible tree depth
+
+Mindmaps support unlimited nesting levels:
+
+[source,mermaid]
+----
+mindmap
+  root
+    branch
+      sub-branch
+        detail
+          sub-detail
+            deep-detail
+----
+
+=== Multiple root branches
+
+The root can have many direct children:
+
+[source,mermaid]
+----
+mindmap
+  root
+    branch-1
+    branch-2
+    branch-3
+    branch-4
+    branch-5
+----
+
+=== Text with special characters
+
+Node text can include various characters:
+
+[source,mermaid]
+----
+mindmap
+  root
+    Node with spaces
+    Node-with-hyphens
+    Node_with_underscores
+    Node (with parentheses)
+----
+
+Note: Use appropriate shape markers to avoid syntax conflicts.
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid mindmap features are not yet supported in Sirena:
+
+* Comments using `%%`
+* HTML line breaks `<br/>` in node text
+* Markdown formatting in node content
+* Custom themes beyond shape-based styling
+* Click events and links
+
+=== Known issues
+
+* Very deep hierarchies may require layout adjustment
+* Long node text may overlap in dense mindmaps
+* Icon rendering depends on icon library availability
+
+== Best practices
+
+=== Keep the root concise
+
+Use a clear, focused root concept:
+
+[source,mermaid]
+----
+%% Good
+mindmap
+  root((Product Strategy))
+
+%% Too broad
+mindmap
+  root((Everything About Our Company And All Its Products))
+----
+
+=== Use shapes meaningfully
+
+Apply shapes consistently to indicate node types:
+
+[source,mermaid]
+----
+mindmap
+  root((Main Goal))
+    {{Category 1}}  %% Hexagons for categories
+      [Action Item]  %% Squares for actions
+      [Action Item]
+    {{Category 2}}
+      [Action Item]
+      [Action Item]
+----
+
+=== Limit depth
+
+Keep hierarchies manageable (typically 3-4 levels):
+
+[source,mermaid]
+----
+%% Good - Clear and scannable
+mindmap
+  root
+    branch
+      detail
+      detail
+
+%% Too deep - Hard to follow
+mindmap
+  root
+    branch
+      sub-branch
+        detail
+          sub-detail
+            deep-detail
+              very-deep-detail
+----
+
+=== Group related concepts
+
+Organize related ideas under common branches:
+
+[source,mermaid]
+----
+mindmap
+  root((Project))
+    Technical Requirements
+      Performance
+      Security
+      Scalability
+    Business Requirements
+      Budget
+      Timeline
+      ROI
+----
+
+=== Use consistent indentation
+
+Choose 2 or 4 spaces and use it throughout:
+
+[source,mermaid]
+----
+%% Good - Consistent 2-space
+mindmap
+  root
+    level-1
+      level-2
+        level-3
+
+%% Inconsistent - Avoid
+mindmap
+  root
+    level-1
+       level-2
+          level-3
+----
+
+=== Add visual hierarchy
+
+Use different shapes to create visual levels:
+
+[source,mermaid]
+----
+mindmap
+  root((Theme))
+    {{Main Branch}}
+      )Important Concept(
+        Regular Detail
+        Regular Detail
+----
+
+=== Keep node text concise
+
+Use brief, descriptive labels:
+
+[source,mermaid]
+----
+%% Good
+mindmap
+  root
+    Clear Label
+    Brief Description
+    Concise Point
+
+%% Too verbose
+mindmap
+  root
+    This is a very long description that explains everything in detail
+    Another lengthy explanation that should probably be shortened
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<flowchart.adoc#,Flowchart diagrams>>
+* link:https://mermaid.js.org/syntax/mindmap.html[Official Mermaid mindmap documentation]

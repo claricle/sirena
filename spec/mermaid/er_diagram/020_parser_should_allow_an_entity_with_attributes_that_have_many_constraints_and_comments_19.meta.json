@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_allow_an_entity_with_attributes_that_have_many_constraints_and_comments_19",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 288
+}

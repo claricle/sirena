@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_no_matter_of_there_are_many_leading_spaces_40",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-node-data.spec.js",
+  "line_number": 115
+}

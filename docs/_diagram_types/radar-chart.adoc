@@ -1,0 +1,528 @@
+= Radar chart diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Radar charts (also known as spider charts or web charts) in Sirena visualize
+multivariate data on axes that radiate from a central point. They are ideal for
+comparing multiple variables across different items or showing the relative
+performance of different attributes.
+
+Radar charts are useful for:
+
+* Comparing skill sets or competencies
+* Displaying performance metrics across categories
+* Visualizing product features or specifications
+* Showing survey results with multiple dimensions
+* Comparing team or individual assessments
+* Analyzing competitive positioning
+
+== Syntax specification
+
+=== Diagram declaration
+
+Radar charts are declared using the `radar-beta` keyword:
+
+[source,mermaid]
+----
+radar-beta
+    axis <axis-definitions>
+    curve <dataset-definitions>
+----
+
+=== Axes
+
+==== Simple axes
+
+Axes are defined with comma-separated identifiers:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+----
+
+==== Labeled axes
+
+Axes can have custom labels using square brackets and quotes:
+
+[source,mermaid]
+----
+radar-beta
+    axis A["Skill A"], B["Skill B"], C["Skill C"]
+----
+
+Where:
+
+`axis`:: Keyword to declare axes
+`A, B, C`:: Axis identifiers (used for data mapping)
+`["Label"]`:: Optional human-readable label for the axis
+
+=== Datasets (curves)
+
+==== Positional values
+
+Data can be provided as a comma-separated list matching axis order:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve dataset1{1, 2, 3}
+----
+
+==== Named values
+
+Data can be mapped explicitly to axes (order-independent):
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve dataset1{C: 3, A: 1, B: 2}
+----
+
+==== Labeled datasets
+
+Datasets can have custom labels:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve dataset1["My Dataset"]{1, 2, 3}
+----
+
+Where:
+
+`curve`:: Keyword to declare a dataset
+`dataset1`:: Dataset identifier
+`["Label"]`:: Optional human-readable label
+`{values}`:: Data values (positional or named)
+
+=== Title and metadata
+
+==== Title
+
+Add a title to the chart:
+
+[source,mermaid]
+----
+radar-beta
+    title Skills Assessment
+    axis A, B, C
+    curve c1{1, 2, 3}
+----
+
+==== Accessibility metadata
+
+Add accessibility information:
+
+[source,mermaid]
+----
+radar-beta
+    title Radar diagram
+    accTitle: Radar accessible title
+    accDescr: Radar accessible description
+    axis A, B, C
+    curve c1{1, 2, 3}
+----
+
+Where:
+
+`title`:: Chart title
+`accTitle:`:: Accessible title for screen readers
+`accDescr:`:: Accessible description for screen readers
+
+=== Configuration options
+
+==== Graticule
+
+Set the grid style (polygon or circular):
+
+[source,mermaid]
+----
+radar-beta
+    graticule polygon
+----
+
+==== Value range
+
+Define minimum and maximum values:
+
+[source,mermaid]
+----
+radar-beta
+    min 0
+    max 100
+----
+
+==== Ticks
+
+Set the number of grid lines:
+
+[source,mermaid]
+----
+radar-beta
+    ticks 10
+----
+
+==== Legend
+
+Control legend visibility:
+
+[source,mermaid]
+----
+radar-beta
+    showLegend false
+----
+
+Where:
+
+`graticule`:: Grid style (`polygon` or `circular`)
+`min`:: Minimum value for scaling
+`max`:: Maximum value for scaling
+`ticks`:: Number of grid circles to display
+`showLegend`:: Whether to show the legend (`true` or `false`)
+
+== Examples
+
+=== Simple radar chart
+
+.Basic three-axis radar
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve mycurve{1, 2, 3}
+----
+
+This creates a simple radar with:
+
+* Three axes (A, B, C)
+* One dataset with values [1, 2, 3]
+* Default styling and grid
+====
+
+=== Skills assessment
+
+.Comparing team skills
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    title Team Skills Assessment
+    axis JavaScript["JavaScript"], Python["Python"], SQL["SQL"], DevOps["DevOps"], Design["Design"]
+    curve TeamA["Team A"]{85, 70, 60, 75, 55}
+    curve TeamB["Team B"]{70, 90, 80, 65, 70}
+----
+
+This demonstrates:
+
+* Labeled axes for clarity
+* Multiple datasets for comparison
+* Meaningful labels for both axes and datasets
+* Real-world skill measurement scenario
+====
+
+=== Product comparison
+
+.Comparing product features
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    title Product Feature Comparison
+    axis Performance["Performance"], Usability["Usability"], Features["Features"], Price["Price"], Support["Support"]
+    curve ProductA["Product A"]{90, 85, 70, 60, 80}
+    curve ProductB["Product B"]{75, 90, 85, 85, 70}
+    curve ProductC["Product C"]{80, 75, 90, 70, 75}
+    min 0
+    max 100
+----
+
+This shows:
+
+* Three products being compared
+* Five evaluation criteria
+* Explicit value range (0-100)
+* Clear labeling for decision-making
+====
+
+=== Survey results
+
+.Analyzing survey data
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    title Customer Satisfaction Survey
+    accTitle: Customer satisfaction survey results
+    accDescr: Radar chart showing satisfaction scores across different aspects
+    axis Quality["Product Quality"], Service["Customer Service"], Value["Value for Money"], Delivery["Delivery Speed"], Packaging["Packaging"]
+    curve Q1Results["Q1 2024"]{85, 78, 82, 90, 88}
+    curve Q2Results["Q2 2024"]{88, 82, 85, 92, 90}
+    graticule polygon
+    min 0
+    max 100
+----
+
+This illustrates:
+
+* Accessibility metadata
+* Quarterly comparison
+* Polygon grid style
+* Clear value range
+* Professional presentation
+====
+
+=== Named value format
+
+.Using named values for clarity
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    title Performance Metrics
+    axis Speed["Speed"], Memory["Memory Usage"], CPU["CPU Usage"], Reliability["Reliability"]
+    curve System1["System 1"]{Speed: 90, Memory: 70, CPU: 75, Reliability: 95}
+    curve System2["System 2"]{Reliability: 85, Speed: 80, CPU: 90, Memory: 85}
+----
+
+This demonstrates:
+
+* Named value format (order-independent)
+* Clear axis-to-value mapping
+* Flexibility in data specification
+====
+
+=== Minimal configuration
+
+.Minimal radar with options
+[example]
+====
+[source,mermaid]
+----
+radar-beta
+    axis Mon, Tue, Wed, Thu, Fri
+    curve Activity{65, 78, 82, 88, 72}
+    ticks 5
+    showLegend false
+    min 0
+    max 100
+----
+
+This shows:
+
+* Simple axis identifiers
+* Single dataset
+* Custom tick count
+* Legend disabled
+* Explicit value range
+====
+
+== Features
+
+=== Multiple datasets
+
+Compare up to multiple datasets on the same chart:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C, D
+    curve data1{1, 2, 3, 4}
+    curve data2{2, 3, 1, 4}
+    curve data3{3, 1, 4, 2}
+----
+
+Each dataset is rendered with a different color from the theme palette.
+
+=== Flexible axis count
+
+Support for any number of axes (typically 3-12):
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C, D, E, F, G, H
+    curve data{10, 20, 30, 40, 50, 60, 70, 80}
+----
+
+=== Value normalization
+
+Values are automatically normalized to fit the chart:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve data{100, 200, 300}  # Automatically scaled
+----
+
+=== Custom labels
+
+All elements support custom labels:
+
+[source,mermaid]
+----
+radar-beta
+    axis A["First Metric"], B["Second Metric"], C["Third Metric"]
+    curve dataset["My Custom Name"]{1, 2, 3}
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid radar features are not yet supported in Sirena:
+
+* Custom colors per dataset
+* Curve-specific styling options
+* Area opacity controls
+* Data point markers beyond default circles
+* Interactive tooltips
+
+=== Known issues
+
+* Very large numbers of axes (>12) may cause label overlap
+* Long axis labels may require manual positioning
+* Theme colors cycle after 10 datasets
+
+== Best practices
+
+=== Use appropriate axis count
+
+Keep the number of axes manageable:
+
+[source,mermaid]
+----
+%% Good - Clear and readable
+radar-beta
+    axis A, B, C, D, E
+    curve data{1, 2, 3, 4, 5}
+
+%% Too many - Hard to distinguish
+radar-beta
+    axis A, B, C, D, E, F, G, H, I, J, K, L, M, N, O
+    curve data{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+----
+
+=== Provide meaningful labels
+
+Use descriptive axis and dataset labels:
+
+[source,mermaid]
+----
+%% Good
+radar-beta
+    title Employee Performance Review
+    axis Communication["Communication Skills"], Technical["Technical Skills"], Leadership["Leadership"], Teamwork["Teamwork"]
+    curve Employee1["John Doe"]{85, 90, 75, 88}
+
+%% Less clear
+radar-beta
+    axis A, B, C, D
+    curve c1{85, 90, 75, 88}
+----
+
+=== Set explicit ranges
+
+Define min/max for consistent comparisons:
+
+[source,mermaid]
+----
+radar-beta
+    axis A, B, C
+    curve data{45, 67, 89}
+    min 0
+    max 100  # Explicit range for clarity
+----
+
+=== Limit dataset count
+
+Keep comparisons manageable (typically 2-5 datasets):
+
+[source,mermaid]
+----
+%% Good - Clear comparison
+radar-beta
+    axis A, B, C, D
+    curve Team1{1, 2, 3, 4}
+    curve Team2{2, 3, 1, 4}
+    curve Team3{3, 1, 4, 2}
+
+%% Too many - Cluttered
+radar-beta
+    axis A, B, C
+    curve d1{1, 2, 3}
+    curve d2{2, 3, 1}
+    curve d3{3, 1, 2}
+    curve d4{1, 3, 2}
+    curve d5{2, 1, 3}
+    curve d6{3, 2, 1}
+----
+
+=== Use consistent scales
+
+Ensure all values are on comparable scales:
+
+[source,mermaid]
+----
+%% Good - All percentages
+radar-beta
+    axis Quality, Speed, Cost
+    curve Product{85, 90, 75}
+    min 0
+    max 100
+
+%% Inconsistent - Mixed scales
+radar-beta
+    axis Score, Count, Percentage
+    curve data{85, 1000, 75}  # Different magnitudes
+----
+
+=== Choose appropriate grid
+
+Select grid style based on your needs:
+
+[source,mermaid]
+----
+%% Polygon grid - More geometric
+radar-beta
+    graticule polygon
+    axis A, B, C
+    curve data{1, 2, 3}
+
+%% Circular grid - More organic
+radar-beta
+    graticule circular
+    axis A, B, C
+    curve data{1, 2, 3}
+----
+
+=== Include context
+
+Add titles and descriptions:
+
+[source,mermaid]
+----
+radar-beta
+    title Q3 2024 Performance Metrics
+    accTitle: Third quarter performance metrics
+    accDescr: Radar chart showing performance across five key metrics for Q3 2024
+    axis A, B, C, D, E
+    curve data{85, 90, 78, 92, 88}
+----
+
+== Related documentation
+
+* link:https://mermaid.js.org/syntax/radar.html[Official Mermaid radar documentation]
+* <<index.adoc#,Diagram types overview>>

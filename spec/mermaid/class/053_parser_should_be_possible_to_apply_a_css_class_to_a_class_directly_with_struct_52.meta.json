@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_apply_a_css_class_to_a_class_directly_with_struct_52",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 20,
+  "metadata": {
+    "test_name": "should be possible to apply a css class to a class directly with struct"
+  }
+}

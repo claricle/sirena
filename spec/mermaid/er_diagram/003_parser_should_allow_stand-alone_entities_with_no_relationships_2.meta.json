@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_allow_stand-alone_entities_with_no_relationships_2",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 15
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-13_should_be_possible_to_set_an_icon_for_the_node_23",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 158,
+  "metadata": {
+    "test_name": "KNBN-13 should be possible to set an icon for the node"
+  }
+}

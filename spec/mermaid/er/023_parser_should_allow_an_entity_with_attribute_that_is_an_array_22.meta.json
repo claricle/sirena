@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_entity_with_attribute_that_is_an_array_22",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 324,
+  "metadata": {
+    "test_name": "should allow an entity with attribute that is an array"
+  }
+}

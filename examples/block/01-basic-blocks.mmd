@@ -1,0 +1,13 @@
+block-beta
+    columns 3
+    Frontend["Frontend App"]
+    Backend["Backend API"]
+    Database["Database"]
+    space
+    Cache["Redis Cache"]
+    Queue["Message Queue"]
+
+    Frontend --> Backend
+    Backend --> Database
+    Backend --> Cache
+    Backend --> Queue

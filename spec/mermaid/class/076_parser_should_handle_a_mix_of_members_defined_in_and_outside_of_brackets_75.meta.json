@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_mix_of_members_defined_in_and_outside_of_brackets_75",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 586,
+  "metadata": {
+    "test_name": "should handle a mix of members defined in and outside of brackets"
+  }
+}

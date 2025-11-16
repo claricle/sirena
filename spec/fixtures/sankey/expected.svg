@@ -1,0 +1,26 @@
+<svg
+ width="543.0"
+ height="270.0"
+ viewBox="0 0 543 270"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<path fill="#4472C4" stroke="none" opacity="0.4" d="M 97 103.0 C 153.5 103.0, 153.5 103.0, 210 103.0 L 210 137.0 C 153.5 137.0, 153.5 137.0, 97 137.0 Z"/>
+<text fill="#000000" x="153.5" y="120.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">10</text>
+<path fill="#ED7D31" stroke="none" opacity="0.4" d="M 243 111.0 C 301.5 111.0, 301.5 111.0, 360 111.0 L 360 129.0 C 301.5 129.0, 301.5 129.0, 243 129.0 Z"/>
+<text fill="#000000" x="301.5" y="120.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">5</text>
+<path fill="#A5A5A5" stroke="none" opacity="0.4" d="M 243 111.0 C 301.5 111.0, 301.5 181.0, 360 181.0 L 360 199.0 C 301.5 199.0, 301.5 129.0, 243 129.0 Z"/>
+<text fill="#000000" x="301.5" y="155.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">5</text>
+<path fill="#FFC000" stroke="none" opacity="0.4" d="M 97 95.0 C 153.5 95.0, 153.5 165.0, 210 165.0 L 210 215.0 C 153.5 215.0, 153.5 145.0, 97 145.0 Z"/>
+<text fill="#000000" x="153.5" y="155.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">15</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="60.0" y="100.0" width="37.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="78.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">A</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="100.0" width="33.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="226.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">B</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="360.0" y="100.0" width="23.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="371.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">C</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="360.0" y="170.0" width="23.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="371.0" y="195.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">D</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="170.0" width="30.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="225.0" y="195.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">E</text>
+</svg>

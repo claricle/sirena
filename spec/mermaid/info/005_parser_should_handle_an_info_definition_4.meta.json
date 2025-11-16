@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_an_info_definition_4",
+  "type": "info",
+  "source_file": "/packages/mermaid/src/diagrams/info/info.spec.ts",
+  "line_number": 3,
+  "metadata": {
+    "test_name": "should handle an info definition"
+  }
+}

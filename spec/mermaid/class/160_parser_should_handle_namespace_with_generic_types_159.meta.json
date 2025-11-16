@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_namespace_with_generic_types_159",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1182,
+  "metadata": {
+    "test_name": "should handle namespace with generic types"
+  }
+}

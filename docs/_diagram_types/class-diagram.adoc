@@ -1,0 +1,816 @@
+= Class diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Class diagrams in Sirena represent the structure of object-oriented systems by showing classes, their attributes, methods, and the relationships between them. They are fundamental for documenting software architecture and design patterns.
+
+Class diagrams are useful for:
+
+* Documenting object-oriented system architecture
+* Showing inheritance hierarchies
+* Illustrating design patterns
+* Mapping domain models
+* Visualizing database schemas as objects
+* Planning software structure before implementation
+
+== Syntax specification
+
+=== Diagram declaration
+
+Class diagrams are declared using the `classDiagram` keyword:
+
+[source,mermaid]
+----
+classDiagram
+    <diagram-content>
+----
+
+=== Class definition
+
+Classes can be defined in two ways:
+
+==== Inline definition
+
+[source,mermaid]
+----
+classDiagram
+    class ClassName
+----
+
+==== Block definition
+
+[source,mermaid]
+----
+classDiagram
+    class ClassName {
+        +Type attributeName
+        +returnType methodName()
+    }
+----
+
+=== Attributes
+
+Attributes (fields) are defined with visibility, type, and name:
+
+[source,mermaid]
+----
+class ClassName {
+    +public attribute
+    -private attribute
+    #protected attribute
+    ~package attribute
+}
+----
+
+Visibility modifiers:
+
+[cols="1,2,3"]
+|===
+|Symbol |Visibility |Description
+
+|`+`
+|Public
+|Accessible from anywhere
+
+|`-`
+|Private
+|Accessible only within the class
+
+|`#`
+|Protected
+|Accessible within the class and subclasses
+
+|`~`
+|Package/Internal
+|Accessible within the same package
+|===
+
+Full attribute syntax:
+
+[source,mermaid]
+----
+visibility type name
+----
+
+Example:
+
+[source,mermaid]
+----
+class Animal {
+    +String name
+    -int age
+    #bool isAlive
+}
+----
+
+=== Methods
+
+Methods are defined similarly to attributes but with parentheses:
+
+[source,mermaid]
+----
+class ClassName {
+    +returnType methodName()
+    +returnType methodName(paramType param)
+}
+----
+
+Examples:
+
+[source,mermaid]
+----
+class Animal {
+    +void makeSound()
+    +void eat(Food food)
+    +String getName()
+}
+----
+
+=== Relationships
+
+Class diagrams support various relationship types:
+
+[cols="2,2,3"]
+|===
+|Syntax |Relationship |Description
+
+|`ClassA <\|-- ClassB`
+|Inheritance
+|ClassB inherits from ClassA
+
+|`ClassA *-- ClassB`
+|Composition
+|ClassA is composed of ClassB (strong ownership)
+
+|`ClassA o-- ClassB`
+|Aggregation
+|ClassA contains ClassB (weak ownership)
+
+|`ClassA --> ClassB`
+|Association
+|ClassA is associated with ClassB
+
+|`ClassA -- ClassB`
+|Link (solid)
+|General connection between classes
+
+|`ClassA ..> ClassB`
+|Dependency
+|ClassA depends on ClassB
+
+|`ClassA ..\|> ClassB`
+|Realization
+|ClassA realizes interface ClassB
+
+|`ClassA ..* ClassB`
+|Composition (dotted)
+|Alternative composition syntax
+|===
+
+==== Relationship labels
+
+Relationships can have labels:
+
+[source,mermaid]
+----
+ClassA "1" --> "many" ClassB : contains
+----
+
+==== Bidirectional associations
+
+Arrows can point in both directions:
+
+[source,mermaid]
+----
+ClassA <-- ClassB
+ClassA <--> ClassB
+----
+
+=== Cardinality
+
+Relationships can specify cardinality (multiplicity):
+
+[source,mermaid]
+----
+ClassA "1" --> "*" ClassB
+ClassA "1..*" --> "0..1" ClassB
+----
+
+Common cardinality notations:
+
+* `1` - Exactly one
+* `0..1` - Zero or one
+* `*` or `0..*` - Zero or more
+* `1..*` - One or more
+* `n` - Exactly n (specific number)
+* `n..m` - Between n and m
+
+=== Generics
+
+Generic types can be specified using tilde notation:
+
+[source,mermaid]
+----
+class List~T~ {
+    +T get(int index)
+    +void add(T item)
+}
+----
+
+=== Abstract classes and interfaces
+
+==== Abstract classes
+
+Abstract classes are indicated with `<<abstract>>` stereotype or italics:
+
+[source,mermaid]
+----
+class AbstractClass {
+    <<abstract>>
+    +abstractMethod()*
+}
+----
+
+==== Interfaces
+
+Interfaces are indicated with `<<interface>>` stereotype:
+
+[source,mermaid]
+----
+class IInterface {
+    <<interface>>
+    +method()
+}
+----
+
+=== Stereotypes
+
+Stereotypes provide additional classification:
+
+[source,mermaid]
+----
+class ClassName {
+    <<stereotype>>
+}
+----
+
+Common stereotypes:
+
+* `<<interface>>`
+* `<<abstract>>`
+* `<<service>>`
+* `<<enumeration>>`
+
+=== Annotations
+
+Annotations can be added to classes:
+
+[source,mermaid]
+----
+class ClassName {
+    <<annotation>>
+    +method()
+}
+----
+
+== Examples
+
+=== Basic class
+
+.Simple class definition
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Animal {
+        +String name
+        +int age
+        +makeSound() void
+    }
+----
+
+This creates a simple class with attributes and a method.
+====
+
+=== Inheritance hierarchy
+
+.Class inheritance
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Animal {
+        +String name
+        +int age
+        +String species
+        +makeSound() void
+        +eat(food Food) void
+        +sleep() void
+    }
+
+    class Mammal {
+        +String furColor
+        +bool warmBlooded
+        +giveBirth() void
+    }
+
+    class Bird {
+        +bool canFly
+        +String featherColor
+        +layEggs() void
+    }
+
+    Animal <|-- Mammal
+    Animal <|-- Bird
+----
+
+This example demonstrates:
+
+* Base class with common attributes and methods
+* Specialized subclasses
+* Inheritance relationships using `<|--`
+====
+
+=== Complex inheritance with multiple levels
+
+.Multi-level inheritance
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Animal {
+        +String name
+        +int age
+        +String species
+        +makeSound() void
+        +eat(food Food) void
+        +sleep() void
+    }
+
+    class Mammal {
+        +String furColor
+        +bool warmBlooded
+        +giveBirth() void
+    }
+
+    class Bird {
+        +bool canFly
+        +String featherColor
+        +layEggs() void
+    }
+
+    class Dog {
+        +String breed
+        +bark() void
+        +fetch(item Item) void
+    }
+
+    class Cat {
+        +bool indoor
+        +int lives
+        +meow() void
+        +purr() void
+    }
+
+    class Eagle {
+        +float wingSpan
+        +hunt() void
+        +soar() void
+    }
+
+    class Penguin {
+        +swim() void
+        +slide() void
+    }
+
+    Animal <|-- Mammal
+    Animal <|-- Bird
+    Mammal <|-- Dog
+    Mammal <|-- Cat
+    Bird <|-- Eagle
+    Bird <|-- Penguin
+----
+
+This shows:
+
+* Multi-level inheritance hierarchy
+* Multiple subclasses at each level
+* Common ancestor class
+* Specialized behaviors in leaf classes
+====
+
+=== Associations and ownership
+
+.Class associations with cardinality
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Owner {
+        +String name
+        +String address
+        +List~Animal~ pets
+        +adoptPet(pet Animal) void
+    }
+
+    class Animal {
+        +String name
+        +int age
+        +makeSound() void
+    }
+
+    Owner "1" --> "*" Animal : owns
+----
+
+This demonstrates:
+
+* Association between classes
+* Cardinality (one-to-many relationship)
+* Relationship label ("owns")
+* Generic type notation `List~Animal~`
+====
+
+=== Composition and aggregation
+
+.Different types of relationships
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class University {
+        +String name
+        +String location
+    }
+
+    class Department {
+        +String name
+        +String head
+    }
+
+    class Professor {
+        +String name
+        +String specialization
+    }
+
+    class Student {
+        +String name
+        +int studentId
+    }
+
+    class Course {
+        +String code
+        +String title
+        +int credits
+    }
+
+    University *-- Department : contains
+    Department o-- Professor : employs
+    Department --> Course : offers
+    Professor --> Course : teaches
+    Student --> Course : enrolls in
+----
+
+This shows:
+
+* Composition (`*--`) - departments are part of university
+* Aggregation (`o--`) - professors work for departments but can exist independently
+* Associations (`-->`) - various relationships between entities
+====
+
+=== Interface implementation
+
+.Interfaces and realization
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Drawable {
+        <<interface>>
+        +draw() void
+        +resize(width int, height int) void
+    }
+
+    class Shape {
+        <<abstract>>
+        +color String
+        +getArea() float*
+    }
+
+    class Circle {
+        +radius float
+        +getArea() float
+        +draw() void
+        +resize(width int, height int) void
+    }
+
+    class Rectangle {
+        +width float
+        +height float
+        +getArea() float
+        +draw() void
+        +resize(width int, height int) void
+    }
+
+    Drawable <|.. Circle
+    Drawable <|.. Rectangle
+    Shape <|-- Circle
+    Shape <|-- Rectangle
+----
+
+This demonstrates:
+
+* Interface definition with `<<interface>>`
+* Abstract class with `<<abstract>>`
+* Interface realization using `<|..`
+* Multiple inheritance (from abstract class and interface)
+====
+
+=== Generic types
+
+.Using generics
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Collection~T~ {
+        <<interface>>
+        +add(item T) void
+        +remove(item T) void
+        +get(index int) T
+    }
+
+    class List~T~ {
+        +items T[]
+        +add(item T) void
+        +remove(item T) void
+        +get(index int) T
+    }
+
+    class Map~K,V~ {
+        +put(key K, value V) void
+        +get(key K) V
+        +remove(key K) void
+    }
+
+    Collection~T~ <|.. List~T~
+----
+
+This shows:
+
+* Generic type parameters with tilde notation
+* Single type parameter `~T~`
+* Multiple type parameters `~K,V~`
+* Generic interface and implementations
+====
+
+=== Complete domain model
+
+.E-commerce domain model
+[example]
+====
+[source,mermaid]
+----
+classDiagram
+    class Customer {
+        +int id
+        +String name
+        +String email
+        +List~Order~ orders
+        +placeOrder(order Order) void
+    }
+
+    class Order {
+        +int id
+        +Date orderDate
+        +OrderStatus status
+        +List~OrderItem~ items
+        +float totalAmount
+        +calculateTotal() float
+    }
+
+    class OrderItem {
+        +int quantity
+        +float price
+        +Product product
+        +getSubtotal() float
+    }
+
+    class Product {
+        +int id
+        +String name
+        +String description
+        +float price
+        +int stockQuantity
+    }
+
+    class OrderStatus {
+        <<enumeration>>
+        PENDING
+        PROCESSING
+        SHIPPED
+        DELIVERED
+        CANCELLED
+    }
+
+    class Payment {
+        +int id
+        +float amount
+        +Date paymentDate
+        +PaymentMethod method
+        +processPayment() bool
+    }
+
+    Customer "1" --> "*" Order : places
+    Order "1" *-- "*" OrderItem : contains
+    OrderItem "*" --> "1" Product : references
+    Order "1" --> "1" Payment : paid by
+    Order --> OrderStatus : has
+----
+
+This comprehensive example includes:
+
+* Multiple related classes
+* Composition relationships
+* Associations with cardinality
+* Enumeration type
+* Business logic methods
+* Complete domain model structure
+====
+
+== Features
+
+=== Method parameters
+
+Methods can have typed parameters:
+
+[source,mermaid]
+----
+class Calculator {
+    +add(a int, b int) int
+    +divide(dividend float, divisor float) float
+}
+----
+
+=== Multiple methods and attributes
+
+Classes can have any number of attributes and methods:
+
+[source,mermaid]
+----
+class ComplexClass {
+    +String attr1
+    +int attr2
+    -bool attr3
+    +method1() void
+    +method2(param String) int
+    -privateMethod() void
+}
+----
+
+=== Static members
+
+Static members can be indicated with underline or `$`:
+
+[source,mermaid]
+----
+class MathUtils {
+    +$PI float
+    +$E float
+    +$sqrt(x float) float
+}
+----
+
+=== Comments
+
+Comments are not displayed but can be added:
+
+[source,mermaid]
+----
+classDiagram
+    %% This is a comment
+    class MyClass
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid class diagram features are not yet supported in Sirena:
+
+* Custom styling with CSS classes
+* Click events and links
+* Notes and annotations on relationships
+* Namespace grouping
+* Direction control (top-to-bottom vs left-to-right)
+* Custom class styling
+
+=== Known issues
+
+* Very long class names may affect layout
+* Complex relationship networks may become cluttered
+* Generic syntax with nested types may not render correctly
+
+== Best practices
+
+=== Keep classes focused
+
+Follow the Single Responsibility Principle:
+
+[source,mermaid]
+----
+%% Good - focused class
+class UserRepository {
+    +findById(id int) User
+    +save(user User) void
+    +delete(id int) void
+}
+
+%% Less ideal - too many responsibilities
+class UserManager {
+    +validateUser() bool
+    +saveToDatabase() void
+    +sendEmail() void
+    +generateReport() void
+    +logActivity() void
+}
+----
+
+=== Use meaningful names
+
+Choose descriptive names for classes, attributes, and methods:
+
+[source,mermaid]
+----
+%% Good
+class CustomerOrder {
+    +orderDate Date
+    +calculateTotal() float
+}
+
+%% Less clear
+class CO {
+    +dt Date
+    +calc() float
+}
+----
+
+=== Show relevant details
+
+Include only the details necessary for the diagram's purpose:
+
+[source,mermaid]
+----
+%% For architecture overview - show only key methods
+class UserService {
+    +createUser(data UserData) User
+    +authenticateUser(credentials Credentials) Session
+}
+
+%% For detailed implementation - show all methods
+class UserService {
+    +createUser(data UserData) User
+    +authenticateUser(credentials Credentials) Session
+    -validateUserData(data UserData) bool
+    -hashPassword(password String) String
+    -sendWelcomeEmail(user User) void
+}
+----
+
+=== Group related classes
+
+Use inheritance and composition to show relationships:
+
+[source,mermaid]
+----
+classDiagram
+    class Animal
+    class Mammal
+    class Reptile
+
+    Animal <|-- Mammal
+    Animal <|-- Reptile
+----
+
+=== Use appropriate relationship types
+
+Choose the correct relationship type for the situation:
+
+* Use inheritance (`<|--`) for "is-a" relationships
+* Use composition (`*--`) for "part-of" relationships with strong ownership
+* Use aggregation (`o--`) for "has-a" relationships with weak ownership
+* Use association (`-->`) for general relationships
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<er-diagram.adoc#,Entity relationship diagrams>>
+* link:https://mermaid.js.org/syntax/classDiagram.html[Official Mermaid class diagram documentation]

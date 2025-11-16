@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_tags_12",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Boundary.spec.js",
+  "line_number": 95,
+  "metadata": {
+    "test_name": "should parse tags"
+  }
+}

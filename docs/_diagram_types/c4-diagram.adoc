@@ -1,0 +1,559 @@
+= C4 Diagram Support
+:toc:
+:toclevels: 3
+
+== Overview
+
+C4 (Context, Container, Component, Code) diagrams visualize software architecture at different levels of abstraction. Sirena provides full support for rendering C4 diagrams with all major element types, boundaries, and relationships.
+
+=== Supported C4 Levels
+
+* **C4Context** - System Context diagrams showing the big picture
+* **C4Container** - Container diagrams showing high-level technology choices
+* **C4Component** - Component diagrams showing components within containers
+* **C4Dynamic** - Dynamic diagrams showing runtime behavior
+* **C4Deployment** - Deployment diagrams showing infrastructure mapping
+
+== Basic Usage
+
+=== Simple C4 Context Diagram
+
+[source,mermaid]
+----
+C4Context
+    title System Context for Banking System
+    Person(customer, "Customer", "A bank customer")
+    System(banking, "Banking System", "Core banking application")
+    System_Ext(email, "Email System", "External email service")
+
+    Rel(customer, banking, "Uses")
+    Rel(banking, email, "Sends emails", "SMTP")
+----
+
+This creates a context diagram showing:
+
+* A person (customer) interacting with the system
+* The main banking system
+* An external email system
+* Relationships between components
+
+=== C4 Container Diagram
+
+[source,mermaid]
+----
+C4Container
+    title Container Diagram for Banking System
+
+    Person(customer, "Customer", "A bank customer")
+
+    Container(web, "Web Application", "React", "Customer-facing web app")
+    Container(api, "API", "Node.js", "Backend REST API")
+    ContainerDb(db, "Database", "PostgreSQL", "Stores customer data")
+
+    Rel(customer, web, "Uses", "HTTPS")
+    Rel(web, api, "Calls", "REST/JSON")
+    Rel(api, db, "Reads/Writes", "SQL")
+----
+
+== Element Types
+
+=== People
+
+==== Person
+
+Represents a user of the system.
+
+[source,mermaid]
+----
+C4Context
+    Person(user, "User", "A system user")
+----
+
+Where:
+
+* `user` - Unique identifier
+* `"User"` - Display label
+* `"A system user"` - Description
+
+==== Person_Ext
+
+Represents an external user outside the system boundary.
+
+[source,mermaid]
+----
+C4Context
+    Person_Ext(external, "External User", "Outside the organization")
+----
+
+=== Systems
+
+==== System
+
+Represents a software system.
+
+[source,mermaid]
+----
+C4Context
+    System(app, "Application", "Main application system")
+----
+
+==== System_Ext
+
+Represents an external system.
+
+[source,mermaid]
+----
+C4Context
+    System_Ext(crm, "CRM System", "Third-party CRM")
+----
+
+==== SystemDb
+
+Represents a database system.
+
+[source,mermaid]
+----
+C4Context
+    SystemDb(maindb, "Main Database", "Central data store")
+----
+
+==== SystemDb_Ext
+
+Represents an external database.
+
+[source,mermaid]
+----
+C4Context
+    SystemDb_Ext(legacy, "Legacy DB", "Old system database")
+----
+
+==== SystemQueue
+
+Represents a message queue system.
+
+[source,mermaid]
+----
+C4Context
+    SystemQueue(queue, "Message Queue", "Event processing")
+----
+
+==== SystemQueue_Ext
+
+Represents an external queue system.
+
+[source,mermaid]
+----
+C4Context
+    SystemQueue_Ext(kafka, "Kafka", "External event stream")
+----
+
+=== Containers
+
+==== Container
+
+Represents an application or service container.
+
+[source,mermaid]
+----
+C4Container
+    Container(web, "Web App", "React", "Frontend application")
+----
+
+Where:
+
+* `web` - Unique identifier
+* `"Web App"` - Display label
+* `"React"` - Technology stack
+* `"Frontend application"` - Description
+
+==== ContainerDb
+
+Represents a database container.
+
+[source,mermaid]
+----
+C4Container
+    ContainerDb(db, "Database", "PostgreSQL", "Data persistence")
+----
+
+==== ContainerQueue
+
+Represents a message queue container.
+
+[source,mermaid]
+----
+C4Container
+    ContainerQueue(mq, "Queue", "RabbitMQ", "Async messaging")
+----
+
+=== Components
+
+==== Component
+
+Represents a component within a container.
+
+[source,mermaid]
+----
+C4Component
+    Component(ctrl, "Controller", "REST Controller", "Handles HTTP requests")
+----
+
+== Relationships
+
+=== Basic Relationship
+
+Use [`Rel()`](lib/sirena/diagram/c4.rb:100) to show a directional relationship:
+
+[source,mermaid]
+----
+C4Context
+    Person(user, "User")
+    System(app, "App")
+    Rel(user, app, "Uses")
+----
+
+Parameters:
+
+* Source element ID
+* Target element ID
+* Relationship label
+* Technology (optional)
+
+.Example with technology
+[example]
+====
+[source,mermaid]
+----
+Rel(web, api, "Calls API", "REST/HTTPS")
+----
+====
+
+=== Bidirectional Relationship
+
+Use `BiRel()` for two-way relationships:
+
+[source,mermaid]
+----
+C4Context
+    System(app1, "App 1")
+    System(app2, "App 2")
+    BiRel(app1, app2, "Syncs data")
+----
+
+== Boundaries
+
+Boundaries group related elements together.
+
+=== Enterprise Boundary
+
+Groups systems within an enterprise.
+
+[source,mermaid]
+----
+C4Context
+    Enterprise_Boundary(org, "Our Organization") {
+        System(app1, "App 1")
+        System(app2, "App 2")
+    }
+----
+
+=== System Boundary
+
+Groups containers within a system.
+
+[source,mermaid]
+----
+C4Container
+    System_Boundary(sys, "Banking System") {
+        Container(web, "Web App", "React")
+        Container(api, "API", "Node.js")
+    }
+----
+
+=== Custom Boundary
+
+Generic boundary with custom type.
+
+[source,mermaid]
+----
+C4Context
+    Boundary(custom, "Custom Group", "boundary") {
+        System(s1, "System 1")
+        System(s2, "System 2")
+    }
+----
+
+=== Nested Boundaries
+
+Boundaries can be nested for hierarchical organization:
+
+[source,mermaid]
+----
+C4Context
+    Enterprise_Boundary(org, "Organization") {
+        System_Boundary(sys, "System") {
+            Boundary(module, "Module", "boundary") {
+                System(app, "Application")
+            }
+        }
+    }
+----
+
+== Element Attributes
+
+=== Sprite Icons
+
+Add custom icons to elements:
+
+[source,mermaid]
+----
+C4Context
+    Person(user, "User", "Description", $sprite="person_icon")
+----
+
+=== Links
+
+Add clickable links:
+
+[source,mermaid]
+----
+C4Context
+    System(app, "App", "Description", $link="https://example.com")
+----
+
+=== Tags
+
+Add tags for categorization:
+
+[source,mermaid]
+----
+C4Context
+    System(app, "App", "Description", $tags="critical,production")
+----
+
+=== Combined Attributes
+
+Multiple attributes can be combined:
+
+[source,mermaid]
+----
+C4Container
+    Container(web, "Web App", "React", "Frontend",
+              $sprite="react", $link="https://app.example.com",
+              $tags="frontend,critical")
+----
+
+== Layout Configuration
+
+Configure diagram layout using [`UpdateLayoutConfig()`](lib/sirena/transform/c4.rb:254):
+
+[source,mermaid]
+----
+C4Context
+    UpdateLayoutConfig($c4ShapeInRow=3, $c4BoundaryInRow=2)
+
+    Person(user, "User")
+    System(app, "App")
+----
+
+== Complete Example
+
+.Full C4 Context Diagram with Nested Boundaries
+[example]
+====
+[source,mermaid]
+----
+C4Context
+    title Internet Banking System Context
+
+    Enterprise_Boundary(bank, "Bank Boundary") {
+        Person(customer, "Customer", "Bank customer with accounts")
+
+        System_Boundary(core, "Core Banking") {
+            System(banking, "Banking System", "Main application")
+            SystemDb(db, "Database", "Customer and account data")
+        }
+
+        System_Ext(email, "Email System", "Microsoft Exchange")
+    }
+
+    System_Ext(mainframe, "Mainframe", "Legacy system")
+
+    BiRel(customer, banking, "Uses")
+    Rel(banking, db, "Reads/Writes", "SQL")
+    Rel(banking, email, "Sends emails", "SMTP")
+    Rel(banking, mainframe, "Gets data", "XML/HTTPS")
+----
+
+This creates a hierarchical diagram showing:
+
+* Enterprise boundary containing the bank's systems
+* System boundary for core banking components
+* Internal and external systems
+* Database and email integration
+* Bidirectional and unidirectional relationships
+====
+
+== Visual Styling
+
+=== C4 Color Scheme
+
+Sirena uses the standard C4-PlantUML color scheme:
+
+* **Person** - Dark blue (#08427B)
+* **Person_Ext** - Gray (#6C6477)
+* **System** - Blue (#1168BD)
+* **System_Ext** - Gray (#8F8F8F)
+* **Container** - Light blue (#438DD5)
+* **Component** - Lighter blue (#85BBF0)
+* **Boundary** - Dashed border (#9BA7B4)
+
+=== Element Dimensions
+
+Default element sizes:
+
+* Person: 140x180 px
+* System: 160x120 px
+* Container: 160x120 px
+* Component: 160x100 px
+
+=== Text Formatting
+
+* **Labels** - Bold, 14-16pt
+* **Descriptions** - Normal, 11pt
+* **Technology** - Italic, 10pt
+
+== Best Practices
+
+=== When to Use Each Level
+
+* **C4Context** - For stakeholders, showing external dependencies
+* **C4Container** - For architects, showing deployment units
+* **C4Component** - For developers, showing internal structure
+* **C4Dynamic** - For runtime scenarios and workflows
+* **C4Deployment** - For infrastructure and DevOps teams
+
+=== Naming Conventions
+
+* Use clear, descriptive labels
+* Keep descriptions concise (1-2 lines)
+* Specify technology for containers/components
+* Use consistent naming across diagrams
+
+=== Diagram Organization
+
+* Start with Context, drill down to Container, then Component
+* Use boundaries to group related elements
+* Limit elements per diagram (5-15 for readability)
+* Show only relevant relationships
+
+=== Common Patterns
+
+.Microservices Architecture
+[example]
+====
+[source,mermaid]
+----
+C4Container
+    title Microservices System
+
+    Container(gateway, "API Gateway", "Kong", "Entry point")
+    Container(auth, "Auth Service", "OAuth2", "Authentication")
+    Container(users, "User Service", "Node.js", "User management")
+    Container(orders, "Order Service", "Java", "Order processing")
+    ContainerDb(userdb, "User DB", "PostgreSQL")
+    ContainerDb(orderdb, "Order DB", "MongoDB")
+
+    Rel(gateway, auth, "Validates")
+    Rel(gateway, users, "Routes")
+    Rel(gateway, orders, "Routes")
+    Rel(users, userdb, "Stores")
+    Rel(orders, orderdb, "Stores")
+----
+====
+
+== Implementation Details
+
+=== Architecture
+
+C4 diagrams are implemented using the standard 7-file Parslet architecture:
+
+1. [`Diagram::C4`](lib/sirena/diagram/c4.rb:224) - Data model with elements, boundaries, relationships
+2. [`Parser::Grammars::C4`](lib/sirena/parser/grammars/c4.rb:13) - Parslet grammar for C4 syntax
+3. [`Parser::Transforms::C4`](lib/sirena/parser/transforms/c4.rb:13) - Parse tree to diagram model transformer
+4. [`Parser::C4Parser`](lib/sirena/parser/c4.rb:29) - Main parser class
+5. [`Transform::C4Transform`](lib/sirena/transform/c4.rb:17) - Diagram to graph transformer
+6. [`Renderer::C4Renderer`](lib/sirena/renderer/c4.rb:16) - SVG renderer
+7. Layout - Automatic hierarchical layout via ELK
+
+=== Rendering Pipeline
+
+The C4 rendering pipeline:
+
+1. **Parse** - Convert Mermaid source to [`C4`](lib/sirena/diagram/c4.rb:224) model
+2. **Transform** - Convert to graph structure with positions
+3. **Layout** - Calculate positions for elements and boundaries
+4. **Render** - Generate SVG with C4 styling
+
+=== Performance
+
+* Parsing: O(n) where n is source length
+* Layout: O(n log n) for hierarchical layout
+* Rendering: O(e + r) where e=elements, r=relationships
+
+=== Limitations
+
+* Variable syntax (`${macroName}`) has limited support
+* Some test-specific constructs may not parse
+* Current coverage: 88.1% of test fixtures (37/42)
+
+== Troubleshooting
+
+=== Common Issues
+
+==== Parse Errors
+
+**Issue**: "Syntax error at line X"
+
+**Solution**: Check for:
+
+* Proper element syntax: `Type(id, "label", "desc")`
+* Matching braces in boundaries
+* Comma-separated parameters
+* Quoted strings for labels and descriptions
+
+==== Missing Elements
+
+**Issue**: Elements don't appear in output
+
+**Solution**: Verify:
+
+* Element IDs are unique
+* Elements are within boundaries if nested
+* Relationships reference existing element IDs
+
+==== Layout Issues
+
+**Issue**: Elements overlap or poorly positioned
+
+**Solution**:
+
+* Use boundaries to organize elements
+* Limit elements per diagram
+* Consider using `UpdateLayoutConfig()` for fine-tuning
+
+=== Getting Help
+
+For issues not covered here:
+
+* Check examples in `spec/mermaid/c4/`
+* Review source code comments
+* Submit bug reports with minimal reproducible examples
+
+== See Also
+
+* link:../README.adoc[Main Documentation]
+* link:flowchart.adoc[Flowchart Diagrams]
+* link:sequence.adoc[Sequence Diagrams]
+* https://c4model.com/[C4 Model Official Site]
+* https://github.com/plantuml-stdlib/C4-PlantUML[C4-PlantUML Reference]

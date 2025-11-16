@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_copies_relationship_definition_7",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 498,
+  "metadata": {
+    "test_name": "will accept copies relationship definition"
+  }
+}

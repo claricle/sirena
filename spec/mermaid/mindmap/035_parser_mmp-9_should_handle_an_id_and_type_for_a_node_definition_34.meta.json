@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-9_should_handle_an_id_and_type_for_a_node_definition_34",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 105,
+  "metadata": {
+    "test_name": "MMP-9 should handle an id and type for a node definition"
+  }
+}

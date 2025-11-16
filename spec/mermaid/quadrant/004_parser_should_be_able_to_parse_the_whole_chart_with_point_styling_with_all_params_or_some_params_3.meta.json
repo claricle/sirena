@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_able_to_parse_the_whole_chart_with_point_styling_with_all_params_or_some_params_3",
+  "type": "quadrant",
+  "source_file": "/packages/mermaid/src/diagrams/quadrant-chart/parser/quadrant.jison.spec.ts",
+  "line_number": 309,
+  "metadata": {
+    "test_name": "should be able to parse the whole chart with point styling with all params or some params"
+  }
+}

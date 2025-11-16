@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_an_empty_class_body_with__106",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1072,
+  "metadata": {
+    "test_name": "should handle an empty class body with {}"
+  }
+}

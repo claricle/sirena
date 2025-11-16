@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-2_should_handle_a_hierarchical_mindmap_definition_27",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 21,
+  "metadata": {
+    "test_name": "MMP-2 should handle a hierarchical mindmap definition"
+  }
+}

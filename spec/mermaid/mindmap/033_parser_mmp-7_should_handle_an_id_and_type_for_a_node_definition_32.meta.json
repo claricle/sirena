@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-7_should_handle_an_id_and_type_for_a_node_definition_32",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 80,
+  "metadata": {
+    "test_name": "MMP-7 should handle an id and type for a node definition"
+  }
+}

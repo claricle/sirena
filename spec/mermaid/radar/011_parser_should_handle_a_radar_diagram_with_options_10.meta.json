@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_radar_diagram_with_options_10",
+  "type": "radar",
+  "source_file": "/packages/mermaid/src/diagrams/radar/radar.spec.ts",
+  "line_number": 82,
+  "metadata": {
+    "test_name": "should handle a radar diagram with options"
+  }
+}

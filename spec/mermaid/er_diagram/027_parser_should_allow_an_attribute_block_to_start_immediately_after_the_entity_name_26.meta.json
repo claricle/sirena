@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_allow_an_attribute_block_to_start_immediately_after_the_entity_name_26",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 383
+}

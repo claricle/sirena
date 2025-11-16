@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_full_requirement_definition_1",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 15,
+  "metadata": {
+    "test_name": "will accept full requirement definition"
+  }
+}

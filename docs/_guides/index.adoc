@@ -1,0 +1,56 @@
+---
+layout: default
+title: Guides
+nav_order: 4
+has_children: true
+---
+
+== Guides
+
+In-depth guides covering advanced topics, best practices, and real-world use cases.
+
+== What's in This Section
+
+Comprehensive guides for:
+
+* **Migration from Mermaid.js** - Converting from JavaScript to Ruby
+* **Performance Optimization** - Making your diagrams render faster
+* **Advanced Theming** - Deep dive into the theme system
+* **Best Practices** - Patterns and anti-patterns for each diagram type
+* **Troubleshooting** - Debugging common issues
+* **Production Deployment** - Running Sirena in production environments
+
+== Guide Format
+
+Each guide provides:
+
+* **Overview** - What the guide covers
+* **Background** - Context and concepts
+* **Detailed explanations** - In-depth technical information
+* **Examples** - Real-world scenarios
+* **Best practices** - Recommended approaches
+* **Common pitfalls** - What to avoid
+
+== Featured Guides
+
+=== For Mermaid.js Users
+
+* link:{% link _guides/migration-from-mermaid.adoc %}[Migration from Mermaid.js] - Complete migration guide with syntax comparison
+
+=== For Production Use
+
+* link:{% link _guides/performance-optimization.adoc %}[Performance Optimization] - Techniques for faster rendering
+* link:{% link _guides/caching-strategies.adoc %}[Caching Strategies] - Improve performance with caching
+* link:{% link _guides/ci-cd-integration.adoc %}[CI/CD Integration] - Using Sirena in automated workflows
+
+=== For Advanced Customization
+
+* link:{% link _guides/custom-themes.adoc %}[Creating Custom Themes] - Building themes from scratch
+* link:{% link _guides/svg-customization.adoc %}[SVG Customization] - Advanced SVG manipulation
+* link:{% link _guides/extending-parsers.adoc %}[Extending Parsers] - Adding custom syntax
+
+== Related Documentation
+
+* link:{% link _tutorials/index.adoc %}[Tutorials] - For step-by-step learning
+* link:{% link _features/index.adoc %}[Features] - For feature documentation
+* link:{% link _references/index.adoc %}[References] - For API and CLI reference

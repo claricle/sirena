@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_generic_class_with_a_literal_name_109",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1108,
+  "metadata": {
+    "test_name": "should handle generic class with a literal name"
+  }
+}

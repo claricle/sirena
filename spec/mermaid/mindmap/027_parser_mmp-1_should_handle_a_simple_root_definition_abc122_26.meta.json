@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-1_should_handle_a_simple_root_definition_abc122_26",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 13,
+  "metadata": {
+    "test_name": "MMP-1 should handle a simple root definition abc122"
+  }
+}

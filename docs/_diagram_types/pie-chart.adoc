@@ -1,0 +1,335 @@
+= Pie Chart Diagrams
+:toc:
+:toclevels: 3
+
+== General
+
+Pie chart diagrams visualize proportional data as circular segments. Each slice represents a portion of the whole, making it easy to see relative sizes and distributions at a glance.
+
+The pie chart implementation in Sirena follows the established Parslet architecture with full support for:
+
+* Multiple data slices with labels and values
+* Optional title display
+* Optional data value display (`showData` flag)
+* Accessibility features (accTitle, accDescr)
+* Decimal and negative values
+* Theme integration for colors
+* Case-insensitive syntax
+
+== Architecture
+
+The pie chart implementation consists of:
+
+* [`Diagram::Pie`](../lib/sirena/diagram/pie.rb) - Model classes for pie charts
+* [`Parser::Grammars::Pie`](../lib/sirena/parser/grammars/pie.rb) - Parslet grammar
+* [`Parser::Transforms::Pie`](../lib/sirena/parser/transforms/pie.rb) - Parse tree transformer
+* [`Parser::PieParser`](../lib/sirena/parser/pie.rb) - Main parser
+* [`Transform::PieTransform`](../lib/sirena/transform/pie.rb) - Layout transformer
+* [`Renderer::PieRenderer`](../lib/sirena/renderer/pie.rb) - SVG renderer
+
+== Syntax
+
+=== Basic pie chart
+
+The simplest pie chart requires only the `pie` keyword and data entries:
+
+[source,mermaid]
+----
+pie
+    "Apples" : 42
+    "Oranges" : 58
+----
+
+=== Pie chart with title
+
+Add a title using the `title` keyword in the header:
+
+[source,mermaid]
+----
+pie title Sales Distribution
+    "Product A" : 45
+    "Product B" : 30
+    "Product C" : 25
+----
+
+=== Pie chart with data values displayed
+
+Use the `showData` flag to display percentage values on labels:
+
+[source,mermaid]
+----
+pie showData
+    "Category A" : 100
+    "Category B" : 50
+----
+
+Where,
+
+`showData`:: Optional flag that enables display of data values and percentages on the chart.
+
+=== Data entries
+
+Each data entry consists of a quoted label, colon, and numeric value:
+
+[source,mermaid]
+----
+pie
+    "Label Text" : 42.5
+    "Another Label" : 57.5
+----
+
+Where,
+
+`"Label Text"`:: The label for the slice, must be in quotes (single or double).
+`value`:: Numeric value (integer or decimal), can be negative.
+
+=== Accessibility features
+
+[[accessibility-features]]
+==== General
+
+Pie charts support accessibility attributes for screen readers:
+
+[source,mermaid]
+----
+pie title Quarterly Report
+    accTitle: Q1-Q4 Sales Data
+    accDescr: Sales distribution across four quarters
+    "Q1" : 25
+    "Q2" : 30
+    "Q3" : 20
+    "Q4" : 25
+----
+
+Where,
+
+`accTitle`:: Accessible title for screen readers (single line).
+`accDescr`:: Accessible description for screen readers.
+
+==== Multi-line descriptions
+
+Accessibility descriptions can span multiple lines using braces:
+
+[source,mermaid]
+----
+pie title Annual Sales
+    accDescr {
+        This chart shows the annual sales distribution
+        across different product categories for 2024
+    }
+    "Electronics" : 40
+    "Clothing" : 35
+    "Food" : 25
+----
+
+=== Comments
+
+Comments are supported using `%%`:
+
+[source,mermaid]
+----
+pie
+    %% This is a comment
+    "Item 1" : 60
+    %% Another comment
+    "Item 2" : 40
+----
+
+== Model Structure
+
+The pie chart uses a hierarchical model structure:
+
+[source]
+----
+Diagram::Pie
+  ├── title (String, optional)
+  ├── show_data (Boolean, default: false)
+  ├── acc_title (String, optional)
+  ├── acc_description (String, optional)
+  └── slices (Array<PieSlice>)
+        └── PieSlice
+              ├── label (String)
+              └── value (Float)
+----
+
+.Example of a pie chart model with assigned values
+====
+[source]
+----
+Pie
+├── title = "Sales Report"
+├── show_data = true
+├── slices
+│   ├── PieSlice
+│   │   ├── label = "Product A"
+│   │   └── value = 45.0
+│   ├── PieSlice
+│   │   ├── label = "Product B"
+│   │   └── value = 30.0
+│   └── PieSlice
+│       ├── label = "Product C"
+│       └── value = 25.0
+└── total_value = 100.0
+----
+====
+
+== Rendering
+
+=== Layout calculation
+
+The renderer calculates:
+
+1. **Percentages**: Each slice's percentage of the total
+2. **Angles**: Each slice's angle in degrees (0-360)
+3. **Positions**: Label positions around the circle
+4. **Colors**: Colors from theme or default palette
+
+.Angle calculation
+====
+Given slices with values [45, 30, 25]:
+
+* Total value: 100
+* Slice 1: (45/100) × 360° = 162°
+* Slice 2: (30/100) × 360° = 108°
+* Slice 3: (25/100) × 360° = 90°
+====
+
+=== SVG generation
+
+The renderer creates:
+
+* SVG path elements for each pie slice
+* Text elements for labels
+* Optional title text
+* Optional percentage/value display
+
+== Theme Integration
+
+Pie charts use theme colors for slices and text:
+
+[source,yaml]
+----
+colors:
+  pie_slice_0: "#4472C4"  # First slice color
+  pie_slice_1: "#ED7D31"  # Second slice color
+  # ... additional slice colors
+  label_text: "#000000"   # Label text color
+  node_stroke: "#ffffff"  # Slice border color
+----
+
+If theme doesn't specify pie slice colors, the renderer uses a default color palette that cycles through 12 colors.
+
+== Advanced Features
+
+=== Decimal values
+
+Pie charts support decimal values for precise proportions:
+
+[source,mermaid]
+----
+pie title Market Share
+    "Company A" : 42.7
+    "Company B" : 31.2
+    "Company C" : 26.1
+----
+
+=== Negative values
+
+Negative values are allowed (though uncommon in pie charts):
+
+[source,mermaid]
+----
+pie
+    "Profit" : 100
+    "Loss" : -20
+----
+
+=== Empty diagrams
+
+Empty pie charts (for testing) are valid:
+
+[source,mermaid]
+----
+pie
+----
+
+=== Case-insensitive syntax
+
+The pie keyword is case-insensitive and accepts variants:
+
+[source,mermaid]
+----
+pie          # lowercase
+Pie          # capitalized
+pie chart    # with 'chart' suffix
+Pie Chart    # fully capitalized
+----
+
+== Examples
+
+=== Simple distribution
+
+[source,mermaid]
+----
+pie title Browser Usage
+    "Chrome" : 65
+    "Firefox" : 20
+    "Safari" : 10
+    "Others" : 5
+----
+
+=== Detailed report with data display
+
+[source,mermaid]
+----
+pie showData title Q4 Revenue by Region
+    "North America" : 45.2
+    "Europe" : 28.7
+    "Asia Pacific" : 18.3
+    "Latin America" : 5.4
+    "Other" : 2.4
+----
+
+=== Accessible chart
+
+[source,mermaid]
+----
+pie title Department Budget Allocation
+    accTitle: 2024 Budget Distribution
+    accDescr {
+        Budget allocation across departments.
+        Engineering receives the largest share at 40%
+    }
+    "Engineering" : 40
+    "Marketing" : 25
+    "Sales" : 20
+    "Operations" : 15
+----
+
+== Testing
+
+The pie chart implementation includes:
+
+* 49 Mermaid test fixtures (100% passing)
+* 13 RSpec tests covering all features
+* Parser, transform, and renderer tests
+* Edge case handling (empty diagrams, negative values, etc.)
+
+Run tests with:
+
+[source,shell]
+----
+bundle exec rspec spec/sirena/parser/pie_spec.rb
+----
+
+== Limitations
+
+* Very small slices (< 1%) may have overlapping labels
+* Extremely long labels may extend beyond the SVG bounds
+* The renderer uses a fixed circular layout (no 3D or exploded slices)
+
+== See Also
+
+* link:index.adoc[Documentation Index]
+* link:../lib/sirena/diagram/pie.rb[Pie Diagram Model]
+* link:../lib/sirena/renderer/pie.rb[Pie Renderer]

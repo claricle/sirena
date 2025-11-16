@@ -1,0 +1,81 @@
+<svg
+ width="753.0"
+ height="600.0"
+ viewBox="0 0 753.0 600"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="transition-start_1_to_Application">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 358.5 75" marker-end="url(#arrowhead)"/>
+</g>
+<g id="transition-start_1_to_Idle">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 600 75" marker-end="url(#arrowhead)"/>
+</g>
+<g id="transition-Idle_to_Processing">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 600 75 L 105.0 275" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="352.5" y="167.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Start</text>
+</g>
+<g id="transition-start_1_to_Validating">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 355.0 275" marker-end="url(#arrowhead)"/>
+</g>
+<g id="transition-Validating_to_Executing">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 355.0 275 L 601.5 275" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="478.25" y="267.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Valid</text>
+</g>
+<g id="transition-Validating_to_Failed">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 355.0 275 L 100 475" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="227.5" y="367.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Invalid</text>
+</g>
+<g id="transition-Executing_to_Success">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 601.5 275 L 350 475" marker-end="url(#arrowhead)"/>
+</g>
+<g id="transition-Executing_to_Failed">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 601.5 275 L 100 475" marker-end="url(#arrowhead)"/>
+</g>
+<g id="transition-Processing_to_Idle">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 105.0 275 L 600 75" marker-end="url(#arrowhead)"/>
+  <text fill="#000000" x="352.5" y="167.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Complete</text>
+</g>
+<g id="transition-Application_to_end_2">
+  <path fill="none" stroke="#000000" stroke-width="2" d="M 358.5 75 L 565 465" marker-end="url(#arrowhead)"/>
+</g>
+<g id="state-start_1">
+  <circle fill="#000000" stroke="none" cx="65.0" cy="65.0" r="15.0"/>
+  <text fill="#000000" x="65.0" y="65.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">[*]</text>
+</g>
+<g id="state-Application">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="300.0" y="50.0" width="117.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="358.5" y="75.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Application</text>
+</g>
+<g id="state-Idle">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="550.0" y="50.0" width="100.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="600.0" y="75.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Idle</text>
+</g>
+<g id="state-Processing">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="50.0" y="250.0" width="110.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="105.0" y="275.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Processing</text>
+</g>
+<g id="state-Validating">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="300.0" y="250.0" width="110.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="355.0" y="275.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Validating</text>
+</g>
+<g id="state-Executing">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="550.0" y="250.0" width="103.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="601.5" y="275.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Executing</text>
+</g>
+<g id="state-Failed">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="50.0" y="450.0" width="100.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="100.0" y="475.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Failed</text>
+</g>
+<g id="state-Success">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="300.0" y="450.0" width="100.0" height="50.0" rx="10.0" ry="10.0"/>
+  <text fill="#000000" x="350.0" y="475.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Success</text>
+</g>
+<g id="state-end_2">
+  <g>
+  <circle fill="none" stroke="#000000" stroke-width="2" cx="565.0" cy="465.0" r="15.0"/>
+  <circle fill="#000000" stroke="none" cx="565.0" cy="465.0" r="10.0"/>
+</g>
+  <text fill="#000000" x="565.0" y="465.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">[*]</text>
+</g>
+</svg>

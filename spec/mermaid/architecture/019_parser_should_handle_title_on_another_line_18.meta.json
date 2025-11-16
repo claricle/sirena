@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_title_on_another_line_18",
+  "type": "architecture",
+  "source_file": "/packages/mermaid/src/diagrams/architecture/architecture.spec.ts",
+  "line_number": 32,
+  "metadata": {
+    "test_name": "should handle title on another line"
+  }
+}

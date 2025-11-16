@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_revert_direction_to_default_once_direction_is_removed_45",
+  "type": "class_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 555
+}

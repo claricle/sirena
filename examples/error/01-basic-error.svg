@@ -1,0 +1,13 @@
+<svg
+ width="500.0"
+ height="220.0"
+ viewBox="0 0 500 220"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<rect fill="#FFEBEE" stroke="#D32F2F" stroke-width="2" x="50.0" y="50.0" width="400.0" height="120.0" rx="8.0" ry="8.0"/>
+<circle fill="#D32F2F" stroke="#B71C1C" stroke-width="2" cx="100.0" cy="110.0" r="20.0"/>
+<rect fill="#FFFFFF" x="98.0" y="100.0" width="4.0" height="12.0" rx="2.0"/>
+<circle fill="#FFFFFF" cx="100.0" cy="116.0" r="2.0"/>
+<text fill="#C62828" x="140.0" y="105.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Diagrams</text>
+</svg>

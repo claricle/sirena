@@ -1,0 +1,488 @@
+---
+layout: default
+title: Flowchart Diagrams
+parent: Diagram Types
+nav_order: 7
+---
+
+== Flowchart diagrams
+
+=== Overview
+
+Flowchart diagrams in Sirena represent directed graphs showing process flows, decision trees, and relationships between nodes. Flowcharts are one of the most versatile diagram types, supporting various node shapes, edge types, and layout directions.
+
+Flowcharts are useful for:
+
+* Documenting business processes and workflows
+* Visualizing algorithms and decision logic
+* Creating system architecture diagrams
+* Showing data flow between components
+* Mapping user interaction flows
+
+=== Syntax specification
+
+==== Diagram declaration
+
+Flowcharts can be declared using either `graph` or `flowchart` keywords:
+
+[source,mermaid]
+----
+graph <direction>
+    <diagram-content>
+----
+
+Or:
+
+[source,mermaid]
+----
+flowchart <direction>
+    <diagram-content>
+----
+
+Where `<direction>` specifies the layout direction:
+
+* `TD` or `TB` - Top to bottom (default)
+* `BT` - Bottom to top
+* `LR` - Left to right
+* `RL` - Right to left
+
+==== Node definitions
+
+Nodes can be defined with various shapes using different bracket styles:
+
+[cols="2,2,3"]
+|===
+|Syntax |Shape |Description
+
+|`id[text]`
+|Rectangle
+|Standard rectangular node
+
+|`id(text)`
+|Rounded rectangle
+|Rectangle with rounded corners
+
+|`id([text])`
+|Stadium
+|Pill-shaped node
+
+|`id[[text]]`
+|Subroutine
+|Rectangle with double vertical lines
+
+|`id[(text)]`
+|Cylindrical
+|Database or storage shape
+
+|`id((text))`
+|Circle
+|Circular node
+
+|`id>text]`
+|Asymmetric
+|Flag or banner shape
+
+|`id{text}`
+|Diamond
+|Decision or conditional node
+
+|`id{{text}}`
+|Hexagon
+|Process or preparation node
+
+|`id[/text/]`
+|Parallelogram
+|Input/output operation
+
+|`id[\text\]`
+|Parallelogram (alt)
+|Alternative input/output syntax
+
+|`id[/text\]`
+|Trapezoid
+|Manual operation
+
+|`id[\text/]`
+|Trapezoid (inverted)
+|Inverted manual operation
+|===
+
+==== Edge definitions
+
+Edges connect nodes and can have different styles:
+
+[cols="2,3,3"]
+|===
+|Syntax |Style |Description
+
+|`A --> B`
+|Arrow
+|Solid line with arrowhead
+
+|`A --- B`
+|Open link
+|Solid line without arrowhead
+
+|`A -.-> B`
+|Dotted arrow
+|Dotted line with arrowhead
+
+|`A -.- B`
+|Dotted link
+|Dotted line without arrowhead
+
+|`A ==> B`
+|Thick arrow
+|Thick solid line with arrowhead
+
+|`A === B`
+|Thick link
+|Thick solid line without arrowhead
+
+|`A --o B`
+|Circle edge
+|Line ending with a circle
+
+|`A --x B`
+|Cross edge
+|Line ending with a cross
+
+|`A <--> B`
+|Bidirectional arrow
+|Arrow pointing both ways
+
+|`A o--o B`
+|Bidirectional circle
+|Circles on both ends
+
+|`A x--x B`
+|Bidirectional cross
+|Crosses on both ends
+|===
+
+==== Edge labels
+
+Edges can have labels using the pipe `|` character:
+
+[source,mermaid]
+----
+A -->|label text| B
+A -- label text --> B
+----
+
+Both syntaxes are equivalent.
+
+==== Subgraphs
+
+Subgraphs group related nodes together:
+
+[source,mermaid]
+----
+subgraph title
+    A --> B
+end
+----
+
+Subgraphs can be nested:
+
+[source,mermaid]
+----
+subgraph outer
+    subgraph inner
+        A --> B
+    end
+end
+----
+
+=== Examples
+
+==== Basic flowchart
+
+.Simple top-to-bottom flowchart
+[example]
+====
+[source,mermaid]
+----
+graph TD
+    Start --> End
+----
+
+This creates a simple flowchart with two rectangular nodes connected by an arrow.
+====
+
+==== Flowchart with different node shapes
+
+.Various node shapes
+[example]
+====
+[source,mermaid]
+----
+graph TD
+    Start[Start Process] --> Input[Receive Input]
+    Input --> Validate{Valid Input?}
+    Validate -->|Yes| Process[Process Data]
+    Validate -->|No| Error[Show Error]
+    Error --> Input
+    Process --> End[End Process]
+----
+
+This example demonstrates:
+
+* Rectangle nodes for process steps
+* Diamond node for decision points
+* Labeled edges showing decision outcomes
+* Loop back from error to input
+====
+
+==== Complex workflow with subgraphs and multiple shapes
+
+.Advanced flowchart with various features
+[example]
+====
+[source,mermaid]
+----
+graph TD
+    Start[Start Process] --> Input[Receive Input]
+    Input --> Validate{Valid Input?}
+    Validate -->|Yes| Process[Process Data]
+    Validate -->|No| Error[Show Error]
+    Error --> Input
+    Process --> Calculate[Calculate Result]
+    Calculate --> Output[Generate Output]
+    Output --> Save{Save to Database?}
+    Save -->|Yes| DB[(Database)]
+    Save -->|No| Display[Display Result]
+    DB --> Display
+    Display --> End[End Process]
+----
+
+This example shows:
+
+* Multiple decision points (diamond nodes)
+* Database node using cylindrical shape `[(Database)]`
+* Branching and merging flows
+* Conditional paths with labels
+====
+
+==== Left-to-right flowchart
+
+.Horizontal layout
+[example]
+====
+[source,mermaid]
+----
+graph LR
+    A[Client] --> B[Load Balancer]
+    B --> C[Server 1]
+    B --> D[Server 2]
+    B --> E[Server 3]
+    C --> F[(Database)]
+    D --> F
+    E --> F
+----
+
+This demonstrates:
+
+* Left-to-right layout using `LR` direction
+* Multiple parallel paths from one node
+* Convergence of multiple paths to a single node
+* Database representation
+====
+
+==== Flowchart with various edge styles
+
+.Different edge types
+[example]
+====
+[source,mermaid]
+----
+graph TD
+    A[Start] --> B[Process]
+    B -.-> C[Optional Step]
+    C ==> D[Important Step]
+    D --> E{Decision}
+    E -->|Yes| F[Action 1]
+    E -->|No| G[Action 2]
+    F --> H[End]
+    G --> H
+----
+
+This shows:
+
+* Solid arrow for normal flow
+* Dotted arrow for optional or conditional flow
+* Thick arrow for emphasized flow
+* Labeled decision branches
+====
+
+==== Subgraph example
+
+.Grouping with subgraphs
+[example]
+====
+[source,mermaid]
+----
+graph TB
+    A[Start] --> B[Authenticate]
+
+    subgraph Authentication
+        B --> C{Valid Credentials?}
+        C -->|Yes| D[Grant Access]
+        C -->|No| E[Deny Access]
+    end
+
+    D --> F[Main Application]
+    E --> G[Login Screen]
+    G --> B
+    F --> H[End]
+----
+
+This demonstrates:
+
+* Grouping related nodes in a subgraph
+* Connections between nodes inside and outside subgraphs
+* Clear visual organization of workflow sections
+====
+
+=== Features
+
+==== Node identifiers
+
+Node identifiers can contain letters, numbers, and underscores:
+
+[source,mermaid]
+----
+graph TD
+    node_1[First Node]
+    node_2[Second Node]
+    node_1 --> node_2
+----
+
+==== Multi-word labels
+
+Labels can contain spaces and special characters:
+
+[source,mermaid]
+----
+graph TD
+    A[This is a multi-word label!]
+    B[Special chars: @#$%]
+    A --> B
+----
+
+==== Long text in nodes
+
+Text in nodes automatically wraps:
+
+[source,mermaid]
+----
+graph TD
+    A[This is a very long text that will be wrapped automatically to fit within the node boundaries]
+----
+
+==== Multiple edges from one node
+
+A single node can have multiple outgoing edges:
+
+[source,mermaid]
+----
+graph TD
+    A --> B
+    A --> C
+    A --> D
+----
+
+This can also be written as:
+
+[source,mermaid]
+----
+graph TD
+    A --> B & C & D
+----
+
+==== Chained connections
+
+Multiple connections can be chained:
+
+[source,mermaid]
+----
+graph TD
+    A --> B --> C --> D
+----
+
+==== Unicode support
+
+Unicode characters are supported in labels:
+
+[source,mermaid]
+----
+graph TD
+    A[Hello 世界]
+    B[Bonjour 🌍]
+    A --> B
+----
+
+=== Limitations
+
+==== Currently not supported
+
+The following Mermaid flowchart features are not yet supported in Sirena:
+
+* Styling individual nodes or edges with `style` or `class` directives
+* Click events and interactions
+* Comments using `%%`
+* Font Awesome icons
+* Markdown formatting in node text
+
+==== Known issues
+
+* Very long labels may overflow node boundaries in some cases
+* Circular dependencies may cause layout issues
+* Complex nested subgraphs may not render optimally
+
+=== Best practices
+
+==== Keep it simple
+
+Avoid creating overly complex diagrams. If a flowchart becomes too large:
+
+* Split into multiple diagrams
+* Use subgraphs to organize related sections
+* Consider using different diagram types for different aspects
+
+==== Use meaningful labels
+
+Use clear, descriptive labels for nodes and edges:
+
+[source,mermaid]
+----
+graph TD
+    %% Good
+    ValidateInput{Input Valid?} -->|Yes| ProcessData[Process Data]
+
+    %% Less clear
+    A{?} --> B
+----
+
+==== Consistent node shapes
+
+Use consistent node shapes for similar types of operations:
+
+* Rectangles for processes
+* Diamonds for decisions
+* Cylinders for databases
+* Parallelograms for I/O operations
+
+==== Direction choice
+
+Choose the layout direction that best fits your content:
+
+* `TD` (top-down) for sequential processes
+* `LR` (left-right) for timelines or horizontal flows
+* Consider your display medium (wide vs. tall screens)
+
+=== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<sequence-diagram.adoc#,Sequence diagrams>>
+* link:https://mermaid.js.org/syntax/flowchart.html[Official Mermaid flowchart documentation]

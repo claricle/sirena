@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_not_allow_leading_numbers_dashes_or_brackets_13",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 221
+}

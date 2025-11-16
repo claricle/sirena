@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-35_should_be_possible_to_set_the_metadata_using_one_line_38",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 465,
+  "metadata": {
+    "test_name": "KNBN-35 should be possible to set the metadata using one line"
+  }
+}

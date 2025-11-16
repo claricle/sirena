@@ -1,0 +1,9 @@
+{
+  "name": "parser_a_node_with_a_square_shape_and_a_label_12",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 24,
+  "metadata": {
+    "test_name": "a node with a square shape and a label"
+  }
+}

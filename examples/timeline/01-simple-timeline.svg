@@ -1,0 +1,36 @@
+<svg
+ width="960.0"
+ height="440.0"
+ viewBox="0 0 960 440"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<text fill="#000000" x="480.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">History of Programming Languages</text>
+<text fill="#4472C4" x="80.0" y="100.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Early Years</text>
+<rect fill="#ffffff" stroke="none" x="80.0" y="140.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
+<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="149.56521739130434" cy="143.0" r="8.0"/>
+<text fill="#000000" x="149.56521739130434" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Fortran released</text>
+<text fill="#000000" x="149.56521739130434" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">1957</text>
+<circle fill="#4472C4" stroke="#000000" stroke-width="2" cx="323.47826086956525" cy="143.0" r="8.0"/>
+<text fill="#000000" x="323.47826086956525" y="175.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">C language created</text>
+<text fill="#000000" x="323.47826086956525" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">1972</text>
+<text fill="#000000" x="80.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">1951</text>
+<text fill="#000000" x="880.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">2020</text>
+<text fill="#000000" x="480.0" y="166.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">1986</text>
+<text fill="#ED7D31" x="80.0" y="160.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Modern Era</text>
+<rect fill="#ffffff" stroke="none" x="80.0" y="200.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
+<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="543.768115942029" cy="203.0" r="8.0"/>
+<text fill="#000000" x="543.768115942029" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Python released</text>
+<text fill="#000000" x="543.768115942029" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">1991</text>
+<circle fill="#ED7D31" stroke="#000000" stroke-width="2" cx="590.1449275362318" cy="203.0" r="8.0"/>
+<text fill="#000000" x="590.1449275362318" y="235.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Java and JavaScript released</text>
+<text fill="#000000" x="590.1449275362318" y="185.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">1995</text>
+<text fill="#A5A5A5" x="80.0" y="220.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Contemporary</text>
+<rect fill="#ffffff" stroke="none" x="80.0" y="260.0" width="800.0" height="6.0" rx="3.0" ry="3.0"/>
+<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="752.463768115942" cy="263.0" r="8.0"/>
+<text fill="#000000" x="752.463768115942" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Go language released</text>
+<text fill="#000000" x="752.463768115942" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">2009</text>
+<circle fill="#A5A5A5" stroke="#000000" stroke-width="2" cx="810.4347826086956" cy="263.0" r="8.0"/>
+<text fill="#000000" x="810.4347826086956" y="295.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Swift released</text>
+<text fill="#000000" x="810.4347826086956" y="245.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">2014</text>
+</svg>

@@ -1,0 +1,7 @@
+{
+  "name": "parsertest_packet.test_2",
+  "type": "packet",
+  "source_file": "/packages/parser/tests/packet.test.ts",
+  "line_number": 7,
+  "metadata": {}
+}

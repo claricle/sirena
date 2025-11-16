@@ -1,0 +1,28 @@
+---
+            config:
+              htmlLabels: true
+              look: handDrawn
+              theme: forest
+          ---
+          erDiagram
+            CAR ||--o{ NAMED-DRIVER : allows
+            CAR {
+                text text PK "comment"
+                string make
+                string model
+                string[] parts
+            }
+            PERSON ||--o{ NAMED-DRIVER : is
+            PERSON ||--o{ CAR : is
+            PERSON {
+                string driversLicense PK "The license #"
+                string(99) firstName "Only 99 characters are allowed"
+                string lastName
+                string phone UK
+                int age
+            }
+            NAMED-DRIVER {
+                string carRegistrationNumber PK, FK
+                string driverLicence PK, FK
+            }
+            MANUFACTURER only one to zero or more CAR : makes

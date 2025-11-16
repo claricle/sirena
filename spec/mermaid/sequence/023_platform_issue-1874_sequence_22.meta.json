@@ -1,0 +1,7 @@
+{
+  "name": "platform_issue-1874_sequence_22",
+  "type": "sequence",
+  "source_file": "/cypress/platform/regression/issue-1874.html",
+  "line_number": 10,
+  "metadata": {}
+}

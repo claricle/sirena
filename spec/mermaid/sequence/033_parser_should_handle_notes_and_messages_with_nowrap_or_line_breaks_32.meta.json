@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle notes and messages with nowrap or line breaks_32",
+  "type": "sequence",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/sequence/sequenceDiagram.spec.js",
+  "line_number": 0
+}

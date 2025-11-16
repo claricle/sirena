@@ -1,0 +1,10 @@
+<svg
+ width="500.0"
+ height="200.0"
+ viewBox="0 0 500 200"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<rect fill="#E3F2FD" stroke="#000000" stroke-width="2" x="50.0" y="50.0" width="400.0" height="100.0" rx="8.0" ry="8.0"/>
+<text fill="#000000" x="250.0" y="105.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold">Info: showInfo enabled</text>
+</svg>

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_parameter_names_that_are_keywords_22",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Diagram.spec.js",
+  "line_number": 23,
+  "metadata": {
+    "test_name": "should handle parameter names that are keywords"
+  }
+}

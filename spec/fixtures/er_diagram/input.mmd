@@ -1,0 +1,64 @@
+erDiagram
+    USER ||--o{ POST : writes
+    USER ||--o{ COMMENT : writes
+    POST ||--o{ COMMENT : has
+    POST }o--|| CATEGORY : belongs_to
+    POST }o--o{ TAG : tagged_with
+    USER ||--o{ LIKE : gives
+    POST ||--o{ LIKE : receives
+    COMMENT ||--o{ LIKE : receives
+
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password_hash
+        datetime created_at
+        datetime updated_at
+        boolean is_active
+    }
+
+    POST {
+        int id PK
+        int user_id FK
+        int category_id FK
+        string title
+        text content
+        string slug UK
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+        int view_count
+    }
+
+    COMMENT {
+        int id PK
+        int post_id FK
+        int user_id FK
+        int parent_id FK
+        text content
+        datetime created_at
+        datetime updated_at
+        boolean is_approved
+    }
+
+    CATEGORY {
+        int id PK
+        string name UK
+        string slug UK
+        text description
+    }
+
+    TAG {
+        int id PK
+        string name UK
+        string slug UK
+    }
+
+    LIKE {
+        int id PK
+        int user_id FK
+        int post_id FK
+        int comment_id FK
+        datetime created_at
+    }

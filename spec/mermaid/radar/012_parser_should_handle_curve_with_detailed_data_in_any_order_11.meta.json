@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_curve_with_detailed_data_in_any_order_11",
+  "type": "radar",
+  "source_file": "/packages/mermaid/src/diagrams/radar/radar.spec.ts",
+  "line_number": 102,
+  "metadata": {
+    "test_name": "should handle curve with detailed data in any order"
+  }
+}

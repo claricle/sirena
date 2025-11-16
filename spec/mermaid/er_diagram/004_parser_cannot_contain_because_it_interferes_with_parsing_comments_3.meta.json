@@ -1,0 +1,6 @@
+{
+  "name": "parser_cannot_contain_because_it_interferes_with_parsing_comments_3",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 95
+}

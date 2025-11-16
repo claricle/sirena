@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_gitGraph_commit_with_custom_msg_commit_id_type_tag_91",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 507,
+  "metadata": {
+    "test_name": "should handle a gitGraph commit with custom msg, commit id, type,tag"
+  }
+}

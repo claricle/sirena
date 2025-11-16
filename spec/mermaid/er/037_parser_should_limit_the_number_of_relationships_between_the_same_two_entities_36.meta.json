@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_limit_the_number_of_relationships_between_the_same_two_entities_36",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 498,
+  "metadata": {
+    "test_name": "should limit the number of relationships between the same two entities"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_assigning_a_class_or_multiple_via_the_shorthand_syntax_when_defining_a_requirement_or_element_22",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 810,
+  "metadata": {
+    "test_name": "will accept assigning a class or multiple via the shorthand syntax when defining a requirement or element"
+  }
+}

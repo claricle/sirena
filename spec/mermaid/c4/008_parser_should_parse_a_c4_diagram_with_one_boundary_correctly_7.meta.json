@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_a_C4_diagram_with_one_Boundary_correctly_7",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Boundary.spec.js",
+  "line_number": 14,
+  "metadata": {
+    "test_name": "should parse a C4 diagram with one Boundary correctly"
+  }
+}

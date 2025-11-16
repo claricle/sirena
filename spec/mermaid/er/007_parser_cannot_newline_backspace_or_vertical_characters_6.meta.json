@@ -1,0 +1,9 @@
+{
+  "name": "parser_cannot_newline_backspace_or_vertical_characters_6",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 110,
+  "metadata": {
+    "test_name": "cannot newline, backspace, or vertical characters"
+  }
+}

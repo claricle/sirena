@@ -1,0 +1,57 @@
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    CUSTOMER {
+        int customer_id PK
+        string name
+        string email UK
+        string phone
+    }
+    
+    ORDER ||--|{ ORDER_ITEM : contains
+    ORDER {
+        int order_id PK
+        int customer_id FK
+        date order_date
+        decimal total_amount
+        string status
+    }
+    
+    ORDER_ITEM }o--|| PRODUCT : references
+    ORDER_ITEM {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }
+    
+    PRODUCT ||--o{ INVENTORY : tracked_in
+    PRODUCT {
+        int product_id PK
+        string name
+        string sku UK
+        decimal price
+        int category_id FK
+    }
+    
+    CATEGORY ||--o{ PRODUCT : categorizes
+    CATEGORY {
+        int category_id PK
+        string name
+        string description
+    }
+    
+    INVENTORY {
+        int inventory_id PK
+        int product_id FK
+        int warehouse_id FK
+        int quantity
+        date last_updated
+    }
+    
+    WAREHOUSE ||--o{ INVENTORY : stores
+    WAREHOUSE {
+        int warehouse_id PK
+        string name
+        string location
+    }

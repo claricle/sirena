@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_able_to_handle_constructor_as_a_className_5",
+  "type": "quadrant",
+  "source_file": "/packages/mermaid/src/diagrams/quadrant-chart/parser/quadrant.jison.spec.ts",
+  "line_number": 427,
+  "metadata": {
+    "test_name": "should be able to handle constructor as a className"
+  }
+}

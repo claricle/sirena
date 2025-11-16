@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-18_should_be_possible_to_use_node_syntax_in_the_descriptions_in_children_44",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 238,
+  "metadata": {
+    "test_name": "MMP-18 should be possible to use node syntax in the descriptions in children"
+  }
+}

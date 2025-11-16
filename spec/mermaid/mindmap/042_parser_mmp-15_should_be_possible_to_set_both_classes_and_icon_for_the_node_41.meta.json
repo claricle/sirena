@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-15_should_be_possible_to_set_both_classes_and_icon_for_the_node_41",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 195,
+  "metadata": {
+    "test_name": "MMP-15 should be possible to set both classes and icon for the node"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_a_C4_diagram_with_one_Person_correctly_24",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Person.spec.js",
+  "line_number": 14,
+  "metadata": {
+    "test_name": "should parse a C4 diagram with one Person correctly"
+  }
+}

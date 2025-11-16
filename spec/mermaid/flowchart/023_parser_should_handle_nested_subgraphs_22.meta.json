@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_nested_subgraphs_22",
+  "type": "flowchart",
+  "source_file": "/packages/mermaid/src/diagrams/flowchart/parser/subgraph.spec.js",
+  "line_number": 204,
+  "metadata": {
+    "test_name": "should handle nested subgraphs"
+  }
+}

@@ -1,0 +1,13 @@
+title: "Basic Flowchart"
+description: "Simple flowchart showing start, process, decision, and end nodes with conditional branching"
+complexity: basic
+keywords:
+  - flowchart
+  - decision
+  - conditional
+  - basic
+use_cases:
+  - "Getting started with flowcharts"
+  - "Simple process documentation"
+  - "Decision tree visualization"
+theme: default

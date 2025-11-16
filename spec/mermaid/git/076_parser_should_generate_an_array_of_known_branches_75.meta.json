@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_generate_an_array_of_known_branches_75",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 216,
+  "metadata": {
+    "test_name": "should generate an array of known branches"
+  }
+}

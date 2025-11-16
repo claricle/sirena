@@ -1,0 +1,59 @@
+<svg
+ width="800.0"
+ height="600.0"
+ viewBox="0 0 800 600"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g>
+  <rect fill="#8dd3c7" stroke="#000000" stroke-width="2" x="10.0" y="10.0" width="780.0" height="580.0" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="15.0" y="25.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Company Revenue</text>
+  <g>
+  <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="30.0" width="760.0" height="179.14285714285717" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="25.0" y="45.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">North America</text>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="50.0" width="740.0" height="117.74436090225566" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="65.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">US</text>
+  <text fill="#000000" x="35.0" y="80.0" font-family="Arial, Helvetica, sans-serif" font-size="10">45000</text>
+</g>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="177.74436090225566" width="740.0" height="40.0" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="192.74436090225566" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Canada</text>
+  <text fill="#000000" x="35.0" y="207.74436090225566" font-family="Arial, Helvetica, sans-serif" font-size="10">12000</text>
+</g>
+</g>
+  <g>
+  <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="219.14285714285717" width="760.0" height="213.71428571428572" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="25.0" y="234.14285714285717" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Europe</text>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="239.14285714285717" width="740.0" height="75.6470588235294" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="254.14285714285717" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">UK</text>
+  <text fill="#000000" x="35.0" y="269.14285714285717" font-family="Arial, Helvetica, sans-serif" font-size="10">28000</text>
+</g>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="324.78991596638656" width="740.0" height="59.43697478991597" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="339.78991596638656" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Germany</text>
+  <text fill="#000000" x="35.0" y="354.78991596638656" font-family="Arial, Helvetica, sans-serif" font-size="10">22000</text>
+</g>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="394.2268907563025" width="740.0" height="48.63025210084034" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="409.2268907563025" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">France</text>
+  <text fill="#000000" x="35.0" y="424.2268907563025" font-family="Arial, Helvetica, sans-serif" font-size="10">18000</text>
+</g>
+</g>
+  <g>
+  <rect fill="#ffffb3" stroke="#000000" stroke-width="2" x="20.0" y="442.8571428571429" width="760.0" height="157.14285714285714" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="25.0" y="457.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Asia</text>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="462.8571428571429" width="740.0" height="40.0" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="477.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">Japan</text>
+  <text fill="#000000" x="35.0" y="492.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="10">15000</text>
+</g>
+  <g>
+  <rect fill="#bebada" stroke="#000000" stroke-width="2" x="30.0" y="512.8571428571429" width="740.0" height="88.99999999999999" rx="4.0" ry="4.0"/>
+  <text fill="#000000" x="35.0" y="527.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold">China</text>
+  <text fill="#000000" x="35.0" y="542.8571428571429" font-family="Arial, Helvetica, sans-serif" font-size="10">35000</text>
+</g>
+</g>
+</g>
+</svg>

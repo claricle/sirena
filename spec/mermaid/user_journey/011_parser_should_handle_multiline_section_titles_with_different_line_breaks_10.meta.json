@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_multiline_section_titles_with_different_line_breaks_10",
+  "type": "user_journey",
+  "source_file": "/packages/mermaid/src/diagrams/user-journey/parser/journey.spec.js",
+  "line_number": 64,
+  "metadata": {
+    "test_name": "should handle multiline section titles with different line breaks"
+  }
+}

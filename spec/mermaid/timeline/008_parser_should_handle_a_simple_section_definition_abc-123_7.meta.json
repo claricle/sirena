@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_simple_section_definition_abc-123_7",
+  "type": "timeline",
+  "source_file": "/packages/mermaid/src/diagrams/timeline/timeline.spec.js",
+  "line_number": 12,
+  "metadata": {
+    "test_name": "should handle a simple section definition abc-123"
+  }
+}

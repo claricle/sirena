@@ -1,0 +1,54 @@
+# Cache results between runs
+cache = true
+
+# Maximum number of concurrent link checks
+max_concurrency = 16
+
+# Accept status codes
+accept = [200, 204, 301, 302, 307, 308, 403, 429]
+
+# Exclude patterns
+exclude = [
+    # Skip local file URLs that won't exist in production
+    '^file://',
+    # Skip mailto links
+    '^mailto:',
+    # Skip anchors without base URL
+    '^#',
+]
+
+# Include patterns
+include = [
+    # Check all HTTP/HTTPS links
+    '^https?://',
+]
+
+# Timeout for each request (in seconds)
+timeout = 30
+
+# Number of retries
+max_retries = 3
+
+# User agent
+user_agent = "lychee/link-checker"
+
+# Exclude certain file types from link checking
+exclude_file = []
+
+# Skip checking links in certain HTML elements
+exclude_mail = true
+
+# Check for broken fragments (anchors)
+check_anchors = true
+
+# Verify SSL certificates
+require_https = false
+
+# Follow redirects
+follow_redirects = true
+
+# Maximum redirect depth
+max_redirects = 10
+
+# Verbosity
+verbose = true

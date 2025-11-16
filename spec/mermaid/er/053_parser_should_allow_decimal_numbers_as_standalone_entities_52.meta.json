@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_decimal_numbers_as_standalone_entities_52",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 1014,
+  "metadata": {
+    "test_name": "should allow decimal numbers as standalone entities"
+  }
+}

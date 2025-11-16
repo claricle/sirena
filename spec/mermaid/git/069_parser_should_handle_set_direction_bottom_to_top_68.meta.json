@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_set_direction_bottom_to_top_68",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 33,
+  "metadata": {
+    "test_name": "should handle set direction bottom to top"
+  }
+}

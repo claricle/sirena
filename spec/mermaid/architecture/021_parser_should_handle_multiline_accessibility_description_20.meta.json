@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_multiline_accessibility_description_20",
+  "type": "architecture",
+  "source_file": "/packages/mermaid/src/diagrams/architecture/architecture.spec.ts",
+  "line_number": 50,
+  "metadata": {
+    "test_name": "should handle multiline accessibility description"
+  }
+}

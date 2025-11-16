@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_visibility_95",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 961,
+  "metadata": {
+    "test_name": "should handle visibility"
+  }
+}

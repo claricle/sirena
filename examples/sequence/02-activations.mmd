@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Database
+    participant Cache
+    
+    Client->>+Server: Request data
+    Server->>+Database: Query data
+    Database-->>-Server: Return results
+    Server->>+Cache: Store in cache
+    Cache-->>-Server: Cached
+    Server-->>-Client: Response
+    
+    Client->>+Server: Request same data
+    Server->>+Cache: Check cache
+    Cache-->>-Server: Cache hit
+    Server-->>-Client: Fast response

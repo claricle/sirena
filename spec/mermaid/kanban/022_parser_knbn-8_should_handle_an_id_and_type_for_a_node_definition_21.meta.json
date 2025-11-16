@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-8_should_handle_an_id_and_type_for_a_node_definition_21",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 122,
+  "metadata": {
+    "test_name": "KNBN-8 should handle an id and type for a node definition"
+  }
+}

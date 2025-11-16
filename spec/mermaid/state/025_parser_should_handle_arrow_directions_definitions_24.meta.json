@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_arrow_directions_definitions_24",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 325,
+  "metadata": {
+    "test_name": "should handle arrow directions definitions"
+  }
+}

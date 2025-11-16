@@ -1,0 +1,9 @@
+{
+  "name": "parser_blocks_next_to_each_other_7",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 150,
+  "metadata": {
+    "test_name": "blocks next to each other"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_allow_more_than_one_relationship_between_the_same_two_entities_34",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 487
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_parses_a_multi_line_description_accDescr__34",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 472,
+  "metadata": {
+    "test_name": "parses a multi line description (accDescr)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_simple_section_and_only_two_tasks_8",
+  "type": "timeline",
+  "source_file": "/packages/mermaid/src/diagrams/timeline/timeline.spec.js",
+  "line_number": 20,
+  "metadata": {
+    "test_name": "should handle a simple section and only two tasks"
+  }
+}

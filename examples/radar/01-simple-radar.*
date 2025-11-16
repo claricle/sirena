@@ -1,0 +1,5 @@
+radar-beta
+    title Technology Stack Assessment
+    axis Frontend, Backend, Database, DevOps, Testing, Documentation
+    curve Current["Current State"] {85, 75, 90, 70, 80, 65}
+    curve Target["Target State"] {90, 85, 95, 90, 95, 85}

@@ -1,0 +1,87 @@
+<svg
+ width="677.0"
+ height="964.0"
+ viewBox="0 0 677.0 964.0"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="edge-A_to_B">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 67.0 L 318.5 67.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-B_to_C">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 67.0 L 568.5 67.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-C_to_D">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 67.0 L 68.5 267.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-E_to_F">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 267.0 L 568.5 272.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-F_to_G">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 272.0 L 68.5 467.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-G_to_H">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 467.0 L 323.5 477.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-I_to_J">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 573.5 477.0 L 68.5 667.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-J_to_K">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 667.0 L 318.5 667.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-L_to_M">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 667.0 L 68.5 867.0" marker-end="url(#arrowhead)"/>
+</g>
+<g id="node-A">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="68.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">A</text>
+</g>
+<g id="node-B">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="37.0" height="34.0" rx="17.0" ry="17.0"/>
+  <text fill="#000000" x="318.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">B</text>
+</g>
+<g id="node-C">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="37.0" height="34.0" rx="17.0" ry="17.0"/>
+  <text fill="#000000" x="568.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">C</text>
+</g>
+<g id="node-D">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="68.5" y="267.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">D</text>
+</g>
+<g id="node-E">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="250.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="318.5" y="267.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">E</text>
+</g>
+<g id="node-F">
+  <circle fill="#ffffff" stroke="#000000" stroke-width="2.0" cx="568.5" cy="272.0" r="18.5"/>
+  <text fill="#000000" x="568.5" y="272.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">F</text>
+</g>
+<g id="node-G">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="450.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="68.5" y="467.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">G</text>
+</g>
+<g id="node-H">
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="323.5,450 347.0,477.0 323.5,504.0 300,477.0"/>
+  <text fill="#000000" x="323.5" y="477.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">H</text>
+</g>
+<g id="node-I">
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="561.75,450 585.25,450 597.0,477.0 585.25,504.0 561.75,504.0 550,477.0"/>
+  <text fill="#000000" x="573.5" y="477.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">I</text>
+</g>
+<g id="node-J">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="650.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="68.5" y="667.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">J</text>
+</g>
+<g id="node-K">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="650.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="318.5" y="667.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">K</text>
+</g>
+<g id="node-L">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="650.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="568.5" y="667.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">L</text>
+</g>
+<g id="node-M">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="850.0" width="37.0" height="34.0"/>
+  <text fill="#000000" x="68.5" y="867.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">M</text>
+</g>
+</svg>

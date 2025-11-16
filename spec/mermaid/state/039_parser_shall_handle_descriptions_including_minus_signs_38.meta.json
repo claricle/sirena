@@ -1,0 +1,9 @@
+{
+  "name": "parser_shall_handle_descriptions_including_minus_signs_38",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+  "line_number": 154,
+  "metadata": {
+    "test_name": "shall handle descriptions including minus signs"
+  }
+}

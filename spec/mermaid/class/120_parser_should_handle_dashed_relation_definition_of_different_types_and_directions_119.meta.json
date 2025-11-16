@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_dashed_relation_definition_of_different_types_and_directions_119",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1291,
+  "metadata": {
+    "test_name": "should handle dashed relation definition of different types and directions"
+  }
+}

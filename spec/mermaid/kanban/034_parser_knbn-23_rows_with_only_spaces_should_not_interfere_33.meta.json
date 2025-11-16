@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-23_Rows_with_only_spaces_should_not_interfere_33",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 359,
+  "metadata": {
+    "test_name": "KNBN-23 Rows with only spaces should not interfere"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_associate_click_and_href_link_with_tooltip_and_target_appropriately_137",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1554,
+  "metadata": {
+    "test_name": "should associate click and href link with tooltip and target appropriately"
+  }
+}

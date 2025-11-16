@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_multiline_section_titles_with_different_line_breaks_15",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 76,
+  "metadata": {
+    "test_name": "should handle multiline section titles with different line breaks"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_error_on_internal-only_shape_47",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-node-data.spec.js",
+  "line_number": 206
+}

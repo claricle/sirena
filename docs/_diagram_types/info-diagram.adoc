@@ -1,0 +1,103 @@
+= Info Diagram
+:toc:
+:toclevels: 3
+
+== Purpose
+
+Info diagrams display simple informational messages or status information in Mermaid syntax. They are utility diagrams used to show system information, help text, or status messages.
+
+== Syntax
+
+=== Basic info diagram
+
+The simplest form displays just an info indicator:
+
+[source,mermaid]
+----
+info
+----
+
+=== Info with showInfo flag
+
+You can enable the `showInfo` flag to display additional information:
+
+[source,mermaid]
+----
+info showInfo
+----
+
+The `showInfo` flag can also be specified on a separate line:
+
+[source,mermaid]
+----
+info
+    showInfo
+----
+
+== Features
+
+=== Visual representation
+
+Info diagrams render as:
+
+* A centered box with informational styling (light blue background)
+* "Info" text or "Info: showInfo enabled" when the flag is set
+* Clean, minimal design suitable for displaying status messages
+
+=== Theme integration
+
+Info diagrams integrate with Sirena's theme system:
+
+* `node_bg`: Background color for the info box (default: light blue)
+* `node_stroke`: Border color for the info box (default: blue)
+* `label_text`: Text color for the message (default: dark blue)
+* Typography settings for font family and size
+
+== Implementation details
+
+=== Parser
+
+The info diagram parser (`Sirena::Parser::InfoParser`) uses Parslet grammar to handle:
+
+* Basic `info` keyword
+* Optional `showInfo` flag (inline or on separate line)
+* Additional text after `info` keyword (ignored for compatibility)
+
+=== Model
+
+The info diagram model (`Sirena::Diagram::Info`) contains:
+
+* `show_info`: Boolean flag indicating if showInfo is enabled
+
+=== Renderer
+
+The info renderer (`Sirena::Renderer::InfoRenderer`) creates:
+
+* A rounded rectangle box (400x100 pixels)
+* Centered text displaying the info message
+* Theme-aware styling for colors and typography
+
+== Examples
+
+=== Simple info
+
+[source,mermaid]
+----
+info
+----
+
+=== Info with flag enabled
+
+[source,mermaid]
+----
+info showInfo
+----
+
+== Use cases
+
+Info diagrams are useful for:
+
+* Displaying system status messages
+* Showing help text in documentation
+* Indicating informational states in workflows
+* Testing and debugging diagram rendering

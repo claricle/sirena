@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_an_accessibility_description_accDescr__7",
+  "type": "user_journey",
+  "source_file": "/packages/mermaid/src/diagrams/user-journey/parser/journey.spec.js",
+  "line_number": 21,
+  "metadata": {
+    "test_name": "should handle an accessibility description (accDescr)"
+  }
+}

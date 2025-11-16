@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_not_throw_error_if_only_quadrantChart_is_there_1",
+  "type": "quadrant",
+  "source_file": "/packages/mermaid/src/diagrams/quadrant-chart/parser/quadrant.jison.spec.ts",
+  "line_number": 42,
+  "metadata": {
+    "test_name": "should not throw error if only quadrantChart is there"
+  }
+}

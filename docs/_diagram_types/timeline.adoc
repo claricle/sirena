@@ -1,0 +1,352 @@
+= Timeline diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Timeline diagrams in Sirena represent chronological events and milestones arranged along a time axis. Timelines are ideal for visualizing historical progressions, project milestones, or any sequence of events that occur over time.
+
+Timelines are useful for:
+
+* Documenting historical events and developments
+* Visualizing project roadmaps and milestones
+* Showing product release schedules
+* Mapping organizational changes over time
+* Creating biographical or company history visualizations
+
+== Syntax specification
+
+=== Diagram declaration
+
+Timelines are declared using the `timeline` keyword:
+
+[source,mermaid]
+----
+timeline
+    <diagram-content>
+----
+
+=== Title declaration
+
+Optional title can be added:
+
+[source,mermaid]
+----
+timeline
+    title My Timeline Title
+    <events>
+----
+
+=== Event syntax
+
+Events are defined with a time/date and one or more descriptions:
+
+[source,mermaid]
+----
+<time> : <description>
+----
+
+Multiple descriptions for the same time:
+
+[source,mermaid]
+----
+<time> : <description1> : <description2> : <description3>
+----
+
+Continuation entries (adds to previous event):
+
+[source,mermaid]
+----
+<time> : <description1>
+     : <description2>
+----
+
+=== Section grouping
+
+Events can be organized into sections:
+
+[source,mermaid]
+----
+timeline
+    section <section-name>
+    <events>
+    section <section-name>
+    <events>
+----
+
+=== Task entries
+
+Sections can contain tasks (items without timestamps):
+
+[source,mermaid]
+----
+timeline
+    section Tasks
+    task1
+    task2
+    task3
+----
+
+== Examples
+
+=== Simple timeline
+
+.Basic timeline with events
+[example]
+====
+[source,mermaid]
+----
+timeline
+    title History of Social Media Platforms
+    2002 : LinkedIn
+    2004 : Facebook
+    2005 : YouTube
+    2006 : Twitter
+----
+
+This creates a simple horizontal timeline showing the founding years of major social media platforms.
+====
+
+=== Timeline with multiple events per year
+
+.Multiple events at same time
+[example]
+====
+[source,mermaid]
+----
+timeline
+    title Tech Milestones 2004
+    2004 : Facebook launched : Google IPO
+    2005 : YouTube founded
+    2006 : Twitter created
+----
+
+This demonstrates how to show multiple events that occurred in the same year.
+====
+
+=== Timeline with sections
+
+.Organized by historical periods
+[example]
+====
+[source,mermaid]
+----
+timeline
+    title History of Flight
+    section 20th Century
+    1903 : Wright Brothers first flight
+    1927 : Lindbergh crosses Atlantic
+    1969 : Moon landing
+    section 21st Century
+    2004 : SpaceX founded
+    2020 : Crew Dragon Demo-2
+----
+
+This shows how sections can organize events into logical groupings (centuries, in this case).
+====
+
+=== Timeline with continuation entries
+
+.Using continuation syntax
+[example]
+====
+[source,mermaid]
+----
+timeline
+    title Product Releases 2020
+    Jan 2020 : Version 1.0 released
+            : Mobile app launched
+    Jun 2020 : Version 2.0 released
+            : Desktop app launched
+            : API v2 available
+    Dec 2020 : Year-end update
+----
+
+This demonstrates the continuation syntax for adding multiple descriptions to an event.
+====
+
+=== Timeline with tasks in sections
+
+.Project phases with tasks
+[example]
+====
+[source,mermaid]
+----
+timeline
+    title Project Milestones
+    section Planning Phase
+    Requirements gathering
+    Design mockups
+    Architecture planning
+    section Development Phase
+    Backend implementation
+    Frontend development
+    Testing and QA
+    section Deployment Phase
+    Production release
+    Monitoring setup
+    Documentation
+----
+
+This shows how sections can contain tasks (non-timestamped items) for project phases.
+====
+
+== Features
+
+=== Accessibility support
+
+Timelines support accessibility features:
+
+[source,mermaid]
+----
+timeline
+    accTitle: Project Timeline
+    accDescr: A timeline showing major project milestones
+    2020 : Project start
+    2021 : Beta release
+    2022 : General availability
+----
+
+=== Special characters
+
+Timeline content supports special characters:
+
+[source,mermaid]
+----
+timeline
+    title ;Special;Characters;
+    section ;Phase-1;
+    ;Task-1; : ;Event-1;
+----
+
+=== Flexible time formats
+
+Time values can be years, dates, or any text:
+
+[source,mermaid]
+----
+timeline
+    2020 : Year only
+    2020-01 : Year and month
+    2020-01-15 : Full date
+    Q1 2020 : Quarter notation
+    Jan 2020 : Month notation
+----
+
+== Best practices
+
+=== Use clear time markers
+
+Choose a consistent time format throughout your timeline:
+
+[source,mermaid]
+----
+timeline
+    %% Good - consistent format
+    2020 : Event A
+    2021 : Event B
+    2022 : Event C
+
+    %% Less clear - mixed formats
+    2020 : Event A
+    Jan 2021 : Event B
+    2022-03-15 : Event C
+----
+
+=== Organize with sections
+
+For long timelines, use sections to group related periods:
+
+[source,mermaid]
+----
+timeline
+    section Early Development
+    1990 : Project conceived
+    1995 : First prototype
+    section Growth Period
+    2000 : Market entry
+    2005 : International expansion
+----
+
+=== Limit event descriptions
+
+Keep descriptions concise to maintain readability:
+
+[source,mermaid]
+----
+timeline
+    %% Good
+    2020 : Product launched
+
+    %% Too verbose
+    2020 : Our amazing product was successfully launched to the market after years of development
+----
+
+=== Choose appropriate granularity
+
+Match time granularity to the timeline scope:
+
+* Years for long historical timelines (decades/centuries)
+* Months for project timelines (6-24 months)
+* Days/weeks for sprint or detailed project plans
+
+== Rendering behavior
+
+=== Timeline positioning
+
+Events are positioned chronologically along a horizontal axis based on their time values. The renderer:
+
+* Extracts numeric values from time strings (e.g., "2004" → 2004)
+* Calculates relative positions along the timeline
+* Distributes events proportionally based on their time values
+
+=== Section visualization
+
+When sections are used:
+
+* Each section gets its own timeline axis
+* Sections are stacked vertically
+* Different colors distinguish sections
+
+=== Task distribution
+
+Tasks (items without timestamps) are distributed evenly along the timeline axis within their section.
+
+== Limitations
+
+=== Currently not supported
+
+The following features are not yet supported:
+
+* Custom styling for individual events
+* Click events or interactions
+* Complex date calculations
+* Time period ranges (start-end dates for events)
+
+=== Known issues
+
+* Very long event descriptions may overflow
+* Non-numeric time values may not position correctly
+* Overlapping events at the same time may cause crowding
+
+== Testing
+
+The timeline implementation includes comprehensive test coverage:
+
+* **16/17 Mermaid fixtures passing** (94.1% success rate)
+* The single failing fixture contains invalid syntax ("Timeline diagram" instead of "timeline")
+* Full support for sections, events, tasks, and styling
+* HTML tags in descriptions handled correctly
+* Special characters (semicolons, hashtags) supported
+
+Run tests with:
+
+[source,shell]
+----
+bundle exec rspec spec/sirena/parser/timeline_spec.rb
+----
+
+== Related documentation
+
+* link:flowchart.adoc[Flowchart diagrams]
+* link:https://mermaid.js.org/syntax/timeline.html[Official Mermaid timeline documentation]

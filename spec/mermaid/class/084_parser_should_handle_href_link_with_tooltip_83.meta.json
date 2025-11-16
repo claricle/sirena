@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_href_link_with_tooltip_83",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 770,
+  "metadata": {
+    "test_name": "should handle href link with tooltip"
+  }
+}

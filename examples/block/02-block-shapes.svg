@@ -1,0 +1,47 @@
+<svg
+ width="393.0"
+ height="400.0"
+ viewBox="0 0 393.0 400"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="block-db">
+  <circle fill="#ffffff" stroke="#000000" stroke-width="2.0" cx="70.0" cy="50.0" r="30.0"/>
+  <text fill="#000000" x="70.0" y="50.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Database</text>
+</g>
+<g id="block-blockArrowId">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="140.0" y="20.0" width="50.0" height="30.0"/>
+  <text fill="#000000" x="165.0" y="35.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">"Arrow"</text>
+</g>
+<g id="block-blockArrowId2">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="210.0" y="20.0" width="50.0" height="30.0"/>
+  <text fill="#000000" x="235.0" y="35.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">"Arrow"</text>
+</g>
+<g id="block-A">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="100.0" width="103.0" height="60.0"/>
+  <text fill="#000000" x="71.5" y="130.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Rectangle</text>
+</g>
+<g id="block-B">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="143.0" y="100.0" width="220.0" height="60.0"/>
+  <text fill="#000000" x="253.0" y="130.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Wide Block</text>
+</g>
+<g id="block-C">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="180.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="70.0" y="210.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">Another</text>
+</g>
+<g id="block-compound">
+  <rect fill="none" stroke="#666" stroke-width="2" x="143.0" y="180.0" width="100.0" height="200.0" stroke-dasharray="5,5"/>
+  <g id="block-D">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="200.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="213.0" y="230.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">D</text>
+</g>
+  <g id="block-E">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="280.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="213.0" y="310.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">E</text>
+</g>
+</g>
+<g id="block-F">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="273.0" y="180.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="323.0" y="210.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">F</text>
+</g>
+</svg>

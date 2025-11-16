@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_recursive_state_definitions_16",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 188,
+  "metadata": {
+    "test_name": "should handle recursive state definitions"
+  }
+}

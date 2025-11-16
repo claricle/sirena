@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_handle_subgraph_with_tab_indentation_70",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/subgraph.spec.js",
+  "line_number": 14
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_simple_member_declaration_with_type_94",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 955,
+  "metadata": {
+    "test_name": "should handle simple member declaration with type"
+  }
+}

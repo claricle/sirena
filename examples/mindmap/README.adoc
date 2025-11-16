@@ -1,0 +1,77 @@
+= Mindmap Examples
+
+== Purpose
+
+Mindmap diagrams visualize hierarchical information, showing central concepts and their related subtopics in a tree-like structure.
+
+== When to Use
+
+* Brainstorming sessions
+* Knowledge organization
+* Concept mapping
+* Note-taking and study aids
+* Idea exploration and planning
+
+== Syntax Overview
+
+[source,mermaid]
+----
+mindmap
+  root((Central Idea))
+    Topic 1
+      Subtopic 1.1
+      Subtopic 1.2
+    Topic 2
+----
+
+== Examples
+
+=== 01: Simple Tree
+
+Demonstrates basic mindmap with central node and branches.
+
+**File**: link:01-simple-tree.mmd[01-simple-tree.mmd]
+
+[source,mermaid]
+----
+include::01-simple-tree.mmd[]
+----
+
+image::01-simple-tree.svg[]
+
+=== 02: Knowledge Map
+
+Showcases complex mindmap with multiple levels and branches.
+
+**File**: link:02-knowledge-map.mmd[02-knowledge-map.mmd]
+
+[source,mermaid]
+----
+include::02-knowledge-map.mmd[]
+----
+
+image::02-knowledge-map.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Central node
+| 01, 02
+
+| Hierarchical structure
+| 01, 02
+
+| Multiple levels
+| 02
+
+| Branch visualization
+| 01, 02
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]
+* https://mermaid.js.org/syntax/mindmap.html[Mermaid Mindmap Documentation]

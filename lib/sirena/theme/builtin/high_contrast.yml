@@ -1,0 +1,70 @@
+name: high_contrast
+description: "High contrast theme for accessibility"
+
+colors:
+  background: "#000000"
+  surface: "#000000"
+  surface_variant: "#1a1a1a"
+
+  foreground: "#ffffff"
+  foreground_secondary: "#ffffff"
+
+  primary: "#ffff00"
+  secondary: "#00ffff"
+  accent: "#00ff00"
+  error: "#ff0000"
+  warning: "#ff8800"
+  success: "#00ff00"
+  info: "#00ffff"
+
+  node_fill: "#000000"
+  node_stroke: "#ffffff"
+  edge_stroke: "#ffffff"
+  label_text: "#ffffff"
+
+  hover_fill: "#1a1a1a"
+  active_fill: "#333333"
+  disabled_fill: "#666666"
+
+typography:
+  font_family: "Arial, Helvetica, sans-serif"
+  font_family_monospace: "Courier New, monospace"
+  font_size_small: 14.0
+  font_size_normal: 16.0
+  font_size_large: 18.0
+  font_size_title: 24.0
+  font_weight_normal: "bold"
+  font_weight_bold: "bold"
+  line_height: 1.6
+  text_transform: "none"
+
+shapes:
+  stroke_width: 3.0
+  stroke_width_thick: 4.0
+  stroke_width_thin: 2.0
+  fill_opacity: 1.0
+  stroke_opacity: 1.0
+  corner_radius: 0.0
+  corner_radius_large: 0.0
+  dash_pattern_dotted: "4,4"
+  dash_pattern_dashed: "8,8"
+
+spacing:
+  node_padding_x: 15.0
+  node_padding_y: 8.0
+  node_margin: 25.0
+  edge_spacing: 15.0
+  edge_label_offset: 8.0
+  rank_spacing: 120.0
+  node_spacing: 60.0
+
+effects:
+  shadow_enabled: false
+  shadow_color: "#000000"
+  shadow_blur: 0.0
+  shadow_offset_x: 0.0
+  shadow_offset_y: 0.0
+  gradient_enabled: false
+  gradient_type: "linear"
+  arrow_size: 12.0
+  arrow_style: "filled"

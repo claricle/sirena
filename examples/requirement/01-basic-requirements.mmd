@@ -1,0 +1,23 @@
+requirementDiagram
+
+    requirement login {
+        id: 1
+        text: Users must be able to login
+        risk: high
+        verifymethod: test
+    }
+
+    requirement security {
+        id: 2
+        text: All data must be encrypted
+        risk: high
+        verifymethod: inspection
+    }
+
+    element webapp {
+        type: application
+        docref: /docs/webapp
+    }
+
+    login - satisfies -> webapp
+    security - verifies -> webapp

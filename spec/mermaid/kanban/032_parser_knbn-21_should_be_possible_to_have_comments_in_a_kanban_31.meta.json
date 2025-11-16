@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-21_should_be_possible_to_have_comments_in_a_kanban_31",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 312,
+  "metadata": {
+    "test_name": "KNBN-21 should be possible to have comments in a kanban"
+  }
+}

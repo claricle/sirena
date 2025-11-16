@@ -1,0 +1,9 @@
+{
+  "name": "parser_5_Multiple_roots_are_illegal_30",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 60,
+  "metadata": {
+    "test_name": "5 Multiple roots are illegal"
+  }
+}

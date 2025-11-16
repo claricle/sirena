@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_attribute_block_to_start_immediately_after_the_entity_name_27",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 383,
+  "metadata": {
+    "test_name": "should allow an attribute block to start immediately after the entity name"
+  }
+}

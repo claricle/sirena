@@ -1,0 +1,58 @@
+= Packet Diagram Examples
+
+== Purpose
+
+Packet diagrams visualize network packet structures, showing data fields, headers, and protocol layouts.
+
+== When to Use
+
+* Network protocol documentation
+* Packet format specification
+* Protocol analysis
+* Network debugging documentation
+* Communication protocol design
+
+== Syntax Overview
+
+[source,mermaid]
+----
+packet-beta
+0-15: "Source Port"
+16-31: "Dest Port"
+----
+
+== Examples
+
+=== 01: Basic Packet
+
+Demonstrates basic packet structure with bit fields.
+
+**File**: link:01-basic-packet.mmd[01-basic-packet.mmd]
+
+[source,mermaid]
+----
+include::01-basic-packet.mmd[]
+----
+
+image::01-basic-packet.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Bit field definition
+| 01
+
+| Field labeling
+| 01
+
+| Packet structure
+| 01
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]
+* https://mermaid.js.org/syntax/packet.html[Mermaid Packet Documentation]

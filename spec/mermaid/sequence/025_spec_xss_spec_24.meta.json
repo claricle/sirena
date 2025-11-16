@@ -1,0 +1,7 @@
+{
+  "name": "spec_xss.spec_24",
+  "type": "sequence",
+  "source_file": "/cypress/integration/other/xss.spec.js",
+  "line_number": 157,
+  "metadata": {}
+}

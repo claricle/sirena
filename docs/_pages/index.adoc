@@ -1,0 +1,39 @@
+---
+layout: default
+title: Core Topics
+nav_order: 2
+has_children: true
+---
+
+== Core Topics
+
+Essential concepts and information you need to understand and use Sirena effectively.
+
+== What's in This Section
+
+This section covers fundamental topics including:
+
+* **Installation** - How to install and set up Sirena
+* **Architecture** - Understanding Sirena's design and components
+* **Theming System** - How themes work in Sirena
+* **Compatibility** - Mermaid.js syntax compatibility matrix
+* **Comparison** - Sirena vs Mermaid.js vs PlantUML vs Graphviz
+* **Configuration** - Configuring Sirena for your needs
+
+== Quick Navigation
+
+Browse the topics in the sidebar or use the search function to find specific information.
+
+== Getting Started
+
+If you're new to Sirena, we recommend starting with:
+
+. link:{% link _tutorials/getting-started.adoc %}[Getting Started Tutorial]
+. link:{% link _pages/architecture.adoc %}[Architecture Overview]
+. link:{% link _diagram_types/index.adoc %}[Diagram Types Reference]
+
+== Need Help?
+
+* See link:{% link _tutorials/index.adoc %}[Tutorials] for step-by-step guides
+* Check link:{% link _references/index.adoc %}[References] for API documentation
+* Visit our https://github.com/claricle/sirena/issues[GitHub Issues] for support

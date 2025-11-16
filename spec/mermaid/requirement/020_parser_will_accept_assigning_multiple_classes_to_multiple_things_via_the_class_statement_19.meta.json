@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_assigning_multiple_classes_to_multiple_things_via_the_class_statement_19",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 739,
+  "metadata": {
+    "test_name": "will accept assigning multiple classes to multiple things via the class statement"
+  }
+}

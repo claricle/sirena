@@ -1,0 +1,9 @@
+{
+  "name": "parser_can_define_multiple_attributes_separated_by_commas_5",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/parser/state-style.spec.js",
+  "line_number": 26,
+  "metadata": {
+    "test_name": "can define multiple attributes separated by commas"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_relation_definition_of_different_types_and_directions_117",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1269,
+  "metadata": {
+    "test_name": "should handle relation definition of different types and directions"
+  }
+}

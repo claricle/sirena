@@ -1,0 +1,7 @@
+{
+  "name": "example_gantt_8",
+  "type": "gantt",
+  "source_file": "/packages/examples/src/examples/gantt.ts",
+  "line_number": 10,
+  "metadata": {}
+}

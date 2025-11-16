@@ -1,0 +1,37 @@
+<svg
+ width="680.0"
+ height="160.0"
+ viewBox="0 0 680 160"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="edge-frontend-backend">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160 80 L 200 80" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-backend-db">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320 80 L 360 80" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-backend-cache">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 320 80 L 520 80" marker-end="url(#arrowhead)"/>
+</g>
+<g id="service-frontend">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="100.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">⊞</text>
+  <text fill="#000000" x="100.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Frontend</text>
+</g>
+<g id="service-backend">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="260.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">▦</text>
+  <text fill="#000000" x="260.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Backend API</text>
+</g>
+<g id="service-db">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="360.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="420.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">⬢</text>
+  <text fill="#000000" x="420.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Database</text>
+</g>
+<g id="service-cache">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="520.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="580.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">◎</text>
+  <text fill="#000000" x="580.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Cache</text>
+</g>
+</svg>

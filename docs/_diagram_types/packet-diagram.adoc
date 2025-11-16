@@ -1,0 +1,378 @@
+= Packet diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Packet diagrams in Sirena visualize network packet structures and protocol formats. They show how data is organized within network packets, including field layouts, bit ranges, and data organization across multiple rows.
+
+Packet diagrams are useful for:
+
+* Documenting network protocol specifications
+* Visualizing packet header structures
+* Teaching network communication concepts
+* Analyzing packet formats and field layouts
+* Designing new network protocols
+* Understanding data transmission formats
+
+== Syntax specification
+
+=== Diagram declaration
+
+Packet diagrams are declared using the `packet-beta` keyword:
+
+[source,mermaid]
+----
+packet-beta
+    <diagram-content>
+----
+
+=== Title
+
+Packets can have a descriptive title:
+
+[source,mermaid]
+----
+packet-beta
+  title TCP Header Structure
+----
+
+=== Field definitions
+
+Fields represent segments of the packet with bit ranges:
+
+[source,mermaid]
+----
+bit_start-bit_end: "Field Label"
+----
+
+Where:
+
+* `bit_start` - The starting bit position (0-based)
+* `bit_end` - The ending bit position (inclusive)
+* `Field Label` - Descriptive label for the field
+
+==== Bit range format
+
+Bit ranges use the format `start-end`:
+
+[source,mermaid]
+----
+packet-beta
+  0-7: "Source Port"
+  8-15: "Destination Port"
+  16-31: "Sequence Number"
+----
+
+This defines:
+
+* Bits 0-7 (8 bits): Source Port
+* Bits 8-15 (8 bits): Destination Port
+* Bits 16-31 (16 bits): Sequence Number
+
+== Examples
+
+=== Basic packet structure
+
+.Simple 32-bit packet
+[example]
+====
+[source,mermaid]
+----
+packet-beta
+  title Hello world
+  0-10: "hello"
+----
+
+This creates a simple packet with:
+
+* A title
+* One field spanning bits 0-10
+====
+
+=== TCP header structure
+
+.TCP packet header
+[example]
+====
+[source,mermaid]
+----
+packet-beta
+  title TCP Header
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  32-63: "Sequence Number"
+  64-95: "Acknowledgment Number"
+  96-99: "Data Offset"
+  100-105: "Reserved"
+  106: "URG"
+  107: "ACK"
+  108: "PSH"
+  109: "RST"
+  110: "SYN"
+  111: "FIN"
+  112-127: "Window Size"
+  128-143: "Checksum"
+  144-159: "Urgent Pointer"
+----
+
+This demonstrates:
+
+* Standard TCP header fields
+* Mix of different field sizes
+* Single-bit flags (URG, ACK, etc.)
+* Multi-byte fields (ports, sequence numbers)
+====
+
+=== IP packet header
+
+.IPv4 packet header
+[example]
+====
+[source,mermaid]
+----
+packet-beta
+  title IPv4 Header
+  0-3: "Version"
+  4-7: "IHL"
+  8-13: "DSCP"
+  14-15: "ECN"
+  16-31: "Total Length"
+  32-47: "Identification"
+  48-50: "Flags"
+  51-63: "Fragment Offset"
+  64-71: "Time to Live"
+  72-79: "Protocol"
+  80-95: "Header Checksum"
+  96-127: "Source IP Address"
+  128-159: "Destination IP Address"
+----
+
+This shows:
+
+* IPv4 header structure
+* Various field sizes from 2 bits to 32 bits
+* Standard network protocol layout
+====
+
+=== UDP packet
+
+.UDP datagram structure
+[example]
+====
+[source,mermaid]
+----
+packet-beta
+  title UDP Datagram
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  32-47: "Length"
+  48-63: "Checksum"
+  64-95: "Data (first 32 bits)"
+----
+
+This demonstrates:
+
+* Simple UDP header
+* Data section indicator
+* Standard 32-bit row layout
+====
+
+=== Ethernet frame
+
+.Ethernet frame structure
+[example]
+====
+[source,mermaid]
+----
+packet-beta
+  title Ethernet Frame
+  0-47: "Destination MAC"
+  48-95: "Source MAC"
+  96-111: "EtherType"
+  112-143: "Payload (start)"
+----
+
+This shows:
+
+* MAC address fields (48 bits each)
+* EtherType field
+* Payload beginning
+====
+
+== Features
+
+=== Flexible field sizes
+
+Fields can span any number of bits:
+
+[source,mermaid]
+----
+packet-beta
+  0-0: "Single bit"
+  1-8: "8 bits"
+  9-40: "32 bits"
+  41-104: "64 bits"
+----
+
+=== Multi-row layout
+
+Packets automatically wrap to multiple rows (typically 32 bits per row):
+
+[source,mermaid]
+----
+packet-beta
+  0-31: "Row 1"
+  32-63: "Row 2"
+  64-95: "Row 3"
+----
+
+=== Automatic bit numbering
+
+Bit positions are automatically labeled in the diagram for easy reference.
+
+=== Empty labels
+
+Fields can have empty labels if needed:
+
+[source,mermaid]
+----
+packet-beta
+  0-7: ""
+  8-15: "Used Field"
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following features are not yet supported in Sirena:
+
+* Custom row widths (fixed at 32 bits per row)
+* Color customization for specific fields
+* Field descriptions beyond labels
+* Nested or hierarchical field structures
+* Variable-length fields
+* Click events or interactive elements
+
+=== Known issues
+
+* Very long field labels may be truncated
+* Packets with many fields may become large
+* Single-bit fields in crowded areas may be hard to read
+
+== Best practices
+
+=== Use descriptive field names
+
+Give fields clear, technical names:
+
+[source,mermaid]
+----
+%% Good
+packet-beta
+  0-3: "Version"
+  4-7: "Header Length"
+
+%% Less clear
+packet-beta
+  0-3: "V"
+  4-7: "HL"
+----
+
+=== Include title for context
+
+Always include a title identifying the packet type:
+
+[source,mermaid]
+----
+%% Good
+packet-beta
+  title TCP Segment
+  ...
+
+%% Missing context
+packet-beta
+  0-15: "Port"
+----
+
+=== Follow protocol standards
+
+For standard protocols, use official field names:
+
+[source,mermaid]
+----
+%% Good - standard TCP terminology
+packet-beta
+  title TCP Header
+  0-15: "Source Port"
+  16-31: "Destination Port"
+
+%% Confusing - non-standard names
+packet-beta
+  title TCP
+  0-15: "From Port"
+  16-31: "To Port"
+----
+
+=== Organize fields logically
+
+Order fields as they appear in the actual packet:
+
+[source,mermaid]
+----
+%% Good - sequential order
+packet-beta
+  0-15: "Field A"
+  16-31: "Field B"
+  32-47: "Field C"
+
+%% Confusing - out of order
+packet-beta
+  32-47: "Field C"
+  0-15: "Field A"
+  16-31: "Field B"
+----
+
+=== Document all header fields
+
+Include all relevant header fields for completeness:
+
+[source,mermaid]
+----
+%% Good - complete header
+packet-beta
+  title UDP Header
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  32-47: "Length"
+  48-63: "Checksum"
+
+%% Incomplete
+packet-beta
+  title UDP Header
+  0-15: "Source Port"
+  16-31: "Destination Port"
+----
+
+=== Use standard bit numbering
+
+Start from 0 and follow protocol specifications:
+
+[source,mermaid]
+----
+%% Good - standard 0-based numbering
+packet-beta
+  0-7: "First byte"
+  8-15: "Second byte"
+
+%% Confusing - 1-based
+packet-beta
+  1-8: "First byte"
+  9-16: "Second byte"
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* link:https://mermaid.js.org/syntax/packet.html[Official Mermaid packet documentation]

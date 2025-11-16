@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_assign_multiple_classes_to_an_entity_at_the_same_time_40",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 809,
+  "metadata": {
+    "test_name": "should be possible to assign multiple classes to an entity at the same time"
+  }
+}

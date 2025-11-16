@@ -1,0 +1,114 @@
+= Error Diagram
+:toc:
+:toclevels: 3
+
+== Purpose
+
+Error diagrams display error messages or error states in Mermaid syntax. They are utility diagrams used to show parsing errors, syntax errors, or system failure states.
+
+== Syntax
+
+=== Basic error diagram
+
+The simplest form displays just an error indicator:
+
+[source,mermaid]
+----
+error
+----
+
+=== Error with message
+
+You can include an error message after the keyword:
+
+[source,mermaid]
+----
+Error Diagrams
+----
+
+The keyword can be lowercase or capitalized:
+
+[source,mermaid]
+----
+error
+----
+
+[source,mermaid]
+----
+Error
+----
+
+== Features
+
+=== Visual representation
+
+Error diagrams render as:
+
+* A centered box with error styling (light red background, red border)
+* An error icon (red circle with exclamation mark)
+* Error message text next to the icon
+* Visual design emphasizing the error state
+
+=== Theme integration
+
+Error diagrams use fixed error colors but integrate with theme typography:
+
+* Background: Light red (#FFEBEE)
+* Border: Red (#D32F2F)
+* Icon: Red circle with white exclamation mark
+* Text: Dark red (#C62828)
+* Typography settings for font family and size from theme
+
+== Implementation details
+
+=== Parser
+
+The error diagram parser (`Sirena::Parser::ErrorParser`) uses Parslet grammar to handle:
+
+* Basic `error` or `Error` keyword
+* Optional error message text after the keyword
+
+=== Model
+
+The error diagram model (`Sirena::Diagram::Error`) contains:
+
+* `message`: Optional error message string
+
+=== Renderer
+
+The error renderer (`Sirena::Renderer::ErrorRenderer`) creates:
+
+* A rounded rectangle box (400x120 pixels)
+* An error icon (red circle with exclamation mark) on the left
+* Error message text on the right
+* Fixed error color scheme for immediate recognition
+
+== Examples
+
+=== Simple error
+
+[source,mermaid]
+----
+error
+----
+
+Renders "Error" in an error box with icon.
+
+=== Error with message
+
+[source,mermaid]
+----
+Error Diagrams
+----
+
+Renders "Diagrams" as the error message.
+
+== Use cases
+
+Error diagrams are useful for:
+
+* Displaying parsing or syntax errors
+* Showing system failure states
+* Indicating error conditions in workflows
+* Testing error handling in diagram rendering
+* Documentation of error states

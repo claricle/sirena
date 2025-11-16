@@ -1,0 +1,9 @@
+{
+  "name": "parser_no_spaces_before_and_after_the_colon_3",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/parser/state-parser.spec.js",
+  "line_number": 40,
+  "metadata": {
+    "test_name": "no spaces before and after the colon"
+  }
+}

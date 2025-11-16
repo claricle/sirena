@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-25_Handle_rows_above_the_kanban_declarations_no_space_13",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 391,
+  "metadata": {
+    "test_name": "KNBN-25 Handle rows above the kanban declarations, no space"
+  }
+}

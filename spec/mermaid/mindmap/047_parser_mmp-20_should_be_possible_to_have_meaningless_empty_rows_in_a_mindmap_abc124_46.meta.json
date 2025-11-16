@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-20_should_be_possible_to_have_meaningless_empty_rows_in_a_mindmap_abc124_46",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 270,
+  "metadata": {
+    "test_name": "MMP-20 should be possible to have meaningless empty rows in a mindmap abc124"
+  }
+}

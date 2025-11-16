@@ -1,0 +1,49 @@
+<svg
+ width="600.0"
+ height="440.0"
+ viewBox="0 0 600 440"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="relationship-login-webapp">
+  <path fill="none" stroke="#666" stroke-width="2" d="M 110 340 C 110 446, 95 -86, 95 20" marker-end="url(#arrowhead)"/>
+  <rect fill="#fff" stroke="#666" stroke-width="1" x="71.0" y="170.0" width="63.0" height="18.0" rx="3.0"/>
+  <text fill="#000" x="102.0" y="180.0" text-anchor="middle" font-size="10" dominant-baseline="middle">satisfies</text>
+</g>
+<g id="relationship-security-webapp">
+  <path fill="none" stroke="#666" stroke-width="2" d="M 390 340 C 390 446, 95 -86, 95 20" marker-end="url(#arrowhead)"/>
+  <rect fill="#fff" stroke="#666" stroke-width="1" x="214.0" y="170.0" width="56.0" height="18.0" rx="3.0"/>
+  <text fill="#000" x="242.0" y="180.0" text-anchor="middle" font-size="10" dominant-baseline="middle">verifies</text>
+</g>
+<g id="requirement-login">
+  <rect fill="#ffffff" stroke="#ff6b6b" stroke-width="2" x="20.0" y="180.0" width="180.0" height="160.0" rx="5.0" ry="5.0"/>
+  <g>
+  <rect fill="#ff6b6b" opacity="0.3" x="20.0" y="180.0" width="180.0" height="30.0"/>
+  <text fill="#000" x="30.0" y="195.0" font-size="12" font-weight="bold" dominant-baseline="middle">Requirement</text>
+  <text fill="#000" x="190.0" y="195.0" text-anchor="end" font-size="11" dominant-baseline="middle">login</text>
+</g>
+  <text fill="#000" x="30.0" y="225.0" font-size="12">ID: 1</text>
+  <text fill="#000" x="30.0" y="241.0" font-size="12">Users must be able to</text>
+  <text fill="#000" x="30.0" y="257.0" font-size="12">login</text>
+  <text fill="#ff6b6b" x="30.0" y="278.0" font-size="12" font-weight="bold">Risk: High</text>
+  <text fill="#000" x="30.0" y="294.0" font-size="12">Verify: Test</text>
+</g>
+<g id="requirement-security">
+  <rect fill="#ffffff" stroke="#ff6b6b" stroke-width="2" x="300.0" y="180.0" width="180.0" height="160.0" rx="5.0" ry="5.0"/>
+  <g>
+  <rect fill="#ff6b6b" opacity="0.3" x="300.0" y="180.0" width="180.0" height="30.0"/>
+  <text fill="#000" x="310.0" y="195.0" font-size="12" font-weight="bold" dominant-baseline="middle">Requirement</text>
+  <text fill="#000" x="470.0" y="195.0" text-anchor="end" font-size="11" dominant-baseline="middle">security</text>
+</g>
+  <text fill="#000" x="310.0" y="225.0" font-size="12">ID: 2</text>
+  <text fill="#000" x="310.0" y="241.0" font-size="12">All data must be</text>
+  <text fill="#000" x="310.0" y="257.0" font-size="12">encrypted</text>
+  <text fill="#ff6b6b" x="310.0" y="278.0" font-size="12" font-weight="bold">Risk: High</text>
+  <text fill="#000" x="310.0" y="294.0" font-size="12">Verify: Inspection</text>
+</g>
+<g id="element-webapp">
+  <polygon fill="#ffffff" stroke="#00796b" stroke-width="2" points="20,60 58,20 132,20 170,60 132,100 58,100"/>
+  <text fill="#000" x="95.0" y="50.0" text-anchor="middle" font-size="14" font-weight="bold" dominant-baseline="middle">webapp</text>
+  <text fill="#666" x="95.0" y="70.0" text-anchor="middle" font-size="11" dominant-baseline="middle">Type: application</text>
+</g>
+</svg>

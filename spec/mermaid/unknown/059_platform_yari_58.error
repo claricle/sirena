@@ -1,0 +1,14 @@
+
+Error: Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, please ensure that you've correctly opened and closed the YAML front-matter with un-indented `---` blocks
+Object.parse (/Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.js:153415:19)
+    at $eval ($eval at renderMermaid (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/src/index.js:266:33), <anonymous>:48:45)
+    at #evaluate (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:388:19)
+    at async ExecutionContext.evaluate (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:275:16)
+    at async IsolatedWorld.evaluate (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/IsolatedWorld.js:97:16)
+    at async CdpJSHandle.evaluate (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/JSHandle.js:146:20)
+    at async CdpElementHandle.evaluate (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/ElementHandle.js:340:20)
+    at async CdpElementHandle.$eval (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/ElementHandle.js:494:24)
+    at async CdpFrame.$eval (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:450:20)
+    at async CdpPage.$eval (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:450:20)
+    at async renderMermaid (file:///Users/mulgogi/.asdf/installs/nodejs/23.8.0/lib/node_modules/@mermaid-js/mermaid-cli/src/index.js:266:22)
+

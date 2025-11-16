@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_entity_with_attribute_that_is_a_limited_length_string_23",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 335,
+  "metadata": {
+    "test_name": "should allow an entity with attribute that is a limited length string"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_blocks_mixed_with_compound_blocks_9",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 266,
+  "metadata": {
+    "test_name": "blocks mixed with compound blocks"
+  }
+}

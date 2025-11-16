@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_handle_edge_case_for_odd_vertex_with_node_id_ending_with_minus_64",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-text.spec.js",
+  "line_number": 371
+}
