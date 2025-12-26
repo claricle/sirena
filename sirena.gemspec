@@ -34,14 +34,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  # TODO: Uncomment when elkrb is available
-  # spec.add_dependency "elkrb"
+  spec.add_dependency "elkrb"
   spec.add_dependency 'lutaml-model', '~> 0.7'
   spec.add_dependency 'moxml'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'
-
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop'
 end
