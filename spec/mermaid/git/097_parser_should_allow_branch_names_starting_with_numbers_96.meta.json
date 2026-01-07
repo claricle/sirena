@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_branch_names_starting_with_numbers_96",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 591,
+  "metadata": {
+    "test_name": "should allow branch names starting with numbers"
+  }
+}

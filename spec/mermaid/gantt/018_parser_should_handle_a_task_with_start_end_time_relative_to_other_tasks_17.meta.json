@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_task_with_start_end_time_relative_to_other_tasks_17",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 119,
+  "metadata": {
+    "test_name": "should handle a task with start/end time relative to other tasks"
+  }
+}

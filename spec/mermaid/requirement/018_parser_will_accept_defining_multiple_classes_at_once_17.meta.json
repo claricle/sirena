@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_defining_multiple_classes_at_once_17",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 690,
+  "metadata": {
+    "test_name": "will accept defining multiple classes at once"
+  }
+}

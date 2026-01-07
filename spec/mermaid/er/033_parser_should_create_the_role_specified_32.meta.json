@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_create_the_role_specified_32",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 443,
+  "metadata": {
+    "test_name": "should create the role specified"
+  }
+}

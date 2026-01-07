@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-24_Handle_rows_above_the_kanban_declarations_12",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 375,
+  "metadata": {
+    "test_name": "KNBN-24 Handle rows above the kanban declarations"
+  }
+}

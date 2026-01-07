@@ -1,0 +1,602 @@
+= User journey diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+User journey diagrams in Sirena map the experience of users as they interact with a system or service over time. They show tasks, actors involved, and satisfaction scores, making them ideal for UX design, service design, and customer experience mapping.
+
+User journey diagrams are useful for:
+
+* Mapping customer experience touchpoints
+* Documenting user workflows and pain points
+* Planning service design improvements
+* Identifying satisfaction levels at each step
+* Communicating user experiences to stakeholders
+* Analyzing multi-actor interactions
+
+== Syntax specification
+
+=== Diagram declaration
+
+User journey diagrams are declared using the `journey` keyword:
+
+[source,mermaid]
+----
+journey
+    <diagram-content>
+----
+
+=== Title
+
+Journeys should have a descriptive title:
+
+[source,mermaid]
+----
+journey
+    title User Registration Journey
+----
+
+=== Sections
+
+Sections group related tasks in the journey:
+
+[source,mermaid]
+----
+journey
+    title My Journey
+    section Section Name
+        Task 1: score: Actor1, Actor2
+        Task 2: score: Actor1
+----
+
+=== Tasks
+
+Tasks represent individual steps in the journey:
+
+[source,mermaid]
+----
+Task description: satisfaction_score: Actor1, Actor2, Actor3
+----
+
+Where:
+
+* `Task description` - Description of what happens in this step
+* `satisfaction_score` - Number from 1-5 indicating satisfaction level
+  - 1 - Very dissatisfied
+  - 2 - Dissatisfied
+  - 3 - Neutral
+  - 4 - Satisfied
+  - 5 - Very satisfied
+* `Actor1, Actor2, Actor3` - Comma-separated list of actors involved
+
+==== Satisfaction scores
+
+Scores affect the visual representation:
+
+* 1-2: Displayed as negative/red (pain points)
+* 3: Displayed as neutral/yellow
+* 4-5: Displayed as positive/green (delightful moments)
+
+=== Actors
+
+Actors are the participants in the journey. They are defined implicitly when used in tasks:
+
+[source,mermaid]
+----
+journey
+    title Shopping Journey
+    section Browse
+        View products: 5: Customer
+        Add to cart: 4: Customer
+    section Checkout
+        Process payment: 3: Customer, System
+----
+
+In this example, `Customer` and `System` are actors.
+
+== Examples
+
+=== Basic user journey
+
+.Simple journey with one actor
+[example]
+====
+[source,mermaid]
+----
+journey
+    title User Login Journey
+    section Access
+        Navigate to site: 5: User
+        Click login button: 5: User
+    section Authentication
+        Enter credentials: 3: User
+        Submit form: 3: User
+    section Success
+        View dashboard: 5: User
+----
+
+This creates a simple journey showing:
+
+* Multiple sections organizing the flow
+* Tasks with satisfaction scores
+* Single actor (User) throughout
+====
+
+=== Multi-actor journey
+
+.Journey with multiple actors
+[example]
+====
+[source,mermaid]
+----
+journey
+    title Customer Support Interaction
+    section Discovery
+        Visit help center: 3: Customer
+        Search for solution: 2: Customer
+        Click support chat: 4: Customer
+    section Initial Contact
+        Greet customer: 5: Customer, Agent
+        Describe issue: 3: Customer, Agent
+        Agent reviews account: 4: Agent, System
+    section Resolution
+        Agent explains solution: 5: Customer, Agent
+        Customer follows steps: 4: Customer
+        Issue resolved: 5: Customer, Agent
+----
+
+This demonstrates:
+
+* Multiple actors (Customer, Agent, System)
+* Tasks involving different combinations of actors
+* Varying satisfaction scores reflecting pain points and successes
+====
+
+=== E-commerce shopping journey
+
+.Complete shopping experience
+[example]
+====
+[source,mermaid]
+----
+journey
+    title Online Shopping Experience
+    section Product Discovery
+        Search for product: 4: Customer
+        View search results: 3: Customer
+        Click product: 5: Customer
+        Read reviews: 4: Customer
+    section Product Evaluation
+        View product details: 5: Customer
+        Check availability: 4: Customer, System
+        Compare prices: 3: Customer
+        Add to cart: 5: Customer
+    section Checkout Process
+        Review cart: 4: Customer
+        Enter shipping info: 3: Customer
+        Select payment method: 3: Customer
+        Apply discount code: 5: Customer
+        Confirm order: 4: Customer, System
+    section Post-Purchase
+        Receive confirmation: 5: Customer, System
+        Track shipment: 4: Customer, System
+        Receive product: 5: Customer
+        Leave review: 4: Customer
+----
+
+This comprehensive journey includes:
+
+* Four distinct sections
+* Multiple touchpoints with the system
+* Satisfaction scores showing pain points (entering info) and delights (discounts)
+* Customer and System actors
+====
+
+=== Service design journey
+
+.Restaurant dining experience
+[example]
+====
+[source,mermaid]
+----
+journey
+    title Restaurant Dining Journey
+    section Arrival
+        Enter restaurant: 5: Guest
+        Greeted by host: 5: Guest, Host
+        Seated at table: 4: Guest, Host
+    section Ordering
+        Review menu: 4: Guest
+        Ask questions: 5: Guest, Server
+        Place order: 5: Guest, Server
+        Order sent to kitchen: 3: Server, Kitchen
+    section Dining
+        Receive appetizer: 5: Guest, Server
+        Receive main course: 5: Guest, Server
+        Enjoy meal: 5: Guest
+    section Conclusion
+        Request check: 4: Guest, Server
+        Process payment: 3: Guest, Server
+        Leave tip: 4: Guest
+        Exit restaurant: 5: Guest
+----
+
+This shows:
+
+* Service touchpoints with staff
+* Multiple actors (Guest, Host, Server, Kitchen)
+* Experience flow from arrival to departure
+====
+
+=== Software onboarding journey
+
+.New user onboarding experience
+[example]
+====
+[source,mermaid]
+----
+journey
+    title SaaS Application Onboarding
+    section Sign Up
+        Visit landing page: 4: User
+        Click sign up: 5: User
+        Fill registration form: 2: User
+        Verify email: 3: User, System
+    section Initial Setup
+        Complete profile: 3: User
+        Watch tutorial video: 4: User
+        Invite team members: 3: User, System
+    section First Use
+        Create first project: 5: User
+        Explore features: 4: User
+        Use core functionality: 5: User
+    section Engagement
+        Receive onboarding email: 4: User, System
+        Complete first task: 5: User
+        Share feedback: 4: User
+----
+
+This demonstrates:
+
+* Onboarding flow
+* Pain points in sign-up process (form filling)
+* System interactions
+* Building engagement over time
+====
+
+=== Complex multi-stakeholder journey
+
+.Healthcare appointment journey
+[example]
+====
+[source,mermaid]
+----
+journey
+    title Medical Appointment Journey
+    section Scheduling
+        Search for doctor: 3: Patient
+        Check availability: 2: Patient, System
+        Book appointment: 3: Patient, System
+        Receive confirmation: 4: Patient, System
+    section Pre-Visit
+        Fill out forms: 2: Patient
+        Upload insurance: 2: Patient, System
+        Receive reminder: 4: Patient, System
+    section Visit
+        Check in: 3: Patient, Receptionist
+        Wait in lobby: 2: Patient
+        Called for appointment: 4: Patient, Nurse
+        Vital signs check: 3: Patient, Nurse
+        Consultation: 5: Patient, Doctor
+        Receive prescription: 4: Patient, Doctor
+    section Post-Visit
+        Check out: 3: Patient, Receptionist
+        Schedule follow-up: 3: Patient, Receptionist
+        Receive bill: 2: Patient, System
+        Complete payment: 2: Patient
+        Fill prescription: 4: Patient
+----
+
+This comprehensive example includes:
+
+* Multiple stakeholders (Patient, Doctor, Nurse, Receptionist, System)
+* Pain points clearly identified (low scores for forms, waiting, billing)
+* Positive moments (consultation, prescription)
+* End-to-end journey from booking to follow-up
+====
+
+=== Customer support journey
+
+.Technical support experience
+[example]
+====
+[source,mermaid]
+----
+journey
+    title Customer Support Interaction Journey
+    section Discovery
+        Visit help center: 3: Customer
+        Search for solution: 2: Customer
+        Click support chat: 4: Customer
+    section Initial Contact
+        Greet customer: 5: Customer, Agent
+        Describe issue: 3: Customer, Agent
+        Agent reviews account: 4: Agent, System
+    section Diagnosis
+        Agent asks clarifying questions: 4: Customer, Agent
+        Customer provides details: 3: Customer, Agent
+        Agent checks logs: 2: Agent, System
+        Agent identifies root cause: 5: Agent
+    section Resolution
+        Agent explains solution: 5: Customer, Agent
+        Customer follows steps: 4: Customer
+        Issue resolved: 5: Customer, Agent
+    section Follow-up
+        Agent confirms resolution: 5: Customer, Agent
+        Customer rates experience: 5: Customer
+        Agent documents case: 4: Agent, System
+----
+
+This shows:
+
+* Support interaction flow
+* Collaboration between customer and agent
+* System involvement in diagnostics
+* Positive resolution experience
+====
+
+== Features
+
+=== Multiple sections
+
+Journeys can have any number of sections:
+
+[source,mermaid]
+----
+journey
+    title My Journey
+    section Phase 1
+        Task: 5: Actor
+    section Phase 2
+        Task: 4: Actor
+    section Phase 3
+        Task: 3: Actor
+----
+
+=== Multiple tasks per section
+
+Sections can contain multiple tasks:
+
+[source,mermaid]
+----
+journey
+    section Shopping
+        Browse products: 5: Customer
+        Add to cart: 4: Customer
+        Apply coupon: 5: Customer
+        Proceed to checkout: 4: Customer
+----
+
+=== Variable actor combinations
+
+Different tasks can involve different actors:
+
+[source,mermaid]
+----
+journey
+    section Service
+        Customer arrives: 4: Customer
+        Staff greets: 5: Customer, Staff
+        System processes: 3: Staff, System
+        Completion: 5: Customer, Staff, System
+----
+
+=== Long task descriptions
+
+Task descriptions can be descriptive:
+
+[source,mermaid]
+----
+journey
+    section Experience
+        Customer searches for the perfect product in the catalog: 4: Customer
+        System displays personalized recommendations based on history: 5: System
+----
+
+=== Score ranges
+
+Scores range from 1 (worst) to 5 (best):
+
+[source,mermaid]
+----
+journey
+    section Emotions
+        Frustrated: 1: User
+        Disappointed: 2: User
+        Neutral: 3: User
+        Satisfied: 4: User
+        Delighted: 5: User
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid user journey features are not yet supported in Sirena:
+
+* Custom styling with CSS classes
+* Click events and links
+* Custom color schemes for scores
+* Annotations or notes on tasks
+* Time duration indicators
+* Alternative paths or branches
+
+=== Known issues
+
+* Very long task descriptions may be truncated
+* Large numbers of actors may become cluttered
+* Many sections may affect layout readability
+
+== Best practices
+
+=== Use descriptive titles
+
+Give journeys clear, descriptive titles:
+
+[source,mermaid]
+----
+%% Good
+journey
+    title Customer Onboarding Journey
+
+%% Less clear
+journey
+    title Journey
+----
+
+=== Organize with meaningful sections
+
+Group related tasks into logical sections:
+
+[source,mermaid]
+----
+%% Good - organized by phase
+journey
+    section Discovery
+        ...
+    section Evaluation
+        ...
+    section Purchase
+        ...
+
+%% Less organized
+journey
+    section Steps
+        All tasks mixed together...
+----
+
+=== Use realistic satisfaction scores
+
+Base scores on actual user research or realistic estimates:
+
+[source,mermaid]
+----
+%% Realistic - mix of high and low
+journey
+    section Experience
+        Easy task: 5: User
+        Confusing form: 2: User
+        Helpful message: 4: User
+
+%% Unrealistic - all perfect
+journey
+    section Experience
+        Task 1: 5: User
+        Task 2: 5: User
+        Task 3: 5: User
+----
+
+=== Identify pain points
+
+Use low scores to highlight areas needing improvement:
+
+[source,mermaid]
+----
+journey
+    section Checkout
+        Review cart: 4: Customer
+        Enter shipping address: 2: Customer  %% Pain point!
+        Enter payment info: 2: Customer      %% Pain point!
+        Confirm order: 5: Customer
+----
+
+=== Include relevant actors
+
+Show all actors involved in each task:
+
+[source,mermaid]
+----
+%% Good - shows all involved parties
+journey
+    section Support
+        Issue reported: 2: Customer
+        Ticket created: 3: Customer, System
+        Agent assigned: 4: Customer, Agent, System
+        Issue resolved: 5: Customer, Agent
+
+%% Less informative - missing actors
+journey
+    section Support
+        Issue reported: 2: Customer
+        Issue resolved: 5: Customer
+----
+
+=== Keep journeys focused
+
+Don't try to map everything in one journey:
+
+[source,mermaid]
+----
+%% Good - focused on one journey
+journey
+    title New User Onboarding
+    section Sign Up
+        ...
+    section Setup
+        ...
+
+%% Too broad - multiple journeys mixed
+journey
+    title Everything Users Do
+    section Onboarding
+        ...
+    section Daily Use
+        ...
+    section Advanced Features
+        ...
+    section Account Management
+        ...
+----
+
+=== Use consistent actor names
+
+Maintain consistent naming throughout:
+
+[source,mermaid]
+----
+%% Good - consistent
+journey
+    section Flow
+        Task 1: 5: Customer
+        Task 2: 4: Customer
+        Task 3: 5: Customer
+
+%% Inconsistent
+journey
+    section Flow
+        Task 1: 5: Customer
+        Task 2: 4: User
+        Task 3: 5: Client
+----
+
+=== Document both positive and negative experiences
+
+Show the full range of user emotions:
+
+[source,mermaid]
+----
+journey
+    section Experience
+        Frustrating task: 1: User
+        Confusing step: 2: User
+        Acceptable process: 3: User
+        Good experience: 4: User
+        Delightful moment: 5: User
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<sequence-diagram.adoc#,Sequence diagrams>>
+* link:https://mermaid.js.org/syntax/userJourney.html[Official Mermaid user journey documentation]

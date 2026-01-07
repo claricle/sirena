@@ -1,0 +1,13 @@
+graph TD
+    Start[Start Process] --> Input[Receive Input]
+    Input --> Validate{Valid Input?}
+    Validate -->|Yes| Process[Process Data]
+    Validate -->|No| Error[Show Error]
+    Error --> Input
+    Process --> Calculate[Calculate Result]
+    Calculate --> Output[Generate Output]
+    Output --> Save{Save to Database?}
+    Save -->|Yes| DB[(Database)]
+    Save -->|No| Display[Display Result]
+    DB --> Display
+    Display --> End[End Process]

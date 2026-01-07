@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle a single node with white space after it (SN1)_115",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-singlenode.spec.js",
+  "line_number": 0
+}

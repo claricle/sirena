@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_log_a_warning_when_two_commits_have_the_same_ID_128",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 1321,
+  "metadata": {
+    "test_name": "should log a warning when two commits have the same ID"
+  }
+}

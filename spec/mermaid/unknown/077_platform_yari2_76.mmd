@@ -1,0 +1,15 @@
+---
+            title: simple ER diagram
+            config:
+              theme: forest
+          ---
+          erDiagram
+          direction TB
+          p[Pers😀on] {
+              string firstName
+              string lastName
+          }
+          a["Customer Account"] {
+              string email
+          }
+          p ||--o| a : has

@@ -1,0 +1,19 @@
+<svg
+ width="500.0"
+ height="460.0"
+ viewBox="0 0 500 460"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<text fill="#000000" x="250.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Browser Market Share 2024</text>
+<path id="slice-0" fill="#4472C4" stroke="#000000" stroke-width="2" d="M 250 200 L 250.0 50.0 A 150 150 0 1 1 128.6474508437579 288.167787843871 Z"/>
+<path id="slice-1" fill="#ED7D31" stroke="#000000" stroke-width="2" d="M 250 200 L 128.6474508437579 288.167787843871 A 150 150 0 0 1 118.55399799342047 127.73694888474269 Z"/>
+<path id="slice-2" fill="#A5A5A5" stroke="#000000" stroke-width="2" d="M 250 200 L 118.55399799342047 127.73694888474269 A 150 150 0 0 1 169.62598075315054 73.35081117469771 Z"/>
+<path id="slice-3" fill="#FFC000" stroke="#000000" stroke-width="2" d="M 250 200 L 169.62598075315054 73.35081117469771 A 150 150 0 0 1 221.89280281214144 52.656912390696675 Z"/>
+<path id="slice-4" fill="#5B9BD5" stroke="#000000" stroke-width="2" d="M 250 200 L 221.89280281214144 52.656912390696675 A 150 150 0 0 1 250.0000000000001 50.0 Z"/>
+<text fill="#000000" x="410.3811743539062" y="281.7182899531184" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Chrome</text>
+<text fill="#000000" x="70.35518888291111" y="211.30229351527643" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Safari</text>
+<text fill="#000000" x="118.78564706414599" y="76.78152093283599" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Firefox</text>
+<text fill="#000000" x="183.73758051675816" y="32.64023254011468" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Edge</text>
+<text fill="#000000" x="233.0605036026675" y="20.798846371445592" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" dominant-baseline="middle">Others</text>
+</svg>

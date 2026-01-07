@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_define_a_class_with_styles_43",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 854,
+  "metadata": {
+    "test_name": "should be possible to define a class with styles"
+  }
+}

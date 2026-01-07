@@ -1,0 +1,9 @@
+{
+  "name": "parser_parses_csv_with_sankey-beta_syntax_0",
+  "type": "sankey",
+  "source_file": "/packages/mermaid/src/diagrams/sankey/parser/sankey.spec.ts",
+  "line_number": 15,
+  "metadata": {
+    "test_name": "parses csv with sankey-beta syntax"
+  }
+}

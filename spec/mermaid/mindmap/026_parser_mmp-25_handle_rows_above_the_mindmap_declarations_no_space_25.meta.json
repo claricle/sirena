@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-25_Handle_rows_above_the_mindmap_declarations_no_space_25",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 352,
+  "metadata": {
+    "test_name": "MMP-25 Handle rows above the mindmap declarations, no space"
+  }
+}

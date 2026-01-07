@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-31_should_be_possible_to_set_the_assignment_34",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 425,
+  "metadata": {
+    "test_name": "KNBN-31 should be possible to set the assignment"
+  }
+}

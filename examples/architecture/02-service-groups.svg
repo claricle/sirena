@@ -1,0 +1,55 @@
+<svg
+ width="554.0"
+ height="350.0"
+ viewBox="0 0 554.0 350"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="group-api">
+  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="10.0" width="504.0" height="300.0" rx="8.0" ry="8.0" stroke-dasharray="5,5" fill-opacity="0.3"/>
+  <text fill="#333" x="20.0" y="30.0" font-size="14" font-weight="bold">API Services</text>
+  <text fill="#666" x="484.0" y="35.0" font-size="20">☁</text>
+</g>
+<g id="group-storage">
+  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="10.0" width="340.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5" fill-opacity="0.3"/>
+  <text fill="#333" x="20.0" y="30.0" font-size="14" font-weight="bold">Storage Layer</text>
+  <text fill="#666" x="320.0" y="35.0" font-size="20">◎</text>
+</g>
+<g id="edge-webapp-auth">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160 80 L 200 240" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-webapp-data">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100 120 L 424.0 200" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-data-db">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 424.0 280 L 100 40" marker-end="url(#arrowhead)"/>
+</g>
+<g id="edge-auth-cache">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 262.0 280 L 260 40" marker-end="url(#arrowhead)"/>
+</g>
+<g id="service-webapp">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="100.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">▦</text>
+  <text fill="#000000" x="100.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Web Server</text>
+</g>
+<g id="service-auth">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="200.0" width="124.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="262.0" y="226.0" text-anchor="middle" font-size="24" dominant-baseline="middle">▦</text>
+  <text fill="#000000" x="262.0" y="253.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Auth Service</text>
+</g>
+<g id="service-data">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="364.0" y="200.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="424.0" y="226.0" text-anchor="middle" font-size="24" dominant-baseline="middle">⬢</text>
+  <text fill="#000000" x="424.0" y="253.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Data API</text>
+</g>
+<g id="service-db">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="100.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">⬢</text>
+  <text fill="#000000" x="100.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Database</text>
+</g>
+<g id="service-cache">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="260.0" y="66.0" text-anchor="middle" font-size="24" dominant-baseline="middle">▦</text>
+  <text fill="#000000" x="260.0" y="93.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" dominant-baseline="middle">Cache</text>
+</g>
+</svg>

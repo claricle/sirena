@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_use_a_accessibility_title_and_multiline_description_accDescr__4",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 93,
+  "metadata": {
+    "test_name": "will use a accessibility title and multiline description (accDescr)"
+  }
+}

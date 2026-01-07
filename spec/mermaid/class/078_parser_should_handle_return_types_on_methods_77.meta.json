@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_return_types_on_methods_77",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 600,
+  "metadata": {
+    "test_name": "should handle return types on methods"
+  }
+}

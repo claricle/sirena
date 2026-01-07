@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_class_names_with_underscore_63",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 154,
+  "metadata": {
+    "test_name": "should handle class names with underscore"
+  }
+}

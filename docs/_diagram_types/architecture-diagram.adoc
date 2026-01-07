@@ -1,0 +1,314 @@
+= Architecture Diagram
+:toc:
+:toclevels: 3
+
+== Purpose
+
+Architecture diagrams visualize software system architecture at different levels, showing system boundaries, services, components, and their relationships. This is useful for documenting system architecture, communicating design decisions, and understanding system topology.
+
+== Features
+
+=== General
+
+Architecture diagrams support:
+
+* Services with icons and labels
+* Grouping services into boundaries
+* Nested group hierarchies
+* Directional connections between services
+* Edge labels for protocols/technologies
+* Metadata (title, accessibility)
+
+The implementation follows Mermaid's `architecture-beta` syntax.
+
+=== Basic services
+
+Define services with icons and labels.
+
+Syntax:
+
+[source]
+----
+architecture-beta
+    service {id}({icon})[{label}]
+----
+
+Where,
+
+`id`:: Unique identifier for the service
+`icon`:: Icon type (database, server, disk, cloud, internet, browser, etc.)
+`label`:: Display label for the service
+
+.Defining basic services
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    service db(database)[Database]
+    service api(server)[API Server]
+    service ui(browser)[Web UI]
+----
+
+This creates three services:
+
+* A database service with ID `db`
+* An API server with ID `api`
+* A web UI with ID `ui`
+====
+
+=== Service connections
+
+Connect services with directional arrows.
+
+Syntax:
+
+[source]
+----
+{from_id}:{from_pos} --> {to_pos}:{to_id}
+{from_id} --> {to_id}
+----
+
+Where,
+
+`from_id`:: Source service identifier
+`to_id`:: Target service identifier
+`from_pos`:: Optional position hint (L/R/T/B for left/right/top/bottom)
+`to_pos`:: Optional position hint for target side
+
+.Connecting services with position hints
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    service db(database)[Database]
+    service server(server)[Server]
+
+    db:R --> L:server
+----
+
+This creates a connection from the right side of the database to the left side of the server.
+====
+
+=== Edge labels
+
+Add labels to connections to indicate protocols or technologies.
+
+Syntax:
+
+[source]
+----
+{from_id} --> {to_id}: {label}
+----
+
+Where,
+
+`label`:: Text describing the connection (e.g., HTTP, SQL, REST)
+
+.Adding edge labels
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    service ui(browser)[Web UI]
+    service api(server)[API]
+    service db(database)[Database]
+
+    ui:R --> L:api: HTTP
+    api:R --> L:db: SQL
+----
+
+This shows the protocols used between services.
+====
+
+=== Groups and boundaries
+
+Group related services using boundaries.
+
+Syntax:
+
+[source]
+----
+group {id}({icon})[{label}]
+service {service_id}({icon})[{label}] in {group_id}
+----
+
+Where,
+
+`group_id`:: Identifier for the group
+`service_id`:: Service to place in the group
+`icon`:: Optional icon for the group (e.g., cloud)
+`label`:: Display label for the group boundary
+
+.Grouping services
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    group api(cloud)[API Layer]
+
+    service db(database)[Database] in api
+    service server(server)[Server] in api
+
+    service gateway(internet)[Gateway]
+
+    gateway:R --> L:server
+----
+
+This creates an API Layer group containing the database and server, with an external gateway service.
+====
+
+=== Nested groups
+
+Create hierarchical group structures.
+
+Syntax:
+
+[source]
+----
+group {parent_id}[{label}]
+group {child_id}[{label}] in {parent_id}
+----
+
+.Creating nested groups
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    group api[API]
+    group public[Public API] in api
+    group private[Private API] in api
+
+    service web(server)[Web Server] in public
+    service admin(server)[Admin Server] in private
+    service db(database)[Database] in private
+----
+
+This creates a hierarchical structure with public and private API groups within a main API group.
+====
+
+=== Title and accessibility
+
+Add metadata for documentation and accessibility.
+
+Syntax:
+
+[source]
+----
+architecture-beta
+    title {diagram title}
+    accTitle: {accessibility title}
+    accDescr: {accessibility description}
+----
+
+.Adding metadata
+[example]
+====
+[source,mermaid]
+----
+architecture-beta
+    title E-Commerce System Architecture
+    accTitle: System Architecture Diagram
+    accDescr: Shows the main components of the e-commerce platform
+
+    service ui(browser)[Web UI]
+    service api(server)[API Gateway]
+    service db(database)[Database]
+----
+====
+
+=== Icon types
+
+Common icon types supported:
+
+* `database` - Database systems
+* `server` - Application servers
+* `disk` - Storage systems
+* `cloud` - Cloud services
+* `internet` - Internet gateway
+* `browser` - Web browsers/clients
+
+Additional icon prefixes (for future extension):
+
+* `logos:{name}` - Logo icons (e.g., `logos:aws-s3`)
+* `fa:{name}` - Font Awesome icons (e.g., `fa:image`)
+
+== Implementation
+
+Architecture diagrams use a 7-file Parslet architecture:
+
+. **Model** ([`lib/sirena/diagram/architecture.rb`](lib/sirena/diagram/architecture.rb)) - Lutaml::Model classes for diagram structure
+. **Grammar** ([`lib/sirena/parser/grammars/architecture.rb`](lib/sirena/parser/grammars/architecture.rb)) - Parslet grammar for syntax parsing
+. **Transform** ([`lib/sirena/parser/transforms/architecture.rb`](lib/sirena/parser/transforms/architecture.rb)) - Converts parse tree to model
+. **Parser** ([`lib/sirena/parser/architecture.rb`](lib/sirena/parser/architecture.rb)) - Orchestrates parsing pipeline
+. **Layout** ([`lib/sirena/transform/architecture.rb`](lib/sirena/transform/architecture.rb)) - Positions elements spatially
+. **Renderer** ([`lib/sirena/renderer/architecture.rb`](lib/sirena/renderer/architecture.rb)) - Generates SVG output
+. **Tests** - Parser and renderer test suites
+
+The implementation follows MECE principles with clear separation of concerns between parsing, transformation, layout, and rendering stages.
+
+== Examples
+
+=== Simple three-tier architecture
+
+[source,mermaid]
+----
+architecture-beta
+    service ui(browser)[Web UI]
+    service api(server)[API Server]
+    service db(database)[Database]
+
+    ui:R --> L:api: HTTPS
+    api:R --> L:db: SQL
+----
+
+=== Microservices with groups
+
+[source,mermaid]
+----
+architecture-beta
+    group frontend[Frontend]
+    group backend[Backend Services]
+    group data[Data Layer]
+
+    service web(browser)[Web App] in frontend
+    service mobile(browser)[Mobile App] in frontend
+
+    service auth(server)[Auth Service] in backend
+    service orders(server)[Order Service] in backend
+    service inventory(server)[Inventory Service] in backend
+
+    service db(database)[Primary DB] in data
+    service cache(disk)[Cache] in data
+
+    web:B --> T:auth
+    mobile:B --> T:auth
+    auth:B --> T:db
+    orders:B --> T:db
+    inventory:R --> L:cache
+----
+
+=== Cloud architecture
+
+[source,mermaid]
+----
+architecture-beta
+    title Cloud Infrastructure
+
+    group aws(cloud)[AWS Cloud]
+
+    service lb(internet)[Load Balancer] in aws
+    service web(server)[Web Servers] in aws
+    service app(server)[App Servers] in aws
+    service db(database)[RDS Database] in aws
+    service s3(disk)[S3 Storage] in aws
+
+    lb:B --> T:web: HTTPS
+    web:B --> T:app: HTTP
+    app:R --> L:db: SQL
+    app:B --> T:s3: S3 API
+----

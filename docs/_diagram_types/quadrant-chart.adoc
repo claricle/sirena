@@ -1,0 +1,406 @@
+= Quadrant Chart
+:toc:
+:toclevels: 3
+
+== General
+
+Quadrant charts visualize data points across four quadrants based on two axes. They are useful for categorizing items based on two independent variables, such as priority matrices, portfolio analysis, or strategic planning.
+
+The quadrant chart implementation in Sirena follows the established 7-file Parslet architecture pattern, ensuring consistency with other diagram types.
+
+== Architecture
+
+=== Components
+
+The quadrant chart implementation consists of seven main components:
+
+. **Diagram Model** ([`lib/sirena/diagram/quadrant.rb`](lib/sirena/diagram/quadrant.rb:1))
+  * `QuadrantChart` - Main diagram model
+  * `QuadrantPoint` - Individual data point with coordinates and styling
+
+. **Parslet Grammar** ([`lib/sirena/parser/grammars/quadrant.rb`](lib/sirena/parser/grammars/quadrant.rb:1))
+  * Parses `quadrantChart` keyword
+  * Axis definitions with labels
+  * Quadrant labels (quadrant-1 through quadrant-4)
+  * Data points with [x, y] coordinates
+  * Point styling (radius, color, stroke)
+
+. **Transform** ([`lib/sirena/parser/transforms/quadrant.rb`](lib/sirena/parser/transforms/quadrant.rb:1))
+  * Converts parse tree to QuadrantChart model
+  * Extracts title, axes, quadrant labels, and points
+
+. **Parser** ([`lib/sirena/parser/quadrant.rb`](lib/sirena/parser/quadrant.rb:1))
+  * Orchestrates grammar and transform
+  * Provides error handling
+
+. **Layout Transform** ([`lib/sirena/transform/quadrant.rb`](lib/sirena/transform/quadrant.rb:1))
+  * Calculates 2x2 grid layout
+  * Converts normalized coordinates (0-1) to SVG coordinates
+  * Positions points in 2D space
+
+. **Renderer** ([`lib/sirena/renderer/quadrant.rb`](lib/sirena/renderer/quadrant.rb:1))
+  * Draws quadrant grid with colored backgrounds
+  * Renders center axes
+  * Adds axis labels and quadrant names
+  * Renders data points as circles with labels
+
+. **Tests** ([`spec/sirena/parser/quadrant_spec.rb`](spec/sirena/parser/quadrant_spec.rb:1))
+  * Parser tests with 17 examples
+  * 10 fixture files from Mermaid test suite
+
+=== Data Flow
+
+[source]
+----
+Mermaid Source
+      ↓
+Grammar (Parslet) → Parse Tree
+      ↓
+Transform → QuadrantChart Model
+      ↓
+Layout Transform → Graph Structure with SVG Coordinates
+      ↓
+Renderer → SVG Document
+----
+
+== Syntax
+
+=== Basic Structure
+
+[source,mermaid]
+----
+quadrantChart
+    title Chart Title
+    x-axis Low Value --> High Value
+    y-axis Low Impact --> High Impact
+    quadrant-1 Label for Top Right
+    quadrant-2 Label for Top Left
+    quadrant-3 Label for Bottom Left
+    quadrant-4 Label for Bottom Right
+    Item A: [0.3, 0.6]
+    Item B: [0.7, 0.8]
+----
+
+=== Quadrant Numbering
+
+Quadrants are numbered 1-4:
+
+* **Quadrant 1**: Top-right (x ≥ 0.5, y ≥ 0.5)
+* **Quadrant 2**: Top-left (x < 0.5, y ≥ 0.5)
+* **Quadrant 3**: Bottom-left (x < 0.5, y < 0.5)
+* **Quadrant 4**: Bottom-right (x ≥ 0.5, y < 0.5)
+
+=== Coordinates
+
+Data points use normalized coordinates in the range [0.0, 1.0]:
+
+* X-axis: 0.0 (left) to 1.0 (right)
+* Y-axis: 0.0 (bottom) to 1.0 (top)
+
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    Point A: [0.2, 0.8]  # Top-left area
+    Point B: [0.8, 0.2]  # Bottom-right area
+----
+====
+
+== Features
+
+=== Title Declaration
+
+Add a title to the chart using the `title` keyword.
+
+.Adding a title
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    title Product Analysis Matrix
+    x-axis Low Cost --> High Cost
+    y-axis Low Value --> High Value
+----
+====
+
+=== Axis Labels
+
+Define axis labels with start and end labels using the arrow syntax `-->`.
+
+.Defining axis labels
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Low Reach --> High Reach
+    y-axis Low Engagement --> High Engagement
+----
+====
+
+.Using quoted labels with special characters
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis "Low Cost ❤" --> "High Cost"
+    y-axis "Low Value" --> "High Value"
+----
+====
+
+=== Quadrant Labels
+
+Label each of the four quadrants using `quadrant-1` through `quadrant-4`.
+
+.Setting quadrant labels
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    quadrant-1 Quick Wins
+    quadrant-2 Major Projects
+    quadrant-3 Fill Ins
+    quadrant-4 Hard Slogs
+----
+====
+
+=== Data Points
+
+Add data points with normalized [x, y] coordinates.
+
+.Basic data points
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    Campaign A: [0.3, 0.6]
+    Campaign B: [0.45, 0.23]
+    Campaign C: [0.57, 0.69]
+----
+====
+
+=== Point Styling
+
+Customize point appearance with styling parameters.
+
+.Point with radius
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    Product A: [0.5, 0.5] radius: 10
+----
+====
+
+.Point with color and radius
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    Product B: [0.3, 0.7] radius: 8, color: #ff0000
+----
+====
+
+.Point with all styling options
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    x-axis Left --> Right
+    y-axis Bottom --> Top
+    Product D: [0.1, 0.9] radius: 10, color: #ff0000, stroke-color: #00ff00, stroke-width: 3px
+----
+====
+
+Available styling parameters:
+
+radius:: Size of the point circle (default: 6)
+color:: Fill color of the point (hex or named color)
+stroke-color:: Border color of the point
+stroke-width:: Width of the point border (can include "px" suffix)
+
+== Complete Example
+
+.Campaign reach and engagement analysis
+[example]
+====
+[source,mermaid]
+----
+quadrantChart
+    title Reach and engagement of campaigns
+    x-axis Low Reach --> High Reach
+    y-axis Low Engagement --> High Engagement
+    quadrant-1 We should expand
+    quadrant-2 Need to promote
+    quadrant-3 Re-evaluate
+    quadrant-4 May be improved
+    Campaign A: [0.3, 0.6]
+    Campaign B: [0.45, 0.23]
+    Campaign C: [0.57, 0.69]
+    Campaign D: [0.78, 0.34]
+    Campaign E: [0.40, 0.34]
+    Campaign F: [0.35, 0.78]
+----
+
+This produces a quadrant chart with:
+
+* A title at the top
+* X-axis labeled from "Low Reach" to "High Reach"
+* Y-axis labeled from "Low Engagement" to "High Engagement"
+* Four labeled quadrants with colored backgrounds
+* Six campaign data points positioned by their coordinates
+====
+
+== Theming
+
+The quadrant chart renderer integrates with Sirena's theme system.
+
+=== Configurable Colors
+
+The following theme colors are used:
+
+label_text:: Text color for labels and titles
+grid_line:: Color for axis lines and quadrant borders
+node_stroke:: Default stroke color for points
+primary:: Default color for Quadrant 1 points
+secondary:: Default color for Quadrant 2 points
+accent:: Default color for Quadrant 3 points
+success:: Default color for Quadrant 4 points
+
+=== Typography
+
+The renderer uses theme typography settings:
+
+font_family:: Font family for all text
+font_size_large:: Size for chart title (default: 18)
+font_size_normal:: Size for quadrant labels (default: 14)
+font_size_small:: Size for axis labels and point labels (default: 11-12)
+
+=== Quadrant Background Colors
+
+Default quadrant colors (can be overridden in theme):
+
+* Quadrant 1 (top-right): `#e3f2fd` (light blue)
+* Quadrant 2 (top-left): `#fff3e0` (light orange)
+* Quadrant 3 (bottom-left): `#f3e5f5` (light purple)
+* Quadrant 4 (bottom-right): `#e8f5e9` (light green)
+
+== Implementation Notes
+
+=== Model Architecture
+
+The [`QuadrantChart`](lib/sirena/diagram/quadrant.rb:81) class inherits from [`Diagram::Base`](lib/sirena/diagram/base.rb:1) and uses Lutaml::Model for serialization.
+
+Key methods:
+
+* [`diagram_type`](lib/sirena/diagram/quadrant.rb:112) - Returns `:quadrant`
+* [`valid?`](lib/sirena/diagram/quadrant.rb:123) - Validates all points
+* [`points_by_quadrant`](lib/sirena/diagram/quadrant.rb:134) - Groups points by quadrant
+
+The [`QuadrantPoint`](lib/sirena/diagram/quadrant.rb:12) class provides:
+
+* [`valid?`](lib/sirena/diagram/quadrant.rb:37) - Ensures coordinates are in [0,1] range
+* [`quadrant`](lib/sirena/diagram/quadrant.rb:53) - Determines which quadrant (1-4) the point is in
+
+=== Grammar Rules
+
+The Parslet grammar in [`lib/sirena/parser/grammars/quadrant.rb`](lib/sirena/parser/grammars/quadrant.rb:1) handles:
+
+* Optional title declarations
+* X-axis and Y-axis with quoted or unquoted labels
+* Quadrant labels (quadrant-1 through quadrant-4)
+* Data points with coordinates and optional styling
+* Class definitions (for future styling support)
+* Comments
+
+=== Coordinate System
+
+The transform converts normalized coordinates (0-1) to SVG coordinates:
+
+* X-axis: `svg_x = margin + (x * chart_width)`
+* Y-axis: `svg_y = margin + ((1.0 - y) * chart_height)` (inverted for SVG)
+
+Default dimensions:
+
+* Width: 800px
+* Height: 600px
+* Margin: 80px
+* Chart area: 640x440px
+
+=== SVG Structure
+
+The renderer creates SVG elements in this order:
+
+. Title (if present)
+. Quadrant background rectangles
+. Center axis lines (vertical and horizontal)
+. Axis labels (x-left, x-right, y-bottom, y-top)
+. Quadrant labels
+. Data points (circles)
+. Point labels (text)
+
+== Testing
+
+The implementation includes comprehensive tests:
+
+=== Parser Tests
+
+17 test examples covering:
+
+* Simple quadrant charts
+* Multiple points
+* Point styling parameters
+* Quoted axis labels
+* Minimal diagrams
+* Quadrant determination
+* All 10 Mermaid fixture files
+
+Run tests with:
+
+[source,shell]
+----
+bundle exec rspec spec/sirena/parser/quadrant_spec.rb
+----
+
+=== Test Coverage
+
+* ✅ All 10 Mermaid fixtures parse successfully
+* ✅ All 10 fixtures render to valid SVG
+* ✅ Point coordinates validated (0-1 range)
+* ✅ Quadrant assignment correct for all points
+* ✅ Styling parameters extracted properly
+
+== Known Limitations
+
+. Class definitions (`classDef`) are parsed but not yet applied to rendering
+. Point labels may overlap if points are close together
+. No automatic label positioning to avoid overlaps
+. Fixed canvas dimensions (800x600)
+
+== Future Enhancements
+
+. Apply `classDef` styles to points
+. Smart label positioning to avoid overlaps
+. Configurable canvas dimensions
+. Interactive tooltips for points
+. Legend support
+. Grid lines within quadrants
+. Data value display on hover

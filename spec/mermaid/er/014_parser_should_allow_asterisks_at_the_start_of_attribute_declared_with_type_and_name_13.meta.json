@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_asterisks_at_the_start_of_attribute_declared_with_type_and_name_13",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 211,
+  "metadata": {
+    "test_name": "should allow asterisks at the start of attribute declared with type and name"
+  }
+}

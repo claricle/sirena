@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_handle_normal_edges_where_you_also_have_a_node_with_metadata_26",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-edges.spec.js",
+  "line_number": 126
+}

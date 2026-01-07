@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_support_cherry-picking_of_merge_commits_111",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 963,
+  "metadata": {
+    "test_name": "should support cherry-picking of merge commits"
+  }
+}

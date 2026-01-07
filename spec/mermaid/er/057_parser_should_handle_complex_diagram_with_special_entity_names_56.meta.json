@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_complex_diagram_with_special_entity_names_56",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 1058,
+  "metadata": {
+    "test_name": "should handle complex diagram with special entity names"
+  }
+}

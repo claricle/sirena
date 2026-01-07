@@ -1,0 +1,9 @@
+{
+  "name": "parser_a_diagram_with_column_statements_4",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 117,
+  "metadata": {
+    "test_name": "a diagram with column statements"
+  }
+}

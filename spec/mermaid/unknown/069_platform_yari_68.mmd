@@ -1,0 +1,31 @@
+---
+          title: Animal example
+          config:
+            layout: dagre
+          ---
+          classDiagram
+              note "From Duck till Zebra"
+              Animal <|--|> Duck
+              note for Duck "can fly<br>can swim<br>can dive<br>can help in debugging"
+              Animal <|-- Fish
+              Animal <|--|> Zebra
+              Animal : +int age
+              Animal : +String gender
+              Animal: +isMammal()
+              Animal: +mate()
+              class Duck{
+                  +String beakColor
+                  +swim()
+                  +quack()
+              }
+              class Fish{
+                  -int sizeInFeet
+                  -canEat()
+              }
+              class Zebra{
+                  +bool is_wild
+                  +run()
+              }
+              cssClass "Duck" test
+              classDef test fill:#f71
+              %%classDef default fill:#f93

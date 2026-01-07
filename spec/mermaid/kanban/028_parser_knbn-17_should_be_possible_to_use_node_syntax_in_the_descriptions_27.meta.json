@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-17_should_be_possible_to_use_node_syntax_in_the_descriptions_27",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 234,
+  "metadata": {
+    "test_name": "KNBN-17 should be possible to use node syntax in the descriptions"
+  }
+}

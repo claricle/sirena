@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_not_allow_leading_numbers_dashes_or_brackets_14",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 221,
+  "metadata": {
+    "test_name": "should not allow leading numbers, dashes or brackets"
+  }
+}

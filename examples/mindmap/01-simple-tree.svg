@@ -1,0 +1,61 @@
+<svg
+ width="2508.0"
+ height="520.0"
+ viewBox="0 0 2508.0 520.0"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1254 80 C 1254 130, 346 130, 346 180"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 346 200 C 346 250, 118 250, 118 300"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 346 200 C 346 250, 346 250, 346 300"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 346 200 C 346 250, 574 250, 574 300"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1254 80 C 1254 130, 1132 130, 1132 180"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1132 200 C 1132 250, 912 250, 912 300"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 912 320 C 912 370, 802 370, 802 420"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 912 320 C 912 370, 1022 370, 1022 420"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1132 200 C 1132 250, 1352 250, 1352 300"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 1352 320 C 1352 370, 1242 370, 1242 420"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 1352 320 C 1352 370, 1462 370, 1462 420"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1254 80 C 1254 130, 1820 130, 1820 180"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1820 200 C 1820 250, 1682 250, 1682 300"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1820 200 C 1820 250, 1930 250, 1930 300"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1254 80 C 1254 130, 2288 130, 2288 180"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2288 200 C 2288 250, 2178 250, 2178 300"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2288 200 C 2288 250, 2398 250, 2398 300"/>
+<circle fill="#e6f2ff" stroke="#007bff" stroke-width="2" cx="1254.0" cy="168.0" r="108.0"/>
+<text fill="#000000" x="1254.0" y="173.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Software Development</text>
+<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="296.0" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="346.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Planning</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="60.0" y="300.0" width="116.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="118.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Requirements</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="296.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="346.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Design</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="516.0" y="300.0" width="116.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="574.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Architecture</text>
+<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1078.0" y="180.0" width="108.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1132.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Development</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="862.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="912.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Frontend</text>
+<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="752.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="802.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">React</text>
+<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="972.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1022.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Vue</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1302.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1352.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Backend</text>
+<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1192.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1242.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Ruby</text>
+<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1412.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1462.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Python</text>
+<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1770.0" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1820.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Testing</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1632.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1682.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Unit Tests</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1852.0" y="300.0" width="156.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="1930.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Integration Tests</text>
+<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="2238.0" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="2288.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Deployment</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2128.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="2178.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">CI/CD</text>
+<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2348.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
+<text fill="#000000" x="2398.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Monitoring</text>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "name": "parser_cannot contain \\\\ because it could start and escape code_4",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 0
+}

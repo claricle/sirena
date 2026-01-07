@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_stand-alone_entities_with_no_relationships_3",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 15,
+  "metadata": {
+    "test_name": "should allow stand-alone entities with no relationships"
+  }
+}

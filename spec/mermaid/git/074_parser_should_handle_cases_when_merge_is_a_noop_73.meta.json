@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_cases_when_merge_is_a_noop_73",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 150,
+  "metadata": {
+    "test_name": "should handle cases when merge is a noop"
+  }
+}

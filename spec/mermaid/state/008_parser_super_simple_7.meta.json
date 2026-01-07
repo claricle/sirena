@@ -1,0 +1,9 @@
+{
+  "name": "parser_super_simple_7",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 16,
+  "metadata": {
+    "test_name": "super simple"
+  }
+}

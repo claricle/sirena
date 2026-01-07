@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_alphanumeric_characters_dashes_underscores_and_brackets_not_leading_chars__11",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 183,
+  "metadata": {
+    "test_name": "should allow alphanumeric characters, dashes, underscores and brackets (not leading chars)"
+  }
+}

@@ -1,0 +1,600 @@
+= Git graph diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Git graph diagrams in Sirena visualize Git repository history, showing commits,
+branches, merges, and cherry-pick operations. These diagrams provide a clear
+visual representation of version control workflows, making them ideal for
+documentation, tutorials, and code review discussions.
+
+Git graphs are useful for:
+
+* Documenting branching strategies and workflows
+* Visualizing feature development and integration
+* Creating tutorials on Git operations
+* Illustrating merge and rebase scenarios
+* Showing release management processes
+* Explaining cherry-pick operations in pull requests
+
+== Syntax specification
+
+=== Diagram declaration
+
+Git graphs are declared using the `gitGraph` keyword with optional orientation:
+
+[source,mermaid]
+----
+gitGraph
+    <diagram-content>
+----
+
+==== Orientation
+
+The layout direction can be specified immediately after the keyword:
+
+[source,mermaid]
+----
+gitGraph LR:
+    <diagram-content>
+----
+
+Options:
+
+* Default (no specification) - Top to bottom layout
+* `TB:` or `BT:` - Top to bottom / bottom to top (vertical)
+* `LR:` - Left to right (horizontal)
+* `:` - Use default orientation
+
+=== Commits
+
+Commits are the basic building blocks of a git graph:
+
+[source,mermaid]
+----
+commit
+----
+
+==== Commit with options
+
+Commits can have custom identifiers, types, and tags:
+
+[source,mermaid]
+----
+commit id: "abc123"
+commit type: HIGHLIGHT
+commit tag: "v1.0.0"
+commit id: "Initial" type: NORMAL tag: "release"
+----
+
+Where:
+
+`id`:: Custom identifier for the commit (quoted or unquoted string)
+`type`:: Visual style of the commit (NORMAL, REVERSE, HIGHLIGHT)
+`tag`:: Version tag or label displayed above the commit
+
+=== Branches
+
+==== Creating a branch
+
+Create a new branch from the current branch:
+
+[source,mermaid]
+----
+branch feature-x
+----
+
+==== Branch with ordering
+
+Control the vertical positioning of branches:
+
+[source,mermaid]
+----
+branch develop order: 1
+branch feature order: 2
+----
+
+Lower order numbers appear higher in the diagram layout.
+
+=== Switching branches
+
+==== Checkout
+
+Switch to an existing branch using `checkout`:
+
+[source,mermaid]
+----
+checkout develop
+----
+
+==== Switch
+
+Alternative syntax using `switch`:
+
+[source,mermaid]
+----
+switch develop
+----
+
+Both `checkout` and `switch` are functionally equivalent.
+
+=== Merge operations
+
+Merge a branch into the current branch:
+
+[source,mermaid]
+----
+merge feature-branch
+----
+
+==== Merge with options
+
+Merges can have custom identifiers, types, and tags:
+
+[source,mermaid]
+----
+merge feature id: "merge-1" type: HIGHLIGHT tag: "v2.0"
+----
+
+=== Cherry-pick operations
+
+Cherry-pick commits from one branch to another:
+
+[source,mermaid]
+----
+cherry-pick id: "abc123"
+----
+
+==== Cherry-pick with parent
+
+Specify the parent commit for the cherry-pick:
+
+[source,mermaid]
+----
+cherry-pick id: "commit-id" parent: "parent-id"
+----
+
+==== Cherry-pick with tag
+
+Add a tag to a cherry-picked commit:
+
+[source,mermaid]
+----
+cherry-pick id: "feature-commit" tag: "backport"
+----
+
+=== Commit types
+
+Three visual styles are available for commits:
+
+[cols="2,3"]
+|===
+|Type |Description
+
+|`NORMAL`
+|Default commit style with filled circle
+
+|`REVERSE`
+|Hollow circle with colored border
+
+|`HIGHLIGHT`
+|Emphasized commit with highlight color
+|===
+
+== Examples
+
+=== Simple linear history
+
+.Basic commit sequence
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "Initial commit"
+    commit id: "Add feature"
+    commit id: "Fix bug"
+    commit id: "Release" tag: "v1.0"
+----
+
+This creates a simple linear history with four commits, where the last commit
+is tagged as version 1.0.
+====
+
+=== Feature branch workflow
+
+.Creating and merging a feature branch
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "Initial"
+    branch develop
+    checkout develop
+    commit id: "Setup"
+    branch feature
+    checkout feature
+    commit id: "Implement feature"
+    commit id: "Add tests"
+    checkout develop
+    merge feature
+    checkout main
+    merge develop tag: "v1.0"
+----
+
+This demonstrates:
+
+* Creating a develop branch from main
+* Creating a feature branch from develop
+* Working on the feature with multiple commits
+* Merging the feature back to develop
+* Merging develop to main with a release tag
+====
+
+=== Multiple parallel branches
+
+.Working with multiple feature branches
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "Start"
+    branch feature-a
+    branch feature-b
+    checkout feature-a
+    commit id: "Feature A - Step 1"
+    commit id: "Feature A - Step 2"
+    checkout feature-b
+    commit id: "Feature B - Step 1"
+    checkout main
+    commit id: "Hotfix"
+    checkout feature-a
+    merge main id: "Sync hotfix"
+    commit id: "Feature A - Complete"
+    checkout main
+    merge feature-a
+    checkout feature-b
+    commit id: "Feature B - Complete"
+    checkout main
+    merge feature-b
+----
+
+This shows:
+
+* Multiple feature branches created simultaneously
+* Independent development on each branch
+* Hotfix applied to main and synchronized to feature-a
+* Sequential merging of completed features
+====
+
+=== Using commit types for emphasis
+
+.Visual differentiation with commit types
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "Init"
+    commit id: "Regular work" type: NORMAL
+    branch feature
+    checkout feature
+    commit id: "Important change" type: HIGHLIGHT
+    commit id: "Experimental" type: REVERSE
+    commit id: "Feature done" type: HIGHLIGHT
+    checkout main
+    merge feature tag: "v2.0"
+----
+
+This demonstrates:
+
+* `NORMAL` - Standard commits (default)
+* `HIGHLIGHT` - Important or milestone commits
+* `REVERSE` - Experimental or tentative commits
+* Using types to visually distinguish commit importance
+====
+
+=== Cherry-pick operation
+
+.Backporting a fix with cherry-pick
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "Base"
+    branch develop
+    checkout develop
+    commit id: "Feature 1"
+    commit id: "Feature 2"
+    commit id: "Critical fix"
+    checkout main
+    cherry-pick id: "Critical fix" tag: "backport"
+    checkout develop
+    commit id: "Feature 3"
+----
+
+This shows:
+
+* Development happening on develop branch
+* A critical fix committed to develop
+* Cherry-picking the fix back to main
+* Tagging the cherry-picked commit as a backport
+* Continued development on develop branch
+====
+
+=== Complex workflow with tags and types
+
+.Real-world release workflow
+[example]
+====
+[source,mermaid]
+----
+gitGraph
+    commit id: "v0.1.0" tag: "v0.1.0"
+    branch develop
+    checkout develop
+    commit id: "Setup CI"
+    branch feature-auth
+    checkout feature-auth
+    commit id: "Add login" type: HIGHLIGHT
+    commit id: "Add logout"
+    checkout develop
+    branch feature-api
+    checkout feature-api
+    commit id: "API endpoint"
+    checkout develop
+    merge feature-auth
+    commit id: "Integration tests"
+    checkout main
+    commit id: "Security patch" type: HIGHLIGHT
+    checkout develop
+    merge main id: "Sync security"
+    merge feature-api
+    commit id: "Prepare release" type: HIGHLIGHT
+    checkout main
+    merge develop tag: "v1.0.0"
+----
+
+This comprehensive example includes:
+
+* Initial release tag on main
+* Develop branch for integration
+* Multiple feature branches in parallel
+* Security patch on main
+* Synchronizing security patch to develop
+* Merging features to develop
+* Final release merge with version tag
+* Using HIGHLIGHT type for important commits
+====
+
+=== Horizontal layout
+
+.Left-to-right git graph
+[example]
+====
+[source,mermaid]
+----
+gitGraph LR:
+    commit id: "Start"
+    branch feature
+    checkout feature
+    commit id: "Work"
+    commit id: "More work"
+    checkout main
+    merge feature tag: "done"
+----
+
+This demonstrates:
+
+* Horizontal layout using `LR:` orientation
+* Better for wide displays or documentation
+* Same functionality as vertical layout
+====
+
+== Features
+
+=== Automatic branch creation
+
+Branches are created automatically when first referenced:
+
+[source,mermaid]
+----
+gitGraph
+    commit
+    branch feature
+    checkout feature
+    commit
+----
+
+The `main` branch exists by default as the starting point.
+
+=== Branch naming
+
+Branch names can contain letters, numbers, hyphens, and underscores:
+
+[source,mermaid]
+----
+gitGraph
+    branch feature-123
+    branch bug_fix_2
+    branch dev-v2
+----
+
+=== Commit identifiers
+
+Commit IDs can be quoted or unquoted:
+
+[source,mermaid]
+----
+gitGraph
+    commit id: abc123
+    commit id: "commit with spaces"
+    commit id: 'single-quoted'
+----
+
+=== Multiple options
+
+Commits and merges can have multiple options:
+
+[source,mermaid]
+----
+gitGraph
+    commit id: "feat-1" type: HIGHLIGHT tag: "milestone"
+    branch develop
+    checkout develop
+    commit
+    checkout main
+    merge develop id: "release" type: HIGHLIGHT tag: "v1.0"
+----
+
+=== Branch ordering
+
+Control visual layout with order numbers:
+
+[source,mermaid]
+----
+gitGraph
+    branch hotfix order: 0
+    branch main order: 1
+    branch develop order: 2
+    branch feature order: 3
+----
+
+Lower numbers appear higher in the vertical layout.
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid git graph features are not yet supported in Sirena:
+
+* Comments using `%%`
+* Custom styling with themes beyond built-in types
+* Click events and links
+* Custom branch colors
+* Parallel merge visualization options
+
+=== Known issues
+
+* Very complex graphs with many branches may require manual ordering
+* Long commit IDs may overlap in compact layouts
+* Cherry-pick visualization is simplified compared to actual Git behavior
+
+== Best practices
+
+=== Use meaningful commit IDs
+
+Choose descriptive identifiers for important commits:
+
+[source,mermaid]
+----
+%% Good
+gitGraph
+    commit id: "Initial setup"
+    commit id: "Add authentication"
+    commit id: "Fix login bug"
+
+%% Less clear
+gitGraph
+    commit id: "a1b2c3"
+    commit id: "commit2"
+    commit id: "fix"
+----
+
+=== Tag releases and milestones
+
+Use tags to mark important points in history:
+
+[source,mermaid]
+----
+gitGraph
+    commit id: "Development"
+    commit id: "Feature complete" tag: "RC1"
+    commit id: "Bug fixes"
+    commit id: "Production ready" tag: "v1.0.0"
+----
+
+=== Use commit types strategically
+
+Apply types to emphasize important commits:
+
+* `HIGHLIGHT` - Major features, releases, critical fixes
+* `REVERSE` - Experimental changes, work-in-progress
+* `NORMAL` - Regular development work (default)
+
+[source,mermaid]
+----
+gitGraph
+    commit type: NORMAL
+    commit type: HIGHLIGHT id: "Major feature" tag: "beta"
+    commit type: REVERSE id: "Experimental API"
+    commit type: NORMAL
+----
+
+=== Keep branch names concise
+
+Use short, descriptive branch names:
+
+[source,mermaid]
+----
+%% Good
+gitGraph
+    branch feature-auth
+    branch hotfix-login
+    branch release-2.0
+
+%% Too verbose
+gitGraph
+    branch feature-implement-user-authentication-system
+    branch hotfix-fix-the-login-page-redirect-issue
+----
+
+=== Order branches logically
+
+Use branch ordering for clarity:
+
+[source,mermaid]
+----
+gitGraph
+    branch main order: 0
+    branch release order: 1
+    branch develop order: 2
+    branch feature order: 3
+    branch hotfix order: 4
+----
+
+This creates a logical top-to-bottom hierarchy.
+
+=== Show complete workflows
+
+Include all steps in your workflow:
+
+[source,mermaid]
+----
+gitGraph
+    commit id: "Start"
+    branch develop
+    checkout develop
+    commit id: "Work"
+    checkout main
+    merge develop
+----
+
+Don't leave workflows incomplete or ambiguous.
+
+=== Choose appropriate orientation
+
+Select layout based on your medium:
+
+* Vertical (default) - Better for most documentation
+* Horizontal (`LR:`) - Better for wide screens or presentations
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<flowchart.adoc#,Flowchart diagrams>>
+* link:https://mermaid.js.org/syntax/gitgraph.html[Official Mermaid git graph documentation]

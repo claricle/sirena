@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_properly_assign_styles_from_a_class_defined_inside_the_diagram_59",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 88,
+  "metadata": {
+    "test_name": "should properly assign styles from a class defined inside the diagram"
+  }
+}

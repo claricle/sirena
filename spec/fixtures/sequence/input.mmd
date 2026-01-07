@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant User
+    participant WebApp
+    participant API
+    participant Database
+    participant Cache
+
+    User->>+WebApp: Request Product Page
+    WebApp->>+Cache: Check Cache
+    Cache-->>-WebApp: Cache Miss
+
+    WebApp->>+API: GET /api/product/123
+    API->>+Database: SELECT * FROM products WHERE id=123
+    Database-->>-API: Product Data
+    API-->>-WebApp: JSON Response
+
+    WebApp->>+Cache: Store in Cache
+    Cache-->>-WebApp: Cached
+
+    WebApp-->>-User: Render Product Page
+
+    Note over User,Cache: Subsequent request will hit cache
+
+    User->>+WebApp: Refresh Page
+    WebApp->>+Cache: Check Cache
+    Cache-->>-WebApp: Cache Hit
+    WebApp-->>-User: Render Product Page (Fast)

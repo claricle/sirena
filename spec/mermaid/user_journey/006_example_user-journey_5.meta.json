@@ -1,0 +1,7 @@
+{
+  "name": "example_user-journey_5",
+  "type": "user_journey",
+  "source_file": "/packages/examples/src/examples/user-journey.ts",
+  "line_number": 10,
+  "metadata": {}
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_two_classes_with_text_labels_and_css_class_shorthands_169",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1850,
+  "metadata": {
+    "test_name": "should parse two classes with text labels and css class shorthands"
+  }
+}

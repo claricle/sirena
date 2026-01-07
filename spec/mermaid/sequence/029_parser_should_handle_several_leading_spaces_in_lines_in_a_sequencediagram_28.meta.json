@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle several leading spaces in lines in a sequenceDiagram_28",
+  "type": "sequence",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/sequence/sequenceDiagram.spec.js",
+  "line_number": 0
+}

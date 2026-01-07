@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_not_disturb_adding_multiple_nodes_after_each_other_44",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-node-data.spec.js",
+  "line_number": 164
+}

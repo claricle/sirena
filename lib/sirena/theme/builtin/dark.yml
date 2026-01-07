@@ -1,0 +1,70 @@
+name: dark
+description: "Dark theme optimized for low-light environments"
+
+colors:
+  background: "#1e1e1e"
+  surface: "#2d2d30"
+  surface_variant: "#3e3e42"
+
+  foreground: "#d4d4d4"
+  foreground_secondary: "#969696"
+
+  primary: "#3794ff"
+  secondary: "#858585"
+  accent: "#4ec9b0"
+  error: "#f48771"
+  warning: "#dcdcaa"
+  success: "#89d185"
+  info: "#9cdcfe"
+
+  node_fill: "#2d2d30"
+  node_stroke: "#858585"
+  edge_stroke: "#858585"
+  label_text: "#d4d4d4"
+
+  hover_fill: "#3e3e42"
+  active_fill: "#505050"
+  disabled_fill: "#404040"
+
+typography:
+  font_family: "Arial, Helvetica, sans-serif"
+  font_family_monospace: "Courier New, monospace"
+  font_size_small: 12.0
+  font_size_normal: 14.0
+  font_size_large: 16.0
+  font_size_title: 20.0
+  font_weight_normal: "normal"
+  font_weight_bold: "bold"
+  line_height: 1.5
+  text_transform: "none"
+
+shapes:
+  stroke_width: 2.0
+  stroke_width_thick: 3.0
+  stroke_width_thin: 1.0
+  fill_opacity: 1.0
+  stroke_opacity: 1.0
+  corner_radius: 5.0
+  corner_radius_large: 10.0
+  dash_pattern_dotted: "2,2"
+  dash_pattern_dashed: "5,5"
+
+spacing:
+  node_padding_x: 10.0
+  node_padding_y: 5.0
+  node_margin: 20.0
+  edge_spacing: 10.0
+  edge_label_offset: 5.0
+  rank_spacing: 100.0
+  node_spacing: 50.0
+
+effects:
+  shadow_enabled: true
+  shadow_color: "#00000066"
+  shadow_blur: 8.0
+  shadow_offset_x: 3.0
+  shadow_offset_y: 3.0
+  gradient_enabled: false
+  gradient_type: "linear"
+  arrow_size: 10.0
+  arrow_style: "filled"

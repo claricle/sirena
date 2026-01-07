@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-4_should_not_distinguish_between_deeper_hierarchical_levels_in_the_kanban_definition_17",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 58,
+  "metadata": {
+    "test_name": "KNBN-4 should not distinguish between deeper hierarchical levels in the kanban definition"
+  }
+}

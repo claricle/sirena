@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_title_definition_11",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 27,
+  "metadata": {
+    "test_name": "should handle a title definition"
+  }
+}

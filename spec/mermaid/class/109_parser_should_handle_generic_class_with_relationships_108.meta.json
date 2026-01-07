@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_generic_class_with_relationships_108",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1097,
+  "metadata": {
+    "test_name": "should handle generic class with relationships"
+  }
+}

@@ -1,0 +1,9 @@
+architecture-beta
+    service frontend(browser)[Frontend]
+    service backend(server)[Backend API]
+    service db(database)[Database]
+    service cache(disk)[Cache]
+
+    frontend L--R backend
+    backend L--R db
+    backend T--B cache

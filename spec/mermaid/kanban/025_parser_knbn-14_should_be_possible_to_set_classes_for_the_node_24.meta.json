@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-14_should_be_possible_to_set_classes_for_the_node_24",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 176,
+  "metadata": {
+    "test_name": "KNBN-14 should be possible to set classes for the node"
+  }
+}

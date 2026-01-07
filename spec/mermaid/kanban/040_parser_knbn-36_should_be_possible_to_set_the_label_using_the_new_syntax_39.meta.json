@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-36_should_be_possible_to_set_the_label_using_the_new_syntax_39",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 475,
+  "metadata": {
+    "test_name": "KNBN-36 should be possible to set the label using the new syntax"
+  }
+}

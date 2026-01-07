@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-6_real_root_in_wrong_place_19",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 97,
+  "metadata": {
+    "test_name": "KNBN-6 real root in wrong place"
+  }
+}

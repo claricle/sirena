@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_recursive_relationships_33",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 452,
+  "metadata": {
+    "test_name": "should allow recursive relationships"
+  }
+}

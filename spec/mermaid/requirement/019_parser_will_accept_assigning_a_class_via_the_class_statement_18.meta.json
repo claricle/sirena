@@ -1,0 +1,9 @@
+{
+  "name": "parser_will_accept_assigning_a_class_via_the_class_statement_18",
+  "type": "requirement",
+  "source_file": "/packages/mermaid/src/diagrams/requirement/parser/requirementDiagram.spec.js",
+  "line_number": 718,
+  "metadata": {
+    "test_name": "will accept assigning a class via the class statement"
+  }
+}

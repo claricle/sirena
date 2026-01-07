@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_todayMarker_definition_13",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 42,
+  "metadata": {
+    "test_name": "should handle a todayMarker definition"
+  }
+}

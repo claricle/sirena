@@ -1,0 +1,78 @@
+<svg
+ width="680.0"
+ height="820.0"
+ viewBox="0 0 680 820"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<line stroke="#000000" stroke-width="1" x1="80.0" y1="60.0" x2="80.0" y2="760.0" stroke-dasharray="5,5"/>
+<line stroke="#000000" stroke-width="1" x1="220.0" y1="60.0" x2="220.0" y2="760.0" stroke-dasharray="5,5"/>
+<line stroke="#000000" stroke-width="1" x1="360.0" y1="60.0" x2="360.0" y2="760.0" stroke-dasharray="5,5"/>
+<line stroke="#000000" stroke-width="1" x1="500.0" y1="60.0" x2="500.0" y2="760.0" stroke-dasharray="5,5"/>
+<g id="message-0">
+  <line stroke="#000000" stroke-width="2" x1="80.0" y1="120.0" x2="212.0" y2="120.0"/>
+  <polygon fill="#000000" stroke="#000000" points="220,120 212,116 212,124"/>
+  <text fill="#000000" x="150.0" y="110.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Request data</text>
+</g>
+<g id="message-1">
+  <line stroke="#000000" stroke-width="2" x1="220.0" y1="180.0" x2="352.0" y2="180.0"/>
+  <polygon fill="#000000" stroke="#000000" points="360,180 352,176 352,184"/>
+  <text fill="#000000" x="290.0" y="170.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Query data</text>
+</g>
+<g id="message-2">
+  <line stroke="#000000" stroke-width="2" x1="360.0" y1="240.0" x2="212.0" y2="240.0" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" stroke="#000000" points="220,240 228,236 228,244"/>
+  <text fill="#000000" x="290.0" y="230.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Return results</text>
+</g>
+<g id="message-3">
+  <line stroke="#000000" stroke-width="2" x1="220.0" y1="300.0" x2="492.0" y2="300.0"/>
+  <polygon fill="#000000" stroke="#000000" points="500,300 492,296 492,304"/>
+  <text fill="#000000" x="360.0" y="290.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Store in cache</text>
+</g>
+<g id="message-4">
+  <line stroke="#000000" stroke-width="2" x1="500.0" y1="360.0" x2="212.0" y2="360.0" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" stroke="#000000" points="220,360 228,356 228,364"/>
+  <text fill="#000000" x="360.0" y="350.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Cached</text>
+</g>
+<g id="message-5">
+  <line stroke="#000000" stroke-width="2" x1="220.0" y1="420.0" x2="72.0" y2="420.0" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" stroke="#000000" points="80,420 88,416 88,424"/>
+  <text fill="#000000" x="150.0" y="410.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Response</text>
+</g>
+<g id="message-6">
+  <line stroke="#000000" stroke-width="2" x1="80.0" y1="480.0" x2="212.0" y2="480.0"/>
+  <polygon fill="#000000" stroke="#000000" points="220,480 212,476 212,484"/>
+  <text fill="#000000" x="150.0" y="470.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Request same data</text>
+</g>
+<g id="message-7">
+  <line stroke="#000000" stroke-width="2" x1="220.0" y1="540.0" x2="492.0" y2="540.0"/>
+  <polygon fill="#000000" stroke="#000000" points="500,540 492,536 492,544"/>
+  <text fill="#000000" x="360.0" y="530.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Check cache</text>
+</g>
+<g id="message-8">
+  <line stroke="#000000" stroke-width="2" x1="500.0" y1="600.0" x2="212.0" y2="600.0" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" stroke="#000000" points="220,600 228,596 228,604"/>
+  <text fill="#000000" x="360.0" y="590.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Cache hit</text>
+</g>
+<g id="message-9">
+  <line stroke="#000000" stroke-width="2" x1="220.0" y1="660.0" x2="72.0" y2="660.0" stroke-dasharray="5,5"/>
+  <polygon fill="#000000" stroke="#000000" points="80,660 88,656 88,664"/>
+  <text fill="#000000" x="150.0" y="650.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">Fast response</text>
+</g>
+<g id="participant-Client">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="20.0" y="20.0" width="120.0" height="40.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="80.0" y="40.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Client</text>
+</g>
+<g id="participant-Server">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="160.0" y="20.0" width="120.0" height="40.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="220.0" y="40.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Server</text>
+</g>
+<g id="participant-Database">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="300.0" y="20.0" width="120.0" height="40.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="360.0" y="40.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Database</text>
+</g>
+<g id="participant-Cache">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="440.0" y="20.0" width="120.0" height="40.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="500.0" y="40.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" dominant-baseline="middle">Cache</text>
+</g>
+</svg>

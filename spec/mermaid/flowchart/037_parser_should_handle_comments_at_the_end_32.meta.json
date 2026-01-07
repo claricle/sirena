@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle comments at the end_32",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-comments.spec.js",
+  "line_number": 0
+}

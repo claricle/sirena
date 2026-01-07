@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_numbers_in_relationships_54",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 1044,
+  "metadata": {
+    "test_name": "should allow numbers in relationships"
+  }
+}

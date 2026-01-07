@@ -1,0 +1,9 @@
+{
+  "name": "parser_blocks_on_top_of_each_other_8",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 164,
+  "metadata": {
+    "test_name": "blocks on top of each other"
+  }
+}

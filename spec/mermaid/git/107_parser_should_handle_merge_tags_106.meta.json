@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_merge_tags_106",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 813,
+  "metadata": {
+    "test_name": "should handle merge tags"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_a_link_43",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4System.spec.js",
+  "line_number": 97,
+  "metadata": {
+    "test_name": "should parse a link"
+  }
+}

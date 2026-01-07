@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_all_basic_relationships_112",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1205,
+  "metadata": {
+    "test_name": "should handle all basic relationships"
+  }
+}

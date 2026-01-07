@@ -1,0 +1,196 @@
+= Sirena Examples
+
+This directory contains examples for all 24 supported diagram types in Sirena, a pure Ruby Mermaid diagram renderer.
+
+== Quick Start
+
+[source,bash]
+----
+# Render an example
+bundle exec ruby exe/sirena render examples/flowchart/01-basic-flow.mmd -o output.svg
+
+# Or use the library directly
+ruby -r ./lib/sirena -e 'puts Sirena.render(File.read("examples/flowchart/01-basic-flow.mmd"))'
+----
+
+== Diagram Types
+
+Each diagram type has its own subdirectory with examples and documentation.
+
+=== Flowcharts & Graphs
+
+==== link:flowchart/README.adoc[Flowchart]
+Process flows, workflows, and decision trees.
+
+* link:flowchart/01-basic-flow.mmd[01-basic-flow] - Basic process flow
+* link:flowchart/02-node-shapes.mmd[02-node-shapes] - Node shape varieties
+* link:flowchart/03-edge-types.mmd[03-edge-types] - Connection types
+* link:flowchart/04-subgraphs.mmd[04-subgraphs] - Grouped nodes
+* link:flowchart/05-styling.mmd[05-styling] - Node hierarchy
+* link:flowchart/06-complex-flow.mmd[06-complex-flow] - Multi-path workflow
+
+==== link:git_graph/[Git Graph]
+Version control branching and merging visualization.
+
+* link:git_graph/01-linear-history.mmd[01-linear-history] - Linear commit history
+
+==== link:mindmap/[Mindmap]
+Hierarchical concept mapping and brainstorming.
+
+* link:mindmap/01-simple-tree.mmd[01-simple-tree] - Basic mind map
+
+=== UML Diagrams
+
+==== link:sequence/[Sequence Diagram]
+Object interaction and message passing over time.
+
+* link:sequence/01-basic-sequence.mmd[01-basic-sequence] - Basic interactions
+
+==== link:class_diagram/[Class Diagram]
+Object-oriented class structure and relationships.
+
+* link:class_diagram/01-basic-classes.mmd[01-basic-classes] - Basic classes
+
+==== link:state_diagram/[State Diagram]
+State machine and lifecycle visualization.
+
+* link:state_diagram/01-simple-states.mmd[01-simple-states] - Basic states
+
+==== link:er_diagram/[ER Diagram]
+Entity-relationship database modeling.
+
+* link:er_diagram/01-basic-entities.mmd[01-basic-entities] - Basic entities
+
+=== Architecture & System Design
+
+==== link:c4/[C4 Diagram]
+Software architecture at different abstraction levels.
+
+* link:c4/01-context-diagram.mmd[01-context-diagram] - System context
+
+==== link:architecture/[Architecture Diagram]
+Service-based architecture visualization.
+
+* link:architecture/01-basic-services.mmd[01-basic-services] - Basic services
+
+==== link:block/[Block Diagram]
+Block-based layouts and connections.
+
+* link:block/01-basic-blocks.mmd[01-basic-blocks] - Basic blocks
+
+=== Project Management
+
+==== link:gantt/[Gantt Chart]
+Project timeline and task scheduling.
+
+* link:gantt/01-simple-timeline.mmd[01-simple-timeline] - Project timeline
+
+==== link:timeline/[Timeline]
+Historical events and chronological visualization.
+
+* link:timeline/01-simple-timeline.mmd[01-simple-timeline] - Event timeline
+
+==== link:kanban/[Kanban Board]
+Task workflow and status tracking.
+
+* link:kanban/01-simple-board.mmd[01-simple-board] - Basic board
+
+==== link:requirement/[Requirement Diagram]
+System requirements and traceability.
+
+* link:requirement/01-basic-requirements.mmd[01-basic-requirements] - Basic requirements
+
+==== link:user_journey/[User Journey]
+User experience mapping and satisfaction tracking.
+
+* link:user_journey/01-simple-journey.mmd[01-simple-journey] - Basic journey
+
+=== Data Visualization
+
+==== link:pie/[Pie Chart]
+Proportional data visualization.
+
+* link:pie/01-simple-chart.mmd[01-simple-chart] - Basic pie chart
+
+==== link:xychart/[XY Chart]
+Line and bar charts with axes.
+
+* link:xychart/01-line-chart.mmd[01-line-chart] - Line chart
+
+==== link:quadrant/[Quadrant Chart]
+2x2 matrix positioning and analysis.
+
+* link:quadrant/01-basic-quadrant.mmd[01-basic-quadrant] - Basic quadrant
+
+==== link:radar/[Radar Chart]
+Multi-dimensional data comparison.
+
+* link:radar/01-simple-radar.mmd[01-simple-radar] - Skill assessment
+
+==== link:treemap/[Treemap]
+Hierarchical data with size-based visualization.
+
+* link:treemap/01-basic-treemap.mmd[01-basic-treemap] - Disk usage
+
+==== link:sankey/[Sankey Diagram]
+Flow quantities between nodes.
+
+* link:sankey/01-simple-flow.mmd[01-simple-flow] - Basic flow
+
+=== Network & Technical
+
+==== link:packet/[Packet Diagram]
+Network protocol packet structure.
+
+* link:packet/01-basic-packet.mmd[01-basic-packet] - TCP header
+
+=== Other
+
+==== link:info/[Info Display]
+Informational messages and notices.
+
+* link:info/01-basic-info.mmd[01-basic-info] - Basic info
+* link:info/02-showinfo.mmd[02-showinfo] - Show info display
+
+==== link:error/[Error Display]
+Error message visualization.
+
+* link:error/01-basic-error.mmd[01-basic-error] - Basic error
+* link:error/02-error-display.mmd[02-error-display] - Detailed error
+
+== Example File Format
+
+Each example consists of:
+
+* `.mmd` file - Mermaid source code
+* `.svg` file - Rendered SVG output (generated)
+* `README.adoc` - Documentation (in subdirectory)
+
+== Contributing Examples
+
+To add a new example:
+
+1. Create `.mmd` file in appropriate subdirectory
+2. Generate SVG: `bundle exec ruby exe/sirena render FILE.mmd -o FILE.svg`
+3. Update subdirectory README.adoc
+4. Ensure example follows naming convention: `{number}-{name}.mmd`
+
+== Testing Examples
+
+Run all examples through the renderer:
+
+[source,bash]
+----
+for dir in examples/*/; do
+  for mmd in $dir*.mmd; do
+    svg="${mmd%.mmd}.svg"
+    bundle exec ruby exe/sirena render "$mmd" -o "$svg" && echo "✓ $mmd" || echo "✗ $mmd"
+  done
+done
+----
+
+== See Also
+
+* link:../README.adoc[Main Sirena Documentation]
+* link:../docs/[Additional Documentation]
+* https://mermaid.js.org/[Mermaid Official Documentation]

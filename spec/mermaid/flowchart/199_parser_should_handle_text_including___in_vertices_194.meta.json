@@ -1,0 +1,6 @@
+{
+  "name": "parser_should handle text including _ in vertices_194",
+  "type": "flowchart",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/flowchart/parser/flow-text.spec.js",
+  "line_number": 0
+}

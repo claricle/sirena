@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_throw_because_of_unsupported_info_grammar_6",
+  "type": "info",
+  "source_file": "/packages/mermaid/src/diagrams/info/info.spec.ts",
+  "line_number": 13,
+  "metadata": {
+    "test_name": "should throw because of unsupported info grammar"
+  }
+}

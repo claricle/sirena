@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_add_relations_between_classes_of_different_namespaces_161",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1681,
+  "metadata": {
+    "test_name": "should add relations between classes of different namespaces"
+  }
+}

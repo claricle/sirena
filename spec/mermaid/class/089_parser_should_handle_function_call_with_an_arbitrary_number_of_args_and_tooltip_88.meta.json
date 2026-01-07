@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_function_call_with_an_arbitrary_number_of_args_and_tooltip_88",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 844,
+  "metadata": {
+    "test_name": "should handle function call with an arbitrary number of args and tooltip"
+  }
+}

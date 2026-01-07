@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-19_should_be_possible_to_have_a_child_after_a_class_assignment_29",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 263,
+  "metadata": {
+    "test_name": "KNBN-19 should be possible to have a child after a class assignment"
+  }
+}

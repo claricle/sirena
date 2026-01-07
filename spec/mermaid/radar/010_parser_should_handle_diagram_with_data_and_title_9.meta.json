@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_diagram_with_data_and_title_9",
+  "type": "radar",
+  "source_file": "/packages/mermaid/src/diagrams/radar/radar.spec.ts",
+  "line_number": 30,
+  "metadata": {
+    "test_name": "should handle diagram with data and title"
+  }
+}

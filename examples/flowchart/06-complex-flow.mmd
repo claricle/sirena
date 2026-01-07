@@ -1,0 +1,8 @@
+graph TD
+    Start[Start] --> Input[Get Input]
+    Input --> Validate{Valid?}
+    Validate -->|No| Error[Error]
+    Validate -->|Yes| Process[Process]
+    Process --> Save[Save]
+    Save --> End[End]
+    Error --> End

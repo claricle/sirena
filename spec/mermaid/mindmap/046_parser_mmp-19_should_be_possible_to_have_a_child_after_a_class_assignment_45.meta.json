@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-19_should_be_possible_to_have_a_child_after_a_class_assignment_45",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 250,
+  "metadata": {
+    "test_name": "MMP-19 should be possible to have a child after a class assignment"
+  }
+}

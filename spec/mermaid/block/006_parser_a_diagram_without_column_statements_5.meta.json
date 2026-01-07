@@ -1,0 +1,9 @@
+{
+  "name": "parser_a_diagram_without_column_statements_5",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 128,
+  "metadata": {
+    "test_name": "a diagram without column statements"
+  }
+}

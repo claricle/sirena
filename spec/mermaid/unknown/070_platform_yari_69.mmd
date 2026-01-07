@@ -1,0 +1,19 @@
+---
+            config:
+              theme: forest
+              look: handDrawn
+          ---
+          classDiagram
+          note for Outside "Note testing"
+          namespace Test {
+              class Outside
+          }
+          namespace BaseShapes {
+              class Triangle
+              class Rectangle {
+                double width
+                double height
+              }
+          }
+          Outside <|--|> Rectangle
+          style Triangle fill:#f9f,stroke:#333,stroke-width:4px

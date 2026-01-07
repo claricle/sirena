@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_notes_for_composite_nested_states_29",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 396,
+  "metadata": {
+    "test_name": "should handle notes for composite (nested) states"
+  }
+}

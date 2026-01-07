@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-20_should_be_possible_to_have_meaningless_empty_rows_in_a_kanban_abc124_30",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 288,
+  "metadata": {
+    "test_name": "KNBN-20 should be possible to have meaningless empty rows in a kanban abc124"
+  }
+}

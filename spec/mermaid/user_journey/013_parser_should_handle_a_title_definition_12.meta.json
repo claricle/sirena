@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_title_definition_12",
+  "type": "user_journey",
+  "source_file": "/packages/mermaid/src/diagrams/user-journey/parser/journey.spec.js",
+  "line_number": 15,
+  "metadata": {
+    "test_name": "should handle a title definition"
+  }
+}

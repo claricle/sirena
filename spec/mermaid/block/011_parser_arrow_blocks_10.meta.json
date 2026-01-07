@@ -1,0 +1,9 @@
+{
+  "name": "parser_Arrow_blocks_10",
+  "type": "block",
+  "source_file": "/packages/mermaid/src/diagrams/block/parser/block.spec.ts",
+  "line_number": 293,
+  "metadata": {
+    "test_name": "Arrow blocks"
+  }
+}

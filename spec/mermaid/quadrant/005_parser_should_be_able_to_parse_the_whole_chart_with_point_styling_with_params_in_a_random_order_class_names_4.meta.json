@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_able_to_parse_the_whole_chart_with_point_styling_with_params_in_a_random_order_class_names_4",
+  "type": "quadrant",
+  "source_file": "/packages/mermaid/src/diagrams/quadrant-chart/parser/quadrant.jison.spec.ts",
+  "line_number": 368,
+  "metadata": {
+    "test_name": "should be able to parse the whole chart with point styling with params in a random order + class names"
+  }
+}

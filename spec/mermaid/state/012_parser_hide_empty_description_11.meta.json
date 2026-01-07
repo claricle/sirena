@@ -1,0 +1,9 @@
+{
+  "name": "parser_hide_empty_description_11",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 73,
+  "metadata": {
+    "test_name": "hide empty description"
+  }
+}

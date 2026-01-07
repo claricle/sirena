@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_the_label_15",
+  "type": "c4",
+  "source_file": "/packages/mermaid/src/diagrams/c4/parser/c4Container.spec.js",
+  "line_number": 63,
+  "metadata": {
+    "test_name": "should parse the label"
+  }
+}

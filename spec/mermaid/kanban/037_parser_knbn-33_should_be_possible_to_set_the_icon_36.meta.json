@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-33_should_be_possible_to_set_the_icon_36",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 443,
+  "metadata": {
+    "test_name": "KNBN-33 should be possible to set the icon"
+  }
+}

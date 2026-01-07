@@ -1,0 +1,502 @@
+= Gantt chart diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Gantt chart diagrams in Sirena visualize project schedules, showing tasks over time with dependencies, sections, and status indicators. Gantt charts are essential for project management and timeline visualization.
+
+Gantt charts are useful for:
+
+* Project planning and scheduling
+* Task dependency visualization
+* Timeline management
+* Resource allocation tracking
+* Progress monitoring
+* Milestone tracking
+
+== Syntax specification
+
+=== Diagram declaration
+
+Gantt charts are declared using the `gantt` keyword:
+
+[source,mermaid]
+----
+gantt
+    <configuration>
+    <sections-and-tasks>
+----
+
+=== Configuration directives
+
+==== Title
+
+Sets the diagram title:
+
+[source,mermaid]
+----
+gantt
+    title Project Timeline
+----
+
+==== Date format
+
+Specifies the date format for task dates:
+
+[source,mermaid]
+----
+gantt
+    dateFormat YYYY-MM-DD
+----
+
+Common date formats:
+
+* `YYYY-MM-DD` - ISO date format (2024-01-15)
+* `YYYY-MM-DD HH:mm` - Date with time
+* `DD/MM/YYYY` - European format
+* `MM/DD/YYYY` - US format
+
+==== Axis format
+
+Specifies how dates are displayed on the timeline axis:
+
+[source,mermaid]
+----
+gantt
+    axisFormat %m-%d
+----
+
+Format specifiers:
+
+* `%Y` - Full year (2024)
+* `%m` - Month (01-12)
+* `%d` - Day (01-31)
+* `%H` - Hour (00-23)
+* `%M` - Minute (00-59)
+
+==== Tick interval
+
+Sets the interval between timeline ticks:
+
+[source,mermaid]
+----
+gantt
+    tickInterval 1day
+    tickInterval 1week
+    tickInterval 1month
+----
+
+==== Excludes
+
+Excludes certain days from the timeline:
+
+[source,mermaid]
+----
+gantt
+    excludes weekends
+    excludes weekdays
+    excludes 2024-01-10
+----
+
+==== Today marker
+
+Adds a marker for the current date:
+
+[source,mermaid]
+----
+gantt
+    todayMarker on
+    todayMarker off
+----
+
+=== Section declarations
+
+Sections group related tasks:
+
+[source,mermaid]
+----
+gantt
+    section Planning
+    Task 1 :2024-01-01, 30d
+    Task 2 :2024-01-15, 20d
+
+    section Development
+    Task 3 :2024-02-01, 45d
+----
+
+=== Task definitions
+
+Tasks can be defined in multiple formats:
+
+==== Basic task with dates and duration
+
+[source,mermaid]
+----
+Task description :task_id, start_date, duration
+----
+
+Example:
+
+[source,mermaid]
+----
+Design phase :des1, 2024-01-01, 30d
+----
+
+==== Task with start and end dates
+
+[source,mermaid]
+----
+Task description :task_id, start_date, end_date
+----
+
+Example:
+
+[source,mermaid]
+----
+Implementation :impl, 2024-01-15, 2024-02-15
+----
+
+==== Task with dependencies
+
+[source,mermaid]
+----
+Task description :task_id, after other_task_id, duration
+----
+
+Example:
+
+[source,mermaid]
+----
+Testing :test, after impl, 15d
+----
+
+==== Task with status tags
+
+Tasks can have status tags that affect their appearance:
+
+* `done` - Completed task (green)
+* `active` - Currently active task (blue)
+* `crit` - Critical task (red)
+* `milestone` - Milestone marker (diamond shape)
+
+[source,mermaid]
+----
+Completed task :done, task1, 2024-01-01, 10d
+Active task :active, task2, 2024-01-11, 5d
+Critical task :crit, task3, 2024-01-16, 3d
+Project milestone :milestone, m1, 2024-01-20, 0d
+----
+
+==== Duration formats
+
+* `30d` - 30 days
+* `2w` - 2 weeks
+* `48h` - 48 hours
+* `1M` - 1 month
+
+=== Task dependencies
+
+Tasks can depend on other tasks using the `after` keyword:
+
+[source,mermaid]
+----
+gantt
+    section Tasks
+    Task A :a, 2024-01-01, 10d
+    Task B :b, after a, 5d
+    Task C :c, after b, 3d
+----
+
+Tasks can also use `until` to end when another task starts:
+
+[source,mermaid]
+----
+gantt
+    section Tasks
+    Task A :a, 2024-01-01, 10d
+    Task B :b, 2024-01-05, until a
+----
+
+== Examples
+
+=== Basic Gantt chart
+
+.Simple project timeline
+[example]
+====
+[source,mermaid]
+----
+gantt
+    title Simple Project Timeline
+    dateFormat YYYY-MM-DD
+
+    section Planning
+    Requirements :a1, 2024-01-01, 30d
+    Design :a2, after a1, 20d
+
+    section Development
+    Implementation :b1, after a2, 45d
+    Testing :b2, after b1, 15d
+----
+
+This creates a basic Gantt chart with two sections and sequential tasks.
+====
+
+=== Gantt chart with task statuses
+
+.Project with status indicators
+[example]
+====
+[source,mermaid]
+----
+gantt
+    title Project Progress
+    dateFormat YYYY-MM-DD
+
+    section Completed
+    Analysis :done, a1, 2024-01-01, 10d
+    Design :done, a2, 2024-01-11, 15d
+
+    section In Progress
+    Development :active, b1, 2024-01-26, 30d
+
+    section Pending
+    Testing :crit, b2, after b1, 10d
+    Deployment :milestone, m1, after b2, 0d
+----
+
+This example shows:
+
+* Completed tasks marked with `done` tag (green)
+* Active task marked with `active` tag (blue)
+* Critical task marked with `crit` tag (red)
+* Milestone marker with zero duration
+====
+
+=== Complex Gantt chart with dependencies
+
+.Multi-phase project
+[example]
+====
+[source,mermaid]
+----
+gantt
+    title Software Development Project
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+
+    section Planning
+    Requirements gathering :done, req, 2024-01-01, 15d
+    System design :done, des, after req, 20d
+
+    section Development
+    Backend development :active, be, after des, 30d
+    Frontend development :active, fe, after des, 35d
+    Integration :int, after be, after fe, 10d
+
+    section Testing
+    Unit testing :crit, ut, after be, 5d
+    Integration testing :crit, it, after int, 7d
+    UAT :uat, after it, 10d
+
+    section Deployment
+    Staging deployment :sd, after uat, 2d
+    Production deployment :milestone, pd, after sd, 0d
+----
+
+This demonstrates:
+
+* Multiple sections organizing the project
+* Task dependencies using `after` keyword
+* Mixed task statuses (done, active, crit)
+* Milestone marker for deployment
+* Custom axis format for date display
+====
+
+=== Gantt chart with excludes
+
+.Project excluding weekends
+[example]
+====
+[source,mermaid]
+----
+gantt
+    title Development Sprint
+    dateFormat YYYY-MM-DD
+    excludes weekends
+
+    section Week 1
+    Sprint planning :done, 2024-01-08, 1d
+    Feature A :active, 2024-01-09, 4d
+
+    section Week 2
+    Feature B :2024-01-15, 5d
+    Code review :2024-01-22, 2d
+----
+
+This shows how to exclude weekends from the timeline calculation.
+====
+
+== Features
+
+=== Task identification
+
+Tasks can have IDs for referencing in dependencies:
+
+[source,mermaid]
+----
+gantt
+    section Tasks
+    First task :task1, 2024-01-01, 10d
+    Second task :task2, after task1, 5d
+    Third task :after task2, 3d
+----
+
+=== Multiple task tags
+
+Tasks can have multiple status tags:
+
+[source,mermaid]
+----
+gantt
+    section Critical Path
+    Important task :crit, active, t1, 2024-01-01, 10d
+    Completed critical :crit, done, t2, 2024-01-11, 5d
+----
+
+=== Flexible date formats
+
+Supports various date input formats:
+
+[source,mermaid]
+----
+gantt
+    dateFormat YYYY-MM-DD
+    section Tasks
+    Task 1 :2024-01-01, 10d
+    Task 2 :2024-01-15, 2024-01-30
+    Task 3 :after Task 2, 1w
+----
+
+=== Timeline customization
+
+Customize timeline appearance:
+
+[source,mermaid]
+----
+gantt
+    title Customized Timeline
+    dateFormat YYYY-MM-DD
+    axisFormat %d/%m
+    tickInterval 1week
+
+    section Tasks
+    Task 1 :2024-01-01, 30d
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid Gantt chart features are not yet supported in Sirena:
+
+* Click events and interactivity
+* Custom styling with `style` directives
+* Accessibility tags beyond basic support
+* Comments using `%%`
+* Custom themes per diagram
+
+=== Known issues
+
+* Very long task names may overflow in some layouts
+* Complex dependency chains may require manual adjustment
+* Timeline scaling with many tasks may need optimization
+
+== Best practices
+
+=== Use meaningful task names
+
+Use clear, descriptive names for tasks:
+
+[source,mermaid]
+----
+gantt
+    %% Good
+    Requirements analysis :done, 2024-01-01, 10d
+
+    %% Less clear
+    Task 1 :done, 2024-01-01, 10d
+----
+
+=== Organize with sections
+
+Group related tasks into logical sections:
+
+[source,mermaid]
+----
+gantt
+    section Planning
+    <planning tasks>
+
+    section Development
+    <development tasks>
+
+    section Testing
+    <testing tasks>
+----
+
+=== Use status tags appropriately
+
+Apply status tags to provide visual context:
+
+* `done` for completed work
+* `active` for current work
+* `crit` for critical path items
+* `milestone` for key dates
+
+=== Set appropriate date formats
+
+Choose date formats that match your audience:
+
+[source,mermaid]
+----
+gantt
+    %% For international audience
+    dateFormat YYYY-MM-DD
+    axisFormat %Y-%m-%d
+
+    %% For US audience
+    dateFormat MM/DD/YYYY
+    axisFormat %m/%d
+----
+
+=== Keep timelines readable
+
+Avoid overcrowding:
+
+* Limit to 20-30 tasks per diagram
+* Use appropriate tick intervals
+* Consider splitting long projects into phases
+
+=== Leverage dependencies
+
+Use task dependencies instead of manual date calculation:
+
+[source,mermaid]
+----
+gantt
+    %% Good - uses dependencies
+    Task A :a, 2024-01-01, 10d
+    Task B :b, after a, 5d
+
+    %% Less maintainable - hardcoded dates
+    Task A :a, 2024-01-01, 10d
+    Task B :b, 2024-01-11, 5d
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<flowchart.adoc#,Flowchart diagrams>>
+* link:https://mermaid.js.org/syntax/gantt.html[Official Mermaid Gantt chart documentation]

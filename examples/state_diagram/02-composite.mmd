@@ -1,0 +1,19 @@
+stateDiagram-v2
+    [*] --> Application
+    
+    state Application {
+        [*] --> Idle
+        Idle --> Processing : Start
+        
+        state Processing {
+            [*] --> Validating
+            Validating --> Executing : Valid
+            Validating --> Failed : Invalid
+            Executing --> Success
+            Executing --> Failed
+        }
+        
+        Processing --> Idle : Complete
+    }
+    
+    Application --> [*]

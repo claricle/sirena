@@ -1,0 +1,44 @@
+<svg
+ width="405.0"
+ height="410.0"
+ viewBox="0 0 405 410"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<path fill="#4472C4" stroke="none" opacity="0.4" d="M 98 95.0 C 154.0 95.0, 154.0 165.0, 210 165.0 L 210 215.0 C 154.0 215.0, 154.0 145.0, 98 145.0 Z"/>
+<text fill="#000000" x="154.0" y="155.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">200</text>
+<path fill="#ED7D31" stroke="none" opacity="0.4" d="M 98 107.0 C 154.0 107.0, 154.0 247.0, 210 247.0 L 210 273.0 C 154.0 273.0, 154.0 133.0, 98 133.0 Z"/>
+<text fill="#000000" x="154.0" y="190.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100</text>
+<path fill="#A5A5A5" stroke="none" opacity="0.4" d="M 98 113.0 C 154.0 113.0, 154.0 323.0, 210 323.0 L 210 337.0 C 154.0 337.0, 154.0 127.0, 98 127.0 Z"/>
+<text fill="#000000" x="154.0" y="225.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">50</text>
+<path fill="#FFC000" stroke="none" opacity="0.4" d="M 90 174.5 C 150.0 174.5, 150.0 104.5, 210 104.5 L 210 135.5 C 150.0 135.5, 150.0 205.5, 90 205.5 Z"/>
+<text fill="#000000" x="150.0" y="155.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">120</text>
+<path fill="#5B9BD5" stroke="none" opacity="0.4" d="M 90 183.0 C 150.0 183.0, 150.0 253.0, 210 253.0 L 210 267.0 C 150.0 267.0, 150.0 197.0, 90 197.0 Z"/>
+<text fill="#000000" x="150.0" y="225.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">50</text>
+<path fill="#70AD47" stroke="none" opacity="0.4" d="M 90 185.5 C 150.0 185.5, 150.0 325.5, 210 325.5 L 210 334.5 C 150.0 334.5, 150.0 194.5, 90 194.5 Z"/>
+<text fill="#000000" x="150.0" y="260.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">30</text>
+<path fill="#C00000" stroke="none" opacity="0.4" d="M 88 247.0 C 149.0 247.0, 149.0 107.0, 210 107.0 L 210 133.0 C 149.0 133.0, 149.0 273.0, 88 273.0 Z"/>
+<text fill="#000000" x="149.0" y="190.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">100</text>
+<path fill="#7030A0" stroke="none" opacity="0.4" d="M 88 253.0 C 149.0 253.0, 149.0 253.0, 210 253.0 L 210 267.0 C 149.0 267.0, 149.0 267.0, 88 267.0 Z"/>
+<text fill="#000000" x="149.0" y="260.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">50</text>
+<path fill="#4472C4" stroke="none" opacity="0.4" d="M 85 319.5 C 147.5 319.5, 147.5 109.5, 210 109.5 L 210 130.5 C 147.5 130.5, 147.5 340.5, 85 340.5 Z"/>
+<text fill="#000000" x="147.5" y="225.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">80</text>
+<path fill="#ED7D31" stroke="none" opacity="0.4" d="M 85 326.5 C 147.5 326.5, 147.5 326.5, 210 326.5 L 210 333.5 C 147.5 333.5, 147.5 333.5, 85 333.5 Z"/>
+<text fill="#000000" x="147.5" y="330.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">20</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="60.0" y="100.0" width="38.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="79.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Oil</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="170.0" width="30.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="225.0" y="195.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Transportation</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="240.0" width="30.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="225.0" y="265.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Industry</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="310.0" width="25.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="222.0" y="335.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Residential</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="60.0" y="170.0" width="30.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="75.0" y="195.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">NaturalGas</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="210.0" y="100.0" width="35.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="227.0" y="125.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">PowerGeneration</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="60.0" y="240.0" width="28.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="74.0" y="265.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Coal</text>
+<rect fill="#ffffff" stroke="#000000" stroke-width="2" x="60.0" y="310.0" width="25.0" height="40.0" rx="3.0" ry="3.0"/>
+<text fill="#FFFFFF" x="72.0" y="335.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">Renewable</text>
+</svg>

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_section_definition_14",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 50,
+  "metadata": {
+    "test_name": "should handle a section definition"
+  }
+}

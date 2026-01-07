@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_the_architecture_keyword_15",
+  "type": "architecture",
+  "source_file": "/packages/mermaid/src/diagrams/architecture/architecture.spec.ts",
+  "line_number": 12,
+  "metadata": {
+    "test_name": "should handle the architecture keyword"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_very_simple_pie_11",
+  "type": "pie",
+  "source_file": "/packages/mermaid/src/diagrams/pie/pie.spec.ts",
+  "line_number": 12,
+  "metadata": {
+    "test_name": "should handle very simple pie"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_section_and_task_and_its_events_including_markdown_link_11",
+  "type": "timeline",
+  "source_file": "/packages/mermaid/src/diagrams/timeline/timeline.spec.js",
+  "line_number": 77,
+  "metadata": {
+    "test_name": "should handle a section, and task and its events including markdown link"
+  }
+}

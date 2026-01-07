@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_generic_class_with_brackets_and_a_literal_name_111",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1135,
+  "metadata": {
+    "test_name": "should handle generic class with brackets and a literal name"
+  }
+}

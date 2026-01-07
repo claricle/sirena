@@ -1,0 +1,6 @@
+{
+  "name": "parser_should_allow_decimal_numbers_as_entity_names_with_attributes_52",
+  "type": "er_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 1031
+}

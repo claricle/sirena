@@ -1,0 +1,125 @@
+<svg
+ width="800.0"
+ height="630.0"
+ viewBox="0 0 800 630"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="rel-CUSTOMER_to_ORDER">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="110.0" x2="300.0" y2="120.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="219.13175685787553" y1="116.94594513699568" x2="220.86824314212447" y2="103.05405486300432"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.05405486300435" cy="119.13175685787554" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="118.13947898116187" x2="296.95611510993984" y2="108.93036977843806"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="118.13947898116187" x2="300.0" y2="120.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="118.13947898116187" x2="294.3249410520188" y2="129.97976224180675"/>
+  <text fill="#000000" x="260.0" y="110.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">places</text>
+</g>
+<g id="rel-ORDER_to_ORDER_ITEM">
+  <line stroke="#333333" stroke-width="2" x1="470.0" y1="120.0" x2="550.0" y2="120.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="470.0" y1="127.0" x2="470.0" y2="113.0"/>
+  <line stroke="#333333" stroke-width="2" x1="550.0" y1="113.0" x2="550.0" y2="127.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0" y1="120.0" x2="545.6066017177982" y2="109.39339828220179"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0" y1="120.0" x2="550.0" y2="120.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0" y1="120.0" x2="545.6066017177982" y2="130.6066017177982"/>
+  <text fill="#000000" x="510.0" y="115.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">contains</text>
+</g>
+<g id="rel-ORDER_ITEM_to_PRODUCT">
+  <line stroke="#333333" stroke-width="2" x1="550.0" y1="205.0" x2="220.0" y2="235.0" stroke-dasharray="5,5"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.0287475547261" cy="205.63375022229764" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="549.3662497777024" y1="198.02874755472607" x2="550.6337502222976" y2="211.97125244527393"/>
+  <line stroke="#333333" stroke-width="2" x1="220.63375022229764" y1="241.97125244527393" x2="219.36624977770236" y2="228.02874755472607"/>
+  <text fill="#000000" x="385.0" y="215.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">references</text>
+</g>
+<g id="rel-PRODUCT_to_INVENTORY">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="320.0" x2="300.0" y2="320.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="327.0" x2="220.0" y2="313.0"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.0" cy="320.0" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.0" y1="320.0" x2="295.6066017177982" y2="309.39339828220176"/>
+  <line stroke="#333333" stroke-width="2" x1="285.0" y1="320.0" x2="300.0" y2="320.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.0" y1="320.0" x2="295.60660171779824" y2="330.6066017177982"/>
+  <text fill="#000000" x="260.0" y="315.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">tracked_in</text>
+</g>
+<g id="rel-CATEGORY_to_PRODUCT">
+  <line stroke="#333333" stroke-width="2" x1="550.0" y1="385.0" x2="220.0" y2="235.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="552.8966206101082" y1="378.62743465776174" x2="547.1033793898918" y2="391.37256534223826"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="226.37256534223823" cy="237.8966206101083" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="233.65549716193908" y1="241.20704416451775" x2="219.6105594984034" y2="246.47389578834364"/>
+  <line stroke="#333333" stroke-width="2" x1="233.65549716193908" y1="241.20704416451775" x2="220.0" y2="235.0"/>
+  <line stroke="#333333" stroke-width="2" x1="233.65549716193908" y1="241.20704416451775" x2="228.3886455381132" y2="227.16210650098208"/>
+  <text fill="#000000" x="385.0" y="305.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">categorizes</text>
+</g>
+<g id="rel-WAREHOUSE_to_INVENTORY">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="415.0" x2="300.0" y2="405.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="220.86824314212447" y1="421.94594513699565" x2="219.13175685787553" y2="408.05405486300435"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.05405486300435" cy="405.86824314212447" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="406.86052101883814" x2="294.3249410520188" y2="395.0202377581932"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="406.86052101883814" x2="300.0" y2="405.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.115831849295" y1="406.86052101883814" x2="296.9561151099399" y2="416.06963022156197"/>
+  <text fill="#000000" x="260.0" y="405.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">stores</text>
+</g>
+<g id="entity-CUSTOMER">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="120.0"/>
+  <text fill="#000000" x="135.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CUSTOMER</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="220.0" y2="94.0"/>
+  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK customer_id int</text>
+  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">name string</text>
+  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK email string</text>
+  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">phone string</text>
+</g>
+<g id="entity-ORDER">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="170.0" height="140.0"/>
+  <text fill="#000000" x="385.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">ORDER</text>
+  <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="470.0" y2="94.0"/>
+  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK order_id int</text>
+  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK customer_id int</text>
+  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">order_date date</text>
+  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">total_amount decimal</text>
+  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">status string</text>
+</g>
+<g id="entity-ORDER_ITEM">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="170.0" height="140.0"/>
+  <text fill="#000000" x="635.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">ORDER_ITEM</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="720.0" y2="94.0"/>
+  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK order_item_id int</text>
+  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK order_id int</text>
+  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK product_id int</text>
+  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">quantity int</text>
+  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">unit_price decimal</text>
+</g>
+<g id="entity-PRODUCT">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="250.0" width="170.0" height="140.0"/>
+  <text fill="#000000" x="135.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">PRODUCT</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="294.0" x2="220.0" y2="294.0"/>
+  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK product_id int</text>
+  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">name string</text>
+  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK sku string</text>
+  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">price decimal</text>
+  <text fill="#000000" x="60.0" y="388.0" font-family="monospace" font-size="12">FK category_id int</text>
+</g>
+<g id="entity-INVENTORY">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="250.0" width="170.0" height="140.0"/>
+  <text fill="#000000" x="385.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">INVENTORY</text>
+  <line stroke="#333333" stroke-width="1" x1="300.0" y1="294.0" x2="470.0" y2="294.0"/>
+  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK inventory_id int</text>
+  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">FK product_id int</text>
+  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">FK warehouse_id int</text>
+  <text fill="#000000" x="310.0" y="370.0" font-family="monospace" font-size="12">quantity int</text>
+  <text fill="#000000" x="310.0" y="388.0" font-family="monospace" font-size="12">last_updated date</text>
+</g>
+<g id="entity-CATEGORY">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="170.0" height="100.0"/>
+  <text fill="#000000" x="635.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CATEGORY</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="720.0" y2="294.0"/>
+  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK category_id int</text>
+  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">name string</text>
+  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">description string</text>
+</g>
+<g id="entity-WAREHOUSE">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="450.0" width="170.0" height="100.0"/>
+  <text fill="#000000" x="135.0" y="476.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">WAREHOUSE</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="494.0" x2="220.0" y2="494.0"/>
+  <text fill="#000000" x="60.0" y="516.0" font-family="monospace" font-size="12">PK warehouse_id int</text>
+  <text fill="#000000" x="60.0" y="534.0" font-family="monospace" font-size="12">name string</text>
+  <text fill="#000000" x="60.0" y="552.0" font-family="monospace" font-size="12">location string</text>
+</g>
+</svg>

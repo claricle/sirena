@@ -1,0 +1,61 @@
+classDiagram
+    class Animal {
+        +String name
+        +int age
+        +String species
+        +makeSound() void
+        +eat(food Food) void
+        +sleep() void
+    }
+
+    class Mammal {
+        +String furColor
+        +bool warmBlooded
+        +giveBirth() void
+    }
+
+    class Bird {
+        +bool canFly
+        +String featherColor
+        +layEggs() void
+    }
+
+    class Dog {
+        +String breed
+        +bark() void
+        +fetch(item Item) void
+    }
+
+    class Cat {
+        +bool indoor
+        +int lives
+        +meow() void
+        +purr() void
+    }
+
+    class Eagle {
+        +float wingSpan
+        +hunt() void
+        +soar() void
+    }
+
+    class Penguin {
+        +swim() void
+        +slide() void
+    }
+
+    Animal <|-- Mammal
+    Animal <|-- Bird
+    Mammal <|-- Dog
+    Mammal <|-- Cat
+    Bird <|-- Eagle
+    Bird <|-- Penguin
+
+    class Owner {
+        +String name
+        +String address
+        +List~Animal~ pets
+        +adoptPet(pet Animal) void
+    }
+
+    Owner "1" --> "*" Animal : owns

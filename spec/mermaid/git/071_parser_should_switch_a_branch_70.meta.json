@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_switch_a_branch_70",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 55,
+  "metadata": {
+    "test_name": "should switch a branch"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_parse_classes_with_different_text_labels_151",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 320,
+  "metadata": {
+    "test_name": "should parse classes with different text labels"
+  }
+}

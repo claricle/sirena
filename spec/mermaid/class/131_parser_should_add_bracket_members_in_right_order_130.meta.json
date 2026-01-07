@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_add_bracket_members_in_right_order_130",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1454,
+  "metadata": {
+    "test_name": "should add bracket members in right order"
+  }
+}

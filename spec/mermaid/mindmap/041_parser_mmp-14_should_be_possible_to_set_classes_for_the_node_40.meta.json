@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-14_should_be_possible_to_set_classes_for_the_node_40",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 181,
+  "metadata": {
+    "test_name": "MMP-14 should be possible to set classes for the node"
+  }
+}

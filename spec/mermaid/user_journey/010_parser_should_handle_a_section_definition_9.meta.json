@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_section_definition_9",
+  "type": "user_journey",
+  "source_file": "/packages/mermaid/src/diagrams/user-journey/parser/journey.spec.js",
+  "line_number": 56,
+  "metadata": {
+    "test_name": "should handle a section definition"
+  }
+}

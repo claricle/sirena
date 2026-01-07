@@ -1,0 +1,9 @@
+{
+  "name": "parser_description_after_second_state_13",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 158,
+  "metadata": {
+    "test_name": "description after second state"
+  }
+}

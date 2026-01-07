@@ -1,0 +1,7 @@
+stateDiagram\n
+        state Configuring {
+          [*] --> NewValueSelection
+          NewValueSelection --> NewValuePreview : EvNewValue
+          NewValuePreview --> NewValueSelection : EvNewValueRejected
+          NewValuePreview --> NewValueSelection : EvNewValueSaved1
+        }

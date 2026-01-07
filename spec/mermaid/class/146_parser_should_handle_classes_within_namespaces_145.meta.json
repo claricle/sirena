@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_classes_within_namespaces_145",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 18,
+  "metadata": {
+    "test_name": "should handle classes within namespaces"
+  }
+}

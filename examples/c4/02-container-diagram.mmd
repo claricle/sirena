@@ -1,0 +1,24 @@
+C4Container
+    title Container Diagram - E-commerce System
+
+    Person(customer, "Customer", "Online shopper")
+    
+    System_Boundary(ecommerce, "E-commerce System") {
+        Container(webapp, "Web Application", "React", "Provides UI")
+        Container(api, "API Gateway", "Node.js", "Routes requests")
+        Container(order, "Order Service", "Java", "Handles orders")
+        Container(payment, "Payment Service", "Python", "Processes payments")
+        ContainerDb(db, "Database", "PostgreSQL", "Stores data")
+        Container(cache, "Cache", "Redis", "Session storage")
+    }
+    
+    System_Ext(paymentGW, "Payment Gateway", "External payment processor")
+    
+    Rel(customer, webapp, "Uses", "HTTPS")
+    Rel(webapp, api, "Calls", "REST/JSON")
+    Rel(api, order, "Routes to")
+    Rel(api, payment, "Routes to")
+    Rel(order, db, "Reads/Writes", "SQL")
+    Rel(payment, db, "Reads/Writes", "SQL")
+    Rel(webapp, cache, "Stores sessions")
+    Rel(payment, paymentGW, "Processes via", "HTTPS")

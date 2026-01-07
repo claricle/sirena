@@ -1,0 +1,9 @@
+{
+  "name": "parser_assemble_assemblies_state_assemble_state_assemblies_4",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/parser/state-parser.spec.js",
+  "line_number": 53,
+  "metadata": {
+    "test_name": "assemble, assemblies, state assemble, state assemblies"
+  }
+}

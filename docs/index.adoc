@@ -1,0 +1,166 @@
+---
+layout: default
+title: Home
+nav_order: 1
+description: "Sirena: Pure Ruby Mermaid diagram renderer with 19 diagram types"
+permalink: /
+---
+
+== Sirena Documentation
+
+Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts Mermaid syntax into beautiful SVG diagrams. Built for server-side rendering, Sirena provides native integration with Ruby applications without requiring Node.js or browser dependencies.
+
+== Why Sirena?
+
+=== Pure Ruby Implementation
+* No Node.js dependencies
+* No Puppeteer/Chrome requirements
+* Simpler deployment in Ruby environments
+* Native integration with Rails, Jekyll, and Ruby applications
+
+=== Better Performance
+* Faster startup (no browser launch)
+* Lower memory footprint
+* Better for batch processing
+* Suitable for serverless environments
+
+=== Comprehensive Diagram Support
+* 19 diagram types fully implemented
+* Mermaid.js syntax compatibility
+* Advanced theming system
+* Professional-quality SVG output
+
+== Quick Start
+
+[source,ruby]
+----
+# Installation
+gem install sirena
+
+# Basic usage
+require 'sirena'
+
+svg = Sirena.render(<<~MERMAID)
+  graph TD
+    Start --> End
+MERMAID
+
+puts svg
+----
+
+See link:{% link _tutorials/getting-started.adoc %}[Getting Started Tutorial] for complete installation and usage instructions.
+
+== Documentation Structure
+
+=== link:{% link _pages/index.adoc %}[Core Topics]
+Essential concepts and architecture you need to understand Sirena.
+
+=== link:{% link _tutorials/index.adoc %}[Tutorials]
+Step-by-step guides to help you get started and accomplish specific tasks.
+
+=== link:{% link _guides/index.adoc %}[Guides]
+In-depth guides for advanced features and best practices.
+
+=== link:{% link _diagram_types/index.adoc %}[Diagram Types]
+Complete reference for all 19 diagram types with syntax and examples.
+
+=== link:{% link _features/index.adoc %}[Features]
+Detailed documentation of Sirena's unique features and capabilities.
+
+=== link:{% link _references/index.adoc %}[References]
+Complete API and CLI references for quick lookup.
+
+== Supported Diagram Types
+
+Sirena supports 19 diagram types compatible with Mermaid.js syntax:
+
+[cols="1,3"]
+|===
+|Type |Use Case
+
+|link:{% link _diagram_types/flowchart.adoc %}[Flowchart]
+|Process flows and directed graphs
+
+|link:{% link _diagram_types/sequence-diagram.adoc %}[Sequence]
+|Message interactions over time
+
+|link:{% link _diagram_types/class-diagram.adoc %}[Class]
+|Object-oriented class structures
+
+|link:{% link _diagram_types/state-diagram.adoc %}[State]
+|State machines and transitions
+
+|link:{% link _diagram_types/er-diagram.adoc %}[ER Diagram]
+|Database entity relationships
+
+|link:{% link _diagram_types/user-journey.adoc %}[User Journey]
+|User experience mapping
+
+|link:{% link _diagram_types/git-graph.adoc %}[Git Graph]
+|Repository history visualization
+
+|link:{% link _diagram_types/pie-chart.adoc %}[Pie Chart]
+|Proportional data visualization
+
+|link:{% link _diagram_types/gantt-chart.adoc %}[Gantt Chart]
+|Project timeline planning
+
+|link:{% link _diagram_types/quadrant-chart.adoc %}[Quadrant]
+|Priority/complexity matrices
+
+|link:{% link _diagram_types/requirement-diagram.adoc %}[Requirement]
+|Requirements traceability
+
+|link:{% link _diagram_types/c4-diagram.adoc %}[C4]
+|Software architecture (Context, Container, Component, Code)
+
+|link:{% link _diagram_types/mindmap.adoc %}[Mindmap]
+|Hierarchical idea organization
+
+|link:{% link _diagram_types/timeline.adoc %}[Timeline]
+|Historical event visualization
+
+|link:{% link _diagram_types/sankey-diagram.adoc %}[Sankey]
+|Flow quantity visualization
+
+|link:{% link _diagram_types/xy-chart.adoc %}[XY Chart]
+|Data point plotting
+
+|link:{% link _diagram_types/block-diagram.adoc %}[Block]
+|Component relationships
+
+|link:{% link _diagram_types/architecture-diagram.adoc %}[Architecture]
+|System architecture views
+
+|link:{% link _diagram_types/kanban-diagram.adoc %}[Kanban]
+|Workflow board visualization
+|===
+
+See the complete link:{% link _diagram_types/index.adoc %}[Diagram Types Reference] for detailed syntax and examples.
+
+== Key Features
+
+* **Theme System**: YAML-based theming with 4 built-in themes (default, dark, light, high-contrast)
+* **Batch Processing**: Built-in batch renderer for documentation sets
+* **Rails Integration**: Native Ruby integration with Rails helpers
+* **Jekyll Support**: Static site generation compatibility
+* **Parslet Parsing**: Robust grammar-based parsing with clear error messages
+* **SVG Output**: Professional-quality scalable vector graphics
+
+== Compatibility & Comparison
+
+Sirena maintains syntax compatibility with Mermaid.js while providing a pure Ruby implementation optimized for server-side rendering.
+
+* link:{% link _pages/compatibility.adoc %}[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
+* link:{% link _pages/comparison.adoc %}[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
+
+== Getting Help
+
+* **Report Issues**: https://github.com/claricle/sirena/issues[GitHub Issues]
+* **Source Code**: https://github.com/claricle/sirena[GitHub Repository]
+* **RubyGems**: https://rubygems.org/gems/sirena[Sirena Gem]
+* **Migration Guide**: link:{% link _guides/migration-from-mermaid.adoc %}[Migrating from Mermaid.js]
+
+== License
+
+Sirena is open source under the MIT License.

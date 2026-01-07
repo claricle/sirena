@@ -1,0 +1,58 @@
+= Info Diagram Examples
+
+== Purpose
+
+Info diagrams display informational messages and notices in a standardized format within documentation.
+
+== When to Use
+
+* Information display
+* Notice visualization
+* Announcement formatting
+* Help text display
+* Status messages
+
+== Syntax Overview
+
+[source,mermaid]
+----
+info
+    title Information
+    showInfo
+----
+
+== Examples
+
+=== 01: Show Info (missing file)
+
+Basic info diagram example.
+
+=== 02: Show Info
+
+Demonstrates info message display.
+
+**File**: link:02-showinfo.mmd[02-showinfo.mmd]
+
+[source,mermaid]
+----
+include::02-showinfo.mmd[]
+----
+
+image::02-showinfo.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Info display
+| 02
+
+| Title display
+| 02
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]

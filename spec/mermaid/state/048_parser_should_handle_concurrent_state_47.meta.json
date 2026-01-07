@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_concurrent_state_47",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+  "line_number": 297,
+  "metadata": {
+    "test_name": "should handle concurrent state"
+  }
+}

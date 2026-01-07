@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_empty_attribute_block_26",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 374,
+  "metadata": {
+    "test_name": "should allow an empty attribute block"
+  }
+}

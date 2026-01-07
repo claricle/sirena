@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-21_should_be_possible_to_have_comments_in_a_mindmap_47",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 289,
+  "metadata": {
+    "test_name": "MMP-21 should be possible to have comments in a mindmap"
+  }
+}

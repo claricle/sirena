@@ -1,0 +1,9 @@
+{
+  "name": "parser_cannot_contain_because_it_could_start_and_escape_code_5",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 102,
+  "metadata": {
+    "test_name": "cannot contain \\\\ because it could start and escape code"
+  }
+}

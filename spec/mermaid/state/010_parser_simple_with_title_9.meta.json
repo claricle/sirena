@@ -1,0 +1,9 @@
+{
+  "name": "parser_simple_with_title_9",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 48,
+  "metadata": {
+    "test_name": "simple with title"
+  }
+}

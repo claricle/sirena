@@ -1,0 +1,43 @@
+<svg
+ width="800.0"
+ height="379.0"
+ viewBox="0 0 800.0 379.0"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="40.0" y="40.0" width="200.0" height="299.0" rx="8.0" ry="8.0"/>
+<rect fill="#007bff" x="40.0" y="40.0" width="200.0" height="50.0" rx="8.0" ry="8.0"/>
+<text fill="#ffffff" x="140.0" y="70.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Todo</text>
+<rect fill="#ffffff" opacity="0.3" x="215.0" y="55.0" width="20.0" height="20.0" rx="10.0" ry="10.0"/>
+<text fill="#ffffff" x="225.0" y="69.0" text-anchor="middle" font-size="11" font-weight="bold">2</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="300.0" y="40.0" width="200.0" height="204.0" rx="8.0" ry="8.0"/>
+<rect fill="#007bff" x="300.0" y="40.0" width="200.0" height="50.0" rx="8.0" ry="8.0"/>
+<text fill="#ffffff" x="400.0" y="70.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">In Progress</text>
+<rect fill="#ffffff" opacity="0.3" x="475.0" y="55.0" width="20.0" height="20.0" rx="10.0" ry="10.0"/>
+<text fill="#ffffff" x="485.0" y="69.0" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="560.0" y="40.0" width="200.0" height="150.0" rx="8.0" ry="8.0"/>
+<rect fill="#007bff" x="560.0" y="40.0" width="200.0" height="50.0" rx="8.0" ry="8.0"/>
+<text fill="#ffffff" x="660.0" y="70.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Done</text>
+<rect fill="#ffffff" opacity="0.3" x="735.0" y="55.0" width="20.0" height="20.0" rx="10.0" ry="10.0"/>
+<text fill="#ffffff" x="745.0" y="69.0" text-anchor="middle" font-size="11" font-weight="bold">1</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="50.0" y="100.0" width="180.0" height="116.0" rx="6.0" ry="6.0"/>
+<text fill="#1f2937" x="60.0" y="125.0" font-family="Arial, Helvetica, sans-serif" font-size="13">Create Documentation</text>
+<text fill="#6c757d" x="60.0" y="150.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Ticket:</text>
+<text fill="#1f2937" x="120.0" y="150.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">DOC-001</text>
+<text fill="#6c757d" x="60.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Priority:</text>
+<text fill="#1f2937" x="120.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">High</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="50.0" y="231.0" width="180.0" height="98.0" rx="6.0" ry="6.0"/>
+<text fill="#1f2937" x="60.0" y="256.0" font-family="Arial, Helvetica, sans-serif" font-size="13">Write Tests</text>
+<text fill="#6c757d" x="60.0" y="281.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Assigned:</text>
+<text fill="#1f2937" x="120.0" y="281.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">dev1</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="310.0" y="100.0" width="180.0" height="134.0" rx="6.0" ry="6.0"/>
+<text fill="#1f2937" x="320.0" y="125.0" font-family="Arial, Helvetica, sans-serif" font-size="13">Implement Feature X</text>
+<text fill="#6c757d" x="320.0" y="150.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Assigned:</text>
+<text fill="#1f2937" x="380.0" y="150.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">dev2</text>
+<text fill="#6c757d" x="320.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Ticket:</text>
+<text fill="#1f2937" x="380.0" y="168.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">FEAT-023</text>
+<text fill="#6c757d" x="320.0" y="186.0" font-family="Arial, Helvetica, sans-serif" font-size="10">Priority:</text>
+<text fill="#1f2937" x="380.0" y="186.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold">Critical</text>
+<rect fill="#ffffff" stroke="#d1d5db" stroke-width="1" x="570.0" y="100.0" width="180.0" height="80.0" rx="6.0" ry="6.0"/>
+<text fill="#1f2937" x="580.0" y="125.0" font-family="Arial, Helvetica, sans-serif" font-size="13">Release v1.0</text>
+</svg>

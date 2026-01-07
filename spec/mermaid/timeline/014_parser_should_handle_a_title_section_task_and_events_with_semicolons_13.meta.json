@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_title_section_task_and_events_with_semicolons_13",
+  "type": "timeline",
+  "source_file": "/packages/mermaid/src/diagrams/timeline/timeline.spec.js",
+  "line_number": 126,
+  "metadata": {
+    "test_name": "should handle a title, section, task, and events with semicolons"
+  }
+}

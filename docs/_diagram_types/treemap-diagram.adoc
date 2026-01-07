@@ -1,0 +1,462 @@
+= Treemap diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Treemap diagrams in Sirena visualize hierarchical data using nested
+rectangles. Each branch of the hierarchy is represented by a rectangle,
+which is then subdivided by rectangles representing its children. The area
+of each rectangle is proportional to a specified value dimension.
+
+Treemap diagrams are useful for:
+
+* Visualizing hierarchical data structures
+* Displaying proportional relationships
+* Showing nested categories and subcategories
+* Analyzing file system structures
+* Representing organizational hierarchies
+* Displaying budget allocations
+
+== Syntax specification
+
+=== Diagram declaration
+
+Treemap diagrams are declared using either the `treemap` or `treemap-beta`
+keyword:
+
+[source,mermaid]
+----
+treemap
+    <diagram-content>
+----
+
+Or:
+
+[source,mermaid]
+----
+treemap-beta
+    <diagram-content>
+----
+
+=== Node definitions
+
+Nodes represent elements in the hierarchy:
+
+[source,mermaid]
+----
+"Node Label"
+    "Child Node": value
+----
+
+Where:
+
+* Indentation (4 spaces) indicates parent-child relationships
+* Labels are enclosed in double quotes
+* Leaf nodes (endpoints) have numeric values
+* Branch nodes (containers) contain other nodes
+
+==== Branch nodes
+
+Branch nodes contain other nodes but don't have values:
+
+[source,mermaid]
+----
+treemap
+"Category A"
+    "Item A1": 10
+    "Item A2": 20
+----
+
+==== Leaf nodes
+
+Leaf nodes are endpoints with numeric values:
+
+[source,mermaid]
+----
+treemap
+"Root"
+    "Leaf 1": 100
+    "Leaf 2": 200
+----
+
+==== Value separators
+
+Values can be separated by either colon `:` or comma `,`:
+
+[source,mermaid]
+----
+treemap
+"Root"
+    "With colon": 100
+    "With comma" , 200
+----
+
+=== Hierarchical structure
+
+Use indentation to create nested hierarchies:
+
+[source,mermaid]
+----
+treemap-beta
+"Level 1"
+    "Level 2"
+        "Level 3": 10
+        "Level 3B": 15
+    "Level 2B"
+        "Level 3C": 20
+----
+
+Each level of indentation (4 spaces) represents one level deeper in the
+hierarchy.
+
+=== Styling
+
+==== CSS classes
+
+Nodes can be assigned CSS classes for custom styling:
+
+[source,mermaid]
+----
+treemap-beta
+"Main"
+    "Important Node":::important
+        "Child": 10
+    "Secondary": 5:::secondary
+----
+
+==== Class definitions
+
+Define custom styles with `classDef`:
+
+[source,mermaid]
+----
+treemap-beta
+"Root"
+    "Important": 100:::important
+
+classDef important fill:#f96,stroke:#333,stroke-width:2px;
+classDef secondary fill:#6cf,stroke:#333,stroke-dasharray:5 5;
+----
+
+=== Metadata
+
+==== Title
+
+Add a title to the diagram:
+
+[source,mermaid]
+----
+treemap
+title Sales by Category
+"Products"
+    "Electronics": 5000
+    "Clothing": 3000
+----
+
+==== Accessibility
+
+Add accessibility metadata:
+
+[source,mermaid]
+----
+treemap
+title My Treemap
+accTitle: Accessible Title
+accDescr: This is an accessible description
+"Root"
+    "Child": 100
+----
+
+== Examples
+
+=== Basic hierarchy
+
+.Simple two-level treemap
+[example]
+====
+[source,mermaid]
+----
+treemap
+"Category A"
+    "Item A1": 10
+    "Item A2": 20
+"Category B"
+    "Item B1": 15
+    "Item B2": 25
+----
+
+This creates a treemap with:
+
+* Two root categories (A and B)
+* Each category containing two items
+* Items sized proportionally to their values
+====
+
+=== Multi-level hierarchy
+
+.Deep nested structure
+[example]
+====
+[source,mermaid]
+----
+treemap-beta
+"Level 1"
+    "Level 2A"
+        "Level 3A": 10
+        "Level 3B": 15
+    "Level 2B"
+        "Level 3C": 20
+        "Level 3D"
+            "Level 4A": 5
+            "Level 4B": 5
+----
+
+This demonstrates:
+
+* Four levels of nesting
+* Mixed depth (some branches deeper than others)
+* Proportional sizing at each level
+====
+
+=== File system visualization
+
+.Disk space usage
+[example]
+====
+[source,mermaid]
+----
+treemap
+title Disk Space Usage
+"Documents"
+    "Work": 250
+    "Personal": 180
+    "Archives": 500
+"Media"
+    "Photos": 1200
+    "Videos": 3500
+    "Music": 450
+"Applications"
+    "Development": 800
+    "Productivity": 350
+    "Games": 1500
+----
+
+This shows:
+
+* File system hierarchy
+* Proportional space usage
+* Multiple root folders
+* Different category sizes
+====
+
+=== Budget allocation
+
+.Department budget
+[example]
+====
+[source,mermaid]
+----
+treemap-beta
+title 2024 Budget Allocation
+"Operations"
+    "Salaries": 500000
+    "Infrastructure": 200000
+    "Supplies": 50000
+"Research"
+    "Equipment": 150000
+    "Personnel": 300000
+    "Materials": 75000
+"Marketing"
+    "Advertising": 180000
+    "Events": 120000
+    "Digital": 90000
+----
+
+This demonstrates:
+
+* Budget breakdown by department
+* Sub-category allocation
+* Clear title for context
+* Proportional visualization
+====
+
+=== With custom styling
+
+.Styled treemap with priorities
+[example]
+====
+[source,mermaid]
+----
+treemap-beta
+title Project Tasks
+"Development"
+    "Critical":::high
+        "Bug Fixes": 40
+        "Security": 30
+    "Normal"
+        "Features": 50
+        "Refactoring": 20
+"Documentation":::low
+    "API Docs": 15
+    "User Guide": 25
+
+classDef high fill:#f96,stroke:#333,stroke-width:3px;
+classDef low fill:#6cf,stroke:#333,stroke-dasharray:5 5;
+----
+
+This shows:
+
+* Custom CSS classes for priority levels
+* Styled rectangles for visual emphasis
+* Mixed styled and default nodes
+====
+
+== Features
+
+=== Proportional sizing
+
+Node areas are automatically calculated proportional to their values or the
+sum of their children's values.
+
+=== Automatic color coding
+
+Nodes at different depth levels receive different colors automatically for
+visual distinction.
+
+=== Hierarchical layout
+
+The layout algorithm automatically positions nodes based on their hierarchy
+and proportional values.
+
+=== Value aggregation
+
+Parent nodes automatically calculate their total value from their children.
+
+== Limitations
+
+=== Currently not supported
+
+The following features are not yet supported in Sirena:
+
+* Custom layout algorithms (squarify, slice-and-dice, etc.)
+* Interactive drill-down
+* Tooltips or hover effects
+* Custom color schemes beyond CSS classes
+* Percentage labels
+* Click events
+
+=== Known issues
+
+* Very long labels may be truncated
+* Deep hierarchies (>4 levels) may become difficult to read
+* Small values may produce tiny rectangles
+
+== Best practices
+
+=== Use meaningful labels
+
+Give nodes clear, descriptive labels:
+
+[source,mermaid]
+----
+%% Good
+treemap
+"Revenue by Product"
+    "Software Licenses": 50000
+    "Consulting Services": 30000
+
+%% Less clear
+treemap
+"Data"
+    "A": 50000
+    "B": 30000
+----
+
+=== Include titles
+
+Always add a title for context:
+
+[source,mermaid]
+----
+%% Good
+treemap
+title Q4 Sales by Region
+...
+
+%% Missing context
+treemap
+...
+----
+
+=== Balance depth
+
+Avoid extremely deep hierarchies:
+
+[source,mermaid]
+----
+%% Good - 3 levels
+treemap
+"Continent"
+    "Country"
+        "City": 1000
+
+%% Hard to visualize - 6+ levels
+treemap
+"Level 1"
+    "Level 2"
+        "Level 3"
+            "Level 4"
+                "Level 5"
+                    "Level 6": 10
+----
+
+=== Use appropriate values
+
+Ensure values are meaningful and proportional:
+
+[source,mermaid]
+----
+%% Good - represents actual data
+treemap
+"Sales"
+    "North": 15000
+    "South": 12000
+    "East": 18000
+
+%% Misleading - arbitrary values
+treemap
+"Sales"
+    "North": 1
+    "South": 1
+    "East": 1
+----
+
+=== Group related items
+
+Organize nodes logically:
+
+[source,mermaid]
+----
+%% Good - logical grouping
+treemap
+"Company"
+    "Engineering"
+        "Frontend": 25
+        "Backend": 30
+    "Sales"
+        "Direct": 40
+        "Channel": 35
+
+%% Confusing - mixed grouping
+treemap
+"Company"
+    "Frontend": 25
+    "Sales": 40
+    "Backend": 30
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* link:https://mermaid.js.org/syntax/treemap.html[Official Mermaid treemap documentation]

@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_apply_a_style_to_an_individual_node_56",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 60,
+  "metadata": {
+    "test_name": "should be possible to apply a style to an individual node"
+  }
+}

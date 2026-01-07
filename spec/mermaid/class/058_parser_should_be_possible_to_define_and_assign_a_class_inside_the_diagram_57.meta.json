@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_57",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 73,
+  "metadata": {
+    "test_name": "should be possible to define and assign a class inside the diagram"
+  }
+}

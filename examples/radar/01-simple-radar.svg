@@ -1,0 +1,25 @@
+<svg
+ width="560.0"
+ height="560.0"
+ viewBox="0 0 560.0 560.0"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="40.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="80.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="120.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="160.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="200.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="80.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="380.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311225" y2="380.0"/>
+<polygon fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" points="280.0,280.0 366.6025403784439,330.0 106.79491924311225,380.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="280.0" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="366.6025403784439" cy="330.0" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="106.79491924311225" cy="380.0" r="3.0"/>
+<text fill="#000000" x="280.0" y="50.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="middle">A</text>
+<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="auto">B</text>
+<text fill="#000000" x="80.81415712957909" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="hanging">C</text>
+<circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
+<text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">mycurve</text>
+</svg>

@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-24_Handle_rows_above_the_mindmap_declarations_24",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 340,
+  "metadata": {
+    "test_name": "MMP-24 Handle rows above the mindmap declarations"
+  }
+}

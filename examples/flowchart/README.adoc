@@ -1,0 +1,167 @@
+= Flowchart Examples
+
+== Purpose
+
+Flowcharts visualize processes, workflows, and decision trees using nodes and directed edges. They are ideal for representing algorithms, business processes, and system logic flows.
+
+== When to Use
+
+* Process documentation and standard operating procedures
+* Algorithm visualization and pseudocode representation  
+* Decision tree mapping and workflow design
+* System flow diagrams and state transitions
+* Business process modeling (BPM)
+
+== Syntax Overview
+
+[source,mermaid]
+----
+graph TD
+    A[Rectangle Node]
+    B{Decision Node}
+    C([Rounded Node])
+    
+    A --> B
+    B -->|Yes| C
+    B -->|No| A
+----
+
+**Direction**: `TD` (top-down), `LR` (left-right), `BT` (bottom-top), `RL` (right-left)
+
+**Node Shapes**:
+- `[text]` - Rectangle
+- `(text)` - Rounded rectangle
+- `([text])` - Stadium/pill shape
+- `[[text]]` - Subroutine
+- `[(text)]` - Database/cylinder
+- `((text))` - Circle
+- `{text}` - Rhombus/decision
+- `{{text}}` - Hexagon
+
+**Edge Types**:
+- `-->` - Arrow
+- `---` - Line
+- `-.->` - Dotted arrow
+- `-.-` - Dotted line
+- `==>` - Thick arrow
+- `===` - Thick line
+
+== Examples
+
+=== 01: Basic Flow
+
+Demonstrates fundamental flowchart structure with start/end nodes, process steps, and decision points.
+
+**File**: link:01-basic-flow.mmd[01-basic-flow.mmd]
+
+[source,mermaid]
+----
+include::01-basic-flow.mmd[]
+----
+
+image::01-basic-flow.svg[]
+
+=== 02: Node Shapes
+
+Showcases all available node shapes in Sirena flowcharts.
+
+**File**: link:02-node-shapes.mmd[02-node-shapes.mmd]
+
+[source,mermaid]
+----
+include::02-node-shapes.mmd[]
+----
+
+image::02-node-shapes.svg[]
+
+=== 03: Edge Types
+
+Demonstrates different edge/connection styles including arrows, lines, dotted, thick, and labeled edges.
+
+**File**: link:03-edge-types.mmd[03-edge-types.mmd]
+
+[source,mermaid]
+----
+include::03-edge-types.mmd[]
+----
+
+image::03-edge-types.svg[]
+
+=== 04: Subgraphs
+
+Shows how to group related nodes using subgraphs to represent system boundaries or logical groupings.
+
+**File**: link:04-subgraphs.mmd[04-subgraphs.mmd]
+
+[source,mermaid]
+----
+include::04-subgraphs.mmd[]
+----
+
+image::04-subgraphs.svg[]
+
+=== 05: Styling
+
+Illustrates custom styling with classDef and linkStyle for colored nodes and edges.
+
+**File**: link:05-styling.mmd[05-styling.mmd]  
+
+[source,mermaid]
+----
+include::05-styling.mmd[]
+----
+
+image::05-styling.svg[]
+
+=== 06: Complex Flow
+
+Demonstrates a realistic complex workflow with multiple paths, error handling, and state management.
+
+**File**: link:06-complex-flow.mmd[06-complex-flow.mmd]
+
+[source,mermaid]  
+----
+include::06-complex-flow.mmd[]
+----
+
+image::06-complex-flow.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Basic node and edge creation
+| 01
+
+| All node shapes
+| 02
+
+| All edge types and labels
+| 03
+
+| Subgraphs/grouping
+| 04
+
+| Custom styling (classDef, linkStyle)
+| 05
+
+| Complex multi-path workflows
+| 06
+
+| Decision points and branching
+| 01, 06
+
+| Error handling patterns
+| 01, 06
+
+| Process loops
+| 06
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]
+* link:../../docs/diagrams/flowchart.adoc[Flowchart Full Reference] (if exists)
+* https://mermaid.js.org/syntax/flowchart.html[Mermaid Flowchart Documentation]

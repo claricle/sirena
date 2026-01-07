@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_member_and_method_definitions_76",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 593,
+  "metadata": {
+    "test_name": "should handle member and method definitions"
+  }
+}

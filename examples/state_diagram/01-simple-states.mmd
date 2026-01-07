@@ -1,0 +1,29 @@
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> Connecting : connect()
+    Connecting --> Connected : success
+    Connecting --> Error : failure
+
+    state Connected {
+        [*] --> Authenticated
+        Authenticated --> Active
+
+        state Active {
+            [*] --> Reading
+            Reading --> Writing : write_request
+            Writing --> Reading : write_complete
+            Reading --> Processing : process_data
+            Processing --> Reading : complete
+        }
+
+        Active --> Suspended : suspend()
+        Suspended --> Active : resume()
+    }
+
+    Connected --> Disconnecting : disconnect()
+    Error --> Idle : reset()
+    Disconnecting --> Idle : complete
+    Suspended --> Disconnecting : timeout
+
+    Idle --> [*] : shutdown()

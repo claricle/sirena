@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_radar_diagram_with_config_override_13",
+  "type": "radar",
+  "source_file": "/packages/mermaid/src/diagrams/radar/radar.spec.ts",
+  "line_number": 132,
+  "metadata": {
+    "test_name": "should handle radar diagram with config override"
+  }
+}

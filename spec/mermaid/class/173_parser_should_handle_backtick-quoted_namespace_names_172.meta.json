@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_backtick-quoted_namespace_names_172",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/parser/class.spec.js",
+  "line_number": 19,
+  "metadata": {
+    "test_name": "should handle backtick-quoted namespace names"
+  }
+}

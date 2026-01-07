@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_state_definitions_with_separation_of_id_43",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram.spec.js",
+  "line_number": 223,
+  "metadata": {
+    "test_name": "should handle state definitions with separation of id"
+  }
+}

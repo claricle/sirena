@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-37_should_be_possible_to_set_the_external_id_40",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 483,
+  "metadata": {
+    "test_name": "KNBN-37 should be possible to set the external id"
+  }
+}

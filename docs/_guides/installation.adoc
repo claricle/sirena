@@ -1,0 +1,100 @@
+---
+layout: default
+title: Installation
+parent: Guides
+nav_order: 1
+---
+
+= Installation Guide
+
+== Requirements
+
+Sirena requires:
+
+* Ruby 2.7 or higher
+* Bundler (for development)
+
+== Installation Methods
+
+=== Via RubyGems (Recommended)
+
+Install Sirena directly from RubyGems:
+
+[source,shell]
+----
+gem install sirena
+----
+
+=== Via Bundler
+
+Add Sirena to your `Gemfile`:
+
+[source,ruby]
+----
+gem 'sirena'
+----
+
+Then install:
+
+[source,shell]
+----
+bundle install
+----
+
+=== From Source
+
+Clone the repository and install locally:
+
+[source,shell]
+----
+git clone https://github.com/claricle/sirena.git
+cd sirena
+bundle install
+bundle exec rake install
+----
+
+== Verification
+
+Verify the installation:
+
+[source,shell]
+----
+sirena version
+----
+
+You should see output similar to:
+
+----
+Sirena version 0.1.0
+----
+
+== Next Steps
+
+* link:quick-start.html[Quick Start Guide] - Get started with your first diagram
+* link:cli-reference.html[CLI Reference] - Learn all available commands
+* link:../diagram_types/index.html[Diagram Types] - Explore all 24 diagram types
+
+== Troubleshooting
+
+=== Command Not Found
+
+If `sirena` command is not found after installation, ensure your gem bin directory is in your PATH:
+
+[source,shell]
+----
+echo 'export PATH="$HOME/.gem/ruby/X.X.0/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+----
+
+Replace `X.X.0` with your Ruby version.
+
+=== Permission Errors
+
+If you encounter permission errors during installation, try:
+
+[source,shell]
+----
+gem install sirena --user-install
+----
+
+Or use a Ruby version manager like `rbenv` or `rvm`.

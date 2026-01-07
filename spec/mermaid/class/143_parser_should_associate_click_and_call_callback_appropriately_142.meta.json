@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_associate_click_and_call_callback_appropriately_142",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1618,
+  "metadata": {
+    "test_name": "should associate click and call callback appropriately"
+  }
+}

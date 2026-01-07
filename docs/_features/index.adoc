@@ -1,0 +1,129 @@
+---
+layout: default
+title: Features
+nav_order: 6
+has_children: true
+---
+
+== Features
+
+Detailed documentation of Sirena's unique features and capabilities.
+
+== What's in This Section
+
+In-depth coverage of:
+
+* **Theme System** - YAML-based theming with built-in themes
+* **Batch Processing** - Processing multiple diagrams efficiently
+* **CLI Tools** - Command-line interface capabilities
+* **Parslet Parsing** - Grammar-based parsing architecture
+* **SVG Generation** - Professional-quality output
+* **Error Handling** - Clear, actionable error messages
+* **Layout Engine** - ELK-based automatic layout
+* **Text Measurement** - Accurate text rendering
+* **Color Palettes** - Theme color system
+* **Typography** - Font and text styling
+* **Shape Styles** - Node and edge styling
+
+== Feature Documentation Format
+
+Each feature page includes:
+
+* **Overview** - What the feature does
+* **Use cases** - When to use this feature
+* **How it works** - Technical explanation
+* **Configuration** - How to configure
+* **Examples** - Practical demonstrations
+* **Best practices** - Recommended usage
+* **Troubleshooting** - Common issues
+
+== Core Features
+
+=== Rendering & Output
+
+* link:{% link _features/svg-generation.adoc %}[SVG Generation] - High-quality scalable graphics
+* link:{% link _features/layout-engine.adoc %}[Layout Engine] - Automatic diagram layout
+* link:{% link _features/text-measurement.adoc %}[Text Measurement] - Accurate text sizing
+
+=== Theming & Styling
+
+* link:{% link _features/theme-system.adoc %}[Theme System] - YAML-based themes
+* link:{% link _features/color-palettes.adoc %}[Color Palettes] - Theme colors
+* link:{% link _features/typography.adoc %}[Typography] - Font system
+* link:{% link _features/shape-styles.adoc %}[Shape Styles] - Node and edge styling
+
+=== Parsing & Validation
+
+* link:{% link _features/parslet-parsing.adoc %}[Parslet Parsing] - Grammar-based parser
+* link:{% link _features/error-handling.adoc %}[Error Handling] - Clear error messages
+* link:{% link _features/syntax-validation.adoc %}[Syntax Validation] - Pre-render validation
+
+=== Productivity Features
+
+* link:{% link _features/batch-processing.adoc %}[Batch Processing] - Multiple diagrams at once
+* link:{% link _features/cli-tools.adoc %}[CLI Tools] - Command-line interface
+* link:{% link _features/caching.adoc %}[Caching] - Performance optimization
+
+== Built-in Themes
+
+Sirena includes four professional themes:
+
+* **Default** - Classic Mermaid.js-compatible styling
+* **Dark** - Dark background with high contrast
+* **Light** - Minimalist light theme
+* **High Contrast** - Maximum accessibility
+
+See link:{% link _features/theme-system.adoc %}[Theme System] for details.
+
+== Integration Features
+
+=== Framework Support
+
+* **Rails** - Native Ruby on Rails integration
+* **Jekyll** - Static site generation
+* **Metanorma** - Technical documentation
+* **Generic Ruby** - Any Ruby application
+
+=== Build Tool Integration
+
+* **Rake Tasks** - Automated diagram generation
+* **CI/CD** - GitHub Actions and other pipelines
+* **Batch Scripts** - Shell integration
+
+== Performance Features
+
+* **Fast Parsing** - Parslet-based efficient parsing
+* **Optimized Rendering** - Minimal memory footprint
+* **Batch Processing** - Parallel rendering support
+* **Caching** - Optional output caching
+
+See link:{% link _guides/performance-optimization.adoc %}[Performance Optimization Guide] for tuning tips.
+
+== Unique Advantages
+
+=== vs. Mermaid.js
+
+* **No Node.js** - Pure Ruby, no JavaScript runtime
+* **No Browser** - No Puppeteer/headless Chrome
+* **Faster** - 16x faster for batch processing
+* **Less Memory** - 8x lower memory usage
+* **Native Ruby** - First-class Ruby integration
+
+See link:{% link _pages/compatibility.adoc %}[Compatibility Comparison] for details.
+
+== Extensibility
+
+Sirena is designed for extension:
+
+* **Custom Themes** - Create your own themes
+* **Custom Parsers** - Extend syntax support
+* **Custom Renderers** - Add rendering features
+* **Plugins** - Extend functionality
+
+See link:{% link _guides/extending-parsers.adoc %}[Extending Parsers Guide] for developer documentation.
+
+== Related Documentation
+
+* link:{% link _tutorials/index.adoc %}[Tutorials] - Learn by doing
+* link:{% link _guides/index.adoc %}[Guides] - In-depth topics
+* link:{% link _references/index.adoc %}[References] - API documentation

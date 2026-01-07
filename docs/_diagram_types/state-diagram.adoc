@@ -1,0 +1,658 @@
+= State diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+State diagrams in Sirena represent state machines, showing the different states a system can be in and the transitions between those states. They are essential for modeling behavior in reactive systems, workflows, and protocol implementations.
+
+State diagrams are useful for:
+
+* Modeling user interface workflows
+* Documenting protocol state machines
+* Visualizing application lifecycle states
+* Mapping connection states in networking
+* Planning game state transitions
+* Designing workflow engines
+
+== Syntax specification
+
+=== Diagram declaration
+
+State diagrams are declared using the `stateDiagram-v2` keyword:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    <diagram-content>
+----
+
+NOTE: Sirena uses the version 2 syntax (`stateDiagram-v2`) which is the current standard.
+
+=== States
+
+==== Simple states
+
+States are declared by their usage in transitions:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    State1 --> State2
+----
+
+==== State with description
+
+States can have descriptions that differ from their identifiers:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state1 : This is a description
+    state1 --> state2
+----
+
+==== Start and end states
+
+Special states mark the beginning and end:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> FirstState
+    LastState --> [*]
+----
+
+Where `[*]` represents the start or end state.
+
+=== Transitions
+
+Transitions connect states and can have labels:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    State1 --> State2
+    State2 --> State3 : transition label
+----
+
+=== Composite states
+
+Composite states contain nested states:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state CompositeState {
+        [*] --> InnerState1
+        InnerState1 --> InnerState2
+        InnerState2 --> [*]
+    }
+----
+
+=== Concurrent states
+
+Concurrent states show parallel state machines:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state Fork <<fork>>
+    state Join <<join>>
+
+    [*] --> Fork
+    Fork --> State1
+    Fork --> State2
+    State1 --> Join
+    State2 --> Join
+    Join --> [*]
+----
+
+Alternatively, use the `--` separator for concurrent regions:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state Active {
+        [*] --> Process1
+        --
+        [*] --> Process2
+    }
+----
+
+=== Choice states
+
+Choice states represent conditional branches:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state if_state <<choice>>
+    [*] --> if_state
+    if_state --> State1 : condition1
+    if_state --> State2 : condition2
+----
+
+=== Notes
+
+Notes can be added to states:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    State1 --> State2
+    note right of State1
+        This is a note
+    end note
+----
+
+Notes can be positioned:
+
+* `note left of StateName`
+* `note right of StateName`
+
+=== Direction
+
+The layout direction can be specified:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    direction LR
+    State1 --> State2
+----
+
+Options:
+
+* `TB` or `TD` - Top to bottom (default)
+* `BT` - Bottom to top
+* `LR` - Left to right
+* `RL` - Right to left
+
+=== Scale
+
+The diagram scale can be adjusted:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    scale 350 width
+    State1 --> State2
+----
+
+== Examples
+
+=== Basic state machine
+
+.Simple state transitions
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Active
+    Active --> Idle
+    Active --> [*]
+----
+
+This creates a simple state machine with:
+
+* Start state transitioning to Idle
+* Transitions between Idle and Active
+* Active state can end the machine
+====
+
+=== State machine with descriptions
+
+.States with descriptive labels
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> Connecting : connect()
+    Connecting --> Connected : success
+    Connecting --> Error : failure
+
+    Connected --> Idle : disconnect()
+    Error --> Idle : reset()
+----
+
+This demonstrates:
+
+* State transitions with labeled triggers
+* Multiple possible outcomes from a state
+* Return transitions to initial state
+====
+
+=== Composite states
+
+.Nested state machine
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> Connecting : connect()
+    Connecting --> Connected : success
+    Connecting --> Error : failure
+
+    state Connected {
+        [*] --> Authenticated
+        Authenticated --> Active
+
+        state Active {
+            [*] --> Reading
+            Reading --> Writing : write_request
+            Writing --> Reading : write_complete
+            Reading --> Processing : process_data
+            Processing --> Reading : complete
+        }
+
+        Active --> Suspended : suspend()
+        Suspended --> Active : resume()
+    }
+
+    Connected --> Disconnecting : disconnect()
+    Error --> Idle : reset()
+    Disconnecting --> Idle : complete
+    Suspended --> Disconnecting : timeout
+
+    Idle --> [*] : shutdown()
+----
+
+This example shows:
+
+* Multi-level nested composite states
+* State `Connected` contains substates
+* State `Active` is nested within `Connected`
+* Transitions between nested states
+* Transitions from nested states to outer states
+====
+
+=== Concurrent states
+
+.Parallel state execution
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Active
+
+    state Active {
+        [*] --> ProcessA
+        --
+        [*] --> ProcessB
+
+        ProcessA --> DoneA
+        ProcessB --> DoneB
+    }
+
+    Active --> [*]
+----
+
+This demonstrates:
+
+* Concurrent regions separated by `--`
+* Independent state machines running in parallel
+* Each region has its own start state
+====
+
+=== Complex state machine with multiple features
+
+.Multi-level recursive states
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    scale 350 width
+    [*] --> NotShooting
+
+    state NotShooting {
+        [*] --> Idle
+        Idle --> Configuring : EvConfig
+        Configuring --> Idle : EvConfig
+    }
+
+    state Configuring {
+        [*] --> NewValueSelection
+        NewValueSelection --> NewValuePreview : EvNewValue
+        NewValuePreview --> NewValueSelection : EvNewValueRejected
+        NewValuePreview --> NewValueSelection : EvNewValueSaved
+
+        state NewValuePreview {
+            State1 --> State2
+        }
+    }
+----
+
+This comprehensive example includes:
+
+* Scale directive for width
+* Multiple composite states
+* Recursive nesting (Configuring appears both as substate and composite)
+* Complex transition patterns
+* Real-world camera state machine pattern
+====
+
+=== Choice states
+
+.Conditional branching
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    state if_state <<choice>>
+
+    [*] --> CheckValue
+    CheckValue --> if_state
+
+    if_state --> Low : value < 10
+    if_state --> Medium : 10 <= value < 50
+    if_state --> High : value >= 50
+
+    Low --> [*]
+    Medium --> [*]
+    High --> [*]
+----
+
+This shows:
+
+* Choice state declaration with `<<choice>>`
+* Multiple conditional branches
+* Condition labels on transitions
+====
+
+=== State machine with notes
+
+.Documented state transitions
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> Processing : start
+
+    note right of Processing
+        This state handles all
+        data processing operations
+    end note
+
+    Processing --> Complete : success
+    Processing --> Error : failure
+
+    note left of Error
+        Error recovery
+        is automatic
+    end note
+
+    Error --> Idle : retry
+    Complete --> [*]
+----
+
+This demonstrates:
+
+* Right-side notes
+* Left-side notes
+* Multi-line note content
+* Documenting state behavior
+====
+
+=== Connection lifecycle
+
+.Real-world connection state machine
+[example]
+====
+[source,mermaid]
+----
+stateDiagram-v2
+    [*] --> Disconnected
+
+    Disconnected --> Connecting : open()
+    Connecting --> Connected : handshake_success
+    Connecting --> Failed : timeout
+    Connecting --> Failed : handshake_error
+
+    state Connected {
+        [*] --> Idle
+        Idle --> Transmitting : send()
+        Transmitting --> Idle : ack_received
+        Idle --> Receiving : data_available
+        Receiving --> Idle : data_processed
+    }
+
+    Connected --> Disconnecting : close()
+    Connected --> Failed : connection_lost
+
+    Disconnecting --> Disconnected : cleanup_complete
+
+    Failed --> Disconnected : reset()
+
+    Disconnected --> [*]
+----
+
+This real-world example shows:
+
+* Connection state lifecycle
+* Error handling paths
+* Nested operational states
+* Recovery transitions
+====
+
+== Features
+
+=== State identifiers
+
+State identifiers can contain letters, numbers, and underscores:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state_1 --> state_2
+    state_2 --> state_3
+----
+
+=== Multi-word state names
+
+State descriptions can contain spaces:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state1 : Waiting for Input
+    state2 : Processing Data
+    state1 --> state2
+----
+
+=== Long descriptions
+
+Descriptions can be multiple words:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    longStateName : This is a very long state description that explains what happens in this state
+----
+
+=== Multiple transitions
+
+A state can have multiple incoming and outgoing transitions:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    State1 --> State2
+    State1 --> State3
+    State4 --> State2
+    State5 --> State2
+----
+
+=== Self-transitions
+
+States can transition to themselves:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    State1 --> State1 : self_transition
+----
+
+=== Nested composite states
+
+Composite states can be nested to any depth:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state Outer {
+        state Inner {
+            state DeepInner {
+                [*] --> DeepState
+            }
+        }
+    }
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid state diagram features are not yet supported in Sirena:
+
+* Fork and join states with `<<fork>>` and `<<join>>` stereotypes
+* Custom styling with CSS classes
+* Click events and links
+* Comments using `%%`
+* Background colors
+* Class styling
+
+=== Known issues
+
+* Very deeply nested states may have layout issues
+* Complex concurrent state diagrams may not space optimally
+* Long state names may overflow boundaries
+
+== Best practices
+
+=== Use meaningful state names
+
+Choose descriptive state names:
+
+[source,mermaid]
+----
+%% Good
+stateDiagram-v2
+    Idle --> Processing : start_processing
+    Processing --> Complete : finished
+
+%% Less clear
+stateDiagram-v2
+    S1 --> S2
+    S2 --> S3
+----
+
+=== Label transitions clearly
+
+Use descriptive transition labels:
+
+[source,mermaid]
+----
+%% Good
+stateDiagram-v2
+    Idle --> Active : user_clicked_start
+    Active --> Paused : user_clicked_pause
+
+%% Less clear
+stateDiagram-v2
+    Idle --> Active
+    Active --> Paused
+----
+
+=== Group related states
+
+Use composite states to organize related substates:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    state Active {
+        Reading --> Writing
+        Writing --> Processing
+        Processing --> Reading
+    }
+----
+
+=== Keep nesting levels manageable
+
+Avoid excessive nesting depth:
+
+[source,mermaid]
+----
+%% Good - 2 levels
+stateDiagram-v2
+    state Outer {
+        state Inner {
+            State1 --> State2
+        }
+    }
+
+%% Less maintainable - too deep
+stateDiagram-v2
+    state L1 {
+        state L2 {
+            state L3 {
+                state L4 {
+                    state L5 {
+                        Deep --> TooDeep
+                    }
+                }
+            }
+        }
+    }
+----
+
+=== Use notes for complex logic
+
+Add notes to explain complex state behavior:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    Processing --> Validated
+
+    note right of Validated
+        Validation includes:
+        - Schema check
+        - Business rules
+        - Data integrity
+    end note
+----
+
+=== Document error paths
+
+Always show error and recovery paths:
+
+[source,mermaid]
+----
+stateDiagram-v2
+    Processing --> Success : valid
+    Processing --> Error : invalid
+    Error --> Retry : recoverable
+    Error --> Failed : unrecoverable
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<flowchart.adoc#,Flowchart diagrams>>
+* link:https://mermaid.js.org/syntax/stateDiagram.html[Official Mermaid state diagram documentation]

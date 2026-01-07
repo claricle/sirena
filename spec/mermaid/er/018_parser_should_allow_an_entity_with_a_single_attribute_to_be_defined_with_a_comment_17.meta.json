@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_allow_an_entity_with_a_single_attribute_to_be_defined_with_a_comment_17",
+  "type": "er",
+  "source_file": "/packages/mermaid/src/diagrams/er/parser/erDiagram.spec.js",
+  "line_number": 253,
+  "metadata": {
+    "test_name": "should allow an entity with a single attribute to be defined with a comment"
+  }
+}

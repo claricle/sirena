@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_accessibility_title_and_description_19",
+  "type": "architecture",
+  "source_file": "/packages/mermaid/src/diagrams/architecture/architecture.spec.ts",
+  "line_number": 40,
+  "metadata": {
+    "test_name": "should handle accessibility title and description"
+  }
+}

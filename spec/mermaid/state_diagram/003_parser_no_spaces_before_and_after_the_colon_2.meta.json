@@ -1,0 +1,6 @@
+{
+  "name": "parser_no_spaces_before_and_after_the_colon_2",
+  "type": "state_diagram",
+  "source_file": "/Users/mulgogi/src/external/mermaid-js/packages/mermaid/src/diagrams/state/parser/state-parser.spec.js",
+  "line_number": 40
+}

@@ -1,0 +1,103 @@
+---
+layout: default
+title: References
+nav_order: 7
+has_children: true
+---
+
+== References
+
+Complete API, CLI, and configuration references for quick lookup.
+
+== What's in This Section
+
+Comprehensive reference documentation:
+
+* **CLI Reference** - Complete command-line interface
+* **API Reference** - Programmatic API documentation
+* **Theme Reference** - Theme configuration schema
+* **Error Codes** - All error codes and meanings
+* **Configuration** - Configuration options
+* **Mermaid Compatibility** - Syntax compatibility matrix
+
+== Reference Format
+
+Each reference page provides:
+
+* **Quick lookup tables** - Find information fast
+* **Complete listings** - Exhaustive documentation
+* **Examples** - Usage demonstrations
+* **Notes** - Important details and caveats
+* **See also** - Related documentation
+
+== Command-Line Interface
+
+=== link:{% link _references/cli-reference.adoc %}[CLI Reference]
+
+Complete documentation of all `sirena` commands:
+
+* `sirena render` - Render a single diagram
+* `sirena batch` - Process multiple diagrams
+* `sirena types` - List supported diagram types
+* `sirena version` - Show version information
+
+== Programmatic API
+
+=== link:{% link _references/api-reference.adoc %}[API Reference]
+
+Ruby API documentation:
+
+* `Sirena.render()` - Main rendering method
+* `Sirena::Engine` - Core engine class
+* `Sirena::Theme` - Theme system
+* `Sirena::Parser` - Parser classes
+* `Sirena::Renderer` - Renderer classes
+
+== Configuration
+
+=== link:{% link _references/theme-reference.adoc %}[Theme Reference]
+
+Complete theme configuration schema:
+
+* Color palette configuration
+* Typography settings
+* Shape styles
+* Spacing configuration
+* Effect styles
+
+== Error Handling
+
+=== link:{% link _references/error-codes.adoc %}[Error Codes]
+
+All error codes with:
+
+* Error code number
+* Error message
+* Cause explanation
+* Resolution steps
+* Examples
+
+== Compatibility
+
+=== link:{% link _references/mermaid-compatibility.adoc %}[Mermaid Compatibility]
+
+Feature-by-feature comparison:
+
+* Supported syntax
+* Unsupported features
+* Behavioral differences
+* Migration notes
+
+== Quick Reference Cards
+
+Downloadable quick references:
+
+* link:{% link _references/cli-quick-reference.adoc %}[CLI Quick Reference]
+* link:{% link _references/api-quick-reference.adoc %}[API Quick Reference]
+* link:{% link _references/syntax-quick-reference.adoc %}[Syntax Quick Reference]
+
+== Related Documentation
+
+* link:{% link _tutorials/index.adoc %}[Tutorials] - Learn step-by-step
+* link:{% link _guides/index.adoc %}[Guides] - In-depth topics
+* link:{% link _diagram_types/index.adoc %}[Diagram Types] - Syntax for each type

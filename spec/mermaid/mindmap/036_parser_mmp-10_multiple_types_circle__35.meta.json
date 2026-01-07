@@ -1,0 +1,9 @@
+{
+  "name": "parser_MMP-10_multiple_types_circle__35",
+  "type": "mindmap",
+  "source_file": "/packages/mermaid/src/diagrams/mindmap/mindmap.spec.ts",
+  "line_number": 119,
+  "metadata": {
+    "test_name": "MMP-10 multiple types (circle)"
+  }
+}

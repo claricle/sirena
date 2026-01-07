@@ -1,0 +1,719 @@
+= Entity relationship diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Entity Relationship (ER) diagrams in Sirena model the relationships between entities in a database or data model. They are essential for database design, showing entities (tables), their attributes (columns), and the relationships between them.
+
+ER diagrams are useful for:
+
+* Database schema design and documentation
+* Planning data models before implementation
+* Communicating data structure to stakeholders
+* Identifying relationships and cardinality
+* Normalizing database structures
+* Visualizing entity dependencies
+
+== Syntax specification
+
+=== Diagram declaration
+
+ER diagrams are declared using the `erDiagram` keyword:
+
+[source,mermaid]
+----
+erDiagram
+    <diagram-content>
+----
+
+=== Entities
+
+Entities are defined implicitly through relationships or explicitly with attributes:
+
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER
+    ORDER
+----
+
+=== Relationships
+
+Relationships connect entities and specify cardinality:
+
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+----
+
+==== Relationship syntax
+
+The basic syntax is:
+
+[source]
+----
+<first-entity> [<relationship>] <second-entity> : <relationship-label>
+----
+
+==== Cardinality and relationship types
+
+Relationships consist of three parts:
+
+1. Left cardinality/relationship
+2. Relationship line style
+3. Right cardinality/relationship
+
+[cols="2,2,3"]
+|===
+|Symbol |Meaning |Description
+
+|`\|o`
+|Zero or one
+|Optional relationship (0 or 1)
+
+|`\|\|`
+|Exactly one
+|Mandatory relationship (1)
+
+|`}o`
+|Zero or more
+|Optional many (0 or more)
+
+|`}\|`
+|One or more
+|Mandatory many (1 or more)
+|===
+
+==== Relationship line styles
+
+[cols="2,3"]
+|===
+|Symbol |Meaning
+
+|`--`
+|Non-identifying relationship
+
+|`..`
+|Identifying relationship (not commonly used)
+|===
+
+==== Common relationship patterns
+
+[cols="3,2,3"]
+|===
+|Syntax |Reads as |Description
+
+|`\|\|--o{`
+|One to zero or more
+|One entity has many optional related entities
+
+|`\|\|--\|\{`
+|One to one or more
+|One entity has many required related entities
+
+|`\|\|--\|\|`
+|One to one
+|Exactly one-to-one relationship
+
+|`\|\|--o\|`
+|One to zero or one
+|Optional one-to-one relationship
+
+|`}o--o{`
+|Zero or more to zero or more
+|Many-to-many optional relationship
+
+|`}o--\|\|`
+|Zero or more to exactly one
+|Many optional to one required
+|===
+
+=== Attributes
+
+Attributes define the properties of entities:
+
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER {
+        int id
+        string name
+        string email
+    }
+----
+
+==== Attribute syntax
+
+[source]
+----
+<type> <name> [<key-type>] ["comment"]
+----
+
+Where:
+
+* `type` is the data type (int, string, varchar, etc.)
+* `name` is the attribute name
+* `key-type` (optional) can be:
+  - `PK` - Primary Key
+  - `FK` - Foreign Key
+  - `UK` - Unique Key
+* `comment` (optional) is a descriptive comment
+
+==== Example with keys
+
+[source,mermaid]
+----
+erDiagram
+    USER {
+        int id PK "Primary identifier"
+        string username UK "Unique username"
+        string email UK "Unique email address"
+        string password_hash "Hashed password"
+    }
+----
+
+=== Relationship labels
+
+Relationships can have descriptive labels:
+
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : "ordered in"
+----
+
+== Examples
+
+=== Basic ER diagram
+
+.Simple two-entity relationship
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER ||--o{ ORDER : places
+----
+
+This creates a simple ER diagram showing:
+
+* One customer can place zero or more orders
+* Each order is placed by exactly one customer
+====
+
+=== Entities with attributes
+
+.Complete entity definitions
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    CUSTOMER {
+        int id PK
+        string name
+        string email UK
+    }
+
+    ORDER {
+        int id PK
+        int customer_id FK
+        date order_date
+    }
+
+    CUSTOMER ||--o{ ORDER : places
+----
+
+This demonstrates:
+
+* Entity definitions with attributes
+* Primary keys (PK)
+* Foreign keys (FK)
+* Unique keys (UK)
+* One-to-many relationship
+====
+
+=== Multiple relationships
+
+.Complex relationship network
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    USER ||--o{ POST : writes
+    USER ||--o{ COMMENT : writes
+    POST ||--o{ COMMENT : has
+    POST }o--|| CATEGORY : belongs_to
+    POST }o--o{ TAG : tagged_with
+----
+
+This shows:
+
+* Multiple relationships from one entity
+* One-to-many relationships (`||--o{`)
+* Many-to-one relationships (`}o--||`)
+* Many-to-many relationships (`}o--o{`)
+====
+
+=== Complete database schema
+
+.E-commerce database schema
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    USER ||--o{ POST : writes
+    USER ||--o{ COMMENT : writes
+    POST ||--o{ COMMENT : has
+    POST }o--|| CATEGORY : belongs_to
+    POST }o--o{ TAG : tagged_with
+    USER ||--o{ LIKE : gives
+    POST ||--o{ LIKE : receives
+    COMMENT ||--o{ LIKE : receives
+
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password_hash
+        datetime created_at
+        datetime updated_at
+        boolean is_active
+    }
+
+    POST {
+        int id PK
+        int user_id FK
+        int category_id FK
+        string title
+        text content
+        string slug UK
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+        int view_count
+    }
+
+    COMMENT {
+        int id PK
+        int post_id FK
+        int user_id FK
+        int parent_id FK
+        text content
+        datetime created_at
+        datetime updated_at
+        boolean is_approved
+    }
+
+    CATEGORY {
+        int id PK
+        string name UK
+        string slug UK
+        text description
+    }
+
+    TAG {
+        int id PK
+        string name UK
+        string slug UK
+    }
+
+    LIKE {
+        int id PK
+        int user_id FK
+        int post_id FK
+        int comment_id FK
+        datetime created_at
+    }
+----
+
+This comprehensive example includes:
+
+* Multiple entities with full attribute definitions
+* Various relationship types
+* Primary and foreign keys
+* Unique constraints
+* Different data types
+* Complex relationship network
+====
+
+=== Self-referential relationship
+
+.Hierarchical data structure
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    EMPLOYEE ||--o{ EMPLOYEE : manages
+
+    EMPLOYEE {
+        int id PK
+        string name
+        string email UK
+        int manager_id FK
+        string position
+    }
+----
+
+This demonstrates:
+
+* Self-referential relationship
+* Hierarchical structure (employees managing employees)
+* Foreign key referencing the same table
+====
+
+=== Many-to-many with junction table
+
+.Explicit junction table for many-to-many
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    STUDENT ||--o{ ENROLLMENT : has
+    COURSE ||--o{ ENROLLMENT : includes
+    ENROLLMENT }o--|| STUDENT : belongs_to
+    ENROLLMENT }o--|| COURSE : is_for
+
+    STUDENT {
+        int id PK
+        string name
+        string email UK
+        date enrollment_date
+    }
+
+    COURSE {
+        int id PK
+        string code UK
+        string title
+        int credits
+    }
+
+    ENROLLMENT {
+        int id PK
+        int student_id FK
+        int course_id FK
+        date enrolled_date
+        string grade
+    }
+----
+
+This shows:
+
+* Explicit junction table for many-to-many relationship
+* Junction table with its own attributes
+* Multiple relationships connecting the junction table
+====
+
+=== One-to-one relationships
+
+.User profile relationship
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    USER ||--|| USER_PROFILE : has
+    USER ||--o| BILLING_INFO : has
+
+    USER {
+        int id PK
+        string username UK
+        string email UK
+    }
+
+    USER_PROFILE {
+        int id PK
+        int user_id FK
+        string full_name
+        string bio
+        string avatar_url
+    }
+
+    BILLING_INFO {
+        int id PK
+        int user_id FK
+        string address
+        string payment_method
+    }
+----
+
+This demonstrates:
+
+* Mandatory one-to-one relationship (`||--||`)
+* Optional one-to-one relationship (`||--o|`)
+* Extended user information in separate tables
+====
+
+=== Database with all cardinality types
+
+.Comprehensive cardinality example
+[example]
+====
+[source,mermaid]
+----
+erDiagram
+    PERSON ||--o| PASSPORT : has
+    PERSON ||--o{ PHONE : owns
+    COMPANY ||--|{ EMPLOYEE : employs
+    EMPLOYEE }o--|| DEPARTMENT : works_in
+    PROJECT }o--o{ EMPLOYEE : assigned_to
+
+    PERSON {
+        int id PK
+        string name
+    }
+
+    PASSPORT {
+        int id PK
+        int person_id FK
+        string number UK
+    }
+
+    PHONE {
+        int id PK
+        int person_id FK
+        string number
+    }
+
+    COMPANY {
+        int id PK
+        string name
+    }
+
+    DEPARTMENT {
+        int id PK
+        int company_id FK
+        string name
+    }
+
+    EMPLOYEE {
+        int id PK
+        int person_id FK
+        int department_id FK
+    }
+
+    PROJECT {
+        int id PK
+        string name
+    }
+----
+
+This comprehensive example shows:
+
+* One-to-zero-or-one (`||--o|`) - person may have passport
+* One-to-many (`||--o{`) - person can have multiple phones
+* One-to-one-or-more (`||--|{`) - company must have employees
+* Many-to-one (`}o--||`) - employees work in one department
+* Many-to-many (`}o--o{`) - projects and employees
+====
+
+== Features
+
+=== Data types
+
+Common data types include:
+
+* `int`, `integer` - Integer numbers
+* `string`, `varchar` - Text strings
+* `text` - Long text
+* `date` - Date values
+* `datetime`, `timestamp` - Date and time
+* `boolean`, `bool` - True/false values
+* `float`, `decimal` - Decimal numbers
+
+Custom types are also supported:
+
+[source,mermaid]
+----
+erDiagram
+    PRODUCT {
+        uuid id PK
+        money price
+        json metadata
+    }
+----
+
+=== Attribute comments
+
+Attributes can have comments for documentation:
+
+[source,mermaid]
+----
+erDiagram
+    USER {
+        int id PK "Auto-incrementing primary key"
+        string email UK "Must be unique and valid"
+        datetime created_at "Account creation timestamp"
+    }
+----
+
+=== Multiple foreign keys
+
+Entities can reference multiple other entities:
+
+[source,mermaid]
+----
+erDiagram
+    ORDER {
+        int id PK
+        int customer_id FK
+        int shipping_address_id FK
+        int billing_address_id FK
+    }
+----
+
+=== Composite keys
+
+While not explicitly shown in syntax, you can document composite keys in comments:
+
+[source,mermaid]
+----
+erDiagram
+    ENROLLMENT {
+        int student_id FK "Part of composite PK"
+        int course_id FK "Part of composite PK"
+        date enrollment_date
+    }
+----
+
+== Limitations
+
+=== Currently not supported
+
+The following Mermaid ER diagram features are not yet supported in Sirena:
+
+* Custom styling with CSS classes
+* Click events and links
+* Entity grouping or namespaces
+* Weak entities (double borders)
+* Identifying relationships with double lines
+* Attribute-level constraints beyond PK, FK, UK
+
+=== Known issues
+
+* Very large diagrams with many entities may become cluttered
+* Long relationship labels may overlap with entities
+* Complex many-to-many relationships may need manual layout adjustment
+
+== Best practices
+
+=== Use clear entity names
+
+Choose descriptive, singular nouns for entities:
+
+[source,mermaid]
+----
+%% Good - singular, clear names
+erDiagram
+    CUSTOMER
+    ORDER
+    PRODUCT
+
+%% Less clear - plural or abbreviated
+erDiagram
+    CUSTOMERS
+    ORDS
+    PRODS
+----
+
+=== Document key relationships
+
+Always identify primary and foreign keys:
+
+[source,mermaid]
+----
+erDiagram
+    ORDER {
+        int id PK
+        int customer_id FK
+        int product_id FK
+    }
+----
+
+=== Use appropriate cardinality
+
+Choose the correct cardinality for relationships:
+
+[source,mermaid]
+----
+%% One customer, many orders
+CUSTOMER ||--o{ ORDER : places
+
+%% Many-to-many with junction table
+STUDENT }o--o{ COURSE : enrolls_in
+----
+
+=== Group related entities visually
+
+When creating the diagram, place related entities near each other:
+
+[source,mermaid]
+----
+erDiagram
+    %% User-related entities together
+    USER ||--o{ POST : writes
+    USER ||--o{ COMMENT : writes
+
+    %% Content-related entities together
+    POST ||--o{ COMMENT : has
+    POST }o--|| CATEGORY : belongs_to
+----
+
+=== Add meaningful comments
+
+Use comments to clarify constraints:
+
+[source,mermaid]
+----
+erDiagram
+    USER {
+        int id PK "Auto-generated"
+        string email UK "Lowercase, validated"
+        datetime last_login "Nullable"
+    }
+----
+
+=== Keep diagrams focused
+
+For large systems, create multiple diagrams:
+
+* One diagram per domain/module
+* Separate diagrams for different abstraction levels
+* Core entities in one diagram, auxiliary in another
+
+=== Use consistent naming
+
+Maintain naming consistency:
+
+[source,mermaid]
+----
+%% Consistent ID naming
+CUSTOMER {
+    int id PK
+}
+
+ORDER {
+    int id PK
+    int customer_id FK
+}
+
+%% Consistent timestamp naming
+POST {
+    datetime created_at
+    datetime updated_at
+}
+----
+
+== Related documentation
+
+* <<index.adoc#,Diagram types overview>>
+* <<class-diagram.adoc#,Class diagrams>>
+* link:https://mermaid.js.org/syntax/entityRelationshipDiagram.html[Official Mermaid ER diagram documentation]

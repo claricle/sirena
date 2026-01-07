@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_a_gitGraph_commit_with_custom_commit_type_NORMAL_only_82",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 326,
+  "metadata": {
+    "test_name": "should handle a gitGraph commit with custom commit type NORMAL only"
+  }
+}

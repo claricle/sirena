@@ -1,0 +1,262 @@
+= Kanban Board Diagrams
+:toc:
+:toclevels: 3
+
+== Overview
+
+Kanban board diagrams visualize workflow with columns and cards, commonly used in agile project management and task tracking.
+
+== Syntax
+
+=== Basic Structure
+
+[source,mermaid]
+----
+kanban
+  column_id[Column Title]
+    card_id[Card Text]
+----
+
+=== Complete Example
+
+[source,mermaid]
+----
+kanban
+  id1[Todo]
+    docs[Create Documentation]
+    blog[Create Blog]@{ priority: 'High', ticket: 'MC-1001' }
+  id2[In Progress]
+    feature[Implement Feature]@{ assigned: 'dev1' }
+  id3[Done]
+    release[Release v1.0]
+----
+
+== Features
+
+=== Columns
+
+Columns represent workflow stages (e.g., Todo, In Progress, Done).
+
+.Column Definition
+[source,mermaid]
+----
+kanban
+  column_id[Column Name]
+----
+
+Where:
+
+* `column_id`: Unique identifier for the column
+* `Column Name`: Display name for the column
+
+=== Cards
+
+Cards represent individual work items or tasks.
+
+.Card Definition
+[source,mermaid]
+----
+kanban
+  column_id[Column Name]
+    card_id[Card Text]
+----
+
+Where:
+
+* `card_id`: Unique identifier for the card
+* `Card Text`: Description of the work item
+
+=== Card Metadata
+
+Cards can include metadata for additional information.
+
+.Metadata Syntax
+[source,mermaid]
+----
+card_id[Card Text]@{ key: 'value', key2: 'value2' }
+----
+
+==== Supported Metadata Fields
+
+* `assigned`: User assigned to the task
+* `ticket`: External ticket/issue number
+* `priority`: Priority level (e.g., High, Medium, Low)
+* `icon`: Icon identifier
+* `label`: Additional label or tag
+
+.Metadata Example
+[source,mermaid]
+----
+kanban
+  todo[Todo]
+    task[Fix Bug]@{
+      assigned: 'john',
+      priority: 'High',
+      ticket: 'JIRA-123'
+    }
+----
+
+== Layout
+
+The renderer automatically:
+
+* Positions columns horizontally from left to right
+* Stacks cards vertically within each column
+* Calculates appropriate spacing and dimensions
+* Displays metadata below card text
+
+== Styling
+
+Kanban diagrams support theme customization:
+
+* Column headers use primary theme color
+* Cards use light backgrounds with borders
+* Metadata uses secondary text color
+* Card count badges appear on column headers
+
+== Implementation Details
+
+=== Architecture
+
+The Kanban implementation follows the standard 7-file architecture:
+
+. **Diagram Model** (`lib/sirena/diagram/kanban.rb`)
+   - `KanbanCard`: Card with text and metadata
+   - `KanbanColumn`: Column containing cards
+   - `Kanban`: Complete board with columns
+
+. **Parser Grammar** (`lib/sirena/parser/grammars/kanban.rb`)
+   - Parslet grammar for kanban syntax
+   - Handles columns, cards, and metadata
+
+. **Transform** (`lib/sirena/parser/transforms/kanban.rb`)
+   - Converts parse tree to diagram model
+   - Extracts and validates metadata
+
+. **Parser** (`lib/sirena/parser/kanban.rb`)
+   - Integrates grammar and transform
+   - Creates diagram instances
+
+. **Layout Transform** (`lib/sirena/transform/kanban.rb`)
+   - Calculates column positions
+   - Determines card layout within columns
+   - Computes dimensions based on content
+
+. **Renderer** (`lib/sirena/renderer/kanban.rb`)
+   - Draws column backgrounds and headers
+   - Renders cards with text
+   - Displays metadata fields
+
+. **Tests**
+   - Parser tests: `spec/sirena/parser/kanban_spec.rb`
+   - Renderer tests: `spec/sirena/renderer/kanban_spec.rb`
+
+=== Data Flow
+
+[source]
+----
+Mermaid Source
+    ↓
+Grammar (Parslet)
+    ↓
+Parse Tree
+    ↓
+Transform
+    ↓
+Diagram Model (Kanban, KanbanColumn, KanbanCard)
+    ↓
+Layout Transform
+    ↓
+Positioned Layout
+    ↓
+Renderer
+    ↓
+SVG Output
+----
+
+== Examples
+
+=== Simple Kanban Board
+
+[source,mermaid]
+----
+kanban
+  todo[Todo]
+    task1[Task 1]
+    task2[Task 2]
+  doing[Doing]
+    task3[Task 3]
+  done[Done]
+    task4[Task 4]
+----
+
+=== Board with Metadata
+
+[source,mermaid]
+----
+kanban
+  backlog[Backlog]
+    story1[User Story 1]@{ priority: 'High' }
+    story2[User Story 2]@{ priority: 'Medium' }
+  development[Development]
+    feature1[Feature A]@{ assigned: 'alice', ticket: 'DEV-101' }
+  review[Review]
+    feature2[Feature B]@{ assigned: 'bob' }
+  completed[Completed]
+    feature3[Feature C]
+----
+
+=== Complex Workflow
+
+[source,mermaid]
+----
+kanban
+  ideas[Ideas]
+    idea1[New Feature Idea]@{ label: 'enhancement' }
+  planning[Planning]
+    plan1[Sprint Planning]@{ assigned: 'team' }
+  development[Development]
+    dev1[API Implementation]@{
+      assigned: 'dev1',
+      priority: 'High',
+      ticket: 'PROJ-201'
+    }
+  testing[Testing]
+    test1[Integration Tests]@{ assigned: 'qa1' }
+  deployment[Deployment]
+    deploy1[Production Release]@{ ticket: 'REL-1.0' }
+----
+
+== Best Practices
+
+=== Column Organization
+
+* Use clear, action-oriented column names
+* Limit the number of columns to 3-6 for readability
+* Order columns from left (start) to right (end) in workflow sequence
+
+=== Card Content
+
+* Keep card text concise and descriptive
+* Use consistent naming conventions
+* Include relevant metadata for tracking
+
+=== Metadata Usage
+
+* Use `assigned` for ownership clarity
+* Include `ticket` numbers for traceability
+* Set `priority` to highlight important items
+* Add `label` for categorization
+
+=== Board Structure
+
+* Group related cards in appropriate columns
+* Limit cards per column for visual clarity
+* Use metadata instead of embedding info in text
+
+== See Also
+
+* link:../README.adoc[Sirena Documentation]
+* link:user-journey-diagram.adoc[User Journey Diagrams]
+* link:gantt-diagram.adoc[Gantt Charts]
+* link:timeline-diagram.adoc[Timeline Diagrams]

@@ -1,0 +1,345 @@
+= Block Diagrams
+:toc:
+:toclevels: 3
+
+== General
+
+Block diagrams in Sirena provide a column-based layout system for visualizing hierarchical structures, data flows, and system architectures using blocks and connections. Unlike flowcharts which use graph-based layouts, block diagrams arrange elements in a structured grid with explicit column positioning.
+
+Block diagrams are declared with the `block-beta` keyword and support:
+
+* Column-based layouts with configurable column counts
+* Blocks with optional labels and width specifications
+* Compound/nested blocks for hierarchical structures
+* Space placeholders for layout control
+* Connections between blocks (arrows and lines)
+* Multiple block shapes (rectangles, circles)
+* Styling directives for customization
+
+== Basic block diagram
+
+The simplest block diagram contains blocks arranged in columns:
+
+[source,mermaid]
+----
+block-beta
+  columns 2
+  A["Block A"]
+  B["Block B"]
+----
+
+This creates a two-column layout with two blocks side by side.
+
+== Block declarations
+
+=== Simple blocks
+
+Blocks can be declared with just an identifier:
+
+[source,mermaid]
+----
+block-beta
+  A
+  B
+  C
+----
+
+Without a label, the block displays its identifier as the label.
+
+=== Blocks with labels
+
+Blocks can have custom labels using bracket notation:
+
+[source,mermaid]
+----
+block-beta
+  id1["Custom Label"]
+  id2["Another Block"]
+----
+
+The label text appears inside the block, while the identifier is used for connections.
+
+=== Block widths
+
+Blocks can span multiple columns using width specifications:
+
+[source,mermaid]
+----
+block-beta
+  columns 3
+  A:2
+  B:1
+  C:3
+----
+
+Where:
+
+`A:2`:: Block A spans 2 columns
+`B:1`:: Block B spans 1 column (default)
+`C:3`:: Block C spans 3 columns (entire row)
+
+== Column layout
+
+=== Columns statement
+
+The `columns` directive specifies how many columns the layout uses:
+
+[source,mermaid]
+----
+block-beta
+  columns 3
+  A
+  B
+  C
+  D
+  E
+  F
+----
+
+This creates a grid with 3 columns. Blocks flow left to right, top to bottom.
+
+=== Default columns
+
+If no `columns` statement is provided, the default is 1 column (vertical layout):
+
+[source,mermaid]
+----
+block-beta
+  A
+  B
+  C
+----
+
+All blocks stack vertically in a single column.
+
+== Block shapes
+
+=== Rectangle shape (default)
+
+Blocks are rectangles by default, but can be explicitly labeled:
+
+[source,mermaid]
+----
+block-beta
+  A["Rectangle Block"]
+----
+
+=== Circle shape
+
+Use double parentheses for circular blocks:
+
+[source,mermaid]
+----
+block-beta
+  db(("Database"))
+----
+
+This creates a circular block, often used for databases or special nodes.
+
+== Compound blocks
+
+=== Basic compound blocks
+
+Compound blocks contain nested child blocks:
+
+[source,mermaid]
+----
+block-beta
+  block:group1
+    A
+    B
+    C
+  end
+----
+
+Where:
+
+`block:group1`:: Declares a compound block with ID "group1"
+`A`, `B`, `C`:: Child blocks nested inside
+`end`:: Closes the compound block
+
+=== Nested compound blocks
+
+Compound blocks can be nested:
+
+[source,mermaid]
+----
+block-beta
+  block:outer
+    A
+    block:inner
+      B
+      C
+    end
+    D
+  end
+----
+
+This creates a hierarchical structure with multiple levels.
+
+== Space placeholders
+
+=== Space blocks
+
+Use `space` to create empty cells in the grid:
+
+[source,mermaid]
+----
+block-beta
+  columns 3
+  A
+  space
+  B
+  C
+  space
+  space
+----
+
+Space blocks maintain grid alignment but don't render visually.
+
+== Connections
+
+=== Arrow connections
+
+Connect blocks with arrows using `-->`:
+
+[source,mermaid]
+----
+block-beta
+  A
+  B
+  A --> B
+----
+
+This draws an arrow from block A to block B.
+
+=== Line connections
+
+Use `---` for non-directed line connections:
+
+[source,mermaid]
+----
+block-beta
+  A
+  B
+  A --- B
+----
+
+This draws a simple line without an arrowhead.
+
+=== Multiple connections
+
+A block can have multiple connections:
+
+[source,mermaid]
+----
+block-beta
+  A
+  B
+  C
+  A --> B
+  A --> C
+  B --> C
+----
+
+== Styling
+
+=== Block styling
+
+Style individual blocks using the `style` directive:
+
+[source,mermaid]
+----
+block-beta
+  A["Styled Block"]
+  style A fill:#969,stroke:#333,stroke-width:4px
+----
+
+Where:
+
+`fill:#969`:: Background color
+`stroke:#333`:: Border color
+`stroke-width:4px`:: Border width
+
+=== Style properties
+
+Supported style properties include:
+
+* `fill` - Background color
+* `stroke` - Border color
+* `stroke-width` - Border thickness
+
+== Complete example
+
+Here's a comprehensive example showing various features:
+
+[source,mermaid]
+----
+block-beta
+  columns 3
+
+  db(("Database"))
+  space
+  api["API Server"]
+
+  block:services
+    auth["Auth Service"]
+    users["User Service"]
+    data["Data Service"]
+  end
+
+  web["Web Client"]:3
+
+  db --> services
+  services --> api
+  api --> web
+
+  style db fill:#69f,stroke:#333,stroke-width:2px
+  style api fill:#f96,stroke:#333,stroke-width:2px
+----
+
+This creates a multi-tier architecture diagram with:
+
+* 3-column layout
+* Circular database block
+* Compound services block
+* Full-width web client block
+* Connections showing data flow
+* Custom styling for key components
+
+== Implementation notes
+
+=== Column-based layout
+
+Unlike flowcharts that use graph algorithms, block diagrams use explicit column-based positioning. Blocks are placed in columns from left to right, wrapping to the next row when a row is full.
+
+=== Width calculation
+
+Block widths are calculated based on:
+
+* Explicit width specifications (`:N` syntax)
+* Label text dimensions
+* Minimum block size constraints
+
+=== Connection routing
+
+Connections are routed from the bottom center of the source block to the top center of the target block using straight lines. Future enhancements may include bezier curves for more aesthetic routing.
+
+=== Compound block rendering
+
+Compound blocks are rendered with:
+
+* Dashed border to indicate grouping
+* Padding around child blocks
+* Automatic height calculation based on children
+
+== Theme integration
+
+Block diagrams support full theme integration:
+
+* Block colors from theme palette
+* Border colors and styles
+* Text styling and fonts
+* Connection colors and styles
+
+All visual properties can be customized through themes or inline styling.

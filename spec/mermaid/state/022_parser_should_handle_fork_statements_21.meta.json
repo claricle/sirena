@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_fork_statements_21",
+  "type": "state",
+  "source_file": "/packages/mermaid/src/diagrams/state/stateDiagram-v2.spec.js",
+  "line_number": 273,
+  "metadata": {
+    "test_name": "should handle fork statements"
+  }
+}

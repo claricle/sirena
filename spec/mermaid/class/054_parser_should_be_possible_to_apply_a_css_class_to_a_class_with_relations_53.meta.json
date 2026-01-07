@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_53",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram-styles.spec.js",
+  "line_number": 35,
+  "metadata": {
+    "test_name": "should be possible to apply a css class to a class with relations"
+  }
+}

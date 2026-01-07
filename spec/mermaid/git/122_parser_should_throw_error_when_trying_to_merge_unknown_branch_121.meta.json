@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_throw_error_when_trying_to_merge_unknown_branch_121",
+  "type": "git",
+  "source_file": "/packages/mermaid/src/diagrams/git/gitGraph.spec.ts",
+  "line_number": 1180,
+  "metadata": {
+    "test_name": "should throw error when trying to merge unknown branch"
+  }
+}

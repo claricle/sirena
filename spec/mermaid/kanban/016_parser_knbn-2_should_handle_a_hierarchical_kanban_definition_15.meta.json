@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-2_should_handle_a_hierarchical_kanban_definition_15",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 23,
+  "metadata": {
+    "test_name": "KNBN-2 should handle a hierarchical kanban definition"
+  }
+}

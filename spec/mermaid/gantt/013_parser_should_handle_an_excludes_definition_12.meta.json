@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_an_excludes_definition_12",
+  "type": "gantt",
+  "source_file": "/packages/mermaid/src/diagrams/gantt/parser/gantt.spec.js",
+  "line_number": 36,
+  "metadata": {
+    "test_name": "should handle an excludes definition"
+  }
+}

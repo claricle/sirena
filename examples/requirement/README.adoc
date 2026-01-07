@@ -1,0 +1,85 @@
+= Requirement Diagram Examples
+
+== Purpose
+
+Requirement diagrams model requirements, their relationships, and associated elements like risks and tests, commonly used in systems engineering.
+
+== When to Use
+
+* Requirements engineering
+* System specification documentation
+* Traceability matrices
+* Risk assessment
+* Verification planning
+
+== Syntax Overview
+
+[source,mermaid]
+----
+requirementDiagram
+    requirement req1 {
+        id: 1
+        text: Requirement text
+        risk: high
+        verifymethod: test
+    }
+    element element1 {
+        type: system
+    }
+    req1 - satisfies -> element1
+----
+
+== Examples
+
+=== 01: Basic Requirements
+
+Demonstrates basic requirement definitions with relationships.
+
+**File**: link:01-basic-requirements.mmd[01-basic-requirements.mmd]
+
+[source,mermaid]
+----
+include::01-basic-requirements.mmd[]
+----
+
+image::01-basic-requirements.svg[]
+
+=== 02: Risk Levels
+
+Showcases requirements with different risk levels and verification methods.
+
+**File**: link:02-risk-levels.mmd[02-risk-levels.mmd]
+
+[source,mermaid]
+----
+include::02-risk-levels.mmd[]
+----
+
+image::02-risk-levels.svg[]
+
+== Features Demonstrated
+
+[%header,cols="1,1"]
+|===
+| Feature | Example
+
+| Requirement definition
+| 01, 02
+
+| Risk levels
+| 02
+
+| Verification methods
+| 01, 02
+
+| Element relationships
+| 01, 02
+
+| Traceability links
+| 01, 02
+|===
+
+== Additional Resources
+
+* link:../../README.adoc[Main Documentation]
+* https://mermaid.js.org/syntax/requirementDiagram.html[Mermaid Requirement Diagram Documentation]

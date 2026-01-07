@@ -1,0 +1,9 @@
+{
+  "name": "parser_should_handle_simple_return_types_98",
+  "type": "class",
+  "source_file": "/packages/mermaid/src/diagrams/class/classDiagram.spec.ts",
+  "line_number": 1001,
+  "metadata": {
+    "test_name": "should handle simple return types"
+  }
+}

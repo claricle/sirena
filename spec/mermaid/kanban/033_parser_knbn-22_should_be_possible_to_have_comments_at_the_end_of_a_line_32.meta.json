@@ -1,0 +1,9 @@
+{
+  "name": "parser_KNBN-22_should_be_possible_to_have_comments_at_the_end_of_a_line_32",
+  "type": "kanban",
+  "source_file": "/packages/mermaid/src/diagrams/kanban/kanban.spec.ts",
+  "line_number": 336,
+  "metadata": {
+    "test_name": "KNBN-22 should be possible to have comments at the end of a line"
+  }
+}

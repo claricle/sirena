@@ -1,0 +1,10 @@
+C4Context
+    title System Context Diagram
+    Person(user, "User", "A system user")
+    System(webapp, "Web Application", "Main application")
+    System_Ext(email, "Email System", "Sends notifications")
+    SystemDb(db, "Database", "Stores user data")
+
+    Rel(user, webapp, "Uses")
+    Rel(webapp, email, "Sends emails")
+    Rel(webapp, db, "Reads/Writes")

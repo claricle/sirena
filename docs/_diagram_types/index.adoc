@@ -1,0 +1,192 @@
+---
+layout: default
+title: Diagram Types
+nav_order: 5
+has_children: true
+---
+
+== Diagram Types
+
+Complete reference documentation for all 19 diagram types supported by Sirena.
+
+== What's in This Section
+
+Detailed syntax and examples for:
+
+* Flowchart diagrams
+* Sequence diagrams
+* Class diagrams
+* State diagrams
+* ER diagrams
+* User journey diagrams
+* Git graph diagrams
+* Pie charts
+* Gantt charts
+* Quadrant charts
+* Requirement diagrams
+* C4 diagrams
+* Mindmaps
+* Timeline diagrams
+* Sankey diagrams
+* XY charts
+* Block diagrams
+* Architecture diagrams
+* Kanban boards
+
+Plus additional specialized types:
+
+* Radar charts
+* Treemap diagrams
+* Packet diagrams
+* Info diagrams
+* Error diagrams
+
+== Diagram Type Documentation Format
+
+Each diagram type page includes:
+
+* **Overview** - What the diagram type is for
+* **Use cases** - When to use this type
+* **Syntax specification** - Complete syntax reference
+* **Elements** - Available node/element types
+* **Relationships** - Connection and edge types
+* **Examples** - From basic to advanced
+* **Features** - Special capabilities
+* **Limitations** - Current constraints
+* **Best practices** - Recommended usage patterns
+
+== Quick Reference
+
+[cols="2,3,2"]
+|===
+|Diagram Type |Primary Use Case |Keyword
+
+|link:{% link _diagram_types/flowchart.adoc %}[Flowchart]
+|Process flows and decision trees
+|`graph`, `flowchart`
+
+|link:{% link _diagram_types/sequence-diagram.adoc %}[Sequence]
+|Message interactions over time
+|`sequenceDiagram`
+
+|link:{% link _diagram_types/class-diagram.adoc %}[Class]
+|Object-oriented design
+|`classDiagram`
+
+|link:{% link _diagram_types/state-diagram.adoc %}[State]
+|State machines
+|`stateDiagram-v2`
+
+|link:{% link _diagram_types/er-diagram.adoc %}[ER Diagram]
+|Database design
+|`erDiagram`
+
+|link:{% link _diagram_types/user-journey.adoc %}[User Journey]
+|User experience flows
+|`journey`
+
+|link:{% link _diagram_types/git-graph.adoc %}[Git Graph]
+|Repository history
+|`gitGraph`
+
+|link:{% link _diagram_types/pie-chart.adoc %}[Pie Chart]
+|Proportional data
+|`pie`
+
+|link:{% link _diagram_types/gantt-chart.adoc %}[Gantt]
+|Project timelines
+|`gantt`
+
+|link:{% link _diagram_types/quadrant-chart.adoc %}[Quadrant]
+|Priority matrices
+|`quadrantChart`
+
+|link:{% link _diagram_types/requirement-diagram.adoc %}[Requirement]
+|Requirements traceability
+|`requirementDiagram`
+
+|link:{% link _diagram_types/c4-diagram.adoc %}[C4]
+|Software architecture
+|`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`
+
+|link:{% link _diagram_types/mindmap.adoc %}[Mindmap]
+|Hierarchical ideas
+|`mindmap`
+
+|link:{% link _diagram_types/timeline.adoc %}[Timeline]
+|Historical events
+|`timeline`
+
+|link:{% link _diagram_types/sankey-diagram.adoc %}[Sankey]
+|Flow quantities
+|`sankey-beta`
+
+|link:{% link _diagram_types/xy-chart.adoc %}[XY Chart]
+|Data plotting
+|`xychart-beta`
+
+|link:{% link _diagram_types/block-diagram.adoc %}[Block]
+|Component relationships
+|`block-beta`
+
+|link:{% link _diagram_types/architecture-diagram.adoc %}[Architecture]
+|System architecture
+|`architecture-beta`
+
+|link:{% link _diagram_types/kanban-diagram.adoc %}[Kanban]
+|Workflow boards
+|`kanban`
+|===
+
+== Choosing the Right Diagram Type
+
+=== For Processes and Workflows
+
+* **Flowchart** - General process flows
+* **Sequence** - Time-based interactions
+* **State** - State transitions
+* **User Journey** - User experience flows
+
+=== For Structure and Relationships
+
+* **Class** - Object relationships
+* **ER Diagram** - Data relationships
+* **Block** - Component relationships
+* **Architecture** - System structure
+
+=== For Data Visualization
+
+* **Pie Chart** - Proportions
+* **XY Chart** - Data points
+* **Sankey** - Flow quantities
+* **Quadrant** - Priority/complexity matrices
+
+=== For Planning and Tracking
+
+* **Gantt** - Project schedules
+* **Timeline** - Historical events
+* **Kanban** - Workflow status
+* **Requirement** - Requirements traceability
+
+=== For Software Development
+
+* **C4** - Architecture documentation
+* **Git Graph** - Repository history
+* **Class** - Code structure
+* **Sequence** - API interactions
+
+== Mermaid.js Compatibility
+
+All diagram types maintain syntax compatibility with Mermaid.js. See link:{% link _pages/compatibility.adoc %}[Compatibility Guide] for detailed comparison.
+
+== Examples
+
+Find complete examples in the GitHub repository:
+
+* https://github.com/claricle/sirena/tree/main/examples[Example Diagrams]
+
+== Need Help?
+
+* Check link:{% link _tutorials/creating-first-diagram.adoc %}[Creating Your First Diagram] tutorial
+* See link:{% link _guides/best-practices.adoc %}[Best Practices] guide
+* Visit https://github.com/claricle/sirena/issues[GitHub Issues] for support
