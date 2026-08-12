@@ -49,10 +49,12 @@ the scoreboard — quantified over the CORPUS, not over registrations, so
 an unregistered type is a failure, not an escape. Zero pending examples
 suite-wide.
 
-Floor raises are acceptance criteria of this item, not side effects:
-the PR closing 07c raises the branch floor 70 → 80, and the LATER of
-item 07's close and item 14's close raises it 80 → 90 (whichever lands
-second performs the raise, and says so in its PR body).
+Floor raises are acceptance criteria of this item, not side effects.
+Both are second-finisher rules, because the tracks run concurrently:
+70 → 80 fires when the last of item 06 and 07a/07b/07c completes, and
+80 → 90 when the later of item 07 and item 14 completes. The first
+finisher records the handoff in its PR body and closes; the second
+performs the raise.
 
 This item OWNS the types in 07a–07f. The all-types statement above can
 only be evaluated once item 06 has closed flowchart/state/er/treemap and

@@ -6,9 +6,10 @@ land as several PRs — the rename, the regeneration, the harness — but
 none of its verdict generation can start before 02a lands, because an
 unpinned renderer produces verdicts nobody can reproduce.
 
-Can start: now. 02a goes immediately; only its CI wiring waits for 19a's
-lane. 02b's design runs in parallel from day one, and its verdict
-generation waits for 02a.
+Can start: now, in the sense that 02a's toolchain research and 02b's
+design begin immediately. 02a's PR LANDS after 19a, because pinning the
+toolchain is only meaningful once a lane runs it. 02b's verdict
+generation then waits for 02a.
 
 Blocks: 03, 05, 06, 07, 14, and the completion of 04, 09, 10.
 
@@ -123,12 +124,18 @@ the rename, under this pin.
    to have one today.
 8. Interim: tighten `fixtures_spec.rb`'s 0.02–2.0 length band (50x
    smaller currently passes) until 14's comparator retires it.
-9. `scripts/corpus_sweep.rb` is the committed instrument behind every
+9. `scripts/corpus_sweep.rb` is the instrument behind every
    corpus pass-rate figure in this plan (the 30.7% and all the per-type
    numbers), and it has no specs of its own. Cover it: classification
    correctness on seeded pass/parse-fail/render-fail/timeout inputs, and
    the `--failing` output shape. An unverified instrument makes those
    measurements unverified.
+
+   Note on where it lives: the tool is NOT on this plan branch. Under
+   the owner's plan-only rule it ships on the code branch alongside the
+   radar and treemap fixes. Items 02 and 04 both reference it, so
+   whichever of those lands first must confirm it is on main by then, or
+   carry it.
 
 ## Done when
 

@@ -124,12 +124,18 @@ completion (09), coverage completion (03b), the docs truth pass (11) and
 the corpus long tail do NOT block it — they run alongside, to their own
 finish lines.
 
-**Wave-1 CI ownership.** Six items want CI edits in the opening wave —
-01 (fresh-resolution job), 02 (oracle toolchain + corpus), 08 (rubocop),
-11 (snippet spec), 15 (docs build + link checker) and 19 itself — with
-17 joining as soon as 01 lands. 13 starts in the wave too but touches no
-workflow. 19a lands first and owns the workflow files; everyone
-else ships local commands or rake tasks plus one lane entry through
+**Wave-1 CI ownership.** Read "starts", "first workflow edit" and
+"closes" as three different things. 01's migration lands first and
+touches no CI at all; 03a follows with rake tasks only; 19a is the FIRST
+workflow edit and owns those files from then on. 17 opens once 19a has
+pinned the release workflow, and item 01 CLOSES after 19a gives it a
+lane.
+
+Six items eventually want CI entries — 01 (fresh-resolution job), 02
+(oracle toolchain + corpus), 08 (rubocop), 11 (snippet spec), 15 (docs
+build + link checker) and 19 itself. 13 starts in the wave but touches
+no workflow. Everyone after 19a ships local commands or rake tasks plus
+one lane entry through
 19a's extension contract.
 
 ## The bars (user-ruled 2026-08-10; never lowered, timeline-staged)

@@ -11,8 +11,7 @@ untracked on the maintainer's machine (built, reviewed, and live-tested
 not repo policy — other developers must not have their tooling choices
 forced. Consequences: the discoverability acceptance below applies to
 sessions ON THIS MACHINE; the committed repo carries the bars via this
-plan (`00-overview.md`) and neutral dev tools
-(`scripts/corpus_sweep.rb`) only.
+plan (`00-overview.md`) and neutral dev tools only.
 
 `CLAUDE.md` joining the local set has a knock-on effect the plan must
 respect: it is no longer a tracked surface, so items 01, 11 and 14 do
@@ -61,6 +60,17 @@ not a plan deliverable.
    payload — it is committed at `docs/claims-manifest.yml`, so every
    worktree already has it.)
 
+   Two pieces, because "a script or a documented command" cannot make a
+   bypass fail:
+   - an **executable** bootstrap the dispatch frontends call, and
+   - a **guard** that runs at agent start, checks the tooling is
+     present, and aborts if it is not.
+
+   The canonical pipeline goes straight from `git worktree add` to
+   building, and item 13 does not own that file — so this item's Files
+   list must name both dispatch frontends it has to change, and getting
+   that change accepted is part of the work, not an assumption.
+
 ## Done when
 
 **The bootstrap is automatic, proven by dispatch and not by hand.**
@@ -83,10 +93,13 @@ questions with facts that exist ONLY in the local tooling:
 - how to update the scoreboard, by command;
 - which agent brief owns a given track, and what it must read first.
 
-Bootstrapped session scores 8/8. A SECOND, context-isolated session in
-an un-bootstrapped worktree scores **≤ 3/8** on that same set. It must
-be a separate session; reusing the first proves nothing once it has read
-`AGENTS.md`.
+Bootstrapped session scores 8/8. A SECOND session scores **≤ 3/8** on
+that same set — and it must be **filesystem-isolated, not just
+context-isolated**. A linked worktree can find the main checkout through
+`git worktree list` and read the tooling from there, and `~/.claude`
+global files are visible from anywhere. So run the negative control in a
+disposable clone or container where neither source exists. A separate
+session in a linked worktree proves nothing.
 
 **The skills are checked structurally too:** every command named in a
 skill runs, and every agent brief reads its owning item file and the
@@ -104,6 +117,11 @@ halves after the bootstrap and the new question set land.]
 `AGENTS.md`, `CLAUDE.md`,
 `.claude/skills/sirena-{gates,corpus,oracle}/SKILL.md`,
 `.claude/agents/*.md` — all maintainer-local, untracked, and all listed
-in `.git/info/exclude` so no `git add` can sweep them in. Nothing in
-this item is committed; `TODO.foundation/00-overview.md` is what the
-repo carries.
+in `.git/info/exclude` so no `git add` can sweep them in.
+
+Plus the two dispatch frontends the bootstrap hook has to change:
+`~/.claude/pipeline/PIPELINE.md` and the `dispatch` skill. This item
+does not own either, so landing that change is part of the work.
+
+Nothing here is committed to the repo; `TODO.foundation/00-overview.md`
+is what it carries.

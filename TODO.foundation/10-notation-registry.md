@@ -47,11 +47,14 @@ decided by whoever types fastest. The split is what makes it real.
 - What happens on mismatch (explicit `notation: :plantuml`, Mermaid
   source) and on an unknown notation — which error class, which message.
 - Stdin: no path hint exists, so sniffing is the only signal.
-- **Discovery**: today every implementation is loaded by an explicit
-  `require_relative` in `lib/sirena.rb:42`. Ruby will not find a
-  newly-shipped notation gem on its own. Pick one — built-in manifest,
-  directory loader, RubyGems plugin hook, or "the consumer requires it"
-  — and write it down.
+- **Discovery**, in two parts. Built-in notations may load from a
+  manifest — that is an internal detail. But 10b's acceptance requires a
+  cold subprocess to render an EXTERNAL notation with no edit to central
+  boot code, and a built-in manifest cannot satisfy that. So 10a must
+  ALSO pick an external mechanism: a RubyGems plugin hook, a directory
+  loader, or an explicit "the consumer requires it" contract. Today
+  everything is an explicit `require_relative` at `lib/sirena.rb:42`,
+  which satisfies neither.
 
 ## Do
 

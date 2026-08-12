@@ -46,12 +46,15 @@ measured under the local 0.7 pin. No coverage tooling is wired in yet.
   | Branch floor | Raised by |
   |---|---|
   | 55 → 70 | the PR that completes item 06 |
-  | 70 → 80 | the PR that completes the LAST of 07a, 07b, 07c |
+  | 70 → 80 | whichever completes LAST of item 06 and 07a/07b/07c |
   | 80 → 90 | whichever of item 07 and item 14 completes SECOND |
   | 90 → 97 | 03b's own coverage-completion pass |
 
   Each raise names the PR that performs it, so no raise can be left to
-  "whoever notices". The bar is never lowered; only the schedule flexes.
+  "whoever notices". Where a raise depends on two tracks that run
+  concurrently, the FIRST to finish records the handoff in its PR body
+  and closes; the SECOND performs the raise. Neither is blocked on the
+  other. The bar is never lowered; only the schedule flexes.
 - **Line 86 → 92 is an owned task**, not a hope: 03a's second PR is a
   dedicated test pass on the least-covered components to reach 92,
   before the floor is set there.
@@ -106,5 +109,10 @@ measured under the local 0.7 pin. No coverage tooling is wired in yet.
 
 ## Files
 
-`.simplecov`, `Gemfile`, `spec/spec_helper.rb`, `Rakefile`, scoreboard,
-and one lane entry in `.github/workflows/` (19a owns those files).
+`.simplecov`, `Gemfile`, `spec/spec_helper.rb`, `Rakefile`, scoreboard.
+
+**No workflow file.** 03a lands BEFORE 19a, so it cannot add a lane
+entry — it ships rake tasks, and 19a picks coverage up through the
+existing rake path when it wires the lanes. An earlier revision listed a
+`.github/workflows/` entry here, which was the same circularity this
+item exists to avoid.

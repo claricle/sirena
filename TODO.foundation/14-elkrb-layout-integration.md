@@ -114,6 +114,9 @@ fail rather than pass silently.
   has-a-reference ∩ Sirena-pass) — the hard gate, stated as the
   completion bar, not just a mechanism. Cohort membership is read from
   the scoreboard, never hardcoded.
+- A seeded elkrb error fails the render loudly — no silent fall back to
+  the grid — and the grid's fate is recorded: removed, or kept as an
+  explicit opt-in with a named flag.
 - A reference-completeness assertion passes: every oracle-valid case has
   a reference, and every registered type has at least one (sankey has
   none today). A missing reference FAILS the comparator instead of
@@ -126,8 +129,10 @@ fail rather than pass silently.
   comparator code is written, and golden fixtures cover nested
   transforms, scale/translation normalization, ancestor containment
   versus peer collision, and at least one non-box type.
-- The branch floor is raised 80 → 90 by whichever of this item and item
-  07 lands second — an acceptance criterion here, not a side effect.
+- The branch floor 80 → 90: if this item finishes first it records the
+  handoff in its PR body and closes; if it finishes second it performs
+  the raise. Item 07 carries the mirror of this. Neither blocks the
+  other, so item 12 is not gated on item 07 finishing.
 - Comparator in CI (full lane). Every ELK mention across `README*`,
   `ARCHITECTURE.md`, `docs/` and `sirena.gemspec` has a row
   in item 11's committed manifest resolved as verified / corrected /

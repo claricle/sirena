@@ -8,8 +8,9 @@ Small; unblocks corpus cases across many types.
 
 104 corpus failures are `DiagramTypeError` — 71 of the 85 cases in
 `unknown/`, plus 33 scattered across typed directories. The other 14
-`unknown/` cases get past detection and fail later; item 02's `stage`
-field is what separates the two groups.
+`unknown/` cases get past detection: 9 render successfully and 5 fail
+later in the pipeline. Item 02's `stage` field is what separates the
+three groups.
 
 Known gap families to verify case-by-case: YAML frontmatter before the
 keyword, `%%` comments and `%%{init}%%` directives, keyword variants,

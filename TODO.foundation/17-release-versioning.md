@@ -34,8 +34,10 @@ what this version promises".
 4. The changelog check must be a real prerequisite JOB in the release
    workflow, not a convention. `release.yml` delegates immediately to
    external generated logic, so a preflight has to be added ahead of
-   that delegation — and added in the Cimas source item 19a tracks, not
-   only in the generated YAML.
+   that delegation. WHERE it is added follows 19a's recorded decision:
+   if 19a tracked the Cimas source, the preflight goes there; if 19a
+   detached `release.yml` and declared the tracked YAML authoritative,
+   it goes in the YAML. This item does not re-litigate that choice.
 5. This item = the PRE-12 release gate, two cuts:
    - post-01 (loads clean) — the weekend status links this installable
      version, not a branch;

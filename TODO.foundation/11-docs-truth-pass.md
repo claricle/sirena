@@ -4,7 +4,9 @@ Can start: NOW — the claim inventory and the promised-features
 dispositions read files, they don't need a building site. Only
 publishing the corrected pages waits for 15; the dispositions this item
 produces are what 15 needs to resolve ghost links (explicit handoff, no
-cycle). Parallel with everything; does not block PlantUML.
+cycle). **Completion also needs 02b** — step 2's generated tables read
+the scoreboard, so this item cannot close before it exists. Parallel
+with everything otherwise; does not block PlantUML.
 
 ## Problem
 
