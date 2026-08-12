@@ -2,8 +2,9 @@
 
 Can start: after 02. Same target, method, and parallelism rules as item
 06 — including the serialized shared-grammar track for anything touching
-`grammars/common.rb`. Completion also needs 03a. Raises the branch floor
-70 → 80 when 07a–07c are all complete, and 80 → 90 jointly with item 14.
+`grammars/common.rb`. Completion also needs 03a. Shares two
+second-finisher floor raises: 70 → 80 with item 06, and 80 → 90 with
+item 14 (see Done).
 The plan-wide "every type at 100%" claim additionally needs 05 and 06 —
 see Done.
 

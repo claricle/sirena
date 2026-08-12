@@ -3,6 +3,13 @@
 Can start: now. THIS WEEK — the parallel-agent strategy depends on it;
 every dispatched agent must inherit the rules without being told.
 
+**Gates dispatch plan-wide, not just item 06.** No track dispatches a
+builder agent until this item's bootstrap and start guard have landed.
+The topology draws the edge to item 06 because that is the first track
+to need it, but the rule is global: an unguarded worktree produces an
+agent that has read none of the bars. Hand-written work and
+investigation are unaffected.
+
 **Owner decision 2026-08-10, extended 2026-08-12: this tooling is
 MAINTAINER-LOCAL, not committed.** `AGENTS.md`,
 `.claude/skills/sirena-*`, `.claude/agents/*` and **`CLAUDE.md`** live

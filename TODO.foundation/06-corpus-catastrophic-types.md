@@ -52,6 +52,11 @@ Each type at 100% of oracle-valid; every non-pass scoreboard row for
 these types carries an oracle-invalid verdict; the branch floor is
 raised 55 → 70 in the same PR that closes this item.
 
+The 70 → 80 raise is shared with item 07's 07a–07c sub-tracks and
+follows the same second-finisher rule: if this item closes FIRST it
+records the handoff in its PR body; if it closes SECOND it performs the
+raise. Item 07 carries the mirror of this criterion.
+
 ## Files
 
 `lib/sirena/parser/{grammars,transforms}/{flowchart,state_diagram,er_diagram,treemap}.rb`

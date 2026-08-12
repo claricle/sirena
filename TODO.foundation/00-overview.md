@@ -91,6 +91,9 @@ flowchart TD
     B03 -.changed-line gate.-> C06
     B03 -.changed-line gate.-> C07
     B03 -.changed-line gate.-> I14
+    B03 -.changed-line gate.-> B04
+    B03 -.changed-line gate.-> E10
+    B03 -.changed-line gate.-> S16
     C05 -.completion.-> C07
     C06 -.completion.-> C07
     E10 --> S16[16 PlantUML class spike]
@@ -103,7 +106,7 @@ flowchart TD
     I14 --> G12
     R17 --> G12
     D08[08 lint: live] --> D09
-    H13[13 skills + agents] -.worktree bootstrap.-> C06
+    H13[13 skills + agents] -.gates all dispatch.-> C06
     F11[11 docs truth] -.decision manifest.-> F15[15 docs build]
     F11 -.decision manifest.-> I14
     F15 -.publishes 11 pages.-> F11
@@ -116,6 +119,15 @@ flowchart TD
 dispositions it needs to resolve ghost links, and 15 later publishes the
 corrected pages 11 produced. Different artifacts, different moments —
 neither waits on the other to start.
+
+**One global rule the arrows cannot express: no builder is dispatched
+before item 13's bootstrap and start-guard land.** Item 13 exists so a
+dispatched agent inherits the bars without being told, and its guard
+aborts when the tooling is missing. A track that dispatches into an
+unguarded fresh worktree gets an agent that has read none of it — which
+is the failure item 13 was written to prevent, and it applies to every
+track, not just item 06. Design, investigation and hand-written work
+start whenever their own dependencies allow; only DISPATCH waits.
 
 Everything without an arrow between them runs in parallel.
 PlantUML phase 1 (12) still waits on 01, 02, 04, 10, 14, 16, 17 in

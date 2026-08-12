@@ -13,9 +13,13 @@ nothing from item 02. Landing 03a early is what gives every later
 behavior PR a gate to pass. Runs in parallel with everything after
 that; does not block PlantUML.
 
-**No behavior PR may close before 03a lands** — items 05, 06, 07, 12
-and 14 all change behavior. Investigation and drafting stay parallel;
-merging waits.
+**No behavior PR may close before 03a lands.** That means every item
+that changes runtime code, not just the corpus tracks: 04 (XML escaping,
+renderers, theme), 05, 06, 07, 10 (engine, registry, CLI), 12, 14 and
+16 (the PlantUML spike ships real code). Investigation and drafting stay
+parallel; merging waits.
+
+Item 01's migration is the single named exemption, above.
 
 ## The bootstrap exemption
 
