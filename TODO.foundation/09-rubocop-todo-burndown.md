@@ -4,11 +4,12 @@ Can start: after 08. **Completion** needs 02 — the suppressed-debt
 column lives in the scoreboard, so the burndown can run without it but
 cannot close without it. Does NOT block PlantUML.
 
-Parallel with everything **except item 10**: the todo parks debt in
-`lib/sirena.rb` (line 70) and `lib/sirena/commands/batch.rb` (lines 26,
-642, 683), and item 10 rewrites both files. Cop families touching those
-files wait for item 10 or rebase onto it; every other family stays
-parallel.
+Parallel with everything **except item 10**: `.rubocop_todo.yml` parks
+debt in `lib/sirena.rb` (one exclusion) and
+`lib/sirena/commands/batch.rb` (three: `Layout/ArgumentAlignment`,
+`Style/RescueStandardError`, `Style/StringConcatenation`), and item 10
+rewrites both files. Cop families touching those files wait for item 10
+or rebase onto it; every other family stays parallel.
 
 ## Target (user-ruled)
 

@@ -1,7 +1,7 @@
 # 19 — CI topology, runtime budget, external pins
 
-Split into two PRs, because five wave-1 items all need to touch CI and
-only one of them can own the file.
+Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
+itself) all need to touch CI and only one of them can own the files.
 
 - **19a — lane skeleton.** Lands FIRST, in the opening wave, and lands
   **GREEN**. It creates the fast/full lanes over the jobs that already
@@ -11,8 +11,9 @@ only one of them can own the file.
   no new gate of its own. Everything else in wave 1 ships local
   commands or rake tasks plus one lane entry through that contract.
 - **19b — consolidation.** After the owned gates exist (01, 02, 03a, 04,
-  08, 15), collapses anything still living outside a lane, enforces "no
-  gate outside a lane", and measures the budgets.
+  08, 14, 15 — and 12's, if its lane work has started), collapses
+  anything still living outside a lane, enforces "no gate outside a
+  lane", and measures the budgets.
 
 This split is what makes the first PR possible at all. The gates the
 full lane eventually carries — fresh-resolution install (01), the
@@ -43,9 +44,12 @@ Can start: now. Owns what no other item did: CI as a system.
 - The mermaid reference toolchain exists only on the maintainer's
   machine. (PlantUML/Java/Graphviz provisioning is item 12's problem,
   not this item's.)
-- The scoreboard guard needs merge-base history, and current checkouts
-  are shallow (`build_deploy.yml:24`) with no base ref fetched — the
-  guard would compare against nothing and pass vacuously.
+- The scoreboard guard needs merge-base history. No workflow in the repo
+  fetches a base ref today, and the one checkout we can read directly
+  (`build_deploy.yml:24`) uses the shallow default; `rake.yml` delegates
+  to metanorma/ci, so its checkout depth is inherited and unaudited.
+  Either way the guard would compare against nothing and pass vacuously
+  — step 1 below settles what generic-rake actually does.
 
 ## Do — 19a
 
@@ -64,12 +68,14 @@ Can start: now. Owns what no other item did: CI as a system.
 
    19a wires the lanes over what exists TODAY (the rake suite, lint,
    docs build, link check) and reserves the shape for what's coming:
-   - Fast lane: unit suite, lint — later joined by the scoreboard guard
-     (02b) and the snippet spec (16). Budget < 10 min.
+   - Fast lane: unit suite, lint — later joined by the snippet spec
+     (16). Budget < 10 min.
    - Full lane: docs build, internal link check — later joined by the
      whole corpus (02b), parity (14), conformance (04), and the
      fresh-resolution install (01). Budget < 30 min, parallelized jobs;
      a required PR check, merge waits for it.
+   - The scoreboard guard (02b) joins BOTH lanes — it only reads files,
+     so it is cheap enough to run twice and too important to run once.
 
    Each lane gets one stable aggregator job with a fixed name (that is
    what branch protection references) and `timeout-minutes` on every
@@ -85,9 +91,9 @@ Can start: now. Owns what no other item did: CI as a system.
    - workflow_dispatch / nightly: an explicitly defined prior baseline,
      or consistency-only mode.
 
-   Prove it with repository-level tests covering PR, push, deletion,
-   regression and stale-improvement — not just a unit test of the guard
-   function.
+   Prove it with repository-level tests covering all five events above
+   plus the deletion, regression and stale-improvement cases — not just
+   a unit test of the guard function.
 5. Extension contract: document how items 01/02/03a/04/08/12/14/15 add
    a job to a lane — which file, which aggregator to hang it off, and
    the rule that oracle/comparison specs FAIL rather than skip when a
@@ -98,16 +104,15 @@ Can start: now. Owns what no other item did: CI as a system.
    provisions the pinned oracle toolchain when it lands, 12 provisions
    PlantUML/Java/Graphviz when its lane work starts. 19a provisions
    nothing.
-6. The scoreboard guard runs in BOTH lanes once 02b ships it (cheap,
-   reads files) — 19a reserves the slot and the baseline-fetching
-   behavior above; 02b fills it.
+6. 19a reserves the scoreboard guard's slot in both lanes and lands the
+   baseline-fetching behavior above; 02b fills the slot when it ships.
 
 ## Do — 19b
 
-8. Consolidate: every gate lives in a lane, nothing runs loose.
-9. Record measured cold-cache AND warm-cache wall times for both lanes
+7. Consolidate: every gate lives in a lane, nothing runs loose.
+8. Record measured cold-cache AND warm-cache wall times for both lanes
    against the 10/30-minute budgets. A budget nobody measured is a wish.
-10. Branch protection settings cannot be proven by workflow YAML. Hand
+9. Branch protection settings cannot be proven by workflow YAML. Hand
     the required-checks configuration to the user as an explicit,
     owner-visible step with the exact aggregator job names to set.
 

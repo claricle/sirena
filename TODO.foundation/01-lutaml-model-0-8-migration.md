@@ -1,8 +1,9 @@
 # 01 — lutaml-model 0.8 migration
 
 Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10,
-12, 17. All in-repo work — no cross-repo release is required
-(re-verified 2026-08-11; see below).
+12, 17, 14's integration work, and 19a's full lane going green. All
+in-repo work — no cross-repo release is required (re-verified
+2026-08-11; see below).
 
 ## Problem
 
@@ -45,33 +46,44 @@ Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10,
    floor value is this item's call.
 5. Add `svg_conform` to the `Gemfile` (development group) constrained
    to `~> 0.2.0`, so the same-bundle smoke below can actually run.
-6. Output must not change: run the CURRENT corpus pass set before/after
-   (whatever the day's measured set is — never a hardcoded count); any
-   differing SVG goes in the PR description with its reason
-   (execution-diff gate; one-time PR artifact, not a permanent ledger).
-7. Fresh-resolution CI job: clean install, no lockfile, full suite —
+6. **Output is expected to stay byte-identical, and every exception is
+   explained.** The prefix change at step 1 could move it, which is
+   exactly why this is measured rather than assumed: run the CURRENT
+   corpus pass set before/after (whatever the day's measured set is —
+   never a hardcoded count). Zero differing SVGs is the target; any
+   difference must be traced to the prefix migration and written into
+   the PR description with its reason. An unexplained difference blocks
+   the merge (execution-diff gate; one-time PR artifact, not a permanent
+   ledger).
+7. Fresh-resolution job: clean install, no lockfile, full suite — it
    catches the next upstream break on push instead of at a user's
-   machine.
+   machine. Added to 19a's full lane through the extension contract,
+   since 19a owns the workflow files.
 8. Optional hygiene, NOT blocking: ask claricle/elkrb to loosen/confirm
    its constraint for 0.8 (repo dormant since 2025-11-14, no 0.8 work
    in flight; only 1.0.0 and 1.0.2 published).
 
 ## Done when
 
-- Clean clone + `bundle install` + `bundle exec rspec`: green, no pins.
+- Clean clone + `bundle install` + `bundle exec rspec`: green, with the
+  local 0.7 workaround gone (the `svg_conform ~> 0.2.0` constraint added
+  at step 5 stays — a declared version constraint is not a workaround
+  pin).
 - elkrb resolves in the same bundle at lutaml-model 0.8 (true today —
   kept as a regression guard).
 - svg_conform installs alongside AND a smoke test requiring both
   `sirena` and `svg_conform` in the same unpinned bundle succeeds
   (install alone can already resolve today; the REQUIRE only works
   post-migration — that's what proves the conflict dead).
-- 0 failures; the 1 pending xit is owned by item 07.
+- 0 failures; the 1 pending xit is owned by item 07 (sub-track 07f).
 - Ruby floor tested in CI at the declared minimum and latest stable.
-- `grep -rn "2\.7" ` over the version-bearing files returns nothing
-  claiming a 2.7 floor.
+- Every file in the list below states the same Ruby floor, checked by
+  reading each one — a grep can find the string `2.7` but cannot tell a
+  stale floor claim from a changelog mention.
 
 ## Files
 
 `lib/sirena/svg/document.rb`, `sirena.gemspec`, `Gemfile`,
 `README.adoc`, `docs/_guides/installation.adoc`, `CLAUDE.md`,
-`.rubocop.yml`, CI workflow.
+`.rubocop.yml`, and one lane entry in `.github/workflows/` (19a owns
+those files).

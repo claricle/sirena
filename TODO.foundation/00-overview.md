@@ -2,10 +2,10 @@
 
 **Date**: 2026-08-11. Revised after a maximum-effort adversarial audit
 that re-derived every claim from live commands. What changed in rev 7:
-four items split into gated halves (02a/02b, 03a/03b, 19a/19b, plus the
-06 shared-grammar track), the oracle toolchain made hermetic, missing
-completion edges recorded, and several factually wrong premises
-corrected.
+three items split into gated halves (02a/02b, 03a/03b, 19a/19b), item
+06's shared-grammar work serialized onto its own track, the oracle
+toolchain made hermetic, missing completion edges recorded, and several
+factually wrong premises corrected.
 **Goal**: make the base flawless AND ship visible results fast — every
 track runs in parallel; strict bars are finish lines the machinery
 grinds toward, locked so scores never regress.
@@ -104,9 +104,16 @@ flowchart TD
     H13[13 skills + agents] -.worktree bootstrap.-> C06
     F11[11 docs truth] -.decision manifest.-> F15[15 docs build]
     F11 -.decision manifest.-> I14
-    F15 -.publishing only.-> F11
+    F15 -.publishes 11 pages.-> F11
     B03 -.changed-line gate.-> C05
+    B03 -.changed-line gate.-> G12
+    J19A -.full lane.-> G12
 ```
+
+11 and 15 point at each other, and that is not a cycle: 11 hands 15 the
+dispositions it needs to resolve ghost links, and 15 later publishes the
+corrected pages 11 produced. Different artifacts, different moments —
+neither waits on the other to start.
 
 Everything without an arrow between them runs in parallel.
 PlantUML phase 1 (12) still waits on 01, 02, 04, 10, 14, 16, 17 in
@@ -115,9 +122,11 @@ completion (09), coverage completion (03b), the docs truth pass (11) and
 the corpus long tail do NOT block it — they run alongside, to their own
 finish lines.
 
-**Wave-1 CI ownership.** Items 01, 02, 08, 13, 15 and 19 all start in
-the opening wave, and 17 joins as soon as 01 lands — every one of them
-wants CI edits. 19a lands first and owns the workflow files; everyone
+**Wave-1 CI ownership.** Six items want CI edits in the opening wave —
+01 (fresh-resolution job), 02 (oracle toolchain + corpus), 08 (rubocop),
+11 (snippet spec), 15 (docs build + link checker) and 19 itself — with
+17 joining as soon as 01 lands. 13 starts in the wave too but touches no
+workflow. 19a lands first and owns the workflow files; everyone
 else ships local commands or rake tasks plus one lane entry through
 19a's extension contract.
 

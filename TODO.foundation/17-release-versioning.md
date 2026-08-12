@@ -26,10 +26,11 @@ what this version promises".
    cimas-generated `release.yml` — the bot bumps
    `lib/sirena/version.rb`, tags, and pushes the gem. No PR ever bumps
    a version; a PR that wants a release says so in its body and the
-   maintainer dispatches. Note the plan said `workflow_dispatch` only,
-   but `release.yml:9` ALSO accepts `repository_dispatch`
-   (`types: [do-release]`) — either remove that trigger or define
-   exactly who may fire it and what it does.
+   maintainer dispatches. Note that `workflow_dispatch` is not the only
+   trigger — `release.yml:9` ALSO accepts `repository_dispatch`
+   (`types: [do-release]`), so a release can be fired from outside the
+   convention. Either remove that trigger or define exactly who may
+   fire it and what it does.
 4. The changelog check must be a real prerequisite JOB in the release
    workflow, not a convention. `release.yml` delegates immediately to
    external generated logic, so a preflight has to be added ahead of

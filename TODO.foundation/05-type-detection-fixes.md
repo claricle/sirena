@@ -6,10 +6,16 @@ Small; unblocks corpus cases across many types.
 
 ## Facts
 
-104 corpus failures are `DiagramTypeError` (71 in `unknown/`, rest
-scattered). Known gap families to verify case-by-case: YAML frontmatter
-before the keyword, `%%` comments and `%%{init}%%` directives, keyword
-variants, and the dangerously broad `error`/`info` patterns.
+104 corpus failures are `DiagramTypeError` — 71 of the 85 cases in
+`unknown/`, plus 33 scattered across typed directories. The other 14
+`unknown/` cases get past detection and fail later; item 02's `stage`
+field is what separates the two groups.
+
+Known gap families to verify case-by-case: YAML frontmatter before the
+keyword, `%%` comments and `%%{init}%%` directives, keyword variants,
+and the `error`/`info` patterns — those two match on such short prefixes
+that they can claim a case belonging to another type, which the bucket
+list must confirm case by case rather than assume.
 
 ## Do
 
@@ -31,5 +37,6 @@ variants, and the dangerously broad `error`/`info` patterns.
 
 ## Files
 
-`lib/sirena/engine.rb` or `lib/sirena/notation/mermaid.rb`,
-`spec/sirena/engine_spec.rb`.
+`lib/sirena/engine.rb` or `lib/sirena/notation/mermaid.rb` (whichever
+exists when this runs), `lib/sirena/preprocessor.rb` (new, only on the
+pre-item-10 path), `spec/sirena/engine_spec.rb`.

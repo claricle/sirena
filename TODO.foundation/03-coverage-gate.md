@@ -27,14 +27,15 @@ No coverage tooling is wired in yet.
   step is a floor raise TIED TO A NAMED EVENT, enforced when the event
   completes (the floor raise is part of that event's acceptance):
 
-  | Branch floor | Raised when |
+  | Branch floor | Raised by |
   |---|---|
-  | 55 → 70 | item 06 complete |
-  | 70 → 80 | sub-tracks 07a–07c complete (defined in item 07) |
-  | 80 → 90 | item 07 complete + item 14 complete |
-  | 90 → 97 | the item-03 coverage-completion pass |
+  | 55 → 70 | the PR that completes item 06 |
+  | 70 → 80 | the PR that completes the LAST of 07a, 07b, 07c |
+  | 80 → 90 | whichever of item 07 and item 14 completes SECOND |
+  | 90 → 97 | 03b's own coverage-completion pass |
 
-  The bar is never lowered; only the schedule flexes.
+  Each raise names the PR that performs it, so no raise can be left to
+  "whoever notices". The bar is never lowered; only the schedule flexes.
 - **Line 86 → 92 is an owned task**, not a hope: 03a's second PR is a
   dedicated test pass on the least-covered components to reach 92,
   before the floor is set there.
@@ -77,10 +78,13 @@ No coverage tooling is wired in yet.
 **03b**
 
 - CI fails below the floors; floors only ever rise.
-- Line ≥ 97, branch ≥ 97 (end of timeline), changed-line rule active.
-- Every event in the floor table above has fired, and each owning item's
-  Done section names its floor raise as acceptance.
+- The first three raises in the table have fired, each performed by the
+  PR named there, and each owning item's Done section lists its raise as
+  acceptance (items 06, 07 and 14 do).
+- 03b's own completion pass then takes branch 90 → 97.
+- Line ≥ 97, branch ≥ 97, changed-line rule active.
 
 ## Files
 
-`.simplecov`, `Gemfile`, `spec/spec_helper.rb`, `Rakefile`, CI, scoreboard.
+`.simplecov`, `Gemfile`, `spec/spec_helper.rb`, `Rakefile`, scoreboard,
+and one lane entry in `.github/workflows/` (19a owns those files).

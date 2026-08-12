@@ -1,9 +1,11 @@
 # 16 — PlantUML class spike (the weekend surprise)
 
-Can start: after 10. Small by design. Blocks: 12 (informs it).
-**Completion also needs 04** (its cases must be valid under the chosen
-profile) **and item 14's comparator** (structural invariants have to be
-measurable before they can hold).
+Can start: after 10. The IMPLEMENTATION is small by design — a thin
+vertical slice, not a small dependency list. **Completion also needs
+04** (its cases must be valid under the chosen profile) **and item 14's
+comparator** (structural invariants have to be measurable before they
+can hold), so the spike lands its code early and closes later.
+Blocks: 12 (informs it).
 
 ## Purpose
 
@@ -52,4 +54,6 @@ provisioning — all item 12. The spike's corpus IS its 15–20 cases.
 
 ## Files
 
-`lib/sirena/notation/plantuml/**` (new), `spec/plantuml_spike_spec.rb`.
+`lib/sirena/notation/plantuml/**` (new), `spec/plantuml_spike_spec.rb`,
+`spec/plantuml_spike/` (the committed case set + its provenance records).
+Item 12 absorbs both into `spec/plantuml/`.

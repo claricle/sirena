@@ -15,7 +15,7 @@ fast-tracked, not why others wait.)
   top-level `def self.render` on `main`, referencing bare `Engine`
   (NameError if ever called).
 
-## Design (settled)
+## Design (shape settled; the API contract below is not)
 
 Two-level registry: notation → notation plugin → (diagram type →
 parser/transform/renderer). No flat tuple map; no type-switch inside a

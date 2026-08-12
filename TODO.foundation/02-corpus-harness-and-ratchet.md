@@ -1,15 +1,20 @@
 # 02 — Corpus oracle, provenance, and the scoreboard
 
-Split into two PRs. **02a** pins the oracle toolchain; **02b** builds the
-harness, the scoreboard and the ratchet. 02b's verdict generation cannot
-start before 02a lands — an unpinned renderer produces verdicts nobody
-can reproduce.
+Split into two stages. **02a** pins the oracle toolchain; **02b** builds
+the harness, the scoreboard and the ratchet. 02b is large enough to
+land as several PRs — the rename, the regeneration, the harness — but
+none of its verdict generation can start before 02a lands, because an
+unpinned renderer produces verdicts nobody can reproduce.
 
-Can start: now — 02a immediately, 02b's design in parallel with its
-verdict generation waiting on 02a. Only 02a's CI wiring waits for 19a's
-lane. Blocks: 03, 05, 06, 07, 14, and the completion of 04, 09, 10. Caveat: the in-bundle gates ("`bundle exec
-rake` runs the corpus") need a loading gem — that's item 01; until it
-lands, the uncommitted 0.7-pin workaround applies.
+Can start: now. 02a goes immediately; only its CI wiring waits for 19a's
+lane. 02b's design runs in parallel from day one, and its verdict
+generation waits for 02a.
+
+Blocks: 03, 05, 06, 07, 14, and the completion of 04, 09, 10.
+
+Caveat: the in-bundle gates ("`bundle exec rake` runs the corpus") need
+a loading gem — that's item 01; until it lands, the uncommitted 0.7-pin
+workaround applies.
 
 ## Problem
 
@@ -63,8 +68,15 @@ the rename, under this pin.
 1. **Oracle**: a case is *valid* iff the 02a-pinned toolchain renders it
    — exit 0, parseable non-error SVG, no timeout. Verdicts recorded per
    case with the full 02a provenance; refreshed only via a reviewed
-   toolchain bump. Oracle-invalid cases stay in the corpus, leave every
-   target.
+   toolchain bump. Oracle-invalid cases stay in the corpus but leave
+   every target.
+
+   Three outcomes, not two — the same shape item 12's PlantUML oracle
+   uses: **valid**, **rejected-by-oracle**, and **infrastructure
+   failure** (browser crash, OOM, missing binary). An infrastructure
+   failure is never recorded as a verdict, and a canary case proves the
+   oracle is alive before any refresh is trusted. A refresh is
+   all-or-nothing: a partial run does not overwrite verdicts.
 2. **Scoreboard** (`scoreboard/` at repo root): the ONE ratchet
    mechanism for the whole plan. **Per-case rows, never aggregate
    counts** — corpus status, conformance status (item 04), parity status
@@ -86,6 +98,11 @@ the rename, under this pin.
    are a hard failure, not a silent overwrite. Upstream-removed cases are
    retained unless the oracle rejects them; unexplained deletion is a
    regression.
+
+   The rename also invalidates every ordinal case ID quoted elsewhere in
+   this plan — item 04's XSS case, item 06's treemap 007, item 14's
+   class_diagram example. Updating those references is part of this
+   step, not a follow-up.
 5. **Reproducible extraction.** Take the mermaid-js checkout path and
    commit SHA as parameters, write the SHA into every `.meta.json`,
    regenerate into an empty temporary root and swap, and either delete
@@ -120,12 +137,24 @@ the rename, under this pin.
 - The toolchain manifest/lockfile (or container digest) is committed and
   every oracle/fixture path uses it.
 - A seeded drift (bumped mermaid or browser version) makes the run fail.
-- `spec/fixtures_mermaid/` regeneration under the pin produces zero diff,
-  and every reference carries its provenance record.
+- A canary case renders, proving the pinned toolchain is actually
+  wired up. (Reference regeneration is 02b's job — see step 7 — because
+  it has to follow the rename.)
 
 **02b**
 
 - `bundle exec rake` runs the corpus against the scoreboard.
+- The canonical type-name table exists, and the rake task and the
+  registry both read it from one place.
+- `spec/fixtures_mermaid/` regeneration under the 02a pin produces zero
+  diff, every reference carries its provenance record, and every
+  oracle-valid case has one.
+- A seeded infrastructure failure is recorded as such and does NOT
+  overwrite an existing verdict.
+- `fixtures_spec.rb`'s length band is tightened, and a 50x-smaller
+  output no longer passes.
+- `scripts/corpus_sweep.rb` has specs covering each classification and
+  the `--failing` output shape.
 - Scoreboard guard: a guard spec seeds one regression and one
   unrecorded improvement; both seeded runs exit non-zero.
 - A seeded `DiagramTypeError` case lands in the scoreboard as
@@ -140,12 +169,14 @@ the rename, under this pin.
   test and an upstream deletion — proven by three seeded cases, not by
   argument.
 - The post-scoreboard sweep confirms the pre-scoreboard rehearsal
-  deltas (radar 13→14, treemap 0→9) or records why they moved.
+  deltas (radar 13→14 of 42, treemap 0→9 of 10) or records why they
+  moved.
 
 ## Files
 
-`package.json` + `package-lock.json` (new, 02a),
+`package.json` + `package-lock.json` (new, 02a — or the container
+digest, if that route is chosen instead),
 `spec/mermaid_corpus_spec.rb` (new), `scoreboard/` (new),
-`spec/mermaid/README.md` (new),
+`spec/mermaid/README.md` (new), `scripts/corpus_sweep.rb` + its spec,
 `scripts/extract_mermaid_tests.rb`, `lib/tasks/generate_mermaid_fixtures.rake`,
 CI workflow.

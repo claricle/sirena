@@ -62,5 +62,5 @@ since the gate is written against that exact API.
 ## Files
 
 `spec/svg_conformance_spec.rb`, `Gemfile`, `lib/sirena/svg/*`,
-`lib/sirena/renderer/*`, `lib/sirena/theme/builtin/*`,
+`lib/sirena/renderer/*`, `lib/sirena/theme/*`,
 `scripts/corpus_sweep.rb`, scoreboard.

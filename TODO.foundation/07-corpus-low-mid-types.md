@@ -7,16 +7,22 @@ Can start: after 02. Same target, method, and parallelism rules as item
 The plan-wide "every type at 100%" claim additionally needs 05 and 06 —
 see Done.
 
-## Sub-tracks (parallel; ordered by failing-case count)
+## Sub-tracks (parallel; ordered by total cases)
+
+Counts measured 2026-08-11 by `ls spec/mermaid/<type>/*.mmd`.
 
 | Sub-todo | Cases | Today |
 |---|---|---|
-| 07a class (+class_diagram) | 465 | ~27% — biggest absolute slice |
+| 07a class (+class_diagram) | 465 | ~27% — the largest single type by case count |
 | 07b sequence | 126 | 48% |
 | 07c git (+gitgraph) | 168 | 66% |
-| 07d gantt, radar, kanban, user_journey | ~144 | 24–39% |
-| 07e architecture, c4, block | ~92 | 31–60% |
-| 07f finishing: mindmap, requirement, timeline, pie, packet, quadrant, sankey, xychart, info, error | small | 92–100% |
+| 07d gantt, radar, kanban, user_journey | 144 | 24–39% |
+| 07e architecture, c4, block | 92 | 31–60% |
+| 07f finishing: mindmap, requirement, timeline, pie, packet, quadrant, sankey, xychart, info, error | 181 | 92–100% |
+
+Item 07 owns 1,176 cases; item 06 owns 736; item 05's `unknown/` holds
+85. 1,176 + 736 + 85 = 1,997, the whole corpus — every case has an
+owner, and the arithmetic is checkable.
 
 07f also owns: the suite's only pending example
 (`spec/sirena/parser/packet_spec.rb:74` xit — implement or delete with

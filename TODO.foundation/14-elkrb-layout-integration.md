@@ -1,16 +1,17 @@
 # 14 — elkrb integration + layout parity
 
-Comparator DESIGN can start after 02 (it needs the references).
-INTEGRATION and Done need **both 01 and 02**: step 1 proves elkrb works
-functionally under lutaml-model 0.8, and that cannot run while the gem
-still crashes at require. Completion also needs 03a, and raises the
-branch floor 80 → 90 jointly with item 07. Blocks: 12; with item 04,
-blocks 16's completion.
+Comparator DESIGN can start after 02b's reference regeneration (step 7)
+— the design needs to know what a reference looks like, and the
+references are being rebuilt. INTEGRATION and Done need **both 01 and
+02**: step 1 proves elkrb works functionally under lutaml-model 0.8, and
+that cannot run while the gem still crashes at require. Completion also
+needs 03a, and raises the branch floor 80 → 90 jointly with item 07.
+Blocks: 12; with item 04, blocks 16's completion.
 
 ## Facts
 
 `Engine#layout_graph` never calls elkrb — fallback grid with a TODO
-(`lib/sirena/engine.rb:~181`) — while README.adoc, ARCHITECTURE.md,
+(`lib/sirena/engine.rb:178-181`) — while README.adoc, ARCHITECTURE.md,
 and parts of `docs/` still claim ELK layout (CLAUDE.md is corrected).
 elkrb 1.0.2 resolves and requires cleanly under lutaml-model 0.8
 (proven 2026-08-11), but its FUNCTIONAL behavior under 0.8 is
@@ -23,7 +24,9 @@ shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
 ## Bars (user-ruled)
 
 - Structural invariants: **hard gate** — all nodes present, all edges
-  connecting the right nodes, no overlaps, labels attached to owners.
+  connecting the right nodes, no PEER overlaps, labels attached to
+  owners. ("No overlaps" unqualified would reject correct output;
+  ancestor containment is legitimate — see the metric contract below.)
 - Geometry: per-case scoreboard ratchet; **8% node-center / 15%
   dimension-aspect are the targets**. Renegotiation happens **per type
   only** (never per case — case-level waivers would hollow the target):
@@ -94,7 +97,11 @@ fail rather than pass silently.
 
 ## Done when
 
-- All types on elkrb (or user-decided per-type exceptions with evidence).
+- Every type whose layout elkrb can meaningfully own is on elkrb. Some
+  cannot be: pie has no node boxes, and block/quadrant are
+  pre-positioned by construction. Each such type carries a recorded,
+  user-approved exception with its evidence — the point is that no type
+  is left undecided, not that elkrb runs everywhere.
 - **Zero invariant failures across the cohort** (oracle-valid ∩
   has-a-reference ∩ Sirena-pass) — the hard gate, stated as the
   completion bar, not just a mechanism. Cohort membership is read from
@@ -108,10 +115,12 @@ fail rather than pass silently.
   analogous metric or carry an approved N/A.
 - The branch floor is raised 80 → 90 by whichever of this item and item
   07 lands second — an acceptance criterion here, not a side effect.
-- Comparator in CI (full lane); `grep -ri elk README* ARCHITECTURE.md
-  CLAUDE.md docs/ sirena.gemspec` cross-checked row-by-row against item
-  11's tracked decision manifest — every hit's row resolved
-  (verified/corrected/removed). The gemspec description still claims
+- Comparator in CI (full lane). Every ELK mention across `README*`,
+  `ARCHITECTURE.md`, `CLAUDE.md`, `docs/` and `sirena.gemspec` has a row
+  in item 11's committed manifest resolved as verified / corrected /
+  removed. Grep finds the mentions; the manifest decides which are true,
+  because after this item lands some ELK claims become correct. The
+  gemspec description still claims
   ELK layout; it counts.
 
 ## Files

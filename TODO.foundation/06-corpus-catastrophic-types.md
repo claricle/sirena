@@ -25,10 +25,13 @@ scoreboard locks every gain.
 
 | Sub-todo | Cases | Today | Notes |
 |---|---|---|---|
-| 06a flowchart | 331 | 6.0% | biggest single lever in the repo |
+| 06a flowchart | 331 | 6.0% | the single biggest block of failing cases in the corpus |
 | 06b state (+state_diagram) | 234 | ~4% | composite states, concurrency |
 | 06c er (+er_diagram) | 161 | ~3% | attribute blocks, label variants |
-| 06d treemap | 10 | 90% (9/10) | wiring fixed in rehearsal (commit 7722ee1's renderer return contract — measured 9/10); only case 007 remains, flagged probably-oracle-invalid pending item 02's verdict |
+| 06d treemap | 10 | 90% (9/10) | wiring fixed in rehearsal (commit 7722ee1's renderer return contract — measured 9/10); one case remains, and the triage note recorded it as a likely oracle rejection, which item 02's verdict settles |
+
+Item 06 owns 736 cases. Item 07's table carries the reconciliation
+against the full 1,997.
 
 ## Method (each sub-track)
 

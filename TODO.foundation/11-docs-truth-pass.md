@@ -57,7 +57,8 @@ substantiates the published figures, and the harness is broken."
      NOT part of item 13's bootstrap payload.
 2. **Numbers are generated** (this step waits for item 02's
    scoreboard): compatibility tables and pass rates render from the
-   scoreboard (rake task), so corpus progress can't restale the docs.
+   scoreboard (rake task), so corpus progress can't make the docs stale
+   again.
    Hand-written numbers are banned in support claims. Name the generated
    include targets, and add a freshness gate — either regenerate during
    every docs build, or require `rake <generate> && git diff

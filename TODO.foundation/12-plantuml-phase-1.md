@@ -66,13 +66,29 @@ sequence then proves temporal semantics.)
 
 - **Phase-end 0.x release** (owned here; item 17 owns only the two
   pre-12 cuts): the release that announces PlantUML support.
-- `TODO.notations` roadmap (DOT, D2, BPMN, Structurizr, BlockDiag
-  family, Priority 2/3 — with the typed-IR phase, item 18, as its
-  first entry, designed from Mermaid + PlantUML evidence) merged via a
-  PR whose body records each chain gate's verdict. The foundation is
-  not complete without this roadmap.
+- `TODO.notations` roadmap merged via a PR whose body records each chain
+  gate's verdict. It covers the notations issue #2 lists and does not
+  schedule in this phase — DOT, D2, BPMN, Structurizr and the BlockDiag
+  family from issue #2's Priority 1, then its Priority 2 and 3 tiers —
+  with the typed-IR phase (item 18) as its FIRST entry, ahead of DOT,
+  designed from Mermaid + PlantUML evidence. The foundation is not
+  complete without this roadmap.
+
+## Done when
+
+- Class and sequence each sit at 100% of oracle-valid on the PlantUML
+  scoreboard rows, and every non-pass row carries an oracle rejection.
+- Both types meet all five issue-#2 criteria listed in step 5, each
+  demonstrated rather than asserted.
+- The PlantUML oracle's seeded invalid case and seeded infrastructure
+  failure are classified correctly.
+- The pinned PlantUML/Java/Graphviz toolchain runs in 19a's full lane,
+  and a comparison spec FAILS (not skips) when a binary is missing.
+- The phase-end release is cut, and `TODO.notations` is merged.
 
 ## Files
 
-`lib/sirena/notation/plantuml/**`, `spec/plantuml/`,
-`scripts/extract_plantuml_tests.rb` (new), CI workflows.
+`lib/sirena/notation/plantuml/**`, `spec/plantuml/` (absorbing item 16's
+`spec/plantuml_spike/` cases — say so in the PR rather than leaving two
+directories), `scripts/extract_plantuml_tests.rb` (new), `TODO.notations`
+(new), and lane entries in `.github/workflows/` (19a owns those files).

@@ -4,20 +4,24 @@ Can start: now. Small. Blocks: 09.
 
 ## Facts
 
-109 live offenses (104 autocorrectable) on top of the parked todo.
-`rake.yml` delegates to metanorma/ci's `generic-rake` — read it to
-learn whether rubocop runs in CI at all (item 19 pins the workflow).
+109 live offenses, 104 of them autocorrectable, on top of the parked
+todo (measured 2026-08-11 with `bundle exec rubocop`). `rake.yml`
+delegates to metanorma/ci's `generic-rake`, so whether rubocop runs in
+CI today is inherited and unaudited — step 1 settles it.
 
 ## Do
 
-1. Confirm/establish rubocop in CI; zero live offenses from then on.
+1. Establish rubocop as a lane entry through item 19a's extension
+   contract (19a owns the workflow files); zero live offenses from then
+   on. First read what `generic-rake` already runs, so we don't add a
+   second rubocop invocation next to an inherited one.
 2. `rubocop -a`, review the diff hunk-by-hunk, suite + corpus after.
 3. Hand-fix the remainder.
 4. Delete `scripts/rename_to_sirena.rb` (dead self-referential script)
-   AND its three `.rubocop_todo.yml` exclusions (lines 245, 510, 692) —
-   deleting the file without them leaves stale exclusions and silently
-   moves the parked-debt number. If item 02 has already baselined the
-   lint column, rebase and update it in the same PR.
+   AND its three `.rubocop_todo.yml` exclusions — deleting the file
+   without them leaves stale exclusions and silently moves the
+   parked-debt number. If item 02 has already baselined the lint column,
+   rebase and update it in the same PR.
 5. Pin the lint toolchain in the `Gemfile`: `rubocop`,
    `rubocop-performance`, `rubocop-rake` and `rubocop-rspec` are all
    unconstrained today, and the todo was generated under 1.82.1 while

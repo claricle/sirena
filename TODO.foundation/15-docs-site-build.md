@@ -19,7 +19,7 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
   links 404; `docs/assets/` missing.
 - **lychee never reads its config.** `links.yml:46` runs from the repo
   root with `--config lychee.toml`, but the only config is
-  `docs/lychee.toml`. So the tuning nobody knew was inert is inert:
+  `docs/lychee.toml`. So none of that tuning has ever taken effect:
   403/429 acceptance and anchor handling are whatever lychee defaults
   to, not what the file says.
 - One of the front-matter targets is generated:
@@ -30,12 +30,12 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 - `docs/Gemfile.lock` exists on disk but is git-ignored, and lists only
   `arm64-darwin` — docs CI runs Ubuntu, and the dependency set has
   native gems. Committing it as-is does not make CI reproducible.
-- First step is a fact check: what does `build_deploy.yml` actually do
-  on main today — fail, or "succeed" building something else?
 
 ## Do
 
-1. Reproduce the build; record the real failure list.
+1. Reproduce the build and record the real failure list — including
+   what `build_deploy.yml` actually does on main today: fail, or
+   "succeed" while publishing something incomplete.
 2. Each of the 38 ghost targets: page written (only if item 11 needs
    it) or link removed — after its category's item-11 disposition;
    user-deleted categories go immediately; deferred ones get a
@@ -66,7 +66,8 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 
 ## Done when
 
-- `jekyll build` exits 0 locally and in CI.
+- `jekyll build` exits 0 locally and in CI. (It already does today —
+  that is why every criterion below checks the OUTPUT instead.)
 - A source-to-output manifest assertion proves every diagram page in the
   set chosen at step 3 (24 or 25) reached `_site`, and — if the include
   route was taken — that the include's content appears in its host page.
