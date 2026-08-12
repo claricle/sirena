@@ -31,16 +31,21 @@ START of this item**, not discovered at the end.
    excluded and emits a machine-readable total (JSON formatter, not
    scraped text), so two runs on two machines agree.
 
-   It must also count suppressions in `.rubocop.yml` itself. Deleting
-   the todo file means nothing if the same debt reappears as an
-   `Exclude:` or `Enabled: false` in the main config, where ordinary
-   RuboCop reports zero. The counter reads BOTH files, subtracts only
+   It must also count suppressions in `.rubocop.yml` itself AND
+   source-level `# rubocop:disable` / `# rubocop:todo` directives, which
+   are the easiest escape of all — an inline directive removes the
+   offense from RuboCop's JSON entirely, so the todo file can be deleted
+   while the same debt simply moves into the source. Deleting the todo
+   file means nothing if the debt reappears as an `Exclude:` or
+   `Enabled: false` in the main config, or as a comment in a `.rb`
+   file. The counter reads BOTH files, subtracts only
    the exact user-signed exception allowlist, and anything outside that
    allowlist counts as debt. May only decrease,
    reaches the user-signed exception set, then the todo file is deleted.
-4. Seed two failures proving the column is enforced: reintroduce a
-   suppressed offense via the todo file, and again via a fresh
-   `Exclude:` in `.rubocop.yml`. Both must exit non-zero. The
+4. Seed THREE failures proving the column is enforced: reintroduce a
+   suppressed offense via the todo file, via a fresh `Exclude:` in
+   `.rubocop.yml`, and via an inline `# rubocop:disable`. All three must
+   exit non-zero. The
    `# approved:` comment is documentation, not a guard — the allowlist
    is what the counter reads.
 

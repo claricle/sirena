@@ -38,7 +38,19 @@ what this version promises".
    if 19a tracked the Cimas source, the preflight goes there; if 19a
    detached `release.yml` and declared the tracked YAML authoritative,
    it goes in the YAML. This item does not re-litigate that choice.
-5. This item = the PRE-12 release gate, two cuts:
+5. **Settle how a release reaches protected `main`.** Item 19a makes
+   both lane aggregators required checks on `main`; this item's release
+   flow has the bot run `gem bump --tag --push`, creating a commit and
+   tag directly. That new SHA never ran the required checks, and pushes
+   made with `GITHUB_TOKEN` do not trigger a further workflow run, so
+   nothing will retroactively satisfy them. Left unresolved this blocks
+   both pre-12 cuts and item 12.
+
+   Pick one and write it down: promote an already-checked SHA rather
+   than creating a new one; or route the bump through a checked PR; or
+   grant the release bot a narrow, recorded branch-protection bypass.
+   Coordinate with 19a, which owns the protection settings.
+6. This item = the PRE-12 release gate, two cuts:
    - post-01 (loads clean) — the weekend status links this installable
      version, not a branch;
    - post-10/16 (multi-notation demo cut).
@@ -50,6 +62,9 @@ what this version promises".
 Both pre-12 cuts released with changelog entries; the changelog
 preflight job exists in the tracked source and a seeded release with no
 releasable entry is blocked by it.
+
+The release reaches `main` by the mechanism chosen in step 5, and a
+release is demonstrated end to end — not just described.
 
 The 0.x versioning contract is committed and names what the public API
 promises (`Sirena.render`, `Engine#render`, the CLI) and what is
