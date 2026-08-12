@@ -110,7 +110,7 @@ module Sirena
             when :acc_descr
               result[:acc_descr] = stmt[:acc_descr]
             when :axes
-              result[:axes] = stmt[:axes]
+              result[:axes].concat(stmt[:axes])
             when :curve
               result[:curves] << stmt
             when :option

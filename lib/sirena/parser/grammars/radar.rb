@@ -44,19 +44,20 @@ module Sirena
         end
 
         # Curve/dataset values
-        # Supports: {1,2,3} or { A: 1, B: 2, C: 3 }
+        # Supports: {1,2,3} or { A: 1, B: 2, C: 3 } — the colon is
+        # optional (mermaid accepts "A 1") and the block may span lines
         rule(:value_number) { match["0-9"].repeat(1).as(:value) }
 
         rule(:positional_value) do
-          space? >> value_number >> space?
+          whitespace? >> value_number >> whitespace?
         end
 
         rule(:named_value) do
-          space? >>
+          whitespace? >>
             identifier.as(:axis) >>
-            space? >> str(":") >> space? >>
+            whitespace? >> str(":").maybe >> whitespace? >>
             value_number >>
-            space?
+            whitespace?
         end
 
         rule(:value_list) do
@@ -83,7 +84,7 @@ module Sirena
           str("curve") >> space >>
             identifier.as(:id) >>
             curve_label.maybe >>
-            curve_values >>
+            space? >> curve_values >>
             eol
         end
 
