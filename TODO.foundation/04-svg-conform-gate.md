@@ -41,7 +41,16 @@ since the gate is written against that exact API.
    (dependency-contract-check gate).
 4. Align the default theme (fonts, palette) with the profile — this is
    the "default Claricle-flavored theme" the issue asks for.
-5. Conformance spec over every fixture and corpus-pass output.
+5. Conformance spec over every fixture and corpus-pass output — AND the
+   53 tracked SVGs under `examples/`, because the gemspec ships whatever
+   `git ls-files` returns, so those go out to every user. They are in
+   worse shape than the corpus output: 52 of 53 fail the default
+   svg_conform profile and `examples/flowchart/02-node-shapes-extra.svg`
+   is zero bytes. Note `lib/tasks/examples.rake:45` regenerates into
+   `examples/<type>/generated/`, NOT over the shipped files, so
+   regenerating does not fix them by itself — each is regenerated into
+   place, or deleted, or the gemspec stops packaging them. Pick one and
+   record it.
    **Status is recorded per case in the scoreboard, not as a count** —
    a count lets one fix pay for one break. Any valid→invalid transition
    fails; the aggregate is derived from the rows.
@@ -58,6 +67,8 @@ since the gate is written against that exact API.
   regressions cover the other two escape classes.
 - 100% of corpus-pass and fixture outputs valid under the profile;
   spec in CI; per-case rows in the scoreboard.
+- Every SVG the gem actually ships is valid under the profile, or is no
+  longer shipped. Zero-byte files are a failure, not an edge case.
 - A boundary-level test proves escaping happens in `lib/sirena/svg/`
   itself, so a new renderer inherits it without opting in.
 - A seeded malformed-XML output makes `corpus_sweep.rb` report a
