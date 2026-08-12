@@ -1,6 +1,11 @@
-# Sirena Foundation Plan (rev 6)
+# Sirena Foundation Plan (rev 7)
 
-**Date**: 2026-08-10. Rewritten after a fresh-eyes review round.
+**Date**: 2026-08-11. Revised after a maximum-effort adversarial audit
+that re-derived every claim from live commands. What changed in rev 7:
+four items split into gated halves (02a/02b, 03a/03b, 19a/19b, plus the
+06 shared-grammar track), the oracle toolchain made hermetic, missing
+completion edges recorded, and several factually wrong premises
+corrected.
 **Goal**: make the base flawless AND ship visible results fast — every
 track runs in parallel; strict bars are finish lines the machinery
 grinds toward, locked so scores never regress.
@@ -17,15 +22,16 @@ gantt
     section Unblock
     lutaml 0.8 migration (01)    :i01, 2026-08-10, 2d
     section Machinery
-    Oracle + scoreboard (02)     :i02, 2026-08-10, 3d
-    CI topology + pins (19)      :i19, 2026-08-10, 2d
+    CI lane skeleton (19a)       :i19a, 2026-08-10, 2d
+    Oracle toolchain pin (02a)   :i02a, 2026-08-10, 1d
+    Oracle + scoreboard (02b)    :i02, after i02a, 3d
     Skills + agents (13)         :i13, 2026-08-10, 2d
     Lint live (08)               :i08, 2026-08-10, 1d
     Docs build (15)              :i15, 2026-08-10, 3d
     Docs truth inventory (11)    :i11, 2026-08-10, 4d
-    svg_conform gate (04)        :i04, after i01, 2d
-    Coverage floors (03)         :i03, after i02, 2d
-    Release first cut (17)       :i17, after i01, 1d
+    svg_conform + XML escape (04):i04, after i01, 2d
+    Coverage instrumentation(03a):i03, after i02, 2d
+    Release first cut (17)       :i17, after i01 i19a, 1d
     section Structure
     Notation registry (10)       :i10, after i01, 2d
     PlantUML class spike (16)    :i16, after i10, 2d
@@ -36,9 +42,10 @@ gantt
     elkrb + parity (14)          :i14, after i02, 8d
 ```
 
-Gantt scope note: week-scope only — items 12, 18, and item 17's second
-release cut (the one made after items 10 and 16 land) are not drawn;
-the items table below is the authoritative list.
+Gantt scope note: week-scope only — items 12, 18, 19b, 03b's later
+floor raises, and item 17's second release cut (the one made after
+items 10 and 16 land) are not drawn; the items table below is the
+authoritative list.
 
 Weekend milestone: the repo status goes to the issue-#2 author (the
 user sends it; the plan's owner prepares the evidence). Evidence
@@ -54,51 +61,77 @@ perfect condition beat many things half-done.
 
 ## Track topology (what blocks what)
 
-Solid arrows = direct blockers (transitive edges omitted: e.g. 01 and
-02 reach 12 through 04/14/16/17). Dotted arrows = labeled partial
-edges (influence, or a dependency of only the named part — not a
-start blocker). The items table below is the authoritative "can start"
-list.
+Solid arrows = **start blockers**. Dotted arrows = labeled partial edges
+— an item may START, but cannot CLOSE (or cannot run one named part)
+until the source lands. Transitive edges are omitted (e.g. 01 and 02
+reach 12 through 04/14/16/17). The items table below is the
+authoritative "can start" list.
 
 ```mermaid
 flowchart TD
-    A01[01 lutaml 0.8 migration] --> B04[04 svg_conform gate]
-    A01 -.in-bundle gates.-> B02[02 corpus oracle + scoreboard]
+    A01[01 lutaml 0.8 migration] --> B04[04 XML escape + svg_conform]
     A01 --> E10[10 notation registry]
     A01 --> R17[17 release: first cut]
-    B02 --> B03[03 coverage floors]
+    A01 -.functional elkrb.-> I14[14 elkrb layout + parity]
+    B02A[02a oracle toolchain pin]
+    J19A[19a CI lane skeleton] -.lane wiring.-> B02A
+    J19A --> R17
+    A01 -.in-bundle rake gate.-> B02[02b scoreboard + ratchet]
+    B02A -.verdict generation.-> B02
+    B02 --> B03[03a coverage instrumentation]
     B02 --> C05[05 type detection]
     B02 --> C06[06 corpus: flowchart/state/er/treemap]
     B02 --> C07[07 corpus: class + remaining]
-    B02 --> I14[14 elkrb layout + parity]
+    B02 --> I14
+    B02 -.completion.-> B04
+    B02 -.completion.-> D09[09 lint: todo burndown]
+    B02 -.type-name table.-> E10
+    B03 -.changed-line gate.-> C06
+    B03 -.changed-line gate.-> C07
+    B03 -.changed-line gate.-> I14
+    C05 -.completion.-> C07
+    C06 -.completion.-> C07
     E10 --> S16[16 PlantUML class spike]
+    E10 -.shared files.-> D09
     E10 --> G12[12 PlantUML phase 1]
+    B04 -.completion.-> S16
+    I14 -.completion.-> S16
     S16 --> G12
     B04 --> G12
     I14 --> G12
     R17 --> G12
-    D08[08 lint: live] --> D09[09 lint: todo burndown]
-    H13[13 skills + agents] -.gates all PRs.-> C06
-    F15[15 docs build] -.publishing only.-> F11[11 docs truth]
+    D08[08 lint: live] --> D09
+    H13[13 skills + agents] -.worktree bootstrap.-> C06
+    F11[11 docs truth] -.decision manifest.-> F15[15 docs build]
+    F11 -.decision manifest.-> I14
+    F15 -.publishing only.-> F11
+    B03 -.changed-line gate.-> C05
 ```
 
 Everything without an arrow between them runs in parallel.
-PlantUML phase 1 (12) waits ONLY for: 01, 02, 04, 10, 14, 16, 17.
-Lint completion (09), coverage completion (03), docs truth (11), and the
-corpus long tail do NOT block it — they run alongside, to their own
+PlantUML phase 1 (12) still waits on 01, 02, 04, 10, 14, 16, 17 in
+full, plus two partial prerequisites named in item 12: 19a and 03a. Lint
+completion (09), coverage completion (03b), the docs truth pass (11) and
+the corpus long tail do NOT block it — they run alongside, to their own
 finish lines.
+
+**Wave-1 CI ownership.** Items 01, 02, 08, 13, 15 and 19 all start in
+the opening wave, and 17 joins as soon as 01 lands — every one of them
+wants CI edits. 19a lands first and owns the workflow files; everyone
+else ships local commands or rake tasks plus one lane entry through
+19a's extension contract.
 
 ## The bars (user-ruled 2026-08-10; never lowered, timeline-staged)
 
 | Measure | Today | Finish line | How it gets there |
 |---|---|---|---|
-| Corpus per type | 30.7% overall (614/1997) | **100% of oracle-valid** | oracle = pinned mmdc renders it; per-case ratchet; parallel per-type burndown |
+| Corpus per type | 30.7% overall (614/1997) | **100% of oracle-valid** | oracle = the hermetically pinned toolchain (item 02a: Node + mermaid-cli + mermaid + Puppeteer + Chromium + fonts) renders it; per-case ratchet; parallel per-type burndown |
 | Coverage (line) | ~86% | **97% gate, 100 aspiration** | floor set at 92 once item 03's initial test pass closes the 86→92 gap (pass first, so the gate never lands red); new code always 100% |
 | Coverage (branch) | ~55% | **97%** | staged timeline: 70 → 80 → 90 → 97, each step tied to a track completing; never lowered |
 | Lint todo | 7,614 parked | **file deleted** | zero live always; monotone shrink; only tiny user-signed metrics exclusions survive in main config |
 | Layout parity | not measured | invariants **hard**; geometry 8%/15% target | per-case geometry ratchet; a type renegotiates only with evidence, user decides; bar raises later |
-| SVG conformance | all samples fail | **100% valid under chosen profile** | no runtime auto-fix; conformant by construction |
-| Docs | unbuildable, false claims | **builds; zero unverified claims** | numbers generated from the scoreboard, not hand-written |
+| SVG conformance | all samples fail; output is not XML-escaped at all | **100% valid under chosen profile, all output parseable XML** | escape at one boundary in `lib/sirena/svg/`; no runtime auto-fix; conformant by construction |
+| Docs | build exits 0 but the published site is incomplete and broken; false claims throughout | **builds complete; zero unverified claims** | numbers generated from the scoreboard, not hand-written |
 
 Universal: zero High/Medium findings reach any PR (nitpicks count);
 full Pre-Push Review Chain per PR; a case leaves a denominator only if
@@ -113,26 +146,39 @@ improvement not recorded fails (stale). Corpus (02), conformance (04),
 lint debt (09), coverage floors (03), and parity (14) are columns in
 it, not five bespoke systems.
 
+Two rules that make it real:
+
+- **Per-case rows, not aggregate counts**, wherever a count could hide
+  a swap. Conformance and parity store one row per case; totals are
+  derived. A count-only column lets one fix pay for one break.
+- **Case identity is stable** — derived from upstream path + test
+  identity + source hash, never from ordinal position. Ordinal IDs turn
+  one upstream insertion into mass deletion plus mass creation, and the
+  ratchet reads noise instead of regressions.
+
 ## Items
 
 | # | Item | Can start |
 |---|---|---|
 | 01 | lutaml-model 0.8 migration (in-repo; elkrb resolves already) | now |
-| 02 | Corpus oracle, provenance, scoreboard | now (in-bundle gates need 01; pin workaround until then) |
-| 03 | Coverage floors + branch timeline | after 02 |
-| 04 | svg_conform gate | after 01 |
+| 02a | Hermetic oracle toolchain pin | now (needs 19a's lane for CI) |
+| 02b | Corpus oracle verdicts, provenance, scoreboard | design now; verdicts after 02a (in-bundle gates need 01) |
+| 03a | Coverage instrumentation + changed-line gate | after 02 |
+| 03b | Coverage floor timeline + completion pass | after 03a, tied to named events |
+| 04 | XML escaping + svg_conform gate | after 01; completes after 02 |
 | 05 | Type detection fixes | after 02 |
-| 06 | Corpus burndown: flowchart, state, er, treemap | after 02 (per-type parallel) |
-| 07 | Corpus burndown: class + all remaining types | after 02 (per-type parallel) |
+| 06 | Corpus burndown: flowchart, state, er, treemap | after 02 (type-local parallel; common.rb serialized) |
+| 07 | Corpus burndown: class + all remaining types | after 02 (same rule); all-types claim closes with 05+06 |
 | 08 | Lint: zero live offenses + CI enforcement | now |
-| 09 | Lint: todo burndown to deletion | after 08 |
+| 09 | Lint: todo burndown to deletion | after 08; completes after 02; item-10 files after 10 |
 | 10 | Notation registry (two-level) | after 01 |
 | 11 | Docs truth (generated numbers) | now (publishing waits for 15) |
-| 12 | PlantUML phase 1: class then sequence | after 01,02,04,10,14,16,17 |
-| 13 | Skills + agents (AGENTS.md first) | now |
-| 14 | elkrb integration + layout parity | after 02 |
+| 12 | PlantUML phase 1: class then sequence | after 01,02,04,10,14,16,17 + 19a, 03a |
+| 13 | Skills + agents + worktree bootstrap | now |
+| 14 | elkrb integration + layout parity | design after 02; integration after 01+02 |
 | 15 | Docs site build integrity | now |
-| 16 | PlantUML class spike (registry proof) | after 10 |
-| 17 | Release + versioning (0.x) | after 01 |
+| 16 | PlantUML class spike (registry proof) | after 10; completes after 04 + 14's comparator |
+| 17 | Release + versioning (0.x) | after 01 + 19a |
 | 18 | Typed-IR boundary (stub for the next phase) | design-only |
-| 19 | CI topology, runtime budget, external pins | now |
+| 19a | CI lane skeleton + external pins | now (lands first in wave 1) |
+| 19b | CI consolidation + measured budgets | after the owned gates exist |

@@ -1,6 +1,14 @@
 # 09 — Lint: burn the todo to deletion
 
-Can start: after 08. Parallel with everything; does NOT block PlantUML.
+Can start: after 08. **Completion** needs 02 — the suppressed-debt
+column lives in the scoreboard, so the burndown can run without it but
+cannot close without it. Does NOT block PlantUML.
+
+Parallel with everything **except item 10**: the todo parks debt in
+`lib/sirena.rb` (line 70) and `lib/sirena/commands/batch.rb` (lines 26,
+642, 683), and item 10 rewrites both files. Cop families touching those
+files wait for item 10 or rebase onto it; every other family stays
+parallel.
 
 ## Target (user-ruled)
 
@@ -17,9 +25,13 @@ START of this item**, not discovered at the end.
    inventory, checked in here).
 2. Burn down one cop family per PR, safest first. Suite + corpus green
    after each.
-3. Suppressed-offense total is a scoreboard column: measured by a
-   stripped-config run, may only decrease, reaches the user-signed
-   exception set, then the todo file is deleted.
+3. Suppressed-offense total is a scoreboard column. **Name the
+   command**: add a rake task that runs rubocop with `.rubocop_todo.yml`
+   excluded and emits a machine-readable total (JSON formatter, not
+   scraped text), so two runs on two machines agree. May only decrease,
+   reaches the user-signed exception set, then the todo file is deleted.
+4. Seed one failure proving the column is enforced: reintroduce one
+   suppressed offense and confirm the guard exits non-zero.
 
 ## Done when
 

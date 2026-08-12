@@ -1,7 +1,16 @@
 # 03 — Coverage floors and the branch timeline
 
+Split into two stages. **03a** lands the measuring machinery AND the
+test pass that closes the 86→92 line gap — two PRs, instrumentation
+first, then the test pass that lets the 92 floor be set without landing
+red. **03b** is the ongoing floor timeline and the final completion
+pass.
+
 Can start: after 02 (floors live in the scoreboard). Runs in parallel
-with everything; does not block PlantUML.
+with everything; does not block PlantUML. **But no behavior PR may
+close before 03a lands** — items 05, 06, 07, 12 and 14 all change
+behavior, and without 03a there is no changed-line gate for them to
+pass. Investigation and drafting stay parallel; merging waits.
 
 ## Facts
 
@@ -26,27 +35,51 @@ No coverage tooling is wired in yet.
   | 90 → 97 | the item-03 coverage-completion pass |
 
   The bar is never lowered; only the schedule flexes.
-- **Line 86 → 92 is an owned task**, not a hope: this item's first PR
-  is a dedicated test pass on the least-covered components to reach 92,
+- **Line 86 → 92 is an owned task**, not a hope: 03a's second PR is a
+  dedicated test pass on the least-covered components to reach 92,
   before the floor is set there.
 - Zero pending/skipped examples suite-wide (single owner: item 07 for
   the existing xit; this item for the CI rule).
 
-## Do
+## Do — 03a, instrumentation
 
 1. SimpleCov with line+branch, grouped by component; corpus spec runs
-   in a SEPARATE process so exercised-not-verified lines can't inflate
-   the number (split rake tasks; verify once by comparing with/without).
-2. Floors live in the scoreboard (item 02's mechanism) — ratchet up only.
-3. Each burndown PR raises the floor to what it achieves.
-4. A dedicated coverage-completion pass closes the last gap to 97 line
+   in a SEPARATE process and its results are **explicitly not collated**
+   into the coverage number, so exercised-not-verified lines can't
+   inflate it (split rake tasks; verify once by comparing with/without).
+2. **Name the changed-line mechanism.** SimpleCov measures coverage; it
+   does not map a diff onto it. Pick the tool or write the algorithm,
+   and state: merge-base computation, how renames and deletions are
+   handled, and which files are in scope. "Changed lines 100% covered"
+   is not a gate until something computes it.
+3. Floors live in the scoreboard (item 02's mechanism) — ratchet up only.
+4. Seed two failures and prove both go red: one uncovered changed line,
+   and one corpus-inflated coverage number.
+5. Then the test pass on the least-covered components to reach 92 line,
+   and set that floor. This is 03a's second PR, not a separate item.
+
+## Do — 03b, the timeline
+
+6. Each burndown PR raises the floor to what it achieves.
+7. A dedicated coverage-completion pass closes the last gap to 97 line
    once the corpus tracks quiet down; branch steps land per the
    timeline above.
 
 ## Done when
 
+**03a**
+
+- The changed-line calculation is implemented and named, not described.
+- Both seeded failures exit non-zero.
+- Corpus results provably absent from the coverage number.
+- Line coverage ≥ 92 and the 92 floor set in the scoreboard.
+
+**03b**
+
 - CI fails below the floors; floors only ever rise.
 - Line ≥ 97, branch ≥ 97 (end of timeline), changed-line rule active.
+- Every event in the floor table above has fired, and each owning item's
+  Done section names its floor raise as acceptance.
 
 ## Files
 

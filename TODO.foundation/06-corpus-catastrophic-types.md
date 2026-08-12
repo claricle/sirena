@@ -1,7 +1,19 @@
 # 06 — Corpus burndown: flowchart, state, er, treemap
 
-Can start: after 02. Each sub-track is independently dispatchable to a
-parallel agent (different grammar files — no merge conflicts).
+Can start: after 02. Completion also needs 03a (changed-line gate) and
+raises the branch floor 55 → 70.
+
+**Parallelism is conditional, not free.** `Flowchart`, `StateDiagram`
+and `ErDiagram` all subclass `Grammars::Common` — a fix in a shared rule
+changes every type at once. So:
+
+- Type-local edits (a type's own grammar/transform/renderer): parallel.
+- Anything touching `grammars/common.rb`: serialized on a single
+  shared-grammar track, one change at a time, verified with a FULL
+  corpus sweep across all types, not just the owning type.
+
+A sub-track that discovers its bucket needs a common-rule change hands
+that piece to the shared track instead of editing in parallel.
 
 ## Target (user-ruled)
 
@@ -20,8 +32,11 @@ scoreboard locks every gain.
 
 ## Method (each sub-track)
 
-1. Classify failures into buckets by parslet failure location — buckets
-   are facts, hypotheses go in the bucket doc.
+1. Classify failures into buckets by **root construct**, found by
+   bisecting the input — the method the `sirena-corpus` skill defines.
+   A parslet failure location names where the parse gave up, which is
+   often not where the unsupported construct is. Buckets are facts;
+   hypotheses go in the bucket doc.
 2. Fix buckets largest-first: grammar → transform → renderer. One
    bucket per PR, corpus cases as specs, scoreboard updated.
 3. Never hand-patch one case; a fix clears its bucket or explains the
@@ -31,7 +46,8 @@ scoreboard locks every gain.
 ## Done when
 
 Each type at 100% of oracle-valid; every non-pass scoreboard row for
-these types carries an oracle-invalid verdict.
+these types carries an oracle-invalid verdict; the branch floor is
+raised 55 → 70 in the same PR that closes this item.
 
 ## Files
 

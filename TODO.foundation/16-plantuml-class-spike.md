@@ -1,6 +1,9 @@
 # 16 — PlantUML class spike (the weekend surprise)
 
 Can start: after 10. Small by design. Blocks: 12 (informs it).
+**Completion also needs 04** (its cases must be valid under the chosen
+profile) **and item 14's comparator** (structural invariants have to be
+measurable before they can hold).
 
 ## Purpose
 
@@ -26,6 +29,13 @@ Two jobs in one thin slice:
   committed under `spec/plantuml_spike/` (15–20 cases covering every
   enumerated construct — coverage of the list is the selection rule,
   not hand-picking); structural invariants must hold on all.
+- **Where those references come from.** Item 12 owns CI provisioning of
+  PlantUML/Java/Graphviz, and 12 cannot start until this spike is done —
+  so the spike's references are generated LOCALLY against a pinned
+  PlantUML and committed. That is accepted deliberately, with one
+  condition: every reference records its PlantUML, Java and Graphviz
+  versions plus a content hash, so item 12 can re-verify them the moment
+  its lane exists. Unprovenanced local references would rot in silence.
 
 ## Explicitly NOT here
 

@@ -17,8 +17,19 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 - Two link styles; `.html` suffixes 404 under `permalink: pretty`;
   markdown-syntax links inside AsciiDoc render literally; source-path
   links 404; `docs/assets/` missing.
-- lychee runs via `links.yml` against `docs/_site` but accepts 403/429
-  and misfires anchors against pretty permalinks.
+- **lychee never reads its config.** `links.yml:46` runs from the repo
+  root with `--config lychee.toml`, but the only config is
+  `docs/lychee.toml`. So the tuning nobody knew was inert is inert:
+  403/429 acceptance and anchor handling are whatever lychee defaults
+  to, not what the file says.
+- One of the front-matter targets is generated:
+  `docs/_diagram_types/examples/flowchart-examples.adoc` is rewritten by
+  `lib/tasks/examples.rake:108`, which emits no front matter, and
+  `examples:build` always calls it. Hand-adding front matter there gets
+  overwritten on the next build.
+- `docs/Gemfile.lock` exists on disk but is git-ignored, and lists only
+  `arm64-darwin` — docs CI runs Ubuntu, and the dependency set has
+  native gems. Committing it as-is does not make CI reproducible.
 - First step is a fact check: what does `build_deploy.yml` actually do
   on main today — fail, or "succeed" building something else?
 
@@ -29,18 +40,39 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
    it) or link removed — after its category's item-11 disposition;
    user-deleted categories go immediately; deferred ones get a
    non-link "planned" marker.
-3. Front matter on all diagram-type pages; fix Gemfile (pin, lockfile
-   committed — a docs site is an app — theme resolved). Note:
-   `docs/Gemfile.lock` exists on disk but is git-ignored; committing
-   it means lifting that ignore in the same PR.
-4. One link mechanism compatible with pretty permalinks; convert
+3. Front matter on the diagram-type pages. For the generated
+   `examples/` page, pick one and record which:
+   - **Include**: it stops being a page. The expected page set drops to
+     24, and a separate assertion proves the include's content actually
+     appears in its host page.
+   - **Page**: teach `examples.rake` to emit deterministic front matter
+     and add a regenerate-and-diff check. The page set stays 25.
+
+   Whichever is chosen, the Done manifest below counts the RESULTING
+   page set, not a fixed 25. Hand-editing a generated file is not a fix.
+4. Fix `docs/Gemfile`: pin versions, resolve the `theme:` /
+   `remote_theme:` conflict, and commit a lockfile that CI can actually
+   use — regenerate it on Linux or add the supported platforms, then
+   prove `bundle install` leaves it unchanged in CI. Lift the ignore
+   with a narrow `!/docs/Gemfile.lock` exception; do NOT unignore the
+   root library lockfile.
+5. One link mechanism compatible with pretty permalinks; convert
    markdown-style links to AsciiDoc.
-5. Fix lychee config: no silent 403/429, anchors handled, `_site`
-   scoped correctly.
-6. Docs build = required status check (repo settings, done with the
+6. Point lychee at the real config (`--config docs/lychee.toml`, or run
+   it with `docs` as the working directory), THEN fix the config: no
+   silent 403/429, anchors handled, `_site` scoped correctly.
+7. Docs build = required status check (repo settings, done with the
    user).
 
 ## Done when
 
-`jekyll build` exits 0 locally and in CI; every diagram-type page
-renders; zero broken internal links; Gemfile pinned + locked.
+- `jekyll build` exits 0 locally and in CI.
+- A source-to-output manifest assertion proves every diagram page in the
+  set chosen at step 3 (24 or 25) reached `_site`, and — if the include
+  route was taken — that the include's content appears in its host page.
+  "The directory exists" is the check that already failed to catch this.
+- No literal `{% link %}` text survives in published output.
+- The selected theme's layout and assets are present in `_site`.
+- lychee runs against the real config, and two seeded failures prove it
+  bites: one broken relative link, one broken fragment.
+- Gemfile pinned, lockfile committed and CI-complete.

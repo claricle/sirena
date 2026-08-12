@@ -1,7 +1,8 @@
 # 05 — Diagram type detection fixes
 
-Can start: after 02 (needs the failure list). Small; unblocks corpus
-cases across many types.
+Can start: after 02 (needs the failure list). Completion also needs 03a
+— this item changes behavior, so its PRs need the changed-line gate.
+Small; unblocks corpus cases across many types.
 
 ## Facts
 
@@ -12,7 +13,9 @@ variants, and the dangerously broad `error`/`info` patterns.
 
 ## Do
 
-1. Build the per-case failure list from the scoreboard; bucket by
+1. Build the per-case failure list from the scoreboard's `detect-fail`
+   rows (item 02b step 3 — a plain pass/fail schema cannot produce this
+   list, which is why 02b records `stage` and `error_class`). Bucket by
    syntactic cause. No pattern edits before the list exists.
 2. Preprocessing lives where it will stay: if item 10 has landed, build
    detection inside `Notation::Mermaid`; if not, build a standalone

@@ -1,6 +1,9 @@
 # 17 — Release + versioning (0.x)
 
-Can start: after 01. Small. Blocks: 12 (a demo needs an installable cut).
+Can start: after 01, and after **19a** pins the release workflow — the
+first cut would otherwise run through `metanorma/ci@main`, mutable
+external code publishing our gem. Small. Blocks: 12 (a demo needs an
+installable cut).
 
 ## Problem
 
@@ -15,13 +18,24 @@ what this version promises".
 1. Adopt explicit 0.x semantics: what the public API promises
    (`Sirena.render`, `Engine#render`, CLI), what is internal (notation
    plugin shapes — the item-10 boundary).
-2. CHANGELOG.md; every released change lands there.
-3. Release mechanics (fixed convention): releases run ONLY through the
-   cimas-generated `release.yml` (`workflow_dispatch` with
-   `next_version`) — the bot bumps `lib/sirena/version.rb`, tags, and
-   pushes the gem. No PR ever bumps a version; a PR that wants a
-   release says so in its body and the maintainer dispatches.
-4. This item = the PRE-12 release gate, two cuts:
+2. CHANGELOG.md — define the format and what makes an entry
+   *releasable*, precisely enough that a job can check it. "Every
+   released change lands there" is a rule; the Done criterion below
+   needs a predicate.
+3. Release mechanics (fixed convention): releases run through the
+   cimas-generated `release.yml` — the bot bumps
+   `lib/sirena/version.rb`, tags, and pushes the gem. No PR ever bumps
+   a version; a PR that wants a release says so in its body and the
+   maintainer dispatches. Note the plan said `workflow_dispatch` only,
+   but `release.yml:9` ALSO accepts `repository_dispatch`
+   (`types: [do-release]`) — either remove that trigger or define
+   exactly who may fire it and what it does.
+4. The changelog check must be a real prerequisite JOB in the release
+   workflow, not a convention. `release.yml` delegates immediately to
+   external generated logic, so a preflight has to be added ahead of
+   that delegation — and added in the Cimas source item 19a tracks, not
+   only in the generated YAML.
+5. This item = the PRE-12 release gate, two cuts:
    - post-01 (loads clean) — the weekend status links this installable
      version, not a branch;
    - post-10/16 (multi-notation demo cut).
@@ -30,5 +44,7 @@ what this version promises".
 
 ## Done when
 
-Both pre-12 cuts released with changelog entries; changelog discipline
-enforced in CI (release blocked without an entry).
+Both pre-12 cuts released with changelog entries; the changelog
+preflight job exists in the tracked source and a seeded release with no
+releasable entry is blocked by it; `repository_dispatch` either removed
+or documented with its owner.

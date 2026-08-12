@@ -1,8 +1,11 @@
 # 14 — elkrb integration + layout parity
 
-Can start: after 02 (comparator needs references); the CI comparator
-lane also needs 01's migration (until then the uncommitted 0.7-pin
-interim applies). Blocks: 12.
+Comparator DESIGN can start after 02 (it needs the references).
+INTEGRATION and Done need **both 01 and 02**: step 1 proves elkrb works
+functionally under lutaml-model 0.8, and that cannot run while the gem
+still crashes at require. Completion also needs 03a, and raises the
+branch floor 80 → 90 jointly with item 07. Blocks: 12; with item 04,
+blocks 16's completion.
 
 ## Facts
 
@@ -27,6 +30,56 @@ shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
   measured evidence that algorithm identity, not our code, makes the
   number unreachable; the user decides. Bars raise later once stable.
 
+## Metric contract (settle before the comparator is written)
+
+The bars above are unmeasurable as stated. The contract must define,
+IN THIS FILE and not in an untracked options doc:
+
+- **Node identity** — how a Sirena node is matched to a reference node
+  (semantic id, not document order).
+- **Normalization** — the denominator is the reference diagram's
+  diagonal; state how scale and translation are removed, and how nested
+  `transform` attributes are flattened before comparison.
+- **The equations** — node-center distance and dimension/aspect
+  deviation, written out, plus whether the threshold is per node or
+  aggregated (and if aggregated, by what statistic).
+- **Overlap semantics.** "No overlaps" as written rejects correct
+  output. `Transform::Treemap` (`treemap.rb:70`) and
+  `Transform::BlockTransform` (`block.rb:100`) deliberately nest
+  children inside parent bounds. Ancestor containment is ALLOWED; peer
+  collision is a failure.
+- **Non-box types.** `Transform::PieTransform` (`pie.rb:17`) emits no
+  node boxes at all. Each such type gets either an analogous metric
+  (e.g. sector angle and radius deviation) or an explicit,
+  user-approved N/A — never a silently vacuous pass.
+- **Failure evidence format** — what a failing case records so the next
+  session can act on it.
+
+## Reference cohort (scoping the hard gate)
+
+Two different gaps, and conflating them is how "all reference cases"
+became meaningless:
+
+- **Not every corpus case has a reference.** There are 1,997 corpus
+  inputs and only ~847 references. mmdc renders cases that have no
+  reference at all (`class_diagram/001_platform_click_security_loose_0.mmd`
+  is one), and the comparator silently skips a missing reference
+  (`generate_mermaid_fixtures.rake:276`). So corpus completion does NOT
+  produce references — reference GENERATION does. That is item 02b step
+  7, which regenerates a reference for every oracle-valid case under the
+  02a pin. `spec/fixtures_mermaid/` also has 23 type dirs and no sankey
+  directory despite sankey being registered; the same step fixes that,
+  or records an oracle-backed N/A.
+- **Not every case Sirena can render.** At most today's 614 pass cases
+  produce candidate output to compare.
+
+So the critical-path cohort is **oracle-valid ∩ has-a-reference ∩
+currently Sirena-pass**. Every newly-passing corpus PR (items 05/06/07)
+adds or updates its own parity row, so the cohort grows with the pass
+set instead of gating on it. Global closure needs BOTH 02b's reference
+generation and the corpus tracks — and a skipped missing reference must
+fail rather than pass silently.
+
 ## Do
 
 1. Prove elkrb on ONE type first (flowchart — already ELK-shaped),
@@ -42,13 +95,24 @@ shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
 ## Done when
 
 - All types on elkrb (or user-decided per-type exceptions with evidence).
-- **Zero invariant failures across all reference cases** (the hard gate,
-  stated as the completion bar, not just a mechanism).
+- **Zero invariant failures across the cohort** (oracle-valid ∩
+  has-a-reference ∩ Sirena-pass) — the hard gate, stated as the
+  completion bar, not just a mechanism. Cohort membership is read from
+  the scoreboard, never hardcoded.
+- A reference-completeness assertion passes: every oracle-valid case has
+  a reference or an explicit oracle-backed N/A row, and every registered
+  type has at least one (sankey has none today). A missing reference
+  FAILS the comparator instead of being skipped.
 - Every type's geometry at 8%/15% OR at its user-approved renegotiated
-  per-type threshold — no third state.
+  per-type threshold — no third state. Non-box types meet their
+  analogous metric or carry an approved N/A.
+- The branch floor is raised 80 → 90 by whichever of this item and item
+  07 lands second — an acceptance criterion here, not a side effect.
 - Comparator in CI (full lane); `grep -ri elk README* ARCHITECTURE.md
-  CLAUDE.md docs/` cross-checked row-by-row against item 11's
-  inventory — every hit's row resolved (verified/corrected/removed).
+  CLAUDE.md docs/ sirena.gemspec` cross-checked row-by-row against item
+  11's tracked decision manifest — every hit's row resolved
+  (verified/corrected/removed). The gemspec description still claims
+  ELK layout; it counts.
 
 ## Files
 

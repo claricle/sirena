@@ -34,21 +34,48 @@ only.
 4. Agent definitions for the parallel tracks (durable, in `.claude/agents/`
    or dispatched ad-hoc): corpus-triage/burndown agent (per-type),
    docs-truth agent, lint-burndown agent — each briefed with its item
-   file + the gates skill.
+   file AND the gates skill. Audited 2026-08-11: four briefs were
+   missing one of those reads (`corpus-triage`, `corpus-burndown`,
+   `docs-truth-auditor`, `lint-burndown`) and have been corrected. Add a
+   check that re-audits this rather than trusting the audit to stay
+   true — a brief is easy to edit and easy to forget.
 5. CLAUDE.md: point at AGENTS.md + skills; keep only Claude-specifics.
+6. **Worktree bootstrap — this is what makes the rest of the item
+   real.** `.git/info/exclude` keeps `AGENTS.md`, `.claude/` and
+   `docs/plans/` untracked, and the canonical pipeline dispatches every
+   builder into a FRESH `git worktree`. A fresh worktree checks out
+   tracked files only, so a dispatched agent inherits none of this
+   tooling — the exact opposite of the item's goal. Ship a bootstrap
+   step (script or documented command) that copies or symlinks
+   `AGENTS.md` and `.claude/` into every new worktree before dispatch,
+   and make it a required step in the dispatch flow rather than
+   something to remember. (Item 11's decision manifest is NOT bootstrap
+   payload — it is committed at `docs/claims-manifest.yml`, so every
+   worktree already has it.)
 
 ## Done when
 
-A fresh session (Claude or not) ON THIS MACHINE, given only this
-machine's checkout (tracked files + the untracked tooling that lives
-here), scores 8/8 on the FIXED
+A fresh session (Claude or not), started **inside a newly created
+pipeline worktree that has been bootstrapped**, scores 8/8 on the FIXED
 question set at `.claude/skills/sirena-gates/QUIZ.md` (maintainer-local,
 like the rest of the tooling) — e.g.: what are the corpus and coverage
 bars? what must a PR show before push? how do you update the
 scoreboard? which numbers may be hand-written in docs? — answers graded
-against the AGENTS.md bars table, not vibes. Skills reviewed through
-the same chain as code. [Met 2026-08-10: quiz scored 8/8 from
-AGENTS.md alone; machinery FINALIZED after live rehearsal.]
+against the AGENTS.md bars table, not vibes.
+
+And the negative control: a SECOND, context-isolated fresh session given
+the identical prompt in an **un-bootstrapped** worktree scores **≤ 3/8**.
+It must be a separate session — reusing the first one proves nothing,
+since it has already read `AGENTS.md`. Grade both against the same key.
+If the un-bootstrapped run also passes, the bootstrap isn't load-bearing
+and the quiz is measuring the model's priors, not the tooling.
+
+Skills reviewed through the same chain as code.
+
+[Partially met 2026-08-10: quiz scored 8/8 from AGENTS.md alone in the
+MAIN checkout. That result does not transfer — it was never run from a
+worktree, where the tooling is absent. Re-run after the bootstrap
+lands.]
 
 ## Files
 

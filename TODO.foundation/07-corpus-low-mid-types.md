@@ -1,6 +1,11 @@
 # 07 — Corpus burndown: class and all remaining types
 
-Can start: after 02. Same target, method, and parallelism as item 06.
+Can start: after 02. Same target, method, and parallelism rules as item
+06 — including the serialized shared-grammar track for anything touching
+`grammars/common.rb`. Completion also needs 03a. Raises the branch floor
+70 → 80 when 07a–07c are all complete, and 80 → 90 jointly with item 14.
+The plan-wide "every type at 100%" claim additionally needs 05 and 06 —
+see Done.
 
 ## Sub-tracks (parallel; ordered by failing-case count)
 
@@ -33,3 +38,15 @@ Every canonical corpus type that has oracle-valid cases sits at 100% on
 the scoreboard — quantified over the CORPUS, not over registrations, so
 an unregistered type is a failure, not an escape. Zero pending examples
 suite-wide.
+
+Floor raises are acceptance criteria of this item, not side effects:
+the PR closing 07c raises the branch floor 70 → 80, and the LATER of
+item 07's close and item 14's close raises it 80 → 90 (whichever lands
+second performs the raise, and says so in its PR body).
+
+This item OWNS the types in 07a–07f. The all-types statement above can
+only be evaluated once item 06 has closed flowchart/state/er/treemap and
+item 05 has cleared the `unknown/` detection cases — so 07's own gate is
+its enumerated types, and the plan-wide "every type at 100%" claim
+closes when 05, 06 and 07 are all done. Record that as completion edges
+05 → 07 and 06 → 07; it does not delay 07's parallel start.

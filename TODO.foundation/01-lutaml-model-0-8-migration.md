@@ -33,16 +33,26 @@ Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10,
    (0.8 deprecates the positional prefix and warns it will be
    ignored — output may differ; the sweep must catch it).
 2. Sweep the full suite + corpus under 0.8 and fix every difference.
-3. Gemspec: lutaml-model `~> 0.8`; set the REAL tested Ruby floor
-   (≥ 3.1, driven by svg_conform) — one number, stated everywhere.
-4. Output must not change: run the CURRENT corpus pass set before/after
+3. Gemspec: lutaml-model `~> 0.8.0` — pessimistic to the patch series,
+   NOT `~> 0.8` (that admits an untested 0.9, repeating exactly the
+   mistake this item exists to fix). Widening to 0.9 is a later,
+   tested change.
+4. Set the REAL tested Ruby floor (≥ 3.1, driven by svg_conform) — one
+   number, stated in EVERY version-bearing file: `sirena.gemspec`,
+   `README.adoc`, `docs/_guides/installation.adoc`, `CLAUDE.md`, and
+   `.rubocop.yml` (`TargetRubyVersion`, currently 3.0). `.rubocop.yml`
+   is also touched by item 08 — whichever lands second rebases; the
+   floor value is this item's call.
+5. Add `svg_conform` to the `Gemfile` (development group) constrained
+   to `~> 0.2.0`, so the same-bundle smoke below can actually run.
+6. Output must not change: run the CURRENT corpus pass set before/after
    (whatever the day's measured set is — never a hardcoded count); any
    differing SVG goes in the PR description with its reason
    (execution-diff gate; one-time PR artifact, not a permanent ledger).
-5. Fresh-resolution CI job: clean install, no lockfile, full suite —
+7. Fresh-resolution CI job: clean install, no lockfile, full suite —
    catches the next upstream break on push instead of at a user's
    machine.
-6. Optional hygiene, NOT blocking: ask claricle/elkrb to loosen/confirm
+8. Optional hygiene, NOT blocking: ask claricle/elkrb to loosen/confirm
    its constraint for 0.8 (repo dormant since 2025-11-14, no 0.8 work
    in flight; only 1.0.0 and 1.0.2 published).
 
@@ -57,7 +67,11 @@ Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10,
   post-migration — that's what proves the conflict dead).
 - 0 failures; the 1 pending xit is owned by item 07.
 - Ruby floor tested in CI at the declared minimum and latest stable.
+- `grep -rn "2\.7" ` over the version-bearing files returns nothing
+  claiming a 2.7 floor.
 
 ## Files
 
-`lib/sirena/svg/document.rb`, `sirena.gemspec`, CI workflow.
+`lib/sirena/svg/document.rb`, `sirena.gemspec`, `Gemfile`,
+`README.adoc`, `docs/_guides/installation.adoc`, `CLAUDE.md`,
+`.rubocop.yml`, CI workflow.
