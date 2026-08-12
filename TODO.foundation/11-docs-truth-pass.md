@@ -24,7 +24,7 @@ error-code taxonomy, 38 absent pages).
 
 On benchmarks, be precise: a harness DOES exist
 (`lib/tasks/benchmark.rake:7`, tasks `benchmark:compare` and
-`benchmark:quick`), and CLAUDE.md advertises it. It is nonfunctional —
+`benchmark:quick`). It is nonfunctional —
 neither the task nor the `Rakefile` requires Sirena before calling
 `Sirena.render`. The true claim is "no recorded, reproducible run
 substantiates the published figures, and the harness is broken."
@@ -35,7 +35,7 @@ substantiates the published figures, and the harness is broken."
    disposition. Every row ends verified / corrected / removed. No
    unresolved rows. **Scope is every tracked user-facing surface**, not
    just the four obvious files:
-   - `README.adoc`, `ARCHITECTURE.md`, `CLAUDE.md`, `docs/**`
+   - `README.adoc`, `ARCHITECTURE.md`, `docs/**`
    - the 26 tracked `examples/**/README*` files
    - `sirena.gemspec` metadata — its description still claims "ELK
      layout" (line ~14), plus the license, summary and Ruby floor

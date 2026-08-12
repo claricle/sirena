@@ -12,7 +12,7 @@ Blocks: 12; with item 04, blocks 16's completion.
 
 `Engine#layout_graph` never calls elkrb — fallback grid with a TODO
 (`lib/sirena/engine.rb:178-181`) — while README.adoc, ARCHITECTURE.md,
-and parts of `docs/` still claim ELK layout (CLAUDE.md is corrected).
+and parts of `docs/` still claim ELK layout.
 elkrb 1.0.2 resolves and requires cleanly under lutaml-model 0.8
 (proven 2026-08-11), but its FUNCTIONAL behavior under 0.8 is
 untested — step 1 must prove it before anything builds on it.
@@ -116,7 +116,7 @@ fail rather than pass silently.
 - The branch floor is raised 80 → 90 by whichever of this item and item
   07 lands second — an acceptance criterion here, not a side effect.
 - Comparator in CI (full lane). Every ELK mention across `README*`,
-  `ARCHITECTURE.md`, `CLAUDE.md`, `docs/` and `sirena.gemspec` has a row
+  `ARCHITECTURE.md`, `docs/` and `sirena.gemspec` has a row
   in item 11's committed manifest resolved as verified / corrected /
   removed. Grep finds the mentions; the manifest decides which are true,
   because after this item lands some ELK claims become correct. The

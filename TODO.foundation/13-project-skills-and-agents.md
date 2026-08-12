@@ -3,16 +3,21 @@
 Can start: now. THIS WEEK — the parallel-agent strategy depends on it;
 every dispatched agent must inherit the rules without being told.
 
-**Owner decision 2026-08-10: this tooling is MAINTAINER-LOCAL, not
-committed.** `AGENTS.md`, `.claude/skills/sirena-*`, and
-`.claude/agents/*` live untracked on the maintainer's machine (built,
-reviewed, and live-tested — they exist and work). Rationale: they are
-the maintainer's workbench, not repo policy — other developers must
-not have their tooling choices forced. Consequences: the
-discoverability acceptance below applies to sessions ON THIS MACHINE;
-the committed repo carries the bars via this plan
-(`00-overview.md`) and neutral dev tools (`scripts/corpus_sweep.rb`)
-only.
+**Owner decision 2026-08-10, extended 2026-08-12: this tooling is
+MAINTAINER-LOCAL, not committed.** `AGENTS.md`,
+`.claude/skills/sirena-*`, `.claude/agents/*` and **`CLAUDE.md`** live
+untracked on the maintainer's machine (built, reviewed, and live-tested
+— they exist and work). Rationale: they are the maintainer's workbench,
+not repo policy — other developers must not have their tooling choices
+forced. Consequences: the discoverability acceptance below applies to
+sessions ON THIS MACHINE; the committed repo carries the bars via this
+plan (`00-overview.md`) and neutral dev tools
+(`scripts/corpus_sweep.rb`) only.
+
+`CLAUDE.md` joining the local set has a knock-on effect the plan must
+respect: it is no longer a tracked surface, so items 01, 11 and 14 do
+not inventory or update it. Keeping it accurate is maintainer upkeep,
+not a plan deliverable.
 
 ## Do
 
@@ -39,15 +44,18 @@ only.
    `docs-truth-auditor`, `lint-burndown`) and have been corrected. Add a
    check that re-audits this rather than trusting the audit to stay
    true — a brief is easy to edit and easy to forget.
-5. CLAUDE.md: point at AGENTS.md + skills; keep only Claude-specifics.
+5. `CLAUDE.md` (local): point at AGENTS.md + skills; keep only
+   Claude-specifics.
 6. **Worktree bootstrap — this is what makes the rest of the item
-   real.** `.git/info/exclude` keeps `AGENTS.md`, `.claude/` and
-   `docs/plans/` untracked, and the canonical pipeline dispatches every
+   real.** `.git/info/exclude` keeps `AGENTS.md`, `.claude/`,
+   `CLAUDE.md` and `docs/plans/` untracked, and the canonical pipeline
+   dispatches every
    builder into a FRESH `git worktree`. A fresh worktree checks out
    tracked files only, so a dispatched agent inherits none of this
    tooling — the exact opposite of the item's goal. Ship a bootstrap
    step (script or documented command) that copies or symlinks
-   `AGENTS.md` and `.claude/` into every new worktree before dispatch,
+   `AGENTS.md`, `.claude/` and `CLAUDE.md` into every new worktree
+   before dispatch,
    and make it a required step in the dispatch flow rather than
    something to remember. (Item 11's decision manifest is NOT bootstrap
    payload — it is committed at `docs/claims-manifest.yml`, so every
@@ -79,6 +87,9 @@ lands.]
 
 ## Files
 
-`AGENTS.md`, `.claude/skills/sirena-{gates,corpus,oracle}/SKILL.md`,
-`.claude/agents/*.md` (all maintainer-local, untracked); `CLAUDE.md`
-(committed) points at them as optional maintainer tooling.
+`AGENTS.md`, `CLAUDE.md`,
+`.claude/skills/sirena-{gates,corpus,oracle}/SKILL.md`,
+`.claude/agents/*.md` — all maintainer-local, untracked, and all listed
+in `.git/info/exclude` so no `git add` can sweep them in. Nothing in
+this item is committed; `TODO.foundation/00-overview.md` is what the
+repo carries.

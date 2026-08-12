@@ -40,8 +40,8 @@ in-repo work — no cross-repo release is required (re-verified
    tested change.
 4. Set the REAL tested Ruby floor (≥ 3.1, driven by svg_conform) — one
    number, stated in EVERY version-bearing file: `sirena.gemspec`,
-   `README.adoc`, `docs/_guides/installation.adoc`, `CLAUDE.md`, and
-   `.rubocop.yml` (`TargetRubyVersion`, currently 3.0). `.rubocop.yml`
+   `README.adoc`, `docs/_guides/installation.adoc`, and `.rubocop.yml`
+   (`TargetRubyVersion`, currently 3.0). `.rubocop.yml`
    is also touched by item 08 — whichever lands second rebases; the
    floor value is this item's call.
 5. Add `svg_conform` to the `Gemfile` (development group) constrained
@@ -84,6 +84,6 @@ in-repo work — no cross-repo release is required (re-verified
 ## Files
 
 `lib/sirena/svg/document.rb`, `sirena.gemspec`, `Gemfile`,
-`README.adoc`, `docs/_guides/installation.adoc`, `CLAUDE.md`,
+`README.adoc`, `docs/_guides/installation.adoc`,
 `.rubocop.yml`, and one lane entry in `.github/workflows/` (19a owns
 those files).
