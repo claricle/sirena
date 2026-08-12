@@ -16,7 +16,12 @@ what this version promises".
    (`Sirena.render`, `Engine#render`, CLI), what is internal (notation
    plugin shapes — the item-10 boundary).
 2. CHANGELOG.md; every released change lands there.
-3. This item = the PRE-12 release gate, two cuts:
+3. Release mechanics (fixed convention): releases run ONLY through the
+   cimas-generated `release.yml` (`workflow_dispatch` with
+   `next_version`) — the bot bumps `lib/sirena/version.rb`, tags, and
+   pushes the gem. No PR ever bumps a version; a PR that wants a
+   release says so in its body and the maintainer dispatches.
+4. This item = the PRE-12 release gate, two cuts:
    - post-01 (loads clean) — the weekend status links this installable
      version, not a branch;
    - post-10/16 (multi-notation demo cut).
