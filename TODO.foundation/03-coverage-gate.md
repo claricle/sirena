@@ -10,8 +10,10 @@ No coverage tooling is wired in yet.
 
 ## Bars (user-ruled)
 
-- **Line**: floor rises to 92 immediately, **97 is the hard phase
-  gate**, 100 the aspiration. Every PR: changed lines 100% covered.
+- **Line**: floor set at 92 once this item's initial test pass closes
+  the 86→92 gap (the pass comes first, so the gate never lands red);
+  **97 is the hard phase gate**, 100 the aspiration. Every PR: changed
+  lines 100% covered.
 - **Branch**: the bar is **97** — reached on a staged timeline. Each
   step is a floor raise TIED TO A NAMED EVENT, enforced when the event
   completes (the floor raise is part of that event's acceptance):

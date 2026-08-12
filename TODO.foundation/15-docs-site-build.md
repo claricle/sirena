@@ -11,7 +11,7 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
   on published pages); "cannot build" was the wrong mechanism.]
 - 23 of 25 `_diagram_types/*.adoc` lack YAML front matter (incl. the
   orphaned `examples/` page) — Jekyll skips them entirely.
-- `docs/Gemfile`: no pins, no lockfile, `theme:` AND `remote_theme:`
+- `docs/Gemfile`: no pins, no tracked lockfile, `theme:` AND `remote_theme:`
   both set, `jekyll-remote-theme` plugin absent (theme silently never
   loads).
 - Two link styles; `.html` suffixes 404 under `permalink: pretty`;
@@ -30,7 +30,9 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
    user-deleted categories go immediately; deferred ones get a
    non-link "planned" marker.
 3. Front matter on all diagram-type pages; fix Gemfile (pin, lockfile
-   committed — a docs site is an app — theme resolved).
+   committed — a docs site is an app — theme resolved). Note:
+   `docs/Gemfile.lock` exists on disk but is git-ignored; committing
+   it means lifting that ignore in the same PR.
 4. One link mechanism compatible with pretty permalinks; convert
    markdown-style links to AsciiDoc.
 5. Fix lychee config: no silent 403/429, anchors handled, `_site`

@@ -23,5 +23,6 @@ START of this item**, not discovered at the end.
 
 ## Done when
 
-Todo deleted; exceptions (if any) user-signed in main config;
+Todo deleted; each surviving exclusion (if any) in `.rubocop.yml`
+carries a `# approved: <user> <date>` comment naming its single file;
 scoreboard column at its floor.

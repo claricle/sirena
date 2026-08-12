@@ -13,10 +13,11 @@ sequence then proves temporal semantics.)
 
 ## Do
 
-1. PlantUML corpus: extract from plantuml's own test resources; pin
-   upstream source + PlantUML version + checksums; oracle = the pinned
-   PlantUML binary renders it; scoreboard rows from day one (0% honest
-   start).
+1. PlantUML corpus: extract from plantuml's own test resources via a
+   `scripts/extract_plantuml_tests.rb` (new) modeled on the mermaid
+   extractor; pin upstream source + PlantUML version + checksums;
+   oracle = the pinned PlantUML binary renders it; scoreboard rows from
+   day one (0% honest start).
 2. CI provisioning is OWNED HERE (item 19 provides the lane mechanism,
    not the tools): pinned PlantUML + Java + Graphviz added to the full
    lane by this item, before any comparison spec lands. Comparison
@@ -33,11 +34,13 @@ sequence then proves temporal semantics.)
 
 - **Phase-end 0.x release** (owned here; item 17 owns only the two
   pre-12 cuts): the release that announces PlantUML support.
-- `TODO.notations` roadmap written and review-chain-approved: DOT, D2,
-  BPMN, Structurizr, BlockDiag family, Priority 2/3 — with the typed-IR
-  phase (item 18) as its first entry, designed from Mermaid + PlantUML
-  evidence. The foundation is not complete without this roadmap.
+- `TODO.notations` roadmap (DOT, D2, BPMN, Structurizr, BlockDiag
+  family, Priority 2/3 — with the typed-IR phase, item 18, as its
+  first entry, designed from Mermaid + PlantUML evidence) merged via a
+  PR whose body records each chain gate's verdict. The foundation is
+  not complete without this roadmap.
 
 ## Files
 
-`lib/sirena/notation/plantuml/**`, `spec/plantuml/`, CI workflows.
+`lib/sirena/notation/plantuml/**`, `spec/plantuml/`,
+`scripts/extract_plantuml_tests.rb` (new), CI workflows.

@@ -15,7 +15,7 @@ gantt
     dateFormat  YYYY-MM-DD
     title Foundation week (planning closed 2026-08-10)
     section Unblock
-    elkrb + lutaml 0.8 (01)      :i01, 2026-08-10, 2d
+    lutaml 0.8 migration (01)    :i01, 2026-08-10, 2d
     section Machinery
     Oracle + scoreboard (02)     :i02, 2026-08-10, 3d
     CI topology + pins (19)      :i19, 2026-08-10, 2d
@@ -36,6 +36,10 @@ gantt
     elkrb + parity (14)          :i14, after i02, 8d
 ```
 
+Gantt scope note: week-scope only — items 12, 18, and item 17's second
+release cut (the one made after items 10 and 16 land) are not drawn;
+the items table below is the authoritative list.
+
 Weekend milestone: the repo status goes to the issue-#2 author (the
 user sends it; the plan's owner prepares the evidence). Evidence
 checklist, each item verified before the status goes out:
@@ -51,16 +55,18 @@ perfect condition beat many things half-done.
 ## Track topology (what blocks what)
 
 Solid arrows = direct blockers (transitive edges omitted: e.g. 01 and
-02 reach 12 through 04/14/16/17). Dotted arrows = influence, not
-dependency. The items table below is the authoritative "can start"
+02 reach 12 through 04/14/16/17). Dotted arrows = labeled partial
+edges (influence, or a dependency of only the named part — not a
+start blocker). The items table below is the authoritative "can start"
 list.
 
 ```mermaid
 flowchart TD
-    A01[01 elkrb + lutaml 0.8] --> B04[04 svg_conform gate]
+    A01[01 lutaml 0.8 migration] --> B04[04 svg_conform gate]
+    A01 -.in-bundle gates.-> B02[02 corpus oracle + scoreboard]
     A01 --> E10[10 notation registry]
     A01 --> R17[17 release: first cut]
-    B02[02 corpus oracle + scoreboard] --> B03[03 coverage floors]
+    B02 --> B03[03 coverage floors]
     B02 --> C05[05 type detection]
     B02 --> C06[06 corpus: flowchart/state/er/treemap]
     B02 --> C07[07 corpus: class + remaining]
@@ -86,8 +92,8 @@ finish lines.
 
 | Measure | Today | Finish line | How it gets there |
 |---|---|---|---|
-| Corpus per type | 30.2% overall | **100% of oracle-valid** | oracle = pinned mmdc renders it; per-case ratchet; parallel per-type burndown |
-| Coverage (line) | ~86% | **97% gate, 100 aspiration** | floor 92 immediately; new code always 100% |
+| Corpus per type | 30.7% overall (614/1997) | **100% of oracle-valid** | oracle = pinned mmdc renders it; per-case ratchet; parallel per-type burndown |
+| Coverage (line) | ~86% | **97% gate, 100 aspiration** | floor set at 92 once item 03's initial test pass closes the 86→92 gap (pass first, so the gate never lands red); new code always 100% |
 | Coverage (branch) | ~55% | **97%** | staged timeline: 70 → 80 → 90 → 97, each step tied to a track completing; never lowered |
 | Lint todo | 7,614 parked | **file deleted** | zero live always; monotone shrink; only tiny user-signed metrics exclusions survive in main config |
 | Layout parity | not measured | invariants **hard**; geometry 8%/15% target | per-case geometry ratchet; a type renegotiates only with evidence, user decides; bar raises later |
@@ -111,8 +117,8 @@ it, not five bespoke systems.
 
 | # | Item | Can start |
 |---|---|---|
-| 01 | elkrb coordination + lutaml-model 0.8 migration | now |
-| 02 | Corpus oracle, provenance, scoreboard | now |
+| 01 | lutaml-model 0.8 migration (in-repo; elkrb resolves already) | now |
+| 02 | Corpus oracle, provenance, scoreboard | now (in-bundle gates need 01; pin workaround until then) |
 | 03 | Coverage floors + branch timeline | after 02 |
 | 04 | svg_conform gate | after 01 |
 | 05 | Type detection fixes | after 02 |

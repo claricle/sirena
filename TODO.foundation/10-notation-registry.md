@@ -38,14 +38,17 @@ PlantUML evidence.
    source only today; `batch` globs `*.mmd` only) — extend both, with
    new specs (render/batch currently have none).
 4. Pure refactor gate: corpus-pass set byte-identical before/after
-   (whatever the scoreboard says it is on the day — not a hardcoded 604).
+   (whatever the scoreboard says it is on the day — never a hardcoded
+   count).
 5. OCP proof: a spec-only fake notation registers through the public
    path, participates in sniffing, renders — touching zero lib files.
 
 ## Done when
 
-Fake-notation spec passes; `lib/sirena.rb` ≤ 40 lines; scoreboard
-unchanged; CLI extended with specs.
+Fake-notation spec passes; a boundary spec asserts no cross-notation
+model sharing and no notation branching in the engine (the assertion
+item 18 relies on); `lib/sirena.rb` ≤ 40 lines; scoreboard unchanged;
+CLI extended with specs.
 
 ## Files
 

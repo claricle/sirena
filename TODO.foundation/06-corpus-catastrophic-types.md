@@ -16,7 +16,7 @@ scoreboard locks every gain.
 | 06a flowchart | 331 | 6.0% | biggest single lever in the repo |
 | 06b state (+state_diagram) | 234 | ~4% | composite states, concurrency |
 | 06c er (+er_diagram) | 161 | ~3% | attribute blocks, label variants |
-| 06d treemap | 10 | 0% | 0% smells like wiring, check registration first |
+| 06d treemap | 10 | 90% (9/10) | wiring fixed in rehearsal (commit 7722ee1's renderer return contract — measured 9/10); only case 007 remains, flagged probably-oracle-invalid pending item 02's verdict |
 
 ## Method (each sub-track)
 
@@ -30,7 +30,8 @@ scoreboard locks every gain.
 
 ## Done when
 
-Each type at 100% of oracle-valid; zero unexplained failures.
+Each type at 100% of oracle-valid; every non-pass scoreboard row for
+these types carries an oracle-invalid verdict.
 
 ## Files
 

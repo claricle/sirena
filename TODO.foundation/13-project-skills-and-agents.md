@@ -16,12 +16,15 @@ only.
 
 ## Do
 
-1. `AGENTS.md` (committed, agent-neutral, first): the bars table, the
-   scoreboard workflow, "no High/Medium reaches a PR", "doc numbers are
-   generated" — and a **definition of the Pre-Push Review Chain itself**
-   (the ordered gates a change passes before push), so the term every
-   item uses is defined IN the repo, not in anyone's memory. Codex and
-   any non-Claude session discovers the rules here.
+1. `AGENTS.md` (maintainer-local, untracked, agent-neutral, first —
+   per the owner decision above): the bars table, the scoreboard
+   workflow, "no High/Medium reaches a PR", "doc numbers are
+   generated" — and a **definition of the Pre-Push Review Chain
+   itself** (the ordered gates a change passes before push), so the
+   term every item uses is defined in ONE file, not in anyone's memory.
+   Codex and any non-Claude session on this machine discovers the
+   rules here; the committed repo carries the bars via
+   `TODO.foundation/00-overview.md`.
 2. `.claude/skills/sirena-gates/`: how to run every gate locally
    (corpus, coverage, conformance, lint, parity), read/update the
    scoreboard, and what a PR must show before push.
@@ -36,14 +39,19 @@ only.
 
 ## Done when
 
-A fresh session (Claude or not), given only the repo, answers a FIXED
-question set committed with this item (e.g.: what are the corpus and
-coverage bars? what must a PR show before push? how do you update the
-scoreboard? which numbers may be hand-written in docs?) — answers
-checked against the bars table, not vibes. Skills reviewed through the
-same chain as code.
+A fresh session (Claude or not) ON THIS MACHINE, given only this
+machine's checkout (tracked files + the untracked tooling that lives
+here), scores 8/8 on the FIXED
+question set at `.claude/skills/sirena-gates/QUIZ.md` (maintainer-local,
+like the rest of the tooling) — e.g.: what are the corpus and coverage
+bars? what must a PR show before push? how do you update the
+scoreboard? which numbers may be hand-written in docs? — answers graded
+against the AGENTS.md bars table, not vibes. Skills reviewed through
+the same chain as code. [Met 2026-08-10: quiz scored 8/8 from
+AGENTS.md alone; machinery FINALIZED after live rehearsal.]
 
 ## Files
 
-`AGENTS.md`, `.claude/skills/sirena-{gates,corpus}/SKILL.md`,
-`.claude/agents/*.md` (as needed), `CLAUDE.md`.
+`AGENTS.md`, `.claude/skills/sirena-{gates,corpus,oracle}/SKILL.md`,
+`.claude/agents/*.md` (all maintainer-local, untracked); `CLAUDE.md`
+(committed) points at them as optional maintainer tooling.

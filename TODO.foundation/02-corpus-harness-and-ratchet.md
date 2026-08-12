@@ -1,10 +1,14 @@
 # 02 — Corpus oracle, provenance, and the scoreboard
 
-Can start: now (oracle + scoreboard don't need 01). Blocks: 03, 05, 06, 07, 14.
+Can start: now (oracle + scoreboard design don't need 01). Blocks: 03,
+05, 06, 07, 14. Caveat: the in-bundle gates ("`bundle exec rake` runs
+the corpus") need a loading gem — that's item 01; until it lands, the
+uncommitted 0.7-pin workaround applies.
 
 ## Problem
 
-Nothing runs the 1,997-case corpus, so 30.2% is invisible and
+Nothing in default rake or CI runs and ratchets the 1,997-case corpus
+(`scripts/corpus_sweep.rb` is manual-only), so 30.7% (614/1997) is
 unprotected. The corpus also has structural debt: duplicate type dirs
 (class/class_diagram, er/er_diagram, state/state_diagram, git/gitgraph),
 an 85-case `unknown/` dir, ~330 `.error`-marked cases inflating
@@ -38,14 +42,20 @@ unique reference SVGs duplicated into `correct/` subdirs (not 1,694).
 ## Done when
 
 - `bundle exec rake` runs the corpus against the scoreboard.
-- Scoreboard guard proves both directions (regression + stale) in CI.
+- Scoreboard guard: a guard spec seeds one regression and one
+  unrecorded improvement; both seeded runs exit non-zero.
 - Zero cases without an oracle verdict and provenance — including
   `unknown/` (fixing or reclassifying those cases is item 05's job;
   this item only guarantees every one carries a verdict).
-- Corpus refresh is reproducible by anyone from a mermaid-js checkout.
+- Corpus refresh reproducible: the extraction script re-run against a
+  mermaid-js checkout at the pinned SHA regenerates `spec/mermaid/`
+  with zero git diff.
+- The post-scoreboard sweep confirms the pre-scoreboard rehearsal
+  deltas (radar 13→14, treemap 0→9) or records why they moved.
 
 ## Files
 
-`spec/mermaid_corpus_spec.rb`, `scoreboard/`, `spec/mermaid/README.md`,
+`spec/mermaid_corpus_spec.rb` (new), `scoreboard/` (new),
+`spec/mermaid/README.md` (new),
 `scripts/extract_mermaid_tests.rb`, `lib/tasks/generate_mermaid_fixtures.rake`,
 CI workflow.

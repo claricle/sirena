@@ -1,11 +1,17 @@
 # 14 — elkrb integration + layout parity
 
-Can start: after 02 (comparator needs references). Blocks: 12.
+Can start: after 02 (comparator needs references); the CI comparator
+lane also needs 01's migration (until then the uncommitted 0.7-pin
+interim applies). Blocks: 12.
 
 ## Facts
 
 `Engine#layout_graph` never calls elkrb — fallback grid with a TODO
-(`lib/sirena/engine.rb:~181`) — while all docs claim ELK layout.
+(`lib/sirena/engine.rb:~181`) — while README.adoc, ARCHITECTURE.md,
+and parts of `docs/` still claim ELK layout (CLAUDE.md is corrected).
+elkrb 1.0.2 resolves and requires cleanly under lutaml-model 0.8
+(proven 2026-08-11), but its FUNCTIONAL behavior under 0.8 is
+untested — step 1 must prove it before anything builds on it.
 References for parity: the deduped `spec/fixtures_mermaid/` set
 (~847 unique SVGs; item 02 dedupes). Transforms emit heterogeneous
 shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
@@ -40,7 +46,9 @@ shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
   stated as the completion bar, not just a mechanism).
 - Every type's geometry at 8%/15% OR at its user-approved renegotiated
   per-type threshold — no third state.
-- Comparator in CI (full lane); zero stale layout claims anywhere.
+- Comparator in CI (full lane); `grep -ri elk README* ARCHITECTURE.md
+  CLAUDE.md docs/` cross-checked row-by-row against item 11's
+  inventory — every hit's row resolved (verified/corrected/removed).
 
 ## Files
 

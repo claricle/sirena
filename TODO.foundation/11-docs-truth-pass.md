@@ -22,9 +22,12 @@ absent pages).
 1. Claim inventory: one row per factual assertion across README,
    ARCHITECTURE.md, CLAUDE.md, docs/ — source, evidence, disposition.
    Every row ends verified / corrected / removed. No unresolved rows.
-2. **Numbers are generated**: compatibility tables and pass rates render
-   from the scoreboard (rake task), so corpus progress can't restale
-   the docs. Hand-written numbers are banned in support claims.
+   The inventory artifact is `docs/plans/docs-claims-inventory.md`
+   (maintainer-local, never committed; extends `docs-claims-audit.md`).
+2. **Numbers are generated** (this step waits for item 02's
+   scoreboard): compatibility tables and pass rates render from the
+   scoreboard (rake task), so corpus progress can't restale the docs.
+   Hand-written numbers are banned in support claims.
 3. Executable snippets: every README/docs code example runs in a
    doc-snippet spec.
 4. Promised-features disposition: each category goes to the user —

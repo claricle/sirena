@@ -23,14 +23,14 @@ Two jobs in one thin slice:
 - Anything outside the enumerated subset fails with a CLEAR "not yet
   supported" error — never a partial render.
 - Reference comparison: side-by-side with pinned PlantUML on a case set
-  committed under `spec/plantuml_spike/` (≥ 15 cases covering every
+  committed under `spec/plantuml_spike/` (15–20 cases covering every
   enumerated construct — coverage of the list is the selection rule,
   not hand-picking); structural invariants must hold on all.
 
 ## Explicitly NOT here
 
 Sequence diagrams, full grammar coverage, corpus extraction, CI
-provisioning — all item 12. The spike's corpus IS its 10–20 cases.
+provisioning — all item 12. The spike's corpus IS its 15–20 cases.
 
 ## Done when
 
