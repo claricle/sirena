@@ -26,7 +26,7 @@ module Sirena
           render_cell(doc, cell, layout[:class_defs])
         end
 
-        doc.to_xml
+        doc
       end
 
       private

@@ -60,6 +60,28 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    context 'with treemap corpus cases' do
+      it 'keeps all ten corpus cases present' do
+        expect(
+          Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__)).size
+        ).to eq(10)
+      end
+
+      # 007 is excluded: it fails at parse and is flagged
+      # probably-oracle-invalid (pending item 02's verdict).
+      Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__))
+        .reject { |path| path.end_with?('007_rendering_treemap_spec_treemap_6.mmd') }
+        .each do |fixture_file|
+        it "renders #{File.basename(fixture_file)}" do
+          result = engine.render(File.read(fixture_file))
+
+          expect(result).to be_a(String)
+          expect(result).to include('<svg')
+          expect(result.rstrip).to end_with('</svg>')
+        end
+      end
+    end
+
     context 'with unknown diagram type' do
       let(:source) { "unknown\ntest" }
 

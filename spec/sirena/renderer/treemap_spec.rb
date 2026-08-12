@@ -18,8 +18,11 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        document = renderer.render(layout)
 
+        expect(document).to be_a(Sirena::Svg::Document)
+
+        svg = document.to_xml
         expect(svg).to include('<svg')
         expect(svg).to include('</svg>')
         expect(svg).to include('Root')
@@ -32,7 +35,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('My Treemap')
       end
@@ -52,7 +55,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root2)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('Section 1')
         expect(svg).to include('Section 2')
@@ -70,7 +73,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('Level 1')
         expect(svg).to include('Level 2')
@@ -89,7 +92,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         # Should have colored rectangles
         expect(svg).to include('<rect')
@@ -107,7 +110,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         # Should use the custom fill color
         expect(svg).to include('#f96')
@@ -122,7 +125,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('123')
       end
@@ -134,7 +137,7 @@ RSpec.describe Sirena::Renderer::Treemap do
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('123.7')
       end
@@ -143,7 +146,7 @@ RSpec.describe Sirena::Renderer::Treemap do
     context 'with empty diagram' do
       it 'renders empty treemap gracefully' do
         layout = transform.to_graph(diagram)
-        svg = renderer.render(layout)
+        svg = renderer.render(layout).to_xml
 
         expect(svg).to include('<svg')
         expect(svg).to include('</svg>')
