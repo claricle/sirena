@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Renders every spec/mermaid corpus case through Sirena::Engine and
-# prints per-type pass rates. Interim measurement tool referenced by
-# AGENTS.md; TODO.foundation/02 replaces it with the scoreboard spec.
+# prints per-type pass rates. Interim measurement tool; the scoreboard
+# spec in TODO.foundation/02 replaces it.
 #
 # Usage: ruby scripts/corpus_sweep.rb [--failing] [type ...]
 #   --failing  also list each non-passing case path with its status
@@ -65,7 +65,8 @@ def report(sweep_results, list_failing:)
                 100.0 * passed / results.size)
   end
   all = sweep_results.values.flat_map(&:values)
-  puts format('TOTAL: %d/%d = %.1f%%', all.count(:pass), all.size, 100.0 * all.count(:pass) / all.size)
+  total_passed = all.count(:pass)
+  puts format('TOTAL: %d/%d = %.1f%%', total_passed, all.size, 100.0 * total_passed / all.size)
   return unless list_failing
 
   sweep_results.sort.each do |_type, results|
@@ -74,5 +75,5 @@ def report(sweep_results, list_failing:)
   end
 end
 
-list_failing = ARGV.delete('--failing')
-report(sweep(corpus_types(ARGV)), list_failing: !list_failing.nil?)
+list_failing = !ARGV.delete('--failing').nil?
+report(sweep(corpus_types(ARGV)), list_failing: list_failing)

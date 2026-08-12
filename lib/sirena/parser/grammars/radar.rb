@@ -43,15 +43,17 @@ module Sirena
             eol
         end
 
-        # Curve/dataset values
-        # Supports: {1,2,3} or { A: 1, B: 2, C: 3 } — the colon is
-        # optional (mermaid accepts "A 1") and the block may span lines
+        # Curve/dataset values: {1,2,3} or { A: 1, B: 2, C: 3 }
         rule(:value_number) { match["0-9"].repeat(1).as(:value) }
 
+        # whitespace? rather than space? so a value block can span
+        # lines, which mermaid allows.
         rule(:positional_value) do
           whitespace? >> value_number >> whitespace?
         end
 
+        # The colon is optional — mermaid accepts "A 1" as well as
+        # "A: 1".
         rule(:named_value) do
           whitespace? >>
             identifier.as(:axis) >>

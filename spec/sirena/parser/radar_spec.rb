@@ -205,7 +205,7 @@ RSpec.describe Sirena::Parser::RadarParser do
       end
     end
 
-    context "with curve value-block constructs from corpus case 003" do
+    context "with the curve value-block constructs corpus case 003 uses" do
       it "parses a curve with a space before the value block" do
         source = <<~MERMAID
           radar-beta
@@ -259,7 +259,12 @@ RSpec.describe Sirena::Parser::RadarParser do
 
         diagram = parser.parse(source)
         expect(diagram.axes.map(&:id)).to eq(["A", "B", "C", "D", "E"])
-        expect(diagram.curves.first.value_for("E")).to eq(5.0)
+        expect(diagram.axes.map(&:label))
+          .to eq(["A", "B", "C", "Dee", "Ee"])
+        # Every position, so a mis-mapping across the two statements
+        # cannot hide behind a single spot check.
+        expect(diagram.curves.first.values)
+          .to eq("A" => 1.0, "B" => 2.0, "C" => 3.0, "D" => 4.0, "E" => 5.0)
       end
 
       it "parses the full corpus case" do
