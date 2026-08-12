@@ -29,7 +29,12 @@ sequence then proves temporal semantics.)
 
 1. PlantUML corpus: extract from plantuml's own test resources via a
    `scripts/extract_plantuml_tests.rb` (new) modeled on the mermaid
-   extractor; stable case IDs from upstream path + test identity + source
+   extractor. Issue #2 asks for a corpus of REAL-WORLD files, and
+   upstream test fixtures are not automatically that — record a
+   selection rule and identify which cases carry real-world provenance,
+   or state plainly that the cohort is upstream fixtures and get the
+   owner's agreement that it satisfies the criterion. Do not let "100%
+   of oracle-valid" quietly redefine what was asked for; stable case IDs from upstream path + test identity + source
    hash (item 02's rule, not ordinals); pin upstream SHA + PlantUML
    version + Java version + Graphviz version + checksums; scoreboard
    rows from day one (0% honest start).
@@ -90,6 +95,10 @@ sequence then proves temporal semantics.)
   hashes.
 - The pinned PlantUML/Java/Graphviz toolchain runs in 19a's full lane,
   and a comparison spec FAILS (not skips) when a binary is missing.
+- The full lane is re-measured cold and warm against the 30-minute
+  budget AFTER this item's jobs land. This item adds Java, Graphviz and
+  a comparison pass; if 19b already closed on an earlier measurement,
+  that number is stale and this item owns refreshing it.
 - The phase-end release is cut, and `TODO.notations` is merged.
 
 ## Files

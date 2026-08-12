@@ -10,7 +10,7 @@ itself) all need to touch CI and only one of them can own the files.
   the topology. 19a adds **no gate of its own** — it wires the suite
   that already exists and reserves empty slots for everything else.
 - **19b — consolidation.** After the owned gates exist (01, 02, 03a, 04,
-  08, 14, 15 — and 12's, if its lane work has started), collapses
+  08, 12, 14, 15), collapses
   anything still living outside a lane, enforces "no gate outside a
   lane", and measures the budgets.
 
@@ -99,7 +99,16 @@ conformance (04), and the fresh-resolution install (01).
 
    Each lane gets one stable aggregator job with a fixed name (that is
    what branch protection references) and `timeout-minutes` on every
-   job. The aggregator names never change afterwards — that is the
+   job.
+
+   **The aggregator must not false-green.** GitHub skips a dependent job
+   when a prerequisite fails, and a SKIPPED required check does not
+   reliably block a merge — so the naive `needs: [...]` aggregator goes
+   green-by-absence exactly when a gate has failed. It therefore runs
+   with `if: always()` and explicitly asserts every child result is
+   `success`, treating `failure`, `cancelled` and `skipped` alike as
+   red. Prove it with two seeded runs: one child failing and one child
+   skipped, both turning the aggregator red. The aggregator names never change afterwards — that is the
    whole point of naming them in 19a. Nightly re-runs the full lane on
    main as belt-and-braces, not as the primary gate.
 4. **Baseline fetching, stated per event** — the scoreboard guard is
@@ -159,6 +168,12 @@ conformance (04), and the fresh-resolution install (01).
   detached and the tracked YAML declared authoritative.
 - The owner has applied branch protection to the two aggregator names,
   and that is recorded.
+- Seeded failed-child and skipped-child runs both turn their aggregator
+  red — a required check that can go green while a gate failed is worse
+  than no check at all.
+- The pin-bump procedure is written down, and the audit of what
+  `generic-rake` inherits is recorded with our gates made explicit.
+- Nightly full-lane runs on main are wired.
 - The extension contract is written down, with one worked example.
 
 **19b**

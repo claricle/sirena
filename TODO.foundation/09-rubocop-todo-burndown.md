@@ -29,10 +29,20 @@ START of this item**, not discovered at the end.
 3. Suppressed-offense total is a scoreboard column. **Name the
    command**: add a rake task that runs rubocop with `.rubocop_todo.yml`
    excluded and emits a machine-readable total (JSON formatter, not
-   scraped text), so two runs on two machines agree. May only decrease,
+   scraped text), so two runs on two machines agree.
+
+   It must also count suppressions in `.rubocop.yml` itself. Deleting
+   the todo file means nothing if the same debt reappears as an
+   `Exclude:` or `Enabled: false` in the main config, where ordinary
+   RuboCop reports zero. The counter reads BOTH files, subtracts only
+   the exact user-signed exception allowlist, and anything outside that
+   allowlist counts as debt. May only decrease,
    reaches the user-signed exception set, then the todo file is deleted.
-4. Seed one failure proving the column is enforced: reintroduce one
-   suppressed offense and confirm the guard exits non-zero.
+4. Seed two failures proving the column is enforced: reintroduce a
+   suppressed offense via the todo file, and again via a fresh
+   `Exclude:` in `.rubocop.yml`. Both must exit non-zero. The
+   `# approved:` comment is documentation, not a guard — the allowlist
+   is what the counter reads.
 
 ## Done when
 
