@@ -126,9 +126,17 @@ halves after the bootstrap and the new question set land.]
 `.claude/agents/*.md` — all maintainer-local, untracked, and all listed
 in `.git/info/exclude` so no `git add` can sweep them in.
 
-Plus the two dispatch frontends the bootstrap hook has to change:
-`~/.claude/pipeline/PIPELINE.md` and the `dispatch` skill. This item
-does not own either, so landing that change is part of the work.
+Plus every dispatch frontend that can create a worktree and start a
+builder — not just the obvious one. `PIPELINE.md` and the `dispatch`
+skill are two; `resolve-comments` and `pr-sweep` also spin up fresh
+worktrees and dispatch fixers, so patching `/dispatch` alone lets item
+13 pass its own acceptance test while those builders start unequipped.
+
+Prefer a **universal start-time guard** over per-frontend patches: one
+check every agent runs that aborts when the tooling is absent. Then a
+frontend nobody remembered still fails loudly instead of silently
+running an agent that has read none of the bars. This item owns none of
+those files, so landing the change is part of the work.
 
 Nothing here is committed to the repo; `TODO.foundation/00-overview.md`
 is what it carries.

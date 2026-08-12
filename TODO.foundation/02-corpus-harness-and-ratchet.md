@@ -69,15 +69,23 @@ the rename, under this pin.
 1. **Oracle**: a case is *valid* iff the 02a-pinned toolchain renders it
    — exit 0, parseable SVG, no timeout.
 
-   "Non-error SVG" is the wrong predicate, and it silently deletes a
-   whole registered type. Sirena registers `:error` (`lib/sirena.rb:324`)
-   and mermaid's `error` corpus cases render error-LOOKING diagrams on
-   purpose — that is their correct output, and 11.12.0 produces
-   references for them. The oracle must separate "mermaid failed and
-   emitted an error SVG" from "mermaid successfully rendered an error
-   diagram", by the input's declared type rather than by the output's
-   appearance. Getting this wrong drops legitimate cases out of the
-   denominator and leaves item 14 with no honest cohort for that type. Verdicts recorded per
+   Neither "non-error SVG" nor "ignore error output" works as the
+   predicate. Error detection is REQUIRED but must be **declared-type
+   aware**:
+   - Sirena registers `:error` (`lib/sirena.rb:324`), and mermaid's
+     `error` cases render error-LOOKING diagrams on purpose — rejecting
+     those deletes a whole registered type's cohort.
+   - But mmdc exits **0** while emitting an error page:
+     `radar/020_parsertest_radar_test_19.mmd` declares `radar-beta`,
+     exits 0, and returns `<svg aria-roledescription="error">` reading
+     "Syntax error in text". Ignoring the marker counts that failure as
+     valid and inflates the denominator.
+
+   So: detect the error marker, and treat it as correct output ONLY when
+   the declared type is `error`; for any other declared type it is a
+   mermaid rejection. The marker is confirmed empirically against the
+   pinned toolchain, with owner sign-off. The `sirena-oracle` skill
+   carries the same table — the two must not drift. Verdicts recorded per
    case with the full 02a provenance; refreshed only via a reviewed
    toolchain bump. Oracle-invalid cases stay in the corpus but leave
    every target.
