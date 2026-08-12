@@ -23,9 +23,11 @@ Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10, 12, 17.
    suite + corpus under 0.8 and fix every difference.
 3. Gemspec: lutaml-model `~> 0.8`; set the REAL tested Ruby floor
    (≥ 3.1, driven by svg_conform) — one number, stated everywhere.
-4. Output must not change: run the 604-case pass set before/after; any
-   differing SVG goes in the PR description with its reason
-   (execution-diff gate; one-time PR artifact, not a permanent ledger).
+4. Output must not change: run the CURRENT corpus pass set before/after
+   (614 at last count — use the day's measured set, never this
+   number); any differing SVG goes in the PR description with its
+   reason (execution-diff gate; one-time PR artifact, not a permanent
+   ledger).
 5. Fresh-resolution CI job: clean install, no lockfile, full suite —
    catches the next upstream break on push instead of at a user's
    machine.
