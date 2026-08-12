@@ -51,6 +51,13 @@ provisioning — all item 12. The spike's corpus IS its 15–20 cases.
   the real OCP proof).
 - A demo-able README example, executed by a spec THIS item ships (item
   11's snippet framework absorbs it later — no dependency on 11).
+- Every construct in the enumerated subset is exercised by at least one
+  of the 15–20 cases, and that mapping is written down.
+- An input using a construct OUTSIDE the subset produces the "not yet
+  supported" error naming the construct, never a partial render.
+- Every committed reference carries its PlantUML, Java and Graphviz
+  versions plus a content hash.
+- Structural invariants hold on all cases under item 14's comparator.
 
 ## Files
 

@@ -39,3 +39,8 @@ START of this item**, not discovered at the end.
 Todo deleted; each surviving exclusion (if any) in `.rubocop.yml`
 carries a `# approved: <user> <date>` comment naming its single file;
 scoreboard column at its floor.
+
+Also required, because they are what make the ratchet real: the cop
+inventory from step 1 is checked in, the JSON-emitting rake task from
+step 3 exists and two runs on two machines agree, and the seeded
+suppressed offense from step 4 makes the guard exit non-zero.

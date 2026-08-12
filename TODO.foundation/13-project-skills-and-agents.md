@@ -63,27 +63,41 @@ not a plan deliverable.
 
 ## Done when
 
-A fresh session (Claude or not), started **inside a newly created
-pipeline worktree that has been bootstrapped**, scores 8/8 on the FIXED
-question set at `.claude/skills/sirena-gates/QUIZ.md` (maintainer-local,
-like the rest of the tooling) — e.g.: what are the corpus and coverage
-bars? what must a PR show before push? how do you update the
-scoreboard? which numbers may be hand-written in docs? — answers graded
-against the AGENTS.md bars table, not vibes.
+**The bootstrap is automatic, proven by dispatch and not by hand.**
+Run the canonical dispatch flow with NO manual pre-step and confirm
+`AGENTS.md`, `.claude/` and `CLAUDE.md` are present in the new worktree
+before the agent starts. Then bypass the hook deliberately and confirm
+dispatch FAILS rather than quietly running an unequipped agent. A Done
+criterion that begins "in a worktree that has been bootstrapped" tests
+nothing — copying files by hand passes it while the pipeline still does
+only `git worktree add`.
 
-And the negative control: a SECOND, context-isolated fresh session given
-the identical prompt in an **un-bootstrapped** worktree scores **≤ 3/8**.
-It must be a separate session — reusing the first one proves nothing,
-since it has already read `AGENTS.md`. Grade both against the same key.
-If the un-bootstrapped run also passes, the bootstrap isn't load-bearing
-and the quiz is measuring the model's priors, not the tooling.
+**The quiz measures the tooling, not the repo.** The old question set
+asked what the bars are — and `00-overview.md` is tracked, so it answers
+most of them; an un-bootstrapped session scores well without any
+tooling, which makes the negative control unsatisfiable. Replace those
+questions with facts that exist ONLY in the local tooling:
+
+- the exact ordered gates of the Pre-Push Review Chain;
+- the command each gate runs, and the lutaml-model pin workaround;
+- how to update the scoreboard, by command;
+- which agent brief owns a given track, and what it must read first.
+
+Bootstrapped session scores 8/8. A SECOND, context-isolated session in
+an un-bootstrapped worktree scores **≤ 3/8** on that same set. It must
+be a separate session; reusing the first proves nothing once it has read
+`AGENTS.md`.
+
+**The skills are checked structurally too:** every command named in a
+skill runs, and every agent brief reads its owning item file and the
+gates skill. Audits go stale — this is a check, not a one-time sweep.
 
 Skills reviewed through the same chain as code.
 
-[Partially met 2026-08-10: quiz scored 8/8 from AGENTS.md alone in the
-MAIN checkout. That result does not transfer — it was never run from a
-worktree, where the tooling is absent. Re-run after the bootstrap
-lands.]
+[The 2026-08-10 "8/8 from AGENTS.md alone in the main checkout" result
+does NOT carry over. It used the old content quiz, which the tracked
+overview largely answers, and it never ran from a worktree. Re-run both
+halves after the bootstrap and the new question set land.]
 
 ## Files
 

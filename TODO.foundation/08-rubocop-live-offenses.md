@@ -33,8 +33,14 @@ CI today is inherited and unaudited — step 1 settles it.
 
 ## Done when
 
-`bundle exec rubocop` exits 0; CI enforces it; the lint toolchain is
-pinned; the corpus scoreboard is unchanged.
+`bundle exec rubocop` exits 0; it runs in 19a's reserved fast-lane slot;
+the lint toolchain is pinned; `scripts/rename_to_sirena.rb` and its
+three todo exclusions are gone; `.rubocop.yml`'s remote `inherit_from`
+points at an immutable commit URL.
+
+The scoreboard's per-case corpus rows are unchanged. Its lint-debt
+column is NOT — it moves to the measured value, by exactly the amount
+the deleted script accounted for.
 
 On the lint-debt number: item 09 owns the machine-readable counter and
 starts after this item, and 02b may not have shipped the scoreboard yet.

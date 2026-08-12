@@ -3,26 +3,40 @@
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
 
-- **19a — lane skeleton.** Lands FIRST, in the opening wave, and lands
-  **GREEN**. It creates the fast/full lanes over the jobs that already
-  exist today, pins every external reference, names the stable
-  aggregator jobs, and documents the extension contract: how another
-  item adds a gate to a lane without rewriting the topology. 19a adds
-  no new gate of its own. Everything else in wave 1 ships local
-  commands or rake tasks plus one lane entry through that contract.
+- **19a — lane skeleton.** Creates the fast/full lanes, pins every
+  external reference, names the stable aggregator jobs, hands the owner
+  the branch-protection settings to apply, and documents the extension
+  contract: how another item adds a gate to a lane without rewriting
+  the topology. 19a adds **no gate of its own** — it wires the suite
+  that already exists and reserves empty slots for everything else.
 - **19b — consolidation.** After the owned gates exist (01, 02, 03a, 04,
   08, 14, 15 — and 12's, if its lane work has started), collapses
   anything still living outside a lane, enforces "no gate outside a
   lane", and measures the budgets.
 
-This split is what makes the first PR possible at all. The gates the
-full lane eventually carries — fresh-resolution install (01), the
-pinned oracle toolchain (02a), the corpus sweep and scoreboard guard
-(02b) — each arrive with their own item. If 19a tried to carry them on
-day one it would be red on arrival and would depend on items that
-themselves depend on 19a's lane.
+**19a lands AFTER item 01's migration, not before it.** An earlier
+revision had 19a landing first and green; that is impossible. The suite
+does not run at all today (`bundle exec rspec` → "0 examples, 1 error
+occurred outside of examples"), so any lane containing it is red until
+01 migrates `Svg::Document`. And 01 cannot add its own CI job before a
+lane exists to add it to.
 
-Can start: now. Owns what no other item did: CI as a system.
+The order that resolves it:
+
+1. **01's migration** — `document.rb` + gemspec only, no CI change. The
+   suite goes green. This is the bootstrap PR; item 03's exemption
+   covers its changed-line gap.
+2. **03a instrumentation** — coverage machinery, now that specs run.
+3. **19a** — lanes over a suite that passes, so it genuinely lands
+   green.
+4. **Everything else**, including 01's own fresh-resolution job and
+   Ruby matrix, added through the extension contract. Item 01 therefore
+   STARTS first and CLOSES after 19a.
+
+Reserved-but-empty slots in 19a: lint (item 08 fills it — there are 109
+live offenses today, so wiring lint now would land 19a red), the
+scoreboard guard (02b), the corpus sweep (02b), parity (14),
+conformance (04), and the fresh-resolution install (01).
 
 ## Problem
 
@@ -66,16 +80,22 @@ Can start: now. Owns what no other item did: CI as a system.
    nothing gate-shaped runs only after merge (a regression outside a
    "slice" must never land first and get caught on main).
 
-   19a wires the lanes over what exists TODAY (the rake suite, lint,
-   docs build, link check) and reserves the shape for what's coming:
-   - Fast lane: unit suite, lint — later joined by the snippet spec
-     (16). Budget < 10 min.
-   - Full lane: docs build, internal link check — later joined by the
-     whole corpus (02b), parity (14), conformance (04), and the
-     fresh-resolution install (01). Budget < 30 min, parallelized jobs;
-     a required PR check, merge waits for it.
-   - The scoreboard guard (02b) joins BOTH lanes — it only reads files,
-     so it is cheap enough to run twice and too important to run once.
+   19a wires ONLY what is green at that moment — the rake suite (green
+   once 01 has landed) and the docs build and link check — and reserves
+   named, empty slots for the rest:
+   - Fast lane: unit suite. Reserved: lint (08), snippet spec (16).
+     Budget < 10 min.
+   - Full lane: docs build, internal link check. Reserved: corpus
+     (02b), parity (14), conformance (04), fresh-resolution install
+     (01). Budget < 30 min, parallelized jobs; a required PR check,
+     merge waits for it.
+   - The scoreboard guard (02b) is reserved in BOTH lanes — it only
+     reads files, so it is cheap enough to run twice and too important
+     to run once.
+
+   Lint is explicitly NOT wired here. There are 109 live offenses, so
+   turning it on in 19a would make 19a's own PR red. Item 08 clears them
+   and fills the slot.
 
    Each lane gets one stable aggregator job with a fixed name (that is
    what branch protection references) and `timeout-minutes` on every
@@ -106,30 +126,43 @@ Can start: now. Owns what no other item did: CI as a system.
    nothing.
 6. 19a reserves the scoreboard guard's slot in both lanes and lands the
    baseline-fetching behavior above; 02b fills the slot when it ships.
+7. **Branch protection, in 19a rather than 19b.** Workflow YAML cannot
+   make a check required — that is a repository setting. The moment the
+   aggregator names exist they are stable forever, so hand the owner the
+   exact names to mark required, and record that they were applied.
+   Deferring this to 19b would leave "both lanes required before merge"
+   as an aspiration for the whole middle of the plan.
 
 ## Do — 19b
 
-7. Consolidate: every gate lives in a lane, nothing runs loose.
-8. Record measured cold-cache AND warm-cache wall times for both lanes
+8. Consolidate: every gate lives in a lane, nothing runs loose.
+9. Record measured cold-cache AND warm-cache wall times for both lanes
    against the 10/30-minute budgets. A budget nobody measured is a wish.
-9. Branch protection settings cannot be proven by workflow YAML. Hand
-    the required-checks configuration to the user as an explicit,
-    owner-visible step with the exact aggregator job names to set.
+10. Re-verify that branch protection still names the aggregators, in
+    case the topology moved during consolidation.
 
 ## Done when
 
 **19a**
 
 - **Both lanes are GREEN on the PR that introduces them.** If a lane is
-  red on arrival, the split failed and a gate leaked in too early.
+  red on arrival, a gate leaked in too early — check that lint, corpus
+  and the fresh-resolution install are still reserved rather than wired.
 - Zero non-SHA external `uses:` anywhere; the guard rejects a seeded one.
 - Both lanes exist with stable aggregator names and `timeout-minutes`.
-- Baseline fetching works for PR, push, fork and merge queue, proven by
-  seeded repository-level tests.
+- Baseline fetching works for pull_request, push, fork PRs, merge queue
+  AND workflow_dispatch/nightly — every event named in step 4 — proven
+  by seeded repository-level tests covering regression, deletion and
+  stale-improvement, not just a unit test of the guard function.
+- The Cimas question is settled: either the generator source is tracked
+  and regeneration produces zero diff, or `release.yml` is explicitly
+  detached and the tracked YAML declared authoritative.
+- The owner has applied branch protection to the two aggregator names,
+  and that is recorded.
 - The extension contract is written down, with one worked example.
 
 **19b**
 
 - No gate outside a lane.
 - Cold and warm timings recorded, both lanes within budget.
-- The user has set branch protection to the named aggregator checks.
+- Branch protection still names the two aggregators after consolidation.

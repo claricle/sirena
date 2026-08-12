@@ -1,8 +1,25 @@
 # 01 — lutaml-model 0.8 migration
 
-Critical path. Can start: now. Blocks: 02's in-bundle gates, 04, 10,
-12, 17, 14's integration work, and 19a's full lane going green. All
-in-repo work — no cross-repo release is required (re-verified
+Critical path, and the FIRST thing that lands — nothing else can be
+green before it. `bundle exec rspec` today reports "0 examples, 1 error
+occurred outside of examples", so the suite, coverage instrumentation
+and every CI lane are all blocked on this item's migration.
+
+Can start: now. Blocks: 02's in-bundle gates, 03a, 04, 10, 12, 17, 14's
+integration work, and 19a's lanes.
+
+**Starts first, closes last of the wave.** The migration itself (step 1,
+`document.rb` + gemspec) touches no CI and lands immediately. The CI
+criteria below — Ruby matrix, fresh-resolution job — need a lane, which
+is 19a, which in turn needs the suite this item repairs. So the running
+order is: 01's migration → 03a instrumentation → 19a lanes → 01's lane
+entry → this item closes.
+
+Item 03 records the one consequence: 01's migration PR predates the
+changed-line gate and is explicitly exempt from it, stating its
+coverage in the PR body instead.
+
+All in-repo work — no cross-repo release is required (re-verified
 2026-08-11; see below).
 
 ## Problem
@@ -77,6 +94,13 @@ in-repo work — no cross-repo release is required (re-verified
   post-migration — that's what proves the conflict dead).
 - 0 failures; the 1 pending xit is owned by item 07 (sub-track 07f).
 - Ruby floor tested in CI at the declared minimum and latest stable.
+- `sirena.gemspec` declares `lutaml-model ~> 0.8.0` exactly — not
+  `~> 0.8`, checked by reading the line.
+- The before/after corpus run over the current pass set shows zero
+  differing SVGs, or each difference is traced to the prefix migration
+  in the PR body.
+- The fresh-resolution job exists in 19a's full lane and runs with no
+  lockfile.
 - Every file in the list below states the same Ruby floor, checked by
   reading each one — a grep can find the string `2.7` but cannot tell a
   stale floor claim from a changelog mention.

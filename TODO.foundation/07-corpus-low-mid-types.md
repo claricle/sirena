@@ -40,6 +40,10 @@ the family likely affects other types.
 
 ## Done when
 
+Every sub-track records its singleton-capture grep audit result,
+including an explicit "zero hits" where that is the answer — an audit
+with no artifact is indistinguishable from one nobody ran.
+
 Every canonical corpus type that has oracle-valid cases sits at 100% on
 the scoreboard — quantified over the CORPUS, not over registrations, so
 an unregistered type is a failure, not an escape. Zero pending examples

@@ -77,3 +77,7 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 - lychee runs against the real config, and two seeded failures prove it
   bites: one broken relative link, one broken fragment.
 - Gemfile pinned, lockfile committed and CI-complete.
+- lychee no longer accepts 403/429 silently — a seeded link of each
+  kind fails the run.
+- The owner has made the docs build a required status check, and that
+  is recorded.

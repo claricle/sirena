@@ -80,8 +80,14 @@ sequence then proves temporal semantics.)
   scoreboard rows, and every non-pass row carries an oracle rejection.
 - Both types meet all five issue-#2 criteria listed in step 5, each
   demonstrated rather than asserted.
-- The PlantUML oracle's seeded invalid case and seeded infrastructure
-  failure are classified correctly.
+- The PlantUML oracle passes a conformance suite, not two spot checks:
+  seeded invalid input, seeded infrastructure failure (missing Java,
+  missing Graphviz), a timeout that is killed rather than hung, an
+  error-carrying SVG recognised as invalid rather than valid, a failing
+  canary halting a refresh, a partial run leaving prior verdicts
+  untouched, and stable IDs surviving an upstream insertion.
+- Every verdict carries its PlantUML, Java, Graphviz and content
+  hashes.
 - The pinned PlantUML/Java/Graphviz toolchain runs in 19a's full lane,
   and a comparison spec FAILS (not skips) when a binary is missing.
 - The phase-end release is cut, and `TODO.notations` is merged.

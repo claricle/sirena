@@ -11,7 +11,7 @@ Blocks: 12; with item 04, blocks 16's completion.
 ## Facts
 
 `Engine#layout_graph` never calls elkrb — fallback grid with a TODO
-(`lib/sirena/engine.rb:178-181`) — while README.adoc, ARCHITECTURE.md,
+(`lib/sirena/engine.rb:178-183`, the `apply_fallback_layout` call) — while README.adoc, ARCHITECTURE.md,
 and parts of `docs/` still claim ELK layout.
 elkrb 1.0.2 resolves and requires cleanly under lutaml-model 0.8
 (proven 2026-08-11), but its FUNCTIONAL behavior under 0.8 is
@@ -52,9 +52,11 @@ IN THIS FILE and not in an untracked options doc:
   children inside parent bounds. Ancestor containment is ALLOWED; peer
   collision is a failure.
 - **Non-box types.** `Transform::PieTransform` (`pie.rb:17`) emits no
-  node boxes at all. Each such type gets either an analogous metric
-  (e.g. sector angle and radius deviation) or an explicit,
-  user-approved N/A — never a silently vacuous pass.
+  node boxes at all. Every such type gets an analogous metric — sector
+  angle and radius deviation for pie, and the equivalent for each other
+  non-box type — defined here before the comparator is written. "No
+  applicable metric" is not an outcome; a type with no metric is a
+  vacuous pass, which is the thing this item exists to prevent.
 - **Failure evidence format** — what a failing case records so the next
   session can act on it.
 
@@ -67,12 +69,15 @@ became meaningless:
   inputs and only ~847 references. mmdc renders cases that have no
   reference at all (`class_diagram/001_platform_click_security_loose_0.mmd`
   is one), and the comparator silently skips a missing reference
-  (`generate_mermaid_fixtures.rake:276`). So corpus completion does NOT
+  (`generate_mermaid_fixtures.rake:284`). So corpus completion does NOT
   produce references — reference GENERATION does. That is item 02b step
   7, which regenerates a reference for every oracle-valid case under the
   02a pin. `spec/fixtures_mermaid/` also has 23 type dirs and no sankey
-  directory despite sankey being registered; the same step fixes that,
-  or records an oracle-backed N/A.
+  directory despite sankey being registered; the same step generates
+  the missing references. There is no N/A escape: the universal rule in
+  `00-overview.md` is that a case leaves a denominator ONLY when the
+  oracle rejects it, and "we have no reference" is not an oracle
+  rejection.
 - **Not every case Sirena can render.** At most today's 614 pass cases
   produce candidate output to compare.
 
@@ -85,6 +90,9 @@ fail rather than pass silently.
 
 ## Do
 
+0. **Settle the metric contract above and commit it to this file.** No
+   comparator code is written until every entry has a single answer.
+   This is the step, not a preamble.
 1. Prove elkrb on ONE type first (flowchart — already ELK-shaped),
    behind the invariants + ratchet. Explicit failure if elkrb errors —
    no silent fallback; decide whether the grid survives as opt-in.
@@ -107,12 +115,17 @@ fail rather than pass silently.
   completion bar, not just a mechanism. Cohort membership is read from
   the scoreboard, never hardcoded.
 - A reference-completeness assertion passes: every oracle-valid case has
-  a reference or an explicit oracle-backed N/A row, and every registered
-  type has at least one (sankey has none today). A missing reference
-  FAILS the comparator instead of being skipped.
+  a reference, and every registered type has at least one (sankey has
+  none today). A missing reference FAILS the comparator instead of
+  being skipped, and cannot be waived — only an oracle rejection removes
+  a case from the denominator.
 - Every type's geometry at 8%/15% OR at its user-approved renegotiated
-  per-type threshold — no third state. Non-box types meet their
-  analogous metric or carry an approved N/A.
+  per-type threshold — no third state. Non-box types meet their own
+  analogous metric at the equivalent threshold.
+- The metric contract above is settled and committed to this file BEFORE
+  comparator code is written, and golden fixtures cover nested
+  transforms, scale/translation normalization, ancestor containment
+  versus peer collision, and at least one non-box type.
 - The branch floor is raised 80 → 90 by whichever of this item and item
   07 lands second — an acceptance criterion here, not a side effect.
 - Comparator in CI (full lane). Every ELK mention across `README*`,

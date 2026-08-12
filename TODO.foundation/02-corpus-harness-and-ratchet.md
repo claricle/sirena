@@ -168,6 +168,10 @@ the rename, under this pin.
 - Identity holds under an inserted upstream test, a reordered upstream
   test and an upstream deletion — proven by three seeded cases, not by
   argument.
+- The old→new migration manifest is committed, and a seeded ID collision
+  fails the run rather than overwriting.
+- The duplicate type dirs are gone (one canonical directory per type,
+  listed), and `.meta.json`'s fields are documented.
 - The post-scoreboard sweep confirms the pre-scoreboard rehearsal
   deltas (radar 13→14 of 42, treemap 0→9 of 10) or records why they
   moved.

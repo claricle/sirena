@@ -6,16 +6,32 @@ first, then the test pass that lets the 92 floor be set without landing
 red. **03b** is the ongoing floor timeline and the final completion
 pass.
 
-Can start: after 02 (floors live in the scoreboard). Runs in parallel
-with everything; does not block PlantUML. **But no behavior PR may
-close before 03a lands** — items 05, 06, 07, 12 and 14 all change
-behavior, and without 03a there is no changed-line gate for them to
-pass. Investigation and drafting stay parallel; merging waits.
+**Can start: as soon as item 01's migration makes the suite runnable —
+NOT after 02.** Only floor STORAGE needs the scoreboard (step 5);
+SimpleCov, the changed-line calculation and the seeded failures need
+nothing from item 02. Landing 03a early is what gives every later
+behavior PR a gate to pass. Runs in parallel with everything after
+that; does not block PlantUML.
+
+**No behavior PR may close before 03a lands** — items 05, 06, 07, 12
+and 14 all change behavior. Investigation and drafting stay parallel;
+merging waits.
+
+## The bootstrap exemption
+
+Item 01's migration PR changes runtime code and lands BEFORE this item,
+because nothing — not the suite, not SimpleCov — runs until it does.
+There is no way to gate it with machinery it is the prerequisite for.
+
+So: item 01's migration PR is explicitly exempt from the changed-line
+rule and states its coverage manually in the PR body instead. Every PR
+after 03a is gated. The exemption is named here rather than left as a
+silent hole, and it applies to exactly one PR.
 
 ## Facts
 
-Measured baseline (unit+integration only): ~86% line, ~55% branch.
-No coverage tooling is wired in yet.
+Measured baseline (unit+integration only): ~86% line, ~55% branch,
+measured under the local 0.7 pin. No coverage tooling is wired in yet.
 
 ## Bars (user-ruled)
 
@@ -53,11 +69,13 @@ No coverage tooling is wired in yet.
    and state: merge-base computation, how renames and deletions are
    handled, and which files are in scope. "Changed lines 100% covered"
    is not a gate until something computes it.
-3. Floors live in the scoreboard (item 02's mechanism) — ratchet up only.
-4. Seed two failures and prove both go red: one uncovered changed line,
+3. Seed two failures and prove both go red: one uncovered changed line,
    and one corpus-inflated coverage number.
-5. Then the test pass on the least-covered components to reach 92 line,
-   and set that floor. This is 03a's second PR, not a separate item.
+4. Then the test pass on the least-covered components to reach 92 line.
+   This is 03a's second PR, not a separate item.
+5. Floor STORAGE moves into the scoreboard once item 02 has built it —
+   the only part of this item that waits on 02. Until then the floors
+   live in the coverage config and the guard still fails below them.
 
 ## Do — 03b, the timeline
 
@@ -73,7 +91,9 @@ No coverage tooling is wired in yet.
 - The changed-line calculation is implemented and named, not described.
 - Both seeded failures exit non-zero.
 - Corpus results provably absent from the coverage number.
-- Line coverage ≥ 92 and the 92 floor set in the scoreboard.
+- Line coverage ≥ 92, with the 92 floor enforced (in the coverage
+  config if item 02 has not landed yet, in the scoreboard once it has).
+- Item 01's migration PR is the ONLY changed-line exemption on record.
 
 **03b**
 

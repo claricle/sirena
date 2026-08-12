@@ -95,3 +95,9 @@ substantiates the published figures, and the harness is broken."
 - Generated tables live AND gated for freshness; snippet spec in CI;
   docs build green; the committed manifest exists and items 14/15
   consume it.
+- The benchmark question is closed one way or the other: either
+  `benchmark:compare` and `benchmark:quick` run and a recorded run is
+  committed, or both tasks and every performance claim are deleted. A
+  broken advertised command is not an acceptable end state.
+- ARCHITECTURE.md carries the pipeline and registry Mermaid diagrams,
+  and both parse.

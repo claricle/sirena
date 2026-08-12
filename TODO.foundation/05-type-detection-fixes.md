@@ -33,6 +33,9 @@ list must confirm case by case rather than assume.
 ## Done when
 
 - `DiagramTypeError` failures = oracle-invalid cases only.
+- Zero oracle-valid `unknown/` cases remain unresolved — each is either
+  passing or carries an oracle rejection. (Baseline: 85 cases, of which
+  9 pass, 71 fail detection and 5 fail later in the pipeline.)
 - Scoreboard updated; every pattern change carries a corpus-case spec.
 
 ## Files

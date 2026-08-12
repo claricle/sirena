@@ -28,10 +28,16 @@ never cross-notation, no notation branching in the engine. The typed-IR
 phase (item 18 stub) replaces them later, designed from Mermaid AND
 PlantUML evidence.
 
-## API contract (settle before implementing)
+## API contract — 10a, a blocking artifact
 
-The plan cannot leave these to the implementer — each one is a public
-behavior nobody can change later without a breaking release:
+These are public behaviors nobody can change later without a breaking
+release, so they are NOT left to the implementer and NOT answered during
+coding. **10a** is a short owner-approved contract document committed
+before any of 10b's implementation starts; 10b then implements it and
+proves each line with a truth-table spec.
+
+Saying "settle this first" and then starting work is how these end up
+decided by whoever types fastest. The split is what makes it real.
 
 - Where `notation:` lives: `Engine.new`, `render`, or both.
 - What a notation identifier is: symbol, string, or class.
@@ -76,6 +82,16 @@ behavior nobody can change later without a breaking release:
 
 ## Done when
 
+**10a** — the contract document is committed and owner-approved, and
+answers every question above with a single unambiguous choice. No
+"either/or" survives into 10b.
+
+**10b** — a truth-table spec covers the precedence rules (explicit vs
+path hint vs sniff, including all three disagreeing), the mismatch
+error, the unknown-notation error, and stdin with no path hint.
+A before/after checksum manifest over the current corpus-pass set shows
+zero differing bytes — the scoreboard's pass/fail rows do not encode
+output bytes, so "scoreboard unchanged" is not the same claim.
 Fake-notation spec passes; a boundary spec asserts no cross-notation
 model sharing and no notation branching in the engine (the assertion
 item 18 relies on); a **cold-subprocess CLI spec** renders a fake

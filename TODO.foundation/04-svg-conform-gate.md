@@ -58,6 +58,11 @@ since the gate is written against that exact API.
   regressions cover the other two escape classes.
 - 100% of corpus-pass and fixture outputs valid under the profile;
   spec in CI; per-case rows in the scoreboard.
+- A boundary-level test proves escaping happens in `lib/sirena/svg/`
+  itself, so a new renderer inherits it without opting in.
+- A seeded malformed-XML output makes `corpus_sweep.rb` report a
+  failure rather than a pass.
+- A structural check proves `apply_fixes` is never called at runtime.
 
 ## Files
 

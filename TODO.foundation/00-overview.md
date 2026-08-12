@@ -21,17 +21,17 @@ gantt
     title Foundation week (planning closed 2026-08-10)
     section Unblock
     lutaml 0.8 migration (01)    :i01, 2026-08-10, 2d
+    Coverage instrumentation(03a):i03, after i01, 2d
+    CI lane skeleton (19a)       :i19a, after i03, 2d
     section Machinery
-    CI lane skeleton (19a)       :i19a, 2026-08-10, 2d
-    Oracle toolchain pin (02a)   :i02a, 2026-08-10, 1d
+    Oracle toolchain pin (02a)   :i02a, after i19a, 1d
     Oracle + scoreboard (02b)    :i02, after i02a, 3d
     Skills + agents (13)         :i13, 2026-08-10, 2d
     Lint live (08)               :i08, 2026-08-10, 1d
     Docs build (15)              :i15, 2026-08-10, 3d
     Docs truth inventory (11)    :i11, 2026-08-10, 4d
     svg_conform + XML escape (04):i04, after i01, 2d
-    Coverage instrumentation(03a):i03, after i02, 2d
-    Release first cut (17)       :i17, after i01 i19a, 1d
+    Release first cut (17)       :i17, after i19a, 1d
     section Structure
     Notation registry (10)       :i10, after i01, 2d
     PlantUML class spike (16)    :i16, after i10, 2d
@@ -73,12 +73,14 @@ flowchart TD
     A01 --> E10[10 notation registry]
     A01 --> R17[17 release: first cut]
     A01 -.functional elkrb.-> I14[14 elkrb layout + parity]
+    A01 --> B03[03a coverage instrumentation]
+    B03 --> J19A[19a CI lane skeleton]
     B02A[02a oracle toolchain pin]
-    J19A[19a CI lane skeleton] -.lane wiring.-> B02A
+    J19A -.lane wiring.-> B02A
     J19A --> R17
     A01 -.in-bundle rake gate.-> B02[02b scoreboard + ratchet]
     B02A -.verdict generation.-> B02
-    B02 --> B03[03a coverage instrumentation]
+    B02 -.floor storage.-> B03
     B02 --> C05[05 type detection]
     B02 --> C06[06 corpus: flowchart/state/er/treemap]
     B02 --> C07[07 corpus: class + remaining]
@@ -169,10 +171,10 @@ Two rules that make it real:
 
 | # | Item | Can start |
 |---|---|---|
-| 01 | lutaml-model 0.8 migration (in-repo; elkrb resolves already) | now |
-| 02a | Hermetic oracle toolchain pin | now (needs 19a's lane for CI) |
+| 01 | lutaml-model 0.8 migration (in-repo; elkrb resolves already) | now — lands FIRST; nothing is green before it |
+| 02a | Hermetic oracle toolchain pin | design now; lands after 19a provides the lane |
 | 02b | Corpus oracle verdicts, provenance, scoreboard | design now; verdicts after 02a (in-bundle gates need 01) |
-| 03a | Coverage instrumentation + changed-line gate | after 02 |
+| 03a | Coverage instrumentation + changed-line gate | after 01's migration (only floor storage waits for 02) |
 | 03b | Coverage floor timeline + completion pass | after 03a, tied to named events |
 | 04 | XML escaping + svg_conform gate | after 01; completes after 02 |
 | 05 | Type detection fixes | after 02 |
@@ -187,7 +189,7 @@ Two rules that make it real:
 | 14 | elkrb integration + layout parity | design after 02; integration after 01+02 |
 | 15 | Docs site build integrity | now |
 | 16 | PlantUML class spike (registry proof) | after 10; completes after 04 + 14's comparator |
-| 17 | Release + versioning (0.x) | after 01 + 19a |
+| 17 | Release + versioning (0.x) | after 19a (which follows 01) |
 | 18 | Typed-IR boundary (stub for the next phase) | design-only |
-| 19a | CI lane skeleton + external pins | now (lands first in wave 1) |
+| 19a | CI lane skeleton + external pins | after 01's migration and 03a — the suite must be green before lanes can be |
 | 19b | CI consolidation + measured budgets | after the owned gates exist |

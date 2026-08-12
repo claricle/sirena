@@ -47,5 +47,12 @@ what this version promises".
 
 Both pre-12 cuts released with changelog entries; the changelog
 preflight job exists in the tracked source and a seeded release with no
-releasable entry is blocked by it; `repository_dispatch` either removed
-or documented with its owner.
+releasable entry is blocked by it.
+
+The 0.x versioning contract is committed and names what the public API
+promises (`Sirena.render`, `Engine#render`, the CLI) and what is
+internal (the item-10 notation plugin shapes) — a contract nobody wrote
+down cannot be honoured.
+
+`repository_dispatch` is either removed, or documented with who may
+fire it, what authorization it requires and exactly what it does.

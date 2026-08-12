@@ -25,7 +25,7 @@ scoreboard locks every gain.
 
 | Sub-todo | Cases | Today | Notes |
 |---|---|---|---|
-| 06a flowchart | 331 | 6.0% | the single biggest block of failing cases in the corpus |
+| 06a flowchart | 331 | 6.0% | largest individual corpus directory by failures (311); item 07a's class + class_diagram pair totals 341 |
 | 06b state (+state_diagram) | 234 | ~4% | composite states, concurrency |
 | 06c er (+er_diagram) | 161 | ~3% | attribute blocks, label variants |
 | 06d treemap | 10 | 90% (9/10) | wiring fixed in rehearsal (commit 7722ee1's renderer return contract — measured 9/10); one case remains, and the triage note recorded it as a likely oracle rejection, which item 02's verdict settles |
