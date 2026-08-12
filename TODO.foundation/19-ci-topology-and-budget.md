@@ -142,6 +142,20 @@ conformance (04), and the fresh-resolution install (01).
    Deferring this to 19b would leave "both lanes required before merge"
    as an aspiration for the whole middle of the plan.
 
+   **Naming the checks is not enough — they must run against the tree
+   that actually merges.** GitHub's default ("loose") required checks
+   stay green on a stale base, so two PRs can both pass against the same
+   commit and then merge in sequence with their COMBINED result never
+   tested. That is exactly the "a regression lands first and gets caught
+   on main" failure step 3 promises to prevent. So require one of:
+   - **strict** required checks ("require branches to be up to date
+     before merging"), or
+   - a required **merge queue**, with the lanes wired to run on
+     `merge_group` so the queue tests the combined tree.
+
+   Whichever is chosen goes in the same owner-visible handoff and is
+   recorded alongside the aggregator names.
+
 ## Do — 19b
 
 8. Consolidate: every gate lives in a lane, nothing runs loose.
@@ -167,7 +181,9 @@ conformance (04), and the fresh-resolution install (01).
   and regeneration produces zero diff, or `release.yml` is explicitly
   detached and the tracked YAML declared authoritative.
 - The owner has applied branch protection to the two aggregator names,
-  and that is recorded.
+  and that is recorded — INCLUDING strict up-to-date checks or a
+  required merge queue, so a stale-but-green PR cannot merge untested
+  against the current tip.
 - Seeded failed-child and skipped-child runs both turn their aggregator
   red — a required check that can go green while a gate failed is worse
   than no check at all.
