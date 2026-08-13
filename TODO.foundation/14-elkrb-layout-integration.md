@@ -6,7 +6,8 @@ references are being rebuilt. INTEGRATION and Done need **both 01 and
 02**: step 1 proves elkrb works functionally under lutaml-model 0.8, and
 that cannot run while the gem still crashes at require. Completion also
 needs 03a, and raises the branch floor 80 → 90 jointly with item 07.
-Blocks: 12; with item 04, blocks 16's completion.
+Blocks: 12; with item 04, blocks 16's completion; and its emit/accept
+survey blocks item 18's start.
 
 ## Facts
 
@@ -98,6 +99,10 @@ fail rather than pass silently.
    no silent fallback; decide whether the grid survives as opt-in.
 2. Verify what each transform emits vs what elkrb accepts against the
    REAL gem (dependency-contract-check), then roll out per type.
+   **Persist the result** as `docs/emit-accept-survey.md` — one row per
+   transform: what it emits, what elkrb accepts, and the gap. Item 18
+   cannot start without it, so a verification that lives only in a PR
+   discussion does not count.
 3. Comparator: invariants + normalized geometry vs references; baseline
    fallback first (honest start), then elkrb; scoreboard per case.
 4. After each type flips, refresh every doc statement about its layout
@@ -114,6 +119,8 @@ fail rather than pass silently.
   has-a-reference ∩ Sirena-pass) — the hard gate, stated as the
   completion bar, not just a mechanism. Cohort membership is read from
   the scoreboard, never hardcoded.
+- `docs/emit-accept-survey.md` is committed and covers every transform
+  — item 18's start gate.
 - A seeded elkrb error fails the render loudly — no silent fall back to
   the grid — and the grid's fate is recorded: removed, or kept as an
   explicit opt-in with a named flag.

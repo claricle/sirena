@@ -1,7 +1,11 @@
 # 12 — PlantUML phase 1: class, then sequence
 
-Can start: after 01, 02, 04, 10, 14, 16, 17 in full, plus two PARTIAL
-prerequisites its own Done criteria need:
+Can start: after 01, 02, 04, 10, 14, 16, 17 in full. **Item 18 gates
+this item's DONE, not its start** — corpus extraction, the oracle and
+the grammar work need no IR, but PlantUML must ultimately ship THROUGH
+the IR rather than around it, so this item cannot close until 18 has
+landed and its transforms emit it. Plus two PARTIAL prerequisites its
+own Done criteria need:
 
 - **19a** (the pinned CI lane skeleton) — step 3 below adds tools to a
   full lane that only item 19 creates.
@@ -74,10 +78,10 @@ sequence then proves temporal semantics.)
 - `TODO.notations` roadmap merged via a PR whose body records each chain
   gate's verdict. It covers the notations issue #2 lists and does not
   schedule in this phase — DOT, D2, BPMN, Structurizr and the BlockDiag
-  family from issue #2's Priority 1, then its Priority 2 and 3 tiers —
-  with the typed-IR phase (item 18) as its FIRST entry, ahead of DOT,
-  designed from Mermaid + PlantUML evidence. The foundation is not
-  complete without this roadmap.
+  family from issue #2's Priority 1, then its Priority 2 and 3 tiers.
+  The roadmap starts at DOT — the typed IR is no longer its first entry,
+  because the owner ruled it into the foundation (item 18) on
+  2026-08-13. The foundation is not complete without this roadmap.
 
 ## Done when
 
@@ -99,6 +103,10 @@ sequence then proves temporal semantics.)
   budget AFTER this item's jobs land. This item adds Java, Graphviz and
   a comparison pass; if 19b already closed on an earlier measurement,
   that number is stale and this item owns refreshing it.
+- **Both PlantUML types EMIT item 18's IR** from their private parse
+  output, rather than a per-notation shape — the architecture issue #2
+  asks for, demonstrated rather than described. (Transforms produce the
+  IR; elkrb and the renderers consume it.)
 - The phase-end release is cut, and `TODO.notations` is merged.
 
 ## Files

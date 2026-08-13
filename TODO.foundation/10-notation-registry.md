@@ -22,11 +22,18 @@ parser/transform/renderer). No flat tuple map; no type-switch inside a
 renderer object. `Sirena::Notation::Mermaid` owns detection rules and
 its type table; the engine holds no notation constants.
 
-**IR boundary (settled, enforced here):** the per-type graph shapes
-transforms emit are PRIVATE to each notation plugin — never public API,
-never cross-notation, no notation branching in the engine. The typed-IR
-phase (item 18 stub) replaces them later, designed from Mermaid AND
-PlantUML evidence.
+**IR boundary (interim, and it has a successor).** The owner ruled on
+2026-08-13 that the typed IR is built in this foundation (item 18), so
+what this item enforces is a stepping stone rather than a permanent
+shape:
+
+- now: per-type transform shapes stay PRIVATE to each notation plugin —
+  no cross-notation sharing, no notation branching in the engine;
+- after item 18: the IR is deliberately SHARED, and what stays private
+  is each notation's parse output before it becomes IR.
+
+Write the boundary spec so item 18 updates it rather than deletes it.
+Do not describe today's shapes as permanent.
 
 ## API contract — 10a, a blocking artifact
 
