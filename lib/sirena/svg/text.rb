@@ -20,7 +20,7 @@ module Sirena
       attribute :font_weight, :string
       attribute :font_style, :string
       attribute :dominant_baseline, :string
-      attribute :content, :string
+      attribute :content, :string, collection: true
 
       xml do
         root 'text', mixed: true

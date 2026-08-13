@@ -146,9 +146,15 @@ module Sirena
         # parent, never randomly. A random id varies in digit length, and
         # that length reaches TextMeasurement, so the same source used to
         # render at different sizes between runs.
+        #
+        # The separator is a hyphen because bare block ids match
+        # [a-zA-Z0-9_] only (grammars/block.rb:180), so no unquoted user id
+        # can collide with one of these. A quoted id still could; that is a
+        # narrower hole than the underscore form, which `compound_1` alone
+        # was enough to hit.
         def self.anonymous_id(kind, parent_block, index)
-          prefix = parent_block ? "#{parent_block.id}_" : ''
-          "#{prefix}#{kind}_#{index}"
+          prefix = parent_block ? "#{parent_block.id}-" : ''
+          "#{prefix}#{kind}-#{index}"
         end
 
         def self.create_space_block(parent_block, index)
