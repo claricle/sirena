@@ -88,6 +88,25 @@ RSpec.describe Sirena::Engine do
       expect(years).to eq([early.year, late.year])
     end
 
+    # Injecting the clock must not change how a complete-enough date reads.
+    # The grammar accepts a year-month date, and Date.parse read that as the
+    # 1st. An earlier fix required both a month and a day, which silently
+    # rescheduled those tasks to today.
+    it 'keeps reading a year-month date as the first of that month' do
+      expect(parsed_gantt_date('2024/01', early)).to eq(Date.new(2024, 1, 1))
+    end
+
+    it 'takes only the missing fields from the pin' do
+      expect(parsed_gantt_date('2024-03-05', early)).to eq(Date.new(2024, 3, 5))
+      expect(parsed_gantt_date('nonsense', early)).to eq(early)
+    end
+
+    def parsed_gantt_date(text, pin)
+      transform = Sirena::Transform::GanttTransform.new
+      transform.today = pin
+      transform.send(:parse_date, text)
+    end
+
     # Pinning must never be the reason a render breaks. Comparing outcomes
     # rather than asserting success keeps this honest about types that are
     # already failing for unrelated reasons.
@@ -138,10 +157,11 @@ RSpec.describe Sirena::Engine do
 
   # Structural half. Two matching random draws are only probabilistic, and a
   # clock read hides behind a pinned clock. The absence of the call holds.
-  describe 'no render path reads ambient state' do
-    # Transform::Base#today is the one sanctioned reader: it supplies the
-    # default when nothing is injected. Matched as an exact line rather than
-    # whitelisting the file, so a second ambient read cannot hide there.
+  describe 'ambient state is read in exactly one injectable place' do
+    # Transform::Base#today is that place: it supplies the default when
+    # nothing is injected, which is why it is allowlisted rather than
+    # removed. Matched as an exact line rather than whitelisting the file,
+    # so a second ambient read cannot hide there.
     let(:sanctioned) { '@today ||= Date.today' }
     # Ruby lets whitespace sit either side of a dot or before an argument
     # list, so `Date . today` and `rand (10)` are the same calls. A pattern
