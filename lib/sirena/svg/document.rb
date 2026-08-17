@@ -5,13 +5,24 @@ require_relative 'element'
 
 module Sirena
   module Svg
+    # SVG namespace, declared as a class because lutaml-model 0.8 rejects
+    # string URIs. The prefix belongs here too — passing it positionally to
+    # namespace() is deprecated and ignored.
+    class SvgNamespace < Lutaml::Xml::Namespace
+      uri 'http://www.w3.org/2000/svg'
+      prefix_default 'svg'
+      # Without this, lutaml's inherited serializer stamps xmlns="" on
+      # mapped children, putting them outside the SVG namespace.
+      element_form_default :qualified
+    end
+
     # SVG Document root element
     #
     # Represents the top-level <svg> element with namespace declarations,
     # viewBox, and dimension attributes. Contains all other SVG elements
     # as children.
     class Document < Lutaml::Model::Serializable
-      SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
+      SVG_NAMESPACE = SvgNamespace.uri
       XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/'
       SVG_VERSION = '1.2'
 
@@ -24,7 +35,7 @@ module Sirena
 
       xml do
         root 'svg', mixed: true
-        namespace SVG_NAMESPACE, 'svg'
+        namespace SvgNamespace
 
         map_attribute 'width', to: :width
         map_attribute 'height', to: :height

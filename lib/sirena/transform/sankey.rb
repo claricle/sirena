@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'set'
 
 require_relative "base"
 require_relative "../diagram/sankey"
