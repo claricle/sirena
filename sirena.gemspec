@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
                        'packet, treemap, info, and error displays.'
   spec.homepage      = 'https://github.com/claricle/sirena'
   spec.license       = 'BSD-2-Clause'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '>= 3.2.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = spec.homepage
@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency "elkrb"
-  spec.add_dependency 'lutaml-model', '~> 0.7'
+  spec.add_dependency 'lutaml-model', '~> 0.8.0'
   spec.add_dependency 'moxml'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'

@@ -20,7 +20,7 @@ module Sirena
       attribute :font_weight, :string
       attribute :font_style, :string
       attribute :dominant_baseline, :string
-      attribute :content, :string
+      attribute :content, :string, collection: true
 
       xml do
         root 'text', mixed: true
@@ -45,10 +45,15 @@ module Sirena
         map_content to: :content
       end
 
-      # Override to_xml to include text content
+      # Override to_xml to include text content.
+      #
+      # `content` is a collection because lutaml-model 0.8 requires that
+      # under `mixed: true`. Renderers assign a plain String, but
+      # `from_xml` yields an Array, so join rather than interpolate —
+      # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
       def to_xml
         attrs = build_attributes
-        "<text#{attrs}>#{content}</text>"
+        "<text#{attrs}>#{Array(content).join}</text>"
       end
 
       protected
