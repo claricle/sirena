@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'date'
+
 module Sirena
   module Transform
     # Abstract base class for diagram transformers.
@@ -22,6 +24,19 @@ module Sirena
     #
     # @abstract Subclass and implement #to_graph
     class Base
+      # The date a transform treats as "today".
+      #
+      # Rendering must be a pure function of its input, so no transform
+      # reads the ambient clock. Gantt needs a reference date when the
+      # source gives none, so it takes one from here. Specs, the
+      # byte-identity gates and the layout comparator pin it; ordinary
+      # rendering gets the real date.
+      attr_writer :today
+
+      def today
+        @today ||= Date.today
+      end
+
       # ELK layout algorithms supported (matching mermaid-js)
       # @see https://www.eclipse.org/elk/reference/algorithms.html
       ALGORITHM_LAYERED = 'layered'

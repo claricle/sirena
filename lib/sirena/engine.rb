@@ -57,9 +57,13 @@ module Sirena
     #
     # @param verbose [Boolean] enable verbose output for debugging
     # @param theme [String, Theme, Hash, nil] theme specification
-    def initialize(verbose: false, theme: nil)
+    # @param today [Date, nil] reference date for diagrams that need one
+    #   (gantt). Pin it to make rendering reproducible; nil uses the real
+    #   date.
+    def initialize(verbose: false, theme: nil, today: nil)
       @verbose = verbose
       @theme = load_theme(theme)
+      @today = today
     end
 
     # Renders Mermaid source code to SVG.
@@ -162,6 +166,11 @@ module Sirena
     def transform_diagram(diagram, transform_class)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
+      # Only Transform::Base subclasses consume a reference date. Seven
+      # transforms (git_graph, kanban, mindmap, packet, radar, treemap,
+      # xy_chart) stand outside that hierarchy and read no clock at all, so
+      # pinning them is meaningless — sending today= to them just crashed.
+      transform.today = @today if @today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'
       graph

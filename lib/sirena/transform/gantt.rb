@@ -131,12 +131,17 @@ module Sirena
         false
       end
 
+      # Date.parse fills whatever the input omits from the system clock, so
+      # "08/17" under `dateFormat MM/DD` picked up the real year and defeated
+      # the injected reference date. _parse reports which fields the input
+      # actually carried, so a missing year comes from today instead.
       def parse_date(date_str)
-        # Handle various date formats
-        Date.parse(date_str)
-      rescue ArgumentError
-        # Default to today if parsing fails
-        Date.today
+        parts = Date._parse(date_str.to_s)
+        return today unless parts[:mon] && parts[:mday]
+
+        Date.new(parts[:year] || today.year, parts[:mon], parts[:mday])
+      rescue ArgumentError, TypeError
+        today
       end
 
       def add_duration(start_date, duration_str)
@@ -176,8 +181,8 @@ module Sirena
         end
 
         # Default to a reasonable range if no dates found
-        min_date ||= Date.today
-        max_date ||= Date.today + 30
+        min_date ||= today
+        max_date ||= today + 30
 
         # Add padding
         min_date -= 1
