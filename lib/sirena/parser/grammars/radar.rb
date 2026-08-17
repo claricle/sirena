@@ -46,10 +46,13 @@ module Sirena
         # Curve/dataset values: {1,2,3} or { A: 1, B: 2, C: 3 }
         rule(:value_number) { match["0-9"].repeat(1).as(:value) }
 
-        # whitespace? rather than space? so a value block can span
-        # lines, which mermaid allows.
+        # Leading whitespace? is what lets a value block span lines: it takes
+        # the break after "{" and after each ",". Everything inside an entry
+        # stays space? on purpose — mermaid allows breaks at list boundaries,
+        # not between an identifier, its colon and its number, and not before
+        # a comma. whitespace? throughout accepted "{A:\n1}" and "{1\n,2}".
         rule(:positional_value) do
-          whitespace? >> value_number >> whitespace?
+          whitespace? >> value_number >> space?
         end
 
         # The colon is optional — mermaid accepts "A 1" as well as
@@ -57,9 +60,9 @@ module Sirena
         rule(:named_value) do
           whitespace? >>
             identifier.as(:axis) >>
-            whitespace? >> str(":").maybe >> whitespace? >>
+            space? >> str(":").maybe >> space? >>
             value_number >>
-            whitespace?
+            space?
         end
 
         rule(:value_list) do
@@ -73,7 +76,7 @@ module Sirena
         rule(:curve_values) do
           str("{") >>
             (named_value_list | value_list).as(:values) >>
-            str("}")
+            whitespace? >> str("}")
         end
 
         rule(:curve_label) do

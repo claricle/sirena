@@ -13,22 +13,33 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 
 require 'sirena'
 require 'timeout'
+require 'rexml/document'
 
 CASE_TIMEOUT = 10
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
 
-# Interim pass predicate: structurally SVG-shaped output. The item-02
+# Interim pass predicate: SVG-shaped AND well-formed XML. The item-02
 # scoreboard spec replaces this with oracle-backed classification;
-# item-04 conformance validates for real. Deliberately stricter than
-# "contains <svg>" so garbage prefixes can't count as passes.
-def svg_shaped?(output)
-  output.is_a?(String) && output.match?(/\A\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/) &&
-    output.rstrip.end_with?('</svg>')
+# item-04 conformance validates for real.
+#
+# Shape alone was not enough. A case emitting an unescaped <br> inside <text>
+# still opens with <svg and closes with </svg>, so it scored as a pass while
+# being unparseable — which overstated the totals rather than understating
+# them. Parsing is the cheapest way to refuse that.
+def well_formed_svg?(output)
+  return false unless output.is_a?(String)
+  return false unless output.match?(/\A\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/)
+  return false unless output.rstrip.end_with?('</svg>')
+
+  REXML::Document.new(output)
+  true
+rescue REXML::ParseException
+  false
 end
 
 def render_result(source)
   svg = Timeout.timeout(CASE_TIMEOUT) { Sirena::Engine.new.render(source) }
-  svg_shaped?(svg) ? :pass : :fail
+  well_formed_svg?(svg) ? :pass : :fail
 rescue Timeout::Error
   :timeout
 rescue StandardError
@@ -56,6 +67,10 @@ def sweep(types)
 end
 
 def report(sweep_results, list_failing:)
+  # An empty corpus otherwise printed "0/0 = NaN%" and exited 0, which reads
+  # as a successful measurement of nothing.
+  abort 'No corpus cases found; nothing to measure.' if sweep_results.values.all?(&:empty?)
+
   puts 'TYPE              PASS   FAIL  TIMEOUT    RATE'
   sweep_results.sort.each do |type, results|
     tally = results.values.tally
@@ -69,9 +84,12 @@ def report(sweep_results, list_failing:)
   puts format('TOTAL: %d/%d = %.1f%%', total_passed, all.size, 100.0 * total_passed / all.size)
   return unless list_failing
 
+  # Corpus-relative, not absolute: the base/head comparison this output exists
+  # for runs in two different worktrees, and absolute paths made every
+  # unchanged failure look like a difference.
   sweep_results.sort.each do |_type, results|
     results.reject { |_, status| status == :pass }
-      .each { |path, status| puts "#{status}: #{path}" }
+      .each { |path, status| puts "#{status}: #{path.sub("#{CORPUS_ROOT}/", '')}" }
   end
 end
 
