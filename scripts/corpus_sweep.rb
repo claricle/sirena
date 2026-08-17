@@ -30,11 +30,25 @@ def well_formed_svg?(output)
   return false unless output.is_a?(String)
   return false unless output.match?(/\A\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/)
   return false unless output.rstrip.end_with?('</svg>')
+  return false if undeclared_entity?(output)
 
   REXML::Document.new(output)
   true
 rescue REXML::ParseException
   false
+end
+
+# XML predefines exactly these five. Anything else needs a DTD, and the SVG
+# output carries none.
+PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
+
+# REXML is lenient about undeclared entity references, so `&nbsp;` parsed
+# clean and still counted as a pass. xmllint refuses the same string with
+# "Entity 'nbsp' not defined". Numeric references are always legal.
+def undeclared_entity?(output)
+  output.scan(/&([^;&\s]+);/).flatten.any? do |ref|
+    !ref.start_with?('#') && !PREDEFINED_ENTITIES.include?(ref)
+  end
 end
 
 def render_result(source)
