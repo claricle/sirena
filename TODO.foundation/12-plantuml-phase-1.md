@@ -1,0 +1,109 @@
+# 12 — PlantUML phase 1: class, then sequence
+
+Can start: after 01, 02, 04, 10, 14, 16, 17 in full, plus two PARTIAL
+prerequisites its own Done criteria need:
+
+- **19a** (the pinned CI lane skeleton) — step 3 below adds tools to a
+  full lane that only item 19 creates.
+- **03a** (coverage instrumentation) — "coverage floors hold" needs
+  something measuring them.
+
+The snippet runner is NOT a third prerequisite: item 16 already ships a
+README-example spec of its own and blocks this item, so that harness
+exists by the time we get here. This item extends it to class and
+sequence; item 11 absorbs it into the all-docs harness later. Item 11 is
+not a blocker.
+
+Lint completion (09), coverage completion (03b), the docs truth pass
+(11) and the corpus long tail all still run in parallel; they do not
+block this.
+
+## Scope (user-approved order)
+
+**Class first** — expanded from the item-16 spike to full corpus-backed
+support, certified before sequence implementation STARTS. Then
+sequence. Separate PRs per type. (Class is the cleaner layout proof;
+sequence then proves temporal semantics.)
+
+## Do
+
+1. PlantUML corpus: extract from plantuml's own test resources via a
+   `scripts/extract_plantuml_tests.rb` (new) modeled on the mermaid
+   extractor. Issue #2 asks for a corpus of REAL-WORLD files, and
+   upstream test fixtures are not automatically that — record a
+   selection rule and identify which cases carry real-world provenance,
+   or state plainly that the cohort is upstream fixtures and get the
+   owner's agreement that it satisfies the criterion. Do not let "100%
+   of oracle-valid" quietly redefine what was asked for; stable case IDs from upstream path + test identity + source
+   hash (item 02's rule, not ordinals); pin upstream SHA + PlantUML
+   version + Java version + Graphviz version + checksums; scoreboard
+   rows from day one (0% honest start).
+2. **PlantUML oracle contract** — the same shape item 02 defines for
+   Mermaid, written down before any verdict is generated. "The pinned
+   binary renders it" is not a predicate. Specify:
+   - the exact command and its arguments;
+   - what counts as a valid result — PlantUML emits an SVG containing an
+     error message on bad input, so exit code alone is not enough;
+   - timeout value and kill behavior;
+   - three distinct states: valid, rejected-by-oracle, infrastructure
+     failure (missing Java, missing Graphviz, OOM) — infrastructure
+     failure must never be recorded as a verdict;
+   - a canary case proving the oracle is alive before a refresh is
+     trusted;
+   - all-or-nothing refresh: a partial run does not overwrite verdicts;
+   - version and content hashes in every provenance record.
+
+   Seed one invalid case and one infrastructure failure and prove the
+   oracle classifies each correctly.
+3. CI provisioning is OWNED HERE (item 19 provides the lane mechanism,
+   not the tools): pinned PlantUML + Java + Graphviz added to the full
+   lane by this item, before any comparison spec lands. Comparison
+   specs FAIL (not skip) in CI when a reference binary is missing; loud
+   skip only in local dev.
+4. Class: grow the spike's grammar to the corpus, bucket-by-bucket like
+   item 06. Then sequence from scratch through the same gates.
+5. Per type, all five issue-#2 criteria: corpus at 100% of oracle-valid;
+   svg_conform valid; item-14 parity gate vs the PlantUML binary; specs
+   incl. edge cases (coverage floors hold); runnable README example
+   (snippet-spec-executed).
+
+## Phase close-out
+
+- **Phase-end 0.x release** (owned here; item 17 owns only the two
+  pre-12 cuts): the release that announces PlantUML support.
+- `TODO.notations` roadmap merged via a PR whose body records each chain
+  gate's verdict. It covers the notations issue #2 lists and does not
+  schedule in this phase — DOT, D2, BPMN, Structurizr and the BlockDiag
+  family from issue #2's Priority 1, then its Priority 2 and 3 tiers —
+  with the typed-IR phase (item 18) as its FIRST entry, ahead of DOT,
+  designed from Mermaid + PlantUML evidence. The foundation is not
+  complete without this roadmap.
+
+## Done when
+
+- Class and sequence each sit at 100% of oracle-valid on the PlantUML
+  scoreboard rows, and every non-pass row carries an oracle rejection.
+- Both types meet all five issue-#2 criteria listed in step 5, each
+  demonstrated rather than asserted.
+- The PlantUML oracle passes a conformance suite, not two spot checks:
+  seeded invalid input, seeded infrastructure failure (missing Java,
+  missing Graphviz), a timeout that is killed rather than hung, an
+  error-carrying SVG recognised as invalid rather than valid, a failing
+  canary halting a refresh, a partial run leaving prior verdicts
+  untouched, and stable IDs surviving an upstream insertion.
+- Every verdict carries its PlantUML, Java, Graphviz and content
+  hashes.
+- The pinned PlantUML/Java/Graphviz toolchain runs in 19a's full lane,
+  and a comparison spec FAILS (not skips) when a binary is missing.
+- The full lane is re-measured cold and warm against the 30-minute
+  budget AFTER this item's jobs land. This item adds Java, Graphviz and
+  a comparison pass; if 19b already closed on an earlier measurement,
+  that number is stale and this item owns refreshing it.
+- The phase-end release is cut, and `TODO.notations` is merged.
+
+## Files
+
+`lib/sirena/notation/plantuml/**`, `spec/plantuml/` (absorbing item 16's
+`spec/plantuml_spike/` cases — say so in the PR rather than leaving two
+directories), `scripts/extract_plantuml_tests.rb` (new), `TODO.notations`
+(new), and lane entries in `.github/workflows/` (19a owns those files).

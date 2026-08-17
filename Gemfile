@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 gemspec
 
+gem 'benchmark'
 gem 'rake'
 # corpus_sweep parses its own SVG output to refuse malformed passes.
 gem 'rexml'
@@ -12,3 +13,4 @@ gem "rubocop"
 gem "rubocop-performance", require: false
 gem "rubocop-rake", require: false
 gem "rubocop-rspec", require: false
+gem 'svg_conform', '~> 0.2.0'
