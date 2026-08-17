@@ -26,11 +26,11 @@ module Sirena
     class Base
       # The date a transform treats as "today".
       #
-      # Rendering must be a pure function of its input, so no transform
-      # reads the ambient clock. Gantt needs a reference date when the
-      # source gives none, so it takes one from here. Specs, the
-      # byte-identity gates and the layout comparator pin it; ordinary
-      # rendering gets the real date.
+      # This reader is the single place a transform may reach the clock, and
+      # only when nothing was injected. Gantt needs a reference date when the
+      # source gives none. Pin it and rendering is a pure function of its
+      # input; leave it unset and the one read below supplies the real date.
+      # Specs, the byte-identity gates and the layout comparator all pin it.
       attr_writer :today
 
       def today

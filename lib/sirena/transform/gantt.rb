@@ -135,11 +135,17 @@ module Sirena
       # "08/17" under `dateFormat MM/DD` picked up the real year and defeated
       # the injected reference date. _parse reports which fields the input
       # actually carried, so a missing year comes from today instead.
+      # Each missing field falls back to the reference date, never the system
+      # clock. Requiring both a month and a day here would have broken
+      # `2024/01`, which the grammar accepts and Date.parse read as
+      # 2024-01-01; the day defaults to the 1st to keep that reading.
       def parse_date(date_str)
         parts = Date._parse(date_str.to_s)
-        return today unless parts[:mon] && parts[:mday]
+        return today unless parts[:mon] || parts[:mday]
 
-        Date.new(parts[:year] || today.year, parts[:mon], parts[:mday])
+        Date.new(parts[:year] || today.year,
+                 parts[:mon] || today.mon,
+                 parts[:mday] || 1)
       rescue ArgumentError, TypeError
         today
       end
