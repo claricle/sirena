@@ -63,9 +63,15 @@ module Sirena
           }
         end
 
-        # Process parsed diagram
-        def self.apply(tree, diagram = nil)
-          diagram ||= Diagram::BlockDiagram.new
+        # Process parsed diagram.
+        #
+        # Deliberately builds its own diagram rather than accepting one. Ids
+        # are positional, so feeding a second tree into a populated diagram
+        # would re-issue "compound-1" and the later block would overwrite the
+        # earlier one. No caller ever passed a diagram, so the parameter only
+        # exposed that hazard.
+        def self.apply(tree)
+          diagram = Diagram::BlockDiagram.new
 
           # Tree is an array of statement hashes
           statements = tree.is_a?(Array) ? tree : [tree]
@@ -146,9 +152,14 @@ module Sirena
         # parent, never randomly. A random id varies in digit length, and
         # that length reaches TextMeasurement, so the same source used to
         # render at different sizes between runs.
+        #
+        # The hyphen separator is what keeps these ids out of the author's
+        # namespace: identifier_char is [a-zA-Z0-9_], so no bare block id can
+        # ever spell "compound-1". An underscore could, and the collision
+        # silently dropped the generated block's children from the SVG.
         def self.anonymous_id(kind, parent_block, index)
-          prefix = parent_block ? "#{parent_block.id}_" : ''
-          "#{prefix}#{kind}_#{index}"
+          prefix = parent_block ? "#{parent_block.id}-" : ''
+          "#{prefix}#{kind}-#{index}"
         end
 
         def self.create_space_block(parent_block, index)
