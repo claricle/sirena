@@ -147,8 +147,13 @@ module Sirena
         return Date.ordinal(parts[:year] || today.year, parts[:yday]) if parts[:yday]
         return today unless parts[:mon] || parts[:mday]
 
+        # An explicit year anchors the month to January, which is what
+        # Date.parse did: '017/2024' read as 2024-01-17, not as today's month.
+        # Only a wholly absent year lets the reference date supply the month.
+        default_month = parts[:year] ? 1 : today.mon
+
         Date.new(parts[:year] || today.year,
-                 parts[:mon] || today.mon,
+                 parts[:mon] || default_month,
                  parts[:mday] || 1)
       rescue ArgumentError, TypeError
         today
