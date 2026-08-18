@@ -15,6 +15,8 @@ module Sirena
       attribute :y2, :float
       attribute :stroke_dasharray, :string
 
+      writes_attributes :x1, :y1, :x2, :y2, :stroke_dasharray
+
       xml do
         root 'line'
         map_attribute 'id', to: :id
@@ -28,21 +30,6 @@ module Sirena
         map_attribute 'stroke-dasharray', to: :stroke_dasharray
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
-      end
-
-      protected
-
-      # Hook for element-specific attributes
-      #
-      # @return [Array<Array>] name/value pairs
-      def element_attributes
-        [
-          ['x1', x1],
-          ['y1', y1],
-          ['x2', x2],
-          ['y2', y2],
-          ['stroke-dasharray', stroke_dasharray]
-        ]
       end
     end
   end

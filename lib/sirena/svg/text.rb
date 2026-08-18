@@ -22,6 +22,8 @@ module Sirena
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
 
+      writes_attributes :x, :y, :dx, :dy, :text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline
+
       xml do
         root 'text', mixed: true
         map_attribute 'id', to: :id
@@ -54,23 +56,6 @@ module Sirena
       def to_xml
         attrs = build_attributes
         "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
-      end
-
-      protected
-
-      def element_attributes
-        [
-          ['x', x],
-          ['y', y],
-          ['dx', dx],
-          ['dy', dy],
-          ['text-anchor', text_anchor],
-          ['font-family', font_family],
-          ['font-size', font_size],
-          ['font-weight', font_weight],
-          ['font-style', font_style],
-          ['dominant-baseline', dominant_baseline]
-        ]
       end
     end
   end
