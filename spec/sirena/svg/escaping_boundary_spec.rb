@@ -57,14 +57,11 @@ RSpec.describe Sirena::Svg::Escaping do
 
       it 'escapes every one of its string attribute values' do
         xml = element.to_xml
-        # Rect declares fill-opacity in writes_attributes while Element already
-        # emits it, so it appears twice. That duplicate is a real defect and
-        # the last 5 malformed corpus cases — it has its own bucket, and this
-        # counts it rather than hiding it. fill_opacity now sits in COMMON
-        # because it is inherited and string-typed, so every class exercises
-        # that site; Rect is the only one that emits it twice.
-        duplicates = klass == Sirena::Svg::Rect ? 1 : 0
-        expected = writers.size + COMMON_ATTRIBUTES.size + duplicates
+        # No duplicate allowance any more. Rect used to list fill-opacity in
+        # writes_attributes while Element also emitted it, producing
+        # `fill-opacity="x" fill-opacity="x"` and the last 5 malformed corpus
+        # cases. Every class now emits each attribute exactly once.
+        expected = writers.size + COMMON_ATTRIBUTES.size
 
         expect(xml).not_to include(HOSTILE)
         expect(xml.scan(ESCAPED).size).to eq(expected)

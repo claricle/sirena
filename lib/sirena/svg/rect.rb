@@ -19,7 +19,12 @@ module Sirena
       attribute :stroke_dasharray, :string
       attribute :fill_opacity, :string
 
-      writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray, :fill_opacity
+      # fill-opacity is NOT listed here. Element already emits it for every
+      # element (element.rb:55), and listing it again produced
+      # `fill-opacity="0.5" fill-opacity="0.5"` — the last 5 malformed cases
+      # in the corpus. The attribute and its lutaml mapping stay, because
+      # they are what let a Rect round-trip through from_xml.
+      writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray
 
       xml do
         root 'rect'
