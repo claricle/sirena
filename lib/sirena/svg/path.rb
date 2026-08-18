@@ -62,14 +62,14 @@ module Sirena
       protected
 
       def element_attributes
-        attrs = []
-        attrs << %( d="#{d}") if d
-        attrs << %( stroke-dasharray="#{stroke_dasharray}") if stroke_dasharray
-        attrs << %( stroke-linecap="#{stroke_linecap}") if stroke_linecap
-        attrs << %( stroke-linejoin="#{stroke_linejoin}") if stroke_linejoin
-        attrs << %( marker-end="#{marker_end}") if marker_end
-        attrs << %( marker-start="#{marker_start}") if marker_start
-        attrs
+        [
+          ['d', d],
+          ['stroke-dasharray', stroke_dasharray],
+          ['stroke-linecap', stroke_linecap],
+          ['stroke-linejoin', stroke_linejoin],
+          ['marker-end', marker_end],
+          ['marker-start', marker_start]
+        ]
       end
     end
   end

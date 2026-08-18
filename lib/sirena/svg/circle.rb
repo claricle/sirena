@@ -30,11 +30,11 @@ module Sirena
       protected
 
       def element_attributes
-        attrs = []
-        attrs << %( cx="#{cx}") if cx
-        attrs << %( cy="#{cy}") if cy
-        attrs << %( r="#{r}") if r
-        attrs
+        [
+          ['cx', cx],
+          ['cy', cy],
+          ['r', r]
+        ]
       end
     end
   end

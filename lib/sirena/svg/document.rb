@@ -84,11 +84,19 @@ module Sirena
       # @return [String] XML representation of the SVG document
       def to_xml
         parts = ["<svg"]
-        parts << %( width="#{width}") if width
-        parts << %( height="#{height}") if height
-        parts << %( viewBox="#{view_box}") if view_box
-        parts << %( version="#{version}") if version
-        parts << %( xmlns="#{xmlns}") if xmlns
+        # Document does not inherit from Element, so it cannot reach
+        # Element#build_attributes. It uses the same renderer directly, one
+        # pair at a time so the newline join below still formats the document
+        # the way it always did.
+        [
+          ['width', width],
+          ['height', height],
+          ['viewBox', view_box],
+          ['version', version],
+          ['xmlns', xmlns]
+        ].each do |name, value|
+          parts << Escaping.attribute(name, value) unless value.nil?
+        end
         parts << ">"
 
         children.each do |child|

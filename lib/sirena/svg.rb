@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'svg/escaping'
 require_relative 'svg/style'
 require_relative 'svg/element'
 require_relative 'svg/document'

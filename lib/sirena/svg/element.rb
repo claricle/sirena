@@ -37,26 +37,29 @@ module Sirena
       #
       # @return [String] formatted attribute string
       def build_attributes
-        attrs = []
-        attrs << %( id="#{id}") if id
-        attrs << %( class="#{class_name}") if class_name
-        attrs << %( transform="#{transform}") if transform
-        attrs << %( fill="#{fill}") if fill
-        attrs << %( fill-opacity="#{fill_opacity}") if fill_opacity
-        attrs << %( stroke="#{stroke}") if stroke
-        attrs << %( stroke-width="#{stroke_width}") if stroke_width
-        attrs << %( stroke-opacity="#{stroke_opacity}") if stroke_opacity
-        attrs << %( opacity="#{opacity}") if opacity
-
-        # Add element-specific attributes
-        attrs.concat(element_attributes)
-
-        attrs.join
+        Escaping.attributes(
+          [
+            ['id', id],
+            ['class', class_name],
+            ['transform', transform],
+            ['fill', fill],
+            ['fill-opacity', fill_opacity],
+            ['stroke', stroke],
+            ['stroke-width', stroke_width],
+            ['stroke-opacity', stroke_opacity],
+            ['opacity', opacity]
+          ] + element_attributes
+        )
       end
 
-      # Hook for subclasses to add their specific attributes
+      # Hook for subclasses to add their specific attributes.
       #
-      # @return [Array<String>] array of attribute strings
+      # Returns name/value PAIRS, not rendered markup. That is deliberate: it
+      # leaves Escaping.attributes as the only code that turns an attribute
+      # into text, so a subclass cannot emit an unescaped one. Pairs with a
+      # nil value are dropped, so callers need no conditionals.
+      #
+      # @return [Array<Array>] name/value pairs
       def element_attributes
         []
       end

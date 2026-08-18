@@ -34,9 +34,9 @@ module Sirena
       protected
 
       def element_attributes
-        attrs = []
-        attrs << %( points="#{points}") if points
-        attrs
+        [
+          ['points', points]
+        ]
       end
     end
   end

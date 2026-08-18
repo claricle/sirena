@@ -53,24 +53,24 @@ module Sirena
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
       def to_xml
         attrs = build_attributes
-        "<text#{attrs}>#{Array(content).join}</text>"
+        "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
       end
 
       protected
 
       def element_attributes
-        attrs = []
-        attrs << %( x="#{x}") if x
-        attrs << %( y="#{y}") if y
-        attrs << %( dx="#{dx}") if dx
-        attrs << %( dy="#{dy}") if dy
-        attrs << %( text-anchor="#{text_anchor}") if text_anchor
-        attrs << %( font-family="#{font_family}") if font_family
-        attrs << %( font-size="#{font_size}") if font_size
-        attrs << %( font-weight="#{font_weight}") if font_weight
-        attrs << %( font-style="#{font_style}") if font_style
-        attrs << %( dominant-baseline="#{dominant_baseline}") if dominant_baseline
-        attrs
+        [
+          ['x', x],
+          ['y', y],
+          ['dx', dx],
+          ['dy', dy],
+          ['text-anchor', text_anchor],
+          ['font-family', font_family],
+          ['font-size', font_size],
+          ['font-weight', font_weight],
+          ['font-style', font_style],
+          ['dominant-baseline', dominant_baseline]
+        ]
       end
     end
   end

@@ -36,13 +36,13 @@ module Sirena
       #
       # @return [Array<String>] array of attribute strings
       def element_attributes
-        attrs = []
-        attrs << %( x1="#{x1}") if x1
-        attrs << %( y1="#{y1}") if y1
-        attrs << %( x2="#{x2}") if x2
-        attrs << %( y2="#{y2}") if y2
-        attrs << %( stroke-dasharray="#{stroke_dasharray}") if stroke_dasharray
-        attrs
+        [
+          ['x1', x1],
+          ['y1', y1],
+          ['x2', x2],
+          ['y2', y2],
+          ['stroke-dasharray', stroke_dasharray]
+        ]
       end
     end
   end
