@@ -104,6 +104,15 @@ RSpec.describe Sirena::Engine do
         .not_to eq(Sirena.render(source, today: late))
     end
 
+    # `today: nil` must mean "use the real date", the same way `theme: nil`
+    # falls through. Written with .key? for exactly this; `||` would silently
+    # fall back to the constructor's pin instead.
+    it 'treats an explicit nil as a request for the real date' do
+      engine = described_class.new(today: early)
+
+      expect(engine.render(source, today: nil)).to eq(render(source))
+    end
+
     it 'lets a render option override the constructor' do
       engine = described_class.new(today: early)
 
