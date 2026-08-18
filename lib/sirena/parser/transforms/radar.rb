@@ -61,9 +61,14 @@ module Sirena
 
         # Transform axes definition
         rule(axes: subtree(:axes)) do
+          # A single-axis statement yields a Hash, and Kernel#Array turns a
+          # Hash into its key/value pairs — so `axis A` became
+          # [[:id, "A"], [:label, "A"]]. Assignment used to hide that,
+          # because a later statement overwrote it; accumulating keeps it and
+          # the renderer then fails on a Symbol index.
           {
             type: :axes,
-            axes: Array(axes)
+            axes: axes.is_a?(Array) ? axes : [axes]
           }
         end
 

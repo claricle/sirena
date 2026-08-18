@@ -249,6 +249,24 @@ RSpec.describe Sirena::Parser::RadarParser do
         expect(curve.value_for("C")).to eq(3.0)
       end
 
+      # A one-axis statement yields a Hash rather than an Array, and
+      # Kernel#Array turns a Hash into its key/value pairs. Assignment used
+      # to hide that because a later statement overwrote it; accumulating
+      # keeps it, and the renderer then dies on a Symbol index. Every
+      # existing example here used multi-axis statements, which is why the
+      # regression got through.
+      it "accumulates a single-axis statement into a later one" do
+        source = <<~MERMAID
+          radar-beta
+              axis A
+              axis B, C
+              curve c1{1, 2, 3}
+        MERMAID
+
+        diagram = parser.parse(source)
+        expect(diagram.axes.map(&:id)).to eq(["A", "B", "C"])
+      end
+
       it "accumulates axes across multiple axis statements" do
         source = <<~MERMAID
           radar-beta

@@ -45,8 +45,9 @@ PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
 
 # REXML is lenient about undeclared entity references, so `&nbsp;` parsed
 # clean and still counted as a pass. xmllint refuses the same string with
-# "Entity 'nbsp' not defined". Numeric references are always legal, and
-# nothing inside a comment or a CDATA section is a reference at all.
+# "Entity 'nbsp' not defined". Numeric references pass this scan and are
+# left to REXML, which rejects the invalid codepoints among them; nothing
+# inside a comment or a CDATA section is a reference at all.
 #
 # One left-to-right pass, because whichever construct opens first owns the
 # text that follows. Comments, CDATA and processing instructions each own
