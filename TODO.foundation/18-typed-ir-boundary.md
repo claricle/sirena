@@ -41,25 +41,40 @@ a particular way stays in that notation's plugin.
 That is a different question from which **diagram categories** the IR
 covers. Sirena renders three structurally different kinds:
 
-- **graph-shaped** — flowchart, class, state, ER, C4, git, mindmap,
-  sankey, and PlantUML class: nodes, edges, containment. Sankey belongs
-  here despite looking like a chart: `SankeyTransform` emits `nodes:`
-  and `flows:` with source/target connectivity (`sankey.rb:49`) and does
-  its own layering, so it is a graph that declines elkrb rather than a
-  data series.
-- **pre-positioned** — block, quadrant, packet: the source dictates
-  placement, so layout is not delegated.
-- **data-shaped** — pie, radar, xychart: values and proportions, no
-  node/edge model at all (`PieTransform` at `pie.rb:17` emits no node
-  boxes).
+Apply these tests **in order**. The order matters: a type can satisfy
+more than one, and the first match wins.
 
-  Each type's shape is confirmed against its transform, not assumed from
-  its name — sankey was misfiled on exactly that mistake.
+1. **pre-positioned** — the source dictates placement, so there is nothing
+   to lay out. Block is the clear case: the author's `columns` fixes the
+   grid (`transform/block.rb:46`). Block also emits `from`/`to`
+   connectivity (`transform/block.rb:188`), which is exactly why this test
+   runs first.
+2. **graph-shaped** — the transform emits **source/target connectivity**.
+   Sankey is the clear case: `SankeyTransform` emits `nodes:` and `flows:`
+   with `source:`/`target:` (`transform/sankey.rb:184`). It looks like a
+   chart and is a graph. Containment on its own does not qualify.
+3. **data-shaped** — everything else: values, or placed content carrying no
+   connectivity. Pie is the clear case (`PieTransform` at `pie.rb:17` emits
+   no node boxes). This is the residual category, so every type lands
+   somewhere.
 
-The IR covers all three. Only the first is graph-shaped and only the
-first delegates to elkrb. That is not a Mermaid bias — PlantUML has
-data-shaped and pre-positioned types too; they are simply not in phase
-1's class-and-sequence slice.
+Those examples are illustrative, not an exhaustive roster. Apply the tests
+to any type, including notations not yet written — that is the point of a
+notation-neutral IR.
+
+A type whose source merely *influences* placement, such as an ordering
+hint, is still classified by what its transform emits. Architecture lets an
+author swap endpoints and git_graph lets an author order branches; neither
+means the source dictates the layout, and both are graph-shaped.
+
+Every classification is confirmed against the type's transform, never
+assumed from its name — sankey was misfiled on exactly that mistake.
+
+The IR covers all three categories; none is exempt. Graph-shaped is the
+category that *can* delegate to elkrb, though not every member does —
+sankey does its own layering and declines it. That is not a Mermaid bias:
+PlantUML has data-shaped and pre-positioned types too, they are simply not
+in phase 1's class-and-sequence slice.
 
 **No category is exempt.** "This type passes through un-IR'd" would let
 the foundation close with the architecture issue #2 asks for half-built.
