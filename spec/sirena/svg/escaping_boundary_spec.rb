@@ -29,13 +29,13 @@ ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Line => [:stroke_dasharray],
   Sirena::Svg::Path => [:d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start],
   Sirena::Svg::Polygon => [:points],
-  Sirena::Svg::Rect => [:stroke_dasharray, :fill_opacity],
+  Sirena::Svg::Rect => [:stroke_dasharray],
   Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline]
 }.freeze
 
 # Inherited from Element, so every subclass carries them.
-COMMON_ATTRIBUTES = [:id, :class_name, :transform, :fill, :stroke,
-                     :stroke_width, :stroke_opacity].freeze
+COMMON_ATTRIBUTES = [:id, :class_name, :transform, :fill, :fill_opacity,
+                     :stroke, :stroke_width, :stroke_opacity].freeze
 
 RSpec.describe Sirena::Svg::Escaping do
   ELEMENT_ATTRIBUTES.each do |klass, writers|
@@ -57,10 +57,12 @@ RSpec.describe Sirena::Svg::Escaping do
 
       it 'escapes every one of its string attribute values' do
         xml = element.to_xml
-        # Rect declares fill-opacity in its own hook while Element already
+        # Rect declares fill-opacity in writes_attributes while Element already
         # emits it, so it appears twice. That duplicate is a real defect and
         # the last 5 malformed corpus cases — it has its own bucket, and this
-        # counts it rather than hiding it.
+        # counts it rather than hiding it. fill_opacity now sits in COMMON
+        # because it is inherited and string-typed, so every class exercises
+        # that site; Rect is the only one that emits it twice.
         duplicates = klass == Sirena::Svg::Rect ? 1 : 0
         expected = writers.size + COMMON_ATTRIBUTES.size + duplicates
 
