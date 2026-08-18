@@ -34,7 +34,7 @@ module Sirena
 
       # Hook for element-specific attributes
       #
-      # @return [Array<String>] array of attribute strings
+      # @return [Array<Array>] name/value pairs
       def element_attributes
         [
           ['x1', x1],

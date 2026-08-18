@@ -68,7 +68,14 @@ module Sirena
       # @param pairs [Array<Array>] name/value pairs
       # @return [String] the concatenated attributes
       def attributes(pairs)
-        pairs.filter_map do |name, value|
+        pairs.filter_map do |pair|
+          unless pair.is_a?(Array) && pair.size == 2
+            raise ArgumentError,
+                  "expected a [name, value] pair, got #{pair.inspect}. " \
+                  'element_attributes returns pairs, not rendered markup.'
+          end
+
+          name, value = pair
           attribute(name, value) unless value.nil?
         end.join
       end
