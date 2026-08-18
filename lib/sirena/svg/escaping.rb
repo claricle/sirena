@@ -30,8 +30,11 @@ module Sirena
         "'" => '&apos;'
       ).freeze
 
-      TEXT_PATTERN = /[&<>]/
-      ATTRIBUTE_PATTERN = /[&<>"']/
+      # Derived from the maps, never written out again. A hand-kept pattern
+      # drifts: add a character to a map, forget the regex, and that character
+      # silently stops being escaped while every test still passes.
+      TEXT_PATTERN = Regexp.union(TEXT.keys).freeze
+      ATTRIBUTE_PATTERN = Regexp.union(ATTRIBUTE.keys).freeze
 
       module_function
 
@@ -63,21 +66,33 @@ module Sirena
         %( #{name}="#{escape_attribute(value)}")
       end
 
-      # Renders a list of name/value pairs, skipping any with a nil value.
+      # Renders name/value pairs, skipping any whose value is nil.
       #
       # @param pairs [Array<Array>] name/value pairs
       # @return [String] the concatenated attributes
+      # @raise [ArgumentError] if handed anything but a pair
       def attributes(pairs)
-        pairs.filter_map do |pair|
-          unless pair.is_a?(Array) && pair.size == 2
-            raise ArgumentError,
-                  "expected a [name, value] pair, got #{pair.inspect}. " \
-                  'element_attributes returns pairs, not rendered markup.'
-          end
+        pairs.filter_map { |pair| render(pair) }.join
+      end
 
-          name, value = pair
-          attribute(name, value) unless value.nil?
-        end.join
+      # @api private
+      def render(pair)
+        name, value = as_pair(pair)
+
+        attribute(name, value) unless value.nil?
+      end
+
+      # The pairs contract is what makes the escaping boundary provable, so a
+      # subclass still returning rendered markup has to fail loudly. Dropping
+      # it silently would lose every attribute on that element.
+      #
+      # @api private
+      def as_pair(pair)
+        return pair if pair.is_a?(Array) && pair.size == 2
+
+        raise ArgumentError,
+              "expected a [name, value] pair, got #{pair.inspect}. " \
+              'element_attributes returns pairs, not rendered markup.'
       end
     end
   end

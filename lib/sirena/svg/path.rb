@@ -17,6 +17,8 @@ module Sirena
       attribute :marker_end, :string
       attribute :marker_start, :string
 
+      writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start
+
       xml do
         root 'path'
         map_attribute 'id', to: :id
@@ -57,19 +59,6 @@ module Sirena
             'Z'
           end
         end.join(' ')
-      end
-
-      protected
-
-      def element_attributes
-        [
-          ['d', d],
-          ['stroke-dasharray', stroke_dasharray],
-          ['stroke-linecap', stroke_linecap],
-          ['stroke-linejoin', stroke_linejoin],
-          ['marker-end', marker_end],
-          ['marker-start', marker_start]
-        ]
       end
     end
   end

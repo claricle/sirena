@@ -19,6 +19,8 @@ module Sirena
       attribute :stroke_dasharray, :string
       attribute :fill_opacity, :string
 
+      writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray, :fill_opacity
+
       xml do
         root 'rect'
         map_attribute 'id', to: :id
@@ -36,21 +38,6 @@ module Sirena
         map_attribute 'stroke-dasharray', to: :stroke_dasharray
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
-      end
-
-      protected
-
-      def element_attributes
-        [
-          ['x', x],
-          ['y', y],
-          ['width', width],
-          ['height', height],
-          ['rx', rx],
-          ['ry', ry],
-          ['stroke-dasharray', stroke_dasharray],
-          ['fill-opacity', fill_opacity]
-        ]
       end
     end
   end

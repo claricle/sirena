@@ -11,6 +11,8 @@ module Sirena
     class Polygon < Element
       attribute :points, :string
 
+      writes_attributes :points
+
       xml do
         root 'polygon'
         map_attribute 'id', to: :id
@@ -29,14 +31,6 @@ module Sirena
       # @return [String] Points string for polygon
       def self.build_points(coords)
         coords.map { |x, y| "#{x},#{y}" }.join(' ')
-      end
-
-      protected
-
-      def element_attributes
-        [
-          ['points', points]
-        ]
       end
     end
   end

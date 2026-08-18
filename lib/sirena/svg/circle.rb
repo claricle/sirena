@@ -13,6 +13,8 @@ module Sirena
       attribute :cy, :float
       attribute :r, :float
 
+      writes_attributes :cx, :cy, :r
+
       xml do
         root 'circle'
         map_attribute 'id', to: :id
@@ -25,16 +27,6 @@ module Sirena
         map_attribute 'stroke-width', to: :stroke_width
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
-      end
-
-      protected
-
-      def element_attributes
-        [
-          ['cx', cx],
-          ['cy', cy],
-          ['r', r]
-        ]
       end
     end
   end
