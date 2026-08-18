@@ -42,25 +42,43 @@ TEMPLATE_PLACEHOLDER = /\$\{[^}]*\}/
 
 # Extracted from a cypress .html fixture without decoding: the file holds
 # `--&gt;` where the source had `-->`. Not mermaid.
-HTML_ENTITY = /&(?:lt|gt|amp|nbsp|quot|apos|#\d+);/
+# Only the bracket entities. &amp;, &nbsp;, &quot; and numeric references are
+# all legal inside a mermaid label — block/004 uses &nbsp; deliberately and
+# mmdc renders it. Flagging those libelled a valid diagram.
+HTML_ENTITY = /&(?:lt|gt);/
 
 # Structural truncation: the extractor cut the source mid-construct.
 TRUNCATIONS = [
   /\[\s*\z/,          # class C1[
-  /\bnamespace\s+\\?\s*\z/,
-  /:\s*\z/,           # CAR ||--o{ DRIVER :
-  /\bstate\s*\z/
+  /:\s*\z/            # CAR ||--o{ DRIVER :
 ].freeze
+
+# The extractor indented frontmatter bodies, so the closing `---` no longer
+# sits at column 0 and mermaid never closes the block: "Diagrams beginning
+# with --- are not valid". 44 cases have an indented closer and every one is
+# rejected; the single case with a column-0 closer renders fine. That is
+# extraction damage, not a diagram mermaid refuses.
+INDENTED_FRONTMATTER = /\A---\s*\n(?:.*\n)*?[ \t]+---\s*$/
 
 def artifact_reason(source)
   return 'literal \\n escape' if source.match?(LITERAL_NEWLINE)
   return 'uninterpolated ${} template' if source.match?(TEMPLATE_PLACEHOLDER)
   return 'html-entity escaped source' if source.match?(HTML_ENTITY)
 
+  return 'indented frontmatter closer' if source.match?(INDENTED_FRONTMATTER)
+
   stripped = source.rstrip
-  return 'truncated source' if TRUNCATIONS.any? { |t| stripped.match?(t) }
+  return 'truncated source' if TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
 
   nil
+end
+
+# Mermaid renders a syntax error AS an SVG — the bomb graphic, tagged
+# aria-roledescription="error". So the presence of a .svg is not evidence the
+# case is valid; 50 references are error graphics, including two info cases
+# whose upstream test names say they should throw.
+def error_graphic?(path)
+  File.exist?(path) && File.read(path).include?('aria-roledescription="error"')
 end
 
 # Validated the same way scripts/corpus_sweep.rb validates its arguments.
@@ -99,9 +117,26 @@ def cases(types)
   end
 end
 
-def reference?(entry)
+# Rendering evidence, but only a REAL render. An SVG carrying mermaid's error
+# graphic means the opposite of what its existence suggests.
+def rendered?(entry)
   name = File.basename(entry[:base])
-  File.exist?(File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg"))
+  sidecar = "#{entry[:base]}.svg"
+  reference = File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg")
+
+  [sidecar, reference].any? { |path| File.exist?(path) && !error_graphic?(path) }
+end
+
+# mermaid rejected it, by either route: an .error sidecar, or an SVG that is
+# actually the error graphic.
+def rejected?(entry)
+  name = File.basename(entry[:base])
+  return true if File.exist?("#{entry[:base]}.error")
+
+  [
+    "#{entry[:base]}.svg",
+    File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg")
+  ].any? { |path| error_graphic?(path) }
 end
 
 # Cases repeat across type directories; a twin carries its evidence over.
@@ -109,38 +144,53 @@ def index_by_digest(entries)
   entries.group_by { |entry| entry[:digest] }
 end
 
-def classify(entry, twins)
-  artifact = artifact_reason(entry[:source])
-  rendered = File.exist?("#{entry[:base]}.svg") || reference?(entry)
-  rejected = File.exist?("#{entry[:base]}.error")
+def twins_of(entry, group)
+  group.reject { |other| other[:path] == entry[:path] }
+end
 
-  # Rendering evidence outranks everything: mmdc produced output, so whatever
-  # else the source looks like, it is a case mermaid accepts. Without this
-  # precedence the buckets are not a partition — 29 cases are both rendered
-  # and structurally damaged, because mmdc rendered the corruption rather
-  # than rejecting it (flowchart/026 has a node literally named "\nA").
-  #
-  # Those cases stay `valid` but are flagged, so nobody reads the valid set
-  # as clean.
-  if rendered
+# Precedence, and the order is the whole design:
+#
+#   1. A real render, on this case or a byte-identical twin. mmdc produced
+#      output, so mermaid accepts it whatever the source looks like.
+#   2. Structural damage. This outranks rejection evidence, because 44 of the
+#      rejections ARE the damage — an indented frontmatter closer makes mermaid
+#      refuse a diagram it otherwise supports.
+#   3. Rejection, on this case or a twin.
+#   4. Nothing either way.
+#
+# Twin evidence is checked in both directions at each step. Checking it only
+# for renders gave byte-identical files opposite verdicts depending on which
+# directory they sat in.
+def classify(entry, group)
+  twins = twins_of(entry, group)
+  artifact = artifact_reason(entry[:source])
+
+  if rendered?(entry)
     return ['valid', "mmdc rendered it (source also looks damaged: #{artifact})"] if artifact
 
     return ['valid', 'mmdc rendered it']
   end
 
-  # The trap. An .error generated from a damaged source is evidence about the
-  # damage, not about the diagram.
-  return ['artifact', artifact] if artifact
-  return ['invalid', 'mmdc rejected it'] if rejected
-
-  twin = twins.find { |t| t[:path] != entry[:path] && (File.exist?("#{t[:base]}.svg") || reference?(t)) }
+  twin = twins.find { |other| rendered?(other) }
   return ['valid', "twin rendered: #{File.basename(twin[:base])}"] if twin
+
+  return ['artifact', artifact] if artifact
+  return ['invalid', 'mmdc rejected it'] if rejected?(entry)
+
+  twin = twins.find { |other| rejected?(other) }
+  return ['invalid', "twin rejected: #{File.basename(twin[:base])}"] if twin
 
   ['unknown', 'no evidence']
 end
 
 types = ARGV.reject { |a| a.start_with?('--') }
 write = ARGV.include?('--write')
+
+# Checked before doing any work: a filtered --write would replace the whole
+# committed file with a fraction of it.
+if write && !types.empty?
+  abort '--write needs the whole corpus; a type filter would truncate the file.'
+end
 
 entries = cases(types)
 by_digest = index_by_digest(entries)
