@@ -30,7 +30,9 @@ module Sirena
       # only when nothing was injected. Gantt needs a reference date when the
       # source gives none. Pin it and rendering is a pure function of its
       # input; leave it unset and the one read below supplies the real date.
-      # Specs, the byte-identity gates and the layout comparator all pin it.
+      # Only spec/sirena/determinism_spec.rb pins it today. The byte-identity
+      # gate and the layout comparator that would also want it do not exist
+      # yet — do not read this as "already covered".
       attr_writer :today
 
       def today
