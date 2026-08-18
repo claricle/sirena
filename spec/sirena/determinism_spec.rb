@@ -37,8 +37,11 @@ RSpec.describe Sirena::Engine do
     }.each do |type, file|
       it "is stable across runs for #{type}" do
         source = corpus_source(type, file)
-        first = render(source)
-        second = render(source)
+        # Pinned, or this file is itself date-dependent: two unpinned gantt
+        # renders straddling midnight differ, and the example that exists to
+        # prove date-independence goes red for the wrong reason.
+        first = render(source, today: Date.new(2024, 6, 1))
+        second = render(source, today: Date.new(2024, 6, 1))
 
         expect(first).to eq(second)
       end
@@ -180,11 +183,22 @@ RSpec.describe Sirena::Engine do
     # list, so `Date . today` and `rand (10)` are the same calls. A pattern
     # without \s* passes while they stay on a render path.
     let(:ambient) do
-      /\brand\s*\(|\b(?:Date|Time|DateTime)\s*\.\s*(?:today|now)\b/
+      # Seeded mutations proved the narrower version blind: `rand 10000`
+      # without parentheses, bare `Time.new`, and SecureRandom all slipped
+      # past a pattern that required `rand(`.
+      #
+      # Date.new and Time.new WITH arguments are deterministic, so only the
+      # argument-less Time.new counts.
+      /\brand\b|\bsrand\b|\bSecureRandom\b|
+       \b(?:Date|DateTime)\s*\.\s*(?:today|now)\b|
+       \bTime\s*\.\s*now\b|
+       \bTime\s*\.\s*new\b(?!\s*\()/x
     end
 
     it 'calls rand nowhere and the clock only in the injectable reader' do
-      offenders = Dir.glob(File.expand_path('../../lib/sirena/**/*.rb', __dir__))
+      # lib/sirena.rb itself sits outside lib/sirena/, so the old glob
+      # never scanned the file that registers every diagram type.
+      offenders = Dir.glob(File.expand_path('../../lib/**/*.rb', __dir__))
         .flat_map { |file| ambient_reads_in(file) }
 
       expect(offenders).to be_empty,

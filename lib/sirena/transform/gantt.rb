@@ -133,12 +133,13 @@ module Sirena
 
       # Date.parse fills whatever the input omits from the system clock, so
       # "08/17" under `dateFormat MM/DD` picked up the real year and defeated
-      # the injected reference date. _parse reports which fields the input
-      # actually carried, so a missing year comes from today instead.
-      # Each missing field falls back to the reference date, never the system
-      # clock. Requiring both a month and a day here would have broken
-      # `2024/01`, which the grammar accepts and Date.parse read as
-      # 2024-01-01; the day defaults to the 1st to keep that reading.
+      # the injected reference date. Date._parse reports which fields the
+      # input actually carried, so nothing here reads the clock.
+      #
+      # Missing fields do not all come from the reference date, though. Only
+      # the year does. A missing day becomes the 1st, and a missing month
+      # becomes January when the year is explicit — both to preserve what
+      # Date.parse returned, so "2024/01" still reads as 2024-01-01.
       def parse_date(date_str)
         parts = Date._parse(date_str.to_s)
         # Ordinal dates such as 2024-032 carry a day-of-year instead of a
