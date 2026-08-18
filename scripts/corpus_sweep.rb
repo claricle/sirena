@@ -14,6 +14,7 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'sirena'
 require 'timeout'
 require 'rexml/document'
+require 'strscan'
 
 CASE_TIMEOUT = 10
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
@@ -44,16 +45,34 @@ PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
 
 # REXML is lenient about undeclared entity references, so `&nbsp;` parsed
 # clean and still counted as a pass. xmllint refuses the same string with
-# "Entity 'nbsp' not defined". Numeric references are always legal.
+# "Entity 'nbsp' not defined". Numeric references are always legal, and
+# nothing inside a comment or a CDATA section is a reference at all.
 #
-# Comments and CDATA are cut first because nothing inside them is an entity
-# reference. Without that, a label rendering `<!-- &nbsp; -->` produced valid
-# SVG that this refused.
+# One left-to-right pass, because whichever construct opens first owns the
+# text that follows. Stripping comments and CDATA with two independent
+# regexes looked equivalent and was not: in `<![CDATA[<!--]]>&nbsp;<!-- -->`
+# the comment pattern started inside the CDATA and swallowed the real
+# entity after it.
 def undeclared_entity?(output)
-  scannable = output.gsub(/<!--.*?-->/m, '').gsub(/<!\[CDATA\[.*?\]\]>/m, '')
-  scannable.scan(/&([^;&\s]+);/).flatten.any? do |ref|
-    !ref.start_with?('#') && !PREDEFINED_ENTITIES.include?(ref)
+  scanner = StringScanner.new(output)
+
+  until scanner.eos?
+    if scanner.scan('<!--')
+      break unless scanner.skip_until(/-->/)
+    elsif scanner.scan('<![CDATA[')
+      break unless scanner.skip_until(/\]\]>/)
+    elsif (ref = scanner.scan(/&([^;&<\s]{1,64});/))
+      name = ref[1..-2]
+      return true unless name.start_with?('#') || PREDEFINED_ENTITIES.include?(name)
+    else
+      # Not a construct we track: step past this character, then jump to the
+      # next one that could start one.
+      scanner.getch
+      scanner.skip(/[^&<]*/)
+    end
   end
+
+  false
 end
 
 def render_result(source)
