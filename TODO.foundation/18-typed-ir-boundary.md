@@ -44,15 +44,28 @@ covers. Sirena renders three structurally different kinds:
 Apply these tests **in order**. The order matters: a type can satisfy
 more than one, and the first match wins.
 
-1. **pre-positioned** — the source dictates placement, so there is nothing
-   to lay out. Block is the clear case: the author's `columns` fixes the
-   grid (`transform/block.rb:46`). Block also emits `from`/`to`
-   connectivity (`transform/block.rb:188`), which is exactly why this test
-   runs first.
-2. **graph-shaped** — the transform emits **source/target connectivity**.
-   Sankey is the clear case: `SankeyTransform` emits `nodes:` and `flows:`
-   with `source:`/`target:` (`transform/sankey.rb:184`). It looks like a
-   chart and is a graph. Containment on its own does not qualify.
+1. **pre-positioned** — the *notation's grammar* fully determines layout,
+   for every valid document, with no layout engine involved. Block is the
+   clear case: the author's `columns` fixes the grid
+   (`transform/block.rb:46`). Block also emits `from`/`to` connectivity
+   (`transform/block.rb:188`), which is exactly why this test runs first.
+
+   Ask it of the notation, not of one file. Every Sirena transform happens
+   to emit final coordinates today, so "is the output positioned" would
+   match all 24 types and collapse the taxonomy. A notation where *some*
+   elements carry positions and others do not — DOT with `pos=`, BPMN with
+   BPMNDI bounds on some shapes — is **not** pre-positioned: it still needs
+   a layout engine for the rest, so it falls through to test 2.
+2. **graph-shaped** — the transform emits edges whose **endpoints identify
+   nodes**, by whatever spelling. Sankey is the obvious case: it emits
+   `nodes:` and `flows:` carrying literal `source:`/`target:`
+   (`transform/sankey.rb:184`). It looks like a chart and is a graph.
+
+   Architecture is the case that shows why the test is about recoverable
+   identity rather than key names: it emits `edge:` plus `from_x/from_y/
+   to_x/to_y` (`transform/architecture.rb:232-238`) and no `source`/`target`
+   key anywhere, yet the endpoints are recoverable from the embedded edge
+   model. It is graph-shaped. Containment on its own does not qualify.
 3. **data-shaped** — everything else: values, or placed content carrying no
    connectivity. Pie is the clear case (`PieTransform` at `pie.rb:17` emits
    no node boxes). This is the residual category, so every type lands
@@ -86,9 +99,12 @@ the foundation close with the architecture issue #2 asks for half-built.
    what is notation-specific, what is layout-specific.
 2. Define the IR's three shapes from that comparison, using the
    notation-neutrality rule above as the test for every field.
-3. Decide per Mermaid type which shape it maps to, and record it. A type
-   whose mapping is unclear is resolved before implementation, not by
-   whoever reaches it first.
+3. Decide per Mermaid type which shape it maps to, and record it.
+   **Persist it** as `docs/ir-type-map.md` — one row per type: the shape,
+   the transform, and the evidence line. A type whose mapping is unclear is
+   resolved before implementation, not by whoever reaches it first. The
+   categories above are illustrated rather than enumerated precisely so
+   that this file, not the prose, carries the per-type rulings.
 4. Migrate Mermaid's transforms onto the IR one type at a time, corpus
    pass set unchanged at each step.
 5. Migrate the PlantUML class spike onto it — the proof the IR is not
@@ -101,8 +117,11 @@ the foundation close with the architecture issue #2 asks for half-built.
 ## Done when
 
 - The IR is defined, committed, and consumed by both Mermaid and the
-  PlantUML class spike.
-- Every Mermaid type maps to one of the three shapes. No exception list.
+  PlantUML class spike. Note the asymmetry: 18 **starts** on 14's survey
+  and 16's spike, but cannot **close** until 14's rollout is complete,
+  because elkrb consuming the IR depends on it.
+- Every Mermaid type maps to one of the three shapes, recorded in
+  `docs/ir-type-map.md` with evidence. No exception list.
 - No IR field names or encodes a notation-specific construct — asserted
   by a spec, not by inspection.
 - The corpus pass set is unchanged across the migration, byte-identical

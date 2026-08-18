@@ -104,7 +104,9 @@ zero differing bytes — the scoreboard's pass/fail rows do not encode
 output bytes, so "scoreboard unchanged" is not the same claim.
 Fake-notation spec passes; a boundary spec asserts no cross-notation
 model sharing and no notation branching in the engine (the assertion
-item 18 relies on); a **cold-subprocess CLI spec** renders a fake
+item 18 relies on — "model" here means a notation's own parse output,
+which stays private; the typed IR is deliberately shared, and item 18
+step 6 moves this boundary); a **cold-subprocess CLI spec** renders a fake
 external notation without editing central boot code, proving the
 discovery mechanism actually works out of process; `lib/sirena.rb` ≤ 40
 lines; scoreboard unchanged; CLI extended with specs.

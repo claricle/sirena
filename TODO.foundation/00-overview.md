@@ -101,8 +101,8 @@ flowchart TD
     E10 --> G12[12 PlantUML phase 1]
     B04 -.completion.-> S16
     I14 -.completion.-> S16
-    S16 --> T18[18 typed IR]
-    I14 --> T18
+    S16 -.class shapes.-> T18[18 typed IR]
+    I14 -.emit/accept survey.-> T18
     T18 -.completion.-> G12
     S16 --> G12
     B04 --> G12
@@ -211,6 +211,6 @@ Two rules that make it real:
 | 15 | Docs site build integrity | now |
 | 16 | PlantUML class spike (registry proof) | after 10; completes after 04 + 14's comparator |
 | 17 | Release + versioning (0.x) | after 19a (which follows 01) |
-| 18 | Typed IR — owner-ruled INTO the foundation 2026-08-13 | after 10, 14's survey and 16's spike; gates 12's Done |
+| 18 | Typed IR boundary | after 10, 14's survey and 16's spike; gates 12's Done |
 | 19a | CI lane skeleton + external pins | after 01's migration and 03a — the suite must be green before lanes can be |
 | 19b | CI consolidation + measured budgets | after the owned gates exist |
