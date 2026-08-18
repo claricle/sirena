@@ -63,14 +63,38 @@ def artifact_reason(source)
   nil
 end
 
-def cases(types)
-  available = Dir.children(CORPUS_ROOT).select do |d|
-    File.directory?(File.join(CORPUS_ROOT, d))
+# Validated the same way scripts/corpus_sweep.rb validates its arguments.
+# Without it a typo silently reports "0 cases" and exits successfully, which
+# reads as a measurement rather than a mistake.
+def corpus_types(requested)
+  available = Dir.children(CORPUS_ROOT).select do |dir|
+    File.directory?(File.join(CORPUS_ROOT, dir))
   end
-  selected = types.empty? ? available.sort : types
-  selected.flat_map do |type|
+  return available.sort if requested.empty?
+
+  unknown = requested - available
+  unless unknown.empty?
+    abort "Unknown corpus type(s): #{unknown.join(', ')}\n" \
+          "Available: #{available.sort.join(', ')}"
+  end
+
+  requested
+end
+
+# Each case is read from disk exactly once. The source and its digest are
+# carried through rather than recomputed — three separate reads over ~2000
+# files is avoidable work.
+def cases(types)
+  corpus_types(types).flat_map do |type|
     Dir.glob(File.join(CORPUS_ROOT, type, '*.mmd')).map do |path|
-      { type: type, path: path, base: path.delete_suffix('.mmd') }
+      source = File.read(path)
+      {
+        type: type,
+        path: path,
+        base: path.delete_suffix('.mmd'),
+        source: source,
+        digest: Digest::SHA256.hexdigest(source)
+      }
     end
   end
 end
@@ -82,12 +106,11 @@ end
 
 # Cases repeat across type directories; a twin carries its evidence over.
 def index_by_digest(entries)
-  entries.group_by { |e| Digest::SHA256.hexdigest(File.read(e[:path])) }
+  entries.group_by { |entry| entry[:digest] }
 end
 
 def classify(entry, twins)
-  source = File.read(entry[:path])
-  artifact = artifact_reason(source)
+  artifact = artifact_reason(entry[:source])
   rendered = File.exist?("#{entry[:base]}.svg") || reference?(entry)
   rejected = File.exist?("#{entry[:base]}.error")
 
@@ -123,8 +146,7 @@ entries = cases(types)
 by_digest = index_by_digest(entries)
 
 rows = entries.map do |entry|
-  digest = Digest::SHA256.hexdigest(File.read(entry[:path]))
-  verdict, evidence = classify(entry, by_digest[digest])
+  verdict, evidence = classify(entry, by_digest[entry[:digest]])
   {
     'case' => entry[:path].sub("#{CORPUS_ROOT}/", ''),
     'verdict' => verdict,
