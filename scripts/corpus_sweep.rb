@@ -92,6 +92,14 @@ def report(sweep_results, list_failing:)
 
   puts 'TYPE              PASS   FAIL  TIMEOUT    RATE'
   sweep_results.sort.each do |type, results|
+    # Type discovery only keeps directories that hold cases, so an empty one
+    # means the files went away mid-run. Report it rather than dividing by
+    # zero on the way to saying nothing.
+    if results.empty?
+      warn "#{type}: no cases at sweep time; skipped"
+      next
+    end
+
     tally = results.values.tally
     passed = tally.fetch(:pass, 0)
     puts format('%-15s %6d %6d %8d %6.1f%%',
