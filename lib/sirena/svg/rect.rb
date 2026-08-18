@@ -41,16 +41,16 @@ module Sirena
       protected
 
       def element_attributes
-        attrs = []
-        attrs << %( x="#{x}") if x
-        attrs << %( y="#{y}") if y
-        attrs << %( width="#{width}") if width
-        attrs << %( height="#{height}") if height
-        attrs << %( rx="#{rx}") if rx
-        attrs << %( ry="#{ry}") if ry
-        attrs << %( stroke-dasharray="#{stroke_dasharray}") if stroke_dasharray
-        attrs << %( fill-opacity="#{fill_opacity}") if fill_opacity
-        attrs
+        [
+          ['x', x],
+          ['y', y],
+          ['width', width],
+          ['height', height],
+          ['rx', rx],
+          ['ry', ry],
+          ['stroke-dasharray', stroke_dasharray],
+          ['fill-opacity', fill_opacity]
+        ]
       end
     end
   end
