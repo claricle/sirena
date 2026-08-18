@@ -102,6 +102,13 @@ RSpec.describe Sirena::Engine do
       expect(parsed_gantt_date('2024-032', early)).to eq(Date.new(2024, 2, 1))
     end
 
+    # Date.parse anchored a missing month to January whenever the year was
+    # explicit. Filling it from the pin instead silently moved the task.
+    it 'anchors a missing month to January when the year is explicit' do
+      expect(parsed_gantt_date('017/2024', Date.new(2020, 6, 15)))
+        .to eq(Date.new(2024, 1, 17))
+    end
+
     it 'takes only the missing fields from the pin' do
       expect(parsed_gantt_date('2024-03-05', early)).to eq(Date.new(2024, 3, 5))
       expect(parsed_gantt_date('nonsense', early)).to eq(early)
