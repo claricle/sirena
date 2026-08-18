@@ -135,5 +135,5 @@ the foundation close with the architecture issue #2 asks for half-built.
 ## Files
 
 `lib/sirena/ir/**` (new), `lib/sirena/transform/*`,
-`lib/sirena/notation/**`, `spec/sirena/ir/**` (new), and item 10's
-boundary spec.
+`lib/sirena/notation/**`, `spec/sirena/ir/**` (new),
+`docs/ir-type-map.md` (new), and item 10's boundary spec.
