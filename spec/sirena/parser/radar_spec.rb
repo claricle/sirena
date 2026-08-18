@@ -205,6 +205,115 @@ RSpec.describe Sirena::Parser::RadarParser do
       end
     end
 
+    context "with the curve value-block constructs corpus case 003 uses" do
+      it "parses a curve with a space before the value block" do
+        source = <<~MERMAID
+          radar-beta
+              axis A, B, C
+              curve c1 {3, 2, 1}
+        MERMAID
+
+        diagram = parser.parse(source)
+        curve = diagram.curves.first
+        expect(curve.value_for("A")).to eq(3.0)
+        expect(curve.value_for("C")).to eq(1.0)
+      end
+
+      it "parses named values without colons" do
+        source = <<~MERMAID
+          radar-beta
+              axis A, B
+              curve c1{A 1, B 2}
+        MERMAID
+
+        diagram = parser.parse(source)
+        curve = diagram.curves.first
+        expect(curve.value_for("A")).to eq(1.0)
+        expect(curve.value_for("B")).to eq(2.0)
+      end
+
+      it "parses a value block spanning multiple lines" do
+        source = <<~MERMAID
+          radar-beta
+              axis A, B, C
+              curve c1{
+                  A: 1, B: 2,
+                  C: 3
+              }
+        MERMAID
+
+        diagram = parser.parse(source)
+        curve = diagram.curves.first
+        expect(curve.value_for("A")).to eq(1.0)
+        expect(curve.value_for("B")).to eq(2.0)
+        expect(curve.value_for("C")).to eq(3.0)
+      end
+
+      # A one-axis statement yields a Hash rather than an Array, and
+      # Kernel#Array turns a Hash into its key/value pairs. Assignment used
+      # to hide that because a later statement overwrote it; accumulating
+      # keeps it, and the renderer then dies on a Symbol index. Every
+      # existing example here used multi-axis statements, which is why the
+      # regression got through.
+      it "accumulates a single-axis statement into a later one" do
+        source = <<~MERMAID
+          radar-beta
+              axis A
+              axis B, C
+              curve c1{1, 2, 3}
+        MERMAID
+
+        diagram = parser.parse(source)
+        expect(diagram.axes.map(&:id)).to eq(["A", "B", "C"])
+      end
+
+      it "accumulates axes across multiple axis statements" do
+        source = <<~MERMAID
+          radar-beta
+              axis A, B, C
+              axis D["Dee"], E["Ee"]
+              curve c1{1, 2, 3, 4, 5}
+        MERMAID
+
+        diagram = parser.parse(source)
+        expect(diagram.axes.map(&:id)).to eq(["A", "B", "C", "D", "E"])
+        expect(diagram.axes.map(&:label))
+          .to eq(["A", "B", "C", "Dee", "Ee"])
+        # Every position, so a mis-mapping across the two statements
+        # cannot hide behind a single spot check.
+        expect(diagram.curves.first.values)
+          .to eq("A" => 1.0, "B" => 2.0, "C" => 3.0, "D" => 4.0, "E" => 5.0)
+      end
+
+      it "parses the full corpus case" do
+        source = File.read(
+          File.expand_path(
+            "../../mermaid/radar/003_rendering_radar_spec_radar_2.mmd",
+            __dir__
+          )
+        )
+
+        diagram = parser.parse(source)
+        expect(diagram.title).to eq("My favorite ninjas")
+        expect(diagram.axes.map(&:id))
+          .to eq(["Agility", "Speed", "Strength", "Stam", "Intel"])
+        expect(diagram.curves.map(&:id)).to eq(["Ninja1", "Ninja2", "Ninja3"])
+        expect(diagram.curves[0].values)
+          .to eq("Agility" => 2.0, "Speed" => 2.0, "Strength" => 3.0,
+                 "Stam" => 5.0, "Intel" => 0.0)
+        expect(diagram.curves[1].values)
+          .to eq("Agility" => 2.0, "Speed" => 3.0, "Strength" => 4.0,
+                 "Stam" => 1.0, "Intel" => 5.0)
+        expect(diagram.curves[2].values)
+          .to eq("Agility" => 3.0, "Speed" => 2.0, "Strength" => 1.0,
+                 "Stam" => 5.0, "Intel" => 4.0)
+        expect(diagram.options).to include(
+          show_legend: true, ticks: 3, max: 8.0, min: 0.0,
+          graticule: "polygon"
+        )
+      end
+    end
+
     context "with complex example" do
       it "parses a full radar diagram" do
         source = <<~MERMAID
