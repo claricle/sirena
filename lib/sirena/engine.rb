@@ -170,7 +170,7 @@ module Sirena
     # @param transform_class [Class] transform class
     # @param today [Date, nil] reference date, or nil for the real date
     # @return [Object] graph structure
-    def transform_diagram(diagram, transform_class, today = @today)
+    def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
       # Only Transform::Base subclasses consume a reference date. Seven
