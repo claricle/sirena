@@ -45,8 +45,13 @@ PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
 # REXML is lenient about undeclared entity references, so `&nbsp;` parsed
 # clean and still counted as a pass. xmllint refuses the same string with
 # "Entity 'nbsp' not defined". Numeric references are always legal.
+#
+# Comments and CDATA are cut first because nothing inside them is an entity
+# reference. Without that, a label rendering `<!-- &nbsp; -->` produced valid
+# SVG that this refused.
 def undeclared_entity?(output)
-  output.scan(/&([^;&\s]+);/).flatten.any? do |ref|
+  scannable = output.gsub(/<!--.*?-->/m, '').gsub(/<!\[CDATA\[.*?\]\]>/m, '')
+  scannable.scan(/&([^;&\s]+);/).flatten.any? do |ref|
     !ref.start_with?('#') && !PREDEFINED_ENTITIES.include?(ref)
   end
 end
