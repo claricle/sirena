@@ -185,6 +185,64 @@ RSpec.describe Sirena::Parser::ClassDiagramParser do
       expect(diagram.direction).to eq('TB')
     end
 
+    # Clause order matters and ours was inverted. Each of these is checked
+    # against mmdc 11.12.0 rather than against what looks reasonable.
+    describe 'class text labels' do
+      def entities(source)
+        parser.parse(source).entities.map { |e| [e.id, e.name] }
+      end
+
+      it 'uses the label for display and keeps the id' do
+        expect(entities(%(classDiagram\n class C1["Class One"]\n)))
+          .to eq([['C1', 'Class One']])
+      end
+
+      it 'lets a label win over the generic, as mermaid does' do
+        expect(entities(%(classDiagram\n class Animal~T~["A label"]\n)))
+          .to eq([['Animal', 'A label']])
+      end
+
+      it 'still appends the generic when there is no label' do
+        expect(entities(%(classDiagram\n class Animal~T~\n)))
+          .to eq([['Animal', 'Animal~T~']])
+      end
+
+      it 'falls back to the id for an empty label' do
+        expect(entities(%(classDiagram\n class C1[]\n)))
+          .to eq([['C1', 'C1']])
+      end
+
+      it 'labels a class already created by an earlier relationship' do
+        source = %(classDiagram\n C1 --> C2\n class C1["Later"]\n)
+
+        expect(entities(source)).to eq([['C1', 'Later'], ['C2', 'C2']])
+      end
+
+      it 'accepts a label alongside a stereotype' do
+        [
+          'class C1["L"] <<interface>>',
+          'class Animal~T~["L"] <<svc>>'
+        ].each do |form|
+          expect { parser.parse("classDiagram\n    #{form}\n") }
+            .not_to raise_error, form
+        end
+      end
+
+      # mmdc accepts generic-then-stereotype and rejects the reverse. Ours was
+      # the wrong way round, so these pin the corrected order.
+      it 'accepts the generic before the stereotype' do
+        expect { parser.parse(%(classDiagram\n class C1~T~<<iface>>\n)) }
+          .not_to raise_error
+      end
+
+      it 'rejects orderings mermaid rejects' do
+        ['class C1["L"]~T~', 'class C1<<iface>>~T~'].each do |form|
+          expect { parser.parse("classDiagram\n    #{form}\n") }
+            .to raise_error(Sirena::Parser::ParseError), form
+        end
+      end
+    end
+
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
