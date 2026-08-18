@@ -45,7 +45,7 @@ RSpec.describe Sirena::Engine do
     end
   end
 
-  describe 'the clock is an input, not ambient state' do
+  describe 'the clock is an injected input wherever it matters' do
     let(:source) do
       corpus_source('gantt', '001_rendering_gantt_spec_gantt_0.mmd')
     end
@@ -94,6 +94,12 @@ RSpec.describe Sirena::Engine do
     # rescheduled those tasks to today.
     it 'keeps reading a year-month date as the first of that month' do
       expect(parsed_gantt_date('2024/01', early)).to eq(Date.new(2024, 1, 1))
+    end
+
+    # Ordinal dates carry a day-of-year rather than a month and day, and the
+    # grammar accepts them. An earlier guard discarded them entirely.
+    it 'keeps reading an ordinal date as its day of year' do
+      expect(parsed_gantt_date('2024-032', early)).to eq(Date.new(2024, 2, 1))
     end
 
     it 'takes only the missing fields from the pin' do
@@ -170,7 +176,7 @@ RSpec.describe Sirena::Engine do
       /\brand\s*\(|\b(?:Date|Time|DateTime)\s*\.\s*(?:today|now)\b/
     end
 
-    it 'calls neither rand nor the clock' do
+    it 'calls rand nowhere and the clock only in the injectable reader' do
       offenders = Dir.glob(File.expand_path('../../lib/sirena/**/*.rb', __dir__))
         .flat_map { |file| ambient_reads_in(file) }
 

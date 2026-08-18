@@ -141,6 +141,10 @@ module Sirena
       # 2024-01-01; the day defaults to the 1st to keep that reading.
       def parse_date(date_str)
         parts = Date._parse(date_str.to_s)
+        # Ordinal dates such as 2024-032 carry a day-of-year instead of a
+        # month and day. The grammar accepts them, so they need their own
+        # branch or the guard below would discard them.
+        return Date.ordinal(parts[:year] || today.year, parts[:yday]) if parts[:yday]
         return today unless parts[:mon] || parts[:mday]
 
         Date.new(parts[:year] || today.year,
