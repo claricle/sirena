@@ -136,10 +136,11 @@ module Sirena
       # the injected reference date. Date._parse reports which fields the
       # input actually carried, so nothing here reads the clock.
       #
-      # Missing fields do not all come from the reference date, though. Only
-      # the year does. A missing day becomes the 1st, and a missing month
-      # becomes January when the year is explicit — both to preserve what
-      # Date.parse returned, so "2024/01" still reads as 2024-01-01.
+      # Which field comes from where: the year always comes from the reference
+      # date when absent, and so does the month when no year was given. A
+      # missing day becomes the 1st, and a missing month becomes January when
+      # the year IS explicit — both to preserve what Date.parse returned, so
+      # "2024/01" still reads as 2024-01-01 rather than moving with the pin.
       def parse_date(date_str)
         parts = Date._parse(date_str.to_s)
         # Ordinal dates such as 2024-032 carry a day-of-year instead of a

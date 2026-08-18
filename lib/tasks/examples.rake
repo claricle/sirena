@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+require 'date'
+
+# The generated SVGs are committed, so rendering must not depend on the day it
+# ran. Gantt derives its whole date range from the reference date, so an
+# unpinned run rewrites those files every day with no source change.
+EXAMPLE_TODAY = Date.new(2026, 1, 1)
+
 namespace :examples do
   desc "Generate all example SVGs from source files"
   task :generate do
@@ -53,7 +60,7 @@ namespace :examples do
 
         begin
           # Render to SVG
-          svg = Sirena.render(source, theme: theme)
+          svg = Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
 
           # Write SVG
           File.write(svg_file, svg)
@@ -199,7 +206,7 @@ namespace :examples do
       relative_path = mmd_file.sub(examples_dir + '/', '')
 
       begin
-        Sirena.render(source)
+        Sirena.render(source, today: EXAMPLE_TODAY)
         passed += 1
         print '.'
       rescue => e

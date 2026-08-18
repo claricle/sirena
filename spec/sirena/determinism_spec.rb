@@ -91,6 +91,25 @@ RSpec.describe Sirena::Engine do
       expect(years).to eq([early.year, late.year])
     end
 
+    # Every other example here injects through the constructor. Reverting the
+    # option plumbing left the whole suite green, so these pin the two entry
+    # points a caller actually reaches for.
+    it 'honours a pin passed as a render option' do
+      expect(described_class.new.render(source, today: early))
+        .not_to eq(described_class.new.render(source, today: late))
+    end
+
+    it 'honours a pin passed through Sirena.render' do
+      expect(Sirena.render(source, today: early))
+        .not_to eq(Sirena.render(source, today: late))
+    end
+
+    it 'lets a render option override the constructor' do
+      engine = described_class.new(today: early)
+
+      expect(engine.render(source, today: late)).to eq(render(source, today: late))
+    end
+
     # Injecting the clock must not change how a complete-enough date reads.
     # The grammar accepts a year-month date, and Date.parse read that as the
     # 1st. An earlier fix required both a month and a day, which silently
