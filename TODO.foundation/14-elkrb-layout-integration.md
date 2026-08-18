@@ -6,8 +6,8 @@ references are being rebuilt. INTEGRATION and Done need **both 01 and
 02**: step 1 proves elkrb works functionally under lutaml-model 0.8, and
 that cannot run while the gem still crashes at require. Completion also
 needs 03a, and raises the branch floor 80 → 90 jointly with item 07.
-Blocks: 12; with item 04, blocks 16's completion; and its emit/accept
-survey blocks item 18's start.
+Blocks: 12; with item 04, blocks 16's completion; its emit/accept survey
+blocks item 18's start, and its rollout blocks item 18's completion.
 
 ## Facts
 
