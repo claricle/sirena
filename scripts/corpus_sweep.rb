@@ -49,7 +49,9 @@ PREDEFINED_ENTITIES = %w[amp lt gt quot apos].freeze
 # nothing inside a comment or a CDATA section is a reference at all.
 #
 # One left-to-right pass, because whichever construct opens first owns the
-# text that follows. Stripping comments and CDATA with two independent
+# text that follows. Comments, CDATA and processing instructions each own
+# their contents; entity names carry no length limit in XML, so the scan
+# imposes none. Stripping comments and CDATA with two independent
 # regexes looked equivalent and was not: in `<![CDATA[<!--]]>&nbsp;<!-- -->`
 # the comment pattern started inside the CDATA and swallowed the real
 # entity after it.
@@ -61,7 +63,11 @@ def undeclared_entity?(output)
       break unless scanner.skip_until(/-->/)
     elsif scanner.scan('<![CDATA[')
       break unless scanner.skip_until(/\]\]>/)
-    elsif (ref = scanner.scan(/&([^;&<\s]{1,64});/))
+    elsif scanner.scan('<?')
+      # A processing instruction owns its text too. Without this branch a
+      # `<!--` inside one opened a comment that ran past the PI's end.
+      break unless scanner.skip_until(/\?>/)
+    elsif (ref = scanner.scan(/&([^;&<\s]+);/))
       name = ref[1..-2]
       return true unless name.start_with?('#') || PREDEFINED_ENTITIES.include?(name)
     else
