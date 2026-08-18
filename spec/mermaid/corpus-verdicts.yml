@@ -1,43 +1,43 @@
 ---
 - case: architecture/001_rendering_architecture_spec_architecture_0.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/002_rendering_architecture_spec_architecture_1.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/003_rendering_architecture_spec_architecture_2.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/004_rendering_architecture_spec_architecture_3.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/005_rendering_architecture_spec_architecture_4.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/006_rendering_architecture_spec_architecture_5.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/007_rendering_architecture_spec_architecture_6.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/008_rendering_architecture_spec_architecture_7.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/009_rendering_architecture_spec_architecture_8.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/010_rendering_architecture_spec_architecture_9.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/011_rendering_architecture_spec_architecture_10.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/012_rendering_architecture_spec_architecture_11.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/013_rendering_architecture_spec_architecture_12.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/014_platform_architecture-external_architecture_13.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -69,8 +69,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/024_parsertest_architecture_test_23.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/025_parsertest_architecture_test_24.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -87,14 +87,14 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/030_spec_svgdraw_spec_29.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: architecture/031_spec_mermaidapi_spec_30.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: architecture/032_spec_mermaidapi_spec_31.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: block/001_rendering_block_spec_block_0.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -106,7 +106,7 @@
   evidence: mmdc rendered it
 - case: block/004_example_block_3.mmd
   verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: html-entity escaped source)'
+  evidence: mmdc rendered it
 - case: block/005_parser_a_diagram_with_column_statements_4.mmd
   verdict: unknown
   evidence: no evidence
@@ -363,8 +363,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class/030_platform_yari_class_29.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 005_platform_yari_4'
 - case: class/031_platform_yari_class_30.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -435,20 +435,20 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class/054_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_53.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 027_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_26'
 - case: class/055_parser_should_be_possible_to_apply_a_cssclass_to_a_class_54.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 028_parser_should_be_possible_to_apply_a_cssclass_to_a_class_27'
 - case: class/056_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_55.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 029_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_28'
 - case: class/057_parser_should_be_possible_to_apply_a_style_to_an_individual_node_56.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: class/058_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_57.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 031_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_30'
 - case: class/059_parser_should_be_possible_to_define_and_assign_a_class_using_shorthand_inside_the_diagram_58.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -456,8 +456,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class/061_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_60.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 034_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_33'
 - case: class/062_parser_should_handle_backticked_class_names_61.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -891,14 +891,14 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class_diagram/025_parser_should_be_possible_to_apply_a_css_class_to_a_class_directly_24.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 052_parser_should_be_possible_to_apply_a_css_class_to_a_class_directly_51'
 - case: class_diagram/025_parser_should_handle_classes_within_namespaces_24.mmd
   verdict: valid
   evidence: 'twin rendered: 146_parser_should_handle_classes_within_namespaces_145'
 - case: class_diagram/026_parser_should_be_possible_to_apply_a_css_class_to_a_class_directly_with_struct_25.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 053_parser_should_be_possible_to_apply_a_css_class_to_a_class_directly_with_struct_52'
 - case: class_diagram/026_parser_should_handle_generic_classes_within_namespaces_25.mmd
   verdict: valid
   evidence: 'twin rendered: 147_parser_should_handle_generic_classes_within_namespaces_146'
@@ -921,8 +921,8 @@
   verdict: valid
   evidence: 'twin rendered: 150_parser_should_handle_fully_qualified_class_names_in_relationships_149'
 - case: class_diagram/030_parser_should_be_possible_to_apply_a_style_to_an_individual_node_29.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 057_parser_should_be_possible_to_apply_a_style_to_an_individual_node_56'
 - case: class_diagram/030_parser_should_handle_backticked_class_names_29.mmd
   verdict: artifact
   evidence: uninterpolated ${} template
@@ -933,8 +933,8 @@
   verdict: valid
   evidence: 'twin rendered: 155_parser_should_handle_member_definitions_154'
 - case: class_diagram/032_parser_should_be_possible_to_define_and_assign_a_class_using_shorthand_inside_the_diagram_31.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 059_parser_should_be_possible_to_define_and_assign_a_class_using_shorthand_inside_the_diagram_58'
 - case: class_diagram/032_parser_should_handle_comments_at_the_end_no_trailing_newline_31.mmd
   verdict: valid
   evidence: 'twin rendered: 156_parser_should_handle_comments_at_the_end_no_trailing_newline_155'
@@ -942,8 +942,8 @@
   verdict: valid
   evidence: 'twin rendered: 157_parser_should_handle_a_comment_with_multiple_line_feeds_156'
 - case: class_diagram/033_parser_should_properly_assign_styles_from_a_class_defined_inside_the_diagram_32.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 060_parser_should_properly_assign_styles_from_a_class_defined_inside_the_diagram_59'
 - case: class_diagram/034_parser_should_handle_a_comment_with_mermaid_class_diagram_code_in_them_33.mmd
   verdict: valid
   evidence: 'twin rendered: 158_parser_should_handle_a_comment_with_mermaid_class_diagram_code_in_them_157'
@@ -2157,14 +2157,14 @@
   verdict: unknown
   evidence: no evidence
 - case: error/002_rendering_errordiagram_spec_error_1.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: error/003_spec_diagram-orchestration_spec_2.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: error/004_spec_diagram-orchestration_spec_3.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: flowchart/001_config_0.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -2553,8 +2553,8 @@
   verdict: artifact
   evidence: uninterpolated ${} template
 - case: flowchart/066_parser_should_handle_styles_for_vertices_61.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 152_parser_should_handle_style_definitions_within_number_of_edges_147'
 - case: flowchart/066_parser_should_handle_thick_edges_with_arrows_with_length___length__61.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -2562,8 +2562,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: flowchart/067_parser_should_handle_styles_for_vertices_62.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 152_parser_should_handle_style_definitions_within_number_of_edges_147'
 - case: flowchart/067_parser_should_handle_thick_labelled_edges_with_arrows_with_length___length__62.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -2580,8 +2580,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: flowchart/069_parser_should_handle_text_without_space_64.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 211_parser_should_throw_error_206'
 - case: flowchart/069_parser_should_handle_thick_labelled_edges_with_double_arrows_with_length___length__64.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -2595,8 +2595,8 @@
   verdict: artifact
   evidence: uninterpolated ${} template
 - case: flowchart/071_parser_should_handle_and_minus_66.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 211_parser_should_throw_error_206'
 - case: flowchart/071_parser_should_handle_dotted_labelled_edges_with_length___length__66.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -2616,8 +2616,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: flowchart/073_parser_should_handle_and_minus_68.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 211_parser_should_throw_error_206'
 - case: flowchart/073_parser_should_handle_dotted_labelled_edges_with_arrows_with_length___length__68.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -3414,8 +3414,8 @@
   verdict: unknown
   evidence: no evidence
 - case: git/060_platform_git-graph_git_59.mmd
-  verdict: valid
-  evidence: 'twin rendered: 001_platform_git-graph_0'
+  verdict: invalid
+  evidence: 'twin rejected: 001_platform_git-graph_0'
 - case: git/061_platform_showcase_base_git_60.mmd
   verdict: valid
   evidence: 'twin rendered: 002_platform_showcase_base_1'
@@ -3720,8 +3720,8 @@
   verdict: unknown
   evidence: no evidence
 - case: gitgraph/001_platform_git-graph_0.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: gitgraph/002_platform_showcase_base_1.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -3747,8 +3747,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: info/003_rendering_info_spec_info_2.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: info/004_platform_vertices_info_3.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -3759,11 +3759,11 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: info/007_parser_should_throw_because_of_unsupported_info_grammar_6.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: info/008_parser_should_throw_because_of_unsupported_info_grammar_7.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: info/009_parsertest_info_test_8.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4107,11 +4107,11 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: pie/009_rendering_pie_spec_pie_8.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: pie/010_platform_darshan_pie_9.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 011_platform_darshan_10'
 - case: pie/011_example_pie_10.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4149,8 +4149,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: pie/023_parser_should_handle_simple_pie_with_negative_slice_value_22.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: 'twin rejected: 011_platform_darshan_10'
 - case: pie/024_parser_should_handle_unsafe_properties_23.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4164,8 +4164,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: pie/028_parsertest_pie_test_27.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: pie/029_parsertest_pie_test_28.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4203,11 +4203,11 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: pie/041_parsertest_pie_test_40.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: pie/042_parsertest_pie_test_41.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: pie/043_parsertest_pie_test_42.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4227,8 +4227,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: pie/049_spec_diagram-orchestration_spec_48.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: truncated source)'
+  verdict: artifact
+  evidence: truncated source
 - case: quadrant/001_example_quadrant-chart_0.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4305,80 +4305,80 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: radar/016_parsertest_radar_test_15.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/017_parsertest_radar_test_16.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/018_parsertest_radar_test_17.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/019_parsertest_radar_test_18.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/020_parsertest_radar_test_19.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/021_parsertest_radar_test_20.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/022_parsertest_radar_test_21.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/023_parsertest_radar_test_22.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/024_parsertest_radar_test_23.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/025_parsertest_radar_test_24.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/026_parsertest_radar_test_25.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/027_parsertest_radar_test_26.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/028_parsertest_radar_test_27.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/029_parsertest_radar_test_28.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/030_parsertest_radar_test_29.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/031_parsertest_radar_test_30.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/032_parsertest_radar_test_31.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/033_parsertest_radar_test_32.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/034_parsertest_radar_test_33.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: literal \n escape)'
+  verdict: artifact
+  evidence: literal \n escape
 - case: radar/035_parsertest_radar_test_34.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/036_parsertest_radar_test_35.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/037_parsertest_radar_test_36.mmd
-  verdict: valid
-  evidence: mmdc rendered it
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: radar/038_parsertest_radar_test_37.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/039_parsertest_radar_test_38.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/040_parsertest_radar_test_39.mmd
-  verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: uninterpolated ${} template)'
+  verdict: artifact
+  evidence: uninterpolated ${} template
 - case: radar/041_spec_mermaidapi_spec_40.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -4930,7 +4930,7 @@
   evidence: mmdc rendered it
 - case: state/030_parser_should_handle_notes_for_composite_nested_states_29.mmd
   verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: truncated source)'
+  evidence: mmdc rendered it
 - case: state/031_parser_super_simple_30.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -5040,8 +5040,8 @@
   verdict: valid
   evidence: 'twin rendered: 005_parser_assemble_assemblies_state_assemble_state_assemblies_4'
 - case: state_diagram/005_parser_can_define_multiple_attributes_separated_by_commas_4.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: valid
+  evidence: 'twin rendered: 006_parser_can_define_multiple_attributes_separated_by_commas_5'
 - case: state_diagram/006_parser_an_attribute_can_have_a_dot_in_the_style_5.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -5146,7 +5146,7 @@
   evidence: literal \n escape
 - case: state_diagram/022_parser_should_handle_state_definitions_with_separation_of_id_21.mmd
   verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: truncated source)'
+  evidence: mmdc rendered it
 - case: state_diagram/023_parser_should_handle_concurrent_state_22.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -5187,8 +5187,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: state_diagram/029_parser_should_handle_notes_for_composite_nested_states_28.mmd
-  verdict: artifact
-  evidence: truncated source
+  verdict: valid
+  evidence: 'twin rendered: 030_parser_should_handle_notes_for_composite_nested_states_29'
 - case: state_diagram/030_parser_should_handle_floating_notes_29.mmd
   verdict: invalid
   evidence: mmdc rejected it
@@ -5206,7 +5206,7 @@
   evidence: literal \n escape
 - case: state_diagram/032_parser_should_handle_notes_for_composite__nested__states_31.mmd
   verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: truncated source)'
+  evidence: mmdc rendered it
 - case: state_diagram/032_parser_simple_with_multiline_accdescription_accdescr__31.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -5332,7 +5332,7 @@
   evidence: literal \n escape
 - case: state_diagram/046_parser_should_handle_state_definitions_with_separation_of_id_45.mmd
   verdict: valid
-  evidence: 'mmdc rendered it (source also looks damaged: truncated source)'
+  evidence: mmdc rendered it
 - case: state_diagram/047_parser_should_handle_arrow_directions_definitions_46.mmd
   verdict: artifact
   evidence: literal \n escape
@@ -5382,8 +5382,8 @@
   verdict: artifact
   evidence: literal \n escape
 - case: state_diagram/052_parser_should_handle_notes_for_composite_nested_states_51.mmd
-  verdict: artifact
-  evidence: truncated source
+  verdict: valid
+  evidence: 'twin rendered: 030_parser_should_handle_notes_for_composite_nested_states_29'
 - case: state_diagram/053_parser_should_handle_multiline_notes_with_different_line_breaks_52.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -5691,35 +5691,35 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: unknown/023_platform_marker_unique_id_22.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/024_platform_marker_unique_id_23.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/025_platform_mindmap-layouts_24.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/026_platform_mindmap-layouts_25.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/027_platform_mindmap-layouts_26.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/028_platform_mindmap-layouts_27.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/029_platform_mindmap-layouts_28.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/030_platform_mindmap-layouts_29.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/031_platform_mindmap-layouts_30.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/032_platform_mindmap-layouts_31.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/033_platform_mindmap-layouts_32.mmd
   verdict: artifact
   evidence: html-entity escaped source
@@ -5733,29 +5733,29 @@
   verdict: artifact
   evidence: html-entity escaped source
 - case: unknown/037_platform_mindmap-layouts_36.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/038_platform_mindmap-layouts_37.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/039_platform_mindmap-layouts_38.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/040_platform_mindmap-layouts_39.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/041_platform_mindmap-layouts_40.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/042_platform_mindmap-layouts_41.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/043_platform_mindmap-layouts_42.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/044_platform_mindmap-layouts_43.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/045_platform_theme-directives_44.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -5790,74 +5790,74 @@
   verdict: invalid
   evidence: mmdc rejected it
 - case: unknown/056_platform_yari_55.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/057_platform_yari_56.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/058_platform_yari_57.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/059_platform_yari_58.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/060_platform_yari_59.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/061_platform_yari_60.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/062_platform_yari_61.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/063_platform_yari_62.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/064_platform_yari_63.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: unknown/065_platform_yari_64.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/066_platform_yari_65.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/067_platform_yari_66.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/068_platform_yari_67.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/069_platform_yari_68.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/070_platform_yari_69.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/071_platform_yari_70.mmd
   verdict: artifact
   evidence: html-entity escaped source
 - case: unknown/072_platform_yari_71.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/073_platform_yari2_72.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/074_platform_yari2_73.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/075_platform_yari2_74.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/076_platform_yari2_75.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/077_platform_yari2_76.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/078_platform_yari2_77.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: artifact
+  evidence: indented frontmatter closer
 - case: unknown/079_platform_yari2_78.mmd
   verdict: valid
   evidence: mmdc rendered it
