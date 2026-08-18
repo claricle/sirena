@@ -123,17 +123,32 @@ module Sirena
 
           entity = find_or_create_entity(class_id)
 
+          # `class C1[]` is an empty label and must fall back to the id, so an
+          # empty string counts as absent here.
+          label = extract_text(stmt[:text_label][:string]) if stmt[:text_label].is_a?(Hash)
+          label = nil if label.nil? || label.empty?
+
           # Handle stereotype
           if stmt[:stereotype] && stmt[:stereotype][:stereotype_value]
             entity.stereotype = extract_text(stmt[:stereotype][:stereotype_value])
           end
 
-          # Handle generic parameters
-          if stmt[:generic] && stmt[:generic][:generic_type]
+          # Handle generic parameters.
+          #
+          # Appended to the name for display, but only when there is no
+          # explicit label. mermaid renders `class Animal~T~["A label"]` as
+          # "A label", not "A label~T~", so a label wins outright.
+          if stmt[:generic] && stmt[:generic][:generic_type] && !label
             generic_type = extract_text(stmt[:generic][:generic_type])
-            # Append generic to class name for display
             entity.name = "#{entity.name}~#{generic_type}~"
           end
+
+          # An explicit text label replaces the display name. The id is
+          # untouched, which is what keeps relationships resolving — and the
+          # assignment is unconditional on purpose, because
+          # find_or_create_entity may have already set name to the id when a
+          # relationship mentioned this class first.
+          entity.name = label if label
 
           # Handle class body
           process_class_body(entity, stmt[:body]) if stmt[:body]

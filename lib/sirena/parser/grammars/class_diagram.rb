@@ -75,13 +75,27 @@ module Sirena
         end
 
         # Class declaration: class ClassName <<stereotype>> { body }
+        # Clause order follows mermaid: id, generic, label, stereotype, body.
+        #
+        # Generic and stereotype used to be the other way round, which made
+        # sirena accept `class C1<<iface>>~T~` (mmdc rejects it) and reject
+        # `class C1~T~<<iface>>` (mmdc accepts it). Swapping them is also what
+        # gives the text label exactly one home rather than two.
         rule(:class_declaration) do
           str('class').as(:keyword) >> space >>
             class_name.as(:class_id) >> space? >>
-            stereotype.maybe.as(:stereotype) >> space? >>
             generic_params.maybe.as(:generic) >> space? >>
+            text_label.maybe.as(:text_label) >> space? >>
+            stereotype.maybe.as(:stereotype) >> space? >>
             class_body.maybe.as(:body) >>
             line_end
+        end
+
+        # `class C1["Label"]`, and `class C1[]` meaning an empty label.
+        # Reuses common.rb's `string`, which handles single quotes and
+        # correctly swallows a nested bracket: `class C4["With [Brackets]"]`.
+        rule(:text_label) do
+          lbracket >> string.maybe >> rbracket
         end
 
         # Standalone stereotype: <<interface>> ClassName
