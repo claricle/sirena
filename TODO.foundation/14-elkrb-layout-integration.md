@@ -7,7 +7,9 @@ references are being rebuilt. INTEGRATION and Done need **both 01 and
 that cannot run while the gem still crashes at require. Completion also
 needs 03a, and raises the branch floor 80 → 90 jointly with item 07.
 Blocks: 12; with item 04, blocks 16's completion; its emit/accept survey
-blocks item 18's start, and its rollout blocks item 18's completion.
+blocks item 18's start, and its rollout — the per-type migration in step 2,
+once every transform actually goes through elkrb — blocks item 18's
+completion.
 
 ## Facts
 

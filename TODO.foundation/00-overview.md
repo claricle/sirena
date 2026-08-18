@@ -63,9 +63,10 @@ perfect condition beat many things half-done.
 
 Solid arrows = **start blockers**; a label on one names the *part* of the
 source that gates the start, so the target waits for that part rather than
-for the whole item. Dotted arrows = labeled partial edges — an item may
-START, but cannot CLOSE (or cannot run one named part) until the source
-lands. Transitive edges are omitted (e.g. 01 and 02
+for the whole item. Dotted arrows = partial edges — an item may START, but
+cannot CLOSE (or cannot run one named part) until the source lands. A pair
+may carry both, as 14 → 18 does: the survey gates 18's start, the rollout
+gates its close. Transitive edges are omitted (e.g. 01 and 02
 reach 12 through 04/14/16/17). The items table below is the
 authoritative "can start" list.
 
@@ -105,6 +106,7 @@ flowchart TD
     I14 -.completion.-> S16
     S16 -- class shapes --> T18[18 typed IR]
     I14 -- emit/accept survey --> T18
+    I14 -.rollout.-> T18
     T18 -.completion.-> G12
     S16 --> G12
     B04 --> G12
