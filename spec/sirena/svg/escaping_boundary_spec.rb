@@ -79,12 +79,35 @@ RSpec.describe Sirena::Svg::Escaping do
       doc = described_class.new
       doc.view_box = HOSTILE
       doc.version = HOSTILE
+      doc.xmlns = HOSTILE
 
       xml = doc.to_xml
 
+      # All three string-typed root attributes, not a sample: each is emitted
+      # on its own line, so asserting two of three would miss a dropped one.
+      # width and height are :float and coerce to 0.0, so they cannot carry
+      # markup — same as the numeric element attributes.
       expect(xml).not_to include(HOSTILE)
-      expect(xml).to include(%(viewBox="&lt;&amp;&gt;&quot;&apos;x"))
-      expect(xml).to include(%(version="&lt;&amp;&gt;&quot;&apos;x"))
+      %w[viewBox version xmlns].each do |name|
+        expect(xml).to include(%(#{name}="#{ESCAPED}"))
+      end
+    end
+  end
+
+  # Group owns its opening tag too, and carries user data — the C4 renderer
+  # assigns edge ids straight onto it. A seeded raw interpolation here left the
+  # entire suite green, so it needs its own case.
+  describe Sirena::Svg::Group do
+    it 'escapes the attributes on its opening tag' do
+      group = described_class.new
+      group.id = HOSTILE
+      group.class_name = HOSTILE
+      group.transform = HOSTILE
+
+      xml = group.to_xml
+
+      expect(xml).not_to include(HOSTILE)
+      expect(xml.scan(ESCAPED).size).to eq(3)
     end
   end
 
