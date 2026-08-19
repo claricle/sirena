@@ -42,7 +42,7 @@ module Sirena
       # @return [String] formatted error message
       def format_parse_error(cause, source)
         lines = source.lines
-        line_num, col_num = failure_position(cause)
+        line_num, col_num = failure_position(cause, source)
 
         context = []
         context << "Parse error at line #{line_num}, column #{col_num}:"
@@ -57,7 +57,7 @@ module Sirena
         context.join("\n")
       rescue StandardError
         # Fallback to simple error message
-        "Parse error: #{error.message}"
+        "Parse error: #{cause.message}"
       end
     end
   end

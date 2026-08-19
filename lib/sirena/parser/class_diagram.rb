@@ -36,7 +36,7 @@ module Sirena
 
       def format_parse_error(cause, source)
         lines = source.lines
-        line_num, col_num = failure_position(cause)
+        line_num, col_num = failure_position(cause, source)
 
         context = if line_num <= lines.length
                     lines[line_num - 1].chomp

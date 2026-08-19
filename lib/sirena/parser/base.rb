@@ -59,10 +59,22 @@ module Sirena
         raise ParseError, format_parse_error(cause, source)
       end
 
+      # Locates a failure as a 1-based line and CHARACTER column.
+      #
+      # Parslet counts bytes, so a line holding any multibyte character
+      # reports a column further right than the caret should sit — the
+      # message then underlines the wrong character.
+      #
       # @param cause [Parslet::Cause] the failure to locate
-      # @return [Array(Integer, Integer)] 1-based line and column
-      def failure_position(cause)
-        cause.source.line_and_column(cause.pos)
+      # @param source [String] the source that was parsed
+      # @return [Array(Integer, Integer)] 1-based line and character column
+      def failure_position(cause, source)
+        line, = cause.source.line_and_column(cause.pos)
+        lines = source.lines
+        preceding = lines[0, line - 1].to_a.join
+        offset = cause.pos.bytepos - preceding.bytesize
+
+        [line, lines[line - 1].to_s.byteslice(0, offset).to_s.length + 1]
       end
     end
 
