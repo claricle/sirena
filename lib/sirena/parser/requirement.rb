@@ -27,15 +27,8 @@ module Sirena
       # @return [Diagram::RequirementDiagram] the parsed requirement diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        grammar = Grammars::Requirement.new
-
-        begin
-          tree = grammar.parse(source)
-          diagram = Transforms::Requirement.apply(tree)
-          diagram
-        rescue Parslet::ParseFailed => e
-          raise ParseError, format_parse_error(e, source)
-        end
+        tree = parse_with_grammar(Grammars::Requirement.new, source)
+        Transforms::Requirement.apply(tree)
       end
 
       private
@@ -45,10 +38,9 @@ module Sirena
       # @param error [Parslet::ParseFailed] the parse error
       # @param source [String] the source that failed to parse
       # @return [String] formatted error message
-      def format_parse_error(error, source)
+      def format_parse_error(cause, source)
         lines = source.lines
-        line_num = error.parse_failure_cause.source.line_and_column[0]
-        col_num = error.parse_failure_cause.source.line_and_column[1]
+        line_num, col_num = failure_position(cause)
 
         context = []
         context << "Parse error at line #{line_num}, column #{col_num}:"
@@ -59,7 +51,7 @@ module Sirena
           context << (' ' * (col_num - 1)) + '^'
         end
 
-        context << error.parse_failure_cause.to_s
+        context << cause.to_s
         context.join("\n")
       rescue StandardError
         # Fallback to simple error message

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'parslet'
+
 module Sirena
   module Parser
     # Abstract base class for diagram parsers.
@@ -32,6 +34,35 @@ module Sirena
       def parse(source)
         raise NotImplementedError,
               "#{self.class} must implement #parse(source)"
+      end
+
+      private
+
+      # Runs a grammar, raising ParseError with a positioned message.
+      #
+      # Uses Parslet's Deepest reporter. The outer `parse_failure_cause`
+      # points at the statement boundary the grammar gave up on rather than
+      # where the input actually stopped: for "graph TD\nA-->" it reports
+      # line 2 column 1, while the deepest cause reports line 2 column 5.
+      # The reporter has to be kept, because the exception still carries the
+      # outer cause even when a Deepest reporter is in use.
+      #
+      # @param grammar [Parslet::Parser] the grammar to run
+      # @param source [String] the source to parse
+      # @return [Hash] the parse tree
+      # @raise [ParseError] with the failure position and context
+      def parse_with_grammar(grammar, source)
+        reporter = Parslet::ErrorReporter::Deepest.new
+        grammar.parse(source, reporter: reporter)
+      rescue Parslet::ParseFailed => e
+        cause = reporter.deepest_cause || e.parse_failure_cause
+        raise ParseError, format_parse_error(cause, source)
+      end
+
+      # @param cause [Parslet::Cause] the failure to locate
+      # @return [Array(Integer, Integer)] 1-based line and column
+      def failure_position(cause)
+        cause.source.line_and_column(cause.pos)
       end
     end
 
