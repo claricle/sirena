@@ -47,14 +47,20 @@ module Sirena
       # Message text content
       attribute :message_text, :string
 
-      # Arrow type: :solid, :dotted, :async, :async_dotted,
-      # :solid_cross, :dotted_cross
-      attribute :arrow_type, :string
+      # Line style: 'solid' or 'dotted'
+      attribute :line_style, :string
 
-      # Initialize with default arrow type
+      # Marker drawn at the message end: 'none', 'filled', 'open' or 'cross'
+      attribute :head_style, :string
+
+      # Whether the marker is drawn at both ends (mermaid's <<->> arrows)
+      attribute :bidirectional, :boolean
+
       def initialize(*args)
         super
-        self.arrow_type ||= 'solid'
+        self.line_style ||= 'solid'
+        self.head_style ||= 'filled'
+        self.bidirectional = false if bidirectional.nil?
       end
 
       # Validates the message has required attributes.
@@ -137,7 +143,8 @@ module Sirena
     #     from_id: 'Alice',
     #     to_id: 'Bob',
     #     message_text: 'Hello Bob',
-    #     arrow_type: 'solid'
+    #     line_style: 'solid',
+    #     head_style: 'filled'
     #   )
     class Sequence < Base
       # Collection of participants in the sequence diagram

@@ -87,7 +87,9 @@ module Sirena
             targets: [message.to_id],
             labels: message_labels(message),
             metadata: {
-              arrow_type: message.arrow_type,
+              line_style: message.line_style,
+              head_style: message.head_style,
+              bidirectional: message.bidirectional,
               message_index: index,
               message_text: message.message_text
             }

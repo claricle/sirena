@@ -246,7 +246,11 @@ module Sirena
 
       def render_message(edge, positions, index, svg)
         metadata = edge[:metadata] || {}
-        arrow_type = metadata[:arrow_type] || 'solid'
+        style = {
+          line: metadata[:line_style] || 'solid',
+          head: metadata[:head_style] || 'filled',
+          bidirectional: metadata[:bidirectional] || false
+        }
         message_text = metadata[:message_text]
 
         source_id = edge[:sources]&.first
@@ -274,7 +278,7 @@ module Sirena
           message_y,
           target_pos[:center_x],
           message_y,
-          arrow_type,
+          style,
           group
         )
 
@@ -292,30 +296,47 @@ module Sirena
         svg << group
       end
 
-      def render_arrow(x1, y1, x2, y2, arrow_type, group)
-        # Determine line style
-        stroke_dasharray = arrow_type.include?('dotted') ? '5,5' : nil
-        has_arrowhead = !arrow_type.include?('cross')
+      def render_arrow(x1, y1, x2, y2, style, group)
+        span = { x1: x1, y1: y1, x2: x2, y2: y2 }
+        ends = head_ends(style)
 
-        # Draw line
-        line = Svg::Line.new.tap do |l|
-          l.x1 = x1
-          l.y1 = y1
-          l.x2 = x2 - (has_arrowhead ? ARROW_SIZE : 0)
-          l.y2 = y2
+        group.children << message_line(span, style, ends)
+        ends.each { |which| render_head(which, span, style, group) }
+      end
+
+      # Which ends of the message carry a marker. Mermaid draws one at the
+      # target, both for its <<->> arrows, and none for the bare -> and -->.
+      def head_ends(style)
+        return [] if style[:head] == 'none'
+
+        style[:bidirectional] ? [:source, :target] : [:target]
+      end
+
+      def message_line(span, style, ends)
+        inset = style[:head] == 'cross' ? 0 : ARROW_SIZE
+
+        Svg::Line.new.tap do |l|
+          l.x1 = span[:x1] + (ends.include?(:source) ? inset : 0)
+          l.y1 = span[:y1]
+          l.x2 = span[:x2] - (ends.include?(:target) ? inset : 0)
+          l.y2 = span[:y2]
           l.stroke = '#000000'
           l.stroke_width = '2'
-          l.stroke_dasharray = stroke_dasharray if stroke_dasharray
+          l.stroke_dasharray = '5,5' if style[:line] == 'dotted'
         end
-        group.children << line
+      end
 
-        # Draw arrowhead or cross
-        if arrow_type.include?('cross')
-          render_cross(x2, y2, group)
-        elsif arrow_type.include?('async')
-          render_open_arrowhead(x1, y1, x2, y2, group)
-        else
-          render_filled_arrowhead(x1, y1, x2, y2, group)
+      def render_head(which, span, style, group)
+        tip_x, tip_y, from_x = if which == :target
+                                 span.values_at(:x2, :y2, :x1)
+                               else
+                                 span.values_at(:x1, :y1, :x2)
+                               end
+
+        case style[:head]
+        when 'cross' then render_cross(tip_x, tip_y, group)
+        when 'open' then render_open_arrowhead(from_x, tip_y, tip_x, tip_y, group)
+        else render_filled_arrowhead(from_x, tip_y, tip_x, tip_y, group)
         end
       end
 
