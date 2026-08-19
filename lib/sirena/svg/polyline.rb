@@ -11,6 +11,10 @@ module Sirena
     class Polyline < Element
       attribute :points, :string
 
+      # Emitted nothing before this: a Polyline rendered as `<polyline stroke="blue"/>`
+      # with no points, and renderer/xy_chart.rb:337 draws line series with it.
+      writes_attributes :points
+
       xml do
         root 'polyline'
         map_attribute 'id', to: :id
