@@ -22,6 +22,28 @@ module Sirena
       attribute :stroke_opacity, :string
       attribute :opacity, :float
 
+      # class_name is the only reader whose SVG name is not just its own
+      # with underscores hyphenated.
+      ATTRIBUTE_NAMES = { class_name: 'class' }.freeze
+      private_constant :ATTRIBUTE_NAMES
+
+      # The SVG name for a Ruby attribute reader.
+      #
+      # @param name [Symbol] the reader
+      # @return [String] the attribute name to emit
+      def self.svg_name(name)
+        ATTRIBUTE_NAMES.fetch(name) { name.to_s.tr('_', '-') }
+      end
+      private_class_method :svg_name
+
+      # Emitted by every element, in this order, as [svg name, reader].
+      # Named once here rather than on every render.
+      BASE_PAIRS = [
+        :id, :class_name, :transform, :fill, :fill_opacity,
+        :stroke, :stroke_width, :stroke_opacity, :opacity
+      ].map { |name| [svg_name(name), name].freeze }.freeze
+      private_constant :BASE_PAIRS
+
       # Generate XML representation of this element
       #
       # @return [String] XML string
@@ -47,9 +69,8 @@ module Sirena
       # @param names [Array<Symbol>] attribute readers, in output order
       # @return [void]
       def self.writes_attributes(*names)
-        define_method(:element_attributes) do
-          names.map { |name| [name.to_s.tr('_', '-'), public_send(name)] }
-        end
+        pairs = names.map { |name| [svg_name(name), name].freeze }.freeze
+        define_method(:element_attributes) { attribute_pairs(pairs) }
 
         # define_method defines a public method, while the base hook is
         # protected. Without this a declared subclass widened the API for no
@@ -63,19 +84,20 @@ module Sirena
       #
       # @return [String] formatted attribute string
       def build_attributes
-        Escaping.attributes(
-          [
-            ['id', id],
-            ['class', class_name],
-            ['transform', transform],
-            ['fill', fill],
-            ['fill-opacity', fill_opacity],
-            ['stroke', stroke],
-            ['stroke-width', stroke_width],
-            ['stroke-opacity', stroke_opacity],
-            ['opacity', opacity]
-          ] + element_attributes
-        )
+        Escaping.attributes(attribute_pairs(BASE_PAIRS) + element_attributes)
+      end
+
+      # Reads the current values for already-named attributes.
+      #
+      # Shared with .writes_attributes so the base attributes and a
+      # subclass's own go through one naming rule. Written out as literal
+      # pairs in both places, the hyphenation was typed by hand here and
+      # computed there, which is two spellings of one rule.
+      #
+      # @param pairs [Array<Array>] [svg name, reader], in output order
+      # @return [Array<Array>] name/value pairs
+      def attribute_pairs(pairs)
+        pairs.map { |svg_name, reader| [svg_name, public_send(reader)] }
       end
 
       # Hook for subclasses to add their specific attributes.
