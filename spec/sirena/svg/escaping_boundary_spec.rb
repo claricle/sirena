@@ -29,6 +29,8 @@ ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Line => [:stroke_dasharray],
   Sirena::Svg::Path => [:d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start],
   Sirena::Svg::Polygon => [:points],
+  Sirena::Svg::Polyline => [:points],
+  Sirena::Svg::Ellipse => [],
   Sirena::Svg::Rect => [:stroke_dasharray],
   Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline]
 }.freeze
@@ -115,12 +117,44 @@ RSpec.describe Sirena::Svg::Escaping do
 
   # Text owns its opening tag AND carries content, which is the actual sink.
   describe Sirena::Svg::Text do
-    it 'escapes its content' do
+    # Checking only for `<img` let a `<`-only escaper pass while leaving raw
+    # `&` and `>` in the output. Assert the exact string instead.
+    it 'escapes every special character in its content' do
+      text = described_class.new
+      text.content = '& < >'
+
+      expect(text.to_xml).to eq('<text>&amp; &lt; &gt;</text>')
+    end
+
+    it 'neutralises a script payload' do
       text = described_class.new
       text.content = 'Alice<img src=x onerror=alert(1)>'
 
+      expect(text.to_xml).to include('&lt;img src=x onerror=alert(1)&gt;')
       expect(text.to_xml).not_to include('<img')
-      expect(text.to_xml).to include('&lt;img')
+    end
+
+    # lutaml leaves unset attributes holding a sentinel that returns itself
+    # from to_s and gsub, so it escaped to a raw `#<...>` and broke the XML.
+    it 'omits attributes lutaml left uninitialised' do
+      xml = described_class.from_xml('<text>x</text>').to_xml
+
+      expect(xml).to eq('<text>x</text>')
+      expect(xml).not_to include('Uninitialized')
+    end
+  end
+
+  describe 'the pair contract' do
+    it 'refuses a pre-rendered string instead of dropping it' do
+      expect { described_class.attributes([%( x="1")]) }
+        .to raise_error(ArgumentError, /pair/)
+    end
+
+    # Only values were escaped, so a name carrying a quote injected a second
+    # attribute and the document stayed valid.
+    it 'refuses an attribute name that would inject another attribute' do
+      expect { described_class.attributes([[%(x="s" onload), 'boom']]) }
+        .to raise_error(ArgumentError, /attribute name/)
     end
   end
 end
