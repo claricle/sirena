@@ -53,18 +53,33 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
 
       # The two strokes straddle the tip rather than stopping at it, and
       # the shaft runs its full length because a cross takes no inset.
-      strokes = group.scan(/<line[^>]*>/).drop(1)
-      expect(strokes.map { |l| l[/x1="([\d.]+)"/, 1] }).to all(eq("216.0"))
-      expect(strokes.map { |l| l[/x2="([\d.]+)"/, 1] }).to all(eq("224.0"))
+      shaft, *strokes = group.scan(/<line[^>]*>/)
+      expect(shaft).to include('x1="80.0"').and include('x2="220.0"')
+      expect(strokes.map { |l| l[/x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/] })
+        .to contain_exactly('x1="216.0" y1="116.0" x2="224.0" y2="124.0"',
+                            'x1="216.0" y1="124.0" x2="224.0" y2="116.0"')
     end
 
     it "draws a filled concave chevron on -)" do
       # mermaid's filled-head marker, path "M 18,7 L9,13 L14,7 L9,1 Z" — a
-      # filled four-point head with a notch, not two open strokes.
-      points = message_group("-)")[/<polygon[^>]*points="([^"]*)"/, 1]
+      # filled four-point head with a notch, not two open strokes. The fill
+      # is the point: an unfilled polygon of the same shape looks wrong.
+      polygon = message_group("-)")[/<polygon[^>]*>/]
 
-      expect(points.split.size).to eq(4)
-      expect(points).to eq("220,120 212,116 215.2,120 212,124")
+      expect(polygon).to include('fill="#000000"')
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 215.2,120 212,124")
+    end
+
+    it "mirrors the chevron on a right-to-left message" do
+      rtl = <<~MERMAID
+        sequenceDiagram
+            participant A
+            participant B
+            B-)A: m
+      MERMAID
+      polygon = message_group("-)", rtl)[/<polygon[^>]*>/]
+
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("80,120 88,116 84.8,120 88,124")
     end
   end
 
@@ -85,9 +100,41 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
       expect(dashed?("-->>")).to be(true)
     end
 
-    it "draws <<-->> dashed with both heads" do
+    it "draws <<-->> dashed with one head at each end" do
+      tips = message_group("<<-->>").scan(/<polygon[^>]*points="(\d+),/).flatten
+
       expect(dashed?("<<-->>")).to be(true)
-      expect(arrowheads("<<-->>")).to eq(2)
+      expect(tips).to contain_exactly("80", "220")
+    end
+  end
+
+  describe "a participant messaging itself" do
+    # A straight shaft has no horizontal run here, so it collapsed to
+    # nothing: A->A drew neither a line nor a head. mermaid loops back to
+    # the same lifeline.
+    def self_group(arrow)
+      xml = Sirena.render(
+        "sequenceDiagram\n    participant A\n    A#{arrow}A: self\n"
+      )
+      xml[%r{<g id="message-0".*?</g>}m]
+    end
+
+    it "draws a loop for a headless self-message" do
+      group = self_group("->")
+
+      expect(group).to include("<path")
+      expect(group.scan("<polygon").size).to eq(0)
+    end
+
+    it "draws a loop and one head for ->>" do
+      group = self_group("->>")
+
+      expect(group).to include("<path")
+      expect(group.scan("<polygon").size).to eq(1)
+    end
+
+    it "dashes the loop for a dotted self-message" do
+      expect(self_group("-->")).to include("stroke-dasharray")
     end
   end
 

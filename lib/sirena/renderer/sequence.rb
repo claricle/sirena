@@ -26,6 +26,10 @@ module Sirena
       ARROW_SIZE = 8
       MESSAGE_Y_OFFSET = 60
 
+      # Loop drawn when a participant messages itself
+      SELF_LOOP_WIDTH = 56
+      SELF_LOOP_HEIGHT = 20
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
@@ -297,11 +301,37 @@ module Sirena
       end
 
       def render_arrow(x1, y1, x2, y2, style, group)
+        return render_self_message(x1, y1, style, group) if x1 == x2
+
         span = { x1: x1, y1: y1, x2: x2, y2: y2 }
         ends = head_ends(style)
 
         group.children << message_line(span, style, ends)
         ends.each { |which| render_head(which, span, style, group) }
+      end
+
+      # A participant messaging itself has no horizontal run, so a straight
+      # shaft collapses to nothing — `A->A` drew no line and no head at all.
+      # Mermaid loops it back to the same lifeline instead.
+      def render_self_message(x, y, style, group)
+        top = y - (SELF_LOOP_HEIGHT / 2)
+        bottom = y + (SELF_LOOP_HEIGHT / 2)
+        reach = x + SELF_LOOP_WIDTH
+
+        group.children << Svg::Path.new.tap do |p|
+          p.d = "M #{x},#{top} C #{reach},#{top} #{reach},#{bottom} #{x},#{bottom}"
+          p.fill = 'none'
+          p.stroke = '#000000'
+          p.stroke_width = '2'
+          p.stroke_dasharray = '5,5' if style[:line] == 'dotted'
+        end
+
+        # The loop returns travelling left, so the head points that way.
+        return if head_ends(style).empty?
+
+        render_head(:target,
+                    { x1: x + ARROW_SIZE, y1: bottom, x2: x, y2: bottom },
+                    style, group)
       end
 
       # Which ends of the message carry a marker. Mermaid draws one at the
