@@ -60,19 +60,43 @@ RSpec.describe Sirena::Parser::Base do
                           "\n\narchitecture-beta\n  group a(cloud)[A]\n  !!!\n")
 
       expect(position_in(offset)).to start_with("line 3,")
-      expect { Sirena::Parser::Architecture.new.parse("\varchitecture-beta\f") }
-        .not_to raise_error
+    end
+
+    ["\varchitecture-beta\f", "architecture-beta\r",
+     "\n\narchitecture-beta\n"].each do |source|
+      it "still accepts #{source.inspect}, as main does" do
+        expect { Sirena::Parser::Architecture.new.parse(source) }
+          .not_to raise_error
+      end
     end
   end
 
   describe "columns count characters, not bytes" do
-    it "places the column past a multibyte character correctly" do
+    it "reports the whole message consistently past a multibyte character" do
       # Parslet counts bytes, so "A[é]-->" reported column 9 for a 7
-      # character line — the caret landed a character too far right.
+      # character line. Asserted on the full message: the heading and the
+      # appended parslet text used to disagree, saying column 8 and char 9.
       message = error_from(Sirena::Parser::FlowchartParser.new,
                            "graph TD\nA[é]-->")
 
-      expect(position_in(message)).to eq("line 2, column 8")
+      expect(message).to eq(
+        "Parse error at line 2, column 8:\nA[é]-->\n       ^\n" \
+        "Premature end of input"
+      )
+    end
+  end
+
+  describe "a failure at end of input" do
+    it "says so and still draws the caret" do
+      # The failure sits one line past the source, so there is no line to
+      # quote. The heading used to be emitted with nothing under it.
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\nA-->B\nC-->\n")
+
+      expect(message).to eq(
+        "Parse error at line 4, column 1:\n(end of input)\n^\n" \
+        "Premature end of input"
+      )
     end
   end
 
@@ -89,10 +113,14 @@ RSpec.describe Sirena::Parser::Base do
     ].each do |klass|
       it "reports rather than raising NameError for #{klass}" do
         parser = klass.new
-        allow(parser).to receive(:failure_position).and_raise("boom")
+        # expect, not allow: a future edit that stops calling
+        # failure_position would otherwise pass without exercising the
+        # fallback at all.
+        expect(parser).to receive(:failure_position).once.and_raise("boom")
 
         expect { parser.parse("!!!\n") }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+          .to raise_error(Sirena::Parser::ParseError,
+                          /\AParse error: /)
       end
     end
   end
