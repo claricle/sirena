@@ -91,11 +91,21 @@ module Sirena
             line_end
         end
 
-        # `class C1["Label"]`, and `class C1[]` meaning an empty label.
-        # Reuses common.rb's `string`, which handles single quotes and
-        # correctly swallows a nested bracket: `class C4["With [Brackets]"]`.
+        # `class C1["Label"]` only, matching mmdc 11.12.0 exactly.
+        #
+        # Two forms are deliberately NOT accepted, both verified against the
+        # oracle: `class C1[]` (mmdc: "Expecting 'STR', got 'SQE'") and
+        # `class C1['Label']` (mmdc: "Expecting 'STR', got 'PUNCTUATION'").
+        # 20 corpus cases use the empty form and none carries a sidecar; their
+        # test names say "should parse a class with a text label", so the label
+        # content was lost in extraction. Accepting it would be over-acceptance
+        # against a damaged input.
+        #
+        # quoted_string rather than common.rb's `string`, because `string`
+        # admits single quotes. It still swallows a nested bracket correctly:
+        # `class C4["With [Brackets]"]`.
         rule(:text_label) do
-          lbracket >> string.maybe >> rbracket
+          lbracket >> quoted_string >> rbracket
         end
 
         # Standalone stereotype: <<interface>> ClassName
