@@ -5,7 +5,8 @@ vertical slice, not a small dependency list. **Completion also needs
 04** (its cases must be valid under the chosen profile) **and item 14's
 comparator** (structural invariants have to be measurable before they
 can hold), so the spike lands its code early and closes later.
-Blocks: 12 (informs it).
+Blocks: 12 (informs it) and 18 — its class shapes are the second
+notation's evidence the IR is designed against.
 
 ## Purpose
 

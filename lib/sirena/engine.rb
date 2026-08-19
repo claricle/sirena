@@ -57,9 +57,13 @@ module Sirena
     #
     # @param verbose [Boolean] enable verbose output for debugging
     # @param theme [String, Theme, Hash, nil] theme specification
-    def initialize(verbose: false, theme: nil)
+    # @param today [Date, nil] reference date for diagrams that need one
+    #   (gantt). Pin it to make rendering reproducible; nil uses the real
+    #   date.
+    def initialize(verbose: false, theme: nil, today: nil)
       @verbose = verbose
       @theme = load_theme(theme)
+      @today = today
     end
 
     # Renders Mermaid source code to SVG.
@@ -68,6 +72,7 @@ module Sirena
     # @param options [Hash] rendering options
     # @option options [Boolean] :verbose enable verbose output
     # @option options [String, Theme, Hash, nil] :theme theme override
+    # @option options [Date, nil] :today reference date override
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
     # @raise [PipelineError] if any pipeline stage fails
@@ -76,6 +81,11 @@ module Sirena
 
       # Override theme if specified in options
       theme = options[:theme] ? load_theme(options[:theme]) : @theme
+
+      # Same for the reference date. Without this, Sirena.render and the
+      # rake tasks that call it get the wall clock no matter what they pass,
+      # silently — examples:generate rewrote its committed gantt SVG daily.
+      today = options.key?(:today) ? options[:today] : @today
 
       log 'Starting render pipeline...'
 
@@ -89,7 +99,7 @@ module Sirena
 
       # Execute pipeline
       diagram = parse_diagram(mermaid_source, handlers[:parser])
-      graph = transform_diagram(diagram, handlers[:transform])
+      graph = transform_diagram(diagram, handlers[:transform], today)
       laid_out_graph = layout_graph(graph)
       svg_document = render_svg(laid_out_graph, handlers[:renderer], theme)
 
@@ -158,10 +168,16 @@ module Sirena
     #
     # @param diagram [Diagram::Base] diagram model
     # @param transform_class [Class] transform class
+    # @param today [Date, nil] reference date, or nil for the real date
     # @return [Object] graph structure
-    def transform_diagram(diagram, transform_class)
+    def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
+      # Only Transform::Base subclasses consume a reference date. Seven
+      # transforms (git_graph, kanban, mindmap, packet, radar, treemap,
+      # xy_chart) stand outside that hierarchy and read no clock at all, so
+      # pinning them is meaningless — sending today= to them just crashed.
+      transform.today = today if today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'
       graph

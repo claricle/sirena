@@ -20,7 +20,7 @@ module Sirena
       attribute :fill_opacity, :string
 
       # fill-opacity is NOT listed here. Element already emits it for every
-      # element (element.rb:55), and listing it again produced
+      # element, and listing it again produced
       # `fill-opacity="0.5" fill-opacity="0.5"` — the last 5 malformed cases
       # in the corpus.
       #
@@ -28,8 +28,8 @@ module Sirena
       # fill-opacity itself parses and re-emits exactly once. That is NOT the
       # same as a Rect round-tripping in full: the mapping block omits
       # stroke_opacity, which Element declares and emits, so a from_xml Rect
-      # leaves that one unset. Harmless since PR #9 treats an unset lutaml
-      # attribute as absent, but it is a separate gap and not a claim to make
+      # leaves that one unset. Harmless, since an unset lutaml attribute is
+      # treated as absent, but it is a separate gap and not a claim to make
       # here.
       writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray
 

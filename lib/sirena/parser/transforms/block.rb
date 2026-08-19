@@ -63,9 +63,15 @@ module Sirena
           }
         end
 
-        # Process parsed diagram
-        def self.apply(tree, diagram = nil)
-          diagram ||= Diagram::BlockDiagram.new
+        # Process parsed diagram.
+        #
+        # Deliberately builds its own diagram rather than accepting one. Ids
+        # are positional, so feeding a second tree into a populated diagram
+        # would re-issue "compound-1" and the later block would overwrite the
+        # earlier one. No caller ever passed a diagram, so the parameter only
+        # exposed that hazard.
+        def self.apply(tree)
+          diagram = Diagram::BlockDiagram.new
 
           # Tree is an array of statement hashes
           statements = tree.is_a?(Array) ? tree : [tree]
@@ -87,7 +93,7 @@ module Sirena
         end
 
         def self.process_statements(diagram, statements, parent_block = nil)
-          statements.each do |stmt|
+          statements.each_with_index do |stmt, index|
             next unless stmt.is_a?(Hash)
 
             if stmt[:columns_keyword]
@@ -95,7 +101,7 @@ module Sirena
               next
             elsif stmt[:space_keyword]
               # Space placeholder
-              block = create_space_block
+              block = create_space_block(parent_block, index)
               if parent_block
                 parent_block.add_child(block)
               else
@@ -111,7 +117,7 @@ module Sirena
               end
             elsif stmt[:compound_keyword]
               # Compound block
-              block = create_compound_block(stmt)
+              block = create_compound_block(stmt, parent_block, index)
               if stmt[:compound_statements]
                 sub_stmts = stmt[:compound_statements]
                 sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
@@ -142,9 +148,23 @@ module Sirena
           end
         end
 
-        def self.create_space_block
+        # Anonymous ids are derived from the statement's position and its
+        # parent, never randomly. A random id varies in digit length, and
+        # that length reaches TextMeasurement, so the same source used to
+        # render at different sizes between runs.
+        #
+        # The hyphen separator is what keeps these ids out of the author's
+        # namespace: identifier_char is [a-zA-Z0-9_], so no bare block id can
+        # ever spell "compound-1". An underscore could, and the collision
+        # silently dropped the generated block's children from the SVG.
+        def self.anonymous_id(kind, parent_block, index)
+          prefix = parent_block ? "#{parent_block.id}-" : ''
+          "#{prefix}#{kind}-#{index}"
+        end
+
+        def self.create_space_block(parent_block, index)
           Diagram::Block.new.tap do |b|
-            b.id = "space_#{rand(10000)}"
+            b.id = anonymous_id('space', parent_block, index)
             b.block_type = 'space'
           end
         end
@@ -158,10 +178,13 @@ module Sirena
           end
         end
 
-        def self.create_compound_block(stmt)
+        def self.create_compound_block(stmt, parent_block, index)
           Diagram::Block.new.tap do |b|
-            # Generate ID if not provided
-            b.id = stmt[:compound_id] ? stmt[:compound_id].to_s : "compound_#{rand(10000)}"
+            b.id = if stmt[:compound_id]
+                     stmt[:compound_id].to_s
+                   else
+                     anonymous_id('compound', parent_block, index)
+                   end
             b.is_compound = true
           end
         end

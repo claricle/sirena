@@ -185,6 +185,107 @@ RSpec.describe Sirena::Parser::ClassDiagramParser do
       expect(diagram.direction).to eq('TB')
     end
 
+    # Clause order matters and ours was inverted. Each of these is checked
+    # against mmdc 11.12.0 rather than against what looks reasonable.
+    describe 'class text labels' do
+      def entities(source)
+        parser.parse(source).entities.map { |e| [e.id, e.name] }
+      end
+
+      it 'uses the label for display and keeps the id' do
+        expect(entities(%(classDiagram\n class C1["Class One"]\n)))
+          .to eq([['C1', 'Class One']])
+      end
+
+      it 'lets a label win over the generic, as mermaid does' do
+        expect(entities(%(classDiagram\n class Animal~T~["A label"]\n)))
+          .to eq([['Animal', 'A label']])
+      end
+
+      it 'still appends the generic when there is no label' do
+        expect(entities(%(classDiagram\n class Animal~T~\n)))
+          .to eq([['Animal', 'Animal~T~']])
+      end
+
+      # mmdc 11.12.0 rejects `class C1[]` with "Expecting 'STR', got 'SQE'",
+      # and rejects single quotes with "got 'PUNCTUATION'". 20 corpus cases
+      # use the empty form with no sidecar, and their test names say they
+      # should have a label — the content was lost in extraction, so accepting
+      # it would be over-acceptance against damaged input.
+      it 'rejects an empty label, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1[]\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'rejects a single-quoted label, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1['L']\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'allows spaces inside the brackets, as mermaid does' do
+        expect(entities(%(classDiagram\n class C1[ "L" ]\n)))
+          .to eq([['C1', 'L']])
+      end
+
+      # common.rb's quoted_string has a backslash-escape branch that swallowed
+      # \" and made us accept this; mmdc rejects it with
+      # "Expecting 'SQE', got 'ALPHA'". The label uses its own string rule so
+      # 15 other grammars keep the escape.
+      it 'rejects a backslash-escaped quote, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1["a\\"b"]\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'still swallows a bracket inside the label' do
+        expect(entities(%(classDiagram\n class C4["With [Brackets]"]\n)))
+          .to eq([['C4', 'With [Brackets]']])
+      end
+
+      # The generic must not append to a label set by an EARLIER declaration.
+      # This produced `Label~T~` where mmdc renders `Label`.
+      it 'keeps a label when a later declaration adds a generic' do
+        source = %(classDiagram\n class C1["Label"]\n class C1~T~\n)
+
+        expect(entities(source)).to eq([['C1', 'Label']])
+      end
+
+      it 'keeps a label declared after the generic' do
+        source = %(classDiagram\n class C1~T~\n class C1["Label"]\n)
+
+        expect(entities(source)).to eq([['C1', 'Label']])
+      end
+
+      it 'labels a class already created by an earlier relationship' do
+        source = %(classDiagram\n C1 --> C2\n class C1["Later"]\n)
+
+        expect(entities(source)).to eq([['C1', 'Later'], ['C2', 'C2']])
+      end
+
+      it 'accepts a label alongside a stereotype' do
+        [
+          'class C1["L"] <<interface>>',
+          'class Animal~T~["L"] <<svc>>'
+        ].each do |form|
+          expect { parser.parse("classDiagram\n    #{form}\n") }
+            .not_to raise_error, form
+        end
+      end
+
+      # mmdc accepts generic-then-stereotype and rejects the reverse. Ours was
+      # the wrong way round, so these pin the corrected order.
+      it 'accepts the generic before the stereotype' do
+        expect { parser.parse(%(classDiagram\n class C1~T~<<iface>>\n)) }
+          .not_to raise_error
+      end
+
+      it 'rejects orderings mermaid rejects' do
+        ['class C1["L"]~T~', 'class C1<<iface>>~T~'].each do |form|
+          expect { parser.parse("classDiagram\n    #{form}\n") }
+            .to raise_error(Sirena::Parser::ParseError), form
+        end
+      end
+    end
+
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(

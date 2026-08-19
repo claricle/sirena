@@ -61,9 +61,12 @@ perfect condition beat many things half-done.
 
 ## Track topology (what blocks what)
 
-Solid arrows = **start blockers**. Dotted arrows = labeled partial edges
-— an item may START, but cannot CLOSE (or cannot run one named part)
-until the source lands. Transitive edges are omitted (e.g. 01 and 02
+Solid arrows = **start blockers**; a label on one names the *part* of the
+source that gates the start, so the target waits for that part rather than
+for the whole item. Dotted arrows = partial edges — an item may START, but
+cannot CLOSE (or cannot run one named part) until the source lands. A pair
+may carry both, as 14 → 18 does: the survey gates 18's start, the rollout
+gates its close. Transitive edges are omitted (e.g. 01 and 02
 reach 12 through 04/14/16/17). The items table below is the
 authoritative "can start" list.
 
@@ -101,6 +104,10 @@ flowchart TD
     E10 --> G12[12 PlantUML phase 1]
     B04 -.completion.-> S16
     I14 -.completion.-> S16
+    S16 -- class shapes --> T18[18 typed IR]
+    I14 -- emit/accept survey --> T18
+    I14 -.rollout.-> T18
+    T18 -.completion.-> G12
     S16 --> G12
     B04 --> G12
     I14 --> G12
@@ -208,6 +215,6 @@ Two rules that make it real:
 | 15 | Docs site build integrity | now |
 | 16 | PlantUML class spike (registry proof) | after 10; completes after 04 + 14's comparator |
 | 17 | Release + versioning (0.x) | after 19a (which follows 01) |
-| 18 | Typed-IR boundary (stub for the next phase) | design-only |
+| 18 | Typed IR boundary | after 10, 14's survey and 16's spike; completes after 14's rollout; gates 12's Done |
 | 19a | CI lane skeleton + external pins | after 01's migration and 03a — the suite must be green before lanes can be |
 | 19b | CI consolidation + measured budgets | after the owned gates exist |

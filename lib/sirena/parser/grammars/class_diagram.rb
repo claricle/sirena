@@ -75,13 +75,52 @@ module Sirena
         end
 
         # Class declaration: class ClassName <<stereotype>> { body }
+        # Clause order follows mermaid: id, generic, label, stereotype, body.
+        #
+        # Generic and stereotype used to be the other way round, which made
+        # sirena accept `class C1<<iface>>~T~` (mmdc rejects it) and reject
+        # `class C1~T~<<iface>>` (mmdc accepts it). Swapping them is also what
+        # gives the text label exactly one home rather than two.
         rule(:class_declaration) do
           str('class').as(:keyword) >> space >>
             class_name.as(:class_id) >> space? >>
-            stereotype.maybe.as(:stereotype) >> space? >>
             generic_params.maybe.as(:generic) >> space? >>
+            text_label.maybe.as(:text_label) >> space? >>
+            stereotype.maybe.as(:stereotype) >> space? >>
             class_body.maybe.as(:body) >>
             line_end
+        end
+
+        # `class C1["Label"]` only, matching mmdc 11.12.0 exactly.
+        #
+        # Two forms are deliberately NOT accepted, both verified against the
+        # oracle: `class C1[]` (mmdc: "Expecting 'STR', got 'SQE'") and
+        # `class C1['Label']` (mmdc: "Expecting 'STR', got 'PUNCTUATION'").
+        # 20 corpus cases use the empty form and none carries a sidecar; their
+        # test names say "should parse a class with a text label", so the label
+        # content was lost in extraction. Accepting it would be over-acceptance
+        # against a damaged input.
+        #
+        # quoted_string rather than common.rb's `string`, because `string`
+        # admits single quotes. It still swallows a nested bracket correctly:
+        # `class C4["With [Brackets]"]`.
+        rule(:text_label) do
+          lbracket >> space? >> label_string >> space? >> rbracket
+        end
+
+        # A label-local string, NOT common.rb's quoted_string.
+        #
+        # Two differences, both measured against mmdc 11.12.0:
+        #   - space? inside the brackets, because `class C1[ "L" ]` renders.
+        #   - no backslash-escape branch. common.rb's quoted_string has
+        #     `str('\\') >> any`, which swallows `\"` and made us accept
+        #     `class C1["a\"b"]`; mmdc rejects that with
+        #     "Expecting 'SQE', got 'ALPHA'".
+        #
+        # Defined here rather than by changing quoted_string, which 15
+        # grammars share.
+        rule(:label_string) do
+          str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')
         end
 
         # Standalone stereotype: <<interface>> ClassName

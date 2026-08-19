@@ -46,6 +46,9 @@ module Sirena
         # @return [Diagram::ClassDiagram] the Class diagram model
         def apply(tree)
           @diagram = Diagram::ClassDiagram.new
+          # Classes given an explicit label, so a later generic on the same id
+          # does not append to it.
+          @labelled_ids = []
           @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
@@ -123,16 +126,39 @@ module Sirena
 
           entity = find_or_create_entity(class_id)
 
+          # `class C1[]` is an empty label and must fall back to the id, so an
+          # empty string counts as absent here.
+          label = extract_text(stmt[:text_label][:string]) if stmt[:text_label].is_a?(Hash)
+          label = nil if label.nil? || label.empty?
+
           # Handle stereotype
           if stmt[:stereotype] && stmt[:stereotype][:stereotype_value]
             entity.stereotype = extract_text(stmt[:stereotype][:stereotype_value])
           end
 
-          # Handle generic parameters
-          if stmt[:generic] && stmt[:generic][:generic_type]
+          # Handle generic parameters.
+          #
+          # Appended to the name for display, but only when there is no
+          # explicit label. mermaid renders `class Animal~T~["A label"]` as
+          # "A label", not "A label~T~", so a label wins outright.
+          # Skipped when a label is present on THIS declaration, and also when
+          # an earlier declaration already labelled this class — otherwise
+          # `class C1["Label"]` followed by `class C1~T~` produced `Label~T~`
+          # where mmdc renders `Label`.
+          if stmt[:generic] && stmt[:generic][:generic_type] && !label &&
+             !@labelled_ids.include?(entity.id)
             generic_type = extract_text(stmt[:generic][:generic_type])
-            # Append generic to class name for display
             entity.name = "#{entity.name}~#{generic_type}~"
+          end
+
+          # An explicit text label replaces the display name. The id is
+          # untouched, which is what keeps relationships resolving — and the
+          # assignment is unconditional on purpose, because
+          # find_or_create_entity may have already set name to the id when a
+          # relationship mentioned this class first.
+          if label
+            entity.name = label
+            @labelled_ids << entity.id
           end
 
           # Handle class body

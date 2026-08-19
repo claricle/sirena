@@ -131,12 +131,34 @@ module Sirena
         false
       end
 
+      # Date.parse fills whatever the input omits from the system clock, so
+      # "08/17" under `dateFormat MM/DD` picked up the real year and defeated
+      # the injected reference date. Date._parse reports which fields the
+      # input actually carried, so nothing here reads the clock.
+      #
+      # Which field comes from where: the year always comes from the reference
+      # date when absent, and so does the month when no year was given. A
+      # missing day becomes the 1st, and a missing month becomes January when
+      # the year IS explicit — both to preserve what Date.parse returned, so
+      # "2024/01" still reads as 2024-01-01 rather than moving with the pin.
       def parse_date(date_str)
-        # Handle various date formats
-        Date.parse(date_str)
-      rescue ArgumentError
-        # Default to today if parsing fails
-        Date.today
+        parts = Date._parse(date_str.to_s)
+        # Ordinal dates such as 2024-032 carry a day-of-year instead of a
+        # month and day. The grammar accepts them, so they need their own
+        # branch or the guard below would discard them.
+        return Date.ordinal(parts[:year] || today.year, parts[:yday]) if parts[:yday]
+        return today unless parts[:mon] || parts[:mday]
+
+        # An explicit year anchors the month to January, which is what
+        # Date.parse did: '017/2024' read as 2024-01-17, not as today's month.
+        # Only a wholly absent year lets the reference date supply the month.
+        default_month = parts[:year] ? 1 : today.mon
+
+        Date.new(parts[:year] || today.year,
+                 parts[:mon] || default_month,
+                 parts[:mday] || 1)
+      rescue ArgumentError, TypeError
+        today
       end
 
       def add_duration(start_date, duration_str)
@@ -176,8 +198,8 @@ module Sirena
         end
 
         # Default to a reasonable range if no dates found
-        min_date ||= Date.today
-        max_date ||= Date.today + 30
+        min_date ||= today
+        max_date ||= today + 30
 
         # Add padding
         min_date -= 1

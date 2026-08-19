@@ -1,27 +1,139 @@
-# 18 — Typed IR (stub for the next phase)
+# 18 — Typed IR
 
-Design-only in this phase. Not scheduled. Exists so the boundary item
-10 enforces has a named owner instead of a hand-wave.
+**Owner ruling 2026-08-13: the typed IR is built in this foundation.**
+Issue #2 records it as an architecture constraint — "renderers consume
+source text, build a typed intermediate representation, delegate layout
+to `elkrb`, and emit SVG" — and the issue's stated architecture is the
+answer. This replaces the earlier "deferred until after PlantUML"
+position, which was our reasoning rather than the author's instruction.
 
-## Decision already settled
+Can start: after 10 (the registry gives the IR a place to live), after
+14's emit/accept survey, and after 16's PlantUML class spike — those two
+are its design evidence. Gates item 12's **Done**, not its start.
 
-The typed intermediate representation is deliberately NOT built in this
-phase. Reason: an IR designed from Mermaid alone encodes Mermaid's
-assumptions; it gets designed AFTER PlantUML ships, from two notations'
-demonstrated commonality. It is the first entry of the `TODO.notations`
-roadmap (item 12's close-out), landing before DOT.
+## Why the old deferral argument still shapes this
 
-## What this phase must preserve for it
+The reason for deferring was real: Sirena's 24 transforms emit
+materially different structures, so an IR designed from Mermaid alone
+would encode Mermaid's assumptions and PlantUML would fight it.
 
-- Item 10's boundary: transform output shapes stay private per notation
-  plugin; engine holds no notation knowledge.
-- Item 14's contract notes: what each transform actually emits vs what
-  elkrb accepts — that survey IS the IR's raw material.
-- Item 16/12's PlantUML shapes: kept private, documented, expected to
-  migrate.
+That risk is managed by sequencing the evidence before the design, not
+by postponing the work:
 
-## Done when (this phase)
+1. Item 14 owes a per-transform record of what each emits versus what
+   elkrb accepts. That survey is this item's input.
+2. Item 16's PlantUML class spike ships first, supplying the second
+   notation's shapes — the data point the deferral said was missing —
+   without waiting for all of item 12.
+3. Only then is the IR fixed, and both notations migrate onto it.
 
-The boundary held: no cross-notation shape sharing, no engine
-notation-branching — asserted by item 10's specs. The IR design work
-itself is out of scope here.
+So the ordering the deferral wanted is preserved. Only the phase
+boundary moves: PlantUML lands ON the IR instead of the IR waiting on
+PlantUML.
+
+## What "notation-neutral" means here
+
+The IR must not encode any notation's **semantics** — no Mermaid-only
+keyword, no PlantUML-only relation kind, nothing naming a source
+language. A construct that exists because one notation spells something
+a particular way stays in that notation's plugin.
+
+That is a different question from which **diagram categories** the IR
+covers. Sirena renders three structurally different kinds:
+
+Apply these tests **in order**. The order matters: a type can satisfy
+more than one, and the first match wins.
+
+1. **pre-positioned** — the *notation's grammar* fully determines layout,
+   for every valid document, with no layout engine involved. Block is the
+   clear case: the author's `columns` fixes the grid
+   (`transform/block.rb:46`). Block also emits `from`/`to` connectivity
+   (`transform/block.rb:188`), which is exactly why this test runs first.
+
+   Ask it of the notation, not of one file. Every Sirena transform happens
+   to emit final coordinates today, so "is the output positioned" would
+   match all 24 types and collapse the taxonomy. A notation where *some*
+   elements carry positions and others do not — DOT with `pos=`, BPMN with
+   BPMNDI bounds on some shapes — is **not** pre-positioned: it still needs
+   a layout engine for the rest, so it falls through to test 2.
+2. **graph-shaped** — the transform emits edges whose **endpoints identify
+   nodes**, by whatever spelling. Sankey is the obvious case: it emits
+   `nodes:` and `flows:` carrying literal `source:`/`target:`
+   (`transform/sankey.rb:184`). It looks like a chart and is a graph.
+
+   Architecture is the case that shows why the test is about recoverable
+   identity rather than key names: it emits `edge:` plus `from_x/from_y/
+   to_x/to_y` (`transform/architecture.rb:232-238`) and no `source`/`target`
+   key anywhere, yet the endpoints are recoverable from the embedded edge
+   model. It is graph-shaped. Containment on its own does not qualify.
+3. **data-shaped** — everything else: values, or placed content carrying no
+   connectivity. Pie is the clear case (`PieTransform` at `pie.rb:17` emits
+   no node boxes). This is the residual category, so every type lands
+   somewhere.
+
+Those examples are illustrative, not an exhaustive roster. Apply the tests
+to any type, including notations not yet written — that is the point of a
+notation-neutral IR.
+
+A type whose source merely *influences* placement, such as an ordering
+hint, is still classified by what its transform emits. Architecture lets an
+author swap endpoints and git_graph lets an author order branches; neither
+means the source dictates the layout, and both are graph-shaped.
+
+Every classification is confirmed against the type's transform, never
+assumed from its name — sankey was misfiled on exactly that mistake.
+
+The IR covers all three categories; none is exempt. Graph-shaped is the
+category that *can* delegate to elkrb, though not every member does —
+sankey does its own layering and declines it. That is not a Mermaid bias:
+PlantUML has data-shaped and pre-positioned types too, they are simply not
+in phase 1's class-and-sequence slice.
+
+**No category is exempt.** "This type passes through un-IR'd" would let
+the foundation close with the architecture issue #2 asks for half-built.
+
+## Do
+
+1. Collect the evidence: item 14's emit/accept survey plus item 16's
+   PlantUML class shapes. Write the comparison down — what is common,
+   what is notation-specific, what is layout-specific.
+2. Define the IR's three shapes from that comparison, using the
+   notation-neutrality rule above as the test for every field.
+3. Decide per Mermaid type which shape it maps to, and record it.
+   **Persist it** as `docs/ir-type-map.md` — one row per type: the shape,
+   the transform, and the evidence line. A type whose mapping is unclear is
+   resolved before implementation, not by whoever reaches it first. The
+   categories above are illustrated rather than enumerated precisely so
+   that this file, not the prose, carries the per-type rulings.
+4. Migrate Mermaid's transforms onto the IR one type at a time, corpus
+   pass set unchanged at each step.
+5. Migrate the PlantUML class spike onto it — the proof the IR is not
+   Mermaid-shaped.
+6. Update item 10's boundary spec. The boundary moves: transform output
+   is no longer private per plugin, because the IR is deliberately
+   shared. What stays private is each notation's PARSE output before it
+   becomes IR.
+
+## Done when
+
+- The IR is defined, committed, and consumed by both Mermaid and the
+  PlantUML class spike. Note the asymmetry: 18 **starts** on 14's survey
+  and 16's spike, but cannot **close** until 14's rollout is complete,
+  because elkrb consuming the IR depends on it.
+- Every Mermaid type maps to one of the three shapes, recorded in
+  `docs/ir-type-map.md` with evidence. No exception list.
+- No IR field names or encodes a notation-specific construct — asserted
+  by a spec, not by inspection.
+- The corpus pass set is unchanged across the migration, byte-identical
+  wherever the renderer did not change.
+- Item 10's boundary spec asserts the new boundary (parse output
+  private, IR shared) and fails if a notation leaks its own shapes past
+  it.
+- `elkrb` consumes the IR's graph shape, not per-notation structures
+  (item 14).
+
+## Files
+
+`lib/sirena/ir/**` (new), `lib/sirena/transform/*`,
+`lib/sirena/notation/**`, `spec/sirena/ir/**` (new),
+`docs/ir-type-map.md` (new), and item 10's boundary spec.
