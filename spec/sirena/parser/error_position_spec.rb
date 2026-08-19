@@ -88,10 +88,10 @@ RSpec.describe Sirena::Parser::Base do
       Sirena::Parser::RequirementParser
     ].each do |klass|
       it "reports rather than raising NameError for #{klass}" do
-        allow_any_instance_of(described_class)
-          .to receive(:failure_position).and_raise("boom")
+        parser = klass.new
+        allow(parser).to receive(:failure_position).and_raise("boom")
 
-        expect { klass.new.parse("!!!\n") }
+        expect { parser.parse("!!!\n") }
           .to raise_error(Sirena::Parser::ParseError, /Parse error/)
       end
     end
