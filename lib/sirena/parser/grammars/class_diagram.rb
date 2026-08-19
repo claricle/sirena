@@ -105,7 +105,22 @@ module Sirena
         # admits single quotes. It still swallows a nested bracket correctly:
         # `class C4["With [Brackets]"]`.
         rule(:text_label) do
-          lbracket >> quoted_string >> rbracket
+          lbracket >> space? >> label_string >> space? >> rbracket
+        end
+
+        # A label-local string, NOT common.rb's quoted_string.
+        #
+        # Two differences, both measured against mmdc 11.12.0:
+        #   - space? inside the brackets, because `class C1[ "L" ]` renders.
+        #   - no backslash-escape branch. common.rb's quoted_string has
+        #     `str('\\') >> any`, which swallows `\"` and made us accept
+        #     `class C1["a\"b"]`; mmdc rejects that with
+        #     "Expecting 'SQE', got 'ALPHA'".
+        #
+        # Defined here rather than by changing quoted_string, which 15
+        # grammars share.
+        rule(:label_string) do
+          str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')
         end
 
         # Standalone stereotype: <<interface>> ClassName
