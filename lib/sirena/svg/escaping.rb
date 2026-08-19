@@ -36,14 +36,31 @@ module Sirena
       TEXT_PATTERN = Regexp.union(TEXT.keys).freeze
       ATTRIBUTE_PATTERN = Regexp.union(ATTRIBUTE.keys).freeze
 
+      # XML 1.0 forbids these code points entirely: they have no escape, so a
+      # document containing one is unparseable whatever you do to the rest.
+      # Tab, newline and carriage return are the only C0 characters allowed.
+      # A sequence label accepts any non-line-ending character
+      # (grammars/sequence.rb:241), so a NUL in a diagram reached the output
+      # and xmllint refused the SVG.
+      FORBIDDEN = /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD]/
+
       module_function
+
+      # Removes characters XML cannot represent at all.
+      #
+      # Dropping rather than substituting: there is no legal escape for them,
+      # and inventing a replacement character would put content in the document
+      # that the author never wrote.
+      def strip_forbidden(text)
+        text.gsub(FORBIDDEN, '')
+      end
 
       # Escapes a value destined for element text content.
       #
       # @param value [Object] the value, stringified first
       # @return [String] the escaped text
       def escape_text(value)
-        value.to_s.gsub(TEXT_PATTERN, TEXT)
+        strip_forbidden(value.to_s).gsub(TEXT_PATTERN, TEXT)
       end
 
       # Escapes a value destined for a double-quoted attribute.
@@ -51,7 +68,7 @@ module Sirena
       # @param value [Object] the value, stringified first
       # @return [String] the escaped value
       def escape_attribute(value)
-        value.to_s.gsub(ATTRIBUTE_PATTERN, ATTRIBUTE)
+        strip_forbidden(value.to_s).gsub(ATTRIBUTE_PATTERN, ATTRIBUTE)
       end
 
       # An XML attribute name: a letter or underscore, then name characters.
@@ -73,6 +90,8 @@ module Sirena
       # @return [String] ` name="escaped"`
       # @raise [ArgumentError] if the name is not a valid XML attribute name
       def attribute(name, value)
+        return '' if blank?(value)
+
         unless name.to_s.match?(NAME)
           raise ArgumentError, "not a valid attribute name: #{name.inspect}"
         end
