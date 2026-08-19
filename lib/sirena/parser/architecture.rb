@@ -9,23 +9,19 @@ module Sirena
     # Parser for architecture diagrams
     class Architecture < Base
       def parse(input)
-        input = input.strip
+        # Not stripped: the grammar already allows leading and trailing
+        # whitespace, and stripping shifted every reported line number by
+        # however many blank lines the caller wrote.
+        tree = parse_with_grammar(Grammars::Architecture.new, input)
 
-        grammar = Grammars::Architecture.new
-        tree = grammar.parse(input)
-
-        transform = Transforms::Architecture.new
-        transform.apply(tree)
-      rescue Parslet::ParseFailed => e
-        raise ParseError, format_error(e, input)
+        Transforms::Architecture.new.apply(tree)
       end
 
       private
 
-      def format_error(error, input)
+      def format_parse_error(cause, input)
         lines = input.split("\n")
-        line_no = error.parse_failure_cause.source.line_and_column[0]
-        column = error.parse_failure_cause.source.line_and_column[1]
+        line_no, column = failure_position(cause)
 
         context = []
         context << lines[line_no - 2] if line_no > 1
@@ -34,7 +30,7 @@ module Sirena
 
         "Parse error at line #{line_no}, column #{column}:\n" \
         "#{context.join("\n")}\n" \
-        "#{error.parse_failure_cause.message}"
+        "#{cause.message}"
       end
     end
   end

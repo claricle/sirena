@@ -28,24 +28,15 @@ module Sirena
       # @return [Diagram::ClassDiagram] the parsed class diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        grammar = Grammars::ClassDiagram.new
-        transform = Transforms::ClassDiagram.new
-
-        begin
-          parse_tree = grammar.parse(source)
-          diagram = transform.apply(parse_tree)
-          diagram
-        rescue Parslet::ParseFailed => e
-          raise ParseError, format_parse_error(e, source)
-        end
+        tree = parse_with_grammar(Grammars::ClassDiagram.new, source)
+        Transforms::ClassDiagram.new.apply(tree)
       end
 
       private
 
-      def format_parse_error(error, source)
+      def format_parse_error(cause, source)
         lines = source.lines
-        line_num = error.parse_failure_cause.source.line_and_column[0]
-        col_num = error.parse_failure_cause.source.line_and_column[1]
+        line_num, col_num = failure_position(cause)
 
         context = if line_num <= lines.length
                     lines[line_num - 1].chomp
@@ -56,7 +47,7 @@ module Sirena
         "Parse error at line #{line_num}, column #{col_num}:\n" \
           "#{context}\n" \
           "#{' ' * (col_num - 1)}^\n" \
-          "Expected: #{error.parse_failure_cause.message}"
+          "Expected: #{cause.message}"
       end
     end
   end
