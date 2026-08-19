@@ -45,13 +45,20 @@ module Sirena
         context = []
         context << "Parse error at line #{line_num}, column #{col_num}:"
 
-        # Show the problematic line
-        if line_num > 0 && line_num <= lines.length
+        # A failure at EOF sits one line past the source, so there is no line
+        # to quote. Say so and still draw the caret rather than emitting a
+        # heading with nothing under it.
+        if line_num.positive? && line_num <= lines.length
           context << lines[line_num - 1].chomp
-          context << (' ' * (col_num - 1)) + '^'
+        else
+          context << '(end of input)'
         end
+        context << (' ' * (col_num - 1)) + '^'
 
-        context << cause.to_s
+        # cause.message, not cause.to_s: the latter appends parslet's own
+        # byte-counted position, which contradicts the character column in
+        # the heading above on any line holding a multibyte character.
+        context << cause.message
         context.join("\n")
       rescue StandardError
         # Fallback to simple error message
