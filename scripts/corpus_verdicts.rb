@@ -8,6 +8,18 @@
 #   --write   emit spec/mermaid/corpus-verdicts.yml
 #   --verify  re-check every `invalid` verdict against the LOCAL mmdc
 #
+# The COMMITTED corpus-verdicts.yml is generated WITHOUT --verify, so anyone
+# with Ruby can regenerate it byte-for-byte and review the diff. --verify needs
+# mmdc installed, which would make the committed artifact unreproducible for
+# most people.
+#
+# One case is known to differ between the two:
+# er_diagram/037_parser_should_handle_complex_diagram_with_special_entity_names_36
+# carries an .error from an older mermaid that rejected a numeric entity name,
+# and mmdc 11.12.0 renders it. Running --verify promotes it, moving the valid
+# rate 42.3% -> 42.4%. Recorded here rather than baked in, because the sidecars
+# are a foreign machine's and we should not silently prefer ours.
+#
 # --verify exists because the sidecars are not reproducible here: they were
 # generated on another machine by an unpinned toolchain (see PROVENANCE
 # below). A case rejected by that mermaid may render in ours. Re-running the
