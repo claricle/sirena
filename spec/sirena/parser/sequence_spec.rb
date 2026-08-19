@@ -93,14 +93,28 @@ RSpec.describe Sirena::Parser::SequenceParser do
   end
 
   describe "#parse alternation order" do
-    # A mis-ordered alternation still parses; it parses wrong. These two
-    # pairs are the ones that can shadow each other.
-    it "does not read -->> as --> followed by a stray >" do
-      expect(message_for("-->>").head_style).to eq("filled")
+    # Parslet alternation is first-match, so a shorter arrow listed before a
+    # longer one that starts with it wins and the rest of the token becomes
+    # part of the actor name. Only genuine prefix pairs can shadow: -> is a
+    # prefix of ->>, and --> of -->>. <<->> and <<-->> diverge on their third
+    # character, so pairing those tests nothing.
+    {
+      "->" => "->>",
+      "-->" => "-->>"
+    }.each do |shorter, longer|
+      it "reads #{longer} whole rather than #{shorter} plus a stray >" do
+        expect(message_for(longer).head_style).to eq("filled")
+        expect(message_for(shorter).head_style).to eq("none")
+      end
     end
 
-    it "does not read <<-->> as <<->> with an extra dash" do
-      expect(message_for("<<-->>").line_style).to eq("dotted")
+    it "keeps the actor names intact when the longer arrow wins" do
+      # The tell for a mis-ordered alternation: the arrow still parses, but
+      # the leftover > lands in the target's name.
+      message = message_for("-->>")
+
+      expect(message.from_id).to eq("A")
+      expect(message.to_id).to eq("B")
     end
   end
 end

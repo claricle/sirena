@@ -313,7 +313,11 @@ module Sirena
       end
 
       def message_line(span, style, ends)
+        # Signed, so a right-to-left message insets towards its own head
+        # rather than past it. Unsigned, B<<->>A started its shaft at 228
+        # while the head occupied 212 to 220.
         inset = style[:head] == 'cross' ? 0 : ARROW_SIZE
+        inset *= (span[:x2] <=> span[:x1])
 
         Svg::Line.new.tap do |l|
           l.x1 = span[:x1] + (ends.include?(:source) ? inset : 0)
@@ -335,7 +339,7 @@ module Sirena
 
         case style[:head]
         when 'cross' then render_cross(tip_x, tip_y, group)
-        when 'open' then render_open_arrowhead(from_x, tip_y, tip_x, tip_y, group)
+        when 'open' then render_chevron(from_x, tip_x, tip_y, group)
         else render_filled_arrowhead(from_x, tip_y, tip_x, tip_y, group)
         end
       end
@@ -362,6 +366,27 @@ module Sirena
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
+          p.fill = '#000000'
+          p.stroke = '#000000'
+        end
+        group.children << polygon
+      end
+
+      # Mermaid draws the -) and --) arrows with a filled, concave head
+      # (its `filled-head` marker, path "M 18,7 L9,13 L14,7 L9,1 Z"), not
+      # the two open strokes this renderer drew for them before.
+      def render_chevron(from_x, tip_x, tip_y, group)
+        direction = tip_x >= from_x ? 1 : -1
+        back = tip_x - (direction * ARROW_SIZE)
+        notch = tip_x - (direction * ARROW_SIZE * 0.6)
+
+        polygon = Svg::Polygon.new.tap do |p|
+          p.points = [
+            "#{tip_x},#{tip_y}",
+            "#{back},#{tip_y - ARROW_SIZE / 2}",
+            "#{notch},#{tip_y}",
+            "#{back},#{tip_y + ARROW_SIZE / 2}"
+          ].join(' ')
           p.fill = '#000000'
           p.stroke = '#000000'
         end
