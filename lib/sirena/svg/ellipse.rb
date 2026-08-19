@@ -14,6 +14,10 @@ module Sirena
       attribute :rx, :float
       attribute :ry, :float
 
+      # Emitted nothing before this: an Ellipse rendered as `<ellipse fill="red"/>`
+      # with no geometry, and renderer/c4.rb:242 draws boundaries with it.
+      writes_attributes :cx, :cy, :rx, :ry
+
       xml do
         root 'ellipse'
         map_attribute 'id', to: :id

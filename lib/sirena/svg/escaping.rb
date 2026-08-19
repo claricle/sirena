@@ -54,15 +54,29 @@ module Sirena
         value.to_s.gsub(ATTRIBUTE_PATTERN, ATTRIBUTE)
       end
 
+      # An XML attribute name: a letter or underscore, then name characters.
+      # Deliberately narrow — SVG attribute names are ASCII with hyphens and
+      # the occasional colon.
+      NAME = /\A[A-Za-z_][\w.:-]*\z/
+
       # Renders one name/value pair as a leading-space XML attribute.
       #
       # This is the only place an attribute becomes text. Subclasses hand back
       # pairs rather than markup, so there is no second path to keep in sync.
       #
+      # The NAME check is not decoration: a pair whose name was
+      # `x="safe" onload` produced a valid document with an extra injected
+      # attribute, because only the value was ever escaped.
+      #
       # @param name [String] the attribute name
       # @param value [Object] the attribute value
       # @return [String] ` name="escaped"`
+      # @raise [ArgumentError] if the name is not a valid XML attribute name
       def attribute(name, value)
+        unless name.to_s.match?(NAME)
+          raise ArgumentError, "not a valid attribute name: #{name.inspect}"
+        end
+
         %( #{name}="#{escape_attribute(value)}")
       end
 
@@ -79,7 +93,23 @@ module Sirena
       def render(pair)
         name, value = as_pair(pair)
 
-        attribute(name, value) unless value.nil?
+        attribute(name, value) unless blank?(value)
+      end
+
+      # lutaml-model leaves an unset attribute holding an UninitializedClass
+      # sentinel rather than nil, and that object returns ITSELF from both
+      # to_s and gsub. So it slipped past a nil check and past escaping, and
+      # `Text.from_xml("<text>x</text>").to_xml` emitted
+      # `fill-opacity="#<Lutaml::Model::UninitializedClass:0x...>"` — whose raw
+      # `<` makes the document unparseable.
+      #
+      # Tested on to_s rather than on the sentinel's class name: any object
+      # whose to_s does not return a String cannot be escaped, and matching a
+      # class name by string would break the moment lutaml renames it.
+      #
+      # @api private
+      def blank?(value)
+        value.nil? || !value.to_s.is_a?(String)
       end
 
       # The pairs contract is what makes the escaping boundary provable, so a
