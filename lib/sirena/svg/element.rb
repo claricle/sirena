@@ -32,12 +32,29 @@ module Sirena
         "<#{tag}#{attrs}/>"
       end
 
+      # Declares the attributes an element writes, in output order.
+      #
+      # Six subclasses were each carrying the same shape of method — a list of
+      # names paired with the matching reader. Declaring them removes that
+      # repetition and, more usefully, removes the chance of one class's
+      # version drifting into a different shape.
+      #
+      # Ruby names map to SVG names by turning underscores into hyphens, which
+      # covers every attribute these elements emit (`stroke_dasharray` becomes
+      # `stroke-dasharray`). A notation needing anything else should override
+      # #element_attributes rather than bend this.
+      #
       # @param names [Array<Symbol>] attribute readers, in output order
       # @return [void]
       def self.writes_attributes(*names)
         define_method(:element_attributes) do
           names.map { |name| [name.to_s.tr('_', '-'), public_send(name)] }
         end
+
+        # define_method defines a public method, while the base hook is
+        # protected. Without this a declared subclass widened the API for no
+        # reason and disagreed with its own parent.
+        protected :element_attributes
       end
 
       protected
@@ -60,19 +77,6 @@ module Sirena
           ] + element_attributes
         )
       end
-
-      # Declares the attributes an element writes, in output order.
-      #
-      # Six subclasses were each carrying the same shape of method — a list of
-      # names paired with the matching reader. Declaring them removes that
-      # repetition and, more usefully, removes the chance of one class's
-      # version drifting into a different shape.
-      #
-      # Ruby names map to SVG names by turning underscores into hyphens, which
-      # covers every attribute these elements emit (`stroke_dasharray` becomes
-      # `stroke-dasharray`). A notation needing anything else should override
-      # #element_attributes rather than bend this.
-      #
 
       # Hook for subclasses to add their specific attributes.
       #
