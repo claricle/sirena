@@ -222,6 +222,20 @@ RSpec.describe Sirena::Parser::ClassDiagramParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
+      it 'allows spaces inside the brackets, as mermaid does' do
+        expect(entities(%(classDiagram\n class C1[ "L" ]\n)))
+          .to eq([['C1', 'L']])
+      end
+
+      # common.rb's quoted_string has a backslash-escape branch that swallowed
+      # \" and made us accept this; mmdc rejects it with
+      # "Expecting 'SQE', got 'ALPHA'". The label uses its own string rule so
+      # 15 other grammars keep the escape.
+      it 'rejects a backslash-escaped quote, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1["a\\"b"]\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
       it 'still swallows a bracket inside the label' do
         expect(entities(%(classDiagram\n class C4["With [Brackets]"]\n)))
           .to eq([['C4', 'With [Brackets]']])
