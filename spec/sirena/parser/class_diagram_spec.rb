@@ -207,9 +207,38 @@ RSpec.describe Sirena::Parser::ClassDiagramParser do
           .to eq([['Animal', 'Animal~T~']])
       end
 
-      it 'falls back to the id for an empty label' do
-        expect(entities(%(classDiagram\n class C1[]\n)))
-          .to eq([['C1', 'C1']])
+      # mmdc 11.12.0 rejects `class C1[]` with "Expecting 'STR', got 'SQE'",
+      # and rejects single quotes with "got 'PUNCTUATION'". 20 corpus cases
+      # use the empty form with no sidecar, and their test names say they
+      # should have a label — the content was lost in extraction, so accepting
+      # it would be over-acceptance against damaged input.
+      it 'rejects an empty label, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1[]\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'rejects a single-quoted label, as mermaid does' do
+        expect { parser.parse(%(classDiagram\n class C1['L']\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'still swallows a bracket inside the label' do
+        expect(entities(%(classDiagram\n class C4["With [Brackets]"]\n)))
+          .to eq([['C4', 'With [Brackets]']])
+      end
+
+      # The generic must not append to a label set by an EARLIER declaration.
+      # This produced `Label~T~` where mmdc renders `Label`.
+      it 'keeps a label when a later declaration adds a generic' do
+        source = %(classDiagram\n class C1["Label"]\n class C1~T~\n)
+
+        expect(entities(source)).to eq([['C1', 'Label']])
+      end
+
+      it 'keeps a label declared after the generic' do
+        source = %(classDiagram\n class C1~T~\n class C1["Label"]\n)
+
+        expect(entities(source)).to eq([['C1', 'Label']])
       end
 
       it 'labels a class already created by an earlier relationship' do

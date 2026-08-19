@@ -46,6 +46,9 @@ module Sirena
         # @return [Diagram::ClassDiagram] the Class diagram model
         def apply(tree)
           @diagram = Diagram::ClassDiagram.new
+          # Classes given an explicit label, so a later generic on the same id
+          # does not append to it.
+          @labelled_ids = []
           @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
@@ -138,7 +141,12 @@ module Sirena
           # Appended to the name for display, but only when there is no
           # explicit label. mermaid renders `class Animal~T~["A label"]` as
           # "A label", not "A label~T~", so a label wins outright.
-          if stmt[:generic] && stmt[:generic][:generic_type] && !label
+          # Skipped when a label is present on THIS declaration, and also when
+          # an earlier declaration already labelled this class — otherwise
+          # `class C1["Label"]` followed by `class C1~T~` produced `Label~T~`
+          # where mmdc renders `Label`.
+          if stmt[:generic] && stmt[:generic][:generic_type] && !label &&
+             !@labelled_ids.include?(entity.id)
             generic_type = extract_text(stmt[:generic][:generic_type])
             entity.name = "#{entity.name}~#{generic_type}~"
           end
@@ -148,7 +156,10 @@ module Sirena
           # assignment is unconditional on purpose, because
           # find_or_create_entity may have already set name to the id when a
           # relationship mentioned this class first.
-          entity.name = label if label
+          if label
+            entity.name = label
+            @labelled_ids << entity.id
+          end
 
           # Handle class body
           process_class_body(entity, stmt[:body]) if stmt[:body]
