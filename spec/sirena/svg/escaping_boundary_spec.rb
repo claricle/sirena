@@ -141,6 +141,44 @@ RSpec.describe Sirena::Svg::Escaping do
     end
   end
 
+  # Both emitted NO geometry before this change — `<ellipse fill="red"/>` with
+  # no cx/cy/rx/ry — while renderer/c4.rb:242 and renderer/xy_chart.rb:337 draw
+  # with them. Their attributes are numeric or a coordinate string, so the
+  # escaping matrix above cannot cover them; these assert the exact output, and
+  # removing either declaration fails here.
+  describe 'geometry that used to be dropped' do
+    it 'serialises an Ellipse with all four of its radii and centres' do
+      ellipse = Sirena::Svg::Ellipse.new
+      ellipse.cx = 10.0
+      ellipse.cy = 20.0
+      ellipse.rx = 5.0
+      ellipse.ry = 6.0
+
+      expect(ellipse.to_xml)
+        .to eq('<ellipse cx="10.0" cy="20.0" rx="5.0" ry="6.0"/>')
+    end
+
+    it 'serialises a Polyline with its points' do
+      polyline = Sirena::Svg::Polyline.new
+      polyline.points = '1,2 3,4'
+
+      expect(polyline.to_xml).to eq('<polyline points="1,2 3,4"/>')
+    end
+  end
+
+  # XML 1.0 has no escape for most C0 controls, and a sequence label accepts
+  # any non-line-ending character, so a NUL reached the document and made it
+  # unparseable.
+  describe 'characters XML cannot represent' do
+    it 'drops a forbidden control from text' do
+      expect(described_class.escape_text("a\u0000b\u000Bc")).to eq('abc')
+    end
+
+    it 'keeps tab, newline and carriage return, which are legal' do
+      expect(described_class.escape_text("a\tb\nc\rd")).to eq("a\tb\nc\rd")
+    end
+  end
+
   describe 'the pair contract' do
     it 'refuses a pre-rendered string instead of dropping it' do
       expect { described_class.attributes([%( x="1")]) }
