@@ -108,8 +108,12 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
     it "insets towards the head on a right-to-left message" do
       # Unsigned, this ran the shaft past its own head: B<<->>A started at
       # 228 while the source head occupied 212 to 220.
-      rtl = "sequenceDiagram\n    participant A\n    participant B\n" \
-            "    B<<->>A: m\n"
+      rtl = <<~MERMAID
+        sequenceDiagram
+            participant A
+            participant B
+            B<<->>A: m
+      MERMAID
 
       expect(message_line("<<->>", "x1", rtl)).to eq(212.0)
       expect(message_line("<<->>", "x2", rtl)).to eq(88.0)
