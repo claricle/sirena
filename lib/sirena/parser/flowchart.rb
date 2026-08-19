@@ -49,11 +49,11 @@ module Sirena
         # A failure at EOF sits one line past the source, so there is no line
         # to quote. Say so and still draw the caret rather than emitting a
         # heading with nothing under it.
-        if line_num.positive? && line_num <= lines.length
-          context << lines[line_num - 1].chomp
-        else
-          context << '(end of input)'
-        end
+        context << if line_num.positive? && line_num <= lines.length
+                     lines[line_num - 1].chomp
+                   else
+                     '(end of input)'
+                   end
         context << (' ' * (col_num - 1)) + '^'
 
         # cause.message, not cause.to_s: the latter appends parslet's own

@@ -113,14 +113,15 @@ RSpec.describe Sirena::Parser::Base do
     ].each do |klass|
       it "reports rather than raising NameError for #{klass}" do
         parser = klass.new
-        # expect, not allow: a future edit that stops calling
-        # failure_position would otherwise pass without exercising the
-        # fallback at all.
-        expect(parser).to receive(:failure_position).once.and_raise("boom")
+        allow(parser).to receive(:failure_position).and_raise("boom")
 
         expect { parser.parse("!!!\n") }
-          .to raise_error(Sirena::Parser::ParseError,
-                          /\AParse error: /)
+          .to raise_error(Sirena::Parser::ParseError, /\AParse error: /)
+
+        # Asserted after the fact: a future edit that stops calling
+        # failure_position would otherwise pass without ever reaching the
+        # fallback this example exists to cover.
+        expect(parser).to have_received(:failure_position).once
       end
     end
   end
