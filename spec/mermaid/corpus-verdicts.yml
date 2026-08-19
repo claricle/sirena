@@ -435,20 +435,20 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class/054_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_53.mmd
-  verdict: invalid
-  evidence: 'twin rejected: 027_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_26'
+  verdict: unknown
+  evidence: no evidence
 - case: class/055_parser_should_be_possible_to_apply_a_cssclass_to_a_class_54.mmd
-  verdict: invalid
-  evidence: 'twin rejected: 028_parser_should_be_possible_to_apply_a_cssclass_to_a_class_27'
+  verdict: unknown
+  evidence: no evidence
 - case: class/056_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_55.mmd
-  verdict: invalid
-  evidence: 'twin rejected: 029_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_28'
+  verdict: unknown
+  evidence: no evidence
 - case: class/057_parser_should_be_possible_to_apply_a_style_to_an_individual_node_56.mmd
   verdict: valid
   evidence: mmdc rendered it
 - case: class/058_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_57.mmd
-  verdict: invalid
-  evidence: 'twin rejected: 031_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_30'
+  verdict: unknown
+  evidence: no evidence
 - case: class/059_parser_should_be_possible_to_define_and_assign_a_class_using_shorthand_inside_the_diagram_58.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -456,8 +456,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: class/061_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_60.mmd
-  verdict: invalid
-  evidence: 'twin rejected: 034_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_33'
+  verdict: unknown
+  evidence: no evidence
 - case: class/062_parser_should_handle_backticked_class_names_61.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -903,20 +903,20 @@
   verdict: valid
   evidence: 'twin rendered: 147_parser_should_handle_generic_classes_within_namespaces_146'
 - case: class_diagram/027_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_26.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/027_parser_should_handle_acctitle_and_accdescr_26.mmd
   verdict: valid
   evidence: 'twin rendered: 148_parser_should_handle_nested_namespaces_and_relationships_147'
 - case: class_diagram/028_parser_should_be_possible_to_apply_a_cssclass_to_a_class_27.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/028_parser_should_handle_acctitle_and_multiline_accdescr_27.mmd
   verdict: valid
   evidence: 'twin rendered: 149_parser_should_handle_acctitle_and_multiline_accdescr_148'
 - case: class_diagram/029_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_28.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/029_parser_should_handle_fully_qualified_class_names_in_relationships_28.mmd
   verdict: valid
   evidence: 'twin rendered: 150_parser_should_handle_fully_qualified_class_names_in_relationships_149'
@@ -924,11 +924,11 @@
   verdict: valid
   evidence: 'twin rendered: 057_parser_should_be_possible_to_apply_a_style_to_an_individual_node_56'
 - case: class_diagram/030_parser_should_handle_backticked_class_names_29.mmd
-  verdict: artifact
-  evidence: uninterpolated ${} template
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/031_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_30.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/031_parser_should_handle_comments_at_the_end_30.mmd
   verdict: valid
   evidence: 'twin rendered: 155_parser_should_handle_member_definitions_154'
@@ -948,8 +948,8 @@
   verdict: valid
   evidence: 'twin rendered: 158_parser_should_handle_a_comment_with_mermaid_class_diagram_code_in_them_157'
 - case: class_diagram/034_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_33.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: class_diagram/035_parser_should_handle_a_comment_inside_brackets_34.mmd
   verdict: valid
   evidence: 'twin rendered: 159_parser_should_handle_a_comment_inside_brackets_158'
@@ -2157,14 +2157,14 @@
   verdict: unknown
   evidence: no evidence
 - case: error/002_rendering_errordiagram_spec_error_1.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: error/003_spec_diagram-orchestration_spec_2.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: error/004_spec_diagram-orchestration_spec_3.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: flowchart/001_config_0.mmd
   verdict: valid
   evidence: mmdc rendered it
@@ -2871,8 +2871,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: flowchart/146_parser_should_keep_node_label_text__if_already_defined__when_a_style_is_applied_141.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: flowchart/147_parser_should_be_possible_to_declare_a_class_142.mmd
   verdict: valid
   evidence: mmdc rendered it
