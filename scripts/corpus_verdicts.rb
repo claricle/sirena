@@ -4,8 +4,16 @@
 # so the corpus pass rate stops being measured against files mermaid itself
 # cannot parse.
 #
-# Usage: ruby scripts/corpus_verdicts.rb [--write] [type ...]
-#   --write  emit spec/mermaid/corpus-verdicts.yml
+# Usage: ruby scripts/corpus_verdicts.rb [--write] [--verify] [type ...]
+#   --write   emit spec/mermaid/corpus-verdicts.yml
+#   --verify  re-check every `invalid` verdict against the LOCAL mmdc
+#
+# --verify exists because the sidecars are not reproducible here: they were
+# generated on another machine by an unpinned toolchain (see PROVENANCE
+# below). A case rejected by that mermaid may render in ours. Re-running the
+# local mmdc over the `invalid` bucket — a few dozen cases, about a second
+# each — turns the weakest evidence in the file into something this machine
+# can reproduce.
 #
 # Evidence, in the order it is trusted:
 #
@@ -29,6 +37,8 @@
 
 require 'digest'
 require 'yaml'
+require 'tmpdir'
+require 'fileutils'
 
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
 REFERENCE_ROOT = File.expand_path('../spec/fixtures_mermaid', __dir__)
@@ -58,11 +68,50 @@ TRUNCATIONS = [
 # with --- are not valid". 44 cases have an indented closer and every one is
 # rejected; the single case with a column-0 closer renders fine. That is
 # extraction damage, not a diagram mermaid refuses.
-INDENTED_FRONTMATTER = /\A---\s*\n(?:.*\n)*?[ \t]+---\s*$/
+INDENTED_FRONTMATTER = /\A---[ \t]*\n(?:.*\n)*?[ \t]+---[ \t]*(?:\n|\z)/
+
+# A placeholder that sits outside every quoted run. Quoted content is label
+# text, and mermaid renders it verbatim.
+def unquoted_placeholder?(source)
+  source.gsub(/"[^"]*"/, '').gsub(/'[^']*'/, '').match?(TEMPLATE_PLACEHOLDER)
+end
+
+# An .error sidecar echoes the input it judged. If that echo does not appear in
+# the current source, the sidecar was generated against a different (usually
+# damaged) version and is not a verdict on what is here now.
+def stale_rejection?(base, source)
+  path = "#{base}.error"
+  return false unless File.exist?(path)
+
+  # mermaid echoes the offending input on the line after "Parse error on
+  # line N:", prefixed with "..." when it truncates the left side. Anything
+  # else in the file is the message, a caret, or a Node stack trace.
+  lines = File.read(path).lines
+  marker = lines.index { |l| l.match?(/Parse error on line \d+:/) }
+  return false unless marker
+
+  echo = lines[marker + 1].to_s.strip.delete_prefix('...').strip
+  return false if echo.length < 12
+
+  # Whitespace differs between the echo and the source, so compare on the
+  # non-space characters.
+  squash = ->(s) { s.gsub(/\s+/, '') }
+
+  !squash.call(source).include?(squash.call(echo[0, 40]))
+end
+
+# spec/mermaid/error/ holds diagrams that are SUPPOSED to fail — mermaid has an
+# `error` diagram type and renders one deliberately. An mmdc rejection there is
+# the point of the case, not a judgement that the case is invalid.
+def intentional_error_type?(entry)
+  entry[:type] == 'error'
+end
 
 def artifact_reason(source)
   return 'literal \\n escape' if source.match?(LITERAL_NEWLINE)
-  return 'uninterpolated ${} template' if source.match?(TEMPLATE_PLACEHOLDER)
+  # Only outside a quoted string. A quoted `${keyword}` is a label mermaid
+  # renders happily — one class note was binned as damage on exactly that.
+  return 'uninterpolated ${} template' if unquoted_placeholder?(source)
   return 'html-entity escaped source' if source.match?(HTML_ENTITY)
 
   return 'indented frontmatter closer' if source.match?(INDENTED_FRONTMATTER)
@@ -131,6 +180,8 @@ end
 # actually the error graphic.
 def rejected?(entry)
   name = File.basename(entry[:base])
+  return false if intentional_error_type?(entry)
+  return false if stale_rejection?(entry[:base], entry[:source])
   return true if File.exist?("#{entry[:base]}.error")
 
   [
@@ -183,8 +234,44 @@ def classify(entry, group)
   ['unknown', 'no evidence']
 end
 
+# Re-checks one case against the installed mmdc. Returns true if it renders.
+def local_mmdc_renders?(path)
+  out = File.join(Dir.tmpdir, "verdict-#{Process.pid}.svg")
+  system('mmdc', '-i', path, '-o', out,
+         out: File::NULL, err: File::NULL)
+ensure
+  FileUtils.rm_f(out)
+end
+
+# Promotes an `invalid` row that the local mmdc actually renders. Leaves every
+# other verdict alone: rendering evidence already outranks everything, and
+# artifact rows are about the source rather than about mermaid's opinion.
+def verify_invalid!(rows, entries)
+  by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ''), e] }
+  checked = 0
+  promoted = 0
+
+  rows.each do |row|
+    next unless row['verdict'] == 'invalid'
+
+    entry = by_case[row['case']] or next
+    checked += 1
+    if local_mmdc_renders?(entry[:path])
+      row['verdict'] = 'valid'
+      row['evidence'] = 'local mmdc renders it (sidecar rejection was stale)'
+      promoted += 1
+    else
+      row['evidence'] = 'local mmdc rejects it too'
+    end
+  end
+
+  warn "  verified #{checked} invalid case(s) against local mmdc; " \
+       "#{promoted} promoted to valid"
+end
+
 types = ARGV.reject { |a| a.start_with?('--') }
 write = ARGV.include?('--write')
+verify = ARGV.include?('--verify')
 
 # Checked before doing any work: a filtered --write would replace the whole
 # committed file with a fraction of it.
@@ -193,7 +280,12 @@ if write && !types.empty?
 end
 
 entries = cases(types)
-by_digest = index_by_digest(entries)
+
+# The twin index always spans the WHOLE corpus, even on a filtered run.
+# Building it from the selection alone made `class_diagram` on its own report
+# 68/11/90/115 against its committed 162/6/90/26 — 129 rows differing purely
+# because the twins were out of scope.
+by_digest = index_by_digest(types.empty? ? entries : cases([]))
 
 rows = entries.map do |entry|
   verdict, evidence = classify(entry, by_digest[entry[:digest]])
@@ -203,6 +295,8 @@ rows = entries.map do |entry|
     'evidence' => evidence
   }
 end
+
+verify_invalid!(rows, entries) if verify
 
 tally = rows.group_by { |r| r['verdict'] }.transform_values(&:size)
 puts 'TYPE       VALID    INVALID  ARTIFACT  UNKNOWN'
