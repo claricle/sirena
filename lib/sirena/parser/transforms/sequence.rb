@@ -12,17 +12,23 @@ module Sirena
       # notes, and activations.
       class Sequence
         # Arrow type mappings
-        ARROW_TYPE_MAP = {
-          '->>+' => 'solid_activate',
-          '-->>+' => 'dotted_activate',
-          '->>-' => 'solid_deactivate',
-          '-->>-' => 'dotted_deactivate',
-          '->>' => 'solid',
-          '->)' => 'async',
-          '-->)' => 'async_dotted',
-          '->' => 'solid',
-          '-->' => 'dotted'
+        # Mermaid's ten arrows, split into the two axes its own SVG uses:
+        # a line class (solid/dotted) and a marker (none/filled/open/cross),
+        # with bidirectional arrows carrying a marker at both ends.
+        ARROW_STYLES = {
+          '->' => %w[solid none],
+          '-->' => %w[dotted none],
+          '->>' => %w[solid filled],
+          '-->>' => %w[dotted filled],
+          '-x' => %w[solid cross],
+          '--x' => %w[dotted cross],
+          '-)' => %w[solid open],
+          '--)' => %w[dotted open],
+          '<<->>' => %w[solid filled],
+          '<<-->>' => %w[dotted filled]
         }.freeze
+
+        BIDIRECTIONAL_ARROWS = %w[<<->> <<-->>].freeze
 
         def initialize
           @message_index = 0
@@ -120,47 +126,41 @@ module Sirena
           to_id = stmt[:to].to_s
           message_text = stmt[:text] ? extract_text(stmt[:text]) : ''
 
-          # Determine arrow type
-          arrow = stmt[:arrow]
-          arrow_str = if arrow.is_a?(Hash)
-                        if arrow[:arrow_activation]
-                          arrow[:arrow_activation].to_s
-                        elsif arrow[:arrow_plain]
-                          arrow[:arrow_plain].to_s
-                        else
-                          arrow.values.first.to_s
-                        end
-                      else
-                        arrow.to_s
-                      end
-
-          arrow_type = ARROW_TYPE_MAP[arrow_str] || 'solid'
+          base = arrow_base(stmt[:arrow])
+          line_style, head_style = ARROW_STYLES.fetch(base, %w[solid filled])
 
           # Ensure participants exist
           ensure_participant(diagram, from_id)
           ensure_participant(diagram, to_id)
 
-          # Handle activation modifiers
-          handle_arrow_activation(diagram, from_id, to_id, arrow_str)
+          handle_arrow_activation(diagram, from_id, to_id,
+                                  activation(stmt[:arrow]))
 
           message = Diagram::SequenceMessage.new.tap do |m|
             m.from_id = from_id
             m.to_id = to_id
             m.message_text = message_text
-            m.arrow_type = arrow_type.sub(/_activate$/, '').sub(/_deactivate$/, '')
+            m.line_style = line_style
+            m.head_style = head_style
+            m.bidirectional = BIDIRECTIONAL_ARROWS.include?(base)
           end
 
           diagram.messages << message
           @message_index += 1
         end
 
-        def handle_arrow_activation(diagram, from_id, to_id, arrow_str)
-          if arrow_str.end_with?('+')
-            # Activate target (receiver)
-            track_activation(diagram, to_id, true)
-          elsif arrow_str.end_with?('-')
-            # Deactivate source (sender)
-            track_activation(diagram, from_id, false)
+        def arrow_base(arrow)
+          arrow.is_a?(Hash) ? arrow[:arrow_base].to_s : arrow.to_s
+        end
+
+        def activation(arrow)
+          arrow.is_a?(Hash) ? arrow[:activation].to_s : ''
+        end
+
+        def handle_arrow_activation(diagram, from_id, to_id, suffix)
+          case suffix
+          when '+' then track_activation(diagram, to_id, true)
+          when '-' then track_activation(diagram, from_id, false)
           end
         end
 

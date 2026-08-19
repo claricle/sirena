@@ -69,24 +69,20 @@ module Sirena
         # Arrow types including activation modifiers
         # Critical: These must be tried in order from longest to shortest
         rule(:arrow) do
-          arrow_with_activation | arrow_without_activation
+          arrow_base.as(:arrow_base) >> activation_suffix.maybe.as(:activation)
         end
 
-        rule(:arrow_with_activation) do
-          (
-            str('->>+') | str('-->>+') |
-            str('->>-') | str('-->>-')
-          ).as(:arrow_activation)
+        # Longest-first within each prefix family: Parslet alternation is
+        # first-match, so `-->` listed before `-->>` would swallow it.
+        rule(:arrow_base) do
+          str('<<-->>') | str('<<->>') |
+            str('-->>') | str('->>') |
+            str('--x') | str('-x') |
+            str('--)') | str('-)') |
+            str('-->') | str('->')
         end
 
-        rule(:arrow_without_activation) do
-          (
-            str('->>') >> str('+').absent? >> str('-').absent? |
-            str('-->>') >> str('+').absent? >> str('-').absent? |
-            str('->)') | str('-->)') |
-            str('->') | str('-->')
-          ).as(:arrow_plain)
-        end
+        rule(:activation_suffix) { match['+-'] }
 
         rule(:message_text) do
           colon >> space? >>
