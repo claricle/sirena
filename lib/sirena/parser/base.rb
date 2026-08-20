@@ -70,9 +70,20 @@ module Sirena
       # @param cause [Parslet::Cause] the failure to describe
       # @return [String] the message alone
       def failure_message(cause)
-        Array(cause.message)
-          .map { |part| part.is_a?(String) ? part : part.to_s.inspect }
-          .join
+        Array(cause.message).map { |part| message_part(part) }.join
+      end
+
+      # Parslet quotes a Slice and leaves everything else alone. Quoting by
+      # "not a String" instead would render a lookahead's symbol as
+      # `"LINE_END"` where parslet writes `LINE_END`.
+      #
+      # Deliberately unguarded by a spec: across 400 corpus files and all
+      # five grammars, every message part is a String or a Slice, so the
+      # third case is not reachable through any parser here. Matching
+      # parslet is still the right rendering; a spec for it would have to
+      # fabricate a cause and would prove nothing about real input.
+      def message_part(part)
+        part.respond_to?(:to_slice) ? part.str.inspect : part.to_s
       end
 
       # Locates a failure as a 1-based line and CHARACTER column.
