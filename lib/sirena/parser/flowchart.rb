@@ -56,14 +56,14 @@ module Sirena
                    end
         context << (' ' * (col_num - 1)) + '^'
 
-        # cause.message, not cause.to_s: the latter appends parslet's own
-        # byte-counted position, which contradicts the character column in
-        # the heading above on any line holding a multibyte character.
-        context << cause.message
+        # Not cause.to_s: it appends parslet's own byte-counted position,
+        # which contradicts the character column in the heading above on any
+        # line holding a multibyte character.
+        context << failure_message(cause)
         context.join("\n")
       rescue StandardError
         # Fallback to simple error message
-        "Parse error: #{cause.message}"
+        "Parse error: #{cause}"
       end
     end
   end

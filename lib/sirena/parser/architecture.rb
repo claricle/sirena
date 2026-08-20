@@ -37,7 +37,7 @@ module Sirena
 
         "Parse error at line #{line_no}, column #{column}:\n" \
         "#{context.join("\n")}\n" \
-        "#{cause.message}"
+        "#{failure_message(cause)}"
       end
     end
   end

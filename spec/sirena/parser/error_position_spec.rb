@@ -86,6 +86,40 @@ RSpec.describe Sirena::Parser::Base do
     end
   end
 
+  describe "a literal mismatch" do
+    # Parslet's message is an Array of String and Slice parts for this
+    # class of failure, not a String. Interpolating it split the message
+    # across lines and printed the slice's byte offset.
+    it "renders the message on one line, without a byte offset" do
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\nA-->B\nxyzzy qux\n")
+
+      expect(message).to eq(
+        "Parse error at line 3, column 7:\nxyzzy qux\n      ^\n" \
+        'Expected "\\n", but got "q"'
+      )
+    end
+
+    {
+      "block" => [Sirena::Parser::BlockParser,
+                  "block-beta\n  columns 3\n  ((((\n"],
+      "class diagram" => [Sirena::Parser::ClassDiagramParser,
+                          "classDiagram\n  class C1\n  ((((\n"],
+      "requirement" => [Sirena::Parser::RequirementParser,
+                        "requirementDiagram\n  !!!!\n"],
+      "architecture" => [Sirena::Parser::Architecture,
+                         "architecture-beta\n  group a(cloud)[A]\n  !!!\n"]
+    }.each do |name, (klass, source)|
+      it "keeps #{name}'s message free of parslet debug output" do
+        message = error_from(klass.new, source)
+
+        expect(message).not_to match(/@\d+/)
+        expect(message).not_to include("Expected: ")
+        expect(message.lines.last).to start_with("Don't know what to do with")
+      end
+    end
+  end
+
   describe "a failure at end of input" do
     it "says so and still draws the caret" do
       # The failure sits one line past the source, so there is no line to
@@ -115,8 +149,11 @@ RSpec.describe Sirena::Parser::Base do
         parser = klass.new
         allow(parser).to receive(:failure_position).and_raise("boom")
 
+        # The fallback has no heading, so it keeps parslet's own position
+        # rather than dropping it as the normal path does.
         expect { parser.parse("!!!\n") }
-          .to raise_error(Sirena::Parser::ParseError, /\AParse error: /)
+          .to raise_error(Sirena::Parser::ParseError,
+                          /\AParse error: .+ at line \d+ char \d+\.\z/)
 
         # Asserted after the fact: a future edit that stops calling
         # failure_position would otherwise pass without ever reaching the
