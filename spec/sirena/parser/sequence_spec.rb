@@ -8,57 +8,108 @@ RSpec.describe Sirena::Parser::SequenceParser do
 
   def message_for(arrow, suffix = "")
     source = if suffix == "-"
-               "sequenceDiagram\n    A->>+B: open\n    B#{arrow}-A: m\n"
+               "sequenceDiagram\n    A->>+B: open\n    " \
+                 "B#{arrow}#{gap(arrow)}-A: m\n"
              else
                "sequenceDiagram\n    A#{arrow}#{suffix}B: m\n"
              end
     parser.parse(source).messages.last
   end
 
-  describe "#parse arrow set" do
-    # Each row is verified against mmdc 11.12.0: the line class it emits
-    # (messageLine0 solid / messageLine1 dotted), whether it emits a
-    # marker-end, and whether it also emits a marker-start.
+  # A reversed arrow already ends in a dash, so writing the deactivation
+  # suffix against it spells the longer arrow instead: `B//--A` is `//--`,
+  # not `//-` closing an activation. mmdc reads it that way too, and takes
+  # the spaced form for the deactivation.
+  def gap(arrow)
+    arrow.end_with?("-") ? " " : ""
+  end
+
+  # The whole vocabulary, read off mmdc 11.12.0's own SVG: the line class
+  # (messageLine0 solid / messageLine1 dotted), the marker id, and whether
+  # it lands on marker-start or marker-end. Reversing a half or stick arrow
+  # keeps the head and moves it to the source end.
+  def self.arrows
     {
-      "->" => %w[solid none],
-      "-->" => %w[dotted none],
-      "->|" => %w[solid none],
-      "-->|" => %w[dotted none],
-      "->>" => %w[solid filled],
-      "-->>" => %w[dotted filled],
-      "-x" => %w[solid cross],
-      "--x" => %w[dotted cross],
-      "-X" => %w[solid cross],
-      "--X" => %w[dotted cross],
-      "-)" => %w[solid open],
-      "--)" => %w[dotted open],
-      "-|/" => %w[solid half_bottom],
-      "--|/" => %w[dotted half_bottom],
-      "-|\\" => %w[solid half_top],
-      "--|\\" => %w[dotted half_top],
-      "<<->>" => %w[solid filled],
-      "<<-->>" => %w[dotted filled]
-    }.each do |arrow, (line_style, head_style)|
-      it "parses #{arrow} as #{line_style}/#{head_style}" do
+      "->" => %w[solid none target],
+      "-->" => %w[dotted none target],
+      "->>" => %w[solid filled target],
+      "-->>" => %w[dotted filled target],
+      "-x" => %w[solid cross target],
+      "--x" => %w[dotted cross target],
+      "-X" => %w[solid cross target],
+      "--X" => %w[dotted cross target],
+      "-)" => %w[solid open target],
+      "--)" => %w[dotted open target],
+      "-|/" => %w[solid half_bottom target],
+      "--|/" => %w[dotted half_bottom target],
+      "-|\\" => %w[solid half_top target],
+      "--|\\" => %w[dotted half_top target],
+      "-//" => %w[solid stick_bottom target],
+      "--//" => %w[dotted stick_bottom target],
+      "-\\\\" => %w[solid stick_top target],
+      "--\\\\" => %w[dotted stick_top target],
+      "/|-" => %w[solid half_bottom source],
+      "/|--" => %w[dotted half_bottom source],
+      "\\|-" => %w[solid half_top source],
+      "\\|--" => %w[dotted half_top source],
+      "//-" => %w[solid stick_bottom source],
+      "//--" => %w[dotted stick_bottom source],
+      "\\\\-" => %w[solid stick_top source],
+      "\\\\--" => %w[dotted stick_top source],
+      "<<->>" => %w[solid filled both],
+      "<<-->>" => %w[dotted filled both]
+    }.freeze
+  end
+
+  describe "#parse arrow set" do
+    arrows.each do |arrow, (line_style, head_style, head_side)|
+      it "parses #{arrow} as #{line_style}/#{head_style} on the #{head_side}" do
         message = message_for(arrow)
 
-        expect(message.line_style).to eq(line_style)
-        expect(message.head_style).to eq(head_style)
+        expect(
+          [message.line_style, message.head_style, message.head_side]
+        ).to eq([line_style, head_style, head_side])
+      end
+
+      # A mis-read arrow still parses — the leftover characters just land
+      # in an actor name — so the styles alone cannot catch it.
+      it "leaves the participants of #{arrow} alone" do
+        message = message_for(arrow)
+
+        expect([message.from_id, message.to_id]).to eq(%w[A B])
       end
     end
 
-    it "marks only the << >> arrows bidirectional" do
-      arrows = %w[-> --> ->| -->| ->> -->> -x --x -X --X -) --)
-                  -|/ --|/ -|\\ --|\\ <<->> <<-->>]
-      bidirectional = arrows.select { |a| message_for(a).bidirectional }
+    it "puts a head on both ends only for the << >> arrows" do
+      both = self.class.arrows.keys.select { |a| message_for(a).bidirectional? }
 
-      expect(bidirectional).to eq(["<<->>", "<<-->>"])
+      expect(both).to eq(["<<->>", "<<-->>"])
+    end
+
+    it "puts a head on the source end only for the reversed spellings" do
+      source_end = self.class.arrows.keys.select do |a|
+        message_for(a).head_side == "source"
+      end
+
+      expect(source_end).to eq(["/|-", "/|--", "\\|-", "\\|--",
+                                "//-", "//--", "\\\\-", "\\\\--"])
+    end
+
+    # mmdc reads `A->|B` as `->` into an actor named `|B`. Treating the
+    # pipe as part of the arrow named participant `B` instead, so the
+    # message pointed at the wrong lifeline while looking correct.
+    ["->|", "-->|"].each do |not_an_arrow|
+      it "does not read #{not_an_arrow} as an arrow" do
+        source = "sequenceDiagram\n    A#{not_an_arrow}B: m\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
   end
 
   describe "#parse activation suffixes" do
-    %w[-> --> ->| -->| ->> -->> -x --x -X --X -) --)
-       -|/ --|/ -|\\ --|\\ <<->> <<-->>].each do |arrow|
+    arrows.each_key do |arrow|
       it "accepts #{arrow} with an activation suffix" do
         expect(message_for(arrow, "+").head_style)
           .to eq(message_for(arrow).head_style)
@@ -68,6 +119,18 @@ RSpec.describe Sirena::Parser::SequenceParser do
         expect(message_for(arrow, "-").head_style)
           .to eq(message_for(arrow).head_style)
       end
+    end
+
+    it "reads a reversed arrow whole rather than as a deactivation" do
+      # `B//--A` has to be the `//--` arrow. Reading it as `//-` plus a
+      # closing dash both draws the wrong head and closes an activation
+      # mermaid leaves open. An activation is only recorded once it closes,
+      # so an empty list is the proof that nothing closed it.
+      source = "sequenceDiagram\n    A->>+B: open\n    B//--A: m\n"
+      diagram = parser.parse(source)
+
+      expect(diagram.messages.last.head_style).to eq("stick_bottom")
+      expect(diagram.activations).to be_empty
     end
 
     it "allows whitespace before the suffix" do
@@ -109,7 +172,30 @@ RSpec.describe Sirena::Parser::SequenceParser do
             B-->>-A: close two
       MERMAID
 
-      expect(parser.parse(source).activations.size).to eq(2)
+      # The count alone passes with FIFO too: two opens and two closes
+      # give two activations either way. The end indexes are the tell —
+      # LIFO closes the inner one first.
+      spans = parser.parse(source).activations.map do |a|
+        [a.participant_id, a.start_index, a.end_index]
+      end
+
+      expect(spans).to eq([["B", 1, 2], ["B", 0, 3]])
+    end
+
+    it "closes the most recent when two participants interleave" do
+      source = <<~MERMAID
+        sequenceDiagram
+            A->>+B: open b
+            B->>+C: open c
+            C-->>-B: close c
+            B-->>-A: close b
+      MERMAID
+
+      spans = parser.parse(source).activations.map do |a|
+        [a.participant_id, a.start_index, a.end_index]
+      end
+
+      expect(spans).to eq([["C", 1, 2], ["B", 0, 3]])
     end
 
     it "rejects deactivating a participant with nothing open" do
@@ -148,6 +234,22 @@ RSpec.describe Sirena::Parser::SequenceParser do
       it "reads #{longer} whole rather than #{shorter} plus a stray >" do
         expect(message_for(longer).head_style).to eq("filled")
         expect(message_for(shorter).head_style).to eq("none")
+      end
+    end
+
+    # The reversed spellings shadow the same way, with the dash on the
+    # other side: `//-` listed first takes the head of `//--` and leaves
+    # the trailing dash to be read as a deactivation.
+    {
+      "//-" => "//--",
+      "\\\\-" => "\\\\--",
+      "/|-" => "/|--",
+      "\\|-" => "\\|--"
+    }.each do |shorter, longer|
+      it "reads #{longer} whole rather than #{shorter} plus a stray -" do
+        expect(message_for(longer).line_style).to eq("dotted")
+        expect(message_for(shorter).line_style).to eq("solid")
+        expect(message_for(longer).to_id).to eq("B")
       end
     end
 

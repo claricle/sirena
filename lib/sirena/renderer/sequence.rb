@@ -253,7 +253,7 @@ module Sirena
         style = {
           line: metadata[:line_style] || 'solid',
           head: metadata[:head_style] || 'filled',
-          bidirectional: metadata[:bidirectional] || false
+          side: metadata[:head_side] || 'target'
         }
         message_text = metadata[:message_text]
 
@@ -338,11 +338,18 @@ module Sirena
       end
 
       # Which ends of the message carry a marker. Mermaid draws one at the
-      # target, both for its <<->> arrows, and none for the bare -> and -->.
+      # target, one at the source for the reversed spellings, both for its
+      # <<->> arrows, and none for the bare -> and -->.
+      HEAD_ENDS = {
+        'target' => [:target].freeze,
+        'source' => [:source].freeze,
+        'both' => [:source, :target].freeze
+      }.freeze
+
       def head_ends(style)
         return [] if style[:head] == 'none'
 
-        style[:bidirectional] ? [:source, :target] : [:target]
+        HEAD_ENDS.fetch(style[:side], HEAD_ENDS['target'])
       end
 
       def message_line(span, style, ends)
@@ -370,12 +377,40 @@ module Sirena
                                  span.values_at(:x1, :y1, :x2)
                                end
 
+        # Mermaid puts `orient="auto-start-reverse"` on every marker, so a
+        # source-end head is the same shape rotated 180 degrees — which
+        # swaps its top and bottom halves. Reusing the target sign would
+        # have drawn `\\-` as the mirror of what mmdc renders.
+        side = which == :source ? -1 : 1
+
         case style[:head]
         when 'cross' then render_cross(tip_x, tip_y, group)
         when 'open' then render_chevron(from_x, tip_x, tip_y, group)
-        when 'half_bottom' then render_half_head(from_x, tip_x, tip_y, 1, group)
-        when 'half_top' then render_half_head(from_x, tip_x, tip_y, -1, group)
+        when 'half_bottom'
+          render_half_head(from_x, tip_x, tip_y, side, group)
+        when 'half_top'
+          render_half_head(from_x, tip_x, tip_y, -side, group)
+        when 'stick_bottom'
+          render_stick_head(from_x, tip_x, tip_y, side, group)
+        when 'stick_top'
+          render_stick_head(from_x, tip_x, tip_y, -side, group)
         else render_filled_arrowhead(from_x, tip_y, tip_x, tip_y, group)
+        end
+      end
+
+      # The stick head is one stroke, not a filled wedge: mermaid's marker
+      # is `M 0 0 L 7 7` with `fill="none"`. Drawing it as a polygon would
+      # have made `-//` indistinguishable from `-|/`.
+      def render_stick_head(from_x, tip_x, tip_y, side, group)
+        direction = tip_x >= from_x ? 1 : -1
+
+        group.children << Svg::Line.new.tap do |l|
+          l.x1 = tip_x
+          l.y1 = tip_y
+          l.x2 = tip_x - (direction * ARROW_SIZE)
+          l.y2 = tip_y + (side * ARROW_SIZE / 2)
+          l.stroke = '#000000'
+          l.stroke_width = '2'
         end
       end
 
@@ -446,32 +481,6 @@ module Sirena
           p.stroke = '#000000'
         end
         group.children << polygon
-      end
-
-      def render_open_arrowhead(x1, _y1, x2, y2, group)
-        dx = x2 - x1
-        direction = dx.positive? ? 1 : -1
-
-        # Open arrowhead (two lines)
-        line1 = Svg::Line.new.tap do |l|
-          l.x1 = x2
-          l.y1 = y2
-          l.x2 = x2 - (direction * ARROW_SIZE)
-          l.y2 = y2 - ARROW_SIZE / 2
-          l.stroke = '#000000'
-          l.stroke_width = '2'
-        end
-        group.children << line1
-
-        line2 = Svg::Line.new.tap do |l|
-          l.x1 = x2
-          l.y1 = y2
-          l.x2 = x2 - (direction * ARROW_SIZE)
-          l.y2 = y2 + ARROW_SIZE / 2
-          l.stroke = '#000000'
-          l.stroke_width = '2'
-        end
-        group.children << line2
       end
 
       def render_cross(x, y, group)

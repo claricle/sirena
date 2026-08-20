@@ -72,14 +72,38 @@ module Sirena
           arrow_base.as(:arrow_base) >> activation_suffix.maybe.as(:activation)
         end
 
-        # Longest-first within each prefix family: Parslet alternation is
-        # first-match, so `-->` listed before `-->>` would swallow it.
+        # Every spelling mmdc 11.12.0 renders, and only those. Half and
+        # stick heads come in a reversed spelling too, which puts the marker
+        # on the source end: `A//-B` and `A-//B` draw the same head at
+        # opposite ends of the line.
+        #
+        # `->|` and `-->|` are NOT arrows. mmdc reads `A->|B` as `->` into
+        # an actor named `|B`, so treating the pipe as part of the arrow
+        # named the wrong participant.
+        #
+        # Parslet alternation is first-match, so a genuine prefix pair has
+        # to be listed longest-first: `-->` before `-->>` would swallow it,
+        # and so would `//-` before `//--`. Nothing else here shadows —
+        # no solid arrow's second character is a dash, so the families are
+        # order-independent between themselves.
         rule(:arrow_base) do
           str('<<-->>') | str('<<->>') |
-            str('-->>') | str('-->|') | str('--|/') | str('--|\\') |
-            str('--x') | str('--X') | str('--)') | str('-->') |
-            str('->>') | str('->|') | str('-|/') | str('-|\\') |
-            str('-x') | str('-X') | str('-)') | str('->')
+            dotted_arrow | solid_arrow | reversed_arrow
+        end
+
+        rule(:dotted_arrow) do
+          str('-->>') | str('--|/') | str('--|\\') | str('--//') |
+            str('--\\\\') | str('--x') | str('--X') | str('--)') | str('-->')
+        end
+
+        rule(:solid_arrow) do
+          str('->>') | str('-|/') | str('-|\\') | str('-//') |
+            str('-\\\\') | str('-x') | str('-X') | str('-)') | str('->')
+        end
+
+        rule(:reversed_arrow) do
+          str('/|--') | str('/|-') | str('\\|--') | str('\\|-') |
+            str('//--') | str('//-') | str('\\\\--') | str('\\\\-')
         end
 
         rule(:activation_suffix) { space? >> match['+-'] }

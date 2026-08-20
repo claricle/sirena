@@ -89,7 +89,7 @@ module Sirena
             metadata: {
               line_style: message.line_style,
               head_style: message.head_style,
-              bidirectional: message.bidirectional,
+              head_side: message.head_side,
               message_index: index,
               message_text: message.message_text
             }
