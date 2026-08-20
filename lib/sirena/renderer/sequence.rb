@@ -326,12 +326,15 @@ module Sirena
           p.stroke_dasharray = '5,5' if style[:line] == 'dotted'
         end
 
-        # The loop returns travelling left, so the head points that way.
-        return if head_ends(style).empty?
-
-        render_head(:target,
-                    { x1: x + ARROW_SIZE, y1: bottom, x2: x, y2: bottom },
-                    style, group)
+        # Each end of the loop carries its own head, so a bidirectional
+        # self-message gets one at the top and one at the bottom — mermaid
+        # emits both a marker-start and a marker-end for `A<<->>A`.
+        head_ends(style).each do |which|
+          edge_y = which == :source ? top : bottom
+          render_head(:target,
+                      { x1: x + ARROW_SIZE, y1: edge_y, x2: x, y2: edge_y },
+                      style, group)
+        end
       end
 
       # Which ends of the message carry a marker. Mermaid draws one at the
@@ -475,9 +478,11 @@ module Sirena
       end
 
       def render_message_label(x1, x2, y, text, group)
-        # Position label above the arrow
+        # Position label above the arrow. A self-message needs more room:
+        # its loop reaches half its height above y, so the ordinary 10px
+        # put the text baseline exactly on the loop's top edge.
         label_x = (x1 + x2) / 2
-        label_y = y - 10
+        label_y = y - (x1 == x2 ? (SELF_LOOP_HEIGHT / 2) + 10 : 10)
 
         text_element = Svg::Text.new.tap do |t|
           t.x = label_x
