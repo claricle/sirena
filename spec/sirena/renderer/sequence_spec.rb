@@ -24,16 +24,24 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
   end
 
   describe "head style" do
-    it "draws no arrowhead on ->" do
-      expect(arrowheads("->")).to eq(0)
+    # Counting polygons alone let a cross — which is drawn with lines —
+    # be added to a "headless" arrow without failing anything.
+    %w[-> -->].each do |arrow|
+      it "draws nothing but the shaft on #{arrow}" do
+        group = message_group(arrow)
+
+        expect(group.scan("<polygon").size).to eq(0)
+        expect(group.scan("<line").size).to eq(1)
+        expect(group[/<line[^>]*>/]).to include('x2="220.0"')
+      end
     end
 
-    it "draws no arrowhead on -->" do
-      expect(arrowheads("-->")).to eq(0)
-    end
+    it "draws one arrowhead, at the target, on ->>" do
+      group = message_group("->>")
 
-    it "draws one arrowhead on ->>" do
-      expect(arrowheads("->>")).to eq(1)
+      expect(group.scan("<polygon").size).to eq(1)
+      expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
+        .to eq("220,120 212,116 212,124")
     end
 
     it "draws an arrowhead at both ends of <<->>, one per end" do
@@ -58,6 +66,9 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
       expect(strokes.map { |l| l[/x1="[\d.]+" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+"/] })
         .to contain_exactly('x1="216.0" y1="116.0" x2="224.0" y2="124.0"',
                             'x1="216.0" y1="124.0" x2="224.0" y2="116.0"')
+      # Stroke-only is the point: mermaid's crosshead sets fill="none".
+      expect(strokes).to all(include('stroke="#000000"'))
+      expect(strokes).to all(include('stroke-width="2"'))
     end
 
     it "draws a filled concave chevron on -)" do
@@ -122,15 +133,37 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
     it "draws a loop for a headless self-message" do
       group = self_group("->")
 
-      expect(group).to include("<path")
+      # Reaching right, not left: the loop must not cross the lifeline into
+      # the previous participant's column.
+      expect(group[/<path[^>]*d="([^"]*)"/, 1])
+        .to eq("M 80,110 C 136,110 136,130 80,130")
       expect(group.scan("<polygon").size).to eq(0)
     end
 
-    it "draws a loop and one head for ->>" do
+    it "draws a loop and one head at its return for ->>" do
       group = self_group("->>")
 
-      expect(group).to include("<path")
       expect(group.scan("<polygon").size).to eq(1)
+      expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
+        .to eq("80,130 88,126 88,134")
+    end
+
+    it "draws a head at each end of a bidirectional self-message" do
+      # mmdc emits both a marker-start and a marker-end here.
+      group = self_group("<<->>")
+      tips = group.scan(/<polygon[^>]*points="[\d.]+,([\d.]+)/).flatten
+
+      expect(tips).to contain_exactly("110", "130")
+    end
+
+    it "lifts the label clear of the loop" do
+      # The loop reaches half its height above the message line, so the
+      # ordinary offset put the text baseline on the loop's top edge.
+      group = self_group("->>")
+      label_y = group[/<text[^>]*y="([\d.]+)"/, 1].to_f
+      loop_top = group[/<path[^>]*d="M [\d.]+,([\d.]+)/, 1].to_f
+
+      expect(label_y).to be < loop_top
     end
 
     it "dashes the loop for a dotted self-message" do
