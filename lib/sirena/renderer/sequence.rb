@@ -373,6 +373,8 @@ module Sirena
         case style[:head]
         when 'cross' then render_cross(tip_x, tip_y, group)
         when 'open' then render_chevron(from_x, tip_x, tip_y, group)
+        when 'half_bottom' then render_half_head(from_x, tip_x, tip_y, 1, group)
+        when 'half_top' then render_half_head(from_x, tip_x, tip_y, -1, group)
         else render_filled_arrowhead(from_x, tip_y, tip_x, tip_y, group)
         end
       end
@@ -399,6 +401,26 @@ module Sirena
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
+          p.fill = '#000000'
+          p.stroke = '#000000'
+        end
+        group.children << polygon
+      end
+
+      # The -|/ and -|\ arrows draw only one barb, below the line or above
+      # it — mermaid's solidBottomArrowHead and solidTopArrowHead markers.
+      #
+      # @param side [Integer] 1 for the barb below the line, -1 for above
+      def render_half_head(from_x, tip_x, tip_y, side, group)
+        direction = tip_x >= from_x ? 1 : -1
+        back = tip_x - (direction * ARROW_SIZE)
+
+        polygon = Svg::Polygon.new.tap do |p|
+          p.points = [
+            "#{tip_x},#{tip_y}",
+            "#{back},#{tip_y + (side * ARROW_SIZE / 2)}",
+            "#{back},#{tip_y}"
+          ].join(' ')
           p.fill = '#000000'
           p.stroke = '#000000'
         end

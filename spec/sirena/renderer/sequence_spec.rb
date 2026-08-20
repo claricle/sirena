@@ -81,6 +81,24 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
       expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 215.2,120 212,124")
     end
 
+    it "draws one barb below the line on -|/" do
+      # mermaid's solidBottomArrowHead: a single barb, not a full head.
+      polygon = message_group("-|/")[/<polygon[^>]*>/]
+
+      expect(polygon).to include('fill="#000000"')
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,124 212,120")
+    end
+
+    it "draws one barb above the line on -|\\" do
+      polygon = message_group("-|\\")[/<polygon[^>]*>/]
+
+      expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 212,120")
+    end
+
+    it "draws no head on ->|" do
+      expect(message_group("->|").scan("<polygon").size).to eq(0)
+    end
+
     it "mirrors the chevron on a right-to-left message" do
       rtl = <<~MERMAID
         sequenceDiagram
