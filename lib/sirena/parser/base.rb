@@ -59,6 +59,22 @@ module Sirena
         raise ParseError, format_parse_error(cause, source)
       end
 
+      # Renders a failure's text without its position.
+      #
+      # Parslet's message is a String for some failures and an Array of
+      # String and Slice parts for a literal mismatch. Interpolating the
+      # array split the message across lines and printed a slice's byte
+      # offset, while cause.to_s renders it properly but appends a
+      # byte-counted position that contradicts the heading's column.
+      #
+      # @param cause [Parslet::Cause] the failure to describe
+      # @return [String] the message alone
+      def failure_message(cause)
+        Array(cause.message)
+          .map { |part| part.is_a?(String) ? part : part.to_s.inspect }
+          .join
+      end
+
       # Locates a failure as a 1-based line and CHARACTER column.
       #
       # Parslet counts bytes, so a line holding any multibyte character

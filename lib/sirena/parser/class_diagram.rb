@@ -47,7 +47,7 @@ module Sirena
         "Parse error at line #{line_num}, column #{col_num}:\n" \
           "#{context}\n" \
           "#{' ' * (col_num - 1)}^\n" \
-          "Expected: #{cause.message}"
+          "#{failure_message(cause)}"
       end
     end
   end
