@@ -54,17 +54,23 @@ module Sirena
           acc_descr_block | acc_line
         end
 
+        # Mermaid separates the keyword from its delimiter with \s*, which
+        # crosses newlines. `space?` does not, so `accTitle:` followed by
+        # the text on the next line made a node called Title, and
+        # `accDescr` then `{` on its own line made a phantom accDescr node.
         rule(:acc_line) do
           (str('accTitle') | str('accDescr')).as(:acc_keyword) >>
-            space? >> str(':') >> space? >>
-            (line_end.absent? >> any).repeat.as(:acc_text) >> line_end
+            ws? >> str(':') >> ws? >>
+            (line_end.absent? >> any).repeat(1).as(:acc_text) >> line_end
         end
 
-        # The block form runs to a closing brace on its own.
+        # The block form ends at its closing brace. Requiring a line end
+        # after it rejected `accDescr {Desc}A-->B`, which mermaid renders —
+        # the statement rule handles what follows.
         rule(:acc_descr_block) do
-          str('accDescr').as(:acc_keyword) >> space? >> str('{') >>
+          str('accDescr').as(:acc_keyword) >> ws? >> str('{') >>
             (str('}').absent? >> any).repeat.as(:acc_text) >>
-            str('}') >> line_end
+            str('}') >> semicolon.maybe
         end
 
         # Subgraph: subgraph id [title] ... end

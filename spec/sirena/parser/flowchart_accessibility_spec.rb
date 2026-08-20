@@ -28,23 +28,45 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids(source)).to eq(%w[A B])
     end
 
-    it "does not turn the block into a node" do
-      # This is the reason the bucket matters. Without a rule, the braced
-      # form parsed as a node called accDescr whose label was the block —
-      # a silent misparse that rendered a phantom node rather than failing.
-      source = "graph TD\naccDescr {\n  multi line\n}\nA-->B\n"
+    it "takes the text from the next line" do
+      # mermaid separates the keyword from its delimiter with \s*, which
+      # crosses newlines. A horizontal-only rule made a node called Title.
+      source = "graph TD\naccTitle:\nTitle\nA-->B\n"
 
-      expect(node_ids(source)).not_to include("accDescr")
+      expect(node_ids(source)).to eq(%w[A B])
     end
 
-    it "leaves an ordinary node starting with acc alone" do
-      expect(node_ids("graph TD\naccount-->B\n")).to eq(%w[B account])
+    it "takes a brace on the next line" do
+      source = "graph TD\naccDescr\n{\nDesc\n}\nA-->B\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    it "ends the block at its closing brace" do
+      # Requiring a line end after `}` rejected this, which mermaid
+      # renders; the statement rule handles what follows.
+      expect(node_ids("graph TD\naccDescr {Desc}A-->B\n")).to eq(%w[A B])
+    end
+  end
+
+  describe "nodes whose names contain the keyword" do
+    # `account` shares only a prefix. These share the WHOLE keyword, which
+    # is what the boundary actually has to get right.
+    %w[accTitleNode accDescrNode account].each do |id|
+      it "leaves #{id} alone" do
+        expect(node_ids("graph TD\n#{id}-->B\n")).to eq(["B", id].sort)
+      end
     end
   end
 
   describe "a diagram with no accessibility statement" do
-    it "is unchanged" do
-      expect(node_ids("graph TD\nA-->B\n")).to eq(%w[A B])
+    it "keeps its edge, not just its nodes" do
+      # Checking node ids alone let the edge disappear unnoticed.
+      diagram = described_class.new.parse("graph TD\nA-->B\nA-->C\n")
+
+      expect(diagram.nodes.map(&:id).sort).to eq(%w[A B C])
+      expect(diagram.edges.map { |e| [e.source_id, e.target_id] })
+        .to eq([%w[A B], %w[A C]])
     end
   end
 end
