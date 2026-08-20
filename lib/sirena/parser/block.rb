@@ -37,7 +37,7 @@ module Sirena
 
       # Formats a Parslet parse error with context.
       #
-      # @param error [Parslet::ParseFailed] the parse error
+      # @param cause [Parslet::Cause] the deepest failure
       # @param source [String] the source that failed to parse
       # @return [String] formatted error message
       def format_parse_error(cause, source)

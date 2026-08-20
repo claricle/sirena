@@ -49,7 +49,7 @@ RSpec.describe Sirena::Parser::Base do
       expect(position_in(message)).to start_with("line 3,")
     end
 
-    it "does not count leading blank lines, and still accepts \\v and \\f" do
+    it "counts from the stripped source, not the original" do
       # Architecture strips its input before parsing, so its positions are
       # relative to the stripped source. Dropping the strip would fix that
       # but also change which inputs parse at all — String#strip removes
@@ -167,8 +167,10 @@ RSpec.describe Sirena::Parser::Base do
         # The fallback has no heading, so it keeps parslet's own position
         # rather than dropping it as the normal path does.
         expect { parser.parse("!!!\n") }
-          .to raise_error(Sirena::Parser::ParseError,
-                          /\AParse error: .+ at line \d+ char \d+\.\z/)
+          .to raise_error(
+            Sirena::Parser::ParseError,
+            "Parse error: Premature end of input at line 1 char 1."
+          )
 
         # Asserted after the fact: a future edit that stops calling
         # failure_position would otherwise pass without ever reaching the
@@ -183,6 +185,19 @@ RSpec.describe Sirena::Parser::Base do
       message = error_from(Sirena::Parser::FlowchartParser.new, "!!!\n")
 
       expect(position_in(message)).to eq("line 1, column 1")
+    end
+  end
+
+  # Parslet's message parts are a String, a Slice, or — for a lookahead —
+  # something else again. Quoting the third case the way a Slice is quoted
+  # would print the symbol as a string literal.
+  describe "a lookahead failure" do
+    it "names the atom without quoting it" do
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\nstyle A ")
+
+      expect(message).to end_with("Input should not start with LINE_END")
+      expect(position_in(message)).to eq("line 2, column 9")
     end
   end
 end

@@ -49,7 +49,8 @@ module Sirena
       #
       # @param grammar [Parslet::Parser] the grammar to run
       # @param source [String] the source to parse
-      # @return [Hash] the parse tree
+      # @return [Hash, Array] the parse tree — a Hash for a single
+      #   captured node, an Array once a grammar repeats one
       # @raise [ParseError] with the failure position and context
       def parse_with_grammar(grammar, source)
         reporter = Parslet::ErrorReporter::Deepest.new
@@ -77,11 +78,13 @@ module Sirena
       # "not a String" instead would render a lookahead's symbol as
       # `"LINE_END"` where parslet writes `LINE_END`.
       #
-      # Deliberately unguarded by a spec: across 400 corpus files and all
-      # five grammars, every message part is a String or a Slice, so the
-      # third case is not reachable through any parser here. Matching
-      # parslet is still the right rendering; a spec for it would have to
-      # fabricate a cause and would prove nothing about real input.
+      # A lookahead failure is the third case, and it is reachable: for
+      # "graph TD\nstyle A " parslet builds an Entity part and the message
+      # reads `Input should not start with LINE_END`. Quoting it would have
+      # printed the symbol as a string literal.
+      #
+      # @param part [String, Parslet::Slice, Object] one piece of a message
+      # @return [String] the piece as parslet would render it
       def message_part(part)
         part.respond_to?(:to_slice) ? part.str.inspect : part.to_s
       end
