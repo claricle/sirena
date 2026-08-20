@@ -72,6 +72,16 @@ RSpec.describe Sirena::Parser::Base do
   end
 
   describe "columns count characters, not bytes" do
+    it "counts a multibyte character on an EARLIER line correctly" do
+      # This is the case that discriminates. Measuring the preceding lines
+      # in characters instead of bytes, or slicing the failing line by
+      # characters instead of bytes, both report column 7 here.
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\nA[é]\nB[é] qux\n")
+
+      expect(message).to start_with("Parse error at line 3, column 6:")
+    end
+
     it "reports the whole message consistently past a multibyte character" do
       # Parslet counts bytes, so "A[é]-->" reported column 9 for a 7
       # character line. Asserted on the full message: the heading and the
@@ -100,22 +110,27 @@ RSpec.describe Sirena::Parser::Base do
       )
     end
 
+    # Sources chosen because each one makes parslet return an ARRAY message.
+    # The earlier fixtures produced Strings, so reverting the formatter to
+    # cause.message passed every example and proved nothing.
     {
       "block" => [Sirena::Parser::BlockParser,
-                  "block-beta\n  columns 3\n  ((((\n"],
+                  "block-beta\nxyzzy qux\n", 'Expected "\\n", but got "q"'],
       "class diagram" => [Sirena::Parser::ClassDiagramParser,
-                          "classDiagram\n  class C1\n  ((((\n"],
+                          "classDiagram\nxyzzy qux\n",
+                          'Expected "\\n", but got "q"'],
       "requirement" => [Sirena::Parser::RequirementParser,
-                        "requirementDiagram\n  !!!!\n"],
+                        "requirementDiagram\nelement xyzzy qux\n",
+                        'Expected "{", but got "q"'],
       "architecture" => [Sirena::Parser::Architecture,
-                         "architecture-beta\n  group a(cloud)[A]\n  !!!\n"]
-    }.each do |name, (klass, source)|
-      it "keeps #{name}'s message free of parslet debug output" do
+                         "architecture-beta\ngroup a x\n",
+                         'Expected "\\n", but got "x"']
+    }.each do |name, (klass, source, expected)|
+      it "renders #{name}'s array message as parslet would" do
         message = error_from(klass.new, source)
 
+        expect(message.lines.last.chomp).to eq(expected)
         expect(message).not_to match(/@\d+/)
-        expect(message).not_to include("Expected: ")
-        expect(message.lines.last).to start_with("Don't know what to do with")
       end
     end
   end
