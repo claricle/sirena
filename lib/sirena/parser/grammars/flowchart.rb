@@ -36,13 +36,35 @@ module Sirena
         end
 
         rule(:statement) do
-          subgraph_statement |
+          accessibility_statement |
+            subgraph_statement |
             style_statement |
             class_def_statement |
             class_assignment_statement |
             click_statement |
             node_edge_statement |
             standalone_node
+        end
+
+        # `accTitle:` and `accDescr:` carry the text mermaid puts in the
+        # SVG's aria attributes. Without them `accDescr { ... }` parsed as a
+        # node called accDescr with the block as its label — a silent
+        # misparse rather than a failure.
+        rule(:accessibility_statement) do
+          acc_descr_block | acc_line
+        end
+
+        rule(:acc_line) do
+          (str('accTitle') | str('accDescr')).as(:acc_keyword) >>
+            space? >> str(':') >> space? >>
+            (line_end.absent? >> any).repeat.as(:acc_text) >> line_end
+        end
+
+        # The block form runs to a closing brace on its own.
+        rule(:acc_descr_block) do
+          str('accDescr').as(:acc_keyword) >> space? >> str('{') >>
+            (str('}').absent? >> any).repeat.as(:acc_text) >>
+            str('}') >> line_end
         end
 
         # Subgraph: subgraph id [title] ... end
