@@ -22,12 +22,20 @@ RSpec.describe Sirena::Parser::SequenceParser do
     {
       "->" => %w[solid none],
       "-->" => %w[dotted none],
+      "->|" => %w[solid none],
+      "-->|" => %w[dotted none],
       "->>" => %w[solid filled],
       "-->>" => %w[dotted filled],
       "-x" => %w[solid cross],
       "--x" => %w[dotted cross],
+      "-X" => %w[solid cross],
+      "--X" => %w[dotted cross],
       "-)" => %w[solid open],
       "--)" => %w[dotted open],
+      "-|/" => %w[solid half_bottom],
+      "--|/" => %w[dotted half_bottom],
+      "-|\\" => %w[solid half_top],
+      "--|\\" => %w[dotted half_top],
       "<<->>" => %w[solid filled],
       "<<-->>" => %w[dotted filled]
     }.each do |arrow, (line_style, head_style)|
@@ -40,7 +48,8 @@ RSpec.describe Sirena::Parser::SequenceParser do
     end
 
     it "marks only the << >> arrows bidirectional" do
-      arrows = %w[-> --> ->> -->> -x --x -) --) <<->> <<-->>]
+      arrows = %w[-> --> ->| -->| ->> -->> -x --x -X --X -) --)
+                  -|/ --|/ -|\\ --|\\ <<->> <<-->>]
       bidirectional = arrows.select { |a| message_for(a).bidirectional }
 
       expect(bidirectional).to eq(["<<->>", "<<-->>"])
@@ -48,7 +57,8 @@ RSpec.describe Sirena::Parser::SequenceParser do
   end
 
   describe "#parse activation suffixes" do
-    %w[-> --> ->> -->> -x --x -) --) <<->> <<-->>].each do |arrow|
+    %w[-> --> ->| -->| ->> -->> -x --x -X --X -) --)
+       -|/ --|/ -|\\ --|\\ <<->> <<-->>].each do |arrow|
       it "accepts #{arrow} with an activation suffix" do
         expect(message_for(arrow, "+").head_style)
           .to eq(message_for(arrow).head_style)
@@ -58,6 +68,14 @@ RSpec.describe Sirena::Parser::SequenceParser do
         expect(message_for(arrow, "-").head_style)
           .to eq(message_for(arrow).head_style)
       end
+    end
+
+    it "allows whitespace before the suffix" do
+      # mmdc renders `A-x + B`, and requiring the suffix to touch the arrow
+      # rejected every spaced form.
+      source = "sequenceDiagram\n    A->> + B: open\n    B-->> - A: close\n"
+
+      expect(parser.parse(source).activations.size).to eq(1)
     end
 
     it "opens an activation on + and closes it on -" do
@@ -79,10 +97,35 @@ RSpec.describe Sirena::Parser::SequenceParser do
     end
   end
 
+  describe "#parse deactivation" do
+    it "closes the most recent activation still open" do
+      # Two opens then two closes is ordinary mermaid. Reading only the
+      # last entry closed the same activation twice.
+      source = <<~MERMAID
+        sequenceDiagram
+            A->>+B: one
+            A->>+B: two
+            B-->>-A: close one
+            B-->>-A: close two
+      MERMAID
+
+      expect(parser.parse(source).activations.size).to eq(2)
+    end
+
+    it "rejects deactivating a participant with nothing open" do
+      # mmdc refuses this, and ignoring it silently rendered every arrow
+      # form carrying an unmatched `-`.
+      expect { parser.parse("sequenceDiagram\n    A-x-B: close\n") }
+        .to raise_error(Sirena::Parser::ParseError, /inactive participant/)
+    end
+  end
+
   describe "#parse forms mermaid rejects" do
-    # mmdc 11.12.0 rejects all four. The first two parsed before the arrow
-    # set was rewritten, so they are demotions we want.
-    ["->)", "-->)", "--->", "---)"].each do |arrow|
+    # mmdc 11.12.0 rejects every one of these. The first two parsed before
+    # the arrow set was rewritten, so they are demotions we want. The last
+    # three are the check that the wider vocabulary did not become
+    # "anything with a dash in it".
+    ['->)', '-->)', '--->', '---)', '--@#$', '--|', '-|'].each do |arrow|
       it "rejects #{arrow}" do
         source = "sequenceDiagram\n    A#{arrow}B: m\n"
 

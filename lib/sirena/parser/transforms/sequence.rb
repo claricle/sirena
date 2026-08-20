@@ -18,12 +18,20 @@ module Sirena
         ARROW_STYLES = {
           '->' => %w[solid none],
           '-->' => %w[dotted none],
+          '->|' => %w[solid none],
+          '-->|' => %w[dotted none],
           '->>' => %w[solid filled],
           '-->>' => %w[dotted filled],
           '-x' => %w[solid cross],
           '--x' => %w[dotted cross],
+          '-X' => %w[solid cross],
+          '--X' => %w[dotted cross],
           '-)' => %w[solid open],
           '--)' => %w[dotted open],
+          '-|/' => %w[solid half_bottom],
+          '--|/' => %w[dotted half_bottom],
+          '-|\\' => %w[solid half_top],
+          '--|\\' => %w[dotted half_top],
           '<<->>' => %w[solid filled],
           '<<-->>' => %w[dotted filled]
         }.freeze
@@ -154,7 +162,9 @@ module Sirena
         end
 
         def activation(arrow)
-          arrow.is_a?(Hash) ? arrow[:activation].to_s : ''
+          # Stripped: mermaid allows whitespace before the suffix, so the
+          # capture can arrive as " +" and never matched a bare "+".
+          arrow.is_a?(Hash) ? arrow[:activation].to_s.strip : ''
         end
 
         def handle_arrow_activation(diagram, from_id, to_id, suffix)
@@ -214,8 +224,21 @@ module Sirena
             # Start new activation
             @activations[participant_id] << { start: @message_index }
           else
-            # End latest activation
-            active = @activations[participant_id].last
+            # Close the most recent activation still open — a stack, not
+            # simply the last entry. Two `+` on the same participant
+            # followed by two `-` is ordinary mermaid, and reading only the
+            # last entry closed the same one twice.
+            active = @activations[participant_id].reverse.find { |a| !a[:end] }
+
+            if active.nil?
+              # mmdc rejects a source that deactivates a participant with
+              # nothing open. Ignoring it silently rendered arrow forms
+              # mermaid refuses, such as `A-x-B`.
+              raise Parser::ParseError,
+                    "Trying to deactivate an inactive participant " \
+                    "(#{participant_id})"
+            end
+
             if active && !active[:end]
               active[:end] = @message_index
 

@@ -76,13 +76,13 @@ module Sirena
         # first-match, so `-->` listed before `-->>` would swallow it.
         rule(:arrow_base) do
           str('<<-->>') | str('<<->>') |
-            str('-->>') | str('->>') |
-            str('--x') | str('-x') |
-            str('--)') | str('-)') |
-            str('-->') | str('->')
+            str('-->>') | str('-->|') | str('--|/') | str('--|\\') |
+            str('--x') | str('--X') | str('--)') | str('-->') |
+            str('->>') | str('->|') | str('-|/') | str('-|\\') |
+            str('-x') | str('-X') | str('-)') | str('->')
         end
 
-        rule(:activation_suffix) { match['+-'] }
+        rule(:activation_suffix) { space? >> match['+-'] }
 
         rule(:message_text) do
           colon >> space? >>
