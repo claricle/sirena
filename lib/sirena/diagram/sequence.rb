@@ -50,17 +50,25 @@ module Sirena
       # Line style: 'solid' or 'dotted'
       attribute :line_style, :string
 
-      # Marker drawn at the message end: 'none', 'filled', 'open' or 'cross'
+      # Marker shape: 'none', 'filled', 'open', 'cross', 'half_top',
+      # 'half_bottom', 'stick_top' or 'stick_bottom'
       attribute :head_style, :string
 
-      # Whether the marker is drawn at both ends (mermaid's <<->> arrows)
-      attribute :bidirectional, :boolean
+      # Which end of the line carries the marker: 'target', 'source', or
+      # 'both' for mermaid's <<->> arrows. Mermaid spells the same head at
+      # the source end by reversing the arrow: `-\\` against `\\-`.
+      attribute :head_side, :string
 
       def initialize(*args)
         super
         self.line_style ||= 'solid'
         self.head_style ||= 'filled'
-        self.bidirectional = false if bidirectional.nil?
+        self.head_side ||= 'target'
+      end
+
+      # @return [Boolean] true when the marker is drawn at both ends
+      def bidirectional?
+        head_side == 'both'
       end
 
       # Validates the message has required attributes.

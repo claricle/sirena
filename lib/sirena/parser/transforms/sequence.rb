@@ -11,32 +11,41 @@ module Sirena
       # fully-formed Diagram::Sequence object with participants, messages,
       # notes, and activations.
       class Sequence
-        # Arrow type mappings
-        # Mermaid's ten arrows, split into the two axes its own SVG uses:
-        # a line class (solid/dotted) and a marker (none/filled/open/cross),
-        # with bidirectional arrows carrying a marker at both ends.
+        # Every arrow mmdc 11.12.0 renders, read off its own SVG: a line
+        # class (messageLine0/1 -> solid/dotted), a marker, and which end
+        # of the line carries it. The reversed spellings differ from their
+        # forward twin only in that last axis — `\\-` puts the same head
+        # mermaid gives `-\\` on the source end instead.
         ARROW_STYLES = {
-          '->' => %w[solid none],
-          '-->' => %w[dotted none],
-          '->|' => %w[solid none],
-          '-->|' => %w[dotted none],
-          '->>' => %w[solid filled],
-          '-->>' => %w[dotted filled],
-          '-x' => %w[solid cross],
-          '--x' => %w[dotted cross],
-          '-X' => %w[solid cross],
-          '--X' => %w[dotted cross],
-          '-)' => %w[solid open],
-          '--)' => %w[dotted open],
-          '-|/' => %w[solid half_bottom],
-          '--|/' => %w[dotted half_bottom],
-          '-|\\' => %w[solid half_top],
-          '--|\\' => %w[dotted half_top],
-          '<<->>' => %w[solid filled],
-          '<<-->>' => %w[dotted filled]
+          '->' => %w[solid none target],
+          '-->' => %w[dotted none target],
+          '->>' => %w[solid filled target],
+          '-->>' => %w[dotted filled target],
+          '-x' => %w[solid cross target],
+          '--x' => %w[dotted cross target],
+          '-X' => %w[solid cross target],
+          '--X' => %w[dotted cross target],
+          '-)' => %w[solid open target],
+          '--)' => %w[dotted open target],
+          '-|/' => %w[solid half_bottom target],
+          '--|/' => %w[dotted half_bottom target],
+          '-|\\' => %w[solid half_top target],
+          '--|\\' => %w[dotted half_top target],
+          '-//' => %w[solid stick_bottom target],
+          '--//' => %w[dotted stick_bottom target],
+          '-\\\\' => %w[solid stick_top target],
+          '--\\\\' => %w[dotted stick_top target],
+          '/|-' => %w[solid half_bottom source],
+          '/|--' => %w[dotted half_bottom source],
+          '\\|-' => %w[solid half_top source],
+          '\\|--' => %w[dotted half_top source],
+          '//-' => %w[solid stick_bottom source],
+          '//--' => %w[dotted stick_bottom source],
+          '\\\\-' => %w[solid stick_top source],
+          '\\\\--' => %w[dotted stick_top source],
+          '<<->>' => %w[solid filled both],
+          '<<-->>' => %w[dotted filled both]
         }.freeze
-
-        BIDIRECTIONAL_ARROWS = %w[<<->> <<-->>].freeze
 
         def initialize
           @message_index = 0
@@ -135,7 +144,8 @@ module Sirena
           message_text = stmt[:text] ? extract_text(stmt[:text]) : ''
 
           base = arrow_base(stmt[:arrow])
-          line_style, head_style = ARROW_STYLES.fetch(base, %w[solid filled])
+          line_style, head_style, head_side =
+            ARROW_STYLES.fetch(base, %w[solid filled target])
 
           # Ensure participants exist
           ensure_participant(diagram, from_id)
@@ -150,7 +160,7 @@ module Sirena
             m.message_text = message_text
             m.line_style = line_style
             m.head_style = head_style
-            m.bidirectional = BIDIRECTIONAL_ARROWS.include?(base)
+            m.head_side = head_side
           end
 
           diagram.messages << message

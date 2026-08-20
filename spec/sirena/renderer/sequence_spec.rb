@@ -95,8 +95,44 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
       expect(polygon[/points="([^"]*)"/, 1]).to eq("220,120 212,116 212,120")
     end
 
-    it "draws no head on ->|" do
-      expect(message_group("->|").scan("<polygon").size).to eq(0)
+    # mermaid's stickBottomArrowHead is `M 0 7 L 7 0` with fill="none" —
+    # one stroke, where the solid variant is a filled wedge. Drawing both
+    # as polygons made `-//` and `-|/` the same picture.
+    {
+      "-//" => 'x1="220.0" y1="120.0" x2="212.0" y2="124.0"',
+      "-\\\\" => 'x1="220.0" y1="120.0" x2="212.0" y2="116.0"'
+    }.each do |arrow, stroke|
+      it "draws one unfilled stroke on #{arrow}" do
+        group = message_group(arrow)
+
+        expect(group.scan("<polygon").size).to eq(0)
+        expect(group.scan(/<line[^>]*>/).last).to include(stroke)
+      end
+    end
+
+    # The reversed spellings put the head on the source end. mermaid marks
+    # every head `orient="auto-start-reverse"`, so the same marker at the
+    # start is rotated 180 degrees — a "bottom" head sits above the line.
+    it "draws the barb of /|- at the source, flipped" do
+      group = message_group("/|-")
+
+      expect(group[/<polygon[^>]*points="([^"]*)"/, 1])
+        .to eq("80,120 88,116 88,120")
+    end
+
+    it "draws the stroke of //- at the source, flipped" do
+      group = message_group("//-")
+
+      expect(group.scan("<polygon").size).to eq(0)
+      expect(group.scan(/<line[^>]*>/).last)
+        .to include('x1="80.0" y1="120.0" x2="88.0" y2="116.0"')
+    end
+
+    it "insets the shaft at the end that carries the head" do
+      # The shaft has to stop short of its own head, at whichever end that
+      # is. Insetting the target end regardless drew //- through its barb.
+      expect(message_group("//-")[/<line[^>]*>/])
+        .to include('x1="88.0"').and include('x2="220.0"')
     end
 
     it "mirrors the chevron on a right-to-left message" do

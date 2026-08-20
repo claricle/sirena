@@ -5868,8 +5868,8 @@
   verdict: unknown
   evidence: no evidence
 - case: unknown/082_parser_should_handle_a_sequencediagram_definition_with_a_title__81.mmd
-  verdict: unknown
-  evidence: no evidence
+  verdict: invalid
+  evidence: mmdc rejected it
 - case: unknown/083_parser_should_draw_background_rect_82.mmd
   verdict: unknown
   evidence: no evidence
