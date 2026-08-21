@@ -76,7 +76,27 @@ module Sirena
             (newline.absent? >> any).repeat.as(:acc_text) >> (newline | eof)
         end
 
-        rule(:acc_gap) { (space | newline).repeat }
+        # Whitespace crosses newlines, and once a newline is crossed a
+        # STANDALONE comment line is skipped whole: mmdc reads
+        # `accTitle:` newline `%% c` newline `Real` as the title `Real`.
+        # A comment on the delimiter's OWN line stays text, which is why
+        # the skipping only starts after the first newline.
+        # `ws?` after the newline, because it already skips comments — the
+        # same-line protection comes from the structure here, not from a
+        # narrower rule, and a separate one could not be killed by any
+        # mutation.
+        rule(:acc_gap) { space.repeat >> (newline >> ws?).repeat }
+
+        rule(:full_comment) do
+          str('%%') >> (newline.absent? >> any).repeat >> newline
+        end
+
+        # A `}` inside a comment does not close a block. mmdc strips the
+        # comment first, so `accDescr {` / `text` / `%% }` swallows every
+        # line after it rather than ending there.
+        rule(:acc_block_body) do
+          (full_comment | (str('}').absent? >> any)).repeat
+        end
 
         # The block form ends at its closing brace. Requiring a line end
         # after it rejected `accDescr {Desc}A-->B`, which mermaid renders —
@@ -87,8 +107,8 @@ module Sirena
         # line after it, so refusing the source lost a diagram it renders.
         rule(:acc_descr_block) do
           str('accDescr').as(:acc_keyword) >> acc_gap >> str('{') >>
-            (str('}').absent? >> any).repeat.as(:acc_text) >>
-            (str('}') >> semicolon.maybe).maybe
+            acc_block_body.as(:acc_text) >>
+            (str('}') >> space? >> semicolon.maybe).maybe
         end
 
         # Subgraph: subgraph id [title] ... end

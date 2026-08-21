@@ -99,6 +99,37 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # mermaid strips comments before reading the statement, so a comment on
+  # its OWN line is skipped while one on the delimiter's line is text.
+  describe "a standalone comment line" do
+    it "is skipped between the delimiter and its text" do
+      source = "graph TD\naccTitle:\n%% comment\nActualTitle\nA --- B\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+      expect(acc_text(source)).to eq("ActualTitle")
+    end
+
+    it "does not close a block with a brace inside it" do
+      # mmdc swallows every line after the open brace here.
+      source = "graph TD\naccDescr {\ntext\n%% }\nC --- D\n"
+
+      expect(node_ids(source)).to eq([])
+    end
+
+    it "still keeps a same-line comment as text" do
+      source = "graph TD\naccTitle: %% comment\nA --- B\nC --- D\n"
+
+      expect(acc_text(source)).to eq("%% comment")
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+  end
+
+  it "takes a spaced semicolon after a closing block" do
+    source = "graph TD\nA --- B\naccDescr {Desc} ; C --- D\n"
+
+    expect(node_ids(source)).to eq(%w[A B C D])
+  end
+
   # mmdc renders all of these; refusing them lost a diagram it draws.
   describe "an incomplete accessibility statement" do
     {
