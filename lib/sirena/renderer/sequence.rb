@@ -352,12 +352,13 @@ module Sirena
         HEAD_ENDS.fetch(style[:side], HEAD_ENDS['target'])
       end
 
-      # Heads that sit on the line rather than in front of it. A filled
-      # wedge occupies the last few pixels of the shaft, so the shaft stops
-      # short of it. A cross straddles the tip, and a stick is one diagonal
-      # stroke from the tip — shortening the shaft for either left a gap
-      # where mermaid draws none.
-      FLUSH_HEADS = %w[cross stick_top stick_bottom].freeze
+      # Heads that sit on the line rather than in front of it. Only a
+      # filled wedge fills the last few pixels of the shaft, so only it
+      # earns an inset. A cross straddles the tip, a stick is one diagonal
+      # stroke from it, and the concave chevron of `-)` touches the
+      # centreline at its notch rather than its back edge — insetting for
+      # that one left the shaft ending at 212 with the notch at 215.2.
+      FLUSH_HEADS = %w[cross open stick_top stick_bottom].freeze
 
       def message_line(span, style, ends)
         # Signed, so a right-to-left message insets towards its own head
