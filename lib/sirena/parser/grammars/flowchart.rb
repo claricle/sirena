@@ -58,19 +58,37 @@ module Sirena
         # crosses newlines. `space?` does not, so `accTitle:` followed by
         # the text on the next line made a node called Title, and
         # `accDescr` then `{` on its own line made a phantom accDescr node.
+        #
+        # `ws?` is wrong the other way: it eats comments, so
+        # `accTitle: %% comment` skipped the comment and took the FOLLOWING
+        # statement as the title. mmdc keeps `%% comment` as the title text
+        # and leaves the next line alone, so the gap is whitespace only.
+        #
+        # The text runs to the PHYSICAL end of the line, not to `line_end`
+        # — that rule swallows a trailing comment, so `accTitle: %% c` came
+        # back with no text at all where mmdc's title is `%% c`.
+        #
+        # The text may be empty. mmdc renders `accTitle:` with nothing
+        # after it, and this rejected the whole diagram.
         rule(:acc_line) do
           (str('accTitle') | str('accDescr')).as(:acc_keyword) >>
-            ws? >> str(':') >> ws? >>
-            (line_end.absent? >> any).repeat(1).as(:acc_text) >> line_end
+            acc_gap >> str(':') >> acc_gap >>
+            (newline.absent? >> any).repeat.as(:acc_text) >> (newline | eof)
         end
+
+        rule(:acc_gap) { (space | newline).repeat }
 
         # The block form ends at its closing brace. Requiring a line end
         # after it rejected `accDescr {Desc}A-->B`, which mermaid renders —
         # the statement rule handles what follows.
+        #
+        # An unterminated block runs to the end of the source rather than
+        # failing: mmdc draws `accDescr {Unterminated` and swallows every
+        # line after it, so refusing the source lost a diagram it renders.
         rule(:acc_descr_block) do
-          str('accDescr').as(:acc_keyword) >> ws? >> str('{') >>
+          str('accDescr').as(:acc_keyword) >> acc_gap >> str('{') >>
             (str('}').absent? >> any).repeat.as(:acc_text) >>
-            str('}') >> semicolon.maybe
+            (str('}') >> semicolon.maybe).maybe
         end
 
         # Subgraph: subgraph id [title] ... end
