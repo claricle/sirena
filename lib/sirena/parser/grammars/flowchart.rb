@@ -80,22 +80,43 @@ module Sirena
         # STANDALONE comment line is skipped whole: mmdc reads
         # `accTitle:` newline `%% c` newline `Real` as the title `Real`.
         # A comment on the delimiter's OWN line stays text, which is why
-        # the skipping only starts after the first newline.
-        # `ws?` after the newline, because it already skips comments — the
+        # the skipping only starts after the first newline — the
         # same-line protection comes from the structure here, not from a
         # narrower rule, and a separate one could not be killed by any
         # mutation.
-        rule(:acc_gap) { space.repeat >> (newline >> ws?).repeat }
-
-        rule(:full_comment) do
-          str('%%') >> (newline.absent? >> any).repeat >> newline
+        rule(:acc_gap) do
+          line_space.repeat >>
+            (newline >> (line_space | newline | comment).repeat).repeat
         end
 
-        # A `}` inside a comment does not close a block. mmdc strips the
-        # comment first, so `accDescr {` / `text` / `%% }` swallows every
-        # line after it rather than ending there.
+        # Whitespace that stays on the line. mermaid's `\s` is wider than
+        # a space and a tab, so mmdc reads `accTitle` no-break-space `:`
+        # as a title and this used to throw the whole diagram away.
+        rule(:line_space) { newline.absent? >> match['[[:space:]]'] }
+
+        # Mermaid deletes whole comment LINES before it parses anything,
+        # so a `}` inside one does not close a block: `accDescr {` /
+        # `text` / `%% }` swallows every line after it.
+        #
+        # "Line" is what this got wrong, at both ends. It wanted a
+        # trailing newline, so a comment at the end of the source was not
+        # one — `%% } C --- D` with no final newline fell through to the
+        # character branch and that `}` closed the block. It also took a
+        # `%%` from the middle of a line, where mermaid anchors the strip
+        # to the line start and mmdc closes the block in
+        # `accDescr {text %% }`.
+        #
+        # So a comment starts at a newline and stops at its own line end,
+        # leaving that newline behind. The next line claims it, which is
+        # how two comment lines in a row both match, and running out of
+        # source just ends the repeat.
+        rule(:comment_line) do
+          newline >> line_space.repeat >> str('%%') >>
+            (newline.absent? >> any).repeat
+        end
+
         rule(:acc_block_body) do
-          (full_comment | (str('}').absent? >> any)).repeat
+          (comment_line | (str('}').absent? >> any)).repeat
         end
 
         # The block form ends at its closing brace. Requiring a line end

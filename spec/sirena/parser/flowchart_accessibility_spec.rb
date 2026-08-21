@@ -116,11 +116,83 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids(source)).to eq([])
     end
 
+    it "hides its brace at the end of the source" do
+      # No trailing newline. The comment used to need one, so this line
+      # was read character by character, the `}` closed the block and
+      # C --- D came back as a second edge. mmdc draws only A and B.
+      source = "graph TD\nA --- B\naccDescr {\ntext\n%% } C --- D"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    # mermaid's `\s` is wider than a space and a tab, so mmdc strips a
+    # `%%` line that a no-break space or a form feed pushed across.
+    {
+      "spaces" => "   ",
+      "a tab" => "\t",
+      "a no-break space" => "\u00A0",
+      "a form feed" => "\f"
+    }.each do |label, indent|
+      it "is still a comment after #{label}" do
+        source = "graph TD\nA --- B\naccDescr {\ntext\n#{indent}%% } C --- D\n"
+
+        expect(node_ids(source)).to eq(%w[A B])
+      end
+    end
+
+    it "does not start in the middle of a line" do
+      # mermaid strips from the line start only. mmdc closes the block on
+      # this `}` and draws C and D.
+      source = "graph TD\nA --- B\naccDescr {\ntext %% } C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
     it "still keeps a same-line comment as text" do
       source = "graph TD\naccTitle: %% comment\nA --- B\nC --- D\n"
 
       expect(acc_text(source)).to eq("%% comment")
       expect(node_ids(source)).to eq(%w[A B C D])
+    end
+  end
+
+  # mermaid puts `\s*` between the keyword and its delimiter, and `\s` is
+  # wider than a space and a tab. A no-break space used to throw the whole
+  # diagram away where mmdc draws it.
+  describe "an exotic space before the delimiter" do
+    {
+      "a no-break space" => "\u00A0",
+      "a form feed" => "\f",
+      "a vertical tab" => "\v"
+    }.each do |label, gap|
+      it "still finds the colon after #{label}" do
+        source = "graph TD\nA --- B\naccTitle#{gap}: Hi\nC --- D\n"
+
+        expect(node_ids(source)).to eq(%w[A B C D])
+        expect(acc_text(source)).to eq("Hi")
+      end
+
+      it "still finds the brace after #{label}" do
+        source = "graph TD\nA --- B\naccDescr#{gap}{Hi}\nC --- D\n"
+
+        expect(node_ids(source)).to eq(%w[A B C D])
+      end
+    end
+
+    it "still finds the brace on the next line" do
+      source = "graph TD\nA --- B\naccDescr\n\u00A0{Hi}\nC --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
+    it "crosses the line end after the colon and takes the next line" do
+      # The gap eats the no-break space, then the newline, so mmdc's
+      # title here is `C --- D` and that edge is gone. A narrow gap
+      # stopped at the space and left the edge behind.
+      source = "graph TD\nA --- B\naccTitle:\u00A0\nC --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+      expect(acc_text(source)).to eq("C --- D")
     end
   end
 
