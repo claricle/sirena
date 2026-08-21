@@ -352,11 +352,18 @@ module Sirena
         HEAD_ENDS.fetch(style[:side], HEAD_ENDS['target'])
       end
 
+      # Heads that sit on the line rather than in front of it. A filled
+      # wedge occupies the last few pixels of the shaft, so the shaft stops
+      # short of it. A cross straddles the tip, and a stick is one diagonal
+      # stroke from the tip — shortening the shaft for either left a gap
+      # where mermaid draws none.
+      FLUSH_HEADS = %w[cross stick_top stick_bottom].freeze
+
       def message_line(span, style, ends)
         # Signed, so a right-to-left message insets towards its own head
         # rather than past it. Unsigned, B<<->>A started its shaft at 228
         # while the head occupied 212 to 220.
-        inset = style[:head] == 'cross' ? 0 : ARROW_SIZE
+        inset = FLUSH_HEADS.include?(style[:head]) ? 0 : ARROW_SIZE
         inset *= (span[:x2] <=> span[:x1])
 
         Svg::Line.new.tap do |l|
@@ -377,11 +384,13 @@ module Sirena
                                  span.values_at(:x1, :y1, :x2)
                                end
 
-        # Mermaid puts `orient="auto-start-reverse"` on every marker, so a
-        # source-end head is the same shape rotated 180 degrees — which
-        # swaps its top and bottom halves. Reusing the target sign would
-        # have drawn `\\-` as the mirror of what mmdc renders.
-        side = which == :source ? -1 : 1
+        # Every mermaid marker is `orient="auto-start-reverse"`, so a head
+        # is rotated to face the way it points — and rotating it swaps its
+        # top and bottom halves. What decides the flip is the direction
+        # from the shaft to the tip, not which end of the line it sits on:
+        # keying on the end drew `B/|-A` and every other right-to-left
+        # message as the mirror of what mmdc renders.
+        side = tip_x <=> from_x
 
         case style[:head]
         when 'cross' then render_cross(tip_x, tip_y, group)
