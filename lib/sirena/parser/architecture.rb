@@ -33,7 +33,7 @@ module Sirena
         context = []
         context << lines[line_no - 2] if line_no > 1
         context << lines[line_no - 1] if line_no > 0
-        context << " " * (column - 1) + "^"
+        context << caret_for(lines[line_no - 1], column)
 
         "Parse error at line #{line_no}, column #{column}:\n" \
         "#{context.join("\n")}\n" \

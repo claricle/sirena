@@ -12,3 +12,10 @@ AllCops:
   NewCops: enable
   Exclude:
     - 'vendor/**/*'
+
+# The separator arguments this cop calls redundant are only redundant when
+# `$/` and `$,` are untouched. A library cannot assume that: with `$/` set
+# to nil a parse error reports the wrong line and loses the source it was
+# quoting, and with `$,` set the message itself is corrupted.
+Style/RedundantArgument:
+  Enabled: false

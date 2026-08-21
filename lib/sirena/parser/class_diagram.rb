@@ -35,18 +35,18 @@ module Sirena
       private
 
       def format_parse_error(cause, source)
-        lines = source.lines
+        lines = source.lines("\n")
         line_num, col_num = failure_position(cause, source)
 
         context = if line_num <= lines.length
-                    lines[line_num - 1].chomp
+                    lines[line_num - 1].chomp("\n")
                   else
                     '(end of input)'
                   end
 
         "Parse error at line #{line_num}, column #{col_num}:\n" \
           "#{context}\n" \
-          "#{' ' * (col_num - 1)}^\n" \
+          "#{caret_for(lines[line_num - 1], col_num)}\n" \
           "#{failure_message(cause)}"
       end
     end
