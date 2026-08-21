@@ -136,6 +136,14 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
         .to include('x1="88.0"').and include('x2="220.0"')
     end
 
+    it "runs the shaft up to the tip under a concave head" do
+      # The chevron of `-)` meets the centreline at its notch, not at its
+      # back edge, so insetting the shaft left a gap between 212 and 215.2.
+      headless = message_group("->")[/<line[^>]*>/]
+
+      expect(message_group("-)")[/<line[^>]*>/]).to eq(headless)
+    end
+
     it "runs the shaft full length under a stick head" do
       # A stick is one diagonal stroke from the tip, so it covers none of
       # the shaft. Insetting for it left an eight-pixel gap where mermaid
