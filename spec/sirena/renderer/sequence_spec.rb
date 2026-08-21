@@ -128,11 +128,44 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
         .to include('x1="80.0" y1="120.0" x2="88.0" y2="116.0"')
     end
 
-    it "insets the shaft at the end that carries the head" do
-      # The shaft has to stop short of its own head, at whichever end that
-      # is. Insetting the target end regardless drew //- through its barb.
-      expect(message_group("//-")[/<line[^>]*>/])
+    it "insets the shaft at the end that carries a filled head" do
+      # A wedge occupies the last few pixels of the shaft, so the shaft
+      # stops short of it — at whichever end it is. Insetting the target
+      # end regardless drew /|- through its own barb.
+      expect(message_group("/|-")[/<line[^>]*>/])
         .to include('x1="88.0"').and include('x2="220.0"')
+    end
+
+    it "runs the shaft full length under a stick head" do
+      # A stick is one diagonal stroke from the tip, so it covers none of
+      # the shaft. Insetting for it left an eight-pixel gap where mermaid
+      # attaches the marker and draws none.
+      headless = message_group("->")[/<line[^>]*>/]
+
+      expect(message_group("//-")[/<line[^>]*>/])
+        .to include('x1="80.0"').and include('x2="220.0"')
+      expect(message_group("-//")[/<line[^>]*>/]).to eq(headless)
+    end
+
+    # Which way a head is rotated follows the direction from the shaft to
+    # the tip, not which end of the line the head sits on. Keying on the
+    # end drew every right-to-left message as the mirror of mmdc's.
+    describe "a right-to-left message" do
+      def rtl_group(arrow)
+        source = "sequenceDiagram\n    participant A\n    participant B\n    " \
+                 "B#{arrow}A: m\n"
+        message_group(arrow, source)
+      end
+
+      it "flips the target barb of -|/ to the other side" do
+        expect(rtl_group("-|/")[/<polygon[^>]*points="([^"]*)"/, 1])
+          .to eq("80,120 88,116 88,120")
+      end
+
+      it "draws the source barb of /|- below, as left-to-right draws it" do
+        expect(rtl_group("/|-")[/<polygon[^>]*points="([^"]*)"/, 1])
+          .to eq("220,120 212,124 212,120")
+      end
     end
 
     it "mirrors the chevron on a right-to-left message" do
