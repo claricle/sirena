@@ -63,8 +63,7 @@ module Sirena
         context << failure_message(cause)
         context.join("\n")
       rescue StandardError
-        # Fallback to simple error message
-        "Parse error: #{cause}"
+        fallback_message(cause)
       end
     end
   end
