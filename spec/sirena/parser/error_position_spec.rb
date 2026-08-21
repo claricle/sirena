@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::Base do
@@ -185,6 +186,62 @@ RSpec.describe Sirena::Parser::Base do
       message = error_from(Sirena::Parser::FlowchartParser.new, "!!!\n")
 
       expect(position_in(message)).to eq("line 1, column 1")
+    end
+  end
+
+  # The message is printed, so the caret has to line up with the character
+  # the column names once tabs are expanded.
+  describe "the caret" do
+    it "carries a tab through rather than counting it as one column" do
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\n\tA[ok] qux\n")
+      quoted, caret = message.lines[1, 2].map(&:chomp)
+
+      expect(caret).to eq("\t      ^")
+      expect(quoted[caret.index("^")]).to eq("q")
+    end
+
+    it "still pads with spaces when the line has none" do
+      message = error_from(Sirena::Parser::FlowchartParser.new,
+                           "graph TD\nA[ok] qux\n")
+
+      expect(message.lines[2].chomp).to eq("      ^")
+    end
+  end
+
+  # A library has no business reading the caller's global separators.
+  describe "the record and field separators" do
+    around do |example|
+      record = $INPUT_RECORD_SEPARATOR
+      field = $OUTPUT_FIELD_SEPARATOR
+      example.run
+    ensure
+      $INPUT_RECORD_SEPARATOR = record
+      $OUTPUT_FIELD_SEPARATOR = field
+    end
+
+    # This source discriminates where a simpler one cannot: it has two
+    # preceding lines for the offset arithmetic, a failing line that ends
+    # in a newline for `chomp`, and a literal mismatch, which is the class
+    # of failure whose parslet message is a multi-part Array.
+    let(:source) { "graph TD\nA-->B\nxyzzy qux\n" }
+
+    it "reports the same message with $/ set to nil" do
+      expected = error_from(Sirena::Parser::FlowchartParser.new, source)
+
+      $INPUT_RECORD_SEPARATOR = nil
+
+      expect(error_from(Sirena::Parser::FlowchartParser.new, source))
+        .to eq(expected)
+    end
+
+    it "reports the same message with $, set" do
+      expected = error_from(Sirena::Parser::FlowchartParser.new, source)
+
+      $OUTPUT_FIELD_SEPARATOR = "|"
+
+      expect(error_from(Sirena::Parser::FlowchartParser.new, source))
+        .to eq(expected)
     end
   end
 

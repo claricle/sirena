@@ -71,7 +71,7 @@ module Sirena
       # @param cause [Parslet::Cause] the failure to describe
       # @return [String] the message alone
       def failure_message(cause)
-        Array(cause.message).map { |part| message_part(part) }.join
+        Array(cause.message).map { |part| message_part(part) }.join('')
       end
 
       # Parslet quotes a Slice and leaves everything else alone. Quoting by
@@ -100,11 +100,23 @@ module Sirena
       # @return [Array(Integer, Integer)] 1-based line and character column
       def failure_position(cause, source)
         line, = cause.source.line_and_column(cause.pos)
-        lines = source.lines
-        preceding = lines[0, line - 1].to_a.join
+        lines = source.lines("\n")
+        preceding = lines[0, line - 1].to_a.join('')
         offset = cause.pos.bytepos - preceding.bytesize
 
         [line, lines[line - 1].to_s.byteslice(0, offset).to_s.length + 1]
+      end
+
+      # The caret has to sit under the character the column names once the
+      # message is printed. Padding with spaces put it eight columns early
+      # on a tab-indented line, so the prefix is carried through with its
+      # tabs intact and everything else blanked.
+      #
+      # @param line [String, nil] the source line being pointed at
+      # @param column [Integer] 1-based character column
+      # @return [String] the padding and the caret
+      def caret_for(line, column)
+        "#{line.to_s[0, column - 1].to_s.gsub(/[^\t]/, ' ')}^"
       end
     end
 

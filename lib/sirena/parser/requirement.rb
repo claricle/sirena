@@ -39,7 +39,7 @@ module Sirena
       # @param source [String] the source that failed to parse
       # @return [String] formatted error message
       def format_parse_error(cause, source)
-        lines = source.lines
+        lines = source.lines("\n")
         line_num, col_num = failure_position(cause, source)
 
         context = []
@@ -49,11 +49,11 @@ module Sirena
         # to quote. Say so and still draw the caret rather than emitting a
         # heading with nothing under it.
         context << if line_num.positive? && line_num <= lines.length
-                     lines[line_num - 1].chomp
+                     lines[line_num - 1].chomp("\n")
                    else
                      '(end of input)'
                    end
-        context << (' ' * (col_num - 1)) + '^'
+        context << caret_for(lines[line_num - 1], col_num)
 
         # Not cause.to_s: it appends parslet's own byte-counted position,
         # which contradicts the character column in the heading above on any
