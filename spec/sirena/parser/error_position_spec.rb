@@ -130,7 +130,7 @@ RSpec.describe Sirena::Parser::Base do
       it "renders #{name}'s array message as parslet would" do
         message = error_from(klass.new, source)
 
-        expect(message.lines.last.chomp).to eq(expected)
+        expect(message.lines("\n").last.chomp("\n")).to eq(expected)
         expect(message).not_to match(/@\d+/)
       end
     end
@@ -195,7 +195,7 @@ RSpec.describe Sirena::Parser::Base do
     it "carries a tab through rather than counting it as one column" do
       message = error_from(Sirena::Parser::FlowchartParser.new,
                            "graph TD\n\tA[ok] qux\n")
-      quoted, caret = message.lines[1, 2].map(&:chomp)
+      quoted, caret = message.lines("\n")[1, 2].map { |l| l.chomp("\n") }
 
       expect(caret).to eq("\t      ^")
       expect(quoted[caret.index("^")]).to eq("q")
@@ -205,7 +205,7 @@ RSpec.describe Sirena::Parser::Base do
       message = error_from(Sirena::Parser::FlowchartParser.new,
                            "graph TD\nA[ok] qux\n")
 
-      expect(message.lines[2].chomp).to eq("      ^")
+      expect(message.lines("\n")[2].chomp("\n")).to eq("      ^")
     end
   end
 
@@ -242,6 +242,22 @@ RSpec.describe Sirena::Parser::Base do
 
       expect(error_from(Sirena::Parser::FlowchartParser.new, source))
         .to eq(expected)
+    end
+
+    # The fallback path has its own reader of a global: interpolating the
+    # cause calls `Parslet::Cause#to_s`, which joins with no argument. It
+    # took two rounds to see, because the ordinary path was already fixed
+    # and nothing drove this one with a multi-part message.
+    it "reports the same fallback message with $, set" do
+      messages = [nil, "|"].map do |separator|
+        parser = Sirena::Parser::FlowchartParser.new
+        allow(parser).to receive(:failure_position).and_raise("boom")
+        $OUTPUT_FIELD_SEPARATOR = separator
+        error_from(parser, source)
+      end
+
+      expect(messages.first).to include('Expected "\\n", but got "q"')
+      expect(messages.last).to eq(messages.first)
     end
   end
 

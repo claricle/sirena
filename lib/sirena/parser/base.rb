@@ -89,6 +89,18 @@ module Sirena
         part.respond_to?(:to_slice) ? part.str.inspect : part.to_s
       end
 
+      # The last resort, when positioning itself blew up. NOT `#{cause}`:
+      # `Parslet::Cause#to_s` joins its parts with a zero-argument join, so
+      # a multi-part message is corrupted when the caller has set `$,`.
+      #
+      # @param cause [Parslet::Cause] the failure to describe
+      # @return [String] the message with parslet's own position
+      def fallback_message(cause)
+        line, column = cause.source.line_and_column(cause.pos)
+        "Parse error: #{failure_message(cause)} at line #{line} " \
+          "char #{column}."
+      end
+
       # Locates a failure as a 1-based line and CHARACTER column.
       #
       # Parslet counts bytes, so a line holding any multibyte character
