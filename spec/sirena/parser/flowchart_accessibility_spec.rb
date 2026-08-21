@@ -140,6 +140,27 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    it "is still a comment after a lone carriage return" do
+      source = "graph TD\nA --- B\naccDescr {\ntext\n\r%% } C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    it "is still a comment after a zero-width no-break space" do
+      source = "graph TD\nA --- B\naccDescr {\ntext\n\uFEFF%% } C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    it "is not a comment after a next-line character" do
+      # U+0085 is not whitespace to mmdc, so the `%%` never reaches the
+      # line start, the line stays description text and the `}` closes
+      # the block. mmdc draws C and D here.
+      source = "graph TD\nA --- B\naccDescr {\ntext\n\u0085%% } C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
     it "does not start in the middle of a line" do
       # mermaid strips from the line start only. mmdc closes the block on
       # this `}` and draws C and D.
@@ -157,32 +178,58 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   # mermaid puts `\s*` between the keyword and its delimiter, and `\s` is
-  # wider than a space and a tab. A no-break space used to throw the whole
-  # diagram away where mmdc draws it.
-  describe "an exotic space before the delimiter" do
+  # every one of these. A narrow gap threw the whole diagram away on
+  # sources mmdc draws. Each entry was measured against mmdc 11.12.0.
+  describe "the spaces mermaid counts before the delimiter" do
     {
-      "a no-break space" => "\u00A0",
+      # A lone carriage return is a space, not a line end.
+      "a carriage return" => "\r",
+      "a tab" => "\t",
+      "a vertical tab" => "\v",
       "a form feed" => "\f",
-      "a vertical tab" => "\v"
+      "a space" => " ",
+      "a no-break space" => "\u00A0",
+      "an ogham space mark" => "\u1680",
+      "an en quad" => "\u2000",
+      "a hair space" => "\u200A",
+      "a line separator" => "\u2028",
+      "a paragraph separator" => "\u2029",
+      "a narrow no-break space" => "\u202F",
+      "a medium mathematical space" => "\u205F",
+      "an ideographic space" => "\u3000",
+      "a zero-width no-break space" => "\uFEFF"
     }.each do |label, gap|
       it "still finds the colon after #{label}" do
         source = "graph TD\nA --- B\naccTitle#{gap}: Hi\nC --- D\n"
 
         expect(node_ids(source)).to eq(%w[A B C D])
-        expect(acc_text(source)).to eq("Hi")
       end
+    end
 
-      it "still finds the brace after #{label}" do
-        source = "graph TD\nA --- B\naccDescr#{gap}{Hi}\nC --- D\n"
+    it "takes the same gap before a block brace" do
+      source = "graph TD\nA --- B\naccDescr\u00A0{Hi}\nC --- D\n"
 
-        expect(node_ids(source)).to eq(%w[A B C D])
-      end
+      expect(node_ids(source)).to eq(%w[A B C D])
     end
 
     it "still finds the brace on the next line" do
       source = "graph TD\nA --- B\naccDescr\n\u00A0{Hi}\nC --- D\n"
 
       expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
+    it "keeps the text once the gap has eaten the space" do
+      source = "graph TD\nA --- B\naccTitle\u00A0: Hi\nC --- D\n"
+
+      expect(acc_text(source)).to eq("Hi")
+    end
+
+    it "does not count a next-line character" do
+      # mmdc rejects this source outright, so taking U+0085 for a space
+      # invented a diagram mermaid will not draw.
+      source = "graph TD\nA --- B\naccTitle\u0085: Hi\nC --- D\n"
+
+      expect { node_ids(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
     it "crosses the line end after the colon and takes the next line" do
