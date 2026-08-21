@@ -89,10 +89,25 @@ module Sirena
             (newline >> (line_space | newline | comment).repeat).repeat
         end
 
-        # Whitespace that stays on the line. mermaid's `\s` is wider than
-        # a space and a tab, so mmdc reads `accTitle` no-break-space `:`
-        # as a title and this used to throw the whole diagram away.
-        rule(:line_space) { newline.absent? >> match['[[:space:]]'] }
+        # Whitespace that stays on the line: mermaid's `\s` without the
+        # newline. It is wider than a space and a tab, and mmdc reads
+        # `accTitle` no-break-space `:` as a title where this used to
+        # throw the whole diagram away.
+        #
+        # A lone carriage return is one of them — mmdc reads it as a
+        # space, not a line end. It needs no guard against eating the
+        # `\r` of a CRLF: `newline` takes a bare `\n`, so splitting the
+        # pair leaves every caller where it would have been anyway.
+        #
+        # Ruby's `[[:space:]]` is close but it is not the same set, in
+        # both directions. It misses U+FEFF, which mmdc treats as a space,
+        # and it adds U+0085, which mmdc does not. Spelling the set out
+        # keeps the block indent honest too, since a comment line is only
+        # stripped when mmdc agrees the leading run is whitespace.
+        rule(:line_space) do
+          match['\r\t\v\f \u00A0\u1680' \
+            '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF']
+        end
 
         # Mermaid deletes whole comment LINES before it parses anything,
         # so a `}` inside one does not close a block: `accDescr {` /
