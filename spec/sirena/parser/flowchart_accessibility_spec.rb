@@ -182,8 +182,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # sources mmdc draws. Each entry was measured against mmdc 11.12.0.
   describe "the spaces mermaid counts before the delimiter" do
     {
-      # A lone carriage return is a space, not a line end.
-      "a carriage return" => "\r",
       "a tab" => "\t",
       "a vertical tab" => "\v",
       "a form feed" => "\f",
@@ -247,6 +245,48 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     source = "graph TD\nA --- B\naccDescr {Desc} ; C --- D\n"
 
     expect(node_ids(source)).to eq(%w[A B C D])
+  end
+
+  it "takes an exotic space after a closing block" do
+    # mmdc draws this; a closing gap of only a space and a tab did not.
+    source = "graph TD\nA --- B\naccDescr {Desc}\u00A0C --- D\n"
+
+    expect(node_ids(source)).to eq(%w[A B C D])
+  end
+
+  # mermaid folds a lone carriage return into a newline before it reads
+  # anything, so a bare `\r` ends a line the way `\n` does. Sirena knew
+  # `\n` and `\r\n` only, and the accessibility rules turned that from a
+  # rejection into a wrong picture.
+  describe "a lone carriage return" do
+    it "ends the title text" do
+      # Were it not a line end, `C --- D` would be title text and its
+      # nodes would be gone.
+      source = "graph TD\nA --- B\naccTitle: Hi\rC --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
+    it "starts a comment line inside a block" do
+      # The `}` is inside a comment, so mmdc swallows the rest.
+      source = "graph TD\nA --- B\naccDescr {\ntext\r%% } C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    it "ends a comment line inside a block" do
+      # The comment stops at the `\r`, so this `}` really does close.
+      source = "graph TD\nA --- B\naccDescr {\ntext\n%% comment\r} C --- D\n"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
+
+    it "separates plain statements too" do
+      # Nothing to do with accessibility: the fold is in the parser.
+      source = "graph TD\rA --- B\rC --- D\r"
+
+      expect(node_ids(source)).to eq(%w[A B C D])
+    end
   end
 
   # mmdc renders all of these; refusing them lost a diagram it draws.

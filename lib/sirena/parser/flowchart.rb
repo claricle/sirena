@@ -28,11 +28,25 @@ module Sirena
       # @return [Diagram::Flowchart] the parsed flowchart
       # @raise [ParseError] if syntax is invalid
       def parse(source)
+        # A lone CR is folded before the grammar sees it; the shared
+        # helper owns the parse and the failure message.
+        source = normalize_line_ends(source)
         tree = parse_with_grammar(Grammars::Flowchart.new, source)
         Transforms::Flowchart.apply(tree)
       end
 
       private
+
+      # mermaid folds a CRLF and a lone CR into a newline before it reads
+      # anything, so a bare `\r` ends a line, a comment and an accTitle's
+      # text. The grammar's `newline` knows `\n` and `\r\n` only, and a
+      # lone `\r` used to throw away a diagram mmdc draws.
+      #
+      # @param source [String] the Mermaid flowchart source
+      # @return [String] the source with every line end as `\n`
+      def normalize_line_ends(source)
+        source.gsub(/\r\n?/, "\n")
+      end
 
       # Formats a Parslet parse error with context.
       #
