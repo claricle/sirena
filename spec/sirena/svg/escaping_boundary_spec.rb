@@ -88,6 +88,13 @@ RSpec.describe Sirena::Svg::Escaping do
       writers.each do |writer, attribute|
         it "never emits #{attribute} from #{klass.name.split('::').last}" do
           element = klass.new
+          # A Path needs real data and a stroke or it draws no arrowhead,
+          # and the assertion would hold for an element that translates
+          # nothing at all.
+          if element.respond_to?(:d=)
+            element.d = 'M 0 0 L 10 0'
+            element.stroke = '#000000'
+          end
           element.public_send("#{writer}=", 'url(#arrowhead)')
 
           expect(element.to_xml).not_to include(attribute)

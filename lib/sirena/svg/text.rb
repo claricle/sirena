@@ -33,10 +33,22 @@ module Sirena
       # baseline where the property would have put it, in a renderer that
       # supports the property and in one that does not.
       #
-      # 0.35em is the usual centring constant — roughly half a cap height
-      # above the baseline. `hanging` sits a full ascender below `y`;
-      # `text-after-edge` a descender above it. Anything else, including
-      # `auto` and `alphabetic`, already means "baseline at y".
+      # These are the conventional em approximations, not measurements. A
+      # real translation reads the font's baseline table — `middle` is half
+      # an x-height, and the edge baselines come from ascent and descent —
+      # and Sirena has no font metrics at all; TextMeasurement approximates
+      # width by character count. So 0.35em stands in for half an x-height,
+      # `hanging` for a full ascender below `y`, `text-after-edge` for a
+      # descender above it. Anything else, including `auto` and
+      # `alphabetic`, already means "baseline at y".
+      #
+      # `middle`, `hanging` and `auto` are all reachable: radar.rb picks
+      # between them per axis label by angle.
+      #
+      # The shift is in ems, so it needs a font size in user units. Every
+      # renderer writes one unitless, which is what Numbers.read expects; a
+      # relative size parsed in from a foreign document (`2em`) would be read
+      # as the bare number, since there is no parent size to resolve against.
       BASELINE_SHIFTS = {
         'middle' => 0.35,
         'central' => 0.35,

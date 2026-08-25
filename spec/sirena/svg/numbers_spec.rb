@@ -31,8 +31,15 @@ RSpec.describe Sirena::Svg::Numbers do
     # lutaml-model leaves an unset attribute holding a sentinel that answers
     # to_s with itself, so a plain to_f would have turned it into 0.0 and
     # every unset attribute would have been emitted as zero.
+    #
+    # Parsed in, not built: `Rect.new.fill_opacity` is plain nil, so writing
+    # it that way asks the same question as the nil case above and never
+    # reaches the sentinel at all.
     it 'has nothing to read in an attribute lutaml never set' do
-      expect(described_class.read(Sirena::Svg::Rect.new.fill_opacity)).to be_nil
+      unset = Sirena::Svg::Text.from_xml('<text>x</text>').fill_opacity
+
+      expect(unset).to be_a(Lutaml::Model::UninitializedClass)
+      expect(described_class.read(unset)).to be_nil
     end
   end
 
@@ -44,6 +51,12 @@ RSpec.describe Sirena::Svg::Numbers do
     # 67.0 + (14.0 * 0.35) is 71.89999999999999 on the way out.
     it 'rounds off floating-point noise' do
       expect(described_class.write(67.0 + (14.0 * 0.35))).to eq('71.9')
+    end
+
+    # Pins the precision itself. The case above rounds to the same string at
+    # any precision above three, so it proves rounding happens and not where.
+    it 'rounds to four decimals' do
+      expect(described_class.write(1.0 / 3)).to eq('0.3333')
     end
   end
 end

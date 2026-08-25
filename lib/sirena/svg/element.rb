@@ -142,6 +142,15 @@ module Sirena
       # reaches it. They differ only where a stroke overlaps its own fill,
       # which no shape Sirena draws relies on.
       #
+      # On a container they are NOT equivalent, and this makes no attempt to
+      # be. Group opacity composites the group as one rendered surface, while
+      # these two are inherited paint properties: a child setting its own
+      # `fill-opacity` replaces the group's rather than multiplying by it,
+      # and overlapping children composite differently. No renderer sets
+      # `opacity` on a Group, so nothing Sirena emits takes that path — the
+      # five that set it (sankey, kanban, quadrant, requirement) all set it
+      # on a Rect, Path or Text.
+      #
       # A component value that is not a number is left exactly as it was.
       # Nothing in the gem writes one, and inventing a factor for it would
       # emit a number the caller never asked for.

@@ -10,8 +10,14 @@ module Sirena
     # builds the curves.
     #
     # Curve tangents are taken from the adjacent control point, which is the
-    # exact tangent for a Bezier and a good enough one for an arc chord. A
-    # command it cannot follow leaves the anchor nil, and the caller draws
+    # exact tangent for a Bezier. An arc has no control point, and its chord
+    # is not its tangent — on a half-circle the two are 90 degrees apart — so
+    # an arc yields no heading at all rather than a head pointing the wrong
+    # way. Sirena emits arcs only on rounded shapes and pie slices, never on
+    # a path carrying a marker, so nothing it renders loses an arrowhead to
+    # this; getting one there needs the arc's centre parameterisation.
+    #
+    # A command it cannot follow leaves the anchor nil, and the caller draws
     # nothing rather than drawing it in the wrong place.
     class PathGeometry
       # One anchor: a point on the path and the unit direction of travel
@@ -45,6 +51,8 @@ module Sirena
 
       # @return [Anchor, nil] the first point, pointing along the first segment
       def origin
+        # `false` means a command that anchors nothing came first, so the
+        # segment after it must not be promoted to the start of the path.
         return nil unless @origin
 
         start, reference = @origin
@@ -84,9 +92,11 @@ module Sirena
         flush(letter, numbers, &block)
       end
 
-      # A trailing group with too few numbers is dropped: SVG renders path
-      # data up to the first error and abandons the rest, and an arrowhead
-      # placed off a half-read command would be worse than none.
+      # A group with too few numbers is dropped, and the walk carries on with
+      # the next command. An arrowhead placed off a half-read command would
+      # be worse than none. A conformant renderer is stricter still — it
+      # abandons the whole path from the first error — but Sirena never emits
+      # malformed data, and reading the rest costs nothing.
       def flush(letter, numbers)
         return if letter.nil?
 
@@ -105,8 +115,22 @@ module Sirena
         args = relative(letter, lower, args)
         return move(args) if lower == 'm'
         return close if lower == 'z'
+        return traverse([args[5], args[6]]) if lower == 'a'
 
         segment(*references(lower, args))
+      end
+
+      # Moves the current point along a segment that offers no usable
+      # tangent. The point has to advance or every command after it lands in
+      # the wrong place, but neither end of an arc may anchor an arrowhead.
+      #
+      # An arc reached before any origin was settled closes the question
+      # rather than leaving it open: the path starts on that arc, and the
+      # segment after it is not the start of the path.
+      def traverse(end_point)
+        @origin = false if @origin.nil?
+        @terminus = nil
+        @point = end_point
       end
 
       # The segment a command draws, as [outgoing reference, incoming
@@ -116,8 +140,8 @@ module Sirena
       #
       # `s` and `t` carry a control point implied by the previous command
       # rather than one of their own, so they use the explicit control point
-      # on both sides. Neither appears in Sirena's own output, and an arc's
-      # chord stands in for its tangents the same way.
+      # on both sides. Neither appears in Sirena's own output. An arc gives
+      # no references at all — see the note on the class.
       def references(lower, args)
         case lower
         when 'l' then straight([args[0], args[1]])
@@ -126,7 +150,6 @@ module Sirena
         when 'c' then [[args[0], args[1]], [args[2], args[3]], [args[4], args[5]]]
         when 's', 'q' then [[args[0], args[1]], [args[0], args[1]], [args[2], args[3]]]
         when 't' then straight([args[0], args[1]])
-        when 'a' then straight([args[5], args[6]])
         end
       end
 
@@ -157,7 +180,7 @@ module Sirena
       end
 
       def segment(out_reference, in_reference, end_point)
-        @origin ||= [@point, out_reference]
+        @origin = [@point, out_reference] if @origin.nil?
         @terminus = [in_reference, end_point]
         @point = end_point
       end
@@ -177,7 +200,10 @@ module Sirena
         dx = to[0] - from[0]
         dy = to[1] - from[1]
         length = Math.sqrt((dx * dx) + (dy * dy))
-        return nil if length.zero?
+        # Not merely non-zero: path data carrying an out-of-range exponent
+        # reaches here as Infinity, and Infinity/Infinity is NaN, which would
+        # be written into the polygon's points verbatim.
+        return nil unless length.finite? && length.positive?
 
         Anchor.new(at[0], at[1], dx / length, dy / length)
       end

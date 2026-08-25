@@ -12,6 +12,32 @@ require 'date'
 # honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
+# A source that stops rendering must not keep shipping its old SVG. Leaving
+# the file behind is how a broken renderer stays invisible: the output is
+# still there, still valid, and no longer true, and the conformance gate
+# reads it as what Sirena draws today.
+# An SVG whose source is gone still ships: git tracks it and the gemspec
+# packages it, and the loop below walks sources, so nothing ever visits it.
+# Reported rather than deleted — a vanished source is usually a rename, and
+# the fix belongs with whoever made it.
+def report_orphan_svgs(examples_dir)
+  orphans = Dir.glob(File.join(examples_dir, '*', '*.svg'))
+    .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
+    .map { |svg| svg.sub("#{examples_dir}/", '') }
+  return if orphans.empty?
+
+  puts "\n⚠️  #{orphans.size} SVG(s) ship with no source — delete or restore:"
+  orphans.sort.each { |svg| puts "   #{svg}" }
+end
+
+def report_render_failure(basename, svg_file, error)
+  puts "  ✗ #{basename}.svg - ERROR: #{error.message}"
+  return unless File.exist?(svg_file)
+
+  File.delete(svg_file)
+  puts "    removed #{basename}.svg, which no longer renders"
+end
+
 namespace :examples do
   desc "Generate all example SVGs from source files"
   task :generate do
@@ -52,16 +78,13 @@ namespace :examples do
         yml_file = File.join(dir, "#{basename}.yml")
         svg_file = File.join(dir, "#{basename}.svg")
 
-        # Read source
-        source = File.read(mmd_file)
-
         # Read metadata if exists
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
         theme = metadata['theme'] || 'default'
 
         begin
           # Render to SVG
-          svg = Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
+          svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
 
           # Write SVG
           File.write(svg_file, svg)
@@ -69,12 +92,13 @@ namespace :examples do
           puts "  ✓ #{basename}.svg"
           total_generated += 1
         rescue => e
-          puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
+          report_render_failure(basename, svg_file, e)
           total_failed += 1
         end
       end
     end
 
+    report_orphan_svgs(examples_dir)
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
@@ -421,6 +445,12 @@ namespace :examples do
 
     # Create .gitignore
     gitignore_content = <<~GITIGNORE
+      # Stale generated/ directories from older checkouts. Nothing writes them
+      # now — the shipped SVGs sit beside their sources — but leaving the rule
+      # keeps an old working copy quiet and stops `git add examples/` sweeping
+      # stale output back in.
+      */generated/
+
       # Ignore macOS files
       .DS_Store
 

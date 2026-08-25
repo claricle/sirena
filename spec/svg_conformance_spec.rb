@@ -2,7 +2,9 @@
 
 require 'spec_helper'
 require 'svg_conform'
+require 'date'
 require 'timeout'
+require 'yaml'
 
 # The gate. Sirena's SVG is embedded straight into Metanorma documents, so
 # "renders something" is not the bar — the document has to be conformant, and
@@ -23,9 +25,34 @@ require 'timeout'
 # conformance defects this gate was written for came out of a renderer no unit
 # spec covered.
 CONFORMANCE_ROOT = File.expand_path('..', __dir__)
-CONFORMANCE_SHIPPED_SVGS = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '**', '*.svg')).freeze
+
+# Asked of the gemspec rather than globbed, because the gemspec is what
+# decides. It packages what `git ls-files` returns minus its own exclusions,
+# so an untracked SVG in the working copy is not something the gem ships and
+# validating it would report on a file no user receives.
+CONFORMANCE_SHIPPED_SVGS =
+  Gem::Specification.load(File.join(CONFORMANCE_ROOT, 'sirena.gemspec'))
+    .files.grep(%r{\Aexamples/.*\.svg\z})
+    .map { |f| File.join(CONFORMANCE_ROOT, f) }
+    .freeze
 CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'fixtures', '*', 'input.mmd')).freeze
 CONFORMANCE_CORPUS_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', '*', '*.mmd')).freeze
+CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*', '*.mmd')).freeze
+
+# How many corpus cases render to a document today. A floor rather than the
+# exact figure, because item 06 raises it and this gate must not stand in the
+# way — but a renderer that starts raising for every input takes its whole
+# type out of the population, and an offender list over what survives would
+# stay green while measuring less. Ratchet it up when it rises.
+CONFORMANCE_RENDERED_FLOOR = 667
+
+# The example sources Sirena cannot parse yet, so they ship no SVG. Named
+# rather than counted: a NEW source falling out of the shipped set is a
+# regression, and a glob over whatever happens to exist cannot see one.
+CONFORMANCE_UNRENDERABLE_EXAMPLES = [
+  'gantt/01-simple-timeline.beta.mmd',
+  'packet/01-basic-packet.beta.mmd'
+].freeze
 
 # Same guard corpus_sweep.rb uses. A case that hangs is a corpus problem, not
 # a conformance one, and it must not hang the suite.
@@ -83,15 +110,99 @@ RSpec.describe Sirena::Svg do
     # One example rather than 1,997: the useful failure is the whole list of
     # offending cases and what each emitted, not the first one rspec reaches.
     it 'renders every case it can render conformantly' do
+      rendered = 0
       offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
         svg = render_or_skip(source_path)
         next unless svg
 
+        rendered += 1
         result = validate(svg)
         complaint(source_path, result) unless result.valid?
       end
 
+      # Checked first: an empty offender list means nothing until the
+      # population it was drawn from is known to be intact.
+      expect(rendered).to be >= CONFORMANCE_RENDERED_FLOOR
       expect(offenders).to be_empty, -> { offenders.join("\n") }
+    end
+  end
+
+  # The gate above judges the SVGs that happen to be on disk, which is not
+  # the same question. Presence proves nothing about whether the renderer
+  # still works, or whether what ships is what the renderer produces today.
+  # Both are rendered here rather than looked for.
+  describe 'the examples the gem ships' do
+    # The same inputs examples.rake uses. The date is pinned there because
+    # gantt and timeline place bars relative to today, so an unpinned render
+    # differs from identical source every day.
+    def render_example(mmd_path)
+      metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
+      metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
+      Sirena.render(File.read(mmd_path), theme: metadata['theme'] || 'default',
+                                         today: Date.new(2026, 1, 1))
+    end
+
+    def relative(path)
+      path.sub("#{CONFORMANCE_ROOT}/examples/", '')
+    end
+
+    # Every source that is not named unrenderable owes exactly one SVG.
+    def expected_svgs
+      (CONFORMANCE_EXAMPLE_SOURCES.map { |mmd| relative(mmd) } -
+        CONFORMANCE_UNRENDERABLE_EXAMPLES).map { |mmd| mmd.sub(/\.mmd\z/, '.svg') }
+    end
+
+    it 'has example sources to render' do
+      expect(CONFORMANCE_EXAMPLE_SOURCES.size).to be >= 53
+    end
+
+    # Both directions. Asking only "does each source ship an SVG" leaves the
+    # other half unasked: delete or rename a source and its old SVG stays
+    # tracked, stays packaged, and stays conformant, so every assertion here
+    # goes on passing while the gem ships a picture of nothing. The generate
+    # task cannot catch it either — it walks sources, so a file with no
+    # source is never visited.
+    it 'packages an SVG for every source and none without one' do
+      packaged = CONFORMANCE_SHIPPED_SVGS.map { |svg| relative(svg) }
+
+      expect(packaged).to match_array(expected_svgs)
+    end
+
+    it 'renders every source except the ones named as unsupported' do
+      failed = CONFORMANCE_EXAMPLE_SOURCES.reject do |mmd|
+        render_example(mmd)
+        true
+      rescue StandardError
+        false
+      end
+
+      expect(failed.map { |mmd| relative(mmd) }).to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
+    end
+
+    it 'ships exactly what the renderer produces today' do
+      compared = 0
+      stale = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
+        rendered = begin
+          render_example(mmd)
+        rescue StandardError
+          next
+        end
+
+        compared += 1
+        svg_path = mmd.sub(/\.mmd\z/, '.svg')
+        next relative(svg_path) unless CONFORMANCE_SHIPPED_SVGS.include?(svg_path)
+
+        relative(svg_path) unless File.read(svg_path) == rendered
+      end
+
+      # Checked first, and here rather than only in the example above: a
+      # source that stops rendering is skipped by the rescue, and an empty
+      # stale list says nothing until every source that is not named
+      # unrenderable is known to have been compared.
+      expect(compared)
+        .to eq(CONFORMANCE_EXAMPLE_SOURCES.size - CONFORMANCE_UNRENDERABLE_EXAMPLES.size)
+      expect(stale).to be_empty,
+                       -> { "not tracked, or not what the renderer produces: #{stale.join(', ')}" }
     end
   end
 end

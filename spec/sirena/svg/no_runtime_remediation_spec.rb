@@ -38,8 +38,15 @@ RSpec.describe Sirena::Svg do
       end
     end
 
-    it 'reads the whole of lib/' do
-      expect(REMEDIATION_LIB_FILES.size).to be > 50
+    # A bare count is not a population guard here: lib/sirena/parser alone
+    # holds 72 files, so the glob could lose the whole of lib/sirena/svg —
+    # the one place a remediation call would land — and still clear any
+    # threshold worth setting. Named against an independent glob instead.
+    it 'reads every file under lib/' do
+      expect(REMEDIATION_LIB_FILES)
+        .to match_array(Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.rb')))
+      expect(REMEDIATION_LIB_FILES)
+        .to include(File.join(REMEDIATION_LIB_ROOT, 'sirena', 'svg', 'element.rb'))
     end
 
     it 'never calls a fixer or a remediation engine' do

@@ -47,7 +47,12 @@ module Sirena
       # `<path>` takes no drawable children. Every caller joins children's
       # markup, so a second element travels with the first.
       #
-      # @return [String] XML string
+      # This is a fragment, not a document: with a marker it holds two
+      # sibling elements and a strict parser will refuse it as having two
+      # roots. Every caller — Group and Document — joins fragments, so that
+      # is the contract they already rely on.
+      #
+      # @return [String] one or more sibling elements, newline separated
       def to_xml
         [super, *Arrowhead.for(self).map(&:to_xml)].join("\n")
       end

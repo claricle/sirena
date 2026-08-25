@@ -79,6 +79,22 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it 'has no anchor for empty data' do
       expect(terminus(nil)).to be_nil
     end
+
+    # The chord of this half circle points along +x; the real end tangent
+    # points along -y. Refusing beats pointing an arrowhead 90 degrees wrong.
+    it 'has no anchor at the end of an arc' do
+      expect(terminus('M 0 0 A 10 10 0 1 1 20 0')).to be_nil
+    end
+
+    it 'still moves the pen through an arc, so the next segment is placed right' do
+      anchor = terminus('M 0 0 A 5 5 0 0 1 10 0 l 5 0')
+
+      expect([anchor.x, anchor.y, anchor.dx]).to eq([15.0, 0.0, 1.0])
+    end
+
+    it 'has no anchor when the heading is not finite' do
+      expect(terminus('M 0 0 L 1e400 0')).to be_nil
+    end
   end
 
   describe '#origin' do
@@ -92,6 +108,22 @@ RSpec.describe Sirena::Svg::PathGeometry do
       anchor = origin('M 0 0 C 0 10, 10 20, 20 20')
 
       expect([anchor.dx, anchor.dy]).to eq([0.0, 1.0])
+    end
+
+    # The path begins on the arc, so the segment after it is not the start of
+    # the path and must not be promoted to it.
+    it 'has no anchor when an absolute arc comes first' do
+      expect(origin('M 0 0 A 5 5 0 0 1 10 0 L 15 0')).to be_nil
+    end
+
+    it 'has no anchor when a relative arc comes first' do
+      expect(origin('M 0 0 a 5 5 0 0 1 10 0 l 5 0')).to be_nil
+    end
+
+    it 'still starts at the path start when an arc comes later' do
+      anchor = origin('M 0 0 L 10 0 A 5 5 0 0 1 20 0 L 30 0')
+
+      expect([anchor.x, anchor.y]).to eq([0.0, 0.0])
     end
   end
 end

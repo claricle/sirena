@@ -2,13 +2,16 @@
 
 require 'spec_helper'
 
-# Every arrow Sirena drew before this pointed at nothing: four renderers set
-# `marker-end="url(#arrowhead)"` and no document ever defined `#arrowhead`,
-# so the head simply did not render. SVG Tiny 1.2 has no way to reference a
+# Every arrow Sirena drew before this pointed at nothing: the five renderers
+# that ask for a head set `marker-end="url(#arrowhead)"` and no document ever
+# defined `#arrowhead`, so the head simply did not render. SVG Tiny 1.2 has no way to reference a
 # marker at all, so the head is drawn as its own shape.
 RSpec.describe Sirena::Svg::Arrowhead do
+  # A stroke by default, because an unstroked path paints no line and so
+  # gets no head — the cases below are about geometry, not about that.
   def path(**attributes)
     Sirena::Svg::Path.new.tap do |p|
+      p.stroke = '#000000'
       attributes.each { |name, value| p.public_send("#{name}=", value) }
     end
   end
@@ -54,10 +57,35 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(polygon.fill).to eq('#ff0000')
     end
 
-    it 'falls back to black, which is what a path with no stroke paints' do
-      polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')).first
+    # An arrowhead is the end of a line. A path with no stroke paints no
+    # line — SVG's initial `stroke` is `none` — so a head there would be a
+    # black triangle floating on its own. Reachable: a partial theme leaves
+    # edge_stroke unset and apply_theme_to_edge then sets no stroke.
+    # nil covers a stroke nobody ever set as well: lutaml holds nil for an
+    # unset Path stroke, whether it was built in Ruby or parsed in.
+    ['none', 'NONE', '', nil].each do |value|
+      it "draws nothing for a path whose stroke is #{value.inspect}" do
+        unstroked = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')
+        unstroked.stroke = value
 
-      expect(polygon.fill).to eq('#000000')
+        expect(described_class.for(unstroked)).to be_empty
+      end
+    end
+
+    it 'paints the head at the stroke opacity of the line it ends' do
+      polygon = described_class.for(
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke_opacity: '0.5')
+      ).first
+
+      expect(polygon.fill_opacity).to eq('0.5')
+    end
+
+    it 'carries the whole-element opacity of the path it ends' do
+      polygon = described_class.for(
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', opacity: 0.4)
+      ).first
+
+      expect(polygon.opacity).to eq(0.4)
     end
 
     # Without this the head lands in the untransformed coordinate space and
@@ -89,6 +117,93 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # Drawing it in the wrong place is worse than not drawing it.
     it 'draws nothing when the path data gives no heading' do
       expect(described_class.for(path(d: 'M 10 10', marker_end: 'url(#arrowhead)'))).to be_empty
+    end
+
+    # `none` is SVG's own way of saying no marker here, so a path carrying it
+    # has asked for nothing rather than failed to ask.
+    ['none', 'NONE', '  none  '].each do |value|
+      it "draws nothing for a marker of #{value.inspect}" do
+        expect(described_class.for(path(d: 'M 0 0 L 10 0', marker_end: value))).to be_empty
+      end
+    end
+
+    it 'draws nothing for an empty marker value' do
+      expect(described_class.for(path(d: 'M 0 0 L 10 0', marker_end: ''))).to be_empty
+    end
+
+    # An arc's chord is not its tangent — on this half circle they are 90
+    # degrees apart — and there is no control point to read one from.
+    it 'draws nothing at the end of an arc rather than pointing along its chord' do
+      arrows = described_class.for(path(d: 'M 0 0 A 10 10 0 1 1 20 0', marker_end: 'url(#arrowhead)'))
+
+      expect(arrows).to be_empty
+    end
+
+    # The arc still moves the pen, so a segment after it starts in the right
+    # place and can carry the head.
+    it 'still ends where a segment after an arc ends' do
+      polygon = described_class.for(
+        path(d: 'M 0 0 A 5 5 0 0 1 10 0 L 20 0', marker_end: 'url(#arrowhead)')
+      ).first
+
+      expect(points_of(polygon).first).to eq([20.0, 0.0])
+    end
+
+    # Infinity/Infinity is NaN, and NaN would be written into points verbatim.
+    it 'draws nothing when the path data has no finite heading' do
+      arrows = described_class.for(path(d: 'M 0 0 L 1e400 0', marker_end: 'url(#arrowhead)'))
+
+      expect(arrows).to be_empty
+    end
+
+    # The early return is what keeps a marker-less path from paying for a
+    # scan of its own data, and most paths carry no marker.
+    it 'does not read the path data when no marker was asked for' do
+      allow(Sirena::Svg::PathGeometry).to receive(:new)
+
+      described_class.for(path(d: 'M 0 0 L 10 0'))
+
+      expect(Sirena::Svg::PathGeometry).not_to have_received(:new)
+    end
+
+    # SVG's initial stroke-width is 1, so a line whose width cannot be read
+    # still paints one and still ends in a head. `1e400` is in this group for
+    # a second reason: it reads as Infinity, and 0.0 * Infinity is NaN, which
+    # would otherwise be written into the points verbatim.
+    ['1e400', 'inherit'].each do |width|
+      it "falls back to a 1-unit line for a stroke width of #{width.inspect}" do
+        odd = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+                   stroke_width: width)
+
+        points = described_class.for(odd).first.points
+
+        expect(points).to eq('10.0,0.0 6.0,2.0 6.0,-2.0')
+      end
+    end
+
+    # A width SVG can read is a different matter: `stroke-width="0"` paints no
+    # stroke at all, so substituting 1 would put a head on an invisible line —
+    # the free-floating triangle this class exists to avoid. Reachable from a
+    # custom theme carrying `stroke_width: 0`.
+    ['0', '0.0', '-2'].each do |width|
+      it "draws nothing for a line of stroke width #{width.inspect}" do
+        unpainted = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+                         stroke_width: width)
+
+        expect(described_class.for(unpainted)).to be_empty
+      end
+    end
+
+    # A Path is mutable, so nothing may remember an answer for data the
+    # caller has since replaced.
+    it 'reads the path data again when it has changed underneath' do
+      moving = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')
+      arrowhead = described_class.new(moving)
+
+      first = arrowhead.polygons.first.points
+      moving.d = 'M 0 0 L 20 0'
+
+      expect(arrowhead.polygons.first.points).not_to eq(first)
     end
   end
 end

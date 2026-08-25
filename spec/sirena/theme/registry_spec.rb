@@ -8,6 +8,15 @@ RSpec.describe Sirena::Theme::Registry do
     described_class.clear
   end
 
+  # The registry is class-level state shared by the whole suite, and clearing
+  # it leaves every later example rendering with no `default` theme. Under a
+  # random seed that reached the example gate and reported every shipped SVG
+  # as stale.
+  after do
+    described_class.clear
+    described_class.load_builtin_themes
+  end
+
   describe '.register' do
     it 'registers a theme' do
       theme = Sirena::Theme.new(name: 'test')

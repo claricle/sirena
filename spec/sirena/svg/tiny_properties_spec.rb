@@ -50,6 +50,16 @@ RSpec.describe Sirena::Svg do
         .to eq('<text y="71.9" font-size="14"></text>')
     end
 
+    # The lookup normalises before it matches, the same way the arrowhead's
+    # marker predicate does. Without that, a value SVG accepts falls through
+    # to no shift at all and the label silently stays put.
+    ['MIDDLE', ' middle ', 'Middle'].each do |value|
+      it "reads #{value.inspect} as the centred baseline it is" do
+        expect(text(y: 67.0, font_size: '14', dominant_baseline: value).to_xml)
+          .to eq('<text y="71.9" font-size="14"></text>')
+      end
+    end
+
     it 'hangs a label a full ascender below its anchor' do
       expect(text(y: 10.0, font_size: '10', dominant_baseline: 'hanging').to_xml)
         .to include('y="18.0"')
