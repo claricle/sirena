@@ -15,7 +15,11 @@ require_relative "theme/shape_styles"
 require_relative "theme/spacing_config"
 require_relative "theme/effect_styles"
 
-module Sirena
+# The forward declaration above is load-bearing, so this file opens `Sirena`
+# twice on purpose. Every sub-model is written compact-style
+# (`class Sirena::Theme::Typography`), so `Sirena::Theme` has to exist before
+# those files are required.
+module Sirena # rubocop:disable Style/OneClassPerFile
   class Theme
     attribute :name, :string
     attribute :description, :string

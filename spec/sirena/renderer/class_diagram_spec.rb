@@ -69,22 +69,16 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
     it 'includes class boxes in SVG' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
       expect(groups.length).to be > 0
     end
 
     it 'renders class boxes as rectangles' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      rects = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Rect)
-      end
+      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
       expect(rects).not_to be_empty
     end
@@ -92,13 +86,9 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
     it 'renders class names as text elements' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
       class_names = texts.map(&:content)
@@ -108,13 +98,9 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
     it 'renders attributes with visibility symbols' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       attr_texts = texts.map(&:content).grep(/age/)
       expect(attr_texts).not_to be_empty
@@ -124,13 +110,9 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
     it 'renders methods with visibility symbols' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       method_texts = texts.map(&:content).grep(/breathe|bark/)
       expect(method_texts).not_to be_empty
@@ -140,13 +122,9 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
     it 'renders compartment separators' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      lines = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Line)
-      end
+      lines = groups.flat_map(&:children).grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
     end
@@ -165,13 +143,9 @@ RSpec.describe Sirena::Renderer::ClassDiagramRenderer do
       graph[:children][0][:metadata][:stereotype] = 'interface'
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       stereotype_texts = texts.map(&:content).grep(/<<.*>>/)
       expect(stereotype_texts).not_to be_empty

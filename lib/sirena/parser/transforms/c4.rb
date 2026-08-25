@@ -152,12 +152,12 @@ module Sirena
 
           # Handle boundary type (can be a variable reference)
           boundary_type = stmt[:boundary_type]
-          if boundary_type.is_a?(Hash) && boundary_type[:variable]
-            # Variable reference like ${macroName}
-            boundary.boundary_type = extract_text(boundary_type[:variable][:var])
-          else
-            boundary.boundary_type = boundary_type.to_s
-          end
+          boundary.boundary_type = if boundary_type.is_a?(Hash) && boundary_type[:variable]
+                                     # Variable reference like ${macroName}
+                                     extract_text(boundary_type[:variable][:var])
+                                   else
+                                     boundary_type.to_s
+                                   end
 
           boundary.id = extract_text(stmt[:id]) if stmt[:id]
           boundary.label = extract_text(stmt[:label]) if stmt[:label]
@@ -215,12 +215,12 @@ module Sirena
 
           # Handle boundary type (can be a variable reference)
           boundary_type = stmt[:boundary_type]
-          if boundary_type.is_a?(Hash) && boundary_type[:variable]
-            # Variable reference like ${macroName}
-            boundary.boundary_type = extract_text(boundary_type[:variable][:var])
-          else
-            boundary.boundary_type = boundary_type.to_s
-          end
+          boundary.boundary_type = if boundary_type.is_a?(Hash) && boundary_type[:variable]
+                                     # Variable reference like ${macroName}
+                                     extract_text(boundary_type[:variable][:var])
+                                   else
+                                     boundary_type.to_s
+                                   end
 
           boundary.id = extract_text(stmt[:id]) if stmt[:id]
           boundary.label = extract_text(stmt[:label]) if stmt[:label]
@@ -285,12 +285,12 @@ module Sirena
 
           # Extract element type
           element_type = stmt[:element_type]
-          if element_type.is_a?(Hash) && element_type[:variable]
-            # Handle ${macroName} variable references (used in tests)
-            element.element_type = extract_text(element_type[:variable][:var])
-          else
-            element.element_type = element_type.to_s
-          end
+          element.element_type = if element_type.is_a?(Hash) && element_type[:variable]
+                                   # Handle ${macroName} variable references (used in tests)
+                                   extract_text(element_type[:variable][:var])
+                                 else
+                                   element_type.to_s
+                                 end
 
           # Extract parameters
           element.id = extract_text(stmt[:id]) if stmt[:id]

@@ -264,12 +264,3 @@ module Sirena
     end
   end
 end
-
-# Extend GanttTask to hold calculated dates
-module Sirena
-  module Diagram
-    class GanttTask
-      attr_accessor :calculated_start, :calculated_end
-    end
-  end
-end

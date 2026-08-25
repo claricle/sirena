@@ -52,9 +52,7 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       svg = renderer.render(graph)
 
       # Should have groups for nodes
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
       expect(groups.length).to be > 0
     end
 
@@ -62,13 +60,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       svg = renderer.render(graph)
 
       # Find groups and check for rect children
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      rects = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Rect)
-      end
+      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
       expect(rects).not_to be_empty
     end
@@ -78,13 +72,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      circles = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Circle)
-      end
+      circles = groups.flat_map(&:children).grep(Sirena::Svg::Circle)
 
       expect(circles).not_to be_empty
     end
@@ -92,13 +82,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     it 'renders node labels as text elements' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
       expect(texts.first.content).to eq('Start')
@@ -107,13 +93,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     it 'renders edges as paths' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      paths = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Path)
-      end
+      paths = groups.flat_map(&:children).grep(Sirena::Svg::Path)
 
       expect(paths).not_to be_empty
     end

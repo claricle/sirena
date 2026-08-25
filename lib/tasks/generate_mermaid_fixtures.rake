@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# A task file and its helpers, not library code. The cop wants one
+# class per file, which is right for lib/ and wrong for a script whose
+# helpers exist only to serve it.
+# rubocop:disable Style/OneClassPerFile
 require 'fileutils'
 require 'json'
 
@@ -361,3 +365,4 @@ class MermaidTestValidator
     }
   end
 end
+# rubocop:enable Style/OneClassPerFile
