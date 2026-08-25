@@ -816,8 +816,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A call cb() ""),
       %(click A cb ""),
       # A bare callback name stops where mermaid keeps the character for
-      # a shape or an edge. Measured one character at a time: these ten
-      # are refused and every other printable ASCII one is not.
+      # a shape or an edge. Measured one character at a time: these
+      # twelve are refused, `(` is refused with the parens above, and
+      # every other printable ASCII character is not.
       "click A cb)x",
       "click A cb<x",
       "click A cb=x",
@@ -877,12 +878,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "keeps a callback tooltip on the callback's line" do
       # mmdc refuses a newline before the tooltip, where it takes one
       # inside the parens. `callback_gap` reached across and swallowed the
-      # next line into the click; now that line stands on its own. We
-      # still accept the source, because a quoted run alone on a line is a
-      # node id here and on main alike.
-      source = %(graph TD\nA\nclick A call cb()\n"tip"\n)
+      # next line into the click; now the tooltip stands on its own line,
+      # where a quoted run is not a statement at all.
+      expect(renders?(%(graph TD\nA\nclick A call cb()\n"tip"\n))).to be(false)
+    end
 
-      expect(described_class.new.parse(source).nodes.size).to eq(2)
+    # Every action ends at its line, so the orphaned tooltip lands on the
+    # next one in each of these.
+    [
+      %(click A cb),
+      %(click A "u"),
+      %(click A href "u")
+    ].each do |action|
+      it "refuses a tooltip on the line after #{action.inspect}" do
+        expect(renders?(%(graph TD\nA\n#{action}\n"tip"\n))).to be(false)
+      end
     end
 
     # A `;` still ends the statement after a complete action.
@@ -895,6 +905,30 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       it "keeps a node after #{label}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A B])
       end
+    end
+  end
+
+  # A quoted run is not a node id. It used to build a node whose id was a
+  # stringified parse tree, so every one of these drew a node called
+  # `{string: "tip"@12}` where mmdc draws nothing at all.
+  describe "a quoted run where a node id goes" do
+    {
+      "alone on a line" => %(graph TD\nA\n"tip"\n),
+      "after a separator" => %(graph TD;A;"tip"\n),
+      "as an edge source" => %(graph TD\n"A" --> B\n),
+      "as an edge target" => %(graph TD\nA --> "B"\n),
+      "carrying a shape" => %(graph TD\n"A"[x]\n),
+      "as a style target" => %(graph TD\nA\nstyle "A" fill:red\n),
+      "as a class target" => %(graph TD\nA\nclass "A" foo\n),
+      "as a click target" => %(graph TD\nA\nclick "A" "u"\n)
+    }.each do |label, source|
+      it "is refused #{label}" do
+        expect(renders?(source)).to be(false)
+      end
+    end
+
+    it "is still a label inside a shape" do
+      expect(node_ids(%(graph TD\nA["tip"] --- B\n))).to eq(%w[A B])
     end
   end
 end

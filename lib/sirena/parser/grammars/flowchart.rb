@@ -640,10 +640,13 @@ module Sirena
           pipe >> (pipe.absent? >> any).repeat(1) >> pipe
         end
 
-        # Node identifier
-        rule(:node_id) do
-          quoted_string | identifier
-        end
+        # A node id is a bare word. A quoted run was never one: mmdc
+        # refuses `"A" --> B`, `A --> "B"`, `"A"[x]`, `style "A" fill:red`
+        # and a quoted run standing alone on a line. All it ever produced
+        # here was a node whose id was a stringified parse tree —
+        # `{string: "tip"@12}` — so the alternative drew garbage where
+        # mermaid draws nothing.
+        rule(:node_id) { identifier }
 
         # Line terminator
         # The optional semicolon here may not be followed by a comment on
