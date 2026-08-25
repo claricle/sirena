@@ -17,7 +17,7 @@ full; every type follows that shape.
 
 After item 03, `Layout::X` still emits a plain Hash and `Renderer::X`
 digs through it: `node.dig(:metadata, :shape) || 'rect'`
-(`renderer/flowchart.rb:61`). There are **24 private hash shapes and no
+(`renderer/flowchart.rb:62`). There are **24 private hash shapes and no
 documentation of any of them**. To change what a layout emits, you have
 to read the renderer to find out what it expects.
 
@@ -37,7 +37,7 @@ module Sirena
         attribute :title, :string
       end
 
-      def call(diagram) = Scene.new(...)
+      def call(diagram, theme:) = Scene.new(...)
     end
   end
 end
@@ -47,15 +47,22 @@ end
 `height` — enough for `Renderer::Base` to own document creation, which
 item 05 uses to delete nine copies of it.
 
-**Types with no geometry get no Layout class at all.** About ten of
-today's `Transform` classes only copy fields into a hash
-(`Transform::InfoTransform` is 38 lines to copy three). Delete the file;
-the renderer takes the `Diagram` model directly. The engine handles both
-in one line:
+**Types with no geometry get no Layout class at all.** Two of today's
+`Transform` classes only copy fields into a hash —
+`Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
+each. `Transform::PieTransform` (61 lines) is arguably a third: it
+copies, but it also pulls each slice's angle and percentage off the
+model. Delete those files; the renderer takes the `Diagram` model
+directly. The engine handles both in one line:
 
 ```ruby
-scene = Layout.for(type)&.call(model) || model
+scene = Layout.for(type)&.call(model, theme: theme) || model
 ```
+
+**Expect two or three deletions, not ten.** Every other `Transform`
+computes geometry — measured 2026-08-25 by scanning all 24 for
+coordinate keys and arithmetic. Check each one before you delete it;
+`timeline` reads like a pass-through and is not.
 
 **Rule for the future: if a layout would only copy fields, do not write
 one.**
@@ -127,8 +134,8 @@ attribute, two of them dead (item 02).
    `architecture`, `c4`, `requirement`, `packet`, `treemap`,
    `user_journey`
 
-3. Change the layout signature to `call(diagram, theme:)` — **layouts
-   need the theme.** Every layout today hardcodes
+3. The layout signature is `call(diagram, theme:)` throughout this plan
+   — **layouts need the theme.** Every layout today hardcodes
    `DEFAULT_FONT_SIZE = 14` while renderers draw at
    `theme.typography.font_size_normal`. The built-in `high_contrast`
    theme sets 16.0, so today its text overflows every box it is sized
@@ -157,7 +164,8 @@ attribute, two of them dead (item 02).
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives
       boxes sized to their own theme's text
-- [ ] every pass-through layout class is deleted (expect about 10)
+- [ ] every pass-through layout class is deleted (expect two or three:
+      `info`, `error`, and possibly `pie`)
 - [ ] `rake corpus:check` shows no regression across the whole item
 
 ## Do not
@@ -166,9 +174,14 @@ attribute, two of them dead (item 02).
   the ELK shape above because elkrb will populate it. Non-graph types get
   a Scene shaped by their own diagram. Forcing a pie into nodes and edges
   recreates the untyped Hash with extra steps.
-- **Do not build a cross-notation IR.** These Scenes are Mermaid-shaped
-  and deliberately so. When PlantUML lands it gets its own; only then is
-  there evidence for anything shared. See `DO-NOT-BUILD.md`.
+- **Do not build the cross-notation IR here.** These Scenes are
+  geometry and they are Mermaid-shaped on purpose. The IR is a different
+  boundary and a different item: `TODO.foundation/18`, which the owner
+  ruled on 2026-08-13 **is** built in this foundation. It is not
+  deferred and item 04 does not replace it — it starts after item 10,
+  after item 14's `docs/emit-accept-survey.md`, and after item 16's
+  PlantUML class spike. See `00-overview.md`, "The IR, and what the
+  owner ruled".
 - Do not convert two types in one PR.
 - Do not fix rendering bugs you notice. Write them down — they are item
   08's work, and they belong in a PR whose corpus delta is expected.

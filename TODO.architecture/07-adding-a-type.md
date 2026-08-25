@@ -1,7 +1,7 @@
 # 07 — Adding or changing a type in an hour
 
 **Goal:** the thing this whole plan is for. Every future Mermaid change
-lands fast, including the ~1,380 corpus cases still failing.
+lands fast, including the 524 oracle-valid corpus cases still failing.
 **Size:** 2 PRs — tooling, then documentation.
 **Prerequisite:** item 06.
 

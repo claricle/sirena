@@ -58,10 +58,15 @@ This is currently wrong in the code, and fixing it is part of item 04.
                         rendered
 ```
 
-Today **no layout receives a theme.** Every one hardcodes
-`DEFAULT_FONT_SIZE = 14` (`transform/er_diagram.rb:20`,
-`transform/c4.rb:19`, `transform/block.rb:148`, and so on) while
-`Renderer::Base#apply_theme_to_text` renders at
+Today **no layout receives a theme.** Nine of the 24 size text anyway,
+at a hardcoded 14: seven declare `DEFAULT_FONT_SIZE = 14`
+(`transform/c4.rb:19`, `class_diagram`, `er_diagram`, `flowchart`,
+`sequence`, `state_diagram`, `user_journey`) and two write the literal
+inline (`transform/block.rb:148`, `transform/architecture.rb`). The
+other 15 never measure text at all — which is its own bug, and it is
+item 04's job to give them a layout that does.
+
+Meanwhile `Renderer::Base#apply_theme_to_text` renders at
 `theme.typography.font_size_normal`.
 
 The built-in `high_contrast` theme sets `font_size_normal: 16.0`. So
@@ -82,8 +87,8 @@ and needs the theme.** Both get it; neither guesses.
 - `Renderer#render(scene, theme:)` returns a new document. It never
   writes to the scene.
 
-Today `Engine#apply_fallback_layout` mutates the graph in place
-(`node.x = 50 + (col * 200)`). After item 03 that code is
+Today `Engine#apply_fallback_layout` (`engine.rb:213`) mutates the graph
+in place (`node.x = 50 + (col * 200)`). After item 03 that code is
 `Layout::Grid`, and it returns rather than mutates.
 
 This matters more than it looks: rendering the same diagram twice under
@@ -105,8 +110,8 @@ All four inherit `Sirena::Error`.
 
 **This is currently broken and item 01 fixes it before anything else.**
 `Engine#render` collapses every non-detection failure into a single
-`PipelineError`, with the backtrace concatenated into the message
-string:
+`PipelineError` (`engine.rb:114-116`), with the backtrace concatenated
+into the message string:
 
 ```ruby
 rescue StandardError => e
@@ -121,6 +126,10 @@ Two consequences:
   everything except detection.
 - A caller cannot rescue selectively, and the backtrace is stringified
   where a normal `cause` chain should be.
+- **And it does not even catch everything.** `NotImplementedError`
+  inherits `ScriptError`, not `StandardError`, so the six models that
+  inherit `Diagram::Base#valid?` raise straight past this rescue. Item
+  01 has the measurement.
 
 Let each layer's error propagate. If the engine wraps at all, it wraps
 with `raise PipelineError, msg` inside a `rescue => e` so `e` remains the
@@ -129,7 +138,8 @@ with `raise PipelineError, msg` inside a `rescue => e` so `e` remains the
 ## What Renderer::Base owns, after item 05
 
 Today it owns theme lookup, SVG path helpers, style factories and a
-no-op `add_arrow_marker` placeholder — four things and a stub.
+no-op `add_arrow_marker` placeholder (`renderer/base.rb:242`) — four
+things and a stub.
 
 Afterwards:
 

@@ -6,9 +6,9 @@
 
 The foundation plan is a good plan for **measuring** the codebase. We're
 adding a phase before it that **shapes** the codebase, because the shape
-is what makes each of the ~1,380 remaining corpus fixes expensive.
+is what makes each of the 524 remaining corpus fixes expensive.
 
-Same destination, different order. Seven of the twenty original items
+Same destination, different order. Nine of the nineteen original items
 are unchanged and still the reference.
 
 ---
@@ -19,8 +19,12 @@ Mermaid is diagram-as-text. The official renderer (`mmdc`) is JavaScript
 and needs Node plus a headless Chromium. **Sirena does the same job in
 pure Ruby, with no Node and no browser.** That's the whole product.
 
-24 Mermaid diagram types are registered. Against the 1,997-case corpus,
-about 31% render correctly (614/1997). Closing that gap is the job.
+24 Mermaid diagram types are registered. `spec/mermaid/` holds 1,997
+files, but a third of them are not mermaid — 632 extraction artifacts
+and 59 cases mmdc rejected, per `spec/mermaid/corpus-verdicts.yml`.
+Against the **1,032 cases mermaid accepts, Sirena renders 508 — 49.2%**,
+leaving **524** to fix (measured 2026-08-25,
+`bundle exec ruby scripts/corpus_sweep.rb`). Closing that gap is the job.
 
 ---
 
@@ -75,32 +79,48 @@ Found while reviewing. All three are live, and all three are cheap now
 and expensive later.
 
 **A latent crash in the model layer.** `Diagram::Base` declares
-`diagram_type` and `valid?` as abstract methods. Across the 24 types:
+`diagram_type` and `valid?` as abstract methods. Across the 24 types
+(measured 2026-08-25 by introspecting the model each parser returns):
 
 ```
   bypass Diagram::Base entirely     4    architecture, block, gantt, requirement
+                                         -> valid? raises NoMethodError
+  inherit Base#valid?, which raises 6    git_graph, mindmap, packet, radar,
+                                         treemap, xychart
+                                         -> NotImplementedError
+  so: no working valid?            10
   no diagram_type                  10    5 of them spell it `type`
-  no valid?                         9
+  define their own valid?          14
 ```
 
-13 transforms call `diagram.valid?`, and those 13 happen to be a subset
-of the 15 models that define it. Nothing crashes today **by
-coincidence.** Move that check into the base class — an obvious cleanup
-someone will make — and 9 types raise `NotImplementedError` in
-production.
+13 transforms call `diagram.valid?`, and those 13 are a subset of the 14
+that define one — kanban defines one nobody calls. Nothing crashes today
+**by coincidence.**
+
+The obvious cleanup — move the check into `Transform::Base` — buys less
+than it looks, and that is the part worth knowing:
+
+- 7 transforms don't inherit `Transform::Base` at all, and they are
+  exactly the 6 `NotImplementedError` types plus kanban. The moved check
+  never runs for them.
+- It reaches the other 4, which raise `NoMethodError`.
+- `NotImplementedError` inherits `ScriptError`, not `StandardError`, so
+  `engine.rb:114` doesn't catch it. It escapes `PipelineError` and
+  reaches the caller raw.
 
 **The error taxonomy destroys the data the corpus harness needs.**
 `Engine#render` collapses every non-detection failure into a single
 `PipelineError`, with the backtrace concatenated into the message string
-(`engine.rb:104-106`). So a corpus harness cannot tell a parse failure
+(`engine.rb:114-116`). So a corpus harness cannot tell a parse failure
 from a render failure — and foundation item 05 derives its entire work
 list from exactly that distinction.
 
-**The theme never reaches the layout layer.** Every layout hardcodes
-`DEFAULT_FONT_SIZE = 14` while renderers draw at
-`theme.typography.font_size_normal`. The built-in `high_contrast` theme
-sets 16.0 — so under that theme, every node is sized for 14pt text and
-rendered at 16pt, and the text overflows its box.
+**The theme never reaches the layout layer.** Nine layouts size text at
+a hardcoded 14 — seven via `DEFAULT_FONT_SIZE = 14`, two via a bare
+literal — while renderers draw at `theme.typography.font_size_normal`.
+The built-in `high_contrast` theme sets 16.0, so under that theme every
+node is sized for 14pt text and rendered at 16pt, and the text overflows
+its box. The other 15 layouts never measure text at all.
 
 ---
 
@@ -112,24 +132,52 @@ Seven items, all mechanical, none changing rendered output except one
 escaping fix:
 
 ```
-  01  safety net        error taxonomy + contract spec + corpus.json
+  01  safety net        error taxonomy + contract spec + scoreboard/corpus.json
   02  SVG               one serializer, escape once
   03  naming            Transform -> Layout, pure rename
   04  typed Scene       kill the 24 undocumented hash shapes
-  05  boilerplate       13 parsers, 9 doc-creators, 5 palettes
+  05  boilerplate       13 parsers, 9 doc-creators, 5 palettes (3 names)
   06  registry          lib/sirena.rb 328 lines -> under 40
   07  adding a type     generator, shared examples, one onboarding page
 ```
 
-**Why:** the burndown is the largest block of work in the project by an
-order of magnitude. It's the one place where a 2x cost difference is
-worth seven items of preparation.
+**Why:** the burndown is still the largest block of work in the project,
+and it's the one place where a 2x per-fix cost difference is worth seven
+items of preparation.
+
+**One correction worth stating, because it cuts against us.** An earlier
+draft of this argument said "~1,380 remaining corpus fixes". That was
+1997 minus 614 — the whole corpus minus what passed — and it counted 632
+extraction artifacts and 59 mmdc rejections as work. The real number is
+**524**, measured against oracle-valid cases only. That is 2.6x smaller
+than we claimed.
+
+Does the argument survive? Yes, but on the per-fix cost rather than the
+case count:
+
+- 524 fixes is still an order of magnitude more work than the seven
+  structural items, which are roughly 35 PRs of mechanical change.
+- The work is concentrated, which makes the structural case stronger
+  rather than weaker: flowchart holds 194 and class holds 143, so 337 of
+  the 524 land in two types whose grammars, layouts and renderers are
+  exactly the files items 03-05 rewrite. Paying the untyped-hash tax 337
+  times in two files is the case for fixing the files first.
+- What we can no longer say is "a thousand cases justify anything".
+  Seven preparatory items in front of 524 fixes is a judgment call, not
+  an arithmetic one. It is the right call, and it is a call.
 
 ### 2. Item 02 (corpus oracle) splits by time — it is NOT dropped
 
-**Now:** a committed `corpus.json` of case -> pass/fail/stage. About 60
-lines. Answers the only question items 01-07 ask: *did I just break
-something?*
+**Now:** a committed `scoreboard/corpus.json` of case -> pass/fail/stage,
+with each case's oracle verdict. About 60 lines. Answers the only
+question items 01-07 ask: *did I just break something?*
+
+**It is the scoreboard's first column, not a second tracker.** `AGENTS.md`
+says every ratchet is a column in `scoreboard/` and that a rival
+mechanism must not be invented, so this ships that directory early with
+one column in it. Items 04, 05, 06, 07, 08, 11 and 14 all name the
+scoreboard in their Done-when criteria; none of them changes, and all of
+them still mean the same place.
 
 **Later, at elkrb time:** the hermetic toolchain pin, reference
 regeneration with provenance, the comparator.
@@ -160,15 +208,41 @@ isn't — that's the signal there isn't enough evidence to design it.
 Build the notation layer in the PlantUML PR, from two real notations.
 `Notation::Mermaid` with its own type table is already the seam.
 
-### 4. Item 18 (typed IR) comes forward, scoped down
+**What does NOT shrink:** item 10's boundary ruling. `TODO.foundation/10:25-36`
+says today's per-notation transform shapes are **interim, with item 18 as
+their successor** — after the IR lands, the IR is deliberately shared and
+only each notation's parse output stays private. Write any boundary
+assertion so item 18 updates it rather than deletes it, and don't
+describe today's shapes as permanent. That is the item's own wording and
+it survives the shrink.
 
-Build the typed contract now, Mermaid-only, deliberately non-general.
+### 4. Item 18 (typed IR) stays exactly as written
 
-**Why:** deferring a *cross-notation* IR until PlantUML exists is
-correct reasoning. But it isn't a reason to have **no** contract in the
-meantime — 24 undocumented hash shapes is a cost being paid on every
-corpus fix today. Expect to rewrite it when PlantUML lands; that's
-cheap.
+An earlier draft of this section said item 18 "comes forward, scoped
+down" and that item 04 was its smaller replacement. **Both halves were
+wrong, and the owner ruled against them on 2026-08-13.**
+
+`TODO.foundation/18:3-8`: the typed IR is built in this foundation,
+because Issue #2 states it as the architecture. The deferral this plan
+leaned on had already been withdrawn there as "our reasoning rather than
+the author's instruction" — so we cited a position that no longer
+existed.
+
+What is true, and what item 04 is actually for:
+
+- **Item 04 is a different boundary.** Scenes sit between layout and
+  renderer and carry geometry. The IR sits between notation and layout
+  and carries meaning. Item 04 kills the 24 undocumented hash shapes;
+  that cost is real and is being paid on every corpus fix today. It does
+  not discharge item 18.
+- **Item 18 keeps its prerequisites**: after item 10, after item 14's
+  `docs/emit-accept-survey.md`, after item 16's PlantUML class spike.
+  That sequencing is what replaced the deferral — evidence before
+  design.
+- **One scheduling consequence.** This plan puts item 14 at item 08 step
+  3. Item 18 can't start before 14's survey exists, so either 14 moves
+  earlier or 18 lands after it. That decision is still open; it is
+  flagged, not made.
 
 ### 5. Item 09 (rubocop todo, 7,614 entries) moves later
 
@@ -203,13 +277,17 @@ comes, read them as written:
 ```
   04  XML escaping           research reused directly
   05  type detection         first task of the burndown
-  06, 07  corpus burndown    per-type counts and bars stand
+  06, 07  corpus burndown    the METHOD stands; re-derive the per-type
+                             denominators — theirs count artifacts
   08  lint, 109 live         small, can run any time
-  11  docs truth             independent
+  11  docs truth             starts now, closes once the scoreboard exists
   14  elkrb + layout parity  adopted IN FULL, including the metric contract
   15  docs site build        independent
   17  release + versioning   independent
+  18  typed IR               owner ruled it INTO this foundation
 ```
+
+That is nine items, not seven.
 
 Item 14's metric contract — node identity, normalisation, the equations,
 overlap semantics, a metric for every non-box type — is the
@@ -267,8 +345,9 @@ Two rules hold it together:
 
 - **No bare Hash crosses a layer boundary.** Every arrow is a class you
   can open and read.
-- **A type with no geometry gets no Layout class.** About ten of today's
-  Transform classes only copy fields; those get deleted.
+- **A type with no geometry gets no Layout class.** Two of today's
+  Transform classes only copy fields (`info`, `error`); `pie` is a
+  borderline third. Those get deleted.
 
 ---
 
@@ -313,8 +392,10 @@ registry find classes by convention instead of listing them.
 
 **New:** `Notation::Mermaid`, `Layout::Scene`, `Layout::<Type>::Scene`.
 
-**Deleted:** ~10 pass-through Layout classes, 5 private `DEFAULT_COLORS`
-constants, 9 copies of `create_document_from_layout`, the no-op
+**Deleted:** 2-3 pass-through Layout classes (`info`, `error`, maybe
+`pie` — every other Transform computes geometry), 5 private palette
+constants under 3 names (`DEFAULT_COLORS`, `FLOW_COLORS`,
+`SECTION_COLORS`), 9 copies of `create_document_from_layout`, the no-op
 `add_arrow_marker` placeholder, the `Treemap = TreemapParser` alias, and
 the dead top-level `self.render` at `lib/sirena.rb:38`.
 
@@ -435,8 +516,8 @@ Worth an afternoon each:
                                 self.render at line 38
 
   lib/sirena/engine.rb          the pipeline in one file: the regex
-                                table at :27, the grid stub at :178,
-                                the error wrapping at :104
+                                table at :27, the grid stub at :194,
+                                the error wrapping at :114
 
   lib/sirena/transform/pie.rb   a "transform" that copies fields
   lib/sirena/transform/mindmap.rb  a "transform" that does layout
@@ -447,8 +528,10 @@ Worth an afternoon each:
                                 the hash pie.rb emits, and notice that
                                 the contract only exists here
 
-  lib/sirena/svg/text.rb        the same attribute declared three
-                                times; work out which one runs
+  lib/sirena/svg/text.rb        the same attribute declared twice —
+                                `attribute` and a dead `map_attribute`
+                                — plus one `writes_attributes` entry;
+                                work out which one runs
 ```
 
 Then pick one diagram type and trace a single `.mmd` file all the way

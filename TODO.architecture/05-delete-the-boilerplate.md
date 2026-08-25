@@ -30,10 +30,20 @@ Two inconsistencies come with them:
   `Builders::X.new.apply(tree)`; three call `Builders::X.apply(tree)` as
   a class method (`block`, `flowchart`, `requirement`). Both work; neither
   is documented; copying the wrong one gets you a `NoMethodError`.
-- **Three parse-error formats.** Group 1 raises `"Syntax error at
-  <pos>: ..."`. Treemap raises `"Treemap parse error: ..."`. Group 2
-  raises the good one — line number, column, the offending source line,
-  and a caret under the column.
+- **Five parse-error formats across 21 raise sites.** Counted
+  2026-08-25:
+
+  | Format | Where |
+  |---|---|
+  | `Syntax error at <pos>: ...` | 15 parsers |
+  | line, column, source line and a caret — the good one | `Parser::Base:60`, via a `format_parse_error` that six parsers each define their own copy of (`architecture`, `block`, `class_diagram`, `flowchart`, `requirement`, `state_diagram`) |
+  | a bare `parse_failure_cause.ascii_tree` | `er_diagram.rb:36` |
+  | `Parse error: <ascii_tree>` | `user_journey.rb:57` |
+  | `Treemap parse error: <message>` | `treemap.rb:26` |
+
+  `user_journey.rb:116` adds a sixth message — `Score must be between 1
+  and 5` — which is a semantic error wearing `ParseError`, not a format.
+  It needs its own class, not the shared formatter.
 
 ### Steps
 
@@ -55,16 +65,6 @@ end
 4. Types with real per-type parse logic keep their `parse` override.
    After item 01 moved treemap's model building out, the remaining
    overrides are genuine.
-
-### Done when
-
-- [ ] no parser contains the boilerplate `parse` body; 13 files are gone
-      or reduced to a two-line declaration
-- [ ] one parse-error format for all 24 types, asserted by a spec that
-      feeds each type deliberately broken source and checks the message
-      names a line and a column
-- [ ] one builder calling convention
-- [ ] `rake corpus:check` unchanged
 
 ---
 
@@ -92,22 +92,22 @@ Plus six more bespoke `create_document_for_<type>` methods.
    document-creation method is the kind of thing that breaks silently
    when someone reorders two calls.
 
-### Done when
-
-- [ ] one `create_document` on `Renderer::Base`, no per-renderer copies
-- [ ] no renderer sets `@offset_x` / `@offset_y`
-- [ ] `rake corpus:check` unchanged
-
 ---
 
 ## C — Themes that are bypassed (PR 3)
 
 ### Why
 
-Hardcoded hex colours per renderer: `c4` 25, `xy_chart` 21,
-`class_diagram` 18, `quadrant` 17, `sequence` 17, `pie` 15, `radar` 15,
-`gantt` 15. Five renderers define a private `DEFAULT_COLORS` palette
-(`pie`, `sankey`, `radar`, `timeline`, `xy_chart`).
+Hardcoded hex colours per renderer, counted 2026-08-25: `c4` 25,
+`sequence` 21, `xy_chart` 21, `class_diagram` 18, `quadrant` 17,
+`pie` 15, `radar` 15, `gantt` 15. (`sequence` was 17 when this plan was
+first written; three arrow commits on main since then added four. The
+number drifts — re-count, do not cite.)
+
+Five renderers define a private palette constant, **under three
+different names**: `DEFAULT_COLORS` in `pie`, `radar` and `xy_chart`,
+`FLOW_COLORS` in `sankey`, `SECTION_COLORS` in `timeline`. Grepping for
+`DEFAULT_COLORS` finds three of the five and leaves two behind.
 
 The theme system exists — `Theme::Registry`, four built-in YAML themes,
 a `--theme` CLI flag — and is structurally unused, because
@@ -118,20 +118,14 @@ hardcoded fallback is what renders.
 ### Steps
 
 1. Add `theme.palette(index)` — one categorical palette, on the theme.
-2. Delete the five private `DEFAULT_COLORS` constants.
+2. Delete all five private palette constants — `DEFAULT_COLORS`,
+   `FLOW_COLORS` and `SECTION_COLORS`.
 3. Replace `theme_color(:x) || '#hex'` with `theme_color(:x)`, and make
    the theme guarantee a value. A missing key is a bug in the theme
    YAML: it should fail a spec, not silently fall back at runtime.
 4. Add a spec that renders one diagram of every type under all four
    built-in themes and asserts `default` and `dark` output differ. That
    is the test that would have caught this.
-
-### Done when
-
-- [ ] no `DEFAULT_COLORS` in `lib/sirena/renderer/`
-- [ ] `grep -c '#[0-9a-fA-F]\{6\}' lib/sirena/renderer/*.rb` near zero
-- [ ] switching themes visibly changes output for every registered type
-- [ ] `rake corpus:check` unchanged — colour does not affect pass/fail
 
 ### Do not
 
@@ -145,3 +139,23 @@ hardcoded fallback is what renders.
 `lib/sirena/parser/*.rb`, `lib/sirena/renderer/*.rb`,
 `lib/sirena/theme.rb`, `lib/sirena/theme/color_palette.rb`,
 `spec/sirena/theme_spec.rb`.
+
+---
+
+All three parts' criteria are one list below. The plan scorer reads the
+first `## Done when` in a file and stops at the next `##`, so per-part
+headings silently drop everything after the first block.
+
+## Done when
+
+- [ ] A — no parser contains the boilerplate `parse` body; 13 files are gone or reduced to a two-line declaration
+- [ ] A — one parse-error format for all 24 types, asserted by a spec that feeds each type deliberately broken source and checks the message names a line and a column
+- [ ] A — `grep -rn "def format_parse_error" lib/` returns one hit, in `Parser::Base`
+- [ ] A — `user_journey`'s score check raises something other than `ParseError`
+- [ ] A — one builder calling convention
+- [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
+- [ ] B — no renderer sets `@offset_x` / `@offset_y`
+- [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/renderer/` returns nothing
+- [ ] C — `grep -c '#[0-9a-fA-F]\{6\}' lib/sirena/renderer/*.rb` near zero
+- [ ] C — switching themes visibly changes output for every registered type
+- [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either

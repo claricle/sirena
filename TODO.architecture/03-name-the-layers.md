@@ -26,7 +26,7 @@ four PRs. If it moves, you have a typo — find it before continuing.
   Transform::InfoTransform  copies 3 fields into a hash (38 lines)
 ```
 
-Meanwhile `Engine#layout_graph` (`engine.rb:178`) — the method named
+Meanwhile `Engine#layout_graph` (`engine.rb:194`) — the method named
 layout — applies a 3-column grid and only fires on graphs that have
 `:children` and no `x`/`y`. Nine renderers already take a parameter
 named `layout` and define `create_document_from_layout`. The renderers
@@ -50,6 +50,7 @@ One commit — and one PR — per rename.
    Directory `transform/` -> `layout/`. `Transform::Base` ->
    `Layout::Base`, `TransformError` -> `LayoutError`.
 3. **`Engine#layout_graph` / `apply_fallback_layout` -> `Layout::Grid`**
+
    A named class in `lib/sirena/layout/grid.rb` that the engine calls
    explicitly. It stays a stub, and it is **explicitly temporary**: put a
    comment at the top naming its successor. Geometry parity is the agreed
@@ -66,10 +67,34 @@ caller in `spec/`, `scripts/` and `lib/tasks/` and delete the old names.
 
 ## Done when
 
-- [ ] `grep -rn "Transform" lib/` returns nothing outside comments
+- [ ] `grep -rn "Sirena::Transform\|Transform::Base\|TransformError" lib/`
+      returns nothing.
+
+      Not a bare `grep -rn "Transform" lib/` — that can never return
+      nothing. Ten builder files inherit `Parslet::Transform`
+      (`parser/transforms/block.rb`, `flowchart`, `git_graph`, `kanban`,
+      `mindmap`, `packet`, `radar`, `requirement`, `treemap`,
+      `xy_chart`), and that is the gem's class name, not ours.
 - [ ] class names are uniform, no `Parser`/`Transform`/`Renderer` suffixes
 - [ ] `Layout::Grid` exists; `Engine` contains no positioning code
 - [ ] `rake corpus:check` shows **zero** change after each of the 4 PRs
+
+## The coverage gate this item does not repeal
+
+`TODO.foundation/03-coverage-gate.md:16` says **"No behavior PR may
+close before 03a lands"**, and `TODO.foundation/05` names 03a as a
+completion prerequisite. This plan simplifies item 03's *staged
+timeline* (see `DO-NOT-BUILD.md`) — it does not lift that gate, and it
+never mentioned 03a at all, which read as if the gate had gone.
+
+It has not. 03a is the coverage instrumentation plus one line floor and
+one branch floor. Land it before the first behaviour PR, exactly as
+`TODO.foundation/03` says. What this plan drops is only the
+70 -> 80 -> 90 -> 97 timeline tied to other tracks' completion events.
+
+Items 01-06 are refactors and change no behaviour, so they are not
+blocked by it. Item 08 is, and so is anything in item 05 that changes a
+parse-error message.
 
 ## Do not
 

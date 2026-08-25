@@ -27,10 +27,17 @@ That is the whole product.
                                                +------------------------+
 ```
 
-24 Mermaid diagram types are registered. Against the 1,997-case test
-corpus in `spec/mermaid/`, about 31% render correctly today. Closing
-that gap is the job. Everything in this directory exists to make closing
-it cheaper.
+24 Mermaid diagram types are registered. `spec/mermaid/` holds 1,997
+files, but a third of them are not mermaid: `spec/mermaid/corpus-verdicts.yml`
+marks 632 as extraction artifacts and 59 as cases mmdc itself rejected.
+**1,032 are cases mermaid accepts, and Sirena renders 508 of them — 49.2%.**
+
+**524 valid cases still fail.** That is the size of the job. Measured
+2026-08-25 with `bundle exec ruby scripts/corpus_sweep.rb`; never quote
+a hand-written figure, and never use the raw 33.4% over all 1,997 files
+— it counts files mermaid cannot parse either.
+
+Everything in this directory exists to make closing that gap cheaper.
 
 ## Decisions already made
 
@@ -43,12 +50,45 @@ been sidetracked — the answer is here.
 | Can we break the API? | **Yes, freely.** Pre-1.0, nothing released | No deprecated aliases, no shims. Rename anything |
 | Is PlantUML real? | **Yes, next few months** | Item 06 keeps detection inside `Notation::Mermaid` rather than the engine, so PlantUML slots in. Still no plugin system — read `TODO.foundation/12` and `16` before item 06 |
 | What are Scene classes built from? | **lutaml-model**, like the Diagram layer | `attribute` declarations only. **Never add an `xml do` block to a Scene** — Scenes are internal and never serialize to XML; that block is what caused the trouble in the Svg layer |
+| Is the cross-notation typed IR in this foundation? | **Yes.** Owner ruling, 2026-08-13, `TODO.foundation/18` | It is NOT deferred past PlantUML, and item 04 does not replace it. Item 04 is the layout→renderer boundary; item 18 is the notation→layout one. Both exist. See "The IR, and what the owner ruled" below |
 
 Geometry parity is the largest of these. It means the reference SVGs and
 a reproducible mermaid toolchain **are** needed — see
 `DO-NOT-BUILD.md`, where they are deferred to a named point in item 08
 rather than dropped. Do not build them earlier; do not be surprised when
 they arrive.
+
+## The IR, and what the owner ruled
+
+An earlier draft of this plan deferred the cross-notation typed IR until
+after PlantUML shipped, and treated item 04 as its smaller replacement.
+**That is overruled.** `TODO.foundation/18` carries an owner ruling dated
+2026-08-13: the typed IR is built in this foundation, because Issue #2
+states it as the architecture. The old deferral was our reasoning, not
+the author's instruction.
+
+So the plan now says two things at once, and they do not conflict:
+
+- **Item 04 is the layout→renderer boundary.** Scenes carry geometry —
+  where things go. They are Mermaid-shaped on purpose and they are what
+  removes the 24 undocumented hash shapes. Nothing about item 18 changes
+  that, and nothing in item 04 waits for it.
+- **Item 18 is the notation→layout boundary.** The IR carries meaning —
+  what a diagram says, in terms no notation owns. It is still foundation
+  work, it still has its own prerequisites, and item 04 does not stand in
+  for it.
+
+Item 18's ordering is unchanged from `TODO.foundation/18`: it starts
+after item 10, after item 14's emit/accept survey (`docs/emit-accept-survey.md`),
+and after item 16's PlantUML class spike. Those two are its design
+evidence, and sequencing the evidence is what replaced the deferral.
+
+**One consequence to see clearly.** This plan schedules item 14 at item
+08 step 3, which is late. Item 18 cannot start before 14's survey
+exists, so ruling the IR into the foundation also means that survey is
+now on the critical path for item 18 — either 14 moves earlier than
+step 3, or item 18 lands after it. That is a scheduling decision this
+plan does not make; it is flagged here so nobody discovers it at item 18.
 
 ## The one goal
 
@@ -132,18 +172,26 @@ Three problems in that picture, and each one costs time on every fix:
 
 ```ruby
 model = Parser.for(type).parse(source)
-scene = Layout.for(type)&.call(model) || model
+scene = Layout.for(type)&.call(model, theme: theme) || model
 Renderer.for(type).render(scene, theme: theme)
 ```
+
+The layout signature is `call(diagram, theme:)` everywhere in this plan.
+Layouts size boxes to text, and text size comes from the theme — see
+`LAYERS.md`.
 
 Two rules hold it together:
 
 - **No bare Hash crosses a layer boundary.** Every arrow above is a class
   you can open and read. That is what removes the reverse-engineering.
-- **A type with no geometry gets no Layout class.** About ten types
-  today have a `Transform` that only copies fields into a hash
-  (`Transform::InfoTransform` is 38 lines to copy three). Those get
-  deleted and the renderer takes the `Diagram` model directly.
+- **A type with no geometry gets no Layout class.** Two of today's
+  `Transform` classes only copy fields into a hash —
+  `Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
+  each to copy three or four. `Transform::PieTransform` (61 lines) is
+  the borderline third: it copies, but it also reads each slice's angle
+  and percentage. Those get deleted and the renderer takes the `Diagram`
+  model directly. Every other `Transform` computes geometry, so the
+  count is two or three, not ten — check before you delete.
 
 `WORKED-EXAMPLE.md` shows the pie type written both ways, in full.
 
@@ -155,7 +203,7 @@ after 01 is protected by 01.
 | # | Item | Size | What it gives a user |
 |---|---|---|---|
 | 01 | Safety net: corpus check + contract spec | 2 PRs | nothing visible — but a real latent crash is closed and nothing breaks silently from here on |
-| 02 | SVG: one serializer, escape once | 1 PR | diagrams containing `<`, `&` or quotes stop producing broken SVG |
+| 02 | SVG: one serializer | 1 PR | nothing visible — the escaping fix it used to carry already landed on main |
 | 03 | Name the layers honestly | 4 PRs, pure rename | nothing — the codebase becomes readable |
 | 04 | Typed Scene between layout and renderer | ~21 PRs, one per type | fixes get roughly 2x cheaper from here on |
 | 05 | Delete the boilerplate | 3 PRs | parse errors that name line, column and source, for all 24 types |
@@ -163,10 +211,11 @@ after 01 is protected by 01.
 | 07 | Adding a type in an hour | 2 PRs | the point of the plan |
 | 08 | Then the corpus burndown | ongoing | the pass rate finally moves |
 
-Items 01-06 change no rendered output. **Item 02 is the only exception,
-and it changes output only where the output was already malformed.**
-If a PR in 01, 03, 04, 05 or 06 moves the corpus number, something is
-wrong — see "Stop and ask" below.
+**Items 01-06 change no rendered output at all.** Item 02 used to be the
+exception, because it carried the escaping fix; that fix landed on main
+ahead of this plan, so what is left of item 02 is a pure deletion. If a
+PR in any of 01-06 moves the corpus number, something is wrong — see
+"Stop and ask" below.
 
 ## How to work
 
