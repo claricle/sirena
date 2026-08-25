@@ -24,8 +24,22 @@ module Sirena
         rule(:header) do
           (str('flowchart') | str('graph')).as(:header) >>
             ws? >>
-            direction.maybe.as(:direction)
+            direction.maybe.as(:direction) >>
+            separator.maybe
         end
+
+        # A `;` between statements on one line. `line_end` is deliberately
+        # left alone: `style_property` and `click_action` scan a value up to
+        # the physical end of the line via `line_end.absent?`, so widening it
+        # would truncate `style A fill:#f9f;stroke:#333` at the semicolon.
+        #
+        # Repeat only this rule, never `statement_end` — the `line_end` arm
+        # succeeds zero-width at EOF, so repeating that would not terminate.
+        rule(:separator) do
+          space? >> (semicolon >> space?).repeat(1)
+        end
+
+        rule(:statement_end) { separator | line_end }
 
         rule(:direction) do
           (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value)
@@ -154,7 +168,7 @@ module Sirena
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
             str('end').as(:subgraph_end) >>
-            line_end
+            statement_end
         end
 
         rule(:subgraph_title) do
@@ -166,7 +180,7 @@ module Sirena
           str('style').as(:style_keyword) >> space >>
             node_id.as(:style_target) >>
             (space >> style_property).repeat(1).as(:style_props) >>
-            line_end
+            statement_end
         end
 
         rule(:style_property) do
@@ -178,7 +192,7 @@ module Sirena
           str('classDef').as(:classdef_keyword) >> space >>
             identifier.as(:class_name) >>
             (space >> style_property).repeat(1).as(:class_props) >>
-            line_end
+            statement_end
         end
 
         # Class assignment: class nodeId className
@@ -186,7 +200,7 @@ module Sirena
           str('class').as(:class_keyword) >> space >>
             node_id.as(:class_target) >> space >>
             identifier.as(:class_name) >>
-            line_end
+            statement_end
         end
 
         # Click: click nodeId href (may not fully implement, just parse)
@@ -201,12 +215,12 @@ module Sirena
         rule(:node_edge_statement) do
           node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
-            line_end
+            statement_end
         end
 
         # Standalone node (just an identifier)
         rule(:standalone_node) do
-          node_id.as(:node_id) >> line_end
+          node_id.as(:node_id) >> statement_end
         end
 
         # Node with optional shape definition
