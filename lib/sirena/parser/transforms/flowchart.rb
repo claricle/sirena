@@ -196,13 +196,17 @@ module Sirena
               node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
             elsif stmt[:subgraph_keyword]
-              # Subgraph (acknowledge but don't fully implement for now)
-              # Process subgraph statements recursively
-              if stmt[:subgraph_statements]
-                sub_stmts = stmt[:subgraph_statements]
-                sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
-                process_statements(diagram, sub_stmts)
-              end
+              # The diagram model has no subgraph: no container, no title,
+              # no cluster in any renderer. Flattening the body dropped
+              # both and drew loose nodes where mermaid draws a cluster —
+              # main refused the source outright, so accepting it here
+              # would replace a refusal with a wrong picture.
+              #
+              # Guarded on the parsed marker, not the source text: a label
+              # or an id containing "subgraph" never reaches this branch.
+              raise Parser::ParseError,
+                    'Flowchart subgraphs are not supported by the ' \
+                    'diagram model.'
             elsif stmt[:style_keyword] || stmt[:classdef_keyword] ||
                   stmt[:class_keyword] || stmt[:click_keyword]
               # Styling directives (acknowledge but don't fully implement)
