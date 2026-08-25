@@ -130,6 +130,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "still ends at the newline" do
       expect(node_ids("graph TD\nA\nstyle A fill:#f9f\nB\n")).to eq(%w[A B])
     end
+
+    it "does not reach forward to a hash on the next line" do
+      expect(node_ids("graph TD\nA\nstyle A fill:red\nB[#x]\n")).to eq(%w[A B])
+    end
+
+    # A comma splits mermaid's declaration list and we model none of that,
+    # with or without a hash. mmdc draws node A for both of these; we refuse
+    # the line, exactly as main does. Pinned so the two paths cannot drift.
+    [
+      "style A fill:red,stroke:blue",
+      "style A fill:#f9f,stroke:blue"
+    ].each do |declaration|
+      it "refuses #{declaration.inspect}" do
+        expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
+      end
+    end
   end
 
   describe "click requires an action" do
@@ -466,17 +482,36 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids("graph TD\nA\nclick A call cb;B()\n")).to eq(%w[A])
     end
 
-    # mmdc takes any run of whitespace after `call`, newlines included.
-    # Allowing only spaces ended the click statement at the line break and
-    # read the callback as a node on the next line.
+    # mermaid stops caring about line structure inside a callback, so
+    # whitespace and comments are ignorable after `call` and again before
+    # the `(`. mmdc draws node A alone for every one of these; spaces alone
+    # left a stray `cb` node on the following line.
     {
       "a newline" => "graph TD\nA\nclick A call\ncb()\n",
       "a newline and a space" => "graph TD\nA\nclick A call\n cb()\n",
-      "a blank line" => "graph TD\nA\nclick A call\n\ncb()\n"
+      "a blank line" => "graph TD\nA\nclick A call\n\ncb()\n",
+      "a comment line" => "graph TD\nA\nclick A call\n%% c\ncb()\n",
+      "a trailing comment" => "graph TD\nA\nclick A call %% c\ncb()\n",
+      "a newline before the parens" => "graph TD\nA\nclick A call cb\n()\n",
+      "a blank line before the parens" =>
+        "graph TD\nA\nclick A call cb\n\n()\n",
+      "a comment before the parens" =>
+        "graph TD\nA\nclick A call cb\n%% c\n()\n",
+      "a trailing comment before the parens" =>
+        "graph TD\nA\nclick A call cb %% c\n()\n"
     }.each do |label, source|
       it "reaches across #{label}" do
         expect(node_ids(source)).to eq(%w[A])
       end
+    end
+
+    it "still stops the name at the end of its line" do
+      # mermaid keeps reading: mmdc draws A alone here, having swallowed
+      # the whole `B --> C` edge into the callback name. Following it there
+      # would let a callback eat statements we can still draw, so we refuse
+      # instead. This asserts what we do, not what mermaid does.
+      expect(renders?("graph TD\nA\nclick A call cb\nB --> C\nD()\n"))
+        .to be(false)
     end
 
     # Once `call` opens a callback the parens are compulsory. Falling back

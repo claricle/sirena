@@ -270,7 +270,7 @@ module Sirena
 
         # Only the decision after a `;` is strict. Text shaped like `name:`
         # continues the declaration list; anything else means the `;`
-        # terminated the statement, so `style A fill:#f9f;B` leaves B to be
+        # terminated the statement, so `style A fill:red;B` leaves B to be
         # parsed as a node instead of swallowing it.
         # A declaration key is a word, and only a word. Taking anything up
         # to a colon read `B-->|x:y|C` as another declaration and swallowed
@@ -328,15 +328,23 @@ module Sirena
         # tail accepted.
         rule(:callback_action) do
           str('call') >> callback_gap >> callback_name >>
-            lparen >> (rparen.absent? >> any).repeat >> rparen >>
+            callback_gap? >> lparen >>
+            (rparen.absent? >> any).repeat >> rparen >>
             (callback_gap >> quoted_run).maybe
         end
 
-        # Any run of whitespace, newlines included — mmdc renders `click A
-        # call` newline `cb()`. Spaces alone left a stray `cb` node behind on
-        # the following line.
-        rule(:callback_gap) { (space | newline).repeat(1) }
+        # mermaid stops caring about line structure inside a callback, so
+        # whitespace and comments are ignorable after `call` and again
+        # before the `(`. mmdc renders all four of `call cb()`,
+        # `call` nl `cb()`, `call cb` nl `()` and `call cb` nl `%% c` nl
+        # `()`. Spaces alone left a stray `cb` node on the following line.
+        rule(:callback_gap) { (space | newline | comment).repeat(1) }
+        rule(:callback_gap?) { callback_gap.maybe }
 
+        # The name still stops at the end of its line. mermaid keeps reading
+        # past it — `call cb` nl `B --> C` nl `D()` swallows the whole edge
+        # and draws neither B nor C — and following it there would let a
+        # callback eat statements we can still draw.
         rule(:callback_name) do
           (lparen.absent? >> line_end.absent? >> any).repeat(1)
         end
