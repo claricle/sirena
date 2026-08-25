@@ -231,11 +231,6 @@ module Sirena
         #   style A fill:red;B    -> nodes A and B  (the `;` ends the style)
         #   style A fill:#f9f;B   -> node A only    (the `;` is value text)
         #
-        # A `#` puts mermaid's lexer into a token that eats the `;` and keeps
-        # reading the line as style components. Deciding on the text after
-        # the `;` instead got the hash form backwards and drew a node B that
-        # neither mermaid nor main draws.
-        #
         # The plain branch is guarded rather than merely second, so a bad
         # hashed tail fails the statement instead of falling through and
         # drawing a node mermaid refuses.
@@ -260,11 +255,13 @@ module Sirena
         end
 
         # What may follow that one `;` is a style component, not a node and
-        # not an edge. mmdc renders `;B`, `;stroke:#333`, `;a b`, `;B-C` and
-        # `;B"C`, and refuses every one of `[ ] { } ( ) < > | ~ @`. Only the
-        # measured refusals are excluded, so nothing mermaid draws is lost.
+        # not an edge. mmdc renders `;B`, `;stroke:#333`, `;a b`, `;B-C`,
+        # `;B"C` and `;B/C`, and refuses every one of
+        # `[ ] { } ( ) < > | ~ @ = ^`. That is every printable ASCII
+        # character accounted for, so only measured refusals are excluded
+        # and nothing mermaid draws is lost.
         rule(:hashed_tail) do
-          (match['\\[\\]{}()<>|~@'].absent? >> declaration_char).repeat >>
+          (match['\\[\\]{}()<>|~@=^'].absent? >> declaration_char).repeat >>
             line_end.present?
         end
 
@@ -273,8 +270,9 @@ module Sirena
         end
 
         # Permissive, exactly as before: mermaid takes `style A red`,
-        # `style A fill:` and `style A fill :red`, and requiring `name:value`
-        # here rejected all three.
+        # `style A fill:` and `style A fill :red`, and requiring
+        # `name:value` here rejected all three. One character minimum
+        # though — mmdc refuses `style A` with nothing after it.
         #
         # Without a hash the `;` always ends the statement, so a second
         # declaration is left to be parsed as one. mermaid draws
@@ -313,6 +311,11 @@ module Sirena
         # line. An open-ended scan drew a node from the junk after a good
         # action: `click A "u" nope;B` and `click A "u");B` both left a
         # node B behind, and mmdc refuses both sources.
+        #
+        # Every gap between these tokens is ONE space or ONE tab. mermaid
+        # counts the characters: `click A href  "u"`, `"u"  "tip"`,
+        # `"u"  _blank` and `href "u"` with two tabs are all errors. Only
+        # inside a `call` is whitespace free-form.
         rule(:click_action) do
           callback_action | href_action | link_action | callback_name_action
         end
@@ -331,7 +334,7 @@ module Sirena
           call_opener >> callback_name >>
             callback_gap? >> lparen >>
             (rparen.absent? >> any).repeat >> rparen >>
-            (callback_gap >> quoted_run).maybe
+            (space >> quoted_run).maybe
         end
 
         # Once `call` has opened a callback the parens are compulsory: mmdc
@@ -359,9 +362,7 @@ module Sirena
         # `href` takes a quoted url, then at most a quoted tooltip and a
         # link target, in that order. mmdc refuses `href` on its own,
         # `href cb`, `href "u" nope` and a third quoted run.
-        rule(:href_action) do
-          str('href') >> space.repeat(1) >> quoted_run >> link_tail
-        end
+        rule(:href_action) { str('href') >> space >> quoted_run >> link_tail }
 
         # The same shape without the keyword: `click A "u" "tip" _blank`.
         rule(:link_action) { quoted_run >> link_tail }
@@ -369,8 +370,7 @@ module Sirena
         # A quoted tooltip then a link target, both optional and in that
         # order. mmdc refuses `"u" _blank "tip"` and a third quoted run.
         rule(:link_tail) do
-          (space.repeat(1) >> quoted_run).maybe >>
-            (space.repeat(1) >> link_target).maybe
+          (space >> quoted_run).maybe >> (space >> link_target).maybe
         end
 
         # A bare token is a callback name, and only a quoted tooltip may
@@ -378,7 +378,7 @@ module Sirena
         # `click A http://x`, and refuses `click A cb _blank` and
         # `click A my callback`.
         rule(:callback_name_action) do
-          bare_token >> (space.repeat(1) >> quoted_run).maybe
+          bare_token >> (space >> quoted_run).maybe
         end
 
         # No spaces, no quotes and no parens: `click A cb()` is an error in

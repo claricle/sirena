@@ -739,6 +739,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "style A fill:#f9f;B|C",
       "style A fill:#f9f;B~C",
       "style A fill:#f9f;B@C",
+      "style A fill:#f9f;B=C",
+      "style A fill:#f9f;B^C",
       "style A fill:#f9f;B-->C",
       "classDef x fill:#f9f;B;C"
     ].each do |declaration|
@@ -753,6 +755,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "style A fill:#f9f;",
       "style A fill:#f9f;a b",
       "style A fill:#f9f;B-C",
+      "style A fill:#f9f;B/C",
+      "style A fill:#f9f;B\tC",
       %(style A fill:#f9f;B"C),
       "style A fill:#f9f;stroke-width:2px",
       "style A fill:#f9f;stroke:#333",
@@ -788,7 +792,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "click A href _self",
       "click A href cb",
       %(click A href "u" nope),
-      %(click A href "u" "t" "x")
+      %(click A href "u" "t" "x"),
+      # mermaid counts the whitespace between these tokens: exactly one
+      # space or one tab. Two of either is an error, and `repeat(1)` let
+      # every one of these through — and once `;` became a separator they
+      # drew a node B out of a line mmdc refuses.
+      %(click A href  "u"),
+      %(click A href\t\t"u"),
+      %(click A "u"  "tip"),
+      %(click A "u"  _blank),
+      %(click A "u"\t\t_blank),
+      %(click A cb  "tip"),
+      %(click A call cb()  "tip"),
+      %(click A href  "u";B),
+      %(click A "u"  "tip";B)
     ].each do |statement|
       it "refuses #{statement.inspect}" do
         expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
@@ -807,11 +824,28 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A http://x "tip"),
       %(click A href "u"),
       %(click A href "u" "tip"),
-      %(click A href "u" _blank)
+      %(click A href "u" _blank),
+      # One tab is one gap, and mermaid takes it wherever a space goes.
+      %(click A href\t"u"),
+      %(click A "u"\t"tip"),
+      %(click A "u"\t_blank),
+      %(click A cb\t"tip"),
+      %(click A call cb()\t"tip")
     ].each do |statement|
       it "takes #{statement.inspect}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
       end
+    end
+
+    it "keeps a callback tooltip on the callback's line" do
+      # mmdc refuses a newline before the tooltip, where it takes one
+      # inside the parens. `callback_gap` reached across and swallowed the
+      # next line into the click; now that line stands on its own. We
+      # still accept the source, because a quoted run alone on a line is a
+      # node id here and on main alike.
+      source = %(graph TD\nA\nclick A call cb()\n"tip"\n)
+
+      expect(described_class.new.parse(source).nodes.size).to eq(2)
     end
 
     # A `;` still ends the statement after a complete action.
