@@ -6,8 +6,10 @@ require 'date'
 # range from the reference date, so an unpinned run produces different output
 # every day from identical source, which makes any diff meaningless.
 #
-# The SVGs under examples/*/generated/ are gitignored, so this does not dirty
-# git by itself — but the adoc files written by generate_docs ARE tracked.
+# The SVGs sit next to their .mmd sources and are tracked, because the gemspec
+# ships whatever `git ls-files` returns and they go out to every user. So this
+# task DOES dirty git, on purpose: regenerating is how a shipped example stays
+# honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 namespace :examples do
@@ -37,10 +39,6 @@ namespace :examples do
 
       puts "\n📊 Generating examples for #{diagram_type}..."
 
-      # Create generated/ directory
-      generated_dir = File.join(dir, 'generated')
-      FileUtils.mkdir_p(generated_dir)
-
       # Find all .mmd files
       mmd_files = Dir.glob(File.join(dir, '*.mmd'))
 
@@ -52,7 +50,7 @@ namespace :examples do
       mmd_files.sort.each do |mmd_file|
         basename = File.basename(mmd_file, '.mmd')
         yml_file = File.join(dir, "#{basename}.yml")
-        svg_file = File.join(generated_dir, "#{basename}.svg")
+        svg_file = File.join(dir, "#{basename}.svg")
 
         # Read source
         source = File.read(mmd_file)
@@ -95,15 +93,15 @@ namespace :examples do
 
     total_copied = 0
 
-    # Find all generated/ directories
-    Dir.glob(File.join(examples_dir, '*/generated')).sort.each do |generated_dir|
-      diagram_type = File.basename(File.dirname(generated_dir))
+    Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }.sort.each do |dir|
+      diagram_type = File.basename(dir)
       target_dir = File.join(docs_assets_dir, diagram_type)
+
+      svg_files = Dir.glob(File.join(dir, '*.svg'))
+      next if svg_files.empty?
 
       FileUtils.mkdir_p(target_dir)
 
-      # Copy all SVG files
-      svg_files = Dir.glob(File.join(generated_dir, '*.svg'))
       svg_files.each do |svg_file|
         FileUtils.cp(svg_file, target_dir)
         total_copied += 1
@@ -325,7 +323,7 @@ namespace :examples do
       examples.sort.each do |mmd_file|
         basename = File.basename(mmd_file, '.mmd')
         yml_file = File.join(dir, "#{basename}.yml")
-        svg_file = File.join(dir, 'generated', "#{basename}.svg")
+        svg_file = File.join(dir, "#{basename}.svg")
 
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
         title = metadata['title'] || basename
@@ -362,7 +360,7 @@ namespace :examples do
       Each diagram type has its own directory with:
       - `*.mmd` - Mermaid source files
       - `*.yml` - Metadata for each example
-      - `generated/` - Auto-generated SVG files (git-ignored)
+      - `*.svg` - Rendered output, regenerated in place and committed
 
       ## Usage
 
@@ -423,9 +421,6 @@ namespace :examples do
 
     # Create .gitignore
     gitignore_content = <<~GITIGNORE
-      # Ignore generated SVG files
-      */generated/
-
       # Ignore macOS files
       .DS_Store
 
@@ -455,7 +450,8 @@ namespace :examples do
     docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
     docs_examples_dir = File.expand_path('../../docs/_diagram_types/examples', __dir__)
 
-    # Clean generated/ directories
+    # Clean the stale generated/ directories older checkouts left behind.
+    # The shipped SVGs sit beside their sources now and are not touched.
     Dir.glob(File.join(examples_dir, '*/generated')).each do |dir|
       FileUtils.rm_rf(dir)
       puts "✓ Removed #{dir}"

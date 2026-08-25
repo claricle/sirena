@@ -1,6 +1,3 @@
-# Ignore generated SVG files
-*/generated/
-
 # Ignore macOS files
 .DS_Store
 

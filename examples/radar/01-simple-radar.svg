@@ -17,9 +17,9 @@
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="280.0" r="3.0"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="366.6025403784439" cy="330.0" r="3.0"/>
 <circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="106.79491924311225" cy="380.0" r="3.0"/>
-<text fill="#000000" x="280.0" y="50.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="middle">A</text>
-<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="auto">B</text>
-<text fill="#000000" x="80.81415712957909" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="hanging">C</text>
+<text fill="#000000" x="280.0" y="54.9" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">A</text>
+<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">B</text>
+<text fill="#000000" x="80.81415712957909" y="406.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">C</text>
 <circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
 <text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">mycurve</text>
 </svg>

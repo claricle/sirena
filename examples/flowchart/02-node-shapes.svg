@@ -6,28 +6,31 @@
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="edge-A_to_B">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 67.0 L 318.5 67.0" marker-end="url(#arrowhead)"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 67.0 L 318.5 67.0"/>
+<polygon fill="#000000" points="318.5,67.0 310.5,71.0 310.5,63.0"/>
 </g>
 <g id="edge-B_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 67.0 L 573.5 77.0" marker-end="url(#arrowhead)"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 67.0 L 573.5 77.0"/>
+<polygon fill="#000000" points="573.5,77.0 565.3494,80.6834 565.6629,72.6896"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 573.5 77.0 L 68.5 272.0" marker-end="url(#arrowhead)"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 573.5 77.0 L 68.5 272.0"/>
+<polygon fill="#000000" points="68.5,272.0 74.5221,265.3868 77.4038,272.8497"/>
 </g>
 <g id="node-A">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="37.0" height="34.0"/>
-  <text fill="#000000" x="68.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">A</text>
+  <text fill="#000000" x="68.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">A</text>
 </g>
 <g id="node-B">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="37.0" height="34.0" rx="17.0" ry="17.0"/>
-  <text fill="#000000" x="318.5" y="67.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">B</text>
+  <text fill="#000000" x="318.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">B</text>
 </g>
 <g id="node-C">
   <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="573.5,50 597.0,77.0 573.5,104.0 550,77.0"/>
-  <text fill="#000000" x="573.5" y="77.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">C</text>
+  <text fill="#000000" x="573.5" y="81.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">C</text>
 </g>
 <g id="node-D">
   <circle fill="#ffffff" stroke="#000000" stroke-width="2.0" cx="68.5" cy="272.0" r="18.5"/>
-  <text fill="#000000" x="68.5" y="272.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" dominant-baseline="middle">D</text>
+  <text fill="#000000" x="68.5" y="276.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
 </g>
 </svg>

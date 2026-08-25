@@ -1,5 +1,170 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="200" viewBox="0 0 400 200" version="1.2" xmlns="http://www.w3.org/2000/svg">
-  <rect x="50" y="50" width="300" height="100" fill="#f0f0f0" stroke="#000000" stroke-width="2"/>
-  <text x="200" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#000000">User Journey (parser needs fixes)</text>
+<svg
+ width="850.0"
+ height="1290.0"
+ viewBox="0 0 850.0 1290"
+ version="1.2"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<text fill="#000000" x="20.0" y="40.0" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Customer Support Interaction Journey</text>
+<text fill="#666666" x="20.0" y="76.0" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Discovery</text>
+<g id="task-task_0">
+  <rect fill="#feca57" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="156.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="128.0" y="74.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Visit help center</text>
+  <text fill="#000000" x="128.0" y="102.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">3</text>
+  <text fill="#333333" x="128.0" y="123.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
+</g>
+<g id="task-task_1">
+  <rect fill="#ff6b6b" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="172.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="386.0" y="74.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Search for solution</text>
+  <text fill="#000000" x="386.0" y="102.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">2</text>
+  <text fill="#333333" x="386.0" y="123.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
+</g>
+<g id="task-task_2">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="164.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="632.0" y="74.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Click support chat</text>
+  <text fill="#000000" x="632.0" y="102.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">4</text>
+  <text fill="#333333" x="632.0" y="123.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
+</g>
+<text fill="#666666" x="20.0" y="122.0" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Initial Contact</text>
+<g id="task-task_3">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="50.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="120.0" y="274.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Greet customer</text>
+  <text fill="#000000" x="120.0" y="302.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="120.0" y="323.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_4">
+  <rect fill="#feca57" stroke="#333333" stroke-width="2" x="300.0" y="250.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="370.0" y="274.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Describe issue</text>
+  <text fill="#000000" x="370.0" y="302.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">3</text>
+  <text fill="#333333" x="370.0" y="323.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_5">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="188.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="644.0" y="274.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent reviews account</text>
+  <text fill="#000000" x="644.0" y="302.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">4</text>
+  <text fill="#333333" x="644.0" y="323.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Agent, System</text>
+</g>
+<text fill="#666666" x="20.0" y="168.0" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Diagnosis</text>
+<g id="task-task_6">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="50.0" y="450.0" width="268.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="184.0" y="474.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent asks clarifying questions</text>
+  <text fill="#000000" x="184.0" y="502.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">4</text>
+  <text fill="#333333" x="184.0" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_7">
+  <rect fill="#feca57" stroke="#333333" stroke-width="2" x="300.0" y="450.0" width="220.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="410.0" y="474.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Customer provides details</text>
+  <text fill="#000000" x="410.0" y="502.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">3</text>
+  <text fill="#333333" x="410.0" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_8">
+  <rect fill="#ff6b6b" stroke="#333333" stroke-width="2" x="550.0" y="450.0" width="156.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="628.0" y="474.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent checks logs</text>
+  <text fill="#000000" x="628.0" y="502.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">2</text>
+  <text fill="#333333" x="628.0" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Agent, System</text>
+</g>
+<g id="task-task_9">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="50.0" y="650.0" width="236.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="168.0" y="674.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent identifies root cause</text>
+  <text fill="#000000" x="168.0" y="702.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="168.0" y="723.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Agent</text>
+</g>
+<text fill="#666666" x="20.0" y="214.0" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Resolution</text>
+<g id="task-task_10">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="300.0" y="650.0" width="204.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="402.0" y="674.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent explains solution</text>
+  <text fill="#000000" x="402.0" y="702.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="402.0" y="723.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_11">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="550.0" y="650.0" width="196.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="648.0" y="674.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Customer follows steps</text>
+  <text fill="#000000" x="648.0" y="702.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">4</text>
+  <text fill="#333333" x="648.0" y="723.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
+</g>
+<g id="task-task_12">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="50.0" y="850.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="120.0" y="874.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Issue resolved</text>
+  <text fill="#000000" x="120.0" y="902.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="120.0" y="923.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<text fill="#666666" x="20.0" y="260.0" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Follow-up</text>
+<g id="task-task_13">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="300.0" y="850.0" width="220.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="410.0" y="874.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent confirms resolution</text>
+  <text fill="#000000" x="410.0" y="902.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="410.0" y="923.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer, Agent</text>
+</g>
+<g id="task-task_14">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="550.0" y="850.0" width="220.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="660.0" y="874.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Customer rates experience</text>
+  <text fill="#000000" x="660.0" y="902.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="660.0" y="923.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
+</g>
+<g id="task-task_15">
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="50.0" y="1050.0" width="180.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="140.0" y="1074.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Agent documents case</text>
+  <text fill="#000000" x="140.0" y="1102.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">4</text>
+  <text fill="#333333" x="140.0" y="1123.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Agent, System</text>
+</g>
+<g id="arrow-flow_0">
+  <line stroke="#666666" stroke-width="2" x1="206.0" y1="90.0" x2="300.0" y2="90.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 300,90 L 291.33974596215563,95.0 M 300,90 L 291.33974596215563,85.0"/>
+</g>
+<g id="arrow-flow_1">
+  <line stroke="#666666" stroke-width="2" x1="472.0" y1="90.0" x2="550.0" y2="90.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 550,90 L 541.3397459621556,95.0 M 550,90 L 541.3397459621556,85.0"/>
+</g>
+<g id="arrow-flow_2">
+  <line stroke="#666666" stroke-width="2" x1="714.0" y1="90.0" x2="50.0" y2="290.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 50,290 L 56.85023375639584,282.7147891257195 M 50,290 L 59.73429456725148,292.2898710177602"/>
+</g>
+<g id="arrow-flow_3">
+  <line stroke="#666666" stroke-width="2" x1="190.0" y1="290.0" x2="300.0" y2="290.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 300,290 L 291.33974596215563,295.0 M 300,290 L 291.33974596215563,285.0"/>
+</g>
+<g id="arrow-flow_4">
+  <line stroke="#666666" stroke-width="2" x1="440.0" y1="290.0" x2="550.0" y2="290.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 550,290 L 541.3397459621556,295.0 M 550,290 L 541.3397459621556,285.0"/>
+</g>
+<g id="arrow-flow_5">
+  <line stroke="#666666" stroke-width="2" x1="738.0" y1="290.0" x2="50.0" y2="490.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 50,490 L 56.920294774351234,482.7813075812799 M 50,490 L 59.71171840389336,492.3838048669048"/>
+</g>
+<g id="arrow-flow_6">
+  <line stroke="#666666" stroke-width="2" x1="318.0" y1="490.0" x2="300.0" y2="490.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 300,490 L 308.66025403784437,485.0 M 300,490 L 308.66025403784437,495.0"/>
+</g>
+<g id="arrow-flow_7">
+  <line stroke="#666666" stroke-width="2" x1="520.0" y1="490.0" x2="550.0" y2="490.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 550,490 L 541.3397459621556,495.0 M 550,490 L 541.3397459621556,485.0"/>
+</g>
+<g id="arrow-flow_8">
+  <line stroke="#666666" stroke-width="2" x1="706.0" y1="490.0" x2="50.0" y2="690.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 50,690 L 56.82568560467737,682.6917843473184 M 50,690 L 59.74194321389601,692.2571093055556"/>
+</g>
+<g id="arrow-flow_9">
+  <line stroke="#666666" stroke-width="2" x1="286.0" y1="690.0" x2="300.0" y2="690.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 300,690 L 291.33974596215563,695.0 M 300,690 L 291.33974596215563,685.0"/>
+</g>
+<g id="arrow-flow_10">
+  <line stroke="#666666" stroke-width="2" x1="504.0" y1="690.0" x2="550.0" y2="690.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 550,690 L 541.3397459621556,695.0 M 550,690 L 541.3397459621556,685.0"/>
+</g>
+<g id="arrow-flow_11">
+  <line stroke="#666666" stroke-width="2" x1="746.0" y1="690.0" x2="50.0" y2="890.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 50,890 L 56.94252244157026,882.8026822948898 M 50,890 L 59.704321192518115,892.4137419481883"/>
+</g>
+<g id="arrow-flow_12">
+  <line stroke="#666666" stroke-width="2" x1="190.0" y1="890.0" x2="300.0" y2="890.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 300,890 L 291.33974596215563,895.0 M 300,890 L 291.33974596215563,885.0"/>
+</g>
+<g id="arrow-flow_13">
+  <line stroke="#666666" stroke-width="2" x1="520.0" y1="890.0" x2="550.0" y2="890.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 550,890 L 541.3397459621556,895.0 M 550,890 L 541.3397459621556,885.0"/>
+</g>
+<g id="arrow-flow_14">
+  <line stroke="#666666" stroke-width="2" x1="770.0" y1="890.0" x2="50.0" y2="1090.0"/>
+  <path fill="none" stroke="#666666" stroke-width="2" d="M 50,1090 L 57.0060905484776,1082.8645465997924 M 50,1090 L 59.68252918633855,1092.499725696092"/>
+</g>
 </svg>
