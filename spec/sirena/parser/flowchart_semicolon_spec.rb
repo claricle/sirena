@@ -141,6 +141,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a comment on the same line as a separator" do
+    # mmdc rejects the same-line form and takes the newline form. `space?`
+    # never crosses a newline, so one guard separates them.
+    ["graph TD;%% c;D", "graph TD\nA;;%% c;D", "graph TD\nA ;%% c;D"]
+      .each do |source|
+        it "rejects #{source.lines.last.chomp.inspect}" do
+          expect(renders?("#{source}\n")).to be(false)
+        end
+      end
+
+    it "still takes a comment on the next line" do
+      expect(renders?("graph TD\nA-->B;\n%% comment\n")).to be(true)
+    end
+  end
+
   describe "the separator rule itself" do
     # `statement_end` must never be repeated directly: its `line_end` arm
     # succeeds zero-width at EOF, so repeating it would spin forever. These

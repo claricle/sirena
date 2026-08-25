@@ -35,8 +35,12 @@ module Sirena
         #
         # Repeat only this rule, never `statement_end` — the `line_end` arm
         # succeeds zero-width at EOF, so repeating that would not terminate.
+        # A comment cannot open on the same line as the separator: mmdc
+        # rejects `graph TD;%% c`, while `;` then a newline then `%% c` is
+        # ordinary. `space?` never crosses a newline, so the guard only
+        # fires on the same-line form.
         rule(:separator) do
-          (semicolon >> space?).repeat(1)
+          (semicolon >> space?).repeat(1) >> str('%%').absent?
         end
 
         # Node statements tolerate a space before the separator, because the
