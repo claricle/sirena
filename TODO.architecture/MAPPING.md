@@ -11,7 +11,8 @@ destination: structural work first, measurement sized to what the work
 actually needs.
 
 Nothing in `TODO.foundation/` is deleted. Use this page to find where an
-item went.
+item went. **Every one of the 19 items appears below**, so a missing row
+is a bug in this page, not a silent drop.
 
 ## Still the reference — use them as written
 
@@ -23,21 +24,23 @@ These are unchanged and still correct. When their turn comes, read them.
 | `05` type detection | first task of `08-burndown.md` |
 | `06`, `07` corpus burndown | `08-burndown.md` |
 | `08` lint: 109 live offences | `08-burndown.md`, step 4 |
-| `11` docs truth | independent; can run any time |
-| `14` elkrb + layout parity | `08-burndown.md`, step 3 — adopted **in full**, including the 8%/15% bar and the whole metric contract. This is the agreed fidelity target |
+| `11` docs truth | starts any time — but it **cannot close before the scoreboard exists** (`TODO.foundation/11:5-8`), because its generated tables read it. So: start now, close at item 08 step 3a |
+| `14` elkrb + layout parity | `08-burndown.md`, step 3 — adopted **in full**, including the 8%/15% bar and the whole metric contract. This is the agreed fidelity target. **Note the knock-on:** 14 also owes `docs/emit-accept-survey.md`, and item 18 cannot start without it — scheduling 14 at step 3 puts that survey on item 18's critical path |
 | `15` docs site build | independent |
 | `17` release + versioning | independent |
 | `01` lutaml 0.8 migration | appears already landed — gemspec is `~> 0.8.0` as of commit 2702a09 |
+| `12` PlantUML phase 1 | unchanged, and out of this plan's scope. Item 06 keeps the detection seam ready for it; `TODO.foundation/18` gates its **Done**, not its start |
+| `16` PlantUML class spike | unchanged, and now load-bearing: it supplies the second notation's shapes that `TODO.foundation/18` designs the IR against |
 
 ## Same problem, smaller answer
 
 | Foundation item | Becomes | What changed |
 |---|---|---|
-| `02` corpus oracle + scoreboard | `01-safety-net.md` part B **now**, `08-burndown.md` step 3a **later** | split by time, not dropped. `corpus.json` answers "did I break something" for items 01-07. The hermetic toolchain pin and reference provenance are **required** once geometry parity work starts, and are scheduled at item 08 step 3a |
+| `02` corpus oracle + scoreboard | `01-safety-net.md` part B **now**, `08-burndown.md` step 3a **later** | split by time, not dropped, and **not relocated**. `scoreboard/corpus.json` is the scoreboard's first column, shipped early; it answers "did I break something" for items 01-07. The other columns, the floors and the CI diff arrive at item 08 step 3a, along with the hermetic toolchain pin and reference provenance, which geometry parity work requires |
 | `10` notation registry | `06-registry-as-data.md` | a data table and convention-based lookup, instead of a notation plugin system with external discovery. Same seam, no speculative API |
-| `18` typed IR | `04-typed-scene.md` | brought forward and scoped to Mermaid only. Deferring a *cross-notation* IR is right; having no contract at all is what costs on every corpus fix today |
+| `18` typed IR | **stays as written** — `04-typed-scene.md` does not replace it | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
 | `03` coverage floors | one line floor, one branch floor | staged timeline tied to other tracks' completion removed |
-| `19` CI topology | one workflow file | lane ownership protocol removed |
+| `19` CI topology | one workflow file | lane ownership protocol removed. **But 08 and 17 still depend on 19a** — 08 wants a rubocop lane, 17 needs the release workflow pinned off `metanorma/ci@main`. The one file owes both; see `DO-NOT-BUILD.md` |
 
 ## Moved later
 
@@ -70,12 +73,31 @@ plan.** Node identity, normalisation, the equations, overlap semantics,
 non-box types — geometry comparison really is that subtle, and it is
 adopted unchanged.
 
+**And the typed IR belongs in this foundation.** The owner ruled it on
+2026-08-13 (`TODO.foundation/18:3-8`), citing Issue #2. An earlier draft
+of this plan deferred it and cited item 18's old deferral in support —
+but item 18 had already withdrawn that argument as "our reasoning rather
+than the author's instruction". So the plan quoted a position that no
+longer existed.
+
+Two things follow, and both are corrections rather than choices:
+
+- Item 18 keeps its full scope and its own prerequisites (after 10,
+  after 14's `docs/emit-accept-survey.md`, after 16's class spike). It
+  is not folded into item 04.
+- Item 04 is a different boundary — geometry between layout and
+  renderer — and it still runs early and still stays Mermaid-shaped.
+  Nothing about the ruling slows it down.
+
+`00-overview.md` has the full version, including the scheduling
+consequence for item 14.
+
 ## What actually changed, in one paragraph
 
 The original plan front-loads measurement and defers structure. Because
-the structure is what makes each of the ~1,380 remaining corpus fixes
-expensive, that ordering pays the high per-fix cost across the largest
-block of work in the project. This plan front-loads the cheap structural
+the structure is what makes each of the 524 remaining oracle-valid
+corpus fixes expensive, that ordering pays the high per-fix cost across
+the largest block of work in the project. This plan front-loads the cheap structural
 work — six items, all mechanical, none changing rendered output except
 one escaping fix — and then runs the same burndown against a codebase
 with one documented contract instead of 24 undocumented ones.

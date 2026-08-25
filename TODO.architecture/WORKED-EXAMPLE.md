@@ -103,7 +103,7 @@ module Sirena
         attribute :sectors, Sector, collection: true
       end
 
-      def call(diagram)
+      def call(diagram, theme:)
         angle = -90.0
         sectors = diagram.slices.each_with_index.map do |slice, i|
           sweep = diagram.slice_angle(slice)
@@ -199,14 +199,17 @@ TYPES = {
 
 ## The pass-through case
 
-About ten types have a `Transform` that only copies fields.
-`Transform::InfoTransform` is 38 lines to move three values into a Hash.
+Two types have a `Transform` that only copies fields —
+`Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
+each to move three or four values into a Hash. `Transform::PieTransform`
+is a borderline third. Every other `Transform` computes geometry, so
+check before you delete.
 
 Those get **no Layout class at all**. Delete the file. The renderer takes
 `Diagram::Info` directly, and the engine's one line handles it:
 
 ```ruby
-scene = Layout.for(type)&.call(model) || model
+scene = Layout.for(type)&.call(model, theme: theme) || model
 ```
 
 **Rule: if a layout would only copy fields, do not write one.**

@@ -41,6 +41,15 @@ The one thing that matters for that: **detection lives inside
 second module and a line in the engine, instead of a second regex table
 in a file that already knows about Mermaid.
 
+**The boundary this sets is interim, and it has a named successor.**
+`TODO.foundation/10:25-36` carries the owner's 2026-08-13 ruling and is
+explicit about it: today each notation's transform shapes stay private
+to that notation; after `TODO.foundation/18` the typed IR is
+deliberately **shared**, and what stays private is each notation's parse
+output before it becomes IR. Write any boundary assertion so item 18
+updates it rather than deletes it, and **do not describe today's shapes
+as permanent** — that is the item's own wording.
+
 ## Steps
 
 1. One table, one row per type, in `lib/sirena/notation/mermaid.rb` —

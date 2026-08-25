@@ -19,7 +19,10 @@ Inside one class, a Hash is fine.
 
 A base class that declares `raise NotImplementedError` and has no spec
 walking every subclass is decoration. `Diagram::Base` declares two such
-methods; 9-10 of 24 types do not honor them, and nothing catches it.
+methods, and **10 of 24 types do not honor either one** — measured, not
+estimated: 10 have no working `valid?` and 10 have no `diagram_type`.
+Nothing catches it. `01-safety-net.md` has the two failure modes and the
+names.
 
 Every abstract contract gets a spec that iterates
 `DiagramRegistry.types` and asserts it. If that spec is annoying to
