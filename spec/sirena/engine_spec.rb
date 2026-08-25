@@ -84,6 +84,28 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    # A direction glyph may sit right against the keyword. Detection
+    # wanted whitespace there, so mmdc drew these and Sirena refused to
+    # name the type at all.
+    context 'with a flowchart header the direction touches' do
+      %w[> < ^].each do |glyph|
+        it "renders graph#{glyph}" do
+          expect(engine.render("graph#{glyph}\nA --- B\n")).to include('<svg')
+        end
+
+        it "renders flowchart#{glyph}" do
+          expect(engine.render("flowchart#{glyph}\nA --- B\n"))
+            .to include('<svg')
+        end
+      end
+
+      it 'still refuses a keyword glued to a word' do
+        expect { engine.render("graphTD\nA --- B\n") }.to raise_error(
+          Sirena::Engine::DiagramTypeError
+        )
+      end
+    end
+
     context 'with unknown diagram type' do
       let(:source) { "unknown\ntest" }
 
