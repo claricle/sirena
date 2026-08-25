@@ -40,6 +40,19 @@ module Sirena
           '==' => 'thick_arrow'
         }.freeze
 
+        # mermaid resolves the alias lexemes to a direction word before
+        # anything reads one, so `graph <` lays out exactly like `graph RL`.
+        # Measured against mmdc 11.12.0: `<` RL, `>` LR, `^` BT, `v` and
+        # `BR` TB. Keeping the raw lexeme sent the three glyphs down the
+        # default branch in the graph transform and drew them top-to-bottom.
+        DIRECTION_ALIASES = {
+          '<' => 'RL',
+          '>' => 'LR',
+          '^' => 'BT',
+          'v' => 'TB',
+          'BR' => 'TB'
+        }.freeze
+
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
 
@@ -173,7 +186,7 @@ module Sirena
           header = tree.first
           if header && header.is_a?(Hash) && header[:direction]
             dir_value = header[:direction][:dir_value] || header[:direction]
-            diagram.direction = dir_value.to_s if dir_value
+            diagram.direction = canonical_direction(dir_value.to_s) if dir_value
           end
 
           # Process statements (remaining elements)
@@ -182,6 +195,10 @@ module Sirena
           process_statements(diagram, statements)
 
           diagram
+        end
+
+        def self.canonical_direction(value)
+          DIRECTION_ALIASES.fetch(value, value)
         end
 
         def self.process_statements(diagram, statements)
