@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'parslet'
+require_relative '../base'
 require_relative '../../diagram/flowchart'
 
 module Sirena
@@ -200,6 +201,7 @@ module Sirena
         def self.canonical_direction(value)
           DIRECTION_ALIASES.fetch(value, value)
         end
+        private_class_method :canonical_direction
 
         def self.process_statements(diagram, statements)
           statements.each do |stmt|

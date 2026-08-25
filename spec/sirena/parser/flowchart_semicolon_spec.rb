@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "timeout"
 
 RSpec.describe Sirena::Parser::FlowchartParser do
   # The corpus cannot verify most of this. A naive version of this change —
@@ -178,6 +179,29 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       it "refuses #{declaration.inspect}" do
         expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
       end
+    end
+  end
+
+  # The guard belongs on every target that takes a node id, not just the
+  # ones a statement can start with. mmdc refuses `style end fill:red` and
+  # `class end foo`, and takes `click end "u"` — a click target is a real
+  # node id there, so that one stays ungated.
+  describe "a statement keyword is not a declaration target" do
+    ["style end fill:red", "class end foo", "style graph fill:red",
+     "class subgraph foo"].each do |declaration|
+      it "refuses #{declaration.inspect}" do
+        expect { described_class.new.parse("graph TD\nA\n#{declaration}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "still takes a click target that reads like one" do
+      expect(node_ids(%(graph TD\nA\nclick end "u"\n))).to eq(%w[A])
+    end
+
+    it "still takes a target that merely starts with a keyword" do
+      expect(node_ids("graph TD\nendpoint\nstyle endpoint fill:red\n"))
+        .to eq(%w[endpoint])
     end
   end
 
@@ -679,12 +703,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  describe "click before an unspaced separator" do
-    it "is a node, as mmdc renders it" do
-      expect(node_ids("graph TD;click;B\n")).to eq(%w[B click])
-    end
-  end
-
   describe "a comment on the same line as a separator" do
     # mmdc rejects the same-line form and takes the newline form. `space?`
     # never crosses a newline, so one guard separates them.
@@ -706,16 +724,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
   describe "the separator rule itself" do
     # `statement_end` must never be repeated directly: its `line_end` arm
-    # succeeds zero-width at EOF, so repeating it would spin forever. These
-    # two hang rather than fail if that is got wrong, which is why they are
-    # asserted at the parser rather than through the engine — a node-less
-    # flowchart is rejected downstream on main too, for unrelated reasons.
+    # succeeds zero-width at EOF, so repeating it would spin forever. Getting
+    # that wrong makes these two spin, not fail, so each one carries its own
+    # timeout — a hung suite is worse than a red one. They are asserted at
+    # the parser rather than through the engine because a node-less flowchart
+    # is rejected downstream on main too, for unrelated reasons.
     it "terminates on a header followed only by separators" do
-      expect { described_class.new.parse("graph TD;;;\n") }.not_to raise_error
+      expect { Timeout.timeout(5) { described_class.new.parse("graph TD;;;\n") } }
+        .not_to raise_error
     end
 
     it "terminates on separators at end of input" do
-      expect { described_class.new.parse("graph TD\nA-->B;;;") }
+      expect { Timeout.timeout(5) { described_class.new.parse("graph TD\nA-->B;;;") } }
         .not_to raise_error
     end
   end
@@ -726,6 +746,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   describe "the tail after a hashed declaration" do
     [
       "style A fill:#f9f;B;C",
+      # A trailing `;` is a second separator too. `line_end` swallows one,
+      # so a lookahead through it let these past the one-`;` rule.
+      "style A fill:#f9f;B;",
+      "style A fill:#f9f;B ;",
+      "classDef x fill:#f9f;B;",
       "style A fill:#f9f;;B",
       "style A fill:#f9f;B ;C",
       "style A fill:#f9f;stroke:#333;color:#fff",

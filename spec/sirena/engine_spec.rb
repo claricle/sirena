@@ -99,6 +99,16 @@ RSpec.describe Sirena::Engine do
         end
       end
 
+      it 'names the type for a bare keyword, as the grammar does' do
+        # mmdc renders `graph` on its own. Detection wanted a character
+        # after the keyword, so this never reached the parser at all. It
+        # still fails downstream, where an empty flowchart is refused on
+        # main too, but it fails as a flowchart rather than as no type.
+        expect { engine.render('graph') }.to raise_error(
+          Sirena::Engine::PipelineError
+        )
+      end
+
       it 'still refuses a keyword glued to a word' do
         expect { engine.render("graphTD\nA --- B\n") }.to raise_error(
           Sirena::Engine::DiagramTypeError
