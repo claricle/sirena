@@ -82,9 +82,11 @@ module Sirena
         Polygon.new.tap do |polygon|
           polygon.points = Polygon.build_points(corners(anchor))
           polygon.fill = color
-          polygon.fill_opacity = path.stroke_opacity unless Escaping.blank?(path.stroke_opacity)
-          polygon.opacity = path.opacity unless Escaping.blank?(path.opacity)
-          polygon.transform = path.transform unless Escaping.blank?(path.transform)
+          # The head is painted where the line's stroke would have been, so
+          # it inherits the line's opacity and sits in its coordinate space.
+          polygon.fill_opacity = presence(path.stroke_opacity)
+          polygon.opacity = presence(path.opacity)
+          polygon.transform = presence(path.transform)
         end
       end
 
@@ -96,13 +98,16 @@ module Sirena
         base_x = anchor.x - (anchor.dx * length)
         base_y = anchor.y - (anchor.dy * length)
 
-        [[number(anchor.x), number(anchor.y)],
-         [number(base_x - (anchor.dy * half)), number(base_y + (anchor.dx * half))],
-         [number(base_x + (anchor.dy * half)), number(base_y - (anchor.dx * half))]]
+        [[anchor.x, anchor.y],
+         [base_x - (anchor.dy * half), base_y + (anchor.dx * half)],
+         [base_x + (anchor.dy * half), base_y - (anchor.dx * half)]]
+          .map { |x, y| [Numbers.write(x), Numbers.write(y)] }
       end
 
-      def number(value)
-        Numbers.write(value)
+      # nil rather than lutaml's unset sentinel, which is not a value any
+      # attribute should be handed.
+      def presence(value)
+        value unless Escaping.blank?(value)
       end
 
       def stroke_width

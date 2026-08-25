@@ -29,6 +29,11 @@ module Sirena
       TOKEN = /([MmLlHhVvCcSsQqTtAaZz])|([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)/
       private_constant :TOKEN
 
+      # A move followed by more coordinates draws lines: only the first
+      # group of `M 1 2 3 4` is a move. Every other command simply repeats.
+      AFTER_FIRST = { 'M' => 'L', 'm' => 'l' }.freeze
+      private_constant :AFTER_FIRST
+
       # @param data [String, nil] the `d` attribute
       def initialize(data)
         @point = [0.0, 0.0]
@@ -64,26 +69,24 @@ module Sirena
       # repeating the letter while arguments remain. A bare `M` with four
       # numbers draws a line after the move, which is the SVG rule and the
       # reason this cannot just split on letters.
-      def each_command(data)
+      def each_command(data, &block)
         letter = nil
         numbers = []
         data.scan(TOKEN) do |command, number|
           if command
-            flush(letter, numbers) { |*pair| yield(*pair) }
+            flush(letter, numbers, &block)
             letter = command
             numbers = []
           else
             numbers << number.to_f
           end
         end
-        flush(letter, numbers) { |*pair| yield(*pair) }
+        flush(letter, numbers, &block)
       end
 
-      # A move followed by more coordinates draws lines: only the first
-      # group of `M 1 2 3 4` is a move. Every other command simply repeats.
-      AFTER_FIRST = { 'M' => 'L', 'm' => 'l' }.freeze
-      private_constant :AFTER_FIRST
-
+      # A trailing group with too few numbers is dropped: SVG renders path
+      # data up to the first error and abandons the rest, and an arrowhead
+      # placed off a half-read command would be worse than none.
       def flush(letter, numbers)
         return if letter.nil?
 
