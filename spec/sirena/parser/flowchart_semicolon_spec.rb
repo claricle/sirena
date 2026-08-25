@@ -176,9 +176,119 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "a declaration key outside ASCII" do
-    it "is a declaration, as mermaid reads it" do
-      # `\w` is ASCII-only in Ruby, so an accented key was a new rejection.
-      expect(node_ids("graph TD\nA\nstyle A fill:red;é: value\n")).to eq(%w[A])
+    it "is not a declaration, and mermaid refuses the line" do
+      # This example asserted the opposite and was wrong. mmdc 11.12.0
+      # rejects `é: value`, so treating it as a continuation accepted a
+      # source the oracle refuses.
+      expect { described_class.new.parse("graph TD\nA\nstyle A fill:red;é: value\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  # Reading the key as "anything up to a colon" made `|x:y|` look like a
+  # declaration, so the edge and both its nodes vanished.
+  describe "an edge label after a declaration" do
+    it "keeps the edge and both its nodes" do
+      source = "graph TD;A;style A fill:red;B-->|x:y|C\n"
+
+      expect(node_ids(source)).to eq(%w[A B C])
+    end
+
+    it "keeps the label itself" do
+      # The pipes are still in the label, here and on main. mmdc's label is
+      # `x:y`; stripping them is an edge-label fix, not a separator one, so
+      # this asserts what we do rather than pretending it is right.
+      source = "graph TD;A;style A fill:red;B-->|x:y|C\n"
+      diagram = described_class.new.parse(source)
+
+      expect(diagram.edges.map(&:label)).to eq(["|x:y|"])
+    end
+  end
+
+  # The direction shares the keyword's line and owns the rest of it.
+  describe "the header line" do
+    {
+      "a separator touching the direction" => "graph TD;A\n",
+      "a newline after the direction" => "graph TD\nA\n",
+      "the keyword alone" => "graph\nA\n"
+    }.each do |label, source|
+      it "takes #{label}" do
+        expect { described_class.new.parse(source) }.not_to raise_error
+      end
+    end
+
+    {
+      "a separator standing off the direction" => "graph TD ;A\n",
+      "a separator with no direction" => "graph ;A\n",
+      "a word that is not a direction" => "graph X;A\n",
+      "a direction with a letter stuck to it" => "graph TDx\nA-->B\n",
+      "a direction with a digit stuck to it" => "graph TD2\nA-->B\n"
+    }.each do |label, source|
+      it "refuses #{label}" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "leaves a direction on the next line as a node" do
+      # mmdc reads this as a diagram with nodes TD and A.
+      expect(node_ids("graph\nTD;A\n")).to eq(%w[A TD])
+    end
+  end
+
+  # mermaid's full direction set. Reading an alias as a node left a stray
+  # `BR` or `v` in the diagram.
+  describe "direction aliases" do
+    %w[TD TB BT BR LR RL < > ^ v].each do |direction|
+      it "takes #{direction} without making it a node" do
+        expect(node_ids("graph #{direction}\nA-->B\n")).to eq(%w[A B])
+      end
+    end
+  end
+
+  # These are keywords wherever they appear, and the boundary is a word
+  # boundary: `style[x]` and `_blank-->Z` slipped through a space-only test.
+  describe "words that are never node ids" do
+    %w[_blank _self _parent _top].each do |word|
+      it "refuses #{word} as a node" do
+        expect { described_class.new.parse("graph TD\n#{word}-->Z\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "refuses a keyword carrying a shape" do
+      expect { described_class.new.parse("graph TD\nstyle[x]\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "still takes a word that merely starts with one" do
+      expect(node_ids("graph TD\n_blanket-->Z\n")).to eq(%w[Z _blanket])
+    end
+  end
+
+  # The callback name runs to its opening paren, so a semicolon inside it
+  # is name text rather than a separator.
+  describe "a call action" do
+    {
+      "two spaces after call" => "graph TD\nA\nclick A call  cb()\n",
+      "a namespaced name" => "graph TD\nA\nclick A call ns.cb()\n",
+      "a semicolon in the name" => "graph TD\nA\nclick A call cb;B()\n"
+    }.each do |label, source|
+      it "takes #{label}" do
+        expect { described_class.new.parse(source) }.not_to raise_error
+      end
+    end
+
+    it "does not leave a node behind a semicolon in the name" do
+      # Splitting on the `;` invented a node called B.
+      expect(node_ids("graph TD\nA\nclick A call cb;B()\n")).to eq(%w[A])
+    end
+  end
+
+  describe "a semicolon after a subgraph's end" do
+    it "may stand off it" do
+      # mmdc renders `end ;B` and this rejected it outright.
+      expect(node_ids("graph TD\nsubgraph s\nA\nend ;B\n")).to eq(%w[A B])
     end
   end
 
