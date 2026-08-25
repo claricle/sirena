@@ -65,8 +65,8 @@ module Sirena
       # @return [void]
       def render_connections(layout, svg)
         # Get branch colors for connections
-        branch_colors = layout[:branches].each_with_object({}) do |b, h|
-          h[b[:name]] = b[:color]
+        branch_colors = layout[:branches].to_h do |b|
+          [b[:name], b[:color]]
         end
 
         layout[:connections].each do |connection|
@@ -186,8 +186,8 @@ module Sirena
       # @return [void]
       def render_commits(layout, svg)
         # Get branch colors
-        branch_colors = layout[:branches].each_with_object({}) do |b, h|
-          h[b[:name]] = b[:color]
+        branch_colors = layout[:branches].to_h do |b|
+          [b[:name], b[:color]]
         end
 
         layout[:commits].each do |commit|

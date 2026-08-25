@@ -67,27 +67,27 @@ RSpec.describe Sirena::Renderer::XYChart do
 
       it "includes title" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         title_text = texts.find { |t| t.content == "Sales Revenue" }
         expect(title_text).not_to be_nil
       end
 
       it "includes axis lines" do
         svg = renderer.render(layout)
-        lines = svg.children.select { |e| e.is_a?(Sirena::Svg::Line) }
+        lines = svg.children.grep(Sirena::Svg::Line)
         # Grid lines + X-axis + Y-axis
         expect(lines.length).to be >= 2
       end
 
       it "includes line chart" do
         svg = renderer.render(layout)
-        polylines = svg.children.select { |e| e.is_a?(Sirena::Svg::Polyline) }
+        polylines = svg.children.grep(Sirena::Svg::Polyline)
         expect(polylines.length).to eq(1)
       end
 
       it "includes data point markers" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         expect(circles.length).to eq(3)
       end
     end
@@ -136,7 +136,7 @@ RSpec.describe Sirena::Renderer::XYChart do
 
       it "renders bars" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         # Bars + potentially legend boxes
         expect(rects.length).to be >= 2
       end
@@ -195,20 +195,20 @@ RSpec.describe Sirena::Renderer::XYChart do
 
       it "renders multiple datasets" do
         svg = renderer.render(layout)
-        polylines = svg.children.select { |e| e.is_a?(Sirena::Svg::Polyline) }
+        polylines = svg.children.grep(Sirena::Svg::Polyline)
         expect(polylines.length).to eq(2)
       end
 
       it "applies different colors to different datasets" do
         svg = renderer.render(layout)
-        polylines = svg.children.select { |e| e.is_a?(Sirena::Svg::Polyline) }
+        polylines = svg.children.grep(Sirena::Svg::Polyline)
         colors = polylines.map(&:stroke).uniq
         expect(colors.length).to eq(2)
       end
 
       it "includes legend" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         legend_texts = texts.select { |t| t.content == "Series A" || t.content == "Series B" }
         expect(legend_texts.length).to eq(2)
       end

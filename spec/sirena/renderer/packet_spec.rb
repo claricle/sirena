@@ -54,27 +54,27 @@ RSpec.describe Sirena::Renderer::Packet do
 
       it "includes title" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         title_texts = texts.select { |t| t.content == "Hello world" }
         expect(title_texts.length).to eq(1)
       end
 
       it "includes field rectangles" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         expect(rects.length).to be >= 1
       end
 
       it "includes field labels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         field_texts = texts.select { |t| t.content == "hello" }
         expect(field_texts.length).to eq(1)
       end
 
       it "includes grid lines" do
         svg = renderer.render(layout)
-        lines = svg.children.select { |e| e.is_a?(Sirena::Svg::Line) }
+        lines = svg.children.grep(Sirena::Svg::Line)
         # Should have both vertical and horizontal grid lines
         expect(lines.length).to be > 0
       end
@@ -137,13 +137,13 @@ RSpec.describe Sirena::Renderer::Packet do
 
       it "renders all fields" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         expect(rects.length).to be >= 3
       end
 
       it "includes all field labels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         expect(texts.any? { |t| t.content == "Source Port" }).to be true
         expect(texts.any? { |t| t.content == "Destination Port" }).to be true
         expect(texts.any? { |t| t.content == "Sequence Number" }).to be true
@@ -195,13 +195,13 @@ RSpec.describe Sirena::Renderer::Packet do
 
       it "renders fields in different rows" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         expect(rects.length).to be >= 2
       end
 
       it "renders bit markers for all rows" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         # Should have bit markers for bits 0-63 (2 rows of 32 bits)
         bit_markers = texts.select { |t| t.content.match?(/^\d+$/) }
         expect(bit_markers.length).to eq(64)
@@ -299,13 +299,13 @@ RSpec.describe Sirena::Renderer::Packet do
 
       it "renders all field segments" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         expect(rects.length).to be >= 3
       end
 
       it "includes labels for all segments" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         long_field_texts = texts.select { |t| t.content == "Long Field" }
         expect(long_field_texts.length).to eq(2)
       end

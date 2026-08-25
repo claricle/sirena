@@ -194,8 +194,8 @@ module Sirena
       # @return [Array<Hash>] connections with from/to commits and type
       def build_connections(positioned_commits, commits_by_id)
         connections = []
-        commit_positions = positioned_commits.each_with_object({}) do |c, h|
-          h[c[:id]] = c
+        commit_positions = positioned_commits.to_h do |c|
+          [c[:id], c]
         end
 
         positioned_commits.each do |commit|

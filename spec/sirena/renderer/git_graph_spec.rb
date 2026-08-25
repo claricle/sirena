@@ -71,19 +71,19 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "includes commit circles" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         expect(circles.length).to eq(2)
       end
 
       it "includes connection lines" do
         svg = renderer.render(layout)
-        lines = svg.children.select { |e| e.is_a?(Sirena::Svg::Line) }
+        lines = svg.children.grep(Sirena::Svg::Line)
         expect(lines.length).to be >= 1
       end
 
       it "includes branch labels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         expect(texts.length).to be >= 1
       end
 
@@ -151,13 +151,13 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "renders multiple branches" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         expect(circles.length).to eq(2)
       end
 
       it "renders branch labels for all branches" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         text_contents = texts.map(&:content).compact
         expect(text_contents).to include("main")
         expect(text_contents).to include("develop")
@@ -220,7 +220,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "renders merge connections with dashed lines" do
         svg = renderer.render(layout)
-        paths = svg.children.select { |e| e.is_a?(Sirena::Svg::Path) }
+        paths = svg.children.grep(Sirena::Svg::Path)
         expect(paths.length).to be >= 1
         expect(paths.first.stroke_dasharray).to eq("5,3")
       end
@@ -256,7 +256,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "renders tag labels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         text_contents = texts.map(&:content).compact
         expect(text_contents).to include("v1.0.0")
       end
@@ -306,7 +306,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "applies different colors for commit types" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         expect(circles.length).to eq(2)
         # HIGHLIGHT and REVERSE should have different fills
         fills = circles.map(&:fill).uniq
@@ -371,7 +371,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
 
       it "renders cherry-pick connections with dotted lines" do
         svg = renderer.render(layout)
-        paths = svg.children.select { |e| e.is_a?(Sirena::Svg::Path) }
+        paths = svg.children.grep(Sirena::Svg::Path)
         expect(paths.length).to be >= 1
         expect(paths.first.stroke_dasharray).to eq("2,4")
       end

@@ -45,9 +45,7 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
     it 'includes task boxes in SVG' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
       expect(groups.length).to be > 0
       expect(groups.first.id).to include('task-')
@@ -56,13 +54,9 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
     it 'renders task boxes as rectangles' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      rects = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Rect)
-      end
+      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
       expect(rects).not_to be_empty
     end
@@ -74,9 +68,7 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.include?('task-')
       end
 
-      rects = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Rect)
-      end
+      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
       expect(rects.first.fill).to eq('#48dbfb')
     end
@@ -84,13 +76,9 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
     it 'renders task content as text elements' do
       svg = renderer.render(graph)
 
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group)
-      end
+      groups = svg.children.grep(Sirena::Svg::Group)
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
     end
@@ -98,9 +86,7 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
     it 'renders title as text element' do
       svg = renderer.render(graph)
 
-      texts = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = svg.children.grep(Sirena::Svg::Text)
 
       title_text = texts.find { |t| t.content == 'My Journey' }
       expect(title_text).not_to be_nil
@@ -109,9 +95,7 @@ RSpec.describe Sirena::Renderer::UserJourneyRenderer do
     it 'renders section headers as text elements' do
       svg = renderer.render(graph)
 
-      texts = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = svg.children.grep(Sirena::Svg::Text)
 
       section_text = texts.find { |t| t.content == 'Shopping' }
       expect(section_text).not_to be_nil

@@ -164,7 +164,7 @@ module Sirena
 
         # Class name (identifier or dotted identifier)
         rule(:class_name) do
-          (match['a-zA-Z_'] >> match['a-zA-Z0-9_.'].repeat)
+          match['a-zA-Z_'] >> match['a-zA-Z0-9_.'].repeat
         end
 
         # Stereotype: <<interface>>, <<abstract>>, etc.
@@ -235,10 +235,8 @@ module Sirena
 
         # Type expression (handles generics like List~String~)
         rule(:type_expression) do
-          (
-            match['a-zA-Z_'] >> match['a-zA-Z0-9_<>'].repeat >>
+          match['a-zA-Z_'] >> match['a-zA-Z0-9_<>'].repeat >>
             (tilde >> (tilde.absent? >> any).repeat >> tilde).maybe
-          )
         end
 
         # Visibility modifiers

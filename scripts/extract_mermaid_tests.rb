@@ -2,6 +2,10 @@
 # Comprehensive test extraction from mermaid-js repository
 # Extracts ALL Mermaid diagram test cases for sirena validation
 
+# A task file and its helpers, not library code. The cop wants one
+# class per file, which is right for lib/ and wrong for a script whose
+# helpers exist only to serve it.
+# rubocop:disable Style/OneClassPerFile
 require 'fileutils'
 require 'json'
 
@@ -491,3 +495,4 @@ end
 # Run extraction
 extractor = MermaidTestExtractor.new
 extractor.extract_all
+# rubocop:enable Style/OneClassPerFile

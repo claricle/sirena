@@ -80,9 +80,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
       end
 
-      rects = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Rect)
-      end
+      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
       expect(rects).not_to be_empty
       expect(rects.length).to be >= 2
@@ -95,9 +93,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
       end
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
       entity_names = texts.map(&:content)
@@ -112,9 +108,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
       end
 
-      texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       attr_texts = texts.map(&:content).grep(/PK|FK/)
       expect(attr_texts).not_to be_empty
@@ -128,9 +122,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
       end
 
-      lines = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Line)
-      end
+      lines = groups.flat_map(&:children).grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
     end
@@ -153,9 +145,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('rel-')
       end
 
-      lines = rel_groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Line)
-      end
+      lines = rel_groups.flat_map(&:children).grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
     end
@@ -183,9 +173,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('rel-')
       end
 
-      texts = rel_groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text)
-      end
+      texts = rel_groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       label_texts = texts.map(&:content)
       expect(label_texts).to include('places')

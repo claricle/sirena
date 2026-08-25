@@ -90,7 +90,7 @@ module Sirena
         values = axis_data[:values]
 
         # Check if all values are numeric
-        if values.all? { |v| v.is_a?(Numeric) }
+        if values.all?(Numeric)
           axis.type = :numeric
           axis.values = values
         else

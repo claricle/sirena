@@ -25,7 +25,7 @@ RSpec.describe 'Reference SVG Fixtures' do
 
       # Verify basic SVG structure
       expect(actual_svg).to match(/<svg[^>]*>/)
-      expect(actual_svg).to match(/<\/svg>/)
+      expect(actual_svg).to include('</svg>')
 
       # Verify presence of graphical elements
       expect(actual_svg).to match(/<g[^>]*>|<rect[^>]*>|<path[^>]*>/)
