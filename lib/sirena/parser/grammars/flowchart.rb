@@ -218,7 +218,7 @@ module Sirena
         # terminated the statement, so `style A fill:#f9f;B` leaves B to be
         # parsed as a node instead of swallowing it.
         rule(:continues_list) do
-          (match['\s:;,'].absent? >> any).repeat(1) >> space? >> str(':')
+          match['\w-'].repeat(1) >> space? >> str(':')
         end
 
         # ClassDef: classDef className fill:#f9f
@@ -250,8 +250,15 @@ module Sirena
         # action while an unquoted one ends the statement, which is what
         # mermaid does with `click A "http://x";B`.
         rule(:click_action) do
-          (quoted_run | (unspaced_separator.absent? >> line_end.absent? >>
-                         semicolon.absent? >> any)).repeat(1)
+          (quoted_run | paren_run |
+            (unspaced_separator.absent? >> line_end.absent? >>
+             semicolon.absent? >> any)).repeat(1)
+        end
+
+        # `click A call cb(foo;bar)` — the semicolon belongs to the callback
+        # argument, not to the statement.
+        rule(:paren_run) do
+          lparen >> (rparen.absent? >> any).repeat >> rparen
         end
 
         # The action must not run up to a spaced separator and leave it for
@@ -267,8 +274,16 @@ module Sirena
         # directive fell through to the node rules: `click ;B` produced
         # nodes `click` and `B`, and mmdc rejects the whole source.
         rule(:reserved_keyword) do
+          spaced_keyword | separable_keyword
+        end
+
+        # mmdc renders `graph TD;click;B` as nodes `click` and `B`, so click
+        # is only a directive when an action can follow it.
+        rule(:spaced_keyword) { str('click') >> space.present? }
+
+        rule(:separable_keyword) do
           (str('classDef') | str('linkStyle') | str('subgraph') |
-            str('click') | str('style') | str('class')) >>
+            str('style') | str('class')) >>
             (space | semicolon | line_end).present?
         end
 
@@ -466,8 +481,12 @@ module Sirena
         end
 
         # Line terminator
+        # The optional semicolon here may not be followed by a comment on
+        # the same line, matching the separator rule and mmdc: `A;%% c` is
+        # rejected while `A;` then a `%% c` line is ordinary.
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          (semicolon >> space? >> str('%%').absent?).maybe >>
+            space? >> (comment.maybe >> newline | eof)
         end
       end
     end
