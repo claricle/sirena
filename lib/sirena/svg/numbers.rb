@@ -26,6 +26,7 @@ module Sirena
       # 71.89999999999999 as often as on 71.9. Four decimals is finer than
       # any diagram needs and short enough to read in a diff.
       PRECISION = 4
+      private_constant :LEADING, :PRECISION
 
       module_function
 

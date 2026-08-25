@@ -50,6 +50,7 @@ module Sirena
       # request but no size of its own. Every renderer sets one; this keeps
       # a hand-built element from shifting by an arbitrary amount.
       DEFAULT_FONT_SIZE = 16.0
+      private_constant :BASELINE_SHIFTS, :DEFAULT_FONT_SIZE
 
       # Written out rather than declared with .writes_attributes, because
       # `y` is not emitted from the `y` reader — see #baseline_y.

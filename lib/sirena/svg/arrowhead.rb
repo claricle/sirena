@@ -33,6 +33,7 @@ module Sirena
       # Arrowheads have no outline of their own, so they take the line's
       # colour. Black matches the stroke a path paints when it names none.
       DEFAULT_COLOR = '#000000'
+      private_constant :LENGTH, :HALF_WIDTH, :DEFAULT_STROKE_WIDTH, :DEFAULT_COLOR
 
       # @param path [Svg::Path] the path to draw arrowheads for
       # @return [Array<Svg::Polygon>] one per marker the path asked for

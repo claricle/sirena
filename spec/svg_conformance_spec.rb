@@ -18,9 +18,10 @@ require 'timeout'
 #   * The mermaid corpus is the wide net: 1,997 sources across every diagram
 #     type, and the only place an attribute a single renderer emits shows up.
 #
-# The corpus pass costs about a minute, which is most of this suite's runtime.
-# It earns it: each of the four conformance defects this gate was written for
-# came out of a renderer no unit spec covered.
+# The corpus pass renders all 1,997 sources and validates the 667 that produce
+# a document, in about five seconds. Worth every one of them: each of the four
+# conformance defects this gate was written for came out of a renderer no unit
+# spec covered.
 CONFORMANCE_ROOT = File.expand_path('..', __dir__)
 CONFORMANCE_SHIPPED_SVGS = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '**', '*.svg')).freeze
 CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'fixtures', '*', 'input.mmd')).freeze

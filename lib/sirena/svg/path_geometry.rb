@@ -40,41 +40,21 @@ module Sirena
 
       # @return [Anchor, nil] the first point, pointing along the first segment
       def origin
-        @origin && anchor(*@origin.reverse)
+        return nil unless @origin
+
+        start, reference = @origin
+        heading(start, start, reference)
       end
 
       # @return [Anchor, nil] the last point, pointing along the last segment
       def terminus
-        @terminus && anchor(*@terminus)
+        return nil unless @terminus
+
+        reference, finish = @terminus
+        heading(finish, reference, finish)
       end
 
       private
-
-      # A straight segment: its tangent is the segment itself, so the
-      # reference on both ends is the far point.
-      #
-      # @return [Array] outgoing reference, incoming reference, end point
-      def self.straight(from, to)
-        [to, from, to]
-      end
-      private_class_method :straight
-
-      # Each handler answers [outgoing reference, incoming reference, end
-      # point] for the segment it draws, given the current point and its own
-      # arguments. `s` and `t` use the near control point for both, which is
-      # the tangent on the side that matters and an approximation on the
-      # other; neither command appears in Sirena's own output.
-      HANDLERS = {
-        'l' => ->(from, a) { straight(from, [a[0], a[1]]) },
-        'h' => ->(from, a) { straight(from, [a[0], from[1]]) },
-        'v' => ->(from, a) { straight(from, [from[0], a[0]]) },
-        'c' => ->(_from, a) { [[a[0], a[1]], [a[2], a[3]], [a[4], a[5]]] },
-        's' => ->(_from, a) { [[a[0], a[1]], [a[0], a[1]], [a[2], a[3]]] },
-        'q' => ->(_from, a) { [[a[0], a[1]], [a[0], a[1]], [a[2], a[3]]] },
-        't' => ->(from, a) { straight(from, [a[0], a[1]]) },
-        'a' => ->(from, a) { straight(from, [a[5], a[6]]) }
-      }.freeze
-      private_constant :HANDLERS
 
       def walk(data)
         each_command(data) { |letter, args| apply(letter, args) }
@@ -123,7 +103,32 @@ module Sirena
         return move(args) if lower == 'm'
         return close if lower == 'z'
 
-        segment(*HANDLERS.fetch(lower).call(@point, args))
+        segment(*references(lower, args))
+      end
+
+      # The segment a command draws, as [outgoing reference, incoming
+      # reference, end point]. A straight segment is its own tangent, so both
+      # references are the far end of it; a curve takes the control point
+      # nearest each end.
+      #
+      # `s` and `t` carry a control point implied by the previous command
+      # rather than one of their own, so they use the explicit control point
+      # on both sides. Neither appears in Sirena's own output, and an arc's
+      # chord stands in for its tangents the same way.
+      def references(lower, args)
+        case lower
+        when 'l' then straight([args[0], args[1]])
+        when 'h' then straight([args[0], @point[1]])
+        when 'v' then straight([@point[0], args[0]])
+        when 'c' then [[args[0], args[1]], [args[2], args[3]], [args[4], args[5]]]
+        when 's', 'q' then [[args[0], args[1]], [args[0], args[1]], [args[2], args[3]]]
+        when 't' then straight([args[0], args[1]])
+        when 'a' then straight([args[5], args[6]])
+        end
+      end
+
+      def straight(destination)
+        [destination, @point, destination]
       end
 
       # Relative commands offset from the current point. On an arc only the
@@ -154,15 +159,24 @@ module Sirena
         @point = end_point
       end
 
-      # @return [Anchor, nil] nil when the two points coincide, which leaves
-      #   no direction to point an arrowhead along
-      def anchor(from, to)
+      # Where the anchor sits is not where its direction comes from: the last
+      # point heads AWAY from the control point behind it, while the first
+      # heads TOWARDS the one in front. Both are the direction of travel, so
+      # both are read from the same pair, and the point is passed separately
+      # rather than assumed to be one end of it.
+      #
+      # @param at [Array] the point the anchor sits on
+      # @param from [Array] the tail of the direction of travel
+      # @param to [Array] the head of the direction of travel
+      # @return [Anchor, nil] nil when the two coincide, which leaves no
+      #   direction to point an arrowhead along
+      def heading(at, from, to)
         dx = to[0] - from[0]
         dy = to[1] - from[1]
         length = Math.sqrt((dx * dx) + (dy * dy))
         return nil if length.zero?
 
-        Anchor.new(to[0], to[1], dx / length, dy / length)
+        Anchor.new(at[0], at[1], dx / length, dy / length)
       end
     end
   end
