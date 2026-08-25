@@ -805,7 +805,31 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A cb  "tip"),
       %(click A call cb()  "tip"),
       %(click A href  "u";B),
-      %(click A "u"  "tip";B)
+      %(click A "u"  "tip";B),
+      # An empty quoted run is never a url and never a tooltip. mmdc
+      # takes `click A " "` and refuses every one of these.
+      %(click A ""),
+      %(click A "" "tip"),
+      %(click A "u" ""),
+      %(click A href ""),
+      %(click A href "u" ""),
+      %(click A call cb() ""),
+      %(click A cb ""),
+      # A bare callback name stops where mermaid keeps the character for
+      # a shape or an edge. Measured one character at a time: these ten
+      # are refused and every other printable ASCII one is not.
+      "click A cb)x",
+      "click A cb<x",
+      "click A cb=x",
+      "click A cb>x",
+      "click A cb@x",
+      "click A cb[x",
+      "click A cb]x",
+      "click A cb^x",
+      "click A cb{x",
+      "click A cb|x",
+      "click A cb}x",
+      "click A cb~x"
     ].each do |statement|
       it "refuses #{statement.inspect}" do
         expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
@@ -830,7 +854,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A "u"\t"tip"),
       %(click A "u"\t_blank),
       %(click A cb\t"tip"),
-      %(click A call cb()\t"tip")
+      %(click A call cb()\t"tip"),
+      # A quote only opens a url when it comes first. mmdc draws
+      # `click A cb"x`, and a bare token carries the rest of the
+      # punctuation it does not keep for shapes.
+      %(click A cb"x),
+      %(click A cb"x "tip"),
+      %(click A " "),
+      "click A cb,x",
+      "click A cb!x",
+      "click A cb#x",
+      "click A cb.x",
+      "click A cb/x",
+      "click A cb:x",
+      "click A cb?x"
     ].each do |statement|
       it "takes #{statement.inspect}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
@@ -851,6 +888,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # A `;` still ends the statement after a complete action.
     {
       "a bare callback" => "click A cb;B",
+      "a quote inside a bare callback" => %(click A cb"x;B),
       "a quoted url" => %(click A "u";B),
       "a link target" => %(click A "u" _blank;B)
     }.each do |label, statement|

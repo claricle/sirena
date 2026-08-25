@@ -255,15 +255,18 @@ module Sirena
         end
 
         # What may follow that one `;` is a style component, not a node and
-        # not an edge. mmdc renders `;B`, `;stroke:#333`, `;a b`, `;B-C`,
-        # `;B"C` and `;B/C`, and refuses every one of
-        # `[ ] { } ( ) < > | ~ @ = ^`. That is every printable ASCII
-        # character accounted for, so only measured refusals are excluded
-        # and nothing mermaid draws is lost.
+        # not an edge, so it stops at a structural character.
         rule(:hashed_tail) do
-          (match['\\[\\]{}()<>|~@=^'].absent? >> declaration_char).repeat >>
+          (structural_char.absent? >> declaration_char).repeat >>
             line_end.present?
         end
+
+        # The characters mermaid keeps for shapes and edges. They are
+        # refused wherever it expects a bare word — in a style declaration
+        # after a `#` and in a callback name alike. Measured one character
+        # at a time against mmdc: every other printable ASCII character is
+        # fine in both places.
+        rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
 
         rule(:declaration_char) do
           line_end.absent? >> semicolon.absent? >> comma.absent? >> any
@@ -381,19 +384,27 @@ module Sirena
           bare_token >> (space >> quoted_run).maybe
         end
 
-        # No spaces, no quotes and no parens: `click A cb()` is an error in
-        # mermaid, and a `;` ends the token so `click A http://x;B` draws
-        # both nodes. A keyword is not a callback name either — mmdc
-        # refuses `click A href`, `click A end` and `click A _blank`, and
-        # takes `click A callback` and `click A clickByFlow`.
+        # A bare token runs to the first space, `;` or structural
+        # character, so `click A cb()` is an error and
+        # `click A http://x;B` draws both nodes. A quote only opens a url
+        # when it comes first — mmdc draws `click A cb"x`. A keyword is
+        # not a callback name either: mmdc refuses `click A href`,
+        # `click A end` and `click A _blank`, and takes `click A callback`
+        # and `click A clickByFlow`.
         rule(:bare_token) do
-          reserved_keyword.absent? >>
-            (space.absent? >> line_end.absent? >> semicolon.absent? >>
-              lparen.absent? >> str('"').absent? >> any).repeat(1)
+          reserved_keyword.absent? >> str('"').absent? >>
+            token_char >> token_char.repeat
         end
 
+        rule(:token_char) do
+          space.absent? >> line_end.absent? >> semicolon.absent? >>
+            structural_char.absent? >> any
+        end
+
+        # Never empty. mmdc refuses `click A ""` and every empty tooltip,
+        # and takes `click A " "`.
         rule(:quoted_run) do
-          str('"') >> (str('"').absent? >> any).repeat >> str('"')
+          str('"') >> (str('"').absent? >> any).repeat(1) >> str('"')
         end
 
         # A statement keyword is not a node id. Without this a malformed
