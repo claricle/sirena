@@ -235,54 +235,53 @@ module Sirena
         # reading the line as style components. Deciding on the text after
         # the `;` instead got the hash form backwards and drew a node B that
         # neither mermaid nor main draws.
+        #
+        # The plain branch is guarded rather than merely second, so a bad
+        # hashed tail fails the statement instead of falling through and
+        # drawing a node mermaid refuses.
         rule(:style_property_list) do
-          hashed_property_list | separated_property_list
+          hashed_property_list | hashed_head.absent? >> style_property
+        end
+
+        # After a `#` the declaration carries one `;` and no more. mmdc
+        # takes `fill:#f9f;stroke:#333` and `fill:#f9f;B`, and refuses
+        # `fill:#f9f;B;C` and `fill:#f9f;;B`, so the tail has to end at the
+        # line rather than hand a second `;` back as a separator.
+        rule(:hashed_property_list) do
+          hashed_head >> declaration_char.repeat >>
+            (semicolon >> space? >> hashed_tail | semicolon.absent?)
         end
 
         # The `#` has to arrive before the first `;` for the swallow to
         # start: mmdc reads `style A fill:red;stroke:#333` as a style plus a
         # node, because the `;` comes first.
-        rule(:hashed_property_list) do
-          (line_end.absent? >> semicolon.absent? >> comma.absent? >>
-            hash.absent? >> any).repeat >>
-            hash >>
-            (line_end.absent? >> comma.absent? >> any).repeat
+        rule(:hashed_head) do
+          (hash.absent? >> declaration_char).repeat >> hash
         end
 
-        # Without a `#`, a `;` ends the statement unless another `key:value`
-        # follows. That lookahead only survives because node ids here take no
-        # colon: mermaid draws `style A fill:red;stroke:blue` as a style plus
-        # a node called `stroke:blue`, and we cannot spell that id, so we
-        # swallow it exactly as main does rather than fail the whole line.
-        rule(:separated_property_list) do
-          style_property >>
-            (semicolon >> space? >> continues_list.present? >> style_property)
-              .repeat
+        # What may follow that one `;` is a style component, not a node and
+        # not an edge. mmdc renders `;B`, `;stroke:#333`, `;a b`, `;B-C` and
+        # `;B"C`, and refuses every one of `[ ] { } ( ) < > | ~ @`. Only the
+        # measured refusals are excluded, so nothing mermaid draws is lost.
+        rule(:hashed_tail) do
+          (match['\\[\\]{}()<>|~@'].absent? >> declaration_char).repeat >>
+            line_end.present?
+        end
+
+        rule(:declaration_char) do
+          line_end.absent? >> semicolon.absent? >> comma.absent? >> any
         end
 
         # Permissive, exactly as before: mermaid takes `style A red`,
         # `style A fill:` and `style A fill :red`, and requiring `name:value`
         # here rejected all three.
-        rule(:style_property) do
-          (line_end.absent? >> semicolon.absent? >> comma.absent? >> any)
-            .repeat(1)
-        end
-
-        # Only the decision after a `;` is strict. Text shaped like `name:`
-        # continues the declaration list; anything else means the `;`
-        # terminated the statement, so `style A fill:red;B` leaves B to be
-        # parsed as a node instead of swallowing it.
-        # A declaration key is a word, and only a word. Taking anything up
-        # to a colon read `B-->|x:y|C` as another declaration and swallowed
-        # both nodes; mermaid also refuses `é: value`, so the ASCII set is
-        # the oracle's, not a shortcut.
         #
-        # `:::` is an inline class, never a declaration colon — without
-        # that guard `style A fill:red;B:::foo` silently dropped node B.
-        rule(:continues_list) do
-          match['a-zA-Z0-9_-'].repeat(1) >>
-            space? >> str(':') >> str(':').absent?
-        end
+        # Without a hash the `;` always ends the statement, so a second
+        # declaration is left to be parsed as one. mermaid draws
+        # `style A fill:red;stroke:blue` as a style plus a node called
+        # `stroke:blue`; a node id here takes no colon, so we refuse the
+        # line rather than draw a diagram one node short.
+        rule(:style_property) { declaration_char.repeat(1) }
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
@@ -308,12 +307,14 @@ module Sirena
             statement_end
         end
 
-        # An action is required — mmdc rejects a bare `click A`. The scan is
-        # quote-aware so a `;` inside a URL or tooltip stays part of the
-        # action while an unquoted one ends the statement, which is what
-        # mermaid does with `click A "http://x";B`.
+        # An action is required — mmdc rejects a bare `click A`. mermaid
+        # takes exactly four shapes here, and anything else is an error, so
+        # the action is spelled out rather than scanned to the end of the
+        # line. An open-ended scan drew a node from the junk after a good
+        # action: `click A "u" nope;B` and `click A "u");B` both left a
+        # node B behind, and mmdc refuses both sources.
         rule(:click_action) do
-          callback_action | non_callback_action
+          callback_action | href_action | link_action | callback_name_action
         end
 
         # `click A call cb(foo;bar)` — the semicolon belongs to the callback
@@ -327,11 +328,17 @@ module Sirena
         # `call cb() _blank` and `call cb() nope`, which the old open-ended
         # tail accepted.
         rule(:callback_action) do
-          str('call') >> callback_gap >> callback_name >>
+          call_opener >> callback_name >>
             callback_gap? >> lparen >>
             (rparen.absent? >> any).repeat >> rparen >>
             (callback_gap >> quoted_run).maybe
         end
+
+        # Once `call` has opened a callback the parens are compulsory: mmdc
+        # exits 1 on `click A call cb`. Nothing else can take that line —
+        # `bare_token` refuses a reserved word, and `call` before a space
+        # is one.
+        rule(:call_opener) { str('call') >> callback_gap }
 
         # mermaid stops caring about line structure inside a callback, so
         # whitespace and comments are ignorable after `call` and again
@@ -349,26 +356,41 @@ module Sirena
           (lparen.absent? >> line_end.absent? >> any).repeat(1)
         end
 
-        # Once `call` has opened a callback the parens are compulsory: mmdc
-        # exits 1 on `click A call cb`. Backtracking into a plain action
-        # accepted it, and swallowed the next line with it.
-        rule(:non_callback_action) do
-          (str('call') >> callback_gap).absent? >> plain_action
+        # `href` takes a quoted url, then at most a quoted tooltip and a
+        # link target, in that order. mmdc refuses `href` on its own,
+        # `href cb`, `href "u" nope` and a third quoted run.
+        rule(:href_action) do
+          str('href') >> space.repeat(1) >> quoted_run >> link_tail
         end
 
-        # A bare paren is not action text — mmdc refuses `click A cb()` and
-        # `click A "u" (1)`. Inside quotes it is ordinary, so `quoted_run`
-        # still carries `"http://x(y)"`.
-        rule(:plain_action) do
-          (quoted_run |
-            (unspaced_separator.absent? >> line_end.absent? >>
-             semicolon.absent? >> lparen.absent? >> any)).repeat(1)
+        # The same shape without the keyword: `click A "u" "tip" _blank`.
+        rule(:link_action) { quoted_run >> link_tail }
+
+        # A quoted tooltip then a link target, both optional and in that
+        # order. mmdc refuses `"u" _blank "tip"` and a third quoted run.
+        rule(:link_tail) do
+          (space.repeat(1) >> quoted_run).maybe >>
+            (space.repeat(1) >> link_target).maybe
         end
 
-        # The action must not run up to a spaced separator and leave it for
-        # the terminator, which turned `click A "u" ;B` into a click plus a
-        # node B. mmdc rejects that source outright.
-        rule(:unspaced_separator) { space >> semicolon }
+        # A bare token is a callback name, and only a quoted tooltip may
+        # follow it. mmdc draws `click A clickByFlow "Add a div"` and
+        # `click A http://x`, and refuses `click A cb _blank` and
+        # `click A my callback`.
+        rule(:callback_name_action) do
+          bare_token >> (space.repeat(1) >> quoted_run).maybe
+        end
+
+        # No spaces, no quotes and no parens: `click A cb()` is an error in
+        # mermaid, and a `;` ends the token so `click A http://x;B` draws
+        # both nodes. A keyword is not a callback name either — mmdc
+        # refuses `click A href`, `click A end` and `click A _blank`, and
+        # takes `click A callback` and `click A clickByFlow`.
+        rule(:bare_token) do
+          reserved_keyword.absent? >>
+            (space.absent? >> line_end.absent? >> semicolon.absent? >>
+              lparen.absent? >> str('"').absent? >> any).repeat(1)
+        end
 
         rule(:quoted_run) do
           str('"') >> (str('"').absent? >> any).repeat >> str('"')
@@ -398,19 +420,26 @@ module Sirena
 
         # The boundary is a word boundary, not a space or a separator:
         # mmdc refuses `style[x]` and `_blank-->Z`, which the narrower test
-        # let through. `_self`, `_blank`, `_parent` and `_top` are mermaid's
-        # link targets and are reserved the same way.
+        # let through.
         #
         # Longest first — Parslet does not backtrack into an alternative
         # that already matched, so `class` ahead of `classDef` would take
         # five characters and then fail the boundary.
         rule(:separable_keyword) do
           (str('interpolate') | str('flowchart') | str('linkStyle') |
-            str('subgraph') | str('classDef') | str('_parent') |
-            str('_blank') | str('_self') | str('style') | str('graph') |
-            str('class') | str('_top') | str('end')) >>
-            match['a-zA-Z0-9_'].absent?
+            str('subgraph') | str('classDef') | str('style') |
+            str('graph') | str('class') | str('end')) >>
+            word_boundary | link_target
         end
+
+        # mermaid's link targets. They close a click action and they are
+        # never node ids, so both places name them here.
+        rule(:link_target) do
+          (str('_parent') | str('_blank') | str('_self') | str('_top')) >>
+            word_boundary
+        end
+
+        rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
 
         # Node with optional shape and edges
         rule(:node_edge_statement) do
