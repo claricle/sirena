@@ -1,0 +1,179 @@
+# 04 — A typed Scene between layout and renderer
+
+**Goal:** no bare Hash crosses a layer boundary. Every renderer's input
+is a class you can open and read.
+**Size:** ~21 PRs, one per diagram type, plus one small PR for the base
+class. Each type PR is small — Scene definition, layout rewrite,
+renderer rewrite.
+**Prerequisite:** item 03.
+
+This is the item that makes every later fix cheaper. It is also the
+longest. Do it one type at a time and it is mechanical.
+
+Read `WORKED-EXAMPLE.md` before starting. It shows pie converted in
+full; every type follows that shape.
+
+## Why
+
+After item 03, `Layout::X` still emits a plain Hash and `Renderer::X`
+digs through it: `node.dig(:metadata, :shape) || 'rect'`
+(`renderer/flowchart.rb:61`). There are **24 private hash shapes and no
+documentation of any of them**. To change what a layout emits, you have
+to read the renderer to find out what it expects.
+
+## The design
+
+The result class lives **in the same file** as the layout that produces
+it, so one file answers both "how is this type laid out" and "what does
+that layout look like":
+
+```ruby
+# lib/sirena/layout/pie.rb
+module Sirena
+  module Layout
+    class Pie
+      class Scene < Layout::Scene        # width, height inherited
+        attribute :sectors, Sector, collection: true
+        attribute :title, :string
+      end
+
+      def call(diagram) = Scene.new(...)
+    end
+  end
+end
+```
+
+`Layout::Scene` is the shared base and carries only `width` and
+`height` — enough for `Renderer::Base` to own document creation, which
+item 05 uses to delete nine copies of it.
+
+**Types with no geometry get no Layout class at all.** About ten of
+today's `Transform` classes only copy fields into a hash
+(`Transform::InfoTransform` is 38 lines to copy three). Delete the file;
+the renderer takes the `Diagram` model directly. The engine handles both
+in one line:
+
+```ruby
+scene = Layout.for(type)&.call(model) || model
+```
+
+**Rule for the future: if a layout would only copy fields, do not write
+one.**
+
+## Two kinds of Scene
+
+**Graph types must use an ELK-shaped Scene.** Geometry parity is the
+agreed bar (`00-overview.md`), which means elkrb computes positions for
+graph types in item 08. If their Scenes mirror what ELK already emits,
+that integration is a swap; if you invent a different shape now, it is a
+redesign of every one of them later.
+
+For `flowchart`, `class_diagram`, `state_diagram`, `er_diagram`, `c4`,
+`requirement`, `architecture`, `block` and `mindmap`, shape the Scene
+like ELK's own output:
+
+```ruby
+class Node < Lutaml::Model::Serializable
+  attribute :id, :string
+  attribute :x, :float
+  attribute :y, :float
+  attribute :width, :float
+  attribute :height, :float
+  attribute :labels, Label, collection: true
+  attribute :shape, :string            # type-specific extras are fine
+  attribute :children, Node, collection: true   # nesting, where the type has it
+end
+
+class Edge < Lutaml::Model::Serializable
+  attribute :id, :string
+  attribute :source, :string
+  attribute :target, :string
+  attribute :sections, Section, collection: true   # start/end/bend points
+  attribute :labels, Label, collection: true
+end
+```
+
+`Section` holds `start_point`, `end_point` and `bend_points` — that is
+ELK's edge routing structure, and it is also what a renderer needs to
+draw a polyline. Add type-specific attributes freely (`shape`,
+`arrow_type`, `cardinality`); do not rename or restructure the geometry
+fields.
+
+**Everything else gets a Scene shaped by its own diagram.** A pie has
+sectors, a gantt has bars on a date axis, an xy chart has axes and
+series. Do not force those into nodes and edges — see the Do-not list.
+
+## Scene classes are lutaml, with one restriction
+
+Scenes use `Lutaml::Model::Serializable` and `attribute` declarations,
+matching the Diagram layer.
+
+**Never add an `xml do` block to a Scene class.** Scenes are internal
+geometry; they are never read from or written to XML. That block is
+exactly what went wrong in the Svg layer — three declarations of every
+attribute, two of them dead (item 02).
+
+## Steps
+
+1. Add `lib/sirena/layout/scene.rb`: `Layout::Scene` with `width` and
+   `height`. One small PR on its own.
+2. Convert types in this order — geometry-heavy first, because they
+   prove the design while you still have room to change it; trivial ones
+   last, because most of them get deleted rather than converted:
+
+   `flowchart`, `class_diagram`, `sequence`, `state_diagram`,
+   `er_diagram`, `mindmap`, `xy_chart`, `git_graph`, `gantt`,
+   `timeline`, `kanban`, `quadrant`, `radar`, `sankey`, `block`,
+   `architecture`, `c4`, `requirement`, `packet`, `treemap`,
+   `user_journey`
+
+3. Change the layout signature to `call(diagram, theme:)` — **layouts
+   need the theme.** Every layout today hardcodes
+   `DEFAULT_FONT_SIZE = 14` while renderers draw at
+   `theme.typography.font_size_normal`. The built-in `high_contrast`
+   theme sets 16.0, so today its text overflows every box it is sized
+   into. Sizing is a layout concern and it depends on font metrics; see
+   `LAYERS.md`.
+4. For each type, one PR:
+   - define the Scene from what the renderer actually reads — that *is*
+     the contract, already written down, just in the wrong place
+   - move every coordinate and angle calculation out of the renderer and
+     into the layout
+   - replace the hardcoded font size with the theme's
+   - rewrite the renderer to read named attributes
+   - the layout returns a new Scene and never mutates the diagram
+   - `rake corpus[<type>]` must show the same pass count
+5. For each pass-through type, delete the layout class and register the
+   type without one.
+6. Extend `spec/contract_spec.rb`: where a layout exists it returns a
+   `Layout::Scene`; where it does not, the renderer accepts the
+   `Diagram` model.
+
+## Done when
+
+- [ ] no renderer indexes a Hash (`[:symbol]`, `.dig`) on its input
+- [ ] no renderer performs arithmetic on coordinates or angles
+- [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
+      returns nothing
+- [ ] rendering one diagram under `default` and `high_contrast` gives
+      boxes sized to their own theme's text
+- [ ] every pass-through layout class is deleted (expect about 10)
+- [ ] `rake corpus:check` shows no regression across the whole item
+
+## Do not
+
+- **Do not design one scene format for all 24 types.** Graph types share
+  the ELK shape above because elkrb will populate it. Non-graph types get
+  a Scene shaped by their own diagram. Forcing a pie into nodes and edges
+  recreates the untyped Hash with extra steps.
+- **Do not build a cross-notation IR.** These Scenes are Mermaid-shaped
+  and deliberately so. When PlantUML lands it gets its own; only then is
+  there evidence for anything shared. See `DO-NOT-BUILD.md`.
+- Do not convert two types in one PR.
+- Do not fix rendering bugs you notice. Write them down — they are item
+  08's work, and they belong in a PR whose corpus delta is expected.
+
+## Files
+
+`lib/sirena/layout/scene.rb` (new), `lib/sirena/layout/*.rb`,
+`lib/sirena/renderer/*.rb`, `spec/contract_spec.rb`.
