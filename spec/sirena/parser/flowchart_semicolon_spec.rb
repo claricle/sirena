@@ -89,6 +89,36 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "declarations mermaid accepts loosely" do
+    # Requiring `name:value` here rejected five forms main accepted and mmdc
+    # renders. Only the decision after a `;` is strict now.
+    [
+      "style A  fill:red",
+      "style A fill :red",
+      "style A fill:",
+      "style A red",
+      "classDef x red"
+    ].each do |declaration|
+      it "still accepts #{declaration.inspect}" do
+        expect(renders?("graph TD\nA\n#{declaration}\n")).to be(true)
+      end
+    end
+  end
+
+  describe "a statement keyword is not a node" do
+    # A malformed directive used to fall through to the node rules, so
+    # `click ;B` produced nodes `click` and `B`. mmdc rejects all of these.
+    ["click ;B", "style ;B", "class ;B"].each do |source|
+      it "rejects #{source.inspect}" do
+        expect(renders?("graph TD\nA\nB\n#{source}\n")).to be(false)
+      end
+    end
+
+    it "leaves a node whose name merely starts with a keyword alone" do
+      expect(renders?("graph TD\nendpoint-->classy\n")).to be(true)
+    end
+  end
+
   describe "a space before the separator" do
     # mmdc takes it on a node statement and refuses it on the header or a
     # class assignment, so one shared separator over-accepted two forms.
@@ -102,6 +132,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     it "is refused on a class assignment" do
       expect(renders?("graph TD\nA\nB\nclass A foo ;B\n")).to be(false)
+    end
+
+    it "is refused between a click action and the separator" do
+      # The action ran up to the space and left ` ;B` for the terminator,
+      # which produced a node B. mmdc rejects the source outright.
+      expect(renders?(%(graph TD\nA\nclick A "u" ;B\n))).to be(false)
     end
   end
 
