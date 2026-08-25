@@ -196,20 +196,25 @@ module Sirena
         # into the value — mermaid renders B, and scanning to the end of the
         # line dropped it silently.
         rule(:style_property_list) do
-          style_property >> (semicolon >> space? >> style_property).repeat
+          style_property >>
+            (semicolon >> space? >> continues_list.present? >> style_property)
+              .repeat
         end
 
+        # Permissive, exactly as before: mermaid takes `style A red`,
+        # `style A fill:` and `style A fill :red`, and requiring `name:value`
+        # here rejected all three.
         rule(:style_property) do
-          style_property_name >> str(':') >> style_property_value
-        end
-
-        rule(:style_property_name) do
-          (match['\s:;,'].absent? >> any).repeat(1)
-        end
-
-        rule(:style_property_value) do
           (line_end.absent? >> semicolon.absent? >> comma.absent? >> any)
             .repeat(1)
+        end
+
+        # Only the decision after a `;` is strict. Text shaped like `name:`
+        # continues the declaration list; anything else means the `;`
+        # terminated the statement, so `style A fill:#f9f;B` leaves B to be
+        # parsed as a node instead of swallowing it.
+        rule(:continues_list) do
+          (match['\s:;,'].absent? >> any).repeat(1) >> space? >> str(':')
         end
 
         # ClassDef: classDef className fill:#f9f
@@ -241,24 +246,40 @@ module Sirena
         # action while an unquoted one ends the statement, which is what
         # mermaid does with `click A "http://x";B`.
         rule(:click_action) do
-          (quoted_run | (line_end.absent? >> semicolon.absent? >> any))
-            .repeat(1)
+          (quoted_run | (unspaced_separator.absent? >> line_end.absent? >>
+                         semicolon.absent? >> any)).repeat(1)
         end
+
+        # The action must not run up to a spaced separator and leave it for
+        # the terminator, which turned `click A "u" ;B` into a click plus a
+        # node B. mmdc rejects that source outright.
+        rule(:unspaced_separator) { space >> semicolon }
 
         rule(:quoted_run) do
           str('"') >> (str('"').absent? >> any).repeat >> str('"')
         end
 
+        # A statement keyword is not a node id. Without this a malformed
+        # directive fell through to the node rules: `click ;B` produced
+        # nodes `click` and `B`, and mmdc rejects the whole source.
+        rule(:reserved_keyword) do
+          (str('classDef') | str('linkStyle') | str('subgraph') |
+            str('click') | str('style') | str('class')) >>
+            (space | semicolon | line_end).present?
+        end
+
         # Node with optional shape and edges
         rule(:node_edge_statement) do
-          node_with_shape.as(:node) >>
+          reserved_keyword.absent? >>
+            node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
             loose_statement_end
         end
 
         # Standalone node (just an identifier)
         rule(:standalone_node) do
-          node_id.as(:node_id) >> loose_statement_end
+          reserved_keyword.absent? >> node_id.as(:node_id) >>
+            loose_statement_end
         end
 
         # Node with optional shape definition
