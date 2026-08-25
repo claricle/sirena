@@ -59,7 +59,6 @@ module Sirena
 
         # Node ID
         rule(node_id: simple(:id)) { id.to_s }
-        rule(node_id: { string: simple(:s) }) { s.to_s }
 
         # Shape with label
         rule(

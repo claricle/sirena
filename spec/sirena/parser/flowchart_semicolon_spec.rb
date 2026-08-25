@@ -793,6 +793,50 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # A hashed tail and a bare callback name both stop where mermaid keeps
+  # the text for itself, and some of what it keeps is longer than one
+  # character. Every character in `--`, `-.` and `:::` is ordinary alone,
+  # so checking one at a time waves all three through in both places.
+  describe "structural tokens longer than one character" do
+    [
+      "style A fill:#f9f;B---C",
+      "style A fill:#f9f;B--C",
+      "style A fill:#f9f;B-.-C",
+      "style A fill:#f9f;B-.C",
+      "style A fill:#f9f;B:::foo",
+      "style A fill:#f9f;B--",
+      "style A fill:#f9f;B-.",
+      "style A fill:#f9f;B:::",
+      "click A cb--x",
+      "click A cb-.x",
+      "click A cb:::x",
+      "click A cb--",
+      "click A cb-.",
+      "click A cb:::"
+    ].each do |statement|
+      it "refuses #{statement.inspect}" do
+        expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
+      end
+    end
+
+    # The same characters standing alone stay ordinary text. Without these
+    # the guard could widen to every `-`, `.` and `:` unnoticed.
+    [
+      "style A fill:#f9f;B.C",
+      "style A fill:#f9f;B:C",
+      "style A fill:#f9f;B::C",
+      "style A fill:#f9f;B-",
+      "click A cb-x",
+      "click A cb.x",
+      "click A cb:x",
+      "click A cb::x"
+    ].each do |statement|
+      it "takes #{statement.inspect}" do
+        expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
+      end
+    end
+  end
+
   # mermaid takes four click actions and nothing else. Scanning to the end
   # of the line accepted the junk after a good one and, once `;` became a
   # separator, drew a node out of it.

@@ -74,9 +74,11 @@ module Sirena
         rule(:statement_end) { separator | line_end }
         rule(:loose_statement_end) { loose_separator | line_end }
 
-        # mermaid's full set, aliases included: `BR` is another down, and
-        # the four arrow glyphs stand in for the words. Reading them as
-        # nodes put a stray `BR` and `v` in the diagram.
+        # mermaid's full set, aliases included: `BR` and `v` are another
+        # down, and three arrow glyphs stand in for the words. `v` is a
+        # word here, not a glyph — it needs the same gap `TD` does, while
+        # `<`, `>` and `^` do not. Reading any of them as a node put a
+        # stray `BR` or `v` in the diagram.
         rule(:direction) { (word_direction | glyph_direction).as(:dir_value) }
 
         rule(:word_direction) do
@@ -238,7 +240,7 @@ module Sirena
           hashed_property_list | hashed_head.absent? >> style_property
         end
 
-        # After a `#` the declaration carries one `;` and no more. mmdc
+        # After a `#` the declaration carries at most one `;`. mmdc
         # takes `fill:#f9f;stroke:#333` and `fill:#f9f;B`, and refuses
         # `fill:#f9f;B;C` and `fill:#f9f;;B`, so the tail has to end at the
         # line rather than hand a second `;` back as a separator.
@@ -255,16 +257,27 @@ module Sirena
         end
 
         # What may follow that one `;` is a style component, not a node and
-        # not an edge, so it stops at a structural character.
+        # not an edge, so it stops at anything structural.
         rule(:hashed_tail) do
-          (structural_char.absent? >> declaration_char).repeat >>
+          (structural_token.absent? >> declaration_char).repeat >>
             space? >> (comment.maybe >> newline | eof).present?
         end
 
-        # The characters mermaid keeps for shapes and edges. They are
-        # refused wherever it expects a bare word — in a style declaration
-        # after a `#` and in a callback name alike. Measured one character
-        # at a time against mmdc: every other printable ASCII character is
+        # What mermaid keeps for shapes and edges. It is refused wherever
+        # mermaid expects a bare word — in a style declaration after a `#`
+        # and in a callback name alike.
+        rule(:structural_token) { compound_token | structural_char }
+
+        # Some of what mermaid reserves is longer than one character, and
+        # every character in it is legal on its own. Measured against mmdc
+        # 11.12.0 in a style tail and in a callback name alike: `B-C`,
+        # `B.C` and `B::C` are ordinary text in both, and `B--C`, `B-.C`
+        # and `B:::C` are errors in both. Checking one character at a time
+        # misses all three.
+        rule(:compound_token) { str(':::') | str('--') | str('-.') }
+
+        # The single-character half of the set. Measured one character at
+        # a time against mmdc: every other printable ASCII character is
         # fine in both places.
         rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
 
@@ -384,8 +397,8 @@ module Sirena
           bare_token >> (space >> quoted_run).maybe
         end
 
-        # A bare token runs to the first space, `;` or structural
-        # character, so `click A cb()` is an error and
+        # A bare token runs to the first space, `;` or structural token,
+        # so `click A cb()` and `click A cb--x` are errors and
         # `click A http://x;B` draws both nodes. A quote only opens a url
         # when it comes first — mmdc draws `click A cb"x`. A keyword is
         # not a callback name either: mmdc refuses `click A href`,
@@ -398,7 +411,7 @@ module Sirena
 
         rule(:token_char) do
           space.absent? >> line_end.absent? >> semicolon.absent? >>
-            structural_char.absent? >> any
+            structural_token.absent? >> any
         end
 
         # Never empty. mmdc refuses `click A ""` and every empty tooltip,
