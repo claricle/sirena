@@ -107,7 +107,7 @@ RSpec.describe Sirena::Parser::Base do
 
       expect(message).to eq(
         "Parse error at line 3, column 7:\nxyzzy qux\n      ^\n" \
-        'Expected "\\n", but got "q"'
+        'Expected ";", but got "q"'
       )
     end
 
@@ -256,7 +256,7 @@ RSpec.describe Sirena::Parser::Base do
         error_from(parser, source)
       end
 
-      expect(messages.first).to include('Expected "\\n", but got "q"')
+      expect(messages.first).to include('Expected ";", but got "q"')
       expect(messages.last).to eq(messages.first)
     end
   end
