@@ -10,6 +10,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # hand against mmdc 11.12.0 for that reason.
   let(:engine) { Sirena::Engine.new }
 
+  def node_ids(source)
+    described_class.new.parse(source).nodes.map(&:id).sort
+  end
+
   def renders?(source)
     engine.render(source)
     true
@@ -57,10 +61,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # `;`, so these parsed and then silently rendered one node short. mmdc
     # renders B in every case. Asserted on the model, because the render
     # succeeds either way and the corpus scores it a pass.
-    def node_ids(source)
-      Sirena::Parser::FlowchartParser.new.parse(source).nodes.map(&:id).sort
-    end
-
     {
       "style" => "graph TD\nA\nstyle A fill:#f9f;B\n",
       "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n",
@@ -141,15 +141,50 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a colon that is not a declaration" do
+    # The continuation lookahead took any text before a colon, so a node
+    # label containing one looked like another property and got swallowed.
+    {
+      "style" => "graph TD\nA\nstyle A fill:red;B(foo:bar)\n",
+      "classDef" => "graph TD\nA\nclassDef x f:r;B(foo:bar)\n"
+    }.each do |label, source|
+      it "keeps a node with a colon in its label after #{label}" do
+        expect(node_ids(source)).to eq(%w[A B])
+      end
+    end
+  end
+
+  describe "a semicolon inside a callback argument" do
+    it "belongs to the callback, not the statement" do
+      expect(renders?("graph TD\nA\nclick A call cb(foo;bar)\n")).to be(true)
+    end
+
+    it "still separates after the closing paren" do
+      source = "graph TD\nA\nclick A call cb(foo;bar);B\n"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+  end
+
+  describe "click before an unspaced separator" do
+    it "is a node, as mmdc renders it" do
+      expect(node_ids("graph TD;click;B\n")).to eq(%w[B click])
+    end
+  end
+
   describe "a comment on the same line as a separator" do
     # mmdc rejects the same-line form and takes the newline form. `space?`
     # never crosses a newline, so one guard separates them.
-    ["graph TD;%% c;D", "graph TD\nA;;%% c;D", "graph TD\nA ;%% c;D"]
-      .each do |source|
-        it "rejects #{source.lines.last.chomp.inspect}" do
-          expect(renders?("#{source}\n")).to be(false)
-        end
+    [
+      "graph TD;%% c;D",
+      "graph TD\nA;;%% c;D",
+      "graph TD\nA ;%% c;D",
+      "graph TD\nA;%% c;D"
+    ].each do |source|
+      it "rejects #{source.lines.last.chomp.inspect}" do
+        expect(renders?("#{source}\n")).to be(false)
       end
+    end
 
     it "still takes a comment on the next line" do
       expect(renders?("graph TD\nA-->B;\n%% comment\n")).to be(true)
