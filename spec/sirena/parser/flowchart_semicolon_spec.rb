@@ -381,9 +381,31 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "a semicolon after a subgraph's end" do
-    it "may stand off it" do
-      # mmdc renders `end ;B` and this rejected it outright.
-      expect(node_ids("graph TD\nsubgraph s\nA\nend ;B\n")).to eq(%w[A B])
+    it "may stand off it, as far as the grammar is concerned" do
+      # mmdc renders `end ;B` and the grammar used to refuse it. Asserted
+      # on the grammar because the transform now refuses every subgraph:
+      # the model has no container to put one in, and drawing loose nodes
+      # where mermaid draws a cluster would be a wrong picture.
+      source = "graph TD\nsubgraph s\nA\nend ;B\n"
+
+      expect { Sirena::Parser::Grammars::Flowchart.new.parse(source) }
+        .not_to raise_error
+    end
+
+    it "is still refused past the grammar, with a reason" do
+      expect { described_class.new.parse("graph TD\nsubgraph s\nA\nend ;B\n") }
+        .to raise_error(Sirena::Parser::ParseError, /subgraphs are not supported/)
+    end
+  end
+
+  # The guard is on the parsed marker, not the source text.
+  describe "the subgraph refusal" do
+    it "does not catch the word in a label" do
+      expect(node_ids("graph TD\nA[subgraph here] --- B\n")).to eq(%w[A B])
+    end
+
+    it "does not catch an id that starts with it" do
+      expect(node_ids("graph TD\nsubgraphs --- B\n")).to eq(%w[B subgraphs])
     end
   end
 
