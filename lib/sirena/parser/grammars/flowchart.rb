@@ -24,15 +24,33 @@ module Sirena
         # The direction shares the keyword's line, so `graph` newline `TD`
         # is a diagram with a node called TD. Nothing else may follow the
         # keyword: mmdc refuses `graph X;A`, `graph ;A` and `graph TDx`.
+        # A word direction needs a gap; a glyph one does not. mmdc renders
+        # `graph<` and `graph >` alike, and refuses `graphTD`.
+        # A word direction needs a gap; a glyph one does not. mmdc renders
+        # `graph<` and `graph >` alike, and refuses `graphTD`.
+        #
+        # The two branches exist because a separator only closes the header
+        # when a direction came first — `graph TD;A` renders and `graph;A`
+        # does not. A lookahead cannot tell them apart: by the time the
+        # header ends, the direction has already been consumed.
         rule(:header) do
           (str('flowchart') | str('graph')).as(:header) >>
-            (space.repeat(1) >> direction).maybe.as(:direction) >>
-            header_end
+            (directed_header | undirected_header)
         end
 
-        # A separator may touch the direction but not stand off it — mmdc
-        # takes `graph TD;A` and refuses `graph TD ;A`.
-        rule(:header_end) { separator | space? >> (newline | eof) }
+        rule(:directed_header) do
+          header_direction.as(:direction) >>
+            (separator | space? >> (newline | eof))
+        end
+
+        rule(:undirected_header) do
+          direction.absent?.as(:direction) >> space? >> (newline | eof)
+        end
+
+        rule(:header_direction) do
+          space.repeat(1) >> direction |
+            space? >> glyph_direction.as(:dir_value)
+        end
 
         # A `;` between statements on one line. `line_end` is deliberately
         # left alone: `style_property` and `click_action` scan a value up to
@@ -61,11 +79,15 @@ module Sirena
         # mermaid's full set, aliases included: `BR` is another down, and
         # the four arrow glyphs stand in for the words. Reading them as
         # nodes put a stray `BR` and `v` in the diagram.
-        rule(:direction) do
-          (str('TD') | str('TB') | str('BT') | str('BR') |
-            str('LR') | str('RL') |
-            str('<') | str('>') | str('^') | str('v')).as(:dir_value)
+        rule(:direction) { (word_direction | glyph_direction).as(:dir_value) }
+
+        rule(:word_direction) do
+          str('TD') | str('TB') | str('BT') | str('BR') | str('LR') |
+            str('RL') | str('v')
         end
+
+        # These four need no gap after the keyword — mmdc draws `graph<`.
+        rule(:glyph_direction) { match['<>^'] }
 
         rule(:statements) do
           ((separator | statement) >> ws?).repeat(1)
@@ -315,8 +337,11 @@ module Sirena
         # `click` alone is not a node — mmdc rejects a bare click — but
         # `graph TD;click;B` is two nodes, so only the spaced form is
         # reserved.
+        # NOT `line_end`: it swallows a trailing semicolon, so `click;`
+        # read as a directive and `graph TD;click;B` was refused. mmdc
+        # draws that as two nodes.
         rule(:spaced_keyword) do
-          str('click') >> (space | line_end).present?
+          str('click') >> (space | newline | eof).present?
         end
 
         # The boundary is a word boundary, not a space or a separator:
@@ -490,7 +515,7 @@ module Sirena
             ws? >>
             edge_label.maybe.as(:label) >>
             ws? >>
-            node_with_shape.as(:target)
+            reserved_keyword.absent? >> node_with_shape.as(:target)
         end
 
         # Arrow types

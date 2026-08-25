@@ -72,8 +72,15 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "still reads two declarations as one list" do
-      expect(node_ids("graph TD\nA-->B\nstyle A fill:#f9f;stroke:#333\n"))
-        .to eq(%w[A B])
+      # Node ids alone cannot see this: they are the same whether the
+      # second declaration joined the list or was dropped. The captured
+      # properties are the tell — deleting the capture left this green.
+      source = "graph TD\nA-->B\nstyle A fill:#f9f;stroke:#333\n"
+      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
+
+      expect(node_ids(source)).to eq(%w[A B])
+      expect(props[:style_props].to_s.strip).to eq("fill:#f9f;stroke:#333")
     end
   end
 
@@ -170,8 +177,96 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "still continues the list for a real declaration" do
-      expect(node_ids("graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"))
-        .to eq(%w[A B])
+      source = "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"
+      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
+
+      expect(node_ids(source)).to eq(%w[A B])
+      expect(props[:style_props].to_s.strip).to eq("fill:red;stroke:blue")
+    end
+  end
+
+  # A keyword is not a node wherever a node is built, and an edge target
+  # is one of those places. The statement-leading guards missed it, so
+  # `A-->end` made a node mmdc refuses.
+  describe "a keyword as an edge target" do
+    it "is refused" do
+      expect { described_class.new.parse("graph TD;A-->end;B\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "still takes an ordinary target" do
+      expect(node_ids("graph TD;A-->B;C\n")).to eq(%w[A B C])
+    end
+  end
+
+  # A word direction needs a gap after the keyword; a glyph one does not.
+  describe "a glyph direction" do
+    %w[< > ^].each do |glyph|
+      it "needs no space before #{glyph}" do
+        expect(node_ids("graph#{glyph}\nA-->B\n")).to eq(%w[A B])
+      end
+
+      it "still takes a space before #{glyph}" do
+        expect(node_ids("graph #{glyph}\nA-->B\n")).to eq(%w[A B])
+      end
+    end
+
+    it "does not let a word direction lose its gap" do
+      expect { described_class.new.parse("graphTD\nA-->B\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  # A separator closes the header only when a direction came first.
+  describe "a separator straight after the keyword" do
+    it "is refused without a direction" do
+      expect { described_class.new.parse("graph;A\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "is taken after one" do
+      expect(node_ids("graph TD;A\n")).to eq(%w[A])
+    end
+  end
+
+  # `click` opens a directive when a space, a newline or nothing follows.
+  # A semicolon does none of those, and testing it with `line_end` — which
+  # swallows one — refused three diagrams mmdc draws.
+  describe "click against a separator" do
+    {
+      "before a newline" => ["graph TD;click;\nB\n", %w[B click]],
+      "at end of input" => ["graph TD;click;\n", %w[click]],
+      "before another node" => ["graph TD;click;B\n", %w[B click]]
+    }.each do |label, (source, ids)|
+      it "is an ordinary node #{label}" do
+        expect(node_ids(source)).to eq(ids)
+      end
+    end
+
+    it "still opens a directive when a space follows" do
+      source = "graph TD\nA\nclick A \"https://example.com\"\n"
+
+      expect(node_ids(source)).to eq(%w[A])
+    end
+  end
+
+  # `classDef` has to be tried before `class`, because Parslet does not
+  # backtrack into an alternative that already matched. Swapping them made
+  # `classDef[x]` a node and left every example green.
+  describe "the keyword alternation order" do
+    { "classDef" => "graph TD\nclassDef[x]\n",
+      "class" => "graph TD\nclass[x]\n" }.each do |word, source|
+      it "refuses #{word} carrying a shape" do
+        expect { described_class.new.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "still takes a classDef statement" do
+      source = "graph TD\nA-->B\nclassDef foo fill:#f9f\n"
+
+      expect { described_class.new.parse(source) }.not_to raise_error
     end
   end
 
