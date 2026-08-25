@@ -141,6 +141,77 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a separator standing on its own" do
+    # mermaid takes a separator where a statement would go. Requiring a
+    # statement before every separator rejected all three.
+    {
+      "opening a line after the header" => "graph TD;\n;A-->B\n",
+      "alone on a line" => "graph TD\nA\n;\nB\n",
+      "trailing after a statement" => "graph TD\nA\n;\n"
+    }.each do |label, source|
+      it "accepts one #{label}" do
+        expect(renders?(source)).to be(true)
+      end
+    end
+
+    it "is still refused on the header line" do
+      # `graph TD ;A` is rejected by mmdc, and allowing a bare separator as
+      # a statement let it back in.
+      expect(renders?("graph TD ;A\n")).to be(false)
+    end
+  end
+
+  describe "an inline class after a separator" do
+    it "keeps the node rather than reading it as a declaration" do
+      # `:::` is an inline class, never a declaration colon. The lookahead
+      # saw `B` then a colon and swallowed the node silently.
+      expect(node_ids("graph TD\nA\nstyle A fill:red;B:::foo\n"))
+        .to eq(%w[A B])
+    end
+
+    it "still continues the list for a real declaration" do
+      expect(node_ids("graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"))
+        .to eq(%w[A B])
+    end
+  end
+
+  describe "a declaration key outside ASCII" do
+    it "is a declaration, as mermaid reads it" do
+      # `\w` is ASCII-only in Ruby, so an accented key was a new rejection.
+      expect(node_ids("graph TD\nA\nstyle A fill:red;é: value\n")).to eq(%w[A])
+    end
+  end
+
+  describe "parentheses in a click action" do
+    it "belong to a callback" do
+      expect(renders?("graph TD\nA\nclick A call cb(foo;bar)\n")).to be(true)
+    end
+
+    it "are not special anywhere else" do
+      # mmdc rejects this; treating every action's parens as a group let it
+      # through.
+      expect(renders?("graph TD\nA\nclick A nope(foo;bar)\n")).to be(false)
+    end
+  end
+
+  describe "keywords that are not node ids" do
+    { "end" => "graph TD;end;B\n",
+      "graph" => "graph TD;graph;B\n",
+      "flowchart" => "graph TD;flowchart;B\n" }.each do |name, source|
+      it "refuses a bare #{name}" do
+        expect(renders?(source)).to be(false)
+      end
+    end
+
+    it "refuses a bare click" do
+      expect(renders?("graph TD\nA\nclick\n")).to be(false)
+    end
+
+    it "still treats click before an unspaced separator as a node" do
+      expect(node_ids("graph TD;click;B\n")).to eq(%w[B click])
+    end
+  end
+
   describe "a colon that is not a declaration" do
     # The continuation lookahead took any text before a colon, so a node
     # label containing one looked like another property and got swallowed.

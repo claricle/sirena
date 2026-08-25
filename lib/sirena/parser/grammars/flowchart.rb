@@ -25,7 +25,7 @@ module Sirena
           (str('flowchart') | str('graph')).as(:header) >>
             ws? >>
             direction.maybe.as(:direction) >>
-            separator.maybe
+            separator.maybe >> space? >> semicolon.absent?
         end
 
         # A `;` between statements on one line. `line_end` is deliberately
@@ -57,7 +57,7 @@ module Sirena
         end
 
         rule(:statements) do
-          (statement >> ws?).repeat(1)
+          ((separator | statement) >> ws?).repeat(1)
         end
 
         rule(:statement) do
@@ -217,8 +217,16 @@ module Sirena
         # continues the declaration list; anything else means the `;`
         # terminated the statement, so `style A fill:#f9f;B` leaves B to be
         # parsed as a node instead of swallowing it.
+        # A declaration key is anything up to the colon that is not
+        # whitespace, a separator or a bracket. `\w` is ASCII-only, and
+        # mermaid takes `é: value`; brackets are excluded so `B(foo:bar)`
+        # reads as a node rather than another declaration.
+        #
+        # `:::` is an inline class, never a declaration colon — without
+        # that guard `style A fill:red;B:::foo` silently dropped node B.
         rule(:continues_list) do
-          match['\w-'].repeat(1) >> space? >> str(':')
+          (match['\s:;,()\[\]{}'].absent? >> any).repeat(1) >>
+            space? >> str(':') >> str(':').absent?
         end
 
         # ClassDef: classDef className fill:#f9f
@@ -250,15 +258,21 @@ module Sirena
         # action while an unquoted one ends the statement, which is what
         # mermaid does with `click A "http://x";B`.
         rule(:click_action) do
-          (quoted_run | paren_run |
-            (unspaced_separator.absent? >> line_end.absent? >>
-             semicolon.absent? >> any)).repeat(1)
+          callback_action | plain_action
         end
 
         # `click A call cb(foo;bar)` — the semicolon belongs to the callback
-        # argument, not to the statement.
-        rule(:paren_run) do
-          lparen >> (rparen.absent? >> any).repeat >> rparen
+        # argument list, so the parens are only special after `call`.
+        rule(:callback_action) do
+          str('call') >> space >> identifier >> space? >>
+            lparen >> (rparen.absent? >> any).repeat >> rparen >>
+            plain_action.maybe
+        end
+
+        rule(:plain_action) do
+          (quoted_run |
+            (unspaced_separator.absent? >> line_end.absent? >>
+             semicolon.absent? >> any)).repeat(1)
         end
 
         # The action must not run up to a spaced separator and leave it for
@@ -279,11 +293,17 @@ module Sirena
 
         # mmdc renders `graph TD;click;B` as nodes `click` and `B`, so click
         # is only a directive when an action can follow it.
-        rule(:spaced_keyword) { str('click') >> space.present? }
+        # `click` alone is not a node — mmdc rejects a bare click — but
+        # `graph TD;click;B` is two nodes, so only the spaced form is
+        # reserved.
+        rule(:spaced_keyword) do
+          str('click') >> (space | line_end).present?
+        end
 
         rule(:separable_keyword) do
-          (str('classDef') | str('linkStyle') | str('subgraph') |
-            str('style') | str('class')) >>
+          (str('flowchart') | str('interpolate') | str('classDef') |
+            str('linkStyle') | str('subgraph') | str('style') |
+            str('graph') | str('class') | str('end')) >>
             (space | semicolon | line_end).present?
         end
 
