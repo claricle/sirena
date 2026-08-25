@@ -47,7 +47,7 @@ module Sirena
 
         rule(:header_direction) do
           space.repeat(1) >> direction |
-            space? >> glyph_direction.as(:dir_value)
+            glyph_direction.as(:dir_value)
         end
 
         # A `;` between statements on one line. `line_end` is deliberately
@@ -84,7 +84,7 @@ module Sirena
             str('RL') | str('v')
         end
 
-        # These four need no gap after the keyword — mmdc draws `graph<`.
+        # These three need no gap after the keyword — mmdc draws `graph<`.
         rule(:glyph_direction) { match['<>^'] }
 
         rule(:statements) do
@@ -220,7 +220,7 @@ module Sirena
         # Style: style nodeId fill:#f9f
         rule(:style_statement) do
           str('style').as(:style_keyword) >> space >>
-            node_id.as(:style_target) >>
+            reserved_keyword.absent? >> node_id.as(:style_target) >>
             (space >> style_property_list).as(:style_props) >>
             statement_end
         end
@@ -258,7 +258,7 @@ module Sirena
         # not an edge, so it stops at a structural character.
         rule(:hashed_tail) do
           (structural_char.absent? >> declaration_char).repeat >>
-            line_end.present?
+            space? >> (comment.maybe >> newline | eof).present?
         end
 
         # The characters mermaid keeps for shapes and edges. They are
@@ -295,7 +295,7 @@ module Sirena
         # Class assignment: class nodeId className
         rule(:class_assignment_statement) do
           str('class').as(:class_keyword) >> space >>
-            node_id.as(:class_target) >> space >>
+            reserved_keyword.absent? >> node_id.as(:class_target) >> space >>
             identifier.as(:class_name) >>
             statement_end
         end
@@ -437,10 +437,10 @@ module Sirena
         # that already matched, so `class` ahead of `classDef` would take
         # five characters and then fail the boundary.
         rule(:separable_keyword) do
-          (str('interpolate') | str('flowchart') | str('linkStyle') |
+          ((str('interpolate') | str('flowchart') | str('linkStyle') |
             str('subgraph') | str('classDef') | str('style') |
             str('graph') | str('class') | str('end')) >>
-            word_boundary | link_target
+            word_boundary) | link_target
         end
 
         # mermaid's link targets. They close a click action and they are
@@ -652,6 +652,10 @@ module Sirena
         # The optional semicolon here may not be followed by a comment on
         # the same line, matching the separator rule and mmdc: `A;%% c` is
         # rejected while `A;` then a `%% c` line is ordinary.
+        #
+        # Only the semicolon form is faithful. mmdc also rejects `A --> B %% c`
+        # with no separator, and the `comment.maybe` arm below still takes it —
+        # that arm predates this rule and tightening it is its own change.
         rule(:line_end) do
           (semicolon >> space? >> str('%%').absent?).maybe >>
             space? >> (comment.maybe >> newline | eof)

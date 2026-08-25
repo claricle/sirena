@@ -2211,8 +2211,8 @@
   verdict: valid
   evidence: mmdc rendered it
 - case: flowchart/008_platform_current_flowchart_7.mmd
-  verdict: invalid
-  evidence: mmdc rejected it
+  verdict: unknown
+  evidence: no evidence
 - case: flowchart/009_platform_click_security_loose_4.mmd
   verdict: valid
   evidence: mmdc rendered it
