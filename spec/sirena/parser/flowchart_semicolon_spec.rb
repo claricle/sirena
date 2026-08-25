@@ -115,16 +115,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    it "swallows the rest when the hash is the only thing left" do
-      # The `;` comes first here, so it ends the statement. mmdc draws a
-      # node `stroke:#333`; we cannot spell a colon in an id, so this
-      # asserts what we do rather than pretending we match.
-      source = "graph TD\nA\nstyle A fill:red;stroke:#333\n"
-      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
-      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
-
-      expect(node_ids(source)).to eq(%w[A])
-      expect(props[:style_props].to_s.strip).to eq("fill:red;stroke:#333")
+    it "does not reach back for a hash after the separator" do
+      # The `;` comes first, so it ends the statement and the hash never
+      # gets to swallow anything. mmdc draws A and a node `stroke:#333`;
+      # a node id here takes no colon, so we refuse instead of drawing a
+      # diagram one node short.
+      expect { described_class.new.parse("graph TD\nA\nstyle A fill:red;stroke:#333\n") }
+        .to raise_error(Sirena::Parser::ParseError)
     end
 
     it "still ends at the newline" do
@@ -172,6 +169,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     ].each do |declaration|
       it "still accepts #{declaration.inspect}" do
         expect(renders?("graph TD\nA\n#{declaration}\n")).to be(true)
+      end
+    end
+
+    # Loose is not empty. mmdc refuses a declaration carrying no
+    # properties at all, trailing space and all.
+    ["style A ", "classDef x "].each do |declaration|
+      it "refuses #{declaration.inspect}" do
+        expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
       end
     end
   end
@@ -240,17 +245,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to eq(%w[A B])
     end
 
-    it "still continues the list for a real declaration" do
-      # mmdc draws a node called `stroke:blue` here, and main does not
-      # either. Node ids in this grammar take no colon, so ending the
-      # statement at the `;` would turn a diagram that renders into a parse
-      # error. This asserts what we do, not what mermaid does.
-      source = "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"
-      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
-      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
-
-      expect(node_ids(source)).to eq(%w[A B])
-      expect(props[:style_props].to_s.strip).to eq("fill:red;stroke:blue")
+    it "refuses a second declaration it cannot spell as a node" do
+      # Without a hash the `;` always ends the statement, so `stroke:blue`
+      # has to stand as a node. mmdc draws exactly that. A node id here
+      # takes no colon, so we refuse the line — swallowing it drew A and B
+      # and silently lost the third node.
+      expect { described_class.new.parse("graph TD\nA-->B\nstyle A fill:red;stroke:blue\n") }
+        .to raise_error(Sirena::Parser::ParseError)
     end
   end
 
@@ -716,6 +717,112 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "terminates on separators at end of input" do
       expect { described_class.new.parse("graph TD\nA-->B;;;") }
         .not_to raise_error
+    end
+  end
+
+  # A hash lets the declaration carry one `;`, and only one. mmdc refuses a
+  # second, and refuses a shape or an edge behind the first. Swallowing the
+  # whole line accepted every source in the first list.
+  describe "the tail after a hashed declaration" do
+    [
+      "style A fill:#f9f;B;C",
+      "style A fill:#f9f;;B",
+      "style A fill:#f9f;B ;C",
+      "style A fill:#f9f;stroke:#333;color:#fff",
+      "style A fill:#f9f;B[x]",
+      "style A fill:#f9f;B]",
+      "style A fill:#f9f;B(x)",
+      "style A fill:#f9f;B)",
+      "style A fill:#f9f;B{x}",
+      "style A fill:#f9f;B}",
+      "style A fill:#f9f;B<C",
+      "style A fill:#f9f;B|C",
+      "style A fill:#f9f;B~C",
+      "style A fill:#f9f;B@C",
+      "style A fill:#f9f;B-->C",
+      "classDef x fill:#f9f;B;C"
+    ].each do |declaration|
+      it "refuses #{declaration.inspect}" do
+        expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
+      end
+    end
+
+    [
+      "style A fill:#f9f;B",
+      "style A fill:#f9f; B",
+      "style A fill:#f9f;",
+      "style A fill:#f9f;a b",
+      "style A fill:#f9f;B-C",
+      %(style A fill:#f9f;B"C),
+      "style A fill:#f9f;stroke-width:2px",
+      "style A fill:#f9f;stroke:#333",
+      "classDef x fill:#f9f;stroke:#333"
+    ].each do |declaration|
+      it "takes #{declaration.inspect}" do
+        expect(node_ids("graph TD\nA\n#{declaration}\n")).to eq(%w[A])
+      end
+    end
+  end
+
+  # mermaid takes four click actions and nothing else. Scanning to the end
+  # of the line accepted the junk after a good one and, once `;` became a
+  # separator, drew a node out of it.
+  describe "the shape of a click action" do
+    [
+      %(click A "u" nope),
+      %(click A "u"\)),
+      %(click A "u" _blank "tip"),
+      %(click A "u" "t" "x"),
+      "click A cb _blank",
+      "click A cb nope",
+      %(click A cb "tip" _blank),
+      "click A my callback",
+      "click A href",
+      "click A href ",
+      "click A click",
+      "click A style",
+      "click A end",
+      "click A graph",
+      "click A subgraph",
+      "click A _blank",
+      "click A href _self",
+      "click A href cb",
+      %(click A href "u" nope),
+      %(click A href "u" "t" "x")
+    ].each do |statement|
+      it "refuses #{statement.inspect}" do
+        expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
+      end
+    end
+
+    [
+      %(click A "u"),
+      %(click A "u" "tip"),
+      "click A \"u\" _blank",
+      %(click A "u" "tip" _blank),
+      "click A cb",
+      "click A callback",
+      %(click A cb "tip"),
+      "click A http://x",
+      %(click A http://x "tip"),
+      %(click A href "u"),
+      %(click A href "u" "tip"),
+      %(click A href "u" _blank)
+    ].each do |statement|
+      it "takes #{statement.inspect}" do
+        expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
+      end
+    end
+
+    # A `;` still ends the statement after a complete action.
+    {
+      "a bare callback" => "click A cb;B",
+      "a quoted url" => %(click A "u";B),
+      "a link target" => %(click A "u" _blank;B)
+    }.each do |label, statement|
+      it "keeps a node after #{label}" do
+        expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A B])
+      end
     end
   end
 end
