@@ -2,6 +2,7 @@
 
 require_relative 'escaping'
 require 'lutaml/model'
+require_relative 'numbers'
 require_relative 'style'
 
 module Sirena
@@ -38,10 +39,22 @@ module Sirena
 
       # Emitted by every element, in this order, as [svg name, reader].
       # Named once here rather than on every render.
+      #
+      # `opacity` is not in the list even though it is an attribute. SVG Tiny
+      # 1.2 — the element and attribute table the svg_conform :metanorma
+      # profile enforces — has no `opacity` property, only `fill-opacity` and
+      # `stroke-opacity`. So the two opacity readers below fold it in rather
+      # than emitting it, and every element inherits that by construction.
       BASE_PAIRS = [
-        :id, :class_name, :transform, :fill, :fill_opacity,
-        :stroke, :stroke_width, :stroke_opacity, :opacity
-      ].map { |name| [svg_name(name), name].freeze }.freeze
+        [svg_name(:id), :id],
+        [svg_name(:class_name), :class_name],
+        [svg_name(:transform), :transform],
+        [svg_name(:fill), :fill],
+        [svg_name(:fill_opacity), :painted_fill_opacity],
+        [svg_name(:stroke), :stroke],
+        [svg_name(:stroke_width), :stroke_width],
+        [svg_name(:stroke_opacity), :painted_stroke_opacity]
+      ].map(&:freeze).freeze
       private_constant :BASE_PAIRS
 
       # Generate XML representation of this element
@@ -97,8 +110,51 @@ module Sirena
       # @param pairs [Array<Array>] [svg name, reader], in output order
       # @return [Array<Array>] name/value pairs
       def attribute_pairs(pairs)
-        pairs.map { |svg_name, reader| [svg_name, public_send(reader)] }
+        pairs.map { |svg_name, reader| [svg_name, send(reader)] }
       end
+
+      # `fill-opacity` as it should be painted, with any whole-element
+      # `opacity` folded in.
+      #
+      # @return [Object, nil] the attribute value, or nil when unset
+      def painted_fill_opacity
+        composed_opacity(fill_opacity)
+      end
+
+      # `stroke-opacity` as it should be painted, with any whole-element
+      # `opacity` folded in.
+      #
+      # @return [Object, nil] the attribute value, or nil when unset
+      def painted_stroke_opacity
+        composed_opacity(stroke_opacity)
+      end
+
+      private
+
+      # Multiplies a component opacity by the whole-element one.
+      #
+      # On a leaf shape the two are equivalent: `opacity` composites the
+      # painted result, and painting fill and stroke at the same fraction
+      # reaches it. They differ only where a stroke overlaps its own fill,
+      # which no shape Sirena draws relies on.
+      #
+      # A component value that is not a number is left exactly as it was.
+      # Nothing in the gem writes one, and inventing a factor for it would
+      # emit a number the caller never asked for.
+      #
+      # @param component [Object] fill-opacity or stroke-opacity as set
+      # @return [Object, nil] the value to emit
+      def composed_opacity(component)
+        whole = Numbers.read(opacity)
+        return component if whole.nil?
+
+        part = Escaping.blank?(component) ? 1.0 : Numbers.read(component)
+        return component if part.nil?
+
+        Numbers.write(part * whole)
+      end
+
+      protected
 
       # Hook for subclasses to add their specific attributes.
       #

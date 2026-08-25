@@ -2,6 +2,7 @@
 
 require 'lutaml/model'
 require_relative 'element'
+require_relative 'numbers'
 
 module Sirena
   module Svg
@@ -22,7 +23,48 @@ module Sirena
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
 
-      writes_attributes :x, :y, :dx, :dy, :text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline
+      # How far below `y` the baseline sits, in ems, for each
+      # `dominant-baseline` value renderers set.
+      #
+      # SVG Tiny 1.2 has no `dominant-baseline`, so the svg_conform
+      # :metanorma profile rejects it on `<text>`. Renderers set it to say
+      # "centre this label on y" or "hang it below y", and that intent
+      # survives the translation: the same shift applied to `y` puts the
+      # baseline where the property would have put it, in a renderer that
+      # supports the property and in one that does not.
+      #
+      # 0.35em is the usual centring constant — roughly half a cap height
+      # above the baseline. `hanging` sits a full ascender below `y`;
+      # `text-after-edge` a descender above it. Anything else, including
+      # `auto` and `alphabetic`, already means "baseline at y".
+      BASELINE_SHIFTS = {
+        'middle' => 0.35,
+        'central' => 0.35,
+        'hanging' => 0.8,
+        'text-before-edge' => 0.8,
+        'text-after-edge' => -0.2,
+        'ideographic' => -0.2
+      }.freeze
+
+      # The CSS initial font-size, used when a Text carries a baseline
+      # request but no size of its own. Every renderer sets one; this keeps
+      # a hand-built element from shifting by an arbitrary amount.
+      DEFAULT_FONT_SIZE = 16.0
+
+      # Written out rather than declared with .writes_attributes, because
+      # `y` is not emitted from the `y` reader — see #baseline_y.
+      ATTRIBUTE_PAIRS = [
+        ['x', :x],
+        ['y', :baseline_y],
+        ['dx', :dx],
+        ['dy', :dy],
+        ['text-anchor', :text_anchor],
+        ['font-family', :font_family],
+        ['font-size', :font_size],
+        ['font-weight', :font_weight],
+        ['font-style', :font_style]
+      ].map(&:freeze).freeze
+      private_constant :ATTRIBUTE_PAIRS
 
       xml do
         root 'text', mixed: true
@@ -56,6 +98,37 @@ module Sirena
       def to_xml
         attrs = build_attributes
         "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
+      end
+
+      protected
+
+      def element_attributes
+        attribute_pairs(ATTRIBUTE_PAIRS)
+      end
+
+      # `y` with the baseline request folded in.
+      #
+      # Returns the reader untouched when there is no shift, so a Text that
+      # never asked for one serialises exactly as it did before.
+      #
+      # @return [Object, nil] the y attribute value
+      def baseline_y
+        shift = baseline_shift
+        return y if shift.zero?
+
+        Numbers.write((Numbers.read(y) || 0.0) + shift)
+      end
+
+      private
+
+      # @return [Float] the baseline offset in user units
+      def baseline_shift
+        return 0.0 if Escaping.blank?(dominant_baseline)
+
+        ems = BASELINE_SHIFTS.fetch(dominant_baseline.to_s.strip.downcase, 0.0)
+        return 0.0 if ems.zero?
+
+        ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
       end
     end
   end

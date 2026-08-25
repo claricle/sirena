@@ -27,12 +27,21 @@ ESCAPED = '&lt;&amp;&gt;&quot;&apos;x'
 ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Circle => [],
   Sirena::Svg::Line => [:stroke_dasharray],
-  Sirena::Svg::Path => [:d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start],
+  Sirena::Svg::Path => [:d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin],
   Sirena::Svg::Polygon => [:points],
   Sirena::Svg::Polyline => [:points],
   Sirena::Svg::Ellipse => [],
   Sirena::Svg::Rect => [:stroke_dasharray],
-  Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline]
+  Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style]
+}.freeze
+
+# marker-end, marker-start and dominant-baseline are set by renderers and
+# never reach the output — the SVG layer translates each into something SVG
+# Tiny 1.2 has. They are not in the matrix above because there is no
+# attribute left to escape; the cases further down assert they are gone.
+TRANSLATED_AWAY = {
+  Sirena::Svg::Path => { marker_end: 'marker-end', marker_start: 'marker-start' },
+  Sirena::Svg::Text => { dominant_baseline: 'dominant-baseline' }
 }.freeze
 
 # Inherited from Element, so every subclass carries them.
@@ -68,6 +77,29 @@ RSpec.describe Sirena::Svg::Escaping do
         expect(xml).not_to include(HOSTILE)
         expect(xml.scan(ESCAPED).size).to eq(expected)
       end
+    end
+  end
+
+  # The three properties the profile has no room for. Asserting the absence
+  # matters as much as asserting the escaping: a renderer keeps setting them,
+  # so the only thing stopping them reaching the document is this layer.
+  describe 'properties SVG Tiny 1.2 does not have' do
+    TRANSLATED_AWAY.each do |klass, writers|
+      writers.each do |writer, attribute|
+        it "never emits #{attribute} from #{klass.name.split('::').last}" do
+          element = klass.new
+          element.public_send("#{writer}=", 'url(#arrowhead)')
+
+          expect(element.to_xml).not_to include(attribute)
+        end
+      end
+    end
+
+    it 'never emits opacity, which Tiny replaces with the two components' do
+      rect = Sirena::Svg::Rect.new
+      rect.opacity = 0.3
+
+      expect(rect.to_xml).to eq('<rect fill-opacity="0.3" stroke-opacity="0.3"/>')
     end
   end
 

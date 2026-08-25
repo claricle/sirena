@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lutaml/model'
+require_relative 'arrowhead'
 require_relative 'element'
 
 module Sirena
@@ -17,7 +18,9 @@ module Sirena
       attribute :marker_end, :string
       attribute :marker_start, :string
 
-      writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start
+      # `marker-end` and `marker-start` are set by renderers but never
+      # emitted — Svg::Arrowhead draws them instead. See that class for why.
+      writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin
 
       xml do
         root 'path'
@@ -34,6 +37,17 @@ module Sirena
         map_attribute 'marker-start', to: :marker_start
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+      end
+
+      # The path, followed by any arrowhead it asked for.
+      #
+      # More than one element, because an arrowhead is a sibling shape and
+      # `<path>` takes no drawable children. Every caller joins children's
+      # markup, so a second element travels with the first.
+      #
+      # @return [String] XML string
+      def to_xml
+        [super, *Arrowhead.for(self).map(&:to_xml)].join("\n")
       end
 
       # Helper to build path data from move and line commands
