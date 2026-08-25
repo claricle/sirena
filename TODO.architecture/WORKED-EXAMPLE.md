@@ -1,0 +1,221 @@
+# Worked example: the pie type, before and after
+
+Copy this shape. When a file in this plan says "convert type X", it
+means "make X look like the AFTER column here".
+
+Pie is a good example because it has real geometry (slice angles), so it
+keeps a Layout class. `info`, `error` and about eight others have none
+and lose theirs entirely — that case is at the bottom.
+
+## Files
+
+```
+  BEFORE                                  AFTER
+  parser/pie.rb              48 ln        parser/pie.rb              ~8 ln
+  parser/grammars/pie.rb    127 ln        parser/grammars/pie.rb    127 ln  unchanged
+  parser/transforms/pie.rb  142 ln        parser/builders/pie.rb    142 ln  renamed only
+  diagram/pie.rb            114 ln        diagram/pie.rb            114 ln  unchanged
+  transform/pie.rb           61 ln        layout/pie.rb             ~70 ln
+  renderer/pie.rb           234 ln        renderer/pie.rb          ~150 ln
+```
+
+The grammar, the builder and the diagram model do not change. Only the
+back half of the pipeline does.
+
+## 1. Parser — becomes a declaration
+
+**Before** (`lib/sirena/parser/pie.rb`, 48 lines) — this exact body is
+copy-pasted into 13 of the 24 parsers:
+
+```ruby
+class PieParser < Base
+  def parse(source)
+    grammar = Grammars::Pie.new
+    begin
+      parse_tree = grammar.parse(source)
+    rescue Parslet::ParseFailed => e
+      raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
+                        "#{e.parse_failure_cause}"
+    end
+    transform = Transforms::Pie.new
+    diagram = transform.apply(parse_tree)
+    diagram
+  end
+end
+```
+
+**After** — the body moves to `Parser::Base` once (item 05):
+
+```ruby
+module Sirena
+  module Parser
+    class Pie < Base
+      grammar Grammars::Pie
+      builder Builders::Pie
+    end
+  end
+end
+```
+
+## 2. Layout — emits a class, not a Hash
+
+**Before** (`lib/sirena/transform/pie.rb`) — returns a Hash whose shape
+is written down nowhere:
+
+```ruby
+def to_graph(diagram)
+  raise TransformError, 'Invalid diagram' unless diagram.valid?
+
+  {
+    id: diagram.id || 'pie',
+    title: diagram.title,
+    show_data: diagram.show_data || false,
+    slices: transform_slices(diagram),
+    metadata: { total_value: ..., slice_count: ... }
+  }
+end
+```
+
+**After** (`lib/sirena/layout/pie.rb`) — the result class lives in the
+same file, so one file answers both "how is pie laid out" and "what does
+that layout look like":
+
+```ruby
+module Sirena
+  module Layout
+    class Pie
+      RADIUS = 150
+      CENTRE = [250, 200].freeze
+
+      class Sector < Lutaml::Model::Serializable
+        attribute :label, :string
+        attribute :percentage, :float
+        attribute :start_angle, :float
+        attribute :end_angle, :float
+        attribute :label_x, :float
+        attribute :label_y, :float
+        attribute :colour_index, :integer
+      end
+
+      class Scene < Layout::Scene          # width, height inherited
+        attribute :title, :string
+        attribute :show_data, :boolean
+        attribute :sectors, Sector, collection: true
+      end
+
+      def call(diagram)
+        angle = -90.0
+        sectors = diagram.slices.each_with_index.map do |slice, i|
+          sweep = diagram.slice_angle(slice)
+          sector = build_sector(slice, angle, sweep, i, diagram)
+          angle += sweep
+          sector
+        end
+
+        Scene.new(
+          width: 500,
+          height: diagram.title ? 460 : 400,
+          title: diagram.title,
+          show_data: diagram.show_data,
+          sectors: sectors
+        )
+      end
+    end
+  end
+end
+```
+
+Note what moved: **`start_angle`, `end_angle` and the label position are
+computed here.** Today the renderer computes them itself, walking the
+slices twice (`renderer/pie.rb` `render_slices` and `render_labels` each
+re-accumulate `start_angle` from -90.0).
+
+**The rule that follows from this: if a renderer computes a coordinate,
+that computation belongs in Layout.** The renderer places shapes; it
+does not decide where they go.
+
+## 3. Renderer — becomes dumb
+
+**Before** — digs through a Hash and does geometry:
+
+```ruby
+def render_slices(graph, svg)
+  slices = graph[:slices] || []
+  start_angle = -90.0
+  slices.each_with_index do |slice, index|
+    end_angle = start_angle + slice[:angle]
+    render_slice(start_angle, end_angle, get_slice_color(index), svg, index)
+    start_angle = end_angle
+  end
+end
+```
+
+**After** — reads typed fields and places shapes:
+
+```ruby
+def render_sectors(scene, svg)
+  scene.sectors.each_with_index do |sector, i|
+    svg << Svg::Path.new(
+      d: arc_path(sector.start_angle, sector.end_angle),
+      fill: theme.palette(sector.colour_index),
+      stroke: theme_color(:node_stroke),
+      stroke_width: '2',
+      id: "slice-#{i}"
+    )
+  end
+end
+```
+
+`get_slice_color` and the private `DEFAULT_COLORS` constant are gone —
+`theme.palette(i)` replaces them (item 05C).
+
+## 4. Registration — one row
+
+**Before** — 13 lines in `lib/sirena.rb`, plus a separate entry in
+`Engine::DIAGRAM_TYPE_PATTERNS`:
+
+```ruby
+require_relative 'sirena/parser/pie'
+require_relative 'sirena/transform/pie'
+require_relative 'sirena/renderer/pie'
+
+Sirena::DiagramRegistry.register(
+  :pie,
+  parser: Sirena::Parser::PieParser,
+  transform: Sirena::Transform::PieTransform,
+  renderer: Sirena::Renderer::PieRenderer
+)
+```
+
+**After** — one row in `lib/sirena/notation/mermaid.rb`, classes found by
+convention (item 06):
+
+```ruby
+TYPES = {
+  pie: /\A\s*pie\s/i,
+  ...
+}
+```
+
+## The pass-through case
+
+About ten types have a `Transform` that only copies fields.
+`Transform::InfoTransform` is 38 lines to move three values into a Hash.
+
+Those get **no Layout class at all**. Delete the file. The renderer takes
+`Diagram::Info` directly, and the engine's one line handles it:
+
+```ruby
+scene = Layout.for(type)&.call(model) || model
+```
+
+**Rule: if a layout would only copy fields, do not write one.**
+
+## Checklist for each converted type
+
+- [ ] The renderer contains no arithmetic on coordinates or angles.
+- [ ] The renderer reads named attributes, never `[:symbol]` or `.dig`.
+- [ ] The Scene class names every value the renderer uses — if you had to
+      look at the renderer to know what to put in the Scene, that is
+      fine; that is where the contract lived. Now it is written down.
+- [ ] `rake corpus[pie]` shows the same pass count as before.
