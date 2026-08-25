@@ -21,12 +21,18 @@ module Sirena
             ws?
         end
 
+        # The direction shares the keyword's line, so `graph` newline `TD`
+        # is a diagram with a node called TD. Nothing else may follow the
+        # keyword: mmdc refuses `graph X;A`, `graph ;A` and `graph TDx`.
         rule(:header) do
           (str('flowchart') | str('graph')).as(:header) >>
-            ws? >>
-            direction.maybe.as(:direction) >>
-            separator.maybe >> space? >> semicolon.absent?
+            (space.repeat(1) >> direction).maybe.as(:direction) >>
+            header_end
         end
+
+        # A separator may touch the direction but not stand off it — mmdc
+        # takes `graph TD;A` and refuses `graph TD ;A`.
+        rule(:header_end) { separator | space? >> (newline | eof) }
 
         # A `;` between statements on one line. `line_end` is deliberately
         # left alone: `style_property` and `click_action` scan a value up to
@@ -52,8 +58,13 @@ module Sirena
         rule(:statement_end) { separator | line_end }
         rule(:loose_statement_end) { loose_separator | line_end }
 
+        # mermaid's full set, aliases included: `BR` is another down, and
+        # the four arrow glyphs stand in for the words. Reading them as
+        # nodes put a stray `BR` and `v` in the diagram.
         rule(:direction) do
-          (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value)
+          (str('TD') | str('TB') | str('BT') | str('BR') |
+            str('LR') | str('RL') |
+            str('<') | str('>') | str('^') | str('v')).as(:dir_value)
         end
 
         rule(:statements) do
@@ -179,7 +190,7 @@ module Sirena
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
             str('end').as(:subgraph_end) >>
-            statement_end
+            loose_statement_end
         end
 
         rule(:subgraph_title) do
@@ -217,15 +228,15 @@ module Sirena
         # continues the declaration list; anything else means the `;`
         # terminated the statement, so `style A fill:#f9f;B` leaves B to be
         # parsed as a node instead of swallowing it.
-        # A declaration key is anything up to the colon that is not
-        # whitespace, a separator or a bracket. `\w` is ASCII-only, and
-        # mermaid takes `é: value`; brackets are excluded so `B(foo:bar)`
-        # reads as a node rather than another declaration.
+        # A declaration key is a word, and only a word. Taking anything up
+        # to a colon read `B-->|x:y|C` as another declaration and swallowed
+        # both nodes; mermaid also refuses `é: value`, so the ASCII set is
+        # the oracle's, not a shortcut.
         #
         # `:::` is an inline class, never a declaration colon — without
         # that guard `style A fill:red;B:::foo` silently dropped node B.
         rule(:continues_list) do
-          (match['\s:;,()\[\]{}'].absent? >> any).repeat(1) >>
+          match['a-zA-Z0-9_-'].repeat(1) >>
             space? >> str(':') >> str(':').absent?
         end
 
@@ -263,10 +274,18 @@ module Sirena
 
         # `click A call cb(foo;bar)` — the semicolon belongs to the callback
         # argument list, so the parens are only special after `call`.
+        #
+        # The name runs to the opening paren, dots and semicolons included:
+        # mmdc reads `call cb;B()` as one callback named `cb;B`, and takes
+        # `call ns.cb()` and any run of spaces after `call`.
         rule(:callback_action) do
-          str('call') >> space >> identifier >> space? >>
+          str('call') >> space.repeat(1) >> callback_name >>
             lparen >> (rparen.absent? >> any).repeat >> rparen >>
             plain_action.maybe
+        end
+
+        rule(:callback_name) do
+          (lparen.absent? >> line_end.absent? >> any).repeat(1)
         end
 
         rule(:plain_action) do
@@ -300,11 +319,20 @@ module Sirena
           str('click') >> (space | line_end).present?
         end
 
+        # The boundary is a word boundary, not a space or a separator:
+        # mmdc refuses `style[x]` and `_blank-->Z`, which the narrower test
+        # let through. `_self`, `_blank`, `_parent` and `_top` are mermaid's
+        # link targets and are reserved the same way.
+        #
+        # Longest first — Parslet does not backtrack into an alternative
+        # that already matched, so `class` ahead of `classDef` would take
+        # five characters and then fail the boundary.
         rule(:separable_keyword) do
-          (str('flowchart') | str('interpolate') | str('classDef') |
-            str('linkStyle') | str('subgraph') | str('style') |
-            str('graph') | str('class') | str('end')) >>
-            (space | semicolon | line_end).present?
+          (str('interpolate') | str('flowchart') | str('linkStyle') |
+            str('subgraph') | str('classDef') | str('_parent') |
+            str('_blank') | str('_self') | str('style') | str('graph') |
+            str('class') | str('_top') | str('end')) >>
+            match['a-zA-Z0-9_'].absent?
         end
 
         # Node with optional shape and edges
