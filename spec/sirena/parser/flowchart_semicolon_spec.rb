@@ -52,12 +52,56 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  describe "click keeps its own terminator" do
+  describe "statements after a separator survive" do
+    # Scanning a value to the end of the line swallowed whatever followed a
+    # `;`, so these parsed and then silently rendered one node short. mmdc
+    # renders B in every case. Asserted on the model, because the render
+    # succeeds either way and the corpus scores it a pass.
+    def node_ids(source)
+      Sirena::Parser::FlowchartParser.new.parse(source).nodes.map(&:id).sort
+    end
+
+    {
+      "style" => "graph TD\nA\nstyle A fill:#f9f;B\n",
+      "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n",
+      "click" => %(graph TD\nA\nclick A "http://x";B\n)
+    }.each do |label, source|
+      it "keeps a node after a #{label} statement" do
+        expect(node_ids(source)).to eq(%w[A B])
+      end
+    end
+
+    it "still reads two declarations as one list" do
+      expect(node_ids("graph TD\nA-->B\nstyle A fill:#f9f;stroke:#333\n"))
+        .to eq(%w[A B])
+    end
+  end
+
+  describe "click requires an action" do
+    # mmdc rejects a bare `click A`, so an optional action let a separator
+    # turn `click A;B` into an actionless click plus a node.
+    it "rejects a bare click" do
+      expect(renders?("graph TD\nA\nclick A\n")).to be(false)
+    end
+
     it "rejects an actionless click followed by a separator" do
-      # `click_action` is optional, so pointing click's terminator at
-      # `statement_end` would parse this as an actionless click plus a node.
-      # mmdc rejects it, because click requires an action.
       expect(renders?("graph TD\nA\nB\nclick A;B\n")).to be(false)
+    end
+  end
+
+  describe "a space before the separator" do
+    # mmdc takes it on a node statement and refuses it on the header or a
+    # class assignment, so one shared separator over-accepted two forms.
+    it "is allowed on a node statement" do
+      expect(renders?("graph TD\nA-->B ;C\n")).to be(true)
+    end
+
+    it "is refused on the header" do
+      expect(renders?("graph TD ;A\n")).to be(false)
+    end
+
+    it "is refused on a class assignment" do
+      expect(renders?("graph TD\nA\nB\nclass A foo ;B\n")).to be(false)
     end
   end
 

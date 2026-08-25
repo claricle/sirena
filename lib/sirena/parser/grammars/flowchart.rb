@@ -36,10 +36,17 @@ module Sirena
         # Repeat only this rule, never `statement_end` — the `line_end` arm
         # succeeds zero-width at EOF, so repeating that would not terminate.
         rule(:separator) do
-          space? >> (semicolon >> space?).repeat(1)
+          (semicolon >> space?).repeat(1)
         end
 
+        # Node statements tolerate a space before the separator, because the
+        # corpus has `graph TD;A ;` and friends. The header and a class
+        # assignment do not: mmdc rejects `graph TD ;A` and
+        # `class A foo ;B`, so a shared loose separator over-accepted both.
+        rule(:loose_separator) { space? >> separator }
+
         rule(:statement_end) { separator | line_end }
+        rule(:loose_statement_end) { loose_separator | line_end }
 
         rule(:direction) do
           (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value)
@@ -179,19 +186,37 @@ module Sirena
         rule(:style_statement) do
           str('style').as(:style_keyword) >> space >>
             node_id.as(:style_target) >>
-            (space >> style_property).repeat(1).as(:style_props) >>
+            (space >> style_property_list).as(:style_props) >>
             statement_end
         end
 
+        # A `;` continues a declaration list only when another `key:value`
+        # follows it. Otherwise it terminates the statement, so
+        # `style A fill:#f9f;B` keeps `B` as a node instead of swallowing it
+        # into the value — mermaid renders B, and scanning to the end of the
+        # line dropped it silently.
+        rule(:style_property_list) do
+          style_property >> (semicolon >> space? >> style_property).repeat
+        end
+
         rule(:style_property) do
-          (line_end.absent? >> comma.absent? >> any).repeat(1)
+          style_property_name >> str(':') >> style_property_value
+        end
+
+        rule(:style_property_name) do
+          (match['\s:;,'].absent? >> any).repeat(1)
+        end
+
+        rule(:style_property_value) do
+          (line_end.absent? >> semicolon.absent? >> comma.absent? >> any)
+            .repeat(1)
         end
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
           str('classDef').as(:classdef_keyword) >> space >>
             identifier.as(:class_name) >>
-            (space >> style_property).repeat(1).as(:class_props) >>
+            (space >> style_property_list).as(:class_props) >>
             statement_end
         end
 
@@ -207,20 +232,33 @@ module Sirena
         rule(:click_statement) do
           str('click').as(:click_keyword) >> space >>
             node_id.as(:click_target) >>
-            (space >> (line_end.absent? >> any).repeat(1)).maybe.as(:click_action) >>
-            line_end
+            (space >> click_action.as(:click_action)) >>
+            statement_end
+        end
+
+        # An action is required — mmdc rejects a bare `click A`. The scan is
+        # quote-aware so a `;` inside a URL or tooltip stays part of the
+        # action while an unquoted one ends the statement, which is what
+        # mermaid does with `click A "http://x";B`.
+        rule(:click_action) do
+          (quoted_run | (line_end.absent? >> semicolon.absent? >> any))
+            .repeat(1)
+        end
+
+        rule(:quoted_run) do
+          str('"') >> (str('"').absent? >> any).repeat >> str('"')
         end
 
         # Node with optional shape and edges
         rule(:node_edge_statement) do
           node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
-            statement_end
+            loose_statement_end
         end
 
         # Standalone node (just an identifier)
         rule(:standalone_node) do
-          node_id.as(:node_id) >> statement_end
+          node_id.as(:node_id) >> loose_statement_end
         end
 
         # Node with optional shape definition
