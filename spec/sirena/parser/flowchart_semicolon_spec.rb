@@ -62,8 +62,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # renders B in every case. Asserted on the model, because the render
     # succeeds either way and the corpus scores it a pass.
     {
-      "style" => "graph TD\nA\nstyle A fill:#f9f;B\n",
-      "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n",
+      "style" => "graph TD\nA\nstyle A fill:red;B\n",
+      "classDef" => "graph TD\nA\nclassDef x fill:red;B\n",
       "click" => %(graph TD\nA\nclick A "http://x";B\n)
     }.each do |label, source|
       it "keeps a node after a #{label} statement" do
@@ -81,6 +81,54 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect(node_ids(source)).to eq(%w[A B])
       expect(props[:style_props].to_s.strip).to eq("fill:#f9f;stroke:#333")
+    end
+  end
+
+  # A `#` in the value changes what the `;` means, and that is the whole
+  # rule. mermaid's lexer reads the `#` as a token that eats the `;` and
+  # carries on to the end of the line, so `style A fill:#f9f;B` draws A
+  # alone while `style A fill:red;B` draws A and B. Deciding on the text
+  # after the `;` invented a node B here that main never drew.
+  describe "a hash in a declaration value" do
+    {
+      "style" => "graph TD\nA\nstyle A fill:#f9f;B\n",
+      "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n"
+    }.each do |label, source|
+      it "swallows what follows the separator on a #{label}" do
+        expect(node_ids(source)).to eq(%w[A])
+      end
+    end
+
+    it "leaves the separator alone when the value has no hash" do
+      expect(node_ids("graph TD\nA\nstyle A fill:red;B\n")).to eq(%w[A B])
+    end
+
+    # A `#` later on the line arrives too late — the `;` already ended the
+    # statement. mmdc draws both nodes in each of these.
+    {
+      "in a node label" => ["graph TD\nA\nstyle A fill:red;B[#x]\n", %w[A B]],
+      "in an edge label" =>
+        ["graph TD\nA\nstyle A fill:red;B-->|#x|C\n", %w[A B C]]
+    }.each do |label, (source, ids)|
+      it "does not reach back for a hash #{label}" do
+        expect(node_ids(source)).to eq(ids)
+      end
+    end
+
+    it "swallows the rest when the hash is the only thing left" do
+      # The `;` comes first here, so it ends the statement. mmdc draws a
+      # node `stroke:#333`; we cannot spell a colon in an id, so this
+      # asserts what we do rather than pretending we match.
+      source = "graph TD\nA\nstyle A fill:red;stroke:#333\n"
+      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+      props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
+
+      expect(node_ids(source)).to eq(%w[A])
+      expect(props[:style_props].to_s.strip).to eq("fill:red;stroke:#333")
+    end
+
+    it "still ends at the newline" do
+      expect(node_ids("graph TD\nA\nstyle A fill:#f9f\nB\n")).to eq(%w[A B])
     end
   end
 
@@ -177,6 +225,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "still continues the list for a real declaration" do
+      # mmdc draws a node called `stroke:blue` here, and main does not
+      # either. Node ids in this grammar take no colon, so ending the
+      # statement at the `;` would turn a diagram that renders into a parse
+      # error. This asserts what we do, not what mermaid does.
       source = "graph TD\nA-->B\nstyle A fill:red;stroke:blue\n"
       tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
       props = Array(tree).find { |n| n.is_a?(Hash) && n.key?(:style_props) }
@@ -333,11 +385,46 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
   # mermaid's full direction set. Reading an alias as a node left a stray
   # `BR` or `v` in the diagram.
+  #
+  # The aliases also have to reach the model as a direction word. mmdc lays
+  # `graph <` out exactly like `graph RL`, `>` like `LR` and `^` like `BT` —
+  # measured from where the two nodes of `A --- B` land. The graph transform
+  # only knows the words, so a surviving glyph fell to its default and drew
+  # all three top-to-bottom.
   describe "direction aliases" do
-    %w[TD TB BT BR LR RL < > ^ v].each do |direction|
-      it "takes #{direction} without making it a node" do
-        expect(node_ids("graph #{direction}\nA-->B\n")).to eq(%w[A B])
+    {
+      "TD" => "TD",
+      "TB" => "TB",
+      "BT" => "BT",
+      "LR" => "LR",
+      "RL" => "RL",
+      "BR" => "TB",
+      "v" => "TB",
+      "<" => "RL",
+      ">" => "LR",
+      "^" => "BT"
+    }.each do |token, direction|
+      it "takes #{token} without making it a node" do
+        expect(node_ids("graph #{token}\nA-->B\n")).to eq(%w[A B])
       end
+
+      it "reads #{token} as #{direction}" do
+        diagram = described_class.new.parse("graph #{token}\nA-->B\n")
+
+        expect(diagram.direction).to eq(direction)
+      end
+    end
+
+    # The point of the words: this is the mapping the finding was about.
+    it "carries a glyph through to the layout direction" do
+      layouts = %w[< > ^].to_h do |glyph|
+        diagram = described_class.new.parse("graph #{glyph}\nA-->B\n")
+        graph = Sirena::Transform::FlowchartTransform.new.to_graph(diagram)
+
+        [glyph, graph[:layoutOptions]["elk.direction"]]
+      end
+
+      expect(layouts).to eq("<" => "LEFT", ">" => "RIGHT", "^" => "UP")
     end
   end
 
@@ -377,6 +464,98 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "does not leave a node behind a semicolon in the name" do
       # Splitting on the `;` invented a node called B.
       expect(node_ids("graph TD\nA\nclick A call cb;B()\n")).to eq(%w[A])
+    end
+
+    # mmdc takes any run of whitespace after `call`, newlines included.
+    # Allowing only spaces ended the click statement at the line break and
+    # read the callback as a node on the next line.
+    {
+      "a newline" => "graph TD\nA\nclick A call\ncb()\n",
+      "a newline and a space" => "graph TD\nA\nclick A call\n cb()\n",
+      "a blank line" => "graph TD\nA\nclick A call\n\ncb()\n"
+    }.each do |label, source|
+      it "reaches across #{label}" do
+        expect(node_ids(source)).to eq(%w[A])
+      end
+    end
+
+    # Once `call` opens a callback the parens are compulsory. Falling back
+    # to a plain action accepted every one of these; mmdc exits 1 on all
+    # four.
+    [
+      "click A call cb",
+      "click A call cb(",
+      "click A call",
+      "click A call cb() _blank"
+    ].each do |statement|
+      it "refuses #{statement.inspect}" do
+        expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
+      end
+    end
+
+    it "refuses a callback that runs into the next line" do
+      expect(renders?("graph TD\nA\nclick A call\nB\n")).to be(false)
+    end
+
+    it "still takes a quoted tooltip after the parens" do
+      expect(renders?(%(graph TD\nA\nclick A call cb() "tip"\n))).to be(true)
+    end
+
+    it "leaves a word that merely starts with call alone" do
+      # `calling()` is not a callback, and mmdc refuses it for the parens.
+      expect(renders?("graph TD\nA\nclick A calling()\n")).to be(false)
+    end
+  end
+
+  # A bare paren is not click-action text. mmdc refuses `click A cb()` and
+  # `click A "u" (1)`, and the old rule only caught the forms that also
+  # carried a `;`.
+  describe "a paren outside a callback" do
+    ["click A cb()", "click A cb(1)", %(click A "http://x" (1))]
+      .each do |statement|
+      it "refuses #{statement.inspect}" do
+        expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
+      end
+    end
+
+    it "is ordinary inside quotes" do
+      expect(renders?(%(graph TD\nA\nclick A "http://x(y)"\n))).to be(true)
+    end
+  end
+
+  # `href` and `call` are directive words exactly where `click` is: mmdc
+  # refuses them as node ids before a space, a newline or the end of input,
+  # and draws them as nodes before a `;` or a shape. Reserving only `click`
+  # let `href --- B` and `call --- B` through.
+  describe "href and call as node ids" do
+    %w[href call].each do |word|
+      it "refuses #{word} before a space" do
+        expect(renders?("graph TD\n#{word} --- B\n")).to be(false)
+      end
+
+      it "refuses #{word} before a newline" do
+        expect(renders?("graph TD\n#{word}\nB\n")).to be(false)
+      end
+
+      it "refuses #{word} at end of input" do
+        expect(renders?("graph TD\n#{word}")).to be(false)
+      end
+
+      it "refuses #{word} as an edge target" do
+        expect(renders?("graph TD\nA --- #{word}\n")).to be(false)
+      end
+
+      it "takes #{word} before a separator" do
+        expect(node_ids("graph TD;#{word};B\n")).to eq(["B", word])
+      end
+
+      it "takes #{word} carrying a shape" do
+        expect(node_ids("graph TD\n#{word}[x]\n")).to eq([word])
+      end
+    end
+
+    it "leaves a word that merely starts with one alone" do
+      expect(node_ids("graph TD\ncaller --- hrefs\n")).to eq(%w[caller hrefs])
     end
   end
 

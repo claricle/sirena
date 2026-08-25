@@ -26,8 +26,6 @@ module Sirena
         # keyword: mmdc refuses `graph X;A`, `graph ;A` and `graph TDx`.
         # A word direction needs a gap; a glyph one does not. mmdc renders
         # `graph<` and `graph >` alike, and refuses `graphTD`.
-        # A word direction needs a gap; a glyph one does not. mmdc renders
-        # `graph<` and `graph >` alike, and refuses `graphTD`.
         #
         # The two branches exist because a separator only closes the header
         # when a direction came first — `graph TD;A` renders and `graph;A`
@@ -227,12 +225,36 @@ module Sirena
             statement_end
         end
 
-        # A `;` continues a declaration list only when another `key:value`
-        # follows it. Otherwise it terminates the statement, so
-        # `style A fill:#f9f;B` keeps `B` as a node instead of swallowing it
-        # into the value — mermaid renders B, and scanning to the end of the
-        # line dropped it silently.
+        # What a `;` does inside a declaration turns on the value, not on the
+        # text after it. Measured against mmdc 11.12.0:
+        #
+        #   style A fill:red;B    -> nodes A and B  (the `;` ends the style)
+        #   style A fill:#f9f;B   -> node A only    (the `;` is value text)
+        #
+        # A `#` puts mermaid's lexer into a token that eats the `;` and keeps
+        # reading the line as style components. Deciding on the text after
+        # the `;` instead got the hash form backwards and drew a node B that
+        # neither mermaid nor main draws.
         rule(:style_property_list) do
+          hashed_property_list | separated_property_list
+        end
+
+        # The `#` has to arrive before the first `;` for the swallow to
+        # start: mmdc reads `style A fill:red;stroke:#333` as a style plus a
+        # node, because the `;` comes first.
+        rule(:hashed_property_list) do
+          (line_end.absent? >> semicolon.absent? >> comma.absent? >>
+            hash.absent? >> any).repeat >>
+            hash >>
+            (line_end.absent? >> comma.absent? >> any).repeat
+        end
+
+        # Without a `#`, a `;` ends the statement unless another `key:value`
+        # follows. That lookahead only survives because node ids here take no
+        # colon: mermaid draws `style A fill:red;stroke:blue` as a style plus
+        # a node called `stroke:blue`, and we cannot spell that id, so we
+        # swallow it exactly as main does rather than fail the whole line.
+        rule(:separated_property_list) do
           style_property >>
             (semicolon >> space? >> continues_list.present? >> style_property)
               .repeat
@@ -291,7 +313,7 @@ module Sirena
         # action while an unquoted one ends the statement, which is what
         # mermaid does with `click A "http://x";B`.
         rule(:click_action) do
-          callback_action | plain_action
+          callback_action | non_callback_action
         end
 
         # `click A call cb(foo;bar)` — the semicolon belongs to the callback
@@ -300,20 +322,39 @@ module Sirena
         # The name runs to the opening paren, dots and semicolons included:
         # mmdc reads `call cb;B()` as one callback named `cb;B`, and takes
         # `call ns.cb()` and any run of spaces after `call`.
+        #
+        # Only a quoted tooltip may trail the parens. mmdc refuses
+        # `call cb() _blank` and `call cb() nope`, which the old open-ended
+        # tail accepted.
         rule(:callback_action) do
-          str('call') >> space.repeat(1) >> callback_name >>
+          str('call') >> callback_gap >> callback_name >>
             lparen >> (rparen.absent? >> any).repeat >> rparen >>
-            plain_action.maybe
+            (callback_gap >> quoted_run).maybe
         end
+
+        # Any run of whitespace, newlines included — mmdc renders `click A
+        # call` newline `cb()`. Spaces alone left a stray `cb` node behind on
+        # the following line.
+        rule(:callback_gap) { (space | newline).repeat(1) }
 
         rule(:callback_name) do
           (lparen.absent? >> line_end.absent? >> any).repeat(1)
         end
 
+        # Once `call` has opened a callback the parens are compulsory: mmdc
+        # exits 1 on `click A call cb`. Backtracking into a plain action
+        # accepted it, and swallowed the next line with it.
+        rule(:non_callback_action) do
+          (str('call') >> callback_gap).absent? >> plain_action
+        end
+
+        # A bare paren is not action text — mmdc refuses `click A cb()` and
+        # `click A "u" (1)`. Inside quotes it is ordinary, so `quoted_run`
+        # still carries `"http://x(y)"`.
         rule(:plain_action) do
           (quoted_run |
             (unspaced_separator.absent? >> line_end.absent? >>
-             semicolon.absent? >> any)).repeat(1)
+             semicolon.absent? >> lparen.absent? >> any)).repeat(1)
         end
 
         # The action must not run up to a spaced separator and leave it for
@@ -332,16 +373,19 @@ module Sirena
           spaced_keyword | separable_keyword
         end
 
-        # mmdc renders `graph TD;click;B` as nodes `click` and `B`, so click
-        # is only a directive when an action can follow it.
-        # `click` alone is not a node — mmdc rejects a bare click — but
-        # `graph TD;click;B` is two nodes, so only the spaced form is
-        # reserved.
+        # `click`, `href` and `call` are directive words wherever a space, a
+        # newline or the end of input follows, and ordinary node ids before a
+        # `;` or a shape. mmdc refuses `href --- B`, `call --- B` and a bare
+        # `href`, and draws `href;B` and `href[x]` as nodes — so the
+        # reservation hangs off the boundary, not the word. Reserving only
+        # `click` let the other two through.
+        #
         # NOT `line_end`: it swallows a trailing semicolon, so `click;`
         # read as a directive and `graph TD;click;B` was refused. mmdc
         # draws that as two nodes.
         rule(:spaced_keyword) do
-          str('click') >> (space | newline | eof).present?
+          (str('click') | str('href') | str('call')) >>
+            (space | newline | eof).present?
         end
 
         # The boundary is a word boundary, not a space or a separator:
