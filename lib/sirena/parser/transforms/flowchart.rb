@@ -60,8 +60,21 @@ module Sirena
         # YAML fold it turned `"one` newline `two"` into `one two`, where
         # mmdc renders `one<br/>two`.
         def self.break_quoted_newlines(body)
-          body.gsub(/"[^"]*"/) { |run| run.gsub(/\n\s*/, '<br/>') }
+          body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, '<br/>') }
         end
+
+        # mermaid's lexer runs `/\n\s*/g` over the text between the quotes,
+        # and that `\s` is JavaScript's. Ruby's is the five ASCII ones, so
+        # a no-break space after the newline stayed in the label and mmdc
+        # dropped it. The set below is JavaScript's exactly: it takes the
+        # line and paragraph separators and the byte-order mark, and it
+        # leaves the next-line character and the zero-width space alone.
+        JS_SPACE = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
+                   '\u2028\u2029\u202f\u205f\u3000\ufeff]'
+
+        QUOTED_BREAK = /\n#{JS_SPACE}*/
+
+        private_constant :JS_SPACE, :QUOTED_BREAK
 
         # Mermaid reads these two off the document and ignores everything
         # else, a merge key included. Validating every entry refused

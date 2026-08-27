@@ -520,6 +520,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
     end
 
+    it "refuses an integer whose leading zero is followed by _" do
+      # js-yaml reads that zero as the start of a base prefix, so the next
+      # character may not be `_`. mmdc refuses `!!int 0_1`; the pattern
+      # here took it because any digit could lead.
+      expect { node_for("graph TD\nA@{ label: !!int 0_1 }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /does not fit/)
+    end
+
+    it "still takes a _ after a later zero" do
+      # The rule is about the first zero only. `00_1` is an integer to
+      # js-yaml, and mmdc draws this node with the label "hi".
+      source = "graph TD\nA(keep)@{ extra: !!int 00_1, label: hi }\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
     it "refuses a tag that does not belong to the node's kind" do
       expect { node_for("graph TD\nA@{ label: !!str [one, two] }\n") }
         .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
@@ -974,6 +990,57 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       source = %(graph TD\nA@{ label: "one\ntwo" }\n)
 
       expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "eats a no-break space after the line break" do
+      # mermaid's lexer rewrites `/\n\s*/` with JavaScript's `\s`, which
+      # takes the no-break space. Ruby's takes only the ASCII five, so the
+      # space stayed and mmdc renders `one<br/>two`.
+      source = %(graph TD\nA@{ label: "one\n\u00A0two" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "eats an ideographic space after the line break" do
+      source = %(graph TD\nA@{ label: "one\n\u3000two" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "eats a line separator mermaid would have eaten" do
+      # A bare line separator is refused, because libyaml ends a line on
+      # it and js-yaml does not. Right after a newline inside quotes
+      # mermaid deletes it first, so neither parser ever sees it.
+      source = %(graph TD\nA@{ label: "one\n\u2028two" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "eats a byte-order mark after the line break" do
+      # JavaScript counts the mark as whitespace, so mermaid deletes it
+      # here and mmdc renders `one<br/>two`. A mark elsewhere is refused,
+      # but this one never survives to be looked at.
+      source = %(graph TD\nA@{ label: "one\n\uFEFFtwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "still refuses a next-line character after the line break" do
+      # The next-line character is NOT in JavaScript's `\s`, so mermaid
+      # keeps it and libyaml still ends a line on it where js-yaml does
+      # not. Eating it here would have accepted a body we cannot read the
+      # way mermaid does.
+      source = %(graph TD\nA@{ label: "one\n\u0085two" }\n)
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Unreadable line break/)
+    end
+
+    it "leaves a zero-width space alone" do
+      # It is not in JavaScript's `\s`, and mmdc keeps it in the label.
+      source = %(graph TD\nA@{ label: "one\n\u200Btwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>\u200Btwo")
     end
 
     it "refuses an unmatched double quote" do
