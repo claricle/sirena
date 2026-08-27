@@ -84,6 +84,15 @@ parent-relative, the adapter flattens them to canvas coordinates on the
 way into the Scene, and that flattening is part of item 08, not
 something a renderer does later.
 
+**Node `x`/`y` is not the whole surface.** The Scene below also imports
+label positions and edge `sections` — `start_point`, `end_point` and
+`bend_points`. Each of those carries coordinates and each may sit in a
+different frame from the node it belongs to; ELK routes an edge in the
+frame of the container that owns it, which is not always the frame of
+its endpoints. Measure all three — node, label, edge section — and
+flatten all three. A probe that only checks node positions will look
+clean and leave every edge in the wrong place.
+
 Measured 2026-08-27 against elkrb at `v2`: a two-level graph came back
 with sibling boxes that overlap, so the frame could not be settled from
 one probe. Treat it as unknown until item 08 pins it.
@@ -212,9 +221,17 @@ attribute, two of them dead (item 02).
       offsets or move them to a `translate`, and neither puts the
       displacement in the Scene
 - [ ] `git_graph`, `mindmap`, `kanban` and `packet` each have a spec
-      asserting a known node lands at its **canvas** coordinate, with
-      the framing already included. That is the positive half; the
-      greps are only the negative half
+      asserting **canvas** coordinates, framing already included, on
+      *every* coordinate-bearing element that type emits — not one. One
+      assertion passes while edges, labels or bounds stay unshifted.
+      Each type exposes its own thing, so name it per type: `git_graph`
+      commits **and** connections, `kanban` columns **and** cards,
+      `mindmap` nodes **and** the links between them, `packet` fields
+      **and** grid lines **and** bit markers
+- [ ] `packet`'s case has a title, or `@title_offset` is zero and the
+      spec proves nothing
+- [ ] each of those four also asserts the document's own width and
+      height include the framing
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives

@@ -80,11 +80,22 @@ TYPES = {
 3. Detection reads the same table. One list, not two.
 
    `contract_spec.rb` moves with it, and it must still be the thing that
-   fails when a type is wrong. Done-when for this migration:
-   - it iterates `TYPES`, and covers every entry
-   - it still resolves each model and still runs each canonical fixture
-   - deleting one `TYPES` row turns it red
-   - it passes with `model:` removed from every registration
+   fails when a type is wrong. Its criteria are in `## Done when` below,
+   not here — the plan scorer reads that list and stops, so a check
+   parked in a step does not gate anything.
+
+   One trap worth naming. Item 01's spec catches a deleted registry row
+   because it compares two lists. After this item there is only `TYPES`,
+   and a spec that iterates `TYPES` **cannot** notice a missing row — the
+   row's example simply stops existing and the suite goes green with one
+   fewer test. Restore the second inventory from something outside the
+   table: the canonical fixture basenames under
+   `spec/fixtures/contract/`. One fixture per type, and `TYPES` must
+   match that set exactly.
+
+   This does not contradict the parity assertion disappearing. What goes
+   away is registry-versus-detector parity, because the detector is gone.
+   What replaces it is table-versus-fixtures parity.
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
 5. `Engine` holds no type constants. Its render method is the three
    lines from `00-overview.md`.
@@ -100,6 +111,14 @@ TYPES = {
 - [ ] `grep -n "def self.render" lib/sirena.rb` shows one, inside `module Sirena`
 - [ ] the CLI and `Sirena.render` behave identically; `corpus:check`
       unchanged
+- [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
+- [ ] it still resolves each model by convention, and still runs each
+      canonical fixture
+- [ ] it asserts `TYPES` keys match the basenames under
+      `spec/fixtures/contract/` exactly, in both directions
+- [ ] deleting one `TYPES` row turns it red — check it, do not assume
+      it. Without the fixture parity above, deletion is silent
+- [ ] it passes with `model:` removed from every registration
 
 ## Do not
 
