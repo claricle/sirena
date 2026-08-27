@@ -218,7 +218,7 @@ assertion so item 18 updates it rather than deletes it, and don't
 describe today's shapes as permanent. That is the item's own wording and
 it survives the shrink.
 
-### 4. Item 18 (typed IR) stays exactly as written
+### 4. Item 18 (typed IR) stays as written, plus one criterion
 
 An earlier draft of this section said item 18 "comes forward, scoped
 down" and that item 04 was its smaller replacement. **Both halves were
@@ -497,8 +497,10 @@ mirror what ELK emits, that's a swap; if we invent a different shape
 now, it's a redesign.
 
 **An ELK-shaped Scene is not a promise that elkrb will fill it.**
-`sankey` is graph-shaped and does its own layering; `block` is
-pre-positioned. `TODO.foundation/14`'s survey decides eligibility.
+`sankey` is graph-shaped in the IR, roots its Scene on `nodes`, and
+does its own layering; `block` is pre-positioned. Eligibility needs
+`TODO.foundation/14`'s survey **and** a recorded, user-approved
+exception for anything it excludes.
 
 ```ruby
 class Node    # id, x, y, width, height, labels, children

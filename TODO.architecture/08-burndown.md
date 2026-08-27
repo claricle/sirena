@@ -113,22 +113,24 @@ snapshot.
       `TODO.foundation/14` leaves the grid's fate open: "removed, or
       kept as an explicit opt-in with a named flag". **This plan takes
       the first.** Record that as 14's decision, satisfied — not as a
-      contradiction of it. What elkrb replaces is the positioning each graph-type layout
+      contradiction of it. What elkrb replaces is the positioning each **elkrb-eligible** layout
       does for itself after item 04. Their Scenes are already
       ELK-shaped, so this is a swap per layout rather than a redesign.
 
-      **Not every type.** Take eligibility from
-      `TODO.foundation/14`'s `docs/emit-accept-survey.md` and its
-      approved exceptions — **not** from item 18's
-      `docs/ir-type-map.md`, which classifies IR shape rather than
-      elkrb fitness, and not from a roster written here.
+      **Not every type.** `docs/emit-accept-survey.md` records the
+      emit/accept evidence; it does not by itself excuse a type.
+      Excluding one needs that evidence **plus a recorded,
+      user-approved exception**, exactly as item 14 requires. Do not
+      take eligibility from item 18's `docs/ir-type-map.md` — that
+      classifies IR shape, not elkrb fitness — and not from a roster
+      written here.
 
-      The two genuinely differ. `TODO.foundation/18:86-89` calls sankey
-      graph-shaped and says it does its own layering and declines
-      elkrb. `block` is pre-positioned by author-specified columns
-      (`18:47-51`) and `14:115` names it an explicit exception. An
-      ELK-shaped Scene is not the same claim as an elkrb-eligible
-      layout.
+      The classifications genuinely differ. `TODO.foundation/18:86-89`
+      calls sankey graph-shaped **in the IR** and says it does its own
+      layering and declines elkrb; its Scene is not ELK-shaped either.
+      `block` is pre-positioned by author-specified columns (`18:47-51`)
+      and `14:115` names it an explicit exception. IR shape, Scene shape
+      and elkrb eligibility are three separate claims.
 
    Keep that metric contract as written. Geometry comparison genuinely
    is subtle, and it is the one place in the original plan where the

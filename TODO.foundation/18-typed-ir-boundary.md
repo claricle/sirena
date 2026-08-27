@@ -122,6 +122,11 @@ the foundation close with the architecture issue #2 asks for half-built.
   because elkrb consuming the IR depends on it.
 - Every Mermaid type maps to one of the three shapes, recorded in
   `docs/ir-type-map.md` with evidence. No exception list.
+- `rake type:new[demo]` produces a type that satisfies the IR boundary,
+  and the file count in `TODO.architecture/07-adding-a-type.md`, its
+  file-count spec, `docs/adding-a-diagram-type.md` and `LAYERS.md`'s
+  new-type row all agree with what it generates. Adding the IR changes
+  that count; this item owns moving every copy of it.
 - No IR field names or encodes a notation-specific construct — asserted
   by a spec, not by inspection.
 - The corpus pass set is unchanged across the migration, byte-identical
