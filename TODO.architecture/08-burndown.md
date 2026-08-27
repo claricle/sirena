@@ -4,7 +4,9 @@
 can feel.
 **Size:** the largest block of work in the project by an order of
 magnitude. Ongoing.
-**Prerequisite:** item 07.
+**Prerequisite:** item 07, and `TODO.foundation/03a`'s coverage gate.
+This item is nothing but behaviour change, so `TODO.foundation/03:16` —
+no behaviour PR closes before 03a — binds it hardest of all.
 
 This item does not restate the burndown work — `TODO.foundation/05`,
 `06`, `07` and `14` describe it well and their per-type case counts and
