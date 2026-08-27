@@ -1044,4 +1044,139 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
   end
+
+  # mermaid wants the shape opener hard against the id. Widening the ids
+  # brought four more kinds of name to a `ws?` that had been taking a
+  # space, a tab, a newline and a whole comment line between the two.
+  describe "a gap before a shape opening" do
+    gaps = { "a space" => " ", "two spaces" => "  ", "a tab" => "\t",
+             "a newline" => "\n", "a comment line" => " %% c\n" }.freeze
+
+    %w[A A1 1 12 é a.b].each do |id|
+      it "takes #{id}[B] with the opening against the id" do
+        expect(parses?("graph TD\n#{id}[B]\n")).to be(true)
+      end
+
+      gaps.each do |label, gap|
+        it "refuses #{id}[B] behind #{label}" do
+          expect(parses?("graph TD\n#{id}#{gap}[B]\n")).to be(false)
+        end
+      end
+    end
+
+    # The other thirteen of `node_shape`'s fourteen openings. The square
+    # one is pinned against every id above.
+    ["(B)", "{B}", "((B))", "[[B]]", "[(B)]", ">B]", "([B])", "{{B}}",
+     "(((B)))", "[/B/]", "[\\B\\]", "[/B\\]", "[\\B/]"].each do |shape|
+      it "refuses 1 #{shape} behind a space" do
+        expect(parses?("graph TD\n1 #{shape}\n")).to be(false)
+      end
+    end
+
+    # Both ends of a link reach the same rule.
+    it "refuses a gap on the far side of a link" do
+      expect(parses?("graph TD\nZ-->1 [B]\n")).to be(false)
+    end
+
+    it "refuses a gap on the near side of a link" do
+      expect(parses?("graph TD\n1 [B]-->Z\n")).to be(false)
+    end
+  end
+
+  # Before mermaid lexes anything it rewrites every `#\w+;` in the source
+  # into a placeholder for an HTML entity, and the placeholder is spelt in
+  # characters no id may hold. So an id cannot carry the sequence, and the
+  # boundary is exact on both sides: the run is `[A-Za-z0-9_]` and the `;`
+  # abuts it.
+  describe "an entity escape inside an id" do
+    { "a letter run" => "#a;B",
+      "a longer letter run" => "#ab;B",
+      "a digit run" => "#35;B",
+      "a mixed run" => "#a1;B",
+      "an underscore in the run" => "#x_;B",
+      "a bare underscore run" => "#_;B",
+      "a named entity" => "#quot;B",
+      "an id in front of it" => "A#a;B",
+      "a digit in front of it" => "1#a;B",
+      "a second hash in front of it" => "##a;B",
+      "a hash inside the run" => "#a#b;B",
+      "a doubled semicolon after it" => "#a;;B",
+      "one behind a separator" => "A-->B;#a;C" }.each do |label, line|
+      it "refuses #{label}" do
+        expect(parses?("graph TD\n#{line}\n")).to be(false)
+      end
+    end
+
+    # None of these is `#\w+;`, and mmdc draws every one.
+    { "an empty run" => "#;B",
+      "an empty run after a digit" => "1#;B",
+      "a space before the semicolon" => "#a ;B",
+      "no semicolon at all" => "#a\nB",
+      "a letter outside ASCII in the run" => "#é;B",
+      "a dot in the run" => "#a.b;B",
+      "a hyphen in the run" => "#a-b;B" }.each do |label, line|
+      it "takes #{label}" do
+        expect(parses?("graph TD\n#{line}\n")).to be(true)
+      end
+    end
+
+    it "refuses one in a subgraph name" do
+      source = "graph TD\nZ-->A\nsubgraph #ab_c;\nX-->Y\nend\n"
+
+      expect(subgraph_name_parses?(source)).to be(false)
+    end
+  end
+
+  # mermaid lexes `end\b\s*` as the token that closes a subgraph, so a
+  # name that hunts one up and then ends the line closes the subgraph
+  # instead of opening it. It is the same hunt the trailing words run, and
+  # it restarts in the same places.
+  describe "a subgraph name that hunts up an end" do
+    def bare_subgraph_parses?(name)
+      subgraph_name_parses?("graph TD\nsubgraph #{name}\nX-->Y\nend\n")
+    end
+
+    # Bare names whose hunt lands on `end`. Trailing whitespace does not
+    # save them, in any mixture: mermaid's own token is `end\b\s*`, so
+    # the run goes with the word.
+    ["end", '""end', "1end", "éend", "##end", "1#end", "Zéend", "ZA中end",
+     "end ", "end   ", "end\t", "end\t\t", "end \t", "end\t "]
+      .each do |name|
+      it "refuses #{name.inspect} as a whole line" do
+        expect(bare_subgraph_parses?(name)).to be(false)
+      end
+    end
+
+    # Names whose hunt never reaches an `end`, and names that do carry one
+    # but are followed by something that is not whitespace — a title,
+    # another word or a `;`. That calls the guard off, which is what mmdc
+    # does.
+    ["Z#end", "Z1end", "ZéAend", "$end", "_end", "Zend", "endx", "end_",
+     "end2", "end [T]", "end A", "end A [T]", "end;", "end ;", "end\t;",
+     '""end [T]', '"" end A'].each do |name|
+      it "takes #{name.inspect} as a whole line" do
+        expect(bare_subgraph_parses?(name)).to be(true)
+      end
+    end
+  end
+
+  # The same space in front of a `;` that node statements already tolerate
+  # in `loose_separator`.
+  describe "a space before a subgraph's semicolon" do
+    %w[A endx end 1end].each do |name|
+      it "takes #{name} with a spaced semicolon" do
+        source = "graph TD\nsubgraph #{name} ;\nX-->Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(true)
+      end
+    end
+
+    # A control: the looser line end must not let anything else past the
+    # title. mmdc refuses this, and so did the tighter one.
+    it "still refuses a word after a title" do
+      source = "graph TD\nsubgraph A [T] X\nY-->Z\nend\n"
+
+      expect(subgraph_name_parses?(source)).to be(false)
+    end
+  end
 end

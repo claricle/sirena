@@ -260,8 +260,13 @@ module Sirena
           str('subgraph').as(:subgraph_keyword) >> space >>
             subgraph_id.as(:subgraph_id) >>
             subgraph_trailing_name >>
-            # A subgraph body must begin on a new physical line.
-            line_end >>
+            # A subgraph body must begin on a new physical line. The gap in
+            # front of the `;` is the one node statements already tolerate
+            # in `loose_separator`: mmdc draws `A ;` `end ;` `endx ;` and
+            # `1end ;` as readily as `A;`, and the tab forms with them. A
+            # bare `line_end` here refused every spaced form, because its
+            # own `space?` sits BEHIND the semicolon, not in front of it.
+            space? >> line_end >>
             ws? >>
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
@@ -610,9 +615,22 @@ module Sirena
         # the tree has one shape instead of one per combination. Parslet
         # omits a `.maybe` that wraps its own `.as`, which is why the
         # transform previously needed a rule per combination.
+        #
+        # The opening abuts the id, with no gap of any kind. A `ws?` here
+        # took a space, a tab, a newline and even a whole comment line
+        # between the two, and mmdc refuses every one of them.
+        #
+        # Measured over 660 cases — six ids (`A` `A1` `1` `12` `é` `a.b`)
+        # against nine shape openings and both ends of a link, each with
+        # ten gaps: none, one and two spaces, one and two tabs, the two
+        # space/tab mixtures, a vertical tab, a form feed and a carriage
+        # return. The 66 mmdc
+        # draws are exactly the 66 with no gap. `A\n[B]` and `A %% c\n[B]`
+        # are refused too, and widening node ids brought `1 [B]` `12 [B]`
+        # `é [B]` and `a.b [B]` into the same arm.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            (ws? >> node_shape).maybe.as(:shape) >>
+            node_shape.maybe.as(:shape) >>
             inline_class.maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
@@ -915,9 +933,39 @@ module Sirena
             subgraph_name_word
         end
 
+        # A name that hunts up an `end` and then ends the line closes the
+        # subgraph on the spot. mermaid lexes `end\b\s*` as its END token,
+        # so `subgraph end` opens nothing and the body's own `end` is left
+        # over — mmdc refuses it, and refuses `subgraph ""end` and
+        # `subgraph 1end` the same way.
+        #
+        # It is the same hunt the trailing words already run, and it lands
+        # in the same places: `end` `#end` `1end` `éend` `##end` `1#end`
+        # `Zéend` and `ZA中end` are all refused, while `Z#end` `Z1end`
+        # `ZéAend` `$end` `_end` `Zend` `endx` `end_` and `end2` all draw.
+        # `subgraph end` was refused only as a TRAILING word before this,
+        # so the first name let all eight through.
+        #
+        # Anything but whitespace after the name calls it off — a title,
+        # another word, or a `;`. `subgraph end [T]` `subgraph end A`
+        # `subgraph end;` `subgraph end ;` and `subgraph end\t;` all draw.
+        # Whitespace does not save it, in any mixture: `subgraph end`
+        # `end ` `end   ` `end\t` `end\t\t` `end \t` and `end\t ` are all
+        # refused, which is mermaid's own `end\b\s*` eating the run.
+        rule(:bare_subgraph_end) do
+          subgraph_end_id >> space? >> (newline | eof)
+        end
+
+        # The guard belongs here because this is the one rule BOTH arms of
+        # `subgraph_id` funnel through, so `subgraph end` and
+        # `subgraph ""end` are refused by the same line. It cannot fire in
+        # a TRAILING word — `subgraph_trailing_word` runs the stricter
+        # `subgraph_end_id.absent?` first, and that refuses a hunted `end`
+        # wherever the line ends.
         rule(:subgraph_name_word) do
-          subgraph_keyword_id.absent? >> dot_run_before_link.absent? >>
-            subgraph_arrowhead.absent? >> id_run
+          bare_subgraph_end.absent? >> subgraph_keyword_id.absent? >>
+            dot_run_before_link.absent? >> subgraph_arrowhead.absent? >>
+            id_run
         end
 
         # A link opening ends a subgraph name the same way it ends a node
@@ -1190,9 +1238,44 @@ module Sirena
         # And a letter outside ASCII starts it over.
         rule(:id_restart_char) { match[MERMAID_UNICODE_TEXT] }
 
-        rule(:id_run) { id_body.repeat(1) }
+        # An id stops in front of an entity escape, and the guard belongs
+        # to the RUN rather than to the character. `id_body` has a third
+        # reader in `arrowhead_ends_id`, which asks a different question —
+        # whether anything could continue an id behind a link opening — and
+        # there a `#` still could. Guarding the character instead flips that
+        # rule: measured, `arrowhead_ends_id` goes from no match to a match
+        # on `x.-#a;` `x.-#a;B` and `o.-#35;`.
+        #
+        # No source changes verdict either way, because `arrowhead_dot_dash`
+        # puts `arrowhead_open` in front and that arm already matches
+        # everything the second could — the same reason written down beside
+        # it. So this is blast radius, not a bug: one reader of `id_body` is
+        # left exactly as it was.
+        rule(:id_run) { (entity_escape.absent? >> id_body).repeat(1) }
 
         rule(:id_body) { id_dot | id_hyphen | id_char }
+
+        # Before mermaid lexes anything it rewrites the whole source, and
+        # one of the rewrites is `encodeEntities`, which turns every
+        # `#\w+;` into a placeholder standing for `&…;`
+        # (`mermaid/dist/chunks/mermaid.esm.min/chunk-7CWYLC5S.mjs`,
+        # `r.replace(/#\w+;/g, …)`). The placeholder is spelt in characters
+        # no id may hold, so an id that swallowed the sequence is one
+        # mermaid cannot lex.
+        #
+        # The shape is exact and was measured either side of every part of
+        # it: the run must be `[A-Za-z0-9_]`, and the `;` must abut it.
+        # mmdc refuses `#a;B` `#35;B` `#x_;B` `Z#a;B` `##a;B` `#a#b;B`
+        # `A-->B;#a;C` and `subgraph #ab_c;`, and draws `#;B` `1#;B`
+        # `#a ;B` `#a\nB` `#é;B` and `#a.b;B` — none of which the rewrite
+        # matches.
+        #
+        # Only the id stops here. mermaid applies the rewrite everywhere,
+        # so `A[#a;]` draws a node labelled `&a;`, and rendering that text
+        # belongs to a change that models the escape rather than refuses it.
+        rule(:entity_escape) do
+          str('#') >> match['a-zA-Z0-9_'].repeat(1) >> semicolon
+        end
 
         # Line terminator. A statement ends at the newline, and NOT at a
         # `%%` on the way to it: mermaid strips a comment with
