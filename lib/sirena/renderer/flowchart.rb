@@ -237,6 +237,14 @@ module Sirena
       # How far an edge label sits off the line it belongs to.
       EDGE_LABEL_LIFT = 5.0
 
+      # Only the depth has the oracle behind it: mmdc loops 24.3 past a
+      # 69.4x54 node, and 0.45 of that node's shorter side is 24.3.
+      #
+      # The reach and its limits do NOT. mermaid draws a self loop as a
+      # bezier and this draws a two-corner polyline, so their widths are
+      # not the same measurement and no mmdc run settles one from the
+      # other. They are pinned by the specs below this file, not by the
+      # oracle. Anyone changing them should know which half is which.
       SELF_LOOP_DEPTH = 0.45
       SELF_LOOP_REACH = 0.175
       SELF_LOOP_REACH_LIMITS = (18.0..50.0)
@@ -319,13 +327,14 @@ module Sirena
         edge.dig(:sections, 0, :bendPoints) || []
       end
 
-      # Where the loop sits, measured off mmdc 11.12.0. It reaches past
-      # the node edge by 0.45 of the node's SHORTER side, and spans 0.175
-      # of its WIDTH either side of centre whichever way it is thrown,
-      # never narrower than 18 or wider than 50.
+      # Where the loop sits. It reaches past the node edge by 0.45 of the
+      # node's SHORTER side, and spans 0.175 of its WIDTH either side of
+      # centre whichever way it is thrown, never narrower than 18 or wider
+      # than 50. The depth is mmdc's; the width is ours — see the note on
+      # the constants.
       #
-      # mmdc also caps that depth at 48. No node the layout builds reaches
-      # it, but a graph handed straight to the renderer can, so the cap is
+      # The depth is capped at 48. No node the layout builds reaches it,
+      # but a graph handed straight to the renderer can, so the cap is
       # written rather than assumed.
       def self_loop_bends(node, side)
         cx, cy = node_centre(node)
