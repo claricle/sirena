@@ -47,7 +47,7 @@ module Sirena
           body = break_quoted_newlines(body)
           return {} if body.empty?
 
-          # Mermaid's own wrapping: a single-line body becomes a block
+          # Mermaid's own wrapping: a single-line body becomes a flow
           # mapping between braces, a multiline one is used as written. It
           # does NOT normalise a missing space after a colon — `shape:rect`
           # is an unknown key there and the node keeps its default, so
@@ -77,7 +77,7 @@ module Sirena
         # empty body sirena drew as a rectangle. mmdc refuses it, because
         # what is left after the comment goes is `A@{` nl `}`.
         def self.strip_metadata_comments(body)
-          body.gsub(/(?<=\n)\s*%%(?!\{)[^\n]+\n?/, '')
+          body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, '')
         end
 
         # A newline inside a double-quoted value is a line break to
@@ -106,12 +106,12 @@ module Sirena
         # of those. A root that is not a mapping has neither key, and mmdc
         # draws the node untouched.
         #
-        # Mermaid reads seven more keys off the document. Six of them
+        # Mermaid reads eight more keys off the document. Six of them
         # (`labelType`, `form`, `pos`, `w`, `h`, `constraint`) leave the
-        # picture alone on their own, so ignoring them matches mmdc. The
-        # seventh does not: `A@{ icon: "fa:bell" }` draws an icon with an
-        # empty label there, and a plain rectangle named `A` here. Icons
-        # are a node kind sirena does not have yet.
+        # picture alone on their own, so ignoring them matches mmdc. Two do
+        # not: `A@{ icon: "fa:bell" }` and `A@{ img: "x.png" }` each draw a
+        # node with an empty label there, and a plain rectangle named `A`
+        # here. Both are node kinds sirena does not have yet.
         def self.entries(document)
           return {} unless document.is_a?(Hash)
 

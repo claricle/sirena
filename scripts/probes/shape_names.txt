@@ -145,3 +145,5 @@ tri
 triangle
 win-pane
 window-pane
+rect_left_inv_arrow
+lined-proc

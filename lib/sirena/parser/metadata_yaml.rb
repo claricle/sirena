@@ -74,6 +74,11 @@ module Sirena
       # `&a:b hi` is the anchor "a:b" holding "hi" there, and the anchor "a"
       # holding ":b hi" here, so the same source names a different label.
       # A tag may sit in front of the anchor, and is stepped over.
+      #
+      # It cuts the other way too: libyaml's anchor charset is the narrower
+      # one, so an anchor holding `.`, `!`, `#` or `%` is refused here and
+      # drawn by mermaid. That is a refusal rather than a wrong picture, and
+      # reading it would mean giving up libyaml's scanner.
       ANCHOR_PROPERTY = /\A(?:!\S*[ \t]+)?&(?<name>[^\s,\[\]{}]*)/
 
       NULL_WORDS = %w[~ null Null NULL].freeze
