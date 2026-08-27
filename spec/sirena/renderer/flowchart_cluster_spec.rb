@@ -434,6 +434,16 @@ RSpec.describe Sirena::Engine do
         .to eq(centre_gap(box(xml, "outer"), box(xml, "inner")))
     end
 
+    it "routes a contained parent/child edge between both borders" do
+      xml = render("flowchart TD\nsubgraph outer\nsubgraph inner\nA\n" \
+                   "end\nend\nouter --> inner\n")
+      path = xml[/<g id="edge-outer_to_inner">\s*<path[^>]*\bd="([^"]*)"/, 1]
+      points = path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a
+
+      expect(on_border?(box(xml, "outer"), *points.first)).to be(true)
+      expect(on_border?(box(xml, "inner"), *points.last)).to be(true)
+    end
+
     # The label used to be measured from the two centres while the path
     # was drawn from the borders, which left it sitting inside the box
     # the line no longer starts in.
@@ -535,20 +545,34 @@ RSpec.describe Sirena::Engine do
         .to eq("M 60.740735 46.660485 L 300.7037 114.814705")
     end
 
-    # The self-loop triggers on box IDENTITY, not on the two ends
-    # landing in the same place. Two DIFFERENT boxes sharing a centre
-    # are a nested pair, not a loop, and must not be drawn as one —
-    # a centre comparison would loop this and draw the wrong picture.
-    it "does not loop two different boxes that share a centre" do
+    # Two DIFFERENT boxes can share a centre too. There is no straight
+    # direction to trim in that case, so the route must bend visibly.
+    it "loops two different boxes that share a centre" do
       graph = { id: "g",
                 children: [cluster("s", x: 0.0, y: 0.0,
                                         width: 100.0, height: 100.0),
                            cluster("t", x: 25.0, y: 25.0,
                                         width: 50.0, height: 50.0)],
                 edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }] }
-      drawn = path_of(graph, "s_to_t").scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
+      points = path_of(graph, "s_to_t").scan(/-?\d+(?:\.\d+)?/)
+        .map(&:to_f).each_slice(2).to_a
 
-      expect(drawn.size).to eq(4)
+      expect(points.size).to be > 2
+      expect(points.uniq.size).to be > 1
+    end
+
+    it "keeps a zero-size coincident edge nonzero" do
+      graph = { id: "g",
+                children: [cluster("s", x: 10.0, y: 10.0,
+                                        width: 0.0, height: 0.0),
+                           cluster("t", x: 10.005, y: 10.005,
+                                        width: 0.0, height: 0.0)],
+                edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }] }
+      points = path_of(graph, "s_to_t").scan(/-?\d+(?:\.\d+)?/)
+        .map(&:to_f).each_slice(2).to_a
+
+      expect(points.size).to be > 2
+      expect(points.each_cons(2).none? { |from, to| from == to }).to be(true)
     end
 
     # Two boxes that meet add up to exactly one run between their
@@ -603,6 +627,17 @@ RSpec.describe Sirena::Engine do
       expect(on_border?(outer, *points.first)).to be(true)
       expect(on_border?(outer, *points.last)).to be(true)
       expect(points.map(&:first).max).to be > outer[:x] + outer[:width]
+    end
+
+    it "uses distinct border endpoints for a nonzero cluster self-edge" do
+      xml = render(source)
+      outer = box(xml, "s")
+      points = loop_points(xml)
+
+      expect(points.uniq.size).to be > 1
+      expect(points.first).not_to eq(points.last)
+      expect(on_border?(outer, *points.first)).to be(true)
+      expect(on_border?(outer, *points.last)).to be(true)
     end
 
     # The loop reaches past the box it leaves, so the page has to still

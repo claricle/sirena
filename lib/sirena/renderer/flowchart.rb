@@ -25,12 +25,16 @@ module Sirena
       # zero units long.
       TOUCHING = 1e-9
 
-      # How far a self-edge loop reaches past the border it leaves, and
-      # half as much either side of it. `calculate_width` already adds
+      # Routes are written to two decimal places after trimming. Centres
+      # closer than one output unit cannot provide a useful straight run.
+      COINCIDENT = 0.01
+
+      # How far a degenerate loop reaches past the borders it leaves.
+      # `calculate_width` already adds
       # 40 past the widest box and `Base#create_document` another 20
       # either side, so a loop this size needs no change to the sizing.
       # Widen it past 60 and the page has to grow with it.
-      SELF_LOOP_REACH = 20
+      LOOP_REACH = 20
 
       # Renders a laid-out graph to SVG.
       #
@@ -316,10 +320,8 @@ module Sirena
 
         return unless source && target
 
-        # One route, so the path and its label cannot disagree. A
-        # self-loop's two ends both sit on the same border, so its
-        # label lands there rather than out at the loop's far side.
-        loop_points = self_loop(source, target)
+        # One route, so the path and its label cannot disagree.
+        loop_points = coincident_loop(source, target)
         route = loop_points ? ends_of(loop_points) : route_ends(source, target)
         # A loop carries its own two bends; otherwise take whatever the
         # layout left in the ELK section.
@@ -369,46 +371,45 @@ module Sirena
         "M #{sx} #{sy} L #{tx} #{ty}"
       end
 
-      # An edge from a box to itself has no run between two centres: both
-      # ends trimmed to the same point and the path came out zero units
-      # long, carrying an arrowhead on nothing. mermaid draws a visible
-      # loop, so this leaves the border and comes back to it.
-      #
-      # Clusters and plain nodes alike. It showed on a cluster first,
-      # because a cluster is painted behind its edge while a node covers
-      # its own — but the collapse is the same one, and an empty
-      # subgraph named by an edge is drawn as a node, so `s --> s`
-      # arrives here either way.
-      #
-      # Both ends sit at the MIDDLE of the right side, the one point
-      # every outline reaches. `create_node_shape` draws five of them
-      # and no more: a rectangle and a rounded rectangle meet it along
-      # the whole side, a circle at its rightmost point, and a rhombus
-      # and a hexagon at their right vertex. Every other shape name
-      # falls through to the rectangle. Anchoring a third of the way
-      # down instead put the loop on the bounding BOX rather than the
-      # drawn border, and left a rhombus wearing it eight units clear.
-      #
-      # The two ends therefore coincide, and the loop is closed. That is
-      # not the defect this fixes — the bends are a fixed reach away, so
-      # the path has length whatever the box's size, and a box of no
-      # height can no longer collapse it.
-      #
-      # Box identity, not coinciding centres: two distinct boxes may sit
-      # concentrically, and a nested pair is not a loop.
-      #
-      # @return [Array<Hash>, nil] four points, or nil when not a self-edge
-      def self_loop(source, target)
-        return nil unless source.equal?(target)
+      # A straight run needs a direction. Self-edges and distinct boxes
+      # with the same centre have none, so route from the source's top to
+      # the target's bottom with two bends beyond both boxes.
+      def coincident_loop(source, target)
+        source_centre = centre_of(source)
+        target_centre = centre_of(target)
+        return nil unless near?(source_centre, target_centre)
 
-        right = (source[:x] || 0) + (source[:width] || 0)
-        middle = (source[:y] || 0) + ((source[:height] || 0) / 2.0)
-        out = right + SELF_LOOP_REACH
-        spread = SELF_LOOP_REACH / 2.0
-        [{ x: right, y: middle.round(2) },
-         { x: out, y: (middle - spread).round(2) },
-         { x: out, y: (middle + spread).round(2) },
-         { x: right, y: middle.round(2) }]
+        source_top, = vertical_outline(source, source_centre[1])
+        _, target_bottom = vertical_outline(target, target_centre[1])
+        start = { x: source_centre[0], y: source_top }
+        finish = { x: target_centre[0],
+                   y: target_bottom }
+        out = [right_of(source), right_of(target)].max + LOOP_REACH
+        bend_y = finish[:y]
+        bend_y += LOOP_REACH if near?(start.values, finish.values)
+
+        [start, { x: out, y: start[:y] }, { x: out, y: bend_y }, finish]
+          .map { |point| point.transform_values { |value| value.round(2) } }
+      end
+
+      def near?(first, second)
+        first.zip(second).all? { |left, right| (left - right).abs <= COINCIDENT }
+      end
+
+      def right_of(box)
+        (box[:x] || 0) + (box[:width] || 0)
+      end
+
+      # Circle nodes use the smaller box dimension as their radius, so
+      # their vertical outline may sit inside the box bounds.
+      def vertical_outline(box, centre_y)
+        y = box[:y] || 0
+        height = box[:height] || 0
+        shape = box.dig(:metadata, :shape)
+        return [y, y + height] unless %w[circle double_circle].include?(shape)
+
+        radius = [box[:width] || 0, height].min / 2
+        [centre_y - radius, centre_y + radius]
       end
 
       # Points carry the shape ELK bend points already have, so the two
@@ -430,12 +431,26 @@ module Sirena
         out = step_out(source, sx, sy, tx, ty)
         back = step_out(target, tx, ty, sx, sy)
 
-        # One box holds the other, or they overlap along this line.
-        # Trimming would put each end past the other and draw the arrow
-        # backwards; centre to centre at least points the right way.
+        # A step past the other centre means that centre is inside this
+        # box. Use the opposite sides so the ordered route still points
+        # from source to target while touching both borders.
+        if out >= 1.0 - TOUCHING || back >= 1.0 - TOUCHING
+          return enclosing_route(source, target, sx, sy, tx, ty)
+        end
+
+        # Partially overlapping or touching boxes would otherwise trim
+        # to reversed or identical points. Keep the established fallback.
         return [sx, sy, tx, ty] if out + back >= 1.0 - TOUCHING
 
         along(sx, sy, tx, ty, out) + along(tx, ty, sx, sy, back)
+      end
+
+      def enclosing_route(source, target, sx, sy, tx, ty)
+        source_back = step_out(source, sx, sy, (2 * sx) - tx, (2 * sy) - ty)
+        target_back = step_out(target, tx, ty, (2 * tx) - sx, (2 * ty) - sy)
+
+        along(sx, sy, tx, ty, -source_back) +
+          along(tx, ty, sx, sy, -target_back)
       end
 
       def centre_of(box)
@@ -443,8 +458,9 @@ module Sirena
          (box[:y] || 0) + ((box[:height] || 50) / 2)]
       end
 
-      # How far along the run to the other centre this box's border sits,
-      # as a fraction. A node is not trimmed, so it stays where it is.
+      # How far along the ray to the other centre this box's border sits.
+      # Values above one mean the other centre lies inside this box. A node
+      # is not trimmed, so it stays where it is.
       #
       # Measured off the sides themselves rather than from half the
       # width: the centre above is the one this renderer has always
@@ -459,7 +475,7 @@ module Sirena
         reach = []
         reach << side(cx, dx, box[:x] || 0, box[:width] || 0) unless dx.zero?
         reach << side(cy, dy, box[:y] || 0, box[:height] || 0) unless dy.zero?
-        reach.empty? ? 0.0 : reach.min.clamp(0.0, 1.0)
+        reach.empty? ? 0.0 : reach.min.clamp(0.0, Float::INFINITY)
       end
 
       # The side the run is heading for, as a fraction of the whole run.
