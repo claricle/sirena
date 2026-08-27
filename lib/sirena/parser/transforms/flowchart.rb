@@ -14,14 +14,27 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
-        # @raise [Parser::ParseError] on a shape name mermaid does not know
+        # Two ways a name can fail, and they are not the same thing.
+        # Mermaid does not know `nope`, and says so in words a corpus case
+        # quotes. Mermaid does know `bang`, and draws it as a curved
+        # outline sirena has no shape for — naming it a rectangle drew a
+        # picture the source did not ask for, which is worse than saying no.
+        #
+        # @raise [Parser::ParseError] on a name sirena will not draw
         def self.metadata_shape(name)
           return nil if name.nil?
 
           MERMAID_SHAPES.fetch(name) do
-            raise Parser::ParseError, "No such shape: #{name}."
+            raise Parser::ParseError, unsupported_shape(name)
           end
         end
+
+        def self.unsupported_shape(name)
+          return "No such shape: #{name}." unless UNDRAWABLE_SHAPES.include?(name)
+
+          "Shape not supported yet: #{name}."
+        end
+        private_class_method :unsupported_shape
 
         # mermaid parses the body with js-yaml: a single-line body as a flow
         # mapping, a multiline one as block YAML. Psych does both, so the
@@ -29,13 +42,10 @@ module Sirena
         #
         # @raise [Parser::ParseError] on YAML mermaid would also refuse
         def self.metadata_entries(metadata)
-          body = break_quoted_newlines(line_feeds(metadata_body(metadata)))
+          body = line_feeds(metadata_body(metadata))
+          body = strip_metadata_comments(body)
+          body = break_quoted_newlines(body)
           return {} if body.empty?
-
-          # `@{}` and `@{ }` are fine and mean nothing; `@{` newline `}` is
-          # not, because block YAML needs at least one entry. mermaid draws
-          # the first two and refuses the third.
-          return {} if body.strip.empty? && !body.include?("\n")
 
           # Mermaid's own wrapping: a single-line body becomes a block
           # mapping between braces, a multiline one is used as written. It
@@ -53,6 +63,21 @@ module Sirena
         # unlevelled, and took a body mermaid refuses.
         def self.line_feeds(body)
           body.gsub(/\r\n?/, "\n")
+        end
+
+        # Mermaid strips comments before lexing, so metadata never sees them.
+        # `%%{` is a directive rather than a comment and stays, and a `%%`
+        # with nothing after it is not a comment either.
+        #
+        # The body is a fragment cut from the middle of a line, so its own
+        # first character is not the start of a line — only the newlines
+        # inside it start one. Anchoring on `^` instead let the leading
+        # whitespace run reach back past `@{` and eat the newline that
+        # opened the block, which turned `A@{` nl `%% c` nl `}` into an
+        # empty body sirena drew as a rectangle. mmdc refuses it, because
+        # what is left after the comment goes is `A@{` nl `}`.
+        def self.strip_metadata_comments(body)
+          body.gsub(/(?<=\n)\s*%%(?!\{)[^\n]+\n?/, '')
         end
 
         # A newline inside a double-quoted value is a line break to
