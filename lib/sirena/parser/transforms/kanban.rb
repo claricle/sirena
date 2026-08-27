@@ -28,14 +28,21 @@ module Sirena
             # Track minimum indentation
             @min_indent = indent_size if @min_indent.nil? || indent_size < @min_indent
 
-            item = {
-              id: line_data[:id].to_s,
-              text: line_data[:text].to_s,
-              indent: indent_size,
-              metadata: line_data[:metadata]
-            }
+            id = line_data[:id].to_s
 
-            @items << item
+            # An item with no bracket label displays its id, which is what
+            # mermaid renders. Resolved here, once, because add_column and
+            # add_card both read this same field.
+            #
+            # The metadata is parsed here rather than in add_card so that
+            # add_column can consult it too; parse_metadata returns {} for a
+            # nil subtree, so this is always a Hash.
+            @items << {
+              id: id,
+              text: line_data[:text]&.to_s || id,
+              indent: indent_size,
+              metadata: parse_metadata(line_data[:metadata])
+            }
           end
 
           def finalize
@@ -59,7 +66,8 @@ module Sirena
           def add_column(item)
             column = {
               id: item[:id],
-              title: item[:text],
+              # A `label:` in the metadata replaces the display text.
+              title: item[:metadata][:label] || item[:text],
               cards: []
             }
 
@@ -71,18 +79,10 @@ module Sirena
             # Cards must belong to a column
             return unless @current_column
 
-            card = {
+            @current_column[:cards] << {
               id: item[:id],
               text: item[:text]
-            }
-
-            # Extract metadata if present
-            if item[:metadata]
-              metadata = parse_metadata(item[:metadata])
-              card.merge!(metadata)
-            end
-
-            @current_column[:cards] << card
+            }.merge(item[:metadata])
           end
 
           def parse_metadata(metadata_data)

@@ -32,13 +32,30 @@ module Sirena
             (newline | eof)
         end
 
-        # An item can be either a column or a card
+        # An item can be either a column or a card. The label is optional:
+        # mermaid accepts a bare id, with or without trailing metadata.
+        #
+        # Ordered alternation, labelled first, rather than making the label
+        # `.maybe`. Parslet does not backtrack into a `.maybe` that already
+        # matched, so `identifier >> label.maybe >> ...` would commit to the
+        # label and never reconsider the bare form.
         rule(:item) do
+          (labelled_item | bare_item) >> metadata.maybe
+        end
+
+        rule(:labelled_item) do
           identifier.as(:id) >>
             lbracket >>
             match('[^\]]').repeat(1).as(:text) >>
-            rbracket >>
-            metadata.maybe
+            rbracket
+        end
+
+        # Deliberately just an identifier. Mermaid also accepts a bare label
+        # containing spaces, but widening this to free text would swallow
+        # `root(Root)` and `:::hot` as literal labels, turning unsupported
+        # constructs into silently wrong output instead of parse failures.
+        rule(:bare_item) do
+          identifier.as(:id)
         end
 
         # Metadata: @{ key: 'value', key2: 'value2' }
