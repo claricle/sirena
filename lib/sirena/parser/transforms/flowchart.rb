@@ -12,6 +12,75 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
+        # `@{ shape: ... }` names, mapped onto the shapes this renderer can
+        # draw. Discovered by probing mmdc 11.12.0 one name at a time
+        # rather than copied from the docs — mermaid REJECTS a name it does
+        # not know, so accepting anything here would render sources mermaid
+        # refuses.
+        #
+        # Many names collapse onto one shape because sirena draws five
+        # distinct ones. That is a renderer gap, not a parsing one.
+        METADATA_SHAPES = {
+          'rect' => 'rect', 'proc' => 'rect', 'process' => 'rect',
+          'rectangle' => 'rect', 'notch-rect' => 'rect', 'card' => 'rect',
+          'div-rect' => 'rect', 'divided-process' => 'rect',
+          'lined-document' => 'rect', 'lined-proc' => 'rect',
+          'loop-limit' => 'rect', 'multi-process' => 'rect',
+          'multi-rect' => 'rect', 'stacked-document' => 'rect',
+          'tag-doc' => 'rect', 'tag-rect' => 'rect', 'win-pane' => 'rect',
+          'doc' => 'rect', 'delay' => 'rect', 'display' => 'rect',
+          'manual-input' => 'rect', 'manual-file' => 'rect',
+          'paper-tape' => 'rect', 'curv-trap' => 'rect', 'odd' => 'rect',
+          'text' => 'rect', 'collate' => 'rect', 'extract' => 'rect',
+          'triangle' => 'rect', 'brace' => 'rect', 'brace-l' => 'rect',
+          'brace-r' => 'rect', 'braces' => 'rect', 'comment' => 'rect',
+          'bolt' => 'rect', 'hourglass' => 'rect', 'junction' => 'rect',
+          'fork' => 'rect', 'join' => 'rect',
+          'rounded' => 'rounded', 'event' => 'rounded',
+          'stadium' => 'stadium', 'terminal' => 'stadium',
+          'pill' => 'stadium',
+          'subroutine' => 'subroutine',
+          'cylinder' => 'cylindrical', 'db' => 'cylindrical',
+          'database' => 'cylindrical', 'disk' => 'cylindrical',
+          'cyl' => 'cylindrical', 'lin-cyl' => 'cylindrical',
+          'circle' => 'circle', 'sm-circ' => 'circle',
+          'start' => 'circle', 'stop' => 'circle',
+          'fr-circ' => 'double_circle', 'framed-circle' => 'double_circle',
+          'dbl-circ' => 'double_circle', 'filled-circle' => 'double_circle',
+          'diamond' => 'rhombus', 'question' => 'rhombus',
+          'decision' => 'rhombus',
+          'hexagon' => 'hexagon', 'in-out' => 'hexagon',
+          'out-in' => 'hexagon', 'prepare' => 'hexagon',
+          'lean-r' => 'parallelogram', 'lean-right' => 'parallelogram',
+          'lean-l' => 'parallelogram_alt', 'lean-left' => 'parallelogram_alt',
+          'trap-b' => 'trapezoid', 'trapezoid' => 'trapezoid',
+          'trap-t' => 'trapezoid_alt',
+          'trapezoid-bottom' => 'trapezoid_alt'
+        }.freeze
+
+        # @raise [Parser::ParseError] on a shape name mermaid does not know
+        def self.metadata_shape(name)
+          return nil if name.nil?
+
+          METADATA_SHAPES.fetch(name) do
+            raise Parser::ParseError, "No such shape: #{name}."
+          end
+        end
+
+        def self.metadata_entries(metadata)
+          return {} if metadata.nil?
+
+          Array(metadata.is_a?(Hash) ? [metadata] : metadata)
+            .to_h { |e| [e[:key].to_s, entry_value(e[:value])] }
+        end
+
+        # Stripped for the bare form only: an unquoted value runs to the
+        # comma or brace and picks up the space before it, while a quoted
+        # value means exactly what it says.
+        def self.entry_value(value)
+          value.is_a?(Hash) ? value[:string].to_s : value.to_s.strip
+        end
+
         # Shape delimiter to type mapping
         SHAPE_MAP = {
           '[]' => 'rect',
@@ -87,60 +156,6 @@ module Sirena
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
             label: ''
-          }
-        end
-
-        # Node with shape
-        rule(
-          node: {
-            node_id: simple(:id),
-            shape: subtree(:s)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: s[:shape_type] || 'rect',
-            label: s[:label] || id.to_s
-          }
-        end
-
-        # Node with shape and inline class
-        rule(
-          node: {
-            node_id: simple(:id),
-            inline_class: simple(:cls),
-            shape: subtree(:s)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: s[:shape_type] || 'rect',
-            label: s[:label] || id.to_s,
-            classes: cls.to_s
-          }
-        end
-
-        # Node without shape
-        rule(node: { node_id: simple(:id) }) do
-          {
-            node_id: id.to_s,
-            shape_type: 'rect',
-            label: id.to_s
-          }
-        end
-
-        # Node with inline class but no shape
-        rule(
-          node: {
-            node_id: simple(:id),
-            inline_class: simple(:cls)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: 'rect',
-            label: id.to_s,
-            classes: cls.to_s
           }
         end
 
@@ -301,6 +316,12 @@ module Sirena
             shape_type = 'rect'
             label = node_id
           end
+
+          # `@{ shape: ..., label: ... }` wins over the bracket form, which
+          # is what mermaid does when a node carries both.
+          entries = metadata_entries(node_hash[:metadata])
+          shape_type = metadata_shape(entries['shape']) || shape_type
+          label = entries['label'] || label
 
           {
             node_id: node_id,
