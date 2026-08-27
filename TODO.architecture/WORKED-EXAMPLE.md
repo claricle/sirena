@@ -103,7 +103,7 @@ module Sirena
         attribute :sectors, Sector, collection: true
       end
 
-      def call(diagram, theme:, today:)
+      def scene(diagram)   # theme and today are readers on Layout::Base
         angle = -90.0
         sectors = diagram.slices.each_with_index.map do |slice, i|
           sweep = diagram.slice_angle(slice)
@@ -209,7 +209,7 @@ Those get **no Layout class at all**. Delete the file. The renderer takes
 `Diagram::Info` directly, and the engine's one line handles it:
 
 ```ruby
-scene = Layout.for(type)&.call(model, theme: theme) || model
+scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
 ```
 
 **Rule: if a layout would only copy fields, do not write one.**

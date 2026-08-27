@@ -114,8 +114,8 @@ One commit — and one PR — per rename.
    | contract fixture filename | item 01's spec cannot find `xy_chart.mmd`, so it goes red **immediately** — not at item 06. Item 06's fixture parity is the second net, not the first |
    | grammar or builder class | nothing fails; the inconsistency just survives |
 
-   That last pair is why item 06's lookup cannot answer `nil` for
-   everything. `Parser.for` and `Renderer.for` are mandatory and must
+   The parser/renderer row and the layout row above are why item 06's
+   lookup cannot answer `nil` for everything. `Parser.for` and `Renderer.for` are mandatory and must
    raise when convention resolution fails. `Layout.for` may return
    `nil`, but **only when the layout file genuinely does not exist** —
    if the file is there and the constant inside it does not match, that
