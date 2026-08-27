@@ -722,6 +722,55 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # Mermaid strips comments with `/^\s*%%(?!{)[^\n]+\n?/gm`, read from
+  # mermaid 11.12.0's own `cleanupComments`. The `^` is anchored to a line
+  # start, so a `%%` with a statement in front of it is never stripped and
+  # never a comment — it is content, and mmdc reads `A%%c` as one node
+  # called `A%%c`.
+  #
+  # `line_end` used to end a statement at such a `%%`. That was wrong for
+  # every input it took, in one of two ways, and both are pinned below.
+  describe "a comment at the end of a statement line" do
+    # With a gap in front of it mmdc refuses the whole diagram, and this
+    # used to draw the statement. Widening node ids is what brought the
+    # numeric and non-ASCII rows into the same arm.
+    [
+      "graph TD\nA %% c",
+      "graph TD\n1 %% c",
+      "graph TD\né %% c",
+      "graph TD\nA-->B %% c",
+      "graph TD\n1-->2 %% c",
+      "graph TD\nA[T] %% c",
+      "graph TD\nA-->B\nclass A foo %% c",
+      "graph TD\nA-->B\nclick A \"u\" %% c"
+    ].each do |source|
+      it "refuses #{source.lines.last.chomp.inspect}, as mmdc does" do
+        expect(renders?("#{source}\n")).to be(false)
+      end
+    end
+
+    # Tight against the statement mmdc draws it, as part of the node's own
+    # name. This refuses it rather than drawing `A` and dropping the rest,
+    # and closing the gap means letting `%` into a node id — a widening
+    # this PR does not make.
+    it "refuses A%%c, which mmdc reads as one node called A%%c" do
+      expect(renders?("graph TD\nA%%c\n")).to be(false)
+    end
+
+    # A comment on its OWN line is untouched by all of this: it is the one
+    # shape mermaid's regex actually strips, leading whitespace and all.
+    {
+      "on the line after a statement" => "graph TD\nA\n%% c\n",
+      "indented on its own line" => "graph TD\nA\n  %% c\n",
+      "after a statement and a separator" => "graph TD\nA;\n%% c\n",
+      "before every statement" => "graph TD\n%% c\nA\n"
+    }.each do |label, source|
+      it "still takes a comment #{label}" do
+        expect(renders?(source)).to be(true)
+      end
+    end
+  end
+
   describe "the separator rule itself" do
     # `statement_end` must never be repeated directly: its `line_end` arm
     # succeeds zero-width at EOF, so repeating it would spin forever. Getting

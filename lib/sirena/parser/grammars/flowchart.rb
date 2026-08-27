@@ -1159,17 +1159,26 @@ module Sirena
 
         rule(:id_body) { id_dot | id_hyphen | id_char }
 
-        # Line terminator
-        # The optional semicolon here may not be followed by a comment on
-        # the same line, matching the separator rule and mmdc: `A;%% c` is
-        # rejected while `A;` then a `%% c` line is ordinary.
+        # Line terminator. A statement ends at the newline, and NOT at a
+        # `%%` on the way to it: mermaid strips a comment with
+        # `/^\s*%%(?!{)[^\n]+\n?/gm`, anchored to the line start, so a `%%`
+        # with a statement in front of it is never a comment. It is content,
+        # and mmdc reads `A%%c` as one node called `A%%c` and `A;%%c` as the
+        # two nodes `A` and `%%c`.
         #
-        # Only the semicolon form is faithful. mmdc also rejects `A --> B %% c`
-        # with no separator, and the `comment.maybe` arm below still takes it —
-        # that arm predates this rule and tightening it is its own change.
+        # Taking a trailing comment here was therefore wrong for every input
+        # it accepted. It drew `A` for `A%%c`, dropping text mermaid keeps,
+        # and it drew `A` for `A %% c`, `A --> B %% c` and `A[T] %% c`,
+        # which mmdc refuses outright. Widening node ids brought `1 %% c`
+        # and its kin into the same arm, which is what made a rule that was
+        # never right reachable from more of the corpus.
+        #
+        # The refusal is an under-acceptance for the abutting `A%%c` alone,
+        # and closing that one means letting `%` into a node id — a widening
+        # this PR does not make.
         rule(:line_end) do
           (semicolon >> space? >> str('%%').absent?).maybe >>
-            space? >> (comment.maybe >> newline | eof)
+            space? >> (newline | eof)
         end
       end
     end

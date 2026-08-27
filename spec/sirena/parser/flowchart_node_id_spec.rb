@@ -522,10 +522,15 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         expect(parses?("graph TD\n#{word}")).to be(false)
       end
 
-      # A comment is not whitespace to mermaid's lexer, so the word in
-      # front of one is an ordinary id and mmdc draws the node.
-      it "reads #{word} in front of a comment as a node" do
-        expect(node_ids("graph TD\n#{word}%%c\n")).to eq([word])
+      # A `%%` with a word in front of it is not a comment: mermaid strips
+      # one only at the start of a line, so mmdc reads `#{word}%%c` as a
+      # single node called `#{word}%%c`. This refuses it, because `%` is
+      # not in a node id here — and it used to draw `#{word}` alone, which
+      # is neither mmdc's node nor a refusal. The link example above
+      # already shows the word is an ordinary id with something tight
+      # behind it.
+      it "refuses #{word} against a %%, which mmdc reads as one node" do
+        expect(parses?("graph TD\n#{word}%%c\n")).to be(false)
       end
     end
 
