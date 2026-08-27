@@ -23,10 +23,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node.label).to eq("DD")
     end
 
-    # Whitespace is free-form in mermaid, and the corpus uses every one of
-    # these spellings.
+    # Whitespace around the braces is free-form in mermaid. The space after
+    # the colon is not: without it the key is unknown and ignored, which has
+    # its own example below.
     {
-      "no spaces" => "D@{shape:rounded}",
       "space before the brace only" => "D@{ shape: rounded}",
       "space after the value" => "D@{ shape: rounded }",
       "generous spacing" => "D@{       shape: rounded         }",
@@ -145,14 +145,16 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_for(%(graph TD\nA@{ label: "a}b" }\n)).label).to eq("a}b")
     end
 
-    it "takes a colon with no space after it" do
-      # YAML's flow mapping wants one; mermaid's js-yaml does not, and the
-      # corpus has D@{shape:rounded}.
-      expect(node_for("graph TD\nD@{shape:rounded}\n").shape).to eq("rounded")
+    it "ignores a key with no space after its colon, as mermaid does" do
+      # mmdc accepts the source and renders a plain rectangle: `shape:rounded`
+      # is one unknown key there, not a shape. Inserting the space made
+      # sirena honour something mermaid ignores.
+      expect(node_for("graph TD\nD@{shape:rounded}\n").shape).to eq("rect")
     end
 
-    it "leaves a colon inside a quoted value alone" do
-      expect(node_for(%(graph TD\nD@{label:"a:b"}\n)).label).to eq("a:b")
+    it "still reads a key written with its space" do
+      expect(node_for("graph TD\nD@{ shape: rounded }\n").shape)
+        .to eq("rounded")
     end
   end
 
@@ -188,13 +190,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   describe "the generated shape table" do
     # Nothing regenerates it in CI, so a name silently disappearing would
     # go unnoticed. mmdc accepts 141 names on this oracle.
-    it "carries every name mermaid accepts" do
-      expect(Sirena::Parser::MERMAID_SHAPES.size).to eq(141)
+    # A size check alone passes when an accepted name is swapped for a
+    # bogus one, so the whole key set is asserted against the candidate
+    # file minus the six names mermaid rejects.
+    def rejected_names
+      %w[
+        disk-storage multi-doc multi-process multi-rect sub-proc
+        subroutine-shape
+      ]
     end
 
-    it "keeps names that are easy to lose" do
-      expect(Sirena::Parser::MERMAID_SHAPES)
-        .to include("bolt", "circ", "hex", "odd", "junction", "doublecircle")
+    it "carries exactly the names mermaid accepts" do
+      probed = File.read("scripts/probes/shape_names.txt")
+      candidates = probed.split(/\s+/).reject(&:empty?).uniq
+
+      expect(Sirena::Parser::MERMAID_SHAPES.keys.sort)
+        .to eq((candidates - rejected_names).sort)
     end
   end
 
