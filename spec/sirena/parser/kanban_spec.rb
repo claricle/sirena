@@ -389,8 +389,10 @@ RSpec.describe Sirena::Parser::KanbanParser do
 
     context 'with metadata keys that collide with a card field' do
       # Mermaid ignores `id:`/`text:` as metadata; they are the card's own
-      # fields. No corpus case uses them, but the bare form made this input
-      # reachable, so it must not emit wrong output.
+      # fields. No corpus case uses them. The collision was already reachable
+      # on base through a labelled card, which has always taken metadata -
+      # the bare form only adds a second route to it. Reachable either way,
+      # so neither route may emit wrong output.
       it 'does not let text: overwrite the card text' do
         diagram = parser.parse("kanban\n  col[C]\n    card[K]@{ text: 'CLOB' }\n")
         expect(diagram.columns.first.cards.first.text).to eq('K')
