@@ -53,6 +53,68 @@ RSpec.describe Sirena::Engine do
      (y - rect[:y]).abs, (y - bottom).abs].min <= 1
   end
 
+  def exactly_on_border?(rect, x, y)
+    left = rect[:x]
+    right = left + rect[:width]
+    top = rect[:y]
+    bottom = top + rect[:height]
+    horizontal = [top, bottom].include?(y) && x.between?(left, right)
+    vertical = [left, right].include?(x) && y.between?(top, bottom)
+    horizontal || vertical
+  end
+
+  # Whether an orthogonal segment enters the open interior. Contact with
+  # the border is allowed; a diagonal is rejected because exterior routes
+  # are deliberately orthogonal.
+  def crosses_face?(rect, from, to)
+    left = rect[:x]
+    right = left + rect[:width]
+    top = rect[:y]
+    bottom = top + rect[:height]
+
+    if from[0] == to[0]
+      low, high = [from[1], to[1]].minmax
+      from[0].between?(left, right) && from[0] != left &&
+        from[0] != right && low < bottom && high > top
+    elsif from[1] == to[1]
+      low, high = [from[0], to[0]].minmax
+      from[1].between?(top, bottom) && from[1] != top &&
+        from[1] != bottom && low < right && high > left
+    else
+      true
+    end
+  end
+
+  def path_points(path)
+    path.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a
+  end
+
+  def expect_exterior_route(document, source, target, name)
+    xml = document.to_xml
+    path = xml[/<g id="edge-s_to_t">\s*<path[^>]*\bd="([^"]*)"/, 1]
+    points = path_points(path)
+    min_x, min_y, width, height = document.view_box.split.map(&:to_f)
+    group = xml[%r{<g id="edge-s_to_t">.*?</g>}m]
+    label_x = group[/<text[^>]*\bx="([^"]*)"/, 1].to_f
+    label_y = group[/<text[^>]*\by="([^"]*)"/, 1].to_f + 5
+    expected_label = [(points[1][0] + points[2][0]) / 2,
+                      (points[1][1] + points[2][1]) / 2]
+
+    aggregate_failures(name) do
+      expect(points.size).to eq(4)
+      expect(exactly_on_border?(source, *points.first)).to be(true)
+      expect(exactly_on_border?(target, *points.last)).to be(true)
+      expect(points.each_cons(2).none? do |from, to|
+        [source, target].any? { |face| crosses_face?(face, from, to) }
+      end).to be(true), name
+      expect(points.all? do |x, y|
+        x.between?(min_x, min_x + width) &&
+          y.between?(min_y, min_y + height)
+      end).to be(true)
+      expect([label_x, label_y]).to eq(expected_label)
+    end
+  end
+
   # The bounding box the layout gave the node, whichever element the
   # shape is drawn with. `nil` when the node was not drawn at all, so a
   # spec says "no node" rather than crashing on it.
@@ -531,6 +593,38 @@ RSpec.describe Sirena::Engine do
       xml[/<g id="edge-#{edge_id}">\s*<path[^>]*\bd="([^"]*)"/, 1]
     end
 
+    def graph_between(source, target, edge = {})
+      { id: "g", children: [source, target],
+        edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }.merge(edge)] }
+    end
+
+    def cluster_pair(source_at, target_at)
+      [cluster("s", x: source_at[0], y: source_at[1],
+                    width: 100.0, height: 100.0),
+       cluster("t", x: target_at[0], y: target_at[1],
+                    width: 100.0, height: 100.0)]
+    end
+
+    def cross_cluster_pair(reverse: false, offset: 0.0)
+      horizontal = { x: 0.0, y: 25.0, width: 100.0, height: 50.0 }
+      vertical = { x: 25.0 + offset, y: 0.0, width: 50.0, height: 100.0 }
+      source, target = reverse ? [vertical, horizontal] : [horizontal, vertical]
+
+      [cluster("s", source), cluster("t", target)]
+    end
+
+    def asymmetric_cluster_pair(rotated: false, reverse: false)
+      boxes = if rotated
+                [{ x: 0.0, y: 40.0, width: 40.0, height: 40.0 },
+                 { x: 20.0, y: 0.0, width: 40.0, height: 160.0 }]
+              else
+                [{ x: 80.0, y: 0.0, width: 40.0, height: 40.0 },
+                 { x: 0.0, y: 20.0, width: 160.0, height: 40.0 }]
+              end
+      source, target = reverse ? boxes.reverse : boxes
+      [cluster("s", source), cluster("t", target)]
+    end
+
     # An end nothing trimmed has to come back exactly as it went in.
     # Rounding it moved every ordinary edge in the project.
     it "leaves a node edge on the coordinates it was given" do
@@ -589,10 +683,94 @@ RSpec.describe Sirena::Engine do
                            cluster("t", x: 10.1, y: 0.0,
                                         width: 11.0, height: 4.0)],
                 edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }] }
-      drawn = path_of(graph, "s_to_t").scan(/-?\d+(?:\.\d+)?/).map(&:to_f)
-      sx, _sy, tx, _ty = drawn
+      points = path_points(path_of(graph, "s_to_t"))
 
-      expect(tx).to be > sx
+      expect(points.last[0]).to be > points.first[0]
+    end
+
+    it "detours when rounded cluster borders would coincide" do
+      source = cluster("s", x: 0.0, y: 0.0, width: 100.0, height: 100.0)
+      target = cluster("t", x: 100.001, y: 0.0, width: 100.0, height: 100.0)
+      points = path_points(path_of(graph_between(source, target), "s_to_t"))
+
+      expect(points.size).to be > 2
+      expect(points.each_cons(2).none? { |from, to| from == to }).to be(true)
+      expect(exactly_on_border?(source, *points.first)).to be(true)
+      expect(exactly_on_border?(target, *points.last)).to be(true)
+    end
+
+    it "routes overlapping clusters outside both faces" do
+      placements = {
+        "horizontal shallow" => [[0.0, 0.0], [75.0, 0.0]],
+        "vertical shallow" => [[0.0, 0.0], [0.0, 75.0]],
+        "horizontal centre inside" => [[0.0, 0.0], [40.0, 0.0]],
+        "horizontal centre inside reversed" => [[40.0, 0.0], [0.0, 0.0]],
+        "vertical centre inside" => [[0.0, 0.0], [0.0, 40.0]],
+        "vertical centre inside reversed" => [[0.0, 40.0], [0.0, 0.0]],
+        "diagonal centre inside" => [[0.0, 0.0], [40.0, 40.0]],
+        "diagonal centre inside reversed" => [[40.0, 40.0], [0.0, 0.0]]
+      }
+      cases = placements.transform_values do |source_at, target_at|
+        cluster_pair(source_at, target_at)
+      end
+      cases.merge!(
+        "equal-centre cross" => cross_cluster_pair,
+        "equal-centre cross reversed" => cross_cluster_pair(reverse: true),
+        "near-centre cross" => cross_cluster_pair(offset: 0.004),
+        "near-centre cross reversed" => cross_cluster_pair(reverse: true, offset: 0.004),
+        "asymmetric" => asymmetric_cluster_pair,
+        "asymmetric reversed" => asymmetric_cluster_pair(reverse: true),
+        "asymmetric rotated" => asymmetric_cluster_pair(rotated: true),
+        "asymmetric rotated reversed" => asymmetric_cluster_pair(rotated: true, reverse: true)
+      )
+      edge = {
+        labels: [{ text: "outside", width: 40.0, height: 10.0 }],
+        sections: [{ bendPoints: [{ x: 60.0, y: 60.0 },
+                                  { x: 90.0, y: 60.0 }] }]
+      }
+
+      cases.each do |name, (source, target)|
+        document = renderer.render(graph_between(source, target, edge))
+
+        expect_exterior_route(document, source, target, name)
+      end
+    end
+
+    it "uses Euclidean distance for diagonal zero-size boxes" do
+      [0.01, 0.008].each do |offset|
+        source = cluster("s", x: 0.0, y: 0.0, width: 0.0, height: 0.0)
+        target = cluster("t", x: offset, y: offset, width: 0.0, height: 0.0)
+
+        expect(path_points(path_of(graph_between(source, target), "s_to_t")))
+          .to eq([[0.0, 0.0], [offset, offset]])
+      end
+    end
+
+    it "keeps centres exactly one output unit apart distinct" do
+      source = cluster("s", x: 0.0, y: 0.0, width: 0.0, height: 0.0)
+      target = cluster("t", x: 0.01, y: 0.0, width: 0.0, height: 0.0)
+
+      expect(path_points(path_of(graph_between(source, target), "s_to_t")))
+        .to eq([[0.0, 0.0], [0.01, 0.0]])
+    end
+
+    it "keeps ordinary ELK bend points" do
+      source = leaf("s", x: 0.0, y: 0.0, width: 100.0, height: 50.0)
+      target = leaf("t", x: 200.0, y: 0.0, width: 100.0, height: 50.0)
+      edge = { sections: [{ bendPoints: [{ x: 120.0, y: 80.0 }] }] }
+
+      expect(path_of(graph_between(source, target, edge), "s_to_t"))
+        .to eq("M 50.0 25.0 L 120.0 80.0 L 250.0 25.0")
+    end
+
+    it "keeps eighty units beyond the right and bottom maxima" do
+      source = cluster("s", x: 0.0, y: 0.0, width: 100.0, height: 100.0)
+      document = renderer.render({ id: "g", children: [source], edges: [] })
+      min_x, min_y, width, height = document.view_box.split.map(&:to_f)
+
+      expect([min_x, min_y]).to eq([0.0, 0.0])
+      expect((min_x + width) - 100.0).to eq(80.0)
+      expect((min_y + height) - 100.0).to eq(80.0)
     end
   end
 

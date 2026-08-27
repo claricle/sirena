@@ -26,14 +26,14 @@ module Sirena
       TOUCHING = 1e-9
 
       # Routes are written to two decimal places after trimming. Centres
-      # closer than one output unit cannot provide a useful straight run.
+      # less than one output unit apart cannot provide a useful straight run.
       COINCIDENT = 0.01
 
       # How far a degenerate loop reaches past the borders it leaves.
-      # `calculate_width` already adds
-      # 40 past the widest box and `Base#create_document` another 20
-      # either side, so a loop this size needs no change to the sizing.
-      # Widen it past 60 and the page has to grow with it.
+      # `calculate_width` and `calculate_height` add 40 past the drawn
+      # maxima. `Base#create_document` keeps the origin at zero and adds
+      # another 40 to the right and bottom extents, leaving 80 units there.
+      # A reach beyond that needs the page to grow with it.
       LOOP_REACH = 20
 
       # Renders a laid-out graph to SVG.
@@ -321,12 +321,15 @@ module Sirena
         return unless source && target
 
         # One route, so the path and its label cannot disagree.
-        loop_points = coincident_loop(source, target)
-        route = loop_points ? ends_of(loop_points) : route_ends(source, target)
-        # A loop carries its own two bends; otherwise take whatever the
-        # layout left in the ELK section.
-        bends = loop_points&.slice(1, 2) ||
-                edge.dig(:sections, 0, :bendPoints)
+        points, label_route = edge_route(source, target)
+        route = ends_of(points)
+        # Generated routes carry their own bends; an ordinary route keeps
+        # whatever the layout left in the ELK section.
+        bends = if points.length > 2
+                  points[1...-1]
+                else
+                  edge.dig(:sections, 0, :bendPoints)
+                end
         path_data = calculate_edge_path(route, bends)
 
         # Create path element
@@ -347,7 +350,7 @@ module Sirena
         # Render edge label if present
         if edge[:labels] && !edge[:labels].empty?
           label = edge[:labels].first
-          text = create_edge_label(route, label)
+          text = create_edge_label(label_route, label)
           group.children << text if text
         end
 
@@ -369,6 +372,18 @@ module Sirena
         return create_path_with_bends(sx, sy, tx, ty, bends) if bends&.any?
 
         "M #{sx} #{sy} L #{tx} #{ty}"
+      end
+
+      def edge_route(source, target)
+        unless exposed_cluster_overlap?(source, target)
+          loop_points = coincident_loop(source, target)
+          return [loop_points, ends_of(loop_points)] if loop_points
+        end
+
+        points = route_ends(source, target).each_slice(2)
+          .map { |x, y| { x: x, y: y } }
+        label_points = points.length > 2 ? points.slice(1, 2) : points
+        [points, ends_of(label_points)]
       end
 
       # A straight run needs a direction. Self-edges and distinct boxes
@@ -393,11 +408,15 @@ module Sirena
       end
 
       def near?(first, second)
-        first.zip(second).all? { |left, right| (left - right).abs <= COINCIDENT }
+        Math.hypot(first[0] - second[0], first[1] - second[1]) < COINCIDENT
       end
 
       def right_of(box)
         (box[:x] || 0) + (box[:width] || 0)
+      end
+
+      def bottom_of(box)
+        (box[:y] || 0) + (box[:height] || 0)
       end
 
       # Circle nodes use the smaller box dimension as their radius, so
@@ -421,7 +440,7 @@ module Sirena
         [first[:x], first[:y], last[:x], last[:y]]
       end
 
-      # Both ends of the straight run. A cluster is painted BEHIND the
+      # The points of the run. A cluster is painted BEHIND the
       # edges, so the stretch from its centre out to its border stays
       # drawn across the inside of the box; a node is painted over its
       # own stretch, which is why ordinary edges do not move at all.
@@ -431,6 +450,13 @@ module Sirena
         out = step_out(source, sx, sy, tx, ty)
         back = step_out(target, tx, ty, sx, sy)
 
+        # One centre can sit inside the other box even when neither box
+        # contains the other. Detect that deep partial overlap from the
+        # rectangles themselves before the centre-based nesting fallback.
+        if exposed_cluster_overlap?(source, target)
+          return exterior_route(source, target, sx, sy, tx, ty)
+        end
+
         # A step past the other centre means that centre is inside this
         # box. Use the opposite sides so the ordered route still points
         # from source to target while touching both borders.
@@ -438,11 +464,33 @@ module Sirena
           return enclosing_route(source, target, sx, sy, tx, ty)
         end
 
-        # Partially overlapping or touching boxes would otherwise trim
-        # to reversed or identical points. Keep the established fallback.
-        return [sx, sy, tx, ty] if out + back >= 1.0 - TOUCHING
+        # Partially overlapping or touching boxes need an exterior route:
+        # their centre chord is visible through both cluster faces.
+        if out + back >= 1.0 - TOUCHING
+          return exterior_route(source, target, sx, sy, tx, ty)
+        end
 
-        along(sx, sy, tx, ty, out) + along(tx, ty, sx, sy, back)
+        route = along(sx, sy, tx, ty, out) + along(tx, ty, sx, sy, back)
+        return exterior_route(source, target, sx, sy, tx, ty) if route.first(2) == route.last(2)
+
+        route
+      end
+
+      def exposed_cluster_overlap?(source, target)
+        return false unless cluster?(source) && cluster?(target)
+        return false if contains_box?(source, target) || contains_box?(target, source)
+
+        (source[:x] || 0) <= right_of(target) &&
+          right_of(source) >= (target[:x] || 0) &&
+          (source[:y] || 0) <= bottom_of(target) &&
+          bottom_of(source) >= (target[:y] || 0)
+      end
+
+      def contains_box?(outer, inner)
+        (outer[:x] || 0) <= (inner[:x] || 0) &&
+          right_of(outer) >= right_of(inner) &&
+          (outer[:y] || 0) <= (inner[:y] || 0) &&
+          bottom_of(outer) >= bottom_of(inner)
       end
 
       def enclosing_route(source, target, sx, sy, tx, ty)
@@ -451,6 +499,64 @@ module Sirena
 
         along(sx, sy, tx, ty, -source_back) +
           along(tx, ty, sx, sy, -target_back)
+      end
+
+      # Corners on the sides facing away from the other box expose both
+      # ends. Prefer the corridor matching the centre direction, but unequal
+      # projections can put that corner inside the other box, so only use a
+      # candidate whose actual segments stay outside both open faces.
+      def exterior_route(source, target, sx, sy, tx, ty)
+        bottom = bottom_exterior_route(source, target, sx, tx)
+        right = right_exterior_route(source, target, sy, ty)
+        candidates = (tx - sx).abs >= (ty - sy).abs ? [bottom, right] : [right, bottom]
+        rounded = candidates.map { |points| rounded_points(points) }
+        points = rounded.find { |route| clear_route?(route, source, target) } || rounded.first
+
+        points.flatten
+      end
+
+      def rounded_points(points)
+        points.map do |point|
+          point.map { |coordinate| coordinate.round(2) }
+        end
+      end
+
+      def clear_route?(points, source, target)
+        points.each_cons(2).none? do |from, to|
+          [source, target].any? { |box| crosses_face?(box, from, to) }
+        end
+      end
+
+      def crosses_face?(box, from, to)
+        if from[0] == to[0]
+          low, high = [from[1], to[1]].minmax
+          from[0] > (box[:x] || 0) && from[0] < right_of(box) &&
+            low < bottom_of(box) && high > (box[:y] || 0)
+        else
+          low, high = [from[0], to[0]].minmax
+          from[1] > (box[:y] || 0) && from[1] < bottom_of(box) &&
+            low < right_of(box) && high > (box[:x] || 0)
+        end
+      end
+
+      def bottom_exterior_route(source, target, sx, tx)
+        source_x = tx > sx ? source[:x] || 0 : right_of(source)
+        target_x = tx > sx ? right_of(target) : target[:x] || 0
+        source_y = bottom_of(source)
+        target_y = bottom_of(target)
+        outside_y = [source_y, target_y].max + LOOP_REACH
+        [[source_x, source_y], [source_x, outside_y],
+         [target_x, outside_y], [target_x, target_y]]
+      end
+
+      def right_exterior_route(source, target, sy, ty)
+        source_x = right_of(source)
+        target_x = right_of(target)
+        source_y = ty > sy ? source[:y] || 0 : bottom_of(source)
+        target_y = ty > sy ? bottom_of(target) : target[:y] || 0
+        outside_x = [source_x, target_x].max + LOOP_REACH
+        [[source_x, source_y], [outside_x, source_y],
+         [outside_x, target_y], [target_x, target_y]]
       end
 
       def centre_of(box)
