@@ -148,7 +148,7 @@ of 24, not 23.
 
 ### Why
 
-`scripts/corpus_sweep.rb` exists but is manual-only, so the 49.2%
+`scripts/corpus_sweep.rb` exists but is manual-only, so the 55.6%
 evidence-valid pass rate (574/1032, swept 2026-08-27) is unprotected: a
 refactor can drop 200 cases and nothing notices.
 
