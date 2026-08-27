@@ -269,6 +269,17 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(arms.max).to be > edge - 4
     end
 
+    # mmdc strokes crossEnd at 2 and circleEnd at 1, and the gap each head
+    # is left is its geometry plus half its own stroke — so the width is
+    # part of the measurement, not decoration. The circle's is asserted
+    # above; without this the cross's could be anything.
+    it "strokes the cross head the width mermaid does" do
+      group = edge_group("--x")
+
+      expect(group.scan(/<line[^>]*stroke-width="([^"]*)"/).flatten)
+        .to all(eq("2"))
+    end
+
     # mmdc's pointEnd is `M 0 0 L 10 5 L 0 10 z` in a 0..10 viewBox drawn
     # at markerWidth 8, so the triangle is 8 long and 4 either side of the
     # line. Reading the corners off a fixed angle instead drew it 3.1
@@ -580,6 +591,23 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect(corners.map { |cx, _y| (cx - centre_x).abs })
         .to all(be_within(0.05).of(18.0))
+    end
+
+    # Both neighbours above sit on a clamp, so the ratio itself never shows
+    # through them: doubling 0.175 leaves both of their answers unchanged.
+    # This node is wide enough to clear 18 and narrow enough to stay under
+    # 50, which is the only place the ratio is the answer.
+    it "spans 0.175 of the width where neither limit binds" do
+      xml = Sirena.render(
+        "flowchart TD\n  A --> A[a label of some length here]\n"
+      )
+      centre_x, = node_centre(xml)
+      width = node_rect(xml, "A")[2]
+      corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
+
+      expect(width * 0.175).to be_between(18.0, 50.0)
+      expect(corners.map { |cx, _y| (cx - centre_x).abs })
+        .to all(be_within(0.05).of(width * 0.175))
     end
 
     # 359 wide here, so the ratio alone would span 62.8. mmdc stops at 50.
