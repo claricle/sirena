@@ -37,7 +37,17 @@ module Sirena
       # is refused rather than read the wrong way round.
       FOREIGN_BREAK = /[\u0085\u2028\u2029]/
 
-      YAML_BREAK = /\r\n|[\r\n]/
+      # js-yaml drops a byte-order mark at the very start of the text and
+      # leaves every other one alone; libyaml drops one at the start of any
+      # line. A mark further in therefore hides a key from mermaid that
+      # libyaml hands over as if it were plain — `@{` newline BOM
+      # `label: hi }` keeps the node's old label in mmdc.
+      BOM = "\uFEFF"
+
+      # The transform has already turned every carriage return into a line
+      # feed, the way mermaid does, and a foreign break is refused below.
+      # So a line is whatever sits between two line feeds.
+      YAML_BREAK = "\n"
 
       # js-yaml takes any 1.x document version and merely warns about the
       # ones it does not know; libyaml refuses everything but 1.1 and 1.2.
@@ -85,7 +95,8 @@ module Sirena
       end
 
       def initialize(document)
-        @document = document.gsub(DOCUMENT_VERSION, LEVELLED_VERSION)
+        text = document.delete_prefix(BOM)
+        @document = text.gsub(DOCUMENT_VERSION, LEVELLED_VERSION)
         @lines = @document.split(YAML_BREAK, -1)
         @anchors = {}
       end
@@ -103,15 +114,23 @@ module Sirena
 
       # `yaml.load` refuses a stream that is not exactly one document.
       def root
-        raise ParseError, 'Unreadable line break.' if
-          FOREIGN_BREAK.match?(@document)
-
+        reject_ambiguous_text
         documents = Psych.parse_stream(@document).children
         raise ParseError, 'Malformed metadata.' unless documents.one?
 
         documents.first.children.first
       rescue Psych::Exception
         raise ParseError, 'Malformed metadata.'
+      end
+
+      # Two characters the two parsers read differently, and neither leaves
+      # a trace in the tree afterwards. The body is refused rather than
+      # read the wrong way round.
+      def reject_ambiguous_text
+        raise ParseError, 'Unreadable line break.' if
+          FOREIGN_BREAK.match?(@document)
+        raise ParseError, 'Stray byte-order mark.' if
+          @lines.any? { |line| line.start_with?(BOM) }
       end
 
       def compose(node)
