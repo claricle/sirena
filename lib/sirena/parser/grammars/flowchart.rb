@@ -507,10 +507,12 @@ module Sirena
           (metadata_quoted | (str('}').absent? >> any)).repeat
         end
 
-        # A quoted run is skipped whole so a brace inside it is text.
+        # A double-quoted run is skipped whole so a brace inside it is
+        # text. Only the double quote does this: mermaid's metadata lexer
+        # has one string state and `"` opens it, so `label: 'a}b'` ends the
+        # block at that brace and mmdc rejects the line.
         rule(:metadata_quoted) do
-          (str('"') >> (str('"').absent? >> any).repeat >> str('"')) |
-            (str("'") >> (str("'").absent? >> any).repeat >> str("'"))
+          str('"') >> (str('"').absent? >> any).repeat >> str('"')
         end
 
         # Inline class syntax: :::className
