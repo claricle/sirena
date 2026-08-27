@@ -9,6 +9,36 @@ module Sirena
       class Kanban < Parslet::Transform
         # Helper class to build kanban board from indented lines
         class BoardBuilder
+          # js-yaml resolves these spellings, and only these, to false or
+          # null. `True`/`TRUE` resolve to boolean true and stay truthy;
+          # `no`, `off`, `n` and `y` are plain strings here.
+          YAML_FALSY_WORDS = %w[false False FALSE null Null NULL].freeze
+          private_constant :YAML_FALSY_WORDS
+
+          # Spellings js-yaml resolves as a number. Case matters unevenly:
+          # the radix prefix is lowercase-only, so `0x0` and `0o0` resolve
+          # while `0X0` and `0O0` stay strings, but the exponent marker is
+          # case-insensitive and `0e0` and `0E0` both resolve.
+          #
+          # `_` is a digit separator. A run of any length counts and one may
+          # follow a radix prefix (`0_0`, `0__0`, `0x_0`), but it may never
+          # lead (`_0`, `__0`, `-_0`) and cannot bridge into a prefix
+          # (`0_x0`). Int and float disagree about a TRAILING separator, so
+          # they stay separate patterns: the int resolver rejects one, so
+          # `0_` and `0_0_` stay strings, while the float mantissa is
+          # `[0-9][0-9_]*` and accepts one, so `0_e0` resolves. The exponent
+          # itself takes no separators, so `0e0_0` and `0_e_0` stay strings.
+          #
+          # `0.0`, `~` and `.nan` are falsy to mermaid but cannot reach here:
+          # unquoted_value admits neither `.` nor `~`. Widening that charset
+          # means re-probing these patterns.
+          YAML_DECIMAL = /\A-?\d+(?:_+\d+)*\z/
+          YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
+          YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
+          YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
+          YAML_FLOAT = /\A-?\d[\d_]*[eE][-+]?\d+\z/
+          private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
+                           :YAML_BINARY, :YAML_FLOAT
           attr_reader :columns
 
           def initialize
@@ -38,6 +68,11 @@ module Sirena
             # The metadata is parsed here rather than in add_card so that
             # add_column can consult it too; parse_metadata returns {} for a
             # nil subtree, so this is always a Hash.
+            #
+            # `|| id` relies on an absent label being nil rather than "",
+            # since `""` is truthy in Ruby and would not fall back. That
+            # holds only because labelled_item captures with `repeat(1)`, so
+            # a label that matched is never empty.
             @items << {
               id: id,
               text: line_data[:text]&.to_s || id,
@@ -75,29 +110,30 @@ module Sirena
             @current_column = column
           end
 
+          # The card's own `id` and `text` beat a metadata entry of the same
+          # name, because mermaid ignores `@{ id: ... }` and `@{ text: ... }`.
+          # Merging the metadata FIRST makes that true by construction, with
+          # no exclusion list to keep in step as fields are added.
+          #
+          # A `label:` on a card is kept as its own attribute and drawn as a
+          # separate "Label:" row. That diverges from mermaid, which renders
+          # the label as the card's primary text and draws no such row. The
+          # divergence is pre-existing; correcting it belongs to the
+          # card-conformance bucket.
           def add_card(item)
             # Cards must belong to a column
             return unless @current_column
 
-            # `id` and `text` are the card's own fields, not metadata keys.
-            # Mermaid ignores an `@{ id: ... }` or `@{ text: ... }` entry, so
-            # the merge must not let one overwrite them.
-            @current_column[:cards] << {
+            @current_column[:cards] << item[:metadata].merge(
               id: item[:id],
               text: item[:text]
-            }.merge(item[:metadata].except(:id, :text))
+            )
           end
 
-          # A `label:` in the metadata replaces a COLUMN's display text, which
-          # is what mermaid renders. A label mermaid would treat as unset is
-          # already gone by here - parse_metadata drops it - so the fallback
-          # to the bracket text, or to the id, is a plain `||`.
-          #
-          # On a CARD the label is instead kept as its own attribute and drawn
-          # as a separate "Label:" row. That DIVERGES FROM MERMAID, which
-          # renders the label as the card's primary text and draws no such
-          # row. The divergence is pre-existing and unchanged here; correcting
-          # it belongs to the card-conformance bucket.
+          # A `label:` replaces a COLUMN's display text, which is what mermaid
+          # renders. A label mermaid would treat as unset is already gone by
+          # here - parse_metadata drops it - so falling back to the bracket
+          # text, or to the id, is a plain `||`.
           def column_title(item)
             item[:metadata][:label] || item[:text]
           end
@@ -117,10 +153,11 @@ module Sirena
             entries.each do |entry|
               next unless entry.is_a?(Hash)
               next unless entry[:key] && entry[:value]
-              next if dropped_by_mermaid?(entry[:value])
+
+              value = extract_value(entry[:value])
+              next if dropped_by_mermaid?(value, unquoted: entry[:value].key?(:unquoted))
 
               key = entry[:key].to_s
-              value = extract_value(entry[:value])
 
               # Map to known metadata fields
               case key
@@ -147,100 +184,54 @@ module Sirena
             return "" if value_data.nil?
 
             if value_data.is_a?(Hash)
-              # An empty quoted string parses as `{string: []}`, because the
-              # shared grammar captures the body with `.repeat`. `[].to_s` is
-              # the literal "[]", so join the capture instead of stringifying
-              # it.
+              # An empty quoted string captures as `{string: []}`, because
+              # the shared grammar takes the body with `.repeat`, and
+              # `[].to_s` is the literal "[]". Parslet::Slice answers false
+              # to `to_ary`, so `Array()` wraps a slice rather than splitting
+              # it; `join` then handles both shapes.
               Array(value_data[:string] || value_data[:unquoted]).join
             else
               value_data.to_s
             end
           end
 
-          # Mermaid gates every metadata field on JS truthiness - the kanban
-          # renderer reads `if (doc?.label)`, and icon, assigned, ticket and
-          # priority the same way - AFTER js-yaml has resolved the scalar. A
-          # value resolving to false, null or numeric zero is therefore never
-          # set, and the field falls back as though it were absent. Dropping
-          # the entry here mirrors that: mermaid has no entry either, so it
-          # draws no metadata row and reserves no height for one.
+          # Mermaid gates every field on JS truthiness - the kanban renderer
+          # reads `if (doc?.label)`, and icon, assigned, ticket and priority
+          # the same way - AFTER js-yaml resolves the scalar. A value
+          # resolving to false, null or zero is therefore never set and the
+          # field falls back. Dropping the entry mirrors that: with no entry
+          # there is no metadata row and no height reserved for one.
           #
-          # Only UNQUOTED values are resolved. A quoted value stays a string,
-          # and a non-empty string is truthy, so `'0'` and `"false"` override
-          # while `''` and `""` do not.
+          # An empty value is dropped whatever its quoting. Past that, only
+          # UNQUOTED values are resolved: a non-empty quoted string is always
+          # truthy, so `'0'` and `"false"` override.
           #
-          # Only the FALSY half of js-yaml resolution is mirrored here. A
-          # scalar that resolves to a truthy value is still rendered as its
-          # raw text, where mermaid renders the resolved value - it draws `1`
-          # for `1e0`, `7` for `007` and `16` for `0x10`, and we draw the
-          # input verbatim. That divergence is pre-existing, it is not
-          # narrowed or widened by this bucket, and it belongs with the
-          # card-conformance work. Do not read this method as "we match
-          # mermaid on unquoted scalars".
-          #
-          # None of this has any corpus exposure: every `@{...}` value in all
-          # 1997 cases is a truthy string. It is pinned by the specs and by
-          # mmdc probes, never by the sweep - "16 fixed" is not evidence for
-          # any of it.
-          def dropped_by_mermaid?(value_data)
-            text = extract_value(value_data)
+          # Only the falsy half of resolution is mirrored. A truthy scalar is
+          # still rendered as its raw text where mermaid renders the resolved
+          # value - `1e0` draws `1`, `0x10` draws `16`. That divergence is
+          # pre-existing and belongs to the card-conformance bucket.
+          def dropped_by_mermaid?(text, unquoted:)
             return true if text.empty?
-            return false unless value_data.is_a?(Hash) && value_data.key?(:unquoted)
+            return false unless unquoted
 
-            YAML_FALSE_WORDS.include?(text) || yaml_zero?(text)
+            YAML_FALSY_WORDS.include?(text) || yaml_zero?(text)
           end
 
-          # js-yaml resolves these spellings, and only these, to false or
-          # null. `True`/`TRUE` resolve to boolean true and stay truthy, and
-          # `no`, `off`, `n` and `y` are plain strings here.
-          YAML_FALSE_WORDS = %w[false False FALSE null Null NULL].freeze
-          private_constant :YAML_FALSE_WORDS
-
-          # Spellings js-yaml resolves as a number, measured against mmdc
-          # 11.12.0 rather than recalled. Case matters where you would not
-          # expect it: the radix prefix is lowercase-only, so `0x0` and `0o0`
-          # resolve to zero while `0X0` and `0O0` stay strings, but the
-          # exponent marker is case-insensitive and `0e0` and `0E0` both do.
-          #
-          # `_` is a digit separator. A run of any length counts, and one may
-          # follow a radix prefix - `0_0`, `0__0`, `0___0`, `00__00` and
-          # `0x_0` all resolve - but it may never lead, so `_0`, `__0` and
-          # `-_0` stay strings. It cannot bridge into a prefix either:
-          # `0_x0` is a string.
-          #
-          # Whether a TRAILING separator is allowed depends on the resolver
-          # mermaid reaches, so the two branches genuinely differ and must
-          # not be unified. The int pattern rejects one, so `0_` and `0_0_`
-          # stay strings; the float pattern is `[0-9][0-9_]*`, which accepts
-          # one, so a mantissa may end in separators and `0_e0`, `0__e0` and
-          # `0_0_e0` all resolve. The exponent takes no separators at all,
-          # which is why `0e0_0` and `0_e_0` stay strings.
-          #
-          # This covers what the grammar can actually produce - unquoted_value
-          # is `match['a-zA-Z0-9_\-']`, so `0.0`, `~` and `.nan` cannot reach
-          # here even though mermaid treats them as falsy too. That is a
-          # separate pre-existing gap in the charset, not fixed in this
-          # bucket. Widen the charset and these cases need re-probing, not
-          # guessing.
-          YAML_DECIMAL = /\A-?\d+(?:_+\d+)*\z/
-          YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
-          YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
-          YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
-          YAML_EXPONENT = /\A-?\d[\d_]*[eE][-+]?\d+\z/
-          private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
-                           :YAML_BINARY, :YAML_EXPONENT
-
           def yaml_zero?(text)
-            digits = text.delete('_')
-
             case text
-            when YAML_DECIMAL then digits.to_i.zero?
-            when YAML_HEX then digits[/0x(.+)/, 1].to_i(16).zero?
-            when YAML_OCTAL then digits[/0o(.+)/, 1].to_i(8).zero?
-            when YAML_BINARY then digits[/0b(.+)/, 1].to_i(2).zero?
-            when YAML_EXPONENT then digits.to_f.zero?
+            when YAML_DECIMAL then digits_of(text).to_i.zero?
+            when YAML_HEX then digits_of(text)[/0x(.+)/, 1].to_i(16).zero?
+            when YAML_OCTAL then digits_of(text)[/0o(.+)/, 1].to_i(8).zero?
+            when YAML_BINARY then digits_of(text)[/0b(.+)/, 1].to_i(2).zero?
+            when YAML_FLOAT then digits_of(text).to_f.zero?
             else false
             end
+          end
+
+          # The patterns above have already vetted where a separator may sit,
+          # so they can be dropped before conversion.
+          def digits_of(text)
+            text.delete('_')
           end
 
           def get_indent_size(indent_data)
