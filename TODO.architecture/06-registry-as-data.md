@@ -79,8 +79,9 @@ TYPES = {
    nothing, because there is now one table to be out of step with.
 
    **This only works if item 03 step 4 renamed the Diagram models.**
-   Eight of them carry a `Chart` or `Diagram` suffix today and do not
-   resolve. Check that first — `Diagram::Gantt` must answer before you
+   Ten need work — seven plain renames, one key-and-constant pair
+   (`xychart`), and two collisions where the conventional name is
+   already taken by a component. Check that first — `Diagram::Gantt` must answer before you
    delete the `model:` row, or a third of the types lose their contract.
 3. Detection reads the same table. One list, not two.
 

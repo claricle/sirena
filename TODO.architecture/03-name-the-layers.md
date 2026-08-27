@@ -83,7 +83,8 @@ One commit — and one PR — per rename.
    | `Diagram::PacketDiagram` | `Diagram::Packet` |
    | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
 
-   **`xychart` is not a two-part rename. It is ten places.** It is the only
+   **`xychart` is not a two-part rename. It is ten places — eight in the
+   table below, plus the grammar and builder named under it.** It is the only
    key that does not match its own file name, and item 06 makes the key
    the single source every class is derived from, so every place the
    old spelling appears has to move together:
@@ -118,8 +119,8 @@ One commit — and one PR — per rename.
    | contract fixture filename | item 01's spec cannot find `xy_chart.mmd`, so it goes red **immediately** — not at item 06. Item 06's fixture parity is the second net, not the first |
    | grammar or builder class | nothing fails; the inconsistency just survives |
 
-   Those three rows are why item 06's lookups raise rather than answer
-   `nil`. All three layers are mandatory — item 04 gives every type a
+   The parser, layout and renderer rows above are why item 06's lookups
+   raise rather than answer `nil`. All three layers are mandatory — item 04 gives every type a
    layout — so a constant that does not resolve is always a broken
    rename, never a legitimate absence. Each layer raises its own error:
    `ParseError`, `LayoutError`, `RenderError`. An unknown type is a
