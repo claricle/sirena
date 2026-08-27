@@ -3,6 +3,7 @@
  height="600.0"
  viewBox="0 0 800 600"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="400.0" y="30.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">Product Feature Priority Matrix</text>

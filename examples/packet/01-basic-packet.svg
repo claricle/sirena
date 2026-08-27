@@ -3,6 +3,7 @@
  height="210.0"
  viewBox="0 0 1040.0 210.0"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="520.0" y="65.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">TCP Header</text>

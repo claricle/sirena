@@ -3,6 +3,7 @@
  height="180.0"
  viewBox="0 0 452.0 180"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="connection-Frontend-Backend">

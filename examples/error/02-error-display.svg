@@ -3,6 +3,7 @@
  height="220.0"
  viewBox="0 0 500 220"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <rect fill="#FFEBEE" stroke="#D32F2F" stroke-width="2" x="50.0" y="50.0" width="400.0" height="120.0" rx="8.0" ry="8.0"/>

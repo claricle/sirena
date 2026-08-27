@@ -3,6 +3,7 @@
  height="600.0"
  viewBox="0 0 753.0 600"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="transition-start_1_to_Application">

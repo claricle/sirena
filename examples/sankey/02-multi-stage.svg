@@ -3,6 +3,7 @@
  height="410.0"
  viewBox="0 0 405 410"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <path fill="#4472C4" fill-opacity="0.4" stroke="none" stroke-opacity="0.4" d="M 98 95.0 C 154.0 95.0, 154.0 165.0, 210 165.0 L 210 215.0 C 154.0 215.0, 154.0 145.0, 98 145.0 Z"/>
