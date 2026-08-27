@@ -176,6 +176,14 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(arrows).to be_empty
     end
 
+    it 'draws nothing when a non-finite endpoint follows a finite heading' do
+      arrows = described_class.for(
+        path(d: 'M 0 0 L 5 0 L 1e400 0', marker_end: 'url(#arrowhead)')
+      )
+
+      expect(arrows).to be_empty
+    end
+
     # The early return is what keeps a marker-less path from paying for a
     # scan of its own data, and most paths carry no marker.
     it 'does not read the path data when no marker was asked for' do
@@ -198,6 +206,16 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
         expect(points).to eq('10.0,0.0 6.0,2.0 6.0,-2.0')
       end
+    end
+
+    # Both inputs are finite; it is LENGTH * stroke_width that overflows.
+    it 'draws nothing when scaling a finite stroke width overflows' do
+      arrows = described_class.for(
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+             stroke: '#000', stroke_width: '1e308')
+      )
+
+      expect(arrows).to be_empty
     end
 
     # A width SVG can read is a different matter: `stroke-width="0"` paints no

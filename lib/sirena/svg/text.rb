@@ -39,7 +39,12 @@ module Sirena
       # real translation reads the font's baseline table — `middle` is half
       # an x-height, and the edge baselines come from ascent and descent —
       # and Sirena has no font metrics at all; TextMeasurement approximates
-      # width by character count. So 0.35em stands in for half an x-height,
+      # width by character count. `central` is the midpoint of ascent and
+      # descent (~0.5em), while `middle` is half the x-height (~0.35em); Sirena
+      # deliberately collapses them because it has no font metrics to separate
+      # them.
+      #
+      # So 0.35em stands in for half an x-height,
       # `hanging` for a full ascender below `y`, `text-after-edge` for a
       # descender above it. Any value the map does not name is left on the
       # alphabetic baseline. For `mathematical`, that is a deliberate
@@ -139,7 +144,8 @@ module Sirena
       # `y` with the baseline request folded in.
       #
       # Returns the reader untouched when there is no shift, so a Text that
-      # never asked for one serialises exactly as it did before.
+      # never asked for one serialises exactly as it did before. It is also
+      # the only usable fallback when the computed coordinate overflows.
       #
       # @return [Object, nil] the y attribute value
       def baseline_y
@@ -147,7 +153,10 @@ module Sirena
         offset = Numbers.read(dy)
         return y if shift.zero? && offset.nil?
 
-        Numbers.write((Numbers.read(y) || 0.0) + (offset || 0.0) + shift)
+        computed_y = (Numbers.read(y) || 0.0) + (offset || 0.0) + shift
+        return y unless computed_y.finite?
+
+        Numbers.write(computed_y)
       end
 
       private
@@ -159,7 +168,10 @@ module Sirena
         ems = BASELINE_SHIFTS.fetch(dominant_baseline.to_s.strip.downcase, 0.0)
         return 0.0 if ems.zero?
 
-        ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
+        shift = ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
+        return 0.0 unless shift.finite?
+
+        shift
       end
     end
   end

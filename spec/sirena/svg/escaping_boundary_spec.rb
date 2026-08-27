@@ -5,7 +5,7 @@ require 'spec_helper'
 # The boundary, not a sample.
 #
 # Testing one hostile attribute per class is not enough — Path emits `d` and
-# `marker-end` independently, and Document has five sites of its own, so a
+# `stroke-dasharray` independently, and Document has six sites of its own, so a
 # per-class test can pass while a site is missed. Grepping for raw
 # interpolation is not enough either: it misses a subclass hook returning
 # markup, and false-positives on legitimate coordinate builders.
@@ -103,10 +103,9 @@ RSpec.describe Sirena::Svg::Escaping do
     end
   end
 
-  # The six properties the profile has no room for: `opacity`, `marker-end`,
-  # `marker-start`, `dominant-baseline`, `dx` and `dy`. Asserting the absence
-  # matters as much as asserting the escaping: a renderer keeps setting them,
-  # so the only thing stopping them reaching the document is this layer.
+  # Four of the six properties the profile has no room for: `opacity`,
+  # `marker-end`, `marker-start` and `dominant-baseline`. The `dx` and `dy`
+  # translations are covered in tiny_properties_spec.
   describe 'properties SVG Tiny 1.2 does not have' do
     TRANSLATED_AWAY.each do |klass, writers|
       writers.each do |writer, (attribute, sample, expected_lines)|
@@ -149,18 +148,27 @@ RSpec.describe Sirena::Svg::Escaping do
       doc = described_class.new
       doc.view_box = HOSTILE
       doc.version = HOSTILE
+      doc.base_profile = HOSTILE
       doc.xmlns = HOSTILE
 
       xml = doc.to_xml
 
-      # All three string-typed root attributes, not a sample: each is emitted
-      # on its own line, so asserting two of three would miss a dropped one.
+      # All four string-typed root attributes, not a sample: each is emitted
+      # on its own line, so asserting three of four would miss a dropped one.
       # width and height are :float and coerce to 0.0, so they cannot carry
       # markup — same as the numeric element attributes.
       expect(xml).not_to include(HOSTILE)
-      %w[viewBox version xmlns].each do |name|
+      %w[viewBox version baseProfile xmlns].each do |name|
         expect(xml).to include(%(#{name}="#{ESCAPED}"))
       end
+    end
+
+    it 'declares and round-trips the SVG Tiny 1.2 profile' do
+      xml = described_class.new.to_xml
+
+      expect(xml).to include(%( version="1.2"\n baseProfile="tiny"))
+      expect(described_class.from_xml(xml).to_xml)
+        .to include(%( version="1.2"\n baseProfile="tiny"))
     end
   end
 

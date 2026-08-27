@@ -281,9 +281,10 @@ module Sirena
         dy = to[1] - from[1]
         length = Math.sqrt((dx * dx) + (dy * dy))
         # Not merely non-zero: path data carrying an out-of-range exponent
-        # reaches here as Infinity, and Infinity/Infinity is NaN, which would
-        # be written into the polygon's points verbatim.
-        return nil unless length.finite? && length.positive?
+        # can put Infinity in the anchor, or in the length where
+        # Infinity/Infinity is NaN. Either would be written into the polygon's
+        # points verbatim.
+        return nil unless at.all?(&:finite?) && length.finite? && length.positive?
 
         Anchor.new(at[0], at[1], dx / length, dy / length)
       end

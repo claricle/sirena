@@ -24,20 +24,20 @@ module Sirena
     # The svg_conform profile Sirena's output is built to satisfy.
     #
     # Sirena's SVG is embedded straight into Metanorma documents, and this
-    # is the profile Metanorma asks for. It requires the SVG namespace and a
+    # is the profile Metanorma asks for. It requires a
     # viewBox, forbids external CSS, fonts and images, and enforces the SVG
     # Tiny 1.2 element and attribute table — while leaving colours, fonts
     # and styles free.
     #
-    # The alternatives do not fit. `:svg_1_2_rfc` restricts colour to black
-    # and white and fonts to the three generic families, which would erase
+    # The alternatives considered do not fit. `:svg_1_2_rfc` restricts colour
+    # to black and white and fonts to the three generic families, which would erase
     # the themes for no benefit outside IETF publication. `:base` and
     # `:no_external_css` check so little that passing them would say
     # nothing. `:lucid_fix` is for cleaning up LucidChart exports.
     #
     # Named here because the profile is a decision about what Sirena emits,
     # not a detail of how it is tested. Six properties are missing from the
-    # output across three classes because of it — see Svg::Arrowhead,
+    # output across three classes because of it — see Svg::Path,
     # Svg::Text and Svg::Element.
     CONFORMANCE_PROFILE = :metanorma
   end

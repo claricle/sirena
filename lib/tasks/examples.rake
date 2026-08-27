@@ -12,6 +12,10 @@ require 'date'
 # honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
+# Only gantt/01-simple-timeline.beta.mmd and packet/01-basic-packet.beta.mmd
+# are legitimately unrenderable today.
+EXPECTED_UNRENDERABLE_SOURCE_COUNT = 2
+
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.
 module ExampleTasks
   module_function
@@ -19,6 +23,8 @@ module ExampleTasks
   # An SVG whose source is gone still ships: git tracks it and the gemspec
   # packages it, and the loop below walks sources, so nothing ever visits it.
   # Delete it so generation leaves only outputs backed by current sources.
+  # This treats every sourceless SVG under examples/*/ as an orphan, so a
+  # hand-authored illustrative SVG there is destroyed by a routine run too.
   def remove_orphan_svgs(examples_dir)
     orphans = Dir.glob(File.join(examples_dir, '*', '*.svg'))
       .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
@@ -31,21 +37,21 @@ module ExampleTasks
   end
 
   # A source that stops rendering must not keep shipping its old SVG. Leaving
-  # the file behind is how a broken renderer stays invisible: the output is
-  # still there, still valid, and no longer true, and the conformance gate
-  # reads it as what Sirena draws today.
-  def remove_failed_svg(basename, svg_file, error)
-    puts "  ✗ #{basename}.svg - ERROR: #{error.message}"
+  # it behind means the packaged output is still there, still valid-looking,
+  # and no longer true. The conformance gate detects a newly failing source
+  # either way by comparing the rendered count; deletion is about not shipping
+  # a stale picture, not about detection.
+  def remove_failed_svg(basename, svg_file)
     return unless File.exist?(svg_file)
 
     File.delete(svg_file)
     puts "    removed #{basename}.svg, which no longer renders"
   end
 
-  def handle_failed_svgs(total_generated, failed_renders)
-    if total_generated.zero? && failed_renders.any?
-      puts "\n⚠️  Every example source failed to render."
-      puts "   Existing SVGs were preserved because this indicates an environment fault."
+  def handle_failed_svgs(failed_renders)
+    if failed_renders.size > EXPECTED_UNRENDERABLE_SOURCE_COUNT
+      puts "\n⚠️  Environment fault: #{failed_renders.size} example sources failed to render."
+      puts "   That exceeds the expected maximum of #{EXPECTED_UNRENDERABLE_SOURCE_COUNT}; no SVGs were deleted."
       exit 1
     end
 
@@ -72,7 +78,6 @@ namespace :examples do
     diagram_dirs = Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }
 
     total_generated = 0
-    total_failed = 0
     failed_renders = []
 
     diagram_dirs.sort.each do |dir|
@@ -107,18 +112,18 @@ namespace :examples do
           puts "  ✓ #{basename}.svg"
           total_generated += 1
         rescue => e
-          failed_renders << [basename, svg_file, e]
-          total_failed += 1
+          puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
+          failed_renders << [basename, svg_file]
         end
       end
     end
 
-    ExampleTasks.handle_failed_svgs(total_generated, failed_renders)
+    ExampleTasks.handle_failed_svgs(failed_renders)
     ExampleTasks.remove_orphan_svgs(examples_dir)
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
-    puts "   Failed: #{total_failed}"
+    puts "   Failed: #{failed_renders.size}"
     puts "=" * 60
   end
 

@@ -21,6 +21,9 @@ module Sirena
         map_attribute 'fill', to: :fill
         map_attribute 'stroke', to: :stroke
         map_attribute 'stroke-width', to: :stroke_width
+        # A parsed Group opacity becomes separate fill and stroke opacities on
+        # output, which is not equivalent to compositing one group surface.
+        # Sirena accepts the deviation because no renderer sets opacity on a Group.
         map_attribute 'opacity', to: :opacity
 
         map_element 'g', to: :children

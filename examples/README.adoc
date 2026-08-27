@@ -171,9 +171,11 @@ Each example consists of:
 To add a new example:
 
 1. Create `.mmd` file in appropriate subdirectory
-2. Generate SVG: `bundle exec ruby exe/sirena render FILE.mmd -o FILE.svg`
+2. Generate SVGs: `bundle exec rake examples:generate`
 3. Update subdirectory README.adoc
 4. Ensure example follows naming convention: `{number}-{name}.mmd`
+
+The task is the only supported generation path because it applies each example's theme and the pinned reference date.
 
 == Testing Examples
 

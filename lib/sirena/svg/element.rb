@@ -69,7 +69,7 @@ module Sirena
 
       # Declares the attributes an element writes, in output order.
       #
-      # Six subclasses were each carrying the same shape of method — a list of
+      # Seven subclasses were each carrying the same shape of method — a list of
       # names paired with the matching reader. Declaring them removes that
       # repetition and, more usefully, removes the chance of one class's
       # version drifting into a different shape.

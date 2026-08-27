@@ -107,6 +107,10 @@ module Sirena
         names_something?(path.stroke) && stroke_width.positive?
       end
 
+      # Unlike marker orient="auto", which points along the path, Sirena
+      # deliberately reverses a start head to form a bidirectional arrow. No
+      # renderer sets marker_start, so this deviation is reached only through
+      # from_xml.
       def reversed(anchor)
         anchor && PathGeometry::Anchor.new(anchor.x, anchor.y,
                                            -anchor.dx, -anchor.dy)
@@ -114,12 +118,17 @@ module Sirena
 
       # @param anchor [PathGeometry::Anchor, nil] tip and heading
       # @return [Svg::Polygon, nil] nil when the path gave no heading to
-      #   point the arrowhead along
+      #   point the arrowhead along or a computed corner is non-finite
       def triangle(anchor)
         return nil if anchor.nil?
 
+        coordinates = corners(anchor)
+        return nil unless coordinates.flatten.all?(&:finite?)
+
         Polygon.new.tap do |polygon|
-          polygon.points = Polygon.build_points(corners(anchor))
+          polygon.points = Polygon.build_points(
+            coordinates.map { |x, y| [Numbers.write(x), Numbers.write(y)] }
+          )
           polygon.fill = path.stroke
           # The head is painted where the line's stroke would have been, so
           # it inherits the line's opacity and sits in its coordinate space.
@@ -140,7 +149,6 @@ module Sirena
         [[anchor.x, anchor.y],
          [base_x - (anchor.dy * half), base_y + (anchor.dx * half)],
          [base_x + (anchor.dy * half), base_y - (anchor.dx * half)]]
-          .map { |x, y| [Numbers.write(x), Numbers.write(y)] }
       end
 
       # nil rather than lutaml's unset sentinel, which is not a value any
@@ -152,8 +160,9 @@ module Sirena
       # Zero remains zero because it suppresses the stroke. Unset,
       # unreadable, non-finite, and negative widths fall back because SVG
       # ignores those error values and uses the inherited or initial width.
-      # Non-finite also needs the fallback because `0.0 * Infinity` is NaN,
-      # which would otherwise be written into the points verbatim.
+      # Non-finite widths are guarded here before multiplication. A finite
+      # width can still overflow as the corners are computed, so #triangle
+      # rejects that non-finite result instead of writing it into points.
       def stroke_width
         width = Numbers.read(path.stroke_width)
         return DEFAULT_STROKE_WIDTH unless width&.finite? && !width.negative?

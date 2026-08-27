@@ -175,6 +175,10 @@ RSpec.describe Sirena::Svg::PathGeometry do
     it 'has no anchor when the heading is not finite' do
       expect(terminus('M 0 0 L 1e400 0')).to be_nil
     end
+
+    it 'has no anchor when a non-finite endpoint follows a finite heading' do
+      expect(terminus('M 0 0 L 5 0 L 1e400 0')).to be_nil
+    end
   end
 
   describe '#origin' do
