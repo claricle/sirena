@@ -499,6 +499,29 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect(title_for('"false"')).to eq('false')
       end
 
+      it 'drops zero written with digit separators' do
+        # js-yaml honours `_` between digits, and `_` is in the unquoted
+        # charset, so these reach here. A run of any length counts, and one
+        # may follow a radix prefix.
+        %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0].each do |zero|
+          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+        end
+      end
+
+      it 'keeps a separator that leads, trails, or bridges a prefix' do
+        # The boundary that makes this a rule rather than "delete every
+        # underscore": mermaid keeps all of these as strings.
+        %w[_0 0_ __0 0_0_ -_0 _ 0_x0].each do |kept|
+          expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+        end
+      end
+
+      it 'honours a separator in the mantissa but not the exponent' do
+        expect(title_for('0_0e0')).to eq('A')
+        expect(title_for('0e0_0')).to eq('0e0_0')
+        expect(title_for('0e_0')).to eq('0e_0')
+      end
+
       it 'drops a falsy value on every field, not just label' do
         source = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, icon: null }\n"
         card = parser.parse(source).columns.first.cards.first

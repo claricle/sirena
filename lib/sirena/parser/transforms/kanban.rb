@@ -168,6 +168,20 @@ module Sirena
           # Only UNQUOTED values are resolved. A quoted value stays a string,
           # and a non-empty string is truthy, so `'0'` and `"false"` override
           # while `''` and `""` do not.
+          #
+          # Only the FALSY half of js-yaml resolution is mirrored here. A
+          # scalar that resolves to a truthy value is still rendered as its
+          # raw text, where mermaid renders the resolved value - it draws `1`
+          # for `1e0`, `7` for `007` and `16` for `0x10`, and we draw the
+          # input verbatim. That divergence is pre-existing, it is not
+          # narrowed or widened by this bucket, and it belongs with the
+          # card-conformance work. Do not read this method as "we match
+          # mermaid on unquoted scalars".
+          #
+          # None of this has any corpus exposure: every `@{...}` value in all
+          # 1997 cases is a truthy string. It is pinned by the specs and by
+          # mmdc probes, never by the sweep - "16 fixed" is not evidence for
+          # any of it.
           def dropped_by_mermaid?(value_data)
             text = extract_value(value_data)
             return true if text.empty?
@@ -182,10 +196,19 @@ module Sirena
           YAML_FALSE_WORDS = %w[false False FALSE null Null NULL].freeze
           private_constant :YAML_FALSE_WORDS
 
-          # Every spelling of zero js-yaml resolves, measured against mmdc
-          # 11.12.0 rather than recalled. The hex prefix is lowercase-only:
-          # `0x0` resolves to zero and is dropped, while `0X0` stays a string
-          # and is kept. The exponent marker is not case-sensitive.
+          # Spellings js-yaml resolves as a number, measured against mmdc
+          # 11.12.0 rather than recalled. Case matters where you would not
+          # expect it: the radix prefix is lowercase-only, so `0x0` and `0o0`
+          # resolve to zero while `0X0` and `0O0` stay strings, but the
+          # exponent marker is case-insensitive and `0e0` and `0E0` both do.
+          #
+          # `_` is a digit separator. A run of any length counts, and one may
+          # follow a radix prefix - `0_0`, `0__0`, `0___0`, `00__00` and
+          # `0x_0` all resolve - but it may never lead or trail, so `_0`,
+          # `0_`, `__0`, `-_0` and `0_0_` stay strings. It cannot bridge into
+          # a prefix either: `0_x0` is a string. Separators count in the
+          # mantissa but NOT in the exponent, which is why `0_0e0` resolves
+          # and `0e0_0` and `0e_0` do not.
           #
           # This covers what the grammar can actually produce - unquoted_value
           # is `match['a-zA-Z0-9_\-']`, so `0.0`, `~` and `.nan` cannot reach
@@ -193,13 +216,23 @@ module Sirena
           # separate pre-existing gap in the charset, not fixed in this
           # bucket. Widen the charset and these cases need re-probing, not
           # guessing.
+          YAML_DECIMAL = /\A-?\d+(?:_+\d+)*\z/
+          YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
+          YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
+          YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
+          YAML_EXPONENT = /\A-?\d+(?:_+\d+)*[eE][-+]?\d+\z/
+          private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
+                           :YAML_BINARY, :YAML_EXPONENT
+
           def yaml_zero?(text)
+            digits = text.delete('_')
+
             case text
-            when /\A-?\d+\z/ then text.to_i.zero?
-            when /\A-?0x[0-9a-f]+\z/ then text[/0x(.+)/, 1].to_i(16).zero?
-            when /\A-?0o[0-7]+\z/ then text[/0o(.+)/, 1].to_i(8).zero?
-            when /\A-?0b[01]+\z/ then text[/0b(.+)/, 1].to_i(2).zero?
-            when /\A-?\d+[eE][-+]?\d+\z/ then text.to_f.zero?
+            when YAML_DECIMAL then digits.to_i.zero?
+            when YAML_HEX then digits[/0x(.+)/, 1].to_i(16).zero?
+            when YAML_OCTAL then digits[/0o(.+)/, 1].to_i(8).zero?
+            when YAML_BINARY then digits[/0b(.+)/, 1].to_i(2).zero?
+            when YAML_EXPONENT then digits.to_f.zero?
             else false
             end
           end
