@@ -120,6 +120,84 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "the body is YAML, because that is what mermaid parses it as" do
+    it "takes a multiline block body with no commas" do
+      source = "graph TD\nA@{\n  shape: rect\n  label: \"x\"\n}\n"
+
+      expect(node_for(source).label).to eq("x")
+    end
+
+    it "refuses commas in a multiline body" do
+      # Single line is a flow mapping and multiline is block YAML. Commas
+      # belong to the first and not the second, which is why the body is
+      # handed to YAML rather than picked apart by the grammar.
+      source = "graph TD\nA@{\n  shape: rect,\n  label: \"x\"\n}\n"
+
+      expect { node_for(source) }.to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "refuses a multiline body with no entries" do
+      expect { node_for("graph TD\nA@{\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "keeps a brace inside a quoted value" do
+      expect(node_for(%(graph TD\nA@{ label: "a}b" }\n)).label).to eq("a}b")
+    end
+
+    it "takes a colon with no space after it" do
+      # YAML's flow mapping wants one; mermaid's js-yaml does not, and the
+      # corpus has D@{shape:rounded}.
+      expect(node_for("graph TD\nD@{shape:rounded}\n").shape).to eq("rounded")
+    end
+
+    it "leaves a colon inside a quoted value alone" do
+      expect(node_for(%(graph TD\nD@{label:"a:b"}\n)).label).to eq("a:b")
+    end
+  end
+
+  describe "shape, then inline class, then metadata" do
+    it "accepts them in mermaid's order" do
+      node = node_for("graph TD\nA[old]:::hot@{ shape: hex }\n")
+
+      expect(node.shape).to eq("hexagon")
+      expect(node.classes).to eq(":::hot")
+    end
+
+    it "refuses the inline class before the shape" do
+      expect { node_for("graph TD\nA:::hot[old]@{ shape: hex }\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  describe "an empty value" do
+    # mermaid keeps what the node had rather than clearing it.
+    it "leaves the label alone" do
+      expect(node_for(%(graph TD\nA[keep]@{ label: }\n)).label).to eq("keep")
+    end
+
+    it "leaves the label alone for an empty string too" do
+      expect(node_for(%(graph TD\nA[keep]@{ label: "" }\n)).label).to eq("keep")
+    end
+
+    it "leaves the shape alone" do
+      expect(node_for("graph TD\nA(keep)@{ shape: }\n").shape).to eq("rounded")
+    end
+  end
+
+  describe "the generated shape table" do
+    # Nothing regenerates it in CI, so a name silently disappearing would
+    # go unnoticed. mmdc accepts 141 names on this oracle.
+    it "carries every name mermaid accepts" do
+      expect(Sirena::Parser::MERMAID_SHAPES.size).to eq(141)
+    end
+
+    it "keeps names that are easy to lose" do
+      expect(Sirena::Parser::MERMAID_SHAPES)
+        .to include("bolt", "circ", "hex", "odd", "junction", "doublecircle")
+    end
+  end
+
   describe "a body mermaid accepts and means nothing by" do
     { "empty" => "A@{}", "a key with no value" => "A@{ label: }",
       "a trailing comma" => "A@{ shape: rect, }" }.each do |label, statement|

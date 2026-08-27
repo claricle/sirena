@@ -27,7 +27,11 @@ def render(name)
   Dir.mktmpdir do |dir|
     input = File.join(dir, 'probe.mmd')
     output = File.join(dir, 'probe.svg')
-    File.write(input, "flowchart TD\n  D@{ shape: #{name} }\n")
+    # Seeded: mermaid's rough renderer is random by default, so the same
+    # shape produced a different path on every run and names were grouped
+    # by noise rather than by geometry.
+    File.write(input, "%%{init: {\"handDrawnSeed\": 1}}%%\n" \
+                      "flowchart TD\n  D@{ shape: #{name} }\n")
     _, _, status = Open3.capture3('mmdc', '-i', input, '-o', output)
     return nil unless status.success?
 
@@ -50,7 +54,13 @@ end
 
 def geometry(attrs)
   source = attrs[/\bd="([^"]*)"/, 1] || attrs[/\bpoints="([^"]*)"/, 1]
-  return attrs.scan(/\b(rx|ry|r)=/).flatten.sort.join(',') unless source
+
+  unless source
+    # Values, not just which attributes are present: ignoring them
+    # collapsed a rounded rectangle into a plain one.
+    return attrs.scan(/\b(rx|ry|r|width|height)="([^"]*)"/)
+        .map { |k, v| "#{k}=#{v.to_f.round(2)}" }.sort.join(',')
+  end
 
   letters = source.scan(/[A-Za-z]/).join
   "#{letters}:#{normalised(source.scan(/-?\d+(?:\.\d+)?/).map(&:to_f))}"
@@ -104,7 +114,8 @@ warn "  rejected: #{rejected.sort.join(' ')}" unless rejected.empty?
 # not so every name is distinct.
 SIRENA_SHAPES = %w[
   double_circle circle stadium subroutine cylindrical rhombus hexagon
-  parallelogram_alt parallelogram trapezoid_alt trapezoid rounded rect
+  parallelogram_alt parallelogram trapezoid_alt trapezoid asymmetric
+  rounded rect
 ].freeze
 
 ALIASES = {
@@ -133,7 +144,8 @@ ALIASES = {
   'pill' => 'stadium', 'terminal' => 'stadium', 'stadium' => 'stadium',
   'subprocess' => 'subroutine', 'subroutine' => 'subroutine',
   'fr-rect' => 'subroutine', 'framed-rectangle' => 'subroutine',
-  'rounded' => 'rounded', 'event' => 'rounded'
+  'rounded' => 'rounded', 'event' => 'rounded',
+  'odd' => 'asymmetric'
 }.freeze
 
 def sirena_shape(group)
