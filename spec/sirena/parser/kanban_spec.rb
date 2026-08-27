@@ -445,7 +445,7 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'refuses it whatever the case' do
-        ['Kanban', 'KANBAN'].each do |word|
+        %w[Kanban KANBAN KaNbAn kAnBaN kanBan kanbaN].each do |word|
           expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
             .to raise_error(Sirena::Parser::ParseError)
         end
@@ -462,8 +462,12 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'reserves no other keyword' do
-        diagram = parser.parse("kanban\n  root[Root]\n  graph\n  section\n  end\n")
-        expect(diagram.columns.map(&:title)).to eq(%w[Root graph section end])
+        # Every token probed against mmdc; all parse as ordinary nodes.
+        others = %w[graph section title class classDef click style subgraph
+                    accTitle accDescr end flowchart]
+        body = others.map { |word| "  #{word}\n" }.join
+        diagram = parser.parse("kanban\n  root[Root]\n#{body}")
+        expect(diagram.columns.map(&:title)).to eq(['Root'] + others)
       end
     end
 
@@ -481,9 +485,16 @@ RSpec.describe Sirena::Parser::KanbanParser do
         end
       end
 
-      it 'falls back for false and null in any case' do
+      it 'falls back for the three spellings js-yaml resolves' do
+        # lowercase, Capitalised and UPPERCASE only - not "any case".
         %w[false False FALSE null Null NULL].each do |word|
           expect(title_for(word)).to eq('A'), "expected #{word} to be dropped"
+        end
+      end
+
+      it 'keeps other mixed-case spellings, which stay strings' do
+        %w[fAlSe nUll FaLsE NuLl].each do |word|
+          expect(title_for(word)).to eq(word), "expected #{word} to be kept"
         end
       end
 
@@ -517,15 +528,29 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'honours a separator in the mantissa but not the exponent' do
-        expect(title_for('0_0e0')).to eq('A')
-        expect(title_for('0e0_0')).to eq('0e0_0')
-        expect(title_for('0e_0')).to eq('0e_0')
+        # The float pattern is `[0-9][0-9_]*`, so a mantissa may even END in
+        # separators - unlike the int pattern, where `0_` stays a string.
+        %w[0_0e0 0_e0 0__e0 -0_e0 0_E0 0_0_e0].each do |zero|
+          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+        end
+        %w[0e0_0 0e_0 0_e_0 _0e0].each do |kept|
+          expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+        end
       end
 
-      it 'drops a falsy value on every field, not just label' do
-        source = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, icon: null }\n"
+      it 'still refuses a trailing separator on an integer' do
+        # Guards the int and float branches against being unified: widening
+        # the float mantissa must not leak into the decimal case.
+        expect(title_for('0_')).to eq('0_')
+        expect(title_for('0_0_')).to eq('0_0_')
+      end
+
+      it 'drops a falsy value on each of the five gated fields' do
+        source = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, " \
+                 "icon: null, priority: 0x0, label: '' }\n"
         card = parser.parse(source).columns.first.cards.first
         expect(card.metadata).to eq({})
+        expect(card.text).to eq('K')
       end
     end
   end

@@ -204,11 +204,17 @@ module Sirena
           #
           # `_` is a digit separator. A run of any length counts, and one may
           # follow a radix prefix - `0_0`, `0__0`, `0___0`, `00__00` and
-          # `0x_0` all resolve - but it may never lead or trail, so `_0`,
-          # `0_`, `__0`, `-_0` and `0_0_` stay strings. It cannot bridge into
-          # a prefix either: `0_x0` is a string. Separators count in the
-          # mantissa but NOT in the exponent, which is why `0_0e0` resolves
-          # and `0e0_0` and `0e_0` do not.
+          # `0x_0` all resolve - but it may never lead, so `_0`, `__0` and
+          # `-_0` stay strings. It cannot bridge into a prefix either:
+          # `0_x0` is a string.
+          #
+          # Whether a TRAILING separator is allowed depends on the resolver
+          # mermaid reaches, so the two branches genuinely differ and must
+          # not be unified. The int pattern rejects one, so `0_` and `0_0_`
+          # stay strings; the float pattern is `[0-9][0-9_]*`, which accepts
+          # one, so a mantissa may end in separators and `0_e0`, `0__e0` and
+          # `0_0_e0` all resolve. The exponent takes no separators at all,
+          # which is why `0e0_0` and `0_e_0` stay strings.
           #
           # This covers what the grammar can actually produce - unquoted_value
           # is `match['a-zA-Z0-9_\-']`, so `0.0`, `~` and `.nan` cannot reach
@@ -220,7 +226,7 @@ module Sirena
           YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
           YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
           YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
-          YAML_EXPONENT = /\A-?\d+(?:_+\d+)*[eE][-+]?\d+\z/
+          YAML_EXPONENT = /\A-?\d[\d_]*[eE][-+]?\d+\z/
           private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
                            :YAML_BINARY, :YAML_EXPONENT
 
