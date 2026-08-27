@@ -428,8 +428,10 @@ During item 04 the engine still resolves classes through
 ## Do not
 
 - **Do not design one scene format for all 24 types.** Graph types share
-  the ELK shape above because elkrb will populate it. Non-graph types get
-  a Scene shaped by their own diagram. Forcing a pie into nodes and edges
+  the ELK shape above because elkrb populates the eligible ones — and
+  they share it whether or not a given type turns out eligible, so the
+  shape stays uniform. `block` is ELK-shaped and ineligible, and that is
+  fine. Non-graph types get a Scene shaped by their own diagram. Forcing a pie into nodes and edges
   recreates the untyped Hash with extra steps.
 - **Do not build the cross-notation IR here.** These Scenes are
   geometry and they are Mermaid-shaped on purpose. The IR is a different

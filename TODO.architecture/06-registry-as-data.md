@@ -184,8 +184,9 @@ TYPES = {
         of the coordinates that layout computes for itself. Same seam,
         named honestly: the eligible layouts, not one stub class.
 
-        Eligible is narrower than it looks, and two different
-        classifications are involved. `TODO.foundation/18` calls sankey
+        Eligible is narrower than it looks, and three separate
+        classifications are involved — IR shape, Scene shape, and elkrb
+        eligibility. `TODO.foundation/18` calls sankey
         **graph-shaped in the IR** while saying it does its own
         layering and declines elkrb (`18:86-89`) — its Scene is not
         ELK-shaped either, it roots on `nodes`. `block` is

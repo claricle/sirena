@@ -492,7 +492,7 @@ never serialize; that block is what created the triple-declaration mess
 in the Svg layer).
 
 **Graph types must use an ELK-shaped Scene.** Geometry parity is the
-agreed bar, so elkrb computes positions later. If the Scenes already
+agreed bar, so elkrb positions the eligible ones later. If the Scenes already
 mirror what ELK emits, that's a swap; if we invent a different shape
 now, it's a redesign.
 
