@@ -67,8 +67,10 @@ buckets.
 
 The raw 36.9% is not a worse version of 55.6%; it is a different
 question with a different denominator. It is *lower*, because it counts
-632 artifacts and 59 rejections we cannot render and should not be asked
-to. Quote the valid-only figure, and say which one you mean.
+632 artifacts and 59 rejections that sit outside today's evidence-backed
+target — not because they are unrenderable. Sirena in fact renders 15 of
+the artifacts and 18 of the rejections; that says nothing useful, which
+is the point. Quote the valid-only figure, and say which one you mean.
 
 **Re-run the sweep before quoting any of this.** These numbers moved
 between two rounds of reviewing this very document — the flowchart work

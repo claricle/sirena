@@ -23,7 +23,7 @@ pure Ruby, with no Node and no browser.** That's the whole product.
 24 Mermaid diagram types are registered. `spec/mermaid/` holds 1,997
 files, but a third of them are not mermaid — 632 extraction artifacts
 and 59 cases mmdc rejected, per `spec/mermaid/corpus-verdicts.yml`.
-Against the **1,032 cases mermaid accepts, Sirena renders 508 — 49.2%**,
+Against the **1,032 cases mermaid accepts, Sirena renders 574 — 55.6%**,
 leaving **458** to fix (measured 2026-08-27,
 `bundle exec ruby scripts/corpus_sweep.rb`). Closing that gap is the job.
 
@@ -166,7 +166,7 @@ case count:
 - The work is concentrated, which makes the structural case stronger
   rather than weaker: flowchart holds 128 and class holds 143, so 271 of
   the 458 land in two types whose grammars, layouts and renderers are
-  exactly the files items 03-05 rewrite. Paying the untyped-hash tax 337
+  exactly the files items 03-05 rewrite. Paying the untyped-hash tax 271
   times in two files is the case for fixing the files first.
 - What we can no longer say is "a thousand cases justify anything".
   Seven preparatory items in front of 458 fixes is a judgment call, not

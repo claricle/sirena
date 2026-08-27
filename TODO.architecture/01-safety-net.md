@@ -149,7 +149,7 @@ of 24, not 23.
 ### Why
 
 `scripts/corpus_sweep.rb` exists but is manual-only, so the 49.2%
-oracle-valid pass rate (508/1032, measured 2026-08-25) is unprotected: a
+evidence-valid pass rate (574/1032, swept 2026-08-27) is unprotected: a
 refactor can drop 200 cases and nothing notices.
 
 ### Steps
@@ -178,7 +178,7 @@ refactor can drop 200 cases and nothing notices.
 2. Commit `scoreboard/corpus.json`.
 
    Record each case's verdict from `spec/mermaid/corpus-verdicts.yml`
-   alongside its status, and report the rate over **oracle-valid cases
+   alongside its status, and report the rate over **evidence-valid cases
    only**. `AGENTS.md`: a case leaves the denominator by oracle
    rejection, never by judgment. A rate over all 1,997 files counts 632
    extraction artifacts and 59 mmdc rejections as work.
@@ -242,7 +242,7 @@ first block.
 - [ ] A — no `Treemap = TreemapParser` alias remains
 - [ ] B — a failing parse raises `ParseError` out of `Engine#render`, not `PipelineError`; no backtrace appears inside any message string
 - [ ] B — `rake corpus` writes `scoreboard/corpus.json`; it is committed
-- [ ] B — the reported rate is over oracle-valid cases, and says so
+- [ ] B — the reported rate is over evidence-valid cases, and says so
 - [ ] B — `rake corpus:check` fails on a deliberately broken renderer
 - [ ] B — `rake corpus:check` fails on an unrecorded improvement
 - [ ] B — `rake corpus[pie]` prints only pie results
