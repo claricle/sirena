@@ -31,6 +31,22 @@ module Sirena
 
       PLAIN_SCALAR = Psych::Nodes::Scalar::PLAIN
 
+      # libyaml ends a line on NEL, LS or PS as well; js-yaml ends one on a
+      # line feed or a carriage return and nothing else. A body carrying
+      # one of the three cannot mean the same thing to both parsers, so it
+      # is refused rather than read the wrong way round.
+      FOREIGN_BREAK = /[\u0085\u2028\u2029]/
+
+      YAML_BREAK = /\r\n|[\r\n]/
+
+      # js-yaml takes any 1.x document version and merely warns about the
+      # ones it does not know; libyaml refuses everything but 1.1 and 1.2.
+      # The version changes nothing either of them does with the tree, so
+      # the line is levelled before parsing. A major other than 1, and a
+      # second directive, still fail in libyaml just as they do in js-yaml.
+      DOCUMENT_VERSION = /^%YAML[ \t]+1\.\d+[ \t]*$/
+      LEVELLED_VERSION = '%YAML 1.2'
+
       NULL_WORDS = %w[~ null Null NULL].freeze
 
       BOOL_WORDS = {
@@ -69,7 +85,8 @@ module Sirena
       end
 
       def initialize(document)
-        @document = document
+        @document = document.gsub(DOCUMENT_VERSION, LEVELLED_VERSION)
+        @lines = @document.split(YAML_BREAK, -1)
         @anchors = {}
       end
 
@@ -86,6 +103,9 @@ module Sirena
 
       # `yaml.load` refuses a stream that is not exactly one document.
       def root
+        raise ParseError, 'Unreadable line break.' if
+          FOREIGN_BREAK.match?(@document)
+
         documents = Psych.parse_stream(@document).children
         raise ParseError, 'Malformed metadata.' unless documents.one?
 
@@ -118,7 +138,7 @@ module Sirena
       # `*s: hi` is an alias named "s:" there, and mermaid reports it
       # undefined rather than reading the key.
       def alias_name(node)
-        line = @document.lines[node.start_line]
+        line = @lines[node.start_line]
         line[(node.start_column + 1)..][/\A[^\s,\[\]{}]*/]
       end
 

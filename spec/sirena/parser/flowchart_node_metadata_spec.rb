@@ -770,6 +770,57 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # js-yaml takes any 1.x document version and only warns about the ones it
+  # does not know. libyaml refuses everything but 1.1 and 1.2, so it used to
+  # refuse two versions mmdc draws.
+  describe "a %YAML directive" do
+    %w[1.0 1.1 1.2 1.3].each do |version|
+      it "reads the document under version #{version}" do
+        source = "graph TD\nA(keep)@{\n%YAML #{version}\n---\nlabel: hi\n}\n"
+
+        expect(node_for(source).label).to eq("hi")
+      end
+    end
+
+    it "still refuses a major version neither parser knows" do
+      source = "graph TD\nA(keep)@{\n%YAML 2.0\n---\nlabel: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+    end
+
+    it "still refuses a second directive" do
+      source = "graph TD\nA(keep)@{\n%YAML 1.2\n%YAML 1.2\n---\nlabel: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+    end
+  end
+
+  # libyaml ends a line on three characters js-yaml reads as ordinary text.
+  # Positions taken off one parser and lines counted off the other put an
+  # alias on a line that did not exist, which came out as a NoMethodError.
+  describe "a line break the two parsers disagree about" do
+    { "a next-line" => "\u0085", "a line separator" => "\u2028",
+      "a paragraph separator" => "\u2029" }.each do |label, brk|
+      it "refuses a body carrying #{label}" do
+        source = "graph TD\nA(keep)@{\n  shape: rounded#{brk}  label: hi\n}\n"
+
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Unreadable line break/)
+      end
+    end
+
+    it "reads an alias after a bare carriage return" do
+      # Both parsers end a line here, so this one is a diagram rather than
+      # an error — and looking the alias up used to walk off the end of the
+      # body and raise NoMethodError.
+      source = "graph TD\nA(keep)@{\n  a: &s hi\r  label: *s\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+  end
+
   # Mermaid lexes the block before YAML sees it, and its string state opens
   # on a double quote only.
   describe "quoting inside the block" do
