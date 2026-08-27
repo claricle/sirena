@@ -162,6 +162,21 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 L 10 0 a5 5 0 011 20 10')).to be_nil
     end
 
+    # SVG's other degenerate arc. `A 5 5 0 0 1 10 0` from (10,0) has real
+    # radii and coincident endpoints, so it is omitted entirely rather than
+    # traversed, and the line before it is still the end of the path.
+    it 'omits an arc whose endpoints coincide, keeping the anchor before it' do
+      anchor = terminus('M 0 0 L 10 0 A 5 5 0 0 1 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
+    it 'omits a relative arc that returns to where it started' do
+      anchor = terminus('M 0 0 L 10 0 a 5 5 0 0 1 0 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
     it 'treats a zero horizontal radius arc as a straight line' do
       anchor = terminus('M 0 0 A 0 5 0 0 1 10 0')
 
@@ -238,6 +253,14 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
     it 'treats a zero-radius initial arc as a straight line' do
       anchor = origin('M 0 0 A 0 5 0 0 1 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+    end
+
+    # An omitted arc is not travelled, so the path has not begun on it and
+    # the segment after it IS the start of the path.
+    it 'starts on the segment after a leading arc that goes nowhere' do
+      anchor = origin('M 0 0 A 5 5 0 0 1 0 0 L 10 0')
 
       expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end

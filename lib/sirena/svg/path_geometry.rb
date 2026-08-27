@@ -165,8 +165,18 @@ module Sirena
         end
       end
 
+      # SVG gives an arc two degenerate forms, and they are not the same
+      # thing. An arc whose endpoints coincide is omitted entirely, so it must
+      # not disturb the anchors either: the segment before it is still the end
+      # of the path and the segment after it is still the start. Only the
+      # zero-radius form becomes a straight line. Handling one and not the
+      # other silently dropped the arrowhead off `M 0 0 L 10 0 A 5 5 0 0 1 10 0`.
+      #
+      # Exact equality, because a relative endpoint of `0 0` is computed as
+      # `@point + 0.0` and lands on the current point exactly.
       def arc(args)
         end_point = [args[5], args[6]]
+        return if end_point == @point
         return segment(*straight(end_point)) if args[0].zero? || args[1].zero?
 
         traverse(end_point)
