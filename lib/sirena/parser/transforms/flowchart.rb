@@ -3,6 +3,7 @@
 require 'parslet'
 require_relative '../base'
 require_relative '../../diagram/flowchart'
+require 'psych'
 require_relative '../mermaid_shapes'
 
 module Sirena
@@ -22,33 +23,88 @@ module Sirena
           end
         end
 
-        # `@{}` carries no named captures, so parslet hands back the raw
-        # slice rather than a hash or an array. Mermaid accepts it and it
-        # means nothing, which is what an empty result says.
+        # mermaid parses the body with js-yaml: a single-line body as a flow
+        # mapping, a multiline one as block YAML. Psych does both, so the
+        # rules fall out instead of being reimplemented in the grammar.
+        #
+        # @raise [Parser::ParseError] on YAML mermaid would also refuse
         def self.metadata_entries(metadata)
-          entries = case metadata
-                    when nil then []
-                    when Hash then [metadata]
-                    when Array then metadata
-                    else []
-                    end
+          body = metadata_body(metadata)
+          return {} if body.empty?
 
-          pairs = entries.map { |e| [e[:key].to_s, entry_value(e[:value])] }
-          keys = pairs.map(&:first)
-          duplicate = keys.detect { |k| keys.count(k) > 1 }
+          # `@{}` is fine and means nothing; `@{` newline `}` is not, because
+          # block YAML needs at least one entry. mermaid draws the first and
+          # refuses the second.
+          if body.strip.empty?
+            raise Parser::ParseError, 'Empty metadata block.'
+          end
 
-          # mermaid parses the body as YAML and raises on a duplicate key.
-          # Taking the last value silently disagreed with it.
-          raise Parser::ParseError, "Duplicate key: #{duplicate}." if duplicate
+          document = body.include?("\n") ? body : "{#{spaced(body)}}"
+          mapping = yaml_mapping(document)
+          reject_duplicates(mapping)
 
-          pairs.to_h
+          mapping.children.each_slice(2).to_h do |key, value|
+            [key.value, scalar(value)]
+          end
         end
 
-        # Stripped for the bare form only: an unquoted value runs to the
-        # comma or brace and picks up the space before it, while a quoted
-        # value means exactly what it says.
-        def self.entry_value(value)
-          value.is_a?(Hash) ? value[:string].to_s : value.to_s.strip
+        # YAML's flow mapping needs a space after the colon; mermaid's
+        # js-yaml does not, and `D@{shape:rounded}` appears in the corpus.
+        # Quoted runs are copied through untouched so a colon inside a
+        # label is left alone.
+        def self.spaced(body)
+          out = +''
+          quote = nil
+
+          body.each_char.with_index do |char, i|
+            if quote
+              quote = nil if char == quote
+            elsif ['"', "'"].include?(char)
+              quote = char
+            elsif char == ':' && body[i + 1] !~ /[ \t]/
+              out << ": "
+              next
+            end
+            out << char
+          end
+
+          out
+        end
+
+        # An empty repeat captures as [], not as an empty slice.
+        def self.metadata_body(metadata)
+          return '' unless metadata.is_a?(Hash)
+
+          value = metadata[:body]
+          value.is_a?(Array) ? '' : value.to_s
+        end
+
+        def self.yaml_mapping(document)
+          node = Psych.parse(document)&.children&.first
+          raise Parser::ParseError, 'Malformed metadata.' unless
+            node.is_a?(Psych::Nodes::Mapping)
+
+          node
+        rescue Psych::Exception
+          raise Parser::ParseError, 'Malformed metadata.'
+        end
+
+        # mermaid raises on a duplicate key rather than taking the last.
+        def self.reject_duplicates(mapping)
+          keys = mapping.children.each_slice(2).map { |key, _| key.value }
+          duplicate = keys.detect { |key| keys.count(key) > 1 }
+          return unless duplicate
+
+          raise Parser::ParseError, "Duplicate key: #{duplicate}."
+        end
+
+        # An absent or empty value is a no-op, which is what mermaid does
+        # with `label:` and `label: ""` — the node keeps what it had.
+        def self.scalar(value)
+          return nil unless value.is_a?(Psych::Nodes::Scalar)
+          return nil if value.value.empty?
+
+          value.value
         end
 
         # Shape delimiter to type mapping

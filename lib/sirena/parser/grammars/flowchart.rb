@@ -486,42 +486,31 @@ module Sirena
         # transform previously needed a rule per combination.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            (ws? >> inline_class).maybe.as(:inline_class) >>
             (ws? >> node_shape).maybe.as(:shape) >>
+            (ws? >> inline_class).maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
         # giving a node a shape or a label, usable as a statement of its own
         # or as a suffix inside an edge chain.
-        # The body is a mapping, and mermaid takes an empty one, a key with
-        # no value, a trailing comma, and newlines between entries.
+        # The body is captured raw and handed to YAML, because that is what
+        # mermaid does with it. A single-line body is a flow mapping and a
+        # multiline one is block YAML, so commas are required on one line
+        # and rejected across several — a grammar rule cannot express that
+        # without reimplementing YAML badly.
         rule(:node_metadata) do
-          str('@{') >> metadata_body >> ws? >> str('}')
+          str('@{') >> metadata_body.as(:body) >> str('}')
         end
 
         rule(:metadata_body) do
-          (ws? >> metadata_entry >>
-            (ws? >> comma >> ws? >> metadata_entry).repeat >>
-            (ws? >> comma).maybe).maybe
+          (metadata_quoted | (str('}').absent? >> any)).repeat
         end
 
-        rule(:metadata_entry) do
-          metadata_key.as(:key) >> space? >> str(':') >> space? >>
-            metadata_value.maybe.as(:value)
-        end
-
-        rule(:metadata_key) { match['\w-'].repeat(1) }
-
-        # A value that opens with a quote must close it — falling back to
-        # the bare form let `label: "oops` through, which mermaid refuses.
-        rule(:metadata_value) do
-          quoted_string | (match['"\''].absent? >> match['^,}\r\n'].repeat(1))
-        end
-
-        rule(:quoted_string) do
-          (str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')) |
-            (str("'") >> (str("'").absent? >> any).repeat.as(:string) >> str("'"))
+        # A quoted run is skipped whole so a brace inside it is text.
+        rule(:metadata_quoted) do
+          (str('"') >> (str('"').absent? >> any).repeat >> str('"')) |
+            (str("'") >> (str("'").absent? >> any).repeat >> str("'"))
         end
 
         # Inline class syntax: :::className
