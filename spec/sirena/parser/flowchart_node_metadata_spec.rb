@@ -860,6 +860,32 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # Nothing in the body but a comment still parses - as an empty mapping.
+  describe "a body with no entries in it" do
+    ["graph TD\nA(keep)@{#}\n", "graph TD\nA(keep)@{ # note }\n"].each do |source|
+      it "keeps the node's own label for #{source.lines.last.strip}" do
+        # mmdc draws both. Reaching for the first key of a mapping that has
+        # none raised NoMethodError straight out of the parser.
+        expect(node_for(source).label).to eq("keep")
+      end
+    end
+  end
+
+  # The tree is walked recursively, so the body can nest deeper than the
+  # stack goes. mermaid runs its browser stack out on the same source.
+  describe "a body nested thousands deep" do
+    it "refuses it as a parse error, not a stack overflow" do
+      # SystemStackError is not a StandardError, so it went past every
+      # caller instead of being reported as bad metadata.
+      nesting = 5000
+      source = "graph TD\nA(keep)@{ label: " \
+               "#{'[' * nesting}x#{']' * nesting} }\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /nested too deeply/)
+    end
+  end
+
   # js-yaml drops a byte-order mark at the very start of the text and
   # nowhere else; libyaml drops one at the start of any line.
   describe "a byte-order mark" do
