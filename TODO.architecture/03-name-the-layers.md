@@ -79,12 +79,32 @@ One commit — and one PR — per rename.
    | `Diagram::PacketDiagram` | `Diagram::Packet` |
    | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
 
-   One needs **both** halves. The key `:xychart` becomes `:xy_chart` so
-   it matches its own file, **and** the constant `Diagram::XYChart`
-   (`diagram/xy_chart.rb:6`) becomes `Diagram::XyChart`. Renaming the
-   key alone leaves a key that resolves to nothing. It is the only key
-   that does not match its file name, and item 06 makes the key the
-   single source the class is derived from.
+   **`xychart` is not a two-part rename. It is six.** It is the only
+   key that does not match its own file name, and item 06 makes the key
+   the single source every class is derived from, so every place the
+   old spelling appears has to move together:
+
+   | what | today | after |
+   |---|---|---|
+   | registry key | `:xychart` | `:xy_chart` |
+   | detector key | `Engine::DIAGRAM_TYPE_PATTERNS[:xychart]` | `[:xy_chart]` |
+   | model | `Diagram::XYChart` (`diagram/xy_chart.rb:6`) | `Diagram::XyChart` |
+   | model's `diagram_type` | `:xychart` | `:xy_chart` |
+   | parser | `Parser::XYChartParser` (`parser/xy_chart.rb:31`) | `Parser::XyChart` |
+   | layout | `Transform::XYChart` (`transform/xy_chart.rb:16`) | `Layout::XyChart` |
+   | renderer | `Renderer::XYChart` (`renderer/xy_chart.rb:26`) | `Renderer::XyChart` |
+   | contract fixture | `spec/fixtures/contract/xychart.mmd` | `xy_chart.mmd` |
+
+   Miss the detector key or `diagram_type` and item 01's contract spec
+   fails on the spot. Miss the fixture and item 06's fixture parity
+   fails later. Miss a layer class and item 06's convention lookup
+   returns nothing for it — the model is not the only thing resolved by
+   convention.
+
+   The inner grammar and builder classes (`parser/grammars/xy_chart.rb`,
+   `parser/transforms/xy_chart.rb`) are not addressed by a key, but
+   rename them too rather than leave one spelling behind in a file where
+   everything else moved.
 
    **Two are collisions, and they are the reason a bare resolution
    check is not enough.** `Diagram::Block` and `Diagram::Requirement`
@@ -101,11 +121,12 @@ One commit — and one PR — per rename.
    | `Diagram::Requirement` (a component) | `Diagram::RequirementNode` |
    | `Diagram::RequirementDiagram` (the model) | `Diagram::Requirement` |
 
-   Do both halves in **one** commit per type — move the component out
-   and rename the model in together. Splitting them leaves a commit
-   where the identity criterion above is deliberately false, and this
-   item ships one commit per rename with `corpus:check` unchanged at
-   every step.
+   Both swaps land **inside step 4's single commit**, and each swap is
+   atomic — move the component out and rename the model in together.
+   This item ships one commit per numbered rename, so the collisions do
+   not get their own commits; splitting a swap would leave a state where
+   the identity criterion above is deliberately false and
+   `corpus:check` has nothing to compare against.
 
    Other inner classes — `Diagram::GanttTask`, `Diagram::BlockStyle` —
    keep their names. They are not addressed by a registry key.
