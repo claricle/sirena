@@ -79,7 +79,7 @@ One commit — and one PR — per rename.
    | `Diagram::PacketDiagram` | `Diagram::Packet` |
    | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
 
-   **`xychart` is not a two-part rename. It is six.** It is the only
+   **`xychart` is not a two-part rename. It is ten places.** It is the only
    key that does not match its own file name, and item 06 makes the key
    the single source every class is derived from, so every place the
    old spelling appears has to move together:
@@ -95,16 +95,23 @@ One commit — and one PR — per rename.
    | renderer | `Renderer::XYChart` (`renderer/xy_chart.rb:26`) | `Renderer::XyChart` |
    | contract fixture | `spec/fixtures/contract/xychart.mmd` | `xy_chart.mmd` |
 
-   Miss the detector key or `diagram_type` and item 01's contract spec
-   fails on the spot. Miss the fixture and item 06's fixture parity
-   fails later. Miss a layer class and item 06's convention lookup
-   returns nothing for it — the model is not the only thing resolved by
-   convention.
+   Rows nine and ten are the inner grammar and builder classes,
+   `Parser::Grammars::XYChart` (`parser/grammars/xy_chart.rb:10`) and
+   `Parser::Transforms::XYChart` (`parser/transforms/xy_chart.rb:9`).
+   No key addresses them, but leaving one spelling behind in a file
+   where everything else moved is how the next person gets it wrong.
 
-   The inner grammar and builder classes (`parser/grammars/xy_chart.rb`,
-   `parser/transforms/xy_chart.rb`) are not addressed by a key, but
-   rename them too rather than leave one spelling behind in a file where
-   everything else moved.
+   What each miss costs you:
+
+   | miss | what fails, and when |
+   |---|---|
+   | registry key | `DiagramRegistry.get(:xy_chart)` returns nil; the engine cannot dispatch. Immediate |
+   | detector key | item 01's set-parity assertion goes red. Immediate |
+   | model constant | convention lookup finds nothing after item 06 |
+   | `diagram_type` | item 01's contract spec goes red. Immediate |
+   | parser, layout or renderer class | item 06's convention lookup returns nil for that layer |
+   | contract fixture filename | item 01's spec cannot find `xy_chart.mmd`, so it goes red **immediately** — not at item 06. Item 06's fixture parity is the second net, not the first |
+   | grammar or builder class | nothing fails; the inconsistency just survives |
 
    **Two are collisions, and they are the reason a bare resolution
    check is not enough.** `Diagram::Block` and `Diagram::Requirement`
