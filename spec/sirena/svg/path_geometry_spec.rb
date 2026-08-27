@@ -131,6 +131,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 A 10 10 0 1 1 20 0')).to be_nil
     end
 
+    # The arc must come second: a first arc has no prior terminus, so it
+    # cannot prove that traversing the arc clears one already set.
+    it 'has no anchor when the path ends on an arc after a line' do
+      expect(terminus('M 0 0 L 10 0 A 5 5 0 0 1 20 10')).to be_nil
+    end
+
     it 'treats a zero horizontal radius arc as a straight line' do
       anchor = terminus('M 0 0 A 0 5 0 0 1 10 0')
 

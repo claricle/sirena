@@ -18,16 +18,16 @@ module ExampleTasks
 
   # An SVG whose source is gone still ships: git tracks it and the gemspec
   # packages it, and the loop below walks sources, so nothing ever visits it.
-  # Reported rather than deleted — a vanished source is usually a rename, and
-  # the fix belongs with whoever made it.
-  def report_orphan_svgs(examples_dir)
+  # Delete it so generation leaves only outputs backed by current sources.
+  def remove_orphan_svgs(examples_dir)
     orphans = Dir.glob(File.join(examples_dir, '*', '*.svg'))
       .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
-      .map { |svg| svg.sub("#{examples_dir}/", '') }
-    return if orphans.empty?
 
-    puts "\n⚠️  #{orphans.size} SVG(s) ship with no source — delete or restore:"
-    orphans.sort.each { |svg| puts "   #{svg}" }
+    orphans.sort.each do |svg_file|
+      File.delete(svg_file)
+      relative = svg_file.sub("#{examples_dir}/", '')
+      puts "    removed #{relative}, which no longer has a source"
+    end
   end
 
   # A source that stops rendering must not keep shipping its old SVG. Leaving
@@ -102,7 +102,7 @@ namespace :examples do
       end
     end
 
-    ExampleTasks.report_orphan_svgs(examples_dir)
+    ExampleTasks.remove_orphan_svgs(examples_dir)
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"

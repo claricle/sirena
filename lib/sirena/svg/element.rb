@@ -146,10 +146,10 @@ module Sirena
       # be. Group opacity composites the group as one rendered surface, while
       # these two are inherited paint properties: a child setting its own
       # `fill-opacity` replaces the group's rather than multiplying by it,
-      # and overlapping children composite differently. No renderer sets
+      # and overlapping children composite differently. Nothing sets
       # `opacity` on a Group, so nothing Sirena emits takes that path — the
-      # four renderers that set it (sankey, kanban, quadrant, requirement)
-      # all set it on a Rect, Path or Text.
+      # six sites set it on leaf shapes: a Path, three Rects, a Text and an
+      # Arrowhead Polygon.
       #
       # A component value that is not a number is left exactly as it was.
       # Non-finite operands also leave the component alone because Float::NAN

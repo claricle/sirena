@@ -143,6 +143,14 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(arrows).to be_empty
     end
 
+    it 'draws nothing when a terminal arc follows a line' do
+      arrows = described_class.for(
+        path(d: 'M 0 0 L 10 0 A 5 5 0 0 1 20 10', marker_end: 'url(#arrowhead)')
+      )
+
+      expect(arrows).to be_empty
+    end
+
     # The arc still moves the pen, so a segment after it starts in the right
     # place and can carry the head.
     it 'still ends where a segment after an arc ends' do

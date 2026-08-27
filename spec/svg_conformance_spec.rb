@@ -20,7 +20,7 @@ require 'yaml'
 #   * The mermaid corpus is the wide net: 1,997 sources across every diagram
 #     type, and the only place an attribute a single renderer emits shows up.
 #
-# The corpus pass renders all 1,997 sources and validates the 715 that produce
+# The corpus pass renders all 1,997 sources and validates the 736 that produce
 # a document, in about five seconds. Worth every one of them: each of the four
 # conformance defects this gate was written for came out of a renderer no unit
 # spec covered.
@@ -44,7 +44,7 @@ CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '
 # way — but a renderer that starts raising for every input takes its whole
 # type out of the population, and an offender list over what survives would
 # stay green while measuring less. Ratchet it up when it rises.
-CONFORMANCE_RENDERED_FLOOR = 715
+CONFORMANCE_RENDERED_FLOOR = 736
 
 # The example sources Sirena cannot parse yet, so they ship no SVG. Named
 # rather than counted: a NEW source falling out of the shipped set is a
