@@ -18,6 +18,12 @@ Two numbers, asserted by a spec rather than claimed:
   Specs are on top of that and the generator writes them too. The 8 is
   the contract surface — what someone has to understand — not the
   number of files the generator creates.
+
+  **This is the count before `TODO.foundation/18`.** That item's typed
+  IR requires every Mermaid type to appear in `docs/ir-type-map.md`
+  (`18-typed-ir-boundary.md:103-109`), which makes it 9. Whoever lands
+  item 18 owns updating this number, the generator and the file-count
+  spec together — it is one line in each and it is easy to miss.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 

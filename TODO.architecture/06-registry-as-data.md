@@ -169,10 +169,16 @@ TYPES = {
       - `Layout::Base`'s `to_graph` branch, and
         `grep -rn "to_graph" lib/sirena/` returns nothing
       - the `Layout::Legacy` wrapper class
-      - `Engine`'s Grid **gate** — but **not `Layout::Grid` itself**.
-        Item 03 creates it and item 08 replaces it with elkrb
-        (`08-burndown.md:107`); deleting it here would make that
-        integration impossible. The gate goes, the class stays
+      - `Engine`'s Grid **gate** — but **not `Layout::Grid` itself**,
+        and not its callers. Item 03 creates it and item 08 replaces it
+        with elkrb (`08-burndown.md:107`), so a Grid with no caller left
+        is a dead class, not a seam.
+
+        By this point its caller is not `Engine`. Each graph type's
+        layout calls `Layout::Grid` to position its nodes, and returns
+        a Scene built from the result. That is what item 08 swaps for
+        elkrb — one positioning service, called from the graph layouts,
+        replaced in one place. See `04-typed-scene.md`
       - `spec/support/legacy_layout.rb` and the transition spec
       A temporary thing with no deletion criterion is a permanent thing
 

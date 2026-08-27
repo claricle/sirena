@@ -217,8 +217,9 @@ attribute, two of them dead (item 02).
    **Sankey is second on purpose.** It is the only converted Scene that
    answers `respond_to?(:nodes)` — the graph types use `children` at
    their root, so flowchart cannot trip `engine.rb:223` and cannot
-   prove the Grid gate. Converting Sankey second puts the one type that
-   can prove it in the second PR instead of the fourteenth.
+   prove the Grid gate. Second in this list is the **fourth PR** of the
+   item, after the `Layout::Scene` PR and the transition PR; that is
+   still twelve PRs earlier than leaving it where it was.
 
    **All 24, not 21.** An earlier draft ended the list at
    `user_journey` because `pie`, `info` and `error` were going to lose
@@ -296,11 +297,29 @@ attribute, two of them dead (item 02).
    legacy branch returns it wrapped.
 
    The wrapper carries the original `to_graph` result and nothing else,
-   and **`Engine` unwraps it before anything downstream sees it**.
-   Nothing else may receive a wrapper: `Layout::Grid`'s Hash path tests
-   `is_a?(Hash)` and legacy renderers expect the graph itself, so both
-   break if the wrapper reaches them. The engine's shape is: call, ask
-   whether it got a wrapper, run Grid if so, unwrap, then render.
+   and **nothing downstream may ever receive it**. `Layout::Grid`'s Hash
+   path tests `is_a?(Hash)` and legacy renderers expect the graph
+   itself, so a wrapper reaching either makes Grid silently no-op and
+   the renderer fail.
+
+   The order matters and it is not the obvious one — unwrap **before**
+   Grid, not after:
+
+   ```
+   result = Layout.for(type).call(model, theme:, today:)
+
+   if result.is_a?(Layout::Legacy)
+     graph = result.payload        # unwrap FIRST
+     graph = Layout::Grid.call(graph)   # Grid sees the real graph
+   else
+     graph = result                # a Scene; Grid never runs
+   end
+
+   Renderer.for(type, theme:).render(graph)
+   ```
+
+   Capture Grid's return value. It replaces the graph; it does not
+   mutate it.
 
    **Keep a test-only legacy layout.** By the end of this item every
    production layout defines `scene`, so the legacy branch becomes
@@ -311,7 +330,17 @@ attribute, two of them dead (item 02).
    Item 06 deletes the fallback once no `to_graph` remains. Add it to
    that item's `Done when`, or it survives forever.
 
-5. For each type, one PR:
+5. **Graph-type layouts position through `Layout::Grid`, not by hand.**
+   `flowchart`, `class_diagram`, `state_diagram`, `er_diagram`, `c4`,
+   `requirement`, `architecture`, `block` and `mindmap` call it and
+   build their Scene from what it returns.
+
+   That is what keeps it a seam. Item 03 creates `Layout::Grid` and item
+   08 replaces it with elkrb (`08-burndown.md:107`). If its only caller
+   were `Engine`'s legacy gate, item 06 would delete that gate and leave
+   a dead class with nothing to swap.
+
+6. For each type, one PR:
    - define the Scene from what the renderer actually reads — that *is*
      the contract, already written down, just in the wrong place
    - move every coordinate and angle calculation out of the renderer and
@@ -320,7 +349,7 @@ attribute, two of them dead (item 02).
    - rewrite the renderer to read named attributes
    - the layout returns a new Scene and never mutates the diagram
    - `rake corpus[<type>]` must show the same pass count
-6. Extend `spec/contract_spec.rb`: every registered type has a layout,
+7. Extend `spec/contract_spec.rb`: every registered type has a layout,
    and that layout returns a `Layout::Scene` with non-nil `width` and
    `height`. There is no "no layout" case to special-case.
 
@@ -374,13 +403,16 @@ attribute, two of them dead (item 02).
 - [ ] a transition spec drives **one converted and one unconverted**
       layout through `Base#call` in the same example, using the
       `spec/support/` legacy fixture so it still works after the last
-      real conversion. Write it at the first conversion
-- [ ] the same spec goes through **`Engine`, not just `Base#call`**, and
+      real conversion. Write it with the **first** conversion
+      (flowchart) — it needs only `Base#call`, not a Scene that answers
+      `:nodes`
+- [ ] a **second** example, added with the **second** conversion
+      (sankey), goes through `Engine` rather than `Base#call` and
       asserts Grid ran on the legacy result and did **not** run on the
-      converted one. It must use **Sankey**, converted second for this
-      reason: graph Scenes use `children` at their root, so flowchart
-      never trips `engine.rb:223` and a flowchart-based spec would pass
-      with the faulty gate still in place
+      converted one. It must use sankey: graph Scenes use `children` at
+      their root, so a flowchart-based version would pass with the
+      faulty gate still in place. Two stages, because the first needs
+      no `:nodes` Scene and should not wait for one
 - [ ] that spec asserts **coordinates**, not a pass count. A corpus run
       cannot tell you Grid overwrote a position
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
