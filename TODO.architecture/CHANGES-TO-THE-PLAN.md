@@ -535,8 +535,8 @@ Worth an afternoon each:
                                 self.render at line 38
 
   lib/sirena/engine.rb          the pipeline in one file: the regex
-                                table at :27, the grid stub at :194,
-                                the error wrapping at :114
+                                table at :32, the grid stub at :199,
+                                the error wrapping at :119
 
   lib/sirena/transform/pie.rb   a "transform" that copies fields
   lib/sirena/transform/mindmap.rb  a "transform" that does layout
