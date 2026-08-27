@@ -444,14 +444,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    # An alias that reaches an anchor already being expanded is a cycle.
-    # The structural guard catches the shallow forms; this catches the
-    # rest, including an anchor nested under a sequence.
-    it "refuses a circular anchor nested in a sequence" do
+    # js-yaml registers a collection's anchor before it reads the entries,
+    # so `&a [y, *a]` ends up holding itself. mermaid gets a label whose
+    # first element is a sequence, and mmdc refuses the source.
+    it "refuses a self-referencing anchor used as a label" do
       source = "graph TD\nA@{\n  label: [&a [y, *a], z]\n  shape: rounded\n}\n"
 
       expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Circular anchor/)
+        .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
     end
 
     it "takes an explicit string tag over the implicit rules" do
@@ -466,13 +466,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to eq("rounded")
     end
 
-    it "refuses an anchor that holds an alias" do
-      # Flat anchors are fine. Nesting them is how a few lines of YAML
-      # become gigabytes, and mermaid has no use for it.
+    it "refuses a shape that came out of an anchored sequence" do
+      # An anchor holding a sequence is fine on its own. This one is
+      # refused because mermaid calls `.toLowerCase()` on the shape and a
+      # sequence has no such thing. mmdc rejects the source.
       source = "graph TD\nA@{\n  shape: &a [x]\n  label: &b [*a, *a]\n}\n"
 
       expect { node_for(source) }
-        .to raise_error(Sirena::Parser::ParseError, /anchor/)
+        .to raise_error(Sirena::Parser::ParseError, /Unusable shape/)
     end
 
     it "takes the first element of a sequence label" do
@@ -494,6 +495,278 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     it "keeps a string zero, which is truthy" do
       expect(node_for(%(graph TD\nA@{ label: "0" }\n)).label).to eq("0")
+    end
+  end
+
+  # js-yaml looks a tag up in the table for the node's own kind and then
+  # runs that type's resolver. Allowing a tag by name alone let
+  # `label: !!int nope` through and refused `label: ! 1`, which mmdc draws
+  # as "1". Every verdict below is measured against mmdc.
+  describe "an explicit tag" do
+    it "runs the tag's resolver over the value" do
+      expect { node_for("graph TD\nA@{ label: !!int nope }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /does not fit/)
+    end
+
+    it "runs it on a quoted value too" do
+      # `!!int "1"` is the number one, which mermaid cannot use as a label.
+      expect { node_for(%(graph TD\nA@{ label: !!int "1" }\n)) }
+        .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
+    end
+
+    it "refuses a tag that does not belong to the node's kind" do
+      expect { node_for("graph TD\nA@{ label: !!str [one, two] }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
+    end
+
+    it "refuses a shape tag whose resolver says no" do
+      expect { node_for("graph TD\nA@{ shape: !!int rounded }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /does not fit/)
+    end
+
+    it "refuses a number the resolver produced" do
+      expect { node_for("graph TD\nA@{ label: !!float .inf }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
+    end
+
+    it "leaves the node alone for a null the resolver produced" do
+      node = node_for("graph TD\nA(keep)@{ label: !!null null }\n")
+
+      expect([node.shape, node.label]).to eq(%w[rounded keep])
+    end
+
+    # `!` says "whatever this is written as", so the implicit rules never
+    # run and a bare 1 stays the string "1".
+    describe "the non-specific tag" do
+      it "keeps a number as the string it was written as" do
+        expect(node_for("graph TD\nA@{ label: ! 1 }\n").label).to eq("1")
+      end
+
+      it "keeps a shape name" do
+        expect(node_for("graph TD\nA@{ shape: ! rounded }\n").shape)
+          .to eq("rounded")
+      end
+
+      it "keeps a sequence a sequence" do
+        expect(node_for("graph TD\nA@{ label: ! [a, b] }\n").label).to eq("a")
+      end
+    end
+
+    # A node with no content has no kind, so js-yaml takes the tag from
+    # the whole table and hands the constructor nothing.
+    describe "on a node with nothing in it" do
+      it "builds an empty sequence for !!seq" do
+        node = node_for("graph TD\nA(keep)@{\n  extra: !!seq\n  label: hi\n}\n")
+
+        expect(node.label).to eq("hi")
+      end
+
+      it "builds an empty mapping for !!map" do
+        node = node_for("graph TD\nA(keep)@{\n  extra: !!map\n  label: hi\n}\n")
+
+        expect(node.label).to eq("hi")
+      end
+
+      it "still refuses !!bool, whose resolver takes no empty value" do
+        source = "graph TD\nA(keep)@{\n  extra: !!bool\n  label: hi\n}\n"
+
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /does not fit/)
+      end
+
+      it "does not extend to a quoted empty value" do
+        # `!!seq ""` is a scalar, and the seq tag is not in the table for
+        # one.
+        expect { node_for(%(graph TD\nA@{ label: !!seq "" }\n)) }
+          .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
+      end
+    end
+  end
+
+  # An anchor is only visible after the node that defines it. Collecting
+  # them all up front accepted a forward alias mmdc refuses, and read a
+  # redefined anchor as its last value where mmdc uses the one in force.
+  describe "an anchor" do
+    it "is not visible before it is defined" do
+      source = "graph TD\nA@{\n  label: *s\n  shape: &s rounded\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /No anchor for alias/)
+    end
+
+    it "resolves to the value in force where the alias sits" do
+      source = "graph TD\nA(keep)@{\n  a: &s one\n  label: *s\n  b: &s two\n}\n"
+
+      expect(node_for(source).label).to eq("one")
+    end
+
+    it "resolves to a later definition for a later alias" do
+      source = "graph TD\nA(keep)@{\n  a: &s one\n  b: &s two\n  label: *s\n}\n"
+
+      expect(node_for(source).label).to eq("two")
+    end
+
+    it "may hold itself as long as nothing reads it" do
+      # js-yaml registers a collection before it reads the entries, so
+      # this resolves instead of looping. mmdc draws the node.
+      source = "graph TD\nA(keep)@{\n  a: &s [*s]\n  label: hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "is visible after a definition nested in another mapping" do
+      source = "graph TD\nA(keep)@{\n  extra:\n    x: &s hi\n  label: *s\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    # js-yaml reads an alias name up to whitespace or a flow indicator, so
+    # the colon is part of the name and mermaid reports it undefined.
+    # libyaml stops at the colon and would have read the key.
+    it "does not reach an alias key written against a colon" do
+      source = "graph TD\nA(keep)@{\n  a: &s label\n  *s: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /No anchor for alias: s:/)
+    end
+
+    it "does reach one with a space in front of the colon" do
+      source = "graph TD\nA(keep)@{\n  a: &s label\n  *s : hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+  end
+
+  # `yaml.load` hands mermaid one value, and mermaid reads two keys off it
+  # without checking what it is. Refusing anything but a mapping rejected
+  # sources mmdc draws.
+  describe "the document as a whole" do
+    { "a sequence" => "\n- one\n- two\n",
+      "a plain scalar" => "\nhello\n" }.each do |label, body|
+      it "ignores a root that is #{label}" do
+        node = node_for("graph TD\nA(keep)@{#{body}}\n")
+
+        expect([node.shape, node.label]).to eq(%w[rounded keep])
+      end
+    end
+
+    it "refuses a second document" do
+      source = "graph TD\nA(keep)@{\nlabel: one\n---\nlabel: two\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+    end
+
+    it "refuses a body that is only a newline" do
+      expect { node_for("graph TD\nA(keep)@{\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+    end
+
+    it "refuses a document that came back empty" do
+      expect { node_for("graph TD\nA(keep)@{\n---\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Empty metadata/)
+    end
+  end
+
+  # Resolving the top level only meant an error inside a nested mapping
+  # was never seen. mmdc refuses all three of these.
+  describe "a nested mapping" do
+    { "an alias with no anchor" => "  extra:\n    x: *nope\n",
+      "a duplicate key" => "  extra:\n    x: 1\n    x: 2\n",
+      "a tag mermaid has no type for" => "  extra:\n    x: !foo bad\n" }
+      .each do |label, body|
+        it "refuses #{label}" do
+          source = "graph TD\nA@{\n  label: hi\n#{body}}\n"
+
+          expect { node_for(source) }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+  end
+
+  # Mermaid stores the entries in a JavaScript object, so the key is
+  # whatever `String()` makes of it. Comparing raw AST scalars missed both
+  # the keys that collide and the ones that turn into `shape`.
+  describe "a mapping key" do
+    it "reads a one-element sequence as its element" do
+      expect(node_for("graph TD\nA@{\n[shape]: rounded\n}\n").shape)
+        .to eq("rounded")
+    end
+
+    it "reads an explicit sequence key the same way" do
+      expect(node_for("graph TD\nA@{\n? [shape]\n: rounded\n}\n").shape)
+        .to eq("rounded")
+    end
+
+    it "reads a sequence key for the label too" do
+      expect(node_for("graph TD\nA(keep)@{\n  [label]: hi\n}\n").label)
+        .to eq("hi")
+    end
+
+    it "refuses a nested sequence inside a key" do
+      source = "graph TD\nA(keep)@{\n  ? - - a\n  : x\n  label: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Nested array/)
+    end
+
+    # Each pair prints to the same string in JavaScript, which makes it
+    # one key twice. Every one of these is an mmdc rejection.
+    { "an integer and a float" => "  1: a\n  1.0: b\n",
+      "a null and a tilde" => "  null: a\n  ~: b\n",
+      "a null and its quoted spelling" => %(  null: a\n  "null": b\n),
+      "two spellings of true" => "  true: a\n  TRUE: b\n",
+      "a sequence and the string it joins to" => %(  [a, b]: x\n  "a,b": y\n),
+      "two integers a double cannot tell apart" =>
+        "  9007199254740992: a\n  9007199254740993: b\n",
+      "an exponent and the text JavaScript prints for it" =>
+        %(  1e21: a\n  "1e+21": b\n),
+      "a large exponent JavaScript prints in full" =>
+        %(  1e20: a\n  "100000000000000000000": b\n),
+      "a small one it does not" =>
+        %(  0.00001: a\n  "0.00001": b\n) }.each do |label, body|
+      it "sees #{label} as one key" do
+        expect { node_for("graph TD\nA(keep)@{\n#{body}  label: hi\n}\n") }
+          .to raise_error(Sirena::Parser::ParseError, /Duplicate key/)
+      end
+    end
+  end
+
+  # js-yaml stops allowing block collections once it reads a node property
+  # followed by a space, so the mapping it was about to read is a parse
+  # error there. libyaml reads the same line as an anchored key.
+  describe "a node property on the first key of a block mapping" do
+    it "is refused at the root" do
+      expect { node_for("graph TD\nA@{\n&s shape: rounded\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Node property/)
+    end
+
+    it "is refused for a tag as well" do
+      expect { node_for("graph TD\nA@{\n!!str shape: rounded\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Node property/)
+    end
+
+    it "is refused in a nested mapping too" do
+      source = "graph TD\nA@{\n  extra:\n    &s x: 1\n  label: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Node property/)
+    end
+
+    it "is fine on any key but the first" do
+      node = node_for("graph TD\nA@{\nlabel: hi\n&s shape: rounded\n}\n")
+
+      expect([node.shape, node.label]).to eq(%w[rounded hi])
+    end
+
+    it "is fine on an explicit key, which starts further in" do
+      expect(node_for("graph TD\nA@{\n? &s shape\n: rounded\n}\n").shape)
+        .to eq("rounded")
+    end
+
+    it "is fine on a flow mapping, which js-yaml still reads" do
+      expect(node_for("graph TD\nA@{ &s shape: rounded }\n").shape)
+        .to eq("rounded")
     end
   end
 
