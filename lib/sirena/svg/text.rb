@@ -52,8 +52,8 @@ module Sirena
       # the alphabetic one. Contextual values such as `use-script`,
       # `no-change` and `reset-size` cannot be resolved here either.
       #
-      # `middle`, `hanging` and `auto` are all reachable: radar.rb picks
-      # between them per axis label by angle.
+      # Renderers set only `middle`, `hanging` and `auto`, and all three are
+      # reachable: radar.rb picks between them per axis label by angle.
       #
       # The shift is in ems, so it needs a font size in user units. Every
       # renderer writes one unitless, which is what Numbers.read expects; a

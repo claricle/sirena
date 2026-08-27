@@ -60,9 +60,11 @@ module Sirena
       # Indents entries rather than lines: a Text holding a newline would
       # otherwise have its own content indented along with the markup.
       #
-      # `children` is a plain Array that enforces no type. Nothing in the gem
-      # puts a non-Element in one, and a foreign object is skipped rather
-      # than serialized, which is what Group has always done with one.
+      # `children` is a plain Array that enforces no type, so a caller can put
+      # anything in one; nothing in the gem does. A foreign object is skipped
+      # rather than serialized. That narrows the old test — anything answering
+      # to `to_xml` used to be written out — because indenting a child by its
+      # entries needs the entries, and only an Element has them.
       #
       # @return [Array<String>] structural lines for this group
       def xml_lines

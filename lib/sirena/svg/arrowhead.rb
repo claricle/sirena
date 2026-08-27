@@ -61,8 +61,12 @@ module Sirena
       # the path is mutable, so a remembered geometry would answer for a `d`
       # the caller has since replaced.
       #
-      # @return [Array<Svg::Polygon>] the end-marker head first, then the
-      #   start-marker head
+      # A head the path gave no heading for is dropped rather than returned as
+      # nil, so a position in the result names a head only when both were
+      # asked for and both could be drawn.
+      #
+      # @return [Array<Svg::Polygon>] the end-marker head before the
+      #   start-marker head, with either absent
       def polygons
         wants_end = names_something?(path.marker_end)
         wants_start = names_something?(path.marker_start)

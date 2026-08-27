@@ -40,8 +40,15 @@ module Sirena
         matched&.to_f
       end
 
-      # @param value [Float] a computed number
+      # Finite only: Float#round raises FloatDomainError on Infinity and NaN.
+      # Every caller already refuses a non-finite result before it gets here —
+      # Text#offset_x, Text#baseline_y, Element#composed_opacity and
+      # Arrowhead#triangle each fall back instead — because the fallback is a
+      # different value at each site and none of them is "emit nothing".
+      #
+      # @param value [Float] a computed, finite number
       # @return [String] the attribute value to emit
+      # @raise [FloatDomainError] if the value is not finite
       def write(value)
         value.round(PRECISION).to_s
       end
