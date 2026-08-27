@@ -4,6 +4,8 @@
 for all 24 types; themes that actually work; about 1,500 fewer lines.
 **Size:** 3 PRs, one per part. All three are deletions.
 **Prerequisite:** part A and C after item 03; part B after item 04.
+Part C also needs `TODO.foundation/03a` — it swaps hardcoded hex for
+theme colours, which changes rendered output.
 
 ---
 

@@ -27,11 +27,25 @@ The escaping fix shipped in commits `248ec25`, `7f79ce8`, `898606b`,
 So this item no longer changes rendered output at all, and
 `rake corpus:check` must show zero change across every one of 01-06.
 
-**Careful with the word.** Items 04 and 05 change the SVG — box sizes
-from theme metrics, hex replaced by theme colours. What none of
-01-06 changes is whether a case renders **well-formed output**,
-which is all `corpus:check` measures. Zero change there, visible
-change on screen for two of them.
+**Careful with the word, in two directions.**
+
+Items 04 and 05 change the SVG — box sizes from theme metrics, hex
+replaced by theme colours. What none of 01-06 changes is the **pass
+set**: which cases render well-formed output. That is the invariant, and
+it is what "zero change" means here.
+
+But `corpus:check` records more than the pass set. Item 01 stores
+`stage` and the exception class, and item 03's
+`TransformError` -> `LayoutError` rename necessarily moves that
+metadata. So the contract is: **the pass set is unchanged; diagnostic
+fields may change and the diff shows them for review.** Do not read a
+metadata diff as a regression, and do not let one hide behind "zero
+change" either.
+
+And it must keep measuring what `corpus_sweep.rb` measures — SVG shape,
+undeclared entities, the REXML parse. Seed a deliberately malformed SVG
+and watch `corpus:check` fail on it, or a renderer returning garbage
+records as a pass.
 
 ## Why — what is still there
 

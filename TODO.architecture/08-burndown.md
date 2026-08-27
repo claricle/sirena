@@ -30,7 +30,7 @@ be forgotten.
 
 Measured 2026-08-25, over the 1,032 oracle-valid cases only
 (`scripts/corpus_sweep.rb` joined to `spec/mermaid/corpus-verdicts.yml`).
-**508 pass, 524 fail.** Two types hold 337 of those 524 — nearly two
+**574 pass, 458 fail** (swept 2026-08-27). Two types hold 271 of those 458 — nearly
 thirds of everything left:
 
 | Type | Pass / valid | Rate | Remaining |
@@ -155,7 +155,7 @@ snapshot.
 
 - Do not start the burndown before item 07. The tooling from 01-07 is
   what makes this affordable; without it every case costs roughly twice
-  as much, and there are 524 of them.
+  as much, and there are 458 of them.
 - Do not fix a case by special-casing it in a renderer. If a fix does
   not generalise to the other cases in its group, it is probably in the
   wrong layer.
