@@ -1176,10 +1176,14 @@ module Sirena
         # The refusal is an under-acceptance for the abutting `A%%c` alone,
         # and closing that one means letting `%` into a node id — a widening
         # this PR does not make.
-        rule(:line_end) do
-          (semicolon >> space? >> str('%%').absent?).maybe >>
-            space? >> (newline | eof)
-        end
+        #
+        # The semicolon carried a `str('%%').absent?` of its own while the
+        # comment arm was here. It is gone because nothing can reach it:
+        # with no comment to take, `A;%% c` fails on the `%` either way.
+        # Measured — the mutant survives all 1997 corpus cases and the
+        # whole suite, while the same guard in `separator`, which is what
+        # actually refuses `A;%% c`, kills 3 examples when it is removed.
+        rule(:line_end) { semicolon.maybe >> space? >> (newline | eof) }
       end
     end
   end
