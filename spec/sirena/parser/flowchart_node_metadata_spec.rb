@@ -27,7 +27,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # the colon is not: without it the key is unknown and ignored, which has
     # its own example below.
     {
-      "space before the brace only" => "D@{ shape: rounded}",
+      "no space before the closing brace" => "D@{ shape: rounded}",
       "space after the value" => "D@{ shape: rounded }",
       "generous spacing" => "D@{       shape: rounded         }",
       "space before the colon" => "D@{ shape : rounded }"
@@ -63,6 +63,19 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node.label).to eq("meta")
     end
 
+    it "refuses an inline class written after the block" do
+      # mmdc rejects `A@{ ... }:::cls` and draws `A:::cls@{ ... }`, so the
+      # order is fixed: shape, then class, then metadata.
+      expect { node_for("graph TD\nA@{ shape: rect }:::cls\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "takes an inline class written before the block" do
+      node = node_for("graph TD\nA:::cls@{ shape: rect }\n")
+
+      expect(node.shape).to eq("rect")
+    end
+
     it "works on a node inside an edge chain" do
       expect(node_for(%(graph TD\nA --> C@{ label: "for c" }\n)).label)
         .to eq("for c")
@@ -76,6 +89,36 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "raises rather than falling back to a rectangle" do
       expect { node_for("graph TD\nD@{ shape: nope }\n") }
         .to raise_error(Sirena::Parser::ParseError, /No such shape: nope/)
+    end
+
+    it "raises for a name mermaid draws as a shape sirena has not got" do
+      # `bang` is a real mermaid shape with a curved, non-rectangular
+      # outline. Calling it a rectangle drew a picture the source did not
+      # ask for, which is the one failure worse than refusing the name.
+      expect { node_for("graph TD\nD@{ shape: bang }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /not supported yet: bang/)
+    end
+
+    # Each of these was pointed at a sirena shape by hand and mermaid draws
+    # none of them that way: it lays `h-cyl` on its side, draws `stop` as a
+    # circle inside a ring, and gives `start` one small solid circle. A wrong
+    # alias is not visible from the name, which is why the table is measured.
+    {
+      "h-cyl" => "cylindrical", "disk" => "cylindrical",
+      "stop" => "double_circle", "junction" => "double_circle",
+      "start" => "circle"
+    }.each do |name, was|
+      it "refuses #{name} rather than drawing it as #{was}" do
+        expect { node_for("graph TD\nD@{ shape: #{name} }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /not supported yet/)
+      end
+    end
+
+    it "keeps mermaid's own wording for a name mermaid has not got" do
+      # A corpus case quotes this message, so the two refusals have to stay
+      # different sentences.
+      expect { node_for("graph TD\nD@{ shape: multi-rect }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /No such shape: multi-rect/)
     end
 
     it "raises for an internal-only name" do
@@ -99,12 +142,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # so many names map onto the same one. That is a renderer gap, not a
     # parsing one, and it is recorded rather than hidden.
     {
-      "proc" => "rect", "rectangle" => "rect", "notch-rect" => "rect",
+      "proc" => "rect", "rectangle" => "rect", "data-store" => "rect",
       "event" => "rounded", "terminal" => "stadium", "pill" => "stadium",
       "db" => "cylindrical", "database" => "cylindrical",
       "question" => "rhombus", "decision" => "rhombus",
       "in-out" => "parallelogram", "lean-r" => "parallelogram",
-      "out-in" => "parallelogram_alt", "junction" => "double_circle",
+      "out-in" => "parallelogram_alt", "dbl-circ" => "double_circle",
       "circ" => "circle", "hex" => "hexagon"
     }.each do |name, expected|
       it "maps #{name} to #{expected}" do
@@ -115,11 +158,15 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "mapping shapes mermaid draws identically" do
-    it "gives junction and filled-circle the same shape" do
-      # mermaid draws these as one shape; mapping junction to a rectangle
-      # made them visibly different here.
-      expect(node_for("graph TD\nD@{ shape: junction }\n").shape)
-        .to eq(node_for("graph TD\nD@{ shape: filled-circle }\n").shape)
+    it "refuses junction and filled-circle alike" do
+      # mermaid draws these two as one shape, and it is a filled circle
+      # sirena has not got. What matters is that they still agree: mapping
+      # one to a rectangle and the other to a double circle made a pair
+      # mermaid draws identically come out visibly different here.
+      %w[junction filled-circle].each do |name|
+        expect { node_for("graph TD\nD@{ shape: #{name} }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /not supported yet/)
+      end
     end
 
     it "gives in-out and lean-r the same shape" do
@@ -140,9 +187,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       # Single line is a flow mapping and multiline is block YAML. Commas
       # belong to the first and not the second, which is why the body is
       # handed to YAML rather than picked apart by the grammar.
-      source = "graph TD\nA@{\n  shape: rect,\n  label: \"x\"\n}\n"
+      # The comma goes on the label line on purpose. Putting it after
+      # `shape: rect` passes for the wrong reason: `rect,` simply misses
+      # the shape table, so the spec stayed green with the wrapping gone.
+      source = "graph TD\nA@{\n  label: \"x\",\n  shape: rect\n}\n"
 
-      expect { node_for(source) }.to raise_error(Sirena::Parser::ParseError)
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
     end
 
     it "refuses a multiline body with no entries" do
@@ -214,26 +265,51 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "the generated shape table" do
-    # Nothing regenerates it in CI, so a name silently disappearing would
-    # go unnoticed. mmdc accepts 141 names on this oracle.
-    # A size check alone passes when an accepted name is swapped for a
-    # bogus one, so the whole key set is asserted against the candidate
-    # file minus the six names mermaid rejects.
+    # Nothing regenerates it in CI, so a name silently changing sides would
+    # go unnoticed. Every candidate lands in exactly one of three places:
+    # drawn, drawn by mermaid but not by sirena, or unknown to mermaid.
+    # A size check alone passes when a name is swapped for a bogus one, so
+    # the three sets are asserted to partition the candidate file.
     def rejected_names
       %w[
-        disk-storage multi-doc multi-process multi-rect sub-proc
-        subroutine-shape
+        disk-storage lined-proc multi-doc multi-process multi-rect
+        rect_left_inv_arrow sub-proc subroutine-shape
       ]
     end
 
-    it "carries exactly the names mermaid accepts" do
-      probed = File.read("scripts/probes/shape_names.txt")
-      candidates = probed.split(/\s+/).reject(&:empty?).uniq
-      # The table is private, so the spec reaches it the way the gem does
-      # rather than the constant being public for the test's sake.
-      table = Sirena::Parser.const_get(:MERMAID_SHAPES)
+    # The tables are private, so the spec reaches them the way the gem does
+    # rather than the constants being public for the test's sake.
+    def drawn = Sirena::Parser.const_get(:MERMAID_SHAPES).keys
 
-      expect(table.keys.sort).to eq((candidates - rejected_names).sort)
+    def undrawable = Sirena::Parser.const_get(:UNDRAWABLE_SHAPES)
+
+    def candidates
+      File.read("scripts/probes/shape_names.txt").split(/\s+/)
+        .reject(&:empty?).uniq
+    end
+
+    it "puts every candidate in exactly one of the three sets" do
+      expect((drawn + undrawable + rejected_names).sort).to eq(candidates.sort)
+    end
+
+    it "never lists a name as both drawn and undrawable" do
+      expect(drawn & undrawable).to be_empty
+    end
+
+    it "names only the shapes the bracket syntax already names" do
+      # A `@{ shape: }` name may map only onto a shape `A[(x)]` and its
+      # friends can already produce. Anything else would be a name the
+      # parser accepts and nothing downstream knows what to do with.
+      #
+      # This is about the shape's NAME, not its drawing: the flowchart
+      # renderer still draws several of these fourteen as plain rectangles,
+      # for the bracket syntax exactly as much as for a `@{}` name. That
+      # gap is the renderer's and it is the same on both paths.
+      named = Sirena::Parser.const_get(:MERMAID_SHAPES).values.uniq
+      bracketed = Sirena::Parser::Transforms::Flowchart
+        .const_get(:SHAPE_MAP).values.uniq
+
+      expect(named.sort).to eq(bracketed.sort)
     end
   end
 
@@ -260,6 +336,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       node = node_for("graph TD\nA(keep)@{ shape: rect, }\n")
 
       expect([node.shape, node.label]).to eq(%w[rect keep])
+    end
+
+    it "still leaves empty and space-only bodies with no entries" do
+      ["A@{}", "A@{ }"].each do |statement|
+        node = node_for("graph TD\n#{statement}\n")
+
+        expect([node.shape, node.label]).to eq(%w[rect A])
+      end
+    end
+  end
+
+  describe "a vertical tab as the whole body" do
+    it "refuses it" do
+      expect { node_for("graph TD\nA@{\x0B}\n") }
+        .to raise_error(Sirena::Parser::ParseError)
     end
   end
 
@@ -965,7 +1056,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  # Nothing in the body but a comment still parses - as an empty mapping.
+  # A body that is nothing but a YAML `#` comment still parses, as an
+  # empty mapping. A `%%` comment body does not — mermaid takes that line
+  # away before the block is read, and what is left has no entries.
   describe "a body with no entries in it" do
     ["graph TD\nA(keep)@{#}\n", "graph TD\nA(keep)@{ # note }\n"].each do |source|
       it "keeps the node's own label for #{source.lines.last.strip}" do
@@ -1022,6 +1115,71 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # Mermaid lexes the block before YAML sees it, and its string state opens
   # on a double quote only.
   describe "quoting inside the block" do
+    it "strips a standalone comment line from a quoted label" do
+      source = %(graph TD\nA@{ label: "one\n%% omitted\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "strips a comment line containing a closing brace" do
+      source = %(graph TD\nA@{ label: "one\n%% has } brace\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "does not end the block at a brace in an unquoted comment" do
+      # mmdc draws this: the comment goes before anything is lexed, so the
+      # `}` inside it never closes the block and `A@{` nl `}` is what is
+      # left. Stopping at that brace refused a source mermaid accepts.
+      source = "graph TD\nA@{ shape: rect\n%% a } brace\n}\n"
+
+      expect(node_for(source).shape).to eq("rect")
+    end
+
+    it "refuses a block that is nothing but a comment line" do
+      # What is left once the comment goes is `A@{` nl `}`, and block YAML
+      # with no entries is a body mmdc refuses. Letting the strip eat the
+      # newline that opened the block drew a rectangle instead.
+      expect { node_for("graph TD\nA@{\n%% c\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "takes a quote inside a comment line as comment text" do
+      # The quote that closes a run cannot be one mermaid has already
+      # deleted. mmdc draws `one<br/>two`; letting the quoted rule win
+      # first left the run open and lost a diagram mmdc renders.
+      source = %(graph TD\nA@{ label: "one\n%% has " quote\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    # The indent has to be the whitespace set mmdc uses, not Ruby's five
+    # ASCII ones. A no-break space is whitespace to mermaid and not to
+    # Ruby, so these two comment lines were kept where mmdc removes them.
+    it "strips a comment indented with a no-break space" do
+      source = %(graph TD\nA@{ label: "one\n\u00A0%% nbsp\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "does not end the block at a brace in one of those" do
+      source = "graph TD\nA@{ shape: rect\n\u00A0%% nbsp } brace\n}\n"
+
+      expect(node_for(source).shape).to eq("rect")
+    end
+
+    it "keeps mid-line percent signs in a quoted label" do
+      source = %(graph TD\nA@{ label: "one %% midline\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one %% midline<br/>two")
+    end
+
+    it "keeps a bare percent-sign line in a quoted label" do
+      source = %(graph TD\nA@{ label: "one\n%%\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>%%<br/>two")
+    end
+
     it "turns a newline inside a quoted value into a line break" do
       # mmdc renders `one<br/>two`. Letting YAML fold the newline gave
       # `one two`, which is a different label.

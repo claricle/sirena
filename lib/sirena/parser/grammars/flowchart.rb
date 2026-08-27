@@ -479,7 +479,7 @@ module Sirena
             loose_statement_end
         end
 
-        # Node with optional shape definition
+        # Node with its optional shape, inline class and metadata
         # Every optional part is captured whether or not it is present, so
         # the tree has one shape instead of one per combination. Parslet
         # omits a `.maybe` that wraps its own `.as`, which is why the
@@ -513,17 +513,36 @@ module Sirena
         # the block early and mmdc refuses `A@{ label: a^b }`. Inside the
         # quotes the rule is `[^"]+`, and `A@{ label: "a^b" }` draws.
         rule(:metadata_body) do
-          (metadata_quoted | (metadata_stop.absent? >> any)).repeat
+          (metadata_comment_line | metadata_quoted |
+            (metadata_stop.absent? >> any)).repeat
         end
 
         rule(:metadata_stop) { str('"') | str('}') | str('^') }
+
+        # Mermaid strips comments before lexing, so their stops are text.
+        # `line_space` rather than Ruby's `\s`: the indent has to be the set
+        # mmdc calls whitespace, or a comment indented with a no-break space
+        # keeps its `%%` in the label and its `}` closes the block.
+        #
+        # `%%{` opens a directive rather than a comment and is left alone,
+        # which is what makes sirena refuse `A@{ shape: rect` nl `%%{ x }`
+        # nl `}` the way mmdc does.
+        rule(:metadata_comment_line) do
+          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+            (newline.absent? >> any).repeat(1)
+        end
 
         # A double-quoted run is skipped whole so a brace inside it is
         # text. Only the double quote does this: mermaid's metadata lexer
         # has one string state and `"` opens it, so `label: 'a}b'` ends the
         # block at that brace and mmdc rejects the line.
+        # A comment line inside the quotes is skipped first, because the
+        # quote that closes this run cannot be one mermaid already deleted:
+        # `label: "one` nl `%% has " quote` nl `two"` is one label to mmdc.
         rule(:metadata_quoted) do
-          str('"') >> (str('"').absent? >> any).repeat >> str('"')
+          str('"') >>
+            (metadata_comment_line | (str('"').absent? >> any)).repeat >>
+            str('"')
         end
 
         # Inline class syntax: :::className

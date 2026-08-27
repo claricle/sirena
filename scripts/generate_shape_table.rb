@@ -17,8 +17,8 @@
 # meant, falling back to a rectangle whenever it could not tell. That fell
 # back ninety-four times: `bang`, `cloud` and `triangle` all came out as
 # plain rectangles, and five curated aliases were wrong outright — mermaid
-# draws `h-cyl` lying down and `stop` with a filled centre, and neither is
-# the cylinder or the double circle they were pointed at. Drawing the wrong
+# draws `h-cyl` lying down and `stop` as a circle inside a ring, and
+# neither is the cylinder or the double circle they were pointed at. Drawing the wrong
 # shape is worse than refusing the name, so a name now earns its place only
 # by matching, exactly, what mermaid draws for a shape sirena can name.
 #
@@ -64,9 +64,10 @@ def render(body)
   Dir.mktmpdir do |dir|
     input = File.join(dir, 'probe.mmd')
     output = File.join(dir, 'probe.svg')
-    # Seeded: mermaid's rough renderer is random by default, so the same
-    # shape produced a different path on every run and names were grouped
-    # by noise rather than by geometry.
+    # The seed pins the hand-drawn renderer, which is the one that would
+    # group names by noise rather than by geometry. Measured: the default
+    # look is already deterministic, so this only bites if the probe is
+    # ever run with `look: handDrawn`.
     File.write(input, "%%{init: {\"handDrawnSeed\": 1}}%%\n" \
                       "flowchart TD\n  #{body}\n")
     _, _, status = Open3.capture3('mmdc', '-i', input, '-o', output)
@@ -109,7 +110,7 @@ def geometry(attrs)
   "#{letters}:#{normalised(source.scan(/-?\d+(?:\.\d+)?/).map(&:to_f))}"
 end
 
-# Every other number is an x, the rest a y. Each axis is scaled into 0..1
+# Every other number is an x, the rest a y. Each axis is scaled into 0..8
 # against its own range and rounded, so only the proportions survive.
 def normalised(numbers)
   return '' if numbers.empty?
