@@ -52,10 +52,22 @@ module Sirena
       # js-yaml takes any 1.x document version and merely warns about the
       # ones it does not know; libyaml refuses everything but 1.1 and 1.2.
       # The version changes nothing either of them does with the tree, so
-      # the line is levelled before parsing. A major other than 1, and a
-      # second directive, still fail in libyaml just as they do in js-yaml.
-      DOCUMENT_VERSION = /^%YAML[ \t]+1\.\d+[ \t]*$/
-      LEVELLED_VERSION = '%YAML 1.2'
+      # the number is levelled before parsing. Only the number: rewriting
+      # the whole line dropped a trailing comment, and `%YAML 1.3 # note`
+      # is a document mmdc draws. The number has to be a whole token, or
+      # `%YAML 1.3#note` — which js-yaml reads as one unusable version and
+      # refuses — became a levelled version with a comment after it.
+      # A major other than 1, a second directive and anything else on the
+      # line still fail in libyaml, as they do in js-yaml.
+      DOCUMENT_VERSION = /^%YAML[ \t]+\K1\.\d+(?=[ \t]|$)/
+      LEVELLED_VERSION = '1.2'
+
+      # A directive only counts ahead of the document, next to the blank
+      # lines and comments allowed to sit with it. Past that point a
+      # `%YAML 1.3` at column 0 is ordinary text — a single-quoted value
+      # carries on there — and levelling it rewrote a label mmdc draws
+      # as written.
+      DIRECTIVE_HEAD = /\A(?:%|[ \t]*(?:#|\z))/
 
       NULL_WORDS = %w[~ null Null NULL].freeze
 
@@ -101,8 +113,7 @@ module Sirena
       end
 
       def initialize(document)
-        text = document.delete_prefix(BOM)
-        @document = text.gsub(DOCUMENT_VERSION, LEVELLED_VERSION)
+        @document = level_versions(document.delete_prefix(BOM))
         @lines = @document.split(YAML_BREAK, -1)
         @anchors = {}
       end
@@ -117,6 +128,16 @@ module Sirena
       end
 
       private
+
+      def level_versions(text)
+        lines = text.split(YAML_BREAK, -1)
+        head = lines.take_while { |line| DIRECTIVE_HEAD.match?(line) }
+        levelled = head.map do |line|
+          line.sub(DOCUMENT_VERSION, LEVELLED_VERSION)
+        end
+
+        (levelled + lines.drop(head.size)).join(YAML_BREAK)
+      end
 
       # `yaml.load` refuses a stream that is not exactly one document.
       def root

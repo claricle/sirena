@@ -186,6 +186,8 @@ puts <<~RUBY
       MERMAID_SHAPES = {
   #{entries.map { |n, s| "      #{n.inspect} => #{s.inspect}," }.join("\n")}
       }.freeze
+
+      private_constant :MERMAID_SHAPES
     end
   end
 RUBY
