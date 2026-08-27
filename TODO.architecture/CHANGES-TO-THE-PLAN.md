@@ -65,7 +65,7 @@ five layers, plus reverse-engineering one undocumented contract. After
 the structural work it's two files and nothing to reverse-engineer.
 
 ```
-  new diagram type        5 files   (4 new + one row in the type table)
+  new diagram type        6 files   (5 new + one row in the type table)
   new syntax on a type    2 files   (grammar + builder)
 ```
 
@@ -322,7 +322,7 @@ Item 01 (lutaml 0.8 migration) appears already landed: the gemspec is
     |
   Diagram::<Type>    TYPED   what the text MEANS      (semantics)
     |
-  Layout::<Type>             only where geometry exists
+  Layout::<Type>             every type, one per type
     |
   Scene              TYPED   where things GO          (geometry)
     |
@@ -339,7 +339,7 @@ Item 01 (lutaml 0.8 migration) appears already landed: the gemspec is
 type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
 scene = Layout.for(type).call(model, theme: theme, today: today)
-Renderer.for(type).render(scene, theme: theme)
+Renderer.for(type, theme: theme).render(scene)
 ```
 
 Two rules hold it together:

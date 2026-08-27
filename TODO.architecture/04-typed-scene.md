@@ -82,8 +82,9 @@ the two smallest**, 38 lines each — measured 2026-08-25 by scanning all
 layouts, not deletions. `timeline` reads like a pass-through and is
 not.
 
-**Rule for the future: if a layout would only copy fields, do not write
-one.**
+**Rule for the future: every type gets a layout. A layout that would
+only copy fields still gets written — it is the thing that owns the
+canvas size and the coordinates the renderer must not compute.**
 
 ## Two kinds of Scene
 
@@ -200,14 +201,20 @@ attribute, two of them dead (item 02).
 1. Add `lib/sirena/layout/scene.rb`: `Layout::Scene` with `width` and
    `height`. One small PR on its own.
 2. Convert types in this order — geometry-heavy first, because they
-   prove the design while you still have room to change it; trivial ones
-   last, because most of them get deleted rather than converted:
+   prove the design while you still have room to change it; the small
+   ones last, because they are the least informative:
 
    `flowchart`, `class_diagram`, `sequence`, `state_diagram`,
    `er_diagram`, `mindmap`, `xy_chart`, `git_graph`, `gantt`,
    `timeline`, `kanban`, `quadrant`, `radar`, `sankey`, `block`,
    `architecture`, `c4`, `requirement`, `packet`, `treemap`,
-   `user_journey`
+   `user_journey`, `pie`, `info`, `error`
+
+   **All 24, not 21.** An earlier draft ended the list at
+   `user_journey` because `pie`, `info` and `error` were going to lose
+   their layouts. They are not — see above — and leaving them out here
+   would strand three `to_graph` implementations at the point item 06
+   deletes the fallback.
 
 3. **`Layout::Base` owns the signature; subclasses do not repeat it.**
    `Base#call(diagram, theme:, today:)` stores both and calls the
@@ -262,13 +269,26 @@ attribute, two of them dead (item 02).
    rollout — the pass-through path was withdrawn above for exactly this
    family of reasons.
 
-   **Grid must run on the legacy branch only.** `Engine#apply_fallback_layout`
-   picks its generic path with `elsif graph.respond_to?(:nodes)`
+   **Grid must run on the legacy branch only, and `Base#call` has to
+   say which branch it took.** `Engine#apply_fallback_layout` picks its
+   generic path with `elsif graph.respond_to?(:nodes)`
    (`engine.rb:223`). A converted Sankey Scene responds to `nodes`, so
-   Grid would catch it and overwrite coordinates the layout just
+   Grid would catch it and overwrite the coordinates the layout just
    computed. Non-mutation does not save you — it hands back a correctly
-   typed Scene in the wrong positions. Gate the Grid stage on which
-   branch `Base#call` took, not on what the result responds to.
+   typed Scene in the wrong positions, and the corpus pass count cannot
+   see wrong coordinates.
+
+   Returning the output alone is not enough for the engine to decide.
+   Give `Base#call` an explicit contract — the simplest is a second
+   return value, or a `Layout::Legacy` wrapper around the `to_graph`
+   result — and have the engine run Grid on that signal, never on
+   `respond_to?`.
+
+   **Keep a test-only legacy layout.** By the end of this item every
+   production layout defines `scene`, so the legacy branch becomes
+   untestable with real classes and its gate rots. Define a fixture
+   layout in `spec/support/` that implements `to_graph` and nothing
+   else, and keep it until item 06 deletes the branch.
 
    Item 06 deletes the fallback once no `to_graph` remains. Add it to
    that item's `Done when`, or it survives forever.
@@ -334,11 +354,15 @@ attribute, two of them dead (item 02).
 - [ ] calling with `today: nil` gives the same output as calling with
       `today: Date.today` — a spec, not an assumption
 - [ ] a transition spec drives **one converted and one unconverted**
-      layout through `Base#call` in the same example. By the end of
-      this item every layout defines `scene`, so a broken fallback
-      would otherwise pass the final corpus run and every criterion
-      above. Write it at the first conversion; it is the only moment
-      the mixed state exists naturally
+      layout through `Base#call` in the same example, using the
+      `spec/support/` legacy fixture so it still works after the last
+      real conversion. Write it at the first conversion
+- [ ] the same spec goes through **`Engine`, not just `Base#call`**, and
+      asserts Grid ran on the legacy result and did **not** run on the
+      converted one. Use Sankey for the converted case — its Scene
+      responds to `nodes`, which is exactly what trips `engine.rb:223`
+- [ ] that spec asserts **coordinates**, not a pass count. A corpus run
+      cannot tell you Grid overwrote a position
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives
@@ -370,8 +394,10 @@ attribute, two of them dead (item 02).
 
 `lib/sirena/layout/scene.rb` (new), `lib/sirena/layout/base.rb` (the
 `#call` template and its temporary `to_graph` branch),
-`lib/sirena/layout/*.rb`, `lib/sirena/layout/info.rb` and
-`error.rb` (new, ~20 lines each), `lib/sirena/renderer/*.rb`,
+`lib/sirena/layout/*.rb`, `lib/sirena/layout/info.rb` and `error.rb` (**not** new — item 03
+renamed the existing transform files into those paths; item 04
+rewrites them, ~20 lines each), `lib/sirena/renderer/*.rb`,
 `lib/sirena/engine.rb` (calls `Layout::Base#call` from the first
 conversion PR, and gates the Grid stage on the legacy branch),
-`spec/contract_spec.rb`, plus the transition spec.
+`spec/contract_spec.rb`, the transition spec, and
+`spec/support/legacy_layout.rb` (new, the `to_graph`-only fixture).

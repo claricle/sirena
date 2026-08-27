@@ -103,8 +103,9 @@ someone touch, and do they have to reverse-engineer anything first?
 
 - Today: **five files** across five layers, plus an undocumented
   contract you learn by reading the renderer.
-- After item 07: **two files** to extend an existing type, **five** to
-  add a new one, and nothing to reverse-engineer.
+- After item 07: **two files** to extend an existing type, **six** to
+  add a new one (five generated, plus the `TYPES` row), and nothing to
+  reverse-engineer.
 
 The same question decides the geometry work. With parity as the bar, a
 layout fix must be a change to one layout class that elkrb feeds — not a
@@ -159,7 +160,7 @@ Three problems in that picture, and each one costs time on every fix:
     |
   Diagram::<Type>      TYPED    what the text MEANS      (semantics)
     |
-  Layout::<Type>                optional - only where geometry exists
+  Layout::<Type>                every type, one per type
     |
   Layout::<Type>::Scene TYPED   where things GO          (geometry)
     |
@@ -176,12 +177,24 @@ Three problems in that picture, and each one costs time on every fix:
 type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
 scene = Layout.for(type).call(model, theme: theme, today: today)
-Renderer.for(type).render(scene, theme: theme)
+Renderer.for(type, theme: theme).render(scene)
 ```
 
 Detection has to come from somewhere, and after item 06 that somewhere
 is `Notation::Mermaid`, reading the same `TYPES` table every lookup
 below it uses.
+
+`Renderer.for` takes the theme because that is where a renderer already
+keeps it: `renderer/base.rb:42` is `initialize(theme: nil)` and `render`
+takes one argument (`engine.rb:272` builds it with
+`renderer_class.new(theme: theme)`). Keeping that shape means item 06
+changes how a renderer is *found*, not how it is *called* — no renderer
+signature migration, and no window where converted and unconverted
+renderers want different arguments.
+
+**Each `.for` returns a fresh instance.** `Layout::Base#call` stores the
+theme and the date on the instance, so a cached one would share render
+state between concurrent calls.
 
 **That is the pipeline, not the whole method.** `Engine#render` still
 resolves the theme, still takes `today` and `verbose`, and still turns
