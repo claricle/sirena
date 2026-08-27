@@ -708,8 +708,8 @@ module Sirena
         rule(:invisible_link) { str('~~~') >> str('~').repeat }
 
         # The vocabulary is generated, not listed. Enumerating it missed
-        # sixteen forms mmdc renders — `====`, `-.-x`, `<--x`, `o----o`
-        # among them — and got `o--x` wrong on top of that.
+        # forms mmdc renders — `====`, `-.-x`, `<--x`, `o----o` among them
+        # — and got `o--x` wrong on top of that.
         #
         # A leading marker is taken here whatever it is; whether mermaid
         # honours it depends on the marker at the other end, which the

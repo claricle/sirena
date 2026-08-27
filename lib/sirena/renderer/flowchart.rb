@@ -218,10 +218,10 @@ module Sirena
       # 4.5 * sqrt(2) long.
       CIRCLE_HEAD_RADIUS = 5.5
       CROSS_HEAD_HALF = 4.5
-      # mmdc's `.arrowMarkerPath` strokes the circle at 1 and the cross at 2.
-      # Numbers, because the reach below is arithmetic on them. `%g` puts
-      # them back the way mmdc writes them: `to_s` would say `2.0`, and
-      # mmdc says `2`.
+      # mmdc fixes its circle stroke at 1 and its cross stroke at 2. They
+      # stay numeric because the reach below uses them. `%g` writes these
+      # marker strokes the way mmdc does. A line's stroke-width comes from
+      # the theme and keeps its own formatting.
       CIRCLE_HEAD_STROKE = 1.0
       CROSS_HEAD_STROKE = 2.0
       # How far each reaches along the line it arrives on: its geometry
@@ -388,7 +388,7 @@ module Sirena
       # no head.
       def render_edge_heads(group, source, target, type, bends)
         shape =
-          EDGE_HEADS[type.sub(/\A(thick|dotted)_/, '').delete_suffix('_both')]
+          EDGE_HEADS[type.sub(/\A(?:thick|dotted)_/, '').delete_suffix('_both')]
         return unless shape
 
         edge_head_ends(type).each do |which|
@@ -474,7 +474,6 @@ module Sirena
       # The node is drawn as a circle on the shorter side, not an ellipse.
       def circle_scale(half_w, half_h, dx, dy)
         span = Math.hypot(dx, dy)
-        return 0.0 if span.zero?
 
         [half_w, half_h].min / span
       end
@@ -545,14 +544,12 @@ module Sirena
       # node never covers it. A circle and a cross are drawn AROUND their
       # point, so sitting that point on the node's edge buried half of
       # each one. mmdc keeps them clear of the node — circleEnd's
-      # reference point is at 11 on a circle that ends at 10 — so back
-      # them off their own reach.
+      # reference point is at 11 on a circle that ends at 10.
       #
-      # Each is backed off the furthest it reaches, so the circle comes to
-      # rest against the edge and the cross, measured to its corner, stops
-      # short of it by 1.0 when it arrives square on. mmdc leaves a
-      # gap there too: crossEnd's reference point is at 12 on arms that
-      # end at 10.
+      # The circle is backed off its full reach. The cross is backed off
+      # its per-axis half-run, so its corner stops 1.0 short when it
+      # arrives square on. mmdc leaves a gap there too: crossEnd's
+      # reference point is at 12 on arms that end at 10.
       def backed_off(geometry, reach)
         tip_x, tip_y, from_x, from_y =
           geometry.values_at(:tip_x, :tip_y, :from_x, :from_y)

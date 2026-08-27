@@ -188,10 +188,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # Then the multiple goes on top of the width it did name, not on top
     # of mmdc's — a 2.0 line thickens to 7.0, not to 3.5.
     it "multiplies the width the theme did name" do
-      xml = Sirena.render("flowchart TD\n  A === B\n",
-                          theme: { shapes: { stroke_width: 2.0 } })
+      group = edge_group("===", theme: { shapes: { stroke_width: 2.0 } })
 
-      expect(xml[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("7.0")
+      expect(group[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("7.0")
     end
 
     # The head half. Each of these was identical before.
@@ -223,7 +222,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       xml = Sirena.render("flowchart TD\n  A --> B\n")
       left, right = node_span(xml, "B")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      tip = group[/<polygon[^>]*points="([\d.]+),/, 1].to_f
+      tip = group[/<polygon[^>]*points="(-?[\d.]+),/, 1].to_f
 
       expect(tip).to be_within(0.5).of(left)
       expect(tip).not_to be_within(1.0).of((left + right) / 2)
@@ -236,7 +235,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "rests a circle head against the node instead of astride it" do
       xml = Sirena.render("flowchart TD\n  A --o B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
-      cx = group[/<circle[^>]*cx="([\d.]+)"/, 1].to_f
+      cx = group[/<circle[^>]*cx="(-?[\d.]+)"/, 1].to_f
       radius = group[/<circle[^>]*r="([\d.]+)"/, 1].to_f
       stroke = group[/<circle[^>]*stroke-width="([\d.]+)"/, 1].to_f
 
@@ -275,7 +274,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # line. Reading the corners off a fixed angle instead drew it 3.1
     # wide, and nothing here would have noticed.
     it "draws the arrow head mermaid's size" do
-      xml = Sirena.render("flowchart TD\n  A --> B\n")
       tip, left, right =
         edge_group("-->")[/<polygon[^>]*points="([^"]*)"/, 1]
           .split.map { |pair| pair.split(",").map(&:to_f) }
@@ -284,7 +282,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to be_within(0.05).of(Math.hypot(8.0, 4.0))
       expect(Math.hypot(*left.zip(right).map { |a, b| a - b }))
         .to be_within(0.05).of(8.0)
-      expect(xml).to include("<polygon")
     end
 
     # mmdc's crossEnd is `orient="auto"`, so the cross turns with the line
@@ -308,6 +305,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(arms.size).to eq(2)
       expect(arms.map { |x1, y1, x2, y2| (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05 })
         .to all(be(true))
+      expect(arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) })
+        .to all(be_within(0.1).of(2 * 4.5 * Math.sqrt(2)))
     end
 
     # A node of no size has no outline for the head to land on. Dividing
@@ -490,10 +489,15 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "puts a head at each end of a two-ended link" do
-      # One head per end, at opposite ends of the span.
-      tips = edge_group("<-->").scan(/<polygon[^>]*points="([\d.]+),/).flatten
+      xml = Sirena.render("flowchart TD\n  A <--> B\n")
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+      tips = group.scan(/<polygon[^>]*points="(-?[\d.]+),/)
+        .flatten.map(&:to_f)
 
-      expect(tips.uniq.size).to eq(2)
+      expect(tips).to contain_exactly(
+        be_within(0.5).of(node_span(xml, "A").last),
+        be_within(0.5).of(node_span(xml, "B").first)
+      )
     end
 
     # An ordinary label is lifted off the line it names. The loop specs
@@ -528,7 +532,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # A coordinate can be negative, and a regex that cannot match one
     # drops the point silently rather than failing.
     def path_points(xml)
-      xml[/<path[^>]*d="([^"]*)"/, 1].scan(/(-?[\d.]+) (-?[\d.]+)/)
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+      group[/<path[^>]*d="([^"]*)"/, 1].scan(/(-?[\d.]+) (-?[\d.]+)/)
         .map { |x, y| [x.to_f, y.to_f] }
     end
 
@@ -565,9 +570,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(path_points(xml).size).to eq(2)
     end
 
-    # A bare node is 37 wide, so the ratio alone would span 6.5 and the
-    # loop would be a spike. mmdc never goes under 18.
-    it "keeps a narrow node's loop 18 wide" do
+    # A bare node is 37 wide, so the ratio alone would reach 6.5 on each
+    # side and span about 13. The loop would be a spike. mmdc never goes
+    # under 18.
+    it "keeps a narrow node's loop 18 either side of centre" do
       xml = Sirena.render("flowchart TD\n  A --> A\n")
       centre_x, = node_centre(xml)
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
@@ -577,7 +583,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     # 359 wide here, so the ratio alone would span 62.8. mmdc stops at 50.
-    it "keeps a wide node's loop 50 wide" do
+    it "keeps a wide node's loop 50 either side of centre" do
       xml = Sirena.render(
         "flowchart TD\n  A --> A[a very long label indeed goes here now]\n"
       )
@@ -629,7 +635,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       xml = Sirena.render("flowchart TD\n  A -->|again| A\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
-      expect(group[/<text[^>]*y="([\d.]+)"/, 1].to_f).to be > node_bottom(xml)
+      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to be > node_bottom(xml)
     end
 
     # An ordinary label is lifted UP off its line. Doing that to a loop

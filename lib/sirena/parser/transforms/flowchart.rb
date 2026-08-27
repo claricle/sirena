@@ -204,8 +204,9 @@ module Sirena
 
         # Mermaid honours a leading marker only when the trailing one
         # matches it. `o--x` draws the cross and nothing at the source, and
-        # a mismatched pair also drops back to normal thickness — `o==x` is
-        # no thicker than `o--x`. Both were read as two-ended links here.
+        # a mismatched pair drops back to normal thickness but keeps its
+        # dots. `o==x` is no thicker than `o--x`, while `<-.-x` stays
+        # dotted. Both were read as two-ended links here.
         def self.link_type(token)
           return 'invisible' if token.start_with?('~')
 
