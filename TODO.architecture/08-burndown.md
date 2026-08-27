@@ -104,9 +104,16 @@ snapshot.
       contract, in full: node identity, normalisation, the equations,
       overlap semantics (ancestor containment is legitimate, peer
       collision is not), and a metric for every non-box type.
-   d. **Then integrate elkrb**, replacing `Layout::Grid`. After item 03
-      that is one file with one caller; after item 04 the graph Scenes
-      are already ELK-shaped, so this is a swap rather than a redesign.
+   d. **Then integrate elkrb.** It does not replace `Layout::Grid` —
+      item 06 deletes that class once no legacy layout is left to call
+      it. What elkrb replaces is the positioning each graph-type layout
+      does for itself after item 04. Their Scenes are already
+      ELK-shaped, so this is a swap per layout rather than a redesign.
+
+      **Not every type.** `block` is pre-positioned by author-specified
+      columns (`TODO.foundation/18:47-51`) and `TODO.foundation/14:115`
+      names it an explicit elkrb exception. Take the classification
+      from item 18's survey, not from a roster written here.
 
    Keep that metric contract as written. Geometry comparison genuinely
    is subtle, and it is the one place in the original plan where the

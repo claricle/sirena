@@ -20,10 +20,18 @@ Two numbers, asserted by a spec rather than claimed:
   number of files the generator creates.
 
   **This is the count before `TODO.foundation/18`.** That item's typed
-  IR requires every Mermaid type to appear in `docs/ir-type-map.md`
-  (`18-typed-ir-boundary.md:103-109`), which makes it 9. Whoever lands
-  item 18 owns updating this number, the generator and the file-count
-  spec together — it is one line in each and it is easy to miss.
+  IR adds more than a row: it requires a notation-to-IR transform per
+  type (`18-typed-ir-boundary.md:103-115,137`, `TODO.foundation/12:106-109`)
+  as well as an entry in `docs/ir-type-map.md`. Since item 03 turned
+  the existing transforms into layouts, that mapper is a new file, so
+  the post-18 count is **at least 10** — unless item 18 assigns the
+  mapping to a file that already exists, in which case item 18 has to
+  say which.
+
+  **Item 18 owns that handoff, and it is not one line.** It updates the
+  file list above, this count, the generator, the file-count spec, the
+  onboarding page in PR 2, and the `LAYERS.md` checklist. Whoever lands
+  it should expect to touch all six.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 

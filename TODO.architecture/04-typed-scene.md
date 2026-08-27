@@ -3,7 +3,7 @@
 **Goal:** no bare Hash crosses a layer boundary. Every renderer's input
 is a class you can open and read.
 **Size:** 26 PRs — one for `Layout::Scene`, one for the transition path
-on `Layout::Base`, and 24 conversions, one per type. Step 6's
+on `Layout::Base`, and 24 conversions, one per type. The final step's
 `contract_spec.rb` extension rides along with the last conversion
 rather than taking a PR of its own; it cannot pass before then anyway. An earlier draft
 said ~21 because three types were going to be deleted rather than
@@ -305,21 +305,26 @@ attribute, two of them dead (item 02).
    The order matters and it is not the obvious one — unwrap **before**
    Grid, not after:
 
+During item 04 the engine still resolves classes through
+   `DiagramRegistry` — `Layout.for` and `Renderer.for` arrive with item
+   06 — so the shape is:
+
    ```
-   result = Layout.for(type).call(model, theme:, today:)
+   result = handlers[:layout].new.call(model, theme:, today:)
 
    if result.is_a?(Layout::Legacy)
-     graph = result.payload        # unwrap FIRST
-     graph = Layout::Grid.call(graph)   # Grid sees the real graph
+     graph = result.payload              # unwrap FIRST
+     graph = Layout::Grid.call(graph)    # Grid sees the real graph
    else
-     graph = result                # a Scene; Grid never runs
+     graph = result                      # a Scene; Engine does not call Grid
    end
 
-   Renderer.for(type, theme:).render(graph)
+   handlers[:renderer].new(theme:).render(graph)
    ```
 
    Capture Grid's return value. It replaces the graph; it does not
-   mutate it.
+   mutate it. Item 06 swaps the two `handlers[...]` lookups for
+   `Layout.for` and `Renderer.for` and deletes the branch entirely.
 
    **Keep a test-only legacy layout.** By the end of this item every
    production layout defines `scene`, so the legacy branch becomes
@@ -330,17 +335,7 @@ attribute, two of them dead (item 02).
    Item 06 deletes the fallback once no `to_graph` remains. Add it to
    that item's `Done when`, or it survives forever.
 
-5. **Graph-type layouts position through `Layout::Grid`, not by hand.**
-   `flowchart`, `class_diagram`, `state_diagram`, `er_diagram`, `c4`,
-   `requirement`, `architecture`, `block` and `mindmap` call it and
-   build their Scene from what it returns.
-
-   That is what keeps it a seam. Item 03 creates `Layout::Grid` and item
-   08 replaces it with elkrb (`08-burndown.md:107`). If its only caller
-   were `Engine`'s legacy gate, item 06 would delete that gate and leave
-   a dead class with nothing to swap.
-
-6. For each type, one PR:
+5. For each type, one PR:
    - define the Scene from what the renderer actually reads — that *is*
      the contract, already written down, just in the wrong place
    - move every coordinate and angle calculation out of the renderer and
@@ -349,7 +344,7 @@ attribute, two of them dead (item 02).
    - rewrite the renderer to read named attributes
    - the layout returns a new Scene and never mutates the diagram
    - `rake corpus[<type>]` must show the same pass count
-7. Extend `spec/contract_spec.rb`: every registered type has a layout,
+6. Extend `spec/contract_spec.rb`: every registered type has a layout,
    and that layout returns a `Layout::Scene` with non-nil `width` and
    `height`. There is no "no layout" case to special-case.
 

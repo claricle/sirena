@@ -173,4 +173,4 @@ Afterwards:
 | a coordinate calculation | `layout/<type>.rb` |
 | an SVG shape choice | `renderer/<type>.rb` |
 | a colour | the theme YAML, never a renderer |
-| a new diagram type | 8 files: `parser/<type>.rb`, its grammar and builder, `diagram/<type>.rb`, `layout/<type>.rb` (Scene inside), `renderer/<type>.rb`, `spec/fixtures/contract/<type>.mmd`, and one row in `TYPES`. Not the theme YAML — a new type adds no colours. `TODO.foundation/18` adds a ninth, `docs/ir-type-map.md` |
+| a new diagram type | 8 files: `parser/<type>.rb`, its grammar and builder, `diagram/<type>.rb`, `layout/<type>.rb` (Scene inside), `renderer/<type>.rb`, `spec/fixtures/contract/<type>.mmd`, and one row in `TYPES`. Not the theme YAML — a new type adds no colours. `TODO.foundation/18` takes it to at least 10 — a notation-to-IR mapper per type plus a row in `docs/ir-type-map.md` |

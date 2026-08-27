@@ -52,11 +52,13 @@ One commit — and one PR — per rename.
 3. **`Engine#layout_graph` / `apply_fallback_layout` -> `Layout::Grid`**
 
    A named class in `lib/sirena/layout/grid.rb` that the engine calls
-   explicitly. It stays a stub, and it is **explicitly temporary**: put a
-   comment at the top naming its successor. Geometry parity is the agreed
-   bar, so elkrb replaces it in item 08 step 3. The point of giving it a
-   name and one caller now is that the replacement touches this file and
-   nothing else.
+   explicitly. It stays a stub, and it is **explicitly temporary**: put
+   a comment at the top naming its successor.
+
+   Its life is short. It exists to hold the engine's positioning code
+   while legacy layouts still return graphs; item 06 deletes it once
+   item 04 has converted the last one. It is not the thing elkrb
+   replaces — see `06-registry-as-data.md` and `08-burndown.md`.
 4. **Uniform class names.** `Sirena::<Layer>::<Type>` everywhere:
    `Parser::Pie`, `Diagram::Pie`, `Layout::Pie`, `Renderer::Pie`. The
    suffix repeats the namespace; drop it.
