@@ -199,21 +199,36 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
-    context 'with metadata on a bare top-level node (corpus 035, 041)' do
-      let(:source) { "kanban\n        root@{ assigned: knsv, ticket: MC-1234 }\n" }
+    context 'with assigned metadata on a bare top-level node (corpus 035)' do
+      let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
 
       it 'creates a column titled by its id' do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(1)
         expect(diagram.columns.first.title).to eq('root')
       end
+    end
 
-      it 'drops assigned and ticket, which a column cannot carry' do
-        # KanbanColumn has only id/title/cards. Pinned so a later model
-        # change cannot silently alter it.
+    context 'with ticket metadata on a bare top-level node (corpus 041)' do
+      let(:source) { "kanban\n        root@{ ticket: MC-1234 }\n" }
+
+      it 'creates a column titled by its id' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.size).to eq(1)
+        expect(diagram.columns.first.title).to eq('root')
+      end
+    end
+
+    context 'with metadata that a column has nowhere to put' do
+      # A KanbanColumn carries only id/title/cards, so `assigned` is parsed
+      # and then dropped. Asserted against the built column rather than the
+      # model's method list, so that routing the metadata onto the column
+      # would actually break this.
+      let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
+
+      it 'keeps the metadata off the column' do
         column = parser.parse(source).columns.first
-        expect(column).not_to respond_to(:assigned)
-        expect(column).not_to respond_to(:ticket)
+        expect(column.to_yaml).not_to include('knsv')
       end
     end
 
@@ -280,7 +295,10 @@ RSpec.describe Sirena::Parser::KanbanParser do
 
     context 'with bare and labelled columns together (corpus 002)' do
       let(:source) do
-        "kanban\n  id1[Todo]\n    docs[Create Documentation]\n  id2\n    blog[Create Blog]\n"
+        # The corpus source verbatim: the same card id `docs` appears under
+        # both columns, which is the shape this case exists to cover.
+        "kanban\n  id1[Todo]\n    docs[Create Documentation]\n  " \
+        "id2\n    docs[Create Blog about the new diagram]\n"
       end
 
       it 'accepts both forms on one board' do
@@ -288,12 +306,27 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect(diagram.columns.map(&:id)).to eq(%w[id1 id2])
         expect(diagram.columns.map(&:title)).to eq(['Todo', 'id2'])
       end
+
+      it 'keeps a repeated card id in its own column' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.map { |c| c.cards.map(&:id) }).to eq([['docs'], ['docs']])
+      end
     end
 
-    context 'with multi-key metadata on a bare column (corpus 036, 037, 039)' do
+    context 'with single-key metadata on a bare column (corpus 036, 037)' do
+      let(:source) { "kanban\n        root@{ icon: star }\n" }
+
+      it 'titles the column by its id' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.size).to eq(1)
+        expect(diagram.columns.first.title).to eq('root')
+      end
+    end
+
+    context 'with multi-key metadata on a bare column (corpus 039)' do
       let(:source) { "kanban\n        root@{ icon: star, assigned: knsv }\n" }
 
-      it 'parses every key and still titles the column by its id' do
+      it 'titles the column by its id' do
         diagram = parser.parse(source)
         expect(diagram.columns.size).to eq(1)
         expect(diagram.columns.first.title).to eq('root')
@@ -316,6 +349,66 @@ RSpec.describe Sirena::Parser::KanbanParser do
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(['realRootWrongPlace'])
         expect(diagram.columns.first.cards).to be_empty
+      end
+    end
+
+    context 'with a label: override on a labelled column' do
+      # Metadata beats bracket text, which is what mmdc renders for
+      # `root[L]@{ label: xx }`. No corpus case covers the labelled shape -
+      # 040 is bare - so it is pinned here.
+      let(:source) { "kanban\n  id1[Todo]@{ label: 'Renamed' }\n" }
+
+      it 'prefers the label metadata over the bracket text' do
+        expect(parser.parse(source).columns.first.title).to eq('Renamed')
+      end
+    end
+
+    context 'with an empty label:' do
+      # An empty label is not a label. mmdc renders the bracket text for
+      # `id1[Todo]@{ label: '' }`, and the id when there is no bracket text.
+      it 'falls back to the bracket text' do
+        diagram = parser.parse("kanban\n  id1[Todo]@{ label: '' }\n")
+        expect(diagram.columns.first.title).to eq('Todo')
+      end
+
+      it 'falls back to the id when there is no bracket text' do
+        diagram = parser.parse("kanban\n  id1@{ label: '' }\n")
+        expect(diagram.columns.first.title).to eq('id1')
+      end
+
+      it 'treats a double-quoted empty label the same way' do
+        diagram = parser.parse(%(kanban\n  id1[Todo]@{ label: "" }\n))
+        expect(diagram.columns.first.title).to eq('Todo')
+      end
+    end
+
+    context 'with metadata keys that collide with a card field' do
+      # Mermaid ignores `id:`/`text:` as metadata; they are the card's own
+      # fields. No corpus case uses them, but the bare form made this input
+      # reachable, so it must not emit wrong output.
+      it 'does not let text: overwrite the card text' do
+        diagram = parser.parse("kanban\n  col[C]\n    card[K]@{ text: 'CLOB' }\n")
+        expect(diagram.columns.first.cards.first.text).to eq('K')
+      end
+
+      it 'does not let id: overwrite the card id' do
+        diagram = parser.parse("kanban\n  col[C]\n    card@{ id: 'CLOB' }\n")
+        card = diagram.columns.first.cards.first
+        expect(card.id).to eq('card')
+        expect(card.text).to eq('card')
+      end
+    end
+
+    context 'with metadata on a bare card' do
+      # The intersection of this bucket's two changes: a card with no bracket
+      # label, carrying metadata.
+      let(:source) { "kanban\n  col[Todo]\n    child1@{ assigned: knsv }\n" }
+
+      it 'titles the card by its id and keeps the metadata' do
+        card = parser.parse(source).columns.first.cards.first
+        expect(card.id).to eq('child1')
+        expect(card.text).to eq('child1')
+        expect(card.assigned).to eq('knsv')
       end
     end
   end

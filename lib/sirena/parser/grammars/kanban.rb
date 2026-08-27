@@ -35,10 +35,14 @@ module Sirena
         # An item can be either a column or a card. The label is optional:
         # mermaid accepts a bare id, with or without trailing metadata.
         #
-        # Ordered alternation, labelled first, rather than making the label
-        # `.maybe`. Parslet does not backtrack into a `.maybe` that already
-        # matched, so `identifier >> label.maybe >> ...` would commit to the
-        # label and never reconsider the bare form.
+        # Named alternation branches rather than an inline `label.maybe`.
+        # Both parse today's inputs identically, so this is about what comes
+        # next: the deferred shape buckets add their branches here, and a
+        # round-bracket branch has to sit BEFORE `bare_item`, which is the
+        # most permissive of them. Ordering is the whole point of the rule,
+        # so the branches are named and ordered rather than implied. This
+        # matches how the other grammars in this directory are written -
+        # see `mindmap.rb`'s `node` rule.
         rule(:item) do
           (labelled_item | bare_item) >> metadata.maybe
         end

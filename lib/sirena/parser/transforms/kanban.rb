@@ -66,8 +66,7 @@ module Sirena
           def add_column(item)
             column = {
               id: item[:id],
-              # A `label:` in the metadata replaces the display text.
-              title: item[:metadata][:label] || item[:text],
+              title: column_title(item),
               cards: []
             }
 
@@ -79,10 +78,23 @@ module Sirena
             # Cards must belong to a column
             return unless @current_column
 
+            # `id` and `text` are the card's own fields, not metadata keys.
+            # Mermaid ignores an `@{ id: ... }` or `@{ text: ... }` entry, so
+            # the merge must not let one overwrite them.
             @current_column[:cards] << {
               id: item[:id],
               text: item[:text]
-            }.merge(item[:metadata])
+            }.merge(item[:metadata].except(:id, :text))
+          end
+
+          # A `label:` in the metadata replaces a COLUMN's display text, which
+          # is what mermaid renders. An empty label is not a label: it falls
+          # back to the bracket text, or to the id when there is no bracket
+          # text. On a CARD the label is kept as its own attribute and drawn
+          # as a separate "Label:" row, which this bucket leaves untouched.
+          def column_title(item)
+            label = item[:metadata][:label]
+            label.nil? || label.empty? ? item[:text] : label
           end
 
           def parse_metadata(metadata_data)
@@ -128,9 +140,12 @@ module Sirena
           def extract_value(value_data)
             return "" if value_data.nil?
 
-            if value_data.is_a?(Hash) && value_data[:string]
-              # It's a string wrapped in :string key
-              value_data[:string].to_s
+            if value_data.is_a?(Hash) && value_data.key?(:string)
+              # An empty quoted string parses as `{string: []}`, because the
+              # shared grammar captures the body with `.repeat`. `[].to_s` is
+              # the literal "[]", so join the capture instead of stringifying
+              # it.
+              Array(value_data[:string]).join
             else
               value_data.to_s
             end

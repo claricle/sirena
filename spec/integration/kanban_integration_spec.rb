@@ -12,6 +12,9 @@ require 'rexml/document'
 RSpec.describe Sirena::Engine do
   let(:svg) { described_class.new.render(source) }
 
+  # Parses the document, so a malformed render fails here rather than in a
+  # separate example that nothing can redden on its own.
+  #
   # `element.text` is nil for an empty node, because a text node with no
   # content serializes as `<text></text>` (Sirena::Svg::Text#to_xml joins an
   # empty content collection). Normalizing with to_s keeps a missing label
@@ -28,10 +31,6 @@ RSpec.describe Sirena::Engine do
       # supplies card_count and Renderer::Kanban emits it as its own text
       # node. It belongs in this list - do not trim it to two elements.
       expect(rendered_text(svg)).to eq(%w[root 1 child1])
-    end
-
-    it 'produces well-formed XML' do
-      expect { REXML::Document.new(svg) }.not_to raise_error
     end
   end
 end
