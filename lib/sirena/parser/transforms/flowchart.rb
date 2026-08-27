@@ -47,7 +47,7 @@ module Sirena
           # is an unknown key there and the node keeps its default, so
           # inserting one made sirena honour something mermaid ignores.
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
-          entries(document, yaml_mapping(document))
+          entries(yaml_mapping(document))
         end
 
         # A newline inside a double-quoted value is a line break to
@@ -55,32 +55,121 @@ module Sirena
         # YAML fold it turned `"one` newline `two"` into `one two`, where
         # mmdc renders `one<br/>two`.
         def self.break_quoted_newlines(body)
-          body.gsub(/"[^"]*"/) { |run| run.gsub("\n", '<br/>') }
+          body.gsub(/"[^"]*"/) { |run| run.gsub(/\n\s*/, '<br/>') }
         end
 
-        def self.entries(document, mapping)
+        def self.entries(mapping)
+          reject_tags(mapping)
           reject_duplicates(mapping)
           reject_nested_anchors(mapping)
 
-          load_values(document).filter_map do |key, value|
+          resolve_mapping(mapping).filter_map do |key, value|
+            next unless READ_KEYS.include?(key)
+
             usable = usable_value(key, value)
             [key, usable] if usable
           end.to_h
         end
 
-        # js-yaml resolves aliases and tags, so the values have to be
-        # materialised rather than read off the AST: `&s rounded` with `*s`
-        # elsewhere is a shape mermaid honours.
+        # Mermaid reads these two and ignores everything else, including a
+        # merge key. Validating every entry refused `A@{ extra: true }`,
+        # which mmdc draws.
+        READ_KEYS = %w[shape label].freeze
+
+        # The values are resolved off the AST rather than handed to a
+        # loader. `Psych.safe_load` is not safe enough here: it still calls
+        # any handler registered with `Psych.add_domain_type`, which is a
+        # host-global list, and the handler's return value became the node
+        # label. A diagram must not reach a materialiser at all.
         #
-        # `safe_load`, NOT the AST's `to_ruby`, which is `unsafe_load` by
-        # another name. It built a `Gem::Requirement` out of a node label
-        # before the type check downstream got to refuse it — arbitrary
-        # object construction from a diagram. The permitted set here is
-        # already what mermaid's JSON schema produces.
-        def self.load_values(document)
-          Psych.safe_load(document, aliases: true)
-        rescue Psych::Exception
-          raise Parser::ParseError, 'Malformed metadata.'
+        # Doing it here also fixes the schema. Psych resolves `no` to false
+        # and `2024-01-01` to a Date; mermaid parses with js-yaml's
+        # JSON_SCHEMA, where both stay strings.
+        def self.resolve_mapping(mapping)
+          anchors = collect_anchors(mapping)
+
+          mapping.children.each_slice(2).to_h do |key, value|
+            [scalar_key(key), resolve(value, anchors, [])]
+          end
+        end
+
+        # An Alias carries an anchor of its own, so collecting on that
+        # alone recorded the alias over the node it points at and every
+        # reference resolved to itself.
+        def self.collect_anchors(node, found = {})
+          found[node.anchor] = node if node.anchor &&
+                                       !node.is_a?(Psych::Nodes::Alias)
+          node.children.to_a.each { |child| collect_anchors(child, found) }
+          found
+        end
+
+        # `open` is the chain of anchors currently being expanded. An alias
+        # that reaches one of them is a cycle, and following it would
+        # recurse until the stack gave out — the structural guard below
+        # catches the shallow forms of this, not an anchor nested under a
+        # sequence or one carried on the mapping itself.
+        def self.resolve(node, anchors, open)
+          if node.is_a?(Psych::Nodes::Alias)
+            name = node.anchor
+            raise Parser::ParseError, 'Circular anchor in metadata.' if
+              open.include?(name)
+
+            node = anchors.fetch(name) { missing_alias(node) }
+            open += [name]
+          end
+
+          case node
+          when Psych::Nodes::Scalar then json_scalar(node)
+          when Psych::Nodes::Sequence
+            node.children.map { |child| resolve(child, anchors, open) }
+          else :unusable
+          end
+        end
+
+        def self.missing_alias(node)
+          raise Parser::ParseError, "No anchor for alias: #{node.anchor}."
+        end
+
+        # js-yaml's JSON_SCHEMA, which is what mermaid parses with: only
+        # `null`, `true`, `false` and a JSON number are anything but a
+        # string, and a quoted scalar is always a string.
+        JSON_WORDS = { 'null' => nil, '~' => nil,
+                       'true' => true, 'false' => false }.freeze
+
+        JSON_NUMBER = /\A-?(0|[1-9]\d*)(\.\d+)?([eE][-+]?\d+)?\z/
+
+        # js-yaml resolves these three the way YAML does, and mermaid sees
+        # the JavaScript values: NaN is falsy and skips the key, Infinity
+        # is a number and is refused like any other.
+        JSON_SPECIALS = { '.nan' => Float::NAN, '.inf' => Float::INFINITY,
+                          '-.inf' => -Float::INFINITY }.freeze
+
+        def self.json_scalar(node)
+          return node.value if node.quoted
+
+          return JSON_WORDS[node.value] if JSON_WORDS.key?(node.value)
+          return JSON_SPECIALS[node.value] if JSON_SPECIALS.key?(node.value)
+          return node.value.to_f if JSON_NUMBER.match?(node.value)
+
+          node.value
+        end
+
+        # A tag routes the value through a materialiser, so only the ones
+        # js-yaml's JSON schema can produce are allowed through. Everything
+        # else — `!ruby/object:`, `!!omap`, a registered domain type — is
+        # refused before anything is built.
+        JSON_TAGS = %w[
+          tag:yaml.org,2002:str tag:yaml.org,2002:int tag:yaml.org,2002:float
+          tag:yaml.org,2002:bool tag:yaml.org,2002:null
+          tag:yaml.org,2002:seq tag:yaml.org,2002:map
+        ].freeze
+
+        def self.reject_tags(node)
+          if node.respond_to?(:tag) && node.tag && !JSON_TAGS.include?(node.tag)
+            raise Parser::ParseError, "Unsupported tag: #{node.tag}."
+          end
+
+          node.children.to_a.each { |child| reject_tags(child) }
         end
 
         # An empty repeat captures as [], not as an empty slice.
@@ -103,11 +192,18 @@ module Sirena
 
         # mermaid raises on a duplicate key rather than taking the last.
         def self.reject_duplicates(mapping)
-          keys = mapping.children.each_slice(2).map { |key, _| key.value }
+          keys = mapping.children.each_slice(2).map { |key, _| scalar_key(key) }
           duplicate = keys.detect { |key| keys.count(key) > 1 }
           return unless duplicate
 
           raise Parser::ParseError, "Duplicate key: #{duplicate}."
+        end
+
+        # A key that is not a plain scalar has no name to match against
+        # `shape` or `label`, and calling `value` on a Sequence raised
+        # NoMethodError before this guard.
+        def self.scalar_key(node)
+          node.is_a?(Psych::Nodes::Scalar) ? node.value : nil
         end
 
         # Mermaid tests the value for truth before using it, so `null`,
@@ -122,7 +218,7 @@ module Sirena
           return nil unless truthy?(value)
 
           value = value.first if value.is_a?(Array) && key == 'label'
-          return value.to_s if value.is_a?(String) || value.is_a?(Numeric)
+          return value if value.is_a?(String)
 
           raise Parser::ParseError, "Unusable #{key} in metadata."
         end
@@ -132,8 +228,10 @@ module Sirena
         # NOT falsy in JavaScript, and mmdc does refuse `label: []`.
         def self.truthy?(value)
           return false if value.nil? || value == false
+          return false if value.is_a?(Float) && value.nan?
           return false if value.is_a?(Numeric) && value.zero?
           return false if value.is_a?(String) && value.empty?
+          return false if value == :unusable && false
 
           true
         end
@@ -399,8 +497,11 @@ module Sirena
           return [nil, nil] unless shape_data
 
           delims = "#{shape_data[:open]}#{shape_data[:close]}"
-          label = shape_data[:label]&.to_s&.strip
-          [SHAPE_MAP[delims] || 'rect', label.to_s.empty? ? nil : label]
+          label = shape_data[:label]
+          # `A[ ]` is an EMPTY label, not an absent one: mmdc draws a node
+          # with nothing in it, and treating it as absent named the node
+          # after itself and kept an older label on a re-mention.
+          [SHAPE_MAP[delims] || 'rect', label.nil? ? nil : label.to_s.strip]
         end
       end
     end

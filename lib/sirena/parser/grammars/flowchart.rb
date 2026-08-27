@@ -487,7 +487,7 @@ module Sirena
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
             (ws? >> node_shape).maybe.as(:shape) >>
-            (ws? >> inline_class).maybe.as(:inline_class) >>
+            inline_class.maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
 
@@ -503,8 +503,13 @@ module Sirena
           str('@{') >> metadata_body.as(:body) >> str('}')
         end
 
+        # An unmatched `"` is not body text. mermaid's lexer stays in its
+        # string state to the end of the block and refuses the source;
+        # falling through to the generic branch took `A@{ label: a"b }`,
+        # which mmdc rejects.
         rule(:metadata_body) do
-          (metadata_quoted | (str('}').absent? >> any)).repeat
+          (metadata_quoted | (str('"').absent? >> str('}').absent? >> any))
+            .repeat
         end
 
         # A double-quoted run is skipped whole so a brace inside it is
