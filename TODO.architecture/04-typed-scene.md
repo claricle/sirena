@@ -2,8 +2,10 @@
 
 **Goal:** no bare Hash crosses a layer boundary. Every renderer's input
 is a class you can open and read.
-**Size:** ~21 PRs, one per diagram type, plus one small PR for the base
-class. Each type PR is small — Scene definition, layout rewrite,
+**Size:** 26 PRs — one for `Layout::Scene`, one for the transition path
+on `Layout::Base`, and 24 conversions, one per type. An earlier draft
+said ~21 because three types were going to be deleted rather than
+converted; they are not. Each type PR is small — Scene definition, layout rewrite,
 renderer rewrite.
 **Prerequisite:** item 03.
 
@@ -279,10 +281,12 @@ attribute, two of them dead (item 02).
    see wrong coordinates.
 
    Returning the output alone is not enough for the engine to decide.
-   Give `Base#call` an explicit contract — the simplest is a second
-   return value, or a `Layout::Legacy` wrapper around the `to_graph`
-   result — and have the engine run Grid on that signal, never on
-   `respond_to?`.
+   **Use a `Layout::Legacy` wrapper around the `to_graph` result**, not
+   a second return value: a tuple would make `Base#call` return an
+   Array, which contradicts the criterion below that it returns a
+   `Layout::Scene`. The converted branch returns the Scene bare; the
+   legacy branch returns it wrapped; the engine runs Grid only on a
+   wrapper, never on `respond_to?`.
 
    **Keep a test-only legacy layout.** By the end of this item every
    production layout defines `scene`, so the legacy branch becomes
@@ -359,8 +363,12 @@ attribute, two of them dead (item 02).
       real conversion. Write it at the first conversion
 - [ ] the same spec goes through **`Engine`, not just `Base#call`**, and
       asserts Grid ran on the legacy result and did **not** run on the
-      converted one. Use Sankey for the converted case — its Scene
-      responds to `nodes`, which is exactly what trips `engine.rb:223`
+      converted one. Use **flowchart** — it is the first conversion, and
+      its Scene responds to `nodes`, which is exactly what trips
+      `engine.rb:223`. Waiting for Sankey would leave the Grid
+      regression ungated for thirteen PRs
+- [ ] when Sankey lands (fourteenth), add it to that spec. It is the
+      case that motivated the gate and it should be covered by name
 - [ ] that spec asserts **coordinates**, not a pass count. A corpus run
       cannot tell you Grid overwrote a position
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`

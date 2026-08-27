@@ -9,29 +9,40 @@ lands fast, including the 524 oracle-valid corpus cases still failing.
 
 Two numbers, asserted by a spec rather than claimed:
 
-- **Adding a new diagram type touches exactly 6 files** — 5 new, plus
-  one row in `TYPES`. The fifth new file is the layout: item 04 made it
-  mandatory for every type, so there is no 4-file case left.
+- **Adding a new diagram type touches exactly 8 files** — 6 new under
+  `lib/`, one new fixture, plus one row in `TYPES`. Counted from the
+  list below, not estimated. Two earlier drafts said 5 and then 6; both
+  forgot files that the list itself names.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 
-## The five files
+## The eight files
 
 ```
+  lib/sirena/parser/<type>.rb             the parser itself
   lib/sirena/parser/grammars/<type>.rb    what the text LOOKS LIKE
   lib/sirena/parser/builders/<type>.rb    parse tree -> model
   lib/sirena/diagram/<type>.rb            what the diagram MEANS
+  lib/sirena/layout/<type>.rb             geometry, AND its Scene class
   lib/sirena/renderer/<type>.rb           scene -> SVG
+  spec/fixtures/contract/<type>.mmd       the contract fixture
   lib/sirena/notation/mermaid.rb          one row in TYPES
 ```
 
-Plus `lib/sirena/layout/<type>.rb` only if the type has geometry.
+**The layout is mandatory** — item 04 gives every type one, so there is
+no "only if it has geometry" case. **The Scene lives inside the layout
+file**, not beside it; that is item 04's rule, and it is why this list
+has no separate scene file.
+
+Six new files, one new fixture, one edited row. Specs are on top of
+that.
 
 ## Steps — PR 1, tooling
 
-1. **Generator.** `rake type:new[kanban]` scaffolds the five files —
-   parser, diagram, layout, scene, renderer — and their specs from
-   templates, and prints the `TYPES` row to paste. The templates encode
+1. **Generator.** `rake type:new[kanban]` scaffolds the seven files the
+   list above names — parser, grammar, builder, diagram, layout (with
+   its Scene inside), renderer, contract fixture — and their specs from
+   templates, then prints the `TYPES` row to paste. The templates encode
    the conventions, so they cannot be got wrong.
 2. **Shared examples.** Package item 01's contract spec as
    `it_behaves_like 'a diagram type'`, so a new type inherits for free:
@@ -66,7 +77,7 @@ Plus `lib/sirena/layout/<type>.rb` only if the type has geometry.
 
 - [ ] `rake type:new[demo]` produces a type that passes the shared
       examples with no hand-editing
-- [ ] a spec asserts the file count: adding `demo` touched 6 files
+- [ ] a spec asserts the file count: adding `demo` touched 8 files
 - [ ] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
 - [ ] `rake corpus[<type>] --failing` output is good enough to work from
