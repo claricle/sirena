@@ -369,11 +369,11 @@ module Sirena
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            # The capture arrives as {plain: slice}. A Parslet rule keyed
+            # The capture arrives as {token: slice}. A Parslet rule keyed
             # on `arrow:` alone cannot flatten it, because the hash it
             # sits in carries `label` and `target` too — so there is no
             # flattening rule to write and the slice is read directly.
-            arrow_type = edge_data[:arrow][:plain].to_s
+            arrow_type = edge_data[:arrow][:token].to_s
             label = edge_data[:label]
             target_data = edge_data[:target]
 

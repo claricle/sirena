@@ -486,8 +486,8 @@ module Sirena
         # transform previously needed a rule per combination.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            ((ws? >> node_shape).as(:shape) | open_name.as(:shape)) >>
-            (inline_class >> open_name).maybe.as(:inline_class) >>
+            ((ws? >> node_shape).as(:shape) | dot_absent.as(:shape)) >>
+            (inline_class >> dot_absent).maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
 
@@ -501,7 +501,7 @@ module Sirena
         # Sirena's own names take no dot, so it refuses those four rather
         # than naming a node or a class after one. Refusing is what it did
         # before; reading a link there would not be.
-        rule(:open_name) { str('.').absent? }
+        rule(:dot_absent) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
         # giving a node a shape or a label, usable as a statement of its own
@@ -694,14 +694,14 @@ module Sirena
             reserved_keyword.absent? >> node_with_shape.as(:target)
         end
 
-        # Arrow types
+        # Link forms
         # Every link mermaid draws, probed one at a time against mmdc
         # rather than counted from the docs.
         #
         # `->` and `==` are deliberately absent: sirena accepted both and
         # mermaid rejects them.
         rule(:arrow) do
-          (invisible_link | visible_link).as(:plain)
+          (invisible_link | visible_link).as(:token)
         end
 
         # `~~~` takes no markers at all: mmdc rejects `o~~~o` and `~~~>`.

@@ -213,25 +213,29 @@ module Sirena
       ARROW_LENGTH = 8.0
       ARROW_HALF_WIDTH = 4.0
       # `circleEnd` is a radius-5 circle in a 0..10 viewBox at markerWidth
-      # 11, and `crossEnd` is a pair of 9-long arms at markerWidth 11 on an
-      # 0..11 viewBox — so 5.5 and 4.5 once drawn.
+      # 11, so its drawn radius is 5.5. `crossEnd` uses the diagonals of a
+      # 9x9 box. The 4.5 is each axis's half-run, making each drawn half-arm
+      # 4.5 * sqrt(2) long.
       CIRCLE_HEAD_RADIUS = 5.5
       CROSS_HEAD_HALF = 4.5
       # mmdc's `.arrowMarkerPath` strokes the circle at 1 and the cross at 2.
-      CIRCLE_HEAD_STROKE = '1'
-      CROSS_HEAD_STROKE = '2'
+      # Numbers, because the reach below is arithmetic on them. `%g` puts
+      # them back the way mmdc writes them: `to_s` would say `2.0`, and
+      # mmdc says `2`.
+      CIRCLE_HEAD_STROKE = 1.0
+      CROSS_HEAD_STROKE = 2.0
       # How far each reaches along the line it arrives on: its geometry
       # plus the half stroke painted outside it. Backing off the geometry
       # alone left half the stroke lying over the node.
-      CIRCLE_HEAD_REACH = CIRCLE_HEAD_RADIUS + (CIRCLE_HEAD_STROKE.to_f / 2)
-      CROSS_HEAD_REACH = CROSS_HEAD_HALF + (CROSS_HEAD_STROKE.to_f / 2)
+      CIRCLE_HEAD_REACH = CIRCLE_HEAD_RADIUS + (CIRCLE_HEAD_STROKE / 2)
+      CROSS_HEAD_REACH = CROSS_HEAD_HALF + (CROSS_HEAD_STROKE / 2)
 
       # Drawn with their ends rounded the whole way, so a head aiming at
       # one pulls in from the corners as far as a circle's does.
       STADIUM_SHAPES = %w[rounded stadium].freeze
 
       # How far an edge label sits off the line it belongs to.
-      EDGE_LABEL_LIFT = 5
+      EDGE_LABEL_LIFT = 5.0
 
       SELF_LOOP_DEPTH = 0.45
       SELF_LOOP_REACH = 0.175
@@ -286,10 +290,9 @@ module Sirena
       end
 
       def calculate_edge_path(source, target, bends)
-        # The same centre the heads and the label are measured from. This
-        # halved the width itself and did it in integers, so on a node of
-        # odd width the line stopped half a pixel from where the head
-        # pointed out of.
+        # `node_centre` keeps the path on the same centre as its heads and
+        # label. The old inline calculation used integer division, so odd
+        # widths left the line half a pixel from where its head pointed.
         sx, sy = node_centre(source)
         tx, ty = node_centre(target)
 
@@ -547,7 +550,7 @@ module Sirena
       #
       # Each is backed off the furthest it reaches, so the circle comes to
       # rest against the edge and the cross, measured to its corner, stops
-      # short of it by up to 1.7 when it arrives square on. mmdc leaves a
+      # short of it by 1.0 when it arrives square on. mmdc leaves a
       # gap there too: crossEnd's reference point is at 12 on arms that
       # end at 10.
       def backed_off(geometry, reach)
@@ -623,7 +626,7 @@ module Sirena
             line.x2 = (tip_x + dx).round(1)
             line.y2 = (tip_y + dy).round(1)
             line.stroke = edge_ink
-            line.stroke_width = CROSS_HEAD_STROKE
+            line.stroke_width = format('%g', CROSS_HEAD_STROKE)
           end
         end
       end
@@ -641,7 +644,7 @@ module Sirena
           circle.r = CIRCLE_HEAD_RADIUS
           circle.fill = edge_ink || 'none'
           circle.stroke = edge_ink
-          circle.stroke_width = CIRCLE_HEAD_STROKE
+          circle.stroke_width = format('%g', CIRCLE_HEAD_STROKE)
         end
       end
 
@@ -678,7 +681,7 @@ module Sirena
 
         sx, sy = node_centre(source)
         tx, ty = node_centre(target)
-        [(sx + tx) / 2, ((sy + ty) / 2) - EDGE_LABEL_LIFT]
+        [(sx + tx) / 2.0, ((sy + ty) / 2.0) - EDGE_LABEL_LIFT]
       end
 
       # mmdc hangs a loop's label past the loop. Lifting it the way an

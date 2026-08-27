@@ -126,8 +126,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # Every "does not include" below would pass on an empty string, so
     # the group and its path are asserted present here rather than in one
     # example that only covers `---`.
-    def edge_group(link)
-      xml = Sirena.render("flowchart TD\n  A #{link} B\n")
+    def edge_group(link, **options)
+      xml = Sirena.render("flowchart TD\n  A #{link} B\n", **options)
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
       expect(group).to start_with("<g id=\"edge-")
       group
@@ -141,7 +141,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     it "draws nothing for an invisible link" do
       expect(edge_path("~~~")).to include('stroke="none"')
-      expect(edge_group("~~~")).not_to include("<polygon")
+      expect(edge_group("~~~"))
+        .not_to match(/<(?:polygon|line|circle)\b/)
     end
 
     # The line half: weight and pattern. Every type used to reach the
@@ -165,21 +166,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # 4.0 thick line and a "4,4" dot; multiplying its 3.0 line by mmdc's
     # 3.5 drew 10.5 and dotted it 2 whatever the theme said.
     it "draws a thick link at the width its own theme asks for" do
-      xml = Sirena.render("flowchart TD\n  A === B\n  C -.- D\n",
-                          theme: "high_contrast")
+      thick = edge_group("===", theme: "high_contrast")
+      dotted = edge_group("-.-", theme: "high_contrast")
 
-      expect(xml[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("4.0")
-      expect(xml[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("4,4")
+      expect(thick[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("4.0")
+      expect(dotted[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("4,4")
     end
 
     # Nothing fills a theme's gaps in. Then mmdc's own numbers stand: its
     # thick line is 3.5 times its normal one, and its normal one is 1.
     it "falls back to mmdc's own line when the theme names none" do
-      xml = Sirena.render("flowchart TD\n  A === B\n  C -.- D\n",
-                          theme: { colors: { node_fill: "#eeeeee" } })
+      theme = { colors: { node_fill: "#eeeeee" } }
+      thick = edge_group("===", theme: theme)
+      dotted = edge_group("-.-", theme: theme)
 
-      expect(xml[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("3.5")
-      expect(xml[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("2")
+      expect(thick[/<path[^>]*stroke-width="([^"]*)"/, 1]).to eq("3.5")
+      expect(dotted[/<path[^>]*stroke-dasharray="([^"]*)"/, 1]).to eq("2")
     end
 
     # A theme can name its plain line and say nothing about a thick one.
@@ -301,11 +303,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
          x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x
       ).map { |a| a.map(&:to_f) }
 
-      # A diagonal edge turns one arm square to the screen; a cross drawn
-      # square to the screen has neither arm square to it.
+      # A diagonal edge turns both arms square to the screen; a cross drawn
+      # square to the screen leaves both diagonal.
       expect(arms.size).to eq(2)
       expect(arms.map { |x1, y1, x2, y2| (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05 })
-        .to include(true)
+        .to all(be(true))
     end
 
     # A node of no size has no outline for the head to land on. Dividing
@@ -531,7 +533,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     def head_points(xml)
-      xml[/<polygon[^>]*points="([^"]*)"/, 1]
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+      group[/<polygon[^>]*points="([^"]*)"/, 1]
         .split.map { |pair| pair.split(",").map(&:to_f) }
     end
 
