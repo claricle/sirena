@@ -110,18 +110,16 @@ One commit — and one PR — per rename.
    | model constant | **item 03's own criterion** below goes red — `Diagram::XyChart` must resolve and equal what the parser returns. Immediate. Item 06 is the second net, not the first |
    | `diagram_type` | item 01's contract spec goes red. Immediate |
    | parser or renderer class | item 06's lookup finds nothing for a **mandatory** layer. It must raise, not return nil — see below |
-   | layout class | worse than a crash: `Layout.for` returning nil is the legitimate signal for a type with no layout, so a misspelled constant silently takes the pass-through path and the diagram renders unlaid-out |
+   | layout class | item 06's lookup cannot resolve it and raises `LayoutError`. Loud, but only because item 04 gave every type a layout — there is no optional-layout branch left for a misspelled constant to slip down |
    | contract fixture filename | item 01's spec cannot find `xy_chart.mmd`, so it goes red **immediately** — not at item 06. Item 06's fixture parity is the second net, not the first |
    | grammar or builder class | nothing fails; the inconsistency just survives |
 
-   The parser/renderer row and the layout row above are why item 06's
-   lookup cannot answer `nil` for everything. `Parser.for` and `Renderer.for` are mandatory and must
-   raise when convention resolution fails. `Layout.for` may return
-   `nil`, but **only when the layout file genuinely does not exist** —
-   if the file is there and the constant inside it does not match, that
-   is a broken rename and it must raise too. Distinguish "no layout for
-   this type" from "the layout is misnamed"; they are not the same
-   answer.
+   Those three rows are why item 06's lookups raise rather than answer
+   `nil`. All three layers are mandatory — item 04 gives every type a
+   layout — so a constant that does not resolve is always a broken
+   rename, never a legitimate absence. Each layer raises its own error:
+   `ParseError`, `LayoutError`, `RenderError`. An unknown type is a
+   different failure and raises `DiagramTypeError`.
 
    **Two are collisions, and they are the reason a bare resolution
    check is not enough.** `Diagram::Block` and `Diagram::Requirement`

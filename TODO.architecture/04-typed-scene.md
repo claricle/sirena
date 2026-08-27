@@ -47,44 +47,43 @@ end
 `height` — enough for `Renderer::Base` to own document creation, which
 item 05 uses to delete nine copies of it.
 
-**Types with no geometry get no Layout class at all.** Two of today's
-`Transform` classes only copy fields into a hash —
-`Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
-each. `Transform::PieTransform` (61 lines) is arguably a third: it
-copies, but it also pulls each slice's angle and percentage off the
-model. Delete those files; the renderer takes the `Diagram` model
-directly. The engine handles both in one line:
+**Every type gets a Layout and a Scene. There is no pass-through.**
+
+An earlier draft said types with no geometry get no Layout class, and
+the renderer takes the `Diagram` model directly. That does not survive
+contact with the rest of the plan:
+
+- `renderer/info.rb:71` reads `graph[:show_info]`, and the error
+  renderer reads `message`. A Scene carrying only `width` and `height`
+  loses both.
+- Both renderers compute their own box, icon and text coordinates,
+  which item 04's own rule forbids.
+- Item 05 collapses nine document builders into **one** method that
+  reads `width` and `height` off the Scene. Hand it a bare `Diagram`
+  and it has nothing to read.
+
+So `info` and `error` get a real Scene — their content *and* their
+dimensions — and a layout of about twenty lines each to compute it.
+That is cheaper than two exceptions threaded through the builder, the
+lookup, the pipeline and the contract spec.
+
+The pipeline loses its conditional with them:
 
 ```ruby
-scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
+scene = Layout.for(type).call(model, theme: theme, today: today)
 ```
 
-**Expect two or three deletions, not ten.** Every other `Transform`
-computes geometry — measured 2026-08-25 by scanning all 24 for
-coordinate keys and arithmetic. Check each one before you delete it;
-`timeline` reads like a pass-through and is not.
+No `&.`, no `|| model`, no optional layout. `Layout.for` always returns
+a layout, and a missing one is an error like any other.
+
+**`Transform::InfoTransform` and `Transform::ErrorTransform` are still
+the two smallest**, 38 lines each — measured 2026-08-25 by scanning all
+24 for coordinate keys and arithmetic. They become the two smallest
+layouts, not deletions. `timeline` reads like a pass-through and is
+not.
 
 **Rule for the future: if a layout would only copy fields, do not write
 one.**
-
-**But "no layout" cannot mean "no Scene".** `Diagram::Info` and
-`Diagram::Error` carry no `width` or `height` — measured, neither file
-mentions either — and item 05 collapses nine document builders into one
-method that reads exactly those two values off the Scene. Hand the
-renderer a bare `Diagram::Info` and that method has nothing to read.
-
-So the pass-through path is narrower than it looks. A type with no
-*geometry to compute* still needs somewhere its canvas size comes from.
-Two ways out, and item 04 must pick one before converting `info` or
-`error`:
-
-- give them a `Layout::Scene` with only `width` and `height`, computed
-  from the text, and keep no `Layout::<Type>` beyond a two-line one; or
-- let `Renderer::Base`'s builder take the dimensions as arguments, and
-  accept that pass-through renderers compute their own canvas.
-
-The first keeps one document-creation contract. Prefer it unless
-converting `info` proves otherwise.
 
 ## Two kinds of Scene
 
@@ -250,12 +249,26 @@ attribute, two of them dead (item 02).
    `Layout.for(type).call(...)` until item 06. Switch early and every
    unconverted type breaks; switch late and every converted type does.
 
-   The fix is one temporary method, deleted by item 06:
-   `Layout::Base#call` returns `scene(diagram)` when the subclass
-   defines `scene`, and falls back to `to_graph(diagram)` when it does
-   not. The engine calls `call` from the first conversion PR onward.
+   The fix is one temporary **branch**, deleted by item 06 —
+   `Layout::Base#call` itself stays: it returns `scene(diagram)` when
+   the subclass defines `scene`, and falls back to `to_graph(diagram)`
+   when it does not. The engine calls `call` from the first conversion PR onward.
    Every PR in between has one path that works for both kinds, and
    `corpus[<type>]` stays green throughout.
+
+   The registry-era engine instantiates the registered class
+   (`engine.rb:180`), so a `nil` layout would be `nil.new`. That cannot
+   happen here, because every type keeps a layout through the whole
+   rollout — the pass-through path was withdrawn above for exactly this
+   family of reasons.
+
+   **Grid must run on the legacy branch only.** `Engine#apply_fallback_layout`
+   picks its generic path with `elsif graph.respond_to?(:nodes)`
+   (`engine.rb:223`). A converted Sankey Scene responds to `nodes`, so
+   Grid would catch it and overwrite coordinates the layout just
+   computed. Non-mutation does not save you — it hands back a correctly
+   typed Scene in the wrong positions. Gate the Grid stage on which
+   branch `Base#call` took, not on what the result responds to.
 
    Item 06 deletes the fallback once no `to_graph` remains. Add it to
    that item's `Done when`, or it survives forever.
@@ -269,11 +282,9 @@ attribute, two of them dead (item 02).
    - rewrite the renderer to read named attributes
    - the layout returns a new Scene and never mutates the diagram
    - `rake corpus[<type>]` must show the same pass count
-6. For each pass-through type, delete the layout class and register the
-   type without one.
-7. Extend `spec/contract_spec.rb`: where a layout exists it returns a
-   `Layout::Scene`; where it does not, the renderer accepts the
-   `Diagram` model.
+6. Extend `spec/contract_spec.rb`: every registered type has a layout,
+   and that layout returns a `Layout::Scene` with non-nil `width` and
+   `height`. There is no "no layout" case to special-case.
 
 ## Done when
 
@@ -322,12 +333,19 @@ attribute, two of them dead (item 02).
       `determinism_spec.rb` still passes
 - [ ] calling with `today: nil` gives the same output as calling with
       `today: Date.today` — a spec, not an assumption
+- [ ] a transition spec drives **one converted and one unconverted**
+      layout through `Base#call` in the same example. By the end of
+      this item every layout defines `scene`, so a broken fallback
+      would otherwise pass the final corpus run and every criterion
+      above. Write it at the first conversion; it is the only moment
+      the mixed state exists naturally
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives
       boxes sized to their own theme's text
-- [ ] every pass-through layout class is deleted (expect two or three:
-      `info`, `error`, and possibly `pie`)
+- [ ] every registered type has a layout, and no `Layout.for` call site
+      guards against `nil`; `grep -rn "Layout.for" lib/sirena/` shows no
+      `&.` and no `|| model`
 - [ ] `rake corpus:check` shows no regression across the whole item
 
 ## Do not
@@ -350,5 +368,10 @@ attribute, two of them dead (item 02).
 
 ## Files
 
-`lib/sirena/layout/scene.rb` (new), `lib/sirena/layout/*.rb`,
-`lib/sirena/renderer/*.rb`, `spec/contract_spec.rb`.
+`lib/sirena/layout/scene.rb` (new), `lib/sirena/layout/base.rb` (the
+`#call` template and its temporary `to_graph` branch),
+`lib/sirena/layout/*.rb`, `lib/sirena/layout/info.rb` and
+`error.rb` (new, ~20 lines each), `lib/sirena/renderer/*.rb`,
+`lib/sirena/engine.rb` (calls `Layout::Base#call` from the first
+conversion PR, and gates the Grid stage on the legacy branch),
+`spec/contract_spec.rb`, plus the transition spec.

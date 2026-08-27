@@ -197,22 +197,30 @@ TYPES = {
 }
 ```
 
-## The pass-through case
+## The smallest case
 
 Two types have a `Transform` that only copies fields —
 `Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
 each to move three or four values into a Hash. `Transform::PieTransform`
-is a borderline third. Every other `Transform` computes geometry, so
-check before you delete.
+is a borderline third. Every other `Transform` computes geometry.
 
-Those get **no Layout class at all**. Delete the file. The renderer takes
-`Diagram::Info` directly, and the engine's one line handles it:
+**They still get a Layout and a Scene.** An earlier draft deleted them
+and handed the renderer the `Diagram` model. That fails three ways:
+`renderer/info.rb:71` reads `graph[:show_info]`, both renderers compute
+their own text and box coordinates, and item 05's single document
+builder reads `width`/`height` off the Scene and would find neither.
+
+So `Layout::Info` is about twenty lines: copy the two fields the
+renderer needs, measure the text, and set `width` and `height`. The
+engine's one line has no special case:
 
 ```ruby
-scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
+scene = Layout.for(type).call(model, theme: theme, today: today)
 ```
 
-**Rule: if a layout would only copy fields, do not write one.**
+**Rule: a layout that only copies fields is still a layout. What it
+must never do is nothing — if it has no `width` and `height` to give,
+the type is not converted yet.**
 
 ## Checklist for each converted type
 

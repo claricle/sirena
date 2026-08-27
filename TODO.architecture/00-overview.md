@@ -175,7 +175,7 @@ Three problems in that picture, and each one costs time on every fix:
 ```ruby
 type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
-scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
+scene = Layout.for(type).call(model, theme: theme, today: today)
 Renderer.for(type).render(scene, theme: theme)
 ```
 
@@ -211,14 +211,14 @@ Two rules hold it together:
 
 - **No bare Hash crosses a layer boundary.** Every arrow above is a class
   you can open and read. That is what removes the reverse-engineering.
-- **A type with no geometry gets no Layout class.** Two of today's
-  `Transform` classes only copy fields into a hash —
-  `Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
-  each to copy three or four. `Transform::PieTransform` (61 lines) is
-  the borderline third: it copies, but it also reads each slice's angle
-  and percentage. Those get deleted and the renderer takes the `Diagram`
-  model directly. Every other `Transform` computes geometry, so the
-  count is two or three, not ten — check before you delete.
+- **Every type gets a Layout and a Scene.** An earlier draft deleted the
+  two smallest — `Transform::InfoTransform` and
+  `Transform::ErrorTransform`, 38 lines each — and handed the renderer
+  the `Diagram` model. Withdrawn: `renderer/info.rb:71` reads
+  `graph[:show_info]`, both renderers compute their own coordinates, and
+  item 05's single document builder reads `width`/`height` off the
+  Scene. They become the two smallest layouts instead, about twenty
+  lines each. The pipeline has no optional-layout branch.
 
 `WORKED-EXAMPLE.md` shows the pie type written both ways, in full.
 
