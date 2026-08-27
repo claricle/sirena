@@ -19,7 +19,7 @@ module Sirena
         # `direction`, `accTitle`, `accDescr`, `default` and `callback` are
         # NOT among them — mmdc draws `default-->Z`. `href`, `call` and
         # `click` are keywords too but end a word differently, so they live
-        # in `directive_keyword` instead.
+        # in `spaced_keyword` instead.
         #
         # Taking `direction` as a node id does not bring the statement with
         # it: `direction TB` on its own line is still unparsed here, and
@@ -48,16 +48,16 @@ module Sirena
         ].freeze
 
         # Mermaid restarts its lexer at certain characters and looks for the
-        # target again behind each restart. Five rules walk that path with a
-        # zero-or-more `repeat`, so they share it here. `arrowhead_dot_dash`
-        # deliberately stays inline: its alternative requires `repeat(1)`
-        # because a buried opening must cross at least one restart.
+        # target again behind each restart. Six rules walk that path, so
+        # they share it here. `arrowhead_dot_dash` passes `min: 1` because
+        # a BURIED opening has to cross at least one restart to be one;
+        # every other caller takes the default and may match at the start.
         #
         # A `repeat` rather than a recursive rule: a rule that called
         # itself blew the Ruby stack on a 2000-character id, and mmdc
         # draws that id.
-        def hunt(target)
-          (target.absent? >> restart_step).repeat >> target
+        def hunt(target, min = 0)
+          (target.absent? >> restart_step).repeat(min) >> target
         end
         private :hunt
 
@@ -258,8 +258,7 @@ module Sirena
         rule(:subgraph_statement) do
           str('subgraph').as(:subgraph_keyword) >> space >>
             subgraph_id.as(:subgraph_id) >>
-            ((space >> subgraph_title.as(:subgraph_title)) |
-              subgraph_trailing_name) >>
+            subgraph_trailing_name >>
             # A subgraph body must begin on a new physical line.
             line_end >>
             ws? >>
@@ -290,8 +289,19 @@ module Sirena
         # and this refuses it — an under-acceptance left for a change that
         # models mermaid's own `textNoTags` production. Nothing reads the
         # name yet, so the extra words are consumed, not kept.
+        #
+        # The bracketed title comes AFTER those words, and this is the only
+        # rule that reads it: a separate `space >> subgraph_title` arm in
+        # front stopped at the first trailing word, so `subgraph A B [T]`
+        # was refused here while mmdc draws it — and so is
+        # `subgraph A B C [T]`. One rule for the whole tail keeps the two
+        # from disagreeing about where the title may sit.
+        #
+        # `subgraph A [T] X` stays refused, which mmdc also refuses:
+        # nothing may follow the title on the line.
         rule(:subgraph_trailing_name) do
-          (space.repeat(1) >> subgraph_trailing_word).repeat
+          (space.repeat(1) >> subgraph_trailing_word).repeat >>
+            (space.repeat(1) >> subgraph_title.as(:subgraph_title)).maybe
         end
 
         # `end` closes the subgraph, so it is a keyword in a trailing word
@@ -305,7 +315,7 @@ module Sirena
 
         rule(:subgraph_end_id) { hunt(subgraph_end_word) }
 
-        rule(:subgraph_end_word) { str('end') >> word_end }
+        rule(:subgraph_end_word) { str('end') >> word_boundary }
 
         # Style: style nodeId fill:#f9f
         rule(:style_statement) do
@@ -515,9 +525,15 @@ module Sirena
         # A statement keyword is not a node id. Without this a malformed
         # directive fell through to the node rules: `click ;B` produced
         # nodes `click` and `B`, and mmdc rejects the whole source.
-        rule(:reserved_keyword) do
-          spaced_keyword | separable_keyword
-        end
+        #
+        # The same words that end an id end a statement, so this asks
+        # `node_keyword` rather than keeping a second list. It used to hold
+        # its own, and the two had already drifted apart by
+        # `swimlane-beta`. Collapsing them changed nothing observable —
+        # measured over 3680 cases, byte for byte — because an id holding
+        # a keyword is refused by `node_id` before this guard is
+        # reached; the value is that there is now one list to keep right.
+        rule(:reserved_keyword) { node_keyword }
 
         # `click`, `href` and `call` are directive words wherever a space, a
         # newline or the end of input follows, and ordinary node ids before a
@@ -529,32 +545,38 @@ module Sirena
         # NOT `line_end`: it swallows a trailing semicolon, so `click;`
         # read as a directive and `graph TD;click;B` was refused. mmdc
         # draws that as two nodes.
+        #
+        # A comment is not one of the endings either. Mermaid needs
+        # whitespace right behind the word and `%%` is not whitespace, so
+        # mmdc draws `href%%c` `call%%c` and `click%%c` as nodes.
+        #
+        # The end of the source IS one. Mermaid appends a newline before
+        # it lexes, so a word at the very end is followed by one after
+        # all. This rule is the only place that says so — a second copy
+        # of it lived beside the id rules for a while, and it masked this
+        # one so completely that deleting the `eof` here left every spec
+        # green.
+        #
+        # These three words also guard an id, which is why `node_keyword`
+        # reaches for this rule rather than restating it.
         rule(:spaced_keyword) do
           (str('click') | str('href') | str('call')) >>
             (space | newline | eof).present?
         end
 
-        # The boundary is a word boundary, not a space or a separator:
-        # mmdc refuses `style[x]` and `_blank-->Z`, which the narrower test
-        # let through.
-        #
-        # Longest first — Parslet does not backtrack into an alternative
-        # that already matched, so `class` ahead of `classDef` would take
-        # five characters and then fail the boundary.
-        rule(:separable_keyword) do
-          ((str('interpolate') | str('flowchart') | str('linkStyle') |
-            str('subgraph') | str('classDef') | str('style') |
-            str('graph') | str('class') | str('end')) >>
-            word_boundary) | link_target
-        end
-
-        # mermaid's link targets. They close a click action and they are
-        # never node ids, so both places name them here.
+        # mermaid's link targets, as they appear at the END of a click
+        # action (`click A "url" "_blank"`). They are reserved as node ids
+        # too, but that is `RESERVED_WORDS`' job now — this rule is only
+        # the click-action tail, which is why it survives on its own.
         rule(:link_target) do
           (str('_parent') | str('_blank') | str('_self') | str('_top')) >>
             word_boundary
         end
 
+        # A word ends where the next character cannot continue it, and
+        # mermaid counts an accent as the end: `1endé` is refused while
+        # `1end_` `1end2` and `1endx` are all ids. Those four forms and
+        # refused `1end` are all pinned in the specs.
         rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
 
         # Node with optional shape and edges
@@ -791,13 +813,32 @@ module Sirena
 
         # Dotted arrow: -.-> or -.-
         rule(:dotted_arrow) do
-          (str('-.->') | str('-.-')).as(:dotted)
+          (str('-.->') | (str('-.-') >> arrow_marker.absent?)).as(:dotted)
         end
 
         # Plain arrow: --> or --- or ->
         rule(:plain_arrow) do
-          (str('-->') | str('---') | str('->')).as(:plain)
+          (str('-->') | (str('---') >> arrow_marker.absent?) |
+            str('->')).as(:plain)
         end
+
+        # A trailing `x` or `o` belongs to the LINK, not to the node behind
+        # it. Mermaid's plain link is `[xo<]?--+[-xo>]` and its dotted one
+        # is `[xo<]?-?\.+-[xo>]?`, so `A---x` is one link carrying a
+        # crossed arrowhead, and `A---x --- Z` is refused for holding two
+        # links with no node between them.
+        #
+        # Sirena draws no crossed or circled arrowhead, so the marker is
+        # REFUSED rather than drawn with the wrong head — the same call
+        # `thick_arrow` makes for the arrowhead-less `===` just above.
+        # Modelling these heads is the change that also owns `1x-->B`.
+        #
+        # Widening node ids is what put these within reach: `#---x --- Z`
+        # `1-.-o --- Z` `é---x --- Z` and 45 more parsed here while mmdc
+        # refuses every one. Only the arrowhead-less forms need the guard;
+        # after `-->` or `-.->` mermaid has already closed the link, so
+        # the `x` in `A-->x` really is a node.
+        rule(:arrow_marker) { match['xo'] }
 
         # Edge label: can be in pipes |label|
         rule(:edge_label) do
@@ -808,10 +849,6 @@ module Sirena
         rule(:pipe_label) do
           pipe >> (pipe.absent? >> any).repeat(1) >> pipe
         end
-
-        # A node id is a bare word, never a quoted run. It is BUILT here,
-        # so every guard applies and malformed ids cannot bypass them.
-        rule(:node_id) { flowchart_id }
 
         # A subgraph is NAMED, not built. It takes a quoted string and the
         # keyword `end`, but not the other reserved words — mmdc draws
@@ -840,7 +877,7 @@ module Sirena
 
         rule(:subgraph_reserved) do
           SUBGRAPH_RESERVED.map { |word| str(word) }.reduce(:|) >>
-            word_end
+            word_boundary
         end
 
         # All three directive words are reserved here too, and they end a
@@ -852,7 +889,7 @@ module Sirena
         # opens its click state on the word and swallows the title, so the
         # subgraph is anonymous and the next link is a parse error. Probing
         # with a bare `X` inside hid that; `X --> Y` shows it.
-        rule(:subgraph_keyword) { subgraph_reserved | directive_keyword }
+        rule(:subgraph_keyword) { subgraph_reserved | spaced_keyword }
 
         # A subgraph name is hunted the same way a node id is, with its own
         # words: `subgraph 1default [T]` and `subgraph #Zédefault [T]` are
@@ -875,13 +912,16 @@ module Sirena
           str('"').absent? >> ((space | newline).absent? >> any).repeat(1)
         end
 
+        # A node id is a bare word, never a quoted run. It is BUILT here,
+        # so every guard applies and malformed ids cannot bypass them.
+        #
         # Mermaid's node ids are far wider than a programming identifier:
         # they may lead with a digit (`1-->2`), and carry dots, slashes and
         # hyphens (`9e122290`, `a.b`, `a/b`, `a-b`).
         #
         # A hyphen is only part of the id when an arrow cannot start there,
         # so `a-b` is one node while `a-->b` stays two.
-        rule(:flowchart_id) do
+        rule(:node_id) do
           digit_id_before_link |
             (node_keyword_id.absent? >> dot_run_before_link.absent? >>
               arrowhead_dot_dash.absent? >> id_run)
@@ -906,16 +946,10 @@ module Sirena
         rule(:id_hyphen) { str('-') >> match['-.'].absent? }
 
         rule(:reserved_word) do
-          RESERVED_WORDS.map { |word| str(word) }.reduce(:|) >> word_end
+          RESERVED_WORDS.map { |word| str(word) }.reduce(:|) >> word_boundary
         end
 
-        # A word ends where the next character cannot continue it, and
-        # mermaid counts an accent as the end: `1endé` is refused while
-        # `1end_` `1end2` and `1endx` are all ids. Those four forms and
-        # refused `1end` are all pinned in the specs.
-        rule(:word_end) { match['a-zA-Z0-9_'].absent? }
-
-        rule(:node_keyword) { reserved_word | directive_keyword }
+        rule(:node_keyword) { reserved_word | spaced_keyword }
 
         # Mermaid does not stop hunting for a keyword at the start of an
         # id, so a reserved word buried in one is still a keyword there.
@@ -977,7 +1011,13 @@ module Sirena
         # link when nothing follows it, so an id can carry on past it.
         rule(:dot_run_before_link) { hunt(dotted_link_open) }
 
-        rule(:dotted_link_open) { str('.').repeat(1) >> str('-') }
+        # The same rule as `arrowhead_open` without its leading marker, so
+        # it carries the same trailing one: mermaid's dotted link is
+        # `[xo<]?-?\.+-[xo>]?` and the tail belongs to the link, not to the
+        # id behind it.
+        rule(:dotted_link_open) do
+          str('.').repeat(1) >> str('-') >> match['xo>'].maybe
+        end
 
         # Everywhere else a dot just joins, dash or no dash: mmdc draws
         # `A.-->B` as `A.` and `B`, and draws `A.-` `A.-B` `A..-->B` and
@@ -998,13 +1038,28 @@ module Sirena
         # A settled character in front kills it either way, so `X.-`
         # `x1.-` `xx.-` and `xo.-` stay ordinary ids.
         rule(:arrowhead_dot_dash) do
-          arrowhead_open |
-            ((arrowhead_ends_id.absent? >> restart_step).repeat(1) >>
-              arrowhead_ends_id)
+          arrowhead_open | hunt(arrowhead_ends_id, 1)
         end
 
+        # Copied from the shape of mermaid's own dotted-link rule rather
+        # than from the examples that happened to be probed. In
+        # mmdc 11.12.0's flow lexer that rule is
+        # `/^(?:\s*[xo<]?-?\.+-[xo>]?\s*)/`, so the opening carries a
+        # marker on BOTH ends and may put a dash in front of the dots.
+        #
+        # Spelling only the middle of it read `x.-x` as `x.-` plus a
+        # stray `x`, and every guard downstream restarted one character
+        # early: `#x.-x --- Z` `#x.-xend --- Z` `1x.-x --- Z` `#o.-o --- Z`
+        # and `x-.-1 --- Z` all parsed here while mmdc refuses them,
+        # because mermaid had already taken the whole marker as one link
+        # and the `---` behind it then had no node in front of it.
+        #
+        # `<` is in mermaid's leading set too and is left out on purpose:
+        # it is not an id character here, so it can never be reached
+        # inside one.
         rule(:arrowhead_open) do
-          (str('x') | str('o')) >> str('.').repeat(1) >> str('-')
+          (str('x') | str('o')) >> str('-').maybe >> str('.').repeat(1) >>
+            str('-') >> match['xo>'].maybe
         end
 
         # This checks for an arrowhead opening with nothing after it that
@@ -1065,28 +1120,6 @@ module Sirena
         rule(:id_run) { id_body.repeat(1) }
 
         rule(:id_body) { id_dot | id_hyphen | id_char }
-
-        # `click`, `href` and `call` end a word differently from the rest.
-        # They open a directive only when a space, a tab, a newline or the
-        # end of the source follows; against any other character they are
-        # ordinary ids, and a semicolon counts as any other character.
-        # mmdc draws `href-->Z` `href;` and `1href-`, and refuses
-        # `href --> Z`, a bare `href` and `1href --- Z`.
-        rule(:directive_keyword) do
-          (str('href') | str('call') | str('click')) >> directive_end
-        end
-
-        # A comment is not one of the endings. Mermaid needs whitespace
-        # right behind the word, and `%%` is not whitespace, so mmdc draws
-        # `href%%c` `call%%c` and `click%%c` as nodes. Counting a comment
-        # here refused all three.
-        #
-        # The end of the source is, though. Mermaid appends a newline
-        # before it lexes, so a word at the very end is followed by one
-        # after all: mmdc refuses `href` with no line behind it.
-        rule(:directive_end) do
-          (space | newline | eof).present?
-        end
 
         # Line terminator
         # The optional semicolon here may not be followed by a comment on

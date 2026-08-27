@@ -143,6 +143,37 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # Mermaid's plain link is `--+[-xo>]` and its dotted one `-?\.+-[xo>]?`,
+  # so a trailing `x` or `o` belongs to the LINK and `A---x` is one token.
+  # mmdc then refuses `A---x --- Z` for holding two links with nothing
+  # between them, and this refuses it too — the marker is not drawn,
+  # because sirena has no crossed or circled arrowhead and the wrong head
+  # would be worse than none. That is the same call `a thick link` above
+  # makes for `===`.
+  describe "an arrowhead marker on a link" do
+    %w[A---x A-.-x A---o #---x 1-.-o é---x].each do |statement|
+      it "refuses #{statement} in front of a second link" do
+        expect(parses?("graph TD\n#{statement} --- Z\n")).to be(false)
+      end
+    end
+
+    # After `-->` or `-.->` mermaid has already closed the link, so the
+    # letter behind it really is a node and both of these draw.
+    { "A-->x --- Z" => %w[A Z x], "A-.->x --- Z" => %w[A Z x],
+      "A---B --- Z" => %w[A B Z] }.each do |statement, ids|
+      it "still reads #{statement} as #{ids.join(', ')}" do
+        expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
+      end
+    end
+
+    # The under-acceptance the refusal buys: mmdc draws `A---xB` as A to B
+    # with a crossed head. Pinned so that modelling those heads — the same
+    # change that owns `1x-->B` — is a decision rather than an accident.
+    it "refuses A---xB, which mmdc draws with a crossed arrowhead" do
+      expect(parses?("graph TD\nA---xB\n")).to be(false)
+    end
+  end
+
   # Reading each edge's SVG `data-id` from mmdc 11.12.0 gave
   # `1x-->B` -> `L_1_B`, `11x-->B` -> `L_11_B`, `1o-->B` -> `L_1_B`,
   # `1x==>B` -> `L_1_B`, `1x-.->B` -> `L_1_B`, `1xx-->B` -> `L_1xx_B`,
@@ -541,6 +572,36 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # Mermaid's dotted-link rule is `/^(?:\s*[xo<]?-?\.+-[xo>]?\s*)/`, so
+    # the opening carries a marker at BOTH ends. Spelling only its middle
+    # read `x.-x` as `x.-` plus a stray `x` and restarted every guard one
+    # character early — mmdc refuses all of these and this took them all.
+    describe "a marker closing the opening" do
+      # `#x.-xend` is the one that shows the damage: the keyword hunt this
+      # file is mostly about walked straight past `end`, because the token
+      # in front of it had been cut short.
+      %w[#x.-x #x.-o #x.-xend 1x.-x #o.-o &x.-x *x.-x éx.-x #x.-x.-B]
+        .each do |id|
+        it "refuses #{id}, whose link marker is not an id character" do
+          expect(parses?("graph TD\n#{id} --- Z\n")).to be(false)
+        end
+      end
+
+      # A leading dash is part of the same opening (`-?` in the rule
+      # above), so `x-.-` is a link where `x1.-` is an id.
+      it "refuses x-.-1, whose opening leads with a dash" do
+        expect(parses?("graph TD\nx-.-1 --- Z\n")).to be(false)
+      end
+
+      # The marker is only a marker. An ordinary letter behind the opening
+      # still continues the id, and mmdc draws both of these.
+      %w[#x.-B #x.-b].each do |id|
+        it "still takes #{id} whole" do
+          expect(node_ids("graph TD\n#{id} --- Z\n")).to eq([id, "Z"].sort)
+        end
+      end
+    end
+
     it "refuses #x.-1.-->B, whose dotted link sits behind the opening" do
       expect(parses?("graph TD\n#x.-1.-->B\n")).to be(false)
     end
@@ -678,6 +739,27 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       source = "flowchart TD\nsubgraph A [T]\nX-->Y\nend\n"
 
       expect(subgraph_name_parses?(source)).to be(true)
+    end
+
+    # The title sits AFTER the trailing words. A separate arm reading it
+    # before them stopped at the first word, so these were refused here
+    # while mmdc draws both — and `subgraph A B [T]` was a regression
+    # against what this grammar already accepted.
+    describe "a bracketed title behind the names" do
+      ["subgraph A B [T]", "subgraph A B C [T]"].each do |head|
+        it "takes a title after #{head.split.length - 2} names" do
+          source = "flowchart TD\n#{head}\nX-->Y\nend\n"
+
+          expect(subgraph_name_parses?(source)).to be(true)
+        end
+      end
+
+      # Nothing may follow the title, which mmdc also refuses.
+      it "refuses a name after the title" do
+        source = "flowchart TD\nsubgraph A [T] X\nX-->Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(false)
+      end
     end
 
     # Every trailing word carries the same guards as the first one.
