@@ -480,10 +480,40 @@ module Sirena
         end
 
         # Node with optional shape definition
+        # Every optional part is captured whether or not it is present, so
+        # the tree has one shape instead of one per combination. Parslet
+        # omits a `.maybe` that wraps its own `.as`, which is why the
+        # transform previously needed a rule per combination.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            (ws? >> inline_class.as(:inline_class)).maybe >>
-            (ws? >> node_shape.as(:shape)).maybe
+            (ws? >> inline_class).maybe.as(:inline_class) >>
+            (ws? >> node_shape).maybe.as(:shape) >>
+            (ws? >> node_metadata).maybe.as(:metadata)
+        end
+
+        # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
+        # giving a node a shape or a label, usable as a statement of its own
+        # or as a suffix inside an edge chain.
+        rule(:node_metadata) do
+          str('@{') >> space? >>
+            metadata_entry >> (space? >> comma >> space? >> metadata_entry).repeat >>
+            space? >> str('}')
+        end
+
+        rule(:metadata_entry) do
+          metadata_key.as(:key) >> space? >> str(':') >> space? >>
+            metadata_value.as(:value)
+        end
+
+        rule(:metadata_key) { match['\w-'].repeat(1) }
+
+        rule(:metadata_value) do
+          quoted_string | match['^,}\r\n'].repeat(1)
+        end
+
+        rule(:quoted_string) do
+          (str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')) |
+            (str("'") >> (str("'").absent? >> any).repeat.as(:string) >> str("'"))
         end
 
         # Inline class syntax: :::className
