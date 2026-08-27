@@ -479,11 +479,70 @@ module Sirena
             loose_statement_end
         end
 
-        # Node with optional shape definition
+        # Node with its optional shape, inline class and metadata
+        # Every optional part is captured whether or not it is present, so
+        # the tree has one shape instead of one per combination. Parslet
+        # omits a `.maybe` that wraps its own `.as`, which is why the
+        # transform previously needed a rule per combination.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            (ws? >> inline_class.as(:inline_class)).maybe >>
-            (ws? >> node_shape.as(:shape)).maybe
+            (ws? >> node_shape).maybe.as(:shape) >>
+            inline_class.maybe.as(:inline_class) >>
+            node_metadata.maybe.as(:metadata)
+        end
+
+        # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
+        # giving a node a shape or a label, usable as a statement of its own
+        # or as a suffix inside an edge chain.
+        # The body is captured raw and handed to YAML, because that is what
+        # mermaid does with it. A single-line body is a flow mapping and a
+        # multiline one is block YAML, so commas are required on one line
+        # and rejected across several — a grammar rule cannot express that
+        # without reimplementing YAML badly.
+        rule(:node_metadata) do
+          str('@{') >> metadata_body.as(:body) >> str('}')
+        end
+
+        # An unmatched `"` is not body text. mermaid's lexer stays in its
+        # string state to the end of the block and refuses the source;
+        # falling through to the generic branch took `A@{ label: a"b }`,
+        # which mmdc rejects.
+        #
+        # A caret is not body text either. mermaid takes the run between
+        # the braces with `[^}^"]+`, so a `^` outside a quoted value ends
+        # the block early and mmdc refuses `A@{ label: a^b }`. Inside the
+        # quotes the rule is `[^"]+`, and `A@{ label: "a^b" }` draws.
+        rule(:metadata_body) do
+          (metadata_comment_line | metadata_quoted |
+            (metadata_stop.absent? >> any)).repeat
+        end
+
+        rule(:metadata_stop) { str('"') | str('}') | str('^') }
+
+        # Mermaid strips comments before lexing, so their stops are text.
+        # `line_space` rather than Ruby's `\s`: the indent has to be the set
+        # mmdc calls whitespace, or a comment indented with a no-break space
+        # keeps its `%%` in the label and its `}` closes the block.
+        #
+        # `%%{` opens a directive rather than a comment and is left alone,
+        # which is what makes sirena refuse `A@{ shape: rect` nl `%%{ x }`
+        # nl `}` the way mmdc does.
+        rule(:metadata_comment_line) do
+          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+            (newline.absent? >> any).repeat(1)
+        end
+
+        # A double-quoted run is skipped whole so a brace inside it is
+        # text. Only the double quote does this: mermaid's metadata lexer
+        # has one string state and `"` opens it, so `label: 'a}b'` ends the
+        # block at that brace and mmdc rejects the line.
+        # A comment line inside the quotes is skipped first, because the
+        # quote that closes this run cannot be one mermaid already deleted:
+        # `label: "one` nl `%% has " quote` nl `two"` is one label to mmdc.
+        rule(:metadata_quoted) do
+          str('"') >>
+            (metadata_comment_line | (str('"').absent? >> any)).repeat >>
+            str('"')
         end
 
         # Inline class syntax: :::className

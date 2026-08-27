@@ -3,6 +3,8 @@
 require 'parslet'
 require_relative '../base'
 require_relative '../../diagram/flowchart'
+require_relative '../metadata_yaml'
+require_relative '../mermaid_shapes'
 
 module Sirena
   module Parser
@@ -12,6 +14,152 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
+        # Two ways a name can fail, and they are not the same thing.
+        # Mermaid does not know `nope`, and says so in words a corpus case
+        # quotes. Mermaid does know `bang`, and draws it as a curved
+        # outline sirena has no shape for — naming it a rectangle drew a
+        # picture the source did not ask for, which is worse than saying no.
+        #
+        # @raise [Parser::ParseError] on a name sirena will not draw
+        def self.metadata_shape(name)
+          return nil if name.nil?
+
+          MERMAID_SHAPES.fetch(name) do
+            raise Parser::ParseError, unsupported_shape(name)
+          end
+        end
+
+        def self.unsupported_shape(name)
+          return "No such shape: #{name}." unless UNDRAWABLE_SHAPES.include?(name)
+
+          "Shape not supported yet: #{name}."
+        end
+        private_class_method :unsupported_shape
+
+        # mermaid parses the body with js-yaml: a single-line body as a flow
+        # mapping, a multiline one as block YAML. Psych does both, so the
+        # rules fall out instead of being reimplemented in the grammar.
+        #
+        # @raise [Parser::ParseError] on YAML mermaid would also refuse
+        def self.metadata_entries(metadata)
+          body = line_feeds(metadata_body(metadata))
+          body = strip_metadata_comments(body)
+          body = break_quoted_newlines(body)
+          return {} if body.empty?
+
+          # Mermaid's own wrapping: a single-line body becomes a flow
+          # mapping between braces, a multiline one is used as written. It
+          # does NOT normalise a missing space after a colon — `shape:rect`
+          # is an unknown key there and the node keeps its default, so
+          # inserting one made sirena honour something mermaid ignores.
+          document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
+          entries(MetadataYaml.value(document))
+        end
+
+        # Mermaid turns every carriage return into a line feed before it
+        # lexes anything, so a Windows line ending inside the block is an
+        # ordinary newline by the time YAML sees it. Reading it as written
+        # folded `"one` CR `two"` onto one line, left a `%YAML 1.3` CR
+        # unlevelled, and took a body mermaid refuses.
+        def self.line_feeds(body)
+          body.gsub(/\r\n?/, "\n")
+        end
+
+        # Mermaid strips comments before lexing, so metadata never sees them.
+        # `%%{` is a directive rather than a comment and stays, and a `%%`
+        # with nothing after it is not a comment either.
+        #
+        # The body is a fragment cut from the middle of a line, so its own
+        # first character is not the start of a line — only the newlines
+        # inside it start one. Anchoring on `^` instead let the leading
+        # whitespace run reach back past `@{` and eat the newline that
+        # opened the block, which turned `A@{` nl `%% c` nl `}` into an
+        # empty body sirena drew as a rectangle. mmdc refuses it, because
+        # what is left after the comment goes is `A@{` nl `}`.
+        def self.strip_metadata_comments(body)
+          body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, '')
+        end
+
+        # A newline inside a double-quoted value is a line break to
+        # mermaid, which rewrites it before js-yaml ever sees it. Letting
+        # YAML fold it turned `"one` newline `two"` into `one two`, where
+        # mmdc renders `one<br/>two`.
+        def self.break_quoted_newlines(body)
+          body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, '<br/>') }
+        end
+
+        # mermaid's lexer runs `/\n\s*/g` over the text between the quotes,
+        # and that `\s` is JavaScript's. Ruby's is the five ASCII ones, so
+        # a no-break space after the newline stayed in the label and mmdc
+        # dropped it. The set below is JavaScript's exactly: it takes the
+        # line and paragraph separators and the byte-order mark, and it
+        # leaves the next-line character and the zero-width space alone.
+        JS_SPACE = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
+                   '\u2028\u2029\u202f\u205f\u3000\ufeff]'
+
+        QUOTED_BREAK = /\n#{JS_SPACE}*/
+
+        private_constant :JS_SPACE, :QUOTED_BREAK
+
+        # A key sirena does not read is left alone rather than validated:
+        # `A@{ extra: true }` is a node mmdc draws, and a merge key is one
+        # of those. A root that is not a mapping has neither key, and mmdc
+        # draws the node untouched.
+        #
+        # Mermaid reads eight more keys off the document. Six of them
+        # (`labelType`, `form`, `pos`, `w`, `h`, `constraint`) leave the
+        # picture alone on their own, so ignoring them matches mmdc. Two do
+        # not: `A@{ icon: "fa:bell" }` and `A@{ img: "x.png" }` each draw a
+        # node with an empty label there, and a plain rectangle named `A`
+        # here. Both are node kinds sirena does not have yet.
+        def self.entries(document)
+          return {} unless document.is_a?(Hash)
+
+          READ_KEYS.filter_map do |key|
+            usable = usable_value(key, document[key])
+            [key, usable] if usable
+          end.to_h
+        end
+
+        READ_KEYS = %w[shape label].freeze
+
+        # An empty repeat captures as [], not as an empty slice.
+        def self.metadata_body(metadata)
+          return '' unless metadata.is_a?(Hash)
+
+          value = metadata[:body]
+          value.is_a?(Array) ? '' : value.to_s
+        end
+
+        # Mermaid tests the value for truth before using it, so `null`,
+        # `false`, `0` and `""` are all no-ops rather than errors — the
+        # node keeps what it had. Reading the raw AST made `shape: null`
+        # a lookup for a shape called "null".
+        #
+        # A sequence renders its first element and nothing else: mmdc draws
+        # `label: [one, two]` as `one`, and refuses a shape or a nested
+        # sequence, where the value it reaches for is not a scalar.
+        def self.usable_value(key, value)
+          return nil unless truthy?(value)
+
+          value = value.first if value.is_a?(Array) && key == 'label'
+          return value if value.is_a?(String)
+
+          raise Parser::ParseError, "Unusable #{key} in metadata."
+        end
+
+        # `null`, `false`, `0` and `""` are all falsy to mermaid, which
+        # skips the key rather than failing on it. An empty collection is
+        # NOT falsy in JavaScript, and mmdc does refuse `label: []`.
+        def self.truthy?(value)
+          return false if value.nil? || value == false
+          return false if value.is_a?(Float) && value.nan?
+          return false if value.is_a?(Numeric) && value.zero?
+          return false if value.is_a?(String) && value.empty?
+
+          true
+        end
+
         # Shape delimiter to type mapping
         SHAPE_MAP = {
           '[]' => 'rect',
@@ -87,60 +235,6 @@ module Sirena
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
             label: ''
-          }
-        end
-
-        # Node with shape
-        rule(
-          node: {
-            node_id: simple(:id),
-            shape: subtree(:s)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: s[:shape_type] || 'rect',
-            label: s[:label] || id.to_s
-          }
-        end
-
-        # Node with shape and inline class
-        rule(
-          node: {
-            node_id: simple(:id),
-            inline_class: simple(:cls),
-            shape: subtree(:s)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: s[:shape_type] || 'rect',
-            label: s[:label] || id.to_s,
-            classes: cls.to_s
-          }
-        end
-
-        # Node without shape
-        rule(node: { node_id: simple(:id) }) do
-          {
-            node_id: id.to_s,
-            shape_type: 'rect',
-            label: id.to_s
-          }
-        end
-
-        # Node with inline class but no shape
-        rule(
-          node: {
-            node_id: simple(:id),
-            inline_class: simple(:cls)
-          }
-        ) do
-          {
-            node_id: id.to_s,
-            shape_type: 'rect',
-            label: id.to_s,
-            classes: cls.to_s
           }
         end
 
@@ -266,23 +360,19 @@ module Sirena
           end
         end
 
+        # A second mention of a node changes only what it actually says.
+        # Treating an absent shape as `rect` and an absent label as the id
+        # meant `A(keep)` followed by `A@{ shape: rect }` kept the round
+        # shape and lost the label — mermaid does the opposite of both.
         def self.add_or_update_node(diagram, node_data)
           return unless node_data
 
           existing = diagram.find_node(node_data[:node_id])
-          if existing
-            # Update existing node - only update if we have non-default values
-            existing.label = node_data[:label] if node_data[:label] && !node_data[:label].empty?
-            # Only update shape if the new shape is not the default 'rect' or if existing is 'rect'
-            if node_data[:shape_type] && node_data[:shape_type] != 'rect'
-              existing.shape = node_data[:shape_type]
-            end
-            existing.classes = node_data[:classes] if node_data[:classes]
-          else
-            # Add new node
-            node = create_node(node_data)
-            diagram.nodes << node
-          end
+          return diagram.nodes << create_node(node_data) unless existing
+
+          existing.label = node_data[:label] if node_data[:label]
+          existing.shape = node_data[:shape_type] if node_data[:shape_type]
+          existing.classes = node_data[:classes] if node_data[:classes]
         end
 
         # Extract node data from parse tree
@@ -290,24 +380,32 @@ module Sirena
           return nil unless node_hash
 
           node_id = node_hash[:node_id].to_s
+          shape_type, label = bracket_shape(node_hash[:shape])
 
-          # Extract shape info if present
-          if node_hash[:shape]
-            shape_data = node_hash[:shape]
-            delims = "#{shape_data[:open]}#{shape_data[:close]}"
-            shape_type = SHAPE_MAP[delims] || 'rect'
-            label = shape_data[:label]&.to_s&.strip || node_id
-          else
-            shape_type = 'rect'
-            label = node_id
-          end
+          # `@{ shape: ..., label: ... }` wins over the bracket form, which
+          # is what mermaid does when a node carries both.
+          entries = metadata_entries(node_hash[:metadata])
 
           {
             node_id: node_id,
-            shape_type: shape_type,
-            label: label,
+            shape_type: metadata_shape(entries['shape']) || shape_type,
+            label: entries['label'] || label,
             classes: node_hash[:inline_class]&.to_s
           }
+        end
+
+        # nil means the source said nothing, which is not the same as
+        # saying `rect` or naming the node after itself. `create_node`
+        # supplies the defaults, so only a real mention overwrites.
+        def self.bracket_shape(shape_data)
+          return [nil, nil] unless shape_data
+
+          delims = "#{shape_data[:open]}#{shape_data[:close]}"
+          label = shape_data[:label]
+          # `A[ ]` is an EMPTY label, not an absent one: mmdc draws a node
+          # with nothing in it, and treating it as absent named the node
+          # after itself and kept an older label on a re-mention.
+          [SHAPE_MAP[delims] || 'rect', label.nil? ? nil : label.to_s.strip]
         end
       end
     end

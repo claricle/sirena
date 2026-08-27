@@ -69,6 +69,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(diagram.direction).to eq('LR')
     end
 
+    # No `@{}` anywhere on purpose. Re-mentioning a node is the widest
+    # change on this branch and every spec that pinned it happened to carry
+    # a metadata block, so restoring the old label default left them green.
+    # mmdc draws B as a rhombus labelled `Choice`; it used to come out here
+    # as a rectangle named `B`.
+    it 'keeps a label and shape given before the node was re-mentioned' do
+      source = "graph TD\nA[Start] --> B{Choice}\nB -->|yes| C[End]"
+      node = parser.parse(source).nodes.find { |n| n.id == 'B' }
+
+      expect([node.label, node.shape]).to eq(%w[Choice rhombus])
+    end
+
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
