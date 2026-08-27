@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'svg_conform'
 require 'date'
+require 'rexml/document'
 require 'timeout'
 require 'yaml'
 
@@ -65,6 +66,25 @@ RSpec.describe Sirena::Svg do
     SvgConform.validate(svg, profile: Sirena::Svg::CONFORMANCE_PROFILE)
   end
 
+  # svg_conform 0.2.1 reports on the elements and attributes it can find and
+  # never parses: measured against the real checker, it answers `valid?` for
+  # an unclosed tag, a mismatched pair, a raw `&`, a missing `</svg>` and for
+  # trailing junk after the root. So conformance alone would keep this gate
+  # green on output no XML parser would accept, which is the one thing a
+  # document embedded in Metanorma may not be.
+  #
+  # REXML is the whole check because Escaping escapes every `&` and strips
+  # the code points XML forbids, so Sirena cannot emit the undeclared entity
+  # REXML is lenient about.
+  #
+  # @return [String, nil] the parse error, or nil when the document parses
+  def parse_error(svg)
+    REXML::Document.new(svg)
+    nil
+  rescue REXML::ParseException => e
+    e.message.lines.first.to_s.strip
+  end
+
   def complaint(path, result)
     messages = (result.errors + result.validity_errors).map(&:message).uniq
     summary = messages.first(3).join(' | ')
@@ -96,6 +116,10 @@ RSpec.describe Sirena::Svg do
         # is nothing to reject, and the gemspec ships it anyway.
         expect(content).not_to be_empty
 
+        malformed = parse_error(content)
+        expect(malformed).to be_nil,
+                             -> { "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
+
         result = validate(content)
         expect(result).to be_valid, -> { complaint(svg_path, result) }
       end
@@ -109,8 +133,13 @@ RSpec.describe Sirena::Svg do
 
     CONFORMANCE_FIXTURE_SOURCES.each do |source_path|
       it "renders #{File.basename(File.dirname(source_path))} conformantly" do
-        result = validate(Sirena::Engine.new.render(File.read(source_path)))
+        svg = Sirena::Engine.new.render(File.read(source_path))
 
+        malformed = parse_error(svg)
+        expect(malformed).to be_nil,
+                             -> { "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: #{malformed}" }
+
+        result = validate(svg)
         expect(result).to be_valid, -> { complaint(source_path, result) }
       end
     end
@@ -126,6 +155,9 @@ RSpec.describe Sirena::Svg do
         next unless svg
 
         rendered += 1
+        malformed = parse_error(svg)
+        next "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: not well-formed: #{malformed}" if malformed
+
         result = validate(svg)
         complaint(source_path, result) unless result.valid?
       end
