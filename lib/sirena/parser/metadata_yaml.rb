@@ -92,6 +92,12 @@ module Sirena
       # @raise [Parser::ParseError] on YAML mermaid would also refuse
       def self.value(document)
         new(document).value
+      rescue SystemStackError
+        # Walking the tree is recursive, so a body nested thousands deep
+        # runs the stack out. mermaid blows its own browser stack on the
+        # same source and refuses it, but SystemStackError is not a
+        # StandardError and sailed past every caller on the way up.
+        raise ParseError, 'Metadata nested too deeply.'
       end
 
       def initialize(document)
@@ -318,7 +324,10 @@ module Sirena
       # mapping's first key is past its brace, so both are left alone.
       def reject_leading_property(node)
         first = node.children.first
-        return unless first.anchor || first.tag
+        # A body that is nothing but a comment composes as an empty flow
+        # mapping, so there may be no first key to look at at all. mmdc
+        # draws `A@{#}` with the label the node already had.
+        return unless first&.anchor || first&.tag
         return unless first.start_line == node.start_line &&
                       first.start_column == node.start_column
 
