@@ -37,7 +37,7 @@ module Sirena
         attribute :title, :string
       end
 
-      def call(diagram, theme:) = Scene.new(...)
+      def call(diagram, theme:, today:) = Scene.new(...)
     end
   end
 end
@@ -56,7 +56,7 @@ model. Delete those files; the renderer takes the `Diagram` model
 directly. The engine handles both in one line:
 
 ```ruby
-scene = Layout.for(type)&.call(model, theme: theme) || model
+scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
 ```
 
 **Expect two or three deletions, not ten.** Every other `Transform`
@@ -191,8 +191,10 @@ attribute, two of them dead (item 02).
    `architecture`, `c4`, `requirement`, `packet`, `treemap`,
    `user_journey`
 
-3. The layout signature is `call(diagram, theme:)` throughout this plan
-   — **layouts need the theme.** Every layout today hardcodes
+3. The layout signature is `call(diagram, theme:, today:)` throughout
+   this plan — **layouts need the theme**, and `gantt` needs the
+   reference date the engine already carries (`engine.rb:93`).
+   Every layout takes both and ignores what it does not use. Every layout today hardcodes
    `DEFAULT_FONT_SIZE = 14` while renderers draw at
    `theme.typography.font_size_normal`. The built-in `high_contrast`
    theme sets 16.0, so today its text overflows every box it is sized

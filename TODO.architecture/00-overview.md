@@ -175,7 +175,7 @@ Three problems in that picture, and each one costs time on every fix:
 ```ruby
 type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
-scene = Layout.for(type)&.call(model, theme: theme) || model
+scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
 Renderer.for(type).render(scene, theme: theme)
 ```
 
@@ -190,8 +190,18 @@ returns. Item 06 keeps all of that byte-identical. What it deletes is
 the type constants and the hand-written dispatch, not the method's
 surrounding contract.
 
-The layout signature is `call(diagram, theme:)` everywhere in this plan.
-Layouts size boxes to text, and text size comes from the theme — see
+The layout signature is `call(diagram, theme:, today:)` everywhere in
+this plan.
+
+Two ambient inputs, both keyword, both always passed. **Theme** because
+layouts size boxes to text and text size comes from the theme.
+**Today** because `gantt` resolves partial dates against a reference
+date — `transform/gantt.rb:150` and `:155` read it — and the engine
+already threads it through (`engine.rb:93`, `:107`). Dropping it from
+the signature changes gantt output, which step 6 forbids.
+
+A layout that needs neither still takes both and ignores them. One
+signature is the point; per-type signatures put the dispatch back. See
 `LAYERS.md`.
 
 Two rules hold it together:

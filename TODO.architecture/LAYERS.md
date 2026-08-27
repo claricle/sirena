@@ -93,7 +93,7 @@ A renderer that adds a constant to a coordinate is a bug, not a style.
 
 ## Nothing mutates its input
 
-- `Layout#call(diagram, theme:)` returns a new Scene. It never writes to
+- `Layout#call(diagram, theme:, today:)` returns a new Scene. It never writes to
   the diagram.
 - `Renderer#render(scene, theme:)` returns a new document. It never
   writes to the scene.
