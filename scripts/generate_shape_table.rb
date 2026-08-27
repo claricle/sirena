@@ -35,7 +35,13 @@ def render(name)
     _, _, status = Open3.capture3('mmdc', '-i', input, '-o', output)
     return nil unless status.success?
 
-    fingerprint(File.read(output))
+    svg = File.read(output)
+    # mmdc exits 0 while emitting an SVG error page, so the exit status
+    # alone let a rejected shape name into the table with a fingerprint
+    # taken from the error drawing.
+    return nil if svg.include?('aria-roledescription="error"')
+
+    fingerprint(svg)
   end
 end
 

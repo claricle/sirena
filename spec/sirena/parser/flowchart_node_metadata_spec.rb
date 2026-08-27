@@ -168,6 +168,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "shape, then inline class, then metadata" do
+    it "refuses whitespace before the inline class" do
+      # mmdc rejects `A[x] :::hot`, and allowing it captured the class
+      # with its leading space still attached.
+      expect { node_for("graph TD\nA[x] :::hot@{ shape: rounded }\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "keeps an empty bracket label empty" do
+      # `A[ ]` is a node with nothing in it. Treating it as absent named
+      # the node after itself.
+      node = node_for("graph TD\nA[ ]@{ shape: rounded }\n")
+
+      expect([node.shape, node.label]).to eq(["rounded", ""])
+    end
+
     it "accepts them in mermaid's order" do
       node = node_for("graph TD\nA[old]:::hot@{ shape: hex }\n")
 
@@ -285,6 +300,104 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # `Psych.safe_load` was not safe enough: it still calls any handler
+    # registered with `Psych.add_domain_type`, which is a host-global list,
+    # and the handler's return value became the node label. Values are
+    # resolved off the AST now, so nothing reaches a materialiser.
+    describe "a tagged value" do
+      around do |example|
+        example.run
+      ensure
+        Psych.domain_types.delete("tag:yaml.org,2002:omap")
+      end
+
+      it "never calls a registered domain handler" do
+        called = 0
+        Psych.add_domain_type("yaml.org,2002", "omap") do |_t, v|
+          called += 1
+          v
+        end
+
+        expect { node_for("graph TD\nA@{ label: !!omap foo }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
+        expect(called).to eq(0)
+      end
+
+      it "refuses a ruby object tag" do
+        source = "graph TD\nA@{\n  shape: rounded\n  " \
+                 "label: !ruby/object:Gem::Requirement\n    " \
+                 "requirements:\n    - x\n}\n"
+
+        expect { node_for(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Unsupported tag/)
+      end
+    end
+
+    # js-yaml's JSON schema, which is what mermaid parses with. Psych's
+    # implicit resolution is wider and disagreed on all of these.
+    describe "the value schema" do
+      {
+        "a date" => ["graph TD\nA@{ label: 2024-01-01 }\n", "2024-01-01"],
+        "a quoted zero" => ["graph TD\nA@{ label: \"0\" }\n", "0"]
+      }.each do |label, (source, expected)|
+        it "reads #{label} as a string" do
+          expect(node_for(source).label).to eq(expected)
+        end
+      end
+
+      it "does not resolve no to false" do
+        # Psych makes this `false`, which silently skipped the key. mmdc
+        # looks for a shape called "no" and refuses the source.
+        expect { node_for("graph TD\nA(keep)@{ shape: no }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /No such shape/)
+      end
+
+      it "refuses a bare number as a label" do
+        expect { node_for("graph TD\nA@{ label: 1 }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
+      end
+
+      it "treats NaN as falsy, as JavaScript does" do
+        expect(node_for("graph TD\nA(keep)@{ label: .nan }\n").label)
+          .to eq("keep")
+      end
+
+      it "refuses Infinity, which is a number like any other" do
+        expect { node_for("graph TD\nA(keep)@{ label: .inf }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
+      end
+    end
+
+    # Mermaid reads `shape` and `label` and ignores the rest, a merge key
+    # included. Validating every entry refused diagrams mmdc draws.
+    describe "a key mermaid does not read" do
+      it "is ignored" do
+        node = node_for("graph TD\nA(keep)@{ extra: true }\n")
+
+        expect([node.shape, node.label]).to eq(%w[rounded keep])
+      end
+
+      it "does not stop the keys it does read" do
+        expect(node_for("graph TD\nA@{ extra: true, shape: rounded }\n").shape)
+          .to eq("rounded")
+      end
+
+      it "ignores a merge key" do
+        expect(node_for("graph TD\nA@{\n  <<: x\n  label: y\n}\n").label)
+          .to eq("y")
+      end
+    end
+
+    # An alias that reaches an anchor already being expanded is a cycle.
+    # The structural guard catches the shallow forms; this catches the
+    # rest, including an anchor nested under a sequence.
+    it "refuses a circular anchor nested in a sequence" do
+      source = "graph TD\nA@{\n  label: [&a [y, *a], z]\n  shape: rounded\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Circular anchor/)
+    end
+
     it "resolves a tag" do
       expect(node_for("graph TD\nA@{ shape: !!str rounded }\n").shape)
         .to eq("rounded")
@@ -328,6 +441,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       # mmdc renders `one<br/>two`. Letting YAML fold the newline gave
       # `one two`, which is a different label.
       source = %(graph TD\nA@{ label: "one\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "refuses an unmatched double quote" do
+      # mermaid's lexer stays in its string state to the end of the block
+      # and refuses the source. Falling through to the generic body branch
+      # took `a"b` as a label.
+      expect { node_for(%(graph TD\nA@{ label: a"b }\n)) }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "collapses the indentation after a quoted newline" do
+      # mmdc renders `one<br/>two`, not `one<br/><br/>  two`.
+      source = %(graph TD\nA@{ label: "one\n\n  two" }\n)
 
       expect(node_for(source).label).to eq("one<br/>two")
     end
