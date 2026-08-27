@@ -164,8 +164,15 @@ TYPES = {
 - [ ] a spec proves a misnamed layout constant raises rather than
       rendering an unlaid-out diagram with no error, which is worse
       than a crash
-- [ ] `Layout::Base`'s temporary `to_graph` fallback from item 04 is
-      deleted, and `grep -rn "to_graph" lib/sirena/` returns nothing
+- [ ] every piece of item 04's temporary transition machinery is gone,
+      not just the fallback branch:
+      - `Layout::Base`'s `to_graph` branch, and
+        `grep -rn "to_graph" lib/sirena/` returns nothing
+      - the `Layout::Legacy` wrapper class
+      - `Engine`'s Grid gate, and the Grid stage itself if nothing
+        legacy can reach it
+      - `spec/support/legacy_layout.rb` and the transition spec
+      A temporary thing with no deletion criterion is a permanent thing
 
 ## Do not
 

@@ -3,9 +3,10 @@
 Copy this shape. When a file in this plan says "convert type X", it
 means "make X look like the AFTER column here".
 
-Pie is a good example because it has real geometry (slice angles), so it
-keeps a Layout class. `info`, `error` and about eight others have none
-and lose theirs entirely — that case is at the bottom.
+Pie is a good example because it has real geometry (slice angles). Every
+type keeps a Layout — item 04 made it mandatory, including for `info`
+and `error`, whose layouts are about twenty lines each. The smallest
+case is at the bottom.
 
 ## Files
 
@@ -233,14 +234,24 @@ and `renderer/pie.rb:133` does the angle conversion, the trigonometry,
 the endpoint calculation and the large-arc choice. That is renderer
 geometry, which item 04 forbids.
 
-Finish it: the Scene carries each sector's start and end **points** and
-its large-arc flag, computed by the layout, and the renderer strings
-them into a path. The title's coordinates move too — they are absent
-from the Scene above and computed in the renderer today.
+Finish it. `renderer/pie.rb:149-151` builds the path from the centre and
+the radius as well as the endpoints, so endpoints and a flag are not
+enough. The Scene needs all of it:
 
-Left visible on purpose. Converting a type is not done when the renderer
-stops indexing a Hash; it is done when the renderer stops doing
-arithmetic.
+- each sector's start and end **points**
+- its large-arc flag
+- the **centre** and **radius** it arcs around
+- the title's coordinates, which are absent above and computed in the
+  renderer today
+
+Then the renderer only strings values into `"M … L … A … Z"` and does
+no arithmetic at all.
+
+**So this file is not yet the full conversion its opening claims.** It
+is the shape to copy — the Scene, the layout, the renderer reading named
+attributes — with one honest gap named here. Converting a type is not
+done when the renderer stops indexing a Hash; it is done when the
+renderer stops doing arithmetic.
 
 ## Checklist for each converted type
 

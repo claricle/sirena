@@ -103,9 +103,10 @@ someone touch, and do they have to reverse-engineer anything first?
 
 - Today: **five files** across five layers, plus an undocumented
   contract you learn by reading the renderer.
-- After item 07: **two files** to extend an existing type, **six** to
-  add a new one (five generated, plus the `TYPES` row), and nothing to
-  reverse-engineer.
+- After item 07: **two files** to extend an existing type, **eight** to
+  add a new one (seven generated, plus the `TYPES` row), and nothing to
+  reverse-engineer. Eight sounds worse than five; it is the same work,
+  counted honestly.
 
 The same question decides the geometry work. With parity as the bar, a
 layout fix must be a change to one layout class that elkrb feeds — not a
@@ -245,7 +246,7 @@ after 01 is protected by 01.
 | 01 | Safety net: corpus check + contract spec | 2 PRs | nothing visible — but a real latent crash is closed and nothing breaks silently from here on |
 | 02 | SVG: one serializer | 1 PR | nothing visible — the escaping fix it used to carry already landed on main |
 | 03 | Name the layers honestly | 4 PRs, pure rename | nothing — the codebase becomes readable |
-| 04 | Typed Scene between layout and renderer | ~21 PRs, one per type | fixes get roughly 2x cheaper from here on |
+| 04 | Typed Scene between layout and renderer | 26 PRs — base, transition, and 24 conversions | fixes get roughly 2x cheaper from here on |
 | 05 | Delete the boilerplate | 3 PRs | parse errors that name line, column and source, for all 24 types |
 | 06 | Registry as data | 1 PR | — |
 | 07 | Adding a type in an hour | 2 PRs | the point of the plan |

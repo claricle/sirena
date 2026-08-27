@@ -65,7 +65,7 @@ five layers, plus reverse-engineering one undocumented contract. After
 the structural work it's two files and nothing to reverse-engineer.
 
 ```
-  new diagram type        6 files   (5 new + one row in the type table)
+  new diagram type        8 files   (7 new + one row in the type table)
   new syntax on a type    2 files   (grammar + builder)
 ```
 

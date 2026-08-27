@@ -35,7 +35,7 @@ way, it owns more than one thing (rule R7).
 | `Diagram::<Type>` | **what the diagram says** — semantics, no geometry | — | — |
 | `Layout::<Type>` | **where everything goes** — geometry, no styling | `Diagram::<Type>`, `Theme`, reference date | `Scene` |
 | `Layout::<Type>::Scene` | the computed geometry — coordinates, no meaning | — | — |
-| `Renderer::<Type>` | shapes, colours, fonts | `Scene`, `Theme` | `Svg::Document` |
+| `Renderer::<Type>` | shapes, colours, fonts | `Scene`, and `Theme` via its constructor | `Svg::Document` |
 | `Svg::*` | valid, escaped XML | — | `String` |
 
 Two boundaries are easy to get wrong:
@@ -96,8 +96,9 @@ A renderer that adds a constant to a coordinate is a bug, not a style.
 - `Layout::Base#call(diagram, theme:, today:)` returns a new Scene, via the
   subclass's `#scene(diagram)`. It never writes to
   the diagram.
-- `Renderer#render(scene, theme:)` returns a new document. It never
-  writes to the scene.
+- `Renderer#render(scene)` returns a new document, and never writes to
+  the scene. The theme reaches it through `Renderer.for(type, theme:)`,
+  which is where a renderer already keeps it (`renderer/base.rb:42`).
 
 Today `Engine#apply_fallback_layout` (`engine.rb:218`) mutates the graph
 in place (`node.x = 50 + (col * 200)`). After item 03 that code is
