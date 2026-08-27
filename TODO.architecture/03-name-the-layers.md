@@ -107,11 +107,21 @@ One commit — and one PR — per rename.
    |---|---|
    | registry key | `DiagramRegistry.get(:xy_chart)` returns nil; the engine cannot dispatch. Immediate |
    | detector key | item 01's set-parity assertion goes red. Immediate |
-   | model constant | convention lookup finds nothing after item 06 |
+   | model constant | **item 03's own criterion** below goes red — `Diagram::XyChart` must resolve and equal what the parser returns. Immediate. Item 06 is the second net, not the first |
    | `diagram_type` | item 01's contract spec goes red. Immediate |
-   | parser, layout or renderer class | item 06's convention lookup returns nil for that layer |
+   | parser or renderer class | item 06's lookup finds nothing for a **mandatory** layer. It must raise, not return nil — see below |
+   | layout class | worse than a crash: `Layout.for` returning nil is the legitimate signal for a type with no layout, so a misspelled constant silently takes the pass-through path and the diagram renders unlaid-out |
    | contract fixture filename | item 01's spec cannot find `xy_chart.mmd`, so it goes red **immediately** — not at item 06. Item 06's fixture parity is the second net, not the first |
    | grammar or builder class | nothing fails; the inconsistency just survives |
+
+   That last pair is why item 06's lookup cannot answer `nil` for
+   everything. `Parser.for` and `Renderer.for` are mandatory and must
+   raise when convention resolution fails. `Layout.for` may return
+   `nil`, but **only when the layout file genuinely does not exist** —
+   if the file is there and the constant inside it does not match, that
+   is a broken rename and it must raise too. Distinguish "no layout for
+   this type" from "the layout is misnamed"; they are not the same
+   answer.
 
    **Two are collisions, and they are the reason a bare resolution
    check is not enough.** `Diagram::Block` and `Diagram::Requirement`

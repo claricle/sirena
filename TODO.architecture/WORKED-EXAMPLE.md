@@ -103,7 +103,7 @@ module Sirena
         attribute :sectors, Sector, collection: true
       end
 
-      def call(diagram, theme:)
+      def call(diagram, theme:, today:)
         angle = -90.0
         sectors = diagram.slices.each_with_index.map do |slice, i|
           sweep = diagram.slice_angle(slice)
