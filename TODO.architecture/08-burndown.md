@@ -66,9 +66,17 @@ snapshot.
    After item 06 these are edits to one table plus a preprocessing step.
 
 2. **Then the big types** — `TODO.foundation/06` and `07`, worst first,
-   by remaining valid cases: flowchart (194 left, at 11%), class and
-   class_diagram together (143 left, at 53%), state and state_diagram
-   (44 left, at 15%), sequence (41 left, at 62%).
+   by remaining valid cases.
+
+   **Sweep before you order them; do not read the order off this page.**
+   The numbers here move under you. As written they were flowchart 194
+   left, class and class_diagram together 143, state and state_diagram
+   44, sequence 41. Flowchart has since gone from 69/218 to 90/218 on
+   `origin/main` — 128 left — which already puts class ahead of it.
+
+   That is the point of re-measuring rather than the numbers being
+   wrong: this list is an example of the ordering rule, not the
+   ordering.
 
    **`git` is not on this list any more.** Its per-type figures in
    `TODO.foundation/06` and `07` are raw counts over every file in
@@ -160,7 +168,7 @@ would count the same burndown twice in any plan total.
 ## Done when
 
 - [ ] `TODO.foundation/05`'s detect-stage list is worked from `scoreboard/corpus.json`'s `stage: detect` rows, and the type table is the only file edited for it
-- [ ] the burndown ran in remaining-valid order — flowchart, then class, then state, then sequence — and each type's remaining count was re-measured before it started, never copied from this file
+- [ ] the burndown ran in remaining-valid order, worst first, with every type's remaining count re-measured immediately before it started and never copied from this file. No fixed sequence is named here on purpose — the one in step 2 was already out of date by the time this item was approved
 - [ ] every edit to `grammars/common.rb` was followed by a full `rake corpus:check`, not a single-type run
 - [ ] `TODO.foundation/02a`'s toolchain pin landed before the comparator, and `02b`'s reference regeneration before elkrb positioned its first type
 - [ ] `TODO.foundation/14`'s metric contract is implemented as written, including a metric for every non-box type
