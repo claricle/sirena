@@ -115,7 +115,7 @@ change scattered across a transform, a renderer and an engine stub.
 ```
   source
     |
-  Engine#detect_diagram_type        engine.rb:27, hardcoded regex table
+  Engine#detect_diagram_type        engine.rb:32, hardcoded regex table
     |
   DiagramRegistry.get(:pie)         -> {parser:, transform:, renderer:}
     |

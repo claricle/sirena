@@ -105,13 +105,13 @@ than it looks, and that is the part worth knowing:
   never runs for them.
 - It reaches the other 4, which raise `NoMethodError`.
 - `NotImplementedError` inherits `ScriptError`, not `StandardError`, so
-  `engine.rb:114` doesn't catch it. It escapes `PipelineError` and
+  `engine.rb:119` doesn't catch it. It escapes `PipelineError` and
   reaches the caller raw.
 
 **The error taxonomy destroys the data the corpus harness needs.**
 `Engine#render` collapses every non-detection failure into a single
 `PipelineError`, with the backtrace concatenated into the message string
-(`engine.rb:114-116`). So a corpus harness cannot tell a parse failure
+(`engine.rb:119-121`). So a corpus harness cannot tell a parse failure
 from a render failure — and foundation item 05 derives its entire work
 list from exactly that distinction.
 
