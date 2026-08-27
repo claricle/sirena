@@ -109,11 +109,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    # The hyphen now joins the id, so this reaches no arrow at all.
-    # mmdc refuses every `->` form, so refusing it here agrees with mermaid.
-    it "refuses A->B, as mermaid does" do
-      expect { described_class.new.parse("graph TD\nA->B\n") }
-        .to raise_error(Sirena::Parser::ParseError)
+    # mmdc refuses every `->` form, whatever the spacing. Only the two
+    # unspaced ones were pinned, and `plain_arrow` listed a bare `->` as a
+    # link, so `A -> B` and `A ->B` drew an edge mermaid never draws.
+    ["A->B", "A -> B", "A ->B", "A-> B"].each do |statement|
+      it "refuses #{statement.inspect}, as mermaid does" do
+        expect { described_class.new.parse("graph TD\n#{statement}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
     end
   end
 
@@ -143,7 +146,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  # Mermaid's plain link is `--+[-xo>]` and its dotted one `-?\.+-[xo>]?`,
+  # Mermaid's plain link is `[xo<]?--+[-xo>]` and its dotted one
+  # `[xo<]?-?\.+-[xo>]?`,
   # so a trailing `x` or `o` belongs to the LINK and `A---x` is one token.
   # mmdc then refuses `A---x --- Z` for holding two links with nothing
   # between them, and this refuses it too — the marker is not drawn,
@@ -244,7 +248,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "still takes a word that merely starts with a keyword" do
       # `endpoint` starts with one; `aend` only ends with one, which the
       # table above already covers.
-      expect(node_ids("graph TD\nendpoint --> Z\n")).to eq(%w[Z endpoint])
+      expect(node_ids("graph TD\nendpoints --> Z\n")).to eq(%w[Z endpoints])
     end
   end
 
@@ -298,7 +302,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # through the node rule, so dropping the quote from it moved them too.
   describe "a quoted id" do
     it "names a subgraph" do
-      source = "graph TD\nsubgraph \"AB\" [Title]\nX\nend\n"
+      source = "graph TD\nsubgraph \"AB\" [Title]\nX --> Y\nend\n"
 
       expect(subgraph_name_parses?(source)).to be(true)
     end
@@ -329,9 +333,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # and over letters in the basic plane.
   describe "the id charset" do
     # Both lists hold characters a node id TAKES. They are split by which
-    # ones also get a subgraph-name example, not by the expected verdict:
-    # the ASCII half is covered for subgraph names by the `A+B` example at
-    # the end of this block, so repeating it per character buys nothing.
+    # ones also get a subgraph-name example, not by the expected verdict.
+    # The ones below are covered for subgraph names by the `A+B` example
+    # at the end of this block, so repeating them per character buys
+    # nothing.
     ascii_chars = [
       ["a plus", "A+B"],
       ["an exclamation", "A!B"],
@@ -341,9 +346,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       ["a backslash", "A\\B"]
     ].freeze
 
-    # A subgraph name is built by its own rule over the same charset, so
-    # each letter outside ASCII is pinned in both positions too.
-    letter_chars = [
+    # These get a subgraph-name example too, because a subgraph name is
+    # built by its own rule over the same charset. Mostly letters outside
+    # ASCII; the quote and the backtick are printable ASCII and sit here
+    # rather than above only because they are pinned in both positions.
+    subgraph_covered_chars = [
       ["an accent", "café"],
       ["an ideograph", "中文"],
       ["a feminine ordinal", "aªb"],
@@ -356,13 +363,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       ["a Mongolian I", "A\u1886B"]
     ].freeze
 
-    (ascii_chars + letter_chars).each do |label, id|
+    (ascii_chars + subgraph_covered_chars).each do |label, id|
       it "takes #{label}" do
         expect(node_ids("graph TD\n#{id}-->Z\n")).to eq([id, "Z"].sort)
       end
     end
 
-    letter_chars.each do |label, id|
+    subgraph_covered_chars.each do |label, id|
       it "takes #{label} in a subgraph name" do
         source = "graph TD\nsubgraph #{id} [Title]\nX --> Y\nend\n"
 
@@ -371,7 +378,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "takes a widened id as a subgraph name" do
-      source = "graph TD\nsubgraph A+B [Title]\nX\nend\n"
+      source = "graph TD\nsubgraph A+B [Title]\nX --> Y\nend\n"
 
       expect(subgraph_name_parses?(source)).to be(true)
     end
@@ -429,7 +436,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
 
       it "refuses #{label} in a subgraph id" do
-        source = "graph TD\nsubgraph A#{char}B [T]\nX\nend\n"
+        source = "graph TD\nsubgraph A#{char}B [T]\nX --> Y\nend\n"
 
         expect(subgraph_name_parses?(source)).to be(false)
       end
@@ -717,7 +724,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "takes a 2000-character subgraph name too" do
-      source = "graph TD\nsubgraph #{id} [T]\nX\nend\n"
+      source = "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n"
 
       expect(subgraph_name_parses?(source)).to be(true)
     end
@@ -754,12 +761,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         end
       end
 
-      # Nothing may follow the title, which mmdc also refuses.
-      it "refuses a name after the title" do
-        source = "flowchart TD\nsubgraph A [T] X\nX-->Y\nend\n"
-
-        expect(subgraph_name_parses?(source)).to be(false)
-      end
+      # Nothing may follow the title. That is pinned once, further down,
+      # by "refuses trailing text after a bracketed title".
     end
 
     # Every trailing word carries the same guards as the first one.
@@ -862,7 +865,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # `href`, `call` and `click` end a word differently from the rest. They
   # are keywords only when a space, a tab, a newline or the end of the source
   # follows, so `1href-` and `1hrefé` are ids while `1endé` is not.
-  # A comment is NOT one of the endings — see `directive_end`.
+  # A comment is NOT one of the endings — see `spaced_keyword`.
   describe "how a keyword ends" do
     %w[1href- 1href. 1hrefé #click- &call- 1click_ éhref#].each do |id|
       it "takes #{id} as a node id" do

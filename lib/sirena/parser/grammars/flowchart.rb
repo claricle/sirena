@@ -12,9 +12,10 @@ module Sirena
       # edges with labels, edge chaining, subgraphs, and styling directives.
       class Flowchart < Common
         # Mermaid lexes these as keywords, so `end.` and `1end` are not
-        # node ids even though the characters are legal. Examples pin
-        # `K-->Z` and `1K --> Z`; `K[L]` and `K.foo-->Z` were also measured
-        # but are not asserted here. mmdc refuses all four for every word.
+        # node ids even though the characters are legal. Writing W for any
+        # word in the list: the examples pin `W-->Z` and `1W --> Z`, while
+        # `W[L]` and `W.foo-->Z` were measured too and are not asserted
+        # here. mmdc refuses all four for every word.
         #
         # `direction`, `accTitle`, `accDescr`, `default` and `callback` are
         # NOT among them — mmdc draws `default-->Z`. `href`, `call` and
@@ -809,15 +810,19 @@ module Sirena
           (str('=').repeat(2) >> str('>')).as(:thick)
         end
 
-        # Dotted arrow: -.-> or -.-
+        # Dotted arrow: `-.->`, or `-.-` when no `x`/`o` marker closes
+        # it — see `trailing_xo_marker`.
         rule(:dotted_arrow) do
-          (str('-.->') | (str('-.-') >> arrow_marker.absent?)).as(:dotted)
+          (str('-.->') | (str('-.-') >> trailing_xo_marker.absent?)).as(:dotted)
         end
 
-        # Plain arrow: --> or --- or ->
+        # A plain link is `-->` or `---`. A bare `->` is NOT one: mmdc
+        # refuses `A->B` `A -> B` `A ->B` and `A-> B` alike. Listing it
+        # here drew an edge for the two spaced forms — an over-acceptance
+        # that outlived the `id_hyphen` guard, which only ever closed the
+        # unspaced pair. Removing it cost no corpus case.
         rule(:plain_arrow) do
-          (str('-->') | (str('---') >> arrow_marker.absent?) |
-            str('->')).as(:plain)
+          (str('-->') | (str('---') >> trailing_xo_marker.absent?)).as(:plain)
         end
 
         # A trailing `x` or `o` belongs to the LINK, not to the node behind
@@ -835,10 +840,11 @@ module Sirena
         # is what put 48 of them within reach — `#---x --- Z` `1-.-o --- Z`
         # and `é---x --- Z` among those. The other 8, `A---x --- Z` and
         # its kin, were already reachable and already wrong.
-        # Only the arrowhead-less forms need the guard;
-        # after `-->` or `-.->` mermaid has already closed the link, so
-        # the `x` in `A-->x` really is a node.
-        rule(:arrow_marker) { match['xo'] }
+        #
+        # Only the arrowhead-less forms need the guard: after `-->` or
+        # `-.->` mermaid has already closed the link, so the `x` in
+        # `A-->x` really is a node.
+        rule(:trailing_xo_marker) { match['xo'] }
 
         # Edge label: can be in pipes |label|
         rule(:edge_label) do
@@ -854,6 +860,12 @@ module Sirena
         # keyword `end`, but not the other reserved words — mmdc draws
         # `subgraph end [Title]` and `subgraph "AB" [Title]` and refuses
         # `subgraph default [Title]` and `subgraph _self [Title]`.
+        # `quoted_string` wraps its body in its own `.as(:string)`, so a
+        # quoted name arrives as `{string: "AB"@19}` where a bare one is a
+        # plain slice — the shape this file calls garbage where `node_id`
+        # used to take a quoted run. It is inert only because the
+        # transform refuses every subgraph; whatever teaches it to keep a
+        # subgraph has to flatten this first.
         rule(:subgraph_id) { quoted_string | subgraph_name_word }
 
         rule(:subgraph_name_word) do
@@ -941,8 +953,10 @@ module Sirena
 
         # A hyphen joins the id unless another dash or a dot follows, which
         # is where a link starts. Excluding `x`, `o` and `>` as well
-        # rejected `a-o-->B` and `a-x-->B`, which mermaid renders; `A->B`
-        # still fails because `>` alone is not a link.
+        # rejected `a-o-->B` and `a-x-->B`, which mermaid renders. `A->B`
+        # fails because the hyphen joins the id here and `>B` cannot
+        # continue a statement — not because `->` is unknown; it is
+        # `plain_arrow` that refuses it, for every spacing.
         rule(:id_hyphen) { str('-') >> match['-.'].absent? }
 
         rule(:reserved_word) do
@@ -1026,10 +1040,11 @@ module Sirena
         # `y.- --> Z`.
         rule(:id_dot) { str('.') }
 
-        # `arrowhead_dot_dash` recognizes `x.-` and `o.-` — an `x` or `o`,
-        # then one or more dots, then a dash — as mermaid's dotted
-        # left-arrowhead openings instead of ids. Where that opening is
-        # legal decides the guard, and it was measured over 173 cases.
+        # `arrowhead_dot_dash` recognizes mermaid's dotted left-arrowhead
+        # opening — the whole of it, as `arrowhead_open` spells it out
+        # below, markers and leading dash included — as a link instead of
+        # an id. Where that opening is legal decides the guard, and it was
+        # measured over 173 cases.
         #
         # At the id start nothing sits in front of the link, so mermaid
         # always refuses: `x.-` `x..-` `x.-z` and `x.-B` all fail. Behind
