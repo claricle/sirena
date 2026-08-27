@@ -825,9 +825,24 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     # An inline class is a name that is still growing: mmdc reads the
-    # `.` into the class name and then refuses what is left.
-    it "still wants a gap after an inline class" do
-      expect { parse("A:::c.->B") }.to raise_error(Sirena::Parser::ParseError)
+    # `.` into the class name and then refuses what is left. A shape
+    # before the class does not close it — mmdc refuses `A[x]:::c.->B`
+    # for the same reason it refuses `A:::c.->B`.
+    ["A:::c.->B", "A[x]:::c.->B"].each do |source|
+      it "still wants a gap after the inline class of #{source}" do
+        expect { parse(source) }.to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # A `@{...}` block closes the name the way a shape does, and it may
+    # come after an inline class where a shape may not. mmdc draws both.
+    ["A@{ shape: rect }.->B", "A:::c@{ shape: rect }.->B"].each do |source|
+      it "takes a dot-opened link after the metadata of #{source}" do
+        parsed = parse(source)
+
+        expect(parsed.nodes.map(&:id).sort).to eq(%w[A B])
+        expect(parsed.edges.map(&:arrow_type)).to eq(["dotted_arrow"])
+      end
     end
   end
 
