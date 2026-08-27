@@ -291,9 +291,9 @@ module Sirena
         # The bracketed title comes AFTER those words, and this is the only
         # rule that reads it: a separate `space >> subgraph_title` arm in
         # front stopped at the first trailing word, so `subgraph A B [T]`
-        # was refused here while mmdc draws it — and so is
-        # `subgraph A B C [T]`. One rule for the whole tail keeps the two
-        # from disagreeing about where the title may sit.
+        # and `subgraph A B C [T]` were both refused here while mmdc draws
+        # them. One rule for the whole tail keeps the two from disagreeing
+        # about where the title may sit.
         #
         # `subgraph A [T] X` stays refused, which mmdc also refuses:
         # nothing may follow the title on the line.
@@ -550,10 +550,10 @@ module Sirena
         #
         # The end of the source IS one. Mermaid appends a newline before
         # it lexes, so a word at the very end is followed by one after
-        # all. This rule is the only place that says so — a second copy
-        # of it lived beside the id rules for a while, and it masked this
-        # one so completely that deleting the `eof` here left every spec
-        # green.
+        # all, and this is the only rule that says so. A second copy of it
+        # lived beside the id rules for a while, and this rule masked that
+        # copy so completely that deleting the copy's `eof` left every
+        # spec green. Deleting it here now fails five.
         #
         # These three words also guard an id, which is why `node_keyword`
         # reaches for this rule rather than restating it.
