@@ -40,14 +40,28 @@ into four buckets — re-measured 2026-08-27:
              1997
 ```
 
-**1,032 are cases mermaid accepts, and Sirena renders 508 of them —
-49.2%.** The 274 unknowns are the reason 632 + 59 does not account for
-the rest; they are unclassified, not passing.
+The 274 unknowns are why 632 + 59 does not account for the rest. They
+are unclassified by the oracle — that says nothing about whether Sirena
+renders them.
 
-**524 valid cases still fail.** That is the size of the job. Measured
-with `bundle exec ruby scripts/corpus_sweep.rb`; never quote a
-hand-written figure, and never use the raw 508/1,997 — 25.4% — because
-it counts files mermaid cannot parse either.
+Sweep run 2026-08-27, `bundle exec ruby scripts/corpus_sweep.rb`:
+
+```
+  valid      574/1032   55.6%    <- the number that matters
+  unknown    129/274    47.1%
+  invalid     18/59     30.5%
+  artifact    15/632     2.4%
+  raw        736/1997   36.9%    <- do not quote this one
+```
+
+**458 valid cases still fail.** That is the size of the job. The raw
+rate counts files mermaid cannot parse either, so it flatters us.
+
+**Re-run the sweep before quoting any of this.** These numbers moved
+between two rounds of reviewing this very document — the flowchart work
+on main took valid from 508 to 574 while the plan sat here saying 508.
+Every figure on this page is a snapshot with a date on it, and the date
+is the important half.
 
 Everything in this directory exists to make closing that gap cheaper.
 
@@ -115,10 +129,11 @@ someone touch, and do they have to reverse-engineer anything first?
 
 - Today: **five files** across five layers, plus an undocumented
   contract you learn by reading the renderer.
-- After item 07: **two files** to extend an existing type, **eight** to
-  add a new one (seven generated, plus the `TYPES` row), and nothing to
-  reverse-engineer. Eight sounds worse than five; it is the same work,
-  counted honestly.
+- After item 07: **eight files** to add a new type (seven generated,
+  plus the `TYPES` row), and nothing to reverse-engineer. Extending an
+  existing type costs whatever the change costs — see
+  `07-adding-a-type.md`, which stopped promising a number after three
+  wrong ones.
 
 The same question decides the geometry work. With parity as the bar, a
 layout fix must be a change to one layout class that elkrb feeds — not a
@@ -271,20 +286,22 @@ be the exception, because it carried the escaping fix; that fix landed
 on main ahead of this plan, so what is left of item 02 is a pure
 deletion.
 
-**Items 04 and 05 do change output, on purpose.** Item 04 sizes boxes
+**Items 04 and 05 change the SVG, on purpose.** Item 04 sizes boxes
 from theme font metrics, so `high_contrast` stops overflowing its own
-text. Item 05 part C replaces hardcoded hex with theme colours. Both are
-the point of the change, not a regression — but they mean "the corpus
-number must not move" is a rule for 01-03 and 06, not for all six.
+text. Item 05 part C replaces hardcoded hex with theme colours.
 
-If a PR in 01-03 or 06 moves the corpus number, something is wrong — see
-"Stop and ask" below.
+**The corpus number must still not move.** It measures whether a case
+renders well-formed output, not what that output looks like — a box
+sized differently still passes. So the rule holds for all six items, and
+items 04 and 05 keep their own unchanged-count criteria. If a PR in
+01-06 moves the corpus number, something is wrong — see "Stop and ask"
+below.
 
 ## How to work
 
 - **One item at a time, in order.** Do not start 04 while 03 is open.
 - **The item's Size line says how many PRs it is**, and that is the
-  authority. Numbered steps are not PRs — item 01 has six steps in two
+  authority. Numbered steps are not PRs — item 01 has twelve steps in two
   PRs, item 04 has six steps across 26. Read the Size line first.
 - **Run `rake corpus:check` before opening every PR.** After item 01 this
   is the whole safety net; it takes seconds and it is not optional.

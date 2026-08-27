@@ -191,9 +191,13 @@ one branch floor. Land it before the first behaviour PR, exactly as
 `TODO.foundation/03` says. What this plan drops is only the
 70 -> 80 -> 90 -> 97 timeline tied to other tracks' completion events.
 
-Items 01-06 are refactors and change no behaviour, so they are not
-blocked by it. Item 08 is, and so is anything in item 05 that changes a
-parse-error message.
+Items 01-03 and 06 change no behaviour, so they are not blocked by it.
+
+**Items 04 and 05 are.** Item 04 sizes boxes from theme metrics and
+item 05 part C swaps hardcoded hex for theme colours — both change what
+a user sees, so 03a lands before either starts. Item 08 is blocked too,
+and so is anything in item 05 that changes a parse-error message. An
+earlier draft exempted all of 01-06 and that was wrong.
 
 ## Do not
 

@@ -423,6 +423,11 @@ During item 04 the engine still resolves classes through
       lib/sirena/layout/` returning nothing is half the check — two
       layouts write the literal inline (`block`, `architecture`), so
       also `grep -rn "font_size: *[0-9]" lib/sirena/layout/`
+- [ ] no layout derives a size from character count either. `mindmap`
+      uses `content_length * 8` and `requirement` uses
+      `text.length / 25`; neither is a font size and neither grep above
+      finds them. They are text metrics guessed instead of measured,
+      and they are item 04's job too
 - [ ] rendering one diagram under `default` and `high_contrast` gives
       boxes sized to their own theme's text
 - [ ] every registered type has a layout, and no `Layout.for` call site

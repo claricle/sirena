@@ -24,9 +24,14 @@ The escaping fix shipped in commits `248ec25`, `7f79ce8`, `898606b`,
   (`svg/element.rb:71`) is a declarative list, and every shape class
   uses it.
 
-So this item no longer changes rendered output at all. **All of 01-06
-are now pure refactors**, and `rake corpus:check` must show zero change
-across every one of them.
+So this item no longer changes rendered output at all, and
+`rake corpus:check` must show zero change across every one of 01-06.
+
+**Careful with the word.** Items 04 and 05 change the SVG — box sizes
+from theme metrics, hex replaced by theme colours. What none of
+01-06 changes is whether a case renders **well-formed output**,
+which is all `corpus:check` measures. Zero change there, visible
+change on screen for two of them.
 
 ## Why — what is still there
 
