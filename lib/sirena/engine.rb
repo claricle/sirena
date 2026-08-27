@@ -23,9 +23,14 @@ module Sirena
     # Error raised during pipeline execution
     class PipelineError < Error; end
 
-    # Mapping of diagram syntax prefixes to diagram types
+    # Mapping of diagram syntax prefixes to diagram types.
+    #
+    # A direction glyph needs no gap after the flowchart keyword. mmdc
+    # draws `graph>`, `graph<` and `graph^`, and the grammar takes them.
+    # Detection used to demand whitespace, so those headers died here
+    # with DiagramTypeError before the parser saw the line.
     DIAGRAM_TYPE_PATTERNS = {
-      flowchart: /\A\s*(graph|flowchart)\s+/i,
+      flowchart: /\A\s*(graph|flowchart)([\s<>^]|\z)/i,
       sequence: /\A\s*sequenceDiagram/i,
       class_diagram: /\A\s*classDiagram/i,
       state_diagram: /\A\s*stateDiagram(-v2)?/i,

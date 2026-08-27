@@ -6,6 +6,11 @@ module Sirena
   module Diagram
     # Gantt chart task
     class GanttTask < Lutaml::Model::Serializable
+      # Filled in by the transform once `after_task`/`until_task` resolve. Not
+      # attributes: they are derived, and reopening the class from the
+      # transform to add them put a second definition in that file.
+      attr_accessor :calculated_start, :calculated_end
+
       attribute :description, :string
       attribute :id, :string
       attribute :start_date, :string

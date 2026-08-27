@@ -21,18 +21,76 @@ module Sirena
             ws?
         end
 
+        # The direction shares the keyword's line, so `graph` newline `TD`
+        # is a diagram with a node called TD. Nothing else may follow the
+        # keyword: mmdc refuses `graph X;A`, `graph ;A` and `graph TDx`.
+        # A word direction needs a gap; a glyph one does not. mmdc renders
+        # `graph<` and `graph >` alike, and refuses `graphTD`.
+        #
+        # The two branches exist because a separator only closes the header
+        # when a direction came first — `graph TD;A` renders and `graph;A`
+        # does not. A lookahead cannot tell them apart: by the time the
+        # header ends, the direction has already been consumed.
         rule(:header) do
           (str('flowchart') | str('graph')).as(:header) >>
-            ws? >>
-            direction.maybe.as(:direction)
+            (directed_header | undirected_header)
         end
 
-        rule(:direction) do
-          (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value)
+        rule(:directed_header) do
+          header_direction.as(:direction) >>
+            (separator | space? >> (newline | eof))
         end
+
+        rule(:undirected_header) do
+          direction.absent?.as(:direction) >> space? >> (newline | eof)
+        end
+
+        rule(:header_direction) do
+          space.repeat(1) >> direction |
+            glyph_direction.as(:dir_value)
+        end
+
+        # A `;` between statements on one line. `line_end` is deliberately
+        # left alone: `style_property` and `click_action` scan a value up to
+        # the physical end of the line via `line_end.absent?`, so widening it
+        # would truncate `style A fill:#f9f;stroke:#333` at the semicolon.
+        #
+        # Repeat only this rule, never `statement_end` — the `line_end` arm
+        # succeeds zero-width at EOF, so repeating that would not terminate.
+        # A comment cannot open on the same line as the separator: mmdc
+        # rejects `graph TD;%% c`, while `;` then a newline then `%% c` is
+        # ordinary. `space?` never crosses a newline, so the guard only
+        # fires on the same-line form.
+        rule(:separator) do
+          (semicolon >> space?).repeat(1) >> str('%%').absent?
+        end
+
+        # Node statements tolerate a space before the separator, because the
+        # corpus has `graph TD;A ;` and friends. The header and a class
+        # assignment do not: mmdc rejects `graph TD ;A` and
+        # `class A foo ;B`, so a shared loose separator over-accepted both.
+        rule(:loose_separator) { space? >> separator }
+
+        rule(:statement_end) { separator | line_end }
+        rule(:loose_statement_end) { loose_separator | line_end }
+
+        # mermaid's full set, aliases included: `BR` and `v` are another
+        # down, and three arrow glyphs stand in for the words. `v` is a
+        # word here, not a glyph — it needs the same gap `TD` does, while
+        # `<`, `>` and `^` do not. Reading any of them as a node put a
+        # stray `BR` or `v` in the diagram.
+        rule(:direction) { (word_direction | glyph_direction).as(:dir_value) }
+
+        rule(:word_direction) do
+          str('TD') | str('TB') | str('BT') | str('BR') | str('LR') |
+            str('RL') | str('v')
+        end
+
+        # These three need no gap after the keyword — mmdc draws `graph<`.
+        rule(:glyph_direction) { match['<>^'] }
 
         rule(:statements) do
-          (statement >> ws?).repeat(1)
+          ((separator | statement) >> ws?).repeat(1)
         end
 
         rule(:statement) do
@@ -154,7 +212,7 @@ module Sirena
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
             str('end').as(:subgraph_end) >>
-            line_end
+            loose_statement_end
         end
 
         rule(:subgraph_title) do
@@ -164,49 +222,261 @@ module Sirena
         # Style: style nodeId fill:#f9f
         rule(:style_statement) do
           str('style').as(:style_keyword) >> space >>
-            node_id.as(:style_target) >>
-            (space >> style_property).repeat(1).as(:style_props) >>
-            line_end
+            reserved_keyword.absent? >> node_id.as(:style_target) >>
+            (space >> style_property_list).as(:style_props) >>
+            statement_end
         end
 
-        rule(:style_property) do
-          (line_end.absent? >> comma.absent? >> any).repeat(1)
+        # What a `;` does inside a declaration turns on the value, not on the
+        # text after it. Measured against mmdc 11.12.0:
+        #
+        #   style A fill:red;B    -> nodes A and B  (the `;` ends the style)
+        #   style A fill:#f9f;B   -> node A only    (the `;` is value text)
+        #
+        # The plain branch is guarded rather than merely second, so a bad
+        # hashed tail fails the statement instead of falling through and
+        # drawing a node mermaid refuses.
+        rule(:style_property_list) do
+          hashed_property_list | hashed_head.absent? >> style_property
         end
+
+        # After a `#` the declaration carries at most one `;`. mmdc
+        # takes `fill:#f9f;stroke:#333` and `fill:#f9f;B`, and refuses
+        # `fill:#f9f;B;C` and `fill:#f9f;;B`, so the tail has to end at the
+        # line rather than hand a second `;` back as a separator.
+        rule(:hashed_property_list) do
+          hashed_head >> declaration_char.repeat >>
+            (semicolon >> space? >> hashed_tail | semicolon.absent?)
+        end
+
+        # The `#` has to arrive before the first `;` for the swallow to
+        # start: mmdc reads `style A fill:red;stroke:#333` as a style plus a
+        # node, because the `;` comes first.
+        rule(:hashed_head) do
+          (hash.absent? >> declaration_char).repeat >> hash
+        end
+
+        # What may follow that one `;` is a style component, not a node and
+        # not an edge, so it stops at anything structural.
+        rule(:hashed_tail) do
+          (structural_token.absent? >> declaration_char).repeat >>
+            space? >> (comment.maybe >> newline | eof).present?
+        end
+
+        # What mermaid keeps for shapes and edges. It is refused wherever
+        # mermaid expects a bare word — in a style declaration after a `#`
+        # and in a callback name alike.
+        rule(:structural_token) { compound_token | structural_char }
+
+        # Some of what mermaid reserves is longer than one character, and
+        # every character in it is legal on its own. Measured against mmdc
+        # 11.12.0 in a style tail and in a callback name alike: `B-C`,
+        # `B.C` and `B::C` are ordinary text in both, and `B--C`, `B-.C`
+        # and `B:::C` are errors in both. Checking one character at a time
+        # misses all three.
+        rule(:compound_token) { str(':::') | str('--') | str('-.') }
+
+        # The single-character half of the set. Measured one character at
+        # a time against mmdc: every other printable ASCII character is
+        # fine in both places.
+        rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
+
+        rule(:declaration_char) do
+          line_end.absent? >> semicolon.absent? >> comma.absent? >> any
+        end
+
+        # Permissive, exactly as before: mermaid takes `style A red`,
+        # `style A fill:` and `style A fill :red`, and requiring
+        # `name:value` here rejected all three. One character minimum
+        # though — mmdc refuses `style A` with nothing after it.
+        #
+        # Without a hash the `;` always ends the statement, so a second
+        # declaration is left to be parsed as one. mermaid draws
+        # `style A fill:red;stroke:blue` as a style plus a node called
+        # `stroke:blue`; a node id here takes no colon, so we refuse the
+        # line rather than draw a diagram one node short.
+        rule(:style_property) { declaration_char.repeat(1) }
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
           str('classDef').as(:classdef_keyword) >> space >>
             identifier.as(:class_name) >>
-            (space >> style_property).repeat(1).as(:class_props) >>
-            line_end
+            (space >> style_property_list).as(:class_props) >>
+            statement_end
         end
 
         # Class assignment: class nodeId className
         rule(:class_assignment_statement) do
           str('class').as(:class_keyword) >> space >>
-            node_id.as(:class_target) >> space >>
+            reserved_keyword.absent? >> node_id.as(:class_target) >> space >>
             identifier.as(:class_name) >>
-            line_end
+            statement_end
         end
 
         # Click: click nodeId href (may not fully implement, just parse)
         rule(:click_statement) do
           str('click').as(:click_keyword) >> space >>
             node_id.as(:click_target) >>
-            (space >> (line_end.absent? >> any).repeat(1)).maybe.as(:click_action) >>
-            line_end
+            (space >> click_action.as(:click_action)) >>
+            statement_end
         end
+
+        # An action is required — mmdc rejects a bare `click A`. mermaid
+        # takes exactly four shapes here, and anything else is an error, so
+        # the action is spelled out rather than scanned to the end of the
+        # line. An open-ended scan drew a node from the junk after a good
+        # action: `click A "u" nope;B` and `click A "u");B` both left a
+        # node B behind, and mmdc refuses both sources.
+        #
+        # Every gap between these tokens is ONE space or ONE tab. mermaid
+        # counts the characters: `click A href  "u"`, `"u"  "tip"`,
+        # `"u"  _blank` and `href "u"` with two tabs are all errors. Only
+        # inside a `call` is whitespace free-form.
+        rule(:click_action) do
+          callback_action | href_action | link_action | callback_name_action
+        end
+
+        # `click A call cb(foo;bar)` — the semicolon belongs to the callback
+        # argument list, so the parens are only special after `call`.
+        #
+        # The name runs to the opening paren, dots and semicolons included:
+        # mmdc reads `call cb;B()` as one callback named `cb;B`, and takes
+        # `call ns.cb()` and any run of spaces after `call`.
+        #
+        # Only a quoted tooltip may trail the parens. mmdc refuses
+        # `call cb() _blank` and `call cb() nope`, which the old open-ended
+        # tail accepted.
+        rule(:callback_action) do
+          call_opener >> callback_name >>
+            callback_gap? >> lparen >>
+            (rparen.absent? >> any).repeat >> rparen >>
+            (space >> quoted_run).maybe
+        end
+
+        # Once `call` has opened a callback the parens are compulsory: mmdc
+        # exits 1 on `click A call cb`. Nothing else can take that line —
+        # `bare_token` refuses a reserved word, and `call` before a space
+        # is one.
+        rule(:call_opener) { str('call') >> callback_gap }
+
+        # mermaid stops caring about line structure inside a callback, so
+        # whitespace and comments are ignorable after `call` and again
+        # before the `(`. mmdc renders all four of `call cb()`,
+        # `call` nl `cb()`, `call cb` nl `()` and `call cb` nl `%% c` nl
+        # `()`. Spaces alone left a stray `cb` node on the following line.
+        rule(:callback_gap) { (space | newline | comment).repeat(1) }
+        rule(:callback_gap?) { callback_gap.maybe }
+
+        # The name still stops at the end of its line. mermaid keeps reading
+        # past it — `call cb` nl `B --> C` nl `D()` swallows the whole edge
+        # and draws neither B nor C — and following it there would let a
+        # callback eat statements we can still draw.
+        rule(:callback_name) do
+          (lparen.absent? >> line_end.absent? >> any).repeat(1)
+        end
+
+        # `href` takes a quoted url, then at most a quoted tooltip and a
+        # link target, in that order. mmdc refuses `href` on its own,
+        # `href cb`, `href "u" nope` and a third quoted run.
+        rule(:href_action) { str('href') >> space >> quoted_run >> link_tail }
+
+        # The same shape without the keyword: `click A "u" "tip" _blank`.
+        rule(:link_action) { quoted_run >> link_tail }
+
+        # A quoted tooltip then a link target, both optional and in that
+        # order. mmdc refuses `"u" _blank "tip"` and a third quoted run.
+        rule(:link_tail) do
+          (space >> quoted_run).maybe >> (space >> link_target).maybe
+        end
+
+        # A bare token is a callback name, and only a quoted tooltip may
+        # follow it. mmdc draws `click A clickByFlow "Add a div"` and
+        # `click A http://x`, and refuses `click A cb _blank` and
+        # `click A my callback`.
+        rule(:callback_name_action) do
+          bare_token >> (space >> quoted_run).maybe
+        end
+
+        # A bare token runs to the first space, `;` or structural token,
+        # so `click A cb()` and `click A cb--x` are errors and
+        # `click A http://x;B` draws both nodes. A quote only opens a url
+        # when it comes first — mmdc draws `click A cb"x`. A keyword is
+        # not a callback name either: mmdc refuses `click A href`,
+        # `click A end` and `click A _blank`, and takes `click A callback`
+        # and `click A clickByFlow`.
+        rule(:bare_token) do
+          reserved_keyword.absent? >> str('"').absent? >>
+            token_char >> token_char.repeat
+        end
+
+        rule(:token_char) do
+          space.absent? >> line_end.absent? >> semicolon.absent? >>
+            structural_token.absent? >> any
+        end
+
+        # Never empty. mmdc refuses `click A ""` and every empty tooltip,
+        # and takes `click A " "`.
+        rule(:quoted_run) do
+          str('"') >> (str('"').absent? >> any).repeat(1) >> str('"')
+        end
+
+        # A statement keyword is not a node id. Without this a malformed
+        # directive fell through to the node rules: `click ;B` produced
+        # nodes `click` and `B`, and mmdc rejects the whole source.
+        rule(:reserved_keyword) do
+          spaced_keyword | separable_keyword
+        end
+
+        # `click`, `href` and `call` are directive words wherever a space, a
+        # newline or the end of input follows, and ordinary node ids before a
+        # `;` or a shape. mmdc refuses `href --- B`, `call --- B` and a bare
+        # `href`, and draws `href;B` and `href[x]` as nodes — so the
+        # reservation hangs off the boundary, not the word. Reserving only
+        # `click` let the other two through.
+        #
+        # NOT `line_end`: it swallows a trailing semicolon, so `click;`
+        # read as a directive and `graph TD;click;B` was refused. mmdc
+        # draws that as two nodes.
+        rule(:spaced_keyword) do
+          (str('click') | str('href') | str('call')) >>
+            (space | newline | eof).present?
+        end
+
+        # The boundary is a word boundary, not a space or a separator:
+        # mmdc refuses `style[x]` and `_blank-->Z`, which the narrower test
+        # let through.
+        #
+        # Longest first — Parslet does not backtrack into an alternative
+        # that already matched, so `class` ahead of `classDef` would take
+        # five characters and then fail the boundary.
+        rule(:separable_keyword) do
+          ((str('interpolate') | str('flowchart') | str('linkStyle') |
+            str('subgraph') | str('classDef') | str('style') |
+            str('graph') | str('class') | str('end')) >>
+            word_boundary) | link_target
+        end
+
+        # mermaid's link targets. They close a click action and they are
+        # never node ids, so both places name them here.
+        rule(:link_target) do
+          (str('_parent') | str('_blank') | str('_self') | str('_top')) >>
+            word_boundary
+        end
+
+        rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
 
         # Node with optional shape and edges
         rule(:node_edge_statement) do
-          node_with_shape.as(:node) >>
+          reserved_keyword.absent? >>
+            node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
-            line_end
+            loose_statement_end
         end
 
         # Standalone node (just an identifier)
         rule(:standalone_node) do
-          node_id.as(:node_id) >> line_end
+          reserved_keyword.absent? >> node_id.as(:node_id) >>
+            loose_statement_end
         end
 
         # Node with optional shape definition
@@ -350,7 +620,7 @@ module Sirena
             ws? >>
             edge_label.maybe.as(:label) >>
             ws? >>
-            node_with_shape.as(:target)
+            reserved_keyword.absent? >> node_with_shape.as(:target)
         end
 
         # Arrow types
@@ -383,14 +653,25 @@ module Sirena
           pipe >> (pipe.absent? >> any).repeat(1) >> pipe
         end
 
-        # Node identifier
-        rule(:node_id) do
-          quoted_string | identifier
-        end
+        # A node id is a bare word. A quoted run was never one: mmdc
+        # refuses `"A" --> B`, `A --> "B"`, `"A"[x]`, `style "A" fill:red`
+        # and a quoted run standing alone on a line. All it ever produced
+        # here was a node whose id was a stringified parse tree —
+        # `{string: "tip"@12}` — so the alternative drew garbage where
+        # mermaid draws nothing.
+        rule(:node_id) { identifier }
 
         # Line terminator
+        # The optional semicolon here may not be followed by a comment on
+        # the same line, matching the separator rule and mmdc: `A;%% c` is
+        # rejected while `A;` then a `%% c` line is ordinary.
+        #
+        # Only the semicolon form is faithful. mmdc also rejects `A --> B %% c`
+        # with no separator, and the `comment.maybe` arm below still takes it —
+        # that arm predates this rule and tightening it is its own change.
         rule(:line_end) do
-          semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+          (semicolon >> space? >> str('%%').absent?).maybe >>
+            space? >> (comment.maybe >> newline | eof)
         end
       end
     end

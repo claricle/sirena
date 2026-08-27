@@ -89,27 +89,27 @@ RSpec.describe Sirena::Renderer::Radar do
 
       it "includes grid circles" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         # Grid circles + data points
         expect(circles.length).to be >= layout[:grid_circles].length
       end
 
       it "includes axis lines" do
         svg = renderer.render(layout)
-        lines = svg.children.select { |e| e.is_a?(Sirena::Svg::Line) }
+        lines = svg.children.grep(Sirena::Svg::Line)
         expect(lines.length).to eq(layout[:axes].length)
       end
 
       it "includes axis labels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         # Axis labels + potentially legend labels
         expect(texts.length).to be >= layout[:axes].length
       end
 
       it "includes data polygons" do
         svg = renderer.render(layout)
-        polygons = svg.children.select { |e| e.is_a?(Sirena::Svg::Polygon) }
+        polygons = svg.children.grep(Sirena::Svg::Polygon)
         expect(polygons.length).to eq(layout[:curves].length)
       end
     end
@@ -178,20 +178,20 @@ RSpec.describe Sirena::Renderer::Radar do
 
       it "renders multiple data polygons" do
         svg = renderer.render(layout)
-        polygons = svg.children.select { |e| e.is_a?(Sirena::Svg::Polygon) }
+        polygons = svg.children.grep(Sirena::Svg::Polygon)
         expect(polygons.length).to eq(2)
       end
 
       it "applies different colors to different datasets" do
         svg = renderer.render(layout)
-        polygons = svg.children.select { |e| e.is_a?(Sirena::Svg::Polygon) }
+        polygons = svg.children.grep(Sirena::Svg::Polygon)
         colors = polygons.map(&:stroke).uniq
         expect(colors.length).to eq(2)
       end
 
       it "includes legend for multiple datasets" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         # Should include axis labels + legend labels
         legend_texts = texts.select { |t| t.content == "Team A" || t.content == "Team B" }
         expect(legend_texts.length).to eq(2)
@@ -265,7 +265,7 @@ RSpec.describe Sirena::Renderer::Radar do
 
       it "does not render legend when disabled" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         legend_texts = texts.select { |t| t.content == "Dataset 1" }
         expect(legend_texts.length).to eq(0)
       end

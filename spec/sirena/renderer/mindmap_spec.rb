@@ -103,13 +103,13 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
       it "includes text labels for nodes" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         expect(texts.length).to eq(layout[:nodes].length)
       end
 
       it "includes connection paths" do
         svg = renderer.render(layout)
-        paths = svg.children.select { |e| e.is_a?(Sirena::Svg::Path) }
+        paths = svg.children.grep(Sirena::Svg::Path)
         expect(paths.length).to eq(layout[:connections].length)
       end
     end
@@ -164,19 +164,19 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
       it "renders circle nodes" do
         svg = renderer.render(layout)
-        circles = svg.children.select { |e| e.is_a?(Sirena::Svg::Circle) }
+        circles = svg.children.grep(Sirena::Svg::Circle)
         expect(circles.length).to be >= 1
       end
 
       it "renders square nodes" do
         svg = renderer.render(layout)
-        rects = svg.children.select { |e| e.is_a?(Sirena::Svg::Rect) }
+        rects = svg.children.grep(Sirena::Svg::Rect)
         expect(rects.length).to be >= 1
       end
 
       it "renders hexagon nodes" do
         svg = renderer.render(layout)
-        polygons = svg.children.select { |e| e.is_a?(Sirena::Svg::Polygon) }
+        polygons = svg.children.grep(Sirena::Svg::Polygon)
         expect(polygons.length).to be >= 1
       end
     end
@@ -219,13 +219,13 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
       it "renders cloud shapes using paths" do
         svg = renderer.render(layout)
-        paths = svg.children.select { |e| e.is_a?(Sirena::Svg::Path) }
+        paths = svg.children.grep(Sirena::Svg::Path)
         expect(paths.length).to be >= 1
       end
 
       it "renders bang shapes using paths" do
         svg = renderer.render(layout)
-        paths = svg.children.select { |e| e.is_a?(Sirena::Svg::Path) }
+        paths = svg.children.grep(Sirena::Svg::Path)
         expect(paths.length).to be >= 1
       end
     end
@@ -311,7 +311,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
 
       it "renders all levels" do
         svg = renderer.render(layout)
-        texts = svg.children.select { |e| e.is_a?(Sirena::Svg::Text) }
+        texts = svg.children.grep(Sirena::Svg::Text)
         expect(texts.length).to eq(4)
       end
     end

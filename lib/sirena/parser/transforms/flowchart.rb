@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'parslet'
+require_relative '../base'
 require_relative '../../diagram/flowchart'
 
 module Sirena
@@ -40,12 +41,24 @@ module Sirena
           '==' => 'thick_arrow'
         }.freeze
 
+        # mermaid resolves the alias lexemes to a direction word before
+        # anything reads one, so `graph <` lays out exactly like `graph RL`.
+        # Measured against mmdc 11.12.0: `<` RL, `>` LR, `^` BT, `v` and
+        # `BR` TB. Keeping the raw lexeme sent the three glyphs down the
+        # default branch in the graph transform and drew them top-to-bottom.
+        DIRECTION_ALIASES = {
+          '<' => 'RL',
+          '>' => 'LR',
+          '^' => 'BT',
+          'v' => 'TB',
+          'BR' => 'TB'
+        }.freeze
+
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
 
         # Node ID
         rule(node_id: simple(:id)) { id.to_s }
-        rule(node_id: { string: simple(:s) }) { s.to_s }
 
         # Shape with label
         rule(
@@ -173,7 +186,7 @@ module Sirena
           header = tree.first
           if header && header.is_a?(Hash) && header[:direction]
             dir_value = header[:direction][:dir_value] || header[:direction]
-            diagram.direction = dir_value.to_s if dir_value
+            diagram.direction = canonical_direction(dir_value.to_s) if dir_value
           end
 
           # Process statements (remaining elements)
@@ -183,6 +196,11 @@ module Sirena
 
           diagram
         end
+
+        def self.canonical_direction(value)
+          DIRECTION_ALIASES.fetch(value, value)
+        end
+        private_class_method :canonical_direction
 
         def self.process_statements(diagram, statements)
           statements.each do |stmt|
@@ -196,13 +214,17 @@ module Sirena
               node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
             elsif stmt[:subgraph_keyword]
-              # Subgraph (acknowledge but don't fully implement for now)
-              # Process subgraph statements recursively
-              if stmt[:subgraph_statements]
-                sub_stmts = stmt[:subgraph_statements]
-                sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
-                process_statements(diagram, sub_stmts)
-              end
+              # The diagram model has no subgraph: no container, no title,
+              # no cluster in any renderer. Flattening the body dropped
+              # both and drew loose nodes where mermaid draws a cluster —
+              # main refused the source outright, so accepting it here
+              # would replace a refusal with a wrong picture.
+              #
+              # Guarded on the parsed marker, not the source text: a label
+              # or an id containing "subgraph" never reaches this branch.
+              raise Parser::ParseError,
+                    'Flowchart subgraphs are not supported by the ' \
+                    'diagram model.'
             elsif stmt[:style_keyword] || stmt[:classdef_keyword] ||
                   stmt[:class_keyword] || stmt[:click_keyword]
               # Styling directives (acknowledge but don't fully implement)

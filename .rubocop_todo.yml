@@ -233,17 +233,6 @@ Lint/RedundantDirGlobSort:
     - 'old-docs/testing/generate_remaining_svgs.rb'
     - 'old-docs/testing/generate_svgs.rb'
 
-# Offense count: 6
-# This cop supports safe autocorrection (--autocorrect).
-Lint/ScriptPermission:
-  Exclude:
-    - 'old-docs/testing/create_placeholder_svgs.rb'
-    - 'old-docs/testing/debug_full_load.rb'
-    - 'old-docs/testing/debug_load.rb'
-    - 'old-docs/testing/generate_remaining_svgs.rb'
-    - 'old-docs/testing/generate_svgs.rb'
-    - 'scripts/rename_to_sirena.rb'
-
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle.
@@ -502,12 +491,11 @@ Style/ConditionalAssignment:
     - 'lib/sirena/parser/transforms/git_graph.rb'
     - 'lib/sirena/parser/transforms/requirement.rb'
 
-# Offense count: 2
+# Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
 Style/ExpandPathArguments:
   Exclude:
     - 'scripts/extract_mermaid_tests.rb'
-    - 'scripts/rename_to_sirena.rb'
 
 # Offense count: 14
 # This cop supports safe autocorrection (--autocorrect).
@@ -675,7 +663,7 @@ Style/SoleNestedConditional:
   Exclude:
     - 'lib/sirena/transform/gantt.rb'
 
-# Offense count: 14
+# Offense count: 9
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Mode.
 Style/StringConcatenation:
@@ -689,7 +677,6 @@ Style/StringConcatenation:
     - 'lib/tasks/examples.rake'
     - 'lib/tasks/generate_mermaid_fixtures.rake'
     - 'scripts/extract_mermaid_tests.rb'
-    - 'scripts/rename_to_sirena.rb'
 
 # Offense count: 3763
 # This cop supports safe autocorrection (--autocorrect).
