@@ -97,7 +97,10 @@ of 24, not 23.
    must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:27`).
    `types` is `@handlers.keys` — only the rows that exist. Without
    parity a type missing from the registry is invisible, and the spec
-   goes green over the 23 it can see.
+   goes green over the ones it can see.
+
+   Both sets are the same 24 today — measured 2026-08-27. So this
+   assertion lands green and its whole job is to stay that way.
 
    The last assertion needs input, so add one canonical fixture per type
    under `spec/fixtures/contract/<type>.mmd` — the smallest source that

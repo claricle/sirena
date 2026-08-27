@@ -134,7 +134,11 @@ alone will not find it. Move it upstream with the rest.
 The alternative — Scene carries an origin, the renderer applies it —
 fails in two directions. Miss one draw site and connected geometry pulls
 apart. Apply it twice and content slides into its own padding.
-`git_graph` has several independent offset sites, so both are reachable.
+`git_graph` applies `@offset_x`/`@offset_y` at 16 separate sites, so
+both are reachable.
+
+Measured 2026-08-27: `grep -rn "@[a-z_]*offset\|padding = "
+lib/sirena/renderer/` returns 44 lines across those four files.
 
 ## Scene classes are lutaml, with one restriction
 
@@ -186,8 +190,10 @@ attribute, two of them dead (item 02).
 
 - [ ] no renderer indexes a Hash (`[:symbol]`, `.dig`) on its input
 - [ ] no renderer performs arithmetic on coordinates or angles
-- [ ] no renderer adds a framing constant to a coordinate;
-      `grep -rn "@offset_\|padding = " lib/sirena/renderer/` returns nothing
+- [ ] no renderer holds positional state between calls;
+      `grep -rn "@[a-z_]*offset\|padding = " lib/sirena/renderer/`
+      returns nothing. The second half of that pattern is what catches
+      `packet`'s `@title_offset` — an `@offset_` grep alone misses it
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives

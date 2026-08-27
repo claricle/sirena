@@ -28,9 +28,10 @@ Every abstract contract gets a spec that iterates
 `DiagramRegistry.types` and asserts it. If that spec is annoying to
 write, the contract is wrong — fix the contract, don't skip the spec.
 
-The registry only knows the rows that exist, so the same spec asserts
-that its type set matches the detector's. Without that, a type missing
-from the registry is a type the contract never sees.
+The registry only knows the rows that exist, so while a second type
+list exists the same spec asserts the two sets match. Without that, a
+type missing from the registry is a type the contract never sees. Item
+06 collapses the two lists into one and the assertion goes with them.
 
 ## R3 — Registration is data, not code
 
