@@ -161,6 +161,9 @@ module Sirena
 
       private
 
+      # May be non-finite when the font size is: #baseline_y is the one place
+      # that can fall back, so the check lives there rather than here too.
+      #
       # @return [Float] the baseline offset in user units
       def baseline_shift
         return 0.0 if Escaping.blank?(dominant_baseline)
@@ -168,10 +171,7 @@ module Sirena
         ems = BASELINE_SHIFTS.fetch(dominant_baseline.to_s.strip.downcase, 0.0)
         return 0.0 if ems.zero?
 
-        shift = ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
-        return 0.0 unless shift.finite?
-
-        shift
+        ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
       end
     end
   end
