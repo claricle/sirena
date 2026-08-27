@@ -1,36 +1,36 @@
 <svg
- width="667.0"
+ width="702.0"
  height="364.0"
- viewBox="0 0 667.0 364.0"
+ viewBox="0 0 702.0 364.0"
  version="1.2"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="edge-A_to_B">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 68.5 67.0 L 318.5 67.0"/>
-<polygon fill="#000000" points="318.5,67.0 310.5,71.0 310.5,63.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 86.0 67.0 L 336.0 67.0"/>
+<polygon fill="#000000" points="336.0,67.0 328.0,71.0 328.0,63.0"/>
 </g>
 <g id="edge-B_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 318.5 67.0 L 568.5 67.0"/>
-<polygon fill="#000000" points="568.5,67.0 560.5,71.0 560.5,63.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 336.0 67.0 L 586.0 67.0"/>
+<polygon fill="#000000" points="586.0,67.0 578.0,71.0 578.0,63.0"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 568.5 67.0 L 68.5 267.0"/>
-<polygon fill="#000000" points="68.5,267.0 74.4423,260.315 77.4134,267.7428"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 586.0 67.0 L 86.0 267.0"/>
+<polygon fill="#000000" points="86.0,267.0 91.9423,260.315 94.9134,267.7428"/>
 </g>
 <g id="node-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="37.0" height="34.0"/>
-  <text fill="#000000" x="68.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">A</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="72.0" height="34.0"/>
+  <text fill="#000000" x="86.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Node A</text>
 </g>
 <g id="node-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="37.0" height="34.0"/>
-  <text fill="#000000" x="318.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">B</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="72.0" height="34.0"/>
+  <text fill="#000000" x="336.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Node B</text>
 </g>
 <g id="node-C">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="37.0" height="34.0"/>
-  <text fill="#000000" x="568.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">C</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="72.0" height="34.0"/>
+  <text fill="#000000" x="586.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Node C</text>
 </g>
 <g id="node-D">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="37.0" height="34.0"/>
-  <text fill="#000000" x="68.5" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="72.0" height="34.0"/>
+  <text fill="#000000" x="86.0" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Node D</text>
 </g>
 </svg>
