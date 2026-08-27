@@ -161,6 +161,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(points.last.first).to be_within(0.05).of(node_span(xml, "B").first)
     end
 
+    # A loop's corners are the coordinates that land on a long decimal:
+    # a depth of 0.45 of the width, off an edge that already carries one.
+    # This node drew `L 172.3 48.275000000000006` before the corners were
+    # rounded with everything else on the path.
+    it "writes every path coordinate to one decimal" do
+      xml = Sirena.render("flowchart LR\n  A[abcdefghijk] --> A\n")
+      numbers = xml.scan(/ d="([^"]*)"/).flatten
+        .flat_map { |d| d.scan(/-?[\d.]+/) }
+      decimals = numbers.filter_map { |n| n.split(".")[1]&.length }
+
+      expect(numbers.size).to be >= 4
+      expect(decimals.max).to eq(1)
+    end
+
     # The line half: weight and pattern. Every type used to reach the
     # same solid stroke. The theme already names both — the default one
     # asks for a 2.0 line, a 3.0 thick one and a "2,2" dot — and a
@@ -379,7 +393,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     # An arrow is the head that reads the direction, so it is the one that
     # reaches the zero-span guard. A circle never calls it.
-    it "draws an arrow for nodes sitting on top of each other" do
+    it "draws an arrow head for nodes sitting on top of each other" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
@@ -388,7 +402,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       }
       xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
 
-      expect(xml).to include("<polygon")
+      expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<polygon")
       expect(xml).not_to include("NaN")
     end
 
@@ -435,7 +449,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     # Two nodes at one position leave the head no direction to point in.
     # Backing it off its own reach must not divide by that nothing.
-    it "draws a head for nodes sitting on top of each other" do
+    it "draws a circle head for nodes sitting on top of each other" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
@@ -444,7 +458,29 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       }
       xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
 
-      expect(xml).to include("<circle")
+      expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<circle")
+      expect(xml).not_to include("NaN")
+    end
+
+    # The cross is the third head, and the only one that turns its arms to
+    # the line. With no direction to turn to it falls back to horizontal —
+    # take that fallback out and the arms collapse to nothing, which is why
+    # this measures their length rather than their presence.
+    it "draws a cross head for nodes sitting on top of each other" do
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
+                   { id: "B", x: 0, y: 0, width: 40, height: 20 }],
+        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                  metadata: { arrow_type: "cross" } }]
+      }
+      xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
+      arms = xml[%r{<g id="edge-A_to_B".*?</g>}m]
+        .scan(/<line[^>]*x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"/)
+        .map { |c| c.map(&:to_f) }
+
+      expect(arms.size).to eq(2)
+      expect(arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) })
+        .to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
       expect(xml).not_to include("NaN")
     end
 
@@ -459,7 +495,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       }
       xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
 
-      expect(xml).to include("<text")
+      expect(xml[%r{<g id="edge-A_to_A".*?</g>}m]).to include("<text")
       expect(xml).not_to include("NaN")
     end
 
@@ -545,7 +581,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       geometry = renderer.send(:head_geometry, bends, source, target, :target)
 
       # The path arrives straight down, so the tip sits on B's top edge
-      # and the direction it came from is directly above it.
+      # and the direction it came from is directly above it. `tip_x` is
+      # the assertion that means something: aiming along the SPAN puts
+      # the tip at 210, and `tip_y` is 200 either way.
+      expect(geometry[:tip_x]).to be_within(0.05).of(220)
       expect(geometry[:tip_y]).to be_within(0.5).of(200)
       expect(geometry[:from_x]).to eq(220)
       expect(geometry[:from_y]).to eq(0)
@@ -626,6 +665,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       xml = Sirena.render("flowchart TD\n  A --> A\n")
       corners = path_points(xml).select { |_x, y| y > node_bottom(xml) }
 
+      expect(corners.size).to eq(2)
       expect(corners.map(&:first).uniq.size).to eq(2)
     end
 
@@ -637,6 +677,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to all(be_within(0.05).of(node_bottom(xml)))
     end
 
+    # `sections` with `bendPoints` is the shape a laid-out graph would
+    # arrive in. Nothing produces it today — the fallback grid writes no
+    # `sections` at all, and elkrb is declared but not wired — so this
+    # fixture stands in for that layout rather than reproducing one.
     it "keeps supplied bends for a self link" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
@@ -707,7 +751,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to all(be_within(0.05).of(width * 0.175))
     end
 
-    # 359 wide here, so the ratio alone would span 62.8. Sirena pins it at 50.
+    # 296 wide here, so the ratio alone would reach 51.8 either side.
+    # Sirena pins it at 50.
     it "keeps a wide node's loop 50 either side of centre" do
       xml = Sirena.render(
         "flowchart TD\n  A --> A[a very long label indeed goes here now]\n"
@@ -791,8 +836,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       height = diamond.map(&:last).max - diamond.map(&:last).min
       depth = path_points(xml).map(&:last).max - diamond.map(&:last).max
 
+      # Every corner is written to one decimal, so the measured depth
+      # carries up to 0.05 of quantisation on its own — it lands on 21.2
+      # against a true 21.15. The window has to clear that; the ratio it
+      # is guarding is 0.47 away from its nearest neighbour here.
       expect(width).to be < height
-      expect(depth).to be_within(0.05).of(0.45 * width)
+      expect(depth).to be_within(0.1).of(0.45 * width)
     end
 
     it "measures a loop's depth from a wide node's height" do
@@ -1000,8 +1049,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # An inline class is a name that is still growing: mmdc reads the
     # `.` into the class name and then refuses what is left. A shape
     # before the class does not close it — mmdc refuses `A[x]:::c.->B`
-    # for the same reason it refuses `A:::c.->B`.
-    ["A:::c.->B", "A[x]:::c.->B"].each do |source|
+    # for the same reason it refuses `A:::c.->B`. `A[x]:::c.-B` is the
+    # near-side half of the same pair, named by the grammar and pinned
+    # here so a class that started closing names cannot pass unseen.
+    ["A:::c.->B", "A[x]:::c.->B", "A[x]:::c.-B"].each do |source|
       it "still wants a gap after the inline class of #{source}" do
         expect { parse(source) }.to raise_error(Sirena::Parser::ParseError)
       end

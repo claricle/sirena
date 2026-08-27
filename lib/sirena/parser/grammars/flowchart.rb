@@ -484,6 +484,9 @@ module Sirena
         # the tree has one shape instead of one per combination. Parslet
         # omits a `.maybe` that wraps its own `.as`, which is why the
         # transform previously needed a rule per combination.
+        # The `:shape` slot is nil either way: `dot_absent` is a
+        # zero-width lookahead and captures nothing. It only exists to
+        # refuse the flush dot a bare name would otherwise swallow.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
             ((ws? >> node_shape).as(:shape) | dot_absent.as(:shape)) >>
@@ -496,9 +499,9 @@ module Sirena
         # `A@{ shape: rect }.->B`. A bare name is still growing, and so is
         # the class name of `A:::c` — each takes a `.` in mermaid, so mmdc
         # reads the dot of `A.-B` and of `A[x]:::c.-B` as name text and
-        # refuses `A.->B` and `A[x]:::c.->B` outright.
+        # refuses `A.->B`, `A:::c.->B` and `A[x]:::c.->B` outright.
         #
-        # Sirena's own names take no dot, so it refuses those four rather
+        # Sirena's own names take no dot, so it refuses all five rather
         # than naming a node or a class after one. Refusing is what it did
         # before; reading a link there would not be.
         rule(:dot_absent) { str('.').absent? }
@@ -702,6 +705,8 @@ module Sirena
         #
         # `->` and `==` are deliberately absent: sirena accepted both and
         # mermaid rejects them.
+        # `~` never opens a visible link, so this alternation is
+        # mutually exclusive and its order is free.
         rule(:arrow) do
           (invisible_link | visible_link).as(:token)
         end
@@ -727,6 +732,11 @@ module Sirena
         rule(:link_end) { match['>xo'] }
 
         rule(:headed_link) { link_body >> link_end }
+
+        # The three bodies part at their second character — `--`, `==`,
+        # and a dot the other two never carry — so this alternation is
+        # mutually exclusive and its order is free. Only the one above
+        # is load-bearing.
         rule(:link_body) { solid_body | thick_body | dotted_body }
 
         rule(:solid_body) { str('--') >> str('-').repeat }
@@ -741,10 +751,9 @@ module Sirena
         # mmdc draws `---` and `===` and refuses `--` and `==`. A dotted
         # body carries a dot already, so its own minimum — `.-` — is a
         # link on its own and it stands here unchanged.
-        rule(:long_link) do
-          (str('--') >> str('-').repeat(1)) |
-            (str('==') >> str('=').repeat(1)) | dotted_body
-        end
+        rule(:long_link) { long_solid | long_thick | dotted_body }
+        rule(:long_solid) { str('---') >> str('-').repeat }
+        rule(:long_thick) { str('===') >> str('=').repeat }
 
         # Edge label: can be in pipes |label|
         rule(:edge_label) do

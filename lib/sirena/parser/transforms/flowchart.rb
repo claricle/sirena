@@ -178,8 +178,11 @@ module Sirena
           '[\\/]' => 'trapezoid_alt'
         }.freeze
 
-        # Which marker each character draws. `<` only ever appears at the
-        # start and `>` only at the end, so one table serves both ends.
+        # Which marker each character draws. One table serves both ends
+        # because the grammar only ever puts `<` at the start and `>` at
+        # the end — see the `link_start` and `link_end` rules in
+        # `Grammars::Flowchart`, which are the sole producers of this
+        # token.
         LINK_MARKERS = {
           '>' => 'arrow', '<' => 'arrow',
           'x' => 'cross', 'o' => 'circle'
@@ -214,27 +217,26 @@ module Sirena
           tail = LINK_MARKERS[token[0]]
           matched = !head.nil? && head == tail
 
-          "#{link_weight(token, matched)}#{link_ends(head, matched)}"
+          "#{link_weight(token, tail, matched)}#{link_ends(head, matched)}"
         end
+        private_class_method :link_type
 
         def self.link_ends(head, matched)
           return head || 'line' unless matched
 
           BOTH_ENDS.fetch(head, "#{head}_both")
         end
-
-        def self.link_weight(token, matched)
-          return 'dotted_' if token.include?('.')
-          return 'thick_' if token.include?('=') && matched_or_bare?(token, matched)
-
-          ''
-        end
+        private_class_method :link_ends
 
         # A thick body keeps its weight only when it carries no leading
         # marker, or a leading marker mermaid actually honours.
-        def self.matched_or_bare?(token, matched)
-          matched || LINK_MARKERS[token[0]].nil?
+        def self.link_weight(token, tail, matched)
+          return 'dotted_' if token.include?('.')
+          return 'thick_' if token.include?('=') && (matched || tail.nil?)
+
+          ''
         end
+        private_class_method :link_weight
 
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
@@ -370,13 +372,14 @@ module Sirena
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            # The capture arrives as {token: slice}. A rule keyed on
-            # `arrow:` cannot flatten it, because Parslet matches a hash
-            # only when every key matches and this one carries `label`
-            # and `target` too. A rule keyed on `token:` would flatten
-            # it, but it would flatten every `{token: ...}` in the tree —
-            # too generic a key for the link to claim — so the slice is
-            # read here instead, where the link is the only thing meant.
+            # The capture arrives as {token: slice}, and no Parslet rule
+            # unwraps it. Two reasons, in order. This class overrides
+            # `apply` (above) and never calls Parslet's, so none of the
+            # declared rules run at all. And even under Parslet's own
+            # `apply`, a rule keyed on `arrow:` could not match: Parslet
+            # matches a hash only when EVERY key matches, and the hash
+            # holding `arrow` carries `label` and `target` too. So the
+            # slice is read here, where the link is the only thing meant.
             arrow_type = edge_data[:arrow][:token].to_s
             label = edge_data[:label]
             target_data = edge_data[:target]

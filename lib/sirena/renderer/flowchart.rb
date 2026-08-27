@@ -14,6 +14,107 @@ module Sirena
     #   renderer = FlowchartRenderer.new
     #   svg = renderer.render(laid_out_graph)
     class FlowchartRenderer < Base
+      # Which outline each shape name is drawn with. One table, because
+      # the drawing and the boundary have to agree: a head landing on a
+      # circle's outline while the node is drawn as a rect points at
+      # nothing. Every other name — `subroutine`, `cylindrical`, the
+      # trapezoids — is drawn as a plain box and answers as one.
+      #
+      # `rounded` and `stadium` share an outline: both are drawn with
+      # their ends rounded the whole way, so a head aiming at one pulls
+      # in from the corners as far as a circle's does.
+      NODE_OUTLINES = {
+        'rounded' => :rounded, 'stadium' => :rounded,
+        'circle' => :circle, 'double_circle' => :circle,
+        'rhombus' => :rhombus, 'hexagon' => :hexagon
+      }.freeze
+      private_constant :NODE_OUTLINES
+
+      # mmdc falls back to these when the theme names no width or dash
+      # pattern of its own: its thick line is 3.5 times its normal one,
+      # and a dotted one is dashed 2 on, 2 off.
+      LINK_THICK_MULTIPLE = 3.5
+      LINK_DOTTED_DASHES = '2'
+      private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES
+
+      # What each link type draws at its ends, read off mmdc's own
+      # `marker-start` and `marker-end`.
+      EDGE_HEADS = { 'arrow' => :arrow, 'cross' => :cross,
+                     'circle' => :circle,
+                     'bidirectional' => :arrow }.freeze
+      private_constant :EDGE_HEADS
+
+      # Each head is mmdc's own marker, scaled the way mmdc scales it.
+      # `pointEnd` is a 0..10 viewBox drawn at markerWidth 8, so its
+      # `M 0 0 L 10 5 L 0 10 z` lands 8 long and 4 either side of the axis.
+      ARROW_LENGTH = 8.0
+      ARROW_HALF_WIDTH = 4.0
+      private_constant :ARROW_LENGTH, :ARROW_HALF_WIDTH
+
+      # The two scale differently, so each is derived from its own marker
+      # rather than from a shared factor.
+      #
+      # `circleEnd` is a radius-5 circle in a `0 0 10 10` viewBox at
+      # markerWidth 11, so it scales by 11/10 and its drawn radius is 5.5.
+      # `crossEnd` draws `M 1,1 l 9,9 M 10,1 l -9,9` in a `0 0 11 11`
+      # viewBox at markerWidth 11, so it scales by 11/11 = 1 and nothing
+      # here is multiplied. Its arms run 1..10 about a centre of 5.5,
+      # making each axis's half-run 4.5 and each drawn half-arm
+      # 4.5 * sqrt(2) long.
+      CIRCLE_HEAD_RADIUS = 5.5
+      CROSS_HEAD_HALF = 4.5
+      private_constant :CIRCLE_HEAD_RADIUS, :CROSS_HEAD_HALF
+
+      # mmdc fixes its circle stroke at 1 and its cross stroke at 2. `%g`
+      # writes those widths without a decimal. A line's stroke width comes
+      # from the theme and keeps its own formatting.
+      CIRCLE_HEAD_STROKE = 1.0
+      CROSS_HEAD_STROKE = 2.0
+      private_constant :CIRCLE_HEAD_STROKE, :CROSS_HEAD_STROKE
+
+      # mmdc puts each marker's reference point on the node boundary, so
+      # each back-off along the line is the refX-to-centre distance in
+      # that marker's own viewBox units, taken at that marker's own scale.
+      #
+      # `circleEnd` has refX 11 against a centre of 5, so (11 - 5) * 1.1
+      # = 6.6 and its painted edge stops 1.1 short of the node.
+      # `crossEnd` has refX 12 against a centre of 5.5 and scales by 1, so
+      # 12 - 5.5 = 6.5 and its nearest arm point stops 2.0 short.
+      CIRCLE_HEAD_REACH = 6.6
+      CROSS_HEAD_REACH = 6.5
+      private_constant :CIRCLE_HEAD_REACH, :CROSS_HEAD_REACH
+
+      # How far an edge label sits off the line it belongs to.
+      EDGE_LABEL_LIFT = 5.0
+      private_constant :EDGE_LABEL_LIFT
+
+      # A self loop is a two-corner polyline: it goes out past the node by
+      # DEPTH and runs SELF_LOOP_HALF_SPAN either side of centre.
+      #
+      # Only the depth has the oracle behind it, and it is measured across
+      # sizes rather than read off one node. mmdc loops 24.3 past a 69.4x54
+      # node and 45.0 past a 100x102 one — 0.45 of the shorter side both
+      # times — and 48.0 past a 108.4x366 one, where the ratio wants 48.8.
+      # So the ratio and the 48 cap are both mmdc's.
+      #
+      # The half span and its limits do NOT. mermaid draws a self loop as
+      # a bezier and this draws a polyline, so their widths are not the
+      # same measurement and no mmdc run settles one from the other. They
+      # are pinned by the specs below this file, not by the oracle.
+      # Anyone changing them should know which half is which.
+      SELF_LOOP_DEPTH = 0.45
+      SELF_LOOP_HALF_SPAN = 0.175
+      SELF_LOOP_HALF_SPAN_LIMITS = (18.0..50.0)
+      SELF_LOOP_MAX_DEPTH = 48.0
+      private_constant :SELF_LOOP_DEPTH, :SELF_LOOP_HALF_SPAN,
+                       :SELF_LOOP_HALF_SPAN_LIMITS, :SELF_LOOP_MAX_DEPTH
+
+      # Which way a self loop is thrown: the way the diagram flows. mmdc
+      # loops below for TD, right for LR, left for RL and above for BT.
+      SELF_LOOP_SIDES = { 'DOWN' => [0, 1], 'UP' => [0, -1],
+                          'RIGHT' => [1, 0], 'LEFT' => [-1, 0] }.freeze
+      private_constant :SELF_LOOP_SIDES
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
@@ -86,19 +187,12 @@ module Sirena
         width = node[:width] || 100
         height = node[:height] || 50
 
-        case shape
-        when 'rect', 'subroutine'
-          create_rectangle(x, y, width, height)
-        when 'rounded', 'stadium'
-          create_rounded_rectangle(x, y, width, height)
-        when 'circle', 'double_circle'
-          create_circle_shape(x, y, width, height)
-        when 'rhombus'
-          create_rhombus(x, y, width, height)
-        when 'hexagon'
-          create_hexagon(x, y, width, height)
-        else
-          create_rectangle(x, y, width, height)
+        case NODE_OUTLINES[shape]
+        when :rounded then create_rounded_rectangle(x, y, width, height)
+        when :circle then create_circle_shape(x, y, width, height)
+        when :rhombus then create_rhombus(x, y, width, height)
+        when :hexagon then create_hexagon(x, y, width, height)
+        else create_rectangle(x, y, width, height)
         end
       end
 
@@ -201,74 +295,6 @@ module Sirena
         end
       end
 
-      # What each link type draws, read off mmdc's own SVG. The line half
-      # is its `edge-thickness-*` and `edge-pattern-*` classes; the head
-      # half is its `marker-start` and `marker-end`.
-      LINK_THICK_MULTIPLE = 3.5
-      LINK_DOTTED_DASHES = '2'
-      EDGE_HEADS = { 'arrow' => :arrow, 'cross' => :cross,
-                     'circle' => :circle,
-                     'bidirectional' => :arrow }.freeze
-      # Each head is mmdc's own marker, scaled the way mmdc scales it.
-      # `pointEnd` is a 0..10 viewBox drawn at markerWidth 8, so its
-      # `M 0 0 L 10 5 L 0 10 z` lands 8 long and 4 either side of the axis.
-      ARROW_LENGTH = 8.0
-      ARROW_HALF_WIDTH = 4.0
-      # The two scale differently, so each is derived from its own marker
-      # rather than from a shared factor.
-      #
-      # `circleEnd` is a radius-5 circle in a `0 0 10 10` viewBox at
-      # markerWidth 11, so it scales by 11/10 and its drawn radius is 5.5.
-      # `crossEnd` draws `M 1,1 l 9,9 M 10,1 l -9,9` in a `0 0 11 11`
-      # viewBox at markerWidth 11, so it scales by 11/11 = 1 and nothing
-      # here is multiplied. Its arms run 1..10 about a centre of 5.5,
-      # making each axis's half-run 4.5 and each drawn half-arm
-      # 4.5 * sqrt(2) long.
-      CIRCLE_HEAD_RADIUS = 5.5
-      CROSS_HEAD_HALF = 4.5
-      # mmdc fixes its circle stroke at 1 and its cross stroke at 2. `%g`
-      # writes those widths without a decimal. A line's stroke width comes
-      # from the theme and keeps its own formatting.
-      CIRCLE_HEAD_STROKE = 1.0
-      CROSS_HEAD_STROKE = 2.0
-      # mmdc puts each marker's reference point on the node boundary, so
-      # each reach is the refX-to-centre distance in that marker's own
-      # viewBox units, taken at that marker's own scale.
-      #
-      # `circleEnd` has refX 11 against a centre of 5, so (11 - 5) * 1.1
-      # = 6.6 and its painted edge stops 1.1 short of the node.
-      # `crossEnd` has refX 12 against a centre of 5.5 and scales by 1, so
-      # 12 - 5.5 = 6.5 and its nearest arm point stops 2.0 short.
-      CIRCLE_HEAD_REACH = 6.6
-      CROSS_HEAD_REACH = 6.5
-
-      # Drawn with their ends rounded the whole way, so a head aiming at
-      # one pulls in from the corners as far as a circle's does.
-      STADIUM_SHAPES = %w[rounded stadium].freeze
-
-      # How far an edge label sits off the line it belongs to.
-      EDGE_LABEL_LIFT = 5.0
-
-      # Only the depth has the oracle behind it, and it is measured across
-      # sizes rather than read off one node. mmdc loops 24.3 past a 69.4x54
-      # node and 45.0 past a 100x102 one — 0.45 of the shorter side both
-      # times — and 48.0 past a 108.4x366 one, where the ratio wants 48.8.
-      # So the ratio and the 48 cap are both mmdc's.
-      #
-      # The reach and its limits do NOT. mermaid draws a self loop as a
-      # bezier and this draws a two-corner polyline, so their widths are
-      # not the same measurement and no mmdc run settles one from the
-      # other. They are pinned by the specs below this file, not by the
-      # oracle. Anyone changing them should know which half is which.
-      SELF_LOOP_DEPTH = 0.45
-      SELF_LOOP_REACH = 0.175
-      SELF_LOOP_REACH_LIMITS = (18.0..50.0)
-      SELF_LOOP_MAX_DEPTH = 48.0
-      # Which way a self loop is thrown: the way the diagram flows. mmdc
-      # loops below for TD, right for LR, left for RL and above for BT.
-      SELF_LOOP_SIDES = { 'DOWN' => [0, 1], 'UP' => [0, -1],
-                          'RIGHT' => [1, 0], 'LEFT' => [-1, 0] }.freeze
-
       def render_edge(edge, graph, svg)
         source = find_node(graph, edge[:sources]&.first)
         target = find_node(graph, edge[:targets]&.first)
@@ -314,22 +340,27 @@ module Sirena
       end
 
       def calculate_edge_path(source, target, bends)
-        # Clipped to each node's outline the way mermaid clips it, aiming
-        # along the segment that actually leaves or arrives — so the line
-        # stops exactly where its head sits. Running to the centres instead
-        # showed through a node the theme painted `none`.
-        #
-        # Rounded like the heads are: an outline crossing at an angle lands
-        # on a long decimal, and 87 of 232 sampled path coordinates carried
-        # one before this.
-        source_aim = bends.first ? bends.first.values_at(:x, :y) : node_centre(target)
-        target_aim = bends.last ? bends.last.values_at(:x, :y) : node_centre(source)
-        sx, sy = node_boundary(source, *source_aim).map { |n| n.round(1) }
-        tx, ty = node_boundary(target, *target_aim).map { |n| n.round(1) }
+        sx, sy = edge_end(bends, source, target, :source)
+        tx, ty = edge_end(bends, source, target, :target)
 
         return create_path_with_bends(sx, sy, tx, ty, bends) if bends.any?
 
         "M #{sx} #{sy} L #{tx} #{ty}"
+      end
+
+      # Clipped to the node's outline the way mermaid clips it, aiming
+      # along the segment that actually leaves or arrives — so the line
+      # stops exactly where its head sits. It reads the SAME geometry the
+      # head does, because a line and its head that disagree draw the
+      # picture this change exists to fix. Running to the centres instead
+      # showed the line through a node the theme painted `none`.
+      #
+      # Rounded like the heads are: an outline crossing at an angle lands
+      # on a long decimal, and 87 of 232 sampled path coordinates carried
+      # one before this.
+      def edge_end(bends, source, target, which)
+        head_geometry(bends, source, target, which)
+          .values_at(:tip_x, :tip_y).map { |n| n.round(1) }
       end
 
       # The graph names the direction it flows in; a graph built by hand
@@ -348,11 +379,11 @@ module Sirena
         self_loop_bends(source, side)
       end
 
-      # Where the loop sits. It reaches past the node edge by 0.45 of the
-      # node's SHORTER side, and spans 0.175 of its WIDTH either side of
-      # centre whichever way it is thrown, never narrower than 18 or wider
-      # than 50. The depth is mmdc's; the width is ours — see the note on
-      # the constants.
+      # Where the loop sits. It goes out past the node edge by 0.45 of
+      # the node's SHORTER side, and runs 0.175 of its WIDTH either side
+      # of centre whichever way it is thrown, never narrower than 18 or
+      # wider than 50. The depth is mmdc's; the half span is ours — see
+      # the note on the constants.
       #
       # The depth is capped at 48. No node the layout builds reaches it,
       # but a graph handed straight to the renderer can, so the cap is
@@ -361,22 +392,25 @@ module Sirena
         cx, cy = node_centre(node)
         width = node[:width] || 100
         height = node[:height] || 50
-        reach = (width * SELF_LOOP_REACH).clamp(SELF_LOOP_REACH_LIMITS)
+        half_span =
+          (width * SELF_LOOP_HALF_SPAN).clamp(SELF_LOOP_HALF_SPAN_LIMITS)
         depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
         out_x, out_y = side
 
         edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)
         far_x = edge_x + (out_x * depth)
         far_y = edge_y + (out_y * depth)
-        [{ x: far_x - (out_y.abs * reach), y: far_y - (out_x.abs * reach) },
-         { x: far_x + (out_y.abs * reach), y: far_y + (out_x.abs * reach) }]
+        [{ x: far_x - (out_y.abs * half_span),
+           y: far_y - (out_x.abs * half_span) },
+         { x: far_x + (out_y.abs * half_span),
+           y: far_y + (out_x.abs * half_span) }]
       end
 
       def create_path_with_bends(sx, sy, tx, ty, bend_points)
         path_parts = ["M #{sx} #{sy}"]
 
         bend_points.each do |point|
-          path_parts << "L #{point[:x]} #{point[:y]}"
+          path_parts << "L #{point[:x].round(1)} #{point[:y].round(1)}"
         end
 
         path_parts << "L #{tx} #{ty}"
@@ -475,18 +509,20 @@ module Sirena
       # a multiple of (dx, dy). The box answer is only right for a box: a
       # diamond, a circle and a hexagon all pull in from the corners a box
       # keeps, so a head coming in diagonally landed outside the shape it
-      # was pointing at. A rounded box and a stadium are drawn with their
-      # corners rounded the whole way — `rx` is half the height — so they
-      # pull in as far as any of them.
+      # was pointing at.
+      #
+      # Dispatched off NODE_OUTLINES, the same table `create_node_shape`
+      # draws from, so the outline a head lands on is the outline that
+      # was drawn.
       def boundary_scale(node, dx, dy)
         half_w = (node[:width] || 100) / 2.0
         half_h = (node[:height] || 50) / 2.0
 
-        case node.dig(:metadata, :shape)
-        when 'rhombus' then rhombus_scale(half_w, half_h, dx, dy)
-        when 'circle', 'double_circle' then circle_scale(half_w, half_h, dx, dy)
-        when 'hexagon' then hexagon_scale(half_w, half_h, dx, dy)
-        when *STADIUM_SHAPES then stadium_scale(half_w, half_h, dx, dy)
+        case NODE_OUTLINES[node.dig(:metadata, :shape)]
+        when :rhombus then rhombus_scale(half_w, half_h, dx, dy)
+        when :circle then circle_scale(half_w, half_h, dx, dy)
+        when :hexagon then hexagon_scale(half_w, half_h, dx, dy)
+        when :rounded then stadium_scale(half_w, half_h, dx, dy)
         else box_scale(half_w, half_h, dx, dy)
         end
       end
@@ -533,7 +569,7 @@ module Sirena
         straight = half_w - half_h
         return flat if (flat * dx).abs <= straight
 
-        cap_scale(straight * (dx.negative? ? -1 : 1), half_h, dx, dy)
+        cap_intersection(straight * (dx.negative? ? -1 : 1), half_h, dx, dy)
       end
 
       # SVG clamps `rx` to half the width, so a stadium no wider than it
@@ -555,7 +591,7 @@ module Sirena
       # Where the ray out of the centre meets a cap of radius `radius`
       # centred at (centre_x, 0) — the far root, so the tip lands on the
       # outside of the cap rather than the inside.
-      def cap_scale(centre_x, radius, dx, dy)
+      def cap_intersection(centre_x, radius, dx, dy)
         a = (dx * dx) + (dy * dy)
         b = dx * centre_x
         c = (centre_x * centre_x) - (radius * radius)
@@ -644,7 +680,8 @@ module Sirena
       # angle on every edge that is not axis-aligned.
       def draw_edge_cross(group, tip_x, tip_y, from_x, from_y)
         along_x, along_y = unit_towards(tip_x, tip_y, from_x, from_y)
-        # Two nodes at one point leave no direction; draw it square then.
+        # Two nodes at one point leave no direction to turn with; draw
+        # it as if the line ran horizontally into the tip.
         along_x = 1.0 if along_x.zero? && along_y.zero?
         arm_x = (along_x - along_y) * CROSS_HEAD_HALF
         arm_y = (along_y + along_x) * CROSS_HEAD_HALF
