@@ -229,9 +229,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "carries exactly the names mermaid accepts" do
       probed = File.read("scripts/probes/shape_names.txt")
       candidates = probed.split(/\s+/).reject(&:empty?).uniq
+      # The table is private, so the spec reaches it the way the gem does
+      # rather than the constant being public for the test's sake.
+      table = Sirena::Parser.const_get(:MERMAID_SHAPES)
 
-      expect(Sirena::Parser::MERMAID_SHAPES.keys.sort)
-        .to eq((candidates - rejected_names).sort)
+      expect(table.keys.sort).to eq((candidates - rejected_names).sort)
     end
   end
 
@@ -784,6 +786,55 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
         expect(node_for(source).label).to eq("hi")
       end
+    end
+
+    it "levels a version that carries a trailing comment" do
+      # mmdc draws this. Replacing the whole line dropped the comment and
+      # left the directive unlevelled, so libyaml refused version 1.3.
+      source = "graph TD\nA(keep)@{\n%YAML 1.3 # note\n---\nlabel: hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "still refuses a version the comment marker runs into" do
+      # js-yaml reads `1.3#note` as one unusable version and refuses the
+      # document. mmdc refuses it too, so levelling it would have drawn a
+      # diagram mermaid does not.
+      source = "graph TD\nA(keep)@{\n%YAML 1.3#note\n---\nlabel: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Malformed metadata/)
+    end
+
+    it "levels a directive sitting behind a comment line" do
+      # A comment is allowed to sit ahead of the directive, and mmdc draws
+      # it. Stopping the scan at the first line that is not a directive
+      # left version 1.3 in place and libyaml refused the document.
+      source = "graph TD\nA(keep)@{\n# c\n%YAML 1.3\n---\nlabel: hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "levels a directive sitting behind a blank line" do
+      source = "graph TD\nA(keep)@{\n\n%YAML 1.3\n---\nlabel: hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "leaves a %YAML line inside a value alone" do
+      # A single-quoted value carries on at column 0, so this line is
+      # ordinary text. Levelling it renamed the node: mmdc draws
+      # "one %YAML 1.3 two".
+      source = "graph TD\nA(keep)@{\nlabel: 'one\n%YAML 1.3 two'\n}\n"
+
+      expect(node_for(source).label).to eq("one %YAML 1.3 two")
+    end
+
+    it "leaves one alone even after a directive it did level" do
+      source = "graph TD\nA(keep)@{\n%YAML 1.3\n---\n" \
+               "label: 'one\n%YAML 1.1 two'\n}\n"
+
+      expect(node_for(source).label).to eq("one %YAML 1.1 two")
     end
 
     it "still refuses a major version neither parser knows" do

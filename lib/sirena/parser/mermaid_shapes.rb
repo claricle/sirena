@@ -157,5 +157,7 @@ module Sirena
       "win-pane" => "rect",
       "window-pane" => "rect",
     }.freeze
+
+    private_constant :MERMAID_SHAPES
   end
 end
