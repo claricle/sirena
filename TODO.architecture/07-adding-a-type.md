@@ -24,14 +24,23 @@ Two numbers, asserted by a spec rather than claimed:
   type (`18-typed-ir-boundary.md:103-115,137`, `TODO.foundation/12:106-109`)
   as well as an entry in `docs/ir-type-map.md`. Since item 03 turned
   the existing transforms into layouts, that mapper is a new file, so
-  the post-18 count is **at least 10** — unless item 18 assigns the
-  mapping to a file that already exists, in which case item 18 has to
-  say which.
+  the post-18 count is **9 or 10, and item 18 settles which**: a
+  separate mapper file makes 10; folding the mapping into one of the
+  eight above keeps it at 9. Any other existing file still makes 9 into
+  10, because it is a file this list does not already count.
 
-  **Item 18 owns that handoff, and it is not one line.** It updates the
-  file list above, this count, the generator, the file-count spec, the
-  onboarding page in PR 2, and the `LAYERS.md` checklist. Whoever lands
-  it should expect to touch all six.
+  **Item 18 owns that handoff, and saying so is not enough to gate
+  it.** `TODO.foundation/18` has no Do, Done or Files entry covering
+  the generator, the file-count spec, the onboarding page or
+  `LAYERS.md`, so as written it can close with the pre-IR generator
+  intact. Add to item 18's `Done when`, in these words:
+
+  > - [ ] `rake type:new[demo]` produces a type that satisfies the IR
+  >   boundary, and the file count in `07-adding-a-type.md`, its
+  >   file-count spec, `docs/adding-a-diagram-type.md` and
+  >   `LAYERS.md`'s new-type row all agree with what it generates.
+
+  That is the whole handoff, in one criterion someone has to tick.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 

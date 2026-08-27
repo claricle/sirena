@@ -2,7 +2,11 @@
 
 **Goal:** a diagram type is declared in exactly one place.
 **Size:** 1 PR. `lib/sirena.rb` goes from 328 lines to under 40.
-**Prerequisite:** item 03 (needs uniform class names).
+**Prerequisite:** items 03 and 04. Item 03 for the uniform class names
+convention lookup needs; **item 04 because this item deletes
+`Layout::Grid`**, and Grid cannot go until item 04 has converted the
+last legacy layout. Ordered the other way round, the deletion is
+destructive.
 
 ## Why
 
@@ -175,10 +179,15 @@ TYPES = {
         caller goes with the gate and the class is dead code.
 
         **This changes what item 08 replaces.** It no longer swaps out
-        `Layout::Grid` — that class is gone. It gives each graph-type
-        layout real positioning from elkrb, in place of the coordinates
-        that layout computes for itself. Same seam, named honestly:
-        the graph layouts, not one stub class
+        `Layout::Grid` — that class is gone. It gives **each
+        elkrb-eligible layout** real positioning from elkrb, in place
+        of the coordinates that layout computes for itself. Same seam,
+        named honestly: the eligible layouts, not one stub class.
+
+        Eligible is narrower than ELK-shaped. `sankey` has an ELK-shaped
+        Scene and does its own layering (`TODO.foundation/18:86-89`);
+        `block` is pre-positioned. `TODO.foundation/14`'s
+        `docs/emit-accept-survey.md` decides, not the Scene shape
       - `spec/support/legacy_layout.rb` and the transition spec
       A temporary thing with no deletion criterion is a permanent thing
 

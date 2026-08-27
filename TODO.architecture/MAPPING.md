@@ -25,7 +25,7 @@ These are unchanged and still correct. When their turn comes, read them.
 | `06`, `07` corpus burndown | `08-burndown.md` |
 | `08` lint: 109 live offences | `08-burndown.md`, step 4 |
 | `11` docs truth | starts any time — but it **cannot close before the scoreboard exists** (`TODO.foundation/11:5-8`), because its generated tables read it. So: start now, close at item 08 step 3a |
-| `14` elkrb + layout parity | `08-burndown.md`, step 3 — adopted **in full**, including the 8%/15% bar and the whole metric contract. This is the agreed fidelity target. **Note the knock-on:** 14 also owes `docs/emit-accept-survey.md`, and item 18 cannot start without it — scheduling 14 at step 3 puts that survey on item 18's critical path |
+| `14` elkrb + layout parity | `08-burndown.md`, step 3 — adopted **in full**, including the 8%/15% bar and the whole metric contract. This is the agreed fidelity target. **One of its open choices is now made:** 14 asks whether the grid survives as an opt-in; item 06 deletes `Layout::Grid` instead, so the answer on record is "removed". **Note the knock-on:** 14 also owes `docs/emit-accept-survey.md`, and item 18 cannot start without it — scheduling 14 at step 3 puts that survey on item 18's critical path |
 | `15` docs site build | independent |
 | `17` release + versioning | independent |
 | `01` lutaml 0.8 migration | appears already landed — gemspec is `~> 0.8.0` as of commit 2702a09 |
@@ -38,7 +38,7 @@ These are unchanged and still correct. When their turn comes, read them.
 |---|---|---|
 | `02` corpus oracle + scoreboard | `01-safety-net.md` part B **now**, `08-burndown.md` step 3a **later** | split by time, not dropped, and **not relocated**. `scoreboard/corpus.json` is the scoreboard's first column, shipped early; it answers "did I break something" for items 01-07. The other columns, the floors and the CI diff arrive at item 08 step 3a, along with the hermetic toolchain pin and reference provenance, which geometry parity work requires |
 | `10` notation registry | `06-registry-as-data.md` | a data table and convention-based lookup, instead of a notation plugin system with external discovery. Same seam, no speculative API |
-| `18` typed IR | **stays as written** — `04-typed-scene.md` does not replace it | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
+| `18` typed IR | **stays as written** — `04-typed-scene.md` does not replace it, with one addition to its Done-when | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
 | `03` coverage floors | one line floor, one branch floor | staged timeline tied to other tracks' completion removed |
 | `19` CI topology | one workflow file | lane ownership protocol removed. **But 08 and 17 still depend on 19a** — 08 wants a rubocop lane, 17 needs the release workflow pinned off `metanorma/ci@main`. The one file owes both; see `DO-NOT-BUILD.md` |
 

@@ -105,15 +105,30 @@ snapshot.
       overlap semantics (ancestor containment is legitimate, peer
       collision is not), and a metric for every non-box type.
    d. **Then integrate elkrb.** It does not replace `Layout::Grid` —
-      item 06 deletes that class once no legacy layout is left to call
-      it. What elkrb replaces is the positioning each graph-type layout
+      item 06 deletes that class once `Engine` stops receiving legacy
+      results to hand it. Legacy layouts never call Grid themselves —
+      they return a graph, `Engine` unwraps it and calls Grid — so the
+      trigger is the last conversion, not a change inside any layout.
+
+      `TODO.foundation/14` leaves the grid's fate open: "removed, or
+      kept as an explicit opt-in with a named flag". **This plan takes
+      the first.** Record that as 14's decision, satisfied — not as a
+      contradiction of it. What elkrb replaces is the positioning each graph-type layout
       does for itself after item 04. Their Scenes are already
       ELK-shaped, so this is a swap per layout rather than a redesign.
 
-      **Not every type.** `block` is pre-positioned by author-specified
-      columns (`TODO.foundation/18:47-51`) and `TODO.foundation/14:115`
-      names it an explicit elkrb exception. Take the classification
-      from item 18's survey, not from a roster written here.
+      **Not every type.** Take eligibility from
+      `TODO.foundation/14`'s `docs/emit-accept-survey.md` and its
+      approved exceptions — **not** from item 18's
+      `docs/ir-type-map.md`, which classifies IR shape rather than
+      elkrb fitness, and not from a roster written here.
+
+      The two genuinely differ. `TODO.foundation/18:86-89` calls sankey
+      graph-shaped and says it does its own layering and declines
+      elkrb. `block` is pre-positioned by author-specified columns
+      (`18:47-51`) and `14:115` names it an explicit exception. An
+      ELK-shaped Scene is not the same claim as an elkrb-eligible
+      layout.
 
    Keep that metric contract as written. Geometry comparison genuinely
    is subtle, and it is the one place in the original plan where the
@@ -145,6 +160,6 @@ would count the same burndown twice in any plan total.
 - [ ] `TODO.foundation/05`'s detect-stage list is worked from `scoreboard/corpus.json`'s `stage: detect` rows, and the type table is the only file edited for it
 - [ ] the burndown ran in remaining-valid order — flowchart, then class, then state, then sequence — and each type's remaining count was re-measured before it started, never copied from this file
 - [ ] every edit to `grammars/common.rb` was followed by a full `rake corpus:check`, not a single-type run
-- [ ] `TODO.foundation/02a`'s toolchain pin landed before the comparator, and `02b`'s reference regeneration before elkrb replaced `Layout::Grid`
+- [ ] `TODO.foundation/02a`'s toolchain pin landed before the comparator, and `02b`'s reference regeneration before elkrb positioned its first type
 - [ ] `TODO.foundation/14`'s metric contract is implemented as written, including a metric for every non-box type
 - [ ] `bundle exec rubocop` exits 0 and `.rubocop_todo.yml` is gone
