@@ -61,32 +61,49 @@ One commit — and one PR — per rename.
    `Parser::Pie`, `Diagram::Pie`, `Layout::Pie`, `Renderer::Pie`. The
    suffix repeats the namespace; drop it.
 
-   **The Diagram layer is included, and 8 of 24 need it.** Measured
-   2026-08-27 by resolving every registry key to its conventional
-   constant:
+   **The Diagram layer is included, and 10 of 24 need work.** Measured
+   2026-08-27, and measured the right way: *"does the constant resolve"*
+   is not the question, because for two types it resolves to the wrong
+   class. The question is whether the conventional constant **is the
+   type's top-level model**.
+
+   Seven are plain renames — nothing else owns the target name:
 
    | today | after |
    |---|---|
    | `Diagram::GanttChart` | `Diagram::Gantt` |
    | `Diagram::QuadrantChart` | `Diagram::Quadrant` |
    | `Diagram::RadarChart` | `Diagram::Radar` |
-   | `Diagram::XYChart` | `Diagram::XyChart` |
    | `Diagram::ArchitectureDiagram` | `Diagram::Architecture` |
    | `Diagram::SankeyDiagram` | `Diagram::Sankey` |
    | `Diagram::PacketDiagram` | `Diagram::Packet` |
    | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
 
-   Rename the registry key `:xychart` to `:xy_chart` in the same PR. It
-   is the only key that does not match its own file name, and item 06
-   makes the key the single source the class is derived from.
+   One is a key rename: `:xychart` -> `:xy_chart`, so the key matches
+   its own file and gives `Diagram::XyChart`. It is the only key that
+   does not match its file name, and item 06 makes the key the single
+   source the class is derived from.
 
-   Only the top-level model per type is in scope. Inner classes like
-   `Diagram::GanttTask` keep their names — they are not addressed by a
-   registry key.
+   **Two are collisions, and they are the reason a bare resolution
+   check is not enough.** `Diagram::Block` and `Diagram::Requirement`
+   both already exist — as *components*, one block and one requirement
+   (`diagram/block.rb:8`, `diagram/requirement.rb:8`). The actual models
+   are `BlockDiagram` (`:62`) and `RequirementDiagram` (`:100`). A check
+   that only asks "does `Diagram::Block` exist" passes today and passes
+   for the wrong reason.
 
-   The other 16 already resolve. If this step is skipped, item 06's
-   convention lookup misses a third of the types and item 01's contract
-   spec goes red.
+   | today | after |
+   |---|---|
+   | `Diagram::Block` (a component) | `Diagram::BlockNode` |
+   | `Diagram::BlockDiagram` (the model) | `Diagram::Block` |
+   | `Diagram::Requirement` (a component) | `Diagram::RequirementNode` |
+   | `Diagram::RequirementDiagram` (the model) | `Diagram::Requirement` |
+
+   Move the component out of the way first, then rename the model into
+   the freed name. Two commits, not one.
+
+   Other inner classes — `Diagram::GanttTask`, `Diagram::BlockStyle` —
+   keep their names. They are not addressed by a registry key.
 
 **No deprecated aliases.** The gem is pre-1.0 with nothing released, and
 breaking changes are explicitly allowed (`00-overview.md`). Update every
@@ -103,12 +120,15 @@ caller in `spec/`, `scripts/` and `lib/tasks/` and delete the old names.
       `mindmap`, `packet`, `radar`, `requirement`, `treemap`,
       `xy_chart`), and that is the gem's class name, not ours.
 - [ ] class names are uniform, no `Parser`/`Transform`/`Renderer` suffixes
-- [ ] every registry key resolves to `Sirena::Diagram::<CamelKey>` —
-      the whole check, and the only one. Do not also ask that no name
-      ends in `Chart` or `Diagram`: `:xy_chart` correctly gives
-      `XyChart`, `:class_diagram` correctly gives `ClassDiagram`. The
-      suffix is only wrong when the key does not contain it, and the
-      resolution check already catches exactly that.
+- [ ] for every registry key, `Sirena::Diagram::<CamelKey>` resolves
+      **and is the same class the parser returns** for that type's
+      canonical fixture. Existence alone is not the check — it passes
+      for `:block` today while resolving to a component
+- [ ] do not also ask that no name ends in `Chart` or `Diagram`.
+      `:xy_chart` correctly gives `XyChart` and `:class_diagram`
+      correctly gives `ClassDiagram`. A suffix is only wrong when the
+      key does not contain it, and the identity check above catches
+      exactly that
 - [ ] `Layout::Grid` exists; `Engine` contains no positioning code
 - [ ] `rake corpus:check` shows **zero** change after each of the 4 PRs
 
