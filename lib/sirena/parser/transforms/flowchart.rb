@@ -29,7 +29,7 @@ module Sirena
         #
         # @raise [Parser::ParseError] on YAML mermaid would also refuse
         def self.metadata_entries(metadata)
-          body = break_quoted_newlines(metadata_body(metadata))
+          body = break_quoted_newlines(line_feeds(metadata_body(metadata)))
           return {} if body.empty?
 
           # `@{}` and `@{ }` are fine and mean nothing; `@{` newline `}` is
@@ -44,6 +44,15 @@ module Sirena
           # inserting one made sirena honour something mermaid ignores.
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
           entries(MetadataYaml.value(document))
+        end
+
+        # Mermaid turns every carriage return into a line feed before it
+        # lexes anything, so a Windows line ending inside the block is an
+        # ordinary newline by the time YAML sees it. Reading it as written
+        # folded `"one` CR `two"` onto one line, left a `%YAML 1.3` CR
+        # unlevelled, and took a body mermaid refuses.
+        def self.line_feeds(body)
+          body.gsub(/\r\n?/, "\n")
         end
 
         # A newline inside a double-quoted value is a line break to

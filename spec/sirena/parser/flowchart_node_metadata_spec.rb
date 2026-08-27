@@ -306,9 +306,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # resolved off the AST now, so nothing reaches a materialiser.
     describe "a tagged value" do
       around do |example|
+        registered = Psych.domain_types.dup
         example.run
       ensure
-        Psych.domain_types.delete("tag:yaml.org,2002:omap")
+        # `add_domain_type` writes two keys, and the table is global to the
+        # process, so putting the whole thing back is the only cleanup that
+        # leaves the rest of the suite alone.
+        Psych.domain_types.replace(registered)
       end
 
       it "never calls a registered domain handler" do
@@ -818,6 +822,69 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       source = "graph TD\nA(keep)@{\n  a: &s hi\r  label: *s\n}\n"
 
       expect(node_for(source).label).to eq("hi")
+    end
+  end
+
+  # Mermaid rewrites every carriage return to a line feed before it lexes
+  # anything, so a Windows line ending is an ordinary newline everywhere
+  # below. Reading the block as written disagreed with mmdc three ways.
+  describe "a carriage return" do
+    it "levels a version directive that ends in one" do
+      # mmdc draws this. The version line kept its CR, so it never matched
+      # the levelling pattern and libyaml refused version 1.3.
+      source = "graph TD\nA(keep)@{\n%YAML 1.3\r\n---\r\nlabel: hi\r\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "turns one inside a quoted value into a line break" do
+      # mmdc renders `one<br/>two`. Only a line feed was rewritten, so
+      # YAML folded this one and the label came out `one two`.
+      source = %(graph TD\nA(keep)@{ label: "one\rtwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "still splits a quoted value on a carriage return and line feed" do
+      source = %(graph TD\nA(keep)@{ label: "one\r\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "refuses a plain value broken by one" do
+      # The body becomes two lines, and the second is further out than the
+      # mapping it lands in. mmdc refuses it too; folding the CR into a
+      # space drew a node labelled `one two`.
+      expect { node_for(%(graph TD\nA(keep)@{ label: one\rtwo }\n)) }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  # js-yaml drops a byte-order mark at the very start of the text and
+  # nowhere else; libyaml drops one at the start of any line.
+  describe "a byte-order mark" do
+    it "reads a body that opens with one" do
+      # mmdc reads the key here, and libyaml refused the whole document.
+      source = "graph TD\nA(keep)@{\uFEFFlabel: hi\nx: 1\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "refuses one at the start of a later line" do
+      # mermaid reads the key as `<BOM>label`, which it does not know, so
+      # mmdc draws the node with its old label. libyaml drops the mark and
+      # hands over `label`, so sirena drew `hi` — a different picture.
+      source = "graph TD\nA(keep)@{\n\uFEFFlabel: hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /byte-order mark/)
+    end
+
+    it "leaves one in the middle of a value alone" do
+      # Both parsers keep it there, and mmdc draws it into the label.
+      source = "graph TD\nA@{ label: a\uFEFFb }\n"
+
+      expect(node_for(source).label).to eq("a\uFEFFb")
     end
   end
 
