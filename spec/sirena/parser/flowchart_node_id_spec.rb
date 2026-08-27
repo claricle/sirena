@@ -2,16 +2,23 @@
 
 require "spec_helper"
 
-# Spelled out rather than read from the grammar: driving the examples off
-# the constant alone means DELETING a word silently deletes its test. The
-# first example in that block pins the two lists against each other, so
-# adding or removing a reserved word fails loudly.
-EXPECTED_RESERVED_WORDS = %w[
-  swimlane-beta interpolate flowchart linkStyle subgraph classDef
-  _parent _blank _self graph style class _top end
-].freeze
-
 RSpec.describe Sirena::Parser::FlowchartParser do
+  # Spelled out rather than read from the grammar: driving the examples off
+  # the grammar's own constant means DELETING a word silently deletes its
+  # test. The first example in that block pins the two lists against each
+  # other, so adding or removing a reserved word fails loudly.
+  #
+  # A group method rather than a constant: a constant assigned inside a
+  # block lands on Object however it is written here, so it would leak to
+  # every other spec file. This is reachable both at group level, where the
+  # examples are generated, and from inside one.
+  def self.expected_reserved_words
+    %w[
+      swimlane-beta interpolate flowchart linkStyle subgraph classDef
+      _parent _blank _self graph style class _top end
+    ].freeze
+  end
+
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -177,10 +184,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   describe "words mermaid lexes as keywords" do
     it "matches the grammar's reserved words" do
       expect(Sirena::Parser::Grammars::Flowchart::RESERVED_WORDS.sort)
-        .to eq(EXPECTED_RESERVED_WORDS.sort)
+        .to eq(self.class.expected_reserved_words.sort)
     end
 
-    EXPECTED_RESERVED_WORDS.each do |word|
+    expected_reserved_words.each do |word|
       it "refuses #{word} as a node id" do
         expect { described_class.new.parse("graph TD\n#{word}-->Z\n") }
           .to raise_error(Sirena::Parser::ParseError)
@@ -290,30 +297,41 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # printable ASCII, minus the characters that mean something else here,
   # and over letters in the basic plane.
   describe "the id charset" do
-    [
-      ["a plus", "A+B", false],
-      ["an exclamation", "A!B", false],
-      ["a hash", "A#B", false],
-      ["a star", "A*B", false],
-      ["a question mark", "A?B", false],
-      ["a backslash", "A\\B", false],
-      ["an accent", "café", true],
-      ["an ideograph", "中文", true],
-      ["a feminine ordinal", "aªb", true],
-      ["a micro sign", "aµb", true],
-      ["a fullwidth A", "aＡb", true],
-      ["a single quote", "A'B", true],
-      ["a backtick", "A`B", true],
+    # Both lists hold characters a node id TAKES. They are split by which
+    # ones also get a subgraph-name example, not by the expected verdict:
+    # the ASCII half is covered for subgraph names by the `A+B` example at
+    # the end of this block, so repeating it per character buys nothing.
+    ascii_chars = [
+      ["a plus", "A+B"],
+      ["an exclamation", "A!B"],
+      ["a hash", "A#B"],
+      ["a star", "A*B"],
+      ["a question mark", "A?B"],
+      ["a backslash", "A\\B"]
+    ].freeze
+
+    # A subgraph name is built by its own rule over the same charset, so
+    # each letter outside ASCII is pinned in both positions too.
+    letter_chars = [
+      ["an accent", "café"],
+      ["an ideograph", "中文"],
+      ["a feminine ordinal", "aªb"],
+      ["a micro sign", "aµb"],
+      ["a fullwidth A", "aＡb"],
+      ["a single quote", "A'B"],
+      ["a backtick", "A`B"],
       # Two Mongolian letters mermaid takes and Ruby's \p{L} does not.
-      ["a Mongolian A", "A\u1885B", true],
-      ["a Mongolian I", "A\u1886B", true]
-    ].each do |label, id, check_subgraph|
+      ["a Mongolian A", "A\u1885B"],
+      ["a Mongolian I", "A\u1886B"]
+    ].freeze
+
+    (ascii_chars + letter_chars).each do |label, id|
       it "takes #{label}" do
         expect(node_ids("graph TD\n#{id}-->Z\n")).to eq([id, "Z"].sort)
       end
+    end
 
-      next unless check_subgraph
-
+    letter_chars.each do |label, id|
       it "takes #{label} in a subgraph name" do
         source = "graph TD\nsubgraph #{id} [Title]\nX --> Y\nend\n"
 
@@ -711,7 +729,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # all three directive words. `end` is a plain name there however the id
   # starts; `click` is NOT, though it took a link-bearing body to see it.
   describe "where mermaid looks again in a subgraph name" do
-    def subgraph_parses?(id)
+    # Wraps a bare id into the source `subgraph_name_parses?` wants, so the
+    # table below can list ids instead of repeating the diagram each time.
+    def names_a_subgraph?(id)
       subgraph_name_parses?(
         "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n"
       )
@@ -752,7 +772,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "." => true, "A-" => true, "a-b" => true
     }.each do |id, taken|
       it "#{taken ? 'takes' : 'refuses'} #{id} as a subgraph name" do
-        expect(subgraph_parses?(id)).to be(taken)
+        expect(names_a_subgraph?(id)).to be(taken)
       end
     end
   end

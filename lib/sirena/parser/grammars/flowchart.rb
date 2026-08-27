@@ -37,8 +37,9 @@ module Sirena
         # in a subgraph id (`subgraph graph [T]` renders), so every one of
         # those drops out. `default` is reserved here and nowhere else
         # (`subgraph default [T]` does not render, `default-->Z` does).
-        # What is left is `default`, plus the link-style words that both
-        # positions share.
+        # What is left is `default`, plus the five words `linkStyle` takes
+        # that both positions share: `interpolate` and the four link
+        # targets `_parent`, `_blank`, `_self` and `_top`.
         # Every word in both lists was probed in all three positions.
         #
         # This list happens to have no prefix collisions.
@@ -1028,11 +1029,10 @@ module Sirena
         # all refused too.
         #
         # `\p{L}` is close but not exact, so the letters come from
-        # mermaid's own table instead (`MERMAID_UNICODE_TEXT`). Ruby's
-        # `\p{L}` tracks a newer standard than the Unicode 6.1 mermaid
-        # froze, so it takes hundreds of codepoints mermaid does not —
-        # `ࢳ` and `ᲀ` among them — and refuses 2 that it does. The count
-        # moves with Ruby's Unicode version; the two exceptions do not.
+        # mermaid's own table instead (`MERMAID_UNICODE_TEXT`). How the
+        # two differ, and why the table is copied rather than approximated,
+        # is written down once beside the table in
+        # `grammars/mermaid_unicode_text.rb`.
         #
         # `:` `,` `"` and `%` are printable ASCII and mermaid joins them —
         # it draws `A:B` `A,B` `A"B` and `A%B` as single nodes — but they
