@@ -237,8 +237,11 @@ module Sirena
       # How far an edge label sits off the line it belongs to.
       EDGE_LABEL_LIFT = 5.0
 
-      # Only the depth has the oracle behind it: mmdc loops 24.3 past a
-      # 69.4x54 node, and 0.45 of that node's shorter side is 24.3.
+      # Only the depth has the oracle behind it, and it is measured across
+      # sizes rather than read off one node. mmdc loops 24.3 past a 69.4x54
+      # node and 45.0 past a 100x102 one — 0.45 of the shorter side both
+      # times — and 48.0 past a 108.4x366 one, where the ratio wants 48.8.
+      # So the ratio and the 48 cap are both mmdc's.
       #
       # The reach and its limits do NOT. mermaid draws a self loop as a
       # bezier and this draws a two-corner polyline, so their widths are

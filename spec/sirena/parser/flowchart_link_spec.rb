@@ -276,8 +276,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "strokes the cross head the width mermaid does" do
       group = edge_group("--x")
 
-      expect(group.scan(/<line[^>]*stroke-width="([^"]*)"/).flatten)
-        .to all(eq("2"))
+      widths = group.scan(/<line[^>]*stroke-width="([^"]*)"/).flatten
+
+      # Counted as well as matched: `all` is happy with an empty list, so
+      # a cross that drew no arms at all would have passed this.
+      expect(widths).to eq(%w[2 2])
     end
 
     # mmdc's pointEnd is `M 0 0 L 10 5 L 0 10 z` in a 0..10 viewBox drawn
@@ -338,7 +341,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         }
         xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
 
-        expect(xml).to include("<polygon")
+        # The edge group, not the document: a rhombus and a hexagon NODE
+        # are drawn as polygons too, so asserting against the whole thing
+        # passed whether or not a head was drawn at all.
+        expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<polygon")
         expect(xml).not_to include("NaN")
       end
     end
