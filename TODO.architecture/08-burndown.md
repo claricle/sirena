@@ -30,14 +30,14 @@ be forgotten.
 
 ## What is actually left
 
-Measured 2026-08-25, over the 1,032 oracle-valid cases only
+Swept 2026-08-27, over the 1,032 evidence-valid cases only
 (`scripts/corpus_sweep.rb` joined to `spec/mermaid/corpus-verdicts.yml`).
-**574 pass, 458 fail** (swept 2026-08-27). Two types hold 271 of those 458 — nearly
-thirds of everything left:
+**574 pass, 458 fail.** Two types hold 271 of those 458 — nearly three
+fifths of everything left:
 
 | Type | Pass / valid | Rate | Remaining |
 |---|---|---|---|
-| `flowchart` | 24/218 | 11.0% | **194** |
+| `flowchart` | 90/218 | 41.3% | **128** |
 | `class_diagram` + `class` | 161/304 | 53.0% | **143** |
 | `state_diagram` + `state` | 8/52 | 15.4% | 44 |
 | `sequence` | 66/107 | 61.7% | 41 |

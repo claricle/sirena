@@ -43,9 +43,12 @@ metadata diff as a regression, and do not let one hide behind "zero
 change" either.
 
 And it must keep measuring what `corpus_sweep.rb` measures — SVG shape,
-undeclared entities, the REXML parse. Seed a deliberately malformed SVG
-and watch `corpus:check` fail on it, or a renderer returning garbage
-records as a pass.
+undeclared entities, the REXML parse. **One malformed fixture is not
+enough**: the checks short-circuit, so a single probe proves only that
+something rejected it. Seed three, one per check — a document with the
+wrong root element, one with an undeclared entity, one that REXML cannot
+parse — and watch `corpus:check` fail on each. Otherwise two of the three
+can rot silently and a renderer returning garbage records as a pass.
 
 ## Why — what is still there
 

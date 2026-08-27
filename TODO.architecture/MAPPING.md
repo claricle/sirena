@@ -95,7 +95,7 @@ consequence for item 14.
 ## What actually changed, in one paragraph
 
 The original plan front-loads measurement and defers structure. Because
-the structure is what makes each of the 458 remaining oracle-valid
+the structure is what makes each of the 458 remaining evidence-valid
 corpus fixes expensive, that ordering pays the high per-fix cost across
 the largest block of work in the project. This plan front-loads the cheap structural
 work — six items, all mechanical, none changing whether a case renders
