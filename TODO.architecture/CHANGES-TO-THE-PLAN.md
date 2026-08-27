@@ -23,7 +23,7 @@ pure Ruby, with no Node and no browser.** That's the whole product.
 24 Mermaid diagram types are registered. `spec/mermaid/` holds 1,997
 files, but a third of them are not mermaid — 632 extraction artifacts
 and 59 cases mmdc rejected, per `spec/mermaid/corpus-verdicts.yml`.
-Against the **1,032 cases mermaid accepts, Sirena renders 574 — 55.6%**,
+Against the **1,032 evidence-valid cases, Sirena renders 574 — 55.6%**,
 leaving **458** to fix (measured 2026-08-27,
 `bundle exec ruby scripts/corpus_sweep.rb`). Closing that gap is the job.
 
