@@ -130,19 +130,32 @@ module Sirena
           raise Parser::ParseError, "No anchor for alias: #{node.anchor}."
         end
 
-        # js-yaml's JSON_SCHEMA, which is what mermaid parses with: only
-        # `null`, `true`, `false` and a JSON number are anything but a
-        # string, and a quoted scalar is always a string.
-        JSON_WORDS = { 'null' => nil, '~' => nil,
-                       'true' => true, 'false' => false }.freeze
+        # js-yaml's JSON_SCHEMA is what mermaid parses with, and it is
+        # not JSON: the resolvers are YAML 1.1's. Each word has three
+        # spellings, so `NULL` is null and mermaid keeps the old label
+        # where a JSON reading would have set the string "NULL".
+        JSON_WORDS = {
+          'null' => nil, 'Null' => nil, 'NULL' => nil, '~' => nil,
+          'true' => true, 'True' => true, 'TRUE' => true,
+          'false' => false, 'False' => false, 'FALSE' => false
+        }.freeze
 
-        JSON_NUMBER = /\A-?(0|[1-9]\d*)(\.\d+)?([eE][-+]?\d+)?\z/
+        # Numbers carry a sign, group digits with `_`, and come in base
+        # 2, 8 and 16 as well. JSON reads none of those, so `+1` and
+        # `0x1F` were labels here and errors in mmdc.
+        JSON_INT = /\A[-+]?(0b[01_]+|0o[0-7_]+|0x[0-9a-fA-F_]+|[0-9][0-9_]*)\z/
 
-        # js-yaml resolves these three the way YAML does, and mermaid sees
-        # the JavaScript values: NaN is falsy and skips the key, Infinity
-        # is a number and is refused like any other.
-        JSON_SPECIALS = { '.nan' => Float::NAN, '.inf' => Float::INFINITY,
-                          '-.inf' => -Float::INFINITY }.freeze
+        # js-yaml's own float pattern. The sign is on two of the four
+        # branches only: `-1.5` and `-.inf` resolve, `-.5` and `-.nan`
+        # stay strings.
+        JSON_FLOAT = /
+          \A(?:
+            [-+]?[0-9][0-9_]*(?:\.[0-9_]*)?(?:[eE][-+]?[0-9]+)?
+            |\.[0-9_]+(?:[eE][-+]?[0-9]+)?
+            |[-+]?\.(?:inf|Inf|INF)
+            |\.(?:nan|NaN|NAN)
+          )\z
+        /x
 
         STRING_TAG = 'tag:yaml.org,2002:str'
 
@@ -152,10 +165,41 @@ module Sirena
           return node.value if node.quoted || node.tag == STRING_TAG
 
           return JSON_WORDS[node.value] if JSON_WORDS.key?(node.value)
-          return JSON_SPECIALS[node.value] if JSON_SPECIALS.key?(node.value)
-          return node.value.to_f if JSON_NUMBER.match?(node.value)
 
-          node.value
+          json_number(node.value) || node.value
+        end
+
+        # js-yaml tries the integer resolver before the float one, and
+        # neither takes a trailing `_` — `1_` is a string. nil means the
+        # scalar stays the string it was written as.
+        def self.json_number(value)
+          return nil if value.end_with?('_')
+
+          digits = value.delete('_')
+          return json_int(digits) if JSON_INT.match?(value)
+
+          json_float(digits) if JSON_FLOAT.match?(value)
+        end
+
+        # Ruby reads the same three prefixes, but it also reads a bare
+        # leading zero as octal, where js-yaml stays in base 10 — and
+        # `Integer("08")` raises. So say the base for the plain form.
+        def self.json_int(digits)
+          digits.match?(/\A[-+]?0[box]/) ? Integer(digits) : Integer(digits, 10)
+        end
+
+        # The two words are named, not parsed: mermaid sees NaN, which is
+        # falsy and skips the key, and Infinity, which is a number and is
+        # refused like any other. `to_f` takes the rest and never raises,
+        # so an odd but legal form like `1.` or `.5` stays a number
+        # instead of throwing out of the parser.
+        def self.json_float(digits)
+          case digits.downcase
+          when '.inf', '+.inf' then Float::INFINITY
+          when '-.inf' then -Float::INFINITY
+          when '.nan' then Float::NAN
+          else digits.to_f
+          end
         end
 
         # A tag routes the value through a materialiser, so only the ones

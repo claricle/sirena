@@ -368,6 +368,62 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # js-yaml's JSON_SCHEMA reads YAML 1.1, not JSON: a word has three
+    # spellings, a number takes a sign and `_` groups, and 0b/0o/0x
+    # count. Reading it as JSON made `label: NULL` the string "NULL"
+    # where mmdc keeps the old label, and let `label: +1` through where
+    # mmdc errors. Every value below is a measured mmdc verdict.
+    describe "the js-yaml scalar table" do
+      # Falsy in JavaScript, so mermaid skips the key and the node keeps
+      # what it had.
+      %w[
+        Null NULL ~ False FALSE 0 00 +0 -0 000 0_0 0x0 0b0 0.0 0. .0 0e5
+        .nan .NaN .NAN
+      ].each do |value|
+        it "skips a label of #{value}" do
+          expect(node_for("graph TD\nA(keep)@{ label: #{value} }\n").label)
+            .to eq("keep")
+        end
+      end
+
+      # Truthy and not a string, which is the one thing mermaid cannot
+      # use. Every `_` is dropped before the number is read, so `1__0`
+      # is ten and `0_1.5` is one and a half.
+      %w[
+        True TRUE +1 -1 08 010 0x1F 0o17 0b101 -0x1F 1_000 1__0 0x_1 0_1
+        0_1.5 .5 1. +1.5 1e+3 .inf .Inf .INF +.inf -.Inf
+      ].each do |value|
+        it "refuses a label of #{value}" do
+          expect { node_for("graph TD\nA(keep)@{ label: #{value} }\n") }
+            .to raise_error(Sirena::Parser::ParseError, /Unusable label/)
+        end
+      end
+
+      # Near misses that stay strings: the wrong case, an uppercase base
+      # prefix, a digit out of range, a stray `_`, and a sign on the two
+      # float branches that have none.
+      %w[
+        nUll tRue Nul 1_ _1 0X1 0b12 0o8 0x 0x_ +_1 1e_3 1e .e3 -.5 +.5
+        -.0 -.nan .iNf .nAn ~~
+      ].each do |value|
+        it "keeps #{value} as a string label" do
+          expect(node_for("graph TD\nA(keep)@{ label: #{value} }\n").label)
+            .to eq(value)
+        end
+      end
+
+      it "skips a falsy shape and leaves the node alone" do
+        node = node_for("graph TD\nA(keep)@{ shape: NULL }\n")
+
+        expect([node.shape, node.label]).to eq(%w[rounded keep])
+      end
+
+      it "refuses a shape that resolved to a number" do
+        expect { node_for("graph TD\nA(keep)@{ shape: 0b1 }\n") }
+          .to raise_error(Sirena::Parser::ParseError, /Unusable shape/)
+      end
+    end
+
     # Mermaid reads `shape` and `label` and ignores the rest, a merge key
     # included. Validating every entry refused diagrams mmdc draws.
     describe "a key mermaid does not read" do
