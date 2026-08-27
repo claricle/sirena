@@ -148,8 +148,8 @@ module Sirena
       # `fill-opacity` replaces the group's rather than multiplying by it,
       # and overlapping children composite differently. No renderer sets
       # `opacity` on a Group, so nothing Sirena emits takes that path — the
-      # five that set it (sankey, kanban, quadrant, requirement) all set it
-      # on a Rect, Path or Text.
+      # four renderers that set it (sankey, kanban, quadrant, requirement)
+      # all set it on a Rect, Path or Text.
       #
       # A component value that is not a number is left exactly as it was.
       # Nothing in the gem writes one, and inventing a factor for it would

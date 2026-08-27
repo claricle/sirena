@@ -40,8 +40,11 @@ ELEMENT_ATTRIBUTES = {
 # Tiny 1.2 has. They are not in the matrix above because there is no
 # attribute left to escape; the cases further down assert they are gone.
 TRANSLATED_AWAY = {
-  Sirena::Svg::Path => { marker_end: 'marker-end', marker_start: 'marker-start' },
-  Sirena::Svg::Text => { dominant_baseline: 'dominant-baseline' }
+  Sirena::Svg::Path => {
+    marker_end: ['marker-end', 'url(#arrowhead)'],
+    marker_start: ['marker-start', 'url(#arrowhead)']
+  },
+  Sirena::Svg::Text => { dominant_baseline: ['dominant-baseline', 'middle'] }
 }.freeze
 
 # Inherited from Element, so every subclass carries them.
@@ -85,7 +88,7 @@ RSpec.describe Sirena::Svg::Escaping do
   # so the only thing stopping them reaching the document is this layer.
   describe 'properties SVG Tiny 1.2 does not have' do
     TRANSLATED_AWAY.each do |klass, writers|
-      writers.each do |writer, attribute|
+      writers.each do |writer, (attribute, sample)|
         it "never emits #{attribute} from #{klass.name.split('::').last}" do
           element = klass.new
           # A Path needs real data and a stroke or it draws no arrowhead,
@@ -95,7 +98,7 @@ RSpec.describe Sirena::Svg::Escaping do
             element.d = 'M 0 0 L 10 0'
             element.stroke = '#000000'
           end
-          element.public_send("#{writer}=", 'url(#arrowhead)')
+          element.public_send("#{writer}=", sample)
 
           expect(element.to_xml).not_to include(attribute)
         end

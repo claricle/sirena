@@ -138,10 +138,9 @@ module Sirena
       # references are the far end of it; a curve takes the control point
       # nearest each end.
       #
-      # `s` and `t` carry a control point implied by the previous command
-      # rather than one of their own, so they use the explicit control point
-      # on both sides. Neither appears in Sirena's own output. An arc gives
-      # no references at all — see the note on the class.
+      # `s` has one explicit control point and reuses it on both sides; `t` has
+      # none and is treated as a straight segment. Neither appears in Sirena's
+      # own output. An arc gives no references at all — see the note on the class.
       def references(lower, args)
         case lower
         when 'l' then straight([args[0], args[1]])
