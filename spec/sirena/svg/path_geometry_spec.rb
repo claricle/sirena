@@ -232,6 +232,10 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
+    it 'does not borrow a later subpath heading after a degenerate initial line' do
+      expect(origin('M 0 0 L 0 0 M 50 50 L 60 50')).to be_nil
+    end
+
     it 'treats a zero-radius initial arc as a straight line' do
       anchor = origin('M 0 0 A 0 5 0 0 1 10 0')
 

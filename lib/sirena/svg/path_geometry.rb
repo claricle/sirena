@@ -176,11 +176,12 @@ module Sirena
       # tangent. The point has to advance or every command after it lands in
       # the wrong place, but neither end of an arc may anchor an arrowhead.
       #
-      # An arc reached before any usable origin was settled closes the question
-      # rather than leaving it open: the path starts on that arc, and the
-      # segment after it is not the start of the path.
-      # A zero-length opening segment leaves a degenerate anchor that the arc
-      # still closes out because it supplies no usable starting direction.
+      # A break in continuity before a pending origin gains a usable direction
+      # closes the question rather than letting a later segment supply that
+      # direction. An arc always breaks it because the path starts on that
+      # unanchorable segment. A later move breaks it only after a zero-length
+      # segment has recorded an origin; moves alone leave the question open for
+      # the first real segment.
       def traverse(end_point)
         @origin = false if @origin_direction.nil?
         @terminus = nil
@@ -240,6 +241,7 @@ module Sirena
       end
 
       def move(args)
+        @origin = false if @origin && @origin_direction.nil?
         @point = [args[0], args[1]]
         @subpath_start = @point
         @terminus = nil
