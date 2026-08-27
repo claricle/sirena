@@ -218,17 +218,17 @@ module Sirena
       # 4.5 * sqrt(2) long.
       CIRCLE_HEAD_RADIUS = 5.5
       CROSS_HEAD_HALF = 4.5
-      # mmdc fixes its circle stroke at 1 and its cross stroke at 2. They
-      # stay numeric because the reach below uses them. `%g` writes these
-      # marker strokes the way mmdc does. A line's stroke-width comes from
-      # the theme and keeps its own formatting.
+      # mmdc fixes its circle stroke at 1 and its cross stroke at 2. `%g`
+      # writes those widths without a decimal. A line's stroke width comes
+      # from the theme and keeps its own formatting.
       CIRCLE_HEAD_STROKE = 1.0
       CROSS_HEAD_STROKE = 2.0
-      # How far each reaches along the line it arrives on: its geometry
-      # plus the half stroke painted outside it. Backing off the geometry
-      # alone left half the stroke lying over the node.
-      CIRCLE_HEAD_REACH = CIRCLE_HEAD_RADIUS + (CIRCLE_HEAD_STROKE / 2)
-      CROSS_HEAD_REACH = CROSS_HEAD_HALF + (CROSS_HEAD_STROKE / 2)
+      # mmdc puts each marker's reference point on the node boundary. The
+      # circle's centre sits (11 - 5) * 1.1 = 6.6 behind it. Its painted
+      # edge stops 1.1 short. The cross's centre sits 12 - 5.5 = 6.5 behind
+      # it. Its nearest arm point stops 2.0 short.
+      CIRCLE_HEAD_REACH = 6.6
+      CROSS_HEAD_REACH = 6.5
 
       # Drawn with their ends rounded the whole way, so a head aiming at
       # one pulls in from the corners as far as a circle's does.
@@ -273,7 +273,8 @@ module Sirena
           p.fill = 'none'
           apply_theme_to_edge(p)
           apply_link_weight(p, type)
-          # An invisible link occupies layout space and draws nothing.
+          # The parsed link still emits a path, but no stroke keeps it
+          # hidden. Today's edge-blind layout reserves no space for it.
           p.stroke = 'none' if type == 'invisible'
         end
 
@@ -302,8 +303,8 @@ module Sirena
 
       def calculate_edge_path(source, target, bends)
         # `node_centre` keeps the path on the same centre as its heads and
-        # label. The old inline calculation used integer division, so odd
-        # widths left the line half a pixel from where its head pointed.
+        # label. It also keeps a hand-built graph with integer dimensions
+        # consistent.
         sx, sy = node_centre(source)
         tx, ty = node_centre(target)
 
@@ -553,16 +554,8 @@ module Sirena
         end
       end
 
-      # An arrow has its point at the tip and its body behind it, so the
-      # node never covers it. A circle and a cross are drawn AROUND their
-      # point, so sitting that point on the node's edge buried half of
-      # each one. mmdc keeps them clear of the node — circleEnd's
-      # reference point is at 11 on a circle that ends at 10.
-      #
-      # The circle is backed off its full reach. The cross is backed off
-      # its per-axis half-run, so its corner stops 1.0 short when it
-      # arrives square on. mmdc leaves a gap there too: crossEnd's
-      # reference point is at 12 on arms that end at 10.
+      # mmdc puts the marker's reference point on the node boundary. Each
+      # head's centre sits behind it by that marker's reference distance.
       def backed_off(geometry, reach)
         tip_x, tip_y, from_x, from_y =
           geometry.values_at(:tip_x, :tip_y, :from_x, :from_y)

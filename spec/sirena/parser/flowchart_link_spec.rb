@@ -228,26 +228,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(tip).not_to be_within(1.0).of((left + right) / 2)
     end
 
-    # An arrow has its point at the tip and its body behind it, so the
-    # node never covers it. A circle and a cross are drawn AROUND their
-    # point, so putting that point on the node's edge buried half of each
-    # one under a node painted afterwards. They belong against the edge.
-    it "rests a circle head against the node instead of astride it" do
+    # mmdc centres the circle behind the reference point it puts on the
+    # boundary. This keeps the head visible without making it touch.
+    it "leaves mmdc's gap between a circle head and the node" do
       xml = Sirena.render("flowchart TD\n  A --o B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       cx = group[/<circle[^>]*cx="(-?[\d.]+)"/, 1].to_f
       radius = group[/<circle[^>]*r="([\d.]+)"/, 1].to_f
       stroke = group[/<circle[^>]*stroke-width="([\d.]+)"/, 1].to_f
+      edge = node_span(xml, "B").first
 
-      # Its own size is what it is backed off by, so the size has to be
-      # asserted too — a head of no size rests anywhere. 5.5 is mmdc's:
-      # circleEnd is a radius-5 circle in a 0..10 viewBox drawn at
-      # markerWidth 11, stroked at 1. It is the PAINTED edge that rests
-      # against the node, so half the stroke counts.
+      # Pin the marker size so a resized head cannot hide a wrong reach.
       expect(radius).to be_within(0.05).of(5.5)
       expect(stroke).to eq(1.0)
-      expect(cx + radius + (stroke / 2))
-        .to be_within(0.05).of(node_span(xml, "B").first)
+      expect(edge - (cx + radius)).to be_within(0.05).of(1.1)
     end
 
     # mmdc's circleEnd marker names no fill of its own and inherits the
@@ -264,15 +258,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .flatten.map(&:to_f)
       edge = node_span(xml, "B").first
 
-      # Wholly outside, and still touching the node rather than adrift.
-      expect(arms.max).to be <= edge
-      expect(arms.max).to be > edge - 4
+      # mmdc's reference point leaves the nearest arm point 2.0 short.
+      expect(edge - arms.max).to be_within(0.05).of(2.0)
     end
 
-    # mmdc strokes crossEnd at 2 and circleEnd at 1, and the gap each head
-    # is left is its geometry plus half its own stroke — so the width is
-    # part of the measurement, not decoration. The circle's is asserted
-    # above; without this the cross's could be anything.
+    # Pin the width because placement alone cannot catch a thinner cross.
     it "strokes the cross head the width mermaid does" do
       group = edge_group("--x")
 
@@ -639,6 +629,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       centre_x, = node_centre(xml)
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
 
+      expect(corners.size).to eq(2)
       expect(corners.map { |cx, _y| (cx - centre_x).abs })
         .to all(be_within(0.05).of(18.0))
     end
@@ -656,6 +647,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
 
       expect(width * 0.175).to be_between(18.0, 50.0)
+      expect(corners.size).to eq(2)
       expect(corners.map { |cx, _y| (cx - centre_x).abs })
         .to all(be_within(0.05).of(width * 0.175))
     end
@@ -668,6 +660,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       centre_x, = node_centre(xml)
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
 
+      expect(corners.size).to eq(2)
       expect(corners.map { |cx, _y| (cx - centre_x).abs })
         .to all(be_within(0.05).of(50.0))
     end
