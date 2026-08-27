@@ -129,6 +129,16 @@ TYPES = {
 - [ ] deleting one `TYPES` row turns it red — check it, do not assume
       it. Without the fixture parity above, deletion is silent
 - [ ] it passes with `model:` removed from every registration
+- [ ] `Parser.for` and `Renderer.for` **raise** for an unknown type and
+      for a type whose class does not resolve. They are mandatory
+      layers; nil is not an answer
+- [ ] `Layout.for` returns `nil` when the layout file genuinely does
+      not exist, and **raises** when the file exists but the constant
+      inside it does not match the convention. Three cases, three
+      specs — absent file, present-but-misnamed, present-and-correct
+- [ ] a spec proves the present-but-misnamed case raises rather than
+      silently taking the pass-through path. That failure mode renders
+      an unlaid-out diagram with no error, which is worse than a crash
 
 ## Do not
 

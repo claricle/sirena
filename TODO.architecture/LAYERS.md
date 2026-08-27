@@ -33,7 +33,7 @@ way, it owns more than one thing (rule R7).
 | `Notation::Mermaid` | which diagram type a piece of text is | `String` | `Symbol` |
 | `Parser::<Type>` | turning text into meaning | `String` | `Diagram::<Type>` |
 | `Diagram::<Type>` | **what the diagram says** — semantics, no geometry | — | — |
-| `Layout::<Type>` | **where everything goes** — geometry, no styling | `Diagram::<Type>`, `Theme` | `Scene` |
+| `Layout::<Type>` | **where everything goes** — geometry, no styling | `Diagram::<Type>`, `Theme`, reference date | `Scene` |
 | `Layout::<Type>::Scene` | the computed geometry — coordinates, no meaning | — | — |
 | `Renderer::<Type>` | shapes, colours, fonts | `Scene`, `Theme` | `Svg::Document` |
 | `Svg::*` | valid, escaped XML | — | `String` |
@@ -93,7 +93,8 @@ A renderer that adds a constant to a coordinate is a bug, not a style.
 
 ## Nothing mutates its input
 
-- `Layout#call(diagram, theme:, today:)` returns a new Scene. It never writes to
+- `Layout::Base#call(diagram, theme:, today:)` returns a new Scene, via the
+  subclass's `#scene(diagram)`. It never writes to
   the diagram.
 - `Renderer#render(scene, theme:)` returns a new document. It never
   writes to the scene.

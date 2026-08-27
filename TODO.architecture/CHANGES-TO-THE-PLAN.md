@@ -333,11 +333,12 @@ Item 01 (lutaml 0.8 migration) appears already landed: the gemspec is
   SVG string
 ```
 
-`Engine#render` becomes three lines:
+`Engine#render`'s core pipeline becomes four lines:
 
 ```ruby
+type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
-scene = Layout.for(type)&.call(model, theme: theme) || model
+scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
 Renderer.for(type).render(scene, theme: theme)
 ```
 
@@ -437,7 +438,7 @@ than one thing.
   Notation::Mermaid     which type a piece of text is     String -> Symbol
   Parser::<Type>        text into meaning                 String -> Diagram
   Diagram::<Type>       what the diagram SAYS             no geometry
-  Layout::<Type>        where everything GOES             Diagram+Theme -> Scene
+  Layout::<Type>        where everything GOES             Diagram+Theme+Today -> Scene
   Scene                 the computed geometry             no meaning
   Renderer::<Type>      shapes, colours, fonts            Scene+Theme -> Svg
   Svg::*                valid, escaped XML                -> String

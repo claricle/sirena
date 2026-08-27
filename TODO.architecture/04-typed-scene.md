@@ -37,7 +37,7 @@ module Sirena
         attribute :title, :string
       end
 
-      def call(diagram, theme:, today:) = Scene.new(...)
+      def scene(diagram) = Scene.new(...)   # theme, today are readers
     end
   end
 end
@@ -191,10 +191,23 @@ attribute, two of them dead (item 02).
    `architecture`, `c4`, `requirement`, `packet`, `treemap`,
    `user_journey`
 
-3. The layout signature is `call(diagram, theme:, today:)` throughout
-   this plan — **layouts need the theme**, and `gantt` needs the
-   reference date the engine already carries (`engine.rb:93`).
-   Every layout takes both and ignores what it does not use. Every layout today hardcodes
+3. **`Layout::Base` owns the signature; subclasses do not repeat it.**
+   `Base#call(diagram, theme:, today:)` stores both and calls the
+   subclass's `#scene(diagram)`; `theme` and `today` are private
+   readers. Layouts need the theme, and `gantt` needs the reference
+   date the engine already carries (`engine.rb:93`).
+
+   Do **not** give every subclass `call(diagram, theme:, today:)` and
+   let it ignore what it does not use. `Lint/UnusedMethodArgument` is
+   enabled with `AllowUnusedKeywordArguments` at its default, so a pie
+   layout that never reads `today` is an offence. The template method
+   gives one signature *and* a lint-clean subclass.
+
+   `Base#today` returns `@today || Date.today`, matching
+   `transform/base.rb:38` exactly. A `nil` reaching the layout means
+   "use the real date" — it does not mean nil. That is the semantics
+   `engine.rb:186` has today (`transform.today = today if today && ...`)
+   and step 6 keeps it. Every layout today hardcodes
    `DEFAULT_FONT_SIZE = 14` while renderers draw at
    `theme.typography.font_size_normal`. The built-in `high_contrast`
    theme sets 16.0, so today its text overflows every box it is sized
