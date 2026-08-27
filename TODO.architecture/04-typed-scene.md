@@ -3,7 +3,9 @@
 **Goal:** no bare Hash crosses a layer boundary. Every renderer's input
 is a class you can open and read.
 **Size:** 26 PRs — one for `Layout::Scene`, one for the transition path
-on `Layout::Base`, and 24 conversions, one per type. An earlier draft
+on `Layout::Base`, and 24 conversions, one per type. Step 6's
+`contract_spec.rb` extension rides along with the last conversion
+rather than taking a PR of its own; it cannot pass before then anyway. An earlier draft
 said ~21 because three types were going to be deleted rather than
 converted; they are not. Each type PR is small — Scene definition, layout rewrite,
 renderer rewrite.
@@ -206,11 +208,17 @@ attribute, two of them dead (item 02).
    prove the design while you still have room to change it; the small
    ones last, because they are the least informative:
 
-   `flowchart`, `class_diagram`, `sequence`, `state_diagram`,
-   `er_diagram`, `mindmap`, `xy_chart`, `git_graph`, `gantt`,
-   `timeline`, `kanban`, `quadrant`, `radar`, `sankey`, `block`,
+   `flowchart`, **`sankey`**, `class_diagram`, `sequence`,
+   `state_diagram`, `er_diagram`, `mindmap`, `xy_chart`, `git_graph`,
+   `gantt`, `timeline`, `kanban`, `quadrant`, `radar`, `block`,
    `architecture`, `c4`, `requirement`, `packet`, `treemap`,
    `user_journey`, `pie`, `info`, `error`
+
+   **Sankey is second on purpose.** It is the only converted Scene that
+   answers `respond_to?(:nodes)` — the graph types use `children` at
+   their root, so flowchart cannot trip `engine.rb:223` and cannot
+   prove the Grid gate. Converting Sankey second puts the one type that
+   can prove it in the second PR instead of the fourteenth.
 
    **All 24, not 21.** An earlier draft ended the list at
    `user_journey` because `pie`, `info` and `error` were going to lose
@@ -285,8 +293,14 @@ attribute, two of them dead (item 02).
    a second return value: a tuple would make `Base#call` return an
    Array, which contradicts the criterion below that it returns a
    `Layout::Scene`. The converted branch returns the Scene bare; the
-   legacy branch returns it wrapped; the engine runs Grid only on a
-   wrapper, never on `respond_to?`.
+   legacy branch returns it wrapped.
+
+   The wrapper carries the original `to_graph` result and nothing else,
+   and **`Engine` unwraps it before anything downstream sees it**.
+   Nothing else may receive a wrapper: `Layout::Grid`'s Hash path tests
+   `is_a?(Hash)` and legacy renderers expect the graph itself, so both
+   break if the wrapper reaches them. The engine's shape is: call, ask
+   whether it got a wrapper, run Grid if so, unwrap, then render.
 
    **Keep a test-only legacy layout.** By the end of this item every
    production layout defines `scene`, so the legacy branch becomes
@@ -363,12 +377,10 @@ attribute, two of them dead (item 02).
       real conversion. Write it at the first conversion
 - [ ] the same spec goes through **`Engine`, not just `Base#call`**, and
       asserts Grid ran on the legacy result and did **not** run on the
-      converted one. Use **flowchart** — it is the first conversion, and
-      its Scene responds to `nodes`, which is exactly what trips
-      `engine.rb:223`. Waiting for Sankey would leave the Grid
-      regression ungated for thirteen PRs
-- [ ] when Sankey lands (fourteenth), add it to that spec. It is the
-      case that motivated the gate and it should be covered by name
+      converted one. It must use **Sankey**, converted second for this
+      reason: graph Scenes use `children` at their root, so flowchart
+      never trips `engine.rb:223` and a flowchart-based spec would pass
+      with the faulty gate still in place
 - [ ] that spec asserts **coordinates**, not a pass count. A corpus run
       cannot tell you Grid overwrote a position
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`

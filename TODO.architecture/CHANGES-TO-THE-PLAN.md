@@ -156,7 +156,9 @@ Does the argument survive? Yes, but on the per-fix cost rather than the
 case count:
 
 - 524 fixes is still an order of magnitude more work than the seven
-  structural items, which are roughly 35 PRs of mechanical change.
+  structural items, which are **39 PRs** of mechanical change. That
+  total moved with item 04: it was ~35 when item 04 was priced at ~21
+  PRs, and item 04 is 26.
 - The work is concentrated, which makes the structural case stronger
   rather than weaker: flowchart holds 194 and class holds 143, so 337 of
   the 524 land in two types whose grammars, layouts and renderers are
