@@ -36,13 +36,12 @@ module Sirena
         # mermaid accepts a bare id, with or without trailing metadata.
         #
         # Named alternation branches rather than an inline `label.maybe`.
-        # Both parse today's inputs identically, so this is about what comes
-        # next: the deferred shape buckets add their branches here, and a
-        # round-bracket branch has to sit BEFORE `bare_item`, which is the
-        # most permissive of them. Ordering is the whole point of the rule,
-        # so the branches are named and ordered rather than implied. This
-        # matches how the other grammars in this directory are written -
-        # see `mindmap.rb`'s `node` rule.
+        # Both parse today's inputs identically, so this is about ordering:
+        # `bare_item` is the most permissive branch and must stay last, or a
+        # branch added after it would never be reached. Naming the branches
+        # keeps that order explicit rather than implied, which is how the
+        # other grammars in this directory are written - see `mindmap.rb`'s
+        # `node` rule.
         rule(:item) do
           reserved_token.absent? >> (labelled_item | bare_item) >> metadata.maybe
         end
@@ -52,7 +51,8 @@ module Sirena
         # carrying a bracket label, as a column or as a card. Only the whole
         # word is taken - `kanbanBoard` and `mykanban` are legal ids. No other
         # keyword is reserved: `graph`, `end`, `section`, `title`, `class`,
-        # `classDef`, `click`, `style`, `subgraph`, `accTitle` and `accDescr`
+        # `classDef`, `click`, `style`, `subgraph`, `accTitle`, `accDescr`
+        # and `flowchart`
         # all parse as ordinary nodes. Measured against mmdc 11.12.0 rather
         # than generalised from the one token.
         rule(:reserved_token) do
@@ -77,6 +77,8 @@ module Sirena
         # containing spaces, but widening this to free text would swallow
         # `root(Root)` and `:::hot` as literal labels, turning unsupported
         # constructs into silently wrong output instead of parse failures.
+        # `identifier` also refuses a leading digit, so `1col` fails to parse
+        # while `col1` and `_col` are accepted.
         rule(:bare_item) do
           identifier.as(:id)
         end
@@ -113,9 +115,8 @@ module Sirena
         end
 
         # Captured as :unquoted, not :string, so the transform can tell an
-        # unquoted scalar from a quoted one. Mermaid resolves an unquoted
-        # value as YAML and drops the field when it lands on false, null or
-        # zero, while any non-empty quoted string is kept.
+        # unquoted scalar from a quoted one. What it does with that
+        # distinction is `dropped_by_mermaid?`'s to state, not this rule's.
         rule(:unquoted_value) do
           match['a-zA-Z0-9_\-'].repeat(1).as(:unquoted)
         end
