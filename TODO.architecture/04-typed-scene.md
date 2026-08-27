@@ -49,7 +49,7 @@ end
 
 `Layout::Scene` is the shared base and carries only `width` and
 `height` — enough for `Renderer::Base` to own document creation, which
-item 05 uses to delete nine copies of it.
+item 05 uses to collapse 16 per-renderer definitions into one.
 
 **Every type gets a Layout and a Scene. There is no pass-through.**
 
@@ -257,9 +257,10 @@ attribute, two of them dead (item 02).
    A `nil` reaching the layout means "use the real date" — it does not
    mean nil. That is the semantics `engine.rb:185` has today
    (`transform.today = today if today && transform.respond_to?(:today=)`)
-   and step 6 keeps it. Every layout today hardcodes
-   `DEFAULT_FONT_SIZE = 14` while renderers draw at
-   `theme.typography.font_size_normal`. The built-in `high_contrast`
+   and step 6 keeps it. Nine of the 24 layouts size text at a hardcoded 14 — seven by
+   `DEFAULT_FONT_SIZE`, two inline — while renderers draw at
+   `theme.typography.font_size_normal`. The other 15 never measure text
+   at all, which is its own bug; see `LAYERS.md`. The built-in `high_contrast`
    theme sets 16.0, so today its text overflows every box it is sized
    into. Sizing is a layout concern and it depends on font metrics; see
    `LAYERS.md`.
@@ -400,7 +401,9 @@ During item 04 the engine still resolves classes through
 - [ ] `Layout::Base#today` is literally `@today ||= Date.today`, and
       `determinism_spec.rb` still passes
 - [ ] calling with `today: nil` gives the same output as calling with
-      `today: Date.today` — a spec, not an assumption
+      `today: Date.today`, **and** calling with a pinned past date gives
+      different output. The first half alone passes for a layout that
+      ignores `today` entirely
 - [ ] a transition spec drives **one converted and one unconverted**
       layout through `Base#call` in the same example, using the
       `spec/support/` legacy fixture so it still works after the last
@@ -416,8 +419,10 @@ During item 04 the engine still resolves classes through
       no `:nodes` Scene and should not wait for one
 - [ ] that spec asserts **coordinates**, not a pass count. A corpus run
       cannot tell you Grid overwrote a position
-- [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
-      returns nothing
+- [ ] no layout hardcodes a font size. `grep -rn "FONT_SIZE = "
+      lib/sirena/layout/` returning nothing is half the check — two
+      layouts write the literal inline (`block`, `architecture`), so
+      also `grep -rn "font_size: *[0-9]" lib/sirena/layout/`
 - [ ] rendering one diagram under `default` and `high_contrast` gives
       boxes sized to their own theme's text
 - [ ] every registered type has a layout, and no `Layout.for` call site

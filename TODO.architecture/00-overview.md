@@ -28,14 +28,26 @@ That is the whole product.
 ```
 
 24 Mermaid diagram types are registered. `spec/mermaid/` holds 1,997
-files, but a third of them are not mermaid: `spec/mermaid/corpus-verdicts.yml`
-marks 632 as extraction artifacts and 59 as cases mmdc itself rejected.
-**1,032 are cases mermaid accepts, and Sirena renders 508 of them — 49.2%.**
+files, and `spec/mermaid/corpus-verdicts.yml` sorts every one of them
+into four buckets — re-measured 2026-08-27:
+
+```
+  valid      1032   mmdc rendered it
+  artifact    632   extraction damage, not mermaid
+  unknown     274   no evidence either way
+  invalid      59   mmdc rejected it
+             ────
+             1997
+```
+
+**1,032 are cases mermaid accepts, and Sirena renders 508 of them —
+49.2%.** The 274 unknowns are the reason 632 + 59 does not account for
+the rest; they are unclassified, not passing.
 
 **524 valid cases still fail.** That is the size of the job. Measured
-2026-08-25 with `bundle exec ruby scripts/corpus_sweep.rb`; never quote
-a hand-written figure, and never use the raw 33.4% over all 1,997 files
-— it counts files mermaid cannot parse either.
+with `bundle exec ruby scripts/corpus_sweep.rb`; never quote a
+hand-written figure, and never use the raw 508/1,997 — 25.4% — because
+it counts files mermaid cannot parse either.
 
 Everything in this directory exists to make closing that gap cheaper.
 
@@ -212,7 +224,8 @@ layouts size boxes to text and text size comes from the theme.
 **Today** because `gantt` resolves partial dates against a reference
 date — `transform/gantt.rb:150` and `:155` read it — and the engine
 already threads it through (`engine.rb:93`, `:107`). Dropping it from
-the signature changes gantt output, which step 6 forbids.
+the signature changes gantt output, which item 06's byte-identical
+API criterion forbids.
 
 Callers always pass both. **`Layout::Base#call` owns them**, stores
 them, and calls the subclass's `#scene(diagram)`; `theme` and `today`
@@ -234,7 +247,8 @@ Two rules hold it together:
   Scene. They become the two smallest layouts instead, about twenty
   lines each. The pipeline has no optional-layout branch.
 
-`WORKED-EXAMPLE.md` shows the pie type written both ways, in full.
+`WORKED-EXAMPLE.md` shows the pie type written both ways — the shape to
+copy, with one gap it names at the bottom.
 
 ## Order of work
 
@@ -252,17 +266,26 @@ after 01 is protected by 01.
 | 07 | Adding a type in an hour | 2 PRs | the point of the plan |
 | 08 | Then the corpus burndown | ongoing | the pass rate finally moves |
 
-**Items 01-06 change no rendered output at all.** Item 02 used to be the
-exception, because it carried the escaping fix; that fix landed on main
-ahead of this plan, so what is left of item 02 is a pure deletion. If a
-PR in any of 01-06 moves the corpus number, something is wrong — see
+**Items 01-03 and 06 change no rendered output at all.** Item 02 used to
+be the exception, because it carried the escaping fix; that fix landed
+on main ahead of this plan, so what is left of item 02 is a pure
+deletion.
+
+**Items 04 and 05 do change output, on purpose.** Item 04 sizes boxes
+from theme font metrics, so `high_contrast` stops overflowing its own
+text. Item 05 part C replaces hardcoded hex with theme colours. Both are
+the point of the change, not a regression — but they mean "the corpus
+number must not move" is a rule for 01-03 and 06, not for all six.
+
+If a PR in 01-03 or 06 moves the corpus number, something is wrong — see
 "Stop and ask" below.
 
 ## How to work
 
 - **One item at a time, in order.** Do not start 04 while 03 is open.
-- **One PR per numbered step** inside an item, unless the item says
-  otherwise.
+- **The item's Size line says how many PRs it is**, and that is the
+  authority. Numbered steps are not PRs — item 01 has six steps in two
+  PRs, item 04 has six steps across 26. Read the Size line first.
 - **Run `rake corpus:check` before opening every PR.** After item 01 this
   is the whole safety net; it takes seconds and it is not optional.
 - **Put the expected corpus effect in the PR description**: "no change"
@@ -285,7 +308,8 @@ PR in any of 01-06 moves the corpus number, something is wrong — see
 
 - `LAYERS.md` — the layer contracts. The architecture in one page.
 - `RULES.md` — seven review rules, one page. Read before item 01.
-- `WORKED-EXAMPLE.md` — the pie type before and after, in full.
+- `WORKED-EXAMPLE.md` — the pie type before and after, with one gap it
+  names at the bottom.
 - `DO-NOT-BUILD.md` — work that is real but premature, with the event
   that makes each one worth doing.
 - `MAPPING.md` — how this relates to `TODO.foundation/`, and which of
