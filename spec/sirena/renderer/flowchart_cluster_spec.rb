@@ -63,6 +63,20 @@ RSpec.describe Sirena::Engine do
     horizontal || vertical
   end
 
+  def on_rounded_border?(rect, x, y, radius)
+    left = rect[:x]
+    right = left + rect[:width]
+    top = rect[:y]
+    bottom = top + rect[:height]
+    horizontal = [top, bottom].include?(y) && x.between?(left + radius, right - radius)
+    vertical = [left, right].include?(x) && y.between?(top + radius, bottom - radius)
+    return true if horizontal || vertical
+
+    cx = x < left + radius ? left + radius : right - radius
+    cy = y < top + radius ? top + radius : bottom - radius
+    (Math.hypot(x - cx, y - cy) - radius).abs <= 1
+  end
+
   # Whether an orthogonal segment enters the open interior. Contact with
   # the border is allowed; a diagonal is rejected because exterior routes
   # are deliberately orthogonal.
@@ -686,6 +700,17 @@ RSpec.describe Sirena::Engine do
       points = path_points(path_of(graph, "s_to_t"))
 
       expect(points.last[0]).to be > points.first[0]
+    end
+
+    it "anchors diagonal cluster edges on their rounded outlines" do
+      source = cluster("s", x: 50.0, y: 50.0, width: 100.0, height: 100.0)
+      target = cluster("t", x: 250.0, y: 250.0,
+                            width: 100.0, height: 100.0)
+      points = path_points(path_of(graph_between(source, target), "s_to_t"))
+      radius = Sirena::Renderer::FlowchartRenderer::CLUSTER_CORNER
+
+      expect(on_rounded_border?(source, *points.first, radius)).to be(true)
+      expect(on_rounded_border?(target, *points.last, radius)).to be(true)
     end
 
     it "detours when rounded cluster borders would coincide" do

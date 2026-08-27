@@ -45,25 +45,32 @@ module Sirena
           box.node_ids.each { |id| acc[id] = box.id }
         end
 
-        placed = diagram.nodes.to_h { |node| [node.id, transform_node(node)] }
+        placed = diagram.nodes.map { |node| transform_node(node) }
 
         assemble(boxes, placed, nested)
       end
 
-      # Declaration order, so an outer cluster is built before the inner
-      # one it holds. mermaid paints them in that order too.
+      # Model order is kept for emitted clusters. Parent lookup is
+      # independent of declaration order, so a later cluster can hold an
+      # earlier one.
       def assemble(boxes, placed, nested)
-        clusters = boxes.to_h { |box| [box.id, transform_subgraph(box)] }
+        entries = boxes.map { |box| [box, transform_subgraph(box)] }
+        clusters = entries.to_h { |box, cluster| [box.id, cluster] }
 
-        boxes.each do |box|
-          mine = clusters[box.id]
+        entries.each do |box, mine|
           clusters[holder_of(box, clusters)]&.fetch(:children)&.push(mine)
-          box.node_ids.each { |id| mine[:children] << placed[id] if placed[id] }
         end
 
-        loose = placed.reject { |id, _| nested.key?(id) }.values
-        roots = boxes.reject { |box| holder_of(box, clusters) }
-        loose + roots.map { |box| clusters[box.id] }
+        loose = place_nodes(placed, nested, clusters)
+        roots = entries.reject { |box, _cluster| holder_of(box, clusters) }
+        loose + roots.map(&:last)
+      end
+
+      def place_nodes(nodes, nested, clusters)
+        nodes.each_with_object([]) do |node, loose|
+          holder = clusters[nested[node[:id]]]
+          holder ? holder[:children] << node : loose << node
+        end
       end
 
       # A box naming a parent nobody drew belongs at the top level. Asked

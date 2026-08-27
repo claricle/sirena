@@ -382,8 +382,29 @@ module Sirena
 
         points = route_ends(source, target).each_slice(2)
           .map { |x, y| { x: x, y: y } }
+        source_neighbour = points[1]
+        target_neighbour = points[-2]
+        points[0] = clamp_cluster_corner(points[0], source_neighbour, source)
+        points[-1] = clamp_cluster_corner(points[-1], target_neighbour, target)
         label_points = points.length > 2 ? points.slice(1, 2) : points
         [points, ends_of(label_points)]
+      end
+
+      # Trimming uses the bounding rectangle, whose sharp corners sit
+      # outside the rounded cluster outline. Keep the chosen route and move
+      # only a corner endpoint onto the straight side it approaches.
+      def clamp_cluster_corner(point, neighbour, box)
+        return point unless cluster?(box)
+
+        xs = [box[:x] || 0, right_of(box)]
+        ys = [box[:y] || 0, bottom_of(box)]
+        return point unless xs.include?(point[:x]) && ys.include?(point[:y])
+
+        radius = [CLUSTER_CORNER, (xs.last - xs.first) / 2.0, (ys.last - ys.first) / 2.0].min
+        axis = (neighbour[:x] - point[:x]).abs >= (neighbour[:y] - point[:y]).abs ? :x : :y
+        edges = axis == :x ? xs : ys
+        limits = [edges.first + radius, edges.last - radius]
+        point.merge(axis => point[axis].clamp(*limits))
       end
 
       # A straight run needs a direction. Self-edges and distinct boxes

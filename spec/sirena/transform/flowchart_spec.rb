@@ -49,6 +49,35 @@ RSpec.describe Sirena::Transform::FlowchartTransform do
       expect(node_a[:labels].first[:text]).to eq('Start')
     end
 
+    it 'emits every node and subgraph when valid model ids repeat' do
+      model = Sirena::Diagram::Flowchart.new(direction: 'TD')
+      model.nodes.push(
+        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'First'),
+        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'Second'),
+        Sirena::Diagram::FlowchartNode.new(id: 'one', label: 'One'),
+        Sirena::Diagram::FlowchartNode.new(id: 'two', label: 'Two')
+      )
+      model.subgraphs.push(
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: 'group', declared_title: 'First group', node_ids: %w[one]
+        ),
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: 'group', declared_title: 'Second group', node_ids: %w[two]
+        )
+      )
+
+      expect(model).to be_valid
+
+      children = transform.to_graph(model)[:children]
+      labels = children.map { |child| child[:labels].first[:text] }
+      members = children.select { |child| child.dig(:metadata, :cluster) }
+        .flat_map { |box| box[:children] }
+        .map { |node| node[:labels].first[:text] }
+
+      expect(labels).to eq(['First', 'Second', 'First group', 'Second group'])
+      expect(members).to eq(%w[One Two])
+    end
+
     it 'creates edges with metadata' do
       graph = transform.to_graph(diagram)
 

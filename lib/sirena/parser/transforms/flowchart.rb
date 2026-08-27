@@ -463,8 +463,8 @@ module Sirena
           Thread.current[:sirena_flowchart_transform] = nil
         end
 
-        # Declaration order is kept: mermaid paints an outer cluster before
-        # the inner one, and a parent is always declared first.
+        # Declaration order is kept for painting. Ownership is independent:
+        # a parent declared later can adopt an earlier top-level subgraph.
         #
         # Being written inside a box is a claim like any other, so a
         # declaration takes the id only if nothing named it earlier. When
