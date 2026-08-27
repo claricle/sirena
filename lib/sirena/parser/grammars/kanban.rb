@@ -44,7 +44,26 @@ module Sirena
         # matches how the other grammars in this directory are written -
         # see `mindmap.rb`'s `node` rule.
         rule(:item) do
-          (labelled_item | bare_item) >> metadata.maybe
+          reserved_token.absent? >> (labelled_item | bare_item) >> metadata.maybe
+        end
+
+        # `kanban` is the diagram's own header token, and mermaid reserves it
+        # as a node name: it refuses `kanban`, `Kanban` and `KANBAN`, bare or
+        # carrying a bracket label, as a column or as a card. Only the whole
+        # word is taken - `kanbanBoard` and `mykanban` are legal ids. No other
+        # keyword is reserved: `graph`, `end`, `section`, `title`, `class`,
+        # `classDef`, `click`, `style`, `subgraph`, `accTitle` and `accDescr`
+        # all parse as ordinary nodes. Measured against mmdc 11.12.0 rather
+        # than generalised from the one token.
+        rule(:reserved_token) do
+          kanban_keyword >> match['a-zA-Z0-9_'].absent?
+        end
+
+        # Parslet's `str` is case-sensitive and it offers no case-insensitive
+        # literal, so the keyword is spelled out character by character.
+        rule(:kanban_keyword) do
+          match['kK'] >> match['aA'] >> match['nN'] >>
+            match['bB'] >> match['aA'] >> match['nN']
         end
 
         rule(:labelled_item) do
@@ -93,8 +112,12 @@ module Sirena
           quoted_string | single_quoted_string | unquoted_value
         end
 
+        # Captured as :unquoted, not :string, so the transform can tell an
+        # unquoted scalar from a quoted one. Mermaid resolves an unquoted
+        # value as YAML and drops the field when it lands on false, null or
+        # zero, while any non-empty quoted string is kept.
         rule(:unquoted_value) do
-          match['a-zA-Z0-9_\-'].repeat(1).as(:string)
+          match['a-zA-Z0-9_\-'].repeat(1).as(:unquoted)
         end
 
         root(:diagram)

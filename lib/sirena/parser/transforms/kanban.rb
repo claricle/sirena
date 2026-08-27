@@ -89,13 +89,17 @@ module Sirena
           end
 
           # A `label:` in the metadata replaces a COLUMN's display text, which
-          # is what mermaid renders. An empty label is not a label: it falls
-          # back to the bracket text, or to the id when there is no bracket
-          # text. On a CARD the label is kept as its own attribute and drawn
-          # as a separate "Label:" row, which this bucket leaves untouched.
+          # is what mermaid renders. A label mermaid would treat as unset is
+          # already gone by here - parse_metadata drops it - so the fallback
+          # to the bracket text, or to the id, is a plain `||`.
+          #
+          # On a CARD the label is instead kept as its own attribute and drawn
+          # as a separate "Label:" row. That DIVERGES FROM MERMAID, which
+          # renders the label as the card's primary text and draws no such
+          # row. The divergence is pre-existing and unchanged here; correcting
+          # it belongs to the card-conformance bucket.
           def column_title(item)
-            label = item[:metadata][:label]
-            label.nil? || label.empty? ? item[:text] : label
+            item[:metadata][:label] || item[:text]
           end
 
           def parse_metadata(metadata_data)
@@ -113,6 +117,7 @@ module Sirena
             entries.each do |entry|
               next unless entry.is_a?(Hash)
               next unless entry[:key] && entry[:value]
+              next if dropped_by_mermaid?(entry[:value])
 
               key = entry[:key].to_s
               value = extract_value(entry[:value])
@@ -141,14 +146,61 @@ module Sirena
           def extract_value(value_data)
             return "" if value_data.nil?
 
-            if value_data.is_a?(Hash) && value_data.key?(:string)
+            if value_data.is_a?(Hash)
               # An empty quoted string parses as `{string: []}`, because the
               # shared grammar captures the body with `.repeat`. `[].to_s` is
               # the literal "[]", so join the capture instead of stringifying
               # it.
-              Array(value_data[:string]).join
+              Array(value_data[:string] || value_data[:unquoted]).join
             else
               value_data.to_s
+            end
+          end
+
+          # Mermaid gates every metadata field on JS truthiness - the kanban
+          # renderer reads `if (doc?.label)`, and icon, assigned, ticket and
+          # priority the same way - AFTER js-yaml has resolved the scalar. A
+          # value resolving to false, null or numeric zero is therefore never
+          # set, and the field falls back as though it were absent. Dropping
+          # the entry here mirrors that: mermaid has no entry either, so it
+          # draws no metadata row and reserves no height for one.
+          #
+          # Only UNQUOTED values are resolved. A quoted value stays a string,
+          # and a non-empty string is truthy, so `'0'` and `"false"` override
+          # while `''` and `""` do not.
+          def dropped_by_mermaid?(value_data)
+            text = extract_value(value_data)
+            return true if text.empty?
+            return false unless value_data.is_a?(Hash) && value_data.key?(:unquoted)
+
+            YAML_FALSE_WORDS.include?(text) || yaml_zero?(text)
+          end
+
+          # js-yaml resolves these spellings, and only these, to false or
+          # null. `True`/`TRUE` resolve to boolean true and stay truthy, and
+          # `no`, `off`, `n` and `y` are plain strings here.
+          YAML_FALSE_WORDS = %w[false False FALSE null Null NULL].freeze
+          private_constant :YAML_FALSE_WORDS
+
+          # Every spelling of zero js-yaml resolves, measured against mmdc
+          # 11.12.0 rather than recalled. The hex prefix is lowercase-only:
+          # `0x0` resolves to zero and is dropped, while `0X0` stays a string
+          # and is kept. The exponent marker is not case-sensitive.
+          #
+          # This covers what the grammar can actually produce - unquoted_value
+          # is `match['a-zA-Z0-9_\-']`, so `0.0`, `~` and `.nan` cannot reach
+          # here even though mermaid treats them as falsy too. That is a
+          # separate pre-existing gap in the charset, not fixed in this
+          # bucket. Widen the charset and these cases need re-probing, not
+          # guessing.
+          def yaml_zero?(text)
+            case text
+            when /\A-?\d+\z/ then text.to_i.zero?
+            when /\A-?0x[0-9a-f]+\z/ then text[/0x(.+)/, 1].to_i(16).zero?
+            when /\A-?0o[0-7]+\z/ then text[/0o(.+)/, 1].to_i(8).zero?
+            when /\A-?0b[01]+\z/ then text[/0b(.+)/, 1].to_i(2).zero?
+            when /\A-?\d+[eE][-+]?\d+\z/ then text.to_f.zero?
+            else false
             end
           end
 

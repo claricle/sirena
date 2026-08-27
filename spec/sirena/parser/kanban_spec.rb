@@ -429,5 +429,81 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect(card.assigned).to eq('knsv')
       end
     end
+
+    context 'with the header token used as a node name' do
+      # mmdc reserves `kanban` as a node name and refuses it in any case,
+      # bare or labelled, as a column or a card. Only the whole word is
+      # taken. No other keyword is reserved - measured against mmdc 11.12.0.
+      it 'refuses a bare kanban column' do
+        expect { parser.parse("kanban\n  root[Root]\n  kanban\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses a bare kanban card' do
+        expect { parser.parse("kanban\n  root[Root]\n    kanban\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses it whatever the case' do
+        ['Kanban', 'KANBAN'].each do |word|
+          expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      it 'refuses it even with a bracket label' do
+        expect { parser.parse("kanban\n  root[Root]\n  kanban[Label]\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'accepts an id that merely contains the word' do
+        diagram = parser.parse("kanban\n  root[Root]\n  kanbanBoard\n  mykanban\n")
+        expect(diagram.columns.map(&:title)).to eq(%w[Root kanbanBoard mykanban])
+      end
+
+      it 'reserves no other keyword' do
+        diagram = parser.parse("kanban\n  root[Root]\n  graph\n  section\n  end\n")
+        expect(diagram.columns.map(&:title)).to eq(%w[Root graph section end])
+      end
+    end
+
+    context 'with a metadata value mermaid resolves as falsy' do
+      # mermaid gates each field on JS truthiness after js-yaml resolves the
+      # scalar, so these are never set and the field falls back. Every value
+      # below was driven through mmdc 11.12.0, not recalled.
+      def title_for(value)
+        parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
+      end
+
+      it 'falls back for every spelling of zero' do
+        %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0].each do |zero|
+          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+        end
+      end
+
+      it 'falls back for false and null in any case' do
+        %w[false False FALSE null Null NULL].each do |word|
+          expect(title_for(word)).to eq('A'), "expected #{word} to be dropped"
+        end
+      end
+
+      it 'keeps 0X0, which js-yaml leaves as a string' do
+        # The hex prefix is lowercase-only, so `0x0` is zero but `0X0` is not.
+        expect(title_for('0X0')).to eq('0X0')
+      end
+
+      it 'keeps truthy scalars and quoted falsy-looking ones' do
+        expect(title_for('1')).to eq('1')
+        expect(title_for('true')).to eq('true')
+        expect(title_for("'0'")).to eq('0')
+        expect(title_for('"false"')).to eq('false')
+      end
+
+      it 'drops a falsy value on every field, not just label' do
+        source = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, icon: null }\n"
+        card = parser.parse(source).columns.first.cards.first
+        expect(card.metadata).to eq({})
+      end
+    end
   end
 end
