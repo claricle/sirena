@@ -110,6 +110,32 @@ fields.
 sectors, a gantt has bars on a date axis, an xy chart has axes and
 series. Do not force those into nodes and edges — see the Do-not list.
 
+## Scene coordinates are final
+
+Scene holds the coordinates the renderer writes out. Not a size and an
+origin the renderer then applies. One coordinate space, and the layout
+owns it.
+
+Three renderers frame their own canvas by hand today. `git_graph.rb:48`,
+`mindmap.rb:48` and `kanban.rb:45` each set `padding = 40`, add
+`padding * 2` to both document dimensions, then carry `@offset_x` and
+`@offset_y` into every draw call below. None of them uses an SVG
+`translate`.
+
+That framing belongs in the layout. `Scene#width` and `#height` already
+include the padding, every point is already shifted, and the renderer
+adds nothing.
+
+`packet` does the same thing outside its document builder.
+`packet.rb:33` computes `@title_offset` during `render`, and
+`packet.rb:187` adds it to every field's `y`. Grepping the builders
+alone will not find it. Move it upstream with the rest.
+
+The alternative — Scene carries an origin, the renderer applies it —
+fails in two directions. Miss one draw site and connected geometry pulls
+apart. Apply it twice and content slides into its own padding.
+`git_graph` has several independent offset sites, so both are reachable.
+
 ## Scene classes are lutaml, with one restriction
 
 Scenes use `Lutaml::Model::Serializable` and `attribute` declarations,
@@ -160,6 +186,8 @@ attribute, two of them dead (item 02).
 
 - [ ] no renderer indexes a Hash (`[:symbol]`, `.dig`) on its input
 - [ ] no renderer performs arithmetic on coordinates or angles
+- [ ] no renderer adds a framing constant to a coordinate;
+      `grep -rn "@offset_\|padding = " lib/sirena/renderer/` returns nothing
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives

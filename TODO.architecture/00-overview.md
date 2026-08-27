@@ -50,6 +50,8 @@ been sidetracked — the answer is here.
 | Can we break the API? | **Yes, freely.** Pre-1.0, nothing released | No deprecated aliases, no shims. Rename anything |
 | Is PlantUML real? | **Yes, next few months** | Item 06 keeps detection inside `Notation::Mermaid` rather than the engine, so PlantUML slots in. Still no plugin system — read `TODO.foundation/12` and `16` before item 06 |
 | What are Scene classes built from? | **lutaml-model**, like the Diagram layer | `attribute` declarations only. **Never add an `xml do` block to a Scene** — Scenes are internal and never serialize to XML; that block is what caused the trouble in the Svg layer |
+| What coordinates does a Scene hold? | **Final canvas ones.** The renderer writes `x` and `y` out verbatim | No origin attribute, no offset applied at render time. The padding three renderers add by hand today (`git_graph.rb:48`, `mindmap.rb:48`, `kanban.rb:45`) moves into the layout, and so does `packet`'s title offset. One coordinate space — see item 04 |
+| How is the `Diagram::Base` contract enforced? | **By the registry.** A required `model:` row, and one spec that iterates it | Completeness comes from the table, so it grows with every new type instead of with a hand-kept list. Canonical fixtures are the second layer, proving the parser builds the model it declared — not the first. See item 01 |
 | Is the cross-notation typed IR in this foundation? | **Yes.** Owner ruling, 2026-08-13, `TODO.foundation/18` | It is NOT deferred past PlantUML, and item 04 does not replace it. Item 04 is the layout→renderer boundary; item 18 is the notation→layout one. Both exist. See "The IR, and what the owner ruled" below |
 
 Geometry parity is the largest of these. It means the reference SVGs and
