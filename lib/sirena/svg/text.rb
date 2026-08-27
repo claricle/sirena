@@ -115,18 +115,25 @@ module Sirena
         map_content to: :content
       end
 
-      # Override to_xml to include text content.
+      protected
+
+      # A text element carries content, so it is not the self-closing tag
+      # the base class writes.
       #
       # `content` is a collection because lutaml-model 0.8 requires that
       # under `mixed: true`. Renderers assign a plain String, but
       # `from_xml` yields an Array, so join rather than interpolate —
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
-      def to_xml
+      #
+      # Content may hold newlines, so this is the one entry in #xml_lines
+      # that is not a single line. It is why Group indents entries rather
+      # than lines.
+      #
+      # @return [String] XML string
+      def element_markup
         attrs = build_attributes
         "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
       end
-
-      protected
 
       def element_attributes
         attribute_pairs(ATTRIBUTE_PAIRS)

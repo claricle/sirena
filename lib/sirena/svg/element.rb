@@ -57,14 +57,17 @@ module Sirena
       ].map(&:freeze).freeze
       private_constant :BASE_PAIRS
 
-      # Generate XML representation of this element
+      # Generate XML representation of this element.
       #
-      # @return [String] XML string
+      # A fragment, not a document. An element that draws sibling shapes — a
+      # Path with an arrowhead — returns more than one root, and a strict
+      # parser will refuse that as having two roots. Group and Document, the
+      # only callers, join fragments, so that is the contract they already
+      # rely on.
+      #
+      # @return [String] one or more sibling elements, newline separated
       def to_xml
-        tag = self.class.name.split('::').last.downcase
-        attrs = build_attributes
-
-        "<#{tag}#{attrs}/>"
+        xml_lines.join("\n")
       end
 
       # Declares the attributes an element writes, in output order.
@@ -92,6 +95,35 @@ module Sirena
       end
 
       protected
+
+      # The complete markup for one element.
+      #
+      # @return [String] XML string
+      def element_markup
+        tag = self.class.name.split('::').last.downcase
+        attrs = build_attributes
+
+        "<#{tag}#{attrs}/>"
+      end
+
+      # The markup a parent indents, one entry per structural unit.
+      #
+      # Separate from #to_xml because a parent may not indent every line of a
+      # child's markup: a Text holding a newline would have its content
+      # rewritten. Group indents entries instead, and Text#element_markup is
+      # the only entry that may carry a newline of its own.
+      #
+      # @return [Array<String>] this element's markup, then each sibling's
+      def xml_lines
+        [element_markup, *sibling_markup]
+      end
+
+      # Hook for subclasses to draw sibling shapes alongside this element.
+      #
+      # @return [Array<String>] one entry of markup per sibling
+      def sibling_markup
+        []
+      end
 
       # Build attribute string for XML output
       #
@@ -138,10 +170,13 @@ module Sirena
 
       # Multiplies a component opacity by the whole-element one.
       #
-      # On a leaf shape the two are equivalent: `opacity` composites the
-      # painted result, and painting fill and stroke at the same fraction
-      # reaches it. They differ only where a stroke overlaps its own fill,
-      # which no shape Sirena draws relies on.
+      # The translation is exact where a shape paints only one of fill and
+      # stroke. Where a stroke overlaps its own fill, the overlap is painted
+      # darker: `1 - (1 - a)^2` instead of `a`. SVG Tiny 1.2 has no object
+      # opacity, so no exact translation exists and this is the deviation
+      # Sirena accepts. It is confined to the inner half of a shape's own
+      # outline; the shipped examples reach it on stroked, filled, translucent
+      # rects such as the quadrant background.
       #
       # On a container they are NOT equivalent, and this makes no attempt to
       # be. Group opacity composites the group as one rendered surface, while

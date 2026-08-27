@@ -42,22 +42,6 @@ module Sirena
         map_attribute 'opacity', to: :opacity
       end
 
-      # The path, followed by any arrowhead it asked for.
-      #
-      # More than one element, because an arrowhead is a sibling shape and
-      # `<path>` takes no drawable children. Every caller joins children's
-      # markup, so a second element travels with the first.
-      #
-      # This is a fragment, not a document: with a marker it holds two
-      # sibling elements and a strict parser will refuse it as having two
-      # roots. Every caller — Group and Document — joins fragments, so that
-      # is the contract they already rely on.
-      #
-      # @return [String] one or more sibling elements, newline separated
-      def to_xml
-        [super, *Arrowhead.for(self).map(&:to_xml)].join("\n")
-      end
-
       # Helper to build path data from move and line commands
       #
       # @param commands [Array<Hash>] Path commands
@@ -81,6 +65,19 @@ module Sirena
             'Z'
           end
         end.join(' ')
+      end
+
+      protected
+
+      # The arrowheads this path asked for, drawn beside it.
+      #
+      # A head is a sibling shape rather than a child because `<path>` takes
+      # no drawable children. Each is a Polygon — a leaf that draws no
+      # siblings of its own — so one head is always one entry.
+      #
+      # @return [Array<String>] one entry of markup per arrowhead
+      def sibling_markup
+        Arrowhead.for(self).map(&:to_xml)
       end
     end
   end

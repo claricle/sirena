@@ -52,23 +52,30 @@ module Sirena
 
       alias << add_child
 
-      # Generate XML with children
+      protected
+
+      # The open tag, each child's entries indented one level, then the close
+      # tag.
       #
-      # @return [String] XML string
-      def to_xml
+      # Indents entries rather than lines: a Text holding a newline would
+      # otherwise have its own content indented along with the markup.
+      #
+      # `children` is a plain Array that enforces no type. Nothing in the gem
+      # puts a non-Element in one, and a foreign object is skipped rather
+      # than serialized, which is what Group has always done with one.
+      #
+      # @return [Array<String>] structural lines for this group
+      def xml_lines
         attrs = build_attributes
 
-        if children.empty?
-          "<g#{attrs}/>"
-        else
-          parts = ["<g#{attrs}>"]
-          children.each do |child|
-            # A child may be a multi-element fragment, so indent every line.
-            parts << child.to_xml.gsub(/^/, '  ') if child.respond_to?(:to_xml)
-          end
-          parts << "</g>"
-          parts.join("\n")
+        return ["<g#{attrs}/>"] if children.empty?
+
+        child_lines = children.flat_map do |child|
+          next [] unless child.is_a?(Element)
+
+          child.xml_lines.map { |line| "  #{line}" }
         end
+        ["<g#{attrs}>", *child_lines, "</g>"]
       end
     end
   end
