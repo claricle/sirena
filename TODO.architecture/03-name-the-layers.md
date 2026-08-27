@@ -58,8 +58,35 @@ One commit — and one PR — per rename.
    name and one caller now is that the replacement touches this file and
    nothing else.
 4. **Uniform class names.** `Sirena::<Layer>::<Type>` everywhere:
-   `Parser::Pie`, `Layout::Pie`, `Renderer::Pie`. The suffix repeats the
-   namespace; drop it.
+   `Parser::Pie`, `Diagram::Pie`, `Layout::Pie`, `Renderer::Pie`. The
+   suffix repeats the namespace; drop it.
+
+   **The Diagram layer is included, and 8 of 24 need it.** Measured
+   2026-08-27 by resolving every registry key to its conventional
+   constant:
+
+   | today | after |
+   |---|---|
+   | `Diagram::GanttChart` | `Diagram::Gantt` |
+   | `Diagram::QuadrantChart` | `Diagram::Quadrant` |
+   | `Diagram::RadarChart` | `Diagram::Radar` |
+   | `Diagram::XYChart` | `Diagram::XyChart` |
+   | `Diagram::ArchitectureDiagram` | `Diagram::Architecture` |
+   | `Diagram::SankeyDiagram` | `Diagram::Sankey` |
+   | `Diagram::PacketDiagram` | `Diagram::Packet` |
+   | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
+
+   Rename the registry key `:xychart` to `:xy_chart` in the same PR. It
+   is the only key that does not match its own file name, and item 06
+   makes the key the single source the class is derived from.
+
+   Only the top-level model per type is in scope. Inner classes like
+   `Diagram::GanttTask` keep their names — they are not addressed by a
+   registry key.
+
+   The other 16 already resolve. If this step is skipped, item 06's
+   convention lookup misses a third of the types and item 01's contract
+   spec goes red.
 
 **No deprecated aliases.** The gem is pre-1.0 with nothing released, and
 breaking changes are explicitly allowed (`00-overview.md`). Update every
@@ -76,6 +103,8 @@ caller in `spec/`, `scripts/` and `lib/tasks/` and delete the old names.
       `mindmap`, `packet`, `radar`, `requirement`, `treemap`,
       `xy_chart`), and that is the gem's class name, not ours.
 - [ ] class names are uniform, no `Parser`/`Transform`/`Renderer` suffixes
+- [ ] every registry key resolves to `Sirena::Diagram::<CamelKey>`;
+      no `Chart`/`Diagram` suffix survives on a top-level model
 - [ ] `Layout::Grid` exists; `Engine` contains no positioning code
 - [ ] `rake corpus:check` shows **zero** change after each of the 4 PRs
 

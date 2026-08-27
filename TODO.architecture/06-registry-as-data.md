@@ -72,6 +72,11 @@ TYPES = {
    It stops being a row and becomes the convention; `contract_spec.rb`
    iterates `TYPES` instead. Its set-parity assertion collapses to
    nothing, because there is now one table to be out of step with.
+
+   **This only works if item 03 step 4 renamed the Diagram models.**
+   Eight of them carry a `Chart` or `Diagram` suffix today and do not
+   resolve. Check that first — `Diagram::Gantt` must answer before you
+   delete the `model:` row, or a third of the types lose their contract.
 3. Detection reads the same table. One list, not two.
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
 5. `Engine` holds no type constants. Its render method is the three
