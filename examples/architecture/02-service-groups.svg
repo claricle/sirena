@@ -17,19 +17,19 @@
 </g>
 <g id="edge-webapp-auth">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 160 80 L 200 240"/>
-<polygon fill="#000000" points="200.0,240.0 194.1791,233.209 201.9403,231.2687"/>
+  <polygon fill="#000000" points="200.0,240.0 194.1791,233.209 201.9403,231.2687"/>
 </g>
 <g id="edge-webapp-data">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100 120 L 424.0 200"/>
-<polygon fill="#000000" points="424.0,200.0 415.2744,201.9657 417.1921,194.1989"/>
+  <polygon fill="#000000" points="424.0,200.0 415.2744,201.9657 417.1921,194.1989"/>
 </g>
 <g id="edge-data-db">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 424.0 280 L 100 40"/>
-<polygon fill="#000000" points="100.0,40.0 108.8094,41.5476 104.0475,47.976"/>
+  <polygon fill="#000000" points="100.0,40.0 108.8094,41.5476 104.0475,47.976"/>
 </g>
 <g id="edge-auth-cache">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 262.0 280 L 260 40"/>
-<polygon fill="#000000" points="260.0,40.0 264.0665,47.9664 256.0668,48.0331"/>
+  <polygon fill="#000000" points="260.0,40.0 264.0665,47.9664 256.0668,48.0331"/>
 </g>
 <g id="service-webapp">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>

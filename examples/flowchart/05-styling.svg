@@ -7,15 +7,15 @@
 >
 <g id="edge-A_to_B">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 86.0 67.0 L 336.0 67.0"/>
-<polygon fill="#000000" points="336.0,67.0 328.0,71.0 328.0,63.0"/>
+  <polygon fill="#000000" points="336.0,67.0 328.0,71.0 328.0,63.0"/>
 </g>
 <g id="edge-B_to_C">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 336.0 67.0 L 586.0 67.0"/>
-<polygon fill="#000000" points="586.0,67.0 578.0,71.0 578.0,63.0"/>
+  <polygon fill="#000000" points="586.0,67.0 578.0,71.0 578.0,63.0"/>
 </g>
 <g id="edge-C_to_D">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 586.0 67.0 L 86.0 267.0"/>
-<polygon fill="#000000" points="86.0,267.0 91.9423,260.315 94.9134,267.7428"/>
+  <polygon fill="#000000" points="86.0,267.0 91.9423,260.315 94.9134,267.7428"/>
 </g>
 <g id="node-A">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="72.0" height="34.0"/>

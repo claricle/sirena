@@ -32,13 +32,13 @@
 <g id="block-compound">
   <rect fill="none" stroke="#666" stroke-width="2" x="143.0" y="180.0" width="100.0" height="200.0" stroke-dasharray="5,5"/>
   <g id="block-D">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="200.0" width="100.0" height="60.0"/>
-  <text fill="#000000" x="213.0" y="234.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
-</g>
+    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="200.0" width="100.0" height="60.0"/>
+    <text fill="#000000" x="213.0" y="234.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
+  </g>
   <g id="block-E">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="280.0" width="100.0" height="60.0"/>
-  <text fill="#000000" x="213.0" y="314.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">E</text>
-</g>
+    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="280.0" width="100.0" height="60.0"/>
+    <text fill="#000000" x="213.0" y="314.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">E</text>
+  </g>
 </g>
 <g id="block-F">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="273.0" y="180.0" width="100.0" height="60.0"/>

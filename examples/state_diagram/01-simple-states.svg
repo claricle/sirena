@@ -7,88 +7,88 @@
 >
 <g id="transition-start_1_to_Idle">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 350 75"/>
-<polygon fill="#000000" points="350.0,75.0 341.8647,78.717 342.1452,70.7219"/>
+  <polygon fill="#000000" points="350.0,75.0 341.8647,78.717 342.1452,70.7219"/>
 </g>
 <g id="transition-Idle_to_Connecting">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 350 75 L 605.0 75"/>
-<polygon fill="#000000" points="605.0,75.0 597.0,79.0 597.0,71.0"/>
+  <polygon fill="#000000" points="605.0,75.0 597.0,79.0 597.0,71.0"/>
   <text fill="#000000" x="477.5" y="67.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">connect()</text>
 </g>
 <g id="transition-Connecting_to_Connected">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 605.0 75 L 101.5 275"/>
-<polygon fill="#000000" points="101.5,275.0 107.4583,268.3292 110.4116,275.7642"/>
+  <polygon fill="#000000" points="101.5,275.0 107.4583,268.3292 110.4116,275.7642"/>
   <text fill="#000000" x="353.25" y="167.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">success</text>
 </g>
 <g id="transition-Connecting_to_Error">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 605.0 75 L 350 275"/>
-<polygon fill="#000000" points="350.0,275.0 353.8263,266.9155 358.7634,273.2103"/>
+  <polygon fill="#000000" points="350.0,275.0 353.8263,266.9155 358.7634,273.2103"/>
   <text fill="#000000" x="477.5" y="167.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">failure</text>
 </g>
 <g id="transition-start_1_to_Authenticated">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 615.5 275"/>
-<polygon fill="#000000" points="615.5,275.0 606.5997,275.886 609.4511,268.4113"/>
+  <polygon fill="#000000" points="615.5,275.0 606.5997,275.886 609.4511,268.4113"/>
 </g>
 <g id="transition-Authenticated_to_Active">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 615.5 275 L 100 475"/>
-<polygon fill="#000000" points="100.0,475.0 106.0115,468.3772 108.9052,475.8355"/>
+  <polygon fill="#000000" points="100.0,475.0 106.0115,468.3772 108.9052,475.8355"/>
 </g>
 <g id="transition-start_1_to_Reading">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 65 65 L 350 475"/>
-<polygon fill="#000000" points="350.0,475.0 342.1494,470.7142 348.7183,466.148"/>
+  <polygon fill="#000000" points="350.0,475.0 342.1494,470.7142 348.7183,466.148"/>
 </g>
 <g id="transition-Reading_to_Writing">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 350 475 L 600 475"/>
-<polygon fill="#000000" points="600.0,475.0 592.0,479.0 592.0,471.0"/>
+  <polygon fill="#000000" points="600.0,475.0 592.0,479.0 592.0,471.0"/>
   <text fill="#000000" x="475.0" y="467.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">write_request</text>
 </g>
 <g id="transition-Writing_to_Reading">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 600 475 L 350 475"/>
-<polygon fill="#000000" points="350.0,475.0 358.0,471.0 358.0,479.0"/>
+  <polygon fill="#000000" points="350.0,475.0 358.0,471.0 358.0,479.0"/>
   <text fill="#000000" x="475.0" y="467.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">write_complete</text>
 </g>
 <g id="transition-Reading_to_Processing">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 350 475 L 105.0 675"/>
-<polygon fill="#000000" points="105.0,675.0 108.6678,666.8423 113.7268,673.0396"/>
+  <polygon fill="#000000" points="105.0,675.0 108.6678,666.8423 113.7268,673.0396"/>
   <text fill="#000000" x="227.5" y="567.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">process_data</text>
 </g>
 <g id="transition-Processing_to_Reading">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 105.0 675 L 350 475"/>
-<polygon fill="#000000" points="350.0,475.0 346.3322,483.1577 341.2732,476.9604"/>
+  <polygon fill="#000000" points="350.0,475.0 346.3322,483.1577 341.2732,476.9604"/>
   <text fill="#000000" x="227.5" y="567.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">complete</text>
 </g>
 <g id="transition-Active_to_Suspended">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 100 475 L 351.5 675"/>
-<polygon fill="#000000" points="351.5,675.0 342.7488,673.1514 347.7282,666.8899"/>
+  <polygon fill="#000000" points="351.5,675.0 342.7488,673.1514 347.7282,666.8899"/>
   <text fill="#000000" x="225.75" y="567.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">suspend()</text>
 </g>
 <g id="transition-Suspended_to_Active">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 351.5 675 L 100 475"/>
-<polygon fill="#000000" points="100.0,475.0 108.7512,476.8486 103.7718,483.1101"/>
+  <polygon fill="#000000" points="100.0,475.0 108.7512,476.8486 103.7718,483.1101"/>
   <text fill="#000000" x="225.75" y="567.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">resume()</text>
 </g>
 <g id="transition-Connected_to_Disconnecting">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 101.5 275 L 615.5 675"/>
-<polygon fill="#000000" points="615.5,675.0 606.7299,673.2435 611.6431,666.93"/>
+  <polygon fill="#000000" points="615.5,675.0 606.7299,673.2435 611.6431,666.93"/>
   <text fill="#000000" x="358.5" y="467.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">disconnect()</text>
 </g>
 <g id="transition-Error_to_Idle">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 350 275 L 350 75"/>
-<polygon fill="#000000" points="350.0,75.0 354.0,83.0 346.0,83.0"/>
+  <polygon fill="#000000" points="350.0,75.0 354.0,83.0 346.0,83.0"/>
   <text fill="#000000" x="350.0" y="167.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">reset()</text>
 </g>
 <g id="transition-Disconnecting_to_Idle">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 615.5 675 L 350 75"/>
-<polygon fill="#000000" points="350.0,75.0 356.8951,80.6971 349.5793,83.9344"/>
+  <polygon fill="#000000" points="350.0,75.0 356.8951,80.6971 349.5793,83.9344"/>
   <text fill="#000000" x="482.75" y="367.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">complete</text>
 </g>
 <g id="transition-Suspended_to_Disconnecting">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 351.5 675 L 615.5 675"/>
-<polygon fill="#000000" points="615.5,675.0 607.5,679.0 607.5,671.0"/>
+  <polygon fill="#000000" points="615.5,675.0 607.5,679.0 607.5,671.0"/>
   <text fill="#000000" x="483.5" y="667.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">timeout</text>
 </g>
 <g id="transition-Idle_to_end_2">
   <path fill="none" stroke="#000000" stroke-width="2" d="M 350 75 L 65 865"/>
-<polygon fill="#000000" points="65.0,865.0 63.9522,856.1173 71.4775,858.8321"/>
+  <polygon fill="#000000" points="65.0,865.0 63.9522,856.1173 71.4775,858.8321"/>
   <text fill="#000000" x="207.0" y="462.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">shutdown()</text>
 </g>
 <g id="state-start_1">
@@ -141,9 +141,9 @@
 </g>
 <g id="state-end_2">
   <g>
-  <circle fill="none" stroke="#000000" stroke-width="2" cx="65.0" cy="865.0" r="15.0"/>
-  <circle fill="#000000" stroke="none" cx="65.0" cy="865.0" r="10.0"/>
-</g>
+    <circle fill="none" stroke="#000000" stroke-width="2" cx="65.0" cy="865.0" r="15.0"/>
+    <circle fill="#000000" stroke="none" cx="65.0" cy="865.0" r="10.0"/>
+  </g>
   <text fill="#000000" x="65.0" y="869.9" text-anchor="middle" font-family="Arial, sans-serif" font-size="14">[*]</text>
 </g>
 </svg>

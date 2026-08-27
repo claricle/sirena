@@ -7,23 +7,23 @@
 >
 <g id="relationship-login-webapp">
   <path fill="none" stroke="#666" stroke-width="2" d="M 110 340 C 110 446, 95 -86, 95 20"/>
-<polygon fill="#666" points="95.0,20.0 91.0,12.0 99.0,12.0"/>
+  <polygon fill="#666" points="95.0,20.0 91.0,12.0 99.0,12.0"/>
   <rect fill="#fff" stroke="#666" stroke-width="1" x="71.0" y="170.0" width="63.0" height="18.0" rx="3.0"/>
   <text fill="#000" x="102.0" y="183.5" text-anchor="middle" font-size="10">satisfies</text>
 </g>
 <g id="relationship-security-webapp">
   <path fill="none" stroke="#666" stroke-width="2" d="M 390 340 C 390 446, 95 -86, 95 20"/>
-<polygon fill="#666" points="95.0,20.0 91.0,12.0 99.0,12.0"/>
+  <polygon fill="#666" points="95.0,20.0 91.0,12.0 99.0,12.0"/>
   <rect fill="#fff" stroke="#666" stroke-width="1" x="214.0" y="170.0" width="56.0" height="18.0" rx="3.0"/>
   <text fill="#000" x="242.0" y="183.5" text-anchor="middle" font-size="10">verifies</text>
 </g>
 <g id="requirement-login">
   <rect fill="#ffffff" stroke="#ff6b6b" stroke-width="2" x="20.0" y="180.0" width="180.0" height="160.0" rx="5.0" ry="5.0"/>
   <g>
-  <rect fill="#ff6b6b" fill-opacity="0.3" stroke-opacity="0.3" x="20.0" y="180.0" width="180.0" height="30.0"/>
-  <text fill="#000" x="30.0" y="199.2" font-size="12" font-weight="bold">Requirement</text>
-  <text fill="#000" x="190.0" y="198.85" text-anchor="end" font-size="11">login</text>
-</g>
+    <rect fill="#ff6b6b" fill-opacity="0.3" stroke-opacity="0.3" x="20.0" y="180.0" width="180.0" height="30.0"/>
+    <text fill="#000" x="30.0" y="199.2" font-size="12" font-weight="bold">Requirement</text>
+    <text fill="#000" x="190.0" y="198.85" text-anchor="end" font-size="11">login</text>
+  </g>
   <text fill="#000" x="30.0" y="225.0" font-size="12">ID: 1</text>
   <text fill="#000" x="30.0" y="241.0" font-size="12">Users must be able to</text>
   <text fill="#000" x="30.0" y="257.0" font-size="12">login</text>
@@ -33,10 +33,10 @@
 <g id="requirement-security">
   <rect fill="#ffffff" stroke="#ff6b6b" stroke-width="2" x="300.0" y="180.0" width="180.0" height="160.0" rx="5.0" ry="5.0"/>
   <g>
-  <rect fill="#ff6b6b" fill-opacity="0.3" stroke-opacity="0.3" x="300.0" y="180.0" width="180.0" height="30.0"/>
-  <text fill="#000" x="310.0" y="199.2" font-size="12" font-weight="bold">Requirement</text>
-  <text fill="#000" x="470.0" y="198.85" text-anchor="end" font-size="11">security</text>
-</g>
+    <rect fill="#ff6b6b" fill-opacity="0.3" stroke-opacity="0.3" x="300.0" y="180.0" width="180.0" height="30.0"/>
+    <text fill="#000" x="310.0" y="199.2" font-size="12" font-weight="bold">Requirement</text>
+    <text fill="#000" x="470.0" y="198.85" text-anchor="end" font-size="11">security</text>
+  </g>
   <text fill="#000" x="310.0" y="225.0" font-size="12">ID: 2</text>
   <text fill="#000" x="310.0" y="241.0" font-size="12">All data must be</text>
   <text fill="#000" x="310.0" y="257.0" font-size="12">encrypted</text>
