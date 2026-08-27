@@ -166,6 +166,18 @@ module Sirena
         composed_opacity(stroke_opacity)
       end
 
+      # Hook for subclasses to add their specific attributes.
+      #
+      # Returns name/value PAIRS, not rendered markup. That is deliberate: it
+      # leaves Escaping.attributes as the only code that turns an attribute
+      # into text, so a subclass cannot emit an unescaped one. Pairs with a
+      # nil value are dropped, so callers need no conditionals.
+      #
+      # @return [Array<Array>] name/value pairs
+      def element_attributes
+        []
+      end
+
       private
 
       # Multiplies a component opacity by the whole-element one.
@@ -207,20 +219,6 @@ module Sirena
         whole = whole.clamp(0.0, 1.0)
         part = part.clamp(0.0, 1.0)
         Numbers.write(part * whole)
-      end
-
-      protected
-
-      # Hook for subclasses to add their specific attributes.
-      #
-      # Returns name/value PAIRS, not rendered markup. That is deliberate: it
-      # leaves Escaping.attributes as the only code that turns an attribute
-      # into text, so a subclass cannot emit an unescaped one. Pairs with a
-      # nil value are dropped, so callers need no conditionals.
-      #
-      # @return [Array<Array>] name/value pairs
-      def element_attributes
-        []
       end
     end
   end
