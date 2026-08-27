@@ -222,9 +222,23 @@ them), `lib/sirena/parser/treemap.rb`, `lib/sirena/transform/*.rb`.
 ---
 
 Both parts' criteria are one list below, at the end of the file. The
-plan scorer reads the first `## Done when` in a file and stops at the
+plan scorer reads the first `## Prerequisite
+
+`TODO.foundation/03a`'s coverage gate. Part A closes a latent runtime
+crash and Part B changes a failing parse from `PipelineError` to
+`ParseError` — both are behaviour, and `TODO.foundation/03:16` says no
+behaviour PR closes before 03a.
+
+## Done when` in a file and stops at the
 next `##`, so a per-part heading silently drops everything after the
 first block.
+
+## Prerequisite
+
+`TODO.foundation/03a`'s coverage gate. Part A closes a latent runtime
+crash and Part B changes a failing parse from `PipelineError` to
+`ParseError` — both are behaviour, and `TODO.foundation/03:16` says no
+behaviour PR closes before 03a.
 
 ## Done when
 

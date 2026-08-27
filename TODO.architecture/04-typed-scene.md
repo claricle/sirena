@@ -9,7 +9,9 @@ rather than taking a PR of its own; it cannot pass before then anyway. An earlie
 said ~21 because three types were going to be deleted rather than
 converted; they are not. Each type PR is small — Scene definition, layout rewrite,
 renderer rewrite.
-**Prerequisite:** item 03.
+**Prerequisite:** item 03, and `TODO.foundation/03a`'s coverage gate —
+this item changes rendered output, so it cannot close before 03a lands
+(`03-name-the-layers.md`).
 
 This is the item that makes every later fix cheaper. It is also the
 longest. Do it one type at a time and it is mechanical.

@@ -6,7 +6,7 @@
 
 The foundation plan is a good plan for **measuring** the codebase. We're
 adding a phase before it that **shapes** the codebase, because the shape
-is what makes each of the 524 remaining corpus fixes expensive.
+is what makes each of the 458 remaining corpus fixes expensive.
 
 Same destination, different order. Ten of the nineteen original items
 are unchanged and still the reference — item 18 keeps its content and
@@ -24,7 +24,7 @@ pure Ruby, with no Node and no browser.** That's the whole product.
 files, but a third of them are not mermaid — 632 extraction artifacts
 and 59 cases mmdc rejected, per `spec/mermaid/corpus-verdicts.yml`.
 Against the **1,032 cases mermaid accepts, Sirena renders 508 — 49.2%**,
-leaving **524** to fix (measured 2026-08-25,
+leaving **458** to fix (measured 2026-08-27,
 `bundle exec ruby scripts/corpus_sweep.rb`). Closing that gap is the job.
 
 ---
@@ -63,15 +63,17 @@ what a layout emits, you read the renderer to find out what it expects.
 
 **Net effect:** fixing one diagram type means touching five files across
 five layers, plus reverse-engineering one undocumented contract. After
-the structural work it's a couple of files and nothing to
-reverse-engineer.
+the structural work it is bounded by the change itself, and there is
+nothing to reverse-engineer.
 
 ```
   new diagram type        8 files   (7 new + one row in the type table)
   new syntax on a type    varies    (1 to 5, measured — see item 07)
 ```
 
-Those two numbers get asserted by a spec, not claimed.
+The eight-file count gets asserted by a spec, not claimed. The syntax
+cost does not — item 07 measured four commits and found no bound worth
+promising.
 
 ---
 
@@ -152,22 +154,22 @@ items of preparation.
 draft of this argument said "~1,380 remaining corpus fixes". That was
 1997 minus 614 — the whole corpus minus what passed — and it counted 632
 extraction artifacts and 59 mmdc rejections as work. The real number is
-**524**, measured against oracle-valid cases only. That is 2.6x smaller
+**458**, measured against evidence-valid cases only. That is 3x smaller
 than we claimed.
 
 Does the argument survive? Yes, but on the per-fix cost rather than the
 case count:
 
-- 524 fixes is still an order of magnitude more work than the seven
+- 458 fixes is still an order of magnitude more work than the seven
   structural items, which are **39 PRs** of mechanical change. Item 04 is
   26 of them.
 - The work is concentrated, which makes the structural case stronger
-  rather than weaker: flowchart holds 194 and class holds 143, so 337 of
-  the 524 land in two types whose grammars, layouts and renderers are
+  rather than weaker: flowchart holds 128 and class holds 143, so 271 of
+  the 458 land in two types whose grammars, layouts and renderers are
   exactly the files items 03-05 rewrite. Paying the untyped-hash tax 337
   times in two files is the case for fixing the files first.
 - What we can no longer say is "a thousand cases justify anything".
-  Seven preparatory items in front of 524 fixes is a judgment call, not
+  Seven preparatory items in front of 458 fixes is a judgment call, not
   an arithmetic one. It is the right call, and it is a call.
 
 ### 2. Item 02 (corpus oracle) splits by time — it is NOT dropped

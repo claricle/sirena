@@ -191,13 +191,23 @@ one branch floor. Land it before the first behaviour PR, exactly as
 `TODO.foundation/03` says. What this plan drops is only the
 70 -> 80 -> 90 -> 97 timeline tied to other tracks' completion events.
 
-Items 01-03 and 06 change no behaviour, so they are not blocked by it.
+**Items 02, 03 and 06 change no behaviour**, so they are not blocked
+by it.
 
-**Items 04 and 05 are.** Item 04 sizes boxes from theme metrics and
-item 05 part C swaps hardcoded hex for theme colours — both change what
-a user sees, so 03a lands before either starts. Item 08 is blocked too,
-and so is anything in item 05 that changes a parse-error message. An
-earlier draft exempted all of 01-06 and that was wrong.
+**Items 01, 04, 05 and 08 are blocked.** An earlier draft exempted all
+of 01-06 and that was wrong twice over:
+
+- **Item 01** changes behaviour in both parts. Part A closes a latent
+  runtime crash; Part B deliberately changes a failing parse from
+  `PipelineError` to `ParseError`. `TODO.foundation/03`'s only exemption
+  is the lutaml migration, and item 01 is not it.
+- **Item 04** sizes boxes from theme metrics; **item 05 part C** swaps
+  hardcoded hex for theme colours. Both change what a user sees.
+
+**This has to be in their headers, not only here.** Item 01, item 04 and
+item 05 each carry 03a as a prerequisite alongside whatever else they
+list; a dependency that lives in one narrative paragraph is a dependency
+nobody checks.
 
 ## Do not
 

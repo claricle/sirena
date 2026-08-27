@@ -40,9 +40,16 @@ into four buckets — re-measured 2026-08-27:
              1997
 ```
 
-The 274 unknowns are why 632 + 59 does not account for the rest. They
-are unclassified by the oracle — that says nothing about whether Sirena
-renders them.
+The 274 unknowns are why 632 + 59 does not account for the rest.
+
+**This split is provisional, and it is not yet the oracle.**
+`scripts/corpus_verdicts.rb:11` says so: the verdicts come from unpinned
+foreign sidecars and heuristic artifact detection.
+`AGENTS.md:11` defines the oracle as the pinned toolchain, and permits
+excluding a case only on oracle rejection. So 632 + 274 + 59 are set
+aside on today's best evidence, not written off — `TODO.foundation/02a`'s
+pin and `02b`'s regeneration are what turn this into a target you can
+hold someone to.
 
 Sweep run 2026-08-27, `bundle exec ruby scripts/corpus_sweep.rb`:
 
@@ -54,8 +61,14 @@ Sweep run 2026-08-27, `bundle exec ruby scripts/corpus_sweep.rb`:
   raw        736/1997   36.9%    <- do not quote this one
 ```
 
-**458 valid cases still fail.** That is the size of the job. The raw
-rate counts files mermaid cannot parse either, so it flatters us.
+**458 valid cases fail today.** That is the size of the job as
+currently evidenced — subject to the pin above moving cases between
+buckets.
+
+The raw 36.9% is not a worse version of 55.6%; it is a different
+question with a different denominator. It is *lower*, because it counts
+632 artifacts and 59 rejections we cannot render and should not be asked
+to. Quote the valid-only figure, and say which one you mean.
 
 **Re-run the sweep before quoting any of this.** These numbers moved
 between two rounds of reviewing this very document — the flowchart work
