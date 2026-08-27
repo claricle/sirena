@@ -129,16 +129,28 @@ TYPES = {
 - [ ] deleting one `TYPES` row turns it red — check it, do not assume
       it. Without the fixture parity above, deletion is silent
 - [ ] it passes with `model:` removed from every registration
-- [ ] `Parser.for` and `Renderer.for` **raise** for an unknown type and
-      for a type whose class does not resolve. They are mandatory
-      layers; nil is not an answer
-- [ ] `Layout.for` returns `nil` when the layout file genuinely does
-      not exist, and **raises** when the file exists but the constant
-      inside it does not match the convention. Three cases, three
-      specs — absent file, present-but-misnamed, present-and-correct
+- [ ] the three `.for` lookups answer **four** cases, each with a named
+      error class — a bare "raises" passes while a `KeyError`,
+      `NameError` or `LoadError` leaks out, and that contradicts the
+      taxonomy in `LAYERS.md`:
+
+      | case | `Parser.for` / `Renderer.for` | `Layout.for` |
+      |---|---|---|
+      | type not in `TYPES` | raise `DiagramTypeError` | raise `DiagramTypeError` |
+      | known type, class resolves | the class | the class |
+      | known type, no layout file | raise `DiagramTypeError` | **`nil`** — the one legitimate nil |
+      | known type, file present, constant misnamed | raise `DiagramTypeError` | raise `DiagramTypeError` |
+
+- [ ] each row above has a spec asserting the **class** raised, not
+      merely that something raised
+- [ ] `Layout.for(:unknown)` raises. It must not return `nil` — an
+      unknown type also has no layout file, so nil would make the two
+      indistinguishable
 - [ ] a spec proves the present-but-misnamed case raises rather than
       silently taking the pass-through path. That failure mode renders
       an unlaid-out diagram with no error, which is worse than a crash
+- [ ] `Layout::Base`'s temporary `to_graph` fallback from item 04 is
+      deleted, and `grep -rn "to_graph" lib/sirena/` returns nothing
 
 ## Do not
 
@@ -155,4 +167,12 @@ extend.
 ## Files
 
 `lib/sirena.rb`, `lib/sirena/notation/mermaid.rb` (new),
-`lib/sirena/diagram_registry.rb`, `lib/sirena/engine.rb`.
+`lib/sirena/diagram_registry.rb`, `lib/sirena/engine.rb`,
+`lib/sirena/layout/base.rb` (the `to_graph` fallback comes out),
+`spec/contract_spec.rb` (migrated from `DiagramRegistry.types` to
+`TYPES`), `spec/sirena/lookup_spec.rb` (new, the four-case table above).
+
+`Parser.for`, `Layout.for` and `Renderer.for` live on their own
+namespace modules — `lib/sirena/parser.rb`, `lib/sirena/layout.rb`,
+`lib/sirena/renderer.rb`. Name them somewhere; three lookups with no
+declared home is how they end up on `Engine` again.
