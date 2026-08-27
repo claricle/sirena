@@ -39,36 +39,18 @@ module Sirena
             raise Parser::ParseError, 'Empty metadata block.'
           end
 
-          document = body.include?("\n") ? body : "{#{spaced(body)}}"
+          # Mermaid's own wrapping: a single-line body becomes a block
+          # mapping between braces, a multiline one is used as written. It
+          # does NOT normalise a missing space after a colon — `shape:rect`
+          # is an unknown key there and the node keeps its default, so
+          # inserting one made sirena honour something mermaid ignores.
+          document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
           mapping = yaml_mapping(document)
           reject_duplicates(mapping)
 
           mapping.children.each_slice(2).to_h do |key, value|
             [key.value, scalar(value)]
           end
-        end
-
-        # YAML's flow mapping needs a space after the colon; mermaid's
-        # js-yaml does not, and `D@{shape:rounded}` appears in the corpus.
-        # Quoted runs are copied through untouched so a colon inside a
-        # label is left alone.
-        def self.spaced(body)
-          out = +''
-          quote = nil
-
-          body.each_char.with_index do |char, i|
-            if quote
-              quote = nil if char == quote
-            elsif ['"', "'"].include?(char)
-              quote = char
-            elsif char == ':' && body[i + 1] !~ /[ \t]/
-              out << ": "
-              next
-            end
-            out << char
-          end
-
-          out
         end
 
         # An empty repeat captures as [], not as an empty slice.
