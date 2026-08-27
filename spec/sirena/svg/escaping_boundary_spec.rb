@@ -68,6 +68,22 @@ TRANSLATED_AWAY = {
   }
 }.freeze
 
+# What each class needs set before its translation can be seen: a Path draws
+# no arrowhead without data and a stroke, and a Text shifts no baseline
+# without a y and a font size. Held per class rather than chosen by asking the
+# element what it responds to, so a third class added above fails loudly here
+# instead of silently taking another class's setup.
+TRANSLATED_AWAY_SETUP = {
+  Sirena::Svg::Path => lambda { |path|
+    path.d = 'M 0 0 L 10 0'
+    path.stroke = '#000000'
+  },
+  Sirena::Svg::Text => lambda { |text|
+    text.y = 10.0
+    text.font_size = '10'
+  }
+}.freeze
+
 # Inherited from Element, so every subclass carries them.
 COMMON_ATTRIBUTES = [:id, :class_name, :transform, :fill, :fill_opacity,
                      :stroke, :stroke_width, :stroke_opacity].freeze
@@ -112,16 +128,7 @@ RSpec.describe Sirena::Svg::Escaping do
       writers.each do |writer, (attribute, sample, expected_lines)|
         it "never emits #{attribute} from #{klass.name.split('::').last}" do
           element = klass.new
-          # A Path needs real data and a stroke or it draws no arrowhead,
-          # and the assertion would hold for an element that translates
-          # nothing at all.
-          if element.respond_to?(:d=)
-            element.d = 'M 0 0 L 10 0'
-            element.stroke = '#000000'
-          else
-            element.y = 10.0
-            element.font_size = '10'
-          end
+          TRANSLATED_AWAY_SETUP.fetch(klass).call(element)
           element.public_send("#{writer}=", sample)
 
           xml = element.to_xml

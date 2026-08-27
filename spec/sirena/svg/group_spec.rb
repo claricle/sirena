@@ -13,7 +13,6 @@ RSpec.describe Sirena::Svg::Group do
       xml = group.to_xml
 
       expect(xml).to eq("<g>\n  <text>This is a\nmultiline string\n</text>\n</g>")
-      expect(xml).to match(/^  <text\b/)
     end
 
     it 'indents every structural line of a nested Group' do

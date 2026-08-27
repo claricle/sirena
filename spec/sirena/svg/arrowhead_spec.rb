@@ -114,10 +114,11 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'points a start marker back the way the path came' do
       polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_start: 'url(#arrowhead)')).first
-      tip, left = points_of(polygon)
 
-      expect(tip).to eq([0.0, 0.0])
-      expect(left).to eq([4.0, -2.0])
+      # The mirror of the end head: base one arrow-length FORWARD along the
+      # path, so both corners must be asserted or a head pointing the wrong
+      # way still passes.
+      expect(points_of(polygon)).to eq([[0.0, 0.0], [4.0, -2.0], [4.0, 2.0]])
     end
 
     it 'draws both when the path asked for both' do
@@ -125,7 +126,10 @@ RSpec.describe Sirena::Svg::Arrowhead do
         path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', marker_start: 'url(#arrowhead)')
       )
 
-      expect(arrows.size).to eq(2)
+      # Both heads, each pointing its own way, in the documented order. A
+      # count alone would pass for the end head drawn twice.
+      expect(arrows.map(&:points))
+        .to eq(['10.0,0.0 6.0,2.0 6.0,-2.0', '0.0,0.0 4.0,-2.0 4.0,2.0'])
     end
 
     # Drawing it in the wrong place is worse than not drawing it.
@@ -240,7 +244,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
         expect(described_class.for(unpainted)).to be_empty
       end
     end
+  end
 
+  describe '#polygons' do
     # A Path is mutable, so nothing may remember an answer for data the
     # caller has since replaced.
     it 'reads the path data again when it has changed underneath' do

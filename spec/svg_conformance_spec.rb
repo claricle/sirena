@@ -45,6 +45,9 @@ CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '
 # way — but a renderer that starts raising for every input takes its whole
 # type out of the population, and an offender list over what survives would
 # stay green while measuring less. Ratchet it up when it rises.
+#
+# 736 measured 2026-08-27 with `bundle exec ruby scripts/corpus_sweep.rb`,
+# which counts the same population by the same criterion.
 CONFORMANCE_RENDERED_FLOOR = 736
 
 # The example sources Sirena cannot parse yet, so they ship no SVG. Named
@@ -94,11 +97,26 @@ RSpec.describe Sirena::Svg do
     "#{path.sub("#{CONFORMANCE_ROOT}/", '')}: #{summary}"
   end
 
-  # A case Sirena cannot render is item 06's problem, not this gate's. Only
-  # output that claims to be an SVG document is judged here.
+  # Output that claims to be an SVG document. One rule, used by both
+  # populations that ask the question: a substring test here and an anchored
+  # one below were two spellings of it, and the looser one would have counted
+  # a document with anything in front of the root.
+  #
+  # @return [Boolean] whether the value is a document to judge
+  def svg_document?(value)
+    value.is_a?(String) && value.match?(/\A<svg(?:\s|>)/)
+  end
+
+  # A case Sirena cannot render is item 06's problem, not this gate's.
+  #
+  # The date is pinned for the same reason it is pinned for the examples:
+  # eight gantt cases place bars relative to today, so an unpinned run judges
+  # different documents every day.
   def render_or_skip(path)
-    svg = Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) { Sirena::Engine.new.render(File.read(path)) }
-    svg if svg.is_a?(String) && svg.include?('<svg')
+    svg = Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
+      Sirena::Engine.new.render(File.read(path), today: CONFORMANCE_EXAMPLE_TODAY)
+    end
+    svg if svg_document?(svg)
   rescue StandardError
     nil
   end
@@ -246,9 +264,8 @@ RSpec.describe Sirena::Svg do
       end
 
       rendered.each_value do |svg|
-        expect(svg).to be_a(String)
         expect(svg).not_to be_empty
-        expect(svg).to match(/\A<svg(?:\s|>)/)
+        expect(svg_document?(svg)).to be(true)
       end
       expect(unrenderable.map { |mmd| relative(mmd) })
         .to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
