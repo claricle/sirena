@@ -507,10 +507,16 @@ module Sirena
         # string state to the end of the block and refuses the source;
         # falling through to the generic branch took `A@{ label: a"b }`,
         # which mmdc rejects.
+        #
+        # A caret is not body text either. mermaid takes the run between
+        # the braces with `[^}^"]+`, so a `^` outside a quoted value ends
+        # the block early and mmdc refuses `A@{ label: a^b }`. Inside the
+        # quotes the rule is `[^"]+`, and `A@{ label: "a^b" }` draws.
         rule(:metadata_body) do
-          (metadata_quoted | (str('"').absent? >> str('}').absent? >> any))
-            .repeat
+          (metadata_quoted | (metadata_stop.absent? >> any)).repeat
         end
+
+        rule(:metadata_stop) { str('"') | str('}') | str('^') }
 
         # A double-quoted run is skipped whole so a brace inside it is
         # text. Only the double quote does this: mermaid's metadata lexer
