@@ -398,6 +398,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to raise_error(Sirena::Parser::ParseError, /Circular anchor/)
     end
 
+    it "takes an explicit string tag over the implicit rules" do
+      # mmdc draws this as "1". Without the tag it is a number and refused.
+      expect(node_for("graph TD\nA@{ label: !!str 1 }\n").label).to eq("1")
+      expect { node_for("graph TD\nA@{ label: 1 }\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
     it "resolves a tag" do
       expect(node_for("graph TD\nA@{ shape: !!str rounded }\n").shape)
         .to eq("rounded")
