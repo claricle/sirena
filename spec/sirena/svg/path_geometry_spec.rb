@@ -27,6 +27,18 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 10.0, 0.0, 1.0])
     end
 
+    it 'keeps the last usable heading through a zero-length final line' do
+      anchor = terminus('M 0 0 L 10 0 L 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
+    it 'finds a curve heading before a degenerate terminal control point' do
+      anchor = terminus('M 0 0 C 0 0, 10 0, 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
     # The one curve in the corpus. A Bezier leaves its end point along the
     # line from the second control point, so the chord would point wrong.
     it 'takes a curve heading from the control point next to the end' do
@@ -34,6 +46,39 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
       expect([anchor.x, anchor.y]).to eq([20.0, 20.0])
       expect([anchor.dx.round(4), anchor.dy.round(4)]).to eq([1.0, 0.0])
+    end
+
+    it 'reflects a quadratic control point for smooth continuation' do
+      anchor = terminus('M 0 0 Q 10 10 20 0 T 40 0')
+
+      expect([anchor.x, anchor.y, anchor.dx.round(4), anchor.dy.round(4)])
+        .to eq([40.0, 0.0, 0.7071, 0.7071])
+    end
+
+    it 'reflects relative quadratic controls in absolute space' do
+      anchor = terminus('M 0 0 q 10 10 20 0 t 20 0')
+
+      expect([anchor.x, anchor.y, anchor.dx.round(4), anchor.dy.round(4)])
+        .to eq([40.0, 0.0, 0.7071, 0.7071])
+    end
+
+    it 'clears a quadratic control before later smooth curves' do
+      anchor = terminus('M 0 0 Q 10 10 20 0 L 30 0 T 40 0 T 40 10')
+
+      expect([anchor.x, anchor.y, anchor.dx.round(4), anchor.dy.round(4)])
+        .to eq([40.0, 10.0, -0.7071, 0.7071])
+    end
+
+    it 'reflects a cubic control for a smooth outgoing tangent' do
+      anchor = terminus('M 0 0 C 0 0, 10 0, 10 10 S 20 20, 20 20')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
+    end
+
+    it 'reflects relative cubic controls in absolute space' do
+      anchor = terminus('M 0 0 c 0 0, 10 0, 10 10 s 10 10, 10 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([20.0, 20.0, 1.0, 0.0])
     end
 
     it 'follows a relative command from the current point' do
@@ -86,6 +131,18 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 A 10 10 0 1 1 20 0')).to be_nil
     end
 
+    it 'treats a zero horizontal radius arc as a straight line' do
+      anchor = terminus('M 0 0 A 0 5 0 0 1 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
+    it 'treats a relative zero vertical radius arc as a straight line' do
+      anchor = terminus('M 5 5 a 5 0 0 0 1 0 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([5.0, 15.0, 0.0, 1.0])
+    end
+
     it 'still moves the pen through an arc, so the next segment is placed right' do
       anchor = terminus('M 0 0 A 5 5 0 0 1 10 0 l 5 0')
 
@@ -108,6 +165,18 @@ RSpec.describe Sirena::Svg::PathGeometry do
       anchor = origin('M 0 0 C 0 10, 10 20, 20 20')
 
       expect([anchor.dx, anchor.dy]).to eq([0.0, 1.0])
+    end
+
+    it 'finds the first usable heading after a zero-length initial line' do
+      anchor = origin('M 0 0 L 0 0 L 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+    end
+
+    it 'treats a zero-radius initial arc as a straight line' do
+      anchor = origin('M 0 0 A 0 5 0 0 1 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end
 
     # The path begins on the arc, so the segment after it is not the start of

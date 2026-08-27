@@ -26,6 +26,16 @@ RSpec.describe Sirena::Svg do
         .to eq('<rect fill-opacity="0.4" stroke-opacity="0.5"/>')
     end
 
+    it 'clamps negative whole and component opacities before multiplying' do
+      expect(rect(opacity: -1, fill_opacity: '-1').to_xml)
+        .to eq('<rect fill-opacity="0.0" stroke-opacity="0.0"/>')
+    end
+
+    it 'clamps opacities above one before multiplying' do
+      expect(rect(opacity: 2, fill_opacity: '0.5').to_xml)
+        .to eq('<rect fill-opacity="0.5" stroke-opacity="1.0"/>')
+    end
+
     it 'leaves the components alone when there is no whole-element opacity' do
       expect(rect(fill_opacity: '0.3').to_xml).to eq('<rect fill-opacity="0.3"/>')
     end
@@ -35,6 +45,12 @@ RSpec.describe Sirena::Svg do
     it 'leaves a component it cannot multiply exactly as it was' do
       expect(rect(opacity: 0.5, fill_opacity: 'inherit').to_xml)
         .to eq('<rect fill-opacity="inherit" stroke-opacity="0.5"/>')
+    end
+
+    # A non-finite operand is left alone because Float::NAN cannot be clamped;
+    # a caller-supplied error value must not make the whole document fail.
+    it 'does not raise for a non-finite opacity' do
+      expect { rect(opacity: Float::NAN).to_xml }.not_to raise_error
     end
   end
 

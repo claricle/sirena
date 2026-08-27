@@ -166,11 +166,10 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(Sirena::Svg::PathGeometry).not_to have_received(:new)
     end
 
-    # SVG's initial stroke-width is 1, so a line whose width cannot be read
-    # still paints one and still ends in a head. `1e400` is in this group for
-    # a second reason: it reads as Infinity, and 0.0 * Infinity is NaN, which
-    # would otherwise be written into the points verbatim.
-    ['1e400', 'inherit'].each do |width|
+    # SVG's initial stroke-width is 1, so an unreadable or invalid declaration
+    # still paints one and still ends in a head. `1e400` also avoids the NaN
+    # that multiplying a perpendicular zero by Infinity would produce.
+    ['1e400', 'inherit', '-2'].each do |width|
       it "falls back to a 1-unit line for a stroke width of #{width.inspect}" do
         odd = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
                    stroke_width: width)
@@ -185,7 +184,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # stroke at all, so substituting 1 would put a head on an invisible line —
     # the free-floating triangle this class exists to avoid. Reachable from a
     # custom theme carrying `stroke_width: 0`.
-    ['0', '0.0', '-2'].each do |width|
+    ['0', '0.0'].each do |width|
       it "draws nothing for a line of stroke width #{width.inspect}" do
         unpainted = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
                          stroke_width: width)

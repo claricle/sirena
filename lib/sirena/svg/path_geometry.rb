@@ -10,12 +10,14 @@ module Sirena
     # builds the curves.
     #
     # Curve tangents are taken from the adjacent control point, which is the
-    # exact tangent for a Bezier. An arc has no control point, and its chord
-    # is not its tangent — on a half-circle the two are 90 degrees apart — so
-    # an arc yields no heading at all rather than a head pointing the wrong
-    # way. Sirena emits arcs only on rounded shapes and pie slices, never on
-    # a path carrying a marker, so nothing it renders loses an arrowhead to
-    # this; getting one there needs the arc's centre parameterisation.
+    # exact tangent for a Bezier. A proper arc has no control point, and its
+    # chord is not its tangent — on a half-circle the two are 90 degrees apart
+    # — so it yields no heading rather than a head pointing the wrong way. A
+    # zero-radius arc is the exception because SVG renders it as a straight
+    # line. Sirena emits proper arcs only on rounded shapes and pie slices,
+    # never on a path carrying a marker, so nothing it renders loses an
+    # arrowhead to this; getting one there needs the arc's centre
+    # parameterisation.
     #
     # A command it cannot follow leaves the anchor nil, and the caller draws
     # nothing rather than drawing it in the wrong place.
@@ -46,6 +48,10 @@ module Sirena
         @subpath_start = @point
         @origin = nil
         @terminus = nil
+        @origin_direction = nil
+        @recent_direction = nil
+        @quadratic_control = nil
+        @cubic_control = nil
         walk(data.to_s)
       end
 
@@ -56,7 +62,8 @@ module Sirena
         return nil unless @origin
 
         start, reference = @origin
-        heading(start, start, reference)
+        heading(start, start, reference) ||
+          (@origin_direction && heading(start, *@origin_direction))
       end
 
       # @return [Anchor, nil] the last point, pointing along the last segment
@@ -64,7 +71,8 @@ module Sirena
         return nil unless @terminus
 
         reference, finish = @terminus
-        heading(finish, reference, finish)
+        heading(finish, reference, finish) ||
+          (@recent_direction && heading(finish, *@recent_direction))
       end
 
       private
@@ -113,11 +121,32 @@ module Sirena
       def apply(letter, args)
         lower = letter.downcase
         args = relative(letter, lower, args)
+        clear_unrelated_control(lower)
         return move(args) if lower == 'm'
         return close if lower == 'z'
-        return traverse([args[5], args[6]]) if lower == 'a'
+        return arc(args) if lower == 'a'
 
         segment(*references(lower, args))
+      end
+
+      # Smooth commands may only reflect a control from the same curve
+      # family immediately before them; retaining either control through a
+      # different command would bend a later shorthand curve unexpectedly.
+      def clear_unrelated_control(lower)
+        case lower
+        when 'q', 't' then @cubic_control = nil
+        when 'c', 's' then @quadratic_control = nil
+        else
+          @quadratic_control = nil
+          @cubic_control = nil
+        end
+      end
+
+      def arc(args)
+        end_point = [args[5], args[6]]
+        return segment(*straight(end_point)) if args[0].zero? || args[1].zero?
+
+        traverse(end_point)
       end
 
       # Moves the current point along a segment that offers no usable
@@ -128,8 +157,9 @@ module Sirena
       # rather than leaving it open: the path starts on that arc, and the
       # segment after it is not the start of the path.
       def traverse(end_point)
-        @origin = false if @origin.nil?
+        @origin = false if @origin_direction.nil?
         @terminus = nil
+        @recent_direction = nil
         @point = end_point
       end
 
@@ -138,18 +168,33 @@ module Sirena
       # references are the far end of it; a curve takes the control point
       # nearest each end.
       #
-      # `s` has one explicit control point and reuses it on both sides; `t` has
-      # none and is treated as a straight segment. Neither appears in Sirena's
-      # own output. An arc gives no references at all — see the note on the class.
+      # Smooth curves reflect the preceding control in absolute space so
+      # relative and absolute commands follow the same geometry. An arc gives
+      # no references at all — see the note on the class.
       def references(lower, args)
         case lower
         when 'l' then straight([args[0], args[1]])
         when 'h' then straight([args[0], @point[1]])
         when 'v' then straight([@point[0], args[0]])
-        when 'c' then [[args[0], args[1]], [args[2], args[3]], [args[4], args[5]]]
-        when 's', 'q' then [[args[0], args[1]], [args[0], args[1]], [args[2], args[3]]]
-        when 't' then straight([args[0], args[1]])
+        when 'c'
+          @cubic_control = [args[2], args[3]]
+          [[args[0], args[1]], @cubic_control, [args[4], args[5]]]
+        when 's'
+          out_reference = reflection(@cubic_control)
+          @cubic_control = [args[0], args[1]]
+          [out_reference, @cubic_control, [args[2], args[3]]]
+        when 'q'
+          @quadratic_control = [args[0], args[1]]
+          [@quadratic_control, @quadratic_control, [args[2], args[3]]]
+        when 't'
+          @quadratic_control = reflection(@quadratic_control)
+          [@quadratic_control, @quadratic_control, [args[0], args[1]]]
         end
+      end
+
+      def reflection(control)
+        source = control || @point
+        [(@point[0] * 2) - source[0], (@point[1] * 2) - source[1]]
       end
 
       def straight(destination)
@@ -180,8 +225,23 @@ module Sirena
 
       def segment(out_reference, in_reference, end_point)
         @origin = [@point, out_reference] if @origin.nil?
+        remember_directions(@point, out_reference, in_reference, end_point)
         @terminus = [in_reference, end_point]
         @point = end_point
+      end
+
+      # Degenerate endpoint derivatives still have a direction when another
+      # edge of the same control polygon, or an earlier segment, establishes
+      # one. Keeping the pair instead of an anchor lets the true endpoint be
+      # supplied only when the caller asks for it.
+      def remember_directions(*points)
+        directions = points.each_cons(2).select do |from, to|
+          heading(to, from, to)
+        end
+        return if directions.empty?
+
+        @origin_direction ||= directions.first
+        @recent_direction = directions.last
       end
 
       # Where the anchor sits is not where its direction comes from: the last

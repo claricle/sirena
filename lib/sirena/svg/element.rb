@@ -152,8 +152,11 @@ module Sirena
       # all set it on a Rect, Path or Text.
       #
       # A component value that is not a number is left exactly as it was.
-      # Nothing in the gem writes one, and inventing a factor for it would
-      # emit a number the caller never asked for.
+      # Non-finite operands also leave the component alone because Float::NAN
+      # cannot be clamped and an invalid attribute must not make the document
+      # fail to serialize. Nothing in the gem writes either kind, and
+      # inventing a factor for one would emit a number the caller never asked
+      # for.
       #
       # @param component [Object] fill-opacity or stroke-opacity as set
       # @return [Object, nil] the value to emit
@@ -163,8 +166,11 @@ module Sirena
 
         part = Escaping.blank?(component) ? 1.0 : Numbers.read(component)
         return component if part.nil?
+        return component unless whole.finite? && part.finite?
 
-        Numbers.write(part * whole)
+        whole = whole.clamp(0.0, 1.0)
+        part = part.clamp(0.0, 1.0)
+        Numbers.write((part * whole).clamp(0.0, 1.0))
       end
 
       protected

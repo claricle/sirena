@@ -36,9 +36,9 @@ module Sirena
     # nothing. `:lucid_fix` is for cleaning up LucidChart exports.
     #
     # Named here because the profile is a decision about what Sirena emits,
-    # not a detail of how it is tested. Three properties are missing from
-    # the output because of it — see Svg::Arrowhead, Svg::Text and
-    # Svg::Element.
+    # not a detail of how it is tested. Four properties are missing from the
+    # output across three classes because of it — see Svg::Arrowhead,
+    # Svg::Text and Svg::Element.
     CONFORMANCE_PROFILE = :metanorma
   end
 end

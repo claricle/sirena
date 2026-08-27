@@ -23,8 +23,10 @@ module Sirena
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
 
-      # How far below `y` the baseline sits, in ems, for each
-      # `dominant-baseline` value renderers set.
+      # How far below `y` the baseline sits, in ems, for each value this map
+      # approximates. Renderers set only `middle`, `hanging` and `auto`;
+      # `central`, `text-before-edge`, `text-after-edge` and `ideographic`
+      # are reachable only through `from_xml`.
       #
       # SVG Tiny 1.2 has no `dominant-baseline`, so the svg_conform
       # :metanorma profile rejects it on `<text>`. Renderers set it to say
@@ -39,8 +41,11 @@ module Sirena
       # and Sirena has no font metrics at all; TextMeasurement approximates
       # width by character count. So 0.35em stands in for half an x-height,
       # `hanging` for a full ascender below `y`, `text-after-edge` for a
-      # descender above it. Anything else, including `auto` and
-      # `alphabetic`, already means "baseline at y".
+      # descender above it. Any value the map does not name is left on the
+      # alphabetic baseline. For `mathematical`, that is a deliberate
+      # approximation rather than a claim that its baseline coincides with
+      # the alphabetic one. Contextual values such as `use-script`,
+      # `no-change` and `reset-size` cannot be resolved here either.
       #
       # `middle`, `hanging` and `auto` are all reachable: radar.rb picks
       # between them per axis label by angle.

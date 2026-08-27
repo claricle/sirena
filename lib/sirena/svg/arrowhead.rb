@@ -32,8 +32,8 @@ module Sirena
     # Sirena has one marker and it is an arrowhead, so the reference is read
     # as "put an arrowhead here" rather than looked up.
     class Arrowhead
-      # Both measured in stroke widths, so an arrowhead stays in proportion
-      # to the line it ends.
+      # Chosen by eye as stroke-width multiples so the head scales with the
+      # line. These are not derived from mermaid-js's marker proportions.
       LENGTH = 4.0
       HALF_WIDTH = 2.0
 
@@ -61,7 +61,8 @@ module Sirena
       # the path is mutable, so a remembered geometry would answer for a `d`
       # the caller has since replaced.
       #
-      # @return [Array<Svg::Polygon>] the arrowheads, in document order
+      # @return [Array<Svg::Polygon>] the end-marker head first, then the
+      #   start-marker head
       def polygons
         wants_end = names_something?(path.marker_end)
         wants_start = names_something?(path.marker_start)
@@ -119,7 +120,7 @@ module Sirena
 
         Polygon.new.tap do |polygon|
           polygon.points = Polygon.build_points(corners(anchor))
-          polygon.fill = color
+          polygon.fill = path.stroke
           # The head is painted where the line's stroke would have been, so
           # it inherits the line's opacity and sits in its coordinate space.
           polygon.fill_opacity = presence(path.stroke_opacity)
@@ -148,26 +149,16 @@ module Sirena
         value unless Escaping.blank?(value)
       end
 
-      # A width SVG can read is used as it is, including zero and negative
-      # ones — #painted? refuses those, rather than this quietly substituting
-      # a width the path never asked for.
-      #
-      # An unset or unreadable width falls back, because SVG's initial
-      # stroke-width is 1 and such a line still paints. Non-finite is in that
-      # group for a reason of its own: PathGeometry refuses a heading it
-      # cannot make finite and the same arithmetic runs here, where `1e400`
-      # reads as Infinity and `0.0 * Infinity` is NaN — which would be
-      # written into the points verbatim, and svg_conform does not check
-      # number syntax.
+      # Zero remains zero because it suppresses the stroke. Unset,
+      # unreadable, non-finite, and negative widths fall back because SVG
+      # ignores those error values and uses the inherited or initial width.
+      # Non-finite also needs the fallback because `0.0 * Infinity` is NaN,
+      # which would otherwise be written into the points verbatim.
       def stroke_width
         width = Numbers.read(path.stroke_width)
-        return DEFAULT_STROKE_WIDTH unless width&.finite?
+        return DEFAULT_STROKE_WIDTH unless width&.finite? && !width.negative?
 
         width
-      end
-
-      def color
-        path.stroke
       end
     end
   end
