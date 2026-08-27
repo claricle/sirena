@@ -33,6 +33,20 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
     end
 
+    it 'has no terminus after a trailing bare move' do
+      expect(terminus('M 0 0 L 10 0 M 50 50')).to be_nil
+    end
+
+    it 'uses a real segment after a move as the terminus' do
+      anchor = terminus('M 0 0 L 10 0 M 50 50 L 60 50')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([60.0, 50.0, 1.0, 0.0])
+    end
+
+    it 'does not borrow the previous subpath heading after a move' do
+      expect(terminus('M 0 0 L 10 0 M 50 50 L 50 50')).to be_nil
+    end
+
     it 'finds a curve heading before a degenerate terminal control point' do
       anchor = terminus('M 0 0 C 0 0, 10 0, 10 0')
 
@@ -182,6 +196,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 L 1e400 0')).to be_nil
     end
 
+    it 'finds a unit heading for a finite segment at 1e308 scale' do
+      anchor = terminus('M 0 0 L 1e308 0')
+
+      expect([anchor.dx, anchor.dy]).to eq([1.0, 0.0])
+    end
+
     it 'has no anchor when a non-finite endpoint follows a finite heading' do
       expect(terminus('M 0 0 L 5 0 L 1e400 0')).to be_nil
     end
@@ -202,6 +222,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
     it 'finds the first usable heading after a zero-length initial line' do
       anchor = origin('M 0 0 L 0 0 L 10 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
+    end
+
+    it 'keeps the first usable heading when later segments turn' do
+      anchor = origin('M 0 0 L 0 0 L 10 0 L 10 10')
 
       expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([0.0, 0.0, 1.0, 0.0])
     end

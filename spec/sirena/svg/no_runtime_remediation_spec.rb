@@ -52,7 +52,7 @@ RSpec.describe Sirena::Svg do
       expect(REMEDIATION_LIB_FILES).to include(*svg_files)
     end
 
-    it 'never calls a fixer or a remediation engine' do
+    it 'never references svg_conform or its remediation engine at runtime' do
       found_offences = offences
 
       expect(found_offences).to be_empty, -> { found_offences.join("\n") }

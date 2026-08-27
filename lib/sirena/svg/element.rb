@@ -107,9 +107,10 @@ module Sirena
       # pairs in both places, the hyphenation was typed by hand here and
       # computed there, which is two spellings of one rule.
       #
-      # `send`, not `public_send`: some readers below are computed rather
-      # than declared, and they stay protected because nothing outside this
-      # file has any use for them.
+      # `send`, not `public_send`: some pair-table readers are protected:
+      # #painted_fill_opacity and #painted_stroke_opacity here, plus
+      # Text#offset_x and Text#baseline_y in the subclass. `public_send`
+      # cannot reach them.
       #
       # @param pairs [Array<Array>] [svg name, reader], in output order
       # @return [Array<Array>] name/value pairs

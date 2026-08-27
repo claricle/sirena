@@ -102,6 +102,16 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(polygon.transform).to eq('translate(5,5)')
     end
 
+    it 'omits empty opacity and transform attributes from the polygon' do
+      polygon = described_class.for(
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+             stroke_opacity: '', transform: '')
+      ).first
+
+      expect(polygon.to_xml)
+        .to eq('<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
+    end
+
     it 'points a start marker back the way the path came' do
       polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_start: 'url(#arrowhead)')).first
       tip, left = points_of(polygon)

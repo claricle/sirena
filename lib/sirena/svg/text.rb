@@ -132,8 +132,8 @@ module Sirena
         attribute_pairs(ATTRIBUTE_PAIRS)
       end
 
-      # SVG dx/dy are per-glyph offset lists. Numbers.read uses the leading
-      # number, the same approximation the baseline shifts already make.
+      # SVG dx/dy are per-glyph offset lists. Their :float declarations make
+      # lutaml keep only the leading number before this method sees the value.
       def offset_x
         offset = Numbers.read(dx)
         return x if offset.nil?

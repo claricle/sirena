@@ -22,6 +22,87 @@ EXPECTED_UNRENDERABLE_SOURCES = [
 module ExampleTasks
   module_function
 
+  # The one place an example's theme is decided. Both :generate and :validate
+  # read it here so they cannot drift into rendering the same source two ways.
+  def theme_for(mmd_file)
+    yml_file = mmd_file.sub(/\.mmd\z/, '.yml')
+    metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
+    metadata['theme'] || 'default'
+  end
+
+  def validate_examples(examples_dir)
+    failed = []
+    known_unrenderable = []
+    unexpectedly_renderable = []
+    passed = 0
+    total = 0
+
+    puts "Validating examples..."
+    puts ""
+
+    Dir.glob(File.join(examples_dir, '*/*.mmd')).sort.each do |mmd_file|
+      total += 1
+      source = File.read(mmd_file)
+      relative_path = mmd_file.sub(examples_dir + '/', '')
+      expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(relative_path)
+
+      begin
+        theme = theme_for(mmd_file)
+        Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
+        if expected_unrenderable
+          unexpectedly_renderable << relative_path
+          print 'F'
+        else
+          passed += 1
+          print '.'
+        end
+      rescue => e
+        if expected_unrenderable
+          known_unrenderable << { file: relative_path, error: e.message }
+          print 'K'
+        else
+          failed << { file: relative_path, error: e.message }
+          print 'F'
+        end
+      end
+    end
+
+    failure_count = failed.size + unexpectedly_renderable.size
+
+    puts "\n\n"
+    puts "=" * 60
+    puts "Validation Results"
+    puts "=" * 60
+    puts "Total:  #{total}"
+    puts "Passed: #{passed} (#{(passed.to_f / total * 100).round(1)}%)"
+    puts "Known unrenderable: #{known_unrenderable.size}"
+    puts "Failed: #{failure_count}"
+    puts "=" * 60
+
+    if known_unrenderable.any?
+      puts "\nKnown unrenderable:"
+      known_unrenderable.each do |f|
+        puts "  ⚠️  #{f[:file]}"
+        puts "    #{f[:error]}"
+      end
+    end
+
+    if failure_count.positive?
+      puts "\nFailures:"
+      failed.each do |f|
+        puts "  ✗ #{f[:file]}"
+        puts "    #{f[:error]}"
+      end
+      unexpectedly_renderable.each do |file|
+        puts "  ✗ #{file}"
+        puts "    listed as known unrenderable but rendered successfully"
+      end
+      exit 1
+    else
+      puts "\n✅ All renderable examples validated successfully!"
+    end
+  end
+
   # An SVG whose source is gone still ships: git tracks it and the gemspec
   # packages it, and the loop below walks sources, so nothing ever visits it.
   # Delete it so generation leaves only outputs backed by current sources.
@@ -53,8 +134,9 @@ module ExampleTasks
   def handle_failed_svgs(failed_renders)
     unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
     unless unexpected_sources.empty?
-      puts "\n⚠️  Environment fault: unexpected example sources failed to render."
-      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; no SVGs were deleted."
+      puts "\n⚠️  Unexpected render failure: example sources failed to render."
+      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; SVGs that did render have " \
+           "already been rewritten, while nothing was deleted."
       exit 1
     end
 
@@ -99,14 +181,11 @@ namespace :examples do
 
       mmd_files.sort.each do |mmd_file|
         basename = File.basename(mmd_file, '.mmd')
-        yml_file = File.join(dir, "#{basename}.yml")
         svg_file = File.join(dir, "#{basename}.svg")
 
         begin
-          metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-          theme = metadata['theme'] || 'default'
-
           # Render to SVG
+          theme = ExampleTasks.theme_for(mmd_file)
           svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
 
           # Write SVG
@@ -240,50 +319,10 @@ namespace :examples do
   desc "Validate all examples (parse and render)"
   task :validate do
     require 'sirena'
+    require 'yaml'
 
     examples_dir = File.expand_path('../../examples', __dir__)
-
-    failed = []
-    passed = 0
-    total = 0
-
-    puts "Validating examples..."
-    puts ""
-
-    Dir.glob(File.join(examples_dir, '*/*.mmd')).sort.each do |mmd_file|
-      total += 1
-      source = File.read(mmd_file)
-      relative_path = mmd_file.sub(examples_dir + '/', '')
-
-      begin
-        Sirena.render(source, today: EXAMPLE_TODAY)
-        passed += 1
-        print '.'
-      rescue => e
-        failed << { file: relative_path, error: e.message }
-        print 'F'
-      end
-    end
-
-    puts "\n\n"
-    puts "=" * 60
-    puts "Validation Results"
-    puts "=" * 60
-    puts "Total:  #{total}"
-    puts "Passed: #{passed} (#{(passed.to_f / total * 100).round(1)}%)"
-    puts "Failed: #{failed.size}"
-    puts "=" * 60
-
-    if failed.any?
-      puts "\nFailures:"
-      failed.each do |f|
-        puts "  ✗ #{f[:file]}"
-        puts "    #{f[:error]}"
-      end
-      exit 1
-    else
-      puts "\n✅ All examples validated successfully!"
-    end
+    ExampleTasks.validate_examples(examples_dir)
   end
 
   desc "Generate all examples and copy to docs"
@@ -497,7 +536,7 @@ namespace :examples do
     puts "  3. Build docs: rake examples:build"
   end
 
-  desc "Clean all generated files"
+  desc "Clean stale generated directories and documentation copies"
   task :clean do
     require 'fileutils'
 

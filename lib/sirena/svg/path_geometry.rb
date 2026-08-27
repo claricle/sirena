@@ -21,8 +21,12 @@ module Sirena
     # arrowhead to this; getting one there needs the arc's centre
     # parameterisation.
     #
-    # A command it cannot follow leaves the anchor nil, and the caller draws
-    # nothing rather than drawing it in the wrong place.
+    # An unrecognised byte is skipped, and any numbers after it are read as
+    # more arguments for the command in force, which can move the anchor to a
+    # point the path never reaches. This is deliberate leniency, like #flush
+    # dropping a short argument group. It is reachable only through from_xml
+    # on a foreign document because no Sirena renderer emits malformed path
+    # data.
     class PathGeometry
       # One anchor: a point on the path and the unit direction of travel
       # through it.
@@ -238,6 +242,8 @@ module Sirena
       def move(args)
         @point = [args[0], args[1]]
         @subpath_start = @point
+        @terminus = nil
+        @recent_direction = nil
       end
 
       def close
@@ -254,7 +260,10 @@ module Sirena
       # Degenerate endpoint derivatives still have a direction when another
       # edge of the same control polygon, or an earlier segment, establishes
       # one. Keeping the pair instead of an anchor lets the true endpoint be
-      # supplied only when the caller asks for it.
+      # supplied only when the caller asks for it. For a straight segment the
+      # middle pair is reversed, but the first and third pairs are the same,
+      # so the reversed one can never be `directions.first` or
+      # `directions.last`.
       def remember_directions(*points)
         directions = points.each_cons(2).select do |from, to|
           heading(to, from, to)
@@ -279,11 +288,11 @@ module Sirena
       def heading(at, from, to)
         dx = to[0] - from[0]
         dy = to[1] - from[1]
-        length = Math.sqrt((dx * dx) + (dy * dy))
+        length = Math.hypot(dx, dy)
         # Not merely non-zero: path data carrying an out-of-range exponent
-        # can put Infinity in the anchor, or in the length where
-        # Infinity/Infinity is NaN. Either would be written into the polygon's
-        # points verbatim.
+        # can put Infinity in the anchor or in a coordinate delta. The guard
+        # keeps Infinity/Infinity out of the heading and a non-finite anchor
+        # out of the polygon's points.
         return nil unless at.all?(&:finite?) && length.finite? && length.positive?
 
         Anchor.new(at[0], at[1], dx / length, dy / length)

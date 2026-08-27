@@ -151,10 +151,10 @@ module Sirena
          [base_x + (anchor.dy * half), base_y - (anchor.dx * half)]]
       end
 
-      # nil rather than lutaml's unset sentinel, which is not a value any
-      # attribute should be handed.
+      # nil rather than lutaml's unset sentinel or an empty attribute value,
+      # neither of which should be handed to a new polygon.
       def presence(value)
-        value unless Escaping.blank?(value)
+        value unless Escaping.blank?(value) || value.to_s.strip.empty?
       end
 
       # Zero remains zero because it suppresses the stroke. Unset,

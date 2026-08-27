@@ -177,8 +177,10 @@ RSpec.describe Sirena::Svg do
         "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
         "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})"
       )
+      # The expression, not the whole assignment: pinning the statement made the
+      # task keep a redundant local just to satisfy this line.
       expect(task_source)
-        .to include("theme = metadata['theme'] || '#{CONFORMANCE_EXAMPLE_THEME}'")
+        .to include("metadata['theme'] || '#{CONFORMANCE_EXAMPLE_THEME}'")
     end
 
     it 'uses the conformance gate named unrenderable examples' do
