@@ -28,6 +28,10 @@ Every abstract contract gets a spec that iterates
 `DiagramRegistry.types` and asserts it. If that spec is annoying to
 write, the contract is wrong — fix the contract, don't skip the spec.
 
+The registry only knows the rows that exist, so the same spec asserts
+that its type set matches the detector's. Without that, a type missing
+from the registry is a type the contract never sees.
+
 ## R3 — Registration is data, not code
 
 `lib/sirena.rb` is 328 lines: the same require-and-register block

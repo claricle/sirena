@@ -80,6 +80,17 @@ and needs the theme.** Both get it; neither guesses.
 
 `TextMeasurement` is a service used by layouts, never by renderers.
 
+## Scene coordinates are final
+
+A Scene's `x` and `y` are the numbers the renderer writes into the SVG.
+There is no origin attribute and no offset applied at render time.
+
+Whatever framing a type needs — canvas padding, a title band — the
+layout has already applied it. `Scene#width` and `#height` include it,
+and every point inside is already shifted.
+
+A renderer that adds a constant to a coordinate is a bug, not a style.
+
 ## Nothing mutates its input
 
 - `Layout#call(diagram, theme:)` returns a new Scene. It never writes to

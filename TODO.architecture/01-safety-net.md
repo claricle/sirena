@@ -74,23 +74,45 @@ of 24, not 23.
 
 ### Steps
 
-1. Write `spec/contract_spec.rb`. It iterates `DiagramRegistry.types`
+1. Add a required `model:` row to `DiagramRegistry.register`. Today it
+   takes `parser:`, `transform:` and `renderer:` only
+   (`diagram_registry.rb:47`), so the registry cannot name the model
+   whose contract is being checked. Fill it in on all 24 rows in
+   `lib/sirena.rb`.
+
+   The registry is the source of completeness here. One row per type
+   means the invariant grows with the table instead of with a hand-kept
+   list somewhere else.
+2. Write `spec/contract_spec.rb`. It iterates `DiagramRegistry.types`
    and asserts, for every type:
    - parser inherits `Parser::Base`
    - transform inherits `Transform::Base`
    - renderer inherits `Renderer::Base`
-   - the parser returns a model inheriting `Diagram::Base`
+   - the registered `model:` inherits `Diagram::Base`
    - that model responds to `diagram_type` and `valid?`
    - `diagram_type` returns the symbol the type is registered under
-2. Run it. It will fail for about ten types. **That failure list is the
+   - the parser returns an instance of the registered `model:`
+
+   Add a set-parity assertion in the same file: `DiagramRegistry.types`
+   must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:27`).
+   `types` is `@handlers.keys` — only the rows that exist. Without
+   parity a type missing from the registry is invisible, and the spec
+   goes green over the 23 it can see.
+
+   The last assertion needs input, so add one canonical fixture per type
+   under `spec/fixtures/contract/<type>.mmd` — the smallest source that
+   parses. `engine.rb:101` hands the parser's return value straight to
+   the transform without checking its class, so nothing catches a parser
+   that builds the wrong model.
+3. Run it. It will fail for about ten types. **That failure list is the
    work** — do not write it out by hand first.
-3. Fix the models, never the spec:
+4. Fix the models, never the spec:
    - rename `type` -> `diagram_type` (5 types)
    - give `valid?` a real body on the 10 that lack one. Returning `true`
      is fine when there is genuinely nothing to check. An honest trivial
      implementation is correct; a missing one is not.
    - make the 4 bypassing types inherit `Diagram::Base`
-4. Make `TreemapParser` inherit `Parser::Base`. Move its model building
+5. Make `TreemapParser` inherit `Parser::Base`. Move its model building
    into `Parser::Transforms::Treemap`. Delete the
    `Treemap = TreemapParser` alias.
 
@@ -98,7 +120,7 @@ of 24, not 23.
    problem. Move them too if the PR stays reviewable; otherwise write
    them down and take them in item 05 part A, which is already opening
    every parser. Do not leave the list undiscovered.
-5. Move the `raise TransformError unless diagram.valid?` line out of the
+6. Move the `raise TransformError unless diagram.valid?` line out of the
    13 individual transforms and into `Transform::Base`. This is the
    proof that the contract is now real — but it only reaches the 17
    transforms that inherit `Transform::Base`. Make the other 7 inherit
@@ -188,7 +210,9 @@ break something?*
 
 ### Files
 
-`spec/contract_spec.rb` (new), `lib/tasks/corpus.rake` (new),
+`spec/contract_spec.rb` (new), `spec/fixtures/contract/*.mmd` (new,
+24 of them), `lib/sirena/diagram_registry.rb`, `lib/sirena.rb`,
+`lib/tasks/corpus.rake` (new),
 `scoreboard/corpus.json` (new), `lib/sirena/diagram/*.rb` (about 12 of
 them), `lib/sirena/parser/treemap.rb`, `lib/sirena/transform/*.rb`.
 
@@ -202,6 +226,9 @@ first block.
 ## Done when
 
 - [ ] A — `bundle exec rspec spec/contract_spec.rb` passes for all 24 types
+- [ ] A — every `DiagramRegistry.register` row carries a `model:`
+- [ ] A — `DiagramRegistry.types` and `Engine::DIAGRAM_TYPE_PATTERNS.keys` are the same set
+- [ ] A — deleting one registry row turns `contract_spec.rb` red
 - [ ] A — `Transform::Base` calls `valid?` once, for every type, suite green
 - [ ] A — `grep -rn "def type$" lib/sirena/diagram/` returns nothing
 - [ ] A — all 24 transforms inherit `Transform::Base`

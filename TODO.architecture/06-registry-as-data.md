@@ -64,8 +64,14 @@ TYPES = {
 ```
 
 2. Resolve classes by convention from the type name: `:pie` ->
-   `Parser::Pie`, `Layout::Pie` (only if that file exists),
-   `Renderer::Pie`. Item 03 made the names uniform so this works.
+   `Parser::Pie`, `Diagram::Pie`, `Layout::Pie` (only if that file
+   exists), `Renderer::Pie`. Item 03 made the names uniform so this
+   works.
+
+   That includes the `model:` row item 01 added to `DiagramRegistry`.
+   It stops being a row and becomes the convention; `contract_spec.rb`
+   iterates `TYPES` instead. Its set-parity assertion collapses to
+   nothing, because there is now one table to be out of step with.
 3. Detection reads the same table. One list, not two.
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
 5. `Engine` holds no type constants. Its render method is the three
