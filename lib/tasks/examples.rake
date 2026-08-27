@@ -12,9 +12,11 @@ require 'date'
 # honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
-# Only gantt/01-simple-timeline.beta.mmd and packet/01-basic-packet.beta.mmd
-# are legitimately unrenderable today.
-EXPECTED_UNRENDERABLE_SOURCE_COUNT = 2
+# The only example sources legitimately unrenderable today.
+EXPECTED_UNRENDERABLE_SOURCES = [
+  'gantt/01-simple-timeline.beta.mmd',
+  'packet/01-basic-packet.beta.mmd'
+].freeze
 
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.
 module ExampleTasks
@@ -39,8 +41,8 @@ module ExampleTasks
   # A source that stops rendering must not keep shipping its old SVG. Leaving
   # it behind means the packaged output is still there, still valid-looking,
   # and no longer true. The conformance gate detects a newly failing source
-  # either way by comparing the rendered count; deletion is about not shipping
-  # a stale picture, not about detection.
+  # either way by matching the unrenderable sources by name; deletion is about
+  # not shipping a stale picture, not about detection.
   def remove_failed_svg(basename, svg_file)
     return unless File.exist?(svg_file)
 
@@ -49,13 +51,14 @@ module ExampleTasks
   end
 
   def handle_failed_svgs(failed_renders)
-    if failed_renders.size > EXPECTED_UNRENDERABLE_SOURCE_COUNT
-      puts "\n⚠️  Environment fault: #{failed_renders.size} example sources failed to render."
-      puts "   That exceeds the expected maximum of #{EXPECTED_UNRENDERABLE_SOURCE_COUNT}; no SVGs were deleted."
+    unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
+    unless unexpected_sources.empty?
+      puts "\n⚠️  Environment fault: unexpected example sources failed to render."
+      puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; no SVGs were deleted."
       exit 1
     end
 
-    failed_renders.each { |failure| remove_failed_svg(*failure) }
+    failed_renders.each { |_, basename, svg_file| remove_failed_svg(basename, svg_file) }
   end
 end
 
@@ -113,7 +116,8 @@ namespace :examples do
           total_generated += 1
         rescue => e
           puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
-          failed_renders << [basename, svg_file]
+          source = mmd_file.delete_prefix("#{examples_dir}/")
+          failed_renders << [source, basename, svg_file]
         end
       end
     end

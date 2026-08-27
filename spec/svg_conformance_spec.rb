@@ -66,7 +66,7 @@ RSpec.describe Sirena::Svg do
   end
 
   def complaint(path, result)
-    messages = result.errors.map(&:message).uniq
+    messages = (result.errors + result.validity_errors).map(&:message).uniq
     summary = messages.first(3).join(' | ')
     remaining = messages.size - 3
     summary += " | #{remaining} more" if remaining.positive?
@@ -179,6 +179,15 @@ RSpec.describe Sirena::Svg do
       )
       expect(task_source)
         .to include("theme = metadata['theme'] || '#{CONFORMANCE_EXAMPLE_THEME}'")
+    end
+
+    it 'uses the conformance gate named unrenderable examples' do
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'examples.rake'))
+      sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  '#{source}'" }.join(",\n")
+
+      expect(task_source).to include(
+        "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze"
+      )
     end
 
     # Both directions. Asking only "does each source ship an SVG" leaves the

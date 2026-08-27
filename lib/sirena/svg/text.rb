@@ -138,7 +138,10 @@ module Sirena
         offset = Numbers.read(dx)
         return x if offset.nil?
 
-        Numbers.write((Numbers.read(x) || 0.0) + offset)
+        computed_x = (Numbers.read(x) || 0.0) + offset
+        return x unless computed_x.finite?
+
+        Numbers.write(computed_x)
       end
 
       # `y` with the baseline request folded in.

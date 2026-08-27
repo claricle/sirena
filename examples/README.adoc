@@ -179,16 +179,11 @@ The task is the only supported generation path because it applies each example's
 
 == Testing Examples
 
-Run all examples through the renderer:
+Validate all examples without rewriting their tracked SVGs:
 
 [source,bash]
 ----
-for dir in examples/*/; do
-  for mmd in $dir*.mmd; do
-    svg="${mmd%.mmd}.svg"
-    bundle exec ruby exe/sirena render "$mmd" -o "$svg" && echo "✓ $mmd" || echo "✗ $mmd"
-  done
-done
+bundle exec rake examples:validate
 ----
 
 == See Also

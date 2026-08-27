@@ -18,8 +18,9 @@ module Sirena
       attribute :marker_end, :string
       attribute :marker_start, :string
 
-      # `marker-end` and `marker-start` are set by renderers but never
-      # emitted — Svg::Arrowhead draws them instead. See that class for why.
+      # Five renderers set `marker-end`; `marker-start` arrives only through
+      # `from_xml`. Neither is emitted — Svg::Arrowhead draws them instead.
+      # See that class for why.
       # They stay in the xml block below, which is what `from_xml` reads: a
       # parsed marker request is honoured the same way a set one is.
       writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin

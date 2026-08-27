@@ -69,7 +69,7 @@ module Sirena
 
       # Declares the attributes an element writes, in output order.
       #
-      # Seven subclasses were each carrying the same shape of method — a list of
+      # Several subclasses were each carrying the same shape of method — a list of
       # names paired with the matching reader. Declaring them removes that
       # repetition and, more usefully, removes the chance of one class's
       # version drifting into a different shape.
@@ -170,7 +170,7 @@ module Sirena
 
         whole = whole.clamp(0.0, 1.0)
         part = part.clamp(0.0, 1.0)
-        Numbers.write((part * whole).clamp(0.0, 1.0))
+        Numbers.write(part * whole)
       end
 
       protected

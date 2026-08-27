@@ -172,6 +172,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dx]).to eq([35.0, 10.0, 1.0])
     end
 
+    # The endpoint cases below short-circuit before the finite-length guard,
+    # so they cannot prove it rejects an infinite control-point delta.
+    it 'has no anchor when a finite-ended curve has a non-finite control point' do
+      expect(terminus('M 0 0 C 0 0, 1e400 0, 10 0')).to be_nil
+    end
+
     it 'has no anchor when the heading is not finite' do
       expect(terminus('M 0 0 L 1e400 0')).to be_nil
     end

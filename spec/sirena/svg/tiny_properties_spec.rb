@@ -90,6 +90,16 @@ RSpec.describe Sirena::Svg do
       expect(xml).not_to include(' dx=')
       expect(xml).not_to include(' dy=')
     end
+
+    it 'leaves x unchanged when a finite offset calculation overflows' do
+      expect(text(x: 1.7e308, dx: 1.7e308).to_xml)
+        .to eq('<text x="1.7e+308"></text>')
+    end
+
+    it 'leaves x unchanged when dx is not finite' do
+      expect(text(x: 1.0, dx: Float::INFINITY).to_xml)
+        .to eq('<text x="1.0"></text>')
+    end
   end
 
   describe 'dominant-baseline, which Tiny expresses by moving the baseline' do

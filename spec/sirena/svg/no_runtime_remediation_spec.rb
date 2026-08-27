@@ -14,7 +14,7 @@ require 'ripper'
 # A structural check rather than a behavioural one, because the failure mode
 # is a call nobody writes a test for.
 REMEDIATION_LIB_ROOT = File.expand_path('../../../lib', __dir__)
-REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.rb')).freeze
+REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.{rb,rake}')).freeze
 
 # The remediation entry points, and the gem that owns them. Sirena's runtime
 # does not depend on svg_conform at all — it is the gate's tool, not the
