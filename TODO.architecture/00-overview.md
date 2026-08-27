@@ -173,10 +173,15 @@ Three problems in that picture, and each one costs time on every fix:
 `Engine#render` becomes three lines:
 
 ```ruby
+type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
 scene = Layout.for(type)&.call(model, theme: theme) || model
 Renderer.for(type).render(scene, theme: theme)
 ```
+
+Four, not three — detection has to come from somewhere, and after item
+06 that somewhere is `Notation::Mermaid`, reading the same `TYPES`
+table every lookup below it uses.
 
 The layout signature is `call(diagram, theme:)` everywhere in this plan.
 Layouts size boxes to text, and text size comes from the theme — see

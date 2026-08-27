@@ -94,8 +94,9 @@ among them, so a top-level edge may already be in canvas coordinates
 while a nested one is not. That is what makes it worth measuring rather
 than assuming in either direction. Measure all three — node, label,
 edge section — and flatten whichever are not already canvas. A probe
-that only checks node positions will look clean and leave the nested
-edges in the wrong place.
+that only checks node positions will look clean whether or not the
+nested edges needed translating, which is the point: it cannot tell you
+either way.
 
 Measured 2026-08-27 against elkrb at `v2`: a two-level graph came back
 with sibling boxes that overlap, so the frame could not be settled from
@@ -232,7 +233,8 @@ attribute, two of them dead (item 02).
       the renderer still positions itself is exactly the leak these
       assertions exist to catch:
       `git_graph` commits, connections, **commit/tag/branch labels**;
-      `kanban` columns, cards, **headers, badges, card metadata**;
+      `kanban` columns, cards, **headers, badges, card metadata, and
+      the card's own text** (`renderer/kanban.rb:218` computes its `y`);
       `mindmap` nodes, links, **node text**;
       `packet` fields, grid lines, bit markers, **title/field/range
       labels**.

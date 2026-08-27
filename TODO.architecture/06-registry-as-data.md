@@ -99,8 +99,10 @@ TYPES = {
    with it registry-versus-detector parity. What replaces it is
    table-versus-fixtures parity.
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
-5. `Engine` holds no type constants. Its render method is the three
-   lines from `00-overview.md`.
+5. `Engine` holds no type constants. Its render method is the four
+   lines from `00-overview.md`, and the first of them is
+   `type = Notation::Mermaid.detect(source)` — detection moved, it did
+   not vanish.
 6. Keep the public API byte-identical: `Sirena.render(source, options)`
    and `Engine#render` behave exactly as before, including error
    classes and messages.
