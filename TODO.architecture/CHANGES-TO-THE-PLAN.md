@@ -8,8 +8,9 @@ The foundation plan is a good plan for **measuring** the codebase. We're
 adding a phase before it that **shapes** the codebase, because the shape
 is what makes each of the 524 remaining corpus fixes expensive.
 
-Same destination, different order. Nine of the nineteen original items
-are unchanged and still the reference.
+Same destination, different order. Ten of the nineteen original items
+are unchanged and still the reference — item 18 keeps its content and
+gains one criterion, which is why an earlier count said nine.
 
 ---
 
@@ -288,7 +289,7 @@ comes, read them as written:
   18  typed IR               owner ruled it INTO this foundation
 ```
 
-That is nine items, not seven.
+That is ten items, not seven — 06 and 07 share a line above.
 
 Item 14's metric contract — node identity, normalisation, the equations,
 overlap semantics, a metric for every non-box type — is the

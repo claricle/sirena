@@ -38,20 +38,25 @@ Two numbers, asserted by a spec rather than claimed:
   (`18-typed-ir-boundary.md:125`), written in the same plain list style
   as the criteria around it. One line, and item 18 cannot close without
   it.
-- **Extending the syntax of an existing type touches 2 files** — grammar
-  and builder — when the diagram model already covers the concept **and
-  the change needs no new shared helper**.
+- **Extending the syntax of an existing type touches 1 to 4 production
+  files**, and which it is depends on what the change needs — not on a
+  rule this page can state. Three real cases from `origin/main`:
 
-  Both halves matter, and the second is the one that bites. Flowchart's
-  node-metadata work on `origin/main` used `FlowchartNode`'s existing
-  label and shape fields, so the model did cover it — and it still took
-  four production files, because it needed a YAML composer
-  (`parser/metadata_yaml.rb`) and a shape table
-  (`parser/mermaid_shapes.rb`) that did not exist yet.
+  | commit | what it added | production files |
+  |---|---|---|
+  | `22996b9` | semicolon statement separators | **1** — the grammar alone |
+  | `c09c975` | strip comments before metadata | **3** — grammar, transform, the existing `metadata_yaml.rb` |
+  | the node-metadata series | `@{ shape: ... }` syntax | **4** — plus a new YAML composer and shape table |
 
-  Two files is the floor for syntax the current machinery can already
-  express. New machinery is its own cost and this number does not
-  promise otherwise.
+  An earlier draft of this page promised two, then promised two "when
+  the model covers it and no new shared helper is needed". Both are
+  false: `22996b9` needed one, and `c09c975` needed three without adding
+  a helper.
+
+  **The claim worth making is the comparison, not the count.** Extending
+  a type touches a handful of files in one or two layers. Adding one
+  touches eight across all of them. That ratio is what the structural
+  work buys, and it does not need a fixed number to hold.
 
 ## The eight files
 

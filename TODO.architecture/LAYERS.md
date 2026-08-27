@@ -144,8 +144,12 @@ Two consequences:
   inherit `Diagram::Base#valid?` raise straight past this rescue. Item
   01 has the measurement.
 
-Let each layer's error propagate. If the engine wraps at all, it wraps
-with `raise PipelineError, msg` inside a `rescue => e` so `e` remains the
+Let each layer's error propagate. **`Engine#render` does not wrap** —
+item 01 requires a failing parse to come out as `ParseError`, not
+`PipelineError`, and that is the criterion the two documents agree on.
+
+`PipelineError` survives only for a failure that belongs to no layer.
+Where it is raised it goes inside a `rescue => e` so `e` remains the
 `cause`, and it never stringifies a backtrace.
 
 ## What Renderer::Base owns, after item 05

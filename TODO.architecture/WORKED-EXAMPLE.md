@@ -202,8 +202,9 @@ TYPES = {
 
 Two types have a `Transform` that only copies fields —
 `Transform::InfoTransform` and `Transform::ErrorTransform`, 38 lines
-each to move three or four values into a Hash. `Transform::PieTransform`
-is a borderline third. Every other `Transform` computes geometry.
+each to move three or four values into a Hash. `Transform::PieTransform` is not one of them — it reads each slice's
+angle and percentage off the model, which is geometry, and that is why
+pie is the example here. Every other `Transform` computes geometry.
 
 **They still get a Layout and a Scene.** An earlier draft deleted them
 and handed the renderer the `Diagram` model. That fails three ways:
