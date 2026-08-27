@@ -48,7 +48,7 @@ cleanup actually buys, before you reach for it:
   `requirement` — and they raise `NoMethodError`, not
   `NotImplementedError`.
 - `NotImplementedError` inherits `ScriptError`, not `StandardError`. So
-  even when one does fire, `engine.rb:114`'s `rescue StandardError` does
+  even when one does fire, `engine.rb:119`'s `rescue StandardError` does
   not catch it: it escapes `PipelineError` entirely and reaches the
   caller raw. Whatever the corpus harness records for that case, it will
   not be a pipeline failure.
@@ -94,7 +94,7 @@ of 24, not 23.
    - the parser returns an instance of the registered `model:`
 
    Add a set-parity assertion in the same file: `DiagramRegistry.types`
-   must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:27`).
+   must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:32`).
    `types` is `@handlers.keys` — only the rows that exist. Without
    parity a type missing from the registry is invisible, and the spec
    goes green over the ones it can see.
@@ -104,7 +104,7 @@ of 24, not 23.
 
    The last assertion needs input, so add one canonical fixture per type
    under `spec/fixtures/contract/<type>.mmd` — the smallest source that
-   parses. `engine.rb:101` hands the parser's return value straight to
+   parses. `engine.rb:106` hands the parser's return value straight to
    the transform without checking its class, so nothing catches a parser
    that builds the wrong model.
 3. Run it. It will fail for about ten types. **That failure list is the
@@ -153,7 +153,7 @@ refactor can drop 200 cases and nothing notices.
 0. **Fix the error taxonomy first — the harness is useless without it.**
    `Engine#render` currently collapses every non-detection failure into
    one `PipelineError`, with the backtrace concatenated into the message
-   string (`engine.rb:114-116`). Recording a `stage` on top of that would
+   string (`engine.rb:119-121`). Recording a `stage` on top of that would
    record `PipelineError` for everything except detection, and
    `TODO.foundation/05` derives its whole work list from that field.
 

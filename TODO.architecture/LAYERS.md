@@ -98,7 +98,7 @@ A renderer that adds a constant to a coordinate is a bug, not a style.
 - `Renderer#render(scene, theme:)` returns a new document. It never
   writes to the scene.
 
-Today `Engine#apply_fallback_layout` (`engine.rb:213`) mutates the graph
+Today `Engine#apply_fallback_layout` (`engine.rb:218`) mutates the graph
 in place (`node.x = 50 + (col * 200)`). After item 03 that code is
 `Layout::Grid`, and it returns rather than mutates.
 
@@ -121,7 +121,7 @@ All four inherit `Sirena::Error`.
 
 **This is currently broken and item 01 fixes it before anything else.**
 `Engine#render` collapses every non-detection failure into a single
-`PipelineError` (`engine.rb:114-116`), with the backtrace concatenated
+`PipelineError` (`engine.rb:119-121`), with the backtrace concatenated
 into the message string:
 
 ```ruby

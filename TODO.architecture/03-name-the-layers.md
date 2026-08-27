@@ -26,7 +26,7 @@ four PRs. If it moves, you have a typo — find it before continuing.
   Transform::InfoTransform  copies 3 fields into a hash (38 lines)
 ```
 
-Meanwhile `Engine#layout_graph` (`engine.rb:194`) — the method named
+Meanwhile `Engine#layout_graph` (`engine.rb:199`) — the method named
 layout — applies a 3-column grid and only fires on graphs that have
 `:children` and no `x`/`y`. Nine renderers already take a parameter
 named `layout` and define `create_document_from_layout`. The renderers

@@ -22,7 +22,7 @@ Sirena::DiagramRegistry.register(
 ```
 
 Detection is a **second, separate list**: a 24-entry regex table
-hardcoded in `Engine::DIAGRAM_TYPE_PATTERNS` (`engine.rb:27`). Adding a
+hardcoded in `Engine::DIAGRAM_TYPE_PATTERNS` (`engine.rb:32`). Adding a
 type means editing two files in two different shapes and hoping the
 symbols match.
 
