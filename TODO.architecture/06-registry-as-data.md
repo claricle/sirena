@@ -93,9 +93,11 @@ TYPES = {
    `spec/fixtures/contract/`. One fixture per type, and `TYPES` must
    match that set exactly.
 
-   This does not contradict the parity assertion disappearing. What goes
-   away is registry-versus-detector parity, because the detector is gone.
-   What replaces it is table-versus-fixtures parity.
+   This does not contradict the parity assertion disappearing. Detection
+   itself does not go away — it moves into `Notation::Mermaid` and reads
+   `TYPES`. What goes away is the detector's *separate inventory*, and
+   with it registry-versus-detector parity. What replaces it is
+   table-versus-fixtures parity.
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
 5. `Engine` holds no type constants. Its render method is the three
    lines from `00-overview.md`.
@@ -114,6 +116,10 @@ TYPES = {
 - [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
 - [ ] it still resolves each model by convention, and still runs each
       canonical fixture
+- [ ] and still asserts the **parsed fixture's class is** the
+      convention-resolved model. Resolution and fixture-runs as two
+      separate checks is what let `:block` pass while pointing at a
+      component. Item 03 closed that; do not reopen it here
 - [ ] it asserts `TYPES` keys match the basenames under
       `spec/fixtures/contract/` exactly, in both directions
 - [ ] deleting one `TYPES` row turns it red — check it, do not assume

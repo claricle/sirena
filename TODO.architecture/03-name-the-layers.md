@@ -79,10 +79,12 @@ One commit — and one PR — per rename.
    | `Diagram::PacketDiagram` | `Diagram::Packet` |
    | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
 
-   One is a key rename: `:xychart` -> `:xy_chart`, so the key matches
-   its own file and gives `Diagram::XyChart`. It is the only key that
-   does not match its file name, and item 06 makes the key the single
-   source the class is derived from.
+   One needs **both** halves. The key `:xychart` becomes `:xy_chart` so
+   it matches its own file, **and** the constant `Diagram::XYChart`
+   (`diagram/xy_chart.rb:6`) becomes `Diagram::XyChart`. Renaming the
+   key alone leaves a key that resolves to nothing. It is the only key
+   that does not match its file name, and item 06 makes the key the
+   single source the class is derived from.
 
    **Two are collisions, and they are the reason a bare resolution
    check is not enough.** `Diagram::Block` and `Diagram::Requirement`
@@ -99,8 +101,11 @@ One commit — and one PR — per rename.
    | `Diagram::Requirement` (a component) | `Diagram::RequirementNode` |
    | `Diagram::RequirementDiagram` (the model) | `Diagram::Requirement` |
 
-   Move the component out of the way first, then rename the model into
-   the freed name. Two commits, not one.
+   Do both halves in **one** commit per type — move the component out
+   and rename the model in together. Splitting them leaves a commit
+   where the identity criterion above is deliberately false, and this
+   item ships one commit per rename with `corpus:check` unchanged at
+   every step.
 
    Other inner classes — `Diagram::GanttTask`, `Diagram::BlockStyle` —
    keep their names. They are not addressed by a registry key.
