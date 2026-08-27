@@ -63,11 +63,12 @@ what a layout emits, you read the renderer to find out what it expects.
 
 **Net effect:** fixing one diagram type means touching five files across
 five layers, plus reverse-engineering one undocumented contract. After
-the structural work it's two files and nothing to reverse-engineer.
+the structural work it's a couple of files and nothing to
+reverse-engineer.
 
 ```
   new diagram type        8 files   (7 new + one row in the type table)
-  new syntax on a type    2 files   (grammar + builder)
+  new syntax on a type    varies    (1 to 5, measured — see item 07)
 ```
 
 Those two numbers get asserted by a spec, not claimed.
@@ -129,8 +130,9 @@ its box. The other 15 layouts never measure text at all.
 
 ### 1. A structural phase goes in front (new)
 
-Seven items, all mechanical, none changing rendered output except one
-escaping fix:
+Seven items, all mechanical. None changes whether a case renders
+well-formed output; 04 and 05 change what that output looks like, on
+purpose:
 
 ```
   01  safety net        error taxonomy + contract spec + scoreboard/corpus.json

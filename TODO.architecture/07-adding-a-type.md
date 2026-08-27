@@ -7,7 +7,8 @@ lands fast, including the 524 oracle-valid corpus cases still failing.
 
 ## The measure
 
-Two numbers, asserted by a spec rather than claimed:
+One number asserted by a spec, and one measurement that refuses to be a
+number:
 
 - **Adding a new diagram type touches exactly 8 files that define the
   type** — 6 new under `lib/`, one new fixture, and one edited row in
@@ -38,25 +39,24 @@ Two numbers, asserted by a spec rather than claimed:
   (`18-typed-ir-boundary.md:125`), written in the same plain list style
   as the criteria around it. One line, and item 18 cannot close without
   it.
-- **Extending the syntax of an existing type touches 1 to 4 production
-  files**, and which it is depends on what the change needs — not on a
-  rule this page can state. Three real cases from `origin/main`:
+- **Extending the syntax of an existing type has no fixed cost, and
+  this page has stopped guessing at one.** Measured on `origin/main`:
 
   | commit | what it added | production files |
   |---|---|---|
-  | `22996b9` | semicolon statement separators | **1** — the grammar alone |
-  | `c09c975` | strip comments before metadata | **3** — grammar, transform, the existing `metadata_yaml.rb` |
-  | the node-metadata series | `@{ shape: ... }` syntax | **4** — plus a new YAML composer and shape table |
+  | `22996b9` | semicolon statement separators | 1 — the grammar |
+  | `c09c975` | strip comments before metadata | 2 — grammar, flowchart transform |
+  | node-metadata series | `@{ shape: ... }` syntax | 4 — plus a YAML composer and a shape table |
+  | `4f77b61` | the full sequence arrow set | 5, across four layers |
 
-  An earlier draft of this page promised two, then promised two "when
-  the model covers it and no new shared helper is needed". Both are
-  false: `22996b9` needed one, and `c09c975` needed three without adding
-  a helper.
+  Three drafts of this page promised a bound and three were wrong: two
+  files, then two-with-conditions, then one-to-four-in-one-or-two-layers.
+  `22996b9` needs one; `4f77b61` needs five across four layers.
 
-  **The claim worth making is the comparison, not the count.** Extending
-  a type touches a handful of files in one or two layers. Adding one
-  touches eight across all of them. That ratio is what the structural
-  work buys, and it does not need a fixed number to hold.
+  **What holds is the direction, not a number.** Extending a type is
+  bounded by the change itself. Adding one is a fixed eight files across
+  every layer, every time. The structural work is what makes the first
+  cheap; it cannot make it constant.
 
 ## The eight files
 

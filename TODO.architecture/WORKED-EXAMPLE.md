@@ -228,6 +228,14 @@ scene = Layout.for(type).call(model, theme: theme, today: today)
 must never do is nothing — if it has no `width` and `height` to give,
 the type is not converted yet.**
 
+**One more thing this example still gets wrong.** The layout above calls
+`diagram.slice_angle`, and the Files section promises `diagram/pie.rb`
+is unchanged. Angle arithmetic belongs to Layout, not Diagram
+(`LAYERS.md`), so converting pie properly moves that method across and
+`diagram/pie.rb` does change. Listed here rather than quietly fixed,
+because the same trap is waiting in every type whose model computes
+something.
+
 ## What this example does not finish
 
 The after-renderer above still calls `arc_path(start_angle, end_angle)`,

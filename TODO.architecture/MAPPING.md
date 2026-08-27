@@ -98,6 +98,7 @@ The original plan front-loads measurement and defers structure. Because
 the structure is what makes each of the 524 remaining oracle-valid
 corpus fixes expensive, that ordering pays the high per-fix cost across
 the largest block of work in the project. This plan front-loads the cheap structural
-work — six items, all mechanical, none changing rendered output except
-one escaping fix — and then runs the same burndown against a codebase
+work — six items, all mechanical, none changing whether a case renders
+well-formed output, though 04 and 05 change what it looks like — and
+then runs the same burndown against a codebase
 with one documented contract instead of 24 undocumented ones.
