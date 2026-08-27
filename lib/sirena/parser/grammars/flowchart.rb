@@ -831,9 +831,11 @@ module Sirena
         # `thick_arrow` makes for the arrowhead-less `===` just above.
         # Modelling these heads is the change that also owns `1x-->B`.
         #
-        # Widening node ids is what put these within reach: `#---x --- Z`
-        # `1-.-o --- Z` `é---x --- Z` and 45 more parsed here while mmdc
-        # refuses every one. Only the arrowhead-less forms need the guard;
+        # 56 inputs parsed here that mmdc refuses, and widening node ids
+        # is what put 48 of them within reach — `#---x --- Z` `1-.-o --- Z`
+        # and `é---x --- Z` among those. The other 8, `A---x --- Z` and
+        # its kin, were already reachable and already wrong.
+        # Only the arrowhead-less forms need the guard;
         # after `-->` or `-.->` mermaid has already closed the link, so
         # the `x` in `A-->x` really is a node.
         rule(:arrow_marker) { match['xo'] }
@@ -1015,8 +1017,8 @@ module Sirena
         # exactly where one without it does, and the only reader
         # (`dot_run_before_link`) is consumed under `.absent?`, where the
         # length never matters either. Writing it changed no verdict across
-        # 4758 probes and the whole corpus — it would be decoration that
-        # reads like a guard.
+        # 2761 probe cases and the whole 1997-case corpus — it would be
+        # decoration that reads like a guard.
         rule(:dotted_link_open) { str('.').repeat(1) >> str('-') }
 
         # Everywhere else a dot just joins, dash or no dash: mmdc draws
@@ -1042,8 +1044,8 @@ module Sirena
         # zero restarts it would ask for `arrowhead_ends_id`, and the arm
         # in front already matches everything that could — so the first
         # arm wins there whatever the second one says. Requiring a restart
-        # changed no verdict across 4758 probes, the whole corpus and the
-        # suite.
+        # changed no verdict across 2761 probe cases, the whole 1997-case
+        # corpus and the suite.
         rule(:arrowhead_dot_dash) do
           arrowhead_open | hunt(arrowhead_ends_id)
         end
