@@ -47,7 +47,7 @@ module Sirena
           # is an unknown key there and the node keeps its default, so
           # inserting one made sirena honour something mermaid ignores.
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
-          entries(yaml_mapping(document))
+          entries(document, yaml_mapping(document))
         end
 
         # A newline inside a double-quoted value is a line break to
@@ -58,22 +58,29 @@ module Sirena
           body.gsub(/"[^"]*"/) { |run| run.gsub("\n", '<br/>') }
         end
 
-        def self.entries(mapping)
+        def self.entries(document, mapping)
           reject_duplicates(mapping)
           reject_nested_anchors(mapping)
 
-          # js-yaml resolves aliases and tags, so the values have to be
-          # materialised rather than read off the AST. `&s rounded` with
-          # `*s` elsewhere is a shape mermaid honours.
-          document = Psych::Nodes::Document.new
-          document.children << mapping
-          stream = Psych::Nodes::Stream.new
-          stream.children << document
-
-          stream.to_ruby.first.filter_map do |key, value|
+          load_values(document).filter_map do |key, value|
             usable = usable_value(key, value)
             [key, usable] if usable
           end.to_h
+        end
+
+        # js-yaml resolves aliases and tags, so the values have to be
+        # materialised rather than read off the AST: `&s rounded` with `*s`
+        # elsewhere is a shape mermaid honours.
+        #
+        # `safe_load`, NOT the AST's `to_ruby`, which is `unsafe_load` by
+        # another name. It built a `Gem::Requirement` out of a node label
+        # before the type check downstream got to refuse it — arbitrary
+        # object construction from a diagram. The permitted set here is
+        # already what mermaid's JSON schema produces.
+        def self.load_values(document)
+          Psych.safe_load(document, aliases: true)
+        rescue Psych::Exception
+          raise Parser::ParseError, 'Malformed metadata.'
         end
 
         # An empty repeat captures as [], not as an empty slice.
