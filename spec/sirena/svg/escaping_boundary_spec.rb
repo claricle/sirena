@@ -165,11 +165,16 @@ RSpec.describe Sirena::Svg::Escaping do
     end
 
     it 'declares and round-trips the SVG Tiny 1.2 profile' do
-      xml = described_class.new.to_xml
+      defaults = described_class.new.to_xml
+      xml = <<~SVG
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full"/>
+      SVG
+      parsed = described_class.from_xml(xml)
 
-      expect(xml).to include(%( version="1.2"\n baseProfile="tiny"))
-      expect(described_class.from_xml(xml).to_xml)
-        .to include(%( version="1.2"\n baseProfile="tiny"))
+      expect(defaults).to include(%( version="1.2"\n baseProfile="tiny"))
+      expect(parsed.version).to eq('1.1')
+      expect(parsed.base_profile).to eq('full')
+      expect(parsed.to_xml).to include(%( version="1.1"\n baseProfile="full"))
     end
   end
 
