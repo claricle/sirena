@@ -93,10 +93,14 @@ canvas size and the coordinates the renderer must not compute.**
 ## Two kinds of Scene
 
 **Graph types must use an ELK-shaped Scene.** Geometry parity is the
-agreed bar (`00-overview.md`), which means elkrb computes positions for
-graph types in item 08. If their Scenes mirror what ELK already emits,
-that integration is a swap; if you invent a different shape now, it is a
-redesign of every one of them later.
+agreed bar (`00-overview.md`), which means elkrb positions the
+**eligible** ones in item 08. If their Scenes mirror what ELK already
+emits, that integration is a swap; if you invent a different shape now,
+it is a redesign of every one of them later.
+
+Shape the Scene that way whether or not the type turns out eligible —
+eligibility is item 14's call, not a reason to invent a second
+shape.
 
 **The swap is not free: establish elkrb's coordinate frame first.** ELK
 nests children in their parent's frame by default, and our Scene holds
@@ -306,9 +310,10 @@ attribute, two of them dead (item 02).
    Grid, not after:
 
 During item 04 the engine still resolves classes through
-   `DiagramRegistry`, and its key is still `:transform` — item 03
-   renames the classes, not the registry keys, and `Layout.for` /
-   `Renderer.for` arrive with item 06. So the shape is:
+   `DiagramRegistry`, and its handler slot is still `:transform` — item
+   03 renames classes and one type key (`:xychart` -> `:xy_chart`), but
+   not the handler slots, and `Layout.for` / `Renderer.for` arrive with
+   item 06. So the shape is:
 
    ```
    result = handlers[:transform].new.call(model, theme:, today:)

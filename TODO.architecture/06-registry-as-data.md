@@ -184,10 +184,15 @@ TYPES = {
         of the coordinates that layout computes for itself. Same seam,
         named honestly: the eligible layouts, not one stub class.
 
-        Eligible is narrower than ELK-shaped. `sankey` has an ELK-shaped
-        Scene and does its own layering (`TODO.foundation/18:86-89`);
-        `block` is pre-positioned. `TODO.foundation/14`'s
-        `docs/emit-accept-survey.md` decides, not the Scene shape
+        Eligible is narrower than it looks, and two different
+        classifications are involved. `TODO.foundation/18` calls sankey
+        **graph-shaped in the IR** while saying it does its own
+        layering and declines elkrb (`18:86-89`) — its Scene is not
+        ELK-shaped either, it roots on `nodes`. `block` is
+        pre-positioned. Eligibility comes from
+        `TODO.foundation/14`'s `docs/emit-accept-survey.md` plus a
+        recorded, user-approved exception for anything it excludes —
+        never from the Scene shape and never from the IR shape
       - `spec/support/legacy_layout.rb` and the transition spec
       A temporary thing with no deletion criterion is a permanent thing
 

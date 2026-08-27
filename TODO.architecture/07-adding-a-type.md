@@ -20,27 +20,23 @@ Two numbers, asserted by a spec rather than claimed:
   number of files the generator creates.
 
   **This is the count before `TODO.foundation/18`.** That item's typed
-  IR adds more than a row: it requires a notation-to-IR transform per
+  IR adds more than a row: it requires a notation-to-IR mapping per
   type (`18-typed-ir-boundary.md:103-115,137`, `TODO.foundation/12:106-109`)
-  as well as an entry in `docs/ir-type-map.md`. Since item 03 turned
-  the existing transforms into layouts, that mapper is a new file, so
-  the post-18 count is **9 or 10, and item 18 settles which**: a
+  as well as an entry in `docs/ir-type-map.md`. Item 03 turned the
+  existing transforms into layouts, so that mapping is a new
+  **responsibility** whose home item 18 has not settled.
+
+  The post-18 count is **9 or 10, and item 18 settles which**: a
   separate mapper file makes 10; folding the mapping into one of the
-  eight above keeps it at 9. Any other existing file still makes 9 into
-  10, because it is a file this list does not already count.
+  eight above keeps it at 9. Any other existing file still makes it 10,
+  because it is a file this list does not already count.
 
-  **Item 18 owns that handoff, and saying so is not enough to gate
-  it.** `TODO.foundation/18` has no Do, Done or Files entry covering
-  the generator, the file-count spec, the onboarding page or
-  `LAYERS.md`, so as written it can close with the pre-IR generator
-  intact. Add to item 18's `Done when`, in these words:
-
-  > - [ ] `rake type:new[demo]` produces a type that satisfies the IR
-  >   boundary, and the file count in `07-adding-a-type.md`, its
-  >   file-count spec, `docs/adding-a-diagram-type.md` and
-  >   `LAYERS.md`'s new-type row all agree with what it generates.
-
-  That is the whole handoff, in one criterion someone has to tick.
+  **Item 18 owns that handoff, and it is gated.** Saying so was not
+  enough — `TODO.foundation/18` had no Do, Done or Files entry covering
+  the generator or the counts, so it could have closed with the pre-IR
+  generator intact. That criterion is now in item 18's `Done when`
+  (`18-typed-ir-boundary.md:125`). One checkbox, someone has to tick
+  it.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 
