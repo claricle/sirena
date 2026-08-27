@@ -15,10 +15,16 @@ module Sirena
           YAML_FALSY_WORDS = %w[false False FALSE null Null NULL].freeze
           private_constant :YAML_FALSY_WORDS
 
-          # Spellings js-yaml resolves as a number. Case matters unevenly:
-          # the radix prefix is lowercase-only, so `0x0` and `0o0` resolve
-          # while `0X0` and `0O0` stay strings, but the exponent marker is
-          # case-insensitive and `0e0` and `0E0` both resolve.
+          # Spellings js-yaml resolves as a number. Measured against mmdc
+          # 11.12.0. Case matters unevenly: the radix prefix is
+          # lowercase-only, so `0x0` and `0o0` resolve while `0X0` and `0O0`
+          # stay strings, but the exponent marker is case-insensitive and
+          # `0e0` and `0E0` both resolve. The digits are lowercase-only too,
+          # so YAML_HEX matches `0xff` and not `0xFF` - immaterial for zero,
+          # which has no letters, but the pattern is narrower than its name.
+          #
+          # YAML_FLOAT's exponent takes no sign in practice: `unquoted_value`
+          # admits `-` but not `+`, so only the `-` alternative is reachable.
           #
           # `_` is a digit separator. A run of any length counts and one may
           # follow a radix prefix (`0_0`, `0__0`, `0x_0`), but it may never
@@ -36,7 +42,7 @@ module Sirena
           YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
           YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
           YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
-          YAML_FLOAT = /\A-?\d[\d_]*[eE][-+]?\d+\z/
+          YAML_FLOAT = /\A-?\d[\d_]*[eE]-?\d+\z/
           private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
                            :YAML_BINARY, :YAML_FLOAT
           attr_reader :columns
@@ -180,19 +186,17 @@ module Sirena
             result
           end
 
+          # Always a Hash of `{string: ...}` or `{unquoted: ...}`: every branch
+          # of `metadata_value` captures with `.as(:string)` or `.as(:unquoted)`,
+          # and the caller has already skipped a nil value. So no guard here.
+          #
+          # An empty quoted string captures as `{string: []}`, because the
+          # shared grammar takes the body with `.repeat`, and `[].to_s` is the
+          # literal "[]". Parslet::Slice answers false to `to_ary`, so
+          # `Array()` wraps a slice rather than splitting it; `join` then
+          # handles both shapes.
           def extract_value(value_data)
-            return "" if value_data.nil?
-
-            if value_data.is_a?(Hash)
-              # An empty quoted string captures as `{string: []}`, because
-              # the shared grammar takes the body with `.repeat`, and
-              # `[].to_s` is the literal "[]". Parslet::Slice answers false
-              # to `to_ary`, so `Array()` wraps a slice rather than splitting
-              # it; `join` then handles both shapes.
-              Array(value_data[:string] || value_data[:unquoted]).join
-            else
-              value_data.to_s
-            end
+            Array(value_data[:string] || value_data[:unquoted]).join
           end
 
           # Mermaid gates every field on JS truthiness - the kanban renderer
@@ -202,9 +206,10 @@ module Sirena
           # field falls back. Dropping the entry mirrors that: with no entry
           # there is no metadata row and no height reserved for one.
           #
-          # An empty value is dropped whatever its quoting. Past that, only
-          # UNQUOTED values are resolved: a non-empty quoted string is always
-          # truthy, so `'0'` and `"false"` override.
+          # An empty value is dropped. Only a QUOTED one can be empty -
+          # `unquoted_value` captures with `repeat(1)` - so that rule and the
+          # unquoted resolution below never both apply. Past it, a non-empty
+          # quoted string is always truthy, so `'0'` and `"false"` override.
           #
           # Only the falsy half of resolution is mirrored. A truthy scalar is
           # still rendered as its raw text where mermaid renders the resolved
