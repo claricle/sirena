@@ -257,6 +257,34 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect([node.shape, node.label]).to eq(%w[rounded rounded])
     end
 
+    # `Psych::Nodes::Node#to_ruby` is `unsafe_load` wearing a different
+    # name. It built a Gem::Requirement out of a node label before the
+    # type check downstream refused the value, so a diagram could
+    # construct arbitrary Ruby objects. mmdc rejects both of these.
+    describe "a ruby-tagged value" do
+      {
+        "an object tag" => "graph TD\nA@{\n  shape: rounded\n  " \
+                           "label: !ruby/object:Gem::Requirement\n    " \
+                           "requirements:\n    - x\n}\n",
+        "a symbol tag" => "graph TD\nA@{ label: !ruby/symbol boom }\n"
+      }.each do |label, source|
+        it "refuses #{label}" do
+          expect { node_for(source) }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      it "builds no object on the way to refusing it" do
+        source = "graph TD\nA@{\n  shape: rounded\n  " \
+                 "label: !ruby/object:Gem::Requirement\n    " \
+                 "requirements:\n    - x\n}\n"
+        before = ObjectSpace.each_object(Gem::Requirement).count
+
+        expect { node_for(source) }.to raise_error(Sirena::Parser::ParseError)
+        expect(ObjectSpace.each_object(Gem::Requirement).count).to eq(before)
+      end
+    end
+
     it "resolves a tag" do
       expect(node_for("graph TD\nA@{ shape: !!str rounded }\n").shape)
         .to eq("rounded")
