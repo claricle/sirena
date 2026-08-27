@@ -316,15 +316,13 @@ module Sirena
           SELF_LOOP_SIDES['DOWN']
       end
 
-      # The points the line turns at. The layout gives them for a normal
-      # edge. A self link has none to give: both ends are the same centre,
-      # so the path came out as `M x y L x y` and the head sat under the
-      # node. Mermaid loops it off the node, so the two corners of that
-      # loop go here and the bent-edge code draws the rest.
+      # A laid-out graph already knows where its edge turns. Only a self
+      # link without that route needs corners to keep it from disappearing.
       def edge_bends(edge, source, target, side)
-        return self_loop_bends(source, side) if source[:id] == target[:id]
+        bend_points = edge.dig(:sections, 0, :bendPoints) || []
+        return bend_points unless source[:id] == target[:id] && bend_points.empty?
 
-        edge.dig(:sections, 0, :bendPoints) || []
+        self_loop_bends(source, side)
       end
 
       # Where the loop sits. It reaches past the node edge by 0.45 of the
@@ -344,8 +342,9 @@ module Sirena
         depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
         out_x, out_y = side
 
-        far_x = cx + (out_x * ((width / 2.0) + depth))
-        far_y = cy + (out_y * ((height / 2.0) + depth))
+        edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)
+        far_x = edge_x + (out_x * depth)
+        far_y = edge_y + (out_y * depth)
         [{ x: far_x - (out_y.abs * reach), y: far_y - (out_x.abs * reach) },
          { x: far_x + (out_y.abs * reach), y: far_y + (out_x.abs * reach) }]
       end
@@ -471,13 +470,9 @@ module Sirena
          dy.zero? ? Float::INFINITY : half_h / dy.abs].min
       end
 
-      # A diamond tapers straight from each mid-side to the next. A node
-      # of no size has no outline to land on, and dividing by its half
-      # width put NaN in the SVG rather than a coordinate.
+      # A diamond's straight sides make the two axis ratios additive.
       def rhombus_scale(half_w, half_h, dx, dy)
-        return 0.0 if half_w.zero? || half_h.zero?
-
-        1 / ((dx.abs / half_w) + (dy.abs / half_h))
+        1 / (axis_ratio(dx, half_w) + axis_ratio(dy, half_h))
       end
 
       # The node is drawn as a circle on the shorter side, not an ellipse.
@@ -491,9 +486,7 @@ module Sirena
       # end, top and bottom. So it is the box's flat top and bottom, and
       # the four sloped faces, whichever the ray meets first.
       def hexagon_scale(half_w, half_h, dx, dy)
-        return 0.0 if half_w.zero? || half_h.zero?
-
-        slope = 1 / ((dx.abs / half_w) + (dy.abs / (2 * half_h)))
+        slope = 1 / (axis_ratio(dx, half_w) + axis_ratio(dy, 2 * half_h))
         [slope, dy.zero? ? Float::INFINITY : half_h / dy.abs].min
       end
 
@@ -520,9 +513,17 @@ module Sirena
       # SVG clamps `rx` to half the width, so a stadium no wider than it
       # is tall is drawn as a plain ellipse rather than a capsule.
       def ellipse_scale(half_w, half_h, dx, dy)
-        return 0.0 if half_w.zero? || half_h.zero?
+        x_ratio = axis_ratio(dx, half_w)
+        y_ratio = axis_ratio(dy, half_h)
 
-        1 / Math.sqrt(((dx / half_w)**2) + ((dy / half_h)**2))
+        1 / Math.sqrt((x_ratio**2) + (y_ratio**2))
+      end
+
+      # A collapsed axis only blocks rays that try to cross it.
+      def axis_ratio(delta, half_extent)
+        return 0.0 if delta.zero?
+
+        delta.abs / half_extent
       end
 
       # Where the ray out of the centre meets a cap of radius `radius`

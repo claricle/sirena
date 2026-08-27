@@ -343,6 +343,25 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # A collapsed width still leaves a vertical outline for a square-on head.
+    %w[rhombus hexagon stadium].each do |shape|
+      it "lands on the end of a #{shape} with no width" do
+        graph = {
+          children: [{ id: "A", x: -20, y: 100, width: 40, height: 20 },
+                     { id: "B", x: 0, y: 0, width: 0, height: 20,
+                       metadata: { shape: shape } }],
+          edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                    metadata: { arrow_type: "arrow" } }]
+        }
+        xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
+        group = xml[%r{<g id="edge-A_to_B".*?</g>}m]
+        tip = group[/<polygon[^>]*points="([^"]*)"/, 1]
+          .split.first.split(",").map(&:to_f)
+
+        expect(tip).to eq([0.0, 20.0])
+      end
+    end
+
     # An arrow is the head that reads the direction, so it is the one that
     # reaches the zero-span guard. A circle never calls it.
     it "draws an arrow for nodes sitting on top of each other" do
@@ -527,9 +546,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # `M x y L x y` and the head sat at that centre, under a node painted
   # after it. Nothing of the link was on screen. mmdc 11.12.0 loops it off
   # the node instead. Measured off mmdc: the loop reaches past the node
-  # edge by 0.45 of the node's shorter side, and spans 0.175 of its width
-  # either side of centre, never narrower than 18 or wider than 50. The
-  # head sits where the loop meets the node again.
+  # edge by 0.45 of the node's shorter side. Sirena pins the reach at 0.175
+  # of its width either side of centre, never narrower than 18 or wider than
+  # 50. The head sits where the loop meets the node again.
   describe "a link from a node to itself" do
     def node_top(xml, id = "A")
       node_rect(xml, id)[1]
@@ -567,6 +586,32 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(corners.map(&:first).uniq.size).to eq(2)
     end
 
+    it "keeps supplied bends for a self link" do
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
+        edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
+                  sections: [{ bendPoints: [{ x: 80, y: 30 },
+                                            { x: 80, y: -10 }] }],
+                  metadata: { arrow_type: "arrow" } }]
+      }
+      xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
+
+      expect(path_points(xml)[1..2]).to eq([[80.0, 30.0], [80.0, -10.0]])
+    end
+
+    # A long label widens the layout box without widening the drawn circle.
+    it "starts a wide circle loop's depth at its drawn edge" do
+      xml = Sirena.render(
+        "flowchart LR\n  A((a fairly long circle label)) --> A\n"
+      )
+      circle = xml[%r{<g id="node-A".*?</g>}m][/<circle\b[^>]*>/]
+      cx = circle[/\scx="(-?[\d.]+)"/, 1].to_f
+      radius = circle[/\sr="([\d.]+)"/, 1].to_f
+      far_x = path_points(xml).map(&:first).max
+
+      expect(far_x - (cx + radius)).to be_within(0.05).of(2 * radius * 0.45)
+    end
+
     it "puts the head where the loop meets the node, not inside it" do
       xml = Sirena.render("flowchart TD\n  A --> A\n")
       tip, *back = head_points(xml)
@@ -582,8 +627,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     # A bare node is 37 wide, so the ratio alone would reach 6.5 on each
-    # side and span about 13. The loop would be a spike. mmdc never goes
-    # under 18.
+    # side and span about 13. Sirena pins the reach at 18 to avoid a spike.
     it "keeps a narrow node's loop 18 either side of centre" do
       xml = Sirena.render("flowchart TD\n  A --> A\n")
       centre_x, = node_centre(xml)
@@ -610,7 +654,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to all(be_within(0.05).of(width * 0.175))
     end
 
-    # 359 wide here, so the ratio alone would span 62.8. mmdc stops at 50.
+    # 359 wide here, so the ratio alone would span 62.8. Sirena pins it at 50.
     it "keeps a wide node's loop 50 either side of centre" do
       xml = Sirena.render(
         "flowchart TD\n  A --> A[a very long label indeed goes here now]\n"
