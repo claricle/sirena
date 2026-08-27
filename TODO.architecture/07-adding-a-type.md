@@ -21,7 +21,7 @@ Two numbers, asserted by a spec rather than claimed:
 
   **This is the count before `TODO.foundation/18`.** That item's typed
   IR adds more than a row: it requires a notation-to-IR mapping per
-  type (`18-typed-ir-boundary.md:103-115,137`, `TODO.foundation/12:106-109`)
+  type (`18-typed-ir-boundary.md:103-115,142-144`, `TODO.foundation/12:106-109`)
   as well as an entry in `docs/ir-type-map.md`. Item 03 turned the
   existing transforms into layouts, so that mapping is a new
   **responsibility** whose home item 18 has not settled.
@@ -35,7 +35,8 @@ Two numbers, asserted by a spec rather than claimed:
   enough — `TODO.foundation/18` had no Do, Done or Files entry covering
   the generator or the counts, so it could have closed with the pre-IR
   generator intact. That criterion is now in item 18's `Done when`
-  (`18-typed-ir-boundary.md:125`). One checkbox, someone has to tick
+  (`18-typed-ir-boundary.md:125`), written in the same plain list style
+  as the criteria around it. One line, and item 18 cannot close without
   it.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
