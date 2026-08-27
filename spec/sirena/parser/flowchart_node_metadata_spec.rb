@@ -38,14 +38,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     it "takes a single-quoted value" do
-      expect(node_for("graph TD\nD@{ shape: 'rect' }\n").shape).to eq("rect")
+      # Non-default on purpose: asserting `rect` passes even when the whole
+      # metadata block is dropped on the floor.
+      expect(node_for("graph TD\nD@{ shape: 'rounded' }\n").shape)
+        .to eq("rounded")
     end
 
     it "keeps whitespace inside a quoted value" do
-      # An unquoted value runs to the brace and picks up the space before
-      # it; a quoted one means exactly what it says.
+      # YAML strips the space around an unquoted value, so `label: padded  `
+      # is "padded" in mmdc and here. Quoting is the only way to keep it.
       expect(node_for(%(graph TD\nD@{ label: " padded " }\n)).label)
         .to eq(" padded ")
+    end
+
+    it "strips the space around an unquoted value" do
+      expect(node_for("graph TD\nD@{ label: padded  }\n").label)
+        .to eq("padded")
     end
 
     it "wins over the bracket form when a node carries both" do
@@ -122,9 +130,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
   describe "the body is YAML, because that is what mermaid parses it as" do
     it "takes a multiline block body with no commas" do
-      source = "graph TD\nA@{\n  shape: rect\n  label: \"x\"\n}\n"
+      source = "graph TD\nA@{\n  shape: rounded\n  label: \"x\"\n}\n"
+      node = node_for(source)
 
-      expect(node_for(source).label).to eq("x")
+      expect([node.shape, node.label]).to eq(%w[rounded x])
     end
 
     it "refuses commas in a multiline body" do
@@ -162,8 +171,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "accepts them in mermaid's order" do
       node = node_for("graph TD\nA[old]:::hot@{ shape: hex }\n")
 
-      expect(node.shape).to eq("hexagon")
-      expect(node.classes).to eq(":::hot")
+      # The bracket label survives a metadata block that does not mention
+      # it — mmdc draws this hexagon with "old" inside.
+      expect([node.shape, node.classes, node.label])
+        .to eq(["hexagon", ":::hot", "old"])
     end
 
     it "refuses the inline class before the shape" do
@@ -210,11 +221,120 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "a body mermaid accepts and means nothing by" do
-    { "empty" => "A@{}", "a key with no value" => "A@{ label: }",
-      "a trailing comma" => "A@{ shape: rect, }" }.each do |label, statement|
-      it "accepts #{label}" do
-        expect { node_for("graph TD\n#{statement}\n") }.not_to raise_error
+    # "It did not raise" passes even when the block quietly renames the
+    # node or flattens its shape, so each one asserts the node came
+    # through untouched.
+    { "empty" => "A(keep)@{}",
+      "whitespace only" => "A(keep)@{ }",
+      "a key with no value" => "A(keep)@{ label: }",
+      "a null value" => "A(keep)@{ shape: null }",
+      "a false value" => "A(keep)@{ shape: false }",
+      "a zero value" => "A(keep)@{ label: 0 }" }.each do |label, statement|
+      it "leaves the node alone for #{label}" do
+        node = node_for("graph TD\n#{statement}\n")
+
+        expect([node.shape, node.label]).to eq(%w[rounded keep])
       end
+    end
+
+    it "takes a trailing comma, and the shape in front of it" do
+      # A trailing comma is legal and means nothing on its own, but the
+      # entry before it still counts: mmdc draws this one square.
+      node = node_for("graph TD\nA(keep)@{ shape: rect, }\n")
+
+      expect([node.shape, node.label]).to eq(%w[rect keep])
+    end
+  end
+
+  # mermaid hands the body to js-yaml under its JSON schema and then tests
+  # each value for truth. Reading scalars straight off the Psych AST agreed
+  # with that only for a plain `key: value`.
+  describe "the values js-yaml produces" do
+    it "resolves an alias" do
+      source = "graph TD\nA@{\n  shape: &s rounded\n  label: *s\n}\n"
+      node = node_for(source)
+
+      expect([node.shape, node.label]).to eq(%w[rounded rounded])
+    end
+
+    it "resolves a tag" do
+      expect(node_for("graph TD\nA@{ shape: !!str rounded }\n").shape)
+        .to eq("rounded")
+    end
+
+    it "refuses an anchor that holds an alias" do
+      # Flat anchors are fine. Nesting them is how a few lines of YAML
+      # become gigabytes, and mermaid has no use for it.
+      source = "graph TD\nA@{\n  shape: &a [x]\n  label: &b [*a, *a]\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /anchor/)
+    end
+
+    it "takes the first element of a sequence label" do
+      # mmdc draws `[one, two]` as `one`, not as `one,two`.
+      expect(node_for("graph TD\nA@{ label: [one, two] }\n").label)
+        .to eq("one")
+    end
+
+    {
+      "a sequence shape" => "A@{ shape: [rounded, rect] }",
+      "a nested sequence label" => "A@{ label: [[x, y], z] }",
+      "an empty sequence label" => "A@{ label: [] }"
+    }.each do |label, statement|
+      it "refuses #{label}, as mermaid does" do
+        expect { node_for("graph TD\n#{statement}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "keeps a string zero, which is truthy" do
+      expect(node_for(%(graph TD\nA@{ label: "0" }\n)).label).to eq("0")
+    end
+  end
+
+  # Mermaid lexes the block before YAML sees it, and its string state opens
+  # on a double quote only.
+  describe "quoting inside the block" do
+    it "turns a newline inside a quoted value into a line break" do
+      # mmdc renders `one<br/>two`. Letting YAML fold the newline gave
+      # `one two`, which is a different label.
+      source = %(graph TD\nA@{ label: "one\ntwo" }\n)
+
+      expect(node_for(source).label).to eq("one<br/>two")
+    end
+
+    it "refuses a brace inside a single-quoted value" do
+      # The block ends at that brace in mermaid, and mmdc rejects the
+      # line. Treating single quotes as a string state accepted it.
+      expect { node_for(%(graph TD\nA@{ label: 'a}b' }\n)) }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "still takes a single-quoted value with no brace in it" do
+      expect(node_for("graph TD\nA@{ label: 'plain' }\n").label)
+        .to eq("plain")
+    end
+  end
+
+  # A node named twice changes only what the second mention says.
+  describe "a node mentioned again" do
+    it "resets the shape and keeps the label" do
+      node = node_for("graph TD\nA(keep)\nA@{ shape: rect }\n")
+
+      expect([node.shape, node.label]).to eq(%w[rect keep])
+    end
+
+    it "keeps both when the block says nothing" do
+      node = node_for("graph TD\nA[keep]@{ shape: hexagon }\nA@{}\n")
+
+      expect([node.shape, node.label]).to eq(%w[hexagon keep])
+    end
+
+    it "takes a label the second mention does give" do
+      node = node_for(%(graph TD\nA(keep)\nA@{ label: "new" }\n))
+
+      expect([node.shape, node.label]).to eq(%w[rounded new])
     end
   end
 

@@ -178,7 +178,7 @@ puts <<~RUBY
     module Parser
       # Shape names mermaid accepts, and what sirena draws for each.
       MERMAID_SHAPES = {
-  #{entries.map { |n, s| "      #{n.inspect} => #{s.inspect}," }.join("\n  ")}
+  #{entries.map { |n, s| "      #{n.inspect} => #{s.inspect}," }.join("\n")}
       }.freeze
     end
   end
