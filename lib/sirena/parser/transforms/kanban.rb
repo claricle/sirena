@@ -31,8 +31,9 @@ module Sirena
             id = line_data[:id].to_s
 
             # An item with no bracket label displays its id, which is what
-            # mermaid renders. Resolved here, once, because add_column and
-            # add_card both read this same field.
+            # mermaid renders. Resolved here, once: add_card reads this field
+            # directly, and add_column reads it through column_title, which
+            # may override it with a `label:` from the metadata.
             #
             # The metadata is parsed here rather than in add_card so that
             # add_column can consult it too; parse_metadata returns {} for a

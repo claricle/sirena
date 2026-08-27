@@ -229,7 +229,7 @@ RSpec.describe Sirena::Parser::KanbanParser do
       # column through this path.
       let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
 
-      it 'parses the metadata and titles the column by its id' do
+      it 'titles the column by its id' do
         expect(parser.parse(source).columns.first.title).to eq('root')
       end
 
@@ -386,6 +386,17 @@ RSpec.describe Sirena::Parser::KanbanParser do
       it 'treats a double-quoted empty label the same way' do
         diagram = parser.parse(%(kanban\n  id1[Todo]@{ label: "" }\n))
         expect(diagram.columns.first.title).to eq('Todo')
+      end
+
+      # Whitespace is not empty, so this one does NOT fall back - it is the
+      # single case that separates `.empty?` from `.strip.empty?`, and
+      # stripping here would be wrong. Oracle-confirmed rather than
+      # incidental: mmdc keeps the whitespace label and emits a text node for
+      # it, so the blank look is HTML whitespace collapsing, not a fallback
+      # to the bracket text.
+      it 'keeps a whitespace-only label rather than falling back' do
+        diagram = parser.parse("kanban\n  id1[Todo]@{ label: '   ' }\n")
+        expect(diagram.columns.first.title).to eq('   ')
       end
     end
 
