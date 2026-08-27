@@ -108,8 +108,8 @@ module Sirena
       # computed there, which is two spellings of one rule.
       #
       # `send`, not `public_send`: some readers below are computed rather
-      # than declared, and they stay off the public surface of a gem class
-      # because nothing outside this file has any use for them.
+      # than declared, and they stay protected because nothing outside this
+      # file has any use for them.
       #
       # @param pairs [Array<Array>] [svg name, reader], in output order
       # @return [Array<Array>] name/value pairs

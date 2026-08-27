@@ -69,13 +69,16 @@ module Sirena
       DEFAULT_FONT_SIZE = 16.0
       private_constant :BASELINE_SHIFTS, :DEFAULT_FONT_SIZE
 
+      # `dx` and `dy` are folded into x/y rather than emitted. They stay in the
+      # xml block below, which is what `from_xml` reads: a parsed offset is
+      # honoured the same way a set one is.
+      #
       # Written out rather than declared with .writes_attributes, because
-      # `y` is not emitted from the `y` reader — see #baseline_y.
+      # `x` and `y` are emitted from computed readers — see #offset_x and
+      # #baseline_y.
       ATTRIBUTE_PAIRS = [
-        ['x', :x],
+        ['x', :offset_x],
         ['y', :baseline_y],
-        ['dx', :dx],
-        ['dy', :dy],
         ['text-anchor', :text_anchor],
         ['font-family', :font_family],
         ['font-size', :font_size],
@@ -124,6 +127,15 @@ module Sirena
         attribute_pairs(ATTRIBUTE_PAIRS)
       end
 
+      # SVG dx/dy are per-glyph offset lists. Numbers.read uses the leading
+      # number, the same approximation the baseline shifts already make.
+      def offset_x
+        offset = Numbers.read(dx)
+        return x if offset.nil?
+
+        Numbers.write((Numbers.read(x) || 0.0) + offset)
+      end
+
       # `y` with the baseline request folded in.
       #
       # Returns the reader untouched when there is no shift, so a Text that
@@ -132,9 +144,10 @@ module Sirena
       # @return [Object, nil] the y attribute value
       def baseline_y
         shift = baseline_shift
-        return y if shift.zero?
+        offset = Numbers.read(dy)
+        return y if shift.zero? && offset.nil?
 
-        Numbers.write((Numbers.read(y) || 0.0) + shift)
+        Numbers.write((Numbers.read(y) || 0.0) + (offset || 0.0) + shift)
       end
 
       private

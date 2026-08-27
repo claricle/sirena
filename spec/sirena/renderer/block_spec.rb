@@ -87,7 +87,7 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
       it 'renders connections' do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('<path')
+        expect(xml).to include('d="M 70 80 L 70 100"')
       end
 
       # The renderer still asks for a marker. It used to be emitted as

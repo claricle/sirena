@@ -20,6 +20,7 @@ REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.rb')).
 # does not depend on svg_conform at all — it is the gate's tool, not the
 # renderer's — so naming it anywhere under lib/ is the same finding.
 REMEDIATION = /apply_fixes|SvgConform|svg_conform|RemediationEngine|RemediationRunner/
+REMEDIATION_COMMENT_TOKENS = [:on_comment, :on_embdoc, :on_embdoc_beg, :on_embdoc_end].freeze
 
 RSpec.describe Sirena::Svg do
   describe 'runtime remediation' do
@@ -27,7 +28,9 @@ RSpec.describe Sirena::Svg do
     # why svg_conform rejects a property, and a line-wise grep reads its own
     # documentation as a violation.
     def code_tokens(path)
-      Ripper.lex(File.read(path)).reject { |(_position, type, _token)| type == :on_comment }
+      Ripper.lex(File.read(path)).reject do |(_position, type, _token)|
+        REMEDIATION_COMMENT_TOKENS.include?(type)
+      end
     end
 
     def offences

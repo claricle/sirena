@@ -20,10 +20,10 @@ require 'yaml'
 #   * The mermaid corpus is the wide net: 1,997 sources across every diagram
 #     type, and the only place an attribute a single renderer emits shows up.
 #
-# The corpus pass renders all 1,997 sources and validates the 736 that produce
-# a document, in about five seconds. Worth every one of them: each of the four
-# conformance defects this gate was written for came out of a renderer no unit
-# spec covered.
+# The corpus pass renders all 1,997 sources and validates every document they
+# produce, with a floor guarding the rendered population. Worth every one of
+# them: each of the four conformance defects this gate was written for came out
+# of a renderer no unit spec covered.
 CONFORMANCE_ROOT = File.expand_path('..', __dir__)
 
 # Asked of the gemspec rather than globbed, because the gemspec is what
@@ -148,6 +148,7 @@ RSpec.describe Sirena::Svg do
     def render_example(mmd_path)
       metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
       metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
+      # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
       Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
                                          today: CONFORMANCE_EXAMPLE_TODAY)
     end
@@ -163,6 +164,7 @@ RSpec.describe Sirena::Svg do
     end
 
     it 'has example sources to render' do
+      # 53 is today's .mmd count under examples/; this guard catches sources vanishing.
       expect(CONFORMANCE_EXAMPLE_SOURCES.size).to be >= 53
     end
 

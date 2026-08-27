@@ -51,6 +51,10 @@ RSpec.describe Sirena::Svg::Numbers do
       expect(described_class.write(71.9)).to eq('71.9')
     end
 
+    it 'keeps the .0 suffix on a whole float' do
+      expect(described_class.write(10.0)).to eq('10.0')
+    end
+
     # 67.0 + (14.0 * 0.35) is 71.89999999999999 on the way out.
     it 'rounds off floating-point noise' do
       expect(described_class.write(67.0 + (14.0 * 0.35))).to eq('71.9')

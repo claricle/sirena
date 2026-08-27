@@ -103,7 +103,8 @@ RSpec.describe Sirena::Svg::Escaping do
     end
   end
 
-  # The four properties the profile has no room for. Asserting the absence
+  # The six properties the profile has no room for: `opacity`, `marker-end`,
+  # `marker-start`, `dominant-baseline`, `dx` and `dy`. Asserting the absence
   # matters as much as asserting the escaping: a renderer keeps setting them,
   # so the only thing stopping them reaching the document is this layer.
   describe 'properties SVG Tiny 1.2 does not have' do

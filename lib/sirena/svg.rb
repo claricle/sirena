@@ -3,16 +3,16 @@
 require_relative 'svg/escaping'
 require_relative 'svg/numbers'
 require_relative 'svg/path_geometry'
-require_relative 'svg/arrowhead'
 require_relative 'svg/style'
 require_relative 'svg/element'
 require_relative 'svg/document'
 require_relative 'svg/group'
 require_relative 'svg/rect'
 require_relative 'svg/circle'
-require_relative 'svg/path'
 require_relative 'svg/line'
 require_relative 'svg/polygon'
+require_relative 'svg/arrowhead'
+require_relative 'svg/path'
 require_relative 'svg/polyline'
 require_relative 'svg/text'
 require_relative 'svg/ellipse'
@@ -36,7 +36,7 @@ module Sirena
     # nothing. `:lucid_fix` is for cleaning up LucidChart exports.
     #
     # Named here because the profile is a decision about what Sirena emits,
-    # not a detail of how it is tested. Four properties are missing from the
+    # not a detail of how it is tested. Six properties are missing from the
     # output across three classes because of it — see Svg::Arrowhead,
     # Svg::Text and Svg::Element.
     CONFORMANCE_PROFILE = :metanorma

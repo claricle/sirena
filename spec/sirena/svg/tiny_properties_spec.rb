@@ -2,9 +2,9 @@
 
 require 'spec_helper'
 
-# The two properties that are translated rather than dropped. SVG Tiny 1.2
-# has neither `opacity` nor `dominant-baseline`, but both carry intent a
-# renderer needs, so the intent is expressed in something Tiny does have.
+# The four properties that are translated rather than dropped. SVG Tiny 1.2
+# has none of `opacity`, `dominant-baseline`, `dx` or `dy`, but each carries
+# intent a renderer needs, so the intent is expressed in something Tiny has.
 #
 # At the boundary, on bare elements: a renderer inherits this by
 # construction, and a new one gets it without opting in.
@@ -31,6 +31,11 @@ RSpec.describe Sirena::Svg do
         .to eq('<rect fill-opacity="0.0" stroke-opacity="0.0"/>')
     end
 
+    it 'clamps a negative component opacity before multiplying' do
+      expect(rect(opacity: 0.5, fill_opacity: '-1').to_xml)
+        .to eq('<rect fill-opacity="0.0" stroke-opacity="0.5"/>')
+    end
+
     it 'clamps opacities above one before multiplying' do
       expect(rect(opacity: 2, fill_opacity: '0.5').to_xml)
         .to eq('<rect fill-opacity="0.5" stroke-opacity="1.0"/>')
@@ -52,11 +57,37 @@ RSpec.describe Sirena::Svg do
     it 'does not raise for a non-finite opacity' do
       expect(rect(opacity: Float::NAN).to_xml).to eq('<rect/>')
     end
+
+    it 'translates opacity on a Group through its inherited paint properties' do
+      group = Sirena::Svg::Group.new
+      group.opacity = 0.3
+
+      expect(group.to_xml).to eq('<g fill-opacity="0.3" stroke-opacity="0.3"/>')
+    end
   end
 
   def text(**attributes)
     Sirena::Svg::Text.new.tap do |t|
       attributes.each { |name, value| t.public_send("#{name}=", value) }
+    end
+  end
+
+  describe 'text offsets, which Tiny expresses by moving the anchor' do
+    it 'moves x by dx' do
+      expect(text(x: 1.0, dx: 3.0).to_xml).to eq('<text x="4.0"></text>')
+    end
+
+    it 'moves y by dy' do
+      expect(text(y: 2.0, dy: 4.0).to_xml).to eq('<text y="6.0"></text>')
+    end
+
+    it 'combines dx and dy with a dominant-baseline shift' do
+      xml = text(x: 1.0, y: 2.0, dx: 3.0, dy: 4.0,
+                 font_size: '10', dominant_baseline: 'middle').to_xml
+
+      expect(xml).to eq('<text x="4.0" y="9.5" font-size="10"></text>')
+      expect(xml).not_to include(' dx=')
+      expect(xml).not_to include(' dy=')
     end
   end
 
@@ -118,6 +149,11 @@ RSpec.describe Sirena::Svg do
 
     it 'falls back to the CSS initial size when the label carries none' do
       expect(text(y: 0.0, dominant_baseline: 'middle').to_xml).to include('y="5.6"')
+    end
+
+    it 'adds y when a baseline is requested without one' do
+      expect(text(font_size: '10', dominant_baseline: 'middle').to_xml)
+        .to eq('<text y="3.5" font-size="10"></text>')
     end
 
     it 'leaves y alone entirely when no baseline was asked for' do

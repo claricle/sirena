@@ -183,7 +183,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
       described_class.for(path(d: 'M 0 0 L 10 0'))
 
-      expect(Sirena::Svg::PathGeometry).to have_received(:new).exactly(0).times
+      expect(Sirena::Svg::PathGeometry).not_to have_received(:new)
     end
 
     # SVG's initial stroke-width is 1, so an unreadable or invalid declaration

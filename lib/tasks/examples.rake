@@ -12,7 +12,7 @@ require 'date'
 # honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
-# Keeps task helpers off Object when the Rakefile is loaded.
+# Keeps helper methods off Object; ExampleTasks itself remains top-level.
 module ExampleTasks
   module_function
 
@@ -41,6 +41,16 @@ module ExampleTasks
     File.delete(svg_file)
     puts "    removed #{basename}.svg, which no longer renders"
   end
+
+  def handle_failed_svgs(total_generated, failed_renders)
+    if total_generated.zero? && failed_renders.any?
+      puts "\n⚠️  Every example source failed to render."
+      puts "   Existing SVGs were preserved because this indicates an environment fault."
+      exit 1
+    end
+
+    failed_renders.each { |failure| remove_failed_svg(*failure) }
+  end
 end
 
 namespace :examples do
@@ -63,6 +73,7 @@ namespace :examples do
 
     total_generated = 0
     total_failed = 0
+    failed_renders = []
 
     diagram_dirs.sort.each do |dir|
       diagram_type = File.basename(dir)
@@ -96,12 +107,13 @@ namespace :examples do
           puts "  ✓ #{basename}.svg"
           total_generated += 1
         rescue => e
-          ExampleTasks.remove_failed_svg(basename, svg_file, e)
+          failed_renders << [basename, svg_file, e]
           total_failed += 1
         end
       end
     end
 
+    ExampleTasks.handle_failed_svgs(total_generated, failed_renders)
     ExampleTasks.remove_orphan_svgs(examples_dir)
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"

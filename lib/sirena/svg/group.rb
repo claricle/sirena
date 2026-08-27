@@ -60,7 +60,8 @@ module Sirena
         else
           parts = ["<g#{attrs}>"]
           children.each do |child|
-            parts << "  #{child.to_xml}" if child.respond_to?(:to_xml)
+            # A child may be a multi-element fragment, so indent every line.
+            parts << child.to_xml.gsub(/^/, '  ') if child.respond_to?(:to_xml)
           end
           parts << "</g>"
           parts.join("\n")
