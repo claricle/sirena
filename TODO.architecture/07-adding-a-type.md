@@ -39,7 +39,19 @@ Two numbers, asserted by a spec rather than claimed:
   as the criteria around it. One line, and item 18 cannot close without
   it.
 - **Extending the syntax of an existing type touches 2 files** — grammar
-  and builder — when the diagram model already covers the concept.
+  and builder — when the diagram model already covers the concept **and
+  the change needs no new shared helper**.
+
+  Both halves matter, and the second is the one that bites. Flowchart's
+  node-metadata work on `origin/main` used `FlowchartNode`'s existing
+  label and shape fields, so the model did cover it — and it still took
+  four production files, because it needed a YAML composer
+  (`parser/metadata_yaml.rb`) and a shape table
+  (`parser/mermaid_shapes.rb`) that did not exist yet.
+
+  Two files is the floor for syntax the current machinery can already
+  express. New machinery is its own cost and this number does not
+  promise otherwise.
 
 ## The eight files
 
