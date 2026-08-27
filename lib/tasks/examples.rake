@@ -38,6 +38,7 @@ module ExampleTasks
     total = 0
 
     puts "Validating examples..."
+    puts ". rendered   K known unrenderable   F failure"
     puts ""
 
     Dir.glob(File.join(examples_dir, '*/*.mmd')).sort.each do |mmd_file|
@@ -73,8 +74,10 @@ module ExampleTasks
     puts "=" * 60
     puts "Validation Results"
     puts "=" * 60
+    renderable = total - known_unrenderable.size
     puts "Total:  #{total}"
-    puts "Passed: #{passed} (#{(passed.to_f / total * 100).round(1)}%)"
+    puts "Passed: #{passed} of #{renderable} renderable " \
+         "(#{renderable.zero? ? 'n/a' : "#{(passed.to_f / renderable * 100).round(1)}%"})"
     puts "Known unrenderable: #{known_unrenderable.size}"
     puts "Failed: #{failure_count}"
     puts "=" * 60
@@ -106,10 +109,18 @@ module ExampleTasks
   # An SVG whose source is gone still ships: git tracks it and the gemspec
   # packages it, and the loop below walks sources, so nothing ever visits it.
   # Delete it so generation leaves only outputs backed by current sources.
-  # This treats every sourceless SVG under examples/*/ as an orphan, so a
+  #
+  # `**` rather than `*/`, because the gemspec packages every SVG under
+  # examples/ at any depth. A sweep one level deep left the ones directly
+  # under examples/ for the conformance gate to fail on and a human to delete
+  # by hand, which is how the two this branch removed were found.
+  #
+  # This treats every sourceless SVG under examples/ as an orphan, so a
   # hand-authored illustrative SVG there is destroyed by a routine run too.
+  # The conformance gate refuses one anyway — it requires exactly one SVG per
+  # source and none without — so the sweep enforces what the gate demands.
   def remove_orphan_svgs(examples_dir)
-    orphans = Dir.glob(File.join(examples_dir, '*', '*.svg'))
+    orphans = Dir.glob(File.join(examples_dir, '**', '*.svg'))
       .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
 
     orphans.sort.each do |svg_file|
@@ -124,11 +135,11 @@ module ExampleTasks
   # and no longer true. The conformance gate detects a newly failing source
   # either way by matching the unrenderable sources by name; deletion is about
   # not shipping a stale picture, not about detection.
-  def remove_failed_svg(basename, svg_file)
+  def remove_failed_svg(svg_file)
     return unless File.exist?(svg_file)
 
     File.delete(svg_file)
-    puts "    removed #{basename}.svg, which no longer renders"
+    puts "    removed #{File.basename(svg_file)}, which no longer renders"
   end
 
   def handle_failed_svgs(failed_renders)
@@ -140,7 +151,7 @@ module ExampleTasks
       exit 1
     end
 
-    failed_renders.each { |_, basename, svg_file| remove_failed_svg(basename, svg_file) }
+    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file) }
   end
 end
 
@@ -195,8 +206,8 @@ namespace :examples do
           total_generated += 1
         rescue => e
           puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
-          source = mmd_file.delete_prefix("#{examples_dir}/")
-          failed_renders << [source, basename, svg_file]
+          relative_path = mmd_file.delete_prefix("#{examples_dir}/")
+          failed_renders << [relative_path, svg_file]
         end
       end
     end
@@ -278,7 +289,6 @@ namespace :examples do
         description = metadata['description'] || 'Example diagram'
         complexity = metadata['complexity'] || 'basic'
         use_cases = metadata['use_cases'] || []
-        keywords = metadata['keywords'] || []
 
         content << "==== Example #{index + 1}: #{title}"
         content << ""
@@ -563,6 +573,6 @@ namespace :examples do
       puts "✓ Removed #{docs_examples_dir}"
     end
 
-    puts "\n✅ Cleaned all generated files!"
+    puts "\n✅ Cleaned stale generated directories and documentation copies!"
   end
 end
