@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'strscan'
+
 module Sirena
   module Svg
     # Where a path starts and ends, and which way it is travelling there.
@@ -36,6 +38,11 @@ module Sirena
 
       TOKEN = /([MmLlHhVvCcSsQqTtAaZz])|([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)/
       private_constant :TOKEN
+
+      # Arc flags are single digits even when no separator follows, so they
+      # cannot use the generic number scan at their two argument positions.
+      ARC_FLAG_TOKEN = /([MmLlHhVvCcSsQqTtAaZz])|([01])/
+      private_constant :ARC_FLAG_TOKEN
 
       # A move followed by more coordinates draws lines: only the first
       # group of `M 1 2 3 4` is a move. Every other command simply repeats.
@@ -88,7 +95,13 @@ module Sirena
       def each_command(data, &block)
         letter = nil
         numbers = []
-        data.scan(TOKEN) do |command, number|
+        scanner = StringScanner.new(data)
+        loop do
+          token = arc_flag_position?(letter, numbers) ? ARC_FLAG_TOKEN : TOKEN
+          break unless scanner.scan_until(token)
+
+          command = scanner[1]
+          number = scanner[2]
           if command
             flush(letter, numbers, &block)
             letter = command
@@ -98,6 +111,12 @@ module Sirena
           end
         end
         flush(letter, numbers, &block)
+      end
+
+      def arc_flag_position?(letter, numbers)
+        return false unless letter&.downcase == 'a'
+
+        (numbers.length % ARITY.fetch('a')).between?(3, 4)
       end
 
       # A group with too few numbers is dropped, and the walk carries on with

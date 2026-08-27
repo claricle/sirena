@@ -121,6 +121,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 L 10')).to be_nil
     end
 
+    it 'keeps the last complete segment when the final command is short' do
+      anchor = terminus('M 0 0 L 10 0 L 5')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([10.0, 0.0, 1.0, 0.0])
+    end
+
     it 'has no anchor for empty data' do
       expect(terminus(nil)).to be_nil
     end
@@ -135,6 +141,11 @@ RSpec.describe Sirena::Svg::PathGeometry do
     # cannot prove that traversing the arc clears one already set.
     it 'has no anchor when the path ends on an arc after a line' do
       expect(terminus('M 0 0 L 10 0 A 5 5 0 0 1 20 10')).to be_nil
+    end
+
+    # The two flags are packed with no separator, which is valid SVG.
+    it 'has no anchor when the path ends on a compact arc' do
+      expect(terminus('M 0 0 L 10 0 a5 5 0 011 20 10')).to be_nil
     end
 
     it 'treats a zero horizontal radius arc as a straight line' do
@@ -153,6 +164,12 @@ RSpec.describe Sirena::Svg::PathGeometry do
       anchor = terminus('M 0 0 A 5 5 0 0 1 10 0 l 5 0')
 
       expect([anchor.x, anchor.y, anchor.dx]).to eq([15.0, 0.0, 1.0])
+    end
+
+    it 'still moves the pen through a compact arc' do
+      anchor = terminus('M 0 0 L 10 0 a5 5 0 01 20 10 l 5 0')
+
+      expect([anchor.x, anchor.y, anchor.dx]).to eq([35.0, 10.0, 1.0])
     end
 
     it 'has no anchor when the heading is not finite' do
