@@ -35,7 +35,8 @@ module Sirena
         # An item can be either a column or a card. The label is optional:
         # mermaid accepts a bare id, with or without trailing metadata.
         #
-        # Named alternation branches rather than an inline `label.maybe`.
+        # Named alternation branches rather than folding the bracket label
+        # into one rule as a `.maybe`.
         # Both parse today's inputs identically, so this is about ordering:
         # `bare_item` is the most permissive branch and must stay last, or a
         # branch added after it would never be reached. Naming the branches
@@ -49,12 +50,12 @@ module Sirena
         # `kanban` is the diagram's own header token, and mermaid reserves it
         # as a node name: it refuses `kanban`, `Kanban` and `KANBAN`, bare or
         # carrying a bracket label, as a column or as a card. Only the whole
-        # word is taken - `kanbanBoard` and `mykanban` are legal ids. No other
-        # keyword is reserved: `graph`, `end`, `section`, `title`, `class`,
-        # `classDef`, `click`, `style`, `subgraph`, `accTitle`, `accDescr`
-        # and `flowchart`
-        # all parse as ordinary nodes. Measured against mmdc 11.12.0 rather
-        # than generalised from the one token.
+        # word is taken - `kanbanBoard` and `mykanban` are legal ids. Measured
+        # against mmdc 11.12.0.
+        #
+        # No other keyword is reserved. The tokens checked are listed once,
+        # in the spec that pins them - see the 'reserves no other keyword'
+        # example in spec/sirena/parser/kanban_spec.rb.
         rule(:reserved_token) do
           kanban_keyword >> match['a-zA-Z0-9_'].absent?
         end

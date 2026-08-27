@@ -13,9 +13,9 @@ module Sirena
     # with columns, cards, and metadata.
     #
     # Parses kanban boards with support for:
-    # - Column definitions: id[Title]
-    # - Card definitions: id[Text]
-    # - Metadata: @{ key: 'value' }
+    # - Column definitions: id[Title], or a bare id
+    # - Card definitions: id[Text], or a bare id
+    # - Metadata: @{ key: 'value' }, with or without a bracket label
     # - Properties: assigned, ticket, icon, label, priority
     #
     # @example Parse a simple kanban board
