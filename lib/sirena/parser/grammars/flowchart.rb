@@ -172,9 +172,11 @@ module Sirena
         # statement as the title. mmdc keeps `%% comment` as the title text
         # and leaves the next line alone, so the gap is whitespace only.
         #
-        # The text runs to the PHYSICAL end of the line, not to `line_end`
-        # — that rule swallows a trailing comment, so `accTitle: %% c` came
-        # back with no text at all where mmdc's title is `%% c`.
+        # The text runs to the PHYSICAL end of the line, not to `line_end`.
+        # A `%%` inside a title is ordinary text — mmdc's title for
+        # `accTitle: %% c` is `%% c` — and `line_end` carries nothing but
+        # spaces to the newline, so reading the title through it would lose
+        # every title that has one.
         #
         # The text may be empty. mmdc renders `accTitle:` with nothing
         # after it, and this rejected the whole diagram.
@@ -545,9 +547,12 @@ module Sirena
         # read as a directive and `graph TD;click;B` was refused. mmdc
         # draws that as two nodes.
         #
-        # A comment is not one of the endings either. Mermaid needs
-        # whitespace right behind the word and `%%` is not whitespace, so
-        # mmdc draws `href%%c` `call%%c` and `click%%c` as nodes.
+        # A comment is not one of the endings either — and behind a word it
+        # is not a comment at all, because mermaid only strips one at the
+        # start of a line. mmdc reads `href%%c` as a SINGLE node called
+        # `href%%c`, not as the word `href`. Keeping `%%` out of the
+        # endings is what stops the word opening a directive; the line is
+        # then refused anyway, since `%` is not in a node id here.
         #
         # The end of the source IS one. Mermaid appends a newline before
         # it lexes, so a word at the very end is followed by one after
