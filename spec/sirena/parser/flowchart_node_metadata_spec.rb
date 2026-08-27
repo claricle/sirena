@@ -74,6 +74,16 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect { node_for("graph TD\nD@{ shape: rect_left_inv_arrow }\n") }
         .to raise_error(Sirena::Parser::ParseError)
     end
+
+    # These three read like ordinary names and mermaid rejects all of them,
+    # which is why the accepted set is generated from mmdc rather than
+    # written out by hand.
+    %w[lined-proc multi-process multi-rect].each do |name|
+      it "raises for #{name}, which mermaid does not know" do
+        expect { node_for("graph TD\nD@{ shape: #{name} }\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
   end
 
   describe "shape names that collapse" do
@@ -85,13 +95,50 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "event" => "rounded", "terminal" => "stadium", "pill" => "stadium",
       "db" => "cylindrical", "database" => "cylindrical",
       "question" => "rhombus", "decision" => "rhombus",
-      "in-out" => "hexagon", "lean-r" => "parallelogram"
+      "in-out" => "parallelogram", "lean-r" => "parallelogram",
+      "out-in" => "parallelogram_alt", "junction" => "double_circle",
+      "circ" => "circle", "hex" => "hexagon"
     }.each do |name, expected|
       it "maps #{name} to #{expected}" do
         expect(node_for("graph TD\nD@{ shape: #{name} }\n").shape)
           .to eq(expected)
       end
     end
+  end
+
+  describe "mapping shapes mermaid draws identically" do
+    it "gives junction and filled-circle the same shape" do
+      # mermaid draws these as one shape; mapping junction to a rectangle
+      # made them visibly different here.
+      expect(node_for("graph TD\nD@{ shape: junction }\n").shape)
+        .to eq(node_for("graph TD\nD@{ shape: filled-circle }\n").shape)
+    end
+
+    it "gives in-out and lean-r the same shape" do
+      expect(node_for("graph TD\nD@{ shape: in-out }\n").shape)
+        .to eq(node_for("graph TD\nD@{ shape: lean-r }\n").shape)
+    end
+  end
+
+  describe "a body mermaid accepts and means nothing by" do
+    { "empty" => "A@{}", "a key with no value" => "A@{ label: }",
+      "a trailing comma" => "A@{ shape: rect, }" }.each do |label, statement|
+      it "accepts #{label}" do
+        expect { node_for("graph TD\n#{statement}\n") }.not_to raise_error
+      end
+    end
+  end
+
+  describe "forms mermaid refuses" do
+    { "whitespace before the brace" => "D @{ shape: rounded }",
+      "an unterminated quoted value" => 'A@{ label: "oops }',
+      "a duplicate key" => "A@{ shape: rect, shape: circle }" }
+      .each do |label, statement|
+        it "rejects #{label}" do
+          expect { node_for("graph TD\n#{statement}\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
   end
 
   describe "nodes without metadata" do

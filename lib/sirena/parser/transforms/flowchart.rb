@@ -3,6 +3,7 @@
 require 'parslet'
 require_relative '../base'
 require_relative '../../diagram/flowchart'
+require_relative '../mermaid_shapes'
 
 module Sirena
   module Parser
@@ -12,66 +13,35 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
-        # `@{ shape: ... }` names, mapped onto the shapes this renderer can
-        # draw. Discovered by probing mmdc 11.12.0 one name at a time
-        # rather than copied from the docs — mermaid REJECTS a name it does
-        # not know, so accepting anything here would render sources mermaid
-        # refuses.
-        #
-        # Many names collapse onto one shape because sirena draws five
-        # distinct ones. That is a renderer gap, not a parsing one.
-        METADATA_SHAPES = {
-          'rect' => 'rect', 'proc' => 'rect', 'process' => 'rect',
-          'rectangle' => 'rect', 'notch-rect' => 'rect', 'card' => 'rect',
-          'div-rect' => 'rect', 'divided-process' => 'rect',
-          'lined-document' => 'rect', 'lined-proc' => 'rect',
-          'loop-limit' => 'rect', 'multi-process' => 'rect',
-          'multi-rect' => 'rect', 'stacked-document' => 'rect',
-          'tag-doc' => 'rect', 'tag-rect' => 'rect', 'win-pane' => 'rect',
-          'doc' => 'rect', 'delay' => 'rect', 'display' => 'rect',
-          'manual-input' => 'rect', 'manual-file' => 'rect',
-          'paper-tape' => 'rect', 'curv-trap' => 'rect', 'odd' => 'rect',
-          'text' => 'rect', 'collate' => 'rect', 'extract' => 'rect',
-          'triangle' => 'rect', 'brace' => 'rect', 'brace-l' => 'rect',
-          'brace-r' => 'rect', 'braces' => 'rect', 'comment' => 'rect',
-          'bolt' => 'rect', 'hourglass' => 'rect', 'junction' => 'rect',
-          'fork' => 'rect', 'join' => 'rect',
-          'rounded' => 'rounded', 'event' => 'rounded',
-          'stadium' => 'stadium', 'terminal' => 'stadium',
-          'pill' => 'stadium',
-          'subroutine' => 'subroutine',
-          'cylinder' => 'cylindrical', 'db' => 'cylindrical',
-          'database' => 'cylindrical', 'disk' => 'cylindrical',
-          'cyl' => 'cylindrical', 'lin-cyl' => 'cylindrical',
-          'circle' => 'circle', 'sm-circ' => 'circle',
-          'start' => 'circle', 'stop' => 'circle',
-          'fr-circ' => 'double_circle', 'framed-circle' => 'double_circle',
-          'dbl-circ' => 'double_circle', 'filled-circle' => 'double_circle',
-          'diamond' => 'rhombus', 'question' => 'rhombus',
-          'decision' => 'rhombus',
-          'hexagon' => 'hexagon', 'in-out' => 'hexagon',
-          'out-in' => 'hexagon', 'prepare' => 'hexagon',
-          'lean-r' => 'parallelogram', 'lean-right' => 'parallelogram',
-          'lean-l' => 'parallelogram_alt', 'lean-left' => 'parallelogram_alt',
-          'trap-b' => 'trapezoid', 'trapezoid' => 'trapezoid',
-          'trap-t' => 'trapezoid_alt',
-          'trapezoid-bottom' => 'trapezoid_alt'
-        }.freeze
-
         # @raise [Parser::ParseError] on a shape name mermaid does not know
         def self.metadata_shape(name)
           return nil if name.nil?
 
-          METADATA_SHAPES.fetch(name) do
+          MERMAID_SHAPES.fetch(name) do
             raise Parser::ParseError, "No such shape: #{name}."
           end
         end
 
+        # `@{}` carries no named captures, so parslet hands back the raw
+        # slice rather than a hash or an array. Mermaid accepts it and it
+        # means nothing, which is what an empty result says.
         def self.metadata_entries(metadata)
-          return {} if metadata.nil?
+          entries = case metadata
+                    when nil then []
+                    when Hash then [metadata]
+                    when Array then metadata
+                    else []
+                    end
 
-          Array(metadata.is_a?(Hash) ? [metadata] : metadata)
-            .to_h { |e| [e[:key].to_s, entry_value(e[:value])] }
+          pairs = entries.map { |e| [e[:key].to_s, entry_value(e[:value])] }
+          keys = pairs.map(&:first)
+          duplicate = keys.detect { |k| keys.count(k) > 1 }
+
+          # mermaid parses the body as YAML and raises on a duplicate key.
+          # Taking the last value silently disagreed with it.
+          raise Parser::ParseError, "Duplicate key: #{duplicate}." if duplicate
+
+          pairs.to_h
         end
 
         # Stripped for the bare form only: an unquoted value runs to the
