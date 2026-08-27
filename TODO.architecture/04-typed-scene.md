@@ -31,7 +31,7 @@ that layout look like":
 # lib/sirena/layout/pie.rb
 module Sirena
   module Layout
-    class Pie
+    class Pie < Layout::Base           # gives #call, and theme/today readers
       class Scene < Layout::Scene        # width, height inherited
         attribute :sectors, Sector, collection: true
         attribute :title, :string
@@ -66,6 +66,25 @@ coordinate keys and arithmetic. Check each one before you delete it;
 
 **Rule for the future: if a layout would only copy fields, do not write
 one.**
+
+**But "no layout" cannot mean "no Scene".** `Diagram::Info` and
+`Diagram::Error` carry no `width` or `height` — measured, neither file
+mentions either — and item 05 collapses nine document builders into one
+method that reads exactly those two values off the Scene. Hand the
+renderer a bare `Diagram::Info` and that method has nothing to read.
+
+So the pass-through path is narrower than it looks. A type with no
+*geometry to compute* still needs somewhere its canvas size comes from.
+Two ways out, and item 04 must pick one before converting `info` or
+`error`:
+
+- give them a `Layout::Scene` with only `width` and `height`, computed
+  from the text, and keep no `Layout::<Type>` beyond a two-line one; or
+- let `Renderer::Base`'s builder take the dimensions as arguments, and
+  accept that pass-through renderers compute their own canvas.
+
+The first keeps one document-creation contract. Prefer it unless
+converting `info` proves otherwise.
 
 ## Two kinds of Scene
 
@@ -203,17 +222,45 @@ attribute, two of them dead (item 02).
    layout that never reads `today` is an offence. The template method
    gives one signature *and* a lint-clean subclass.
 
-   `Base#today` returns `@today || Date.today`, matching
-   `transform/base.rb:38` exactly. A `nil` reaching the layout means
-   "use the real date" — it does not mean nil. That is the semantics
-   `engine.rb:186` has today (`transform.today = today if today && ...`)
+   `Layout::Base#today` must be **`@today ||= Date.today`**, character
+   for character. Not `@today || Date.today`. Two reasons, and both
+   bite:
+
+   - Without `||=` it does not memoize, so a long gantt render can read
+     the clock twice and cross midnight between reads.
+   - `spec/sirena/determinism_spec.rb:209` allowlists the ambient clock
+     read by matching that **exact line**, deliberately, so a second
+     ambient read cannot hide in the same file. Any other spelling
+     fails it.
+
+   A `nil` reaching the layout means "use the real date" — it does not
+   mean nil. That is the semantics `engine.rb:185` has today
+   (`transform.today = today if today && transform.respond_to?(:today=)`)
    and step 6 keeps it. Every layout today hardcodes
    `DEFAULT_FONT_SIZE = 14` while renderers draw at
    `theme.typography.font_size_normal`. The built-in `high_contrast`
    theme sets 16.0, so today its text overflows every box it is sized
    into. Sizing is a layout concern and it depends on font metrics; see
    `LAYERS.md`.
-4. For each type, one PR:
+4. **Before converting the first type, give `Layout::Base` a transition
+   path.** This item converts one type per PR and requires
+   `rake corpus[<type>]` unchanged after each. That is impossible as
+   stated: an unconverted layout exposes `to_graph`, a converted one
+   exposes `scene`, and the engine does not switch to
+   `Layout.for(type).call(...)` until item 06. Switch early and every
+   unconverted type breaks; switch late and every converted type does.
+
+   The fix is one temporary method, deleted by item 06:
+   `Layout::Base#call` returns `scene(diagram)` when the subclass
+   defines `scene`, and falls back to `to_graph(diagram)` when it does
+   not. The engine calls `call` from the first conversion PR onward.
+   Every PR in between has one path that works for both kinds, and
+   `corpus[<type>]` stays green throughout.
+
+   Item 06 deletes the fallback once no `to_graph` remains. Add it to
+   that item's `Done when`, or it survives forever.
+
+5. For each type, one PR:
    - define the Scene from what the renderer actually reads — that *is*
      the contract, already written down, just in the wrong place
    - move every coordinate and angle calculation out of the renderer and
@@ -222,9 +269,9 @@ attribute, two of them dead (item 02).
    - rewrite the renderer to read named attributes
    - the layout returns a new Scene and never mutates the diagram
    - `rake corpus[<type>]` must show the same pass count
-5. For each pass-through type, delete the layout class and register the
+6. For each pass-through type, delete the layout class and register the
    type without one.
-6. Extend `spec/contract_spec.rb`: where a layout exists it returns a
+7. Extend `spec/contract_spec.rb`: where a layout exists it returns a
    `Layout::Scene`; where it does not, the renderer accepts the
    `Diagram` model.
 
@@ -264,6 +311,17 @@ attribute, two of them dead (item 02).
       and height afterwards leaves it stale or nil. All four renderers
       set it by hand today — width and height alone do not prove the
       viewport is right
+- [ ] `Layout::Base` defines `#call` and **no subclass overrides it**;
+      `grep -rn "def call" lib/sirena/layout/` returns exactly one hit
+- [ ] every layout subclass defines `#scene(diagram)` and declares no
+      keyword arguments of its own
+- [ ] `theme` and `today` are private readers on `Layout::Base`; a
+      subclass reading them works, an outside caller gets
+      `NoMethodError`
+- [ ] `Layout::Base#today` is literally `@today ||= Date.today`, and
+      `determinism_spec.rb` still passes
+- [ ] calling with `today: nil` gives the same output as calling with
+      `today: Date.today` — a spec, not an assumption
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives

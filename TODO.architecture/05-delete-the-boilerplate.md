@@ -85,12 +85,17 @@ Plus six more bespoke `create_document_for_<type>` methods.
 ### Steps
 
 1. With `Layout::Scene` carrying `width` and `height` (item 04), replace
-   all of them with one method on `Renderer::Base` taking a padding
-   argument.
-2. Replace the `@offset_x` / `@offset_y` side effect with an explicit
-   translate on the root `<g>`. Hidden instance-variable state set by a
-   document-creation method is the kind of thing that breaks silently
-   when someone reorders two calls.
+   all of them with one method on `Renderer::Base` that reads those two
+   values and nothing else. **No padding argument.** Scene coordinates
+   are final and `width`/`height` already include the framing
+   (`04-typed-scene.md`), so a renderer that adds padding is adding it
+   twice.
+2. Delete the `@offset_x` / `@offset_y` side effect outright. **Do not
+   replace it with a translate on the root `<g>`** — item 04's gate
+   forbids an SVG `translate` for exactly this reason: it moves the
+   displacement back out of the Scene while every grep still passes.
+   The layout has already shifted every point; the renderer emits them
+   as they are.
 
 ---
 

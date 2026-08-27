@@ -200,9 +200,12 @@ date — `transform/gantt.rb:150` and `:155` read it — and the engine
 already threads it through (`engine.rb:93`, `:107`). Dropping it from
 the signature changes gantt output, which step 6 forbids.
 
-A layout that needs neither still takes both and ignores them. One
-signature is the point; per-type signatures put the dispatch back. See
-`LAYERS.md`.
+Callers always pass both. **`Layout::Base#call` owns them**, stores
+them, and calls the subclass's `#scene(diagram)`; `theme` and `today`
+are private readers. Subclasses define only `scene` — they never
+declare a keyword they do not read, because `Lint/UnusedMethodArgument`
+would flag it. One signature is the point; per-type signatures put the
+dispatch back. See `LAYERS.md`.
 
 Two rules hold it together:
 

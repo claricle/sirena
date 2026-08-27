@@ -83,7 +83,7 @@ that layout look like":
 ```ruby
 module Sirena
   module Layout
-    class Pie
+    class Pie < Layout::Base   # gives #call, and the theme/today readers
       RADIUS = 150
       CENTRE = [250, 200].freeze
 
