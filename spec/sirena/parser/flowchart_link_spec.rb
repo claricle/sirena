@@ -310,8 +310,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(arms.size).to eq(2)
       expect(arms.map { |x1, y1, x2, y2| (x2 - x1).abs < 0.05 || (y2 - y1).abs < 0.05 })
         .to all(be(true))
+      # Every endpoint is written to one decimal, so the measured arm
+      # carries up to 0.1 of quantisation on its own — it lands on 12.8
+      # against a true 12.728. The window has to clear that before it can
+      # mean anything, or rounding alone spends most of it.
       expect(arms.map { |x1, y1, x2, y2| Math.hypot(x2 - x1, y2 - y1) })
-        .to all(be_within(0.1).of(2 * 4.5 * Math.sqrt(2)))
+        .to all(be_within(0.2).of(2 * 4.5 * Math.sqrt(2)))
     end
 
     # A node of no size has no outline for the head to land on. Dividing
@@ -867,6 +871,42 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # `double_circle` and `rounded` each ride another shape's branch —
+    # one shares the circle's, one is in STADIUM_SHAPES. Dropping either
+    # name sends it to the box answer, and every example above would stay
+    # green, so each is pinned on the outline it is actually drawn as.
+    it "lands on a double circle at its radius" do
+      xml = Sirena.render("flowchart TD\n  A(((x))) --> A\n")
+      group = xml[%r{<g id="node-A".*?</g>}m]
+      cx, cy, r = group.match(
+        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/
+      ).captures.map(&:to_f)
+      tip_x, tip_y = tip_of(xml, "A_to_A")
+
+      expect(Math.hypot(tip_x - cx, tip_y - cy)).to be_within(0.05).of(r)
+    end
+
+    it "lands on a rounded box's curved end" do
+      xml = Sirena.render("flowchart TD\n  A --> B\n  B --> C\n  C --> D(x)\n")
+      rect = xml[%r{<g id="node-D".*?</g>}m].match(
+        /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/
+      )
+      x, y, width, height = rect.captures.map(&:to_f)
+      half_w = width / 2
+      half_h = height / 2
+      tip_x, tip_y = tip_of(xml, "C_to_D")
+      across = (tip_x - (x + half_w)).abs
+      down = tip_y - (y + half_h)
+      straight = [half_w - half_h, 0].max
+      gap = if across <= straight
+              down.abs - half_h
+            else
+              Math.hypot(across - straight, down) - [half_w, half_h].min
+            end
+
+      expect(gap).to be_within(0.05).of(0)
+    end
+
     it "lands on a circle at its radius" do
       xml = Sirena.render("flowchart TD\n  A((x)) --> A\n")
       group = xml[%r{<g id="node-A".*?</g>}m]
@@ -896,7 +936,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect { parse("A.->B") }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "wants no gap on the far side" do
+    # The gap the dot needs is on the NEAR side only. `A .- B` parses too,
+    # so this says the far side MAY sit flush — not that it must.
+    it "lets a dot-opened link sit flush against its target" do
       expect(parse("A .-B").edges.map(&:arrow_type)).to eq(["dotted_line"])
     end
 

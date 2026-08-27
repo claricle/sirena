@@ -214,9 +214,15 @@ module Sirena
       # `M 0 0 L 10 5 L 0 10 z` lands 8 long and 4 either side of the axis.
       ARROW_LENGTH = 8.0
       ARROW_HALF_WIDTH = 4.0
-      # `circleEnd` is a radius-5 circle in a 0..10 viewBox at markerWidth
-      # 11, so its drawn radius is 5.5. `crossEnd` uses the diagonals of a
-      # 9x9 box. The 4.5 is each axis's half-run, making each drawn half-arm
+      # The two scale differently, so each is derived from its own marker
+      # rather than from a shared factor.
+      #
+      # `circleEnd` is a radius-5 circle in a `0 0 10 10` viewBox at
+      # markerWidth 11, so it scales by 11/10 and its drawn radius is 5.5.
+      # `crossEnd` draws `M 1,1 l 9,9 M 10,1 l -9,9` in a `0 0 11 11`
+      # viewBox at markerWidth 11, so it scales by 11/11 = 1 and nothing
+      # here is multiplied. Its arms run 1..10 about a centre of 5.5,
+      # making each axis's half-run 4.5 and each drawn half-arm
       # 4.5 * sqrt(2) long.
       CIRCLE_HEAD_RADIUS = 5.5
       CROSS_HEAD_HALF = 4.5
@@ -225,10 +231,14 @@ module Sirena
       # from the theme and keeps its own formatting.
       CIRCLE_HEAD_STROKE = 1.0
       CROSS_HEAD_STROKE = 2.0
-      # mmdc puts each marker's reference point on the node boundary. The
-      # circle's centre sits (11 - 5) * 1.1 = 6.6 behind it. Its painted
-      # edge stops 1.1 short. The cross's centre sits 12 - 5.5 = 6.5 behind
-      # it. Its nearest arm point stops 2.0 short.
+      # mmdc puts each marker's reference point on the node boundary, so
+      # each reach is the refX-to-centre distance in that marker's own
+      # viewBox units, taken at that marker's own scale.
+      #
+      # `circleEnd` has refX 11 against a centre of 5, so (11 - 5) * 1.1
+      # = 6.6 and its painted edge stops 1.1 short of the node.
+      # `crossEnd` has refX 12 against a centre of 5.5 and scales by 1, so
+      # 12 - 5.5 = 6.5 and its nearest arm point stops 2.0 short.
       CIRCLE_HEAD_REACH = 6.6
       CROSS_HEAD_REACH = 6.5
 
@@ -383,8 +393,11 @@ module Sirena
         path.stroke_dasharray = dotted_dashes if type.start_with?('dotted_')
       end
 
-      # What mmdc falls back to when the theme names neither: its own
-      # thick line is 3.5 times its normal one, and its normal one is 1.
+      # Three answers, in order. A theme naming a thick width gets it. One
+      # naming only a plain width gets mmdc's multiple on top of ITS
+      # width, not on top of mmdc's — a 2.0 line thickens to 7.0. A theme
+      # naming neither falls back to mmdc outright, whose thick line is
+      # 3.5 times its normal one and whose normal one is 1.
       def thick_width
         theme_shape(:stroke_width_thick) ||
           ((theme_shape(:stroke_width) || 1.0) * LINK_THICK_MULTIPLE)
@@ -556,8 +569,13 @@ module Sirena
         end
       end
 
-      # mmdc puts the marker's reference point on the node boundary. Each
-      # head's centre sits behind it by that marker's reference distance.
+      # mmdc puts the marker's reference point on the node boundary, so a
+      # circle's and a cross's CENTRE sit behind it by that marker's
+      # reference distance. Only those two come through here.
+      #
+      # An arrow does not. `pointEnd`'s refX is the middle of the
+      # triangle, and mmdc ends the line 4 short so the tip still lands on
+      # the boundary — which is where this draws it, with no back-off.
       def backed_off(geometry, reach)
         tip_x, tip_y, from_x, from_y =
           geometry.values_at(:tip_x, :tip_y, :from_x, :from_y)
