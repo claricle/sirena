@@ -89,9 +89,13 @@ label positions and edge `sections` — `start_point`, `end_point` and
 `bend_points`. Each of those carries coordinates and each may sit in a
 different frame from the node it belongs to; ELK routes an edge in the
 frame of the container that owns it, which is not always the frame of
-its endpoints. Measure all three — node, label, edge section — and
-flatten all three. A probe that only checks node positions will look
-clean and leave every edge in the wrong place.
+its endpoints. ELK allows more than one edge-coordinate mode, `ROOT`
+among them, so a top-level edge may already be in canvas coordinates
+while a nested one is not. That is what makes it worth measuring rather
+than assuming in either direction. Measure all three — node, label,
+edge section — and flatten whichever are not already canvas. A probe
+that only checks node positions will look clean and leave the nested
+edges in the wrong place.
 
 Measured 2026-08-27 against elkrb at `v2`: a two-level graph came back
 with sibling boxes that overlap, so the frame could not be settled from
@@ -224,14 +228,25 @@ attribute, two of them dead (item 02).
       asserting **canvas** coordinates, framing already included, on
       *every* coordinate-bearing element that type emits — not one. One
       assertion passes while edges, labels or bounds stay unshifted.
-      Each type exposes its own thing, so name it per type: `git_graph`
-      commits **and** connections, `kanban` columns **and** cards,
-      `mindmap` nodes **and** the links between them, `packet` fields
-      **and** grid lines **and** bit markers
+      Each type exposes its own thing, and **text counts** — a label
+      the renderer still positions itself is exactly the leak these
+      assertions exist to catch:
+      `git_graph` commits, connections, **commit/tag/branch labels**;
+      `kanban` columns, cards, **headers, badges, card metadata**;
+      `mindmap` nodes, links, **node text**;
+      `packet` fields, grid lines, bit markers, **title/field/range
+      labels**.
+      The rule underneath the list: if the renderer computes a position
+      for it, it belongs in the Scene and it gets an assertion
 - [ ] `packet`'s case has a title, or `@title_offset` is zero and the
       spec proves nothing
 - [ ] each of those four also asserts the document's own width and
       height include the framing
+- [ ] and asserts its `viewBox`. `Svg::Document` computes `view_box`
+      only in `initialize` (`svg/document.rb:66`), so assigning width
+      and height afterwards leaves it stale or nil. All four renderers
+      set it by hand today — width and height alone do not prove the
+      viewport is right
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives
