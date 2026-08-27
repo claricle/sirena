@@ -53,7 +53,9 @@ One commit — and one PR — per rename.
 
    A named class in `lib/sirena/layout/grid.rb` that the engine calls
    explicitly. It stays a stub, and it is **explicitly temporary**: put
-   a comment at the top naming its successor.
+   a comment at the top saying item 06 deletes it, and when — once
+   `Engine` no longer receives a legacy result to hand it. It has no
+   successor; nothing takes its place.
 
    Its life is short. It exists to hold the engine's positioning code
    while legacy layouts still return graphs; item 06 deletes it once

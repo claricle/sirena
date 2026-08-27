@@ -376,8 +376,8 @@ Pure renames, no logic change. The corpus number must not move.
 
   Engine#layout_graph                 Layout::Grid
   Engine#apply_fallback_layout          a class with one caller,
-                                        explicitly temporary — elkrb
-                                        replaces it later
+                                        explicitly temporary — item 06
+                                        deletes it
 
   Engine::DIAGRAM_TYPE_PATTERNS       Notation::Mermaid::TYPES
 ```
@@ -494,7 +494,11 @@ in the Svg layer).
 **Graph types must use an ELK-shaped Scene.** Geometry parity is the
 agreed bar, so elkrb computes positions later. If the Scenes already
 mirror what ELK emits, that's a swap; if we invent a different shape
-now, it's a redesign of all nine.
+now, it's a redesign.
+
+**An ELK-shaped Scene is not a promise that elkrb will fill it.**
+`sankey` is graph-shaped and does its own layering; `block` is
+pre-positioned. `TODO.foundation/14`'s survey decides eligibility.
 
 ```ruby
 class Node    # id, x, y, width, height, labels, children

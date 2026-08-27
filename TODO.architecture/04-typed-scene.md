@@ -306,11 +306,12 @@ attribute, two of them dead (item 02).
    Grid, not after:
 
 During item 04 the engine still resolves classes through
-   `DiagramRegistry` — `Layout.for` and `Renderer.for` arrive with item
-   06 — so the shape is:
+   `DiagramRegistry`, and its key is still `:transform` — item 03
+   renames the classes, not the registry keys, and `Layout.for` /
+   `Renderer.for` arrive with item 06. So the shape is:
 
    ```
-   result = handlers[:layout].new.call(model, theme:, today:)
+   result = handlers[:transform].new.call(model, theme:, today:)
 
    if result.is_a?(Layout::Legacy)
      graph = result.payload              # unwrap FIRST
