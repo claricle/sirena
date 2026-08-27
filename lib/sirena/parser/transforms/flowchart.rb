@@ -76,10 +76,17 @@ module Sirena
 
         private_constant :JS_SPACE, :QUOTED_BREAK
 
-        # Mermaid reads these two off the document and ignores everything
-        # else, a merge key included. Validating every entry refused
-        # `A@{ extra: true }`, which mmdc draws. A root that is not a
-        # mapping has neither key, and mmdc draws the node untouched.
+        # A key sirena does not read is left alone rather than validated:
+        # `A@{ extra: true }` is a node mmdc draws, and a merge key is one
+        # of those. A root that is not a mapping has neither key, and mmdc
+        # draws the node untouched.
+        #
+        # Mermaid reads seven more keys off the document. Six of them
+        # (`labelType`, `form`, `pos`, `w`, `h`, `constraint`) leave the
+        # picture alone on their own, so ignoring them matches mmdc. The
+        # seventh does not: `A@{ icon: "fa:bell" }` draws an icon with an
+        # empty label there, and a plain rectangle named `A` here. Icons
+        # are a node kind sirena does not have yet.
         def self.entries(document)
           return {} unless document.is_a?(Hash)
 

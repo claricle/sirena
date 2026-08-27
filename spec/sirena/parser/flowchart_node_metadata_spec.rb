@@ -657,6 +657,44 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect(node_for(source).label).to eq("hi")
     end
+
+    # The same disagreement on the defining side. js-yaml names the anchor
+    # `a:b` and the value is `hi`; libyaml names it `a` and leaves `:b` in
+    # the value, so sirena drew `:b hi` where mmdc draws `hi`.
+    it "refuses a name the two parsers read differently" do
+      source = "graph TD\nA(keep)@{\nlabel: &a:b hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Ambiguous anchor: a/)
+    end
+
+    it "refuses one behind a tag as well" do
+      source = "graph TD\nA(keep)@{\nlabel: !!str &a:b hi\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Ambiguous anchor: a/)
+    end
+
+    # mmdc refuses this source too: js-yaml never defines an anchor `a`,
+    # so the alias is undefined. Sirena used to draw `:b 1`.
+    it "refuses one that a later alias reads" do
+      source = "graph TD\nA(keep)@{\nx: &a:b 1\nlabel: *a\n}\n"
+
+      expect { node_for(source) }
+        .to raise_error(Sirena::Parser::ParseError, /Ambiguous anchor: a/)
+    end
+
+    it "takes a name both parsers read the same way" do
+      source = "graph TD\nA(keep)@{\nlabel: &a-b hi\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
+
+    it "takes one on a collection" do
+      source = "graph TD\nA(keep)@{\nlabel: &a [hi]\n}\n"
+
+      expect(node_for(source).label).to eq("hi")
+    end
   end
 
   # `yaml.load` hands mermaid one value, and mermaid reads two keys off it
@@ -1049,6 +1087,23 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       # took `a"b` as a label.
       expect { node_for(%(graph TD\nA@{ label: a"b }\n)) }
         .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "refuses a caret outside a quoted value" do
+      # mermaid takes the run between the braces with `[^}^"]+`, so the
+      # caret ends the block early and mmdc refuses the source. Taking it
+      # as body text drew a node mermaid will not draw.
+      expect { node_for("graph TD\nA@{ label: a^b }\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "refuses one in a multiline body too" do
+      expect { node_for("graph TD\nA@{\nlabel: a^b\n}\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "keeps a caret inside a quoted value, which mmdc draws" do
+      expect(node_for(%(graph TD\nA@{ label: "a^b" }\n)).label).to eq("a^b")
     end
 
     it "collapses the indentation after a quoted newline" do

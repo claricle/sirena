@@ -69,6 +69,13 @@ module Sirena
       # as written.
       DIRECTIVE_HEAD = /\A(?:%|[ \t]*(?:#|\z))/
 
+      # js-yaml reads an anchor name up to whitespace or a flow indicator,
+      # where libyaml stops at the first character an anchor may not hold.
+      # `&a:b hi` is the anchor "a:b" holding "hi" there, and the anchor "a"
+      # holding ":b hi" here, so the same source names a different label.
+      # A tag may sit in front of the anchor, and is stepped over.
+      ANCHOR_PROPERTY = /\A(?:!\S*[ \t]+)?&(?<name>[^\s,\[\]{}]*)/
+
       NULL_WORDS = %w[~ null Null NULL].freeze
 
       BOOL_WORDS = {
@@ -200,8 +207,26 @@ module Sirena
 
       def scalar(node)
         resolved = resolve_scalar(node)
-        @anchors[node.anchor] = resolved if node.anchor
+        register_anchor(node, resolved)
         resolved
+      end
+
+      # The two parsers read the name differently, and libyaml leaves the
+      # rest of it in the value, so the node cannot be read the way mermaid
+      # reads it. It is refused instead.
+      def register_anchor(node, value)
+        name = node.anchor
+        return unless name
+
+        raise ParseError, "Ambiguous anchor: #{name}." unless
+          js_anchor_name(node) == name
+
+        @anchors[name] = value
+      end
+
+      def js_anchor_name(node)
+        line = @lines[node.start_line]
+        ANCHOR_PROPERTY.match(line[node.start_column..])&.[](:name)
       end
 
       def resolve_scalar(node)
@@ -310,7 +335,7 @@ module Sirena
         list = []
         # Registered before the children are read, so `&s [*s]` resolves to
         # the array being built rather than running out of stack.
-        @anchors[node.anchor] = list if node.anchor
+        register_anchor(node, list)
         node.children.each { |child| list << compose(child) }
         list
       end
@@ -319,7 +344,7 @@ module Sirena
         collection_tag(node, MAP_TAG)
         reject_leading_property(node)
         pairs = {}
-        @anchors[node.anchor] = pairs if node.anchor
+        register_anchor(node, pairs)
         node.children.each_slice(2) { |key, value| store(pairs, key, value) }
         pairs
       end
