@@ -219,16 +219,23 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
-    context 'with metadata that a column has nowhere to put' do
-      # A KanbanColumn carries only id/title/cards, so `assigned` is parsed
-      # and then dropped. Asserted against the built column rather than the
-      # model's method list, so that routing the metadata onto the column
-      # would actually break this.
+    context 'with metadata a column has no attribute for' do
+      # This pins a MODEL SHAPE, not transform behaviour, and the name says
+      # so deliberately. `assigned` cannot reach a column no matter what the
+      # transform does, because build_column reads only id/title/cards - so
+      # no transform change can redden this. What it does catch is the model
+      # growing an attribute later, which would silently change what a bare
+      # column carries. Five corpus cases (035, 036, 037, 039, 041) reach a
+      # column through this path.
       let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
 
-      it 'keeps the metadata off the column' do
-        column = parser.parse(source).columns.first
-        expect(column.to_yaml).not_to include('knsv')
+      it 'parses the metadata and titles the column by its id' do
+        expect(parser.parse(source).columns.first.title).to eq('root')
+      end
+
+      it 'defines no attribute the metadata could land in' do
+        expect(Sirena::Diagram::KanbanColumn.attributes.keys)
+          .to contain_exactly(:id, :title, :cards)
       end
     end
 
