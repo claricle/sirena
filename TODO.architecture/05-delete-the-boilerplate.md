@@ -80,7 +80,13 @@ variants:
   effects — `kanban`, `mindmap`, `git_graph`
 - no padding — `packet`, `radar`, `xy_chart`
 
-Plus six more bespoke `create_document_for_<type>` methods.
+Plus six more bespoke `create_document_for_<type>` methods, and one
+override of plain `create_document` (`renderer/quadrant.rb:60`).
+
+**16 per-renderer definitions**, measured 2026-08-27:
+`grep -rn "def create_document" lib/sirena/renderer/` returns 17, one of
+which is `Renderer::Base`'s own. An inventory that counts only the two
+named shapes misses quadrant.
 
 ### Steps
 
