@@ -9,10 +9,15 @@ lands fast, including the 524 oracle-valid corpus cases still failing.
 
 Two numbers, asserted by a spec rather than claimed:
 
-- **Adding a new diagram type touches exactly 8 files** — 6 new under
-  `lib/`, one new fixture, plus one row in `TYPES`. Counted from the
-  list below, not estimated. Two earlier drafts said 5 and then 6; both
-  forgot files that the list itself names.
+- **Adding a new diagram type touches exactly 8 files that define the
+  type** — 6 new under `lib/`, one new fixture, and one edited row in
+  `TYPES`. Counted from the list below, not estimated. Two earlier
+  drafts said 5 and then 6; both forgot files that the list itself
+  names.
+
+  Specs are on top of that and the generator writes them too. The 8 is
+  the contract surface — what someone has to understand — not the
+  number of files the generator creates.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 
@@ -41,9 +46,15 @@ that.
 
 1. **Generator.** `rake type:new[kanban]` scaffolds the seven files the
    list above names — parser, grammar, builder, diagram, layout (with
-   its Scene inside), renderer, contract fixture — and their specs from
-   templates, then prints the `TYPES` row to paste. The templates encode
-   the conventions, so they cannot be got wrong.
+   its Scene inside), renderer, contract fixture — plus their specs,
+   from templates. The templates encode the conventions, so they cannot
+   be got wrong.
+
+   **It edits `TYPES` itself; it does not print a row to paste.** Item
+   06 asserts `TYPES` and the contract fixtures match exactly, so a
+   generator that writes the fixture and leaves the row to a human
+   leaves the suite red — and that contradicts this item's own "no
+   hand-editing" criterion.
 2. **Shared examples.** Package item 01's contract spec as
    `it_behaves_like 'a diagram type'`, so a new type inherits for free:
    parses, produces a valid model, renders parseable escaped XML,
@@ -57,7 +68,7 @@ that.
 
 4. Write `docs/adding-a-diagram-type.md`:
    - the pipeline diagram from `00-overview.md`
-   - the five files and what each owns, in one sentence each
+   - the eight files and what each owns, in one sentence each
    - the generator command
    - a worked example adding a trivial type end to end
 5. In the same page, **"how do I fix a failing case"** — the single most
@@ -77,7 +88,10 @@ that.
 
 - [ ] `rake type:new[demo]` produces a type that passes the shared
       examples with no hand-editing
-- [ ] a spec asserts the file count: adding `demo` touched 8 files
+- [ ] a spec asserts the file count: adding `demo` touched 8 defining
+      files, ignoring specs
+- [ ] `rake type:new[demo]` leaves the suite **green**, including item
+      06's `TYPES`-to-fixture parity — no hand-edited row
 - [ ] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
 - [ ] `rake corpus[<type>] --failing` output is good enough to work from

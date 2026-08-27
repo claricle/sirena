@@ -173,4 +173,4 @@ Afterwards:
 | a coordinate calculation | `layout/<type>.rb` |
 | an SVG shape choice | `renderer/<type>.rb` |
 | a colour | the theme YAML, never a renderer |
-| a new diagram type | all of the above, plus one row in `TYPES` |
+| a new diagram type | 8 files: `parser/<type>.rb`, its grammar and builder, `diagram/<type>.rb`, `layout/<type>.rb` (Scene inside), `renderer/<type>.rb`, `spec/fixtures/contract/<type>.mmd`, and one row in `TYPES`. Not the theme YAML — a new type adds no colours |

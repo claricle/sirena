@@ -169,8 +169,10 @@ TYPES = {
       - `Layout::Base`'s `to_graph` branch, and
         `grep -rn "to_graph" lib/sirena/` returns nothing
       - the `Layout::Legacy` wrapper class
-      - `Engine`'s Grid gate, and the Grid stage itself if nothing
-        legacy can reach it
+      - `Engine`'s Grid **gate** — but **not `Layout::Grid` itself**.
+        Item 03 creates it and item 08 replaces it with elkrb
+        (`08-burndown.md:107`); deleting it here would make that
+        integration impossible. The gate goes, the class stays
       - `spec/support/legacy_layout.rb` and the transition spec
       A temporary thing with no deletion criterion is a permanent thing
 

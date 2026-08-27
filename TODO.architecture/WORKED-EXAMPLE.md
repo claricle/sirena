@@ -239,7 +239,9 @@ the radius as well as the endpoints, so endpoints and a flag are not
 enough. The Scene needs all of it:
 
 - each sector's start and end **points**
-- its large-arc flag
+- its large-arc flag **and its sweep flag** — `renderer/pie.rb:151`
+  hardcodes the sweep to `1`, which is still the renderer choosing an
+  arc direction
 - the **centre** and **radius** it arcs around
 - the title's coordinates, which are absent above and computed in the
   renderer today
