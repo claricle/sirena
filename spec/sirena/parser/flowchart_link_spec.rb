@@ -147,6 +147,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .not_to match(/<(?:polygon|line|circle)\b/)
     end
 
+    it "clips a visible path to transparent node outlines" do
+      xml = Sirena.render(
+        "flowchart LR\n  A --x B\n",
+        theme: { colors: { node_fill: "none", edge_stroke: "#000000" } }
+      )
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+      points = group[/<path[^>]*d="([^"]*)"/, 1]
+        .scan(/(-?[\d.]+) (-?[\d.]+)/)
+        .map { |x, y| [x.to_f, y.to_f] }
+
+      expect(points.first.first).to be_within(0.05).of(node_span(xml, "A").last)
+      expect(points.last.first).to be_within(0.05).of(node_span(xml, "B").first)
+    end
+
     # The line half: weight and pattern. Every type used to reach the
     # same solid stroke. The theme already names both — the default one
     # asks for a 2.0 line, a 3.0 thick one and a "2,2" dot — and a
@@ -613,6 +627,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       corners = path_points(xml).select { |_x, y| y > node_bottom(xml) }
 
       expect(corners.map(&:first).uniq.size).to eq(2)
+    end
+
+    it "starts and ends the loop on the node outline" do
+      xml = Sirena.render("flowchart TD\n  A --> A\n")
+      start_point, end_point = path_points(xml).values_at(0, -1)
+
+      expect([start_point.last, end_point.last])
+        .to all(be_within(0.05).of(node_bottom(xml)))
     end
 
     it "keeps supplied bends for a self link" do

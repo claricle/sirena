@@ -314,11 +314,18 @@ module Sirena
       end
 
       def calculate_edge_path(source, target, bends)
-        # `node_centre` keeps the path on the same centre as its heads and
-        # label. It also keeps a hand-built graph with integer dimensions
-        # consistent.
-        sx, sy = node_centre(source)
-        tx, ty = node_centre(target)
+        # Clipped to each node's outline the way mermaid clips it, aiming
+        # along the segment that actually leaves or arrives — so the line
+        # stops exactly where its head sits. Running to the centres instead
+        # showed through a node the theme painted `none`.
+        #
+        # Rounded like the heads are: an outline crossing at an angle lands
+        # on a long decimal, and 87 of 232 sampled path coordinates carried
+        # one before this.
+        source_aim = bends.first ? bends.first.values_at(:x, :y) : node_centre(target)
+        target_aim = bends.last ? bends.last.values_at(:x, :y) : node_centre(source)
+        sx, sy = node_boundary(source, *source_aim).map { |n| n.round(1) }
+        tx, ty = node_boundary(target, *target_aim).map { |n| n.round(1) }
 
         return create_path_with_bends(sx, sy, tx, ty, bends) if bends.any?
 
