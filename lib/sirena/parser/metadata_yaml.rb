@@ -87,7 +87,17 @@ module Sirena
       # Numbers carry a sign, group digits with `_`, and come in base 2, 8
       # and 16 as well. JSON reads none of those, so `+1` and `0x1F` were
       # labels here and errors in mmdc.
-      JSON_INT = /\A[-+]?(0b[01_]+|0o[0-7_]+|0x[0-9a-fA-F_]+|[0-9][0-9_]*)\z/
+      #
+      # A leading zero is where js-yaml starts looking for a base
+      # letter, so the character after it may not be `_`: `0_1` is not
+      # an integer there and mmdc refuses `!!int 0_1`. A zero further
+      # along is fine, and `00_1` is an integer to both.
+      JSON_INT = %r{
+        \A[-+]?(
+          0b[01_]+ | 0o[0-7_]+ | 0x[0-9a-fA-F_]+
+          | 0(?!_)[0-9_]* | [1-9][0-9_]*
+        )\z
+      }x
 
       # js-yaml's own float pattern. The sign is on two of the four
       # branches only: `-1.5` and `-.inf` resolve, `-.5` and `-.nan` stay
