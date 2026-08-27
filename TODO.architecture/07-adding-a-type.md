@@ -9,8 +9,9 @@ lands fast, including the 524 oracle-valid corpus cases still failing.
 
 Two numbers, asserted by a spec rather than claimed:
 
-- **Adding a new diagram type touches exactly 5 files** — 4 new, plus
-  one row in `TYPES`.
+- **Adding a new diagram type touches exactly 6 files** — 5 new, plus
+  one row in `TYPES`. The fifth new file is the layout: item 04 made it
+  mandatory for every type, so there is no 4-file case left.
 - **Extending the syntax of an existing type touches 2 files** — grammar
   and builder — when the diagram model already covers the concept.
 
@@ -28,9 +29,10 @@ Plus `lib/sirena/layout/<type>.rb` only if the type has geometry.
 
 ## Steps — PR 1, tooling
 
-1. **Generator.** `rake type:new[kanban]` scaffolds the four files and
-   their specs from templates, and prints the `TYPES` row to paste. The
-   templates encode the conventions, so they cannot be got wrong.
+1. **Generator.** `rake type:new[kanban]` scaffolds the five files —
+   parser, diagram, layout, scene, renderer — and their specs from
+   templates, and prints the `TYPES` row to paste. The templates encode
+   the conventions, so they cannot be got wrong.
 2. **Shared examples.** Package item 01's contract spec as
    `it_behaves_like 'a diagram type'`, so a new type inherits for free:
    parses, produces a valid model, renders parseable escaped XML,
@@ -64,7 +66,7 @@ Plus `lib/sirena/layout/<type>.rb` only if the type has geometry.
 
 - [ ] `rake type:new[demo]` produces a type that passes the shared
       examples with no hand-editing
-- [ ] a spec asserts the file count: adding `demo` touched 5 files
+- [ ] a spec asserts the file count: adding `demo` touched 6 files
 - [ ] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
 - [ ] `rake corpus[<type>] --failing` output is good enough to work from
@@ -72,8 +74,9 @@ Plus `lib/sirena/layout/<type>.rb` only if the type has geometry.
 ## Do not
 
 - Do not make the generator configurable. One template set, no options.
-- Do not generate a layout file by default — most types do not need one
-  (item 04). Add a `--layout` flag if you want it.
+- Always generate the layout. There is no `--layout` flag, because
+  there is no type without a layout (item 04). A generated type that
+  skips it cannot pass `contract_spec.rb`.
 
 ## Files
 

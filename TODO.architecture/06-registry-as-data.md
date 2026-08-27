@@ -64,9 +64,10 @@ TYPES = {
 ```
 
 2. Resolve classes by convention from the type name: `:pie` ->
-   `Parser::Pie`, `Diagram::Pie`, `Layout::Pie` (only if that file
-   exists), `Renderer::Pie`. Item 03 made the names uniform so this
-   works.
+   `Parser::Pie`, `Diagram::Pie`, `Layout::Pie`, `Renderer::Pie`. All
+   four are mandatory — item 04 gave every type a layout — so a
+   constant that does not resolve is an error, never an absence. Item
+   03 made the names uniform so this works.
 
    That includes the `model:` row item 01 added to `DiagramRegistry`.
    It stops being a row and becomes the convention; `contract_spec.rb`
@@ -129,11 +130,17 @@ TYPES = {
 - [ ] deleting one `TYPES` row turns it red — check it, do not assume
       it. Without the fixture parity above, deletion is silent
 - [ ] it passes with `model:` removed from every registration
-- [ ] the three `.for` lookups **return an instance, not a class**. The
-      pipeline calls `.parse`, `.call` and `.render` on the result
-      directly, so a lookup handing back a class would need a `.new`
-      the four-line pipeline does not have. Either is defensible;
-      pick one and make the pipeline agree
+- [ ] the three `.for` lookups return a **fresh instance**, not a class
+      and not a cached one. The pipeline calls `.parse`, `.call` and
+      `.render` on the result directly, and `Layout::Base#call` stores
+      the theme and the date on the instance — a memoised lookup would
+      share that state across concurrent renders
+- [ ] `Renderer.for(type, theme:)` takes the theme, because
+      `renderer/base.rb:42` already keeps it on the instance. `render`
+      stays one-argument. Item 06 changes how a renderer is found, not
+      how it is called
+- [ ] a spec asserts two calls to the same `.for` return different
+      object ids
 - [ ] all three answer **three** cases, and every layer raises **its
       own** error class. A bare "it raises" passes while a `KeyError`,
       `NameError` or `LoadError` leaks out, and a blanket
@@ -178,7 +185,7 @@ extend.
 `lib/sirena/diagram_registry.rb`, `lib/sirena/engine.rb`,
 `lib/sirena/layout/base.rb` (the `to_graph` fallback comes out),
 `spec/contract_spec.rb` (migrated from `DiagramRegistry.types` to
-`TYPES`), `spec/sirena/lookup_spec.rb` (new, the four-case table above).
+`TYPES`), `spec/sirena/lookup_spec.rb` (new, the three-case matrix above).
 
 `Parser.for`, `Layout.for` and `Renderer.for` live on their own
 namespace modules — `lib/sirena/parser.rb`, `lib/sirena/layout.rb`,

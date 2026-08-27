@@ -211,7 +211,11 @@ their own text and box coordinates, and item 05's single document
 builder reads `width`/`height` off the Scene and would find neither.
 
 So `Layout::Info` is about twenty lines: copy the two fields the
-renderer needs, measure the text, and set `width` and `height`. The
+renderer needs, measure the text, set `width` and `height`, **and move
+the box, icon and text positions out of the renderer into the Scene**.
+That last part is the point — those coordinates are constants today, so
+they slip past a gate that only looks for arithmetic. A constant
+position in a renderer is still the renderer owning geometry. The
 engine's one line has no special case:
 
 ```ruby
@@ -221,6 +225,22 @@ scene = Layout.for(type).call(model, theme: theme, today: today)
 **Rule: a layout that only copies fields is still a layout. What it
 must never do is nothing — if it has no `width` and `height` to give,
 the type is not converted yet.**
+
+## What this example does not finish
+
+The after-renderer above still calls `arc_path(start_angle, end_angle)`,
+and `renderer/pie.rb:133` does the angle conversion, the trigonometry,
+the endpoint calculation and the large-arc choice. That is renderer
+geometry, which item 04 forbids.
+
+Finish it: the Scene carries each sector's start and end **points** and
+its large-arc flag, computed by the layout, and the renderer strings
+them into a path. The title's coordinates move too — they are absent
+from the Scene above and computed in the renderer today.
+
+Left visible on purpose. Converting a type is not done when the renderer
+stops indexing a Hash; it is done when the renderer stops doing
+arithmetic.
 
 ## Checklist for each converted type
 
