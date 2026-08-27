@@ -199,23 +199,22 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
-    context 'with assigned metadata on a bare top-level node (corpus 035)' do
-      let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
-
-      it 'creates a column titled by its id' do
-        diagram = parser.parse(source)
-        expect(diagram.columns.size).to eq(1)
-        expect(diagram.columns.first.title).to eq('root')
-      end
-    end
-
-    context 'with ticket metadata on a bare top-level node (corpus 041)' do
-      let(:source) { "kanban\n        root@{ ticket: MC-1234 }\n" }
-
-      it 'creates a column titled by its id' do
-        diagram = parser.parse(source)
-        expect(diagram.columns.size).to eq(1)
-        expect(diagram.columns.first.title).to eq('root')
+    context 'with metadata on a bare top-level node' do
+      # Four corpus cases that differ only in the metadata payload; each
+      # becomes a single column titled by its id.
+      {
+        '035' => 'assigned: knsv',
+        '036/037' => 'icon: star',
+        '039' => 'icon: star, assigned: knsv',
+        '041' => 'ticket: MC-1234'
+      }.each do |corpus_id, payload|
+        it "titles the column by its id (corpus #{corpus_id})" do
+          diagram = parser.parse("kanban\n        root@{ #{payload} }\n")
+          aggregate_failures do
+            expect(diagram.columns.size).to eq(1), "corpus #{corpus_id}"
+            expect(diagram.columns.first.title).to eq('root'), "corpus #{corpus_id}"
+          end
+        end
       end
     end
 
@@ -228,10 +227,6 @@ RSpec.describe Sirena::Parser::KanbanParser do
       # column carries. Five corpus cases (035, 036, 037, 039, 041) reach a
       # column through this path.
       let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
-
-      it 'titles the column by its id' do
-        expect(parser.parse(source).columns.first.title).to eq('root')
-      end
 
       it 'defines no attribute the metadata could land in' do
         expect(Sirena::Diagram::KanbanColumn.attributes.keys)
@@ -266,9 +261,23 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect { parser.parse("kanban\n  root\n  :::hot\n") }
           .to raise_error(Sirena::Parser::ParseError)
       end
+
+      it 'still refuses trailing free text after a bare id' do
+        # The reason bare_item stays an identifier: mermaid accepts a bare
+        # label with spaces, and widening to match would swallow the
+        # unsupported constructs above as literal labels.
+        aggregate_failures do
+          ['root some words', 'root trailing', 'card some words'].each do |line|
+            expect { parser.parse("kanban\n  #{line}\n") }
+              .to raise_error(Sirena::Parser::ParseError), line
+          end
+        end
+      end
     end
 
-    context 'with blank and spaces-only rows (corpus 012, 013, 014)' do
+    # corpus 012, 013 and 014 are byte-identical (20 bytes, same md5), so
+    # this pins one input that three corpus entries happen to share.
+    context 'with blank and spaces-only rows (corpus 012 = 013 = 014)' do
       let(:source) { "kanban\nroot\n A\n \n\n B\n" }
 
       it 'ignores the empty rows and keeps the bare nodes' do
@@ -317,26 +326,6 @@ RSpec.describe Sirena::Parser::KanbanParser do
       it 'keeps a repeated card id in its own column' do
         diagram = parser.parse(source)
         expect(diagram.columns.map { |c| c.cards.map(&:id) }).to eq([['docs'], ['docs']])
-      end
-    end
-
-    context 'with single-key metadata on a bare column (corpus 036, 037)' do
-      let(:source) { "kanban\n        root@{ icon: star }\n" }
-
-      it 'titles the column by its id' do
-        diagram = parser.parse(source)
-        expect(diagram.columns.size).to eq(1)
-        expect(diagram.columns.first.title).to eq('root')
-      end
-    end
-
-    context 'with multi-key metadata on a bare column (corpus 039)' do
-      let(:source) { "kanban\n        root@{ icon: star, assigned: knsv }\n" }
-
-      it 'titles the column by its id' do
-        diagram = parser.parse(source)
-        expect(diagram.columns.size).to eq(1)
-        expect(diagram.columns.first.title).to eq('root')
       end
     end
 
@@ -485,16 +474,20 @@ RSpec.describe Sirena::Parser::KanbanParser do
         end
       end
 
-      it 'falls back for the three spellings js-yaml resolves' do
-        # lowercase, Capitalised and UPPERCASE only - not "any case".
-        %w[false False FALSE null Null NULL].each do |word|
-          expect(title_for(word)).to eq('A'), "expected #{word} to be dropped"
+      it 'falls back for false and null in the three casings js-yaml resolves' do
+        # lowercase, Capitalised and UPPERCASE - and no others.
+        aggregate_failures do
+          %w[false False FALSE null Null NULL].each do |word|
+            expect(title_for(word)).to eq('A'), "expected #{word} to be dropped"
+          end
         end
       end
 
       it 'keeps other mixed-case spellings, which stay strings' do
-        %w[fAlSe nUll FaLsE NuLl].each do |word|
-          expect(title_for(word)).to eq(word), "expected #{word} to be kept"
+        aggregate_failures do
+          %w[fAlSe nUll FaLsE NuLl].each do |word|
+            expect(title_for(word)).to eq(word), "expected #{word} to be kept"
+          end
         end
       end
 
@@ -510,47 +503,77 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect(title_for('"false"')).to eq('false')
       end
 
-      it 'drops zero written with digit separators' do
+      it 'drops zero written with digit separators, including after a prefix' do
         # js-yaml honours `_` between digits, and `_` is in the unquoted
-        # charset, so these reach here. A run of any length counts, and one
-        # may follow a radix prefix.
-        %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0].each do |zero|
-          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+        # charset, so these reach here. A run of any length counts, and
+        # `0x_0` shows one directly after a radix prefix.
+        aggregate_failures do
+          %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0].each do |zero|
+            expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+          end
         end
       end
 
-      it 'keeps a separator that leads, trails, or bridges a prefix' do
+      it 'keeps a separator that is not between digits' do
         # The boundary that makes this a rule rather than "delete every
-        # underscore": mermaid keeps all of these as strings.
-        %w[_0 0_ __0 0_0_ -_0 _ 0_x0].each do |kept|
-          expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+        # underscore": leading, trailing, bridging a prefix, or standing
+        # alone - mermaid keeps every one of these as a string.
+        aggregate_failures do
+          %w[_0 0_ __0 0_0_ -_0 _ 0_x0 _0e0].each do |kept|
+            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          end
         end
       end
 
-      it 'honours a separator in the mantissa but not the exponent' do
+      it 'honours a separator anywhere in the mantissa, trailing edge included' do
         # The float pattern is `[0-9][0-9_]*`, so a mantissa may even END in
         # separators - unlike the int pattern, where `0_` stays a string.
-        %w[0_0e0 0_e0 0__e0 -0_e0 0_E0 0_0_e0].each do |zero|
-          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
-        end
-        %w[0e0_0 0e_0 0_e_0 _0e0].each do |kept|
-          expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+        aggregate_failures do
+          %w[0_0e0 0_e0 0__e0 -0_e0 0_E0 0_0_e0].each do |zero|
+            expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+          end
         end
       end
 
-      it 'still refuses a trailing separator on an integer' do
+      it 'ignores a separator inside the exponent' do
+        # `_0e0` is not here: a leading separator is its own rule, covered by
+        # the not-between-digits example above.
+        aggregate_failures do
+          %w[0e0_0 0e_0 0_e_0].each do |kept|
+            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          end
+        end
+      end
+
+      it 'keeps an integer that ends in a separator' do
         # Guards the int and float branches against being unified: widening
-        # the float mantissa must not leak into the decimal case.
-        expect(title_for('0_')).to eq('0_')
-        expect(title_for('0_0_')).to eq('0_0_')
+        # the float mantissa must not leak into the decimal case. Nothing is
+        # refused here - the value survives verbatim as the title.
+        aggregate_failures do
+          expect(title_for('0_')).to eq('0_')
+          expect(title_for('0_0_')).to eq('0_0_')
+        end
       end
 
-      it 'drops a falsy value on each of the five gated fields' do
-        source = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, " \
-                 "icon: null, priority: 0x0, label: '' }\n"
-        card = parser.parse(source).columns.first.cards.first
-        expect(card.metadata).to eq({})
-        expect(card.text).to eq('K')
+      it 'drops a falsy value on each of the five gated fields, and keeps a truthy one' do
+        # The positive control matters: KanbanCard#metadata is a `.compact`
+        # over five attributes, so an empty hash cannot by itself tell
+        # "dropped" from "never parsed". The truthy row proves the fields do
+        # land when mermaid would set them.
+        falsy = "kanban\n  col[C]\n    k[K]@{ assigned: 0, ticket: false, " \
+                "icon: null, priority: 0x0, label: '' }\n"
+        truthy = "kanban\n  col[C]\n    k[K]@{ assigned: knsv, ticket: MC-1, " \
+                 "icon: star, priority: High, label: 'Fix' }\n"
+
+        aggregate_failures do
+          card = parser.parse(falsy).columns.first.cards.first
+          expect(card.metadata).to eq({})
+          expect(card.text).to eq('K')
+
+          kept = parser.parse(truthy).columns.first.cards.first
+          expect(kept.metadata).to eq(assigned: 'knsv', ticket: 'MC-1',
+                                      icon: 'star', priority: 'High', label: 'Fix')
+        end
       end
     end
   end
