@@ -129,26 +129,34 @@ TYPES = {
 - [ ] deleting one `TYPES` row turns it red — check it, do not assume
       it. Without the fixture parity above, deletion is silent
 - [ ] it passes with `model:` removed from every registration
-- [ ] the three `.for` lookups answer **four** cases, each with a named
-      error class — a bare "raises" passes while a `KeyError`,
-      `NameError` or `LoadError` leaks out, and that contradicts the
-      taxonomy in `LAYERS.md`:
+- [ ] the three `.for` lookups **return an instance, not a class**. The
+      pipeline calls `.parse`, `.call` and `.render` on the result
+      directly, so a lookup handing back a class would need a `.new`
+      the four-line pipeline does not have. Either is defensible;
+      pick one and make the pipeline agree
+- [ ] all three answer **three** cases, and every layer raises **its
+      own** error class. A bare "it raises" passes while a `KeyError`,
+      `NameError` or `LoadError` leaks out, and a blanket
+      `DiagramTypeError` contradicts the taxonomy in `LAYERS.md`:
 
-      | case | `Parser.for` / `Renderer.for` | `Layout.for` |
-      |---|---|---|
-      | type not in `TYPES` | raise `DiagramTypeError` | raise `DiagramTypeError` |
-      | known type, class resolves | the class | the class |
-      | known type, no layout file | raise `DiagramTypeError` | **`nil`** — the one legitimate nil |
-      | known type, file present, constant misnamed | raise `DiagramTypeError` | raise `DiagramTypeError` |
+      | case | `Parser.for` | `Layout.for` | `Renderer.for` |
+      |---|---|---|---|
+      | type not in `TYPES` | `DiagramTypeError` | `DiagramTypeError` | `DiagramTypeError` |
+      | known type, constant resolves | an instance | an instance | an instance |
+      | known type, constant does not resolve | `ParseError` | `LayoutError` | `RenderError` |
 
-- [ ] each row above has a spec asserting the **class** raised, not
-      merely that something raised
-- [ ] `Layout.for(:unknown)` raises. It must not return `nil` — an
-      unknown type also has no layout file, so nil would make the two
-      indistinguishable
-- [ ] a spec proves the present-but-misnamed case raises rather than
-      silently taking the pass-through path. That failure mode renders
-      an unlaid-out diagram with no error, which is worse than a crash
+      Unknown type is a *notation* failure, so it is `DiagramTypeError`
+      for all three. A broken convention lookup is a failure **of that
+      layer**, so it takes that layer's error.
+
+      There is no "no layout" row. Every type has a layout (item 04),
+      so `Layout.for` never returns `nil`
+- [ ] every cell has a spec. The raising cells assert the exact class;
+      the resolving cell asserts the instance's class is the
+      convention-resolved one
+- [ ] a spec proves a misnamed layout constant raises rather than
+      rendering an unlaid-out diagram with no error, which is worse
+      than a crash
 - [ ] `Layout::Base`'s temporary `to_graph` fallback from item 04 is
       deleted, and `grep -rn "to_graph" lib/sirena/` returns nothing
 

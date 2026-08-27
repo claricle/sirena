@@ -338,7 +338,7 @@ Item 01 (lutaml 0.8 migration) appears already landed: the gemspec is
 ```ruby
 type  = Notation::Mermaid.detect(source)
 model = Parser.for(type).parse(source)
-scene = Layout.for(type)&.call(model, theme: theme, today: today) || model
+scene = Layout.for(type).call(model, theme: theme, today: today)
 Renderer.for(type).render(scene, theme: theme)
 ```
 
@@ -346,9 +346,14 @@ Two rules hold it together:
 
 - **No bare Hash crosses a layer boundary.** Every arrow is a class you
   can open and read.
-- **A type with no geometry gets no Layout class.** Two of today's
-  Transform classes only copy fields (`info`, `error`); `pie` is a
-  borderline third. Those get deleted.
+- **Every type gets a Layout and a Scene.** An earlier draft deleted the
+  two smallest — `Transform::InfoTransform` and
+  `Transform::ErrorTransform`, 38 lines each — and handed the renderer
+  the `Diagram` model. Withdrawn: `renderer/info.rb:71` reads
+  `graph[:show_info]`, both renderers compute their own coordinates, and
+  item 05's single document builder reads `width`/`height` off the
+  Scene. They become the two smallest layouts instead, about twenty
+  lines each. The pipeline has no optional-layout branch.
 
 ---
 
@@ -393,7 +398,8 @@ registry find classes by convention instead of listing them.
 
 **New:** `Notation::Mermaid`, `Layout::Scene`, `Layout::<Type>::Scene`.
 
-**Deleted:** 2-3 pass-through Layout classes (`info`, `error`, maybe
+**Deleted:** none on this count — the pass-through idea is withdrawn.
+What an earlier draft would have deleted (`info`, `error`, maybe
 `pie` — every other Transform computes geometry), 5 private palette
 constants under 3 names (`DEFAULT_COLORS`, `FLOW_COLORS`,
 `SECTION_COLORS`), 9 copies of `create_document_from_layout`, the no-op
