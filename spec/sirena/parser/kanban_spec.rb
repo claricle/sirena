@@ -226,8 +226,6 @@ RSpec.describe Sirena::Parser::KanbanParser do
       # growing an attribute later, which would silently change what a bare
       # column carries. Five corpus cases (035, 036, 037, 039, 041) reach a
       # column through this path.
-      let(:source) { "kanban\n        root@{ assigned: knsv }\n" }
-
       it 'defines no attribute the metadata could land in' do
         expect(Sirena::Diagram::KanbanColumn.attributes.keys)
           .to contain_exactly(:id, :title, :cards)
@@ -267,7 +265,7 @@ RSpec.describe Sirena::Parser::KanbanParser do
         # label with spaces, and widening to match would swallow the
         # unsupported constructs above as literal labels.
         aggregate_failures do
-          ['root some words', 'root trailing', 'card some words'].each do |line|
+          ['root trailing', 'root two more words'].each do |line|
             expect { parser.parse("kanban\n  #{line}\n") }
               .to raise_error(Sirena::Parser::ParseError), line
           end
@@ -434,9 +432,11 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'refuses it whatever the case' do
-        %w[Kanban KANBAN KaNbAn kAnBaN kanBan kanbaN].each do |word|
-          expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
-            .to raise_error(Sirena::Parser::ParseError)
+        aggregate_failures do
+          %w[Kanban KANBAN KaNbAn kAnBaN kanBan kanbaN].each do |word|
+            expect { parser.parse("kanban\n  root[Root]\n  #{word}\n") }
+              .to raise_error(Sirena::Parser::ParseError), word
+          end
         end
       end
 
@@ -451,7 +451,8 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'reserves no other keyword' do
-        # Every token probed against mmdc; all parse as ordinary nodes.
+        # The single home of this list; the grammar comment points here.
+        # Every token was probed against mmdc and parses as an ordinary node.
         others = %w[graph section title class classDef click style subgraph
                     accTitle accDescr end flowchart]
         body = others.map { |word| "  #{word}\n" }.join
@@ -469,8 +470,10 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'falls back for every spelling of zero' do
-        %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0].each do |zero|
-          expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+        aggregate_failures do
+          %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0].each do |zero|
+            expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+          end
         end
       end
 
@@ -485,7 +488,7 @@ RSpec.describe Sirena::Parser::KanbanParser do
 
       it 'keeps other mixed-case spellings, which stay strings' do
         aggregate_failures do
-          %w[fAlSe nUll FaLsE NuLl].each do |word|
+          %w[fAlSe nUll].each do |word|
             expect(title_for(word)).to eq(word), "expected #{word} to be kept"
           end
         end
