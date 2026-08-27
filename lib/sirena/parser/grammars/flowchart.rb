@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'common'
+require_relative 'mermaid_unicode_text'
 
 module Sirena
   module Parser
@@ -10,6 +11,55 @@ module Sirena
       # Handles flowchart syntax including nodes with various shapes,
       # edges with labels, edge chaining, subgraphs, and styling directives.
       class Flowchart < Common
+        # Mermaid lexes these as keywords, so `end.` and `1end` are not
+        # node ids even though the characters are legal. Examples pin
+        # `K-->Z` and `1K --> Z`; `K[L]` and `K.foo-->Z` were also measured
+        # but are not asserted here. mmdc refuses all four for every word.
+        #
+        # `direction`, `accTitle`, `accDescr`, `default` and `callback` are
+        # NOT among them — mmdc draws `default-->Z`. `href`, `call` and
+        # `click` are keywords too but end a word differently, so they live
+        # in `directive_keyword` instead.
+        #
+        # Taking `direction` as a node id does not bring the statement with
+        # it: `direction TB` on its own line is still unparsed here, and
+        # mmdc draws it.
+        #
+        # Longest first, because Parslet does not backtrack into an
+        # alternative that already matched: `class` ahead of `classDef`
+        # would take the first five characters and then fail the boundary.
+        RESERVED_WORDS = %w[
+          swimlane-beta interpolate flowchart linkStyle subgraph classDef
+          _parent _blank _self graph style class _top end
+        ].freeze
+
+        # NOT derived from the node list. A statement keyword is plain text
+        # in a subgraph id (`subgraph graph [T]` renders), so every one of
+        # those drops out. `default` is reserved here and nowhere else
+        # (`subgraph default [T]` does not render, `default-->Z` does).
+        # What is left is `default`, plus the link-style words that both
+        # positions share.
+        # Every word in both lists was probed in all three positions.
+        #
+        # This list happens to have no prefix collisions.
+        SUBGRAPH_RESERVED = %w[
+          interpolate _parent default _blank _self _top
+        ].freeze
+
+        # Mermaid restarts its lexer at certain characters and looks for the
+        # target again behind each restart. Five rules walk that path with a
+        # zero-or-more `repeat`, so they share it here. `arrowhead_dot_dash`
+        # deliberately stays inline: its alternative requires `repeat(1)`
+        # because a buried opening must cross at least one restart.
+        #
+        # A `repeat` rather than a recursive rule: a rule that called
+        # itself blew the Ruby stack on a 2000-character id, and mmdc
+        # draws that id.
+        def hunt(target)
+          (target.absent? >> restart_step).repeat >> target
+        end
+        private :hunt
+
         root(:diagram)
 
         # Main diagram structure
@@ -206,8 +256,11 @@ module Sirena
         # Subgraph: subgraph id [title] ... end
         rule(:subgraph_statement) do
           str('subgraph').as(:subgraph_keyword) >> space >>
-            node_id.as(:subgraph_id) >>
-            (space >> subgraph_title.as(:subgraph_title)).maybe >>
+            subgraph_id.as(:subgraph_id) >>
+            ((space >> subgraph_title.as(:subgraph_title)) |
+              subgraph_trailing_name) >>
+            # A subgraph body must begin on a new physical line.
+            line_end >>
             ws? >>
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
@@ -218,6 +271,40 @@ module Sirena
         rule(:subgraph_title) do
           lbracket >> (rbracket.absent? >> any).repeat(1) >> rbracket
         end
+
+        # An unbracketed name runs on past the first space: mermaid titles
+        # `subgraph 1 abc` "1 abc". Stopping the name at that space left
+        # ` abc` on the line and the body swallowed it as a statement, so a
+        # node called `abc` appeared that mmdc never draws.
+        #
+        # Every word carries the same guards as the first one. Reaching for
+        # a bare `id_run` here let ten word refusals through, plus the
+        # bracketed-title case, because the guards live in `subgraph_id`
+        # and not in `id_run`: mmdc refuses
+        # `subgraph A interpolate` `subgraph A href` `subgraph A 1default`
+        # `subgraph A .-` and `subgraph A x.-b`.
+        #
+        # The charset is narrower than mermaid's title text, which is why
+        # this only consumes id words. mmdc titles `subgraph A B:C` "A B:C"
+        # and this refuses it — an under-acceptance left for a change that
+        # models mermaid's own `textNoTags` production. Nothing reads the
+        # name yet, so the extra words are consumed, not kept.
+        rule(:subgraph_trailing_name) do
+          (space.repeat(1) >> subgraph_trailing_word).repeat
+        end
+
+        # `end` closes the subgraph, so it is a keyword in a trailing word
+        # where it is an ordinary name in the first one: mmdc draws
+        # `subgraph end [T]` and refuses `subgraph A end`. It is hunted the
+        # way every other keyword is, so `subgraph A 1end` is refused too
+        # while `subgraph A endx` draws.
+        rule(:subgraph_trailing_word) do
+          subgraph_end_id.absent? >> subgraph_name_word
+        end
+
+        rule(:subgraph_end_id) { hunt(subgraph_end_word) }
+
+        rule(:subgraph_end_word) { str('end') >> word_end }
 
         # Style: style nodeId fill:#f9f
         rule(:style_statement) do
@@ -314,9 +401,13 @@ module Sirena
         end
 
         # Click: click nodeId href (may not fully implement, just parse)
+        #
+        # The gap after the keyword is a RUN of whitespace, unlike the one
+        # before the action. mermaid opens its click state on `"click"\s+`,
+        # so mmdc draws `click  A "url"` where a single space refused it.
         rule(:click_statement) do
-          str('click').as(:click_keyword) >> space >>
-            node_id.as(:click_target) >>
+          str('click').as(:click_keyword) >> space.repeat(1) >>
+            click_target.as(:click_target) >>
             (space >> click_action.as(:click_action)) >>
             statement_end
         end
@@ -687,9 +778,14 @@ module Sirena
           thick_arrow | dotted_arrow | plain_arrow
         end
 
-        # Thick arrow: ==> or ==
+        # Bare `==` is not a link (mmdc rejects `A==B`). The arrow form is
+        # two or more `=` followed by `>`. Mermaid's arrowhead-less thick
+        # link `===` is REFUSED here rather than drawn, because this renderer
+        # puts an arrowhead on every edge and drawing one where mermaid draws
+        # none would be worse than refusing. Modelling open links is a
+        # separate change.
         rule(:thick_arrow) do
-          (str('==>') | str('==')).as(:thick)
+          (str('=').repeat(2) >> str('>')).as(:thick)
         end
 
         # Dotted arrow: -.-> or -.-
@@ -712,13 +808,285 @@ module Sirena
           pipe >> (pipe.absent? >> any).repeat(1) >> pipe
         end
 
-        # A node id is a bare word. A quoted run was never one: mmdc
-        # refuses `"A" --> B`, `A --> "B"`, `"A"[x]`, `style "A" fill:red`
-        # and a quoted run standing alone on a line. All it ever produced
-        # here was a node whose id was a stringified parse tree —
-        # `{string: "tip"@12}` — so the alternative drew garbage where
-        # mermaid draws nothing.
-        rule(:node_id) { identifier }
+        # A node id is a bare word, never a quoted run. It is BUILT here,
+        # so every guard applies and malformed ids cannot bypass them.
+        rule(:node_id) { flowchart_id }
+
+        # A subgraph is NAMED, not built. It takes a quoted string and the
+        # keyword `end`, but not the other reserved words — mmdc draws
+        # `subgraph end [Title]` and `subgraph "AB" [Title]` and refuses
+        # `subgraph default [Title]` and `subgraph _self [Title]`.
+        rule(:subgraph_id) { quoted_string | subgraph_name_word }
+
+        rule(:subgraph_name_word) do
+          subgraph_keyword_id.absent? >> dot_run_before_link.absent? >>
+            subgraph_arrowhead.absent? >> id_run
+        end
+
+        # A link opening ends a subgraph name the same way it ends a node
+        # id, and mermaid hunts for it in the same places: mmdc refuses
+        # `subgraph .- [T]` `subgraph Zé.- [T]` and `subgraph ...- [T]`,
+        # and draws `subgraph a.- [T]` `subgraph .. [T]` and
+        # `subgraph Zéa.- [T]`. Without the guard all sixteen refusals
+        # parsed here, because a name was hunted for keywords only.
+        #
+        # The arrowhead half is STRICTER here than in a node id. A node can
+        # carry on past the opening when something follows it, so
+        # `#x.-B --- Z` is one id — but a subgraph name cannot, and mmdc
+        # refuses `subgraph #x.-b [T]`. So this walk fires on the opening
+        # itself, with no look at what comes after.
+        rule(:subgraph_arrowhead) { hunt(arrowhead_open) }
+
+        rule(:subgraph_reserved) do
+          SUBGRAPH_RESERVED.map { |word| str(word) }.reduce(:|) >>
+            word_end
+        end
+
+        # All three directive words are reserved here too, and they end a
+        # word the same way they do in a node id — `subgraph click- [T]`
+        # and `subgraph clickx [T]` are ordinary names.
+        #
+        # `click` looked like the exception and is not. mmdc draws
+        # `subgraph click [T]` only while the body holds no link: mermaid
+        # opens its click state on the word and swallows the title, so the
+        # subgraph is anonymous and the next link is a parse error. Probing
+        # with a bare `X` inside hid that; `X --> Y` shows it.
+        rule(:subgraph_keyword) { subgraph_reserved | directive_keyword }
+
+        # A subgraph name is hunted the same way a node id is, with its own
+        # words: `subgraph 1default [T]` and `subgraph #Zédefault [T]` are
+        # refused, and `subgraph #end [T]` draws because `end` is not one.
+        rule(:subgraph_keyword_id) { hunt(subgraph_keyword) }
+
+        # A click target is named, not built, and mermaid is at its most
+        # permissive here: `click default`, `click _self` and `click end`
+        # all render, and so does `click --> "url"`. The target is simply
+        # everything up to the next space, tab or newline. Only a leading
+        # quote is out — mmdc refuses `click "AB" "https://example.com"`
+        # because the quote opens a string instead.
+        #
+        # The terminator is this grammar's own whitespace, not Ruby's `\s`.
+        # `\s` holds a vertical tab and a form feed, and ending the target
+        # on either refused `click A\vB "url"` and `click A\fB "url"`,
+        # which mmdc draws. It stays aligned with the single `space` in
+        # `click_statement` that holds the action off the target.
+        rule(:click_target) do
+          str('"').absent? >> ((space | newline).absent? >> any).repeat(1)
+        end
+
+        # Mermaid's node ids are far wider than a programming identifier:
+        # they may lead with a digit (`1-->2`), and carry dots, slashes and
+        # hyphens (`9e122290`, `a.b`, `a/b`, `a-b`).
+        #
+        # A hyphen is only part of the id when an arrow cannot start there,
+        # so `a-b` is one node while `a-->b` stays two.
+        rule(:flowchart_id) do
+          digit_id_before_link |
+            (node_keyword_id.absent? >> dot_run_before_link.absent? >>
+              arrowhead_dot_dash.absent? >> id_run)
+        end
+
+        # Measured against mmdc 11.12.0: a pure-digit node id ends before
+        # one `x` or `o` when `--`, `==` or `-.` follows. A doubled `x`/`o`,
+        # as in `1xx`, or any non-digit before the marker keeps it in the id.
+        #
+        # Sirena models no `x`/`o` link-start marker at all, so stopping
+        # the id makes the statement fail. That is safer than drawing a
+        # different graph with `1x` or `1o` as the node.
+        rule(:digit_id_before_link) do
+          match['0-9'].repeat(1) >>
+            (match['xo'] >> (str('--') | str('==') | str('-.'))).present?
+        end
+
+        # A hyphen joins the id unless another dash or a dot follows, which
+        # is where a link starts. Excluding `x`, `o` and `>` as well
+        # rejected `a-o-->B` and `a-x-->B`, which mermaid renders; `A->B`
+        # still fails because `>` alone is not a link.
+        rule(:id_hyphen) { str('-') >> match['-.'].absent? }
+
+        rule(:reserved_word) do
+          RESERVED_WORDS.map { |word| str(word) }.reduce(:|) >> word_end
+        end
+
+        # A word ends where the next character cannot continue it, and
+        # mermaid counts an accent as the end: `1endé` is refused while
+        # `1end_` `1end2` and `1endx` are all ids. Those four forms and
+        # refused `1end` are all pinned in the specs.
+        rule(:word_end) { match['a-zA-Z0-9_'].absent? }
+
+        rule(:node_keyword) { reserved_word | directive_keyword }
+
+        # Mermaid does not stop hunting for a keyword at the start of an
+        # id, so a reserved word buried in one is still a keyword there.
+        # Where it looks again was measured over 1300 cases and it is a
+        # position, not a character: `#end` `1end` `éend` `##end` `1#end`
+        # `Zéend` and `ZA中end` are all refused, while `Z#end` `Z1end`
+        # `#Z#end` `ZéAend` `$end` and `_end` all draw.
+        #
+        # So the id start is one of those places, a letter outside ASCII
+        # makes another, `# & *` and digits carry along whatever came
+        # before them, and every other id character settles the hunt.
+        #
+        # Walk the places one at a time and stop at the first one holding a
+        # word.
+        rule(:node_keyword_id) { hunt(node_keyword) }
+
+        # An arrowhead opening standing AT one of these places is a link,
+        # and mermaid starts a fresh token behind it — so the hunt has to
+        # carry on past it. Without that step the walk stalled on the
+        # `x.-` and never saw the word behind it, and `#x.-end --- Z`
+        # `1x.-end --- Z` and `#x.-1.-->B` all parsed here while mmdc
+        # refused them.
+        #
+        # Only at one of the places, though. A settled character in front
+        # still kills it, so `Zéax.-end` `#Zx.-end` and `Zx.-end` stay
+        # whole ids, which is what mmdc draws.
+        rule(:restart_step) do
+          arrowhead_open | (settled_run.maybe >> restart_run)
+        end
+
+        rule(:restart_run) { (id_carry_char | id_restart_char).repeat(1) }
+
+        rule(:settled_run) do
+          settled_char >> (settled_char | id_carry_char).repeat
+        end
+
+        rule(:settled_char) { id_dot | id_hyphen | id_ascii_char }
+
+        # A dot run against a dash is the opening of a dotted link, not a
+        # node: mmdc refuses `.-->B` while `. --> B` is a node called `.`.
+        # An equals sign is a different story — `.==>B` renders as `.` and
+        # `B`, so excluding it here refused a diagram mermaid draws.
+        #
+        # Mermaid finds that opening wherever its lexer restarts, not only
+        # at the id start, so it is hunted the way a keyword is. `1.-->B`
+        # `#.-->B` `Zé.-->B` and `xé.-->B` are all refused, while
+        # `Z1.-->B` `Z#.-->B` and `Zéa.-->B` draw as a node and a link.
+        #
+        # Nothing about what follows changes it. Reading on and firing
+        # only ahead of `->` `--` or `=` let `1.-` and `1.-x --- Z`
+        # through, and mmdc refuses both. mmdc does draw `1.-a --- Z` —
+        # but as THREE nodes, `1`, `a` and the target, because `.-`
+        # opened a dotted link between the first two. Sirena has no
+        # `-.-` link to build, so the id stops at the opening instead of
+        # swallowing it and drawing a node that is not on mermaid's page.
+        #
+        # `arrowhead_dot_dash` below keeps the id in the same spot, and
+        # the two are not in disagreement: there the opening is only a
+        # link when nothing follows it, so an id can carry on past it.
+        rule(:dot_run_before_link) { hunt(dotted_link_open) }
+
+        rule(:dotted_link_open) { str('.').repeat(1) >> str('-') }
+
+        # Everywhere else a dot just joins, dash or no dash: mmdc draws
+        # `A.-->B` as `A.` and `B`, and draws `A.-` `A.-B` `A..-->B` and
+        # `y.- --> Z`.
+        rule(:id_dot) { str('.') }
+
+        # `arrowhead_dot_dash` recognizes `x.-` and `o.-` — an `x` or `o`,
+        # then one or more dots, then a dash — as mermaid's dotted
+        # left-arrowhead openings instead of ids. Where that opening is
+        # legal decides the guard, and it was measured over 173 cases.
+        #
+        # At the id start nothing sits in front of the link, so mermaid
+        # always refuses: `x.-` `x..-` `x.-z` and `x.-B` all fail. Behind
+        # a lexer restart a node does sit in front, so the opening is a
+        # real link and only fails when nothing follows it — `#x.- --> Z`
+        # is refused while `#x.-B --- Z` draws.
+        #
+        # A settled character in front kills it either way, so `X.-`
+        # `x1.-` `xx.-` and `xo.-` stay ordinary ids.
+        rule(:arrowhead_dot_dash) do
+          arrowhead_open |
+            ((arrowhead_ends_id.absent? >> restart_step).repeat(1) >>
+              arrowhead_ends_id)
+        end
+
+        rule(:arrowhead_open) do
+          (str('x') | str('o')) >> str('.').repeat(1) >> str('-')
+        end
+
+        # This checks for an arrowhead opening with nothing after it that
+        # could continue an id.
+        #
+        # Sirena has no `x--` or `x-.-` link of its own yet, so it reads
+        # `#x.-B` as one node where mermaid reads three. The two agree the
+        # diagram is legal; they do not yet agree on what it holds.
+        rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }
+
+        # Mermaid's lexer spells its id charset out, so an id is not
+        # "anything that is not punctuation". It is printable ASCII, or a
+        # letter in the basic plane. A negated class took far more than
+        # that: `😀 --- Z` parsed here and mmdc failed to lex it.
+        #
+        # Both halves were measured against mmdc a character at a time —
+        # 168 sampled codepoints, then every ASCII control. Category and
+        # plane both matter. `é` `中` `ª` and `Ａ` draw. `Ⅰ` does not,
+        # because a Roman numeral is category Nl, not a letter. Nor does
+        # `𝐀`, which is a letter but astral. Control characters,
+        # combining marks, non-ASCII digits, braille and box drawing are
+        # all refused too.
+        #
+        # `\p{L}` is close but not exact, so the letters come from
+        # mermaid's own table instead (`MERMAID_UNICODE_TEXT`). Ruby's
+        # `\p{L}` tracks a newer standard than the Unicode 6.1 mermaid
+        # froze, so it takes hundreds of codepoints mermaid does not —
+        # `ࢳ` and `ᲀ` among them — and refuses 2 that it does. The count
+        # moves with Ruby's Unicode version; the two exceptions do not.
+        #
+        # `:` `,` `"` and `%` are printable ASCII and mermaid joins them —
+        # it draws `A:B` `A,B` `A"B` and `A%B` as single nodes — but they
+        # are held back on purpose, because each also opens something else
+        # here: an inline class, a declaration list, a quoted label and a
+        # comment. Letting them in needs those boundaries worked out
+        # first, so it is left for its own change. A `;` is NOT one of
+        # them: mermaid separates on it, and `A;B --- Z` draws `A` and
+        # then `B --- Z`.
+        # mmdc refuses `( ) < = > @ [ ] ^ { | } ~` outright.
+        #
+        # `-` and `.` are excluded here and handled by their own rules: a
+        # hyphen only joins when a link cannot start there. Letting the
+        # general class take them swallowed the `--` of `A-->B`.
+        #
+        # The class is written as three pieces because `restart_step`
+        # has to tell them apart. An id itself takes any of the three.
+        rule(:id_char) { id_ascii_char | id_carry_char | id_restart_char }
+
+        rule(:id_ascii_char) do
+          match['[\\u0021-\\u007E]&&[^;:,"%()<=>@\\[\\]^{|}~.\\-#&*0-9]']
+        end
+
+        # These carry mermaid's keyword hunt along rather than ending it.
+        rule(:id_carry_char) { match['#&*0-9'] }
+
+        # And a letter outside ASCII starts it over.
+        rule(:id_restart_char) { match[MERMAID_UNICODE_TEXT] }
+
+        rule(:id_run) { id_body.repeat(1) }
+
+        rule(:id_body) { id_dot | id_hyphen | id_char }
+
+        # `click`, `href` and `call` end a word differently from the rest.
+        # They open a directive only when a space, a tab, a newline or the
+        # end of the source follows; against any other character they are
+        # ordinary ids, and a semicolon counts as any other character.
+        # mmdc draws `href-->Z` `href;` and `1href-`, and refuses
+        # `href --> Z`, a bare `href` and `1href --- Z`.
+        rule(:directive_keyword) do
+          (str('href') | str('call') | str('click')) >> directive_end
+        end
+
+        # A comment is not one of the endings. Mermaid needs whitespace
+        # right behind the word, and `%%` is not whitespace, so mmdc draws
+        # `href%%c` `call%%c` and `click%%c` as nodes. Counting a comment
+        # here refused all three.
+        #
+        # The end of the source is, though. Mermaid appends a newline
+        # before it lexes, so a word at the very end is followed by one
+        # after all: mmdc refuses `href` with no line behind it.
+        rule(:directive_end) do
+          (space | newline | eof).present?
+        end
 
         # Line terminator
         # The optional semicolon here may not be followed by a comment on
