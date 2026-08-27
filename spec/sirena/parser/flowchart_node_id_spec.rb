@@ -129,7 +129,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # renderer puts an arrowhead on every edge, so drawing one where mermaid
   # draws none would be worse than refusing. main refused them too.
   describe "a thick link" do
-    ["1==b", "A==b", "A===B", "A====B", "1===b"].each do |statement|
+    ["1==b", "A==b", "A==B", "A===B", "A====B", "1===b"]
+      .each do |statement|
       it "refuses #{statement}" do
         expect(parses?("graph TD\n#{statement}\n")).to be(false)
       end
@@ -909,7 +910,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     ["A--B", "A.-B", "-->", "A[B]", "A|B", "A:B", "A\"B", "A;", "A~B",
      "A@B", "A{B}", "A=B", "A,B", "A<B>"].each do |target|
       it "takes #{target} as a target" do
-        expect(click_parses?("click #{target} \"https://example.com\"")).to be(true)
+        expect(click_parses?("click #{target} \"https://example.com\""))
+          .to be(true)
       end
     end
 
