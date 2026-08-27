@@ -351,6 +351,42 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(subgraph_name_parses?(source)).to be(true)
     end
 
+    # An empty pair names nothing alone and still stands in front of a
+    # name, with or without a space. Reading only `quoted_run` here refused
+    # both of these, which is more than mermaid does.
+    ['subgraph "" A', 'subgraph "" x', 'subgraph ""A', 'subgraph ""x']
+      .each do |head|
+      it "names a subgraph with #{head.inspect}" do
+        source = "graph TD\n#{head}\nX --> Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(true)
+      end
+    end
+
+    # A quoted part anywhere BUT the front is still refused, and so is an
+    # empty pair trailed only by spaces. mmdc draws all four. They are one
+    # gap with `subgraph A B:C` above — a name here is built from id words
+    # and one leading quoted run, where mermaid's is `textNoTags`. Pinned
+    # as refusals so that widening the name is a decision, not a drift.
+    ['subgraph "" ""', 'subgraph A ""', 'subgraph "AB" ""',
+     'subgraph ""  '].each do |head|
+      it "does not yet name a subgraph with #{head.inspect}" do
+        source = "graph TD\n#{head}\nX --> Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(false)
+      end
+    end
+
+    # mmdc does not refuse `subgraph "" [T]` — it crashes rendering it
+    # ("Cannot read properties of undefined"), so there is no verdict to
+    # copy. Refused here, and recorded as unevidenced rather than pinned
+    # against mermaid.
+    it "does not name a subgraph with an empty pair and a title" do
+      source = "graph TD\nsubgraph \"\" [T]\nX --> Y\nend\n"
+
+      expect(subgraph_name_parses?(source)).to be(false)
+    end
+
     it "does not name a node" do
       expect(parses?("graph TD\n\"A\"-->Z\n")).to be(false)
     end

@@ -357,9 +357,15 @@ module Sirena
 
         # What may follow that one `;` is a style component, not a node and
         # not an edge, so it stops at anything structural.
+        #
+        # It ends where `line_end` ends and nowhere else. This carried a
+        # `comment.maybe` of its own while `line_end` took a trailing
+        # comment; once that went, a `%%` here is ordinary declaration text
+        # and the arm could not be reached — 0 verdict changes across all
+        # 1997 corpus cases, and the suite green without it.
         rule(:hashed_tail) do
           (structural_token.absent? >> declaration_char).repeat >>
-            space? >> (comment.maybe >> newline | eof).present?
+            space? >> (newline | eof).present?
         end
 
         # What mermaid keeps for shapes and edges. It is refused wherever
@@ -531,9 +537,11 @@ module Sirena
         # `node_keyword` rather than keeping a second list. It used to hold
         # its own, and the two had already drifted apart by
         # `swimlane-beta`. Collapsing them changed nothing observable —
-        # measured over 3680 cases, byte for byte — because an id holding
-        # a keyword is refused by `node_id` before this guard is
-        # reached; the value is that there is now one list to keep right.
+        # measured over 3680 cases, byte for byte — because the two refuse
+        # the same words, so it makes no difference which runs first. This
+        # guard is the one that runs first: every call site spells
+        # `reserved_keyword.absent? >> node_id`. The value of the collapse
+        # is that there is now one list to keep right.
         rule(:reserved_keyword) { node_keyword }
 
         # `click`, `href` and `call` are directive words wherever a space, a
@@ -817,6 +825,13 @@ module Sirena
 
         # Dotted arrow: `-.->`, or `-.-` when no `x`/`o` marker closes
         # it — see `trailing_xo_marker`.
+        #
+        # Two fixed strings where mermaid has a run: its dotted link is
+        # `[xo<]?-?\.+-[xo>]?`, so `-..-` and `-...->` are links it draws
+        # and this refuses. Under-acceptance only — 0 over-acceptance
+        # across the 396-case link corpus — and closing it belongs with
+        # the leading `[xo<]?`, in the arrowhead-model PR that also owns
+        # `1x-->B` and `A---xB`.
         rule(:dotted_arrow) do
           (str('-.->') | (str('-.-') >> trailing_xo_marker.absent?)).as(:dotted)
         end
@@ -885,7 +900,20 @@ module Sirena
         # where a bare one is a plain slice — the same nested-tree shape
         # this file refuses to give `node_id`. This rule is non-empty and
         # captures a slice, so both go away together.
-        rule(:subgraph_id) { quoted_run | subgraph_name_word }
+        #
+        # An empty pair of quotes still names nothing ON ITS OWN, and it
+        # may still stand in FRONT of a name: mmdc refuses `subgraph ""`
+        # and draws `subgraph "" A` and `subgraph ""A` alike. Reading only
+        # `quoted_run` here refused those two as well, which is more than
+        # mermaid does.
+        #
+        # Whitespace between the pair and the name is optional, so the
+        # name is taken here rather than left to `subgraph_trailing_name`,
+        # which only starts at a space.
+        rule(:subgraph_id) do
+          quoted_run | (str('""') >> space.repeat >> subgraph_name_word) |
+            subgraph_name_word
+        end
 
         rule(:subgraph_name_word) do
           subgraph_keyword_id.absent? >> dot_run_before_link.absent? >>
@@ -1035,9 +1063,11 @@ module Sirena
         # only ahead of `->` `--` or `=` let `1.-` and `1.-x --- Z`
         # through, and mmdc refuses both. mmdc does draw `1.-a --- Z` —
         # but as THREE nodes, `1`, `a` and the target, because `.-`
-        # opened a dotted link between the first two. Sirena has no
-        # `-.-` link to build, so the id stops at the opening instead of
-        # swallowing it and drawing a node that is not on mermaid's page.
+        # opened a dotted link between the first two. That opening is the
+        # one sirena has no link for — `dotted_arrow` builds `-.-` and
+        # `-.->`, not a run that starts on the dot — so the id stops at it
+        # instead of swallowing it and drawing a node that is not on
+        # mermaid's page.
         #
         # `arrowhead_dot_dash` below keeps the id in the same spot, and
         # the two are not in disagreement: there the opening is only a
