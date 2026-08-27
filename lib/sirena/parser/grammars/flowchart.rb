@@ -816,13 +816,26 @@ module Sirena
           (str('-.->') | (str('-.-') >> trailing_xo_marker.absent?)).as(:dotted)
         end
 
-        # A plain link is `-->` or `---`. A bare `->` is NOT one: mmdc
-        # refuses `A->B` `A -> B` `A ->B` and `A-> B` alike. Listing it
-        # here drew an edge for the two spaced forms — an over-acceptance
-        # that outlived the `id_hyphen` guard, which only ever closed the
-        # unspaced pair. Removing it cost no corpus case.
+        # Mermaid's plain link is `--+[-xo>]`: two or more dashes, then
+        # ONE of `-`, `x`, `o`, `>`. Spelling it as the two fixed strings
+        # `-->` and `---` got the length wrong in both directions —
+        # `A----` drew an edge to a node called `-`, `A----B` drew
+        # `A --> -B` where mermaid draws `A --> B`, and `A--->B` and
+        # `A-----B` were refused outright. The dashes are counted here
+        # instead.
+        #
+        # A bare `->` is NOT a plain link: mmdc refuses `A->B` `A -> B`
+        # `A ->B` and `A-> B` alike. Listing it drew an edge for the two
+        # spaced forms — an over-acceptance that outlived the `id_hyphen`
+        # guard, which only ever closed the unspaced pair.
+        #
+        # The arrowhead arm goes first because Parslet does not backtrack
+        # into an alternative that already matched, and the open arm would
+        # otherwise eat the dashes that the `>` needs.
         rule(:plain_arrow) do
-          (str('-->') | (str('---') >> trailing_xo_marker.absent?)).as(:plain)
+          (str('--') >> str('-').repeat >> str('>') |
+            str('--') >> str('-').repeat(1) >>
+              trailing_xo_marker.absent?).as(:plain)
         end
 
         # A trailing `x` or `o` belongs to the LINK, not to the node behind
@@ -860,13 +873,14 @@ module Sirena
         # keyword `end`, but not the other reserved words — mmdc draws
         # `subgraph end [Title]` and `subgraph "AB" [Title]` and refuses
         # `subgraph default [Title]` and `subgraph _self [Title]`.
-        # `quoted_string` wraps its body in its own `.as(:string)`, so a
-        # quoted name arrives as `{string: "AB"@19}` where a bare one is a
-        # plain slice — the shape this file calls garbage where `node_id`
-        # used to take a quoted run. It is inert only because the
-        # transform refuses every subgraph; whatever teaches it to keep a
-        # subgraph has to flatten this first.
-        rule(:subgraph_id) { quoted_string | subgraph_name_word }
+        # `quoted_run`, not `quoted_string`: the shared rule takes an
+        # EMPTY body, and mmdc refuses `subgraph ""` while drawing
+        # `subgraph " "`. It also wraps what it takes in its own
+        # `.as(:string)`, so a quoted name arrived as `{string: "AB"@19}`
+        # where a bare one is a plain slice — the same nested-tree shape
+        # this file refuses to give `node_id`. This rule is non-empty and
+        # captures a slice, so both go away together.
+        rule(:subgraph_id) { quoted_run | subgraph_name_word }
 
         rule(:subgraph_name_word) do
           subgraph_keyword_id.absent? >> dot_run_before_link.absent? >>

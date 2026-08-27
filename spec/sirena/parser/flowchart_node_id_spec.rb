@@ -120,6 +120,34 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # Mermaid's plain link is `--+[-xo>]` — two or more dashes, then one of
+  # `-`, `x`, `o`, `>` — so its LENGTH is not fixed. Spelling it as the two
+  # strings `-->` and `---` was wrong in both directions.
+  describe "how many dashes make a link" do
+    # A fourth dash used to fall through to the widened id rule, which now
+    # takes a bare `-`, so `A----B` drew an edge to a node called `-B` and
+    # `A----` drew one to a node called `-`. mmdc draws A to B, and refuses
+    # `A----` outright.
+    { "A---B" => %w[A B], "A----B" => %w[A B], "A-----B" => %w[A B],
+      "A--->B" => %w[A B], "A---->B" => %w[A B],
+      "A-->B" => %w[A B] }.each do |statement, ids|
+      it "reads #{statement} as one link between #{ids.join(' and ')}" do
+        expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
+      end
+    end
+
+    # Two ways to fall off the rule, both of which mmdc refuses too: a
+    # link with nothing behind it, and a run too short to be a link.
+    { "A----" => "has no target", "A---" => "has no target",
+      "A-->" => "has no target",
+      "A--B" => "is only two dashes",
+      "A--" => "is only two dashes" }.each do |statement, reason|
+      it "refuses #{statement}, which #{reason}" do
+        expect(parses?("graph TD\n#{statement}\n")).to be(false)
+      end
+    end
+  end
+
   # Measured against mmdc 11.12.0: `A==>B` and `A===>B` draw arrowheads,
   # `A===B` and `A====B` draw edges without arrowheads, and `A==B` is
   # rejected. Widening ids made the bad `==` arm reachable with the numeric
@@ -304,6 +332,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   describe "a quoted id" do
     it "names a subgraph" do
       source = "graph TD\nsubgraph \"AB\" [Title]\nX --> Y\nend\n"
+
+      expect(subgraph_name_parses?(source)).to be(true)
+    end
+
+    # The shared `quoted_string` takes an empty body; mmdc refuses an empty
+    # subgraph name and draws a blank one, so this reads the local
+    # `quoted_run` instead, which is never empty.
+    it "does not name a subgraph with nothing in it" do
+      source = "graph TD\nsubgraph \"\"\nX --> Y\nend\n"
+
+      expect(subgraph_name_parses?(source)).to be(false)
+    end
+
+    it "names a subgraph with only a space in it" do
+      source = "graph TD\nsubgraph \" \"\nX --> Y\nend\n"
 
       expect(subgraph_name_parses?(source)).to be(true)
     end
