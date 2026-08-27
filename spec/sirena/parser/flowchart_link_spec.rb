@@ -110,8 +110,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # tildes and the rules generate from `~~~`, so a rule written one
     # tilde short would draw a link mermaid refuses and nothing above
     # would notice — every other tilde case here is about the markers.
+    # `o~~~o` carries one at BOTH ends, which is the shape a rule that
+    # honours a matched pair would wave through while `o~~~` still fails.
     %w[-- == -> <-- o-- x-- <-> o-> <- .-. .-- -. o= -.x -.o
-       -.->> .-->> ==>> <-->> o~~~ ~~~> <~~~ ~~ ~].each do |link|
+       -.->> .-->> ==>> <-->> o~~~ o~~~o ~~~> <~~~ ~~ ~].each do |link|
       it "refuses #{link}" do
         expect { diagram(link) }.to raise_error(Sirena::Parser::ParseError)
       end
@@ -220,12 +222,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # rasterised identically. The tip belongs on the node's edge.
     it "puts the tip on the target's boundary, not inside it" do
       xml = Sirena.render("flowchart TD\n  A --> B\n")
-      left, right = node_span(xml, "B")
+      left, = node_span(xml, "B")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       tip = group[/<polygon[^>]*points="(-?[\d.]+),/, 1].to_f
 
       expect(tip).to be_within(0.5).of(left)
-      expect(tip).not_to be_within(1.0).of((left + right) / 2)
     end
 
     # mmdc centres the circle behind the reference point it puts on the
