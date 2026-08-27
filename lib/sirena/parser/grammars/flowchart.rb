@@ -486,10 +486,22 @@ module Sirena
         # transform previously needed a rule per combination.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
-            (ws? >> node_shape).maybe.as(:shape) >>
-            inline_class.maybe.as(:inline_class) >>
+            ((ws? >> node_shape).as(:shape) | open_name.as(:shape)) >>
+            (inline_class >> open_name).maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
+
+        # A shape and a `@{...}` block each close the node's name, and a
+        # link may then sit flush against it: mmdc draws `A[x].-B` and
+        # `A@{ shape: rect }.->B`. A bare name is still growing, and so is
+        # the class name of `A:::c` — each takes a `.` in mermaid, so mmdc
+        # reads the dot of `A.-B` and of `A[x]:::c.-B` as name text and
+        # refuses `A.->B` and `A[x]:::c.->B` outright.
+        #
+        # Sirena's own names take no dot, so it refuses those four rather
+        # than naming a node or a class after one. Refusing is what it did
+        # before; reading a link there would not be.
+        rule(:open_name) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
         # giving a node a shape or a label, usable as a statement of its own
@@ -683,23 +695,53 @@ module Sirena
         end
 
         # Arrow types
+        # Every link mermaid draws, probed one at a time against mmdc
+        # rather than counted from the docs.
+        #
+        # `->` and `==` are deliberately absent: sirena accepted both and
+        # mermaid rejects them.
         rule(:arrow) do
-          thick_arrow | dotted_arrow | plain_arrow
+          (invisible_link | visible_link).as(:plain)
         end
 
-        # Thick arrow: ==> or ==
-        rule(:thick_arrow) do
-          (str('==>') | str('==')).as(:thick)
-        end
+        # `~~~` takes no markers at all: mmdc rejects `o~~~o` and `~~~>`.
+        rule(:invisible_link) { str('~~~') >> str('~').repeat }
 
-        # Dotted arrow: -.-> or -.-
-        rule(:dotted_arrow) do
-          (str('-.->') | str('-.-')).as(:dotted)
-        end
+        # The vocabulary is generated, not listed. Enumerating it missed
+        # sixteen forms mmdc renders — `====`, `-.-x`, `<--x`, `o----o`
+        # among them — and got `o--x` wrong on top of that.
+        #
+        # A leading marker is taken here whatever it is; whether mermaid
+        # honours it depends on the marker at the other end, which the
+        # transform decides.
+        #
+        # Headed first: parslet's alternation takes the first branch that
+        # matches, and `long_link` would swallow the `---` of `--->` and
+        # leave the `>` for the target to start with, which nothing can
+        # parse — the whole diagram would be thrown away.
+        rule(:visible_link) { link_start.maybe >> (headed_link | long_link) }
 
-        # Plain arrow: --> or --- or ->
-        rule(:plain_arrow) do
-          (str('-->') | str('---') | str('->')).as(:plain)
+        rule(:link_start) { match['ox<'] }
+        rule(:link_end) { match['>xo'] }
+
+        rule(:headed_link) { link_body >> link_end }
+        rule(:link_body) { solid_body | thick_body | dotted_body }
+
+        rule(:solid_body) { str('--') >> str('-').repeat }
+        rule(:thick_body) { str('==') >> str('=').repeat }
+
+        # The opening hyphen is optional. mmdc draws `.-`, `..->` and
+        # `<.-x` exactly as it draws `-.-`, `-..->` and `<-.-x`, and this
+        # rule refused the whole leading-dot half of the family.
+        rule(:dotted_body) { str('-').maybe >> str('.').repeat(1) >> str('-') }
+
+        # Without a marker the body has to be longer than its minimum:
+        # mmdc draws `---` and `===` and refuses `--` and `==`. A dotted
+        # body carries a dot already, so its own minimum — `.-` — is a
+        # link on its own and it stands here unchanged.
+        rule(:long_link) do
+          (str('--') >> str('-').repeat(1)) |
+            (str('==') >> str('=').repeat(1)) | dotted_body
         end
 
         # Edge label: can be in pipes |label|

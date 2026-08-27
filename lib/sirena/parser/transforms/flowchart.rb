@@ -178,15 +178,11 @@ module Sirena
           '[\\/]' => 'trapezoid_alt'
         }.freeze
 
-        # Arrow type mapping
-        ARROW_MAP = {
-          '-->' => 'arrow',
-          '->' => 'arrow',
-          '---' => 'line',
-          '-.>' => 'dotted_arrow',
-          '-.-' => 'dotted_arrow',
-          '==>' => 'thick_arrow',
-          '==' => 'thick_arrow'
+        # Which marker each character draws. `<` only ever appears at the
+        # start and `>` only at the end, so one table serves both ends.
+        LINK_MARKERS = {
+          '>' => 'arrow', '<' => 'arrow',
+          'x' => 'cross', 'o' => 'circle'
         }.freeze
 
         # mermaid resolves the alias lexemes to a direction word before
@@ -201,6 +197,43 @@ module Sirena
           'v' => 'TB',
           'BR' => 'TB'
         }.freeze
+
+        # An arrow at both ends has its own name; the others read as
+        # `<marker>_both`.
+        BOTH_ENDS = { 'arrow' => 'bidirectional' }.freeze
+
+        # Mermaid honours a leading marker only when the trailing one
+        # matches it. `o--x` draws the cross and nothing at the source, and
+        # a mismatched pair also drops back to normal thickness — `o==x` is
+        # no thicker than `o--x`. Both were read as two-ended links here.
+        def self.link_type(token)
+          return 'invisible' if token.start_with?('~')
+
+          head = LINK_MARKERS[token[-1]]
+          tail = LINK_MARKERS[token[0]]
+          matched = !head.nil? && head == tail
+
+          "#{link_weight(token, matched)}#{link_ends(head, matched)}"
+        end
+
+        def self.link_ends(head, matched)
+          return head || 'line' unless matched
+
+          BOTH_ENDS.fetch(head, "#{head}_both")
+        end
+
+        def self.link_weight(token, matched)
+          return 'dotted_' if token.include?('.')
+          return 'thick_' if token.include?('=') && matched_or_bare?(token, matched)
+
+          ''
+        end
+
+        # A thick body keeps its weight only when it carries no leading
+        # marker, or a leading marker mermaid actually honours.
+        def self.matched_or_bare?(token, matched)
+          matched || LINK_MARKERS[token[0]].nil?
+        end
 
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
@@ -238,11 +271,6 @@ module Sirena
           }
         end
 
-        # Arrow types
-        rule(arrow: { plain: simple(:a) }) { a.to_s }
-        rule(arrow: { dotted: simple(:a) }) { a.to_s }
-        rule(arrow: { thick: simple(:a) }) { a.to_s }
-
         # Edge label
         rule(label: simple(:l)) { l.to_s.strip }
         rule(label: sequence(:l)) { l.join.strip }
@@ -262,7 +290,7 @@ module Sirena
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
-            e.arrow_type = ARROW_MAP[arrow_type] || 'arrow'
+            e.arrow_type = link_type(arrow_type)
             # Convert Parslet::Slice to string before checking empty
             label_str = label.to_s if label
             e.label = label_str if label_str && !label_str.empty?
@@ -341,7 +369,11 @@ module Sirena
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            arrow_type = edge_data[:arrow].to_s
+            # The capture arrives as {plain: slice}. A Parslet rule keyed
+            # on `arrow:` alone cannot flatten it, because the hash it
+            # sits in carries `label` and `target` too — so there is no
+            # flattening rule to write and the slice is read directly.
+            arrow_type = edge_data[:arrow][:plain].to_s
             label = edge_data[:label]
             target_data = edge_data[:target]
 
