@@ -179,9 +179,11 @@ module Sirena
         width = node[:width] || 100
         height = node[:height] || 50
 
-        # Center text in node
-        text_x = x + width / 2
-        text_y = y + height / 2
+        # Center text in node. Halved as a float like the shape and the
+        # path are, so a hand-built node with odd integer sides puts its
+        # label on the same centre they use.
+        text_x = x + (width / 2.0)
+        text_y = y + (height / 2.0)
 
         Svg::Text.new.tap do |text|
           text.x = text_x

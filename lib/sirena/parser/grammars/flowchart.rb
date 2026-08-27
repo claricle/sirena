@@ -695,8 +695,10 @@ module Sirena
         end
 
         # Link forms
-        # Every link mermaid draws, probed one at a time against mmdc
-        # rather than counted from the docs.
+        # Every symbol-only link mermaid draws, probed one at a time
+        # against mmdc rather than counted from the docs. The form that
+        # carries its label in the middle — `A -- text --> B` — is a
+        # different shape and is still refused; see the spec that pins it.
         #
         # `->` and `==` are deliberately absent: sirena accepted both and
         # mermaid rejects them.

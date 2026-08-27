@@ -473,9 +473,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("none")
     end
 
-    # A cross and a circle are stroked, not filled, and leaving a stroke
-    # off really is invisible — so they need no `none` of their own. That
-    # only holds while nothing else paints them.
+    # A cross is stroked and not filled, so leaving its stroke off really
+    # is invisible. A circle is BOTH — mermaid's circleEnd is a solid dot
+    # — so it needs its own `none` for the fill, or SVG paints it black.
+    # Asserting only the stroke let that `none` be deleted unnoticed.
     %w[--x --o].each do |link|
       it "leaves #{link}'s head unstroked when the theme paints no line" do
         xml = Sirena.render("flowchart TD\n  A #{link} B\n",
@@ -485,6 +486,33 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         expect(group).to match(/<(line|circle)\b/)
         expect(group).not_to match(/<(line|circle)[^>]*stroke="[^"]/)
       end
+    end
+
+    # Every halving in the renderer is a float one, so a hand-built node
+    # with odd integer sides puts its label on the same centre its shape
+    # and its edge use. Integer division put the text half a pixel off.
+    it "centres a label on an odd-sided node the way the shape is centred" do
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 41, height: 21,
+                     labels: [{ text: "A" }] }],
+        edges: []
+      }
+      xml = Sirena::Renderer::FlowchartRenderer.new.render(graph).to_xml
+      group = xml[%r{<g id="node-A".*?</g>}m]
+
+      expect(group[/<text[^>]*x="(-?[\d.]+)"/, 1].to_f).to eq(20.5)
+      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(10.5)
+    end
+
+    # The circle's own half of that: it is filled, so an absent fill is
+    # not an unpainted dot but a black one. Only this assertion stops the
+    # `none` being dropped.
+    it "leaves a circle head unfilled when the theme paints no line" do
+      xml = Sirena.render("flowchart TD\n  A --o B\n",
+                          theme: { colors: { node_fill: "#eeeeee" } })
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+
+      expect(group[/<circle[^>]*fill="([^"]*)"/, 1]).to eq("none")
     end
 
     # The fallback layout emits no bend points, so the geometry rule is
