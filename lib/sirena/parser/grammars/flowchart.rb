@@ -49,15 +49,13 @@ module Sirena
 
         # Mermaid restarts its lexer at certain characters and looks for the
         # target again behind each restart. Six rules walk that path, so
-        # they share it here. `arrowhead_dot_dash` passes `min: 1` because
-        # a BURIED opening has to cross at least one restart to be one;
-        # every other caller takes the default and may match at the start.
+        # they share it here.
         #
         # A `repeat` rather than a recursive rule: a rule that called
         # itself blew the Ruby stack on a 2000-character id, and mmdc
         # draws that id.
-        def hunt(target, min = 0)
-          (target.absent? >> restart_step).repeat(min) >> target
+        def hunt(target)
+          (target.absent? >> restart_step).repeat >> target
         end
         private :hunt
 
@@ -1011,13 +1009,15 @@ module Sirena
         # link when nothing follows it, so an id can carry on past it.
         rule(:dot_run_before_link) { hunt(dotted_link_open) }
 
-        # The same rule as `arrowhead_open` without its leading marker, so
-        # it carries the same trailing one: mermaid's dotted link is
-        # `[xo<]?-?\.+-[xo>]?` and the tail belongs to the link, not to the
-        # id behind it.
-        rule(:dotted_link_open) do
-          str('.').repeat(1) >> str('-') >> match['xo>'].maybe
-        end
+        # `arrowhead_open` without its leading marker. Mermaid's dotted
+        # link also carries a trailing `[xo>]`, and it is deliberately NOT
+        # spelled here: the tail is optional, so a rule holding it succeeds
+        # exactly where one without it does, and the only reader
+        # (`dot_run_before_link`) is consumed under `.absent?`, where the
+        # length never matters either. Writing it changed no verdict across
+        # 4758 probes and the whole corpus — it would be decoration that
+        # reads like a guard.
+        rule(:dotted_link_open) { str('.').repeat(1) >> str('-') }
 
         # Everywhere else a dot just joins, dash or no dash: mmdc draws
         # `A.-->B` as `A.` and `B`, and draws `A.-` `A.-B` `A..-->B` and
@@ -1037,8 +1037,15 @@ module Sirena
         #
         # A settled character in front kills it either way, so `X.-`
         # `x1.-` `xx.-` and `xo.-` stay ordinary ids.
+        #
+        # The second arm needs no "at least one restart" of its own. At
+        # zero restarts it would ask for `arrowhead_ends_id`, and the arm
+        # in front already matches everything that could — so the first
+        # arm wins there whatever the second one says. Requiring a restart
+        # changed no verdict across 4758 probes, the whole corpus and the
+        # suite.
         rule(:arrowhead_dot_dash) do
-          arrowhead_open | hunt(arrowhead_ends_id, 1)
+          arrowhead_open | hunt(arrowhead_ends_id)
         end
 
         # Copied from the shape of mermaid's own dotted-link rule rather
