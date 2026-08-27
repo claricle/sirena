@@ -170,7 +170,7 @@ Three problems in that picture, and each one costs time on every fix:
   SVG string
 ```
 
-`Engine#render` becomes three lines:
+`Engine#render`'s **core pipeline** becomes four lines:
 
 ```ruby
 type  = Notation::Mermaid.detect(source)
@@ -179,9 +179,16 @@ scene = Layout.for(type)&.call(model, theme: theme) || model
 Renderer.for(type).render(scene, theme: theme)
 ```
 
-Four, not three — detection has to come from somewhere, and after item
-06 that somewhere is `Notation::Mermaid`, reading the same `TYPES`
-table every lookup below it uses.
+Detection has to come from somewhere, and after item 06 that somewhere
+is `Notation::Mermaid`, reading the same `TYPES` table every lookup
+below it uses.
+
+**That is the pipeline, not the whole method.** `Engine#render` still
+resolves the theme, still takes `today` and `verbose`, and still turns
+the `Svg::Document` a renderer returns into the String the public API
+returns. Item 06 keeps all of that byte-identical. What it deletes is
+the type constants and the hand-written dispatch, not the method's
+surrounding contract.
 
 The layout signature is `call(diagram, theme:)` everywhere in this plan.
 Layouts size boxes to text, and text size comes from the theme — see
