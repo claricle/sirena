@@ -50,7 +50,7 @@ RSpec.describe Sirena::Svg do
     # A non-finite operand is left alone because Float::NAN cannot be clamped;
     # a caller-supplied error value must not make the whole document fail.
     it 'does not raise for a non-finite opacity' do
-      expect { rect(opacity: Float::NAN).to_xml }.not_to raise_error
+      expect(rect(opacity: Float::NAN).to_xml).to eq('<rect/>')
     end
   end
 
@@ -61,7 +61,7 @@ RSpec.describe Sirena::Svg do
   end
 
   describe 'dominant-baseline, which Tiny expresses by moving the baseline' do
-    it 'drops a centred label half a cap height below its anchor' do
+    it 'drops a centred label half an x-height below its anchor' do
       expect(text(y: 67.0, font_size: '14', dominant_baseline: 'middle').to_xml)
         .to eq('<text y="71.9" font-size="14"></text>')
     end
@@ -76,13 +76,28 @@ RSpec.describe Sirena::Svg do
       end
     end
 
+    it 'drops a central label half an x-height below its anchor' do
+      expect(text(y: 10.0, font_size: '10', dominant_baseline: 'central').to_xml)
+        .to include('y="13.5"')
+    end
+
     it 'hangs a label a full ascender below its anchor' do
       expect(text(y: 10.0, font_size: '10', dominant_baseline: 'hanging').to_xml)
         .to include('y="18.0"')
     end
 
+    it 'hangs a text-before-edge label a full ascender below its anchor' do
+      expect(text(y: 10.0, font_size: '10', dominant_baseline: 'text-before-edge').to_xml)
+        .to include('y="18.0"')
+    end
+
     it 'lifts a bottom-aligned label by a descender' do
       expect(text(y: 10.0, font_size: '10', dominant_baseline: 'text-after-edge').to_xml)
+        .to include('y="8.0"')
+    end
+
+    it 'lifts an ideographic label by a descender' do
+      expect(text(y: 10.0, font_size: '10', dominant_baseline: 'ideographic').to_xml)
         .to include('y="8.0"')
     end
 

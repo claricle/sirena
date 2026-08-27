@@ -57,6 +57,8 @@ CONFORMANCE_UNRENDERABLE_EXAMPLES = [
 # Same guard corpus_sweep.rb uses. A case that hangs is a corpus problem, not
 # a conformance one, and it must not hang the suite.
 CONFORMANCE_CASE_TIMEOUT = 10
+CONFORMANCE_EXAMPLE_TODAY = Date.new(2026, 1, 1)
+CONFORMANCE_EXAMPLE_THEME = 'default'
 
 RSpec.describe Sirena::Svg do
   def validate(svg)
@@ -64,8 +66,12 @@ RSpec.describe Sirena::Svg do
   end
 
   def complaint(path, result)
-    messages = result.errors.map(&:message)
-    "#{path.sub("#{CONFORMANCE_ROOT}/", '')}: #{messages.uniq.first(3).join(' | ')}"
+    messages = result.errors.map(&:message).uniq
+    summary = messages.first(3).join(' | ')
+    remaining = messages.size - 3
+    summary += " | #{remaining} more" if remaining.positive?
+
+    "#{path.sub("#{CONFORMANCE_ROOT}/", '')}: #{summary}"
   end
 
   # A case Sirena cannot render is item 06's problem, not this gate's. Only
@@ -97,6 +103,10 @@ RSpec.describe Sirena::Svg do
   end
 
   describe 'conformance of the reference fixtures' do
+    it 'has reference fixtures to render' do
+      expect(CONFORMANCE_FIXTURE_SOURCES).not_to be_empty
+    end
+
     CONFORMANCE_FIXTURE_SOURCES.each do |source_path|
       it "renders #{File.basename(File.dirname(source_path))} conformantly" do
         result = validate(Sirena::Engine.new.render(File.read(source_path)))
@@ -138,8 +148,8 @@ RSpec.describe Sirena::Svg do
     def render_example(mmd_path)
       metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
       metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
-      Sirena.render(File.read(mmd_path), theme: metadata['theme'] || 'default',
-                                         today: Date.new(2026, 1, 1))
+      Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
+                                         today: CONFORMANCE_EXAMPLE_TODAY)
     end
 
     def relative(path)
@@ -156,6 +166,19 @@ RSpec.describe Sirena::Svg do
       expect(CONFORMANCE_EXAMPLE_SOURCES.size).to be >= 53
     end
 
+    # Duplicated render inputs must drift loudly here instead of blaming every
+    # checked-in SVG as stale.
+    it 'uses the generation task rendering defaults' do
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'examples.rake'))
+
+      expect(task_source).to include(
+        "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
+        "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})"
+      )
+      expect(task_source)
+        .to include("theme = metadata['theme'] || '#{CONFORMANCE_EXAMPLE_THEME}'")
+    end
+
     # Both directions. Asking only "does each source ship an SVG" leaves the
     # other half unasked: delete or rename a source and its old SVG stays
     # tracked, stays packaged, and stays conformant, so every assertion here
@@ -169,14 +192,21 @@ RSpec.describe Sirena::Svg do
     end
 
     it 'renders every source except the ones named as unsupported' do
-      failed = CONFORMANCE_EXAMPLE_SOURCES.reject do |mmd|
-        render_example(mmd)
-        true
+      rendered = {}
+      unrenderable = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
+        rendered[mmd] = render_example(mmd)
+        nil
       rescue StandardError
-        false
+        mmd
       end
 
-      expect(failed.map { |mmd| relative(mmd) }).to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
+      rendered.each_value do |svg|
+        expect(svg).to be_a(String)
+        expect(svg).not_to be_empty
+        expect(svg).to match(/\A<svg(?:\s|>)/)
+      end
+      expect(unrenderable.map { |mmd| relative(mmd) })
+        .to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
     end
 
     it 'ships exactly what the renderer produces today' do

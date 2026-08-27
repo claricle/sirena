@@ -97,7 +97,9 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
         xml = renderer.render(layout).to_xml
 
         expect(xml).not_to include('marker-end')
-        expect(xml).to include('<polygon')
+        expect(xml)
+          .to include('<polygon fill="#000000" ' \
+                      'points="70.0,100.0 66.0,92.0 74.0,92.0"/>')
       end
     end
 

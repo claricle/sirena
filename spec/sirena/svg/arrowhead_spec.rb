@@ -77,7 +77,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
         path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke_opacity: '0.5')
       ).first
 
-      expect(polygon.fill_opacity).to eq('0.5')
+      expect(polygon.to_xml)
+        .to eq('<polygon fill="#000000" fill-opacity="0.5" ' \
+               'points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
     end
 
     it 'carries the whole-element opacity of the path it ends' do
@@ -85,7 +87,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
         path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', opacity: 0.4)
       ).first
 
-      expect(polygon.opacity).to eq(0.4)
+      expect(polygon.to_xml)
+        .to eq('<polygon fill="#000000" fill-opacity="0.4" stroke-opacity="0.4" ' \
+               'points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
     end
 
     # Without this the head lands in the untransformed coordinate space and
@@ -159,11 +163,11 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # The early return is what keeps a marker-less path from paying for a
     # scan of its own data, and most paths carry no marker.
     it 'does not read the path data when no marker was asked for' do
-      allow(Sirena::Svg::PathGeometry).to receive(:new)
+      allow(Sirena::Svg::PathGeometry).to receive(:new).and_call_original
 
       described_class.for(path(d: 'M 0 0 L 10 0'))
 
-      expect(Sirena::Svg::PathGeometry).not_to have_received(:new)
+      expect(Sirena::Svg::PathGeometry).to have_received(:new).exactly(0).times
     end
 
     # SVG's initial stroke-width is 1, so an unreadable or invalid declaration

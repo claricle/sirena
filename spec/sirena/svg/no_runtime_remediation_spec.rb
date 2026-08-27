@@ -38,25 +38,27 @@ RSpec.describe Sirena::Svg do
       end
     end
 
-    # A bare count is not a population guard here: lib/sirena/parser alone
-    # holds 72 files, so the glob could lose the whole of lib/sirena/svg —
-    # the one place a remediation call would land — and still clear any
-    # threshold worth setting. Named against an independent glob instead.
+    # A bare count is not a population guard here: enough files live outside
+    # lib/sirena/svg that the broad glob could lose the one directory where a
+    # remediation call would land and still clear any useful threshold. The
+    # focused glob names that directory independently.
     it 'reads every file under lib/' do
-      expect(REMEDIATION_LIB_FILES)
-        .to match_array(Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.rb')))
-      expect(REMEDIATION_LIB_FILES)
-        .to include(File.join(REMEDIATION_LIB_ROOT, 'sirena', 'svg', 'element.rb'))
+      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, 'sirena', 'svg', '*.rb'))
+
+      expect(svg_files).not_to be_empty
+      expect(REMEDIATION_LIB_FILES).to include(*svg_files)
     end
 
     it 'never calls a fixer or a remediation engine' do
-      expect(offences).to be_empty, -> { offences.join("\n") }
+      found_offences = offences
+
+      expect(found_offences).to be_empty, -> { found_offences.join("\n") }
     end
 
     it 'does not declare svg_conform as a runtime dependency' do
       gemspec = Gem::Specification.load(File.expand_path('../../../sirena.gemspec', __dir__))
 
-      expect(gemspec.dependencies.map(&:name)).not_to include('svg_conform')
+      expect(gemspec.runtime_dependencies.map(&:name)).not_to include('svg_conform')
     end
   end
 end

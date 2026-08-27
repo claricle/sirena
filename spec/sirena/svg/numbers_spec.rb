@@ -38,7 +38,10 @@ RSpec.describe Sirena::Svg::Numbers do
     it 'has nothing to read in an attribute lutaml never set' do
       unset = Sirena::Svg::Text.from_xml('<text>x</text>').fill_opacity
 
-      expect(unset).to be_a(Lutaml::Model::UninitializedClass)
+      # Lutaml::Model::UninitializedClass is an internal name; the non-String
+      # to_s result is the boundary Sirena relies on and survives a rename.
+      expect(unset).not_to be_nil
+      expect(unset.to_s).not_to be_a(String)
       expect(described_class.read(unset)).to be_nil
     end
   end

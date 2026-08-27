@@ -41,10 +41,30 @@ ELEMENT_ATTRIBUTES = {
 # attribute left to escape; the cases further down assert they are gone.
 TRANSLATED_AWAY = {
   Sirena::Svg::Path => {
-    marker_end: ['marker-end', 'url(#arrowhead)'],
-    marker_start: ['marker-start', 'url(#arrowhead)']
+    marker_end: [
+      'marker-end',
+      'url(#arrowhead)',
+      [
+        '<path stroke="#000000" d="M 0 0 L 10 0"/>',
+        '<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>'
+      ]
+    ],
+    marker_start: [
+      'marker-start',
+      'url(#arrowhead)',
+      [
+        '<path stroke="#000000" d="M 0 0 L 10 0"/>',
+        '<polygon fill="#000000" points="0.0,0.0 4.0,-2.0 4.0,2.0"/>'
+      ]
+    ]
   },
-  Sirena::Svg::Text => { dominant_baseline: ['dominant-baseline', 'middle'] }
+  Sirena::Svg::Text => {
+    dominant_baseline: [
+      'dominant-baseline',
+      'middle',
+      ['<text y="13.5" font-size="10"></text>']
+    ]
+  }
 }.freeze
 
 # Inherited from Element, so every subclass carries them.
@@ -83,12 +103,12 @@ RSpec.describe Sirena::Svg::Escaping do
     end
   end
 
-  # The three properties the profile has no room for. Asserting the absence
+  # The four properties the profile has no room for. Asserting the absence
   # matters as much as asserting the escaping: a renderer keeps setting them,
   # so the only thing stopping them reaching the document is this layer.
   describe 'properties SVG Tiny 1.2 does not have' do
     TRANSLATED_AWAY.each do |klass, writers|
-      writers.each do |writer, (attribute, sample)|
+      writers.each do |writer, (attribute, sample, expected_lines)|
         it "never emits #{attribute} from #{klass.name.split('::').last}" do
           element = klass.new
           # A Path needs real data and a stroke or it draws no arrowhead,
@@ -97,10 +117,16 @@ RSpec.describe Sirena::Svg::Escaping do
           if element.respond_to?(:d=)
             element.d = 'M 0 0 L 10 0'
             element.stroke = '#000000'
+          else
+            element.y = 10.0
+            element.font_size = '10'
           end
           element.public_send("#{writer}=", sample)
 
-          expect(element.to_xml).not_to include(attribute)
+          xml = element.to_xml
+
+          expect(xml).not_to include(attribute)
+          expect(xml.lines(chomp: true)).to eq(expected_lines)
         end
       end
     end
