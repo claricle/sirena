@@ -103,8 +103,12 @@ caller in `spec/`, `scripts/` and `lib/tasks/` and delete the old names.
       `mindmap`, `packet`, `radar`, `requirement`, `treemap`,
       `xy_chart`), and that is the gem's class name, not ours.
 - [ ] class names are uniform, no `Parser`/`Transform`/`Renderer` suffixes
-- [ ] every registry key resolves to `Sirena::Diagram::<CamelKey>`;
-      no `Chart`/`Diagram` suffix survives on a top-level model
+- [ ] every registry key resolves to `Sirena::Diagram::<CamelKey>` —
+      the whole check, and the only one. Do not also ask that no name
+      ends in `Chart` or `Diagram`: `:xy_chart` correctly gives
+      `XyChart`, `:class_diagram` correctly gives `ClassDiagram`. The
+      suffix is only wrong when the key does not contain it, and the
+      resolution check already catches exactly that.
 - [ ] `Layout::Grid` exists; `Engine` contains no positioning code
 - [ ] `rake corpus:check` shows **zero** change after each of the 4 PRs
 

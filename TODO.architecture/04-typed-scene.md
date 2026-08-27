@@ -75,6 +75,19 @@ graph types in item 08. If their Scenes mirror what ELK already emits,
 that integration is a swap; if you invent a different shape now, it is a
 redesign of every one of them later.
 
+**The swap is not free: establish elkrb's coordinate frame first.** ELK
+nests children in their parent's frame by default, and our Scene holds
+final canvas coordinates. Those are not the same numbers. Before wiring
+elkrb in, run one nested graph through it and record which frame the
+child `x`/`y` come back in — measured, not assumed. If they are
+parent-relative, the adapter flattens them to canvas coordinates on the
+way into the Scene, and that flattening is part of item 08, not
+something a renderer does later.
+
+Measured 2026-08-27 against elkrb at `v2`: a two-level graph came back
+with sibling boxes that overlap, so the frame could not be settled from
+one probe. Treat it as unknown until item 08 pins it.
+
 For `flowchart`, `class_diagram`, `state_diagram`, `er_diagram`, `c4`,
 `requirement`, `architecture`, `block` and `mindmap`, shape the Scene
 like ELK's own output:
@@ -192,8 +205,16 @@ attribute, two of them dead (item 02).
 - [ ] no renderer performs arithmetic on coordinates or angles
 - [ ] no renderer holds positional state between calls;
       `grep -rn "@[a-z_]*offset\|padding = " lib/sirena/renderer/`
-      returns nothing. The second half of that pattern is what catches
-      `packet`'s `@title_offset` — an `@offset_` grep alone misses it
+      returns nothing. `@[a-z_]*offset` is the half that catches
+      `packet`'s `@title_offset`; a plain `@offset_` grep misses it
+- [ ] no Scene class declares an `origin`, and no renderer emits an SVG
+      `translate`. The grep above passes if you merely delete the
+      offsets or move them to a `translate`, and neither puts the
+      displacement in the Scene
+- [ ] `git_graph`, `mindmap`, `kanban` and `packet` each have a spec
+      asserting a known node lands at its **canvas** coordinate, with
+      the framing already included. That is the positive half; the
+      greps are only the negative half
 - [ ] no layout hardcodes a font size; `grep -rn "FONT_SIZE = " lib/sirena/layout/`
       returns nothing
 - [ ] rendering one diagram under `default` and `high_contrast` gives

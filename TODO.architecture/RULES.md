@@ -24,9 +24,11 @@ estimated: 10 have no working `valid?` and 10 have no `diagram_type`.
 Nothing catches it. `01-safety-net.md` has the two failure modes and the
 names.
 
-Every abstract contract gets a spec that iterates
-`DiagramRegistry.types` and asserts it. If that spec is annoying to
-write, the contract is wrong — fix the contract, don't skip the spec.
+Every abstract contract gets a spec that iterates **whichever table is
+the single source of registered types** and asserts it — that is
+`DiagramRegistry.types` until item 06, and `Notation::Mermaid::TYPES`
+after. If that spec is annoying to write, the contract is wrong — fix
+the contract, don't skip the spec.
 
 The registry only knows the rows that exist, so while a second type
 list exists the same spec asserts the two sets match. Without that, a

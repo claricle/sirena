@@ -78,6 +78,13 @@ TYPES = {
    resolve. Check that first — `Diagram::Gantt` must answer before you
    delete the `model:` row, or a third of the types lose their contract.
 3. Detection reads the same table. One list, not two.
+
+   `contract_spec.rb` moves with it, and it must still be the thing that
+   fails when a type is wrong. Done-when for this migration:
+   - it iterates `TYPES`, and covers every entry
+   - it still resolves each model and still runs each canonical fixture
+   - deleting one `TYPES` row turns it red
+   - it passes with `model:` removed from every registration
 4. Delete the stray `self.render` at `lib/sirena.rb:38`.
 5. `Engine` holds no type constants. Its render method is the three
    lines from `00-overview.md`.
