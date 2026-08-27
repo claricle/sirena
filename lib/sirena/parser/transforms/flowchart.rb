@@ -144,8 +144,12 @@ module Sirena
         JSON_SPECIALS = { '.nan' => Float::NAN, '.inf' => Float::INFINITY,
                           '-.inf' => -Float::INFINITY }.freeze
 
+        STRING_TAG = 'tag:yaml.org,2002:str'
+
         def self.json_scalar(node)
-          return node.value if node.quoted
+          # An explicit `!!str` says what the value IS, so the implicit
+          # rules do not run over it: mmdc draws `label: !!str 1` as "1".
+          return node.value if node.quoted || node.tag == STRING_TAG
 
           return JSON_WORDS[node.value] if JSON_WORDS.key?(node.value)
           return JSON_SPECIALS[node.value] if JSON_SPECIALS.key?(node.value)
