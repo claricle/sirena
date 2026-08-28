@@ -124,8 +124,10 @@ RSpec.describe Sirena::Svg do
     path.sub("#{File.join(CONFORMANCE_ROOT, 'spec', 'mermaid')}/", '')
   end
 
+  # Read fresh, not memoized: the one caller regenerates the file it just
+  # read, and a remembered list would answer for the version before that.
   def baseline_renderable
-    @baseline_renderable ||= File.readlines(CONFORMANCE_RENDERABLE_FILE, chomp: true).reject(&:empty?)
+    File.readlines(CONFORMANCE_RENDERABLE_FILE, chomp: true).reject(&:empty?)
   end
 
   # Writes the baseline from the run that just measured it, so the list and
@@ -193,18 +195,20 @@ RSpec.describe Sirena::Svg do
   describe 'conformance across the mermaid corpus' do
     # One example rather than 1,997: the useful failure is the whole list of
     # offending cases and what each emitted, not the first one rspec reaches.
-    # The baseline is the gate's own population guard, so it is checked
-    # before anything is measured against it.
-    it 'holds a renderable baseline to draw the population from' do
-      expect(baseline_renderable.size).to be >= CONFORMANCE_RENDERED_FLOOR
-      expect(baseline_renderable.uniq).to eq(baseline_renderable)
-    end
-
+    #
+    # One example rather than two, as well. Checking the baseline's own
+    # integrity somewhere else did not work: rspec randomises order, so the
+    # render could run first, regenerate over a truncated list, and leave that
+    # check reading the file it had just repaired. Everything that reads,
+    # judges or writes the baseline happens here, in this order.
     it 'renders every case it can render conformantly' do
-      # Read before anything is written. Regenerating first would compare the
-      # new list against itself, so a run that lost one case and gained
-      # another would drop the regressed name from the baseline in silence.
+      # Read and judged before anything is rendered or written. An emptied or
+      # truncated list would make the subset check below pass against nothing,
+      # and regenerating first would compare the new list against itself.
       baseline = baseline_renderable
+      expect(baseline.size).to be >= CONFORMANCE_RENDERED_FLOOR
+      expect(baseline.uniq).to eq(baseline)
+
       rendered = []
       offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
         svg = render_or_skip(source_path)
@@ -226,8 +230,9 @@ RSpec.describe Sirena::Svg do
                       -> { "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}" }
       expect(offenders).to be_empty, -> { offenders.join("\n") }
 
-      # Written last, and only once both assertions have held, so regenerating
-      # can record a gain but never quietly accept a loss.
+      # Written last, and only once every assertion above has held, so
+      # regenerating can record a gain but never quietly accept a loss or
+      # launder a damaged list.
       write_renderable(rendered) if ENV['CONFORMANCE_WRITE_RENDERABLE']
     end
   end
