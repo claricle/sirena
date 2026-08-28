@@ -127,12 +127,27 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
       expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
     end
 
-    it 'raises error for invalid diagram' do
+    it 'raises error when a transition names a state that does not exist' do
       invalid_diagram = Sirena::Diagram::StateDiagram.new
+      invalid_diagram.states << Sirena::Diagram::StateNode.new(
+        id: 'idle', label: 'Idle', state_type: 'normal'
+      )
+      invalid_diagram.transitions << Sirena::Diagram::StateTransition.new(
+        from_id: 'idle', to_id: 'nowhere'
+      )
 
       expect do
         transform.to_graph(invalid_diagram)
       end.to raise_error(Sirena::Transform::TransformError)
+    end
+
+    it 'transforms a diagram with no states at all' do
+      graph = transform.to_graph(Sirena::Diagram::StateDiagram.new)
+
+      expect(graph[:children]).to eq([])
+      expect(graph[:edges]).to eq([])
+      expect(graph[:id]).to eq('state_diagram')
+      expect(graph[:layoutOptions]['elk.direction']).to eq('DOWN')
     end
 
     it 'includes description in labels when present' do

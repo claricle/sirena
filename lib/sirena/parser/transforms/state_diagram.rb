@@ -56,38 +56,65 @@ module Sirena
           elsif stmt[:from] && stmt[:to]
             # Transition
             process_transition(stmt)
-          elsif stmt[:note_keyword]
-            # Note statement - skip for now
+          elsif stmt[:note_keyword] || stmt[:style_keyword]
+            # Notes and styling directives are parsed and dropped. mmdc
+            # 11.12.0 draws no node for either, and the diagram model
+            # carries neither.
             nil
           elsif stmt[:state_id] && !stmt[:keyword]
-            # Standalone state
-            ensure_state_exists(extract_text(stmt[:state_id]))
+            # Standalone state, with or without a description
+            process_standalone_state(stmt)
           elsif stmt[:concurrent_sep]
             # Concurrent separator - handled in composite context
             nil
           end
+          # A `direction` statement reaches here only from inside a
+          # composite, and falls through on purpose: the model has no
+          # composite container to hang it on, and mermaid scopes it to the
+          # composite rather than to the diagram.
         end
 
         def process_state_declaration(stmt)
           state_id = extract_text(stmt[:state_id])
 
           if stmt[:marker]
-            # Special state marker (choice, fork, join)
-            marker_type = extract_text(stmt[:marker][:marker_type])
-            add_special_state(state_id, marker_type)
+            # Special state marker (choice, fork, join). No label: mmdc
+            # 11.12.0 has no shape for `state "X" as Y <<choice>>` either.
+            add_special_state(state_id, extract_text(stmt[:marker][:marker_type]))
           elsif stmt[:composite]
             # Composite state with nested statements
-            process_composite_state(state_id, stmt[:composite])
-          elsif stmt[:description]
-            # State with description
-            description = extract_text(stmt[:description]).strip
-            # Remove leading colon if present
-            description = description.sub(/^:\s*/, '')
-            add_or_update_state(state_id, state_id, description)
+            process_composite_state(state_id, state_label(stmt, state_id),
+                                    stmt[:composite])
           else
-            # Regular state
-            ensure_state_exists(state_id)
+            add_or_update_state(state_id, state_label(stmt, state_id),
+                                description_of(stmt))
           end
+        end
+
+        # nil rather than "" when there is no description: every non-nil
+        # value reaching `add_or_update_state` is one it stores.
+        def description_of(stmt)
+          extract_text(stmt[:description]) if stmt[:description]
+        end
+
+        def process_standalone_state(stmt)
+          state_id = extract_text(stmt[:state_id])
+          ensure_state_exists(state_id)
+          return unless stmt[:description]
+
+          # `A : text` describes A without renaming it, so a label an
+          # earlier `state "L" as A` set has to survive. mmdc 11.12.0 draws
+          # both the label and the description.
+          @diagram.find_state(state_id).description =
+            extract_text(stmt[:description])
+        end
+
+        # `state "Idle mode" as Idle` labels the state Idle "Idle mode";
+        # without the alias the id is its own label.
+        def state_label(stmt, state_id)
+          return state_id unless stmt[:state_label]
+
+          extract_text(stmt[:state_label])
         end
 
         def process_transition(stmt)
@@ -118,9 +145,9 @@ module Sirena
           end
         end
 
-        def process_composite_state(parent_id, composite_data)
+        def process_composite_state(parent_id, label, composite_data)
           # Create parent state
-          parent_state = add_or_update_state(parent_id, parent_id)
+          parent_state = add_or_update_state(parent_id, label)
 
           # Process nested statements
           if composite_data.is_a?(Hash) || composite_data.is_a?(Array)

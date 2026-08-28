@@ -98,18 +98,21 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       expect(state.description).to eq('System is idle')
     end
 
-    it 'parses state diagram with TD direction' do
-      source = "stateDiagram-v2 TD\nIdle-->Active"
-      diagram = parser.parse(source)
-
-      expect(diagram.direction).to eq('TD')
-    end
-
-    it 'parses state diagram with LR direction' do
-      source = "stateDiagram-v2 LR\nIdle-->Active"
+    it 'parses a direction statement' do
+      source = "stateDiagram-v2\ndirection LR\nIdle-->Active"
       diagram = parser.parse(source)
 
       expect(diagram.direction).to eq('LR')
+    end
+
+    # mmdc 11.12.0 reads nothing on the keyword's line as a direction: it
+    # draws `stateDiagram-v2 LR` as a state called LR.
+    it 'reads a word after the keyword as a state, not a direction' do
+      source = "stateDiagram-v2 LR\nIdle-->Active"
+      diagram = parser.parse(source)
+
+      expect(diagram.direction).to be_nil
+      expect(diagram.states.map(&:id)).to include('LR')
     end
 
     it 'parses multiple transitions in sequence' do
@@ -133,6 +136,294 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError
       )
+    end
+  end
+
+  # One example per corpus case the statement form was added for. Every
+  # claim about mermaid below was measured against mmdc 11.12.0.
+  describe 'mermaid corpus statement forms' do
+    def corpus(name)
+      parser.parse(File.read("spec/mermaid/#{name}"))
+    end
+
+    describe 'state "Label" as Id' do
+      it 'names and labels a state (state_diagram/019, state/020)' do
+        diagram = corpus(
+          'state_diagram/019_parser_should_handle_state_definitions_' \
+          'with_separation_of_id_18.mmd'
+        )
+
+        expect(diagram.find_state('NotShooting').label)
+          .to eq('Not Shooting State')
+        expect(diagram.find_state('Idle').label).to eq('Idle mode')
+        expect(diagram.find_state('Configuring').label)
+          .to eq('Configuring mode')
+      end
+
+      it 'labels a composite carrying a note (state_diagram/052)' do
+        diagram = corpus(
+          'state_diagram/052_parser_should_handle_notes_for_composite_' \
+          'nested_states_51.mmd'
+        )
+
+        expect(diagram.find_state('NotShooting').label)
+          .to eq('Not Shooting State')
+        expect(diagram.transitions.map(&:to_id)).to include('NotShooting')
+        expect(diagram.states.map(&:id))
+          .to eq(%w[start_1 NotShooting Idle Configuring])
+      end
+
+      # mmdc refuses the reverse order: `state Idle as "Idle mode"` is a
+      # parse error there.
+      it 'refuses the alias with the label last' do
+        source = %(stateDiagram-v2\nstate Idle as "Idle mode"\n)
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # mmdc takes a double-quoted label only.
+      it 'refuses a single-quoted alias label' do
+        expect { parser.parse("stateDiagram-v2\nstate 'L' as N\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an empty alias label' do
+        expect { parser.parse(%(stateDiagram-v2\nstate "" as N\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # `A : text` describes A without renaming it. mmdc draws the label
+      # and the description together, in either order.
+      it 'keeps an alias label when a later line describes the state' do
+        diagram = parser.parse(%(stateDiagram-v2\nstate "L" as A\nA : two\n))
+
+        expect(diagram.find_state('A').label).to eq('L')
+        expect(diagram.find_state('A').description).to eq('two')
+      end
+
+      it 'keeps an alias label when an earlier line described the state' do
+        diagram = parser.parse(%(stateDiagram-v2\nA : two\nstate "L" as A\n))
+
+        expect(diagram.find_state('A').label).to eq('L')
+        expect(diagram.find_state('A').description).to eq('two')
+      end
+
+      it 'takes a quoted id after as' do
+        diagram = parser.parse(%(stateDiagram-v2\nstate "L" as "X"\n))
+
+        expect(diagram.find_state('X').label).to eq('L')
+      end
+    end
+
+    describe 'id : description' do
+      it 'describes a state, spaces around the colon (state_diagram/002)' do
+        diagram = corpus(
+          'state_diagram/002_parser_space_before_and_after_the_colon_1.mmd'
+        )
+
+        expect(diagram.find_state('namedState1').description)
+          .to eq('Small State 1')
+      end
+
+      # The brace belongs to the description in the bare form and opens a
+      # composite body in the keyword form: mmdc draws `A : text {` and
+      # refuses `state A : text {`.
+      it 'keeps a brace in a bare description' do
+        diagram = parser.parse("stateDiagram-v2\nA : text {\n")
+
+        expect(diagram.find_state('A').description).to eq('text {')
+      end
+
+      it 'refuses a brace in a state statement description' do
+        expect { parser.parse("stateDiagram-v2\nstate A : text {\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'describes a state, no spaces (state_diagram/003)' do
+        diagram = corpus(
+          'state_diagram/003_parser_no_spaces_before_and_after_the_colon_2.mmd'
+        )
+
+        expect(diagram.find_state('namedState1').description)
+          .to eq('Small State 1')
+      end
+    end
+
+    describe 'note statements' do
+      it 'reads a note block to its end note (state_diagram/026)' do
+        diagram = corpus(
+          'state_diagram/026_parser_should_handle_multiline_notes_with_' \
+          'different_line_breaks_25.mmd'
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['State1'])
+      end
+
+      it 'reads a single-line note' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nState1\nnote right of State1 : hello\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['State1'])
+      end
+
+      # mmdc reads everything after a colon-less note as a note body, so it
+      # refuses the file when no `end note` closes it.
+      it 'refuses a colon-less note whose body runs to another statement' do
+        expect { parser.parse("stateDiagram-v2\nA\nnote right of A\nbody\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses a colon-less note that ends the file' do
+        expect { parser.parse("stateDiagram-v2\nA\nnote right of A\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # Only a whole line closes the block. mmdc keeps this one as text.
+      it 'keeps end note inside a body line as note text' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nA\nnote right of A\nsay end notes here\nend note\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+
+      # mmdc keeps a body line that ends in `;` or holds a `%%` comment.
+      it 'keeps a semicolon and a comment marker inside a note body' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nA\nnote right of A\nfoo;\n%% x\nend note\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+
+      it 'accepts a note block with an empty body' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nA\nnote right of A\nend note\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+
+      # mmdc takes a non-empty double-quoted text only.
+      it 'refuses a single-quoted floating note' do
+        expect { parser.parse("stateDiagram-v2\nA\nnote 'f' as N1\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an empty floating note' do
+        expect { parser.parse(%(stateDiagram-v2\nA\nnote "" as N1\n)) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # mmdc parses a floating note and draws nothing for it.
+      it 'drops a floating note (state_diagram/027)' do
+        diagram = corpus(
+          'state_diagram/027_parser_should_handle_floating_notes_26.mmd'
+        )
+
+        expect(diagram.states.map(&:id)).to eq(['foo'])
+        expect(diagram.find_state('foo').description).to eq('bar')
+      end
+    end
+
+    describe 'style statements' do
+      it 'drops a style over several targets (state_diagram/006)' do
+        diagram = corpus(
+          'state_diagram/006_parser_can_define_multiple_attributes_' \
+          'separated_by_commas_5.mmd'
+        )
+
+        expect(diagram.states.map(&:id)).to eq(%w[id1 id2])
+      end
+
+      # mmdc takes a bare `style A` with no properties at all.
+      it 'accepts a style with no properties' do
+        diagram = parser.parse("stateDiagram-v2\nA\nstyle A\n")
+
+        expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+
+      # A `;` splits nothing here: mmdc draws the same picture either way.
+      it 'keeps a semicolon inside the property list' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nA\nB\nstyle A fill:red;stroke:blue\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(%w[A B])
+      end
+
+      # mmdc renders `style note fill:red` even though it refuses `note`
+      # as a state on its own.
+      it 'takes a reserved name as a style target' do
+        diagram = parser.parse("stateDiagram-v2\nA\nstyle note fill:red\n")
+
+        expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+    end
+
+    describe 'direction statements' do
+      it 'sets the direction (state/060)' do
+        diagram = corpus('state/060_spec_mermaidapi_spec_59.mmd')
+
+        expect(diagram.direction).to eq('LR')
+        expect(diagram.find_state('direction')).to be_nil
+      end
+
+      # mmdc knows TB, BT, LR and RL here and nothing else: `direction TD`
+      # draws two states called `direction` and `TD`.
+      it 'refuses TD as a direction' do
+        expect { parser.parse("stateDiagram-v2\ndirection TD\nA-->B\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    describe 'state ids' do
+      it 'takes a digits-only id (state/001)' do
+        diagram = corpus(
+          'state/001_rendering_statediagram-v2_spec_state_0.mmd'
+        )
+
+        expect(diagram.states.map(&:id)).to eq(%w[s2 s3 s4 55])
+      end
+
+      # mmdc lexes `note` and `style` wherever a statement or a transition
+      # end may start, so it refuses these three and renders `notes`.
+      it 'refuses a bare note as a state (state_diagram/031)' do
+        expect do
+          corpus(
+            'state_diagram/031_parser_should_handle_floating_notes_30.mmd'
+          )
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses note at a transition end' do
+        expect { parser.parse("stateDiagram-v2\nA --> note\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses style at a transition end' do
+        expect { parser.parse("stateDiagram-v2\nA --> style\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'takes note and style once a state statement claims the line' do
+        diagram = parser.parse(
+          "stateDiagram-v2\nstate note\nstate style\nnotes\nstyles\n"
+        )
+
+        expect(diagram.states.map(&:id)).to eq(%w[note style notes styles])
+      end
+    end
+
+    describe 'a diagram with no statements' do
+      it 'parses to an empty, valid diagram (state/055)' do
+        diagram = corpus('state/055_spec_diagram-orchestration_spec_54.mmd')
+
+        expect(diagram.states).to be_empty
+        expect(diagram.valid?).to be true
+      end
     end
   end
 end

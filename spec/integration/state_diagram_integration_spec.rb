@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'rexml/document'
+require 'yaml'
 
 RSpec.describe 'StateDiagram Integration' do
   describe 'complete state diagram pipeline' do
@@ -87,7 +89,7 @@ RSpec.describe 'StateDiagram Integration' do
     end
 
     it 'handles different directions' do
-      source = "stateDiagram-v2 LR\nIdle-->Active"
+      source = "stateDiagram-v2\ndirection LR\nIdle-->Active"
 
       diagram = parser.parse(source)
       expect(diagram.direction).to eq('LR')
@@ -117,6 +119,37 @@ RSpec.describe 'StateDiagram Integration' do
       expect(handlers[:renderer]).to eq(
         Sirena::Renderer::StateDiagramRenderer
       )
+    end
+  end
+
+  # The regression net for the corpus burndown: every state case mmdc
+  # 11.12.0 renders has to survive the whole Engine path and come back as
+  # SVG a parser accepts.
+  describe 'the oracle-valid corpus' do
+    def self.oracle_valid_cases
+      verdicts = YAML.load_file('spec/mermaid/corpus-verdicts.yml')
+        .to_h { |row| [row['case'], row['verdict']] }
+
+      %w[state state_diagram].flat_map do |type|
+        Dir.glob("spec/mermaid/#{type}/*.mmd").select do |path|
+          verdicts[path.delete_prefix('spec/mermaid/')] == 'valid'
+        end
+      end.sort
+    end
+
+    # A tripwire, not a behaviour spec: it fails when the corpus or the
+    # verdicts move, so the generated list below cannot quietly shrink.
+    it 'still finds the 52 cases the examples below were generated from' do
+      expect(self.class.oracle_valid_cases.length).to eq(52)
+    end
+
+    oracle_valid_cases.each do |path|
+      it "renders #{path.delete_prefix('spec/mermaid/')}" do
+        svg = Sirena::Engine.new.render(File.read(path))
+
+        expect(svg).to start_with('<svg')
+        expect { REXML::Document.new(svg) }.not_to raise_error
+      end
     end
   end
 end
