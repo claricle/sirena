@@ -71,6 +71,74 @@ RSpec.describe ExampleTasks do
     end
   end
 
+  # The only thing standing between a source that stops rendering and the gem
+  # shipping its stale picture forever. Deleting the call in :generate left the
+  # whole suite green before these.
+  describe '.handle_failed_svgs' do
+    def handle(failures)
+      described_class.handle_failed_svgs(failures)
+    end
+
+    let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
+
+    it 'deletes the stale SVG of a source that is expected not to render' do
+      svg = write('gantt/01-simple-timeline.beta.svg')
+
+      expect { handle([[expected_source, svg]]) }.to output.to_stdout
+      expect(File).not_to exist(svg)
+    end
+
+    it 'says nothing when the stale SVG is already gone' do
+      missing = File.join(examples_dir, 'gantt/01-simple-timeline.beta.svg')
+
+      expect { handle([[expected_source, missing]]) }.not_to raise_error
+    end
+
+    # An unexpected failure is a regression, not a cleanup. Exiting before any
+    # delete is what keeps a real breakage from quietly erasing the evidence.
+    it 'exits without deleting anything when an unexpected source failed' do
+      svg = write('flowchart/01-basic.svg')
+
+      expect { handle([['flowchart/01-basic.mmd', svg]]) }
+        .to raise_error(SystemExit).and(output(/Unexpected/).to_stdout)
+      expect(File).to exist(svg)
+    end
+
+    it "keeps an expected failure's SVG when an unexpected one shares the run" do
+      expected_svg = write('gantt/01-simple-timeline.beta.svg')
+      unexpected_svg = write('flowchart/01-basic.svg')
+
+      expect do
+        handle([[expected_source, expected_svg], ['flowchart/01-basic.mmd', unexpected_svg]])
+      end.to raise_error(SystemExit).and(output(/Unexpected/).to_stdout)
+      expect(File).to exist(expected_svg)
+    end
+
+    it 'does nothing when every source rendered' do
+      svg = write('flowchart/01-basic.svg')
+
+      expect { handle([]) }.not_to raise_error
+      expect(File).to exist(svg)
+    end
+  end
+
+  # Both helpers above are worth nothing if the task stops calling them, and
+  # nothing else can see a deleted call — that is exactly why they went
+  # untested. Pinned on the task's source, the way the conformance gate pins
+  # the unrenderable list, because the task's body is a Rake proc that runs
+  # against the real examples/ tree and cannot be invoked from a spec.
+  describe 'the generate task' do
+    let(:task_source) { File.read(TASKS_RAKE_FILE) }
+
+    it 'hands every failed render to the cleanup' do
+      expect(task_source).to include('ExampleTasks.handle_failed_svgs(failed_renders)')
+    end
+
+    it 'sweeps orphans once generation is done' do
+      expect(task_source).to include('ExampleTasks.remove_orphan_svgs(examples_dir)')
+    end
+  end
+
   describe '.theme_for' do
     it 'reads the theme its metadata names' do
       mmd = write('flowchart/01-basic.mmd')

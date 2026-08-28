@@ -228,9 +228,14 @@ module Sirena
         end
       end
 
+      # Reflecting a control point through the current point. Written as
+      # `point + (point - source)` rather than `2 * point - source`, which is
+      # the same number but overflows on the way: at `M 1e308 0 S …` the
+      # source IS the current point, so the reflection is that point, and
+      # doubling it reached Infinity and pointed the head backwards.
       def reflection(control)
         source = control || @point
-        [(@point[0] * 2) - source[0], (@point[1] * 2) - source[1]]
+        [@point[0] + (@point[0] - source[0]), @point[1] + (@point[1] - source[1])]
       end
 
       def straight(destination)
@@ -300,6 +305,15 @@ module Sirena
       def heading(at, from, to)
         dx = to[0] - from[0]
         dy = to[1] - from[1]
+        # Two finite coordinates can still overflow the distance between them:
+        # `M -1e308 0 L 1e308 0` is 2e308 apart. A direction does not change
+        # with scale, so halving both ends brings the difference back into
+        # range and answers the same question. Only reached on overflow, so
+        # nothing else loses precision to it.
+        if !dx.finite? || !dy.finite?
+          dx = (to[0] / 2) - (from[0] / 2)
+          dy = (to[1] / 2) - (from[1] / 2)
+        end
         length = Math.hypot(dx, dy)
         # Not merely non-zero: path data carrying an out-of-range exponent
         # can put Infinity in the anchor or in a coordinate delta. The guard

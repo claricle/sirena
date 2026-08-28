@@ -113,10 +113,15 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dy]).to eq([10.0, 10.0, 1.0])
     end
 
-    it 'closes back to the start of the subpath' do
+    # The heading as well as the point. A closing segment travels from the
+    # last vertex back to the start, and that direction is what an arrowhead
+    # there points along — asserting the position alone let any angle pass.
+    it 'closes back to the start of the subpath, heading along the closing segment' do
       anchor = terminus('M 0 0 L 10 0 L 10 10 Z')
+      diagonal = -10 / Math.hypot(10, 10)
 
       expect([anchor.x, anchor.y]).to eq([0.0, 0.0])
+      expect([anchor.dx, anchor.dy]).to eq([diagonal, diagonal])
     end
 
     it 'has no anchor when the path only moves' do
@@ -207,6 +212,21 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect(terminus('M 0 0 C 0 0, 1e400 0, 10 0')).to be_nil
     end
 
+    # Both coordinates are finite; it is the distance between them that
+    # overflows. The case below only ever subtracted from zero, so it could
+    # not see this.
+    it 'finds a heading across a segment wider than the float range' do
+      anchor = terminus('M -1e308 0 L 1e308 0')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([1e308, 0.0, 1.0, 0.0])
+    end
+
+    it 'finds a heading between two large coordinates of the same sign' do
+      anchor = terminus('M 1e308 1e308 L 9e307 1e308')
+
+      expect([anchor.dx, anchor.dy]).to eq([-1.0, 0.0])
+    end
+
     it 'has no anchor when the heading is not finite' do
       expect(terminus('M 0 0 L 1e400 0')).to be_nil
     end
@@ -249,6 +269,16 @@ RSpec.describe Sirena::Svg::PathGeometry do
 
     it 'does not borrow a later subpath heading after a degenerate initial line' do
       expect(origin('M 0 0 L 0 0 M 50 50 L 60 50')).to be_nil
+    end
+
+    # A smooth curve with no curve before it reflects the current point onto
+    # itself, so the outgoing reference IS the current point. Doubling the
+    # coordinate to get there overflowed and pointed the head back down the
+    # x-axis instead of up the y-axis.
+    it 'reflects a leading smooth curve control without overflowing' do
+      anchor = origin('M 1e308 0 S 1e308 10 9e307 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([1e308, 0.0, 0.0, 1.0])
     end
 
     it 'treats a zero-radius initial arc as a straight line' do
