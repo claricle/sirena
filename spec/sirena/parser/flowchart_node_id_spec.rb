@@ -1140,8 +1140,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # save them, in any mixture: mermaid's own token is `end\b\s*`, so
     # the run goes with the word.
     ["end", '""end', "1end", "éend", "##end", "1#end", "Zéend", "ZA中end",
-     "end ", "end   ", "end\t", "end\t\t", "end \t", "end\t "]
-      .each do |name|
+     "end ", "end   ", "end\t", "end\t\t", "end \t", "end\t ",
+     "end\u00A0", "1end\u00A0"].each do |name|
       it "refuses #{name.inspect} as a whole line" do
         expect(bare_subgraph_parses?(name)).to be(false)
       end
@@ -1153,6 +1153,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # does.
     ["Z#end", "Z1end", "ZéAend", "$end", "_end", "Zend", "endx", "end_",
      "end2", "end [T]", "end A", "end A [T]", "end;", "end ;", "end\t;",
+     "end\u00A0;", "endx\u00A0", "A\u00A0",
      '""end [T]', '"" end A'].each do |name|
       it "takes #{name.inspect} as a whole line" do
         expect(bare_subgraph_parses?(name)).to be(true)
@@ -1161,13 +1162,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   # The same space in front of a `;` that node statements already tolerate
-  # in `loose_separator`.
+  # in `loose_separator`, over the whole space set mermaid reads.
   describe "a space before a subgraph's semicolon" do
-    %w[A endx end 1end].each do |name|
-      it "takes #{name} with a spaced semicolon" do
-        source = "graph TD\nsubgraph #{name} ;\nX-->Y\nend\n"
+    gaps = { "a space" => " ", "a tab" => "\t",
+             "a no-break space" => "\u00A0" }.freeze
 
-        expect(subgraph_name_parses?(source)).to be(true)
+    %w[A endx end 1end].each do |name|
+      gaps.each do |label, gap|
+        it "takes #{name} with #{label} before the semicolon" do
+          source = "graph TD\nsubgraph #{name}#{gap};\nX-->Y\nend\n"
+
+          expect(subgraph_name_parses?(source)).to be(true)
+        end
       end
     end
 

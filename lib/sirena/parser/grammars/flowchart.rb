@@ -263,10 +263,13 @@ module Sirena
             # A subgraph body must begin on a new physical line. The gap in
             # front of the `;` is the one node statements already tolerate
             # in `loose_separator`: mmdc draws `A ;` `end ;` `endx ;` and
-            # `1end ;` as readily as `A;`, and the tab forms with them. A
-            # bare `line_end` here refused every spaced form, because its
-            # own `space?` sits BEHIND the semicolon, not in front of it.
-            space? >> line_end >>
+            # `1end ;` as readily as `A;`. A bare `line_end` refused every
+            # one, because its own space run sits BEHIND the semicolon and
+            # not in front of it.
+            #
+            # `line_space`, not `space?`: mermaid's lexer eats its whole
+            # space set here, so `subgraph A` no-break-space `;` draws.
+            line_space.repeat >> line_end >>
             ws? >>
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
@@ -952,8 +955,13 @@ module Sirena
         # Whitespace does not save it, in any mixture: `subgraph end`
         # `end ` `end   ` `end\t` `end\t\t` `end \t` and `end\t ` are all
         # refused, which is mermaid's own `end\b\s*` eating the run.
+        #
+        # The run is `line_space`, the set this grammar already measured
+        # against mermaid's, so a no-break space goes with the keyword the
+        # way a plain one does: `subgraph end` no-break-space is refused
+        # too, while `subgraph A` no-break-space draws.
         rule(:bare_subgraph_end) do
-          subgraph_end_id >> space? >> (newline | eof)
+          subgraph_end_id >> line_space.repeat >> (newline | eof)
         end
 
         # The guard belongs here because this is the one rule BOTH arms of
@@ -1255,13 +1263,25 @@ module Sirena
 
         rule(:id_body) { id_dot | id_hyphen | id_char }
 
-        # Before mermaid lexes anything it rewrites the whole source, and
-        # one of the rewrites is `encodeEntities`, which turns every
-        # `#\w+;` into a placeholder standing for `&…;`
-        # (`mermaid/dist/chunks/mermaid.esm.min/chunk-7CWYLC5S.mjs`,
-        # `r.replace(/#\w+;/g, …)`). The placeholder is spelt in characters
-        # no id may hold, so an id that swallowed the sequence is one
-        # mermaid cannot lex.
+        # Before mermaid lexes anything it rewrites the whole source. The
+        # rewrite that matters here is the last of `encodeEntities`' three,
+        # `r.replace(/#\w+;/g, …)`, which turns `#\w+;` into a placeholder
+        # standing for `&…;`
+        # (`mermaid/dist/chunks/mermaid.esm.min/chunk-7CWYLC5S.mjs`). The
+        # placeholder is spelt in characters no id may hold, so an id that
+        # swallowed the sequence is one mermaid cannot lex.
+        #
+        # NOT every `#\w+;`, though, and this rule does not model the
+        # difference. Two rewrites run FIRST — `/style.*:\S*#.*;/` and
+        # `/classDef.*:\S*#.*;/` — and each strips the final `;` from what
+        # it matches. Neither is anchored, so `stylex` and a `style:` inside
+        # a label count: mmdc draws `stylex[foo:#bar]-->A#a;` and
+        # `Z[style:#b]-->A#a;` because the `;` is gone before the escape
+        # could form, and this refuses both. Modelling that needs a source
+        # pre-pass, which this grammar has no place for yet, and origin/main
+        # refuses the same sources for want of a `#` in an id at all.
+        # Owner: the PR that models `encodeEntities` as a pre-pass — it also
+        # owns the `style Z fill:#é;` over-acceptance left on main.
         #
         # The shape is exact and was measured either side of every part of
         # it: the run must be `[A-Za-z0-9_]`, and the `;` must abut it.
