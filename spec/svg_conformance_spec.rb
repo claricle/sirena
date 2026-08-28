@@ -40,14 +40,25 @@ CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'fixt
 CONFORMANCE_CORPUS_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', '*', '*.mmd')).freeze
 CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*', '*.mmd')).freeze
 
-# How many corpus cases render to a document today. A floor rather than the
-# exact figure, because item 06 raises it and this gate must not stand in the
-# way — but a renderer that starts raising for every input takes its whole
-# type out of the population, and an offender list over what survives would
-# stay green while measuring less. Ratchet it up when it rises.
+# Which corpus cases render to a document today, by name. A count was the
+# first attempt and it was not enough: a case that regresses out of the
+# population while another gains its way in leaves the total where it was, so
+# the offender list is drawn from a different set and the gate stays green.
+# Identity sees the swap a number cannot.
 #
-# 736 measured 2026-08-27 with `bundle exec ruby scripts/corpus_sweep.rb`,
-# which counts the same population by the same criterion.
+# A floor, not an equality: additions are free, because item 06 raises this
+# every week and this gate must not stand in the way. Only a case that STOPS
+# rendering fails it.
+#
+# Regenerate after a real gain with
+# `CONFORMANCE_WRITE_RENDERABLE=1 bundle exec rspec spec/svg_conformance_spec.rb`,
+# which writes the file from the same predicate the gate reads it with.
+CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'corpus-renderable.txt')
+
+# The size the baseline itself must not fall below. It guards the guard: an
+# emptied or truncated list would make the subset check pass against nothing.
+# 736 measured 2026-08-27, the same population `scripts/corpus_sweep.rb`
+# counts by the same criterion.
 CONFORMANCE_RENDERED_FLOOR = 736
 
 # The example sources Sirena cannot parse yet, so they ship no SVG. Named
@@ -105,6 +116,22 @@ RSpec.describe Sirena::Svg do
   # @return [Boolean] whether the value is a document to judge
   def svg_document?(value)
     value.is_a?(String) && value.match?(/\A<svg(?:\s|>)/)
+  end
+
+  # A corpus case as the baseline names it: `<type>/<case>.mmd`, the same key
+  # `scripts/corpus_sweep.rb --failing` prints, so the two lists compare.
+  def corpus_name(path)
+    path.sub("#{File.join(CONFORMANCE_ROOT, 'spec', 'mermaid')}/", '')
+  end
+
+  def baseline_renderable
+    @baseline_renderable ||= File.readlines(CONFORMANCE_RENDERABLE_FILE, chomp: true).reject(&:empty?)
+  end
+
+  # Writes the baseline from the run that just measured it, so the list and
+  # the gate can never be two spellings of "renders to a document".
+  def write_renderable(names)
+    File.write(CONFORMANCE_RENDERABLE_FILE, "#{names.sort.join("\n")}\n")
   end
 
   # A case Sirena cannot render is item 06's problem, not this gate's.
@@ -166,13 +193,20 @@ RSpec.describe Sirena::Svg do
   describe 'conformance across the mermaid corpus' do
     # One example rather than 1,997: the useful failure is the whole list of
     # offending cases and what each emitted, not the first one rspec reaches.
+    # The baseline is the gate's own population guard, so it is checked
+    # before anything is measured against it.
+    it 'holds a renderable baseline to draw the population from' do
+      expect(baseline_renderable.size).to be >= CONFORMANCE_RENDERED_FLOOR
+      expect(baseline_renderable.uniq).to eq(baseline_renderable)
+    end
+
     it 'renders every case it can render conformantly' do
-      rendered = 0
+      rendered = []
       offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
         svg = render_or_skip(source_path)
         next unless svg
 
-        rendered += 1
+        rendered << corpus_name(source_path)
         malformed = parse_error(svg)
         next "#{source_path.sub("#{CONFORMANCE_ROOT}/", '')}: not well-formed: #{malformed}" if malformed
 
@@ -180,9 +214,14 @@ RSpec.describe Sirena::Svg do
         complaint(source_path, result) unless result.valid?
       end
 
+      write_renderable(rendered) if ENV['CONFORMANCE_WRITE_RENDERABLE']
+
       # Checked first: an empty offender list means nothing until the
-      # population it was drawn from is known to be intact.
-      expect(rendered).to be >= CONFORMANCE_RENDERED_FLOOR
+      # population it was drawn from is known to be intact. By name, because a
+      # count stays put when one case regresses and another gains.
+      lost = baseline_renderable - rendered
+      expect(lost).to be_empty,
+                      -> { "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}" }
       expect(offenders).to be_empty, -> { offenders.join("\n") }
     end
   end
