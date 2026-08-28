@@ -52,9 +52,9 @@ module Sirena
       # Optional edge label
       attribute :label, :string
 
-      # Arrow type: the head part, optionally prefixed by the line's weight.
-      # The head part is `line` for none, `arrow`, `cross` or `circle`.
-      # `bidirectional`, `cross_both` and `circle_both` are both-ends forms.
+      # Arrow type: the head part, optionally prefixed by the line's
+      # weight. The head part is `line` for none, or `arrow`, `cross` or
+      # `circle`; a `_both` suffix marks the head as drawn at both ends.
       # Weights are `thick_` and `dotted_`. `invisible` carries neither.
       attribute :arrow_type, :string
 

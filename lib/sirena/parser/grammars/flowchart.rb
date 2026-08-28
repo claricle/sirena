@@ -484,9 +484,10 @@ module Sirena
         # the tree has one shape instead of one per combination. Parslet
         # omits a `.maybe` that wraps its own `.as`, which is why the
         # transform previously needed a rule per combination.
-        # The `:shape` slot is nil either way: `dot_absent` is a
-        # zero-width lookahead and captures nothing. It only exists to
-        # refuse the flush dot a bare name would otherwise swallow.
+        # On its second branch the `:shape` slot comes back nil:
+        # `dot_absent` is a zero-width lookahead and captures nothing. It
+        # is there only to refuse the flush dot a bare name would
+        # otherwise swallow.
         rule(:node_with_shape) do
           node_id.as(:node_id) >>
             ((ws? >> node_shape).as(:shape) | dot_absent.as(:shape)) >>
@@ -501,9 +502,10 @@ module Sirena
         # reads the dot of `A.-B` and of `A[x]:::c.-B` as name text and
         # refuses `A.->B`, `A:::c.->B` and `A[x]:::c.->B` outright.
         #
-        # Sirena's own names take no dot, so it refuses all five rather
-        # than naming a node or a class after one. Refusing is what it did
-        # before; reading a link there would not be.
+        # Sirena's own names take no dot, so it refuses all six of those
+        # — `A.-B`, `A:::c.-B`, `A[x]:::c.-B` and the three `.->` forms —
+        # rather than naming a node or a class after one. Refusing is what
+        # it did before; reading a link there would not be.
         rule(:dot_absent) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
@@ -733,10 +735,10 @@ module Sirena
 
         rule(:headed_link) { link_body >> link_end }
 
-        # The three bodies part at their second character — `--`, `==`,
-        # and a dot the other two never carry — so this alternation is
-        # mutually exclusive and its order is free. Only the one above
-        # is load-bearing.
+        # The three bodies part on a `-`, an `=`, or a dot no other body
+        # carries — a dotted one may open with the dot itself — so this
+        # alternation is mutually exclusive and its order is free. Only
+        # the one above is load-bearing.
         rule(:link_body) { solid_body | thick_body | dotted_body }
 
         rule(:solid_body) { str('--') >> str('-').repeat }

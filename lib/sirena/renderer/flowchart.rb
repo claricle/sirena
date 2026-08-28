@@ -30,9 +30,11 @@ module Sirena
       }.freeze
       private_constant :NODE_OUTLINES
 
-      # mmdc falls back to these when the theme names no width or dash
-      # pattern of its own: its thick line is 3.5 times its normal one,
-      # and a dotted one is dashed 2 on, 2 off.
+      # mmdc's own numbers, reached when the theme names no thick width
+      # and no dash pattern. The multiple lands on whatever plain width
+      # the theme does name, and on mmdc's 1 only when it names none —
+      # see `thick_width`. mmdc's thick line is 3.5 times its normal one,
+      # and its dotted one is dashed 2 on, 2 off.
       LINK_THICK_MULTIPLE = 3.5
       LINK_DOTTED_DASHES = '2'
       private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES
@@ -40,8 +42,7 @@ module Sirena
       # What each link type draws at its ends, read off mmdc's own
       # `marker-start` and `marker-end`.
       EDGE_HEADS = { 'arrow' => :arrow, 'cross' => :cross,
-                     'circle' => :circle,
-                     'bidirectional' => :arrow }.freeze
+                     'circle' => :circle }.freeze
       private_constant :EDGE_HEADS
 
       # Each head is mmdc's own marker, scaled the way mmdc scales it.
@@ -88,8 +89,10 @@ module Sirena
       EDGE_LABEL_LIFT = 5.0
       private_constant :EDGE_LABEL_LIFT
 
-      # A self loop is a two-corner polyline: it goes out past the node by
-      # DEPTH and runs SELF_LOOP_HALF_SPAN either side of centre.
+      # A self loop is a two-corner polyline. It goes out past the node
+      # edge by SELF_LOOP_DEPTH of the node's shorter side, capped at
+      # SELF_LOOP_MAX_DEPTH, and runs SELF_LOOP_HALF_SPAN of its width
+      # either side of centre.
       #
       # Only the depth has the oracle behind it, and it is measured across
       # sizes rather than read off one node. mmdc loops 24.3 past a 69.4x54
@@ -483,7 +486,7 @@ module Sirena
       end
 
       def edge_head_ends(type)
-        type.end_with?('_both', 'bidirectional') ? [:source, :target] : [:target]
+        type.end_with?('_both') ? [:source, :target] : [:target]
       end
 
       def node_centre(node)
@@ -622,11 +625,9 @@ module Sirena
       def backed_off(geometry, reach)
         tip_x, tip_y, from_x, from_y =
           geometry.values_at(:tip_x, :tip_y, :from_x, :from_y)
-        span = Math.hypot(from_x - tip_x, from_y - tip_y)
-        return [tip_x, tip_y] if span.zero?
+        along_x, along_y = unit_towards(tip_x, tip_y, from_x, from_y)
 
-        [tip_x + ((from_x - tip_x) / span * reach),
-         tip_y + ((from_y - tip_y) / span * reach)]
+        [tip_x + (along_x * reach), tip_y + (along_y * reach)]
       end
 
       # The heads follow the theme, like the line they belong to. Hardcoded

@@ -201,10 +201,6 @@ module Sirena
           'BR' => 'TB'
         }.freeze
 
-        # An arrow at both ends has its own name; the others read as
-        # `<marker>_both`.
-        BOTH_ENDS = { 'arrow' => 'bidirectional' }.freeze
-
         # Mermaid honours a leading marker only when the trailing one
         # matches it. `o--x` draws the cross and nothing at the source, and
         # a mismatched pair drops back to normal thickness but keeps its
@@ -216,17 +212,11 @@ module Sirena
           head = LINK_MARKERS[token[-1]]
           tail = LINK_MARKERS[token[0]]
           matched = !head.nil? && head == tail
+          ends = matched ? "#{head}_both" : head || 'line'
 
-          "#{link_weight(token, tail, matched)}#{link_ends(head, matched)}"
+          "#{link_weight(token, tail, matched)}#{ends}"
         end
         private_class_method :link_type
-
-        def self.link_ends(head, matched)
-          return head || 'line' unless matched
-
-          BOTH_ENDS.fetch(head, "#{head}_both")
-        end
-        private_class_method :link_ends
 
         # A thick body keeps its weight only when it carries no leading
         # marker, or a leading marker mermaid actually honours.
@@ -373,10 +363,11 @@ module Sirena
             next unless edge_data.is_a?(Hash)
 
             # The capture arrives as {token: slice}, and no Parslet rule
-            # unwraps it. Two reasons, in order. This class overrides
-            # `apply` (above) and never calls Parslet's, so none of the
-            # declared rules run at all. And even under Parslet's own
-            # `apply`, a rule keyed on `arrow:` could not match: Parslet
+            # unwraps it. Two reasons, in order. Nothing instantiates this
+            # class — parsing runs through its own class-level `apply`
+            # below — so Parslet's instance `apply`, the only thing that
+            # runs the declared rules, is never called. And even under
+            # that, a rule keyed on `arrow:` could not match: Parslet
             # matches a hash only when EVERY key matches, and the hash
             # holding `arrow` carries `label` and `target` too. So the
             # slice is read here, where the link is the only thing meant.
