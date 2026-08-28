@@ -71,11 +71,15 @@ RSpec.describe Sirena::Transform::FlowchartTransform do
       children = transform.to_graph(model)[:children]
       labels = children.map { |child| child[:labels].first[:text] }
       members = children.select { |child| child.dig(:metadata, :cluster) }
-        .flat_map { |box| box[:children] }
-        .map { |node| node[:labels].first[:text] }
+        .to_h do |box|
+          title = box[:labels].first[:text]
+          held = box[:children].map { |node| node[:labels].first[:text] }
+          [title, held]
+        end
 
       expect(labels).to eq(['First', 'Second', 'First group', 'Second group'])
-      expect(members).to eq(%w[One Two])
+      expect(members).to eq('First group' => %w[One],
+                            'Second group' => %w[Two])
     end
 
     it 'creates edges with metadata' do

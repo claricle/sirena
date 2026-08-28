@@ -42,7 +42,7 @@ module Sirena
       def transform_children(diagram)
         boxes = drawable_subgraphs(diagram)
         nested = boxes.each_with_object({}) do |box, acc|
-          box.node_ids.each { |id| acc[id] = box.id }
+          box.node_ids.each { |id| acc[id] = box }
         end
 
         placed = diagram.nodes.map { |node| transform_node(node) }
@@ -50,20 +50,37 @@ module Sirena
         assemble(boxes, placed, nested)
       end
 
-      # Model order is kept for emitted clusters. Parent lookup is
-      # independent of declaration order, so a later cluster can hold an
-      # earlier one.
+      # Model order is kept for emitted clusters. Nested clusters are attached
+      # before member nodes, so every cluster lists boxes before nodes. Parent
+      # lookup is independent of declaration order, so a later cluster can
+      # hold an earlier one.
       def assemble(boxes, placed, nested)
         entries = boxes.map { |box| [box, transform_subgraph(box)] }
-        clusters = entries.to_h { |box, cluster| [box.id, cluster] }
+        clusters_by_box = index_by_box(entries)
+        parents_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
 
-        entries.each do |box, mine|
-          clusters[holder_of(box, clusters)]&.fetch(:children)&.push(mine)
+        attach_clusters(entries, parents_by_id)
+        loose = place_nodes(placed, nested, clusters_by_box)
+        loose + root_clusters(entries, parents_by_id)
+      end
+
+      def index_by_box(entries)
+        entries.each_with_object({}.compare_by_identity) do |(box, cluster), acc|
+          acc[box] = cluster
         end
+      end
 
-        loose = place_nodes(placed, nested, clusters)
-        roots = entries.reject { |box, _cluster| holder_of(box, clusters) }
-        loose + roots.map(&:last)
+      def attach_clusters(entries, parents)
+        entries.each do |box, mine|
+          holder = holder_of(box, parents)
+          next unless holder
+
+          holder.fetch(:children).push(mine)
+        end
+      end
+
+      def root_clusters(entries, parents)
+        entries.reject { |box, _cluster| holder_of(box, parents) }.map(&:last)
       end
 
       def place_nodes(nodes, nested, clusters)
@@ -77,7 +94,7 @@ module Sirena
       # rather than written back, because the diagram belongs to the
       # caller and a transform has no business editing it.
       def holder_of(box, clusters)
-        clusters.key?(box.parent_id) ? box.parent_id : nil
+        clusters[box.parent_id]
       end
 
       # An empty subgraph draws no cluster in mermaid, so it is not

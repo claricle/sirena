@@ -463,7 +463,7 @@ module Sirena
           Thread.current[:sirena_flowchart_transform] = nil
         end
 
-        # Declaration order is kept for painting. Ownership is independent:
+        # Declaration order is kept in the model. Ownership is independent:
         # a parent declared later can adopt an earlier top-level subgraph.
         #
         # Being written inside a box is a claim like any other, so a

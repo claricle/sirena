@@ -54,10 +54,10 @@ RSpec.describe Sirena::Engine do
   end
 
   def exactly_on_border?(rect, x, y)
-    left = rect[:x]
-    right = left + rect[:width]
-    top = rect[:y]
-    bottom = top + rect[:height]
+    left = rect[:x].to_i.to_f
+    right = left + rect[:width].to_i
+    top = rect[:y].to_i.to_f
+    bottom = top + rect[:height].to_i
     horizontal = [top, bottom].include?(y) && x.between?(left, right)
     vertical = [left, right].include?(x) && y.between?(top, bottom)
     horizontal || vertical
@@ -68,13 +68,40 @@ RSpec.describe Sirena::Engine do
     right = left + rect[:width]
     top = rect[:y]
     bottom = top + rect[:height]
-    horizontal = [top, bottom].include?(y) && x.between?(left + radius, right - radius)
-    vertical = [left, right].include?(x) && y.between?(top + radius, bottom - radius)
-    return true if horizontal || vertical
+    # SVG clamps rx by half the width and ry by half the height,
+    # independently, so a short wide box gets an elliptical corner.
+    radii = [[radius, rect[:width] / 2.0].min, [radius, rect[:height] / 2.0].min]
+    bounds = [left, right, top, bottom]
+    return true if on_rounded_side?(bounds, x, y, radii)
 
-    cx = x < left + radius ? left + radius : right - radius
-    cy = y < top + radius ? top + radius : bottom - radius
-    (Math.hypot(x - cx, y - cy) - radius).abs <= 1
+    on_rounded_arc?(bounds, x, y, radii)
+  end
+
+  def on_rounded_side?(bounds, x, y, radii)
+    left, right, top, bottom = bounds
+    rx, ry = radii
+    horizontal = [top, bottom].include?(y) && x.between?(left + rx, right - rx)
+    vertical = [left, right].include?(x) && y.between?(top + ry, bottom - ry)
+    horizontal || vertical
+  end
+
+  def on_rounded_arc?(bounds, x, y, radii)
+    left, right, top, bottom = bounds
+    rx, ry = radii
+    cx = corner_centre(x, left, right, rx)
+    cy = corner_centre(y, top, bottom, ry)
+    return false unless cx && cy && rx.positive? && ry.positive?
+
+    ellipse = (((x - cx) / rx)**2) + (((y - cy) / ry)**2)
+    ellipse.between?(1.0, 1.01)
+  end
+
+  # nil for a coordinate in neither corner band, so a mid-box point is
+  # never measured against a corner it is nowhere near.
+  def corner_centre(coordinate, near, far, radius)
+    return near + radius if coordinate.between?(near, near + radius)
+
+    far - radius if coordinate.between?(far - radius, far)
   end
 
   # Whether an orthogonal segment enters the open interior. Contact with
@@ -115,17 +142,17 @@ RSpec.describe Sirena::Engine do
                       (points[1][1] + points[2][1]) / 2]
 
     aggregate_failures(name) do
-      expect(points.size).to eq(4)
-      expect(exactly_on_border?(source, *points.first)).to be(true)
-      expect(exactly_on_border?(target, *points.last)).to be(true)
+      expect(points.size).to eq(4), name
+      expect(exactly_on_border?(source, *points.first)).to be(true), name
+      expect(exactly_on_border?(target, *points.last)).to be(true), name
       expect(points.each_cons(2).none? do |from, to|
         [source, target].any? { |face| crosses_face?(face, from, to) }
       end).to be(true), name
       expect(points.all? do |x, y|
         x.between?(min_x, min_x + width) &&
           y.between?(min_y, min_y + height)
-      end).to be(true)
-      expect([label_x, label_y]).to eq(expected_label)
+      end).to be(true), name
+      expect([label_x, label_y]).to eq(expected_label), name
     end
   end
 
@@ -255,13 +282,14 @@ RSpec.describe Sirena::Engine do
       rects = xml.scan(/<g id="node-[^"]+">\s*(<rect[^>]*>)/).flatten
 
       expect(rects.length).to eq(2)
-      rects.each do |rect|
-        expect(attr(rect, "x")).to be >= outer[:x]
-        expect(attr(rect, "y")).to be >= outer[:y]
+      rects.each_with_index do |rect, index|
+        name = "node rectangle #{index}"
+        expect(attr(rect, "x")).to be >= outer[:x], name
+        expect(attr(rect, "y")).to be >= outer[:y], name
         expect(attr(rect, "x") + attr(rect, "width"))
-          .to be <= outer[:x] + outer[:width]
+          .to be <= outer[:x] + outer[:width], name
         expect(attr(rect, "y") + attr(rect, "height"))
-          .to be <= outer[:y] + outer[:height]
+          .to be <= outer[:y] + outer[:height], name
       end
     end
 
@@ -669,6 +697,17 @@ RSpec.describe Sirena::Engine do
       expect(points.uniq.size).to be > 1
     end
 
+    it "clamps a coincident loop to the painted cluster outline" do
+      source = cluster("s", x: 0.9, y: 0.9, width: 100.9, height: 100.9)
+      target = leaf("t", x: 46.35, y: 46.35, width: 10.0, height: 10.0)
+      points = path_points(path_of(graph_between(source, target), "s_to_t"))
+      painted = { x: 0.0, y: 0.0, width: 100.0, height: 100.0 }
+
+      expect(points.size).to be > 2
+      expect(points.first[1]).to eq(0.0)
+      expect(on_rounded_border?(painted, *points.first, 5)).to be(true)
+    end
+
     it "keeps a zero-size coincident edge nonzero" do
       graph = { id: "g",
                 children: [cluster("s", x: 10.0, y: 10.0,
@@ -707,10 +746,38 @@ RSpec.describe Sirena::Engine do
       target = cluster("t", x: 250.0, y: 250.0,
                             width: 100.0, height: 100.0)
       points = path_points(path_of(graph_between(source, target), "s_to_t"))
-      radius = Sirena::Renderer::FlowchartRenderer::CLUSTER_CORNER
 
-      expect(on_rounded_border?(source, *points.first, radius)).to be(true)
-      expect(on_rounded_border?(target, *points.last, radius)).to be(true)
+      expect(on_rounded_border?(source, *points.first, 5)).to be(true)
+      expect(on_rounded_border?(target, *points.last, 5)).to be(true)
+      expect(exactly_on_border?(source, *points.first)).to be(false)
+      expect(exactly_on_border?(target, *points.last)).to be(false)
+      expect(on_rounded_border?(source, 148.18, 148.18, 5)).to be(false)
+    end
+
+    it "uses painted bounds and accepts two-decimal corner coordinates" do
+      source = cluster("s", x: 50.901, y: 50.901,
+                            width: 100.903, height: 100.903)
+      target = cluster("t", x: 250.901, y: 250.901,
+                            width: 100.903, height: 100.903)
+      points = path_points(path_of(graph_between(source, target), "s_to_t"))
+      painted_source = { x: 50.0, y: 50.0, width: 100.0, height: 100.0 }
+      painted_target = { x: 250.0, y: 250.0, width: 100.0, height: 100.0 }
+
+      expect(on_rounded_border?(painted_source, *points.first, 5)).to be(true)
+      expect(on_rounded_border?(painted_target, *points.last, 5)).to be(true)
+      expect(exactly_on_border?(painted_source, *points.first)).to be(false)
+      expect(exactly_on_border?(painted_target, *points.last)).to be(false)
+    end
+
+    it "uses independent radii and the adjacent ELK bend" do
+      source = cluster("s", x: 0.0, y: 0.0, width: 100.0, height: 4.0)
+      target = leaf("t", x: 149.0, y: 5.0, width: 2.0, height: 2.0)
+      edge = { sections: [{ bendPoints: [{ x: 110.0, y: 4.0 }] }] }
+      points = path_points(path_of(graph_between(source, target, edge), "s_to_t"))
+
+      expect(points.first).to eq([95.0, 4.0])
+      expect(points[1]).to eq([110.0, 4.0])
+      expect(on_rounded_border?(source, *points.first, 5)).to be(true)
     end
 
     it "detours when rounded cluster borders would coincide" do
@@ -767,7 +834,7 @@ RSpec.describe Sirena::Engine do
         target = cluster("t", x: offset, y: offset, width: 0.0, height: 0.0)
 
         expect(path_points(path_of(graph_between(source, target), "s_to_t")))
-          .to eq([[0.0, 0.0], [offset, offset]])
+          .to eq([[0.0, 0.0], [offset, offset]]), "offset #{offset}"
       end
     end
 
@@ -864,13 +931,13 @@ RSpec.describe Sirena::Engine do
         aggregate_failures(src) do
           # The loop is the thing that reaches furthest right, so a
           # source whose loop vanished would not be testing the page.
-          expect(xs.max).to be > box_right(xml)
-          expect(xs.max).to be <= width
-          expect(xs.min).to be >= 0
+          expect(xs.max).to be > box_right(xml), src
+          expect(xs.max).to be <= width, src
+          expect(xs.min).to be >= 0, src
           # The loop spreads vertically too, so the page has to hold
           # that as well - the dimension this geometry actually moved.
-          expect(ys.max).to be <= height
-          expect(ys.min).to be >= 0
+          expect(ys.max).to be <= height, src
+          expect(ys.min).to be >= 0, src
         end
       end
     end
@@ -898,17 +965,17 @@ RSpec.describe Sirena::Engine do
         rect = node_rect(xml, id)
         drawn = node_shape(xml, id)
 
-        expect(rect).not_to be_nil
-        expect(drawn).not_to be_nil
+        expect(rect).not_to be_nil, shape
+        expect(drawn).not_to be_nil, shape
         # Out and back: two ends on the outline, two bends clear of it.
-        expect(points.size).to eq(4)
+        expect(points.size).to eq(4), shape
         # On the OUTLINE. A circle and a rhombus meet their bounding box
         # at one point per side, so anchoring anywhere else leaves the
         # loop hanging in space beside the shape.
-        expect(on_shape?(drawn, *points.first)).to be(true)
-        expect(on_shape?(drawn, *points.last)).to be(true)
+        expect(on_shape?(drawn, *points.first)).to be(true), shape
+        expect(on_shape?(drawn, *points.last)).to be(true), shape
         # It has to LEAVE the box, or it is a chord across the inside.
-        expect(points.map(&:first).max).to be > rect[:x] + rect[:width]
+        expect(points.map(&:first).max).to be > rect[:x] + rect[:width], shape
       end
     end
 
@@ -926,12 +993,12 @@ RSpec.describe Sirena::Engine do
         points = nums.each_slice(2).to_a
 
         aggregate_failures(src) do
-          expect(drawn.size).to eq(1)
+          expect(drawn.size).to eq(1), src
           # No zero-length SEGMENT, not merely no zero-length path: a
           # repeated point anywhere along the run draws the same
           # nothing, and matching one exact serialisation missed it.
-          expect(points.each_cons(2).any? { |a, b| a == b }).to be(false)
-          expect(points.size).to be > 1
+          expect(points.each_cons(2).any? { |a, b| a == b }).to be(false), src
+          expect(points.size).to be > 1, src
         end
       end
     end
