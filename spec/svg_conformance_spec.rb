@@ -201,6 +201,10 @@ RSpec.describe Sirena::Svg do
     end
 
     it 'renders every case it can render conformantly' do
+      # Read before anything is written. Regenerating first would compare the
+      # new list against itself, so a run that lost one case and gained
+      # another would drop the regressed name from the baseline in silence.
+      baseline = baseline_renderable
       rendered = []
       offenders = CONFORMANCE_CORPUS_SOURCES.filter_map do |source_path|
         svg = render_or_skip(source_path)
@@ -214,15 +218,17 @@ RSpec.describe Sirena::Svg do
         complaint(source_path, result) unless result.valid?
       end
 
-      write_renderable(rendered) if ENV['CONFORMANCE_WRITE_RENDERABLE']
-
       # Checked first: an empty offender list means nothing until the
       # population it was drawn from is known to be intact. By name, because a
       # count stays put when one case regresses and another gains.
-      lost = baseline_renderable - rendered
+      lost = baseline - rendered
       expect(lost).to be_empty,
                       -> { "stopped rendering, so nothing checked them: #{lost.sort.join(', ')}" }
       expect(offenders).to be_empty, -> { offenders.join("\n") }
+
+      # Written last, and only once both assertions have held, so regenerating
+      # can record a gain but never quietly accept a loss.
+      write_renderable(rendered) if ENV['CONFORMANCE_WRITE_RENDERABLE']
     end
   end
 
