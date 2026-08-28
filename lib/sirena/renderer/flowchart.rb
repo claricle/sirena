@@ -82,7 +82,8 @@ module Sirena
       # that marker's own viewBox units, taken at that marker's own scale.
       #
       # `circleEnd` has refX 11 against a centre of 5, so (11 - 5) * 1.1
-      # = 6.6 and its painted edge stops 1.1 short of the node.
+      # = 6.6 and its outline stops 1.1 short of the node. The stroke is
+      # centred on that outline and so paints 0.5 past it, leaving 0.6.
       # `crossEnd` has refX 12 against a centre of 5.5 and scales by 1, so
       # 12 - 5.5 = 6.5 and its nearest arm point stops 2.0 short.
       CIRCLE_HEAD_REACH = 6.6
@@ -671,8 +672,10 @@ module Sirena
       end
 
       # The unit vector from the tip back along the line it arrived on.
-      # Zero when the two points coincide, which leaves a head of no size
-      # rather than a NaN one.
+      # Zero when the two points coincide, which is a direction no head
+      # can be turned by — but never a NaN one. Only the arrow collapses
+      # to nothing there; a circle keeps its radius, and the cross takes
+      # the horizontal fallback in `draw_edge_cross` and stays full size.
       def unit_towards(tip_x, tip_y, from_x, from_y)
         span = Math.hypot(from_x - tip_x, from_y - tip_y)
         return [0.0, 0.0] if span.zero?
