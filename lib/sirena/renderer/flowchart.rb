@@ -17,8 +17,9 @@ module Sirena
       # Which outline each shape name is drawn with. One table, because
       # the drawing and the boundary have to agree: a head landing on a
       # circle's outline while the node is drawn as a rect points at
-      # nothing. Every other name — `subroutine`, `cylindrical`, the
-      # trapezoids — is drawn as a plain box and answers as one.
+      # nothing. Every other name `SHAPE_MAP` produces — `rect`,
+      # `subroutine`, `cylindrical`, `asymmetric`, the parallelograms and
+      # the trapezoids — is drawn as a plain box and answers as one.
       #
       # `rounded` and `stadium` share an outline: both are drawn with
       # their ends rounded the whole way, so a head aiming at one pulls
@@ -39,8 +40,11 @@ module Sirena
       LINK_DOTTED_DASHES = '2'
       private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES
 
-      # What each link type draws at its ends, read off mmdc's own
-      # `marker-start` and `marker-end`.
+      # Which marker each HEAD name draws, read off mmdc's own
+      # `marker-start` and `marker-end`. Keyed on the head alone, not on
+      # the whole link type: `render_edge_heads` strips the weight prefix
+      # and the `_both` suffix first, so `thick_arrow_both` looks up
+      # `arrow` here rather than needing a key of its own.
       EDGE_HEADS = { 'arrow' => :arrow, 'cross' => :cross,
                      'circle' => :circle }.freeze
       private_constant :EDGE_HEADS

@@ -42,7 +42,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "o-.-x" => "dotted_cross", "o-.-" => "dotted_line",
       "<-.-" => "dotted_line",
       # The same family written without its opening hyphen. mmdc draws
-      # every one of these, and the rules refused all 72 of them.
+      # every one of these, and the rules refused the lot — the family is
+      # open-ended in its dot count, so the fourteen pinned below are a
+      # sample of it rather than the whole.
       ".-" => "dotted_line", ".->" => "dotted_arrow",
       ".-x" => "dotted_cross", ".-o" => "dotted_circle",
       "..-" => "dotted_line", "..->" => "dotted_arrow",

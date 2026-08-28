@@ -456,7 +456,7 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
         group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
         expect(group).to match(/<(line|circle)\b/)
-        expect(group).not_to match(/<(line|circle)[^>]*stroke="[^"]/)
+        expect(group).not_to match(/<(line|circle)[^>]*\bstroke=/)
       end
     end
 
@@ -892,7 +892,7 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       gap = if across <= straight
               down.abs - half_h
             else
-              Math.hypot(across - straight, down) - [half_w, half_h].min
+              Math.hypot(across - straight, down) - half_h
             end
 
       expect(gap).to be_within(0.05).of(0)

@@ -187,6 +187,7 @@ module Sirena
           '>' => 'arrow', '<' => 'arrow',
           'x' => 'cross', 'o' => 'circle'
         }.freeze
+        private_constant :LINK_MARKERS
 
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
@@ -278,12 +279,14 @@ module Sirena
           end
         end
 
-        # Helper method to create edges
-        def self.create_edge(source_id, target_data, arrow_type, label = nil)
+        # `link_token` is the raw lexeme the grammar matched — `-->`,
+        # `o--x`, `~~~`. `link_type` is what turns it into the edge's
+        # arrow type; the two are not the same string.
+        def self.create_edge(source_id, target_data, link_token, label = nil)
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
-            e.arrow_type = link_type(arrow_type)
+            e.arrow_type = link_type(link_token)
             # Convert Parslet::Slice to string before checking empty
             label_str = label.to_s if label
             e.label = label_str if label_str && !label_str.empty?
@@ -371,7 +374,7 @@ module Sirena
             # matches a hash only when EVERY key matches, and the hash
             # holding `arrow` carries `label` and `target` too. So the
             # slice is read here, where the link is the only thing meant.
-            arrow_type = edge_data[:arrow][:token].to_s
+            link_token = edge_data[:arrow][:token].to_s
             label = edge_data[:label]
             target_data = edge_data[:target]
 
@@ -382,7 +385,7 @@ module Sirena
             add_or_update_node(diagram, target_node_data)
 
             # Create edge
-            edge = create_edge(source_id, target_node_data, arrow_type, label)
+            edge = create_edge(source_id, target_node_data, link_token, label)
             diagram.edges << edge
 
             # For chaining, next edge source is current target
