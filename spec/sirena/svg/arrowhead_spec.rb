@@ -46,7 +46,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
         path(d: 'M 0 0 L 20 0', marker_end: 'url(#arrowhead)', stroke_width: '2')
       ).first
 
-      expect(points_of(polygon)[1]).to eq([12.0, 4.0])
+      # All three corners: asserting one back corner left the other free to
+      # scale by a different amount.
+      expect(points_of(polygon)).to eq([[20.0, 0.0], [12.0, 4.0], [12.0, -4.0]])
     end
 
     it 'takes the colour of the line, because it is part of it' do
@@ -253,10 +255,12 @@ RSpec.describe Sirena::Svg::Arrowhead do
       moving = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')
       arrowhead = described_class.new(moving)
 
-      first = arrowhead.polygons.first.points
+      # The new head in full, not merely a different one: "not what it was"
+      # would pass for a head that moved to the wrong place.
+      expect(arrowhead.polygons.first.points).to eq('10.0,0.0 6.0,2.0 6.0,-2.0')
       moving.d = 'M 0 0 L 20 0'
 
-      expect(arrowhead.polygons.first.points).not_to eq(first)
+      expect(arrowhead.polygons.first.points).to eq('20.0,0.0 16.0,2.0 16.0,-2.0')
     end
   end
 end

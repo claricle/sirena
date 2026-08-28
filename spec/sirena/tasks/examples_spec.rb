@@ -80,18 +80,21 @@ RSpec.describe ExampleTasks do
     end
 
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
+    # Derived, not typed out: naming the source by position and its SVG by
+    # hand let a reorder of the constant pair the two up wrongly.
+    let(:expected_svg) { expected_source.sub(/\.mmd\z/, '.svg') }
 
     it 'deletes the stale SVG of a source that is expected not to render' do
-      svg = write('gantt/01-simple-timeline.beta.svg')
+      svg = write(expected_svg)
 
       expect { handle([[expected_source, svg]]) }.to output.to_stdout
       expect(File).not_to exist(svg)
     end
 
     it 'says nothing when the stale SVG is already gone' do
-      missing = File.join(examples_dir, 'gantt/01-simple-timeline.beta.svg')
+      missing = File.join(examples_dir, expected_svg)
 
-      expect { handle([[expected_source, missing]]) }.not_to raise_error
+      expect { handle([[expected_source, missing]]) }.not_to output.to_stdout
     end
 
     # An unexpected failure is a regression, not a cleanup. Exiting before any
@@ -105,13 +108,13 @@ RSpec.describe ExampleTasks do
     end
 
     it "keeps an expected failure's SVG when an unexpected one shares the run" do
-      expected_svg = write('gantt/01-simple-timeline.beta.svg')
+      kept = write(expected_svg)
       unexpected_svg = write('flowchart/01-basic.svg')
 
       expect do
-        handle([[expected_source, expected_svg], ['flowchart/01-basic.mmd', unexpected_svg]])
+        handle([[expected_source, kept], ['flowchart/01-basic.mmd', unexpected_svg]])
       end.to raise_error(SystemExit).and(output(/Unexpected/).to_stdout)
-      expect(File).to exist(expected_svg)
+      expect(File).to exist(kept)
     end
 
     it 'does nothing when every source rendered' do

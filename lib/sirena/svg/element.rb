@@ -61,9 +61,10 @@ module Sirena
       #
       # A fragment, not a document. An element that draws sibling shapes — a
       # Path with an arrowhead — returns more than one root, and a strict
-      # parser will refuse that as having two roots. Group and Document, the
-      # only callers, join fragments, so that is the contract they already
-      # rely on.
+      # parser will refuse that as having two roots. Group and Document join
+      # fragments, so that is the contract they already rely on. Path calls
+      # it on each of its own arrowheads too, and a Polygon draws no
+      # siblings, so those are always one root.
       #
       # @return [String] one or more sibling elements, newline separated
       def to_xml
