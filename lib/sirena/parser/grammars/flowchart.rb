@@ -834,27 +834,21 @@ module Sirena
           thick_arrow | dotted_arrow | plain_arrow
         end
 
-        # Bare `==` is not a link (mmdc rejects `A==B`). The arrow form is
-        # two or more `=` followed by `>`. Mermaid's arrowhead-less thick
-        # link `===` is REFUSED here rather than drawn, because this renderer
-        # puts an arrowhead on every edge and drawing one where mermaid draws
-        # none would be worse than refusing. Modelling open links is a
-        # separate change.
+        # Bare `==` is not a link (mmdc rejects `A==B`). A thick link has at
+        # least two `=` before an arrowhead or at least three without one.
+        # The headed arm comes first so its `>` is not left for the target.
         rule(:thick_arrow) do
-          (str('=').repeat(2) >> str('>')).as(:thick)
+          (str('=').repeat(2) >> str('>') |
+            str('=').repeat(3) >> str('>').absent?).as(:thick)
         end
 
-        # Dotted arrow: `-.->`, or `-.-` when no `x`/`o` marker closes
-        # it — see `trailing_xo_marker`.
-        #
-        # Two fixed strings where mermaid has a run: its dotted link is
-        # `[xo<]?-?\.+-[xo>]?`, so `-..-` and `-...->` are links it draws
-        # and this refuses. Under-acceptance only — 0 over-acceptance
-        # across the 396-case link corpus — and closing it belongs with
-        # the leading `[xo<]?`, in the arrowhead-model PR that also owns
-        # `1x-->B` and `A---xB`.
+        # A dotted link has one or more dots. As with a plain link, put the
+        # headed arm first and guard only the open arm from consuming an
+        # unsupported crossed or circled arrowhead.
         rule(:dotted_arrow) do
-          (str('-.->') | (str('-.-') >> trailing_xo_marker.absent?)).as(:dotted)
+          (str('-') >> str('.').repeat(1) >> str('->') |
+            str('-') >> str('.').repeat(1) >> str('-') >>
+              trailing_xo_marker.absent?).as(:dotted)
         end
 
         # Mermaid's plain link is `--+[-xo>]`: two or more dashes, then
@@ -886,8 +880,10 @@ module Sirena
         # links with no node between them.
         #
         # Sirena draws no crossed or circled arrowhead, so the marker is
-        # REFUSED rather than drawn with the wrong head — the same call
-        # `thick_arrow` makes for the arrowhead-less `===` just above.
+        # REFUSED rather than drawn with the wrong head. The arrowhead-less
+        # `===` above was refused for that same reason once; it no longer is,
+        # because a headless link now resolves to a type that draws no
+        # marker. A crossed or circled head still has no shape to draw.
         # Modelling these heads is the change that also owns `1x-->B`.
         #
         # 56 inputs parsed here that mmdc refuses, and widening node ids

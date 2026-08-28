@@ -99,5 +99,15 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
       expect(paths).not_to be_empty
     end
+
+    it 'renders marker-end only for a link with an arrowhead' do
+      { '-->' => true, '---' => false }.each do |link, has_arrowhead|
+        source = "flowchart TD\n  A#{link}B\n"
+        svg = Sirena.render(source)
+        message = "source #{source.inspect}"
+
+        expect(svg.include?('marker-end')).to be(has_arrowhead), message
+      end
+    end
   end
 end

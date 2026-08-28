@@ -148,19 +148,28 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  # Measured against mmdc 11.12.0: `A==>B` and `A===>B` draw arrowheads,
-  # `A===B` and `A====B` draw edges without arrowheads, and `A==B` is
-  # rejected. Widening ids made the bad `==` arm reachable with the numeric
-  # `1==b`, which is why this rule changed.
+  # Measured against mmdc 11.12.0: two equals is too short to be a link, so
+  # `A==B` is refused exactly as `A--B` is. Three or more draw a thick edge,
+  # carrying an arrowhead only when the link itself has one.
   #
-  # The two arrowhead-less forms are REFUSED here rather than drawn: this
-  # renderer puts an arrowhead on every edge, so drawing one where mermaid
-  # draws none would be worse than refusing. main refused them too.
+  # The headless forms used to be refused here, because every edge got an
+  # arrowhead and drawing one where mermaid draws none is worse than
+  # refusing. Link types now carry the arrowhead separately and a headless
+  # link renders with no marker, so that reason is gone and these are drawn.
   describe "a thick link" do
-    ["1==b", "A==b", "A==B", "A===B", "A====B", "1===b"]
-      .each do |statement|
-      it "refuses #{statement}" do
+    ["1==b", "A==b", "A==B"].each do |statement|
+      it "refuses #{statement}, which is only two equals" do
         expect(parses?("graph TD\n#{statement}\n")).to be(false)
+      end
+    end
+
+    { "A===B" => %w[A B], "A====B" => %w[A B], "1===b" => %w[1 b] }
+      .each do |statement, ids|
+      it "accepts #{statement} and draws it without an arrowhead" do
+        source = "graph TD\n#{statement}\n"
+        expect(node_ids(source)).to eq(ids)
+        expect(described_class.new.parse(source).edges.first.arrow_type)
+          .to eq("thick_line")
       end
     end
 
@@ -181,8 +190,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # mmdc then refuses `A---x --- Z` for holding two links with nothing
   # between them, and this refuses it too — the marker is not drawn,
   # because sirena has no crossed or circled arrowhead and the wrong head
-  # would be worse than none. That is the same call `a thick link` above
-  # makes for `===`.
+  # would be worse than none. `a thick link` above no longer makes that
+  # call for `===`: a headless link now has a type that draws no marker,
+  # while a crossed or circled head still has no shape to draw.
   describe "an arrowhead marker on a link" do
     %w[A---x A-.-x A---o #---x 1-.-o é---x].each do |statement|
       it "refuses #{statement} in front of a second link" do
