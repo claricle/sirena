@@ -104,26 +104,89 @@ RSpec.describe Sirena::Engine do
     far - radius if coordinate.between?(far - radius, far)
   end
 
-  # Whether an orthogonal segment enters the open interior. Contact with
-  # the border is allowed; a diagonal is rejected because exterior routes
-  # are deliberately orthogonal.
+  # Whether a segment enters the open painted interior. Contact with the
+  # rounded outline is allowed, including a diagonal leaving a corner arc.
   def crosses_face?(rect, from, to)
-    left = rect[:x]
-    right = left + rect[:width]
-    top = rect[:y]
-    bottom = top + rect[:height]
-
-    if from[0] == to[0]
-      low, high = [from[1], to[1]].minmax
-      from[0].between?(left, right) && from[0] != left &&
-        from[0] != right && low < bottom && high > top
-    elsif from[1] == to[1]
-      low, high = [from[0], to[0]].minmax
-      from[1].between?(top, bottom) && from[1] != top &&
-        from[1] != bottom && low < right && high > left
-    else
-      true
+    bounds, radii = rounded_geometry(rect)
+    left, right, top, bottom = bounds
+    rx, ry = radii
+    horizontal = [[left, right], [top + ry, bottom - ry]]
+    vertical = [[left + rx, right - rx], [top, bottom]]
+    return true if [horizontal, vertical].any? do |x_bounds, y_bounds|
+      crosses_open_rectangle?(from, to, x_bounds, y_bounds)
     end
+
+    rounded_corners(bounds, radii).any? do |corner|
+      crosses_open_corner?(from, to, corner, radii)
+    end
+  end
+
+  def rounded_geometry(rect)
+    left = rect[:x].to_i.to_f
+    top = rect[:y].to_i.to_f
+    width = rect[:width].to_i
+    height = rect[:height].to_i
+
+    [[left, left + width, top, top + height],
+     [[5, width / 2.0].min, [5, height / 2.0].min]]
+  end
+
+  def rounded_corners(bounds, radii)
+    left, right, top, bottom = bounds
+    rx, ry = radii
+    [
+      [[left + rx, top + ry], [left, left + rx], [top, top + ry]],
+      [[right - rx, top + ry], [right - rx, right], [top, top + ry]],
+      [[left + rx, bottom - ry], [left, left + rx], [bottom - ry, bottom]],
+      [[right - rx, bottom - ry], [right - rx, right], [bottom - ry, bottom]]
+    ]
+  end
+
+  def crosses_open_rectangle?(from, to, x_bounds, y_bounds)
+    interval = segment_interval(from, to, x_bounds, y_bounds, open: true)
+
+    interval && interval.first < interval.last
+  end
+
+  def crosses_open_corner?(from, to, corner, radii)
+    centre, x_bounds, y_bounds = corner
+    interval = segment_interval(from, to, x_bounds, y_bounds, open: false)
+    return false unless interval
+
+    minimum_ellipse_value(from, to, centre, radii, interval) < 1
+  end
+
+  def minimum_ellipse_value(from, to, centre, radii, interval)
+    dx = to[0] - from[0]
+    dy = to[1] - from[1]
+    rx, ry = radii
+    a = ((dx / rx)**2) + ((dy / ry)**2)
+    b = 2 * ((((from[0] - centre[0]) * dx) / (rx**2)) +
+             (((from[1] - centre[1]) * dy) / (ry**2)))
+    minimum = a.zero? ? interval.first : (-b / (2 * a)).clamp(*interval)
+    x = from[0] + (dx * minimum)
+    y = from[1] + (dy * minimum)
+
+    (((x - centre[0]) / rx)**2) + (((y - centre[1]) / ry)**2)
+  end
+
+  def segment_interval(from, to, x_bounds, y_bounds, open:)
+    intervals = [axis_interval(from[0], to[0], x_bounds, open: open),
+                 axis_interval(from[1], to[1], y_bounds, open: open)]
+    return nil if intervals.any?(&:nil?)
+
+    clipped = [[0.0, *intervals.map(&:first)].max,
+               [1.0, *intervals.map(&:last)].min]
+    clipped if clipped.first <= clipped.last
+  end
+
+  def axis_interval(from, to, bounds, open:)
+    if from == to
+      inside = open ? from > bounds.first && from < bounds.last : from.between?(*bounds)
+      return inside ? [0.0, 1.0] : nil
+    end
+
+    bounds.map { |bound| (bound - from) / (to - from).to_f }.minmax
   end
 
   def path_points(path)
@@ -667,6 +730,92 @@ RSpec.describe Sirena::Engine do
       [cluster("s", source), cluster("t", target)]
     end
 
+    source_boxes = [
+      { x: 400.0, y: 450.0, width: 4.0, height: 36.0 },
+      { x: 850.0, y: 620.0, width: 54.0, height: 4.0 },
+      { x: 1300.0, y: 980.0, width: 72.0, height: 46.0 }
+    ]
+    target_sizes = [[6.0, 48.0], [48.0, 6.0], [74.0, 38.0]]
+    directions = {
+      "north" => [0, -1], "north-east" => [1, -1],
+      "east" => [1, 0], "south-east" => [1, 1],
+      "south" => [0, 1], "south-west" => [-1, 1],
+      "west" => [-1, 0], "north-west" => [-1, -1]
+    }
+    gaps = [90.0, 210.0]
+    bend_sides = [-1, 1]
+    sweep_cases = []
+
+    source_boxes.each_with_index do |source_box, source_index|
+      target_sizes.each_with_index do |(target_width, target_height), target_index|
+        directions.each do |direction_name, (x_direction, y_direction)|
+          gaps.each do |gap|
+            source_x, source_y, source_width, source_height =
+              source_box.values_at(:x, :y, :width, :height)
+            target_x = if x_direction.negative?
+                         source_x - gap - target_width
+                       elsif x_direction.positive?
+                         source_x + source_width + gap
+                       else
+                         source_x + ((source_width - target_width) / 2)
+                       end
+            target_y = if y_direction.negative?
+                         source_y - gap - target_height
+                       elsif y_direction.positive?
+                         source_y + source_height + gap
+                       else
+                         source_y + ((source_height - target_height) / 2)
+                       end
+            target_box = { x: target_x, y: target_y,
+                           width: target_width, height: target_height }
+            source_centre = [source_x + (source_width / 2),
+                             source_y + (source_height / 2)]
+            target_centre = [target_x + (target_width / 2),
+                             target_y + (target_height / 2)]
+            perpendicular = [-y_direction, x_direction]
+            reach = gap + [source_width, source_height,
+                           target_width, target_height].max
+            bend_routes = { "none" => [] }
+            bend_sides.each do |side|
+              offset = perpendicular.map { |axis| axis * reach * side }
+              source_bend = { x: source_centre[0] + offset[0],
+                              y: source_centre[1] + offset[1] }
+              target_bend = { x: target_centre[0] + offset[0],
+                              y: target_centre[1] + offset[1] }
+              bend_routes["one-source-#{side}"] = [source_bend]
+              bend_routes["one-target-#{side}"] = [target_bend]
+              bend_routes["two-#{side}"] = [source_bend, target_bend]
+            end
+
+            bend_routes.each do |bend_name, bends|
+              case_name = "source#{source_index} target#{target_index} " \
+                          "#{direction_name} gap#{gap.to_i} #{bend_name}"
+              sweep_cases << [case_name, source_box, target_box, bends]
+            end
+          end
+        end
+      end
+    end
+
+    sweep_cases.each do |case_name, source_box, target_box, bends|
+      it "sweeps cluster route #{case_name}", :aggregate_failures do
+        source = cluster("s", source_box)
+        target = cluster("t", target_box)
+        edge = bends.empty? ? {} : { sections: [{ bendPoints: bends }] }
+        points = path_points(path_of(graph_between(source, target, edge), "s_to_t"))
+        configuration = "source=#{source_box.inspect} " \
+                        "target=#{target_box.inspect} bends=#{bends.inspect}"
+
+        expect(on_rounded_border?(source_box, *points.first, 5))
+          .to be(true), "#{configuration} source endpoint=#{points.first.inspect}"
+        expect(on_rounded_border?(target_box, *points.last, 5))
+          .to be(true), "#{configuration} target endpoint=#{points.last.inspect}"
+        expect(points.each_cons(2).none? do |from, to|
+          [source_box, target_box].any? { |box| crosses_face?(box, from, to) }
+        end).to be(true), "#{configuration} path=#{points.inspect}"
+      end
+    end
+
     # An end nothing trimmed has to come back exactly as it went in.
     # Rounding it moved every ordinary edge in the project.
     it "leaves a node edge on the coordinates it was given" do
@@ -775,7 +924,7 @@ RSpec.describe Sirena::Engine do
       edge = { sections: [{ bendPoints: [{ x: 110.0, y: 4.0 }] }] }
       points = path_points(path_of(graph_between(source, target, edge), "s_to_t"))
 
-      expect(points.first).to eq([95.0, 4.0])
+      expect(points.first).to eq([100.0, 2.0])
       expect(points[1]).to eq([110.0, 4.0])
       expect(on_rounded_border?(source, *points.first, 5)).to be(true)
     end

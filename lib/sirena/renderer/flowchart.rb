@@ -325,7 +325,7 @@ module Sirena
         return unless source && target
 
         elk_bends = edge.dig(:sections, 0, :bendPoints)
-        # One route, so the path and its label cannot disagree.
+        # The route also supplies the straight pair used to place its label.
         points, label_route = edge_route(source, target, elk_bends)
         route = ends_of(points)
         # Generated routes carry their own bends; an ordinary route keeps
@@ -387,12 +387,25 @@ module Sirena
 
         points ||= route_ends(source, target).each_slice(2)
           .map { |x, y| { x: x, y: y } }
-        source_neighbour = bends&.first || points[1]
-        target_neighbour = bends&.last || points[-2]
+        elk_neighbours = bends if points.length == 2
+        points[0] = cluster_endpoint_toward(points[0], elk_neighbours&.first, source)
+        points[-1] = cluster_endpoint_toward(points[-1], elk_neighbours&.last, target)
+        drawn_bends = points.length > 2 ? points[1...-1] : bends
+        source_neighbour = drawn_bends&.first || points[1]
+        target_neighbour = drawn_bends&.last || points[-2]
         points[0] = clamp_cluster_corner(points[0], source_neighbour, source)
         points[-1] = clamp_cluster_corner(points[-1], target_neighbour, target)
         label_points = points.length > 2 ? points.slice(1, 2) : points
         [points, ends_of(label_points)]
+      end
+
+      def cluster_endpoint_toward(point, neighbour, box)
+        return point unless cluster?(box) && neighbour
+
+        cx, cy = centre_of(box)
+        step = step_out(box, cx, cy, neighbour[:x], neighbour[:y])
+        x, y = along(cx, cy, neighbour[:x], neighbour[:y], step)
+        { x: x, y: y }
       end
 
       # Nodes and unmarked containers stay unchanged. A cluster is painted
@@ -713,9 +726,8 @@ module Sirena
         %w[arrow dotted_arrow thick_arrow].include?(arrow_type)
       end
 
-      # The midpoint of the run that was actually drawn. Measuring from
-      # the centres instead left a label on a trimmed edge sitting
-      # inside the box the line no longer starts in.
+      # The midpoint of the straight pair selected for the label. An ELK-bent
+      # path still uses its two endpoints here rather than following its bends.
       def create_edge_label(route, label)
         sx, sy, tx, ty = route
         mid_x = (sx + tx) / 2
