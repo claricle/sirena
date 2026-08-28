@@ -33,10 +33,16 @@ module Sirena
           (statement >> ws?).repeat(1)
         end
 
-        # Two orderings here are load-bearing. Every keyword form comes
-        # before `standalone_state`, which would otherwise take the keyword
-        # for a state id and then fail on the rest of the line; and
-        # `note_block` comes before the single-line note (see that rule).
+        # Keyword forms are listed first for readability, not for
+        # correctness: parslet backtracks out of a failed alternative, so
+        # `state Foo` still reaches `state_declaration` even when
+        # `standalone_state` is tried first — it takes `state` as an id and
+        # then fails on the rest of the line. Reordering this list was
+        # measured against the suite and changed nothing.
+        #
+        # What actually keeps `note` and `style` from being read as state
+        # ids is `reserved_name.absent?`, in `standalone_state` and in
+        # `transition_end`. Remove that and the suite goes red.
         rule(:statement) do
           direction_statement |
             style_statement |
@@ -126,9 +132,10 @@ module Sirena
           note_head >> colon >> space? >> note_text.as(:note_text) >> line_end
         end
 
-        # `note right of X` ... `end note` spans lines. It has to be tried
-        # before the single-line form, which matches the opening line on its
-        # own and leaves the body to be parsed as statements.
+        # `note right of X` ... `end note` spans lines. The single-line form
+        # cannot swallow the opening line ahead of it, because the colon
+        # there is mandatory and a block opener carries none — so the two
+        # forms are disjoint and either order parses the same.
         rule(:note_block) do
           note_head >> newline >>
             note_body.as(:note_text) >>
