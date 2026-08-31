@@ -21,8 +21,62 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       expect(diagram.valid?).to be true
     end
 
-    it 'returns false for diagram without entities' do
+    it 'returns true for a diagram with no entities' do
       diagram = described_class.new
+      expect(diagram.valid?).to be true
+    end
+
+    it 'returns false when the entity collection is missing' do
+      diagram = described_class.new(entities: nil)
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an embedded entity is invalid' do
+      diagram = described_class.new
+      diagram.entities << Sirena::Diagram::ErEntity.new(id: 'CUSTOMER')
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an embedded relationship is invalid' do
+      diagram = described_class.new
+      diagram.entities << Sirena::Diagram::ErEntity.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER'
+      )
+      diagram.entities << Sirena::Diagram::ErEntity.new(
+        id: 'ORDER',
+        name: 'ORDER'
+      )
+      diagram.relationships << Sirena::Diagram::ErRelationship.new(
+        from_id: 'CUSTOMER',
+        to_id: 'ORDER',
+        relationship_type: 'non-identifying',
+        cardinality_to: 'zero_or_more'
+      )
+
+      expect(diagram.valid?).to be false
+    end
+
+    # Empty entities used to short-circuit this method, so a nil relationship
+    # member never reached the validity check. It does now.
+    it 'returns false when a relationship member is nil' do
+      diagram = described_class.new(relationships: [nil])
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an empty diagram has dangling relationships' do
+      diagram = described_class.new
+      diagram.relationships << Sirena::Diagram::ErRelationship.new(
+        from_id: 'CUSTOMER',
+        to_id: 'ORDER',
+        relationship_type: 'non-identifying',
+        cardinality_from: 'one',
+        cardinality_to: 'zero_or_more'
+      )
+
       expect(diagram.valid?).to be false
     end
 

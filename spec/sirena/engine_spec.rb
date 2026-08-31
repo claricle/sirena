@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'rexml/document'
 
 RSpec.describe Sirena::Engine do
   describe '#render' do
@@ -49,6 +50,41 @@ RSpec.describe Sirena::Engine do
 
       it 'detects ER diagram type' do
         expect { engine.render(source) }.not_to raise_error
+      end
+    end
+
+    context 'with the byte-identical empty ER corpus rows' do
+      fixture_files = [
+        'er/059_spec_xss_spec_58.mmd',
+        'er/060_spec_diagram-orchestration_spec_59.mmd',
+        'er/061_spec_mermaidapi_spec_60.mmd'
+      ]
+
+      def expect_empty_er_fixture_to_render(relative_path)
+        path = File.expand_path("../mermaid/#{relative_path}", __dir__)
+        svg = engine.render(File.binread(path))
+
+        expect(svg).to be_a(String)
+        expect(svg).not_to be_empty
+        expect(svg).to match(/\A<svg[\s>]/)
+        expect(svg.rstrip).to end_with('</svg>')
+
+        document = REXML::Document.new(svg)
+        expect(document.elements.to_a.map(&:name)).to eq(['svg'])
+        expect(document.root.namespace).to eq('http://www.w3.org/2000/svg')
+      end
+
+      fixture_files.each do |relative_path|
+        it "guards the byte content of #{relative_path}" do
+          path = File.expand_path("../mermaid/#{relative_path}", __dir__)
+
+          expect(File.exist?(path)).to be true
+          expect(File.binread(path)).to eq('erDiagram')
+        end
+
+        it "renders byte-identical replay row #{relative_path}" do
+          expect_empty_er_fixture_to_render(relative_path)
+        end
       end
     end
 

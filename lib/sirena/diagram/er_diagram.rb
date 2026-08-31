@@ -174,17 +174,17 @@ module Sirena
       # Validates the ER diagram structure.
       #
       # An ER diagram is valid if:
-      # - It has at least one entity
+      # - It has an entity collection, which may be empty
       # - All entities are valid
       # - All relationships are valid
       # - All relationship references point to existing entities
       #
       # @return [Boolean] true if ER diagram is valid
       def valid?
-        return false if entities.nil? || entities.empty?
+        return false if entities.nil?
         return false unless entities.all?(&:valid?)
         return false unless relationships.nil? ||
-                            relationships.all?(&:valid?)
+                            relationships.all? { |rel| rel&.valid? }
 
         # Validate relationship references
         entity_ids = entities.map(&:id)
