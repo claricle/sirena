@@ -107,6 +107,40 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       expect(tasks[4].score).to eq(5)
     end
 
+    # The fixture names come from the mermaid-js test extraction and are
+    # misleading: every directive below is single-line, including the two in
+    # files named "multiline", and the files named "title_definition" carry an accTitle
+    # rather than a title. So a title_definition row expects a nil title,
+    # while an accDescr row that also has a real title line expects that text.
+    context 'with single-line accessibility directives' do
+      cases = {
+        '004_parser_should_handle_a_title_definition_3.mmd' => nil,
+        '004_parser_should_handle_an_accessibility_description_accdescr__3.mmd' =>
+          'Adding journey diagram functionality to mermaid',
+        '005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd' =>
+          'Adding journey diagram functionality to mermaid',
+        '008_parser_should_handle_an_accessibility_description_accdescr__7.mmd' =>
+          'Adding journey diagram functionality to mermaid',
+        '009_parser_should_handle_a_title_definition_8.mmd' => nil,
+        '009_parser_should_handle_an_accessibility_multiline_description_accdescr__8.mmd' =>
+          'Adding journey diagram functionality to mermaid',
+        '013_parser_should_handle_a_title_definition_12.mmd' => nil
+      }
+
+      cases.each do |filename, expected_title|
+        it "parses #{filename}" do
+          source = File.read("spec/mermaid/user_journey/#{filename}")
+
+          diagram = parser.parse(source)
+
+          expect(diagram.title).to eq(expected_title)
+          expect(diagram.sections.length).to eq(1)
+          expect(diagram.sections.first.name).to eq('Order from website')
+          expect(diagram.sections.first.tasks).to be_empty
+        end
+      end
+    end
+
     it 'raises ParseError for invalid syntax' do
       source = 'invalid'
 
