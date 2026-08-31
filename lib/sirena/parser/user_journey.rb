@@ -17,6 +17,10 @@ module Sirena
       rule(:section_decl) do
         sp? >> str('section') >> sp >> text_line.as(:section) >> (nl | any.absent?)
       end
+      rule(:accessibility_decl) do
+        sp? >> (str('accTitle') | str('accDescr')) >> str(':') >> sp? >>
+          (nl.absent? >> any).repeat >> (nl | any.absent?)
+      end
 
       rule(:text_line) { (nl.absent? >> str(':').absent? >> any).repeat(1) }
       rule(:task_text) { (str(':').absent? >> nl.absent? >> any).repeat(1) }
@@ -34,7 +38,9 @@ module Sirena
           (sp? >> str(',') >> sp? >> actor_text.as(:actor)).repeat
       end
 
-      rule(:line) { title_decl | section_decl | task_line | comment_line | blank_line }
+      rule(:line) do
+        title_decl | section_decl | accessibility_decl | task_line | comment_line | blank_line
+      end
       rule(:comment_line) { sp? >> str('%%') >> (nl.absent? >> any).repeat >> nl }
       rule(:blank_line) { sp? >> nl }
 
