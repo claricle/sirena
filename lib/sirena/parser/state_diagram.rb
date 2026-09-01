@@ -14,7 +14,7 @@ module Sirena
     # - Special states (start [*], end [*], choice, fork, join)
     # - Transitions with triggers and guard conditions
     # - Composite/nested states
-    # - Direction specification (TD, LR, etc.)
+    # - Direction statements (TB, BT, LR, RL)
     #
     # @example Parse a simple state diagram
     #   parser = StateDiagramParser.new

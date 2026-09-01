@@ -17,9 +17,19 @@ module Sirena
         rule(:diagram) do
           ws? >>
             header >>
+            header_line_direction.absent? >>
             ws? >>
             statements.maybe >>
             ws?
+        end
+
+        # A direction is only a direction BELOW the header. Measured against
+        # mmdc 11.12.0: `stateDiagram-v2 direction LR` exits 1 and writes no
+        # output, while `stateDiagram-v2 A --> B` and a `direction LR` on its
+        # own line both render. So the header's line bars the direction
+        # statement and nothing else -- other statements stay legal there.
+        rule(:header_line_direction) do
+          space.repeat(1) >> direction_statement
         end
 
         # Nothing on the keyword's line is a direction: mmdc 11.12.0 draws

@@ -21,7 +21,7 @@ module Sirena
           @diagram = Diagram::StateDiagram.new
           @state_counter = 0
 
-          # Tree is an array: [header, direction, ...statements]
+          # Tree is an array containing the header and statements in source order.
           if tree.is_a?(Array)
             tree.each do |item|
               process_item(item) if item.is_a?(Hash)
@@ -38,7 +38,7 @@ module Sirena
         def process_item(item)
           return unless item.is_a?(Hash)
 
-          # Process header to get direction
+          # Process a top-level direction statement
           if item[:direction] && item[:direction][:dir_value]
             @diagram.direction = extract_text(item[:direction][:dir_value])
           end

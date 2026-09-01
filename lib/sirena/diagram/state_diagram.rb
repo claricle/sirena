@@ -20,7 +20,7 @@ module Sirena
       # State type: :normal, :start, :end, :choice, :fork, :join
       attribute :state_type, :string
 
-      # Optional description for composite states
+      # Most recently declared description for this state, if any
       attribute :description, :string
 
       # Ordered display text declared by aliases and descriptions

@@ -156,8 +156,12 @@ RSpec.describe Sirena::Renderer::StateDiagramRenderer do
       state_group = svg.children.find { |child| child.id == 'state-A' }
       rectangle = state_group.children.grep(Sirena::Svg::Rect).first
       texts = state_group.children.grep(Sirena::Svg::Text)
+      labels = rendered_graph[:children].first[:labels]
 
-      text_bounds = texts.zip(rendered_graph[:children].first[:labels]).map do |text, label|
+      expect(texts.length).to eq(labels.length)
+      expect(texts.map(&:content)).to eq(labels.map { |label| label[:text] })
+
+      text_bounds = texts.zip(labels).map do |text, label|
         [text.y - (label[:height] / 2), text.y + (label[:height] / 2)]
       end
       expect(text_bounds.flatten.min).to be >= rectangle.y

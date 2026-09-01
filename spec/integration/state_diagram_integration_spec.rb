@@ -123,6 +123,18 @@ RSpec.describe 'StateDiagram Integration' do
       graph = transform.to_graph(diagram)
       expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
     end
+
+    it 'requires direction statements to start below the header' do
+      engine = Sirena::Engine.new
+
+      expect { engine.render('stateDiagram-v2 direction LR') }
+        .to raise_error(Sirena::Engine::PipelineError, /Parse error/)
+
+      document = REXML::Document.new(
+        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n")
+      )
+      expect(REXML::XPath.match(document, '//text').map(&:text)).to eq(%w[A B])
+    end
   end
 
   describe 'DiagramRegistry integration' do

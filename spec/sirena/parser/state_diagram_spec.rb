@@ -487,12 +487,14 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      it 'takes note and style once a state statement claims the line' do
+      it 'takes reserved names once a state statement claims the line' do
         diagram = parser.parse(
-          "stateDiagram-v2\nstate note\nstate style\nnotes\nstyles\n"
+          "stateDiagram-v2\nstate note\nstate style\nstate state\n" \
+          "notes\nstyles\n"
         )
 
-        expect(diagram.states.map(&:id)).to eq(%w[note style notes styles])
+        expect(diagram.states.map(&:id))
+          .to eq(%w[note style state notes styles])
       end
     end
 
