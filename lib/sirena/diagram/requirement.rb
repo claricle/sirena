@@ -98,6 +98,7 @@ module Sirena
 
     # Represents a Mermaid requirement diagram
     class RequirementDiagram < Lutaml::Model::Serializable
+      attribute :title, :string
       attribute :requirements, Requirement, collection: true, default: -> { [] }
       attribute :elements, RequirementElement, collection: true, default: -> { [] }
       attribute :relationships, RequirementRelationship, collection: true, default: -> { [] }
