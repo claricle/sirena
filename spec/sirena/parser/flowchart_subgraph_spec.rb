@@ -621,12 +621,34 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     # The counter and the containment map used to live on the class, so
     # two threads rendering at once handed out each other's ids.
-    it "hands out ids per thread" do
-      source = "graph TD\n#{Array.new(40) { |i| "subgraph s#{i} T#{i}\nn#{i}\nend" }.join("\n")}\n"
-      want = boxes(source).map(&:id)
-      threads = Array.new(4) { Thread.new { boxes(source).map(&:id) } }
+    #
+    # Racing whole parses does not reach that: a 40-box diagram parses in
+    # 23ms, well inside Ruby's 100ms thread quantum, so the threads run one
+    # after another and agree wherever the state lives. This drives the
+    # overlap directly instead, holding one parse open across another's
+    # whole run - take an id, take a second id, finish and release.
+    it "keeps one thread's ids to itself while another parse runs" do
+      transform = Sirena::Parser::Transforms::Flowchart
+      mid_parse = Queue.new
+      finished = Queue.new
 
-      expect(threads.map(&:value)).to all(eq(want))
+      other = Thread.new do
+        held = transform.state
+        ids = [transform.next_generated_id]
+        mid_parse.push(:mid_parse)
+        finished.pop
+        ids << transform.next_generated_id
+        { ids: ids, kept_its_own_state: transform.state.equal?(held) }
+      end
+
+      mid_parse.pop
+      ours = transform.next_generated_id
+      transform.release_state
+      finished.push(:finished)
+
+      expect(ours).to eq("subGraph0")
+      expect(other.value)
+        .to eq(ids: %w[subGraph0 subGraph1], kept_its_own_state: true)
     end
 
     # The memo keeps a reference to every subgraph statement, so holding
