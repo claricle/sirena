@@ -71,6 +71,32 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       expect(choice.state_type).to eq('choice')
     end
 
+    it 'keeps alias syntax literal in a marker state id' do
+      source = <<~MERMAID
+        stateDiagram-v2
+        state "X" as Y <<choice>>
+        Y --> A
+      MERMAID
+      diagram = parser.parse(source)
+
+      expect(diagram.states.map { |state| [state.id, state.state_type] }).to eq(
+        [['"X" as Y', 'choice'], ['Y', 'normal'], ['A', 'normal']]
+      )
+      transitions = diagram.transitions.map do |transition|
+        [transition.from_id, transition.to_id]
+      end
+      expect(transitions).to eq([%w[Y A]])
+    end
+
+    it 'keeps marker-like text inside a marker state id' do
+      diagram = parser.parse(
+        %(stateDiagram-v2\nstate "A <<choice>> B" <<fork>>\n)
+      )
+
+      expect(diagram.states.map { |state| [state.id, state.state_type] })
+        .to eq([['"A <<choice>> B"', 'fork']])
+    end
+
     it 'parses fork state' do
       source = "stateDiagram-v2\nstate fork1 <<fork>>"
       diagram = parser.parse(source)
@@ -193,13 +219,14 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      # `A : text` describes A without renaming it. mmdc draws the label
-      # and the description together, in either order.
+      # Mermaid accumulates aliases and descriptions as display text in source
+      # order without changing the state's id.
       it 'keeps an alias label when a later line describes the state' do
         diagram = parser.parse(%(stateDiagram-v2\nstate "L" as A\nA : two\n))
 
         expect(diagram.find_state('A').label).to eq('L')
         expect(diagram.find_state('A').description).to eq('two')
+        expect(diagram.find_state('A').descriptions).to eq(%w[L two])
       end
 
       it 'keeps an alias label when an earlier line described the state' do
@@ -207,12 +234,46 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
 
         expect(diagram.find_state('A').label).to eq('L')
         expect(diagram.find_state('A').description).to eq('two')
+        expect(diagram.find_state('A').descriptions).to eq(%w[two L])
       end
 
-      it 'takes a quoted id after as' do
-        diagram = parser.parse(%(stateDiagram-v2\nstate "L" as "X"\n))
+      it 'keeps a quoted alias id distinct from its unquoted spelling' do
+        diagram = parser.parse(
+          %(stateDiagram-v2\nstate "L" as "X"\nX --> A\n)
+        )
 
-        expect(diagram.find_state('X').label).to eq('L')
+        expect(diagram.states.map(&:id)).to eq(['"X"', 'X', 'A'])
+        expect(diagram.find_state('"X"').label).to eq('L')
+        expect(diagram.transitions.first.from_id).to eq('X')
+      end
+    end
+
+    describe 'statement whitespace' do
+      it 'accepts repeated spaces at Mermaid-flexible separators' do
+        source = <<~MERMAID
+          stateDiagram-v2
+          direction  LR
+          state  "Label"  as  A
+          style  A  fill:red
+          note  right of  A : attached
+          note  "floating"  as  N
+        MERMAID
+        diagram = parser.parse(source)
+
+        expect(diagram.direction).to eq('LR')
+        expect(diagram.states.map(&:id)).to eq(['A'])
+        expect(diagram.find_state('A').label).to eq('Label')
+
+        # Mermaid's lexer is deliberately narrower between `right` and `of`.
+        expect do
+          parser.parse("stateDiagram-v2\nA\nnote right  of A : attached\n")
+        end.to raise_error(Sirena::Parser::ParseError)
+
+        marker_diagram = parser.parse(
+          "stateDiagram-v2\nstate  A <<choice>>\n"
+        )
+        expect(marker_diagram.states.map { |state| [state.id, state.state_type] })
+          .to eq([['A', 'choice']])
       end
     end
 
@@ -283,10 +344,17 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       # Only a whole line closes the block. mmdc keeps this one as text.
       it 'keeps end note inside a body line as note text' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nnote right of A\nsay end notes here\nend note\n"
+          "stateDiagram-v2\nA\nnote right of A\nsay end note\nend note\n"
         )
 
         expect(diagram.states.map(&:id)).to eq(['A'])
+      end
+
+      it 'refuses a body line ending in end note without a terminator line' do
+        source = "stateDiagram-v2\nA\nnote right of A\nsay end note\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
       end
 
       # mmdc keeps a body line that ends in `;` or holds a `%%` comment.
@@ -405,6 +473,17 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
 
       it 'refuses style at a transition end' do
         expect { parser.parse("stateDiagram-v2\nA --> style\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'treats a bare state keyword as an empty statement' do
+        diagram = parser.parse("stateDiagram-v2\nstate\n")
+
+        expect(diagram.states).to be_empty
+      end
+
+      it 'refuses state at a transition end' do
+        expect { parser.parse("stateDiagram-v2\nA --> state\n") }
           .to raise_error(Sirena::Parser::ParseError)
       end
 

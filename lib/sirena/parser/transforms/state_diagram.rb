@@ -76,6 +76,8 @@ module Sirena
 
         def process_state_declaration(stmt)
           state_id = extract_text(stmt[:state_id])
+          label = state_label(stmt)
+          description = description_of(stmt)
 
           if stmt[:marker]
             # Special state marker (choice, fork, join). No label: mmdc
@@ -83,38 +85,44 @@ module Sirena
             add_special_state(state_id, extract_text(stmt[:marker][:marker_type]))
           elsif stmt[:composite]
             # Composite state with nested statements
-            process_composite_state(state_id, state_label(stmt, state_id),
-                                    stmt[:composite])
+            state = process_composite_state(state_id, label, stmt[:composite])
+            append_display_text(state, label)
           else
-            add_or_update_state(state_id, state_label(stmt, state_id),
-                                description_of(stmt))
+            state = add_or_update_state(state_id, label)
+            append_display_text(state, label)
+            if description
+              state.description = description
+              append_display_text(state, description)
+            end
           end
         end
 
         # nil rather than "" when there is no description: every non-nil
-        # value reaching `add_or_update_state` is one it stores.
+        # value is recorded as display text.
         def description_of(stmt)
           extract_text(stmt[:description]) if stmt[:description]
         end
 
         def process_standalone_state(stmt)
           state_id = extract_text(stmt[:state_id])
-          ensure_state_exists(state_id)
+          state = ensure_state_exists(state_id)
           return unless stmt[:description]
 
-          # `A : text` describes A without renaming it, so a label an
-          # earlier `state "L" as A` set has to survive. mmdc 11.12.0 draws
-          # both the label and the description.
-          @diagram.find_state(state_id).description =
-            extract_text(stmt[:description])
+          description = extract_text(stmt[:description])
+          state.description = description
+          append_display_text(state, description)
         end
 
         # `state "Idle mode" as Idle` labels the state Idle "Idle mode";
         # without the alias the id is its own label.
-        def state_label(stmt, state_id)
-          return state_id unless stmt[:state_label]
+        def state_label(stmt)
+          return unless stmt[:state_label]
 
           extract_text(stmt[:state_label])
+        end
+
+        def append_display_text(state, text)
+          state.descriptions << text if text && !text.empty?
         end
 
         def process_transition(stmt)
@@ -220,7 +228,8 @@ module Sirena
         end
 
         def ensure_state_exists(state_id)
-          return if @diagram.find_state(state_id)
+          existing = @diagram.find_state(state_id)
+          return existing if existing
 
           state = Diagram::StateNode.new.tap do |s|
             s.id = state_id
@@ -228,6 +237,7 @@ module Sirena
             s.state_type = 'normal'
           end
           @diagram.states << state
+          state
         end
 
         def add_special_state(state_id, state_type)
@@ -239,18 +249,16 @@ module Sirena
           @diagram.states << state
         end
 
-        def add_or_update_state(state_id, label, description = nil)
+        def add_or_update_state(state_id, label = nil)
           existing = @diagram.find_state(state_id)
           if existing
-            existing.label = label unless label.to_s.empty?
-            existing.description = description if description
+            existing.label = label if label && !label.empty?
             existing
           else
             state = Diagram::StateNode.new.tap do |s|
               s.id = state_id
-              s.label = label
+              s.label = label || state_id
               s.state_type = 'normal'
-              s.description = description
             end
             @diagram.states << state
             state

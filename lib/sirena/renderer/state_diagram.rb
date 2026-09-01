@@ -200,14 +200,11 @@ module Sirena
         width = state[:width] || 100
         height = state[:height] || 50
 
-        # Center text in state
+        # Center the complete label stack in the state.
         text_x = x + width / 2
-        # Adjust y position based on label index (for multiple labels)
-        text_y = if index.zero?
-                   y + height / 2
-                 else
-                   y + height / 2 + (index * 20)
-                 end
+        label_count = state[:labels].length
+        stack_offset = (label_count - 1) * 10
+        text_y = y + height / 2 - stack_offset + (index * 20)
 
         font_size = index.zero? ? '14' : '12'
 

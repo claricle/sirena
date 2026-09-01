@@ -33,6 +33,8 @@ module Sirena
           (statement >> ws?).repeat(1)
         end
 
+        rule(:spaces) { space.repeat(1) }
+
         # Keyword forms are listed first for readability, not for
         # correctness: parslet backtracks out of a failed alternative, so
         # `state Foo` still reaches `state_declaration` even when
@@ -40,12 +42,13 @@ module Sirena
         # then fails on the rest of the line. Reordering this list was
         # measured against the suite and changed nothing.
         #
-        # What actually keeps `note` and `style` from being read as state
-        # ids is `reserved_name.absent?`, in `standalone_state` and in
+        # What actually keeps `note`, `style`, and `state` from being read as
+        # state ids is `reserved_name.absent?`, in `standalone_state` and in
         # `transition_end`. Remove that and the suite goes red.
         rule(:statement) do
           direction_statement |
             style_statement |
+            empty_state_statement |
             state_declaration |
             note_block |
             floating_note |
@@ -54,16 +57,39 @@ module Sirena
             standalone_state
         end
 
+        # Mermaid lexes a bare `state` as an empty statement. Capturing the
+        # keyword lets the transform drop it like any declaration without an
+        # id, while `reserved_name` keeps it out of state and transition ids.
+        rule(:empty_state_statement) do
+          str('state').as(:keyword) >> line_end
+        end
+
         # State declaration with description, marker, or composite body
         rule(:state_declaration) do
-          str('state').as(:keyword) >> space >>
-            state_target >> space? >>
+          str('state').as(:keyword) >> spaces >>
             (
-              state_marker.as(:marker) |
-              state_description |
-              composite_body.as(:composite)
-            ).maybe >>
+              marker_declaration |
+              state_target >> space? >>
+                (
+                  state_description |
+                  composite_body.as(:composite)
+                ).maybe
+            ) >>
             line_end
+        end
+
+        # Marker declarations do not use the alias syntax. Mermaid takes
+        # everything before the marker as its literal id, including quotes and
+        # `as`: `state "X" as Y <<choice>>` identifies `"X" as Y`.
+        rule(:marker_declaration) do
+          marker_state_target.as(:state_id) >> space? >>
+            state_marker.as(:marker)
+        end
+
+        rule(:marker_state_target) do
+          (
+            (space? >> state_marker >> line_end).absent? >> line_char
+          ).repeat(1)
         end
 
         # `state "Idle mode" as Idle` names the state Idle and labels it
@@ -73,15 +99,32 @@ module Sirena
         rule(:state_target) do
           (
             str('""').absent? >> quoted_string.as(:state_label) >>
-              space >> str('as') >> space
-          ).maybe >> state_id.as(:state_id)
+              spaces >> str('as') >> spaces >>
+              (quoted_state_id | state_name).as(:state_id)
+          ) |
+            state_id.as(:state_id)
+        end
+
+        # Unlike ordinary quoted state names, an id declared after `as` keeps
+        # its delimiters as part of its identity in Mermaid's StateDB.
+        rule(:quoted_state_id) do
+          (
+            str('"') >>
+              (str('\\') >> any | str('"').absent? >> any).repeat >>
+              str('"')
+          ) |
+            (
+              str("'") >>
+                (str('\\') >> any | str("'").absent? >> any).repeat >>
+                str("'")
+            )
         end
 
         # Direction on a line of its own. mmdc 11.12.0 knows TB, BT, LR and
         # RL here and nothing else: `direction TD` draws two states called
         # `direction` and `TD`, which this grammar has no shape for.
         rule(:direction_statement) do
-          str('direction') >> space >> direction.as(:direction) >> line_end
+          str('direction') >> spaces >> direction.as(:direction) >> line_end
         end
 
         rule(:direction) do
@@ -92,9 +135,9 @@ module Sirena
         # grammar treats `style`. mmdc 11.12.0 takes a bare `style A` with
         # no properties at all, so the property list is optional.
         rule(:style_statement) do
-          str('style').as(:style_keyword) >> space >>
+          str('style').as(:style_keyword) >> spaces >>
             style_targets.as(:style_targets) >>
-            (space >> style_properties.as(:style_props)).maybe >>
+            (spaces >> style_properties.as(:style_props)).maybe >>
             line_end
         end
 
@@ -143,16 +186,19 @@ module Sirena
         end
 
         rule(:note_head) do
-          str('note').as(:note_keyword) >> space >>
+          str('note').as(:note_keyword) >> spaces >>
             note_position.as(:position) >> space >>
-            str('of') >> space >>
+            str('of') >> spaces >>
             state_id.as(:note_target) >> space?
         end
 
         # Everything up to the line that closes the note. An empty body is
         # legal: mmdc 11.12.0 renders `note right of A` / `end note`.
         rule(:note_body) do
-          (note_block_end.absent? >> any).repeat
+          (
+            note_block_end.absent? >>
+              (newline.absent? >> any).repeat >> newline
+          ).repeat
         end
 
         # `end note` closes the note only when the line ends there. mmdc
@@ -164,9 +210,9 @@ module Sirena
         # parses it, draws nothing for it, and takes a non-empty
         # double-quoted text only.
         rule(:floating_note) do
-          str('note').as(:note_keyword) >> space >>
-            str('""').absent? >> quoted_string.as(:note_text) >> space >>
-            str('as') >> space >>
+          str('note').as(:note_keyword) >> spaces >>
+            str('""').absent? >> quoted_string.as(:note_text) >> spaces >>
+            str('as') >> spaces >>
             state_id.as(:note_id) >> line_end
         end
 
@@ -194,12 +240,14 @@ module Sirena
         # note`, and takes `note` as a note's target.
         rule(:state_id) { string | state_name }
 
-        # The two names mmdc 11.12.0 lexes as keywords wherever a statement
-        # or a transition end may start, and only those two: `A --> note`,
-        # `note : x` and a bare `style` are refused, while `state`,
-        # `direction`, `end`, `as`, `notes` and `styles` all render.
+        # The three names mmdc 11.12.0 lexes as keywords wherever a statement
+        # or a transition end may start: `A --> note`, `note : x`, a bare
+        # `style`, and `A --> state` are refused. A bare `state` is an empty
+        # statement, while `direction`, `end`, `as`, `notes`, and `styles`
+        # all render.
         rule(:reserved_name) do
-          (str('note') | str('style')) >> match['a-zA-Z0-9_'].absent?
+          (str('note') | str('style') | str('state')) >>
+            match['a-zA-Z0-9_'].absent?
         end
 
         # A bare state name. A superset of `identifier`, which is

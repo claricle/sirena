@@ -44,7 +44,7 @@ module Sirena
             id: state.id,
             width: dims[:width],
             height: dims[:height],
-            labels: state_labels(state, dims),
+            labels: state_labels(state),
             metadata: {
               state_type: state.state_type,
               description: state.description
@@ -70,32 +70,18 @@ module Sirena
         end
       end
 
-      def state_labels(state, dims)
-        labels = []
-
-        # Add state label
-        if state.label && !state.label.empty?
-          labels << {
-            text: state.label,
-            width: dims[:label_width],
-            height: dims[:label_height]
-          }
-        end
-
-        # Add description if present
-        if state.description && !state.description.empty?
-          desc_dims = measure_text(
-            state.description,
-            font_size: DEFAULT_FONT_SIZE - 2
+      def state_labels(state)
+        state_texts(state).each_with_index.map do |text, index|
+          text_dims = measure_text(
+            text,
+            font_size: index.zero? ? DEFAULT_FONT_SIZE : DEFAULT_FONT_SIZE - 2
           )
-          labels << {
-            text: state.description,
-            width: desc_dims[:width],
-            height: desc_dims[:height]
+          {
+            text: text,
+            width: text_dims[:width],
+            height: text_dims[:height]
           }
         end
-
-        labels
       end
 
       def transition_labels(transition)
@@ -114,7 +100,8 @@ module Sirena
       end
 
       def calculate_state_dimensions(state)
-        label_text = state.label || state.id
+        texts = state_texts(state)
+        label_text = texts.first || state.id
         label_dims = measure_text(
           label_text,
           font_size: DEFAULT_FONT_SIZE
@@ -131,7 +118,7 @@ module Sirena
                      else
                        calculate_normal_state_dimensions(
                          label_dims,
-                         state.description
+                         texts.drop(1)
                        )
                      end
 
@@ -141,6 +128,16 @@ module Sirena
           label_width: label_dims[:width],
           label_height: label_dims[:height]
         }
+      end
+
+      # Parsed aliases and descriptions are Mermaid's ordered display text.
+      # StateNode's scalar fields remain the fallback for callers that build
+      # the model directly.
+      def state_texts(state)
+        descriptions = Array(state.descriptions).reject(&:empty?)
+        return descriptions unless descriptions.empty?
+
+        [state.label, state.description].compact.reject(&:empty?)
       end
 
       def calculate_terminal_dimensions
@@ -168,13 +165,12 @@ module Sirena
         }
       end
 
-      def calculate_normal_state_dimensions(label_dims, description)
+      def calculate_normal_state_dimensions(label_dims, descriptions)
         # Normal states are rounded rectangles
         width = label_dims[:width] + 40
         height = label_dims[:height] + 30
 
-        # Add extra height if there's a description
-        if description && !description.empty?
+        descriptions.each do |description|
           desc_dims = measure_text(
             description,
             font_size: DEFAULT_FONT_SIZE - 2

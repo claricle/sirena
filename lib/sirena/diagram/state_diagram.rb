@@ -23,6 +23,9 @@ module Sirena
       # Optional description for composite states
       attribute :description, :string
 
+      # Ordered display text declared by aliases and descriptions
+      attribute :descriptions, :string, collection: true, default: -> { [] }
+
       # Child states for composite/nested states
       attribute :children, StateNode, collection: true, default: -> { [] }
 

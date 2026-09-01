@@ -176,5 +176,33 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
       expect(state[:labels][0][:text]).to eq('Idle')
       expect(state[:labels][1][:text]).to eq('System is idle')
     end
+
+    it 'uses a bare description as the only display text' do
+      diagram = Sirena::Parser::StateDiagramParser.new.parse(
+        "stateDiagram-v2\nA : ONLY_TEXT\n"
+      )
+
+      graph = transform.to_graph(diagram)
+      labels = graph[:children].first[:labels].map { |label| label[:text] }
+
+      expect(labels).to eq(['ONLY_TEXT'])
+    end
+
+    it 'preserves aliases and descriptions in source order' do
+      diagram = Sirena::Parser::StateDiagramParser.new.parse(<<~MERMAID)
+        stateDiagram-v2
+        state "ALIAS_ONE" as A
+        A : DESC_ONE
+        state "ALIAS_TWO" as A
+        A : DESC_TWO
+      MERMAID
+
+      graph = transform.to_graph(diagram)
+      labels = graph[:children].first[:labels].map { |label| label[:text] }
+
+      expect(labels).to eq(
+        %w[ALIAS_ONE DESC_ONE ALIAS_TWO DESC_TWO]
+      )
+    end
   end
 end
