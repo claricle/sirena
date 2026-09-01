@@ -62,10 +62,16 @@ as permanent** — that is the item's own wording.
 ```ruby
 TYPES = {
   pie:       /\A\s*pie\s/i,
-  flowchart: /\A\s*(graph|flowchart)\s+/i,
+  flowchart: /\A\s*(graph|flowchart)([\s<>^]|\z)/i,
   # ...
 }
 ```
+
+   Copy each pattern from `Engine::DIAGRAM_TYPE_PATTERNS` as it stands on
+   `main`, never from an older draft. The `flowchart` row above is the live
+   one: `\s+` was deliberately replaced by `([\s<>^]|\z)`, and reverting it
+   re-breaks `graph>`, `graph<`, `graph^` and bare `flowchart` — measured, 4 of
+   6 inputs regress.
 
 2. Resolve classes by convention from the type name: `:pie` ->
    `Parser::Pie`, `Diagram::Pie`, `Layout::Pie`, `Renderer::Pie`. All

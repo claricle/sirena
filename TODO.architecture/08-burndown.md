@@ -148,7 +148,7 @@ snapshot.
 
 4. **Then lint** — `TODO.foundation/08` and `09`.
    Item 08 (109 live offences, 104 autocorrectable) is small and can run
-   any time. The 7,614-entry `.rubocop_todo.yml` burndown belongs
+   any time. The 7,602-entry `.rubocop_todo.yml` burndown belongs
    **here**, after the structural work — items 04-06 delete a large
    fraction of the files that debt is parked in, and styling code you
    are about to delete costs twice.

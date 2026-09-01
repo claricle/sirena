@@ -32,6 +32,11 @@ layout — applies a 3-column grid and only fires on graphs that have
 named `layout` and define `create_document_from_layout`. The renderers
 have the right name; the classes have the wrong one.
 
+(Nine is right for that pair. **Ten** renderers take a `layout`
+parameter — `treemap.rb` is the tenth and does not define
+`create_document_from_layout`. Elsewhere the figure is ten because the
+claim there is only about the parameter name.)
+
 **(c) Registered class names follow three conventions.** 17 types use
 `XParser` / `XTransform` / `XRenderer`. Seven use the bare type name for
 transform and renderer (`GitGraph`, `Mindmap`, `Kanban`, `Radar`,

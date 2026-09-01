@@ -188,7 +188,7 @@ Three problems in that picture, and each one costs time on every fix:
 2. **The layer called `Transform` is doing layout.** `Transform::Mindmap`
    positions nodes; `Transform::XYChart` computes axis scales. Meanwhile
    `Engine#layout_graph` — the method actually named layout — is a
-   3-column grid stub. Nine renderers already name their input `layout`.
+   3-column grid stub. Ten renderers already name their input `layout`.
 3. **The typed model is flattened into an untyped Hash** right before the
    renderer. 24 private, undocumented hash shapes.
 

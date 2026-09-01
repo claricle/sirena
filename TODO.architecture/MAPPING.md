@@ -39,12 +39,29 @@ These are unchanged and still correct. When their turn comes, read them.
 | `02` corpus oracle + scoreboard | `01-safety-net.md` part B **now**, `08-burndown.md` step 3a **later** | split by time, not dropped, and **not relocated**. `scoreboard/corpus.json` is the scoreboard's first column, shipped early; it answers "did I break something" for items 01-07. The other columns, the floors and the CI diff arrive at item 08 step 3a, along with the hermetic toolchain pin and reference provenance, which geometry parity work requires |
 | `10` notation registry | `06-registry-as-data.md` | a data table and convention-based lookup, instead of a notation plugin system with external discovery. Same seam, no speculative API |
 | `18` typed IR | **stays as written** — `04-typed-scene.md` does not replace it, with one addition to its Done-when | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
-| `03` coverage floors | one line floor, one branch floor | staged timeline tied to other tracks' completion removed |
+| `03` coverage floors | one line floor, one branch floor | staged timeline tied to other tracks' completion removed. **This overrides the floor-raise criteria inside items 06, 07 and 14**, which are otherwise adopted as written — see the note below |
 | `19` CI topology | one workflow file | lane ownership protocol removed. **But 08 and 17 still depend on 19a** — 08 wants a rubocop lane, 17 needs the release workflow pinned off `metanorma/ci@main`. The one file owes both; see `DO-NOT-BUILD.md` |
+
+### Which wins on the coverage floors
+
+Rows above adopt items `06`, `07` and `14` "as written" and "in full", and each of
+those carries a branch-floor raise as its own acceptance criterion — 06 at
+`55 → 70`, 07 at `70 → 80` and `80 → 90`, 14 at `80 → 90`, with 07 stating
+outright that "floor raises are acceptance criteria of this item, not side
+effects". `DO-NOT-BUILD.md:108-115` repeals exactly that ladder.
+
+Read literally, two engineers closing two items set opposite CI floors and
+neither is wrong on the text.
+
+**`DO-NOT-BUILD.md` wins.** One line floor and one branch floor, raised by hand.
+When closing 06, 07 or 14, treat their floor-raise bullets as SATISFIED without
+touching CI, and record the raise as a manual decision if anyone wants one. The
+rest of those items — the per-type case counts, the 8%/15% bar, the metric
+contract — still stand as written.
 
 ## Moved later
 
-**`09` — `.rubocop_todo.yml` burndown (7,614 entries).** It is now step 4
+**`09` — `.rubocop_todo.yml` burndown (7,602 entries).** It is now step 4
 of `08-burndown.md`. Items 04-06 delete a large fraction of the files
 that debt is parked in; styling them first means doing it twice. The
 original item already noticed the collision with item 10 and resolved it
