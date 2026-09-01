@@ -59,28 +59,27 @@ module Sirena
 
       protected
 
-      # A graph MISSING a collection key is an unknown shape, not an empty
-      # one, and is left to the sizing code below. What it then measures
-      # depends on what the LOOKUP returns, because calculate_width branches
-      # on the lookup rather than on key presence: a plain Hash answers nil
-      # and takes the `return 800`/`return 600` branches, which skip the
-      # `+ 40` those methods otherwise add, giving 840x640; a Hash defaulting
-      # to `[]` answers truthy, skips those branches, and gives 880x680.
+      # An empty diagram is one that carries BOTH collection keys and holds
+      # nothing in either. Key presence is tested separately from the values
+      # because a default-valued Hash (`Hash.new([])`) holds no key at all yet
+      # answers `[]` to a lookup, so a value test by itself would call it
+      # empty and shrink it. Values are compared with `== []` rather than
+      # asked `empty?`, so a non-collection value is false here rather than
+      # raising.
       #
-      # Hence `key?`, not a value test alone: a default-valued Hash
-      # (`Hash.new([])`) has no key at all yet answers `[]` to a lookup, so a
-      # value test by itself would call it empty and shrink it to 16x16.
-      # Values are still compared with `== []` rather than asked `empty?`, so
-      # a non-collection value is simply false here.
+      # Every other shape is left to calculate_width/calculate_height, which
+      # size from what the lookups return rather than from key presence. The
+      # specs pin the shapes that reach them; this comment deliberately does
+      # not restate their arithmetic.
       def nothing_to_draw?(graph)
         graph.key?(:children) && graph.key?(:edges) &&
           graph[:children] == [] && graph[:edges] == []
       end
 
-      # The shape this method serves is the other one: an EMPTY array. It is
-      # truthy, so it never reaches those `return 800` branches — it falls to
-      # `.max || 800` instead and comes out 880x680, an empty diagram
-      # reserving a blank rectangle in the embedding document.
+      # Counterfactual, since the guard above now short-circuits first:
+      # WITHOUT that early return an empty diagram would be sized by
+      # calculate_width/calculate_height and come out 880x680 — a blank
+      # rectangle reserved in the embedding document. mermaid gives it 16x16.
       def empty_canvas
         Svg::Document.new(
           width: EMPTY_CANVAS_SIZE,
