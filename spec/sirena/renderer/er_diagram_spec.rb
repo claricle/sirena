@@ -195,6 +195,24 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       end
     end
 
+    context 'with entities but no relationships' do
+      let(:entity_only_graph) do
+        { id: 'er_diagram', children: [graph[:children].first], edges: [] }
+      end
+
+      # The empty-canvas gate is a conjunction, and this is the corner that
+      # pins the `&&`. Flipping it to `||` leaves the whole suite green while
+      # every relationship-free ER diagram — the most ordinary kind there is —
+      # collapses to the 16x16 stub and loses its entities.
+      it 'draws the entities at content size, not the empty canvas' do
+        svg = renderer.render(entity_only_graph)
+
+        expect(svg.width).to eq(270)
+        expect(svg.height).to eq(210)
+        expect(svg.children.map(&:id)).to eq(['entity-CUSTOMER'])
+      end
+    end
+
     context 'with a graph whose collection keys are absent' do
       it 'keeps the no-content defaults rather than the empty canvas' do
         svg = renderer.render({ id: 'er_diagram' })
