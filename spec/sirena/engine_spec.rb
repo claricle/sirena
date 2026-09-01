@@ -77,16 +77,14 @@ RSpec.describe Sirena::Engine do
       end
 
       # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
-      # Sirena keeps its own 0 0 origin — every non-empty ER reference uses
-      # one — and matches the 16x16 extent. Before this, an empty diagram
-      # reserved an 880x680 blank rectangle in the embedding document.
-      it 'sizes the canvas the way mermaid sizes an empty diagram' do
+      # Sirena keeps its own 0 0 origin — every non-empty ER reference in
+      # spec/fixtures_mermaid/er uses one — and matches the 16x16 extent.
+      # Before this, an empty diagram reserved an 880x680 blank rectangle in
+      # the embedding document.
+      it 'renders as the 16x16 empty canvas, not a blank 880x680 one' do
         expect(document.root.attributes['width']).to eq('16.0')
         expect(document.root.attributes['height']).to eq('16.0')
         expect(document.root.attributes['viewBox']).to eq('0 0 16 16')
-      end
-
-      it 'draws no shapes on that canvas' do
         expect(document.root.elements.to_a).to eq([])
       end
     end

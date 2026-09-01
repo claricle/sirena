@@ -182,16 +182,16 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
     context 'with a graph that has no entities and no relationships' do
       let(:empty_graph) { { id: 'er_diagram', children: [], edges: [] } }
 
-      it 'sizes the canvas the way mermaid sizes an empty ER diagram' do
+      # Size and emptiness are one property: what an empty ER diagram looks
+      # like. Asserting emptiness on its own proved nothing — an empty graph
+      # already drew no children on the old 880x680 canvas.
+      it 'is the 16x16 canvas mermaid gives an empty ER diagram' do
         svg = renderer.render(empty_graph)
 
         expect(svg.width).to eq(16)
         expect(svg.height).to eq(16)
         expect(svg.view_box).to eq('0 0 16 16')
-      end
-
-      it 'puts nothing on the canvas' do
-        expect(renderer.render(empty_graph).children).to eq([])
+        expect(svg.children).to eq([])
       end
     end
 
