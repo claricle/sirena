@@ -226,6 +226,27 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         expect(svg.width).to eq(840)
         expect(svg.height).to eq(640)
       end
+
+      # A default-valued Hash answers `[]` to a lookup while holding no key at
+      # all, so testing the looked-up value alone called these empty and
+      # shrank them to 16x16. Absent keys are an unknown shape, not an empty
+      # diagram, whatever a default makes the lookup return. All three
+      # partial shapes are one property, and between them they pin both
+      # `key?` calls: dropping either one alone revives the 16x16 answer for
+      # exactly one of these rows.
+      it 'is not fooled by a Hash that defaults its lookups to empty' do
+        defaulted = -> { Hash.new { [] }.merge!(id: 'er_diagram') }
+        neither = defaulted.call
+        children_only = defaulted.call.merge!(children: [])
+        edges_only = defaulted.call.merge!(edges: [])
+
+        sizes = [neither, children_only, edges_only].map do |graph|
+          svg = renderer.render(graph)
+          [svg.width, svg.height]
+        end
+
+        expect(sizes).to eq([[880, 680], [880, 680], [880, 680]])
+      end
     end
   end
 end
