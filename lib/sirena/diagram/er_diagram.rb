@@ -179,9 +179,10 @@ module Sirena
       # - All relationships are valid
       # - All relationship references point to existing entities
       #
-      # A nil member of either collection makes the diagram invalid rather
-      # than raising, so the predicate answers for every shape the
-      # collection attributes accept.
+      # A nil entity or relationship makes the diagram invalid rather than
+      # raising. That covers the two collections this method iterates; it
+      # says nothing about what an entity holds — ErEntity#valid? still
+      # raises on a nil member of its own `attributes`.
       #
       # @return [Boolean] true if ER diagram is valid
       def valid?
