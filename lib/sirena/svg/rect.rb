@@ -50,6 +50,7 @@ module Sirena
         map_attribute 'stroke-dasharray', to: :stroke_dasharray
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
       end
     end
   end

@@ -59,6 +59,31 @@ RSpec.describe Sirena::Svg do
       expect(rect(opacity: Float::NAN).to_xml).to eq('<rect/>')
     end
 
+    # The guard above is one operand of two. This is the other: a component
+    # that reads as non-finite must survive untouched, or 1e400 would clamp
+    # to 1.0 and silently become the whole-element fraction.
+    it 'leaves a non-finite component exactly as it was' do
+      expect(rect(opacity: 0.5, fill_opacity: '1e400').to_xml)
+        .to eq('<rect fill-opacity="1e400" stroke-opacity="0.5"/>')
+    end
+
+    # Tiny has no `opacity`, so this translation is the only record of it in
+    # the output. If the emitted components do not parse back, a document
+    # Sirena wrote and Sirena re-read loses the fraction entirely -- which is
+    # what happened before every class mapped them.
+    it 'keeps the translated opacity when its own output is read back' do
+      lossy = %w[Rect Circle Ellipse Line Polygon Polyline Path Text Group].reject do |name|
+        klass = described_class.const_get(name)
+        subject = klass.new
+        subject.opacity = 0.3
+        subject.content = 'x' if subject.respond_to?(:content=)
+        once = subject.to_xml
+        klass.from_xml(once).to_xml == once
+      end
+
+      expect(lossy).to be_empty
+    end
+
     it 'translates opacity on a Group through its inherited paint properties' do
       group = Sirena::Svg::Group.new
       group.opacity = 0.3

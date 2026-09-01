@@ -40,6 +40,8 @@ module Sirena
         map_attribute 'marker-start', to: :marker_start
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
       end
 
       # Helper to build path data from move and line commands

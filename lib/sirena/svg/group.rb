@@ -25,6 +25,8 @@ module Sirena
         # output, which is not equivalent to compositing one group surface.
         # Sirena accepts the deviation because no renderer sets opacity on a Group.
         map_attribute 'opacity', to: :opacity
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
 
         map_element 'g', to: :children
         map_element 'rect', to: :children

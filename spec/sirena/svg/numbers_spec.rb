@@ -32,11 +32,13 @@ RSpec.describe Sirena::Svg::Numbers do
     # to_s with itself, so a plain to_f would have turned it into 0.0 and
     # every unset attribute would have been emitted as zero.
     #
-    # Parsed in, not built: `Rect.new.fill_opacity` is plain nil, so writing
-    # it that way asks the same question as the nil case above and never
-    # reaches the sentinel at all.
+    # Parsed in, not built: `Rect.new.style` is plain nil, so writing it that
+    # way asks the same question as the nil case above and never reaches the
+    # sentinel at all. `style` because only an attribute the class does NOT
+    # map is left holding the sentinel, and every mapped one is set to nil
+    # by the parse.
     it 'has nothing to read in an attribute lutaml never set' do
-      unset = Sirena::Svg::Text.from_xml('<text>x</text>').fill_opacity
+      unset = Sirena::Svg::Text.from_xml('<text>x</text>').style
 
       # Lutaml::Model::UninitializedClass is an internal name; the non-String
       # to_s result is the boundary Sirena relies on and survives a rename.
