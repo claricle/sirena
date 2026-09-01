@@ -327,6 +327,23 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
+    context 'with identical bare cards in one column' do
+      # lutaml-model gives KanbanCard VALUE equality, so cards written the
+      # same way compare equal and collapse under `uniq`, `Set` membership
+      # or a `Hash` key. Bare cards are new here and make that shape trivial
+      # to write; the corpus 002 example above cannot cover it, because its
+      # two `docs` cards carry different text and so are not value-equal.
+      it 'keeps one card per line rather than collapsing look-alikes' do
+        diagram = parser.parse("kanban\n  col\n    a\n    a\n    a\n")
+        cards = diagram.columns.first.cards
+        aggregate_failures do
+          expect(cards.map(&:id)).to eq(%w[a a a])
+          # The hazard is live, not theoretical: all three are value-equal.
+          expect(cards.uniq.size).to eq(1)
+        end
+      end
+    end
+
     context 'with a real root in the wrong place (corpus 020)' do
       # KNOWN GAP, pinned deliberately. mmdc 11.12.0 REJECTS this input with
       # "Items without section detected, found section (\"fakeRoot\")".
@@ -378,9 +395,10 @@ RSpec.describe Sirena::Parser::KanbanParser do
       # Whitespace is not empty, so this one does NOT fall back - it is the
       # single case that separates `.empty?` from `.strip.empty?`, and
       # stripping here would be wrong. Oracle-confirmed rather than
-      # incidental: mmdc keeps the whitespace label and emits a text node for
-      # it, so the blank look is HTML whitespace collapsing, not a fallback
-      # to the bracket text.
+      # incidental: mmdc 11.12.0 emits `<span class="nodeLabel"></span>` -
+      # empty, with no text node at all - where a kept label gives
+      # `<p>x</p>` and a fallback gives the bracket text. So the label is
+      # consumed rather than fallen back to; it just leaves nothing behind.
       it 'keeps a whitespace-only label rather than falling back' do
         diagram = parser.parse("kanban\n  id1[Todo]@{ label: '   ' }\n")
         expect(diagram.columns.first.title).to eq('   ')
@@ -472,8 +490,12 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'falls back for every spelling of zero' do
+        # The signed forms carry the leading-sign branch of each radix
+        # pattern, and `0e-0` the exponent's - the only sign the float
+        # reaches, since `unquoted_value` admits `-` but not `+`.
         aggregate_failures do
-          %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0].each do |zero|
+          %w[0 -0 00 000 -00 0x0 0o0 0b0 0e0 0E0
+             -0x0 -0o0 -0b0 0e-0].each do |zero|
             expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
           end
         end
@@ -496,9 +518,15 @@ RSpec.describe Sirena::Parser::KanbanParser do
         end
       end
 
-      it 'keeps 0X0, which js-yaml leaves as a string' do
-        # The hex prefix is lowercase-only, so `0x0` is zero but `0X0` is not.
-        expect(title_for('0X0')).to eq('0X0')
+      it 'keeps an uppercase radix prefix, which js-yaml leaves as a string' do
+        # All three prefixes are lowercase-only, so `0x0`/`0o0`/`0b0` are
+        # zero while these stay strings. The exponent marker is the one
+        # case-insensitive spelling, covered by `0E0` above.
+        aggregate_failures do
+          %w[0X0 0O0 0B0].each do |kept|
+            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          end
+        end
       end
 
       it 'keeps truthy scalars and quoted falsy-looking ones' do
@@ -515,6 +543,31 @@ RSpec.describe Sirena::Parser::KanbanParser do
         aggregate_failures do
           %w[0_0 0__0 0___0 0_0_0 00__00 -0_0 0x_0 0x0_0 0b0_0 0o0_0].each do |zero|
             expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+          end
+        end
+      end
+
+      it 'strips the separators before converting, so a non-zero payload survives' do
+        # The other half of the separator rule, and the only half that can
+        # tell stripping from tolerating. Every value in the drop example
+        # above has a ZERO payload, where Ruby's own `to_i` already reaches
+        # zero whether or not the separators are removed first - `0x_0` and
+        # `0__0` are dropped either way. Only a NON-zero payload behind a
+        # separator distinguishes them: without the strip, `to_i(16)` reads
+        # `0x_1` as 0 and `to_i` truncates `0__1` at the double separator,
+        # and both would be dropped where mermaid draws a label.
+        #
+        # mmdc 11.12.0 resolves each of these to a truthy number and keeps
+        # the label row - `0x_1` to 1, `0x_a` to 10, `0x_10` to 16, `-0x_1`
+        # to -1. Sirena keeps the raw text, the pre-existing divergence
+        # noted above.
+        aggregate_failures do
+          %w[0__1 0___1 -0__1 00__01 0__10
+             0x_1 0x__1 0x_10 0x_a -0x_1 0x_0_1
+             0o_1 0o__1 0o_10 -0o_1 0o_0_1
+             0b_1 0b__1 0b_10 -0b_1 0b_0_1
+             0__1e0 0__1E0].each do |kept|
+            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
           end
         end
       end

@@ -19,9 +19,11 @@ module Sirena
           # 11.12.0. Case matters unevenly: the radix prefix is
           # lowercase-only, so `0x0` and `0o0` resolve while `0X0` and `0O0`
           # stay strings, but the exponent marker is case-insensitive and
-          # `0e0` and `0E0` both resolve. The digits are lowercase-only too,
-          # so YAML_HEX matches `0xff` and not `0xFF` - immaterial for zero,
-          # which has no letters, but the pattern is narrower than its name.
+          # `0e0` and `0E0` both resolve. YAML_HEX's DIGITS are lowercase-only
+          # where js-yaml's are not - it resolves `0xFF` to 255 - so the
+          # pattern is narrower than js-yaml, not merely than its own name.
+          # Immaterial while only the falsy half is mirrored: every hex zero
+          # is digit-only, so no uppercase digit can change a verdict.
           #
           # YAML_FLOAT's exponent takes no sign in practice: `unquoted_value`
           # admits `-` but not `+`, so only the `-` alternative is reachable.
