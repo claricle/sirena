@@ -59,9 +59,10 @@ module Sirena
 
       protected
 
-      # Compared against `[]` rather than asked `empty?` on purpose: a graph
-      # with the key absent entirely is an unknown shape, and keeps the
-      # 800x600 defaults below.
+      # Compared against `[]` rather than asked `empty?` on purpose. A graph
+      # that is missing the key entirely is an unknown shape rather than an
+      # empty one, and keeps whatever calculate_width/calculate_height give
+      # it — 840x640 today, via their `return 800`/`return 600` branches.
       def nothing_to_draw?(graph)
         graph[:children] == [] && graph[:edges] == []
       end
