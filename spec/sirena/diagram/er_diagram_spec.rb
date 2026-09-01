@@ -59,10 +59,18 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       expect(diagram.valid?).to be false
     end
 
-    # Empty entities used to short-circuit this method, so a nil relationship
-    # member never reached the validity check. It does now.
+    # A nil member used to raise NoMethodError out of the predicate, in both
+    # collections. Measured on the base commit: one valid entity plus
+    # `relationships: [nil]` reached `relationships.all?(&:valid?)` and died
+    # there. Both branches now answer instead.
     it 'returns false when a relationship member is nil' do
       diagram = described_class.new(relationships: [nil])
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an entity member is nil' do
+      diagram = described_class.new(entities: [nil])
 
       expect(diagram.valid?).to be false
     end

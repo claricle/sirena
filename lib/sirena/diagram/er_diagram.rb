@@ -179,10 +179,14 @@ module Sirena
       # - All relationships are valid
       # - All relationship references point to existing entities
       #
+      # A nil member of either collection makes the diagram invalid rather
+      # than raising, so the predicate answers for every shape the
+      # collection attributes accept.
+      #
       # @return [Boolean] true if ER diagram is valid
       def valid?
         return false if entities.nil?
-        return false unless entities.all?(&:valid?)
+        return false unless entities.all? { |entity| entity&.valid? }
         return false unless relationships.nil? ||
                             relationships.all? { |rel| rel&.valid? }
 
