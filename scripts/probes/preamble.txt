@@ -1,0 +1,41 @@
+---
+title: T
+---
+flowchart LR
+  A-->B
+%%%%
+  ---
+  title: T
+  ---
+  flowchart LR
+  A --> B
+%%%%
+%%{init: {"theme":"base"}}%%
+sequenceDiagram
+  A->>B: m
+%%%%
+%%{init: {"a": "b}c"}}%%
+flowchart LR
+  A-->B
+%%%%
+%%{init: {}}%%flowchart LR
+  A-->B
+%%%%
+%% a comment
+classDiagram
+  class C1
+%%%%
+%% one
+
+%% two
+flowchart LR
+  A-->B
+%%%%
+---
+config:
+  theme: base
+---
+flowchart LR
+  A-->B
+%%%%
+radar-beta\n${context}

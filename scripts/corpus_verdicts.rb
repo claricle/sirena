@@ -51,6 +51,7 @@ require 'digest'
 require 'yaml'
 require 'tmpdir'
 require 'fileutils'
+require_relative 'mmdc_oracle'
 
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
 REFERENCE_ROOT = File.expand_path('../spec/fixtures_mermaid', __dir__)
@@ -246,13 +247,13 @@ def classify(entry, group)
   ['unknown', 'no evidence']
 end
 
-# Re-checks one case against the installed mmdc. Returns true if it renders.
-def local_mmdc_renders?(path)
-  out = File.join(Dir.tmpdir, "verdict-#{Process.pid}.svg")
-  system('mmdc', '-i', path, '-o', out,
-         out: File::NULL, err: File::NULL)
-ensure
-  FileUtils.rm_f(out)
+# Re-checks one case against the installed mmdc using the shared oracle.
+def local_mmdc_verdict(path)
+  MmdcOracle.verdict(path) do |input, output|
+    status = system('mmdc', '-i', input, '-o', output,
+                    out: File::NULL, err: File::NULL)
+    [status, '']
+  end.verdict
 end
 
 # Promotes an `invalid` row that the local mmdc actually renders. Leaves every
@@ -268,18 +269,23 @@ def verify_invalid!(rows, entries)
 
     entry = by_case[row['case']] or next
     checked += 1
-    if local_mmdc_renders?(entry[:path])
+    case local_mmdc_verdict(entry[:path])
+    when :accepts
       row['verdict'] = 'valid'
       row['evidence'] = 'local mmdc renders it (sidecar rejection was stale)'
       promoted += 1
-    else
+    when :rejects
       row['evidence'] = 'local mmdc rejects it too'
+    when :error
+      row['evidence'] = 'local mmdc could not be run'
     end
   end
 
   warn "  verified #{checked} invalid case(s) against local mmdc; " \
        "#{promoted} promoted to valid"
 end
+
+return unless $PROGRAM_NAME == __FILE__
 
 types = ARGV.reject { |a| a.start_with?('--') }
 write = ARGV.include?('--write')
