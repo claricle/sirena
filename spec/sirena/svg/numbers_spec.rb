@@ -57,9 +57,11 @@ RSpec.describe Sirena::Svg::Numbers do
       expect(described_class.write(10.0)).to eq('10.0')
     end
 
-    # 67.0 + (14.0 * 0.35) is 71.89999999999999 on the way out.
+    # 12.0 * 1.1 is 13.200000000000001 on the way out. Measured, because the
+    # obvious-looking 67.0 + (14.0 * 0.35) is exactly 71.9 and would have
+    # proved nothing.
     it 'rounds off floating-point noise' do
-      expect(described_class.write(67.0 + (14.0 * 0.35))).to eq('71.9')
+      expect(described_class.write(12.0 * 1.1)).to eq('13.2')
     end
 
     # Pins the precision itself. The case above rounds to the same string at

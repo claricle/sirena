@@ -6,8 +6,8 @@ module Sirena
   module Svg
     # Reading and writing the numbers that end up in SVG attributes.
     #
-    # Three callers needed the same two things and each would have grown its
-    # own version: turn whatever an attribute is holding into a Float, and
+    # Several callers needed the same two things and each would have grown
+    # its own version: turn whatever an attribute is holding into a Float, and
     # turn a computed Float back into an attribute value that does not read
     # as floating-point noise.
     #
@@ -22,8 +22,8 @@ module Sirena
       # is ignored rather than rejected.
       LEADING = /\A\s*[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/
 
-      # Computed coordinates are floats, so 67.0 + 14.0 * 0.35 lands on
-      # 71.89999999999999 as often as on 71.9. Four decimals is finer than
+      # Computed coordinates are floats, so 12.0 * 1.1 lands on
+      # 13.200000000000001 rather than 13.2. Four decimals is finer than
       # any diagram needs and short enough to read in a diff.
       PRECISION = 4
       private_constant :LEADING, :PRECISION
@@ -40,15 +40,16 @@ module Sirena
         matched&.to_f
       end
 
-      # Finite only: Float#round raises FloatDomainError on Infinity and NaN.
-      # Every caller already refuses a non-finite result before it gets here —
+      # Finite only, but nothing here enforces it: Float#round(4) returns
+      # Infinity and NaN untouched rather than raising, so a non-finite value
+      # would be emitted verbatim as `Infinity`, which is not an SVG number.
+      # Every caller refuses a non-finite result before it gets here —
       # Text#offset_x, Text#baseline_y, Element#composed_opacity and
       # Arrowhead#triangle each fall back instead — because the fallback is a
       # different value at each site and none of them is "emit nothing".
       #
       # @param value [Float] a computed, finite number
       # @return [String] the attribute value to emit
-      # @raise [FloatDomainError] if the value is not finite
       def write(value)
         value.round(PRECISION).to_s
       end

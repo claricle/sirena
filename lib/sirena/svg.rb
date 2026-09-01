@@ -24,10 +24,15 @@ module Sirena
     # The svg_conform profile Sirena's output is built to satisfy.
     #
     # Sirena's SVG is embedded straight into Metanorma documents, and this
-    # is the profile Metanorma asks for. It requires a
-    # viewBox, forbids external CSS, fonts and images, and enforces the SVG
-    # Tiny 1.2 element and attribute table — while leaving colours, fonts
-    # and styles free.
+    # is the profile Metanorma asks for. It requires a viewBox, rejects
+    # `@import`, `<link>` and external images, and enforces the SVG Tiny 1.2
+    # element and attribute table — while leaving colours, fonts and styles
+    # free.
+    #
+    # It is not on its own a self-containment guarantee: measured against
+    # svg_conform 0.2.1, a document carrying an external `<?xml-stylesheet?>`
+    # processing instruction validates clean. Nothing Sirena emits can
+    # produce one, and spec/svg_conformance_spec.rb is what holds that line.
     #
     # The alternatives considered do not fit. `:svg_1_2_rfc` restricts colour
     # to black and white and fonts to the three generic families, which would erase
