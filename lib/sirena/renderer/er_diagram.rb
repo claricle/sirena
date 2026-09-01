@@ -30,11 +30,22 @@ module Sirena
       # Cardinality symbol size
       CARDINALITY_SIZE = 15
 
+      # Canvas mermaid gives an ER diagram with nothing in it: a zero-size
+      # content box with its 8px diagram padding on each side. Measured from
+      # spec/fixtures_mermaid/er/061_spec_mermaidapi_spec_60.svg, whose source
+      # is the bare `erDiagram` keyword — viewBox="-8 -8 16 16", max-width
+      # 16px. Every non-empty ER reference in that directory starts its
+      # viewBox at "0 0", so the -8 origin is mermaid centring an empty
+      # bounding box, not a convention to copy; only the extent is.
+      EMPTY_CANVAS_SIZE = 16
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
+        return empty_canvas if nothing_to_draw?(graph)
+
         svg = create_document(graph)
 
         # Render edges first (so they appear under nodes)
@@ -47,6 +58,34 @@ module Sirena
       end
 
       protected
+
+      # An empty diagram is one that carries BOTH collection keys and holds
+      # nothing in either. Key presence is tested separately from the values
+      # because a default-valued Hash (`Hash.new([])`) holds no key at all yet
+      # answers `[]` to a lookup, so a value test by itself would call it
+      # empty and shrink it. Values are compared with `== []` rather than
+      # asked `empty?`, so a non-collection value is false here rather than
+      # raising.
+      #
+      # Every other shape is left to calculate_width/calculate_height, which
+      # size from what the lookups return rather than from key presence. The
+      # specs pin the shapes that reach them; this comment deliberately does
+      # not restate their arithmetic.
+      def nothing_to_draw?(graph)
+        graph.key?(:children) && graph.key?(:edges) &&
+          graph[:children] == [] && graph[:edges] == []
+      end
+
+      # Counterfactual, since the guard above now short-circuits first:
+      # WITHOUT that early return an empty diagram would be sized by
+      # calculate_width/calculate_height and come out 880x680 — a blank
+      # rectangle reserved in the embedding document. mermaid gives it 16x16.
+      def empty_canvas
+        Svg::Document.new(
+          width: EMPTY_CANVAS_SIZE,
+          height: EMPTY_CANVAS_SIZE
+        )
+      end
 
       def calculate_width(graph)
         return 800 unless graph[:children]

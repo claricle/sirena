@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'rexml/document'
 
 RSpec.describe Sirena::Engine do
   describe '#render' do
@@ -49,6 +50,44 @@ RSpec.describe Sirena::Engine do
 
       it 'detects ER diagram type' do
         expect { engine.render(source) }.not_to raise_error
+      end
+    end
+
+    context 'with the byte-identical empty ER corpus rows' do
+      # All three rows are the same nine bytes, so one render covers them.
+      # The first example is what makes that claim a checked fact.
+      let(:fixture_files) do
+        %w[
+          er/059_spec_xss_spec_58.mmd
+          er/060_spec_diagram-orchestration_spec_59.mmd
+          er/061_spec_mermaidapi_spec_60.mmd
+        ]
+      end
+
+      let(:sources) do
+        fixture_files.map do |name|
+          File.binread(File.expand_path("../mermaid/#{name}", __dir__))
+        end
+      end
+
+      let(:document) { REXML::Document.new(engine.render(sources.first)) }
+
+      it 'reads the bare erDiagram keyword from every one of the rows' do
+        expect(sources).to eq(['erDiagram'] * fixture_files.length)
+      end
+
+      # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
+      # Sirena keeps its own 0 0 origin — every non-empty ER reference in
+      # spec/fixtures_mermaid/er uses one — and matches the 16x16 extent.
+      # At the base commit an empty diagram did not render at all — empty
+      # entities failed validation and Engine raised. The 880x680 blank
+      # rectangle is what the PR head produced once validation was widened
+      # but the renderer had not caught up; that is what this replaces.
+      it 'renders as the 16x16 empty canvas, not a blank 880x680 one' do
+        expect(document.root.attributes['width']).to eq('16.0')
+        expect(document.root.attributes['height']).to eq('16.0')
+        expect(document.root.attributes['viewBox']).to eq('0 0 16 16')
+        expect(document.root.elements.to_a).to eq([])
       end
     end
 
