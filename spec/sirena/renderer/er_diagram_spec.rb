@@ -185,7 +185,12 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       # Size and emptiness are one property: what an empty ER diagram looks
       # like. Asserting emptiness on its own proved nothing — an empty graph
       # already drew no children on the old 880x680 canvas.
-      it 'is the 16x16 canvas mermaid gives an empty ER diagram' do
+      #
+      # The EXTENT is mermaid's; the origin is not. mmdc emits
+      # viewBox="-8 -8 16 16" for this source, from centring a zero-size
+      # bounding box. Sirena keeps the "0 0" origin every one of its other
+      # diagrams uses, so only 16x16 is the parity claim being made here.
+      it 'matches the 16x16 extent mermaid gives an empty ER diagram' do
         svg = renderer.render(empty_graph)
 
         expect(svg.width).to eq(16)
