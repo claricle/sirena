@@ -59,17 +59,26 @@ module Sirena
 
       protected
 
-      # Compared against `[]` rather than asked `empty?` on purpose. A graph
-      # that is missing the key entirely is an unknown shape rather than an
-      # empty one, and keeps whatever calculate_width/calculate_height give
-      # it — 840x640 today, via their `return 800`/`return 600` branches.
+      # Two different "no content" shapes reach the sizing code below, and
+      # they size differently. A graph MISSING a collection key is an unknown
+      # shape, not an empty one: it takes the `return 800`/`return 600`
+      # branches, which skip the `+ 40` those methods otherwise add, and comes
+      # out 840x640. Left alone.
+      #
+      # Hence `key?`, not a value test alone: a default-valued Hash
+      # (`Hash.new([])`) has no key at all yet answers `[]` to a lookup, so a
+      # value test by itself would call it empty and shrink it to 16x16.
+      # Values are still compared with `== []` rather than asked `empty?`, so
+      # a non-collection value is simply false here.
       def nothing_to_draw?(graph)
-        graph[:children] == [] && graph[:edges] == []
+        graph.key?(:children) && graph.key?(:edges) &&
+          graph[:children] == [] && graph[:edges] == []
       end
 
-      # calculate_width/calculate_height fall back to a full 800x600 when
-      # there is no content to measure, which would reserve an 880x680 blank
-      # rectangle in an embedding document.
+      # The shape this method serves is the other one: an EMPTY array. It is
+      # truthy, so it never reaches those `return 800` branches — it falls to
+      # `.max || 800` instead and comes out 880x680, an empty diagram
+      # reserving a blank rectangle in the embedding document.
       def empty_canvas
         Svg::Document.new(
           width: EMPTY_CANVAS_SIZE,

@@ -79,8 +79,10 @@ RSpec.describe Sirena::Engine do
       # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
       # Sirena keeps its own 0 0 origin — every non-empty ER reference in
       # spec/fixtures_mermaid/er uses one — and matches the 16x16 extent.
-      # Before this, an empty diagram reserved an 880x680 blank rectangle in
-      # the embedding document.
+      # At the base commit an empty diagram did not render at all — empty
+      # entities failed validation and Engine raised. The 880x680 blank
+      # rectangle is what the PR head produced once validation was widened
+      # but the renderer had not caught up; that is what this replaces.
       it 'renders as the 16x16 empty canvas, not a blank 880x680 one' do
         expect(document.root.attributes['width']).to eq('16.0')
         expect(document.root.attributes['height']).to eq('16.0')

@@ -206,9 +206,10 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       end
 
       # The empty-canvas gate is a conjunction, and this is the corner that
-      # pins the `&&`. Flipping it to `||` leaves the whole suite green while
-      # every relationship-free ER diagram — the most ordinary kind there is —
-      # collapses to the 16x16 stub and loses its entities.
+      # pins the `&&`. WITHOUT this example, flipping it to `||` left the whole
+      # suite green while every relationship-free ER diagram — the most
+      # ordinary kind there is — collapsed to the 16x16 stub and lost its
+      # entities. This example is what now fails under that mutation.
       it 'draws the entities at content size, not the empty canvas' do
         svg = renderer.render(entity_only_graph)
 
