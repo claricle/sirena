@@ -26,7 +26,7 @@ back half of the pipeline does.
 ## 1. Parser — becomes a declaration
 
 **Before** (`lib/sirena/parser/pie.rb`, 48 lines) — this exact body is
-copy-pasted into 13 of the 24 parsers:
+copy-pasted into 12 of the 24 parsers:
 
 ```ruby
 class PieParser < Base

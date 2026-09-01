@@ -55,7 +55,7 @@ word.
 **2. The layer called Transform is doing layout.** `Transform::Mindmap`
 positions nodes; `Transform::XYChart` computes axis scales. Meanwhile
 `Engine#layout_graph` — the method actually named layout — is a
-3-column grid stub. Nine renderers already name their input `layout`.
+3-column grid stub. Ten renderers already name their input `layout`.
 
 **3. The typed model is flattened into an untyped Hash** right before
 the renderer. There are 24 private, undocumented hash shapes. To change
@@ -141,7 +141,7 @@ purpose:
   02  SVG               one serializer, escape once
   03  naming            Transform -> Layout, pure rename
   04  typed Scene       kill the 24 undocumented hash shapes
-  05  boilerplate       13 parsers, 9 doc-creators, 5 palettes (3 names)
+  05  boilerplate       12 parsers, 9 doc-creators, 5 palettes (3 names)
   06  registry          lib/sirena.rb 328 lines -> under 40
   07  adding a type     generator, shared examples, one onboarding page
 ```
@@ -250,7 +250,7 @@ What is true, and what item 04 is actually for:
   earlier or 18 lands after it. That decision is still open; it is
   flagged, not made.
 
-### 5. Item 09 (rubocop todo, 7,614 entries) moves later
+### 5. Item 09 (rubocop todo, 7,602 entries) moves later
 
 **Why:** items 04-06 delete a large fraction of the files that debt is
 parked in. Styling code you're about to delete costs twice. The original
@@ -430,7 +430,7 @@ names go.
 ```
 
 The parser becomes a declaration — that same 22-line body is currently
-copy-pasted into 13 of the 24 parsers:
+copy-pasted into 12 of the 24 parsers:
 
 ```ruby
 class Parser::Pie < Base

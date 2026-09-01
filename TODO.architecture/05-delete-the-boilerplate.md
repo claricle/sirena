@@ -20,12 +20,20 @@ comparing puts the 24 parsers into four groups:
 | Group | Count | Types | Shape |
 |---|---|---|---|
 | 1 | 9 | `c4`, `info`, `pie`, `quadrant`, `sequence`, `gantt`, `sankey`, `timeline`, `error` | identical 22 lines; the only difference across the group is single vs double quotes |
-| 2 | 3 | `block`, `flowchart`, `requirement` | identical to each other, including a copy-pasted 20-line `format_parse_error` |
+| 2 | 2 | `block`, `requirement` | identical to each other, including a copy-pasted 20-line `format_parse_error` |
 | 3 | 1 | `er_diagram` | group 1, at 19 lines |
-| 4 | 11 | the rest | genuine per-type logic |
+| 4 | 12 | the rest, including `flowchart` | genuine per-type logic |
 
-**13 of 24 parsers contain no per-type logic at all** — about 280 lines
+**12 of 24 parsers contain no per-type logic at all** — about 260 lines
 whose only job is to name three classes.
+
+`flowchart` looks like group 2 and is not. It calls `normalize_line_ends`
+(`lib/sirena/parser/flowchart.rb:33`, defined at `:47`) before parsing, which
+folds a lone `\r` into a newline; `block.rb` and `requirement.rb` have no such
+call. Measured: `graph TD\rA[Start]-->B[End]\r` renders today and raises
+`ParseError` against a declarative body with the normalisation dropped. Reducing
+`flowchart` to a two-line declaration deletes a working fix — leave its `parse`
+alone, or move `normalize_line_ends` into `Parser::Base` for every type first.
 
 Two inconsistencies come with them:
 
@@ -162,7 +170,7 @@ headings silently drop everything after the first block.
 
 ## Done when
 
-- [ ] A — no parser contains the boilerplate `parse` body; 13 files are gone or reduced to a two-line declaration
+- [ ] A — no parser contains the boilerplate `parse` body; 12 files are gone or reduced to a two-line declaration. `flowchart` is NOT one of them — see the group table above
 - [ ] A — one parse-error format for all 24 types, asserted by a spec that feeds each type deliberately broken source and checks the message names a line and a column
 - [ ] A — `grep -rn "def format_parse_error" lib/` returns one hit, in `Parser::Base`
 - [ ] A — `user_journey`'s score check raises something other than `ParseError`
@@ -170,6 +178,6 @@ headings silently drop everything after the first block.
 - [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
 - [ ] B — no renderer sets `@offset_x` / `@offset_y`
 - [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/renderer/` returns nothing
-- [ ] C — `grep -c '#[0-9a-fA-F]\{6\}' lib/sirena/renderer/*.rb` near zero
+- [ ] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
 - [ ] C — switching themes visibly changes output for every registered type
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either
