@@ -1,0 +1,108 @@
+graph TD
+A-->B
+%%%%
+graph TD;
+A-->B
+%%%%
+graph TD
+A-->B;C-->D
+%%%%
+graph TD
+A-->B ;C
+%%%%
+graph TD
+A-->B;;;C
+%%%%
+graph TD;click;B
+%%%%
+graph TD
+A
+click A
+%%%%
+graph TD
+A
+B
+click A;B
+%%%%
+graph TD
+A
+click A "http://x";B
+%%%%
+graph TD
+A
+click A "http://x" ;B
+%%%%
+graph TD
+A
+click A call cb(foo;bar)
+%%%%
+graph TD
+A
+style A fill:#f9f;stroke:#333
+%%%%
+graph TD
+A
+style A fill:#f9f;B
+%%%%
+graph TD
+A
+style A red
+%%%%
+graph TD
+A
+style A fill:
+%%%%
+graph TD
+A
+style A fill :red
+%%%%
+graph TD
+A
+style A  fill:red
+%%%%
+graph TD
+A
+style A fill:red;B(foo:bar)
+%%%%
+graph TD
+A
+classDef x fill:#f9f;stroke:#333
+%%%%
+graph TD
+A
+classDef x red
+%%%%
+graph TD;%% c;D
+%%%%
+graph TD
+A;%% c;D
+%%%%
+graph TD
+A-->B;
+%% comment
+%%%%
+graph TD
+style ;B
+%%%%
+graph TD
+A
+B
+class ;B
+%%%%
+graph TD
+A
+B
+class A foo ;B
+%%%%
+graph TD ;A
+%%%%
+graph TD;subgraph s;A;end;B
+%%%%
+graph TD;
+;A-->B
+%%%%
+graph TD
+endpoint-->classy
+%%%%
+flowchart TD
+  A[Syntax error in text]
