@@ -107,10 +107,36 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y, anchor.dy]).to eq([10.0, 10.0, 1.0])
     end
 
+    # The absolute case above promotes to `L`; a relative move must promote
+    # to `l`, so every later group is still an offset. Two implicit groups
+    # rather than one, because one cannot show that the second is measured
+    # from the first rather than from the move.
+    it 'draws relative lines from the coordinates that follow a relative move' do
+      anchor = terminus('m 5 20 10 0 0 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([15.0, 30.0, 0.0, 1.0])
+    end
+
     it 'reads horizontal and vertical shorthand' do
       anchor = terminus('M 0 0 H 10 V 10')
 
       expect([anchor.x, anchor.y, anchor.dy]).to eq([10.0, 10.0, 1.0])
+    end
+
+    # Each shorthand carries one number, and which axis that number belongs
+    # to is the whole content of the branch. Starting from a point whose x
+    # and y differ, and asserting the heading as well as the position,
+    # because swapping the two axes both moves the anchor and turns it.
+    it 'offsets only x for a relative horizontal shorthand' do
+      anchor = terminus('M 5 20 h 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([15.0, 20.0, 1.0, 0.0])
+    end
+
+    it 'offsets only y for a relative vertical shorthand' do
+      anchor = terminus('M 5 20 v 10')
+
+      expect([anchor.x, anchor.y, anchor.dx, anchor.dy]).to eq([5.0, 30.0, 0.0, 1.0])
     end
 
     # The heading as well as the point. A closing segment travels from the
