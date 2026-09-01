@@ -59,11 +59,13 @@ module Sirena
 
       protected
 
-      # Two different "no content" shapes reach the sizing code below, and
-      # they size differently. A graph MISSING a collection key is an unknown
-      # shape, not an empty one: it takes the `return 800`/`return 600`
-      # branches, which skip the `+ 40` those methods otherwise add, and comes
-      # out 840x640. Left alone.
+      # A graph MISSING a collection key is an unknown shape, not an empty
+      # one, and is left to the sizing code below. What it then measures
+      # depends on what the LOOKUP returns, because calculate_width branches
+      # on the lookup rather than on key presence: a plain Hash answers nil
+      # and takes the `return 800`/`return 600` branches, which skip the
+      # `+ 40` those methods otherwise add, giving 840x640; a Hash defaulting
+      # to `[]` answers truthy, skips those branches, and gives 880x680.
       #
       # Hence `key?`, not a value test alone: a default-valued Hash
       # (`Hash.new([])`) has no key at all yet answers `[]` to a lookup, so a
