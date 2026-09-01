@@ -59,7 +59,8 @@ module Sirena
       end
 
       def render_state(state, svg)
-        state_type = state.dig(:metadata, :state_type) || 'normal'
+        state_type = state.dig(:metadata, :shape_type) ||
+                     state.dig(:metadata, :state_type) || 'normal'
 
         # Create group for state and its label
         group = Svg::Group.new.tap do |g|

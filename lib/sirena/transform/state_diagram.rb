@@ -47,6 +47,7 @@ module Sirena
             labels: state_labels(state),
             metadata: {
               state_type: state.state_type,
+              shape_type: state_shape_type(state),
               description: state.description
             }
           }
@@ -108,7 +109,7 @@ module Sirena
         )
 
         # Adjust dimensions based on state type
-        state_dims = case state.state_type
+        state_dims = case state_shape_type(state)
                      when 'start', 'end'
                        calculate_terminal_dimensions
                      when 'choice'
@@ -138,6 +139,14 @@ module Sirena
         return descriptions unless descriptions.empty?
 
         [state.label, state.description].compact.reject(&:empty?)
+      end
+
+      # Mermaid keeps the declared marker type, but displays a marker with a
+      # description as an ordinary rectangular state.
+      def state_shape_type(state)
+        return 'normal' if state.description && !state.description.empty?
+
+        state.state_type
       end
 
       def calculate_terminal_dimensions

@@ -241,12 +241,9 @@ module Sirena
         end
 
         def add_special_state(state_id, state_type)
-          state = Diagram::StateNode.new.tap do |s|
-            s.id = state_id
-            s.label = state_id
-            s.state_type = state_type
-          end
-          @diagram.states << state
+          state = ensure_state_exists(state_id)
+          state.state_type = state_type
+          state
         end
 
         def add_or_update_state(state_id, label = nil)

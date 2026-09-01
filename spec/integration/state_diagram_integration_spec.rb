@@ -73,6 +73,32 @@ RSpec.describe 'StateDiagram Integration' do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
+    it 'renders one described marker state in either declaration order' do
+      sources = [
+        "stateDiagram-v2\nstate C <<choice>>\n" \
+          "C : FIRST\nC : SECOND\n",
+        "stateDiagram-v2\nC : FIRST\nstate C <<choice>>\n" \
+          "C : SECOND\n"
+      ]
+
+      sources.each do |source|
+        diagram = parser.parse(source)
+        states = diagram.states.select { |state| state.id == 'C' }
+        expect(states.length).to eq(1)
+        expect(states.first.state_type).to eq('choice')
+        expect(states.first.description).to eq('SECOND')
+        expect(states.first.descriptions).to eq(%w[FIRST SECOND])
+
+        document = REXML::Document.new(Sirena::Engine.new.render(source))
+        groups = REXML::XPath.match(document, "//*[@id='state-C']")
+        expect(groups.length).to eq(1)
+        expect(REXML::XPath.match(groups.first, 'rect').length).to eq(1)
+        expect(REXML::XPath.match(groups.first, 'polygon')).to be_empty
+        expect(REXML::XPath.match(groups.first, 'text').map(&:text))
+          .to eq(%w[FIRST SECOND])
+      end
+    end
+
     it 'handles transitions with triggers and guards' do
       source = "stateDiagram-v2\nIdle-->Active: start [ready]"
 
