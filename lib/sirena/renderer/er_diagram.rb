@@ -30,11 +30,22 @@ module Sirena
       # Cardinality symbol size
       CARDINALITY_SIZE = 15
 
+      # Canvas mermaid gives an ER diagram with nothing in it: a zero-size
+      # content box with its 8px diagram padding on each side. Measured from
+      # spec/fixtures_mermaid/er/061_spec_mermaidapi_spec_60.svg, whose source
+      # is the bare `erDiagram` keyword — viewBox="-8 -8 16 16", max-width
+      # 16px. Every non-empty ER reference in that directory starts its
+      # viewBox at "0 0", so the -8 origin is mermaid centring an empty
+      # bounding box, not a convention to copy; only the extent is.
+      EMPTY_CANVAS_SIZE = 16
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
+        return empty_canvas if nothing_to_draw?(graph)
+
         svg = create_document(graph)
 
         # Render edges first (so they appear under nodes)
@@ -47,6 +58,23 @@ module Sirena
       end
 
       protected
+
+      # Compared against `[]` rather than asked `empty?` on purpose: a graph
+      # with the key absent entirely is an unknown shape, and keeps the
+      # 800x600 defaults below.
+      def nothing_to_draw?(graph)
+        graph[:children] == [] && graph[:edges] == []
+      end
+
+      # calculate_width/calculate_height fall back to a full 800x600 when
+      # there is no content to measure, which would reserve an 880x680 blank
+      # rectangle in an embedding document.
+      def empty_canvas
+        Svg::Document.new(
+          width: EMPTY_CANVAS_SIZE,
+          height: EMPTY_CANVAS_SIZE
+        )
+      end
 
       def calculate_width(graph)
         return 800 unless graph[:children]

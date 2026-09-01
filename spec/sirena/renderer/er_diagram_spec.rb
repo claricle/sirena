@@ -178,5 +178,30 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       label_texts = texts.map(&:content)
       expect(label_texts).to include('places')
     end
+
+    context 'with a graph that has no entities and no relationships' do
+      let(:empty_graph) { { id: 'er_diagram', children: [], edges: [] } }
+
+      it 'sizes the canvas the way mermaid sizes an empty ER diagram' do
+        svg = renderer.render(empty_graph)
+
+        expect(svg.width).to eq(16)
+        expect(svg.height).to eq(16)
+        expect(svg.view_box).to eq('0 0 16 16')
+      end
+
+      it 'puts nothing on the canvas' do
+        expect(renderer.render(empty_graph).children).to eq([])
+      end
+    end
+
+    context 'with a graph whose collection keys are absent' do
+      it 'keeps the no-content defaults rather than the empty canvas' do
+        svg = renderer.render({ id: 'er_diagram' })
+
+        expect(svg.width).to eq(840)
+        expect(svg.height).to eq(640)
+      end
+    end
   end
 end
