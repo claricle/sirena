@@ -259,7 +259,15 @@ first block.
 - [ ] A — every `DiagramRegistry.register` row carries a `model:`
 - [ ] A — `DiagramRegistry.types` and `Engine::DIAGRAM_TYPE_PATTERNS.keys` are the same set
 - [ ] A — deleting one registry row turns `contract_spec.rb` red
-- [ ] A — `Transform::Base` calls `valid?` once, for every type, suite green
+- [ ] A — the guard runs ONCE for every type, and survives items 04 and 06.
+      `Transform::Base` alone does not satisfy this: item 04 sends converted
+      layouts straight to `scene(diagram)` and item 06 deletes `to_graph`, so a
+      guard living only in `to_graph` disappears with it. Put it on the durable
+      entry point (`Base#call`), or preserve an explicit Engine-side check
+      through 04 and 06
+- [ ] A — an INVALID model driven through `Engine` raises, asserted by a spec —
+      not a unit test on the transform. That is the only form that keeps
+      holding after 04 and 06 move the pipeline
 - [ ] A — `grep -rn "def type$" lib/sirena/diagram/` returns nothing
 - [ ] A — all 24 transforms inherit `Transform::Base`
 - [ ] A — no `Treemap = TreemapParser` alias remains

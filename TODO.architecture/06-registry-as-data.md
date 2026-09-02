@@ -131,9 +131,14 @@ TYPES = {
       cannot prove this** — item 01's task calls only `Sirena.render` and
       records pass/fail, stage and exception class. It never invokes the CLI,
       never compares SVG bytes and never compares error text, so the
-      byte-identical promise above needs its own gate: render the same source
-      both ways, compare a checksum of the SVG, and compare the exact error
-      message on a failing source
+      byte-identical promise above needs its own gate.
+
+      **Compare each surface to ITSELF before and after — never the CLI to the
+      API.** Measured: the CLI adds a trailing newline via `puts` and prefixes
+      failures with `Error:`, so CLI and API output can never be equal and a
+      gate demanding that can never pass. The gate is: API-before vs API-after
+      (SVG checksum and exact error text), and CLI-before vs CLI-after (stdout,
+      stderr and exit status)
 - [ ] `corpus:check` unchanged
 - [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
 - [ ] it still resolves each model by convention, and still runs each
