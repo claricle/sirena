@@ -14,23 +14,32 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # The rule that enumeration missed: a leading marker counts only when the
   # trailing one matches it. `o--x` draws the cross alone, and a mismatched
   # pair loses its thickness too — `o==x` is no thicker than `o--x`.
+  #
+  # Every family here is open-ended in its length, so each is pinned at its
+  # minimum and at least one length past it. A family pinned at one length
+  # while its siblings are pinned at another is the gap to watch for: the
+  # `<`-prefixed rows stopped at three dashes for a while and nothing in
+  # the suite noticed.
   def self.links
     {
       "---" => "line", "-->" => "arrow", "--x" => "cross", "--o" => "circle",
       "----" => "line", "-----" => "line", "--->" => "arrow",
-      "----x" => "cross",
+      "---->" => "arrow", "---x" => "cross", "----x" => "cross",
+      "---o" => "circle", "----o" => "circle",
       "o--o" => "circle_both", "x--x" => "cross_both",
-      "o----o" => "circle_both",
+      "o----o" => "circle_both", "x----x" => "cross_both",
       "o--x" => "cross", "x--o" => "circle",
       "<-->" => "arrow_both", "<--->" => "arrow_both",
       "<--x" => "cross", "<--o" => "circle", "<---" => "line",
-      "o---" => "line", "x---" => "line",
+      "<----" => "line", "<-----" => "line",
+      "o---" => "line", "x---" => "line", "o----" => "line",
       "===" => "thick_line", "==>" => "thick_arrow",
       "==x" => "thick_cross", "==o" => "thick_circle",
       "====" => "thick_line", "=====" => "thick_line",
       "===>" => "thick_arrow", "====>" => "thick_arrow",
       "o==o" => "thick_circle_both", "x==x" => "thick_cross_both",
-      "<==>" => "thick_arrow_both",
+      "<==>" => "thick_arrow_both", "<===>" => "thick_arrow_both",
+      "<====>" => "thick_arrow_both", "<===" => "line",
       "o==x" => "cross", "x==o" => "circle",
       "o===" => "line", "<====" => "line",
       "-.-" => "dotted_line", "-.->" => "dotted_arrow",
