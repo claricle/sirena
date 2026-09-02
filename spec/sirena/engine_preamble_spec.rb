@@ -177,6 +177,76 @@ RSpec.describe Sirena::Engine do
     end
   end
 
+  describe "#render refusal enumerations" do
+    let(:empty_preamble_forms) do
+      {
+        "%%\n" => "an empty comment",
+        "%%{}%%\n" => "a directive with no header"
+      }
+    end
+
+    {
+      flowchart: "flowchart LR\n  A-->B\n",
+      er_diagram: "erDiagram\n  A ||--o{ B : has\n",
+      user_journey: "journey\n  section S\n  Task: 5: A\n",
+      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  T: 2024-01-01, 1d\n",
+      timeline: "timeline\n  2024 : Event\n",
+      block: "block-beta\n  A\n",
+      sankey: "sankey-beta\nA,B,1\n",
+      requirement: "requirementDiagram\n"
+    }.each do |type, body|
+      it "refuses both empty preamble forms for #{type}" do
+        empty_preamble_forms.each do |preamble, reason|
+          expect { engine.render("#{preamble}#{body}") }
+            .to raise_error(
+              described_class::PipelineError,
+              /\ARendering failed: A #{type} diagram does not accept #{reason}\./
+            )
+        end
+      end
+    end
+
+    it "refuses a headerless directive for state_diagram" do
+      source = "%%{}%%\nstateDiagram-v2\n  [*] --> S\n"
+
+      expect { engine.render(source) }
+        .to raise_error(
+          described_class::PipelineError,
+          /\ARendering failed: A state_diagram diagram does not accept a directive with no header\./
+        )
+    end
+
+    {
+      flowchart: "flowchart LR\n  A-->B\n",
+      sequence: "sequenceDiagram\n  A->>B: m\n",
+      class_diagram: "classDiagram\n  class A\n",
+      state_diagram: "stateDiagram-v2\n  [*] --> S\n",
+      er_diagram: "erDiagram\n  A ||--o{ B : has\n",
+      user_journey: "journey\n  section S\n  Task: 5: A\n",
+      gantt: "gantt\n  dateFormat YYYY-MM-DD\n  section S\n  T: 2024-01-01, 1d\n",
+      timeline: "timeline\n  2024 : Event\n",
+      quadrant: "quadrantChart\n  A: [0.5, 0.5]\n",
+      mindmap: "mindmap\n  root((A))\n",
+      kanban: "kanban\n  column1[Todo]\n    task1[Task]\n",
+      block: "block-beta\n  A\n",
+      requirement: "requirementDiagram\n",
+      xychart: "xychart-beta\n  x-axis [1, 2]\n  line [1, 2]\n",
+      sankey: "sankey-beta\nA,B,1\n",
+      treemap: "treemap-beta\n\"A\": 1\n",
+      c4: "C4Context\n  Person(a, \"A\")\n"
+    }.each do |type, body|
+      it "refuses late frontmatter for #{type}" do
+        source = "%% note\n---\ntitle: T\n---\n#{body}"
+
+        expect { engine.render(source) }
+          .to raise_error(
+            described_class::PipelineError,
+            /\ARendering failed: A #{type} diagram does not accept frontmatter behind another item\./
+          )
+      end
+    end
+  end
+
   describe "#render with a fence that is not at the start" do
     # A fence behind anything at all is not frontmatter to mermaid. The
     # lines stay in the text, so the diagram's own parser meets them:
