@@ -1016,11 +1016,11 @@ module Sirena
         # `subgraph Zéa.- [T]`. Without the guard all sixteen refusals
         # parsed here, because a name was hunted for keywords only.
         #
-        # The arrowhead half is STRICTER here than in a node id. A node can
-        # carry on past the opening when something follows it, so
-        # `#x.-B --- Z` is one id — but a subgraph name cannot, and mmdc
-        # refuses `subgraph #x.-b [T]`. So this walk fires on the opening
-        # itself, with no look at what comes after.
+        # This walk fires on the opening itself, with no look at what comes
+        # after it, and mmdc refuses `subgraph #x.-b [T]`. A node id reaches
+        # the same verdict by a different road — `id_before_xo_link` stops
+        # the id at the restart in front of the opening — so `#x.-B --- Z`
+        # is refused in both positions now.
         rule(:subgraph_arrowhead) { hunt(arrowhead_open) }
 
         rule(:subgraph_reserved) do
@@ -1207,9 +1207,11 @@ module Sirena
         # instead of swallowing it and drawing a node that is not on
         # mermaid's page.
         #
-        # `arrowhead_dot_dash` below keeps the id in the same spot, and
-        # the two are not in disagreement: there the opening is only a
-        # link when nothing follows it, so an id can carry on past it.
+        # `arrowhead_dot_dash` below keeps the id in the same spot. It is
+        # the weaker of the two: it treats the opening as a link only when
+        # nothing follows it. What actually stops `#x.-B` is
+        # `id_before_xo_link`, which stops the id at the restart in front
+        # of the opening whatever follows.
         rule(:dot_run_before_link) { hunt(dotted_link_open) }
 
         # `arrowhead_open` without its leading marker. Mermaid's dotted
@@ -1235,9 +1237,12 @@ module Sirena
         #
         # At the id start nothing sits in front of the link, so mermaid
         # always refuses: `x.-` `x..-` `x.-z` and `x.-B` all fail. Behind
-        # a lexer restart a node does sit in front, so the opening is a
-        # real link and only fails when nothing follows it — `#x.- --> Z`
-        # is refused while `#x.-B --- Z` draws.
+        # a lexer restart a node does sit in front, so mermaid opens a real
+        # link there and reads THREE nodes — `#x.-B --- Z` is `#`, `B` and
+        # `Z`. This rule alone would let the id carry on past the opening;
+        # `id_before_xo_link` is what stops it at the restart, so both
+        # `#x.- --> Z` and `#x.-B --- Z` are refused rather than drawn as
+        # one node.
         #
         # A settled character in front kills it either way, so `X.-`
         # `x1.-` `xx.-` and `xo.-` stay ordinary ids.
@@ -1276,9 +1281,11 @@ module Sirena
         # This checks for an arrowhead opening with nothing after it that
         # could continue an id.
         #
-        # Sirena has no `x--` or `x-.-` link of its own yet, so it reads
-        # `#x.-B` as one node where mermaid reads three. The two agree the
-        # diagram is legal; they do not yet agree on what it holds.
+        # Sirena has no `x--` or `x-.-` link of its own yet. It used to
+        # read `#x.-B` as one node where mermaid reads three, which is a
+        # different graph rather than a missing one; `id_before_xo_link`
+        # now stops the id at the restart, so that source is refused until
+        # the crossed head has a shape to draw.
         rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }
 
         # Mermaid's lexer spells its id charset out, so an id is not
