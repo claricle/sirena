@@ -17,9 +17,76 @@ module Sirena
       rule(:section_decl) do
         sp? >> str('section') >> sp >> text_line.as(:section) >> (nl | any.absent?)
       end
-      rule(:accessibility_decl) do
-        sp? >> (str('accTitle') | str('accDescr')) >> str(':') >> sp? >>
+      # mermaid reserves `accTitle` and `accDescr` and puts their text in
+      # the SVG's aria attributes. The text is parsed and discarded, since
+      # no Diagram::UserJourney attribute holds it yet.
+      rule(:accessibility_decl) { acc_descr_block | acc_line }
+
+      # mermaid allows whitespace around the delimiter, so the gap is
+      # optional. Demanding the colon immediately after the keyword threw
+      # away a whole diagram mmdc renders, and it read `accDescr : 3: Me` as
+      # a task named accDescr, where mmdc reads a description and draws no
+      # task.
+      #
+      # `sp?` is ASCII space and tab only, where mermaid's `\s` is wider, so
+      # `accTitle` no-break-space `:` is still read as a task here and as a
+      # title by mmdc. Closing that needs flowchart's explicit character set
+      # (grammars/flowchart.rb:160-175); it is unchanged from before this
+      # rule existed, not a regression it introduced.
+      rule(:acc_line) do
+        sp? >> (str('accTitle') | str('accDescr')) >> sp? >> str(':') >> sp? >>
           (nl.absent? >> any).repeat >> (nl | any.absent?)
+      end
+
+      # The braced form, as gantt, pie and timeline spell it. The closing
+      # brace is required: mmdc rejects `accDescr {unterminated` in a
+      # journey, where in a flowchart it draws the diagram and swallows the
+      # rest of the source.
+      #
+      # Content on the same line AFTER the brace is not handled — mmdc
+      # renders `accDescr {Desc}After: 3: Me` as a description plus a task,
+      # where this reads the whole line as one task name. That predates this
+      # rule (c09c975 produces the identical task) and gantt, pie and
+      # timeline share it; flowchart drops the line-end requirement instead.
+      rule(:acc_descr_block) do
+        sp? >> str('accDescr') >> sp? >> str('{') >>
+          (acc_block_comment | (str('}').absent? >> any)).repeat >> str('}') >>
+          sp? >> (nl | any.absent?)
+      end
+
+      # A standalone `%%` comment line inside the block is consumed whole, so
+      # a `}` inside one does not close the block. Without this, the source
+      # `accDescr {unterminated` / a task / `%% }` parsed as a diagram with
+      # that task silently missing, where both c09c975 and mmdc reject it.
+      rule(:acc_block_comment) do
+        acc_nl >> line_space.repeat >> str('%%') >>
+          (acc_nl.absent? >> any).repeat
+      end
+
+      # ECMAScript's four line terminators, which is the set mermaid strips
+      # comment lines by. `nl` stays LF-only; this rule is wider because it
+      # alone decides whether a `}` is content or a delimiter, and the wrong
+      # answer loses a task in silence. Each of CR, U+2028 and U+2029 before
+      # `%% }` closed the block and dropped one, where mmdc refuses all three.
+      #
+      # Nothing else in the grammar reads them, so a wholly CR- or
+      # CRLF-delimited journey still fails at the `journey` header exactly as
+      # it does at c09c975 — reading those is a new feature, not this repair.
+      rule(:acc_nl) { match('[\n\r\u2028\u2029]') }
+
+      # mermaid's explicit whitespace set, copied from grammars/flowchart.rb.
+      # Not purely horizontal — it carries U+2028 and U+2029, which acc_nl
+      # also treats as line breaks; either reading leaves the comment
+      # recognised. Only the comment strip uses it, because that is the one
+      # place where
+      # too narrow a set loses content in SILENCE: an indent this misses
+      # leaves the `}` in `accDescr {...` / `%% }` closing the block and a
+      # task disappears. Everywhere else `sp?` staying ASCII only leaves a
+      # gap c09c975 has too, where the source is either rejected outright or
+      # read as an ordinary task — never quietly shortened.
+      rule(:line_space) do
+        match['\t\v\f \u00A0\u1680' \
+          '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF']
       end
 
       rule(:text_line) { (nl.absent? >> str(':').absent? >> any).repeat(1) }
