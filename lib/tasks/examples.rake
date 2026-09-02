@@ -2,6 +2,7 @@
 
 require 'date'
 require 'fileutils'
+require 'securerandom'
 
 # Rendering must not depend on the day it ran. Gantt derives its whole date
 # range from the reference date, so an unpinned run produces different output
@@ -107,12 +108,40 @@ module ExampleTasks
     end
   end
 
+  # Literal children, never a glob. A directory legitimately named `g*` is a
+  # pattern to Dir.glob, so the sweep matched a sibling's files and paired
+  # them with the wrong directory. Nothing here needs pattern matching.
+  #
+  # @return [Array<String>] the entries of dir, as full paths, or [] if unreadable
+  def children(dir)
+    Dir.children(dir).sort.map { |entry| File.join(dir, entry) }
+  rescue SystemCallError
+    []
+  end
+
+  # A real directory, not a link to one. A link is skipped rather than
+  # followed: it resolves somewhere this task has no claim on, and following
+  # one is how pruning reached a fixture two levels down.
+  def plain_directory?(path)
+    File.directory?(path) && !File.symlink?(path)
+  end
+
+  def plain_svg?(path)
+    path.end_with?('.svg') && File.file?(path) && !File.symlink?(path)
+  end
+
   # The two depths the gemspec packages and the conformance gate pairs: an
   # SVG directly under examples/ and one beside its source in a diagram
   # directory. A sweep one level deep missed the first kind, which is how the
   # two this branch removed were found; `**` went too far the other way and
   # reached a nested fixture tree that nothing here manages.
-  MANAGED_SVG_GLOBS = ['*.svg', '*/*.svg'].freeze
+  def managed_svgs(examples_dir)
+    entries = children(examples_dir)
+    top = entries.select { |path| plain_svg?(path) }
+    nested = entries.select { |path| plain_directory?(path) }
+      .flat_map { |dir| children(dir).select { |path| plain_svg?(path) } }
+    top + nested
+  end
 
   # Where a path is allowed to be, judged on its DIRECTORY rather than on
   # itself: the file may not exist yet, and a symlinked file has to be judged
@@ -145,8 +174,7 @@ module ExampleTasks
   # conformance gate still fails on an orphan, which is what sends a human to
   # the prune task deliberately.
   def orphan_svgs(examples_dir)
-    MANAGED_SVG_GLOBS
-      .flat_map { |glob| Dir.glob(File.join(examples_dir, glob)) }
+    managed_svgs(examples_dir)
       .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
       .select { |svg| manageable?(examples_dir, svg) }
       .sort
@@ -207,7 +235,8 @@ module ExampleTasks
     raise "refused to write outside examples/: #{svg_file}" unless manageable?(examples_dir, svg_file)
     raise 'rendered no SVG document' unless svg.is_a?(String) && svg.include?('<svg')
 
-    temporary = File.join(File.dirname(svg_file), ".#{File.basename(svg_file)}.#{Process.pid}.tmp")
+    temporary = File.join(File.dirname(svg_file),
+                          ".#{File.basename(svg_file)}.#{Process.pid}.#{SecureRandom.hex(8)}.tmp")
     created = false
     begin
       # CREAT|EXCL rather than File.write: the temporary path is predictable,
@@ -219,6 +248,9 @@ module ExampleTasks
         file.write(svg)
       end
       File.rename(temporary, svg_file)
+      # Renamed, so the temporary name is vacant. Leaving `created` set made
+      # the ensure below unlink whatever next claimed that name.
+      created = false
     ensure
       # Only what this call made. Removing a name we refused to write to would
       # be the same mistake one step down.
@@ -236,7 +268,7 @@ module ExampleTasks
     diagram_dirs(examples_dir).each do |dir|
       diagram_type = File.basename(dir)
       puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
-      mmd_files = Dir.glob(File.join(dir, '*.mmd')).sort
+      mmd_files = children(dir).select { |path| path.end_with?('.mmd') && File.file?(path) }
 
       if mmd_files.empty?
         puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
@@ -245,7 +277,9 @@ module ExampleTasks
 
       mmd_files.each do |mmd_file|
         basename = File.basename(mmd_file, '.mmd')
-        svg_file = File.join(dir, "#{basename}.svg")
+        # From the source path, not rebuilt from the directory: a directory
+        # named with glob syntax made those two disagree.
+        svg_file = mmd_file.sub(/\.mmd\z/, '.svg')
 
         begin
           theme = theme_for(mmd_file)
@@ -268,11 +302,10 @@ module ExampleTasks
   # would then write and delete there while reporting success. Skipped by
   # name so the run says which one it refused.
   def diagram_dirs(examples_dir)
-    Dir.glob(File.join(examples_dir, '*')).sort.select do |entry|
-      next false unless File.directory?(entry)
-
+    children(examples_dir).select do |entry|
       name = File.basename(entry)
       next false if name.start_with?('.')
+      next false unless File.directory?(entry)
 
       if File.symlink?(entry)
         puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that leaves examples/"

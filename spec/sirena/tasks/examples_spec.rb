@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'fileutils'
 require 'rake'
 require 'tmpdir'
+require 'securerandom'
 require 'stringio'
 require 'yaml'
 
@@ -41,6 +42,26 @@ RSpec.describe ExampleTasks do
     $stdout.string
   ensure
     $stdout = original
+  end
+
+  # Fails the temporary write half-done while still running write_svg's own
+  # block, so the bookkeeping inside it (which decides whether the temporary
+  # file is cleaned up) runs exactly as it does in production. Replacing the
+  # block instead skipped that, and made a passing spec out of debris the real
+  # code would have removed.
+  def fail_temporary_write_partway
+    original_open = File.method(:open)
+    allow(File).to receive(:open) do |path, *arguments, &block|
+      next original_open.call(path, *arguments, &block) unless path.to_s.end_with?('.tmp')
+
+      original_open.call(path, *arguments) do |file|
+        def file.write(content)
+          super(content.to_s[0, 4])
+          raise Errno::EFBIG
+        end
+        block.call(file)
+      end
+    end
   end
 
   def write(relative_path, content = 'x')
@@ -207,20 +228,7 @@ RSpec.describe ExampleTasks do
     it 'keeps the previous SVG whole when the write dies partway' do
       write('flowchart/01-basic.mmd', source)
       svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
-      # Fails the temporary write half-done. Holding the original Method
-      # rather than and_wrap_original, because the replacement calls File.open
-      # again and would otherwise recurse into itself.
-      original_open = File.method(:open)
-      allow(File).to receive(:open) do |path, *arguments, &block|
-        if path.to_s.end_with?('.tmp')
-          original_open.call(path, *arguments) do |file|
-            file.write('<svg')
-            raise Errno::EFBIG
-          end
-        else
-          original_open.call(path, *arguments, &block)
-        end
-      end
+      fail_temporary_write_partway
 
       silently { described_class.generate_examples(examples_dir) }
 
@@ -291,14 +299,70 @@ RSpec.describe ExampleTasks do
       FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
       target = File.join(examples_dir, 'flowchart', 'a.svg')
       File.write(target, '<svg>previous</svg>')
-      File.symlink(victim, File.join(examples_dir, 'flowchart', ".a.svg.#{Process.pid}.tmp"))
+      # The name carries a random component, so it is pinned here rather than
+      # guessed; the guard has to hold even when the name IS known.
+      allow(SecureRandom).to receive(:hex).and_return('feedface')
+      planted = File.join(examples_dir, 'flowchart', ".a.svg.#{Process.pid}.feedface.tmp")
+      File.symlink(victim, planted)
 
       expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
         .to raise_error(Errno::EEXIST)
-      expect([File.read(victim), File.read(target)])
-        .to eq(['KEEP ME', '<svg>previous</svg>'])
+      expect([File.read(victim), File.read(target), File.symlink?(planted)])
+        .to eq(['KEEP ME', '<svg>previous</svg>', true])
     ensure
       FileUtils.remove_entry(outside) if outside
+    end
+
+    # The guard is a check on the rendered document, not on nil alone: an
+    # error page or an empty string is a String too, and accepting one would
+    # replace a good SVG with it.
+    it 'refuses a render that is a String but not an SVG document' do
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, '<svg>previous</svg>')
+
+      expect { described_class.write_svg(target, 'Internal Server Error', examples_dir) }
+        .to raise_error(/rendered no SVG document/)
+      expect(File.read(target)).to eq('<svg>previous</svg>')
+    end
+
+    it 'leaves no debris behind when the write dies partway' do
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, '<svg>previous</svg>')
+      fail_temporary_write_partway
+
+      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+        .to raise_error(Errno::EFBIG)
+      expect(Dir.glob(File.join(examples_dir, 'flowchart', '.*.tmp'))).to be_empty
+    end
+
+    it 'refuses a target inside the tree that is a link elsewhere' do
+      outside = Dir.mktmpdir('sirena-outside')
+      victim = File.join(outside, 'victim.svg')
+      File.write(victim, 'KEEP ME')
+      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      File.symlink(victim, target)
+
+      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+        .to raise_error(/refused to write outside/)
+      expect(File.read(victim)).to eq('KEEP ME')
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    # Once renamed, the temporary name belongs to nobody. Unlinking it anyway
+    # is how one run removed the temporary file of another.
+    it 'unlinks nothing once the rename has succeeded' do
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      FileUtils.mkdir_p(File.dirname(target))
+
+      allow(FileUtils).to receive(:rm_f).and_call_original
+
+      described_class.write_svg(target, '<svg>fresh</svg>', examples_dir)
+
+      expect(FileUtils).not_to have_received(:rm_f)
     end
 
     it 'writes a rendered document to a path inside the tree' do
@@ -308,6 +372,41 @@ RSpec.describe ExampleTasks do
       described_class.write_svg(target, '<svg>fresh</svg>', examples_dir)
 
       expect(File.read(target)).to eq('<svg>fresh</svg>')
+    end
+  end
+
+  # Both defects here were found by a reviewer building the tree by hand, and
+  # neither is exotic: a directory may legitimately be named with a glob
+  # character, and a link inside examples/ resolves to a real directory that
+  # passes a containment test on its own.
+  describe 'unusual but legitimate names' do
+    let(:source) { "flowchart TD\n  A --> B\n" }
+
+    it 'treats a directory named with glob syntax as one literal directory' do
+      FileUtils.mkdir_p([File.join(examples_dir, 'gantt'), File.join(examples_dir, 'g*')])
+      File.write(File.join(examples_dir, 'gantt', '01.mmd'), source)
+      by_hand = File.join(examples_dir, 'g*', '01.svg')
+      File.write(by_hand, 'HAND WRITTEN')
+
+      generated, = silently { described_class.generate_examples(examples_dir) }
+
+      # One, not two: globbing the literal name `g*` reaches gantt as well and
+      # renders it a second time under the wrong directory.
+      expect(generated).to eq(1)
+      expect([File.read(by_hand), File.exist?(File.join(examples_dir, 'gantt', '01.svg'))])
+        .to eq(['HAND WRITTEN', true])
+    end
+
+    it 'does not reach a deeper file through a link inside the tree' do
+      FileUtils.mkdir_p(File.join(examples_dir, 'deep', 'nested'))
+      fixture = File.join(examples_dir, 'deep', 'nested', 'fixture.svg')
+      File.write(fixture, 'NESTED FIXTURE')
+      File.symlink(File.join(examples_dir, 'deep', 'nested'),
+                   File.join(examples_dir, 'alias'))
+
+      described_class.prune_orphan_svgs(examples_dir)
+
+      expect(File).to exist(fixture)
     end
   end
 
