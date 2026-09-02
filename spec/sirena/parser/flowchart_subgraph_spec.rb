@@ -622,31 +622,32 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # The counter and the containment map used to live on the class, so
     # two threads rendering at once handed out each other's ids.
     #
-    # Racing whole parses does not reach that: a 40-box diagram parses in
-    # 23ms, well inside Ruby's 100ms thread quantum, so the threads run one
-    # after another and agree wherever the state lives. This drives the
-    # overlap directly instead, holding one parse open across another's
-    # whole run - take an id, take a second id, finish and release.
-    it "keeps one thread's ids to itself while another parse runs" do
+    # Racing two whole parses does not reach that: a 40-box diagram parses
+    # in 23ms, well inside Ruby's 100ms thread quantum, so the two threads
+    # run one after the other and agree wherever the state lives. This
+    # holds one thread open between its two ids instead, and runs a real
+    # parse against it while it waits.
+    it "numbers a parse from zero while another thread is mid-parse" do
       transform = Sirena::Parser::Transforms::Flowchart
-      mid_parse = Queue.new
-      finished = Queue.new
+      opened = Queue.new
+      parsed = Queue.new
 
       other = Thread.new do
         held = transform.state
         ids = [transform.next_generated_id]
-        mid_parse.push(:mid_parse)
-        finished.pop
+        opened.push(:opened)
+        parsed.pop
         ids << transform.next_generated_id
         { ids: ids, kept_its_own_state: transform.state.equal?(held) }
       end
 
-      mid_parse.pop
-      ours = transform.next_generated_id
-      transform.release_state
-      finished.push(:finished)
+      opened.pop
+      ours = described_class.new
+                          .parse("graph TD\nsubgraph one A\nX\nend\n" \
+                                 "subgraph two B\nY\nend\n")
+      parsed.push(:parsed)
 
-      expect(ours).to eq("subGraph0")
+      expect(ours.subgraphs.map(&:id)).to eq(%w[subGraph0 subGraph1])
       expect(other.value)
         .to eq(ids: %w[subGraph0 subGraph1], kept_its_own_state: true)
     end
