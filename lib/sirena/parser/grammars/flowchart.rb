@@ -308,15 +308,25 @@ module Sirena
         #
         # `subgraph A [T] X` stays refused, which mmdc also refuses:
         # nothing may follow the title on the line.
+        #
         # A trailing word carries the same guards as the first one, `end`
-        # included. What ends a subgraph is `end` with the LINE behind it,
-        # which is `bare_subgraph_end`'s whole job — the position, not the
-        # word. Guarding a trailing word on the hunted word alone refused
-        # five headers mmdc draws, and it drew them as ONE cluster with
-        # the word in its id: `subgraph A end [T]` is the cluster
-        # `A end`, `subgraph A 1end [T]` is `A 1end`, and
-        # `subgraph A B end [T]`, `subgraph A end A [T]` and
-        # `subgraph A end end [T]` all keep theirs the same way.
+        # included. What ends a subgraph is `end` with the LINE behind it —
+        # the position, not the word — and that is `bare_subgraph_end`'s
+        # whole job, which every subgraph word already runs. Guarding a
+        # trailing word on the hunted WORD instead refused ten headers
+        # mmdc draws, measured one at a time by putting the guard back:
+        # `A end [T]` `A 1end [T]` `A B end [T]` `A end A [T]`
+        # `A end end [T]` `A B 1end [T]` `A end B` `A end;` `A end ;` and
+        # `A endé`.
+        #
+        # mmdc draws each as ONE cluster holding `end` in its name. With a
+        # bracketed title the whole run becomes the cluster id — `A end [T]`
+        # is the cluster `A end` titled `T` — and without one the cluster
+        # is auto-named `subGraph0` and the run becomes its label, so
+        # `A end B` is labelled `A end B`. Read from mmdc 11.12.0's
+        # `class="cluster" id=` and from the text inside its
+        # `<foreignObject>`, which is where a label actually lives.
+        #
         # `subgraph A end` and `subgraph A 1end` stay refused, which is
         # mmdc's verdict too.
         rule(:subgraph_trailing_name) do
@@ -1062,9 +1072,14 @@ module Sirena
         # every other guard here runs, and reading it as a leading run of
         # DIGITS was that walk measured on one prefix shape. mmdc splits
         # `#x-->B` into `#` and `B`, `&x---B` into `&` and `B`, `*o-.-B`
-        # into `*` and `B`, and `éx-->B` `中o===B` `#1x-->B` `1#x-->B` and
-        # `Aéx-->B` the same way; only the `1` prefix was caught, and the
-        # other eleven drew a node mermaid never puts on the page.
+        # into `*` and `B`, and `éx-->B` `中o===B` `#1x-->B` `1#x-->B`
+        # `Aéx-->B` and `Zéo==>B` the same way.
+        #
+        # Measured over 228 sources — 19 prefixes, each with `x` and `o`,
+        # against all six link spellings. A digit prefix stopped; nine
+        # other prefixes that restart the lexer did not, and 108 of the
+        # 228 drew a node mermaid never puts on the page. Walking the
+        # restarts takes that to none, with no new over-acceptance.
         #
         # `repeat(1)` rather than `hunt`'s `repeat`: at zero restarts the
         # marker stands at the id START, where mermaid has no node in
