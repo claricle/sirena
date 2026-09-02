@@ -90,9 +90,9 @@ module Sirena
         rule(:glyph_direction) { match['<>^'] }
 
         # `direction LR` inside a subgraph turns that box's contents.
-        # mmdc 11.12.0 accepts it at the top level too and lays the
-        # diagram out as declared, so it is a statement anywhere and the
-        # transform decides whether anything encloses it.
+        # mmdc 11.12.0 accepts a top-level one too but does not honour it,
+        # so it is a statement anywhere and the transform decides whether
+        # anything encloses it.
         # `statement_end`, not `line_end`: a semicolon separates this from
         # the next statement the way it separates every other one. mmdc
         # 11.12.0 renders `direction LR;A`, and `line_end` takes the

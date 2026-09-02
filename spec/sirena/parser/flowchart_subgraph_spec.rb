@@ -8,6 +8,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     described_class.new.parse(source).nodes.map(&:id).sort
   end
 
+  def boxes(source)
+    described_class.new.parse(source).subgraphs
+  end
+
   def parses?(source)
     described_class.new.parse(source)
     true
@@ -24,12 +28,30 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids("graph TD\nsubgraph s\nA-->B\nend\n")).to eq(%w[A B])
     end
 
+    # Two levels passed with a parser capped at one. The chain, not just
+    # the nodes: with `parent_id` never set the three boxes land flat at
+    # the top level and every node id still reads the same.
     it "nests three deep" do
-      # Two levels passed with a parser capped at one.
       source = "graph TD\nsubgraph a\nsubgraph b\nsubgraph c\n" \
                "A-->B\nend\nend\nend\n"
 
+      expect(boxes(source).map { |box| [box.id, box.parent_id] })
+        .to eq([["a", nil], %w[b a], %w[c b]])
       expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    # `end` closes a box only as a whole word. Under a bare `str("end")`
+    # each of these is refused instead, and nothing in the suite noticed.
+    {
+      "subgraph endpoint" => %w[endpoint endpoint],
+      "subgraph ending [T]" => %w[ending T],
+      "subgraph end_x" => %w[end_x end_x]
+    }.each do |header, (id, title)|
+      it "reads `#{header}` as a box, not a terminator" do
+        box = boxes("graph TD\n#{header}\nX\nend\n").first
+
+        expect([box.id, box.title]).to eq([id, title])
+      end
     end
 
     it "lets statements follow the end" do
@@ -486,10 +508,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   describe "the subgraph model" do
-    def boxes(source)
-      described_class.new.parse(source).subgraphs
-    end
-
     def only(source)
       boxes(source).first
     end
@@ -642,9 +660,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
 
       opened.pop
-      ours = described_class.new
-                          .parse("graph TD\nsubgraph one A\nX\nend\n" \
-                                 "subgraph two B\nY\nend\n")
+      ours = described_class.new.parse(
+        "graph TD\nsubgraph one A\nX\nend\nsubgraph two B\nY\nend\n"
+      )
       parsed.push(:parsed)
 
       expect(ours.subgraphs.map(&:id)).to eq(%w[subGraph0 subGraph1])
@@ -655,20 +673,29 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # The memo keeps a reference to every subgraph statement, so holding
     # it after the parse keeps the whole tree alive on a long-lived
     # thread.
+    #
+    # Read through a second parse rather than off the storage key: a
+    # counter that carried over is what a caller would see, and the
+    # assertion still means something if the state moves again.
     it "lets the parse tree go when it is done" do
-      described_class.new.parse("graph TD\nsubgraph s\nA\nend\n")
+      parser = described_class.new
+      first = parser.parse("graph TD\nsubgraph one A\nX\nend\n")
+      second = parser.parse("graph TD\nsubgraph two B\nY\nend\n")
 
-      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
+      expect([first, second].map { |d| d.subgraphs.map(&:id) })
+        .to eq([%w[subGraph0], %w[subGraph0]])
     end
 
     it "lets it go even when the parse is refused" do
-      begin
-        described_class.new.parse("graph TD\nsubgraph a\nsubgraph a\nX\nend\nend\n")
-      rescue Sirena::Parser::ParseError
-        nil
-      end
+      parser = described_class.new
+      refused = "graph TD\nsubgraph one A\nX\nend\n" \
+                "subgraph a\nsubgraph a\nY\nend\nend\n"
 
-      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
+      expect { parser.parse(refused) }
+        .to raise_error(Sirena::Parser::ParseError)
+
+      expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
+                   .subgraphs.map(&:id)).to eq(%w[subGraph0])
     end
 
     def ids_by_title(source)

@@ -49,6 +49,22 @@ RSpec.describe Sirena::Transform::FlowchartTransform do
       expect(node_a[:labels].first[:text]).to eq('Start')
     end
 
+    # `assemble` attaches nested clusters before member nodes, and the
+    # order is what the grid slices three to a row: run `place_nodes`
+    # first instead and the inner box drops from [20, 54] to the second
+    # row, taking the outer box from 308 units tall to 398.
+    it 'lists a nested cluster before the nodes beside it' do
+      source = "flowchart TD\nsubgraph outer\nsubgraph inner\ni1\nend\n" \
+               "n1\nn2\nn3\nend\n"
+      model = Sirena::Parser::FlowchartParser.new.parse(source)
+
+      outer = transform.to_graph(model)[:children]
+        .find { |child| child[:id] == 'outer' }
+
+      expect(outer[:children].map { |child| child[:id] })
+        .to eq(%w[inner n1 n2 n3])
+    end
+
     it 'emits every node and subgraph when valid model ids repeat' do
       model = Sirena::Diagram::Flowchart.new(direction: 'TD')
       model.nodes.push(

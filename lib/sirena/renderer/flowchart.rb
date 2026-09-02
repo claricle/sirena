@@ -83,9 +83,11 @@ module Sirena
             next
           end
 
-          # The same test the layout uses, so the two cannot drift into
-          # disagreeing about what a box is. Transform::FlowchartTransform
-          # sets the marker.
+          # The same test Layout::Fallback#cluster? makes, written out
+          # again rather than reached for across the layer. Nothing
+          # coupled keeps them together: change one and change the other,
+          # or the layout and the renderer stop agreeing about what a box
+          # is. Transform::FlowchartTransform sets the marker.
           clusters << placed.except(:children) if cluster?(child)
           collect(child[:children], placed[:x], placed[:y], clusters, nodes)
         end

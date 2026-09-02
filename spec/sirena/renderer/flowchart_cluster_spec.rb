@@ -392,13 +392,13 @@ RSpec.describe Sirena::Engine do
     end
 
     # There is nothing inside to measure, and a box with no size is a box
-    # nobody can see.
+    # nobody can see. Literal numbers, because `> 0` is satisfied by a
+    # one-by-one box, which is invisible too.
     it "gives it a size anyway" do
       xml = render("flowchart TB\nsubgraph a\nsubgraph b\nend\nend\nz\n")
       outer = box(xml, "a")
 
-      expect(outer[:width]).to be > 0
-      expect(outer[:height]).to be > 0
+      expect([outer[:width], outer[:height]]).to eq([47.0, 74.0])
     end
   end
 
@@ -597,10 +597,6 @@ RSpec.describe Sirena::Engine do
     let(:source) do
       "flowchart TD\nsubgraph one\nsubgraph e1\nend\nend\n" \
         "subgraph two\nsubgraph e2\nend\nend\none --> two\n"
-    end
-
-    it "renders" do
-      expect { render(source) }.not_to raise_error
     end
 
     it "draws both boxes and the edge between them" do

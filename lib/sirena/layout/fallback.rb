@@ -58,6 +58,8 @@ module Sirena
       # Only the flowchart transform marks a child as a cluster. Treating
       # every nested child as one resized the boundaries and namespaces
       # that c4, class and er diagrams nest, which is not this change.
+      #
+      # Renderer::FlowchartRenderer#cluster? is the second copy of this.
       def cluster?(child)
         child.dig(:metadata, :cluster) == true
       end

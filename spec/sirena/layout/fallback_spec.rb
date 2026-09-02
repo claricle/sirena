@@ -84,6 +84,19 @@ RSpec.describe Sirena::Layout::Fallback do
       expect(placed.last[:x]).to eq(520)
     end
 
+    # The vertical twin of the column example above, and the same reason
+    # for literal numbers: with `row_height` reduced to the floor the box
+    # keeps its height and the next row starts underneath it anyway, so
+    # only an exact y reports the overlap.
+    it "makes the row it sits in taller, with a gap" do
+      tall = cluster("s", [node("a", height: 400)])
+      graph = { children: [tall, node("b"), node("c"), node("d")] }
+      placed = apply(graph)[:children]
+
+      expect(placed.first[:height]).to eq(474)
+      expect(placed.last[:y]).to eq(554)
+    end
+
     # The exact coordinates, because "smaller than the box" is also true
     # of the page coordinates a typical cluster would have had. On the
     # padding, and under a title band of the label height plus a padding

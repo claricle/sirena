@@ -39,14 +39,18 @@ RSpec.describe Sirena::Diagram::Containment do
       expect(described_class.looping_pair(graph)).to eq(%w[r p])
     end
 
-    # The model's graph points the other way, and the answer has to be
-    # the same. Only the reading of the returned pair differs.
+    # The same loop over the same three boxes, written both ways round.
+    # Both are found, and each pair comes back in EDGE order — which is
+    # what says the walk reads arrows and not parentage. Two acyclic
+    # graphs prove none of this: they return nil whichever way they are
+    # read.
     it "reads a parent graph the same as a containment graph" do
-      holds = { "outer" => %w[inner] }
-      parents = { "inner" => %w[outer] }
+      holds = { "a" => %w[b], "b" => %w[c], "c" => %w[a] }
+      parents = { "b" => %w[a], "c" => %w[b], "a" => %w[c] }
 
-      expect(described_class.looping_pair(holds)).to be_nil
-      expect(described_class.looping_pair(parents)).to be_nil
+      expect([described_class.looping_pair(holds),
+              described_class.looping_pair(parents)])
+        .to eq([%w[c a], %w[c b]])
     end
 
     it "ignores an edge to an id that is not a key" do
