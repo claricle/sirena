@@ -368,7 +368,7 @@ module Sirena
             # The capture arrives as {token: slice}, and no Parslet rule
             # unwraps it. Two reasons, in order. Nothing instantiates this
             # class — parsing runs through its own class-level `apply`
-            # below — so Parslet's instance `apply`, the only thing that
+            # above — so Parslet's instance `apply`, the only thing that
             # runs the declared rules, is never called. And even under
             # that, a rule keyed on `arrow:` could not match: Parslet
             # matches a hash only when EVERY key matches, and the hash
