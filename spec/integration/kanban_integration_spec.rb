@@ -28,4 +28,18 @@ RSpec.describe Sirena::Engine do
       expect(rendered_text(xml)).to eq(%w[root 2 child1 child2])
     end
   end
+
+  context 'with identical bare cards in one column' do
+    # The parser spec pins that three lines survive as three KanbanCards, but
+    # those three are value-equal under lutaml-model, so any later `uniq`,
+    # `Set` or `Hash` key between the model and the SVG would collapse them
+    # with no parser-level assertion able to notice. This asserts the drawn
+    # result instead: three card labels reach the document, and the column
+    # header still counts three.
+    let(:source) { "kanban\n  col\n    a\n    a\n    a\n" }
+
+    it 'draws one card per source line' do
+      expect(rendered_text(xml)).to eq(%w[col 3 a a a])
+    end
+  end
 end
