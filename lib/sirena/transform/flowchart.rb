@@ -28,7 +28,7 @@ module Sirena
 
         {
           id: diagram.id || 'flowchart',
-          children: transform_nodes(diagram),
+          children: transform_children(diagram),
           edges: transform_edges(diagram),
           layoutOptions: layout_options(diagram)
         }
@@ -36,27 +36,107 @@ module Sirena
 
       private
 
-      def transform_nodes(diagram)
-        diagram.nodes.map do |node|
-          dims = calculate_dimensions(node)
-
-          {
-            id: node.id,
-            width: dims[:width],
-            height: dims[:height],
-            labels: [
-              {
-                text: node.label,
-                width: dims[:label_width],
-                height: dims[:label_height]
-              }
-            ],
-            metadata: {
-              shape: node.shape,
-              classes: node.classes
-            }
-          }
+      # Subgraphs become compound children holding their members, which is
+      # what elkrb reads and what lets the layout size a cluster to fit.
+      # A node in no subgraph stays at the top level.
+      def transform_children(diagram)
+        boxes = drawable_subgraphs(diagram)
+        nested = boxes.each_with_object({}) do |box, acc|
+          box.node_ids.each { |id| acc[id] = box }
         end
+
+        placed = diagram.nodes.map { |node| transform_node(node) }
+
+        assemble(boxes, placed, nested)
+      end
+
+      # Model order is kept for emitted clusters. Nested clusters are attached
+      # before member nodes, so every cluster lists boxes before nodes. Parent
+      # lookup is independent of declaration order, so a later cluster can
+      # hold an earlier one.
+      def assemble(boxes, placed, nested)
+        entries = boxes.map { |box| [box, transform_subgraph(box)] }
+        clusters_by_box = index_by_box(entries)
+        parents_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
+
+        attach_clusters(entries, parents_by_id)
+        loose = place_nodes(placed, nested, clusters_by_box)
+        loose + root_clusters(entries, parents_by_id)
+      end
+
+      def index_by_box(entries)
+        entries.each_with_object({}.compare_by_identity) do |(box, cluster), acc|
+          acc[box] = cluster
+        end
+      end
+
+      def attach_clusters(entries, parents)
+        entries.each do |box, mine|
+          holder = holder_of(box, parents)
+          next unless holder
+
+          holder.fetch(:children).push(mine)
+        end
+      end
+
+      def root_clusters(entries, parents)
+        entries.reject { |box, _cluster| holder_of(box, parents) }.map(&:last)
+      end
+
+      def place_nodes(nodes, nested, clusters)
+        nodes.each_with_object([]) do |node, loose|
+          holder = clusters[nested[node[:id]]]
+          holder ? holder[:children] << node : loose << node
+        end
+      end
+
+      # A box naming a parent nobody drew belongs at the top level. Asked
+      # rather than written back, because the diagram belongs to the
+      # caller and a transform has no business editing it.
+      def holder_of(box, clusters)
+        clusters[box.parent_id]
+      end
+
+      # An empty subgraph draws no cluster in mermaid, so it is not
+      # carried into the layout.
+      def drawable_subgraphs(diagram)
+        (diagram.subgraphs || []).select(&:drawable?)
+      end
+
+      def transform_subgraph(box)
+        label = measure_text(box.title, font_size: DEFAULT_FONT_SIZE)
+
+        {
+          id: box.id,
+          width: 0,
+          height: 0,
+          children: [],
+          labels: [
+            { text: box.title, width: label[:width], height: label[:height] }
+          ],
+          metadata: { cluster: true }
+        }
+      end
+
+      def transform_node(node)
+        dims = calculate_dimensions(node)
+
+        {
+          id: node.id,
+          width: dims[:width],
+          height: dims[:height],
+          labels: [
+            {
+              text: node.label,
+              width: dims[:label_width],
+              height: dims[:label_height]
+            }
+          ],
+          metadata: {
+            shape: node.shape,
+            classes: node.classes
+          }
+        }
       end
 
       def transform_edges(diagram)

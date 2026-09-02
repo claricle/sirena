@@ -49,6 +49,55 @@ RSpec.describe Sirena::Transform::FlowchartTransform do
       expect(node_a[:labels].first[:text]).to eq('Start')
     end
 
+    # `assemble` attaches nested clusters before member nodes, and the
+    # order is what the grid slices three to a row: run `place_nodes`
+    # first instead and the inner box drops from [20, 54] to the second
+    # row, taking the outer box from 308 units tall to 398.
+    it 'lists a nested cluster before the nodes beside it' do
+      source = "flowchart TD\nsubgraph outer\nsubgraph inner\ni1\nend\n" \
+               "n1\nn2\nn3\nend\n"
+      model = Sirena::Parser::FlowchartParser.new.parse(source)
+
+      outer = transform.to_graph(model)[:children]
+        .find { |child| child[:id] == 'outer' }
+
+      expect(outer[:children].map { |child| child[:id] })
+        .to eq(%w[inner n1 n2 n3])
+    end
+
+    it 'emits every node and subgraph when valid model ids repeat' do
+      model = Sirena::Diagram::Flowchart.new(direction: 'TD')
+      model.nodes.push(
+        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'First'),
+        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'Second'),
+        Sirena::Diagram::FlowchartNode.new(id: 'one', label: 'One'),
+        Sirena::Diagram::FlowchartNode.new(id: 'two', label: 'Two')
+      )
+      model.subgraphs.push(
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: 'group', declared_title: 'First group', node_ids: %w[one]
+        ),
+        Sirena::Diagram::FlowchartSubgraph.new(
+          id: 'group', declared_title: 'Second group', node_ids: %w[two]
+        )
+      )
+
+      expect(model).to be_valid
+
+      children = transform.to_graph(model)[:children]
+      labels = children.map { |child| child[:labels].first[:text] }
+      members = children.select { |child| child.dig(:metadata, :cluster) }
+        .to_h do |box|
+          title = box[:labels].first[:text]
+          held = box[:children].map { |node| node[:labels].first[:text] }
+          [title, held]
+        end
+
+      expect(labels).to eq(['First', 'Second', 'First group', 'Second group'])
+      expect(members).to eq('First group' => %w[One],
+                            'Second group' => %w[Two])
+    end
+
     it 'creates edges with metadata' do
       graph = transform.to_graph(diagram)
 

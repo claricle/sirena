@@ -14,42 +14,163 @@ module Sirena
     #   renderer = FlowchartRenderer.new
     #   svg = renderer.render(laid_out_graph)
     class FlowchartRenderer < Base
+      # Rounded like mermaid draws a cluster, and far enough down that the
+      # title clears the top edge.
+      CLUSTER_CORNER = 5
+      CLUSTER_TITLE_BASELINE = 20
+
+      # Two boxes that touch add up to exactly one run between their
+      # centres, and the arithmetic lands a hair under it. Without the
+      # slack they get trimmed to the same point and the edge is drawn
+      # zero units long.
+      TOUCHING = 1e-9
+
+      # Routes are written to two decimal places after trimming. Centres
+      # less than one output unit apart cannot provide a useful straight run.
+      COINCIDENT = 0.01
+
+      # Trimmed endpoints are written to two decimals, so a coordinate can
+      # sit half a hundredth away from the unrounded side it reached.
+      ROUTE_EPSILON = 0.01
+
+      # How far a degenerate loop reaches past the borders it leaves.
+      # `calculate_width` and `calculate_height` add 40 past the drawn
+      # maxima. `Base#create_document` keeps the origin at zero and adds
+      # another 40 to the right and bottom extents, leaving 80 units there.
+      # A reach beyond that needs the page to grow with it.
+      LOOP_REACH = 20
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document(graph)
+        page = flatten(graph)
+        svg = create_document(page)
 
-        # Render edges first (so they appear under nodes)
-        render_edges(graph, svg) if graph[:edges]
-
-        # Render nodes
-        render_nodes(graph, svg) if graph[:children]
+        # mermaid's paint order: clusters sit behind everything, then
+        # edges, then the nodes that cover where the edges end.
+        render_clusters(page, svg)
+        render_edges(page, svg) if page[:edges]
+        render_nodes(page, svg) if page[:children]
 
         svg
       end
 
       protected
 
-      def calculate_width(graph)
-        return 800 unless graph[:children]
+      # The layout nests a cluster's contents inside it, ELK style, so a
+      # child's coordinates are relative to the box holding it. Everything
+      # below this point works in page coordinates on a flat list, so the
+      # tree is walked once here and the offsets added up.
+      def flatten(graph)
+        clusters = []
+        nodes = []
+        collect(graph[:children] || [], 0, 0, clusters, nodes)
 
-        max_x = graph[:children].map do |node|
+        graph.merge(children: nodes, clusters: clusters)
+      end
+
+      # Outermost first, which is the order mermaid paints nested boxes,
+      # so an inner cluster lands on top of the one holding it.
+      def collect(children, dx, dy, clusters, nodes)
+        children.each do |child|
+          placed = child.merge(x: (child[:x] || 0) + dx,
+                               y: (child[:y] || 0) + dy)
+
+          unless child[:children]
+            nodes << placed
+            next
+          end
+
+          # The same test Layout::Fallback#cluster? makes, written out
+          # again rather than reached for across the layer. Nothing
+          # coupled keeps them together: change one and change the other,
+          # or the layout and the renderer stop agreeing about what a box
+          # is. Transform::FlowchartTransform sets the marker.
+          clusters << placed.except(:children) if cluster?(child)
+          collect(child[:children], placed[:x], placed[:y], clusters, nodes)
+        end
+      end
+
+      def cluster?(child)
+        child.dig(:metadata, :cluster) == true
+      end
+
+      def render_clusters(graph, svg)
+        (graph[:clusters] || []).each { |cluster| render_cluster(cluster, svg) }
+      end
+
+      def render_cluster(cluster, svg)
+        group = Svg::Group.new.tap { |g| g.id = "cluster-#{cluster[:id]}" }
+        group.children << cluster_box(cluster)
+
+        label = (cluster[:labels] || []).first
+        group.children << cluster_title(cluster, label) if label
+
+        svg << group
+      end
+
+      def cluster_box(cluster)
+        Svg::Rect.new.tap do |rect|
+          rect.x = cluster[:x].to_i
+          rect.y = cluster[:y].to_i
+          rect.width = cluster[:width].to_i
+          rect.height = cluster[:height].to_i
+          rect.rx = CLUSTER_CORNER
+          rect.ry = CLUSTER_CORNER
+          apply_theme_to_cluster(rect)
+        end
+      end
+
+      # mermaid writes the title inside the box, centred along the top.
+      def cluster_title(cluster, label)
+        Svg::Text.new.tap do |text|
+          text.x = cluster[:x] + (cluster[:width].to_i / 2)
+          text.y = cluster[:y] + CLUSTER_TITLE_BASELINE
+          text.content = label[:text]
+          apply_theme_to_text(text)
+          text.text_anchor = 'middle'
+          text.dominant_baseline = 'middle'
+        end
+      end
+
+      # A cluster is a surface behind the nodes, not another node, so it
+      # borrows the palette's variant surface rather than the node fill.
+      def apply_theme_to_cluster(element)
+        element.fill = theme_color(:surface_variant) if theme_color(:surface_variant)
+        element.stroke = theme_color(:node_stroke) if theme_color(:node_stroke)
+        return unless theme_shape(:stroke_width)
+
+        element.stroke_width = theme_shape(:stroke_width).to_s
+      end
+
+      def calculate_width(graph)
+        boxes = drawn(graph)
+        return 800 if boxes.empty?
+
+        max_x = boxes.map do |node|
           (node[:x] || 0) + (node[:width] || 100)
-        end.max || 800
+        end.max
 
         max_x + 40 # Add padding
       end
 
       def calculate_height(graph)
-        return 600 unless graph[:children]
+        boxes = drawn(graph)
+        return 600 if boxes.empty?
 
-        max_y = graph[:children].map do |node|
+        max_y = boxes.map do |node|
           (node[:y] || 0) + (node[:height] || 50)
-        end.max || 600
+        end.max
 
         max_y + 40 # Add padding
+      end
+
+      # A cluster can reach past the nodes inside it, so the page is
+      # measured against the boxes as well.
+      def drawn(graph)
+        (graph[:children] || []) + (graph[:clusters] || [])
       end
 
       def render_nodes(graph, svg)
@@ -205,8 +326,18 @@ module Sirena
 
         return unless source && target
 
-        # Calculate edge path
-        path_data = calculate_edge_path(source, target, edge)
+        elk_bends = edge.dig(:sections, 0, :bendPoints)
+        # One route, so the path and its label cannot disagree.
+        points, label_route = edge_route(source, target, elk_bends)
+        route = ends_of(points)
+        # Generated routes carry their own bends; an ordinary route keeps
+        # whatever the layout left in the ELK section.
+        bends = if points.length > 2
+                  points[1...-1]
+                else
+                  elk_bends
+                end
+        path_data = calculate_edge_path(route, bends)
 
         # Create path element
         path = Svg::Path.new.tap do |p|
@@ -226,36 +357,346 @@ module Sirena
         # Render edge label if present
         if edge[:labels] && !edge[:labels].empty?
           label = edge[:labels].first
-          text = create_edge_label(source, target, label)
+          text = create_edge_label(label_route, label)
           group.children << text if text
         end
 
         svg << group
       end
 
+      # An edge may end on a cluster: mermaid joins the boxes when an
+      # edge names a subgraph. A cluster carries the same x, y, width and
+      # height a node does, so the routing below needs no special case.
       def find_node(graph, node_id)
-        return nil unless graph[:children] && node_id
+        return nil unless node_id
 
-        graph[:children].find { |n| n[:id] == node_id }
+        (graph[:children] || []).find { |n| n[:id] == node_id } ||
+          (graph[:clusters] || []).find { |c| c[:id] == node_id }
       end
 
-      def calculate_edge_path(source, target, edge)
-        # Simple straight line path
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
-
-        # Use sections if available (from elkrb layout)
-        if edge[:sections] && !edge[:sections].empty?
-          section = edge[:sections].first
-          if section[:bendPoints] && !section[:bendPoints].empty?
-            return create_path_with_bends(sx, sy, tx, ty,
-                                          section[:bendPoints])
-          end
-        end
+      def calculate_edge_path(route, bends)
+        sx, sy, tx, ty = route
+        return create_path_with_bends(sx, sy, tx, ty, bends) if bends&.any?
 
         "M #{sx} #{sy} L #{tx} #{ty}"
+      end
+
+      def edge_route(source, target, bends = nil)
+        points = nil
+        unless exposed_cluster_overlap?(source, target)
+          points = coincident_loop(source, target)
+        end
+
+        points ||= route_ends(source, target).each_slice(2)
+          .map { |x, y| { x: x, y: y } }
+        source_neighbour = bends&.first || points[1]
+        target_neighbour = bends&.last || points[-2]
+        points[0] = clamp_cluster_corner(points[0], source_neighbour, source)
+        points[-1] = clamp_cluster_corner(points[-1], target_neighbour, target)
+        label_points = points.length > 2 ? points.slice(1, 2) : points
+        [points, ends_of(label_points)]
+      end
+
+      # Nodes and unmarked containers stay unchanged. A cluster is painted
+      # with integer rectangle coordinates, so its endpoint is moved from the
+      # layout box onto that exact rounded outline.
+      def clamp_cluster_corner(point, neighbour, box)
+        return point unless cluster?(box)
+
+        x_side, y_side = cluster_sides(point, box)
+        return point unless x_side || y_side
+
+        outline = painted_cluster_outline(box)
+        return point if outline.values_at(:rx, :ry).any?(&:zero?)
+        return rounded_corner(neighbour, outline, x_side, y_side) if x_side && y_side
+
+        clamp_cluster_side(point, outline, x_side, y_side)
+      end
+
+      def cluster_sides(point, box)
+        [edge_side(point[:x], [box[:x] || 0, right_of(box)]),
+         edge_side(point[:y], [box[:y] || 0, bottom_of(box)])]
+      end
+
+      def edge_side(coordinate, edges)
+        side = edges.each_index.min_by { |index| (coordinate - edges[index]).abs }
+        side if (coordinate - edges[side]).abs <= ROUTE_EPSILON
+      end
+
+      def painted_cluster_outline(box)
+        x = (box[:x] || 0).to_i.to_f
+        y = (box[:y] || 0).to_i.to_f
+        width = (box[:width] || 0).to_i.to_f
+        height = (box[:height] || 0).to_i.to_f
+        xs = [x, x + width]
+        ys = [y, y + height]
+        { xs: xs, ys: ys,
+          rx: [CLUSTER_CORNER, width / 2.0].min,
+          ry: [CLUSTER_CORNER, height / 2.0].min }
+      end
+
+      def clamp_cluster_side(point, outline, x_side, y_side)
+        xs, ys, rx, ry = outline.values_at(:xs, :ys, :rx, :ry)
+        if x_side
+          point.merge(x: xs[x_side], y: point[:y].clamp(ys.first + ry,
+                                                        ys.last - ry))
+        else
+          point.merge(x: point[:x].clamp(xs.first + rx, xs.last - rx),
+                      y: ys[y_side])
+        end
+      end
+
+      def rounded_corner(neighbour, outline, x_side, y_side)
+        xs, ys, rx, ry = outline.values_at(:xs, :ys, :rx, :ry)
+        corner = { x: xs[x_side], y: ys[y_side] }
+        centre = { x: x_side.zero? ? xs.first + rx : xs.last - rx,
+                   y: y_side.zero? ? ys.first + ry : ys.last - ry }
+        direction = { x: corner[:x] - neighbour[:x],
+                      y: corner[:y] - neighbour[:y] }
+        step = ellipse_entry(corner, centre, direction, rx, ry)
+        return corner unless step
+
+        corner.merge(x: (corner[:x] + (direction[:x] * step)).round(2),
+                     y: (corner[:y] + (direction[:y] * step)).round(2))
+      end
+
+      def ellipse_entry(corner, centre, direction, rx, ry)
+        x = (corner[:x] - centre[:x]) / rx
+        y = (corner[:y] - centre[:y]) / ry
+        dx = direction[:x] / rx
+        dy = direction[:y] / ry
+        a = (dx**2) + (dy**2)
+        return nil if a.zero?
+
+        b = 2 * ((x * dx) + (y * dy))
+        smallest_quadratic_root(a, b)
+      end
+
+      def smallest_quadratic_root(a, b)
+        discriminant = (b**2) - (4 * a)
+        return nil if discriminant.negative?
+
+        [(-b - Math.sqrt(discriminant)) / (2 * a),
+         (-b + Math.sqrt(discriminant)) / (2 * a)]
+          .select { |value| value >= 0 }.min
+      end
+
+      # A straight run needs a direction. Self-edges and distinct boxes
+      # with the same centre have none, so route from the source's top to
+      # the target's bottom with two bends beyond both boxes.
+      def coincident_loop(source, target)
+        source_centre = centre_of(source)
+        target_centre = centre_of(target)
+        return nil unless near?(source_centre, target_centre)
+
+        source_top, = vertical_outline(source, source_centre[1])
+        _, target_bottom = vertical_outline(target, target_centre[1])
+        start = { x: source_centre[0], y: source_top }
+        finish = { x: target_centre[0],
+                   y: target_bottom }
+        out = [right_of(source), right_of(target)].max + LOOP_REACH
+        bend_y = finish[:y]
+        bend_y += LOOP_REACH if near?(start.values, finish.values)
+
+        [start, { x: out, y: start[:y] }, { x: out, y: bend_y }, finish]
+          .map { |point| point.transform_values { |value| value.round(2) } }
+      end
+
+      def near?(first, second)
+        Math.hypot(first[0] - second[0], first[1] - second[1]) < COINCIDENT
+      end
+
+      def right_of(box)
+        (box[:x] || 0) + (box[:width] || 0)
+      end
+
+      def bottom_of(box)
+        (box[:y] || 0) + (box[:height] || 0)
+      end
+
+      # Circle nodes use the smaller box dimension as their radius, so
+      # their vertical outline may sit inside the box bounds.
+      def vertical_outline(box, centre_y)
+        y = box[:y] || 0
+        height = box[:height] || 0
+        shape = box.dig(:metadata, :shape)
+        return [y, y + height] unless %w[circle double_circle].include?(shape)
+
+        radius = [box[:width] || 0, height].min / 2
+        [centre_y - radius, centre_y + radius]
+      end
+
+      # Points carry the shape ELK bend points already have, so the two
+      # middle ones drop straight into `create_path_with_bends`. This
+      # flattens the outer pair into the ends every route is shaped as.
+      def ends_of(points)
+        first = points.first
+        last = points.last
+        [first[:x], first[:y], last[:x], last[:y]]
+      end
+
+      # The points of the run. A cluster is painted BEHIND the
+      # edges, so the stretch from its centre out to its border stays
+      # drawn across the inside of the box; a node is painted over its
+      # own stretch, which is why ordinary edges do not move at all.
+      def route_ends(source, target)
+        sx, sy = centre_of(source)
+        tx, ty = centre_of(target)
+        out = step_out(source, sx, sy, tx, ty)
+        back = step_out(target, tx, ty, sx, sy)
+
+        # One centre can sit inside the other box even when neither box
+        # contains the other. Detect that deep partial overlap from the
+        # rectangles themselves before the centre-based nesting fallback.
+        if exposed_cluster_overlap?(source, target)
+          return exterior_route(source, target, sx, sy, tx, ty)
+        end
+
+        # A step past the other centre means that centre is inside this
+        # box. Use the opposite sides so the ordered route still points
+        # from source to target while touching both borders.
+        if out >= 1.0 - TOUCHING || back >= 1.0 - TOUCHING
+          return enclosing_route(source, target, sx, sy, tx, ty)
+        end
+
+        # Partially overlapping or touching boxes need an exterior route:
+        # their centre chord is visible through both cluster faces.
+        if out + back >= 1.0 - TOUCHING
+          return exterior_route(source, target, sx, sy, tx, ty)
+        end
+
+        route = along(sx, sy, tx, ty, out) + along(tx, ty, sx, sy, back)
+        return exterior_route(source, target, sx, sy, tx, ty) if route.first(2) == route.last(2)
+
+        route
+      end
+
+      def exposed_cluster_overlap?(source, target)
+        return false unless cluster?(source) && cluster?(target)
+        return false if contains_box?(source, target) || contains_box?(target, source)
+
+        (source[:x] || 0) <= right_of(target) &&
+          right_of(source) >= (target[:x] || 0) &&
+          (source[:y] || 0) <= bottom_of(target) &&
+          bottom_of(source) >= (target[:y] || 0)
+      end
+
+      def contains_box?(outer, inner)
+        (outer[:x] || 0) <= (inner[:x] || 0) &&
+          right_of(outer) >= right_of(inner) &&
+          (outer[:y] || 0) <= (inner[:y] || 0) &&
+          bottom_of(outer) >= bottom_of(inner)
+      end
+
+      def enclosing_route(source, target, sx, sy, tx, ty)
+        source_back = step_out(source, sx, sy, (2 * sx) - tx, (2 * sy) - ty)
+        target_back = step_out(target, tx, ty, (2 * tx) - sx, (2 * ty) - sy)
+
+        along(sx, sy, tx, ty, -source_back) +
+          along(tx, ty, sx, sy, -target_back)
+      end
+
+      # Corners on the sides facing away from the other box expose both
+      # ends. Prefer the corridor matching the centre direction, but unequal
+      # projections can put that corner inside the other box, so only use a
+      # candidate whose actual segments stay outside both open faces.
+      def exterior_route(source, target, sx, sy, tx, ty)
+        bottom = bottom_exterior_route(source, target, sx, tx)
+        right = right_exterior_route(source, target, sy, ty)
+        candidates = (tx - sx).abs >= (ty - sy).abs ? [bottom, right] : [right, bottom]
+        rounded = candidates.map { |points| rounded_points(points) }
+        points = rounded.find { |route| clear_route?(route, source, target) } || rounded.first
+
+        points.flatten
+      end
+
+      def rounded_points(points)
+        points.map do |point|
+          point.map { |coordinate| coordinate.round(2) }
+        end
+      end
+
+      def clear_route?(points, source, target)
+        points.each_cons(2).none? do |from, to|
+          [source, target].any? { |box| crosses_face?(box, from, to) }
+        end
+      end
+
+      def crosses_face?(box, from, to)
+        if from[0] == to[0]
+          low, high = [from[1], to[1]].minmax
+          from[0] > (box[:x] || 0) && from[0] < right_of(box) &&
+            low < bottom_of(box) && high > (box[:y] || 0)
+        else
+          low, high = [from[0], to[0]].minmax
+          from[1] > (box[:y] || 0) && from[1] < bottom_of(box) &&
+            low < right_of(box) && high > (box[:x] || 0)
+        end
+      end
+
+      def bottom_exterior_route(source, target, sx, tx)
+        source_x = tx > sx ? source[:x] || 0 : right_of(source)
+        target_x = tx > sx ? right_of(target) : target[:x] || 0
+        source_y = bottom_of(source)
+        target_y = bottom_of(target)
+        outside_y = [source_y, target_y].max + LOOP_REACH
+        [[source_x, source_y], [source_x, outside_y],
+         [target_x, outside_y], [target_x, target_y]]
+      end
+
+      def right_exterior_route(source, target, sy, ty)
+        source_x = right_of(source)
+        target_x = right_of(target)
+        source_y = ty > sy ? source[:y] || 0 : bottom_of(source)
+        target_y = ty > sy ? bottom_of(target) : target[:y] || 0
+        outside_x = [source_x, target_x].max + LOOP_REACH
+        [[source_x, source_y], [outside_x, source_y],
+         [outside_x, target_y], [target_x, target_y]]
+      end
+
+      def centre_of(box)
+        [(box[:x] || 0) + ((box[:width] || 100) / 2),
+         (box[:y] || 0) + ((box[:height] || 50) / 2)]
+      end
+
+      # How far along the ray to the other centre this box's border sits.
+      # Values above one mean the other centre lies inside this box. A node
+      # is not trimmed, so it stays where it is.
+      #
+      # Measured off the sides themselves rather than from half the
+      # width: the centre above is the one this renderer has always
+      # used, and its integer division puts it half a unit off centre on
+      # an odd-width box. Halves either side of that would miss the side
+      # by the same half unit.
+      def step_out(box, cx, cy, tx, ty)
+        return 0.0 unless cluster?(box)
+
+        dx = tx - cx
+        dy = ty - cy
+        reach = []
+        reach << side(cx, dx, box[:x] || 0, box[:width] || 0) unless dx.zero?
+        reach << side(cy, dy, box[:y] || 0, box[:height] || 0) unless dy.zero?
+        reach.empty? ? 0.0 : reach.min.clamp(0.0, Float::INFINITY)
+      end
+
+      # The side the run is heading for, as a fraction of the whole run.
+      def side(from, delta, near, size)
+        edge = delta.positive? ? near + size : near
+        (edge - from) / delta.to_f
+      end
+
+      # An end that was not trimmed comes back exactly as it went in. A
+      # box measured from text has a fractional centre, and touching
+      # that moved every ordinary edge.
+      #
+      # A trimmed one is rounded, because the arithmetic lands on
+      # seventeen digits behind the point and this output goes into a
+      # document. Two decimals is finer than anything anyone draws.
+      def along(cx, cy, tx, ty, step)
+        return [cx, cy] if step.zero?
+
+        [(cx + ((tx - cx) * step)).round(2),
+         (cy + ((ty - cy) * step)).round(2)]
       end
 
       def create_path_with_bends(sx, sy, tx, ty, bend_points)
@@ -274,13 +715,11 @@ module Sirena
         %w[arrow dotted_arrow thick_arrow].include?(arrow_type)
       end
 
-      def create_edge_label(source, target, label)
-        # Position label at midpoint of edge
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
-
+      # The midpoint of the run that was actually drawn. Measuring from
+      # the centres instead left a label on a trimmed edge sitting
+      # inside the box the line no longer starts in.
+      def create_edge_label(route, label)
+        sx, sy, tx, ty = route
         mid_x = (sx + tx) / 2
         mid_y = (sy + ty) / 2
 
