@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 require 'open3'
+# RbConfig arrives with RubyGems, not with the interpreter: `ruby --disable-gems`
+# raises NameError on it. The example at :587 calls `RbConfig.ruby` to re-invoke
+# the current interpreter, so requiring it here is what makes that example
+# independent of how the suite was launched.
+require 'rbconfig'
 require 'stringio'
 require 'timeout'
 require 'tmpdir'
