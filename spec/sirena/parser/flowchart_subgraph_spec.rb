@@ -698,9 +698,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect { parser.parse(refused) }
         .to raise_error(Sirena::Parser::ParseError)
 
+      # Before the next parse, not after: a recovery parse releases the
+      # slot on its own way out, which erases the very evidence that the
+      # refused one held on to its tree.
+      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
       expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
                    .subgraphs.map(&:id)).to eq(%w[subGraph0])
-      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
     end
 
     def ids_by_title(source)
@@ -887,14 +890,21 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   end
 
   # A flat chain nests nothing, so the grammar's own depth guard never
-  # fires. The cycle walk recursed anyway and raised a bare
+  # fires. The ownership walk recursed anyway and raised a bare
   # SystemStackError straight out of the parse.
+  #
+  # The chain it built, not just "it did not raise": with the cycle check
+  # replaced by `nil` this source still parses cleanly, so the bare form
+  # said nothing about cycles despite its name. Fifteen other examples
+  # fail on that mutation; what is left to pin here is the flat walk.
   describe "a long chain of boxes" do
-    it "is checked for cycles without recursing" do
+    it "walks the whole chain without recursing" do
       chain = (0...4_000).map { |i| "subgraph s#{i}\ns#{i + 1}\nend\n" }.join
+      built = boxes("graph TD\n#{chain}s4000\n")
+      last = built.last
 
-      expect { described_class.new.parse("graph TD\n#{chain}s4000\n") }
-        .not_to raise_error
+      expect([built.size, last.id, last.parent_id, last.node_ids])
+        .to eq([4000, "s3999", "s3998", %w[s4000]])
     end
   end
 end
