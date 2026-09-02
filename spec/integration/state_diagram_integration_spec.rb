@@ -135,6 +135,46 @@ RSpec.describe 'StateDiagram Integration' do
       )
       expect(REXML::XPath.match(document, '//text').map(&:text)).to eq(%w[A B])
     end
+
+    # mmdc 11.12.0 exits 1 with no output on every separator width, including
+    # none at all: `stateDiagram-v2direction LR` is not a diagram. The first
+    # guard here required one space, so the zero-space form walked past it.
+    it 'refuses a direction on the header line at any separator width' do
+      engine = Sirena::Engine.new
+
+      ["stateDiagram-v2direction LR\nA --> B\n",
+       "stateDiagram-v2 direction LR\nA --> B\n",
+       "stateDiagram-v2\tdirection LR\nA --> B\n"].each do |source|
+        expect { engine.render(source) }
+          .to raise_error(Sirena::Engine::PipelineError, /Parse error/), source
+      end
+    end
+  end
+
+  describe 'marker states that carry display text' do
+    # An alias is stored in `descriptions`, never in the scalar `description`.
+    # mmdc 11.12.0 renders `state C <<choice>>` plus `state "Label" as C` as a
+    # described RECTANGLE in either order, and draws no polygon for it.
+    it 'draws a marker with an alias as a rectangle in either order' do
+      engine = Sirena::Engine.new
+
+      ["stateDiagram-v2\nstate C <<choice>>\nstate \"Label\" as C\n",
+       "stateDiagram-v2\nstate \"Label\" as C\nstate C <<choice>>\n"].each do |source|
+        svg = engine.render(source)
+
+        expect([svg.scan('<polygon').size, svg.scan('<rect').size])
+          .to eq([0, 1]), source
+      end
+    end
+
+    # The guard above must not reach the label. A bare marker's label is its own
+    # id, so keying the shape on display text INCLUDING the label would turn
+    # every marker into a rectangle.
+    it 'keeps a marker without display text as a polygon' do
+      svg = Sirena::Engine.new.render("stateDiagram-v2\nstate C <<choice>>\nC --> A\n")
+
+      expect(svg.scan('<polygon').size).to eq(1)
+    end
   end
 
   describe 'DiagramRegistry integration' do

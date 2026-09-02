@@ -29,7 +29,7 @@ module Sirena
         # own line both render. So the header's line bars the direction
         # statement and nothing else -- other statements stay legal there.
         rule(:header_line_direction) do
-          space.repeat(1) >> direction_statement
+          space.repeat >> direction_statement
         end
 
         # Nothing on the keyword's line is a direction: mmdc 11.12.0 draws

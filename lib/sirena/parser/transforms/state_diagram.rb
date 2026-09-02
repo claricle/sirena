@@ -57,9 +57,12 @@ module Sirena
             # Transition
             process_transition(stmt)
           elsif stmt[:note_keyword] || stmt[:style_keyword]
-            # Notes and styling directives are parsed and dropped. mmdc
-            # 11.12.0 draws no node for either, and the diagram model
-            # carries neither.
+            # Notes and styling directives are parsed and dropped, and that
+            # is a GAP, not parity. Measured against mmdc 11.12.0: a note
+            # renders its own node and its text -- `note right of A / hello`
+            # produces a 10,403-byte SVG containing "hello", against 7,992
+            # bytes without it. The diagram model carries neither, so nothing
+            # downstream could draw them yet.
             nil
           elsif stmt[:state_id] && !stmt[:keyword]
             # Standalone state, with or without a description

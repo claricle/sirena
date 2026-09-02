@@ -173,7 +173,7 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
     end
 
     describe 'state "Label" as Id' do
-      it 'names and labels a state (state_diagram/019, state/020)' do
+      it 'names and labels a state (state_diagram/019)' do
         diagram = corpus(
           'state_diagram/019_parser_should_handle_state_definitions_' \
           'with_separation_of_id_18.mmd'
