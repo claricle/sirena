@@ -18,7 +18,7 @@
 # `---` cannot be the separator: it opens a frontmatter block.
 #
 # Exits nonzero on any disagreement, and on any infrastructure failure.
-# Needs mmdc on PATH.
+# Needs a POSIX system and mmdc on PATH.
 
 # The verdicts are only worth as much as the sirena that produced them, so
 # the Gemfile decides which one that is rather than whatever is installed.
@@ -224,8 +224,8 @@ end
 def subtree_of(pid)
   parents = Hash.new { |hash, key| hash[key] = [] }
   capture(['ps', '-eo', 'pid=,ppid='], PS_TIMEOUT).each_line do |line|
-    child, parent = line.split.map(&:to_i)
-    parents[parent] << child if child && parent
+    child, parent = line.split.map { |field| Integer(field, exception: false) }
+    parents[parent] << child if child&.positive? && parent&.positive?
   end
 
   found = []
@@ -247,10 +247,10 @@ def monotonic
 end
 
 # Runs a program and hands back what it printed. Spawned rather than
-# backticked so that one which never answers can be killed: it inherited the
-# harness's own stdout and stderr, so leaving it running hands the wait to
-# whoever is reading our output. Measured with a wedged `ps` — the sweep came
-# back in 0.30s and the reader waited 21.29s for EOF.
+# backticked so that one which never answers can be killed: a descendant can
+# inherit the capture pipe's write end, so leaving it running keeps `io.read`
+# from reaching EOF. Measured with a wedged `ps` — the sweep came back in
+# 0.30s and the reader waited 21.29s for EOF.
 def capture(command, timeout)
   io = IO.popen(command, err: File::NULL, pgroup: true)
   begin
@@ -275,9 +275,9 @@ end
 # The escape drops ONE backslash from a run of them, so every line is
 # writable: `\%%%%` is the separator escaped, `\\%%%%` is a source whose own
 # line is `\%%%%`. It used to rewrite `\%%%%` and leave `\\%%%%` doubled, so
-# the one source you could not write was `\%%%%` — which mmdc renders and
-# sirena rejects. The probe for that gap silently became the bare `%%%%`
-# source, and that one both accept.
+# the one source you could not write was `\%%%%` — which mmdc 11.12.0 renders
+# and sirena rejects. The probe silently became a source with a bare `%%%%`
+# line instead, which both accept.
 #
 # Matching blanks here would strip the backslash off a `\%%%%   ` that no
 # longer needs one.
