@@ -17,15 +17,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       aggregate_failures do
         links.each do |link|
           source = "flowchart TD\n  A#{link}B\n"
-          diagram = nil
-          message = "source #{source.inspect}"
-
-          expect { diagram = described_class.new.parse(source) }
-            .not_to raise_error, message
-          next unless diagram
+          diagram = described_class.new.parse(source)
 
           expect(diagram.edges.fetch(0).arrow_type)
-            .to eq(expected_type), message
+            .to eq(expected_type), "source #{source.inspect}"
         end
       end
     end

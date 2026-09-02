@@ -848,7 +848,13 @@ module Sirena
 
         # Bare `==` is not a link (mmdc rejects `A==B`). A thick link has at
         # least two `=` before an arrowhead or at least three without one.
-        # The headed arm comes first so its `>` is not left for the target.
+        # The headed arm comes first so its `>` is not left for the target,
+        # and that ordering is also why the open arm needs no `>` guard of
+        # its own: the headed arm's `repeat(2)` is greedy, so wherever a
+        # `>` follows the equals run it has already matched. One was
+        # written here anyway and changed no verdict across a 72-case
+        # equals sweep or all 331 flowchart corpus cases — the two sibling
+        # link rules carry none either.
         #
         # The open arm carries `trailing_xo_marker.absent?` for the same
         # reason the other two links do. Mermaid's thick link is
@@ -859,8 +865,7 @@ module Sirena
         # here while mmdc refuses every one of them.
         rule(:thick_arrow) do
           (str('=').repeat(2) >> str('>') |
-            str('=').repeat(3) >> str('>').absent? >>
-              trailing_xo_marker.absent?).as(:thick)
+            str('=').repeat(3) >> trailing_xo_marker.absent?).as(:thick)
         end
 
         # A dotted link has one or more dots. As with a plain link, put the

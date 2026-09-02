@@ -97,6 +97,12 @@ module Sirena
         '\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A' \
         '\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF' \
         '\uFFD2-\uFFD7\uFFDA-\uFFDC'
+
+      # Read unqualified from `Grammars::Flowchart`, which this module
+      # lexically encloses, so marking it private costs that reader
+      # nothing. `mermaid_shapes.rb:104` does the same with its own
+      # mmdc-derived table.
+      private_constant :MERMAID_UNICODE_TEXT
     end
   end
 end

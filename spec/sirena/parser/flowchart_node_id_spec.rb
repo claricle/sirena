@@ -34,6 +34,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # diagram model has no container to put one in — so `parses?` cannot
   # tell a subgraph name this grammar accepts from one it rejects. The
   # name guards are the grammar's job and this asks the grammar directly.
+  # The bracketed title a subgraph header captured, or nil. The name
+  # itself is consumed rather than kept, so the title is what a header's
+  # reading can be read back from.
+  def subgraph_title_of(source)
+    tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+    header = tree.find do |element|
+      element.is_a?(Hash) && element.key?(:subgraph_id)
+    end
+
+    header[:subgraph_title]&.to_s
+  end
+
   def subgraph_name_parses?(source)
     Sirena::Parser::Grammars::Flowchart.new.parse(source)
     true
@@ -230,13 +242,16 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     # The under-acceptance the refusal buys: mmdc draws `A---xB` and
-    # `A===xB` alike as A to B with a crossed head. Pinned so that
-    # modelling those heads — the same change that owns `1x-->B` — is a
-    # decision rather than an accident. `A===xB` drew `A` and a node
-    # called `xB` before the thick link carried the guard.
+    # `A===xB` alike as A to B with a head sirena cannot draw — `x` is a
+    # crossed one, `o` a circled one. Pinned so that modelling those
+    # heads — the same change that owns `1x-->B` — is a decision rather
+    # than an accident. `A===xB` drew `A` and a node called `xB` before
+    # the thick link carried the guard. Both markers on every spelling,
+    # so an omission cannot hide in the gap.
     context "with a target behind the marker" do
-      %w[A---xB A---oB A===xB A===oB A====xB A-.-xB].each do |statement|
-        it "refuses #{statement}, which mmdc draws with a crossed head" do
+      %w[A---xB A---oB A===xB A===oB A====xB A====oB
+         A-.-xB A-.-oB].each do |statement|
+        it "refuses #{statement}, whose head mmdc draws and sirena cannot" do
           expect(parses?("graph TD\n#{statement}\n")).to be(false)
         end
       end
@@ -302,10 +317,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    # The marker is only a marker when a link follows it. `#x` and `éo`
-    # are ordinary ids on their own, and the walk must not refuse them
-    # for holding an `x` at a restart.
-    context "with no link behind the marker" do
+    # The marker is only a marker when a link opening ABUTS it. Put a
+    # space in front of the link, or leave the link off altogether, and
+    # `#x` `éo` and `*o` are ordinary ids — the walk must not refuse them
+    # for carrying an `x` or an `o` at a restart. `#x --> B` differs from
+    # the refused `#x-->B` by that space alone.
+    context "with nothing abutting the marker" do
       {
         "#x --> B" => ["#x", "B"], "éo --> B" => ["B", "éo"],
         "#x" => ["#x"], "*o" => ["*o"]
@@ -945,36 +962,55 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     # What closes a subgraph is `end` with the LINE behind it, not the
     # word wherever it stands. Guarding a trailing word on the hunted
-    # word alone refused every header below, and mmdc draws each as ONE
-    # cluster holding `end` in its name.
+    # word alone refused every header below.
     #
-    # WHERE it holds it depends on the title. With a bracketed one the
-    # whole run is the cluster id: `subgraph A end [T]` is the cluster
-    # `A end` titled `T`, and `A 1end [T]` and `A B end [T]` the same.
-    # Without one the cluster is auto-named `subGraph0` and the run is
-    # its label, so `subgraph A end B` is labelled `A end B`. Read from
-    # mmdc 11.12.0's `class="cluster" id=` AND from the text inside its
-    # `<foreignObject>`, which is where a label lives — not from whether
-    # it drew.
+    # mmdc 11.12.0 draws each as ONE cluster holding `end` in its name,
+    # and WHERE it holds it depends on the title. With a bracketed one
+    # the whole run is the cluster id: `subgraph A end [T]` is the
+    # cluster `A end` titled `T`, and `A 1end [T]` and `A B end [T]` the
+    # same. Without one the cluster is auto-named `subGraph0` and the run
+    # becomes its label, so `subgraph A end B` is labelled `A end B`.
+    # That was read from mmdc's `class="cluster" id=` and from the text
+    # inside its `<foreignObject>` — the oracle's reason for the verdict
+    # below, not something these examples measure.
+    #
+    # What they CAN measure is whether the subgraph is still open, and
+    # the example beneath the table does it: drop the closing `end` and
+    # the same header must fail. That separates "the name swallowed the
+    # word" from "the word closed the subgraph and the rest still
+    # parsed", which a bare `parses? == true` cannot tell apart.
     #
     # The refusals above are the other side of the same line:
     # `subgraph A end` and `subgraph A 1end` end their line and mmdc
     # refuses both.
     ["end [T]", "end;", "end ;", "end B", "1end [T]", "end A [T]",
      "B end [T]", "B 1end [T]", "end end [T]"].each do |tail|
-      it "takes a trailing #{tail}, whose end does not end the line" do
+      it "takes A #{tail}, whose end does not end the line" do
         source = "flowchart TD\nsubgraph A #{tail}\nX-->Y\nend\n"
 
         expect(subgraph_name_parses?(source)).to be(true)
       end
     end
 
-    # More than one space between the words. mmdc draws all three, and a
-    # single-space rule refuses them — every other trailing-name example
-    # here uses exactly one, so the run length went untested.
-    ["A  B", "A   B", "A  [T]"].each do |head|
-      it "takes #{head.inspect}, whose words are spaced wide" do
-        source = "flowchart TD\nsubgraph #{head}\nX-->Y\nend\n"
+    it "reads the title behind a name that swallowed an end" do
+      # The discriminator for the table above. A bare `parses? == true`
+      # cannot tell "the name swallowed `end` and the title behind it
+      # was still read" from "the `end` closed the subgraph and what
+      # followed happened to parse anyway". The tree can: a title is
+      # captured only on the first reading, because on the second there
+      # is no header left to hang one on.
+      source = "flowchart TD\nsubgraph A end [T]\nX-->Y\nend\n"
+
+      expect(subgraph_title_of(source)).to eq("[T]")
+    end
+
+    # More than one space, both between two names and in front of a
+    # bracketed title. mmdc draws all three, and a single-space rule
+    # refuses them — every other trailing-name example here uses exactly
+    # one space, so the run length went untested.
+    ["A  B", "A   B", "A  [T]"].each do |name|
+      it "takes #{name.inspect}, whose parts are spaced wide" do
+        source = "flowchart TD\nsubgraph #{name}\nX-->Y\nend\n"
 
         expect(subgraph_name_parses?(source)).to be(true)
       end
@@ -1033,11 +1069,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "ZéAclick" => true, "clickx" => true, "click1" => true,
       "click." => true, "click_" => true,
       "href-" => true, "call-" => true, "click-" => true,
-      # A subgraph's own six words end at a word boundary too, and mmdc
-      # draws all five of these. Without that boundary each one is
-      # refused for the reserved word it merely starts with.
+      # A subgraph's own six reserved words end at a word boundary too,
+      # and mmdc draws every name below. Without that boundary each is
+      # refused for the reserved word it merely starts with. All six are
+      # covered, so dropping one from the list cannot go unnoticed.
       "defaultx" => true, "default_" => true, "interpolatex" => true,
-      "_selfx" => true, "_topx" => true,
+      "_selfx" => true, "_topx" => true, "_blankx" => true,
+      "_parentx" => true,
       # Every place gets checked, not just the last one: these hold a
       # reserved word at their second place and an id character at their
       # third, so a walk that only looked where it stopped took them.

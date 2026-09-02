@@ -100,7 +100,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(paths).not_to be_empty
     end
 
-    # All six types `canonical_arrow_type` can build, not a sample. The
+    # One spelling for each of the six types `canonical_arrow_type` can
+    # build — `arrow` `line` `dotted_arrow` `dotted_line` `thick_arrow`
+    # `thick_line`, in the order listed below — not a sample. The
     # renderer decides the head from a hard-coded whitelist
     # (`arrow_type?`) that lives apart from the generative rule, so the
     # two can drift silently: adding `thick_line` and `dotted_line` to

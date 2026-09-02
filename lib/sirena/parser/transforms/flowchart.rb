@@ -253,10 +253,15 @@ module Sirena
           end
         end
 
+        # The grammar hands over a one-pair Hash whose KEY is the link
+        # style — `:plain`, `:dotted` or `:thick` — and whose value is the
+        # spelling it matched, so `{ thick: '==>' }` is a thick link that
+        # carries a head. `:plain` takes no prefix, which is what keeps
+        # `-->` named `arrow` and `---` named `line`.
         def self.canonical_arrow_type(link_shape)
           style, spelling = link_shape.first
           head = spelling.to_s.end_with?('>') ? 'arrow' : 'line'
-          [style == :plain ? nil : style, head].compact.join('_')
+          style == :plain ? head : "#{style}_#{head}"
         end
         private_class_method :canonical_arrow_type
 
