@@ -41,12 +41,15 @@ module Sirena
       # but letting a StackError out of a parse is not a gap, it is a
       # crash in whatever called us.
       #
-      # Only the grammar is wrapped. It is the recursive half, so it runs
-      # out of stack first — measured here at 188 nested boxes, a tree the
-      # transform then walks without trouble. A runaway recursion in the
-      # transform therefore stays visible instead of being reported as a
-      # diagram that nests too deeply. The depth itself moves with the
-      # stack the process was given; the order of the two does not.
+      # Only the grammar is wrapped. Both halves recurse, but the grammar
+      # spends far more stack per nested box, so on a source anyone can
+      # write it is the one that gives out first — measured here just
+      # under 190 nested boxes, a tree the transform then walks without
+      # trouble. A runaway recursion in the transform therefore stays
+      # visible instead of being reported as a diagram that nests too
+      # deeply. The depth moves with the stack the process was given, and
+      # a tree built by hand rather than parsed can still outrun the
+      # transform; neither changes which one a real source reaches first.
       #
       # @param source [String] the source with line ends already folded
       # @return [Hash, Array] the parse tree

@@ -674,9 +674,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # it after the parse keeps the whole tree alive on a long-lived
     # thread.
     #
-    # Read through a second parse rather than off the storage key: a
-    # counter that carried over is what a caller would see, and the
-    # assertion still means something if the state moves again.
+    # Both halves, because either alone can be satisfied while the other
+    # is false. A second parse numbering from zero is what a caller would
+    # see, and it still means something if the state moves off the thread
+    # — but it only proves the COUNTER was reset: keep `state[:ids]` and
+    # drop the rest and it passes with every statement still referenced.
+    # An empty slot is what says the tree was let go.
     it "lets the parse tree go when it is done" do
       parser = described_class.new
       first = parser.parse("graph TD\nsubgraph one A\nX\nend\n")
@@ -684,6 +687,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect([first, second].map { |d| d.subgraphs.map(&:id) })
         .to eq([%w[subGraph0], %w[subGraph0]])
+      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
     end
 
     it "lets it go even when the parse is refused" do
@@ -696,6 +700,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
                    .subgraphs.map(&:id)).to eq(%w[subGraph0])
+      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
     end
 
     def ids_by_title(source)
