@@ -158,7 +158,7 @@ def render_sectors(scene, svg)
   scene.sectors.each_with_index do |sector, i|
     svg << Svg::Path.new(
       d: arc_path(sector.start_angle, sector.end_angle),
-      fill: theme.palette(sector.colour_index),
+      fill: theme.palette(:pie, sector.colour_index),
       stroke: theme_color(:node_stroke),
       stroke_width: '2',
       id: "slice-#{i}"
@@ -168,7 +168,10 @@ end
 ```
 
 `get_slice_color` and the private `DEFAULT_COLORS` constant are gone —
-`theme.palette(i)` replaces them (item 05C).
+`theme.palette(name, i)` replaces them (item 05C) — NAMED, because the five
+constants hold four distinct palettes and a single shared one cannot preserve
+the existing colours. The one-argument form in an earlier draft silently chose
+the visible-colour-change alternative.
 
 ## 4. Registration — one row
 

@@ -139,6 +139,14 @@ different names**: `DEFAULT_COLORS` in `pie`, `radar` and `xy_chart`,
 `FLOW_COLORS` in `sankey`, `SECTION_COLORS` in `timeline`. Grepping for
 `DEFAULT_COLORS` finds three of the five and leaves two behind.
 
+**There is a SIXTH, and it is not in a renderer.**
+`Transform::GitGraph::DEFAULT_COLORS` (`transform/git_graph.rb:32`) supplies
+branch colours at `:245` and `:253`. A search confined to
+`lib/sirena/renderer/` misses it entirely. It also matters to item 03: that
+class becomes `Layout::GitGraph`, and a layout holding a colour table
+violates LAYERS.md's "geometry, no styling" contract. Move it with the other
+five, and search `lib/sirena/` — not just the renderers.
+
 The theme system exists — `Theme::Registry`, four built-in YAML themes,
 a `--theme` CLI flag — and is structurally unused, because
 `Renderer::Base#theme_color` rescues `NoMethodError` and returns `nil`.

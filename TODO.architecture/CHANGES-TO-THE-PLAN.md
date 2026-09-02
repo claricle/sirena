@@ -285,7 +285,7 @@ comes, read them as written:
   05  type detection         first task of the burndown
   06, 07  corpus burndown    the METHOD stands; re-derive the per-type
                              denominators — theirs count artifacts
-  08  lint, 109 live         small, can run any time
+  08  lint (live: DONE)      only the 7,602 parked offences remain
   11  docs truth             starts now, closes once the scoreboard exists
   14  elkrb + layout parity  adopted IN FULL, including the metric contract
   15  docs site build        independent

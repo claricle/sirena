@@ -16,7 +16,7 @@ tooling from items 01-07 gives you.
 ## Your loop
 
 ```
-  rake corpus[flowchart] --failing
+  rake 'corpus[flowchart,failing]'
     -> pick a case, read its stage
     -> stage tells you which file to open (docs/adding-a-diagram-type.md)
     -> fix

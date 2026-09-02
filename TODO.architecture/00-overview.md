@@ -88,7 +88,7 @@ been sidetracked — the answer is here.
 | Question | Decision | What it means for you |
 |---|---|---|
 | How close to mermaid must output be? | **Geometry parity.** 8% node-centre, 15% dimension-aspect, per `TODO.foundation/14` | elkrb is the layout engine, not a hand-written approximation. Scenes for graph types must be shaped so elkrb output drops into them (see item 04). Renderers never invent coordinates |
-| Can we break the API? | **Yes, freely.** Pre-1.0, nothing released | No deprecated aliases, no shims. Rename anything |
+| Can we break the API? | **Yes, but say so.** Pre-1.0 — though `v0.1.0` IS tagged and published on RubyGems, so "nothing released" is false. Breaking it is still the right call; it needs stating as a decision, not assumed from a wrong premise | No deprecated aliases, no shims. Rename anything |
 | Is PlantUML real? | **Yes, next few months** | Item 06 keeps detection inside `Notation::Mermaid` rather than the engine, so PlantUML slots in. Still no plugin system — read `TODO.foundation/12` and `16` before item 06 |
 | What are Scene classes built from? | **lutaml-model**, like the Diagram layer | `attribute` declarations only. **Never add an `xml do` block to a Scene** — Scenes are internal and never serialize to XML; that block is what caused the trouble in the Svg layer |
 | What coordinates does a Scene hold? | **Final canvas ones.** The renderer writes `x` and `y` out verbatim | No origin attribute, no offset applied at render time. The padding three renderers add by hand today (`git_graph.rb:48`, `mindmap.rb:48`, `kanban.rb:45`) moves into the layout, and so does `packet`'s title offset. One coordinate space — see item 04 |
