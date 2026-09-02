@@ -84,11 +84,21 @@ effects". `DO-NOT-BUILD.md:108-115` repeals exactly that ladder.
 Read literally, two engineers closing two items set opposite CI floors and
 neither is wrong on the text.
 
-**`DO-NOT-BUILD.md` wins.** One line floor and one branch floor, raised by hand.
-When closing 06, 07 or 14, treat their floor-raise bullets as SATISFIED without
-touching CI, and record the raise as a manual decision if anyone wants one. The
-rest of those items — the per-type case counts, the 8%/15% bar, the metric
-contract — still stand as written.
+**The SCHEDULE flexes; the BAR does not.** An earlier draft of this section said
+to treat the floor-raise bullets as satisfied without touching CI. That was wrong,
+and `AGENTS.md` is the reason: it sets branch coverage at "97% via staged floors —
+70/80/90/97 tied to plan items; **schedule flexes, bar doesn't**." Waiving the
+raises waives the bar, which is not this plan's to waive.
+
+What `DO-NOT-BUILD.md` actually rejects is the COUPLING — each raise firing
+automatically on another track's completion event. What stands is the ladder
+itself. So: raise the branch floor by hand, in its own PR, when the coverage is
+actually there; do not tie the raise to item 06, 07 or 14 closing. The 97%
+destination is unchanged and still owned. The
+rest of those items — the 8%/15% bar and the metric contract — still stand as
+written. **Their absolute per-type case counts do NOT** — see "Which wins on
+the corpus denominators" above; what survives there is their ordering and
+prioritisation, not their numbers.
 
 ## Moved later
 

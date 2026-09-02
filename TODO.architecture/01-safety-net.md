@@ -97,8 +97,10 @@ of 24, not 23.
      **calling `valid?` returns a boolean.** `respond_to?` alone is not
      enough: six models respond only because they inherit
      `Diagram::Base#valid?`, which raises `NotImplementedError` when
-     invoked. Assert on the returned value, or assert the concrete model
-     owns its own implementation.
+     invoked. **Always invoke it and assert the returned value is `true`
+     or `false`.** Checking that the concrete model *owns* an
+     implementation is not sufficient either — `def valid?; :maybe; end`
+     satisfies ownership and returns a symbol.
    - `diagram_type` returns the symbol the type is registered under
    - the parser returns an instance of the registered `model:`
 
@@ -134,11 +136,27 @@ of 24, not 23.
    every parser. Do not leave the list undiscovered.
 6. Move the `raise TransformError unless diagram.valid?` line out of the
    13 individual transforms and into `Transform::Base`. This is the
-   proof that the contract is now real — but it only reaches the 17
-   transforms that inherit `Transform::Base`. Make the other 7 inherit
-   it first (`git_graph`, `kanban`, `mindmap`, `packet`, `radar`,
-   `treemap`, `xychart`), or the check silently skips exactly the types
-   most likely to fail it.
+   proof that the contract is now real — but **moving it into `Base` is
+   not enough on its own, and this is what makes the step bigger than it
+   looks.**
+
+   Measured 2026-09-02: all 24 concrete transforms own their own
+   `#to_graph`, only 17 inherit `Transform::Base`, and **not one calls
+   `super`**. A guard placed in `Base#to_graph` is therefore never
+   executed by anybody. Moved literally, all 13 existing guards disappear
+   and nothing replaces them.
+
+   Pick one, explicitly, in the PR:
+
+   - **Template method.** `Base#to_graph` becomes the public entry point,
+     runs the guard, then calls a subclass hook (`build_graph`). All 24
+     transforms rename their `to_graph` to that hook. Mechanical, 24 files.
+   - **Engine dispatch.** The Engine runs the guard before invoking the
+     transform, and `Transform::Base` holds nothing.
+
+   Either way, also make the other 7 inherit `Transform::Base`
+   (`git_graph`, `kanban`, `mindmap`, `packet`, `radar`, `treemap`,
+   `xychart`), or the check skips exactly the types most likely to fail it.
 
 ### Do not
 

@@ -362,7 +362,7 @@ During item 04 the engine still resolves classes through
 - [ ] no renderer indexes a Hash (`[:symbol]`, `.dig`) on its input
 - [ ] no renderer performs arithmetic on coordinates or angles
 - [ ] no renderer holds positional state between calls;
-      `grep -rn "@[a-z_]*offset\|@center_\|@radius\|@layout\|padding = " lib/sirena/renderer/`
+      `grep -rn "@[a-z_]*offset\|@center_\|@radius\|@layout\|@current_\|padding = " lib/sirena/renderer/`
       returns nothing. **The offset-only form of this command cannot decide
       the criterion** — it returns no matches while `@center_x`, `@center_y`,
       `@radius` and `@layout` are still held. Widened 2026-09-02.
