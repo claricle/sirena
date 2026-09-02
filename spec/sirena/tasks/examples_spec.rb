@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'fileutils'
 require 'rake'
 require 'tmpdir'
+require 'stringio'
 require 'yaml'
 
 # The generation task deletes files. Nothing else in the suite calls it: the
@@ -27,6 +28,21 @@ RSpec.describe ExampleTasks do
 
   attr_reader :examples_dir
 
+  def silently
+    result = nil
+    capture { result = yield }
+    result
+  end
+
+  def capture
+    original = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original
+  end
+
   def write(relative_path, content = 'x')
     path = File.join(examples_dir, relative_path)
     FileUtils.mkdir_p(File.dirname(path))
@@ -34,12 +50,12 @@ RSpec.describe ExampleTasks do
     path
   end
 
-  describe '.remove_orphan_svgs' do
+  describe '.prune_orphan_svgs' do
     it 'keeps an SVG whose source is still there' do
       write('flowchart/01-basic.mmd')
       svg = write('flowchart/01-basic.svg')
 
-      described_class.remove_orphan_svgs(examples_dir)
+      described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).to exist(svg)
     end
@@ -47,7 +63,7 @@ RSpec.describe ExampleTasks do
     it 'removes an SVG whose source is gone' do
       orphan = write('flowchart/02-deleted.svg')
 
-      described_class.remove_orphan_svgs(examples_dir)
+      described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).not_to exist(orphan)
     end
@@ -57,7 +73,7 @@ RSpec.describe ExampleTasks do
     it 'removes an orphan sitting directly under examples' do
       orphan = write('stray_example.svg')
 
-      described_class.remove_orphan_svgs(examples_dir)
+      described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).not_to exist(orphan)
     end
@@ -65,9 +81,41 @@ RSpec.describe ExampleTasks do
     it 'leaves files that are not SVGs alone' do
       kept = write('flowchart/notes.txt')
 
-      described_class.remove_orphan_svgs(examples_dir)
+      described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).to exist(kept)
+    end
+
+    # The gemspec packages an SVG beside its source and one directly under
+    # examples/; nothing here manages a deeper tree, and a sweep that reached
+    # one deleted a fixture it had no claim on.
+    it 'leaves a nested tree it does not manage alone' do
+      nested = write('deep/nested/fixture.svg')
+
+      described_class.prune_orphan_svgs(examples_dir)
+
+      expect(File).to exist(nested)
+    end
+
+    # A symlink inside examples/ passes a containment test on its directory
+    # and still resolves somewhere else, so deleting through one would reach
+    # a file the task has no claim on.
+    # Asserting the TARGET survives proves nothing: deleting a symlink only
+    # unlinks the link. The property is that the task does not manage a
+    # symlink at all, so the link itself is still there afterwards.
+    it 'refuses an orphan that is a symlink out of the tree' do
+      outside = Dir.mktmpdir('sirena-outside')
+      target = File.join(outside, 'victim.svg')
+      File.write(target, '<svg>outside</svg>')
+      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+      link = File.join(examples_dir, 'flowchart', 'link.svg')
+      File.symlink(target, link)
+
+      described_class.prune_orphan_svgs(examples_dir)
+
+      expect([File.symlink?(link), File.exist?(target)]).to eq([true, true])
+    ensure
+      FileUtils.remove_entry(outside) if outside
     end
   end
 
@@ -76,7 +124,7 @@ RSpec.describe ExampleTasks do
   # whole suite green before these.
   describe '.handle_failed_svgs' do
     def handle(failures)
-      described_class.handle_failed_svgs(failures)
+      described_class.handle_failed_svgs(failures, examples_dir)
     end
 
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
@@ -125,20 +173,111 @@ RSpec.describe ExampleTasks do
     end
   end
 
-  # Both helpers above are worth nothing if the task stops calling them, and
-  # nothing else can see a deleted call — that is exactly why they went
-  # untested. Pinned on the task's source, the way the conformance gate pins
-  # the unrenderable list, because the task's body is a Rake proc that runs
-  # against the real examples/ tree and cannot be invoked from a spec.
-  describe 'the generate task' do
-    let(:task_source) { File.read(TASKS_RAKE_FILE) }
+  # Driven against a throwaway tree rather than pinned on the task's source
+  # text. The two examples here used to assert that the rake file CONTAINED a
+  # call; both stayed green while the task handed nothing to the cleanup.
+  describe '.generate_examples' do
+    let(:source) { "flowchart TD\n  A --> B\n" }
 
-    it 'hands every failed render to the cleanup' do
-      expect(task_source).to include('ExampleTasks.handle_failed_svgs(failed_renders)')
+    it 'writes each SVG beside the source it came from' do
+      write('flowchart/01-basic.mmd', source)
+
+      generated, failed = silently { described_class.generate_examples(examples_dir) }
+
+      expect([generated, failed]).to eq([1, []])
+      expect(File.read(File.join(examples_dir, 'flowchart/01-basic.svg'))).to include('<svg')
     end
 
-    it 'sweeps orphans once generation is done' do
-      expect(task_source).to include('ExampleTasks.remove_orphan_svgs(examples_dir)')
+    # File.write truncates before it writes, so a render that produced nothing
+    # used to leave a zero-byte SVG and still count as generated.
+    it 'keeps the previous SVG intact when a source renders nothing' do
+      write('flowchart/01-basic.mmd', source)
+      svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
+      allow(Sirena).to receive(:render).and_return(nil)
+
+      generated, failed = silently { described_class.generate_examples(examples_dir) }
+
+      expect([generated, failed.map(&:first)]).to eq([0, ['flowchart/01-basic.mmd']])
+      expect(File.read(svg)).to eq('<svg>previous</svg>')
+    end
+
+    # The nil case is caught before any write, so it cannot see the rename.
+    # Only a write that dies PARTWAY can, which is the case that left a
+    # 1,100-byte SVG truncated to 32.
+    it 'keeps the previous SVG whole when the write dies partway' do
+      write('flowchart/01-basic.mmd', source)
+      svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
+      allow(File).to receive(:write).and_wrap_original do |original, path, content|
+        original.call(path, content.to_s[0, 4])
+        raise Errno::EFBIG
+      end
+
+      silently { described_class.generate_examples(examples_dir) }
+
+      expect(File.read(svg)).to eq('<svg>previous</svg>')
+    end
+
+    # A symlinked diagram directory resolves outside examples/, and the loop
+    # would write and delete there while reporting success.
+    it 'refuses a diagram directory that is a symlink out of the tree' do
+      outside = Dir.mktmpdir('sirena-outside')
+      File.write(File.join(outside, 'escaped.mmd'), source)
+      File.symlink(outside, File.join(examples_dir, 'linked'))
+
+      generated, failed = nil
+      output = capture { generated, failed = described_class.generate_examples(examples_dir) }
+
+      # Not merely "nothing was written outside" -- write_svg refuses that on
+      # its own, so this passed with the skip deleted. Walking the directory
+      # at all records a failed render, so an empty failure list is what
+      # proves it was never entered.
+      expect([generated, failed]).to eq([0, []])
+      expect(output).to include('skipped linked')
+      expect(File).not_to exist(File.join(outside, 'escaped.svg'))
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    # Generation must not delete a file it cannot prove it created; Sirena
+    # stamps no provenance, so a sourceless SVG is reported and left alone.
+    # Driving the whole of generation, not the reporter alone: the point is
+    # that a routine regeneration leaves it there, and calling the reporter
+    # directly cannot see a generation that deletes.
+    it 'reports a sourceless SVG without deleting it' do
+      write('flowchart/01-basic.mmd', source)
+      orphan = write('flowchart/hand-drawn.svg', '<svg>by hand</svg>')
+
+      output = capture { described_class.generate_examples(examples_dir) }
+
+      expect(output).to include('hand-drawn.svg')
+      expect(File.read(orphan)).to eq('<svg>by hand</svg>')
+    end
+  end
+
+  # Reached only if diagram_dirs ever stops skipping a symlinked directory.
+  # Kept as a second line of defence because the failure it prevents is
+  # overwriting a file outside the repository, and tested directly because an
+  # unreachable guard is one nobody notices breaking.
+  describe '.write_svg' do
+    it 'refuses to write outside the examples tree' do
+      outside = Dir.mktmpdir('sirena-outside')
+      victim = File.join(outside, 'victim.svg')
+      File.write(victim, '<svg>outside</svg>')
+
+      expect { described_class.write_svg(victim, '<svg>new</svg>', examples_dir) }
+        .to raise_error(/refused to write outside/)
+      expect(File.read(victim)).to eq('<svg>outside</svg>')
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    it 'writes a rendered document to a path inside the tree' do
+      target = File.join(examples_dir, 'flowchart', '01-basic.svg')
+      FileUtils.mkdir_p(File.dirname(target))
+
+      described_class.write_svg(target, '<svg>fresh</svg>', examples_dir)
+
+      expect(File.read(target)).to eq('<svg>fresh</svg>')
     end
   end
 

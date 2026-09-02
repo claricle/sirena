@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'date'
+require 'fileutils'
 
 # Rendering must not depend on the day it ran. Gantt derives its whole date
 # range from the reference date, so an unpinned run produces different output
@@ -106,28 +107,67 @@ module ExampleTasks
     end
   end
 
-  # An SVG whose source is gone still ships: git tracks it and the gemspec
-  # packages it, and the loop below walks sources, so nothing ever visits it.
-  # Delete it so generation leaves only outputs backed by current sources.
-  #
-  # `**` rather than `*/`, because the gemspec packages every SVG under
-  # examples/ at any depth. A sweep one level deep left the ones directly
-  # under examples/ for the conformance gate to fail on and a human to delete
-  # by hand, which is how the two this branch removed were found.
-  #
-  # This treats every sourceless SVG under examples/ as an orphan, so a
-  # hand-authored illustrative SVG there is destroyed by a routine run too.
-  # The conformance gate refuses one anyway — it requires exactly one SVG per
-  # source and none without — so the sweep enforces what the gate demands.
-  def remove_orphan_svgs(examples_dir)
-    orphans = Dir.glob(File.join(examples_dir, '**', '*.svg'))
-      .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
+  # The two depths the gemspec packages and the conformance gate pairs: an
+  # SVG directly under examples/ and one beside its source in a diagram
+  # directory. A sweep one level deep missed the first kind, which is how the
+  # two this branch removed were found; `**` went too far the other way and
+  # reached a nested fixture tree that nothing here manages.
+  MANAGED_SVG_GLOBS = ['*.svg', '*/*.svg'].freeze
 
-    orphans.sort.each do |svg_file|
+  # Where a path is allowed to be, judged on its DIRECTORY rather than on
+  # itself: the file may not exist yet, and a symlinked file has to be judged
+  # by where it sits, not by where it points.
+  def within?(root, path)
+    root = File.realpath(root)
+    directory = File.realpath(File.dirname(path))
+    directory == root || directory.start_with?("#{root}#{File::SEPARATOR}")
+  rescue Errno::ENOENT
+    false
+  end
+
+  # A path this task may write to or delete. Containment is not enough on its
+  # own: a symlink sitting inside examples/ passes the directory test and
+  # still resolves somewhere else, so writing through it would overwrite a
+  # file outside the tree and deleting it would only remove the link.
+  def manageable?(root, path)
+    return false unless within?(root, path)
+
+    !File.symlink?(path)
+  end
+
+  # An SVG whose source is gone still ships: git tracks it and the gemspec
+  # packages it, and the generate loop walks sources, so nothing ever visits
+  # it. It has to go — but nothing here can tell a stale generated SVG from
+  # one a human wrote, because Sirena stamps no provenance into its output.
+  #
+  # So generation REPORTS them and `rake examples:prune` deletes them. A
+  # routine regeneration can no longer destroy a file it did not create; the
+  # conformance gate still fails on an orphan, which is what sends a human to
+  # the prune task deliberately.
+  def orphan_svgs(examples_dir)
+    MANAGED_SVG_GLOBS
+      .flat_map { |glob| Dir.glob(File.join(examples_dir, glob)) }
+      .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
+      .select { |svg| manageable?(examples_dir, svg) }
+      .sort
+  end
+
+  def report_orphan_svgs(examples_dir)
+    orphans = orphan_svgs(examples_dir)
+    return if orphans.empty?
+
+    puts "\n\u26a0\ufe0f  #{orphans.size} SVG(s) have no source and are still packaged:"
+    orphans.each { |svg| puts "    #{svg.sub("#{examples_dir}/", '')}" }
+    puts "   Run 'rake examples:prune' to delete them."
+  end
+
+  def prune_orphan_svgs(examples_dir)
+    orphans = orphan_svgs(examples_dir)
+    orphans.each do |svg_file|
       File.delete(svg_file)
-      relative = svg_file.sub("#{examples_dir}/", '')
-      puts "    removed #{relative}, which no longer has a source"
+      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which no longer has a source"
     end
+    orphans.size
   end
 
   # A source that stops rendering must not keep shipping its old SVG. Leaving
@@ -135,14 +175,15 @@ module ExampleTasks
   # and no longer true. The conformance gate detects a newly failing source
   # either way by matching the unrenderable sources by name; deletion is about
   # not shipping a stale picture, not about detection.
-  def remove_failed_svg(svg_file)
+  def remove_failed_svg(svg_file, examples_dir)
     return unless File.exist?(svg_file)
+    return unless manageable?(examples_dir, svg_file)
 
     File.delete(svg_file)
     puts "    removed #{File.basename(svg_file)}, which no longer renders"
   end
 
-  def handle_failed_svgs(failed_renders)
+  def handle_failed_svgs(failed_renders, examples_dir)
     unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
     unless unexpected_sources.empty?
       puts "\n⚠️  Unexpected render failure: example sources failed to render."
@@ -151,7 +192,84 @@ module ExampleTasks
       exit 1
     end
 
-    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file) }
+    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file, examples_dir) }
+  end
+
+  # A render that produced no document must not destroy the document already
+  # there. `File.write` truncates before it writes, so handing it a nil render
+  # left a zero-byte SVG that the loop then counted as generated, and a write
+  # that died partway left the old file truncated.
+  #
+  # Rendered into a sibling temporary file and renamed into place, so the
+  # visible file only ever changes as a whole, and refused outright unless the
+  # render actually looks like an SVG document.
+  def write_svg(svg_file, svg, examples_dir)
+    raise "refused to write outside examples/: #{svg_file}" unless manageable?(examples_dir, svg_file)
+    raise 'rendered no SVG document' unless svg.is_a?(String) && svg.include?('<svg')
+
+    temporary = File.join(File.dirname(svg_file), ".#{File.basename(svg_file)}.#{Process.pid}.tmp")
+    begin
+      File.write(temporary, svg)
+      File.rename(temporary, svg_file)
+    ensure
+      FileUtils.rm_f(temporary)
+    end
+  end
+
+  # Takes the root as an argument so a test can drive the real task against a
+  # throwaway tree. A destructive task nobody can run in a sandbox is a task
+  # nobody can prove.
+  def generate_examples(examples_dir)
+    total_generated = 0
+    failed_renders = []
+
+    diagram_dirs(examples_dir).each do |dir|
+      diagram_type = File.basename(dir)
+      puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
+      mmd_files = Dir.glob(File.join(dir, '*.mmd')).sort
+
+      if mmd_files.empty?
+        puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
+        next
+      end
+
+      mmd_files.each do |mmd_file|
+        basename = File.basename(mmd_file, '.mmd')
+        svg_file = File.join(dir, "#{basename}.svg")
+
+        begin
+          theme = theme_for(mmd_file)
+          svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
+          write_svg(svg_file, svg, examples_dir)
+          puts "  \u2713 #{basename}.svg"
+          total_generated += 1
+        rescue StandardError => e
+          puts "  \u2717 #{basename}.svg - ERROR: #{e.message}"
+          failed_renders << [mmd_file.delete_prefix("#{examples_dir}/"), svg_file]
+        end
+      end
+    end
+
+    report_orphan_svgs(examples_dir)
+    [total_generated, failed_renders]
+  end
+
+  # A symlinked diagram directory resolves outside examples/, and the loop
+  # would then write and delete there while reporting success. Skipped by
+  # name so the run says which one it refused.
+  def diagram_dirs(examples_dir)
+    Dir.glob(File.join(examples_dir, '*')).sort.select do |entry|
+      next false unless File.directory?(entry)
+
+      name = File.basename(entry)
+      next false if name.start_with?('.')
+
+      if File.symlink?(entry)
+        puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that leaves examples/"
+        next false
+      end
+      true
+    end
   end
 end
 
@@ -170,55 +288,23 @@ namespace :examples do
       exit 1
     end
 
-    # Find all diagram type directories
-    diagram_dirs = Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }
+    total_generated, failed_renders = ExampleTasks.generate_examples(examples_dir)
 
-    total_generated = 0
-    failed_renders = []
-
-    diagram_dirs.sort.each do |dir|
-      diagram_type = File.basename(dir)
-      next if diagram_type == '.git' || diagram_type.start_with?('.')
-
-      puts "\n📊 Generating examples for #{diagram_type}..."
-
-      # Find all .mmd files
-      mmd_files = Dir.glob(File.join(dir, '*.mmd'))
-
-      if mmd_files.empty?
-        puts "  ⚠️  No examples found for #{diagram_type}"
-        next
-      end
-
-      mmd_files.sort.each do |mmd_file|
-        basename = File.basename(mmd_file, '.mmd')
-        svg_file = File.join(dir, "#{basename}.svg")
-
-        begin
-          # Render to SVG
-          theme = ExampleTasks.theme_for(mmd_file)
-          svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
-
-          # Write SVG
-          File.write(svg_file, svg)
-
-          puts "  ✓ #{basename}.svg"
-          total_generated += 1
-        rescue => e
-          puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
-          relative_path = mmd_file.delete_prefix("#{examples_dir}/")
-          failed_renders << [relative_path, svg_file]
-        end
-      end
-    end
-
-    ExampleTasks.handle_failed_svgs(failed_renders)
-    ExampleTasks.remove_orphan_svgs(examples_dir)
+    ExampleTasks.handle_failed_svgs(failed_renders, examples_dir)
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
     puts "   Failed: #{failed_renders.size}"
     puts "=" * 60
+  end
+
+  desc "Delete example SVGs whose source is gone (destructive, deliberate)"
+  task :prune do
+    examples_dir = File.expand_path('../../examples', __dir__)
+
+    puts "Pruning example SVGs with no source..."
+    removed = ExampleTasks.prune_orphan_svgs(examples_dir)
+    puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
   end
 
   desc "Copy generated examples to docs/assets/examples"
