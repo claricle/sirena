@@ -200,8 +200,8 @@ RSpec.describe Sirena::Parser::KanbanParser do
     end
 
     context 'with metadata on a bare top-level node' do
-      # Four corpus cases that differ only in the metadata payload; each
-      # becomes a single column titled by its id.
+      # Five corpus cases over four distinct payloads (036 and 037 share
+      # one); each becomes a single column titled by its id.
       {
         '035' => 'assigned: knsv',
         '036/037' => 'icon: star',
@@ -466,8 +466,14 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
 
       it 'accepts an id that merely contains the word' do
-        diagram = parser.parse("kanban\n  root[Root]\n  kanbanBoard\n  mykanban\n")
-        expect(diagram.columns.map(&:title)).to eq(%w[Root kanbanBoard mykanban])
+        # `kanban_x` is the case that matters: `_` is inside the boundary
+        # class, so it continues the word rather than ending it. mermaid's
+        # own `\b` agrees - it accepts `kanban_x` and rejects `kanban-x`.
+        diagram = parser.parse(
+          "kanban\n  root[Root]\n  kanbanBoard\n  mykanban\n  kanban_x\n"
+        )
+        expect(diagram.columns.map(&:title))
+          .to eq(%w[Root kanbanBoard mykanban kanban_x])
       end
 
       it 'reserves no other keyword' do

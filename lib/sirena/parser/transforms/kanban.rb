@@ -25,8 +25,9 @@ module Sirena
           # Immaterial while only the falsy half is mirrored: every hex zero
           # is digit-only, so no uppercase digit can change a verdict.
           #
-          # YAML_FLOAT's exponent takes no sign in practice: `unquoted_value`
-          # admits `-` but not `+`, so only the `-` alternative is reachable.
+          # YAML_FLOAT's exponent accepts an unsigned or negative form, and
+          # only those two: `unquoted_value` admits `-` but not `+`, so `0e0`
+          # and `0e-0` both reach here and resolve, while `0e+0` cannot.
           #
           # `_` is a digit separator. A run of any length counts and one may
           # follow a radix prefix (`0_0`, `0__0`, `0x_0`), but it may never
@@ -36,6 +37,12 @@ module Sirena
           # `0_` and `0_0_` stay strings, while the float mantissa is
           # `[0-9][0-9_]*` and accepts one, so `0_e0` resolves. The exponent
           # itself takes no separators, so `0e0_0` and `0_e_0` stay strings.
+          #
+          # Re-verify against the copy mermaid BUNDLES - js-yaml 4.1.x, in
+          # `mermaid/dist/chunks/mermaid.esm/chunk-PWCFYZI5.mjs` - not against
+          # whatever `js-yaml` resolves to in node_modules. mermaid-cli carries
+          # 4.3.1 alongside it, which dropped digit separators entirely and
+          # would invert every separator verdict below.
           #
           # `0.0`, `~` and `.nan` are falsy to mermaid but cannot reach here:
           # unquoted_value admits neither `.` nor `~`. Widening that charset

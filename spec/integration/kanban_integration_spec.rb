@@ -41,5 +41,17 @@ RSpec.describe Sirena::Engine do
     it 'draws one card per source line' do
       expect(rendered_text(xml)).to eq(%w[col 3 a a a])
     end
+
+    # Text alone does not prove three cards were DRAWN. Keying the cards by
+    # value anywhere in the layout stacks all three at one y, and the labels
+    # still come back as three strings in document order - so the assertion
+    # above survives a board that visibly shows one card. The y values are
+    # what separates three rows from three copies of one row.
+    it 'gives each card its own row' do
+      ys = REXML::Document.new(xml).get_elements('//text')
+        .select { |e| e.text == 'a' }
+        .map { |e| e.attributes['y'] }
+      expect(ys.uniq.size).to eq(3)
+    end
   end
 end

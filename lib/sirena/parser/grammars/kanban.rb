@@ -39,7 +39,9 @@ module Sirena
         # into one rule as a `.maybe`.
         # Both parse today's inputs identically, so this is about ordering:
         # `bare_item` is the most permissive branch and must stay last, or a
-        # branch added after it would never be reached. Naming the branches
+        # later branch that also starts with an identifier would never be
+        # reached. A branch keyed on something an identifier cannot start -
+        # `:::hot`, say - stays reachable either way. Naming the branches
         # keeps that order explicit rather than implied, which is how the
         # other grammars in this directory are written - see `mindmap.rb`'s
         # `node` rule.
@@ -117,7 +119,7 @@ module Sirena
 
         # Captured as :unquoted, not :string, so the transform can tell an
         # unquoted scalar from a quoted one. What it does with that
-        # distinction is `dropped_by_mermaid?`'s to state, not this rule's.
+        # distinction is `dropped_by_mermaid?`'s responsibility, not this rule's.
         rule(:unquoted_value) do
           match['a-zA-Z0-9_\-'].repeat(1).as(:unquoted)
         end
