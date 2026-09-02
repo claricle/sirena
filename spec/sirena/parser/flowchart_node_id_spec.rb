@@ -261,8 +261,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # guard in this grammar runs — not a leading run of digits, which is
   # that walk measured on one prefix shape. mmdc splits `#x-->B` into
   # `#` and `B`, and `&x---B` `*o-.-B` `éx-->B` `中o===B` `#1x-->B`
-  # `1#x-->B` and `Aéx-->B` the same way; only the `1` prefix stopped,
-  # and the other seven drew a node mermaid never puts on the page.
+  # `1#x-->B` `Aéx-->B` and `Zéo==>B` the same way. Over 228 probed
+  # sources — 19 prefixes, each with `x` and `o`, against all six link
+  # spellings — a digit prefix stopped and nine other restart prefixes
+  # did not, drawing a node mermaid never puts on the page in 108 of
+  # them.
   #
   # Both directions are pinned, because a guard proven on one side is
   # how this shipped: a settled character in front of the marker means
@@ -287,7 +290,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "1.x-->B" => ["1.x", "B"],
       "a1x-->B" => ["B", "a1x"],
       "ax-->B" => ["B", "ax"],
-      "Zx-->B" => %w[B Zx],
+      "Zx-->B" => ["B", "Zx"],
       "A#x-->B" => ["A#x", "B"],
       "A&x-->B" => ["A&x", "B"],
       "A*x-->B" => ["A*x", "B"],
@@ -942,11 +945,17 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     # What closes a subgraph is `end` with the LINE behind it, not the
     # word wherever it stands. Guarding a trailing word on the hunted
-    # word alone refused every header below, and mmdc draws all of them
-    # as ONE cluster carrying the word in its id — `subgraph A end [T]`
-    # is the cluster `A end`, `subgraph A 1end [T]` is `A 1end`, and
-    # `subgraph A B end [T]` is `A B end`. Read from mmdc 11.12.0's own
-    # `class="cluster" id=` attribute, not from whether it drew.
+    # word alone refused every header below, and mmdc draws each as ONE
+    # cluster holding `end` in its name.
+    #
+    # WHERE it holds it depends on the title. With a bracketed one the
+    # whole run is the cluster id: `subgraph A end [T]` is the cluster
+    # `A end` titled `T`, and `A 1end [T]` and `A B end [T]` the same.
+    # Without one the cluster is auto-named `subGraph0` and the run is
+    # its label, so `subgraph A end B` is labelled `A end B`. Read from
+    # mmdc 11.12.0's `class="cluster" id=` AND from the text inside its
+    # `<foreignObject>`, which is where a label lives — not from whether
+    # it drew.
     #
     # The refusals above are the other side of the same line:
     # `subgraph A end` and `subgraph A 1end` end their line and mmdc
