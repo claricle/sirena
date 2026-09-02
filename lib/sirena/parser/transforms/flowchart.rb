@@ -178,17 +178,6 @@ module Sirena
           '[\\/]' => 'trapezoid_alt'
         }.freeze
 
-        # Arrow type mapping
-        ARROW_MAP = {
-          '-->' => 'arrow',
-          '->' => 'arrow',
-          '---' => 'line',
-          '-.>' => 'dotted_arrow',
-          '-.-' => 'dotted_arrow',
-          '==>' => 'thick_arrow',
-          '==' => 'thick_arrow'
-        }.freeze
-
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
         # Measured against mmdc 11.12.0: `<` RL, `>` LR, `^` BT, `v` and
@@ -238,11 +227,6 @@ module Sirena
           }
         end
 
-        # Arrow types
-        rule(arrow: { plain: simple(:a) }) { a.to_s }
-        rule(arrow: { dotted: simple(:a) }) { a.to_s }
-        rule(arrow: { thick: simple(:a) }) { a.to_s }
-
         # Edge label
         rule(label: simple(:l)) { l.to_s.strip }
         rule(label: sequence(:l)) { l.join.strip }
@@ -258,16 +242,28 @@ module Sirena
         end
 
         # Helper method to create edges
-        def self.create_edge(source_id, target_data, arrow_type, label = nil)
+        def self.create_edge(source_id, target_data, link_shape, label = nil)
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
-            e.arrow_type = ARROW_MAP[arrow_type] || 'arrow'
+            e.arrow_type = canonical_arrow_type(link_shape)
             # Convert Parslet::Slice to string before checking empty
             label_str = label.to_s if label
             e.label = label_str if label_str && !label_str.empty?
           end
         end
+
+        # The grammar hands over a one-pair Hash whose KEY is the link
+        # style — `:plain`, `:dotted` or `:thick` — and whose value is the
+        # spelling it matched, so `{ thick: '==>' }` is a thick link that
+        # carries a head. `:plain` takes no prefix, which is what keeps
+        # `-->` named `arrow` and `---` named `line`.
+        def self.canonical_arrow_type(link_shape)
+          style, spelling = link_shape.first
+          head = spelling.to_s.end_with?('>') ? 'arrow' : 'line'
+          style == :plain ? head : "#{style}_#{head}"
+        end
+        private_class_method :canonical_arrow_type
 
         # Process parsed diagram
         def self.apply(tree, diagram = nil)
@@ -341,7 +337,7 @@ module Sirena
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            arrow_type = edge_data[:arrow].to_s
+            link_shape = edge_data[:arrow]
             label = edge_data[:label]
             target_data = edge_data[:target]
 
@@ -352,7 +348,7 @@ module Sirena
             add_or_update_node(diagram, target_node_data)
 
             # Create edge
-            edge = create_edge(source_id, target_node_data, arrow_type, label)
+            edge = create_edge(source_id, target_node_data, link_shape, label)
             diagram.edges << edge
 
             # For chaining, next edge source is current target
