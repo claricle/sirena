@@ -732,10 +732,29 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    %w[A.- y.- X.- O.- x1.- xx.- xo.- #x.-B 1x.-B 11x.-B éx.-B 中x.-B
-       #x.-1 Zéax.-B].each do |id|
+    # A settled character in front of the opening kills it, so these stay
+    # whole ids and mmdc draws each as one node and a link.
+    %w[A.- y.- X.- O.- x1.- xx.- xo.- Zéax.-B].each do |id|
       it "takes #{id} in front of a link" do
         expect(node_ids("graph TD\n#{id} --> Z\n")).to eq([id, "Z"].sort)
+      end
+    end
+
+    # Behind a lexer RESTART the opening is a real link, and mermaid reads
+    # three nodes where a whole id would be one. mmdc draws `#x.-B --> Z`
+    # as `#`, `B` and `Z`, and `#x.-1` `1x.-B` `11x.-B` `éx.-B` and
+    # `中x.-B` the same way. Sirena has no `x.-` link to build, so it
+    # refuses rather than drawing the single node it used to — the same
+    # call `A---xB` makes. Taking them whole was a wrong graph, not an
+    # under-acceptance.
+    # An ordinary letter behind the opening does not put the id back
+    # together either — the opening still stands at the restart, so
+    # `#x.-b` reads as three nodes the same way `#x.-B` does.
+    context "with a restart in front of the opening" do
+      %w[#x.-B #x.-b 1x.-B 11x.-B éx.-B 中x.-B #x.-1].each do |id|
+        it "refuses #{id}, where mmdc reads three nodes" do
+          expect(parses?("graph TD\n#{id} --> Z\n")).to be(false)
+        end
       end
     end
 
@@ -777,28 +796,29 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       it "refuses x-.-1, whose opening leads with a dash" do
         expect(parses?("graph TD\nx-.-1 --- Z\n")).to be(false)
       end
-
-      # The marker is only a marker. An ordinary letter behind the opening
-      # still continues the id, and mmdc draws both of these.
-      %w[#x.-B #x.-b].each do |id|
-        it "still takes #{id} whole" do
-          expect(node_ids("graph TD\n#{id} --- Z\n")).to eq([id, "Z"].sort)
-        end
-      end
     end
 
     it "refuses #x.-1.-->B, whose dotted link sits behind the opening" do
       expect(parses?("graph TD\n#x.-1.-->B\n")).to be(false)
     end
 
-    # Two ways the word behind an opening stays plain text, and mmdc
-    # draws one node for both. On the first six a settled character in
-    # front killed the opening, so there is no fresh token at all. On the
-    # rest the opening is real but nothing reserved starts the token.
-    %w[Zéax.-end Zaax.-end Zéabx.-end #Zx.-end #ax.-end Zx.-end
-       #x.-endx #x.-aend #x.-aendé #x.-endxé #x.-Bé].each do |id|
+    # A settled character in front kills the opening, so there is no
+    # fresh token at all and mmdc draws one node for each of these.
+    %w[Zéax.-end Zaax.-end Zéabx.-end #Zx.-end #ax.-end Zx.-end]
+      .each do |id|
       it "takes #{id} whole" do
         expect(node_ids("graph TD\n#{id} --- Z\n")).to eq([id, "Z"].sort)
+      end
+    end
+
+    # Behind a restart the opening is real whatever follows it, reserved
+    # word or not: mmdc reads `#x.-endx --- Z` as `#`, `endx` and `Z`.
+    # These were the last of the wrong graphs the dot-first opening left.
+    context "with a plain word behind a restarted opening" do
+      %w[#x.-endx #x.-aend #x.-aendé #x.-endxé #x.-Bé].each do |id|
+        it "refuses #{id}, where mmdc reads three nodes" do
+          expect(parses?("graph TD\n#{id} --- Z\n")).to be(false)
+        end
       end
     end
   end
@@ -974,11 +994,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # inside its `<foreignObject>` — the oracle's reason for the verdict
     # below, not something these examples measure.
     #
-    # What they CAN measure is whether the subgraph is still open, and
-    # the example beneath the table does it: drop the closing `end` and
-    # the same header must fail. That separates "the name swallowed the
-    # word" from "the word closed the subgraph and the rest still
-    # parsed", which a bare `parses? == true` cannot tell apart.
+    # What they CAN measure is what the header READ, and the example
+    # beneath the table does it by asking the parse tree for the title.
+    # That separates "the name swallowed the word" from "the word closed
+    # the subgraph and the rest still parsed", which a bare
+    # `parses? == true` cannot tell apart.
     #
     # The refusals above are the other side of the same line:
     # `subgraph A end` and `subgraph A 1end` end their line and mmdc
@@ -989,6 +1009,25 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         source = "flowchart TD\nsubgraph A #{tail}\nX-->Y\nend\n"
 
         expect(subgraph_name_parses?(source)).to be(true)
+      end
+    end
+
+    # A name may hold more than one `end`, and only the LAST one can end
+    # the line. Testing the first candidate and stopping there took
+    # `subgraph A endéend`, which mmdc refuses: `é` restarts the lexer,
+    # so the second `end` is line-final and closes the subgraph, leaving
+    # the body's own `end` with nothing to close. Put a title behind it
+    # and no `end` ends the line, so mmdc draws it as the cluster
+    # `A endéend` — the control that keeps the guard from swallowing the
+    # whole shape.
+    {
+      "endéend" => false, "end end" => false, "endéend [T]" => true,
+      "end end [T]" => true, "endé" => true
+    }.each do |tail, accepted|
+      it "#{accepted ? 'takes' : 'refuses'} A #{tail}, on its LAST end" do
+        source = "flowchart TD\nsubgraph A #{tail}\nX-->Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(accepted)
       end
     end
 

@@ -335,8 +335,6 @@ module Sirena
             (space.repeat(1) >> subgraph_title.as(:subgraph_title)).maybe
         end
 
-        rule(:subgraph_end_id) { hunt(subgraph_end_word) }
-
         rule(:subgraph_end_word) { str('end') >> word_boundary }
 
         # Style: style nodeId fill:#f9f
@@ -989,8 +987,16 @@ module Sirena
         # against mermaid's, so a no-break space goes with the keyword the
         # way a plain one does: `subgraph end` no-break-space is refused
         # too, while `subgraph A` no-break-space draws.
+        # The whole condition goes INSIDE the walk. Hunting the word
+        # alone and testing the line end behind it committed to the FIRST
+        # `end` and PEG never resumed at a later one, so
+        # `subgraph A endéend` was taken as a name when mmdc refuses it —
+        # `é` restarts the lexer and the second `end` is line-final, which
+        # closes the subgraph and leaves the body's own `end` over.
+        # `subgraph A endéend [T]` still draws, as mmdc draws it: with a
+        # title behind it no `end` ends the line.
         rule(:bare_subgraph_end) do
-          subgraph_end_id >> line_space.repeat >> (newline | eof)
+          hunt(subgraph_end_word >> line_space.repeat >> (newline | eof))
         end
 
         # The `end` guard belongs here because every subgraph word funnels
@@ -1105,8 +1111,23 @@ module Sirena
         # Mermaid spells the head on both ends of all three links —
         # `[xo<]?--+[-xo>]`, `[xo<]?==+[=xo>]`, `[xo<]?-?\.+-[xo>]?` — so
         # the marker leads a dash, an equals or a dotted run alike.
+        #
+        # The dotted one puts its dash BEFORE the dots and makes it
+        # optional, so it opens as `x-.` and as `x.-` both. Spelling only
+        # the `-.` half read `#x.-B --- Z` as one node `#x.-B`, where mmdc
+        # draws three — `#`, then a crossed dotted link to `B`, then
+        # `B --- Z`. `arrowhead_open` already spells the whole opening,
+        # markers and leading dash included, so it is reused rather than
+        # respelt; the other two links have no such second form.
+        #
+        # Only the restart cases moved: `#x.-B` `1x.-B` `11x.-B` `éx.-B`
+        # `中x.-B` and `#x.-1` were each a wrong graph and are now
+        # refused, while `Zéax.-B` `A.-` `y.-` `X.-` `O.-` `x1.-` `xx.-`
+        # and `xo.-` keep their whole id — a settled character in front
+        # kills the opening, which is what mmdc does too.
         rule(:xo_link_open) do
-          match['xo'] >> (str('--') | str('==') | str('-.'))
+          arrowhead_open |
+            (match['xo'] >> (str('--') | str('==') | str('-.')))
         end
 
         # A hyphen joins the id unless another dash or a dot follows, which
