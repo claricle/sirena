@@ -445,6 +445,18 @@ RSpec.describe ExampleTasks do
       File.chmod(0o755, locked) if locked
     end
 
+    # One table rather than one example per string: the property is where the
+    # root element sits, and the shapes differ only in how that root is
+    # spelled.
+    it 'accepts every spelling of an SVG root and nothing else' do
+      accepted = ['<svg/>', '<?xml version="1.0"?><svg/>', '<svg xmlns="x"/>',
+                  "<svg\n width=\"1\">x</svg>", '<!-- note --><svg/>']
+      rejected = ['<html><svg/></html>', '', 'Error 500', '<svgx/>', nil]
+
+      expect(accepted.map { |doc| described_class.svg_document?(doc) }).to all(be(true))
+      expect(rejected.map { |doc| described_class.svg_document?(doc) }).to all(be(false))
+    end
+
     it 'refuses a render that only contains an SVG element' do
       target = File.join(examples_dir, 'flowchart', 'a.svg')
       FileUtils.mkdir_p(File.dirname(target))

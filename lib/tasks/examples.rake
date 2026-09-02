@@ -252,10 +252,11 @@ module ExampleTasks
   # render actually looks like an SVG document.
   # An SVG document, not a string that merely mentions one: an error page
   # carrying an inline <svg> passed a substring check and replaced a good
-  # picture with itself.
+  # picture with itself. The root may be self-closing, so `/` ends the name
+  # as legitimately as whitespace or `>`.
   def svg_document?(svg)
     svg.is_a?(String) &&
-      svg.match?(/\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg[\s>]/m)
+      svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg[\s/>]}m)
   end
 
   def write_svg(svg_file, svg, examples_dir)
