@@ -183,4 +183,37 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to raise_error(Sirena::Parser::ParseError)
     end
   end
+
+  # mmdc reads a lone `x` or `o` sitting flush against a link body as the
+  # link's START marker, so the line has nothing on its left and mmdc
+  # refuses it. The marker has to be exactly one character and flush:
+  # `xx===B`, `x1===B` and `x === B` are all ordinary node names and mmdc
+  # draws every one. Each row below was measured against mermaid 11.12.0.
+  #
+  # Base accepted `x-->B`, `o-->B` and `x---B`, so three of these were
+  # already wrong before this branch; the rest arrived with the widened
+  # token set and would have been new.
+  describe "a lone x or o flush against a link" do
+    def parse(source)
+      described_class.new.parse("flowchart TD\n  #{source}\n")
+    end
+
+    %w[x===B o===B x==>B o==>B x-->B o-->B x---B x--xB].each do |source|
+      it "refuses #{source} the way mermaid does" do
+        expect { parse(source) }.to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # The guard is one character wide and wants no gap, so everything
+    # here is still a node name. The ids are asserted, not just the
+    # count: reading `xx===B` as a node called `x` would satisfy a bare
+    # "it parses" while drawing a link mermaid does not.
+    { "xx===B" => %w[B xx], "x1===B" => %w[B x1],
+      "ox===B" => %w[B ox], "x === B" => %w[B x] }
+      .each do |source, ids|
+      it "still reads #{source} as an ordinary node" do
+        expect(parse(source).nodes.map(&:id).sort).to eq(ids)
+      end
+    end
+  end
 end

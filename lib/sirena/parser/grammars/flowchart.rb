@@ -465,9 +465,19 @@ module Sirena
 
         rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
 
+        # One `x` or `o` and then a link body, with nothing between them.
+        rule(:flush_link_marker) { match['xo'] >> link_body }
+
         # Node with optional shape and edges
+        #
+        # A lone `x` or `o` sitting flush against a link body is mermaid's
+        # link-START marker, not a node called `x`. mmdc reads `x===B` as
+        # a link with nothing on its left and refuses it, while it draws
+        # `xx===B` and `x === B` — the marker has to be one character and
+        # flush. `flush_link_marker` refuses exactly that shape.
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
+            flush_link_marker.absent? >>
             node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
             loose_statement_end
