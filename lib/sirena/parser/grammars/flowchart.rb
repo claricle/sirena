@@ -288,8 +288,9 @@ module Sirena
         #
         # Every word carries the same guards as the first one. Reaching for
         # a bare `id_run` here let ten word refusals through, plus the
-        # bracketed-title case, because the guards live in `subgraph_id`
-        # and not in `id_run`: mmdc refuses
+        # bracketed-title case, because the guards live in
+        # `subgraph_name_word` — the rule every subgraph word funnels
+        # through — and not in `id_run`: mmdc refuses
         # `subgraph A interpolate` `subgraph A href` `subgraph A 1default`
         # `subgraph A .-` and `subgraph A x.-b`.
         #
@@ -555,10 +556,12 @@ module Sirena
         #
         # The same words that end an id end a statement, so this asks
         # `node_keyword` rather than keeping a second list. It used to hold
-        # its own, and the two had already drifted apart by
-        # `swimlane-beta`. Collapsing them changed nothing observable —
-        # measured over 3680 cases, byte for byte — because the two refuse
-        # the same words, so it makes no difference which runs first. This
+        # its own, and the two had drifted: this one was missing
+        # `swimlane-beta`. Collapsing them is what removed the drift, and
+        # it changed nothing observable — measured over 3680 cases, byte
+        # for byte — because no source reaches the one word they disagreed
+        # about. mmdc refuses `swimlane-beta-->Z` and so does every path
+        # here, with the word on either list. This
         # guard is the one that runs first: every call site spells
         # `reserved_keyword.absent? >> node_id`. The value of the collapse
         # is that there is now one list to keep right.
@@ -639,8 +642,7 @@ module Sirena
         # against nine shape openings and both ends of a link, each with
         # ten gaps: none, one and two spaces, one and two tabs, the two
         # space/tab mixtures, a vertical tab, a form feed and a carriage
-        # return. The 66 mmdc
-        # draws are exactly the 66 with no gap. `A\n[B]` and `A %% c\n[B]`
+        # return. The 66 that mmdc draws are exactly the 66 with no gap. `A\n[B]` and `A %% c\n[B]`
         # are refused too, and widening node ids brought `1 [B]` `12 [B]`
         # `é [B]` and `a.b [B]` into the same arm.
         rule(:node_with_shape) do
@@ -1111,8 +1113,14 @@ module Sirena
         # is where a link starts. Excluding `x`, `o` and `>` as well
         # rejected `a-o-->B` and `a-x-->B`, which mermaid renders. `A->B`
         # fails because the hyphen joins the id here and `>B` cannot
-        # continue a statement — not because `->` is unknown; it is
-        # `plain_arrow` that refuses it, for every spacing.
+        # continue a statement — not because `->` is unknown.
+        #
+        # Which rule does the refusing depends on the spacing, and the two
+        # halves cover all four forms between them. Measured by widening
+        # `plain_arrow` to take a bare `->`: `A -> B` and `A ->B` then
+        # draw, so those two are `plain_arrow`'s refusals. `A->B` and
+        # `A-> B` stay refused even then, because the hyphen has already
+        # joined the id before any link rule is reached.
         rule(:id_hyphen) { str('-') >> match['-.'].absent? }
 
         rule(:reserved_word) do
