@@ -49,8 +49,6 @@
 
 require 'digest'
 require 'yaml'
-require 'tmpdir'
-require 'fileutils'
 require_relative 'mmdc_oracle'
 
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
@@ -281,7 +279,7 @@ def verify_invalid!(rows, entries)
     end
   end
 
-  warn "  verified #{checked} invalid case(s) against local mmdc; " \
+  warn "  checked #{checked} invalid case(s) against local mmdc; " \
        "#{promoted} promoted to valid"
 end
 
