@@ -271,6 +271,12 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # non-zero divides by nothing twice, and the two infinities collapse
     # back to a finite 0 — so an off-axis node would pass this with the
     # guards taken out again.
+    #
+    # Three of the four discriminate. `circle` is the control: its scale
+    # is [half_w, half_h].min / span, which is a finite 0.0 at zero size
+    # and never calls `axis_ratio`, so it stays green with the guard
+    # removed. It is here to say a zero-size circle still draws a head,
+    # not to hold the guard up.
     %w[rhombus hexagon circle stadium].each do |shape|
       it "draws no NaN aiming square at a #{shape} of no size" do
         graph = {
@@ -309,8 +315,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       end
     end
 
-    # An arrow is the head that reads the direction, so it is the one that
-    # reaches the zero-span guard. A circle never calls it.
+    # An arrow is the head that reads the direction. A circle and a cross
+    # reach the same zero-span guard through `backed_off`, so this pins
+    # the arrow because it is the one drawn without a back-off first.
     it "draws an arrow head for nodes sitting on top of each other" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
@@ -593,6 +600,29 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
       expect([start_point.last, end_point.last])
         .to all(be_within(0.05).of(node_bottom(xml)))
+    end
+
+    # A loop thrown sideways spreads along y, so the spread has to be
+    # measured from the height. Measuring it from the width instead put
+    # the corners outside a wide node's height band, and the loop left
+    # through the top face and came back through the bottom one.
+    #
+    # The all-directions example below does not catch that: it asks only
+    # that the corners sit past the node edge along the flow, which stays
+    # true while the face moves. This asks where the loop actually meets
+    # the node. A 16-character label is wide enough to show it; at 12 the
+    # old code still landed on the right face.
+    #
+    # The window is 0.1 rather than 0.05 because a coordinate written to
+    # one decimal already carries 0.05 of rounding, so 0.05 would sit
+    # exactly on the quantisation floor with no headroom.
+    it "keeps a sideways loop on the flow-side face of a wide node" do
+      xml = Sirena.render("flowchart LR\n  A[#{'a' * 16}] --> A\n")
+      x, _y, width, = node_rect(xml)
+      start_point, end_point = path_points(xml).values_at(0, -1)
+
+      expect([start_point.first, end_point.first])
+        .to all(be_within(0.1).of(x + width))
     end
 
     # `sections` with `bendPoints` is the shape a laid-out graph would

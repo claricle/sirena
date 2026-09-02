@@ -96,8 +96,11 @@ module Sirena
 
       # A self loop is a two-corner polyline. It goes out past the node
       # edge by SELF_LOOP_DEPTH of the node's shorter side, capped at
-      # SELF_LOOP_MAX_DEPTH, and runs SELF_LOOP_HALF_SPAN of its width
-      # either side of centre.
+      # SELF_LOOP_MAX_DEPTH, and spreads SELF_LOOP_HALF_SPAN either side
+      # of centre. The spread runs ACROSS the throw, so it is measured
+      # across it too: a vertical loop spreads along x and takes its span
+      # from the width, a horizontal one spreads along y and takes it
+      # from the height.
       #
       # Only the depth has the oracle behind it, and it is measured across
       # sizes rather than read off one node. mmdc loops 24.3 past a 69.4x54
@@ -119,8 +122,9 @@ module Sirena
 
       # Which way a self loop is thrown: the way the diagram flows. mmdc
       # loops below for TD, right for LR, left for RL and above for BT.
-      SELF_LOOP_SIDES = { 'DOWN' => [0, 1], 'UP' => [0, -1],
-                          'RIGHT' => [1, 0], 'LEFT' => [-1, 0] }.freeze
+      SELF_LOOP_SIDES = { 'DOWN' => [0, 1].freeze, 'UP' => [0, -1].freeze,
+                          'RIGHT' => [1, 0].freeze,
+                          'LEFT' => [-1, 0].freeze }.freeze
       private_constant :SELF_LOOP_SIDES
 
       # Renders a laid-out graph to SVG.
@@ -400,10 +404,14 @@ module Sirena
         cx, cy = node_centre(node)
         width = node[:width] || 100
         height = node[:height] || 50
-        half_span =
-          (width * SELF_LOOP_HALF_SPAN).clamp(SELF_LOOP_HALF_SPAN_LIMITS)
-        depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
         out_x, out_y = side
+        # The span runs across the throw, so it is measured across it too:
+        # a downward loop spreads along x and takes its span from the width,
+        # a rightward one spreads along y and takes it from the height.
+        span_side = out_y.zero? ? height : width
+        half_span =
+          (span_side * SELF_LOOP_HALF_SPAN).clamp(SELF_LOOP_HALF_SPAN_LIMITS)
+        depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
 
         edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)
         far_x = edge_x + (out_x * depth)
@@ -426,8 +434,9 @@ module Sirena
       end
 
       # A thick link is drawn heavier and a dotted one dashed. Every type
-      # used to reach the same solid stroke, so `===`, `-.-` and `---`
-      # came out as the same picture.
+      # that parsed used to reach the same solid stroke, so `-.-` and
+      # `---` came out as the same picture. `===` drew nothing at all —
+      # it was rejected before it reached the renderer.
       #
       # A theme already has a word for both of these — every built-in one
       # names `stroke_width_thick` and `dash_pattern_dotted` — so they are
@@ -500,9 +509,10 @@ module Sirena
       end
 
       # A head drawn at the node's centre is under the node, and the nodes
-      # are painted afterwards — so every head was invisible and `---`,
-      # `-->`, `--x` and `--o` rasterised the same. The tip belongs on the
-      # node's edge, where the line meets it.
+      # are painted afterwards — so every head was invisible and `---` and
+      # `-->` rasterised the same. `--x` and `--o` were rejected outright
+      # and drew nothing. The tip belongs on the node's edge, where the
+      # line meets it.
       def node_boundary(node, from_x, from_y)
         cx, cy = node_centre(node)
         dx = from_x - cx
