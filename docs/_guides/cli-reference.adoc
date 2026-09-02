@@ -126,8 +126,9 @@ sirena batch [OPTIONS]
   Enable verbose output. It defaults to false.
 
 When the input is a directory, Sirena recursively matches `**/*.mmd` and writes
-an `.svg` file under the output directory with the same relative path. Hidden
-files and files in hidden directories are excluded from this match.
+an `.svg` file under the output directory with the same relative path. The glob
+excludes dotfiles and does not descend into hidden subdirectories of the
+selected input directory.
 
 For example:
 
