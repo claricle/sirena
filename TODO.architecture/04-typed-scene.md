@@ -362,8 +362,11 @@ During item 04 the engine still resolves classes through
 - [ ] no renderer indexes a Hash (`[:symbol]`, `.dig`) on its input
 - [ ] no renderer performs arithmetic on coordinates or angles
 - [ ] no renderer holds positional state between calls;
-      `grep -rn "@[a-z_]*offset\|padding = " lib/sirena/renderer/`
-      returns nothing. `@[a-z_]*offset` is the half that catches
+      `grep -rn "@[a-z_]*offset\|@center_\|@radius\|@layout\|padding = " lib/sirena/renderer/`
+      returns nothing. **The offset-only form of this command cannot decide
+      the criterion** — it returns no matches while `@center_x`, `@center_y`,
+      `@radius` and `@layout` are still held. Widened 2026-09-02.
+      `@[a-z_]*offset` is the half that catches
       `packet`'s `@title_offset`; a plain `@offset_` grep misses it
 - [ ] no Scene class declares an `origin`, and no renderer emits an SVG
       `translate`. The grep above passes if you merely delete the

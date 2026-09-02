@@ -101,8 +101,14 @@ A renderer that adds a constant to a coordinate is a bug, not a style.
   which is where a renderer already keeps it (`renderer/base.rb:42`).
 
 Today `Engine#apply_fallback_layout` (`engine.rb:218`) mutates the graph
-in place (`node.x = 50 + (col * 200)`). After item 03 that code is
-`Layout::Grid`, and it returns rather than mutates.
+in place (`node.x = 50 + (col * 200)`) and returns the identical object it
+was given. After item 03 that code is `Layout::Grid`.
+
+**But item 03 declares itself a pure rename with zero logic change, so it
+cannot also make Grid non-mutating** — those are two different items. The
+mutation-to-replacement rewrite is a BEHAVIOUR change and belongs to a
+behaviour-gated item (04, where Scene becomes the return value), not to
+the rename. Item 03 moves this code and leaves its semantics alone.
 
 This matters more than it looks: rendering the same diagram twice under
 two themes must give two independent results, and item 08's comparator

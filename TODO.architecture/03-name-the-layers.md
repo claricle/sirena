@@ -196,8 +196,17 @@ one branch floor. Land it before the first behaviour PR, exactly as
 `TODO.foundation/03` says. What this plan drops is only the
 70 -> 80 -> 90 -> 97 timeline tied to other tracks' completion events.
 
-**Items 02, 03 and 06 change no behaviour**, so they are not blocked
-by it.
+**Items 02, 03 and 06 DO change observable behaviour** and are blocked by
+it too. An earlier draft exempted them; that was wrong on all three,
+measured 2026-09-02:
+
+- **Item 02** removes the currently callable `Svg::Text.from_xml` path.
+- **Item 03** changes the registry/detector/model value `:xychart` to
+  `:xy_chart`, which is observable in `sirena types` output.
+- **Item 06** is the engine/registry/CLI work that `TODO.foundation/03:16-20`
+  names explicitly.
+
+None of the eight items is exempt from the retained `03a` gate.
 
 **Items 01, 04, 05 and 08 are blocked.** An earlier draft exempted all
 of 01-06 and that was wrong twice over:

@@ -37,10 +37,18 @@ alone, or move `normalize_line_ends` into `Parser::Base` for every type first.
 
 Two inconsistencies come with them:
 
-- **Two calling conventions for the same collaborator.** 21 parsers call
-  `Builders::X.new.apply(tree)`; three call `Builders::X.apply(tree)` as
-  a class method (`block`, `flowchart`, `requirement`). Both work; neither
-  is documented; copying the wrong one gets you a `NoMethodError`.
+- **Two calling conventions for the same collaborator.** Measured
+  2026-09-02: **20 parsers** call `Builders::X.new.apply(tree)`, **three**
+  define `self.apply` and are called as class methods (`block`,
+  `flowchart`, `requirement`), and **`user_journey` has no builder at all**.
+
+  **The failure mode is worse than a `NoMethodError`, which is why this is
+  not a call-site rename.** Calling `.new.apply` on one of the three
+  class-method builders does not raise — it returns the parse-tree Array
+  or Hash instead of a `BlockDiagram`, `Flowchart` or
+  `RequirementDiagram`. A silent wrong-type return travels much further
+  than an exception. Their implementations must be migrated to instance
+  methods, not merely their call sites rewritten.
 - **Five parse-error formats across 21 raise sites.** Counted
   2026-08-25:
 
@@ -139,7 +147,22 @@ hardcoded fallback is what renders.
 
 ### Steps
 
-1. Add `theme.palette(index)` — one categorical palette, on the theme.
+1. Add type-aware categorical palettes on the theme.
+
+   **Not one shared palette.** The five constants hold FOUR DISTINCT
+   palettes, and at index 0 alone they disagree: `pie`, `sankey` and
+   `timeline` start at `#4472C4`, while `radar` and `xy_chart` start at
+   `#2563eb`. Measured 2026-09-02.
+
+   So a single `theme.palette(index)` cannot satisfy both this step and
+   the "Do not pick nicer colours" rule below — one of them has to give.
+   Pick explicitly, in the PR, and say which:
+
+   - **`theme.palette(name, index)`**, keyed by palette name, preserving
+     all four sets. Colours unchanged, schema slightly larger.
+   - **One palette and an accepted, visible colour change** for whichever
+     types do not match it. That is a product decision, not a refactor,
+     and it needs sign-off before the PR opens.
 2. Delete all five private palette constants — `DEFAULT_COLORS`,
    `FLOW_COLORS` and `SECTION_COLORS`.
 3. Replace `theme_color(:x) || '#hex'` with `theme_color(:x)`, and make
