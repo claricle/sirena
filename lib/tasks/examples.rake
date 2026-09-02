@@ -115,8 +115,6 @@ module ExampleTasks
   # @return [Array<String>] the entries of dir, as full paths, or [] if unreadable
   def children(dir)
     Dir.children(dir).sort.map { |entry| File.join(dir, entry) }
-  rescue SystemCallError
-    []
   end
 
   # A real directory, not a link to one. A link is skipped rather than
@@ -130,13 +128,29 @@ module ExampleTasks
     path.end_with?('.svg') && File.file?(path) && !File.symlink?(path)
   end
 
+  # One predicate for both callers. Generation used File.file? and the orphan
+  # pairing used File.exist?, so a .mmd link to a directory was invisible to
+  # one and a source to the other: the SVG beside it could never be pruned.
+  def plain_mmd?(path)
+    path.end_with?('.mmd') && File.file?(path) && !File.symlink?(path)
+  end
+
+  # The examples folder itself must be a real directory. A link there is
+  # resolved by realpath and then trusted, so every containment check below
+  # would be measuring against somewhere else entirely.
+  def verified_root(examples_dir)
+    raise "examples root must not be a link: #{examples_dir}" if File.symlink?(examples_dir)
+
+    examples_dir
+  end
+
   # The two depths the gemspec packages and the conformance gate pairs: an
   # SVG directly under examples/ and one beside its source in a diagram
   # directory. A sweep one level deep missed the first kind, which is how the
   # two this branch removed were found; `**` went too far the other way and
   # reached a nested fixture tree that nothing here manages.
   def managed_svgs(examples_dir)
-    entries = children(examples_dir)
+    entries = children(verified_root(examples_dir))
     top = entries.select { |path| plain_svg?(path) }
     nested = entries.select { |path| plain_directory?(path) }
       .flat_map { |dir| children(dir).select { |path| plain_svg?(path) } }
@@ -159,9 +173,14 @@ module ExampleTasks
   # still resolves somewhere else, so writing through it would overwrite a
   # file outside the tree and deleting it would only remove the link.
   def manageable?(root, path)
+    return false if File.symlink?(root)
     return false unless within?(root, path)
+    return false if File.symlink?(path)
 
-    !File.symlink?(path)
+    # An existing entry that is not a plain file — a FIFO, a socket, a
+    # directory — is not something this task created, and File.rename would
+    # replace it just the same.
+    !File.exist?(path) || File.lstat(path).file?
   end
 
   # An SVG whose source is gone still ships: git tracks it and the gemspec
@@ -175,7 +194,7 @@ module ExampleTasks
   # the prune task deliberately.
   def orphan_svgs(examples_dir)
     managed_svgs(examples_dir)
-      .reject { |svg| File.exist?(svg.sub(/\.svg\z/, '.mmd')) }
+      .reject { |svg| plain_mmd?(svg.sub(/\.svg\z/, '.mmd')) }
       .select { |svg| manageable?(examples_dir, svg) }
       .sort
   end
@@ -231,12 +250,22 @@ module ExampleTasks
   # Rendered into a sibling temporary file and renamed into place, so the
   # visible file only ever changes as a whole, and refused outright unless the
   # render actually looks like an SVG document.
+  # An SVG document, not a string that merely mentions one: an error page
+  # carrying an inline <svg> passed a substring check and replaced a good
+  # picture with itself.
+  def svg_document?(svg)
+    svg.is_a?(String) &&
+      svg.match?(/\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg[\s>]/m)
+  end
+
   def write_svg(svg_file, svg, examples_dir)
     raise "refused to write outside examples/: #{svg_file}" unless manageable?(examples_dir, svg_file)
-    raise 'rendered no SVG document' unless svg.is_a?(String) && svg.include?('<svg')
+    raise 'rendered no SVG document' unless svg_document?(svg)
 
+    # Independent of the target's basename: embedding a legal 255-byte name
+    # produced an illegal temporary one and ENAMETOOLONG.
     temporary = File.join(File.dirname(svg_file),
-                          ".#{File.basename(svg_file)}.#{Process.pid}.#{SecureRandom.hex(8)}.tmp")
+                          ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
     created = false
     begin
       # CREAT|EXCL rather than File.write: the temporary path is predictable,
@@ -268,7 +297,7 @@ module ExampleTasks
     diagram_dirs(examples_dir).each do |dir|
       diagram_type = File.basename(dir)
       puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
-      mmd_files = children(dir).select { |path| path.end_with?('.mmd') && File.file?(path) }
+      mmd_files = children(dir).select { |path| plain_mmd?(path) }
 
       if mmd_files.empty?
         puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
@@ -302,7 +331,7 @@ module ExampleTasks
   # would then write and delete there while reporting success. Skipped by
   # name so the run says which one it refused.
   def diagram_dirs(examples_dir)
-    children(examples_dir).select do |entry|
+    children(verified_root(examples_dir)).select do |entry|
       name = File.basename(entry)
       next false if name.start_with?('.')
       next false unless File.directory?(entry)

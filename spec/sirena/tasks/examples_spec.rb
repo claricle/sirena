@@ -84,8 +84,7 @@ RSpec.describe ExampleTasks do
     it 'removes an SVG whose source is gone' do
       orphan = write('flowchart/02-deleted.svg')
 
-      described_class.prune_orphan_svgs(examples_dir)
-
+      expect(described_class.prune_orphan_svgs(examples_dir)).to eq(1)
       expect(File).not_to exist(orphan)
     end
 
@@ -302,7 +301,7 @@ RSpec.describe ExampleTasks do
       # The name carries a random component, so it is pinned here rather than
       # guessed; the guard has to hold even when the name IS known.
       allow(SecureRandom).to receive(:hex).and_return('feedface')
-      planted = File.join(examples_dir, 'flowchart', ".a.svg.#{Process.pid}.feedface.tmp")
+      planted = File.join(examples_dir, 'flowchart', ".sirena-#{Process.pid}-feedface.tmp")
       File.symlink(victim, planted)
 
       expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
@@ -407,6 +406,132 @@ RSpec.describe ExampleTasks do
       described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).to exist(fixture)
+    end
+  end
+
+  # Every one of these was found by a reviewer building the tree by hand.
+  # None is exotic: a folder can be a link, a folder can be unreadable, a
+  # render can fail while still containing the word svg, and a name can be
+  # long.
+  describe 'refusing what it did not create' do
+    let(:source) { "flowchart TD\n  A --> B\n" }
+
+    it 'refuses to work under an examples root that is a link' do
+      real = Dir.mktmpdir('sirena-real')
+      FileUtils.mkdir_p(File.join(real, 'flowchart'))
+      handmade = File.join(real, 'flowchart', 'handmade.svg')
+      File.write(handmade, 'HANDMADE')
+      linked_root = File.join(examples_dir, 'linked-root')
+      File.symlink(real, linked_root)
+
+      expect { described_class.prune_orphan_svgs(linked_root) }
+        .to raise_error(/examples root must not be a link/)
+      expect(File.read(handmade)).to eq('HANDMADE')
+    ensure
+      FileUtils.remove_entry(real) if real
+    end
+
+    # Swallowing the error made an unreadable directory look like an empty
+    # one, so generation reported success having rewritten nothing.
+    it 'fails loudly when a diagram directory cannot be read' do
+      locked = File.join(examples_dir, 'locked')
+      FileUtils.mkdir_p(locked)
+      File.write(File.join(locked, 'a.mmd'), source)
+      File.chmod(0o000, locked)
+
+      expect { silently { described_class.generate_examples(examples_dir) } }
+        .to raise_error(SystemCallError)
+    ensure
+      File.chmod(0o755, locked) if locked
+    end
+
+    it 'refuses a render that only contains an SVG element' do
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      FileUtils.mkdir_p(File.dirname(target))
+      File.write(target, '<svg>previous</svg>')
+      payload = '<html><body>Error 500 <svg width="1"></svg></body></html>'
+
+      expect { described_class.write_svg(target, payload, examples_dir) }
+        .to raise_error(/rendered no SVG document/)
+      expect(File.read(target)).to eq('<svg>previous</svg>')
+    end
+
+    it 'ignores a source that is a link' do
+      outside = Dir.mktmpdir('sirena-outside')
+      File.write(File.join(outside, 'ext.mmd'), source)
+      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+      File.symlink(File.join(outside, 'ext.mmd'),
+                   File.join(examples_dir, 'flowchart', 'linked.mmd'))
+
+      generated, failed = silently { described_class.generate_examples(examples_dir) }
+
+      expect([generated, failed]).to eq([0, []])
+      expect(File).not_to exist(File.join(examples_dir, 'flowchart', 'linked.svg'))
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    # One predicate for both callers: generation used File.file? and pruning
+    # used File.exist?, so a .mmd link to a directory was a source to one and
+    # not the other, and the SVG beside it could never be removed.
+    it 'treats a .mmd link to a directory as no source at all' do
+      flowchart = File.join(examples_dir, 'flowchart')
+      FileUtils.mkdir_p([flowchart, File.join(examples_dir, 'adir')])
+      File.symlink(File.join(examples_dir, 'adir'), File.join(flowchart, 'ghost.mmd'))
+      File.write(File.join(flowchart, 'ghost.svg'), 'STALE')
+
+      expect(described_class.orphan_svgs(examples_dir).map { |path| File.basename(path) })
+        .to eq(['ghost.svg'])
+    end
+
+    it 'leaves an entry that is not a plain file where it is' do
+      flowchart = File.join(examples_dir, 'flowchart')
+      FileUtils.mkdir_p(flowchart)
+      fifo = File.join(flowchart, 'a.svg')
+      system('mkfifo', fifo)
+
+      expect { described_class.write_svg(fifo, '<svg>x</svg>', examples_dir) }
+        .to raise_error(/refused to write outside/)
+      expect(File.ftype(fifo)).to eq('fifo')
+    end
+
+    # The temporary name used to embed the target's, so a legal source name
+    # produced an illegal temporary one.
+    it 'generates a source whose name is as long as the filesystem allows' do
+      flowchart = File.join(examples_dir, 'flowchart')
+      FileUtils.mkdir_p(flowchart)
+      File.write(File.join(flowchart, "#{'a' * 247}.mmd"), source)
+
+      generated, failed = silently { described_class.generate_examples(examples_dir) }
+
+      expect([generated, failed]).to eq([1, []])
+    end
+
+    it 'replaces an existing SVG with the new bytes and counts it once' do
+      flowchart = File.join(examples_dir, 'flowchart')
+      FileUtils.mkdir_p(flowchart)
+      File.write(File.join(flowchart, '01.mmd'), source)
+      stale = File.join(flowchart, '01.svg')
+      File.write(stale, '<svg>STALE</svg>')
+
+      generated, = silently { described_class.generate_examples(examples_dir) }
+
+      expect(generated).to eq(1)
+      expect(File.read(stale)).to start_with('<svg')
+      expect(File.read(stale)).not_to include('STALE')
+    end
+
+    # A later source must still be rendered after an earlier one fails.
+    it 'keeps generating after a source fails' do
+      flowchart = File.join(examples_dir, 'flowchart')
+      FileUtils.mkdir_p(flowchart)
+      File.write(File.join(flowchart, '01-bad.mmd'), 'not a diagram at all')
+      File.write(File.join(flowchart, '02-good.mmd'), source)
+
+      generated, failed = silently { described_class.generate_examples(examples_dir) }
+
+      expect([generated, failed.map(&:first)]).to eq([1, ['flowchart/01-bad.mmd']])
+      expect(File).to exist(File.join(flowchart, '02-good.svg'))
     end
   end
 
