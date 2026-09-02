@@ -392,10 +392,11 @@ module Sirena
       end
 
       # Where the loop sits. It goes out past the node edge by 0.45 of
-      # the node's SHORTER side, and runs 0.175 of its WIDTH either side
-      # of centre whichever way it is thrown, never narrower than 18 or
-      # wider than 50, and never wider than half the dimension it spreads
-      # across. The depth is mmdc's; the half span is ours — see
+      # the node's SHORTER side, and runs 0.175 of the dimension it
+      # spreads ACROSS either side of centre — the width for an up or
+      # down loop, the height for a left or right one — never narrower
+      # than 18 or wider than 50, and never wider than half that same
+      # dimension. The depth is mmdc's; the half span is ours — see
       # the note on the constants.
       #
       # The depth is capped at 48. No node the layout builds reaches it,

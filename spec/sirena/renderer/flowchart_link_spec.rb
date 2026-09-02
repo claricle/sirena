@@ -322,7 +322,12 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # An arrow is the head that reads the direction. A circle and a cross
     # reach the same zero-span guard through `backed_off`, so this pins
     # the arrow because it is the one drawn without a back-off first.
-    it "draws an arrow head for nodes sitting on top of each other" do
+    #
+    # It does NOT draw a head. Two nodes on the same centre give the head
+    # no direction, and the polygon comes out as three copies of one point
+    # — `20.0,10.0` three times, zero area. What this holds is that the
+    # guard turns that into a degenerate polygon rather than NaN.
+    it "writes no NaN for nodes sitting on top of each other" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
@@ -619,10 +624,14 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # true while the face moves. This asks where the loop actually meets
     # the node.
     #
-    # The width is swept rather than picked. A single 16-character label
-    # passed here while an 80-character one still left through the top,
-    # because the 18 lower limit only exceeds the half height once the
-    # node is wide enough for the clamp to bite.
+    # The width is swept rather than picked: a single 16-character label
+    # passed here while an 80-character one still left through the top.
+    #
+    # Not because the inequality turns over — every node in this sweep is
+    # 34 high, so the lower limit of 18 exceeds the 17 half height at all
+    # of them. What the width changes is which boundary the ray out of the
+    # corner meets first. That is why one label proves nothing here and a
+    # range does.
     #
     # The window is 0.1 rather than 0.05 because a coordinate written to
     # one decimal already carries 0.05 of rounding, so 0.05 would sit
