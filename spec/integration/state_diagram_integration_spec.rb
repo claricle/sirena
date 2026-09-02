@@ -198,13 +198,40 @@ RSpec.describe 'StateDiagram Integration' do
       ]
 
       cases.each do |source, expected_shapes|
-        group = rendered_state(source, 'C')
+        document = REXML::Document.new(Sirena::Engine.new.render(source))
+        groups = REXML::XPath.match(document, "//*[@id='state-C']")
+
+        # Count the groups, do not just inspect the first. Substituting the
+        # origin/main `add_special_state` at runtime left every shape assertion
+        # here GREEN while three of these four sources built two model states
+        # and emitted two duplicate `state-C` groups. Reading only the first
+        # group cannot see a duplicate, which is the whole defect.
+        expect(groups.length).to eq(1), source
+
         shapes = [
-          REXML::XPath.match(group, 'rect').length,
-          REXML::XPath.match(group, 'polygon').length
+          REXML::XPath.match(groups.first, 'rect').length,
+          REXML::XPath.match(groups.first, 'polygon').length
         ]
 
         expect(shapes).to eq(expected_shapes), source
+      end
+    end
+
+    # mmdc 11.12.0 refuses each of these as a transition target, in any case:
+    # one source per word, every one exits 1 with no output. `classroom` and
+    # `notes` render, so the guard must not swallow a longer identifier.
+    it 'refuses every mermaid keyword as a state id' do
+      engine = Sirena::Engine.new
+
+      %w[class classDef click href scale default note state style
+         Class CLASS clAsS NOTE Default classdef].each do |word|
+        expect { engine.render("stateDiagram-v2\nA --> #{word}\n") }
+          .to raise_error(Sirena::Engine::PipelineError), word
+      end
+
+      %w[classroom notes styles stateful].each do |word|
+        expect { engine.render("stateDiagram-v2\nA --> #{word}\n") }
+          .not_to raise_error, word
       end
     end
 

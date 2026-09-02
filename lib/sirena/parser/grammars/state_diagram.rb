@@ -256,14 +256,41 @@ module Sirena
         # note`, and takes `note` as a note's target.
         rule(:state_id) { string | state_name }
 
-        # The three names mmdc 11.12.0 lexes as keywords wherever a statement
-        # or a transition end may start: `A --> note`, `note : x`, a bare
-        # `style`, and `A --> state` are refused. A bare `state` is an empty
-        # statement, while `direction`, `end`, `as`, `notes`, and `styles`
-        # all render.
+        # The names mmdc 11.12.0 lexes as keywords wherever a statement or a
+        # transition end may start. Measured against the real binary, one
+        # source per word: `A --> class`, `A --> classDef`, `A --> click`,
+        # `A --> href`, `A --> scale`, `A --> default`, `A --> note`,
+        # `A --> state` and `A --> style` each exit 1 with no output.
+        # `direction`, `end`, `as`, `notes` and `styles` all render, and the
+        # trailing guard is what keeps them out: `classroom` is a legal id
+        # because a word character follows the keyword.
+        #
+        # A bare `state` stays an empty statement; only its use as an ID is
+        # refused here.
+        RESERVED_WORDS = %w[
+          class classDef click href scale default note state style
+        ].freeze
+
+        # Longest first, and that ordering is load-bearing. Parslet alternation
+        # is ordered choice, so with `class` ahead of `classDef` the shorter
+        # word matches, the trailing guard then fails on the `D`, and the whole
+        # rule gives up — leaving `A --> classDef` accepted. Measured: sorting
+        # by length is what turns that from RENDERS into a refusal.
         rule(:reserved_name) do
-          (str('note') | str('style') | str('state')) >>
+          RESERVED_WORDS.sort_by { |word| -word.length }
+            .map { |word| word_ci(word) }
+            .reduce(:|) >>
             match['a-zA-Z0-9_'].absent?
+        end
+
+        # Case matters and this bundle of parslet has no `stri`. The house
+        # pattern in pie.rb (`match['Pp'] >> str('ie')`) varies only the first
+        # letter, which is not enough: mmdc refuses `CLASS`, `Class` and
+        # `clAsS` alike, so every letter has to vary.
+        def word_ci(word)
+          word.each_char
+            .map { |ch| ch.match?(/[a-z]/i) ? match["#{ch.downcase}#{ch.upcase}"] : str(ch) }
+            .reduce(:>>)
         end
 
         # A bare state name. A superset of `identifier`, which is
