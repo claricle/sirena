@@ -147,12 +147,19 @@ module Sirena
       # alone left `state C <<choice>>` + `state "Label" as C` drawing a
       # polygon where mmdc 11.12.0 draws two rects, in both declaration orders.
       #
-      # Deliberately NOT `state_texts`: it falls back to the label, and keying
-      # the shape on that fallback would turn every marker carrying a label into
-      # a rectangle. The PARSER no longer supplies one — `add_special_state`
-      # clears it, so a parsed bare `state C <<choice>>` arrives with
-      # `label: nil` and no texts. A caller building the model directly can
-      # still set a label, and that is the path this guard protects.
+      # "Display text" here means `descriptions` or the scalar `description`,
+      # and deliberately NOT the label. A label cannot be used: terminals carry
+      # `label: "[*]"` with no descriptions, so keying the shape on the label
+      # turns `[*]` into an ordinary state and its 30px circle into a 100px box.
+      # Measured — adding a label check reddened "handles start state
+      # dimensions", which is the guard that caught it.
+      #
+      # Nothing is lost by that. No parsed source produces a marker carrying a
+      # label but no descriptions: `add_special_state` clears the label, and the
+      # one input that sets one — `state C <<choice>>` with `state "L" as C` —
+      # fills `descriptions` too, which the first check already catches. Only a
+      # directly built model can hold that combination, and it keeps its
+      # declared marker type.
       def state_shape_type(state)
         return 'normal' unless Array(state.descriptions).reject(&:empty?).empty?
         return 'normal' if state.description && !state.description.empty?

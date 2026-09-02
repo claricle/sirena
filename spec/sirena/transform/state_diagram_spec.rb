@@ -204,5 +204,22 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
         %w[ALIAS_ONE DESC_ONE ALIAS_TWO DESC_TWO]
       )
     end
+
+    # A label is deliberately NOT display text for shape purposes, because
+    # terminals carry `label: "[*]"` with no descriptions — keying the shape on
+    # the label turns `[*]` into an ordinary 100px box instead of a 30px circle.
+    # No parsed source produces a marker with a label and no descriptions, so
+    # only a directly built model can hold that combination.
+    it 'keeps a marker type when only a scalar label is set' do
+      labelled = Sirena::Diagram::StateNode.new(
+        id: 'C', label: 'C', state_type: 'choice'
+      )
+      described = Sirena::Diagram::StateNode.new(
+        id: 'D', state_type: 'choice', descriptions: ['text']
+      )
+
+      expect(transform.send(:state_shape_type, labelled)).to eq('choice')
+      expect(transform.send(:state_shape_type, described)).to eq('normal')
+    end
   end
 end
