@@ -21,7 +21,8 @@ module Sirena
           @diagram = Diagram::StateDiagram.new
           @state_counter = 0
 
-          # Tree is an array containing the header and statements in source order.
+          # A diagram with statements is an array containing the header and
+          # statements in source order; a header-only diagram is the header hash.
           if tree.is_a?(Array)
             tree.each do |item|
               process_item(item) if item.is_a?(Hash)
@@ -251,6 +252,7 @@ module Sirena
           return existing if existing
 
           state = ensure_state_exists(state_id)
+          state.label = nil
           state.state_type = state_type
           state
         end

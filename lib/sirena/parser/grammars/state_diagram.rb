@@ -282,9 +282,10 @@ module Sirena
 
         # The bare `id : text` form has no composite body to open, and mmdc
         # 11.12.0 draws a state labelled `text {` for `A : text {` while
-        # refusing `state A : text {`.
+        # refusing `state A : text {`. It also requires at least one physical
+        # character after the colon, although that character may be padding.
         rule(:bare_state_description) do
-          colon >> space? >>
+          colon >> (newline | eof).absent? >> space? >>
             (bare_description_end.absent? >> any)
               .repeat(1).as(:description).maybe
         end

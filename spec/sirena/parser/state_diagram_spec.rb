@@ -342,9 +342,9 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       end
 
       # Only a whole line closes the block. mmdc keeps this one as text.
-      it 'keeps end note inside a body line as note text' do
+      it 'keeps an end note prefix inside a body line as note text' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nnote right of A\nsay end note\nend note\n"
+          "stateDiagram-v2\nA\nnote right of A\nend noteB\nend note\n"
         )
 
         expect(diagram.states.map(&:id)).to eq(['A'])

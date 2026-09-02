@@ -176,13 +176,17 @@ RSpec.describe 'StateDiagram Integration' do
       end
     end
 
-    # The guard above must not reach the label. A bare marker's label is its own
-    # id, so keying the shape on display text INCLUDING the label would turn
-    # every marker into a rectangle.
-    it 'keeps a marker without display text as a polygon' do
-      svg = Sirena::Engine.new.render("stateDiagram-v2\nstate C <<choice>>\nC --> A\n")
+    # The guard above must not reach the scalar label. Keying the shape on the
+    # state id would turn every otherwise-unlabelled marker into a rectangle.
+    it 'keeps a marker without display text as an unlabelled polygon' do
+      source = "stateDiagram-v2\nstate C <<choice>>\nC --> A\n"
+      svg = Sirena::Engine.new.render(source)
+      document = REXML::Document.new(svg)
+      choice = REXML::XPath.first(document, "//*[@id='state-C']")
 
       expect(svg.scan('<polygon').size).to eq(1)
+      expect(REXML::XPath.match(choice, 'rect')).to be_empty
+      expect(REXML::XPath.match(choice, 'text').map(&:text)).to eq([])
     end
 
     it 'renders the first established state type' do
@@ -217,7 +221,7 @@ RSpec.describe 'StateDiagram Integration' do
       )
       expect(REXML::XPath.match(choice, 'rect')).to be_empty
       expect(REXML::XPath.match(choice, 'polygon').length).to eq(1)
-      expect(REXML::XPath.match(choice, 'text').map(&:text)).to eq(['C'])
+      expect(REXML::XPath.match(choice, 'text').map(&:text)).to eq([])
     end
   end
 
@@ -246,6 +250,18 @@ RSpec.describe 'StateDiagram Integration' do
         expect(REXML::XPath.match(group, 'text').map(&:text))
           .to eq(expected_text), source
       end
+    end
+
+    it 'requires content or horizontal whitespace after a bare colon' do
+      engine = Sirena::Engine.new
+
+      ["stateDiagram-v2\nA :\n", "stateDiagram-v2\nA :"].each do |source|
+        expect { engine.render(source) }
+          .to raise_error(Sirena::Engine::PipelineError, /Parse error/), source
+      end
+
+      state = rendered_state("stateDiagram-v2\nA : \n", 'A')
+      expect(REXML::XPath.match(state, 'text').map(&:text)).to eq(['A'])
     end
   end
 

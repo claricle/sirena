@@ -144,11 +144,12 @@ module Sirena
       # Mermaid keeps the declared marker type, but displays a marker carrying
       # ANY display text as an ordinary rectangular state. An alias lands in
       # `descriptions`, never in the scalar `description`, so asking the scalar
-      # alone left `state C <<choice>>` + `state "Label" as C" drawing a
+      # alone left `state C <<choice>>` + `state "Label" as C` drawing a
       # polygon where mmdc 11.12.0 draws two rects, in both declaration orders.
       #
-      # Deliberately NOT `state_texts`: that falls back to the label, and a bare
-      # `state C <<choice>>` has label "C", so every marker would become a
+      # Deliberately NOT `state_texts`: it falls back to the label for callers
+      # that build the model directly, and a bare `state C <<choice>>` has label
+      # "C" — so keying the shape on that fallback would turn EVERY marker into a
       # rectangle. Measured before writing this.
       def state_shape_type(state)
         return 'normal' unless Array(state.descriptions).reject(&:empty?).empty?
