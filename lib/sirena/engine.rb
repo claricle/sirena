@@ -56,6 +56,42 @@ module Sirena
       error: /\A\s*(error|Error)/i
     }.freeze
 
+    # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
+    # directive header — is not universally invalid. Every type was probed
+    # with both, and these eight refuse both.
+    REFUSES_BARE_COMMENT = [
+      :flowchart, :er_diagram, :user_journey, :gantt, :timeline, :block,
+      :sankey, :requirement
+    ].freeze
+    private_constant :REFUSES_BARE_COMMENT
+
+    # stateDiagram is the odd one out: it draws a bare `%%` and refuses a
+    # directive with no header.
+    REFUSES_HEADERLESS_DIRECTIVE = (
+      REFUSES_BARE_COMMENT + [:state_diagram]
+    ).freeze
+    private_constant :REFUSES_HEADERLESS_DIRECTIVE
+
+    # A fence that is not the first thing in the file is not frontmatter
+    # to mermaid. It stays in the text, and the diagram's own parser meets
+    # it: these seventeen stop on it, and pie, gitGraph, radar,
+    # architecture, packet and info skip the lines and draw the diagram.
+    REFUSES_LATE_FRONTMATTER = [
+      :flowchart, :sequence, :class_diagram, :state_diagram, :er_diagram,
+      :user_journey, :gantt, :timeline, :quadrant, :mindmap, :kanban,
+      :block, :requirement, :xychart, :sankey, :treemap, :c4
+    ].freeze
+    private_constant :REFUSES_LATE_FRONTMATTER
+
+    # What each preamble item mermaid cannot make sense of costs, and how
+    # to say so.
+    REFUSED_PREAMBLE = {
+      comment: ['an empty comment', REFUSES_BARE_COMMENT],
+      directive: ['a directive with no header', REFUSES_HEADERLESS_DIRECTIVE],
+      frontmatter: ['frontmatter behind another item', REFUSES_LATE_FRONTMATTER]
+    }.freeze
+    private_constant :REFUSED_PREAMBLE
+
     attr_reader :verbose, :theme
 
     # Creates a new Engine instance.
@@ -94,16 +130,28 @@ module Sirena
 
       log 'Starting render pipeline...'
 
+      # Mermaid allows frontmatter, %%{init}%% directives and %% comments
+      # before the diagram keyword; detection and parsing both need the body.
+      preamble = Source.split(mermaid_source)
+
+      # Read the title now, not lazily: frontmatter is validated whether or
+      # not the body supplies its own title, so `title: [` is refused even
+      # when the diagram has a title of its own.
+      frontmatter_title = Source.title(preamble[:frontmatter])
+
       # Detect diagram type
-      diagram_type = detect_diagram_type(mermaid_source)
+      diagram_type = detect_diagram_type(preamble[:body])
       log "Detected diagram type: #{diagram_type}"
+
+      reject_degenerate_preamble(diagram_type, preamble[:degenerate])
 
       # Retrieve handlers
       handlers = retrieve_handlers(diagram_type)
       log "Retrieved handlers for #{diagram_type}"
 
       # Execute pipeline
-      diagram = parse_diagram(mermaid_source, handlers[:parser])
+      diagram = parse_diagram(preamble[:body], handlers[:parser])
+      apply_frontmatter_title(diagram, frontmatter_title)
       graph = transform_diagram(diagram, handlers[:transform], today)
       laid_out_graph = layout_graph(graph)
       svg_document = render_svg(laid_out_graph, handlers[:renderer], theme)
@@ -138,6 +186,33 @@ module Sirena
             'Source must start with one of: graph, flowchart, ' \
             'sequenceDiagram, classDiagram, stateDiagram, ' \
             'erDiagram, journey, gantt, or pie'
+    end
+
+    # Whether an odd preamble item is an error belongs to the diagram
+    # type, not to the split — the split runs first, and it cannot know.
+    # Refusing them for everyone rejected fifteen types' worth of sources
+    # that mmdc renders.
+    def reject_degenerate_preamble(diagram_type, degenerate)
+      kind = degenerate.find do |item|
+        REFUSED_PREAMBLE.fetch(item).last.include?(diagram_type)
+      end
+      return unless kind
+
+      raise PipelineError,
+            "A #{diagram_type} diagram does not accept " \
+            "#{REFUSED_PREAMBLE.fetch(kind).first}."
+    end
+
+    # Applies a frontmatter title, unless the body already set one.
+    #
+    # Ten grammars parse their own inline `title` line. The frontmatter
+    # title is a default beneath those, not an override.
+    #
+    # @param diagram [Diagram::Base] the parsed diagram
+    # @param title [String, nil] the title the frontmatter set
+    # @return [void]
+    def apply_frontmatter_title(diagram, title)
+      diagram.title = title if title && diagram.title.nil?
     end
 
     # Retrieves handlers for a diagram type.

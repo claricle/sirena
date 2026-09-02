@@ -60,6 +60,7 @@ module Sirena
 
     # Represents a Mermaid block diagram
     class BlockDiagram < Lutaml::Model::Serializable
+      attribute :title, :string
       attribute :columns, :integer, default: -> { 1 }
       attribute :blocks, Block, collection: true, default: -> { [] }
       attribute :connections, BlockConnection, collection: true, default: -> { [] }
