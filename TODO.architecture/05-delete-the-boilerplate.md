@@ -171,7 +171,8 @@ hardcoded fallback is what renders.
    - **One palette and an accepted, visible colour change** for whichever
      types do not match it. That is a product decision, not a refactor,
      and it needs sign-off before the PR opens.
-2. Delete all five private palette constants — `DEFAULT_COLORS`,
+2. Delete all SIX private palette constants — five in renderers, plus
+   `Transform::GitGraph::DEFAULT_COLORS` — `DEFAULT_COLORS`,
    `FLOW_COLORS` and `SECTION_COLORS`.
 3. Replace `theme_color(:x) || '#hex'` with `theme_color(:x)`, and make
    the theme guarantee a value. A missing key is a bug in the theme
@@ -190,6 +191,7 @@ hardcoded fallback is what renders.
 ## Files
 
 `lib/sirena/parser/*.rb`, `lib/sirena/renderer/*.rb`,
+`lib/sirena/transform/git_graph.rb` (the sixth palette),
 `lib/sirena/theme.rb`, `lib/sirena/theme/color_palette.rb`,
 `spec/sirena/theme_spec.rb`.
 
@@ -208,7 +210,14 @@ headings silently drop everything after the first block.
 - [ ] A — one builder calling convention
 - [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
 - [ ] B — no renderer sets `@offset_x` / `@offset_y`
-- [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/renderer/` returns nothing
+- [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/`
+      returns nothing. **Search all of `lib/sirena/`, not just the renderers** —
+      the sixth palette lives in `transform/git_graph.rb` and a renderer-only
+      grep reports success with it still there
+- [ ] C — a git_graph rendered under `default` and under `dark` differs in its
+      BRANCH colours. Measured before the change, the two documents differ while
+      both keep `#7c3aed` and `#2563eb`, so a whole-document diff passes without
+      the palette moving
 - [ ] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
 - [ ] C — switching themes visibly changes output for every registered type
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either
