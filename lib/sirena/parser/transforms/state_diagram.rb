@@ -121,7 +121,10 @@ module Sirena
         def state_label(stmt)
           return unless stmt[:state_label]
 
-          extract_text(stmt[:state_label])
+          label = extract_text(stmt[:state_label]).strip
+          return if label.empty?
+
+          label
         end
 
         def append_display_text(state, text)
@@ -244,6 +247,9 @@ module Sirena
         end
 
         def add_special_state(state_id, state_type)
+          existing = @diagram.find_state(state_id)
+          return existing if existing
+
           state = ensure_state_exists(state_id)
           state.state_type = state_type
           state

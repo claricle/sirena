@@ -108,11 +108,17 @@ module Sirena
         # and an empty one. It does accept a quoted id after `as`.
         rule(:state_target) do
           (
-            str('""').absent? >> quoted_string.as(:state_label) >>
+            str('""').absent? >> state_label_string.as(:state_label) >>
               spaces >> str('as') >> spaces >>
               (quoted_state_id | state_name).as(:state_id)
           ) |
             state_id.as(:state_id)
+        end
+
+        # Alias labels do not recognize backslash-escaped quotes. Keep this
+        # local: other quoted state syntax has different escape behavior.
+        rule(:state_label_string) do
+          str('"') >> (str('"').absent? >> any).repeat.as(:string) >> str('"')
         end
 
         # Unlike ordinary quoted state names, an id declared after `as` keeps
@@ -278,8 +284,15 @@ module Sirena
         # 11.12.0 draws a state labelled `text {` for `A : text {` while
         # refusing `state A : text {`.
         rule(:bare_state_description) do
-          colon >> space? >> line_char.repeat(1).as(:description)
+          colon >> space? >>
+            (bare_description_end.absent? >> any)
+              .repeat(1).as(:description).maybe
         end
+
+        # A bare description treats comments and semicolons as text, ending
+        # only at the physical line boundary. Horizontal padding stays outside
+        # the captured description.
+        rule(:bare_description_end) { space? >> (newline | eof) }
 
         # One character that is not the end of the line.
         rule(:line_char) { line_end.absent? >> any }
