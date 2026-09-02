@@ -100,8 +100,16 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(paths).not_to be_empty
     end
 
+    # All six types `canonical_arrow_type` can build, not a sample. The
+    # renderer decides the head from a hard-coded whitelist
+    # (`arrow_type?`) that lives apart from the generative rule, so the
+    # two can drift silently: adding `thick_line` and `dotted_line` to
+    # that list draws an arrowhead on `A===B` and `A-.-B` that mermaid
+    # does not draw. Accepting those two headless spellings at all was
+    # justified by this guarantee, so this is where it is pinned.
     it 'renders marker-end only for a link with an arrowhead' do
-      { '-->' => true, '---' => false }.each do |link, has_arrowhead|
+      { '-->' => true, '---' => false, '-.->' => true, '-.-' => false,
+        '==>' => true, '===' => false }.each do |link, has_arrowhead|
         source = "flowchart TD\n  A#{link}B\n"
         svg = Sirena.render(source)
         message = "source #{source.inspect}"

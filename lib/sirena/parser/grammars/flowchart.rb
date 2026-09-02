@@ -308,18 +308,20 @@ module Sirena
         #
         # `subgraph A [T] X` stays refused, which mmdc also refuses:
         # nothing may follow the title on the line.
+        # A trailing word carries the same guards as the first one, `end`
+        # included. What ends a subgraph is `end` with the LINE behind it,
+        # which is `bare_subgraph_end`'s whole job — the position, not the
+        # word. Guarding a trailing word on the hunted word alone refused
+        # five headers mmdc draws, and it drew them as ONE cluster with
+        # the word in its id: `subgraph A end [T]` is the cluster
+        # `A end`, `subgraph A 1end [T]` is `A 1end`, and
+        # `subgraph A B end [T]`, `subgraph A end A [T]` and
+        # `subgraph A end end [T]` all keep theirs the same way.
+        # `subgraph A end` and `subgraph A 1end` stay refused, which is
+        # mmdc's verdict too.
         rule(:subgraph_trailing_name) do
-          (space.repeat(1) >> subgraph_trailing_word).repeat >>
+          (space.repeat(1) >> subgraph_name_word).repeat >>
             (space.repeat(1) >> subgraph_title.as(:subgraph_title)).maybe
-        end
-
-        # `end` closes the subgraph, so it is a keyword in a trailing word
-        # where it is an ordinary name in the first one: mmdc draws
-        # `subgraph end [T]` and refuses `subgraph A end`. It is hunted the
-        # way every other keyword is, so `subgraph A 1end` is refused too
-        # while `subgraph A endx` draws.
-        rule(:subgraph_trailing_word) do
-          subgraph_end_id.absent? >> subgraph_name_word
         end
 
         rule(:subgraph_end_id) { hunt(subgraph_end_word) }
@@ -837,9 +839,18 @@ module Sirena
         # Bare `==` is not a link (mmdc rejects `A==B`). A thick link has at
         # least two `=` before an arrowhead or at least three without one.
         # The headed arm comes first so its `>` is not left for the target.
+        #
+        # The open arm carries `trailing_xo_marker.absent?` for the same
+        # reason the other two links do. Mermaid's thick link is
+        # `[xo<]?==+[=xo>]`, so the trailing `x` belongs to the LINK.
+        # Without the guard `A===xB` drew `A` and a node called `xB` where
+        # mmdc 11.12.0 draws `A` and `B` joined by one crossed-head link,
+        # and `A===x` `A===o` `A===x --- Z` and `A====x --- Z` all parsed
+        # here while mmdc refuses every one of them.
         rule(:thick_arrow) do
           (str('=').repeat(2) >> str('>') |
-            str('=').repeat(3) >> str('>').absent?).as(:thick)
+            str('=').repeat(3) >> str('>').absent? >>
+              trailing_xo_marker.absent?).as(:thick)
         end
 
         # A dotted link has one or more dots. As with a plain link, put the
@@ -874,10 +885,12 @@ module Sirena
         end
 
         # A trailing `x` or `o` belongs to the LINK, not to the node behind
-        # it. Mermaid's plain link is `[xo<]?--+[-xo>]` and its dotted one
-        # is `[xo<]?-?\.+-[xo>]?`, so `A---x` is one link carrying a
-        # crossed arrowhead, and `A---x --- Z` is refused for holding two
-        # links with no node between them.
+        # it. All three of mermaid's links carry one: the plain link is
+        # `[xo<]?--+[-xo>]`, the thick one `[xo<]?==+[=xo>]` and the dotted
+        # one `[xo<]?-?\.+-[xo>]?`. So `A---x` and `A===x` are each one
+        # link carrying a crossed arrowhead, and `A---x --- Z` and
+        # `A===x --- Z` are refused for holding two links with no node
+        # between them.
         #
         # Sirena draws no crossed or circled arrowhead, so the marker is
         # REFUSED rather than drawn with the wrong head. The arrowhead-less
@@ -889,7 +902,10 @@ module Sirena
         # 56 inputs parsed here that mmdc refuses, and widening node ids
         # is what put 48 of them within reach — `#---x --- Z` `1-.-o --- Z`
         # and `é---x --- Z` among those. The other 8, `A---x --- Z` and
-        # its kin, were already reachable and already wrong.
+        # its kin, were already reachable and already wrong. Those counts
+        # are the plain and dotted families only; `thick_arrow` reached
+        # this rule later and brought `A===xB` `A===x` and `A===x --- Z`
+        # with it.
         #
         # Only the arrowhead-less forms need the guard: after `-->` or
         # `-.->` mermaid has already closed the link, so the `x` in
@@ -960,12 +976,10 @@ module Sirena
           subgraph_end_id >> line_space.repeat >> (newline | eof)
         end
 
-        # The guard belongs here because this is the one rule BOTH arms of
-        # `subgraph_id` funnel through, so `subgraph end` and
-        # `subgraph ""end` are refused by the same line. It cannot fire in
-        # a TRAILING word — `subgraph_trailing_word` runs the stricter
-        # `subgraph_end_id.absent?` first, and that refuses a hunted `end`
-        # wherever the line ends.
+        # The `end` guard belongs here because every subgraph word funnels
+        # through this rule — both arms of `subgraph_id` and every
+        # trailing word — so `subgraph end`, `subgraph ""end` and
+        # `subgraph A end` are refused by the same line.
         rule(:subgraph_name_word) do
           bare_subgraph_end.absent? >> subgraph_keyword_id.absent? >>
             dot_run_before_link.absent? >> subgraph_arrowhead.absent? >>
@@ -1033,21 +1047,44 @@ module Sirena
         # A hyphen is only part of the id when an arrow cannot start there,
         # so `a-b` is one node while `a-->b` stays two.
         rule(:node_id) do
-          digit_id_before_link |
+          id_before_xo_link |
             (node_keyword_id.absent? >> dot_run_before_link.absent? >>
               arrowhead_dot_dash.absent? >> id_run)
         end
 
-        # Measured against mmdc 11.12.0: a pure-digit node id ends before
-        # one `x` or `o` when `--`, `==` or `-.` follows. A doubled `x`/`o`,
-        # as in `1xx`, or any non-digit before the marker keeps it in the id.
+        # Measured against mmdc 11.12.0: a node id ends before one `x` or
+        # `o` when `--`, `==` or `-.` follows. A doubled `x`/`o`, as in
+        # `1xx`, keeps the marker in the id, and so does a settled
+        # character in front of it — `Zx-->B` and `A1x-->B` are one node
+        # and a plain link.
+        #
+        # Where the marker splits the id is a lexer restart, the same walk
+        # every other guard here runs, and reading it as a leading run of
+        # DIGITS was that walk measured on one prefix shape. mmdc splits
+        # `#x-->B` into `#` and `B`, `&x---B` into `&` and `B`, `*o-.-B`
+        # into `*` and `B`, and `éx-->B` `中o===B` `#1x-->B` `1#x-->B` and
+        # `Aéx-->B` the same way; only the `1` prefix was caught, and the
+        # other eleven drew a node mermaid never puts on the page.
+        #
+        # `repeat(1)` rather than `hunt`'s `repeat`: at zero restarts the
+        # marker stands at the id START, where mermaid has no node in
+        # front of the link at all. `x-->B` is that shape and it is left
+        # exactly where it was.
         #
         # Sirena models no `x`/`o` link-start marker at all, so stopping
         # the id makes the statement fail. That is safer than drawing a
-        # different graph with `1x` or `1o` as the node.
-        rule(:digit_id_before_link) do
-          match['0-9'].repeat(1) >>
-            (match['xo'] >> (str('--') | str('==') | str('-.'))).present?
+        # different graph with `1x` or `#x` as the node.
+        rule(:id_before_xo_link) do
+          (xo_link_open.absent? >> restart_step).repeat(1) >>
+            xo_link_open.present?
+        end
+
+        # The opening of a link that carries a crossed or circled head.
+        # Mermaid spells the head on both ends of all three links —
+        # `[xo<]?--+[-xo>]`, `[xo<]?==+[=xo>]`, `[xo<]?-?\.+-[xo>]?` — so
+        # the marker leads a dash, an equals or a dotted run alike.
+        rule(:xo_link_open) do
+          match['xo'] >> (str('--') | str('==') | str('-.'))
         end
 
         # A hyphen joins the id unless another dash or a dot follows, which

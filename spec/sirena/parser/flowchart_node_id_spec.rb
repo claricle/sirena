@@ -184,19 +184,39 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  # Mermaid's plain link is `[xo<]?--+[-xo>]` and its dotted one
-  # `[xo<]?-?\.+-[xo>]?`,
-  # so a trailing `x` or `o` belongs to the LINK and `A---x` is one token.
+  # All THREE of mermaid's links carry a trailing marker — the plain one
+  # is `[xo<]?--+[-xo>]`, the thick one `[xo<]?==+[=xo>]` and the dotted
+  # one `[xo<]?-?\.+-[xo>]?` — so a trailing `x` or `o` belongs to the
+  # LINK and `A---x`, `A===x` and `A-.-x` are each one token.
   # mmdc then refuses `A---x --- Z` for holding two links with nothing
   # between them, and this refuses it too — the marker is not drawn,
   # because sirena has no crossed or circled arrowhead and the wrong head
   # would be worse than none. `a thick link` above no longer makes that
   # call for `===`: a headless link now has a type that draws no marker,
   # while a crossed or circled head still has no shape to draw.
+  #
+  # The thick members are here because `thick_arrow` reached the guard
+  # last and shipped without it: `A===xB` drew a node called `xB` that
+  # mermaid never puts on the page, and `A===x` `A===o` and `A====x`
+  # parsed while mmdc refuses every one. The accept side — `A===B`
+  # `A====B` `A==>B` `A===>B` — is pinned in `a thick link` above, so the
+  # guard cannot buy these refusals by refusing a headless thick link.
   describe "an arrowhead marker on a link" do
-    %w[A---x A-.-x A---o #---x 1-.-o é---x].each do |statement|
+    %w[A---x A-.-x A---o #---x 1-.-o é---x
+       A===x A===o A====x 1===o é===x].each do |statement|
       it "refuses #{statement} in front of a second link" do
         expect(parses?("graph TD\n#{statement} --- Z\n")).to be(false)
+      end
+    end
+
+    # mmdc refuses a bare marker tail too: the link has no target behind
+    # it. The shipped `thick_arrow` accepted all four, reading the marker
+    # as the target's whole id.
+    context "with nothing behind the marker" do
+      %w[A===x A===o A====x A=====o].each do |statement|
+        it "refuses #{statement}" do
+          expect(parses?("graph TD\n#{statement}\n")).to be(false)
+        end
       end
     end
 
@@ -209,11 +229,17 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
-    # The under-acceptance the refusal buys: mmdc draws `A---xB` as A to B
-    # with a crossed head. Pinned so that modelling those heads — the same
-    # change that owns `1x-->B` — is a decision rather than an accident.
-    it "refuses A---xB, which mmdc draws with a crossed arrowhead" do
-      expect(parses?("graph TD\nA---xB\n")).to be(false)
+    # The under-acceptance the refusal buys: mmdc draws `A---xB` and
+    # `A===xB` alike as A to B with a crossed head. Pinned so that
+    # modelling those heads — the same change that owns `1x-->B` — is a
+    # decision rather than an accident. `A===xB` drew `A` and a node
+    # called `xB` before the thick link carried the guard.
+    context "with a target behind the marker" do
+      %w[A---xB A---oB A===xB A===oB A====xB A-.-xB].each do |statement|
+        it "refuses #{statement}, which mmdc draws with a crossed head" do
+          expect(parses?("graph TD\n#{statement}\n")).to be(false)
+        end
+      end
     end
   end
 
@@ -225,28 +251,65 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # `ax-->B` -> `L_ax_B`.
   #
   # Sirena models no `x`/`o` arrowheads: `arrow` is only `thick_arrow |
-  # dotted_arrow | plain_arrow`. Once a digit id correctly stops before
-  # the marker, nothing can consume `x--` or `o--`, so refusing is correct
-  # by omission. The defect guarded against is drawing `1x` or `1o` as a
+  # dotted_arrow | plain_arrow`. Once an id correctly stops before the
+  # marker, nothing can consume `x--` or `o--`, so refusing is correct
+  # by omission. The defect guarded against is drawing `1x` or `#x` as a
   # node, which is a different graph from mermaid's. Adding the arrowhead
   # is a separate change.
-  describe "a digit id before an arrowhead marker" do
-    ["1x-->B", "11x-->B", "1o-->B", "1x==>B", "1x-.->B"].each do |statement|
-      it "refuses #{statement} after splitting the digit id" do
+  #
+  # WHERE the id stops is a lexer restart, the same walk every other
+  # guard in this grammar runs — not a leading run of digits, which is
+  # that walk measured on one prefix shape. mmdc splits `#x-->B` into
+  # `#` and `B`, and `&x---B` `*o-.-B` `éx-->B` `中o===B` `#1x-->B`
+  # `1#x-->B` and `Aéx-->B` the same way; only the `1` prefix stopped,
+  # and the other seven drew a node mermaid never puts on the page.
+  #
+  # Both directions are pinned, because a guard proven on one side is
+  # how this shipped: a settled character in front of the marker means
+  # NO restart, so `Zx-->B` and `A#x-->B` stay one node and a link.
+  describe "an id before an arrowhead marker" do
+    ["1x-->B", "11x-->B", "1o-->B", "1x==>B", "1x-.->B",
+     "#x-->B", "&x---B", "*o-.-B", "éx-->B", "中o===B",
+     "#1x-->B", "1#x-->B", "Aéx-->B", "Zéo==>B"].each do |statement|
+      it "refuses #{statement} after splitting the id at the marker" do
         expect(parses?("graph TD\n#{statement}\n")).to be(false)
       end
     end
 
+    # No restart stands in front of the marker in any of these, so mmdc
+    # keeps it in the id. `#`, `&`, `*` and a digit carry a settled run
+    # along rather than restarting it, which is why `A#x` differs from
+    # `#x` and `A1x` from `1x`.
     {
       "1xx-->B" => ["1xx", "B"],
       "1ax-->B" => ["1ax", "B"],
       "1_x-->B" => ["1_x", "B"],
       "1.x-->B" => ["1.x", "B"],
       "a1x-->B" => ["B", "a1x"],
-      "ax-->B" => ["B", "ax"]
+      "ax-->B" => ["B", "ax"],
+      "Zx-->B" => %w[B Zx],
+      "A#x-->B" => ["A#x", "B"],
+      "A&x-->B" => ["A&x", "B"],
+      "A*x-->B" => ["A*x", "B"],
+      "A1x-->B" => ["A1x", "B"],
+      "Zéax-->B" => ["B", "Zéax"]
     }.each do |statement, ids|
       it "keeps the whole id in #{statement}" do
         expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
+      end
+    end
+
+    # The marker is only a marker when a link follows it. `#x` and `éo`
+    # are ordinary ids on their own, and the walk must not refuse them
+    # for holding an `x` at a restart.
+    context "with no link behind the marker" do
+      {
+        "#x --> B" => ["#x", "B"], "éo --> B" => ["B", "éo"],
+        "#x" => ["#x"], "*o" => ["*o"]
+      }.each do |statement, ids|
+        it "still takes #{statement} as #{ids.join(', ')}" do
+          expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
+        end
       end
     end
   end
@@ -874,6 +937,26 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         source = "flowchart TD\nsubgraph A #{word}\nX-->Y\nend\n"
 
         expect(subgraph_name_parses?(source)).to be(false)
+      end
+    end
+
+    # What closes a subgraph is `end` with the LINE behind it, not the
+    # word wherever it stands. Guarding a trailing word on the hunted
+    # word alone refused every header below, and mmdc draws all of them
+    # as ONE cluster carrying the word in its id — `subgraph A end [T]`
+    # is the cluster `A end`, `subgraph A 1end [T]` is `A 1end`, and
+    # `subgraph A B end [T]` is `A B end`. Read from mmdc 11.12.0's own
+    # `class="cluster" id=` attribute, not from whether it drew.
+    #
+    # The refusals above are the other side of the same line:
+    # `subgraph A end` and `subgraph A 1end` end their line and mmdc
+    # refuses both.
+    ["end [T]", "end;", "end ;", "end B", "1end [T]", "end A [T]",
+     "B end [T]", "B 1end [T]", "end end [T]"].each do |tail|
+      it "takes a trailing #{tail}, whose end does not end the line" do
+        source = "flowchart TD\nsubgraph A #{tail}\nX-->Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(true)
       end
     end
 
