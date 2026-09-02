@@ -394,7 +394,8 @@ module Sirena
       # Where the loop sits. It goes out past the node edge by 0.45 of
       # the node's SHORTER side, and runs 0.175 of its WIDTH either side
       # of centre whichever way it is thrown, never narrower than 18 or
-      # wider than 50. The depth is mmdc's; the half span is ours — see
+      # wider than 50, and never wider than half the dimension it spreads
+      # across. The depth is mmdc's; the half span is ours — see
       # the note on the constants.
       #
       # The depth is capped at 48. No node the layout builds reaches it,
@@ -408,9 +409,16 @@ module Sirena
         # The span runs across the throw, so it is measured across it too:
         # a downward loop spreads along x and takes its span from the width,
         # a rightward one spreads along y and takes it from the height.
+        #
+        # Then it is held inside that same dimension. The lower limit is 18
+        # and a node is 34 high, so a horizontal loop's clamped span could
+        # exceed the half height — and once a corner sits outside the face,
+        # the line into the centre leaves through the next face round and
+        # the loop attaches to the top and bottom instead of the side.
         span_side = out_y.zero? ? height : width
         half_span =
           (span_side * SELF_LOOP_HALF_SPAN).clamp(SELF_LOOP_HALF_SPAN_LIMITS)
+        half_span = [half_span, span_side / 2.0].min
         depth = [[width, height].min * SELF_LOOP_DEPTH, SELF_LOOP_MAX_DEPTH].min
 
         edge_x, edge_y = node_boundary(node, cx + out_x, cy + out_y)

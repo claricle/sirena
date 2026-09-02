@@ -80,11 +80,15 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     end
 
     # A loop's corners are the coordinates that land on a long decimal:
-    # a depth of 0.45 of the width, off an edge that already carries one.
-    # This node drew `L 172.3 48.275000000000006` before the corners were
-    # rounded with everything else on the path.
+    # a depth of 0.45 of the shorter side, off an edge that already carries
+    # one. This node drew `L 172.3 48.275000000000006` before the corners
+    # were rounded with everything else on the path.
+    #
+    # It has to be a TD loop. Holding the span inside the node's height put
+    # an LR loop's corners on whole tenths already, so the LR form passed
+    # this whether or not anything rounded. TD still bends at 84.775.
     it "writes every path coordinate to one decimal" do
-      xml = Sirena.render("flowchart LR\n  A[abcdefghijk] --> A\n")
+      xml = Sirena.render("flowchart TD\n  A[abcdefghijk] --> A\n")
       numbers = xml.scan(/ d="([^"]*)"/).flatten
         .flat_map { |d| d.scan(/-?[\d.]+/) }
       decimals = numbers.filter_map { |n| n.split(".")[1]&.length }
@@ -554,8 +558,11 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
   # after it. Nothing of the link was on screen. mmdc 11.12.0 loops it off
   # the node instead. Measured off mmdc: the loop reaches past the node
   # edge by 0.45 of the node's shorter side. Sirena pins the reach at 0.175
-  # of its width either side of centre, never narrower than 18 or wider than
-  # 50. The head sits where the loop meets the node again.
+  # of the dimension the loop spreads ACROSS — the width for an up or down
+  # loop, the height for a left or right one — never narrower than 18, never
+  # wider than 50, and never wider than half that dimension, which is what
+  # keeps both ends on the face the loop was thrown from. The head sits
+  # where the loop meets the node again.
   describe "a link from a node to itself" do
     def node_top(xml, id = "A")
       node_rect(xml, id)[1]
@@ -603,26 +610,32 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     end
 
     # A loop thrown sideways spreads along y, so the spread has to be
-    # measured from the height. Measuring it from the width instead put
-    # the corners outside a wide node's height band, and the loop left
-    # through the top face and came back through the bottom one.
+    # measured from the height, and then held inside it. Measuring it from
+    # the width put the corners outside a wide node's height band, and the
+    # loop left through the top face and came back through the bottom one.
     #
     # The all-directions example below does not catch that: it asks only
     # that the corners sit past the node edge along the flow, which stays
     # true while the face moves. This asks where the loop actually meets
-    # the node. A 16-character label is wide enough to show it; at 12 the
-    # old code still landed on the right face.
+    # the node.
+    #
+    # The width is swept rather than picked. A single 16-character label
+    # passed here while an 80-character one still left through the top,
+    # because the 18 lower limit only exceeds the half height once the
+    # node is wide enough for the clamp to bite.
     #
     # The window is 0.1 rather than 0.05 because a coordinate written to
     # one decimal already carries 0.05 of rounding, so 0.05 would sit
     # exactly on the quantisation floor with no headroom.
-    it "keeps a sideways loop on the flow-side face of a wide node" do
-      xml = Sirena.render("flowchart LR\n  A[#{'a' * 16}] --> A\n")
-      x, _y, width, = node_rect(xml)
-      start_point, end_point = path_points(xml).values_at(0, -1)
+    [4, 16, 40, 80, 160].each do |label_width|
+      it "keeps a sideways loop on the flow-side face at #{label_width} characters" do
+        xml = Sirena.render("flowchart LR\n  A[#{'a' * label_width}] --> A\n")
+        x, _y, width, = node_rect(xml)
+        start_point, end_point = path_points(xml).values_at(0, -1)
 
-      expect([start_point.first, end_point.first])
-        .to all(be_within(0.1).of(x + width))
+        expect([start_point.first, end_point.first])
+          .to all(be_within(0.1).of(x + width))
+      end
     end
 
     # `sections` with `bendPoints` is the shape a laid-out graph would

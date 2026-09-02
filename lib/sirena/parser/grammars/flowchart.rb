@@ -477,7 +477,6 @@ module Sirena
         # flush. `flush_link_marker` refuses exactly that shape.
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
-            flush_link_marker.absent? >>
             node_with_shape.as(:node) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
             loose_statement_end
@@ -499,7 +498,8 @@ module Sirena
         # is there only to refuse the flush dot a bare name would
         # otherwise swallow.
         rule(:node_with_shape) do
-          node_id.as(:node_id) >>
+          flush_link_marker.absent? >>
+            node_id.as(:node_id) >>
             ((ws? >> node_shape).as(:shape) | dot_absent.as(:shape)) >>
             (inline_class >> dot_absent).maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)

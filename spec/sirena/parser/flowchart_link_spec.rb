@@ -15,11 +15,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # trailing one matches it. `o--x` draws the cross alone, and a mismatched
   # pair loses its thickness too — `o==x` is no thicker than `o--x`.
   #
-  # Every family here is open-ended in its length, so each is pinned at its
-  # minimum and at least one length past it. A family pinned at one length
-  # while its siblings are pinned at another is the gap to watch for: the
-  # `<`-prefixed rows stopped at three dashes for a while and nothing in
-  # the suite noticed.
+  # Every family here is open-ended in its length. Most are pinned at their
+  # minimum and at least one length past it; the thick cross and circle
+  # (`==x`, `==o`) are pinned at their minimum only. A family pinned at one
+  # length while its siblings are pinned at another is the gap to watch
+  # for: the `<`-prefixed rows stopped at three dashes for a while and
+  # nothing in the suite noticed.
   def self.links
     {
       "---" => "line", "-->" => "arrow", "--x" => "cross", "--o" => "circle",
@@ -52,8 +53,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "<-.-" => "dotted_line",
       # The same family written without its opening hyphen. mmdc draws
       # every one of these, and the rules refused the lot — the family is
-      # open-ended in its dot count, so the fourteen pinned below are a
-      # sample of it rather than the whole.
+      # open-ended in its dot count, so the rows below are a sample of it
+      # rather than the whole.
       ".-" => "dotted_line", ".->" => "dotted_arrow",
       ".-x" => "dotted_cross", ".-o" => "dotted_circle",
       "..-" => "dotted_line", "..->" => "dotted_arrow",
@@ -199,15 +200,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # `xx===B`, `x1===B` and `x === B` are all ordinary node names and mmdc
   # draws every one. Each row below was measured against mermaid 11.12.0.
   #
-  # Base accepted `x-->B`, `o-->B` and `x---B`, so three of these were
-  # already wrong before this branch; the rest arrived with the widened
-  # token set and would have been new.
+  # Measured on base c09c975: it accepted `x-->B`, `o-->B`, `x---B`,
+  # `x==>B` and `o==>B`, so five of these were already wrong before this
+  # branch; the rest arrived with the widened token set and would have
+  # been new.
   describe "a lone x or o flush against a link" do
     def parse(source)
       described_class.new.parse("flowchart TD\n  #{source}\n")
     end
 
-    %w[x===B o===B x==>B o==>B x-->B o-->B x---B x--xB].each do |source|
+    # Both node positions: the statement's own node and a chained target.
+    # The guard sat on the statement head for a round, so `A-->x===B` went
+    # through while `x===B` was refused.
+    %w[x===B o===B x==>B o==>B x-->B o-->B x---B x--xB
+       A-->x===B A-->o===B A-->x-->B A-->o--oB].each do |source|
       it "refuses #{source} the way mermaid does" do
         expect { parse(source) }.to raise_error(Sirena::Parser::ParseError)
       end
