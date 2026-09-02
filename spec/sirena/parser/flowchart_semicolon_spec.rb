@@ -1038,6 +1038,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A cb"x),
       %(click A cb"x "tip"),
       %(click A " "),
+      # All four of mermaid's link targets, not just `_blank`. They are
+      # reserved node ids as well, and once `RESERVED_WORDS` took that
+      # role the click tail was the only reader left — with three of its
+      # four alternatives unreached by any example.
+      %(click A "u" _self),
+      %(click A "u" _parent),
+      %(click A "u" _top),
       "click A cb,x",
       "click A cb!x",
       "click A cb#x",

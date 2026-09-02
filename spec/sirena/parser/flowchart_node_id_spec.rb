@@ -960,6 +960,17 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    # More than one space between the words. mmdc draws all three, and a
+    # single-space rule refuses them — every other trailing-name example
+    # here uses exactly one, so the run length went untested.
+    ["A  B", "A   B", "A  [T]"].each do |head|
+      it "takes #{head.inspect}, whose words are spaced wide" do
+        source = "flowchart TD\nsubgraph #{head}\nX-->Y\nend\n"
+
+        expect(subgraph_name_parses?(source)).to be(true)
+      end
+    end
+
     # A statement keyword is plain text in a subgraph name, trailing or
     # not, and mmdc draws all four of these.
     %w[graph style classDef endx].each do |word|
@@ -1013,6 +1024,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "ZéAclick" => true, "clickx" => true, "click1" => true,
       "click." => true, "click_" => true,
       "href-" => true, "call-" => true, "click-" => true,
+      # A subgraph's own six words end at a word boundary too, and mmdc
+      # draws all five of these. Without that boundary each one is
+      # refused for the reserved word it merely starts with.
+      "defaultx" => true, "default_" => true, "interpolatex" => true,
+      "_selfx" => true, "_topx" => true,
       # Every place gets checked, not just the last one: these hold a
       # reserved word at their second place and an id character at their
       # third, so a walk that only looked where it stopped took them.

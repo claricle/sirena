@@ -14,8 +14,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
   link_shapes.each do |shape, expected_type, links|
     it "keeps #{shape} identical across lengths" do
-      observed_types = {}
-
       aggregate_failures do
         links.each do |link|
           source = "flowchart TD\n  A#{link}B\n"
@@ -26,14 +24,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
             .not_to raise_error, message
           next unless diagram
 
-          arrow_type = diagram.edges.fetch(0).arrow_type
-          observed_types[source] = arrow_type
-          expect(arrow_type).to eq(expected_type), message
-        end
-
-        reference_type = observed_types.values.first
-        observed_types.each do |source, arrow_type|
-          expect(arrow_type).to eq(reference_type), "source #{source.inspect}"
+          expect(diagram.edges.fetch(0).arrow_type)
+            .to eq(expected_type), message
         end
       end
     end

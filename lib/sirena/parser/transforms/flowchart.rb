@@ -227,11 +227,6 @@ module Sirena
           }
         end
 
-        # Arrow types
-        rule(arrow: { plain: simple(:a) }) { a.to_s }
-        rule(arrow: { dotted: simple(:a) }) { a.to_s }
-        rule(arrow: { thick: simple(:a) }) { a.to_s }
-
         # Edge label
         rule(label: simple(:l)) { l.to_s.strip }
         rule(label: sequence(:l)) { l.join.strip }
