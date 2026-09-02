@@ -96,7 +96,19 @@ that.
    `it_behaves_like 'a diagram type'`, so a new type inherits for free:
    parses, produces a valid model, renders parseable escaped XML,
    respects themes, handles empty input without raising.
-3. **Per-type corpus output.** `rake corpus[kanban] --failing` prints,
+3. **Per-type corpus output.** Measured 2026-09-02, the interface as first
+   written does not run: unquoted brackets die in zsh with `no matches
+   found: corpus[pie]`, and once quoted, `rake 'corpus[pie]' --failing`
+   still exits with `invalid option: --failing` because Rake consumes the
+   option before the task sees it. Quote the task AND carry the flag some
+   other way — a second task argument, an env var, or a thin `bin/` wrapper:
+
+   ```sh
+   rake 'corpus[kanban,failing]'      # second argument
+   FAILING=1 rake 'corpus[kanban]'    # env var
+   ```
+
+   Whichever shape is chosen, it prints,
    for each failing case: the path, the stage, and the first line of the
    error. This is the command someone lives in for a whole day of item
    08, so spend the time to make its output good.
@@ -131,7 +143,12 @@ that.
       06's `TYPES`-to-fixture parity — no hand-edited row
 - [ ] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
-- [ ] `rake corpus[<type>] --failing` output is good enough to work from
+- [ ] `rake 'corpus[<type>,failing]'` (or the chosen equivalent) RUNS and
+      exits 0 — measured, not assumed. The unquoted `--failing` form in an
+      earlier draft does neither
+- [ ] its output names, for each failing case, the path, the stage and the
+      first line of the error. "Good enough to work from" is not a
+      criterion — this list is
 
 ## Do not
 

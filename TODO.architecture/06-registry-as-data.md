@@ -127,8 +127,14 @@ TYPES = {
 - [ ] a diagram type is declared in exactly one place
 - [ ] `Engine` contains no diagram-type constants
 - [ ] `grep -n "def self.render" lib/sirena.rb` shows one, inside `module Sirena`
-- [ ] the CLI and `Sirena.render` behave identically; `corpus:check`
-      unchanged
+- [ ] the CLI and `Sirena.render` behave identically. **`corpus:check` alone
+      cannot prove this** — item 01's task calls only `Sirena.render` and
+      records pass/fail, stage and exception class. It never invokes the CLI,
+      never compares SVG bytes and never compares error text, so the
+      byte-identical promise above needs its own gate: render the same source
+      both ways, compare a checksum of the SVG, and compare the exact error
+      message on a failing source
+- [ ] `corpus:check` unchanged
 - [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
 - [ ] it still resolves each model by convention, and still runs each
       canonical fixture

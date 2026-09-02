@@ -93,7 +93,12 @@ of 24, not 23.
    - transform inherits `Transform::Base`
    - renderer inherits `Renderer::Base`
    - the registered `model:` inherits `Diagram::Base`
-   - that model responds to `diagram_type` and `valid?`
+   - that model responds to `diagram_type` and `valid?` — and that
+     **calling `valid?` returns a boolean.** `respond_to?` alone is not
+     enough: six models respond only because they inherit
+     `Diagram::Base#valid?`, which raises `NotImplementedError` when
+     invoked. Assert on the returned value, or assert the concrete model
+     owns its own implementation.
    - `diagram_type` returns the symbol the type is registered under
    - the parser returns an instance of the registered `model:`
 

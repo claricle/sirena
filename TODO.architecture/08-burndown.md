@@ -147,7 +147,13 @@ snapshot.
    rigour is proportionate to the problem.
 
 4. **Then lint** — `TODO.foundation/08` and `09`.
-   Item 08 (109 live offences, 104 autocorrectable) is small and can run
+   Item 08's LIVE-offence work is ALREADY DONE and must not be scheduled
+again. The "109 live offences, 104 autocorrectable" figure is stale:
+commit `ff8b1a8` "Clear the live lint offenses and pin the toolchain" is
+an ancestor of base `c09c975`, and `bundle exec rubocop` on the frozen
+tree reports no offences in tracked files. The 7,602 PARKED offences in
+`.rubocop_todo.yml` are still real and are still the work. What remains
+of item 08 is small and can run
    any time. The 7,602-entry `.rubocop_todo.yml` burndown belongs
    **here**, after the structural work — items 04-06 delete a large
    fraction of the files that debt is parked in, and styling code you

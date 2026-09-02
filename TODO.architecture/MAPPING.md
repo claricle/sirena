@@ -38,9 +38,40 @@ These are unchanged and still correct. When their turn comes, read them.
 |---|---|---|
 | `02` corpus oracle + scoreboard | `01-safety-net.md` part B **now**, `08-burndown.md` step 3a **later** | split by time, not dropped, and **not relocated**. `scoreboard/corpus.json` is the scoreboard's first column, shipped early; it answers "did I break something" for items 01-07. The other columns, the floors and the CI diff arrive at item 08 step 3a, along with the hermetic toolchain pin and reference provenance, which geometry parity work requires |
 | `10` notation registry | `06-registry-as-data.md` | a data table and convention-based lookup, instead of a notation plugin system with external discovery. Same seam, no speculative API |
-| `18` typed IR | **stays as written** — `04-typed-scene.md` does not replace it, with one addition to its Done-when | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
+| `18` typed IR | **kept, but its paths and boundary need rewriting before it starts** — see the note below. `04-typed-scene.md` does not replace it | An earlier draft of this plan said 18 was "brought forward and scoped to Mermaid only". That was wrong on both halves, and the owner ruled against it on 2026-08-13. See below |
 | `03` coverage floors | one line floor, one branch floor | staged timeline tied to other tracks' completion removed. **This overrides the floor-raise criteria inside items 06, 07 and 14**, which are otherwise adopted as written — see the note below |
 | `19` CI topology | one workflow file | lane ownership protocol removed. **But 08 and 17 still depend on 19a** — 08 wants a rubocop lane, 17 needs the release workflow pinned off `metanorma/ci@main`. The one file owes both; see `DO-NOT-BUILD.md` |
+
+### Item 18 cannot start against the paths it names
+
+It is kept in full, but two things in it are stale the moment item 03 lands
+and must be rewritten before anyone picks it up:
+
+- It targets `lib/sirena/transform/*`, a directory **item 03 removes** —
+  that code becomes `lib/sirena/layout/`.
+- It directs those transforms to emit the IR, while this architecture puts
+  the IR at the **notation -> layout** boundary and admits mapper ownership
+  is unsettled.
+
+Rewriting the paths is mechanical. Deciding who emits the IR is not, and it
+is the part to settle first.
+
+### Which wins on the corpus denominators
+
+Two rules here contradict each other and one has to win:
+
+- Rows above say foundation `06`/`07`'s per-type case counts "stand as
+  written".
+- `CHANGES-TO-THE-PLAN.md` says to re-derive them because they include
+  extraction artifacts, and `08-burndown.md:83-89` rejects the original
+  denominators outright.
+
+**Re-derivation wins.** The original counts are measured against the whole
+1,997-file corpus, which carries 632 extraction artifacts and 59 cases mmdc
+itself rejects. Only the evidence-valid denominator means anything. What
+still stands from `06`/`07` is their ORDERING and their per-type
+prioritisation — not their absolute numbers. Re-measure before quoting any
+of them.
 
 ### Which wins on the coverage floors
 
