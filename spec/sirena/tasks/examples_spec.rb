@@ -207,9 +207,19 @@ RSpec.describe ExampleTasks do
     it 'keeps the previous SVG whole when the write dies partway' do
       write('flowchart/01-basic.mmd', source)
       svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
-      allow(File).to receive(:write).and_wrap_original do |original, path, content|
-        original.call(path, content.to_s[0, 4])
-        raise Errno::EFBIG
+      # Fails the temporary write half-done. Holding the original Method
+      # rather than and_wrap_original, because the replacement calls File.open
+      # again and would otherwise recurse into itself.
+      original_open = File.method(:open)
+      allow(File).to receive(:open) do |path, *arguments, &block|
+        if path.to_s.end_with?('.tmp')
+          original_open.call(path, *arguments) do |file|
+            file.write('<svg')
+            raise Errno::EFBIG
+          end
+        else
+          original_open.call(path, *arguments, &block)
+        end
       end
 
       silently { described_class.generate_examples(examples_dir) }
@@ -267,6 +277,26 @@ RSpec.describe ExampleTasks do
       expect { described_class.write_svg(victim, '<svg>new</svg>', examples_dir) }
         .to raise_error(/refused to write outside/)
       expect(File.read(victim)).to eq('<svg>outside</svg>')
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    # The temporary name is predictable, and an ordinary write follows
+    # whatever already answers to it. A leftover from a killed run, or a link
+    # planted there, would otherwise be written straight through.
+    it 'aborts rather than writing through a name already in the temporary slot' do
+      outside = Dir.mktmpdir('sirena-outside')
+      victim = File.join(outside, 'victim')
+      File.write(victim, 'KEEP ME')
+      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+      target = File.join(examples_dir, 'flowchart', 'a.svg')
+      File.write(target, '<svg>previous</svg>')
+      File.symlink(victim, File.join(examples_dir, 'flowchart', ".a.svg.#{Process.pid}.tmp"))
+
+      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+        .to raise_error(Errno::EEXIST)
+      expect([File.read(victim), File.read(target)])
+        .to eq(['KEEP ME', '<svg>previous</svg>'])
     ensure
       FileUtils.remove_entry(outside) if outside
     end

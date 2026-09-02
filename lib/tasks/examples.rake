@@ -208,11 +208,21 @@ module ExampleTasks
     raise 'rendered no SVG document' unless svg.is_a?(String) && svg.include?('<svg')
 
     temporary = File.join(File.dirname(svg_file), ".#{File.basename(svg_file)}.#{Process.pid}.tmp")
+    created = false
     begin
-      File.write(temporary, svg)
+      # CREAT|EXCL rather than File.write: the temporary path is predictable,
+      # and File.write follows whatever is already there. Anything sitting on
+      # that name — a leftover from a killed run, or a link — must abort the
+      # write rather than be written through onto its target.
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
+        created = true
+        file.write(svg)
+      end
       File.rename(temporary, svg_file)
     ensure
-      FileUtils.rm_f(temporary)
+      # Only what this call made. Removing a name we refused to write to would
+      # be the same mistake one step down.
+      FileUtils.rm_f(temporary) if created
     end
   end
 
