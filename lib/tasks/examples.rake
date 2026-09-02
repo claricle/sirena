@@ -112,7 +112,9 @@ module ExampleTasks
   # pattern to Dir.glob, so the sweep matched a sibling's files and paired
   # them with the wrong directory. Nothing here needs pattern matching.
   #
-  # @return [Array<String>] the entries of dir, as full paths, or [] if unreadable
+  # @return [Array<String>] the entries of dir, as full paths
+  # @raise [SystemCallError] if dir cannot be read — a folder that cannot be
+  #   listed must not look like an empty one
   def children(dir)
     Dir.children(dir).sort.map { |entry| File.join(dir, entry) }
   end
@@ -252,15 +254,16 @@ module ExampleTasks
   # render actually looks like an SVG document.
   # An SVG document, not a string that merely mentions one: an error page
   # carrying an inline <svg> passed a substring check and replaced a good
-  # picture with itself. The root may be self-closing, so `/` ends the name
-  # as legitimately as whitespace or `>`.
+  # picture with itself. The whole start tag has to be there: matching one
+  # character after the name accepted `<svg/garbage` and `<svg width="1"`,
+  # and write_svg replaced a good picture with the first of those.
   def svg_document?(svg)
     svg.is_a?(String) &&
-      svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg[\s/>]}m)
+      svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg(?:\s[^>]*)?/?>}m)
   end
 
   def write_svg(svg_file, svg, examples_dir)
-    raise "refused to write outside examples/: #{svg_file}" unless manageable?(examples_dir, svg_file)
+    raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
     raise 'rendered no SVG document' unless svg_document?(svg)
 
     # Independent of the target's basename: embedding a legal 255-byte name

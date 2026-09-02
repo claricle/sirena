@@ -282,7 +282,7 @@ RSpec.describe ExampleTasks do
       File.write(victim, '<svg>outside</svg>')
 
       expect { described_class.write_svg(victim, '<svg>new</svg>', examples_dir) }
-        .to raise_error(/refused to write outside/)
+        .to raise_error(/refused an unsafe SVG target/)
       expect(File.read(victim)).to eq('<svg>outside</svg>')
     ensure
       FileUtils.remove_entry(outside) if outside
@@ -345,7 +345,7 @@ RSpec.describe ExampleTasks do
       File.symlink(victim, target)
 
       expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
-        .to raise_error(/refused to write outside/)
+        .to raise_error(/refused an unsafe SVG target/)
       expect(File.read(victim)).to eq('KEEP ME')
     ensure
       FileUtils.remove_entry(outside) if outside
@@ -451,7 +451,10 @@ RSpec.describe ExampleTasks do
     it 'accepts every spelling of an SVG root and nothing else' do
       accepted = ['<svg/>', '<?xml version="1.0"?><svg/>', '<svg xmlns="x"/>',
                   "<svg\n width=\"1\">x</svg>", '<!-- note --><svg/>']
-      rejected = ['<html><svg/></html>', '', 'Error 500', '<svgx/>', nil]
+      # The malformed prefixes matter: matching one character after the name
+      # accepted every one of them.
+      rejected = ['<html><svg/></html>', '', 'Error 500', '<svgx/>', nil,
+                  '<svg/garbage', '<svg ', '<svg/', '<svg width="1"', '<svg']
 
       expect(accepted.map { |doc| described_class.svg_document?(doc) }).to all(be(true))
       expect(rejected.map { |doc| described_class.svg_document?(doc) }).to all(be(false))
@@ -503,13 +506,13 @@ RSpec.describe ExampleTasks do
       system('mkfifo', fifo)
 
       expect { described_class.write_svg(fifo, '<svg>x</svg>', examples_dir) }
-        .to raise_error(/refused to write outside/)
+        .to raise_error(/refused an unsafe SVG target/)
       expect(File.ftype(fifo)).to eq('fifo')
     end
 
     # The temporary name used to embed the target's, so a legal source name
     # produced an illegal temporary one.
-    it 'generates a source whose name is as long as the filesystem allows' do
+    it 'generates a source with a 251-byte name' do
       flowchart = File.join(examples_dir, 'flowchart')
       FileUtils.mkdir_p(flowchart)
       File.write(File.join(flowchart, "#{'a' * 247}.mmd"), source)
