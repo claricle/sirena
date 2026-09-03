@@ -134,7 +134,6 @@ def run_mmdc(input, output)
     descendants = descendants_of(pid)
     status = wait_with_deadline(pid, descendants: descendants)
     kill_group_id(pid)
-    kill_each(descendants)
     [status, drain.join(DRAIN_GRACE) ? drain.value : '']
   ensure
     kill_group(pid) if pid && status.nil?
