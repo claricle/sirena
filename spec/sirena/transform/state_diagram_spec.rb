@@ -127,12 +127,30 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
       expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
     end
 
-    it 'raises error for invalid diagram' do
+    # A REGRESSION GUARD for pre-existing transform behaviour. The branch
+    # rewrote how transition endpoints resolve, so this is the invariant that
+    # must survive; it is green on origin/main by design.
+    it 'raises error when a transition names a state that does not exist' do
       invalid_diagram = Sirena::Diagram::StateDiagram.new
+      invalid_diagram.states << Sirena::Diagram::StateNode.new(
+        id: 'idle', label: 'Idle', state_type: 'normal'
+      )
+      invalid_diagram.transitions << Sirena::Diagram::StateTransition.new(
+        from_id: 'idle', to_id: 'nowhere'
+      )
 
       expect do
         transform.to_graph(invalid_diagram)
       end.to raise_error(Sirena::Transform::TransformError)
+    end
+
+    it 'transforms a diagram with no states at all' do
+      graph = transform.to_graph(Sirena::Diagram::StateDiagram.new)
+
+      expect(graph[:children]).to eq([])
+      expect(graph[:edges]).to eq([])
+      expect(graph[:id]).to eq('state_diagram')
+      expect(graph[:layoutOptions]['elk.direction']).to eq('DOWN')
     end
 
     it 'includes description in labels when present' do
@@ -160,6 +178,51 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
       expect(state[:labels].length).to eq(2)
       expect(state[:labels][0][:text]).to eq('Idle')
       expect(state[:labels][1][:text]).to eq('System is idle')
+    end
+
+    it 'uses a bare description as the only display text' do
+      diagram = Sirena::Parser::StateDiagramParser.new.parse(
+        "stateDiagram-v2\nA : ONLY_TEXT\n"
+      )
+
+      graph = transform.to_graph(diagram)
+      labels = graph[:children].first[:labels].map { |label| label[:text] }
+
+      expect(labels).to eq(['ONLY_TEXT'])
+    end
+
+    it 'preserves aliases and descriptions in source order' do
+      diagram = Sirena::Parser::StateDiagramParser.new.parse(<<~MERMAID)
+        stateDiagram-v2
+        state "ALIAS_ONE" as A
+        A : DESC_ONE
+        state "ALIAS_TWO" as A
+        A : DESC_TWO
+      MERMAID
+
+      graph = transform.to_graph(diagram)
+      labels = graph[:children].first[:labels].map { |label| label[:text] }
+
+      expect(labels).to eq(
+        %w[ALIAS_ONE DESC_ONE ALIAS_TWO DESC_TWO]
+      )
+    end
+
+    # A label is deliberately NOT display text for shape purposes, because
+    # terminals carry `label: "[*]"` with no descriptions — keying the shape on
+    # the label turns `[*]` into an ordinary 100px box instead of a 30px circle.
+    # No parsed source produces a marker with a label and no descriptions, so
+    # only a directly built model can hold that combination.
+    it 'keeps a marker type when only a scalar label is set' do
+      labelled = Sirena::Diagram::StateNode.new(
+        id: 'C', label: 'C', state_type: 'choice'
+      )
+      described = Sirena::Diagram::StateNode.new(
+        id: 'D', state_type: 'choice', descriptions: ['text']
+      )
+
+      expect(transform.send(:state_shape_type, labelled)).to eq('choice')
+      expect(transform.send(:state_shape_type, described)).to eq('normal')
     end
   end
 end

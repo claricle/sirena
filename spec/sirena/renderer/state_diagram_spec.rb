@@ -142,6 +142,32 @@ RSpec.describe Sirena::Renderer::StateDiagramRenderer do
       expect(texts.map(&:content)).to include('Idle')
     end
 
+    it 'keeps accumulated state text inside its rectangle' do
+      diagram = Sirena::Parser::StateDiagramParser.new.parse(<<~MERMAID)
+        stateDiagram-v2
+        state "ALIAS_ONE" as A
+        A : DESC_ONE
+        state "ALIAS_TWO" as A
+        A : DESC_TWO
+      MERMAID
+      rendered_graph = Sirena::Transform::StateDiagramTransform.new
+        .to_graph(diagram)
+      svg = renderer.render(rendered_graph)
+      state_group = svg.children.find { |child| child.id == 'state-A' }
+      rectangle = state_group.children.grep(Sirena::Svg::Rect).first
+      texts = state_group.children.grep(Sirena::Svg::Text)
+      labels = rendered_graph[:children].first[:labels]
+
+      expect(texts.length).to eq(labels.length)
+      expect(texts.map(&:content)).to eq(labels.map { |label| label[:text] })
+
+      text_bounds = texts.zip(labels).map do |text, label|
+        [text.y - (label[:height] / 2), text.y + (label[:height] / 2)]
+      end
+      expect(text_bounds.flatten.min).to be >= rectangle.y
+      expect(text_bounds.flatten.max).to be <= rectangle.y + rectangle.height
+    end
+
     it 'renders transitions as paths' do
       svg = renderer.render(graph)
 
