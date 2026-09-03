@@ -737,12 +737,16 @@ RSpec.describe MermaidDiff do
       probe = File.join(dir, 'probe.txt')
       File.write(probe, source)
       bin = fake_mmdc(dir, mmdc)
-      command = [
-        RbConfig.ruby,
-        relative ? './scripts/mermaid_diff.rb' : File.expand_path('../../scripts/mermaid_diff.rb', __dir__),
-        *options,
-        probe
-      ]
+      script = if relative
+                 './scripts/mermaid_diff.rb'
+               else
+                 File.expand_path('../../scripts/mermaid_diff.rb', __dir__)
+               end
+      command = if relative
+                  ['bundle', 'exec', script, *options, probe]
+                else
+                  [RbConfig.ruby, script, *options, probe]
+                end
       capture = proc do
         Open3.capture3(
           { 'PATH' => "#{bin}:#{ENV.fetch('PATH')}" },
