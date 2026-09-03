@@ -48,6 +48,7 @@
 #      whether Sirena can parse it — the point is to judge the input, not us.
 
 require 'digest'
+require 'open3'
 require 'yaml'
 require_relative 'mmdc_oracle'
 
@@ -248,9 +249,8 @@ end
 # Re-checks one case against the installed mmdc using the shared oracle.
 def local_mmdc_verdict(path)
   MmdcOracle.verdict(path) do |input, output|
-    status = system('mmdc', '-i', input, '-o', output,
-                    out: File::NULL, err: File::NULL)
-    [status, '']
+    stdout, stderr, status = Open3.capture3('mmdc', '-i', input, '-o', output)
+    [status, [stdout, stderr].reject(&:empty?).join]
   end.verdict
 end
 
