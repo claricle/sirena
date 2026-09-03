@@ -365,10 +365,14 @@ RSpec.describe MermaidDiff do
           [false, 'browser launch failed once']
         else
           File.write(output, '<svg/>')
-          [true, '']
+          [true, 'Generating single mermaid chart']
         end
       end
 
+      # Real mmdc prints this to stdout even on a healthy canary run, so a
+      # true positive here must keep it out of the reported diagnostic --
+      # otherwise a probe failure report gets the canary's own success noise
+      # appended to the text a developer reads to triage the gap.
       expect([result.verdict, result.diagnostic]).to eq(
         [:error, 'browser launch failed once']
       )
@@ -630,8 +634,9 @@ RSpec.describe MermaidDiff do
           { 'case' => entry[:path], 'verdict' => 'invalid', 'evidence' => 'sidecar rejected it' }
         end
 
+        errors = nil
         prefix_path(fake_mmdc(dir, corpus_verdict_mmdc)) do
-          expect { corpus_harness.send(:verify_invalid!, rows, entries) }
+          expect { errors = corpus_harness.send(:verify_invalid!, rows, entries) }
             .to output(/checked 3 invalid case\(s\).*1 promoted to valid/).to_stderr
         end
 
@@ -642,6 +647,10 @@ RSpec.describe MermaidDiff do
         ]
 
         expect(rows.map { |row| [row['verdict'], row['evidence']] }).to eq(expected)
+        # The CLI's abort-on-broken-mmdc gate reads exactly this return value
+        # (corpus_verdicts.rb:318-319) -- only the third row is a genuine
+        # :error (mmdc could not be run), so it must be 1, not 3.
+        expect(errors).to eq(1)
       end
     end
 
