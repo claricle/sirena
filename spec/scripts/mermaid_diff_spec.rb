@@ -600,6 +600,17 @@ RSpec.describe MermaidDiff do
       end
     end
 
+    it 'uses a real rejection diagnostic when mmdc exits nonzero' do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, 'syntax-error.mmd')
+        File.write(path, 'not a diagram\n')
+
+        prefix_path(fake_mmdc(dir, rejecting_corpus_mmdc)) do
+          expect(corpus_harness.send(:local_mmdc_verdict, path)).to be(:rejects)
+        end
+      end
+    end
+
     it 'maps every local verdict to the matching row update' do
       Dir.mktmpdir do |dir|
         entries = {
@@ -952,6 +963,14 @@ RSpec.describe MermaidDiff do
         *accept.mmd|*reject.mmd) /bin/cp "$2" "$4" ;;
         *) exit 1 ;;
       esac
+    SH
+  end
+
+  def rejecting_corpus_mmdc
+    <<~'SH'
+      #!/bin/sh
+      printf '%s\n' 'UnknownDiagramError: no diagram type detected' >&2
+      exit 1
     SH
   end
 
