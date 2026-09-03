@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lutaml/model'
+require_relative 'arrowhead'
 require_relative 'element'
 
 module Sirena
@@ -17,7 +18,12 @@ module Sirena
       attribute :marker_end, :string
       attribute :marker_start, :string
 
-      writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin, :marker_end, :marker_start
+      # Five renderers set `marker-end`; `marker-start` arrives only through
+      # `from_xml`. Neither is emitted — Svg::Arrowhead draws them instead.
+      # See that class for why.
+      # They stay in the xml block below, which is what `from_xml` reads: a
+      # parsed marker request is honoured the same way a set one is.
+      writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin
 
       xml do
         root 'path'
@@ -34,6 +40,8 @@ module Sirena
         map_attribute 'marker-start', to: :marker_start
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
       end
 
       # Helper to build path data from move and line commands
@@ -59,6 +67,19 @@ module Sirena
             'Z'
           end
         end.join(' ')
+      end
+
+      protected
+
+      # The arrowheads this path asked for, drawn beside it.
+      #
+      # A head is a sibling shape rather than a child because `<path>` takes
+      # no drawable children. Each is a Polygon — a leaf that draws no
+      # siblings of its own — so one head is always one entry.
+      #
+      # @return [Array<String>] one entry of markup per arrowhead
+      def sibling_markup
+        Arrowhead.for(self).map(&:to_xml)
       end
     end
   end

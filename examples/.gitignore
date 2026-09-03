@@ -1,4 +1,7 @@
-# Ignore generated SVG files
+# Stale generated/ directories from older checkouts. Nothing writes them
+# now — the shipped SVGs sit beside their sources — but leaving the rule
+# keeps an old working copy quiet and stops `git add examples/` sweeping
+# stale output back in.
 */generated/
 
 # Ignore macOS files

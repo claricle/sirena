@@ -1,5 +1,147 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="200" viewBox="0 0 400 200" version="1.2" xmlns="http://www.w3.org/2000/svg">
-  <rect x="50" y="50" width="300" height="100" fill="#f0f0f0" stroke="#000000" stroke-width="2"/>
-  <text x="200" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#000000">ER Diagram (parser needs fixes)</text>
+<svg
+ width="800.0"
+ height="470.0"
+ viewBox="0 0 800 470"
+ version="1.2"
+ baseProfile="tiny"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="rel-USER_to_POST">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="300.0" y2="170.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="217.54213590888125" y1="146.5543042429833" x2="222.45786409111875" y2="133.4456957570167"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.44569575701667" cy="167.54213590888125" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="299.6105594984034" y2="158.52610421165636"/>
+  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="300.0" y2="170.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="292.1621065009821" y2="178.3886455381132"/>
+  <text fill="#000000" x="260.0" y="150.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+</g>
+<g id="rel-USER_to_COMMENT">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="150.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="219.78797611351462" y1="146.99678825401767" x2="220.21202388648538" y2="133.00321174598233"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.0032117459823" cy="149.78797611351462" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.9298822032113" y2="139.2651926153136"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="550.0" y2="150.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.2873527978941" y2="160.4686629907805"/>
+  <text fill="#000000" x="385.0" y="140.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+</g>
+<g id="rel-POST_to_COMMENT">
+  <line stroke="#333333" stroke-width="2" x1="470.0" y1="85.0" x2="550.0" y2="235.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="463.8235294117647" y1="88.29411764705883" x2="476.1764705882353" y2="81.70588235294117"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="546.7058823529412" cy="228.8235294117647" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="557.2912846770212" y2="226.13213011909338"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="550.0" y2="234.99999999999997"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="538.5737522338478" y2="236.1148140887858"/>
+  <text fill="#000000" x="510.0" y="155.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">has</text>
+</g>
+<g id="rel-POST_to_CATEGORY">
+  <line stroke="#333333" stroke-width="2" x1="300.0" y1="255.0" x2="220.0" y2="225.0" stroke-dasharray="5,5"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.44569575701667" cy="252.54213590888125" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="302.4578640911187" y1="248.4456957570167" x2="297.5421359088813" y2="261.55430424298333"/>
+  <line stroke="#333333" stroke-width="2" x1="217.54213590888125" y1="231.5543042429833" x2="222.45786409111875" y2="218.4456957570167"/>
+  <text fill="#000000" x="260.0" y="235.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">belongs_to</text>
+</g>
+<g id="rel-POST_to_TAG">
+  <line stroke="#333333" stroke-width="2" x1="385.0" y1="290.0" x2="385.0" y2="250.0" stroke-dasharray="5,5"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="385.0" cy="283.0" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="392.0" y1="290.0" x2="378.0" y2="290.0"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="385.0" cy="257.0" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="374.39339828220176" y2="254.3933982822018"/>
+  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="385.0" y2="250.0"/>
+  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="395.6066017177982" y2="254.3933982822018"/>
+  <text fill="#000000" x="385.0" y="265.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">tagged_with</text>
+</g>
+<g id="rel-USER_to_LIKE">
+  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="320.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="216.648035085236" y1="146.14526901040068" x2="223.351964914764" y2="133.85473098959932"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.8547309895993" cy="316.64803508523596" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="551.2220489298533" y2="308.5847231799181"/>
+  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="550.0" y2="320.0"/>
+  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="541.0640612661574" y2="327.20770056336045"/>
+  <text fill="#000000" x="385.0" y="225.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">gives</text>
+</g>
+<g id="rel-POST_to_LIKE">
+  <line stroke="#333333" stroke-width="2" x1="470.0" y1="170.0" x2="550.0" y2="320.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="463.8235294117647" y1="173.2941176470588" x2="476.1764705882353" y2="166.7058823529412"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="546.7058823529412" cy="313.8235294117647" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="557.2912846770212" y2="311.13213011909335"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="550.0" y2="320.0"/>
+  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="538.5737522338478" y2="321.1148140887858"/>
+  <text fill="#000000" x="510.0" y="240.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+</g>
+<g id="rel-COMMENT_to_LIKE">
+  <line stroke="#333333" stroke-width="2" x1="635.0" y1="250.0" x2="635.0" y2="250.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="635.0" y1="257.0" x2="635.0" y2="243.0"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="642.0" cy="250.0" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="260.6066017177982"/>
+  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="635.0" y2="250.0"/>
+  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="239.3933982822018"/>
+  <text fill="#000000" x="635.0" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+</g>
+<g id="entity-USER">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="180.0"/>
+  <text fill="#000000" x="135.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">USER</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="220.0" y2="94.0"/>
+  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">UK username string</text>
+  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK email string</text>
+  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">password_hash string</text>
+  <text fill="#000000" x="60.0" y="188.0" font-family="monospace" font-size="12">created_at datetime</text>
+  <text fill="#000000" x="60.0" y="206.0" font-family="monospace" font-size="12">updated_at datetime</text>
+  <text fill="#000000" x="60.0" y="224.0" font-family="monospace" font-size="12">is_active boolean</text>
+</g>
+<g id="entity-POST">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="170.0" height="240.0"/>
+  <text fill="#000000" x="385.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">POST</text>
+  <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="470.0" y2="94.0"/>
+  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK user_id int</text>
+  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">FK category_id int</text>
+  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">title string</text>
+  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">content text</text>
+  <text fill="#000000" x="310.0" y="206.0" font-family="monospace" font-size="12">UK slug string</text>
+  <text fill="#000000" x="310.0" y="224.0" font-family="monospace" font-size="12">published_at datetime</text>
+  <text fill="#000000" x="310.0" y="242.0" font-family="monospace" font-size="12">created_at datetime</text>
+  <text fill="#000000" x="310.0" y="260.0" font-family="monospace" font-size="12">updated_at datetime</text>
+  <text fill="#000000" x="310.0" y="278.0" font-family="monospace" font-size="12">view_count int</text>
+</g>
+<g id="entity-COMMENT">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="170.0" height="200.0"/>
+  <text fill="#000000" x="635.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">COMMENT</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="720.0" y2="94.0"/>
+  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK post_id int</text>
+  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK user_id int</text>
+  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">FK parent_id int</text>
+  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">content text</text>
+  <text fill="#000000" x="560.0" y="206.0" font-family="monospace" font-size="12">created_at datetime</text>
+  <text fill="#000000" x="560.0" y="224.0" font-family="monospace" font-size="12">updated_at datetime</text>
+  <text fill="#000000" x="560.0" y="242.0" font-family="monospace" font-size="12">is_approved boolean</text>
+</g>
+<g id="entity-CATEGORY">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="250.0" width="170.0" height="120.0"/>
+  <text fill="#000000" x="135.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CATEGORY</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="294.0" x2="220.0" y2="294.0"/>
+  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">UK name string</text>
+  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK slug string</text>
+  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">description text</text>
+</g>
+<g id="entity-TAG">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="250.0" width="170.0" height="100.0"/>
+  <text fill="#000000" x="385.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">TAG</text>
+  <line stroke="#333333" stroke-width="1" x1="300.0" y1="294.0" x2="470.0" y2="294.0"/>
+  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">UK name string</text>
+  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">UK slug string</text>
+</g>
+<g id="entity-LIKE">
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="170.0" height="140.0"/>
+  <text fill="#000000" x="635.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">LIKE</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="720.0" y2="294.0"/>
+  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
+  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">FK user_id int</text>
+  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">FK post_id int</text>
+  <text fill="#000000" x="560.0" y="370.0" font-family="monospace" font-size="12">FK comment_id int</text>
+  <text fill="#000000" x="560.0" y="388.0" font-family="monospace" font-size="12">created_at datetime</text>
+</g>
 </svg>

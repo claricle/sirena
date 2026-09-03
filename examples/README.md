@@ -7,7 +7,7 @@ This directory contains example diagrams for all supported diagram types.
 Each diagram type has its own directory with:
 - `*.mmd` - Mermaid source files
 - `*.yml` - Metadata for each example
-- `generated/` - Auto-generated SVG files (git-ignored)
+- `*.svg` - Rendered output, regenerated in place and committed
 
 ## Usage
 
