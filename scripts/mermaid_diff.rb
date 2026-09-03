@@ -131,19 +131,27 @@ def run_mmdc(input, output)
     stdout_w.close
     drain = Thread.new { stdout_r.read }
 
-    status = wait_with_deadline(pid)
+    descendants = descendants_of(pid)
+    status = wait_with_deadline(pid, descendants: descendants)
     kill_group_id(pid)
+    kill_each(descendants)
     [status, drain.join(DRAIN_GRACE) ? drain.value : '']
   ensure
     kill_group(pid) if pid && status.nil?
+    kill_each(descendants || [])
     drain&.kill
   end
 end
 
-def wait_with_deadline(pid)
+def wait_with_deadline(pid, descendants: nil)
   deadline = monotonic + CASE_TIMEOUT
 
   loop do
+    if descendants
+      descendants.concat(descendants_of(pid))
+      descendants.uniq!
+    end
+
     finished, status = Process.waitpid2(pid, Process::WNOHANG)
     return status if finished
     return kill_group(pid) if monotonic > deadline
@@ -155,10 +163,9 @@ end
 # Killing mmdc's process group is not enough: puppeteer starts Chromium in
 # a group of its own, and after the group kill it survived under PID 1 for
 # seconds. The descendants have to be collected BEFORE the kill, because
-# once the parent dies they are reparented and the trail is gone. That also
-# bounds what this can clean up: a descendant that escapes a normally
-# exiting mmdc is already reparented by the time we hold its status, and no
-# sweep from here can tell it from anything else on the machine.
+# once the parent dies they are reparented and the trail is gone. A first
+# snapshot is taken immediately after spawn and repeated while the leader is
+# alive, so a child that escapes a normally exiting mmdc is still collected.
 #
 # Collecting the descendants means running `ps`, and mmdc can finish while
 # that runs. The status it finished with is the verdict we came for, so it
@@ -321,7 +328,8 @@ end
 # Scrubbed for the display and nowhere else: a probe may hold bytes UTF-8
 # cannot name, and both tools were asked about the real ones.
 def one_line(source)
-  source.scrub.sub(/\r?\n\z/, '').gsub(/\r?\n/, ' | ')
+  folded = source.scrub.sub(/\r?\n\z/, '').gsub(/\r?\n/, ' | ')
+  folded.gsub(/[\x00-\x1F\x7F]/) { |control| format('\\x%02X', control.ord) }
 end
 
 def check_oracle
@@ -341,7 +349,7 @@ rescue StandardError
   ''
 end
 
-return unless $PROGRAM_NAME == __FILE__
+return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
 only_gaps = !ARGV.delete('--only-gaps').nil?
 paths = ARGV
