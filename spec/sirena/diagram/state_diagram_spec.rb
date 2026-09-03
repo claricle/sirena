@@ -29,6 +29,8 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       expect(diagram.valid?).to be true
     end
 
+    # A REGRESSION GUARD for pre-existing model behaviour, kept because the
+    # branch changes what reaches `valid?`. Green on origin/main by design.
     it 'returns false when the states collection is missing altogether' do
       diagram = described_class.new(direction: 'TB')
       diagram.states = nil

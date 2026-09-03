@@ -342,6 +342,11 @@ RSpec.describe 'StateDiagram Integration' do
 
     # A count tripwire, not a behaviour spec: it catches changes to the total
     # number of oracle-valid cases represented by the generated list below.
+    # A COUNT-ONLY TRIPWIRE, and deliberately weak: its job is to fail if the
+    # corpus or the verdict file moves under the examples below, not to prove
+    # behaviour. A same-count swap slips past it, which is recorded as a Low
+    # rather than fixed, because per-case identity belongs to the scoreboard
+    # (TODO.foundation item 02), not here.
     it 'still finds the 52 cases the examples below were generated from' do
       expect(self.class.oracle_valid_cases.length).to eq(52)
     end

@@ -127,6 +127,9 @@ RSpec.describe Sirena::Transform::StateDiagramTransform do
       expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
     end
 
+    # A REGRESSION GUARD for pre-existing transform behaviour. The branch
+    # rewrote how transition endpoints resolve, so this is the invariant that
+    # must survive; it is green on origin/main by design.
     it 'raises error when a transition names a state that does not exist' do
       invalid_diagram = Sirena::Diagram::StateDiagram.new
       invalid_diagram.states << Sirena::Diagram::StateNode.new(

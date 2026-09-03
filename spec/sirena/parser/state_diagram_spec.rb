@@ -339,6 +339,10 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
         expect(diagram.states.map(&:id)).to eq(['State1'])
       end
 
+      # A REGRESSION GUARD, not a proof of new behaviour. This parses
+      # identically on origin/main; it is here because the note grammar was
+      # rewritten around it and this is the shape that must not break.
+      # mutation-check reports it STAYED GREEN for exactly that reason.
       it 'reads a single-line note' do
         diagram = parser.parse(
           "stateDiagram-v2\nState1\nnote right of State1 : hello\n"
@@ -515,6 +519,11 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
+      # The refusal belongs in the same example as the acceptance. Asserting
+      # only that `state note` parses passes on origin/main too, where a
+      # reserved word is an ordinary id everywhere — so it could not tell
+      # "the keyword guard lets a claimed line through" from "there is no
+      # guard at all". The transition form is what pins it.
       it 'takes reserved names once a state statement claims the line' do
         diagram = parser.parse(
           "stateDiagram-v2\nstate note\nstate style\nstate state\n" \
@@ -523,6 +532,9 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
 
         expect(diagram.states.map(&:id))
           .to eq(%w[note style state notes styles])
+
+        expect { parser.parse("stateDiagram-v2\nA --> note\n") }
+          .to raise_error(Sirena::Parser::ParseError)
       end
     end
 
