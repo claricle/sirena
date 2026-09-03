@@ -186,8 +186,75 @@ RSpec.describe MermaidDiff do
 
         expect(status).to be_success
         expect(output).to eq('')
+        expect(dies?(File.read(pidfile).to_i)).to be(true)
       ensure
         kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
+      end
+    end
+
+    it 'passes source bytes to mmdc unchanged' do
+      Dir.mktmpdir do |dir|
+        input = File.join(dir, 'in.mmd')
+        output = File.join(dir, 'out.svg')
+        source = "flowchart LR\n  A[\xFF\xFE]\n".b
+        File.binwrite(input, source)
+
+        prefix_path(fake_mmdc(dir, <<~SH)) do
+          #!/bin/sh
+          /bin/cp "$2" "$4"
+        SH
+          status, = harness.send(:run_mmdc, input, output)
+
+          expect(status).to be_success
+          expect(File.binread(output)).to eq(source)
+        end
+      end
+    end
+
+    it 'drains a large mmdc diagnostic while it runs' do
+      Dir.mktmpdir do |dir|
+        input = File.join(dir, 'in.mmd')
+        output = File.join(dir, 'out.svg')
+        File.write(input, trivial_source)
+
+        prefix_path(fake_mmdc(dir, <<~SH)) do
+          #!/bin/sh
+          perl -e 'print "x" x 100000'
+        SH
+          status, diagnostic = harness.send(:run_mmdc, input, output)
+
+          expect(status).to be_success
+          expect(diagnostic).to eq('x' * 100_000)
+        end
+      end
+    end
+
+    it 'cleans up when interrupted' do
+      Dir.mktmpdir do |dir|
+        input = File.join(dir, 'in.mmd')
+        output = File.join(dir, 'out.svg')
+        pidfile = File.join(dir, 'mmdc.pid')
+        File.write(input, trivial_source)
+
+        prefix_path(fake_mmdc(dir, interruptible_mmdc(pidfile))) do
+          wait_for_pid = proc do
+            Timeout.timeout(guard) { sleep 0.01 until File.exist?(pidfile) }
+          end
+          harness.define_singleton_method(:descendants_of) do |pid|
+            result = super(pid)
+            wait_for_pid.call
+            result
+          end
+          harness.define_singleton_method(:wait_with_deadline) do |*_args, **_kwargs|
+            raise Interrupt
+          end
+
+          expect { harness.send(:run_mmdc, input, output) }.to raise_error(Interrupt)
+          pid = File.read(pidfile).to_i
+          expect(dies?(pid)).to be(true)
+        ensure
+          kill_quietly(pid) if pid
+        end
       end
     end
   end
@@ -287,6 +354,21 @@ RSpec.describe MermaidDiff do
       end
       expect(broken).to be(:error)
     end
+
+    it 'does not call a transient renderer failure a source rejection' do
+      result = MmdcOracle.verdict('probe') do |input, output|
+        if input == 'probe'
+          [false, 'browser launch failed once']
+        else
+          File.write(output, '<svg/>')
+          [true, '']
+        end
+      end
+
+      expect([result.verdict, result.diagnostic]).to eq(
+        [:error, 'browser launch failed once']
+      )
+    end
   end
 
   # The version check runs before any per-case deadline applies, so a wedged
@@ -376,12 +458,29 @@ RSpec.describe MermaidDiff do
 
       expect([status.exitstatus, stdout, stderr]).to eq(expected)
     end
+
+    it 'runs when invoked through a relative script path' do
+      stdout, stderr, status = run_harness(trivial_source, relative: true)
+
+      expect([status.exitstatus, stdout, stderr]).to eq(
+        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", '']
+      )
+    end
   end
 
   describe 'splitting a probe file into records' do
     it 'splits on a line that is exactly the separator' do
       expect(records_in("flowchart LR\n%%%%\n  A --> B\n"))
         .to eq(["flowchart LR\n", "  A --> B\n"])
+    end
+
+    it 'splits a CRLF separator' do
+      expect(records_in("flowchart LR\r\n%%%%\r\n  A --> B\r\n"))
+        .to eq(["flowchart LR\r\n", "  A --> B\r\n"])
+    end
+
+    it 'accepts a separator at the end of a file' do
+      expect(records_in("flowchart LR\n%%%%")).to eq(["flowchart LR\n"])
     end
 
     # mmdc 11.12.0 accepts `%%%%` followed by blanks as a comment, so a probe
@@ -427,6 +526,15 @@ RSpec.describe MermaidDiff do
 
       expect(records_in(source).first.b).to eq(source)
     end
+
+    it 'loads all committed probe records' do
+      paths = Dir[File.expand_path('../../scripts/probes/*.txt', __dir__)]
+        .reject { |path| File.basename(path) == 'shape_names.txt' }
+        .sort
+
+      expect(paths.size).to eq(3)
+      expect(harness.send(:probes, paths).size).to eq(60)
+    end
   end
 
   # These strings are cut down from real mmdc 11.12.0 output. Both error
@@ -439,6 +547,12 @@ RSpec.describe MermaidDiff do
 
     it 'rejects a rendered syntax-error page' do
       expect(oracle_verdict(syntax_error_svg)).to be(:rejects)
+    end
+
+    it 'requires a valid SVG document' do
+      ['', 'plain text', '<svg>'].each do |svg|
+        expect(oracle_verdict(svg)).to be(:error)
+      end
     end
 
     it 'requires the error role as well as an XHTML style' do
@@ -515,6 +629,24 @@ RSpec.describe MermaidDiff do
         expect(rows.map { |row| [row['verdict'], row['evidence']] }).to eq(expected)
       end
     end
+
+    it 'fails the verify command when mmdc cannot run' do
+      environment = ENV.keys
+        .grep(/\A(?:BUNDLE|BUNDLER|RUBY)/)
+        .to_h { |key| [key, nil] }
+      environment['PATH'] = '/nonexistent'
+      stdout, stderr, status = Open3.capture3(
+        environment,
+        RbConfig.ruby,
+        File.expand_path('../../scripts/corpus_verdicts.rb', __dir__),
+        '--verify',
+        'gitgraph'
+      )
+
+      expect(stdout).to eq('')
+      expect(stderr).to include('mmdc verification failed')
+      expect(status).not_to be_success
+    end
   end
 
   describe 'showing a probe in the report' do
@@ -570,6 +702,13 @@ RSpec.describe MermaidDiff do
 
       expect(harness.send(:one_line, source)).to eq("flowchart LR |   A[\uFFFD]")
     end
+
+    it 'escapes terminal control bytes in a record' do
+      source = "flowchart LR\n  A[\x1B]52;c;secret\x07\rB]\n"
+
+      expect(harness.send(:one_line, source))
+        .to eq('flowchart LR |   A[\\x1B]52;c;secret\\x07\\x0DB]')
+    end
   end
 
   # Longer than any example here needs, so a regression that hangs fails the
@@ -582,18 +721,29 @@ RSpec.describe MermaidDiff do
     "flowchart LR\n  A --> B\n"
   end
 
-  def run_harness(source, *options, mmdc: accepting_mmdc)
+  def run_harness(source, *options, mmdc: accepting_mmdc, relative: false)
     Dir.mktmpdir do |dir|
       probe = File.join(dir, 'probe.txt')
       File.write(probe, source)
       bin = fake_mmdc(dir, mmdc)
-      Open3.capture3(
-        { 'PATH' => "#{bin}:#{ENV.fetch('PATH')}" },
+      command = [
         RbConfig.ruby,
-        File.expand_path('../../scripts/mermaid_diff.rb', __dir__),
+        relative ? './scripts/mermaid_diff.rb' : File.expand_path('../../scripts/mermaid_diff.rb', __dir__),
         *options,
         probe
-      )
+      ]
+      capture = proc do
+        Open3.capture3(
+          { 'PATH' => "#{bin}:#{ENV.fetch('PATH')}" },
+          *command
+        )
+      end
+
+      if relative
+        Dir.chdir(File.expand_path('../..', __dir__), &capture)
+      else
+        capture.call
+      end
     end
   end
 
@@ -817,11 +967,16 @@ RSpec.describe MermaidDiff do
     perl = %q(perl -e 'setpgrp(0,0); open(F, ">", $ARGV[0]) or die; ) +
            %q(print F $$; close F; exec("/bin/sleep", "20.29")')
     "#!/bin/sh\n#{perl} '#{pidfile}' &\n" \
-      "while [ ! -s '#{pidfile}' ]; do sleep 0.01; done\n"
+      "while [ ! -s '#{pidfile}' ]; do sleep 0.01; done\n" \
+      "sleep 0.1\n"
   end
 
   def child_in_the_group(pidfile)
     "#!/bin/sh\n/bin/sleep 20.29 &\necho $! > '#{pidfile}'\n"
+  end
+
+  def interruptible_mmdc(pidfile)
+    "#!/bin/sh\necho $$ > '#{pidfile}'\nexec /bin/sleep 20.71\n"
   end
 
   # PATH becomes this one directory, so the real program cannot be reached.

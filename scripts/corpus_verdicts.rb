@@ -261,6 +261,7 @@ def verify_invalid!(rows, entries)
   by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ''), e] }
   checked = 0
   promoted = 0
+  errors = 0
 
   rows.each do |row|
     next unless row['verdict'] == 'invalid'
@@ -276,14 +277,16 @@ def verify_invalid!(rows, entries)
       row['evidence'] = 'local mmdc rejects it too'
     when :error
       row['evidence'] = 'local mmdc could not be run'
+      errors += 1
     end
   end
 
   warn "  checked #{checked} invalid case(s) against local mmdc; " \
        "#{promoted} promoted to valid"
+  errors
 end
 
-return unless $PROGRAM_NAME == __FILE__
+return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
 types = ARGV.reject { |a| a.start_with?('--') }
 write = ARGV.include?('--write')
@@ -312,7 +315,8 @@ rows = entries.map do |entry|
   }
 end
 
-verify_invalid!(rows, entries) if verify
+verification_errors = verify_invalid!(rows, entries) if verify
+abort "mmdc verification failed for #{verification_errors} case(s)" if verification_errors&.positive?
 
 tally = rows.group_by { |r| r['verdict'] }.transform_values(&:size)
 puts 'TYPE       VALID    INVALID  ARTIFACT  UNKNOWN'
