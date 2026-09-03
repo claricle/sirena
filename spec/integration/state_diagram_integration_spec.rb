@@ -144,6 +144,11 @@ RSpec.describe 'StateDiagram Integration' do
     # mmdc 11.12.0 exits 1 with no output on every separator width, including
     # none at all: `stateDiagram-v2direction LR` is not a diagram. The first
     # guard here required one space, so the zero-space form walked past it.
+    # The positive control belongs in THIS example, not a neighbouring one.
+    # Asserting only the refusals passes on origin/main, where `direction` is
+    # not supported at all and every form raises — so the example could not tell
+    # "the guard fired" from "nothing parses". Rendering the newline form here
+    # is what makes it fail without the feature.
     it 'refuses a direction on the header line at any separator width' do
       engine = Sirena::Engine.new
 
@@ -153,6 +158,11 @@ RSpec.describe 'StateDiagram Integration' do
         expect { engine.render(source) }
           .to raise_error(Sirena::Engine::PipelineError, /Parse error/), source
       end
+
+      document = REXML::Document.new(
+        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n")
+      )
+      expect(REXML::XPath.match(document, '//text').map(&:text)).to eq(%w[A B])
     end
   end
 

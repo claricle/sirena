@@ -206,17 +206,31 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
 
         expect { parser.parse(source) }
           .to raise_error(Sirena::Parser::ParseError)
+        # The accepted order belongs in the same example. Without it this
+        # passes on origin/main, where the alias form does not parse at all.
+        expect(
+          parser.parse(%(stateDiagram-v2\nstate "Idle mode" as Idle\n))
+            .find_state('Idle').label
+        ).to eq('Idle mode')
       end
 
       # mmdc takes a double-quoted label only.
       it 'refuses a single-quoted alias label' do
         expect { parser.parse("stateDiagram-v2\nstate 'L' as N\n") }
           .to raise_error(Sirena::Parser::ParseError)
+        expect(
+          parser.parse(%(stateDiagram-v2\nstate "L" as N\n))
+            .find_state('N').label
+        ).to eq('L')
       end
 
       it 'refuses an empty alias label' do
         expect { parser.parse(%(stateDiagram-v2\nstate "" as N\n)) }
           .to raise_error(Sirena::Parser::ParseError)
+        expect(
+          parser.parse(%(stateDiagram-v2\nstate "x" as N\n))
+            .find_state('N').label
+        ).to eq('x')
       end
 
       # Mermaid accumulates aliases and descriptions as display text in source
@@ -299,6 +313,10 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       it 'refuses a brace in a state statement description' do
         expect { parser.parse("stateDiagram-v2\nstate A : text {\n") }
           .to raise_error(Sirena::Parser::ParseError)
+        # mmdc draws `A : text {` as a state labelled `text {`, and refuses it
+        # only after the `state` keyword. The bare form is the control.
+        expect(parser.parse("stateDiagram-v2\nA : text {\n").states.length)
+          .to eq(1)
       end
 
       it 'describes a state, no spaces (state_diagram/003)' do
@@ -355,6 +373,8 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
 
         expect { parser.parse(source) }
           .to raise_error(Sirena::Parser::ParseError)
+        closed = "stateDiagram-v2\nA\nnote right of A\nsay end note\nend note\n"
+        expect(parser.parse(closed).states.length).to eq(1)
       end
 
       # mmdc keeps a body line that ends in `;` or holds a `%%` comment.
@@ -378,11 +398,17 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       it 'refuses a single-quoted floating note' do
         expect { parser.parse("stateDiagram-v2\nA\nnote 'f' as N1\n") }
           .to raise_error(Sirena::Parser::ParseError)
+        expect(
+          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length
+        ).to eq(1)
       end
 
       it 'refuses an empty floating note' do
         expect { parser.parse(%(stateDiagram-v2\nA\nnote "" as N1\n)) }
           .to raise_error(Sirena::Parser::ParseError)
+        expect(
+          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length
+        ).to eq(1)
       end
 
       # mmdc parses a floating note and draws nothing for it.
@@ -444,6 +470,8 @@ RSpec.describe Sirena::Parser::StateDiagramParser do
       it 'refuses TD as a direction' do
         expect { parser.parse("stateDiagram-v2\ndirection TD\nA-->B\n") }
           .to raise_error(Sirena::Parser::ParseError)
+        expect(parser.parse("stateDiagram-v2\ndirection TB\nA-->B\n").direction)
+          .to eq('TB')
       end
     end
 
