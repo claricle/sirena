@@ -114,7 +114,7 @@ module Sirena
       # rewritten. Group indents entries instead, and Text#element_markup is
       # the only entry that may carry a newline of its own.
       #
-      # @return [Array<String>] this element's markup, then each sibling's
+      # @return [Array<String>] this element's markup, then each sibling's markup
       def xml_lines
         [element_markup, *sibling_markup]
       end
