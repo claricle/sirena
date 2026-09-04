@@ -402,6 +402,26 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to raise_error(Sirena::Parser::ParseError, /Parse error/)
       end
 
+      it 'does not read a directive split across two lines' do
+        # A DIVERGENCE, pinned. The oracle strips
+        # `%%{init: {` / `"theme":"dark"}}%%` across the line break and
+        # renders with the description `a\nb` — the same answer it gives the
+        # one-line spelling. Here the directive body stops at the line end,
+        # so the `}` inside the JSON closes the block, `}%%` is left stranded
+        # after it and the source is refused.
+        #
+        # The bound is deliberate and costs nothing that existed before:
+        # `origin/main` and the parser before this change both refuse this
+        # source too. Without it every `%%{` inside a block scanned to the
+        # end of the source hunting for `}%%`, and a block of them was
+        # quadratic.
+        source = "journey\naccDescr {a\n%%{init: {\n\"theme\":\"dark\"}}%%\nb}\n" \
+                 "section S\nT: 1: M\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+      end
+
       it 'treats a directive with no closing tail as ordinary text' do
         # The directive rule requires its `}%%`, so `%%{x` here is text: the
         # `}` after `b` closes the block and the section and task that follow
@@ -483,11 +503,49 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
     end
 
     describe 'the cost of a large source' do
-      # Both examples here are clock-based, which is why each is written
-      # against a control rather than a bare stopwatch where it can be. They
-      # exist because the two defects they pin are invisible to every other
-      # assertion in this file: the second one below does not change a single
-      # parse result, only how long one takes.
+      # These examples are clock-based, which is why each is written against
+      # a control rather than a bare stopwatch wherever it can be. They exist
+      # because the defects they pin are invisible to every other assertion
+      # in this file: two of the three do not change a single parse result,
+      # only how long one takes.
+
+      it 'keeps every alternative in the block body line-bounded' do
+        # THE INVARIANT. `acc_block_body` runs its alternation at every
+        # position in the block, so an alternative whose own repeat can reach
+        # the end of the source makes the whole parse quadratic in the length
+        # of the block. That has happened twice in this grammar — first in
+        # the block body itself, then in the directive rule added to repair
+        # it — so it is measured here rather than remembered.
+        #
+        # Each alternative is driven with 800 lines of its own trigger and
+        # compared against plain content, which is the single-character
+        # branch and linear by construction. Measured: the comment rule runs
+        # at about 1x the control and the directive rule at about 2.6x,
+        # against 26x for that same rule with its body unbounded.
+        #
+        # ADD A ROW when you add an alternative to `acc_block_comment`. One
+        # carrying this defect then fails on arrival instead of shipping.
+        block = lambda do |line|
+          "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
+        end
+        timed = lambda do |source|
+          parser.parse(source)
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          parser.parse(source)
+          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        end
+
+        control = timed.call(block.call('x'))
+
+        { 'acc_comment_line' => '%% x', 'acc_directive' => '%%{x' }.each do |rule, line|
+          source = block.call(line)
+
+          expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+            .to eq([['S', ['T']]])
+          expect(timed.call(source))
+            .to be < control * 8, "#{rule} is not line-bounded"
+        end
+      end
 
       it 'refuses a long unclosed block without rescanning it per line' do
         # Before the block opener was refused outright, each of these lines
