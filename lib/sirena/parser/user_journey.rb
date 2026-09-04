@@ -50,15 +50,21 @@ module Sirena
       # journey, where in a flowchart it draws the diagram and swallows the
       # rest of the source.
       #
-      # Content on the same line AFTER the brace is not handled — the oracle
-      # renders `accDescr {Desc}After: 3: Me` as a description plus a task,
-      # where this rule declines the line, `task_line` claims it, and the
-      # whole of `accDescr {Desc}After` becomes one task name scoring 3 for
-      # Me. That predates this rule (the parser before this change produces
-      # the identical task) and gantt, pie and timeline share it; flowchart
-      # drops the line-end requirement instead.
+      # The brace ENDS the block and nothing is required after it, which is
+      # what flowchart's `acc_descr_block` already does. `line.repeat` then
+      # claims whatever is left of the line, so
+      # `accDescr {Desc}After: 3: Me` becomes a description plus the task
+      # `After` scoring 3 — the tasks and sections the oracle renders.
+      # Demanding a line end here instead read the whole of
+      # `accDescr {Desc}After` as one task name, and it cost more than
+      # accuracy: the block rule then failed AFTER scanning for its `}`, and
+      # every following line paid for its own scan. 1000 such lines took
+      # 9.75s against 0.82s now.
+      #
+      # gantt, pie and timeline still demand the line end. This rule no
+      # longer matches them, and flowchart is the one it now matches.
       rule(:acc_descr_block) do
-        acc_descr_open >> acc_block_body >> str('}') >> sp? >> (nl | any.absent?)
+        acc_descr_open >> acc_block_body >> str('}')
       end
 
       # INVARIANT, enforced by measurement in the spec: every alternative
@@ -119,12 +125,14 @@ module Sirena
       #
       # Two divergences from mermaid are known and left standing, both
       # pinned by examples. Mermaid's directive strip is NOT anchored to a
-      # line start, so it deletes `%%{x}%%` from mid-line where this refuses
-      # the source. And where a directive has no tail, mermaid swallows the
-      # rest of the source and still renders, where making the tail optional
-      # here would leave the block open and refuse it — so requiring the
-      # tail is the reading that agrees with the oracle's answer, even
-      # though the optional tail is the more faithful pattern.
+      # line start, so it deletes `%%{x}%%` from mid-line where this leaves
+      # it as text: `accDescr {A%%{x}%%B` then parses here and the oracle
+      # refuses it, because for mermaid the block never closes. And where a
+      # directive has no tail, mermaid swallows the rest of the source and
+      # still renders, where making the tail optional here would leave the
+      # block open and refuse it — so requiring the tail is the reading that
+      # agrees with the oracle's answer, even though the optional tail is
+      # the more faithful pattern.
       # The body may not cross a line terminator, per the invariant on
       # `acc_block_body`. Unbounded, every `%%{` inside a block scanned to
       # the end of the source hunting for `}%%`, so a block of `%%{` lines
