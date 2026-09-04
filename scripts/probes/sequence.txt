@@ -1,0 +1,65 @@
+sequenceDiagram
+    A->B: m
+%%%%
+sequenceDiagram
+    A-->B: m
+%%%%
+sequenceDiagram
+    A->>B: m
+%%%%
+sequenceDiagram
+    A-->>B: m
+%%%%
+sequenceDiagram
+    A-xB: m
+%%%%
+sequenceDiagram
+    A--xB: m
+%%%%
+sequenceDiagram
+    A-)B: m
+%%%%
+sequenceDiagram
+    A--)B: m
+%%%%
+sequenceDiagram
+    A<<->>B: m
+%%%%
+sequenceDiagram
+    A<<-->>B: m
+%%%%
+sequenceDiagram
+    A->)B: m
+%%%%
+sequenceDiagram
+    A-->)B: m
+%%%%
+sequenceDiagram
+    A--->B: m
+%%%%
+sequenceDiagram
+    A---)B: m
+%%%%
+sequenceDiagram
+    A->>+B: m
+%%%%
+sequenceDiagram
+    A->>+B: open
+    B-->>-A: close
+%%%%
+sequenceDiagram
+    participant A
+    A->>A: self
+%%%%
+sequenceDiagram
+    participant A
+    participant B
+    Alice ()->>() Bob: m
+%%%%
+sequenceDiagram
+    participant Charlie@{"type":"boundary"}
+    Charlie->>Charlie: m
+%%%%
+sequenceDiagram
+    create participant Carl
+    Carl->>Carl: m
