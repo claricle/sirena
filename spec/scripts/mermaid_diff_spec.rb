@@ -72,9 +72,6 @@ RSpec.describe MermaidDiff do
     end
   end
 
-  # A broken `ps` costs the descendant list and nothing else. It used to cost
-  # the group kill too: the exec failure raised straight out of kill_group and
-  # left mmdc and its child running.
   # The descendant sweep, the deadline wait, and mmdc process cleanup moved to
   # HardenedMmdc (spec/scripts/hardened_mmdc_spec.rb) when corpus_verdicts.rb
   # started sharing this hardening instead of calling mmdc through a bare
