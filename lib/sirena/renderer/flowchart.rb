@@ -394,14 +394,18 @@ module Sirena
       # Where the loop sits. It goes out past the node edge by 0.45 of
       # the node's SHORTER side, and runs 0.175 of the dimension it
       # spreads ACROSS either side of centre — the width for an up or
-      # down loop, the height for a left or right one — never narrower
-      # than 18 or wider than 50, and never wider than half that same
-      # dimension. The depth is mmdc's; the half span is ours — see
-      # the note on the constants.
+      # down loop, the height for a left or right one.
       #
-      # The depth is capped at 48. No node the layout builds reaches it,
-      # but a graph handed straight to the renderer can, so the cap is
-      # written rather than assumed.
+      # That span is then held between 18 and 50, and the answer held
+      # again to half the spreading dimension. The two limits are applied
+      # in that order, not together, and the second one wins where they
+      # disagree: a 34-high node's sideways loop reaches 17, not 18. The
+      # note inside the method says why it has to be last.
+      #
+      # The depth is mmdc's; the half span is ours — see the note on the
+      # constants. The depth is capped at 48. No node the layout builds
+      # reaches it, but a graph handed straight to the renderer can, so
+      # the cap is written rather than assumed.
       def self_loop_bends(node, side)
         cx, cy = node_centre(node)
         width = node[:width] || 100
@@ -453,8 +457,10 @@ module Sirena
       # width by mmdc's 3.5 instead ignored the theme and drew
       # high_contrast's thick line at 10.5 where it asks for 4.
       #
-      # A dotted link keeps the plain width. It used to be forced to 2
-      # here and came out thinner than its own theme's line.
+      # A dotted link is dashed and nothing else — only `thick_` touches
+      # the width. That follows mermaid: mmdc marks `-.-` as
+      # `edge-thickness-normal edge-pattern-dotted`, so dotting a line
+      # does not thin it, and the theme's plain width still applies.
       def apply_link_weight(path, type)
         path.stroke_width = thick_width.to_s if type.start_with?('thick_')
         path.stroke_dasharray = dotted_dashes if type.start_with?('dotted_')
