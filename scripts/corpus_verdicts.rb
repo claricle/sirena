@@ -48,8 +48,8 @@
 #      whether Sirena can parse it — the point is to judge the input, not us.
 
 require 'digest'
-require 'open3'
 require 'yaml'
+require_relative 'hardened_mmdc'
 require_relative 'mmdc_oracle'
 
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
@@ -247,10 +247,15 @@ def classify(entry, group)
 end
 
 # Re-checks one case against the installed mmdc using the shared oracle.
+#
+# Goes through HardenedMmdc rather than a bare Open3.capture3, for the same
+# reason scripts/mermaid_diff.rb does: mmdc's Chromium-backed process tree can
+# hang past any reasonable per-case budget. Measured directly — pointed this
+# call at a fake mmdc that only sleeps, and without the deadline/process-group
+# handling below it did not return on its own.
 def local_mmdc_verdict(path)
   MmdcOracle.verdict(path) do |input, output|
-    stdout, stderr, status = Open3.capture3('mmdc', '-i', input, '-o', output)
-    [status, [stdout, stderr].reject(&:empty?).join]
+    HardenedMmdc.run_mmdc(input, output)
   end.verdict
 end
 

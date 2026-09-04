@@ -166,7 +166,7 @@ module MermaidDiffSpecSupport
 
       prefix_path(fake_mmdc(dir, script)) do
         Timeout.timeout(guard) do
-          harness.send(:run_mmdc, File.join(dir, 'in.mmd'), File.join(dir, 'out.svg'))
+          HardenedMmdc.run_mmdc(File.join(dir, 'in.mmd'), File.join(dir, 'out.svg'))
         end
       end
     end

@@ -15,10 +15,14 @@ require_relative '../support/mermaid_diff_spec_support'
 # The harness is a program, not a library. Loading it into a module runs the
 # definitions without the main block, and keeps its methods and constants off
 # Object for the rest of the suite.
-MermaidDiff = Module.new
-load File.expand_path('../../scripts/mermaid_diff.rb', __dir__), MermaidDiff
-CorpusVerdicts = Module.new
-load File.expand_path('../../scripts/corpus_verdicts.rb', __dir__), CorpusVerdicts
+unless defined?(MermaidDiff)
+  MermaidDiff = Module.new
+  load File.expand_path('../../scripts/mermaid_diff.rb', __dir__), MermaidDiff
+end
+unless defined?(CorpusVerdicts)
+  CorpusVerdicts = Module.new
+  load File.expand_path('../../scripts/corpus_verdicts.rb', __dir__), CorpusVerdicts
+end
 
 # Every example that breaks `ps` puts a real broken `ps` on PATH, and every
 # process tree uses real processes — a stub would only prove that the rescue
@@ -71,197 +75,10 @@ RSpec.describe MermaidDiff do
   # A broken `ps` costs the descendant list and nothing else. It used to cost
   # the group kill too: the exec failure raised straight out of kill_group and
   # left mmdc and its child running.
-  describe 'the descendant sweep' do
-    {
-      'is not on PATH at all' => nil,
-      'never answers' => "#!/bin/sh\nexec /bin/sleep 30 2>/dev/null\n",
-      'prints bytes that are not UTF-8' => "#!/bin/sh\nprintf '\\377\\376 1 0\\n'\n"
-    }.each do |trouble, script|
-      it "kills the group anyway when ps #{trouble}" do
-        stub_const('MermaidDiff::PS_TIMEOUT', 0.3)
-        parent, _child = spawn_tree
-
-        only('ps', script) { Timeout.timeout(guard) { harness.send(:kill_group, parent) } }
-
-        expect(dies?(parent)).to be(true)
-      end
-    end
-
-    it 'kills a descendant that sits in a process group of its own' do
-      parent, child = spawn_tree
-
-      Timeout.timeout(guard) { harness.send(:kill_group, parent) }
-
-      expect(dies?(child)).to be(true)
-    end
-
-    it 'keeps malformed and nonpositive pids out of the descendant list' do
-      pid = Process.pid
-      table = "#!/bin/sh\nprintf '%s\\n' 'garbled #{pid}' '7garbled #{pid}' " \
-              "'0 #{pid}' '-7 #{pid}' '8 #{pid}garbled' '9 0' '10 -7'\n"
-
-      descendants = only('ps', table) { harness.send(:subtree_of, pid) }
-
-      expect(descendants).to eq([])
-    end
-
-    # Giving up on a wedged `ps` is not enough. A descendant can inherit the
-    # capture pipe's write end, so leaving it running keeps the read from EOF:
-    # measured, the sweep returned in 0.30s and the reader waited 21.29s.
-    it 'kills a ps that never answers rather than leave its pipe open' do
-      stub_const('MermaidDiff::PS_TIMEOUT', 1)
-
-      only('ps', wedge('20.17')) do
-        Timeout.timeout(guard) { harness.send(:descendants_of, Process.pid) }
-      end
-
-      expect(gone?('20.17')).to be(true)
-    end
-  end
-
-  # The deadline is not the only thing that can be true when cleanup runs.
-  # Collecting descendants means waiting on `ps`, and mmdc can finish while
-  # that happens.
-  describe 'waiting out the deadline' do
-    it 'keeps the status of a program that finished while ps was running' do
-      stub_const('MermaidDiff::CASE_TIMEOUT', 0)
-      pid = Process.spawn('/bin/sh', '-c', 'sleep 0.4; exit 7', pgroup: true)
-      spawned << pid
-
-      status = only('ps', slow_ps) { Timeout.timeout(guard) { harness.send(:wait_with_deadline, pid) } }
-
-      expect(status.exitstatus).to eq(7)
-    end
-
-    # The complement: a program the deadline really did kill has no verdict,
-    # and handing back its status would read as mermaid rejecting the source.
-    it 'gives no status for a program the deadline killed' do
-      stub_const('MermaidDiff::CASE_TIMEOUT', 0)
-      pid = Process.spawn('/bin/sh', '-c', 'sleep 20.61', pgroup: true)
-      spawned << pid
-
-      status = Timeout.timeout(guard) { harness.send(:wait_with_deadline, pid) }
-
-      expect(status).to be_nil
-    end
-
-    # A case that times out is cleaned up twice: the deadline reaps mmdc, and
-    # then run_mmdc cleans up again because it came away with no status. The
-    # second pass has nothing left to wait for, and it used to raise
-    # Errno::ECHILD straight out of the harness on every case that timed out.
-    it 'cleans up twice after a case that timed out without raising' do
-      stub_const('MermaidDiff::CASE_TIMEOUT', 0.3)
-
-      status, output = Dir.mktmpdir do |dir|
-        prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.43\n")) do
-          Timeout.timeout(guard) do
-            harness.send(:run_mmdc, File.join(dir, 'in.mmd'), File.join(dir, 'out.svg'))
-          end
-        end
-      end
-
-      expect(status).to be_nil
-      expect(output).to eq('')
-      expect(gone?('26.43')).to be(true)
-    end
-  end
-
-  describe 'cleaning up after mmdc' do
-    it 'kills a child that stayed in the group mmdc was given' do
-      Dir.mktmpdir do |dir|
-        pidfile = File.join(dir, 'child.pid')
-
-        run_fake_mmdc(dir, pidfile, escape: false)
-
-        expect(dies?(File.read(pidfile).to_i)).to be(true)
-      end
-    end
-
-    # A child that leaves the group is out of reach of the kill and still
-    # holds the pipe, so reading to EOF waits on IT: one escaped Chromium
-    # held a 30s case open for 301.7s.
-    it 'stops waiting on the pipe when a child escapes the group' do
-      stub_const('MermaidDiff::DRAIN_GRACE', 0.3)
-
-      Dir.mktmpdir do |dir|
-        pidfile = File.join(dir, 'child.pid')
-
-        status, output = run_fake_mmdc(dir, pidfile, escape: true)
-
-        expect(status).to be_success
-        expect(output).to eq('')
-        expect(dies?(File.read(pidfile).to_i)).to be(true)
-      ensure
-        kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
-      end
-    end
-
-    it 'passes source bytes to mmdc unchanged' do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, 'in.mmd')
-        output = File.join(dir, 'out.svg')
-        source = "flowchart LR\n  A[\xFF\xFE]\n".b
-        File.binwrite(input, source)
-
-        prefix_path(fake_mmdc(dir, <<~SH)) do
-          #!/bin/sh
-          /bin/cp "$2" "$4"
-        SH
-          status, = harness.send(:run_mmdc, input, output)
-
-          expect(status).to be_success
-          expect(File.binread(output)).to eq(source)
-        end
-      end
-    end
-
-    it 'drains a large mmdc diagnostic while it runs' do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, 'in.mmd')
-        output = File.join(dir, 'out.svg')
-        File.write(input, trivial_source)
-
-        prefix_path(fake_mmdc(dir, <<~SH)) do
-          #!/bin/sh
-          perl -e 'print "x" x 100000'
-        SH
-          status, diagnostic = harness.send(:run_mmdc, input, output)
-
-          expect(status).to be_success
-          expect(diagnostic).to eq('x' * 100_000)
-        end
-      end
-    end
-
-    it 'cleans up when interrupted' do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, 'in.mmd')
-        output = File.join(dir, 'out.svg')
-        pidfile = File.join(dir, 'mmdc.pid')
-        File.write(input, trivial_source)
-
-        prefix_path(fake_mmdc(dir, interruptible_mmdc(pidfile))) do
-          wait_for_pid = proc do
-            Timeout.timeout(guard) { sleep 0.01 until File.exist?(pidfile) }
-          end
-          harness.define_singleton_method(:descendants_of) do |pid|
-            result = super(pid)
-            wait_for_pid.call
-            result
-          end
-          harness.define_singleton_method(:wait_with_deadline) do |*_args, **_kwargs|
-            raise Interrupt
-          end
-
-          expect { harness.send(:run_mmdc, input, output) }.to raise_error(Interrupt)
-          pid = File.read(pidfile).to_i
-          expect(dies?(pid)).to be(true)
-        ensure
-          kill_quietly(pid) if pid
-        end
-      end
-    end
-  end
+  # The descendant sweep, the deadline wait, and mmdc process cleanup moved to
+  # HardenedMmdc (spec/scripts/hardened_mmdc_spec.rb) when corpus_verdicts.rb
+  # started sharing this hardening instead of calling mmdc through a bare
+  # Open3.capture3.
 
   describe 'asking sirena for a verdict' do
     it 'accepts a source sirena can render' do
@@ -273,7 +90,7 @@ RSpec.describe MermaidDiff do
     # verdict after it and the report never arrived. The guard is here so a
     # regression fails this example instead of wedging the suite.
     it 'gives up on a source sirena cannot finish' do
-      stub_const('MermaidDiff::CASE_TIMEOUT', 0.5)
+      stub_const('HardenedMmdc::CASE_TIMEOUT', 0.5)
       source = "packet-beta\n0-2000000: \"x\"\n"
 
       verdict = Timeout.timeout(guard) { harness.send(:sirena_verdict, source) }
