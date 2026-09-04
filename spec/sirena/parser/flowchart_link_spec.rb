@@ -218,9 +218,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # draws every one. Each row below was measured against mermaid 11.12.0.
   #
   # Measured on base c09c975: it accepted `x-->B`, `o-->B`, `x---B`,
-  # `x==>B` and `o==>B`, so five of these were already wrong before this
-  # branch; the rest arrived with the widened token set and would have
-  # been new.
+  # `x==>B`, `o==>B` and `A-->x-->B`, so six of these were already wrong
+  # before this branch. Measured again with the widened token set and the
+  # guard lifted, all twelve go through — so the other six would have been
+  # new, and the guard has to hold both halves of the list.
   describe "a lone x or o flush against a link" do
     def parse(source)
       described_class.new.parse("flowchart TD\n  #{source}\n")
