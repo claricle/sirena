@@ -122,7 +122,7 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # A theme that asks for something else gets it. high_contrast names a
     # 4.0 thick line and a "4,4" dot; multiplying its 3.0 line by mmdc's
     # 3.5 drew 10.5 and dotted it 2 whatever the theme said.
-    it "draws a thick link at the width its own theme asks for" do
+    it "draws a thick link and a dotted one the way its own theme asks" do
       thick = edge_group("===", theme: "high_contrast")
       dotted = edge_group("-.-", theme: "high_contrast")
 
@@ -520,9 +520,14 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       }
       xml = described_class.new.render(graph).to_xml
       group = xml[%r{<g id="node-A".*?</g>}m]
+      x, y, width, height = group.match(
+        /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*
+         width="([\d.]+)"[^>]*height="([\d.]+)"/x
+      ).captures.map(&:to_f)
 
       expect(group[/<text[^>]*x="(-?[\d.]+)"/, 1].to_f).to eq(20.5)
       expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(10.5)
+      expect([x + (width / 2), y + (height / 2)]).to eq([20.5, 10.5])
     end
 
     # The circle's own half of that: it is filled, so an absent fill is
@@ -749,6 +754,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(back.map(&:last).min).to be > node_bottom(xml)
     end
 
+    # The control for the loops above. A link between two DIFFERENT nodes
+    # keeps its two points, so a bend appearing here would be the self-loop
+    # rule reaching a link it was never meant to touch.
     it "leaves a link between two nodes straight" do
       xml = Sirena.render("flowchart TD\n  A --> B\n")
 
