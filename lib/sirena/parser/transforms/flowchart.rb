@@ -178,16 +178,16 @@ module Sirena
           '[\\/]' => 'trapezoid_alt'
         }.freeze
 
-        # Arrow type mapping
-        ARROW_MAP = {
-          '-->' => 'arrow',
-          '->' => 'arrow',
-          '---' => 'line',
-          '-.>' => 'dotted_arrow',
-          '-.-' => 'dotted_arrow',
-          '==>' => 'thick_arrow',
-          '==' => 'thick_arrow'
+        # Which marker each character draws. One table serves both ends
+        # because the grammar only ever puts `<` at the start and `>` at
+        # the end — see the `link_start` and `link_end` rules in
+        # `Grammars::Flowchart`, which are the sole producers of this
+        # token.
+        LINK_MARKERS = {
+          '>' => 'arrow', '<' => 'arrow',
+          'x' => 'cross', 'o' => 'circle'
         }.freeze
+        private_constant :LINK_MARKERS
 
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
@@ -201,6 +201,33 @@ module Sirena
           'v' => 'TB',
           'BR' => 'TB'
         }.freeze
+
+        # Mermaid honours a leading marker only when the trailing one
+        # matches it. `o--x` draws the cross and nothing at the source, and
+        # a mismatched pair drops back to normal thickness but keeps its
+        # dots. `o==x` is no thicker than `o--x`, while `<-.-x` stays
+        # dotted. Both were read as two-ended links here.
+        def self.link_type(token)
+          return 'invisible' if token.start_with?('~')
+
+          head = LINK_MARKERS[token[-1]]
+          tail = LINK_MARKERS[token[0]]
+          matched = !head.nil? && head == tail
+          ends = matched ? "#{head}_both" : head || 'line'
+
+          "#{link_weight(token, tail, matched)}#{ends}"
+        end
+        private_class_method :link_type
+
+        # A thick body keeps its weight only when it carries no leading
+        # marker, or a leading marker mermaid actually honours.
+        def self.link_weight(token, tail, matched)
+          return 'dotted_' if token.include?('.')
+          return 'thick_' if token.include?('=') && (matched || tail.nil?)
+
+          ''
+        end
+        private_class_method :link_weight
 
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
@@ -238,11 +265,6 @@ module Sirena
           }
         end
 
-        # Arrow types
-        rule(arrow: { plain: simple(:a) }) { a.to_s }
-        rule(arrow: { dotted: simple(:a) }) { a.to_s }
-        rule(arrow: { thick: simple(:a) }) { a.to_s }
-
         # Edge label
         rule(label: simple(:l)) { l.to_s.strip }
         rule(label: sequence(:l)) { l.join.strip }
@@ -257,12 +279,14 @@ module Sirena
           end
         end
 
-        # Helper method to create edges
-        def self.create_edge(source_id, target_data, arrow_type, label = nil)
+        # `link_token` is the raw lexeme the grammar matched — `-->`,
+        # `o--x`, `~~~`. `link_type` is what turns it into the edge's
+        # arrow type; the two are not the same string.
+        def self.create_edge(source_id, target_data, link_token, label = nil)
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
-            e.arrow_type = ARROW_MAP[arrow_type] || 'arrow'
+            e.arrow_type = link_type(link_token)
             # Convert Parslet::Slice to string before checking empty
             label_str = label.to_s if label
             e.label = label_str if label_str && !label_str.empty?
@@ -341,7 +365,16 @@ module Sirena
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
 
-            arrow_type = edge_data[:arrow].to_s
+            # The capture arrives as {token: slice}, and no Parslet rule
+            # unwraps it. Two reasons, in order. Nothing instantiates this
+            # class — parsing runs through its own class-level `apply`
+            # above — so Parslet's instance `apply`, the only thing that
+            # runs the declared rules, is never called. And even under
+            # that, a rule keyed on `arrow:` could not match: Parslet
+            # matches a hash only when EVERY key matches, and the hash
+            # holding `arrow` carries `label` and `target` too. So the
+            # slice is read here, where the link is the only thing meant.
+            link_token = edge_data[:arrow][:token].to_s
             label = edge_data[:label]
             target_data = edge_data[:target]
 
@@ -352,7 +385,7 @@ module Sirena
             add_or_update_node(diagram, target_node_data)
 
             # Create edge
-            edge = create_edge(source_id, target_node_data, arrow_type, label)
+            edge = create_edge(source_id, target_node_data, link_token, label)
             diagram.edges << edge
 
             # For chaining, next edge source is current target
