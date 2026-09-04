@@ -127,18 +127,19 @@ TYPES = {
 - [ ] a diagram type is declared in exactly one place
 - [ ] `Engine` contains no diagram-type constants
 - [ ] `grep -n "def self.render" lib/sirena.rb` shows one, inside `module Sirena`
-- [ ] the CLI and `Sirena.render` behave identically. **`corpus:check` alone
-      cannot prove this** — item 01's task calls only `Sirena.render` and
-      records pass/fail, stage and exception class. It never invokes the CLI,
-      never compares SVG bytes and never compares error text, so the
-      byte-identical promise above needs its own gate.
+- [ ] this refactor changes neither the CLI's nor `Sirena.render`'s existing
+      behaviour. **`corpus:check` alone cannot prove this** — item 01's task
+      calls only `Sirena.render` and records pass/fail, stage and exception
+      class. It never invokes the CLI, never compares SVG bytes and never
+      compares error text, so this needs its own gate.
 
       **Compare each surface to ITSELF before and after — never the CLI to the
       API.** Measured: the CLI adds a trailing newline via `puts` and prefixes
-      failures with `Error:`, so CLI and API output can never be equal and a
-      gate demanding that can never pass. The gate is: API-before vs API-after
-      (SVG checksum and exact error text), and CLI-before vs CLI-after (stdout,
-      stderr and exit status)
+      failures with `Error:`, so CLI and API output are never equal and a gate
+      demanding that can never pass; "behave identically" means each surface
+      matches its OWN prior behaviour, not that the two surfaces match each
+      other. The gate is: API-before vs API-after (SVG checksum and exact
+      error text), and CLI-before vs CLI-after (stdout, stderr and exit status)
 - [ ] `corpus:check` unchanged
 - [ ] `contract_spec.rb` iterates `TYPES` and covers every entry
 - [ ] it still resolves each model by convention, and still runs each
@@ -189,7 +190,9 @@ TYPES = {
 - [ ] every piece of item 04's temporary transition machinery is gone,
       not just the fallback branch:
       - `Layout::Base`'s `to_graph` branch, and
-        `grep -rn "to_graph" lib/sirena/` returns nothing
+        `grep -rn "to_graph\|@graph" lib/sirena/` returns nothing — the method
+        name alone misses a transform that still holds the old graph as a
+        `@graph` instance variable after `to_graph` itself is gone
       - the `Layout::Legacy` wrapper class
       - `Engine`'s Grid gate **and `Layout::Grid` itself**. Item 03
         created it to hold the engine's positioning stub while legacy

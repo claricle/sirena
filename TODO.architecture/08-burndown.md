@@ -20,7 +20,7 @@ tooling from items 01-07 gives you.
     -> pick a case, read its stage
     -> stage tells you which file to open (docs/adding-a-diagram-type.md)
     -> fix
-    -> rake corpus[flowchart]
+    -> rake 'corpus[flowchart]'
     -> rake corpus && commit scoreboard/corpus.json with the fix
 ```
 

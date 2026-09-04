@@ -210,7 +210,7 @@ refactor can drop 200 cases and nothing notices.
    - a case that used to fail and now passes, not recorded -> **fail the
      build** (so the file cannot go stale; you re-run `rake corpus` and
      commit the improvement)
-4. `rake corpus[flowchart]` scopes to one type. You will live in this
+4. `rake 'corpus[flowchart]'` scopes to one type. You will live in this
    command during item 08, so make its output good: for each failure,
    print the case path, the stage, and the first line of the error.
 5. Wire `corpus:check` into default `rake` and into CI.
@@ -256,6 +256,9 @@ first block.
 ## Done when
 
 - [ ] A — `bundle exec rspec spec/contract_spec.rb` passes for all 24 types
+- [ ] A — `contract_spec.rb` calls `model.valid?` and asserts
+      `[true, false].include?(model.valid?)` — not merely that it does not raise.
+      `def valid?; :maybe; end` must fail this spec; a `respond_to?` check does not
 - [ ] A — every `DiagramRegistry.register` row carries a `model:`
 - [ ] A — `DiagramRegistry.types` and `Engine::DIAGRAM_TYPE_PATTERNS.keys` are the same set
 - [ ] A — deleting one registry row turns `contract_spec.rb` red
@@ -276,5 +279,5 @@ first block.
 - [ ] B — the reported rate is over evidence-valid cases, and says so
 - [ ] B — `rake corpus:check` fails on a deliberately broken renderer
 - [ ] B — `rake corpus:check` fails on an unrecorded improvement
-- [ ] B — `rake corpus[pie]` prints only pie results
+- [ ] B — `rake 'corpus[pie]'` prints only pie results
 - [ ] B — CI runs `corpus:check`

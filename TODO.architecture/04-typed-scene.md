@@ -268,7 +268,7 @@ attribute, two of them dead (item 02).
    `LAYERS.md`.
 4. **Before converting the first type, give `Layout::Base` a transition
    path.** This item converts one type per PR and requires
-   `rake corpus[<type>]` unchanged after each. That is impossible as
+   `rake 'corpus[<type>]'` unchanged after each. That is impossible as
    stated: an unconverted layout exposes `to_graph`, a converted one
    exposes `scene`, and the engine does not switch to
    `Layout.for(type).call(...)` until item 06. Switch early and every
@@ -279,7 +279,7 @@ attribute, two of them dead (item 02).
    the subclass defines `scene`, and falls back to `to_graph(diagram)`
    when it does not. The engine calls `call` from the first conversion PR onward.
    Every PR in between has one path that works for both kinds, and
-   `corpus[<type>]` stays green throughout.
+   `rake 'corpus[<type>]'` stays green throughout.
 
    The registry-era engine instantiates the registered class
    (`engine.rb:180`), so a `nil` layout would be `nil.new`. That cannot
@@ -352,7 +352,7 @@ During item 04 the engine still resolves classes through
    - replace the hardcoded font size with the theme's
    - rewrite the renderer to read named attributes
    - the layout returns a new Scene and never mutates the diagram
-   - `rake corpus[<type>]` must show the same pass count
+   - `rake 'corpus[<type>]'` must show the same pass count
 6. Extend `spec/contract_spec.rb`: every registered type has a layout,
    and that layout returns a `Layout::Scene` with non-nil `width` and
    `height`. There is no "no layout" case to special-case.

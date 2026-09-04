@@ -207,7 +207,10 @@ headings silently drop everything after the first block.
 - [ ] A — one parse-error format for all 24 types, asserted by a spec that feeds each type deliberately broken source and checks the message names a line and a column
 - [ ] A — `grep -rn "def format_parse_error" lib/` returns one hit, in `Parser::Base`
 - [ ] A — `user_journey`'s score check raises something other than `ParseError`
-- [ ] A — one builder calling convention
+- [ ] A — one builder calling convention: `block`, `flowchart` and `requirement`'s
+      `self.apply` class methods are migrated to instance methods, not merely called
+      differently — `grep -rn "def self.apply" lib/sirena/parser/transforms/` returns
+      nothing
 - [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
 - [ ] B — no renderer sets `@offset_x` / `@offset_y`
 - [ ] C — `grep -rn "DEFAULT_COLORS\|FLOW_COLORS\|SECTION_COLORS" lib/sirena/`
@@ -215,9 +218,17 @@ headings silently drop everything after the first block.
       the sixth palette lives in `transform/git_graph.rb` and a renderer-only
       grep reports success with it still there
 - [ ] C — a git_graph rendered under `default` and under `dark` differs in its
-      BRANCH colours. Measured before the change, the two documents differ while
-      both keep `#7c3aed` and `#2563eb`, so a whole-document diff passes without
-      the palette moving
+      BRANCH colours specifically. Measured before the change, the two documents
+      differ while both keep `#7c3aed` and `#2563eb`, so a whole-document diff
+      passes without the palette moving — a bare "output differs" check is a
+      false-positive gate and does not prove this
 - [ ] C — `cat lib/sirena/renderer/*.rb | grep -o '#[0-9a-fA-F]\{6\}' | wc -l` returns **10 or fewer**, against a measured baseline of **269** (2026-09-01). Count OCCURRENCES, not lines: `grep -c` reports c4.rb at 11 where the part C baseline above says 25, so the two are not comparable and "near zero" cannot be judged from it
-- [ ] C — switching themes visibly changes output for every registered type
+- [ ] C — for EVERY registered type, not just git_graph: rendering under `default`
+      and under `dark` differs in that type's OWN categorical palette colours
+      specifically (the values step 1 moved into the theme), not merely
+      somewhere in the document. `pie` needs the same specific check as
+      git_graph got above — its default and dark SVGs already differ elsewhere
+      (background, text) while both keep `#4472C4`, so "switching themes visibly
+      changes output for every registered type" is satisfied today without the
+      palette ever moving, and is not sufficient on its own
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either
