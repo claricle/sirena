@@ -65,7 +65,11 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
         .not_to match(/<(?:polygon|line|circle)\b/)
     end
 
-    it "clips a visible path to transparent node outlines" do
+    # The transparent fill is what made the defect visible — a line run to
+    # the centres showed straight through a node the theme paints `none` —
+    # but it is not a condition of what is asserted here. The same `d` is
+    # drawn whatever the fill is, so the name promises only the clipping.
+    it "clips a visible path to the node outline at each end" do
       xml = Sirena.render(
         "flowchart LR\n  A --x B\n",
         theme: { colors: { node_fill: "none", edge_stroke: "#000000" } }
@@ -419,17 +423,27 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     end
 
     # A node of no size loops back onto its own centre, so the label has
-    # no direction to be pushed out along.
+    # no direction to be pushed out along. It stays ON that centre, and
+    # the coordinates are what says so: asserting only that a `<text>` was
+    # drawn leaves the guard free to put it anywhere at all — a thousand
+    # units off-canvas passed.
+    #
+    # The node sits away from the origin deliberately. At (0, 0) its
+    # centre and a dropped or zeroed coordinate are the same point, so the
+    # assertion could not tell them apart.
     it "places a self link's label on a node of no size" do
       graph = {
-        children: [{ id: "A", x: 0, y: 0, width: 0, height: 0 }],
+        children: [{ id: "A", x: 30, y: 70, width: 0, height: 0 }],
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
                   labels: [{ text: "x" }],
                   metadata: { arrow_type: "arrow" } }]
       }
       xml = described_class.new.render(graph).to_xml
+      text = xml[%r{<g id="edge-A_to_A".*?</g>}m][/<text\b[^>]*>/].to_s
 
-      expect(xml[%r{<g id="edge-A_to_A".*?</g>}m]).to include("<text")
+      expect(text).to start_with("<text")
+      expect(text[/\sx="(-?[\d.]+)"/, 1].to_f).to eq(30.0)
+      expect(text[/\sy="(-?[\d.]+)"/, 1].to_f).to eq(70.0)
       expect(xml).not_to include("NaN")
     end
 
@@ -446,6 +460,24 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
         expect(ink).to match(/\A#[0-9a-f]{6}\z/)
         expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq(ink)
       end
+    end
+
+    # The sweep above cannot say WHICH colour the head was drawn in. All
+    # four built-in themes paint their nodes and their edges the same ink
+    # — `node_stroke` and `edge_stroke` are one value in every one of them
+    # — so reading the node's colour by mistake agrees with reading the
+    # edge's on all four. A theme that separates them is what tells the
+    # two apart, and it draws the picture the sweep exists to refuse: a
+    # red head on a blue line.
+    it "draws the head in the edge colour, not the node's" do
+      xml = Sirena.render(
+        "flowchart TD\n  A --> B\n",
+        theme: { colors: { node_stroke: "#ff0000", edge_stroke: "#0000ff" } }
+      )
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+
+      expect(group[/<path[^>]*stroke="([^"]*)"/, 1]).to eq("#0000ff")
+      expect(group[/<polygon[^>]*fill="([^"]*)"/, 1]).to eq("#0000ff")
     end
 
     # Nothing fills a theme's gaps in, so a theme can name no edge colour
@@ -503,35 +535,56 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(group[/<circle[^>]*fill="([^"]*)"/, 1]).to eq("none")
     end
 
-    # The fallback layout emits no bend points, so the geometry rule is
-    # exercised directly. Orienting along the span rather than the arriving
-    # segment drew a diagonal arrow on a path that arrives vertically.
+    # A path that bends arrives along its last segment, not along the span
+    # between the two node centres. Orienting on the span drew a diagonal
+    # arrow on a path that comes in vertically.
+    #
+    # Read off the drawn SVG rather than through the geometry helper. The
+    # fallback layout emits no bend points, so nothing else in this file
+    # renders a non-self edge that carries one — the branch that follows a
+    # bend was reached by no example that draws, and a `send` past it
+    # leaves that arm empty rather than filling it.
     it "points the head along the arriving segment, not the span" do
-      renderer = described_class.new
-      source = { id: "A", x: 0, y: 0, width: 40, height: 20 }
-      target = { id: "B", x: 200, y: 200, width: 40, height: 20 }
-      bends = [{ x: 220, y: 0 }]
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
+                   { id: "B", x: 200, y: 200, width: 40, height: 20 }],
+        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                  sections: [{ bendPoints: [{ x: 220, y: 0 }] }],
+                  metadata: { arrow_type: "arrow" } }]
+      }
+      xml = described_class.new.render(graph).to_xml
+      group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
+      tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
+        .split.map { |pair| pair.split(",").map(&:to_f) }
 
-      geometry = renderer.send(:head_geometry, bends, source, target, :target)
-
-      # The path arrives straight down, so the tip sits on B's top edge
-      # and the direction it came from is directly above it. `tip_x` is
-      # the assertion that means something: aiming along the SPAN puts
-      # the tip at 210, and `tip_y` is 200 either way.
-      expect(geometry[:tip_x]).to be_within(0.05).of(220)
-      expect(geometry[:tip_y]).to be_within(0.5).of(200)
-      expect(geometry[:from_x]).to eq(220)
-      expect(geometry[:from_y]).to eq(0)
+      # The path leaves the bend at x 220 and drops straight onto B's top
+      # edge. `tip.first` is the assertion that discriminates: aiming
+      # along the span puts the tip at 210, and its y is 200 either way.
+      expect(tip).to eq([220.0, 200.0])
+      # Square across the line it ends, so both back corners share a y
+      # above the tip. Aimed along the span they sit at different ones.
+      expect(back.map(&:last).uniq).to eq([192.0])
     end
 
+    # With no bend the head has only the OTHER node's centre to aim from.
     it "falls back to the other node when there is no bend" do
-      renderer = described_class.new
-      source = { id: "A", x: 0, y: 0, width: 40, height: 20 }
-      target = { id: "B", x: 200, y: 0, width: 40, height: 20 }
+      graph = {
+        children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
+                   { id: "B", x: 200, y: 0, width: 40, height: 20 }],
+        edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                  metadata: { arrow_type: "arrow" } }]
+      }
+      xml = described_class.new.render(graph).to_xml
+      group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
+      tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
+        .split.map { |pair| pair.split(",").map(&:to_f) }
 
-      geometry = renderer.send(:head_geometry, [], source, target, :target)
-
-      expect([geometry[:from_x], geometry[:from_y]]).to eq([20.0, 10.0])
+      # A's centre is (20, 10), dead level with B's, so the tip lands on
+      # the middle of B's left edge. Aiming from the origin instead pulls
+      # it to y 9.1; aiming from B's own centre leaves no ray at all and
+      # the polygon degenerates onto that centre.
+      expect(tip).to eq([200.0, 10.0])
+      expect(back.map(&:first).uniq).to eq([192.0])
     end
 
     it "puts a head at each end of a two-ended link" do
@@ -546,15 +599,25 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       )
     end
 
-    # An ordinary label is lifted off the line it names. The loop specs
-    # below measure their lift against this one, and nothing was holding
-    # it — the lift could go and they would all still agree.
+    # An ordinary label sits at the midpoint of the two node centres,
+    # lifted off the line it names. The loop specs below measure their
+    # lift against this one, and nothing was holding it — the lift could
+    # go and they would all still agree.
+    #
+    # The x is asserted as well as the y, and it is the half that
+    # discriminates. The fallback layout puts A and B on one row, so the
+    # path's start, the source's centre and the midpoint all share a y of
+    # 67 — every candidate anchor gives the same lifted y. Anchoring on
+    # the source centre instead drops the label on top of A and leaves
+    # that y untouched.
     it "lifts an ordinary label clear of its own line" do
       xml = Sirena.render("flowchart TD\n  A -->|hi| B\n")
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
       line = group[/<path[^>]*d="M [-\d.]+ ([-\d.]+)/, 1].to_f
+      midpoint = (node_centre(xml, "A").first + node_centre(xml, "B").first) / 2
 
       expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
+      expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f).to eq(midpoint)
     end
   end
 
