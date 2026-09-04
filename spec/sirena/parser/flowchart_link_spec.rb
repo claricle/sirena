@@ -15,12 +15,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # trailing one matches it. `o--x` draws the cross alone, and a mismatched
   # pair loses its thickness too — `o==x` is no thicker than `o--x`.
   #
-  # Every family here is open-ended in its length. Most are pinned at their
-  # minimum and at least one length past it; the thick cross and circle
-  # (`==x`, `==o`) are pinned at their minimum only. A family pinned at one
-  # length while its siblings are pinned at another is the gap to watch
-  # for: the `<`-prefixed rows stopped at three dashes for a while and
-  # nothing in the suite noticed.
+  # Every family here is open-ended in its length, and MOST are pinned at
+  # their minimum only — the families carrying a second length are the
+  # minority, not the rule, so no list of the single-length ones would stay
+  # true for long. The gap to watch for is therefore not a family with one
+  # row: it is a family pinned at one length while a sibling sharing its
+  # markers is pinned at another. That is how the `<`-prefixed rows stopped
+  # at three dashes for a while with nothing in the suite noticing.
   def self.links
     {
       "---" => "line", "-->" => "arrow", "--x" => "cross", "--o" => "circle",
