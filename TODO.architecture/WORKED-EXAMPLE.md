@@ -274,4 +274,4 @@ renderer stops doing arithmetic.
 - [ ] The Scene class names every value the renderer uses — if you had to
       look at the renderer to know what to put in the Scene, that is
       fine; that is where the contract lived. Now it is written down.
-- [ ] `rake corpus[pie]` shows the same pass count as before.
+- [ ] `rake 'corpus[pie]'` shows the same pass count as before.
