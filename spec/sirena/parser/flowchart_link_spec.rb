@@ -94,8 +94,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # would notice — every other tilde case here is about the markers.
     # `o~~~o` carries one at BOTH ends, which is the shape a rule that
     # honours a matched pair would wave through while `o~~~` still fails.
+    #
+    # `>-->` and `--<` are the characters next door to the two marker
+    # classes: a link may START with `o`, `x` or `<` and may END with `>`,
+    # `x` or `o`. Widening either class by its neighbour — `match['ox<>']`
+    # or `match['>xo<']` — draws links mmdc refuses, and without these two
+    # rows every other row here stays green while it does.
+    #
+    # `>--` is deliberately NOT one of them, and completing the pattern
+    # with it would prove nothing: a widened start still leaves `--` too
+    # short to be a body on its own, so it is refused either way. Measured
+    # against mmdc 11.12.0, all three are rejected.
     %w[-- == -> <-- o-- x-- <-> o-> <- .-. .-- -. o= -.x -.o
-       -.->> .-->> ==>> <-->> o~~~ o~~~o ~~~> <~~~ ~~ ~].each do |link|
+       >--> --< -.->> .-->> ==>> <-->> o~~~ o~~~o ~~~> <~~~ ~~ ~]
+      .each do |link|
       it "refuses #{link}" do
         expect { diagram(link) }.to raise_error(Sirena::Parser::ParseError)
       end
@@ -158,13 +170,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to eq(%w[dotted_arrow dotted_arrow])
     end
 
-    # An inline class is a name that is still growing: mmdc reads the
-    # `.` into the class name and then refuses what is left. A shape
-    # before the class does not close it — mmdc refuses `A[x]:::c.->B`
-    # for the same reason it refuses `A:::c.->B`. `A:::c.-B` and
-    # `A[x]:::c.-B` are the near-side halves of the same pairs, and they
-    # are pinned here too so a class that started closing names cannot
-    # pass unseen.
+    # An inline class is a name that is still growing: mmdc reads the `.`
+    # into the class name. A shape before the class does not close it —
+    # mmdc refuses `A[x]:::c.->B` for the same reason it refuses
+    # `A:::c.->B`.
+    #
+    # Only those two rows follow the oracle. Measured against mmdc
+    # 11.12.0, `A:::c.-B` and `A[x]:::c.-B` are ACCEPTED and DRAWN, one
+    # node apiece and no edge — the same answer it gives `A.-B` above.
+    # Sirena refuses all four, because its own names take no dot; the
+    # deviation is stated on `dot_absent` in `grammars/flowchart.rb`. The
+    # two near-side rows are pinned so a class that started closing names
+    # cannot pass unseen, not because mermaid refuses them.
     ["A:::c.->B", "A[x]:::c.->B", "A:::c.-B", "A[x]:::c.-B"]
       .each do |source|
       it "still wants a gap after the inline class of #{source}" do
