@@ -469,12 +469,6 @@ module Sirena
         rule(:flush_link_marker) { match['xo'] >> link_body }
 
         # Node with optional shape and edges
-        #
-        # A lone `x` or `o` sitting flush against a link body is mermaid's
-        # link-START marker, not a node called `x`. mmdc reads `x===B` as
-        # a link with nothing on its left and refuses it, while it draws
-        # `xx===B` and `x === B` — the marker has to be one character and
-        # flush. `flush_link_marker` refuses exactly that shape.
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
             node_with_shape.as(:node) >>
@@ -497,6 +491,16 @@ module Sirena
         # `dot_absent` is a zero-width lookahead and captures nothing. It
         # is there only to refuse the flush dot a bare name would
         # otherwise swallow.
+        #
+        # `flush_link_marker.absent?` on the first line is the other
+        # refusal. A lone `x` or `o` sitting flush against a link body is
+        # mermaid's link-START marker, not a node called `x`: mmdc reads
+        # `x===B` as a link with nothing on its left and refuses it, while
+        # it draws `xx===B` and `x === B` — the marker has to be one
+        # character and flush. This rule is the edge TARGET as well as the
+        # statement's own node, so the guard governs both positions, and
+        # mmdc refuses `A --> x---B` for the same reason it refuses
+        # `x===B`.
         rule(:node_with_shape) do
           flush_link_marker.absent? >>
             node_id.as(:node_id) >>
@@ -723,7 +727,11 @@ module Sirena
           (invisible_link | visible_link).as(:token)
         end
 
-        # `~~~` takes no markers at all: mmdc rejects `o~~~o` and `~~~>`.
+        # `~~~` takes no markers at all. mmdc rejects `~~~>` outright, and
+        # it never reads an `o` or an `x` beside a tilde run as a marker
+        # either — `A o~~~o B` is refused, and written flush `Ao~~~oB` is
+        # DRAWN, as the two nodes `Ao` and `oB` with an invisible link
+        # between them. Sirena gives both the same answers.
         rule(:invisible_link) { str('~~~') >> str('~').repeat }
 
         # The vocabulary is generated, not listed. Enumerating it missed
