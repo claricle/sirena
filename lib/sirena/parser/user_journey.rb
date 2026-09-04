@@ -104,6 +104,15 @@ module Sirena
       # `accDescr {` open, and this rejects it because the line falls through
       # to the character branch and the `}` inside the JSON closes the block
       # early. Same verdict, different mechanism.
+      #
+      # Two divergences from mermaid are known and left standing, both
+      # pinned by examples. Mermaid's directive strip is NOT anchored to a
+      # line start, so it deletes `%%{x}%%` from mid-line where this refuses
+      # the source. And where a directive has no tail, mermaid swallows the
+      # rest of the source and still renders, where making the tail optional
+      # here would leave the block open and refuse it — so requiring the
+      # tail is the reading that agrees with the oracle's answer, even
+      # though the optional tail is the more faithful pattern.
       rule(:acc_directive) do
         acc_nl >> acc_line_space.repeat >> str('%%{') >>
           (str('}%%').absent? >> any).repeat >> str('}%%')

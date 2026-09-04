@@ -383,6 +383,42 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         end
       end
 
+      it 'reads a directive only at the start of a line' do
+        # A DIVERGENCE, pinned rather than endorsed. Mermaid's directive
+        # strip is not anchored to a line start, so it deletes `%%{x}%%` from
+        # the middle of this line and the oracle renders the source with the
+        # description `AB`. This grammar anchors both of its strips, so the
+        # `}` inside `{x}` closes the block, `%%B}` is left stranded after it
+        # and the source is refused.
+        #
+        # The anchor is kept because it matches the comment rule beside it
+        # and flowchart's `metadata_comment_line`, and because no corpus case
+        # puts a directive mid-line. Unanchoring it is a change to what a
+        # directive IS, which wants its own oracle round rather than a
+        # side effect of this one.
+        source = "journey\naccDescr {A%%{x}%%B}\nsection S\nT: 1: M\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+      end
+
+      it 'treats a directive with no closing tail as ordinary text' do
+        # The directive rule requires its `}%%`, so `%%{x` here is text: the
+        # `}` after `b` closes the block and the section and task that follow
+        # are read normally.
+        #
+        # Making the tail optional would be closer to mermaid's own pattern,
+        # which runs an unterminated directive to the end of the source — but
+        # it is further from the oracle's ANSWER. Mermaid eats `section S`
+        # and the task along with the directive and still renders, with the
+        # description `a`; making the tail optional here leaves `accDescr {`
+        # open instead and refuses a source the oracle accepts.
+        source = "journey\naccDescr {a\n%%{x\nb}\nsection S\nT: 1: M\n"
+
+        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          .to eq([['S', ['T']]])
+      end
+
       it 'does not let a brace inside a comment close the block' do
         # Both the oracle and the parser before this change refuse the first
         # source. Until the block body consumed comment lines whole, it
