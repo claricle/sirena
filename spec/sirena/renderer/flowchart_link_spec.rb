@@ -85,12 +85,13 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
     # A loop's corners are the coordinates that land on a long decimal:
     # a depth of 0.45 of the shorter side, off an edge that already carries
-    # one. This node drew `L 172.3 48.275000000000006` before the corners
-    # were rounded with everything else on the path.
+    # one. This node drew `L 84.775 99.3` before the corners were rounded
+    # with everything else on the path.
     #
     # It has to be a TD loop. Holding the span inside the node's height put
     # an LR loop's corners on whole tenths already, so the LR form passed
-    # this whether or not anything rounded. TD still bends at 84.775.
+    # this whether or not anything rounded. TD is the only one of the two
+    # that still bends off a tenth.
     it "writes every path coordinate to one decimal" do
       xml = Sirena.render("flowchart TD\n  A[abcdefghijk] --> A\n")
       numbers = xml.scan(/ d="([^"]*)"/).flatten
@@ -978,9 +979,9 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
     # `double_circle` and `rounded` each ride another shape's branch —
     # one shares the circle's outline in NODE_OUTLINES, one shares the
-    # stadium's. Dropping either
-    # name sends it to the box answer, and every example above would stay
-    # green, so each is pinned on the outline it is actually drawn as.
+    # stadium's. Dropping either name sends it to the box answer, and
+    # every example above would stay green, so each is pinned on the
+    # outline it is actually drawn as.
     it "lands on a double circle at its radius" do
       xml = Sirena.render("flowchart TD\n  A(((x))) --> A\n")
       group = xml[%r{<g id="node-A".*?</g>}m]
