@@ -44,7 +44,7 @@ RSpec.describe HardenedMmdc do
         stub_const('HardenedMmdc::PS_TIMEOUT', 0.3)
         parent, _child = spawn_tree
 
-        only('ps', script) { Timeout.timeout(guard) { described_class.kill_group(parent) } }
+        only('ps', script) { Timeout.timeout(guard) { described_class.send(:kill_group, parent) } }
 
         expect(dies?(parent)).to be(true)
       end
@@ -53,7 +53,7 @@ RSpec.describe HardenedMmdc do
     it 'kills a descendant that sits in a process group of its own' do
       parent, child = spawn_tree
 
-      Timeout.timeout(guard) { described_class.kill_group(parent) }
+      Timeout.timeout(guard) { described_class.send(:kill_group, parent) }
 
       expect(dies?(child)).to be(true)
     end
@@ -63,7 +63,7 @@ RSpec.describe HardenedMmdc do
       table = "#!/bin/sh\nprintf '%s\\n' 'garbled #{pid}' '7garbled #{pid}' " \
               "'0 #{pid}' '-7 #{pid}' '8 #{pid}garbled' '9 0' '10 -7'\n"
 
-      descendants = only('ps', table) { described_class.subtree_of(pid) }
+      descendants = only('ps', table) { described_class.send(:subtree_of, pid) }
 
       expect(descendants).to eq([])
     end
@@ -75,7 +75,7 @@ RSpec.describe HardenedMmdc do
       stub_const('HardenedMmdc::PS_TIMEOUT', 1)
 
       only('ps', wedge('20.17')) do
-        Timeout.timeout(guard) { described_class.descendants_of(Process.pid) }
+        Timeout.timeout(guard) { described_class.send(:descendants_of, Process.pid) }
       end
 
       expect(gone?('20.17')).to be(true)
@@ -91,7 +91,7 @@ RSpec.describe HardenedMmdc do
       pid = Process.spawn('/bin/sh', '-c', 'sleep 0.4; exit 7', pgroup: true)
       spawned << pid
 
-      status = only('ps', slow_ps) { Timeout.timeout(guard) { described_class.wait_with_deadline(pid) } }
+      status = only('ps', slow_ps) { Timeout.timeout(guard) { described_class.send(:wait_with_deadline, pid) } }
 
       expect(status.exitstatus).to eq(7)
     end
@@ -103,7 +103,7 @@ RSpec.describe HardenedMmdc do
       pid = Process.spawn('/bin/sh', '-c', 'sleep 20.61', pgroup: true)
       spawned << pid
 
-      status = Timeout.timeout(guard) { described_class.wait_with_deadline(pid) }
+      status = Timeout.timeout(guard) { described_class.send(:wait_with_deadline, pid) }
 
       expect(status).to be_nil
     end
@@ -182,7 +182,7 @@ RSpec.describe HardenedMmdc do
       Dir.mktmpdir do |dir|
         input = File.join(dir, 'in.mmd')
         output = File.join(dir, 'out.svg')
-        File.write(input, "flowchart LR\n  A --> B\n")
+        File.write(input, trivial_source)
 
         prefix_path(fake_mmdc(dir, <<~SH)) do
           #!/bin/sh
@@ -201,7 +201,7 @@ RSpec.describe HardenedMmdc do
         input = File.join(dir, 'in.mmd')
         output = File.join(dir, 'out.svg')
         pidfile = File.join(dir, 'mmdc.pid')
-        File.write(input, "flowchart LR\n  A --> B\n")
+        File.write(input, trivial_source)
 
         prefix_path(fake_mmdc(dir, interruptible_mmdc(pidfile))) do
           wait_for_pid = proc do
@@ -238,7 +238,7 @@ RSpec.describe HardenedMmdc do
 
       Dir.mktmpdir do |dir|
         input = File.join(dir, 'in.mmd')
-        File.write(input, "flowchart LR\n  A --> B\n")
+        File.write(input, trivial_source)
 
         prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.83\n")) do
           verdict = Timeout.timeout(guard) do
