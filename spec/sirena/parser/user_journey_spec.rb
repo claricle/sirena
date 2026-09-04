@@ -287,16 +287,20 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to eq([['S', ['T']]])
       end
 
-      it 'requires a line end after the closing brace' do
-        # With content after the brace the block rule declines the line and
-        # `task_line` claims the whole of it as one name. The oracle instead
-        # reads a description `Desc` and a task `After`, so this pins a
-        # divergence rather than endorsing it. Dropping the line-end
-        # requirement would quietly switch the task name to `After`.
+      it 'ends the block at the brace and reads what follows it' do
+        # A DIVERGENCE NOW CLOSED. The oracle renders this source with the
+        # description `Desc`, the section `S` and one task `After` — the
+        # exact sections and tasks asserted here.
+        #
+        # Requiring a line end after the brace instead read the whole of
+        # `accDescr {Desc}After` as one task name, and that cost more than
+        # accuracy: the block rule failed only AFTER scanning for its `}`,
+        # so every following line paid for its own scan. 1000 such lines
+        # took 9.75s; they take 0.82s now.
         source = "journey\nsection S\naccDescr{Desc}After: 3: Me\n"
 
         expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map { |t| [t.name, t.score] }] })
-          .to eq([['S', [['accDescr{Desc}After', 3]]]])
+          .to eq([['S', [['After', 3]]]])
       end
 
       it 'raises ParseError on a source valid in a non-UTF-8 encoding' do
@@ -383,22 +387,31 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         end
       end
 
-      it 'reads a directive only at the start of a line' do
+      it 'reads a mid-line directive as text rather than as a directive' do
         # A DIVERGENCE, pinned rather than endorsed. Mermaid's directive
-        # strip is not anchored to a line start, so it deletes `%%{x}%%` from
-        # the middle of this line and the oracle renders the source with the
-        # description `AB`. This grammar anchors both of its strips, so the
-        # `}` inside `{x}` closes the block, `%%B}` is left stranded after it
-        # and the source is refused.
+        # strip is NOT anchored to a line start, so it deletes `%%{x}%%` from
+        # the middle of a line; this grammar anchors both of its strips and
+        # so leaves it as text. In `directive` the `}` inside `{x}` therefore
+        # ends the block, `%%B` is left as an ordinary comment line, and the
+        # source parses — where the oracle strips the directive, never closes
+        # `accDescr {`, and REFUSES it.
+        #
+        # `comment` is the control that places the divergence on the
+        # directive rather than on mid-line `%%` in general: with a plain
+        # comment both tools refuse the source.
         #
         # The anchor is kept because it matches the comment rule beside it
         # and flowchart's `metadata_comment_line`, and because no corpus case
-        # puts a directive mid-line. Unanchoring it is a change to what a
-        # directive IS, which wants its own oracle round rather than a
-        # side effect of this one.
-        source = "journey\naccDescr {A%%{x}%%B}\nsection S\nT: 1: M\n"
+        # puts a directive mid-line. Unanchoring it changes what a directive
+        # IS, which wants its own oracle round rather than arriving as a side
+        # effect of this one — on the evidence so far it would move TOWARD
+        # the oracle on every shape measured.
+        directive = "journey\naccDescr {A%%{x}%%B\nsection S\nT: 1: M\n"
+        comment = "journey\naccDescr {A%% x}B\nsection S\nT: 1: M\n"
 
-        expect { parser.parse(source) }
+        expect(parser.parse(directive).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          .to eq([['S', ['T']]])
+        expect { parser.parse(comment) }
           .to raise_error(Sirena::Parser::ParseError, /Parse error/)
       end
 
