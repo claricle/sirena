@@ -538,24 +538,30 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         #
         # ADD A ROW when you add an alternative to `acc_block_comment`. One
         # carrying this defect then fails on arrival instead of shipping.
+        # Every measurement is the MINIMUM of three runs. Noise only ever ADDS
+        # time, so the minimum is the robust statistic, and a scheduler spike
+        # has to hit all three samples to survive. A single sample is not
+        # enough here: measured under a loaded machine it put this ratio at
+        # 13.89x against a true value near 2.5x, which is a false failure.
         block = lambda do |line|
           "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
         end
-        timed = lambda do |source|
-          parser.parse(source)
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          parser.parse(source)
-          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        best = lambda do |source|
+          Array.new(3) do
+            started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            parser.parse(source)
+            Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          end.min
         end
 
-        control = timed.call(block.call('x'))
+        control = best.call(block.call('x'))
 
         { 'acc_comment_line' => '%% x', 'acc_directive' => '%%{x' }.each do |rule, line|
           source = block.call(line)
 
           expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
             .to eq([['S', ['T']]])
-          expect(timed.call(source))
+          expect(best.call(source))
             .to be < control * 8, "#{rule} is not line-bounded"
         end
       end
@@ -590,6 +596,10 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         # that separates the two runs. Measuring against it rather than
         # against a fixed number of seconds keeps the example honest on a
         # machine of any speed.
+        #
+        # Each side is the MINIMUM of three runs, for the reason given on the
+        # line-bounded example above: noise only adds time, so a spike has to
+        # hit every sample to survive.
         terminator = 0x2028.chr(Encoding::UTF_8)
         control = 0x00A0.chr(Encoding::UTF_8)
         expect(terminator).not_to eq(control)
@@ -600,10 +610,12 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         expect(sources.first).not_to eq(sources.last)
 
         results = sources.map do |source|
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          parsed = parser.parse(source)
-          [Process.clock_gettime(Process::CLOCK_MONOTONIC) - started,
-           parsed.sections.map { |s| [s.name, s.tasks.map(&:name)] }]
+          best = Array.new(3) do
+            started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            parser.parse(source)
+            Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          end.min
+          [best, parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] }]
         end
 
         expect(results.map(&:last)).to eq([[['S', ['T']]], [['S', ['T']]]])
