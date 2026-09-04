@@ -115,6 +115,26 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # The other half of the `o~~~o` row above. Spaced, it is refused because
+  # a tilde run takes no markers; written flush there is no marker to take,
+  # and mmdc 11.12.0 draws `Ao~~~oB` as the two ordinary names `Ao` and
+  # `oB` with an invisible link between them.
+  #
+  # The ids are what is asserted, and they are what carries this. Let the
+  # tilde rule take a marker at its trailing end and there are still two
+  # nodes and still one invisible edge — the `o` of `oB` is just read as
+  # part of the link, leaving `Ao` and `B`. Measured: that widening fails
+  # this example and nothing else in the file, so the count and the
+  # `invisible` type would both have waved it through.
+  describe "an invisible link written flush against its nodes" do
+    it "reads Ao~~~oB as two ordinary names" do
+      parsed = described_class.new.parse("flowchart TD\n  Ao~~~oB\n")
+
+      expect(parsed.nodes.map(&:id).sort).to eq(%w[Ao oB])
+      expect(parsed.edges.map(&:arrow_type)).to eq(["invisible"])
+    end
+  end
+
   # A mermaid node name takes a `.` and a lone `-`, so a dot-opened link
   # only counts when something separates it from the node before it.
   # mmdc reads `A.-B` as ONE node called `A.-B`, and refuses `A.->B`
