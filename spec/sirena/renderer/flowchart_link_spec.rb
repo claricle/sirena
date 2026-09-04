@@ -625,12 +625,12 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
   # `M x y L x y` and the head sat at that centre, under a node painted
   # after it. Nothing of the link was on screen. mmdc 11.12.0 loops it off
   # the node instead. Measured off mmdc: the loop reaches past the node
-  # edge by 0.45 of the node's shorter side. Sirena pins the reach at 0.175
-  # of the dimension the loop spreads ACROSS — the width for an up or down
-  # loop, the height for a left or right one — never narrower than 18, never
-  # wider than 50, and never wider than half that dimension, which is what
-  # keeps both ends on the face the loop was thrown from. The head sits
-  # where the loop meets the node again.
+  # edge by 0.45 of the node's shorter side. How far it spreads sideways is
+  # sirena's own answer, and the ORDER its two limits are applied in is what
+  # decides the corners the examples below assert — `self_loop_bends` in
+  # `lib/sirena/renderer/flowchart.rb` states that rule, and it is
+  # deliberately not restated here so the two cannot drift apart. The head
+  # sits where the loop meets the node again.
   describe "a link from a node to itself" do
     def node_top(xml, id = "A")
       node_rect(xml, id)[1]
