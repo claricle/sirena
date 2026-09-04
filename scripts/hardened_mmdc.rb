@@ -191,4 +191,13 @@ module HardenedMmdc
       io.close
     end
   end
+
+  # Only run_mmdc and capture are the public entry points the other scripts
+  # call. Everything else is an implementation detail of those two — matching
+  # the privacy these methods had before the extraction, when they were
+  # unqualified top-level defs reachable only via `.send` (per the ORIGINAL
+  # top-level scoping in mermaid_diff.rb, before this module existed).
+  private_class_method :wait_with_deadline, :kill_group, :status_unless_killed,
+                       :kill_group_id, :kill_each, :descendants_of, :subtree_of,
+                       :monotonic
 end
