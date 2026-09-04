@@ -60,6 +60,15 @@ module Sirena
         acc_descr_open >> acc_block_body >> str('}') >> sp? >> (nl | any.absent?)
       end
 
+      # INVARIANT, enforced by measurement in the spec: every alternative
+      # reachable from here must be LINE-BOUNDED — its own repeats carry
+      # `acc_nl.absent?`, or it consumes a single character. This repeat
+      # visits every position in the block, so one alternative able to run to
+      # the end of the source makes the whole parse quadratic in the block's
+      # length. That has now happened twice, once in this rule and once in
+      # the directive rule added to repair it, so the constraint is written
+      # down rather than remembered. Anything added to `acc_block_comment`
+      # inherits it.
       rule(:acc_block_body) do
         (acc_block_comment | (str('}').absent? >> any)).repeat
       end
@@ -73,9 +82,11 @@ module Sirena
       # same input before the braced form existed. Refusing the line runs the
       # scan at most twice and only on the line that fails.
       #
-      # It refuses no source the grammar accepted before: reaching this rule
-      # already means the block did not close, and the oracle rejects an
-      # unclosed block in a journey whatever follows the brace.
+      # It DOES refuse sources the grammar accepted before, and that is the
+      # point: `accDescr {x: 3: Me` used to become a task named
+      # `accDescr {x`, where the oracle rejects the source outright. Every
+      # shape this newly refuses is one the oracle also refuses, so the
+      # agreement improves as the cost comes down.
       rule(:acc_descr_unclosed) { acc_descr_open >> acc_block_body >> any.absent? }
 
       # Mermaid deletes directive lines and then comment lines before it
@@ -113,9 +124,23 @@ module Sirena
       # here would leave the block open and refuse it — so requiring the
       # tail is the reading that agrees with the oracle's answer, even
       # though the optional tail is the more faithful pattern.
+      # The body may not cross a line terminator, per the invariant on
+      # `acc_block_body`. Unbounded, every `%%{` inside a block scanned to
+      # the end of the source hunting for `}%%`, so a block of `%%{` lines
+      # was quadratic all over again — the same defect this rule was added to
+      # repair, one rule to the left. 400 such lines took 1.03s against 0.04s
+      # before this rule existed.
+      #
+      # The bound costs a directive split across lines, `%%{init: {` /
+      # `"theme":"dark"}}%%` inside a block, which the oracle strips and this
+      # now reads as text. That is where both `origin/main` and the parser
+      # before this change already stood — neither accepted that source —
+      # so the bound gives up an accident, not a feature. A single-line
+      # directive, which is how mermaid's own documentation writes them, is
+      # unaffected.
       rule(:acc_directive) do
         acc_nl >> acc_line_space.repeat >> str('%%{') >>
-          (str('}%%').absent? >> any).repeat >> str('}%%')
+          (acc_nl.absent? >> str('}%%').absent? >> any).repeat >> str('}%%')
       end
 
       rule(:acc_comment_line) do
@@ -131,10 +156,11 @@ module Sirena
       # These are ECMAScript's four line terminators, and mermaid does anchor
       # its comment strip after all four. Its comment BODY is `[^LF]+`
       # though, so mermaid ends a comment at a line feed alone where this
-      # rule ends one at any of the four. The reachable consequence is
-      # `accDescr {` / `%% x` U+2028 `}`, which the oracle renders and this
-      # parser refuses. A refusal is a visible answer rather than a quietly
-      # wrong picture, so it is left as it is.
+      # rule ends one at any of the four. No source has been found where
+      # that changes the answer: a U+2028 that ends a comment here is then
+      # consumed as an ordinary body character, so the following `}` still
+      # closes the block and both tools render. Four such shapes were tried
+      # and all four agree.
       #
       # Nothing else in the grammar reads them, so a wholly CR- or
       # CRLF-delimited journey still fails at the `journey` header exactly as
