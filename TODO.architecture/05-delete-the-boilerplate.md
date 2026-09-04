@@ -227,8 +227,12 @@ headings silently drop everything after the first block.
       and under `dark` differs in that type's OWN categorical palette colours
       specifically (the values step 1 moved into the theme), not merely
       somewhere in the document. `pie` needs the same specific check as
-      git_graph got above — its default and dark SVGs already differ elsewhere
-      (background, text) while both keep `#4472C4`, so "switching themes visibly
-      changes output for every registered type" is satisfied today without the
-      palette ever moving, and is not sufficient on its own
+      git_graph got above — its default and dark SVGs already differ in 12
+      lines elsewhere in the document (background, text) while both keep
+      `#4472C4`. Measured 2026-09-04:
+      `bundle exec exe/sirena render pie.mmd -o d.svg --theme default` vs
+      `--theme dark`, then `diff d.svg k.svg | wc -l` -> 12, and
+      `grep -c '#4472C4' d.svg k.svg` -> 1 in each. So "switching themes
+      visibly changes output for every registered type" is satisfied today
+      without the palette ever moving, and is not sufficient on its own
 - [ ] `rake corpus:check` unchanged after every one of the three PRs — colour does not affect pass/fail either

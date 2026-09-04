@@ -136,7 +136,7 @@ TYPES = {
       **Compare each surface to ITSELF before and after — never the CLI to the
       API.** Measured: the CLI adds a trailing newline via `puts` and prefixes
       failures with `Error:`, so CLI and API output are never equal and a gate
-      demanding that can never pass; "behave identically" means each surface
+      demanding that can never pass. This item's promise is that each surface
       matches its OWN prior behaviour, not that the two surfaces match each
       other. The gate is: API-before vs API-after (SVG checksum and exact
       error text), and CLI-before vs CLI-after (stdout, stderr and exit status)
@@ -190,9 +190,12 @@ TYPES = {
 - [ ] every piece of item 04's temporary transition machinery is gone,
       not just the fallback branch:
       - `Layout::Base`'s `to_graph` branch, and
-        `grep -rn "to_graph\|@graph" lib/sirena/` returns nothing — the method
-        name alone misses a transform that still holds the old graph as a
-        `@graph` instance variable after `to_graph` itself is gone
+        `grep -rn "to_graph\|@graph" lib/sirena/layout/` returns nothing —
+        scoped to `layout/`, not all of `lib/sirena/`: `@graph` is already a
+        legitimate, unrelated instance variable in three renderers (sankey,
+        timeline, gantt), so a repo-wide grep would report false failures
+        there. The method name alone also misses a layout class that still
+        holds the old graph as a `@graph` ivar after `to_graph` itself is gone
       - the `Layout::Legacy` wrapper class
       - `Engine`'s Grid gate **and `Layout::Grid` itself**. Item 03
         created it to hold the engine's positioning stub while legacy

@@ -408,7 +408,8 @@ registry find classes by convention instead of listing them.
 What an earlier draft would have deleted (`info`, `error`, maybe
 `pie` — every other Transform computes geometry), 6 private palette
 constants under 3 names (`DEFAULT_COLORS`, `FLOW_COLORS`,
-`SECTION_COLORS`) — 5 in renderers plus `Transform::GitGraph::DEFAULT_COLORS` —
+`SECTION_COLORS`) — 5 in renderers plus `Transform::GitGraph::DEFAULT_COLORS`,
+per the breakdown in `05-delete-the-boilerplate.md` (measured 2026-09-02) —
 9 copies of `create_document_from_layout`, the no-op
 `add_arrow_marker` placeholder, the `Treemap = TreemapParser` alias, and
 the dead top-level `self.render` at `lib/sirena.rb:38`.
