@@ -34,9 +34,10 @@ module Sirena
       #
       # `sp?` is ASCII space and tab only, where mermaid's `\s` is wider, so
       # `accTitle` no-break-space `:` is still read as a task here and as a
-      # title by the oracle. Closing that needs flowchart's `line_space`
-      # character set; it is unchanged from before this rule existed, not a
-      # regression it introduced.
+      # title by the oracle. Closing that means widening this gap to the set
+      # `acc_line_space` already spells out below, which changes what every
+      # directive line accepts; it is unchanged from before this rule
+      # existed, not a regression it introduced.
       rule(:acc_line) do
         sp? >> (str('accTitle') | str('accDescr')) >> sp? >> str(':') >>
           (nl.absent? >> any).repeat >> (nl | any.absent?)
@@ -65,10 +66,10 @@ module Sirena
       # `acc_nl.absent?`, or it consumes a single character. This repeat
       # visits every position in the block, so one alternative able to run to
       # the end of the source makes the whole parse quadratic in the block's
-      # length. That has now happened twice, once in this rule and once in
-      # the directive rule added to repair it, so the constraint is written
-      # down rather than remembered. Anything added to `acc_block_comment`
-      # inherits it.
+      # length. `acc_directive` shipped exactly that defect, in the round
+      # that was fixing the neighbouring per-line rescan, so the constraint
+      # is written down rather than remembered. Anything added to
+      # `acc_block_comment` inherits it.
       rule(:acc_block_body) do
         (acc_block_comment | (str('}').absent? >> any)).repeat
       end
