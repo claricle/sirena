@@ -182,14 +182,9 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
     context 'with a graph that has no entities and no relationships' do
       let(:empty_graph) { { id: 'er_diagram', children: [], edges: [] } }
 
-      # Size and emptiness are one property: what an empty ER diagram looks
-      # like. Asserting emptiness on its own proved nothing — an empty graph
-      # already drew no children on the old 880x680 canvas.
-      #
-      # The EXTENT is mermaid's; the origin is not. mmdc emits
-      # viewBox="-8 -8 16 16" for this source, from centring a zero-size
-      # bounding box. Sirena keeps the "0 0" origin every one of its other
-      # diagrams uses, so only 16x16 is the parity claim being made here.
+      # Only the 16x16 extent comes from mermaid. mmdc emits
+      # viewBox="-8 -8 16 16" here, from centring a zero-size bounding box;
+      # Sirena keeps the "0 0" origin all its other diagrams use.
       it 'matches the 16x16 extent mermaid gives an empty ER diagram' do
         svg = renderer.render(empty_graph)
 
@@ -205,11 +200,9 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         { id: 'er_diagram', children: [graph[:children].first], edges: [] }
       end
 
-      # The empty-canvas gate is a conjunction, and this is the corner that
-      # pins the `&&`. WITHOUT this example, flipping it to `||` left the whole
-      # suite green while every relationship-free ER diagram — the most
-      # ordinary kind there is — collapsed to the 16x16 stub and lost its
-      # entities. This example is what now fails under that mutation.
+      # A diagram with entities and no relationships is the ordinary case.
+      # It must keep its content size, so the empty check needs both keys to
+      # be empty, not either one.
       it 'draws the entities at content size, not the empty canvas' do
         svg = renderer.render(entity_only_graph)
 
@@ -227,13 +220,9 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         expect(svg.height).to eq(640)
       end
 
-      # A default-valued Hash answers `[]` to a lookup while holding no key at
-      # all, so testing the looked-up value alone called these empty and
-      # shrank them to 16x16. Absent keys are an unknown shape, not an empty
-      # diagram, whatever a default makes the lookup return. All three
-      # partial shapes are one property, and between them they pin both
-      # `key?` calls: dropping either one alone revives the 16x16 answer for
-      # exactly one of these rows.
+      # A default-valued Hash answers `[]` to a lookup while holding no key
+      # at all. Absent keys are an unknown shape, not an empty diagram, so
+      # these keep the no-content defaults.
       it 'is not fooled by a Hash that defaults its lookups to empty' do
         defaulted = -> { Hash.new { [] }.merge!(id: 'er_diagram') }
         neither = defaulted.call

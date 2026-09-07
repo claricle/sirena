@@ -59,11 +59,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       expect(diagram.valid?).to be false
     end
 
-    # A nil member used to raise NoMethodError out of the predicate, in both
-    # collections. The entity here is what makes this reach the relationship
-    # branch: on the base commit an EMPTY entity list short-circuited first,
-    # so it took one valid entity plus `relationships: [nil]` to get to
-    # `relationships.all?(&:valid?)` and die there. Both branches now answer.
+    # The valid entity is needed to reach the relationship branch at all.
     it 'returns false when a relationship member is nil' do
       diagram = described_class.new(relationships: [nil])
       diagram.entities << Sirena::Diagram::ErEntity.new(
@@ -195,6 +191,26 @@ RSpec.describe Sirena::Diagram::ErEntity do
 
     it 'returns false for entity without name' do
       entity = described_class.new(id: 'CUSTOMER')
+      expect(entity.valid?).to be false
+    end
+
+    it 'returns false when the attribute collection is missing' do
+      entity = described_class.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER',
+        attributes: nil
+      )
+
+      expect(entity.valid?).to be false
+    end
+
+    it 'returns false when an attribute member is nil' do
+      entity = described_class.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER',
+        attributes: [nil]
+      )
+
       expect(entity.valid?).to be false
     end
   end

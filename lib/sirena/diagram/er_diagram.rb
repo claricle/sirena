@@ -57,10 +57,14 @@ module Sirena
 
       # Validates the entity has required fields.
       #
+      # A missing attribute collection, or a nil member inside it, makes the
+      # entity invalid rather than raising.
+      #
       # @return [Boolean] true if entity is valid
       def valid?
         !id.nil? && !id.empty? && !name.nil? && !name.empty? &&
-          attributes.all?(&:valid?)
+          !attributes.nil? &&
+          attributes.all? { |attribute| attribute&.valid? }
       end
     end
 
@@ -180,9 +184,7 @@ module Sirena
       # - All relationship references point to existing entities
       #
       # A nil entity or relationship makes the diagram invalid rather than
-      # raising. That covers the two collections this method iterates; it
-      # says nothing about what an entity holds — ErEntity#valid? still
-      # raises on a nil member of its own `attributes`.
+      # raising. ErEntity#valid? answers the same way for a nil attribute.
       #
       # @return [Boolean] true if ER diagram is valid
       def valid?
