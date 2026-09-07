@@ -34,7 +34,7 @@ module Sirena
     # regex, which is why a BOM in front of a fence costs the title. It is
     # not part of the diagram, though, so it comes off before anything is
     # detected.
-    BOM = /\A﻿/
+    BOM = /\A\uFEFF/
 
     # A comment line that is not the start of a directive. A bare `%%` is
     # one too: eight diagram types refuse it and fifteen render it, so the
