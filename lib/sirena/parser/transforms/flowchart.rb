@@ -5,6 +5,7 @@ require_relative '../base'
 require_relative '../../diagram/flowchart'
 require_relative '../metadata_yaml'
 require_relative '../mermaid_shapes'
+require_relative '../../diagram/containment'
 
 module Sirena
   module Parser
@@ -14,6 +15,55 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
+        # One parse's bookkeeping.
+        #
+        # It used to sit in `Thread.current` behind a public `.state`, so
+        # any code in the host app could read or rewrite the ids the next
+        # parse was about to hand out, and a parse that raised had to
+        # remember to clear the slot or it kept the whole parse tree
+        # alive. Made inside `apply` and passed down instead, it is
+        # reachable from nowhere else and goes away with the parse.
+        #
+        # A gem runs inside somebody else's app, and these used to be
+        # shared on the class: 11 of 36 concurrent parses of a 60-box
+        # diagram handed out ids that disagreed with the sequential
+        # answer. Every parse now counts on its own object, so two
+        # threads cannot see each other at all.
+        class Context
+          # Generated ids, keyed by statement IDENTITY: two subgraphs
+          # written the same way are still two boxes, and each needs its
+          # own id.
+          attr_reader :ids
+
+          # Who claimed whom, as won rather than as written. Read by the
+          # cycle check once the whole diagram has been walked.
+          attr_reader :ownership
+
+          # The box holding each id, so a member lookup is indexed rather
+          # than a scan over every box.
+          attr_reader :boxes
+
+          # Ids already spoken for. The first box to name an id keeps it.
+          attr_reader :claimed
+
+          def initialize
+            @ids = {}.compare_by_identity
+            @ownership = {}
+            @boxes = {}
+            @claimed = {}
+            @counter = -1
+          end
+
+          # mermaid names a box carrying a free title `subGraph<n>`, and
+          # counts from zero within one diagram.
+          #
+          # @return [String] the next generated subgraph id
+          def next_generated_id
+            @counter += 1
+            "subGraph#{@counter}"
+          end
+        end
+
         # Two ways a name can fail, and they are not the same thing.
         # Mermaid does not know `nope`, and says so in words a corpus case
         # quotes. Mermaid does know `bang`, and draws it as a curved
@@ -298,7 +348,16 @@ module Sirena
           # Process statements (remaining elements)
           statements = tree[1..-1] || []
 
-          process_statements(diagram, statements)
+          # Made here and passed down, so it belongs to this parse alone.
+          # Nothing outside can reach it, and it is let go — with every
+          # subgraph statement it references — the moment `apply` returns
+          # or raises.
+          context = Context.new
+
+          assign_ids(statements, context)
+          process_statements(diagram, statements, context)
+          reject_ownership_cycles(context)
+          promote_referenced_subgraphs(diagram, context)
 
           diagram
         end
@@ -308,29 +367,22 @@ module Sirena
         end
         private_class_method :canonical_direction
 
-        def self.process_statements(diagram, statements)
+        def self.process_statements(diagram, statements, context, parents = [])
           statements.each do |stmt|
             next unless stmt.is_a?(Hash)
 
             if stmt[:node]
               # Node with edges
-              process_node_edge_statement(diagram, stmt)
+              process_node_edge_statement(diagram, stmt, parents.last, context)
             elsif stmt[:node_id]
               # Standalone node
               node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
+              claim_member(parents.last, stmt[:node_id].to_s, context)
             elsif stmt[:subgraph_keyword]
-              # The diagram model has no subgraph: no container, no title,
-              # no cluster in any renderer. Flattening the body dropped
-              # both and drew loose nodes where mermaid draws a cluster —
-              # main refused the source outright, so accepting it here
-              # would replace a refusal with a wrong picture.
-              #
-              # Guarded on the parsed marker, not the source text: a label
-              # or an id containing "subgraph" never reaches this branch.
-              raise Parser::ParseError,
-                    'Flowchart subgraphs are not supported by the ' \
-                    'diagram model.'
+              process_subgraph(diagram, stmt, context, parents)
+            elsif stmt[:direction_keyword]
+              set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword] || stmt[:classdef_keyword] ||
                   stmt[:class_keyword] || stmt[:click_keyword]
               # Styling directives (acknowledge but don't fully implement)
@@ -339,9 +391,293 @@ module Sirena
           end
         end
 
-        def self.process_node_edge_statement(diagram, stmt)
+        # A subgraph cannot be its own ancestor. mmdc refuses that with
+        # "Setting b as parent of a would create a cycle", and the
+        # transform was discarding the ids needed to see it.
+        #
+        # The id is not always the written one. A subgraph declared with a
+        # FREE title gets a generated `subGraph<n>` — so `subgraph s Some
+        # Title` containing `s` is fine, and containing `subGraph0` is the
+        # cycle. Only a bare or bracket-titled declaration keeps its word.
+        def self.process_subgraph(diagram, stmt, context, parents = [])
+          id = subgraph_id(stmt, context)
+          ancestry = parents + [id]
+          record_subgraph(diagram, stmt, id, parents.last, context)
+          return unless stmt[:subgraph_statements]
+
+          sub_stmts = stmt[:subgraph_statements]
+          sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
+          process_statements(diagram, sub_stmts, context, ancestry)
+        end
+
+        # Ids are handed out in one pass before anything reads them.
+        # `subgraph_id` is asked for the same statement from several
+        # places, and a counter that ticked on every call skipped numbers:
+        # a subgraph nested in another came out `subGraph2`.
+        #
+        # mermaid numbers the innermost box first, so the walk goes down
+        # before it hands anything out. Measured on mmdc 11.12.0:
+        # `subgraph a One` holding `subgraph b Two` makes b subGraph0 and
+        # a subGraph1.
+        def self.assign_ids(statements, context)
+          statements = [statements] unless statements.is_a?(Array)
+
+          statements.each do |stmt|
+            next unless stmt.is_a?(Hash) && stmt[:subgraph_keyword]
+
+            if stmt[:subgraph_statements]
+              assign_ids(stmt[:subgraph_statements], context)
+            end
+            context.ids[stmt] = allocate_id(stmt, context)
+          end
+        end
+
+        # A quoted id arrives as a Hash, and `to_s` on that gave
+        # `{string: "s"}`, so a quoted self-parent slipped through.
+        def self.subgraph_id(stmt, context)
+          context.ids[stmt] ||= allocate_id(stmt, context)
+        end
+
+        def self.allocate_id(stmt, context)
+          generated_id?(stmt) ? context.next_generated_id : written_id(stmt)
+        end
+
+        # A free title always generates one. So does a bare id carrying
+        # whitespace — `subgraph "a b"` is subGraph0 titled "a b". A
+        # bracket title keeps the written id even then, so
+        # `subgraph "a b" [T]` stays `a b`. All measured on mmdc 11.12.0.
+        def self.generated_id?(stmt)
+          return true if free_titled?(stmt)
+
+          stmt[:subgraph_title].nil? && written_id(stmt).match?(/\s/)
+        end
+
+        def self.written_id(stmt)
+          plain_id(stmt[:subgraph_id])
+        end
+
+        # A quoted id arrives as `{string: <slice>}`, so a bare `to_s`
+        # gives `{string: "a"@21}` and never matches the id it names.
+        # Every place that compares an id has to unwrap it, not just the
+        # subgraph's own — the cycle walk reads node ids too.
+        def self.plain_id(raw)
+          return raw.to_s unless raw.is_a?(Hash)
+
+          value = raw.values.first
+          value.is_a?(Array) ? value.join : value.to_s
+        end
+
+        # The grammar captures a bracket title WITHOUT its brackets, so
+        # the text cannot tell the two forms apart. They carry different
+        # keys for that reason — testing for a leading `[` read every
+        # bracketed title as free and generated an id for it.
+        def self.free_titled?(stmt)
+          !stmt[:subgraph_free_title].nil?
+        end
+
+        # A box cannot end up inside itself. An ancestor chain only sees
+        # loops that nest, and two declarations can close one between
+        # them — `a` holding `b` while `b` holds `a` — so each edge is
+        # recorded as its claim is won, and the whole set is checked
+        # once the diagram has been read.
+        #
+        # Read from the ARBITRATED graph, not from what the source
+        # writes. A claim that lost makes no edge, because the box it
+        # named already belongs to somebody else and mermaid never hangs
+        # it there. Measured on mmdc 11.12.0: `subgraph c` holding `b`,
+        # then `b` holding `a`, then `a` holding `b` draws clusters `c`
+        # and `b` — the last claim loses, so nothing closes. Walking the
+        # written source instead refused a diagram mmdc draws.
+        def self.reject_ownership_cycles(context)
+          loop_found = Diagram::Containment.looping_pair(context.ownership)
+          return if loop_found.nil?
+
+          parent, child = loop_found
+          raise Parser::ParseError,
+                "Setting #{parent} as parent of #{child} would create " \
+                'a cycle.'
+        end
+
+        # Declaration order is kept in the model. Ownership is independent:
+        # a parent declared later can adopt an earlier top-level subgraph.
+        #
+        # Being written inside a box is a claim like any other, so a
+        # declaration takes the id only if nothing named it earlier. When
+        # it loses, the box is still built and still holds what it
+        # contains — it just does not become anybody's child, and the
+        # earlier claimant adopts it once the walk is over.
+        def self.record_subgraph(diagram, stmt, id, parent, context)
+          box = Diagram::FlowchartSubgraph.new
+          box.id = id
+          box.declared_title = subgraph_label(stmt)
+          diagram.subgraphs << box
+          # First box wins the name, matching how a node is claimed, and
+          # every later mention adds to that one.
+          holding = (context.boxes[id] ||= box)
+
+          holder = claim(parent, id, context)
+          return if holder.nil?
+
+          # The box that HOLDS the id, not the one just built. Writing a
+          # subgraph twice makes a second object, and the second one is
+          # empty — everything inside it is claimed for the first. So
+          # parenting the new object left the drawable box orphaned at
+          # the top level: `subgraph b` at the top, redeclared inside
+          # `a`, drew `a` and `b` side by side where mmdc nests them.
+          holding.parent_id = parent
+          holder.child_ids << id
+        end
+
+        # A bracketed title stands alone. A free one keeps the word that
+        # looks like an id, and the gap after it, because mermaid labels
+        # `subgraph s Some Title` with the whole run and generates the id
+        # separately. Measured against mmdc 11.12.0.
+        def self.subgraph_label(stmt)
+          return stmt[:subgraph_title].to_s if stmt[:subgraph_title]
+
+          if free_titled?(stmt)
+            return [written_id(stmt), stmt[:subgraph_free_gap],
+                    stmt[:subgraph_free_title]].join
+          end
+
+          # The text that was too spaced to serve as an id becomes the
+          # title instead, trimmed: `subgraph " ab"` is titled "ab".
+          generated_id?(stmt) ? written_id(stmt).strip : nil
+        end
+
+        # The one ownership rule: the first box to name an id keeps it,
+        # whether it named a node or another box. Source order decides
+        # and nothing else. Measured against mmdc 11.12.0; the shapes
+        # are one apiece in flowchart_subgraph_ownership_spec.rb.
+        #
+        # A declaration at the TOP level claims nothing, which is why
+        # `subgraph b / X / end` followed by `subgraph c / b / end` still
+        # leaves b inside c.
+        #
+        # This used to be written twice, once here and once as `adopt`'s
+        # "unless the parent is already set". The two disagreed, and a
+        # later nested declaration took an id an earlier reference had
+        # already claimed.
+        #
+        # @return [Diagram::FlowchartSubgraph, nil] the box that took it
+        def self.claim(parent, id, context)
+          box = enclosing(parent, context)
+          return nil if box.nil? || id.empty? || context.claimed[id]
+
+          context.claimed[id] = true
+          # The edge the cycle check reads. Only a WINNING claim makes
+          # one, which is what stops a losing claim from closing a loop
+          # that mermaid never sees. No `include?` guard: an id is
+          # claimed once, so it can be listed only once.
+          (context.ownership[box.id] ||= []) << id
+          box
+        end
+
+        # `<<`, not `+=`. Each instance gets its own array from the
+        # attribute default, so appending touches nobody else, and `+=`
+        # went through the model's collection setter once per member —
+        # 1,600 nodes in one box took 2.3 seconds instead of half a
+        # millisecond.
+        def self.claim_member(parent, node_id, context)
+          box = claim(parent, node_id, context)
+          box.node_ids << node_id if box
+        end
+
+        # Indexed rather than searched. Scanning every box for every node
+        # made a 240-subgraph diagram take four times as long to parse as
+        # it did before subgraphs were modelled.
+        def self.enclosing(parent, context)
+          parent.nil? ? nil : context.boxes[parent]
+        end
+
+        # `direction` inside a box turns that box's contents, and mmdc
+        # accepts a top-level one without honouring it — measured on
+        # 11.12.0, where `flowchart TD` followed by `direction LR` still
+        # stacks its nodes vertically. So there is nothing to do when no
+        # box encloses it.
+        def self.set_direction(parent, value, context)
+          box = enclosing(parent, context)
+          box.direction = value.to_s if box
+        end
+
+        # An id that names a subgraph names the BOX, not a node beside it.
+        # `one --> two` joins two clusters, and a bare `b` inside
+        # `subgraph a` nests box b in a. Measured on mmdc 11.12.0: every
+        # form of the reference — bare, shaped, an edge endpoint, written
+        # before or after the declaration — draws no node.
+        #
+        # Left until the walk is over because an EMPTY box is the
+        # exception: mmdc draws `subgraph one` / `end` joined by an edge
+        # as a plain node, and nothing knows what a box holds until every
+        # statement has been read.
+        #
+        # The ids are collected first and the nodes swept once. Asking
+        # `find_node` per box rescans the whole collection each time, and
+        # a chain of 2,000 boxes spent 17 seconds in the transform where
+        # this takes under one.
+        def self.promote_referenced_subgraphs(diagram, context)
+          holders = holders_by_member(diagram)
+          promoted = surviving_boxes(context)
+          return if promoted.empty?
+
+          promoted.each_value { |box| adopt(holders[box.id], box) }
+          diagram.nodes.reject! { |node| promoted.key?(node.id) }
+        end
+
+        # A box is worth drawing when it holds something, and holding
+        # something is exactly what the model already calls `drawable?`.
+        #
+        # This used to settle by fixed point, re-checking whether taking
+        # a reference out of a box had left that box empty. Once `claim`
+        # became the single ownership rule that stopped being possible:
+        # an id sitting in a box's `node_ids` is an id that box WON, so
+        # no declaration parented it elsewhere and the box keeps it.
+        # `adopt` is the only later writer and it MOVES an id from
+        # `node_ids` to `child_ids` on the same holder, so no pass can
+        # leave a box holding less than it holds now.
+        #
+        # Measured before deleting the loop — 2,312 sources, 301 calls to
+        # the old predicate, zero that disagreed with `drawable?`.
+        def self.surviving_boxes(context)
+          context.boxes.select { |_id, box| box.drawable? }
+        end
+
+        def self.holders_by_member(diagram)
+          diagram.subgraphs.each_with_object({}) do |box, acc|
+            box.node_ids.each { |id| acc[id] = box }
+          end
+        end
+
+        # The box that claimed the reference becomes the parent, with
+        # nobody to argue with. Two guards used to say so defensively;
+        # both were unreachable, because `parent_id` has exactly two
+        # writers — `record_subgraph`, which only runs on a WINNING
+        # claim, and this method, which runs after the walk. Holding
+        # `box.id` in `node_ids` means this holder won that claim, so
+        # no declaration can have set a parent or listed the child.
+        # `promoted` is keyed by id, so no box is adopted twice either.
+        #
+        # Checked as well as argued, before the guards came out: 2,312
+        # sources, 50 adoptions, none with a parent already set and none
+        # where the holder already listed the child.
+        def self.adopt(holder, box)
+          return if holder.nil?
+
+          holder.node_ids.delete(box.id)
+          box.parent_id = holder.id
+          holder.child_ids << box.id
+        end
+
+        # The last two arguments are new, and both default, so a caller
+        # written against the old two-argument form still works: with no
+        # enclosing box there is nothing to claim, and the throwaway
+        # context is only there to keep the claim path from special-casing
+        # its absence.
+        def self.process_node_edge_statement(diagram, stmt, parent = nil,
+                                             context = Context.new)
           node_data = extract_node_data(stmt[:node])
           add_or_update_node(diagram, node_data)
+          claim_member(parent, node_data[:node_id].to_s, context)
 
           # Process edges if present
           edges = stmt[:edges]
@@ -362,6 +698,7 @@ module Sirena
             # Extract and add target node
             target_node_data = extract_node_data(target_data)
             add_or_update_node(diagram, target_node_data)
+            claim_member(parent, target_node_data[:node_id].to_s, context)
 
             # Create edge
             edge = create_edge(source_id, target_node_data, link_shape, label)

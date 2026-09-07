@@ -125,12 +125,35 @@ module Sirena
         # These three need no gap after the keyword — mmdc draws `graph<`.
         rule(:glyph_direction) { match['<>^'] }
 
+        # `direction LR` inside a subgraph turns that box's contents.
+        # mmdc 11.12.0 accepts a top-level one too but does not honour it,
+        # so it is a statement anywhere and the transform decides whether
+        # anything encloses it.
+        # `statement_end`, not `line_end`: a semicolon separates this from
+        # the next statement the way it separates every other one. mmdc
+        # 11.12.0 renders `direction LR;A`, and `line_end` takes the
+        # semicolon only when a newline follows it.
+        rule(:direction_statement) do
+          str('direction').as(:direction_keyword) >> space >>
+            statement_direction >> statement_end
+        end
+
+        # The five plain words only, NOT the header's set. mmdc takes
+        # `graph <`, `graph v` and `graph BR`, and refuses every one of
+        # them after `direction` — measured on 11.12.0. Reusing the
+        # header rule here accepted three sources mermaid will not draw.
+        rule(:statement_direction) do
+          (str('TD') | str('TB') | str('BT') | str('LR') |
+            str('RL')).as(:dir_value)
+        end
+
         rule(:statements) do
           ((separator | statement) >> ws?).repeat(1)
         end
 
         rule(:statement) do
           accessibility_statement |
+            direction_statement |
             subgraph_statement |
             style_statement |
             class_def_statement |
@@ -216,28 +239,133 @@ module Sirena
             (str('}') >> line_space.repeat >> semicolon.maybe).maybe
         end
 
-        # Subgraph: subgraph id [title] ... end
+        # Subgraph: subgraph id [title] ... end, or `subgraph id title`
+        # with the rest of the line as the title.
         rule(:subgraph_statement) do
           str('subgraph').as(:subgraph_keyword) >> space >>
             subgraph_id.as(:subgraph_id) >>
-            subgraph_trailing_name >>
-            # A subgraph body must begin on a new physical line. The gap
-            # in front of the `;` is the one node statements already
-            # tolerate in `loose_separator`: mmdc draws `A ;` and `end ;`
-            # as readily as `A;`. `line_space`, not `space?`, because
-            # mermaid's lexer eats its whole space set here, so
-            # `subgraph A` no-break-space `;` draws.
-            line_space.repeat >> line_end >>
+            subgraph_name_and_title >>
+            declaration_end >>
             ws? >>
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
             str('end').as(:subgraph_end) >>
-            loose_statement_end
+            subgraph_close
         end
 
-        rule(:subgraph_title) do
-          lbracket >> (rbracket.absent? >> any).repeat(1) >> rbracket
+        # What sits between the subgraph id and the end of its line.
+        #
+        # Two readings met here. This branch reads the rest of the line as
+        # the box TITLE, because the cluster renderer needs that text. The
+        # `end`-word walk on main reads extra WORDS in front of an optional
+        # bracketed title and throws the words away. Both are kept: the
+        # title is tried first, and it only wins when it reaches the end of
+        # the declaration, so `subgraph A Title` is titled `A Title` while
+        # `subgraph A B [T]` still falls through to the word walk and is
+        # titled `T`.
+        rule(:subgraph_name_and_title) do
+          (subgraph_title >> declaration_end.present?) |
+            subgraph_trailing_name
         end
+
+        # The declaration owns the rest of its line. A bracketed title has
+        # to be the last thing on it — mmdc refuses `subgraph s [T] A` and
+        # `subgraph s [T] %% note`, while `subgraph s %% note` is fine
+        # because the comment simply becomes the title text.
+        # All the whitespace, not just the first space: consuming one let
+        # `subgraph s  [Title] A` slip past the bracket guard below and be
+        # read as free text, which mmdc refuses.
+        # A bracketed title may sit straight against the id — mmdc renders
+        # `subgraph s[Title]` — while a free one needs a gap to start.
+        # The gap is captured, not just skipped. A free title's label is
+        # the source from the id onwards, so `subgraph s  Title` is
+        # labelled `s  Title` and collapsing the run would misquote it.
+        rule(:subgraph_title) do
+          space.repeat >> bracketed_title |
+            space.repeat(1).as(:subgraph_free_gap) >> free_title
+        end
+
+        rule(:bracketed_title) { bracket_title >> bracket_title_end }
+
+        rule(:bracket_title) do
+          lbracket >> (rbracket.absent? >> any).repeat(1).as(:subgraph_title) >>
+            rbracket
+        end
+
+        # Nothing at all may follow a bracketed title, not even a space:
+        # mmdc refuses `subgraph s [Title] ` before the newline.
+        rule(:bracket_title_end) do
+          (semicolon_run >> no_comment | newline | eof).present?
+        end
+
+        # A flat character class, NOT `declaration_end.absent? >> any`.
+        # That re-ran `space?` at every byte, so a title carrying a run of
+        # spaces parsed in quadratic time — 4k spaces took 3.7 seconds and
+        # 16k took over a minute, on a source mmdc renders.
+        #
+        # The structural characters are excluded because mermaid refuses
+        # them here: `subgraph s Title (More)`, `<More>` and `{More}` are
+        # all rejected.
+        rule(:free_title) do
+          lbracket.absent? >>
+            (title_run >> (space.repeat(1) >> title_run).repeat)
+              .as(:subgraph_free_title)
+        end
+
+        rule(:title_run) { comment_word | title_word }
+
+        # Mermaid only strips a comment at the start of a line, so behind
+        # the id it stays text and owns the rest of the line.
+        rule(:comment_word) do
+          str('%%') >> (newline.absent? >> any).repeat
+        end
+
+        # Main's guarded name word, not a loose character run. A free
+        # title's words are the same words a trailing name may hold, so
+        # `subgraph A end` and `subgraph A interpolate` stay refused while
+        # the text still becomes the box title.
+        rule(:title_word) { subgraph_name_word }
+
+        # A semicolon run separates statements here as it does after `end`,
+        # and a comment is not a statement: mmdc renders `subgraph s;;A`
+        # and refuses `subgraph s; %% note`.
+        rule(:declaration_end) do
+          line_space.repeat >> (semicolon_run >> no_comment | newline | eof)
+        end
+
+        rule(:subgraph_close) do
+          space.repeat(1) >> close_at_space |
+            space? >> (close_at_line_end | close_at_semicolon)
+        end
+
+        # Whitespace alone separates `end` from what follows: mmdc renders
+        # `end B-->C`. Referencing `statement` here would be recursive, so
+        # the guard is what a statement cannot start with — a comment, a
+        # separator, or the end of the line.
+        rule(:close_at_space) do
+          (str('%%') | semicolon | newline | eof).absent?
+        end
+
+        # `end` finishes its line, with any number of trailing semicolons.
+        # Nothing else may follow, so `end %% note` is refused here — mmdc
+        # takes `end` and then a comment on its own line.
+        rule(:close_at_line_end) do
+          semicolon_run.maybe >> space? >> (newline | eof)
+        end
+
+        # A semicolon separates statements, so the next one may sit on the
+        # same line: mmdc renders `end; B-->C` and `end;end`. A comment is
+        # still not a statement, and `end; %% note` is refused.
+        rule(:close_at_semicolon) do
+          semicolon_run >> str('%%').absent?
+        end
+
+        rule(:semicolon_run) { (semicolon >> space?).repeat(1) }
+
+        # A comment is not a statement, so it cannot follow a separator on
+        # the same line: mmdc refuses `end; %% note` and
+        # `subgraph s; %% note`.
+        rule(:no_comment) { str('%%').absent? }
 
         # An unbracketed name runs on past the first space: mermaid titles
         # `subgraph 1 abc` "1 abc". Every trailing word carries the same
@@ -260,7 +388,7 @@ module Sirena
         # nothing may follow the title on the line.
         rule(:subgraph_trailing_name) do
           (space.repeat(1) >> subgraph_name_word).repeat >>
-            (space.repeat(1) >> subgraph_title.as(:subgraph_title)).maybe
+            subgraph_title.maybe
         end
 
         rule(:subgraph_end_word) { str('end') >> word_boundary }
@@ -815,8 +943,18 @@ module Sirena
         # is taken here rather than left to `subgraph_trailing_name`, which
         # only starts at a space.
         rule(:subgraph_id) do
-          quoted_run | (str('""') >> space.repeat >> subgraph_name_word) |
+          subgraph_quoted_name |
+            (str('""') >> space.repeat >> subgraph_name_word) |
             subgraph_name_word
+        end
+
+        # `quoted_run`'s body, captured. The quotes are not part of the
+        # name: the transform compares ids and builds the title from this
+        # text, so `subgraph "a b"` has to arrive as `a b`. Never empty,
+        # for the same reason `quoted_run` is not.
+        rule(:subgraph_quoted_name) do
+          str('"') >> (str('"').absent? >> any).repeat(1).as(:string) >>
+            str('"')
         end
 
         # A name that hunts up an `end` and then ends the line closes the

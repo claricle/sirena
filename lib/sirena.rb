@@ -17,6 +17,7 @@ end
 
 # Load modules in dependency order
 require_relative 'sirena/text_measurement'
+require_relative 'sirena/layout/fallback'
 require_relative 'sirena/diagram_registry'
 require_relative 'sirena/theme'
 require_relative 'sirena/theme/registry'

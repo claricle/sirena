@@ -60,8 +60,11 @@ module Sirena
 
       # Creates an SVG document with appropriate dimensions.
       #
+      # The viewBox origin stays at zero, so this grows the right and bottom
+      # extents rather than adding visible space on all four sides.
+      #
       # @param graph [Object] the graph to get dimensions from
-      # @param padding [Numeric] padding around the diagram
+      # @param padding [Numeric] half the growth added to each dimension
       # @return [Svg::Document] new SVG document
       def create_document(graph, padding: 20)
         width = calculate_width(graph) + (padding * 2)

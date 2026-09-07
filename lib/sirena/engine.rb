@@ -174,7 +174,7 @@ module Sirena
     # @param diagram [Diagram::Base] diagram model
     # @param transform_class [Class] transform class
     # @param today [Date, nil] reference date, or nil for the real date
-    # @return [Object] graph structure
+    # @return [Hash] graph structure
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
@@ -194,78 +194,22 @@ module Sirena
     # available. In the future, this will attempt to use elkrb for
     # proper graph layout computation.
     #
-    # @param graph [Object] graph structure
-    # @return [Object] graph with computed positions
+    # @param graph [Hash] graph structure
+    # @return [Hash] graph with computed positions
     def layout_graph(graph)
       log 'Computing layout...'
 
       # TODO: Attempt to use elkrb when available
       # For now, use simple fallback positioning
-      apply_fallback_layout(graph)
+      Layout::Fallback.apply(graph)
 
       log 'Layout complete (using fallback positioning)'
       graph
     end
 
-    # Applies simple grid-based fallback layout.
-    #
-    # This is a placeholder for actual elkrb layout. It arranges
-    # nodes in a simple grid pattern. Handles both object-based
-    # and hash-based graph structures.
-    #
-    # @param graph [Object, Hash] graph structure
-    # @return [Object, Hash] graph with positions
-    def apply_fallback_layout(graph)
-      # Handle hash-based graph structure (elkrb-compatible)
-      if graph.is_a?(Hash) && graph[:children]
-        apply_fallback_layout_to_hash(graph)
-      # Handle object-based graph structure
-      elsif graph.respond_to?(:nodes)
-        nodes = graph.nodes
-        nodes.each_with_index do |node, index|
-          next unless node.respond_to?(:x=) && node.respond_to?(:y=)
-
-          # Simple grid layout: 3 columns
-          col = index % 3
-          row = index / 3
-
-          node.x = 50 + (col * 200)
-          node.y = 50 + (row * 150)
-        end
-      end
-
-      graph
-    end
-
-    # Applies fallback layout to hash-based graph structure.
-    #
-    # @param graph [Hash] graph hash with :children
-    # @return [Hash] graph with positions added
-    def apply_fallback_layout_to_hash(graph)
-      children = graph[:children] || []
-
-      # Apply layout to immediate children
-      children.each_with_index do |child, index|
-        # Skip if already has position
-        next if child[:x] && child[:y]
-
-        # Simple grid layout: 3 columns
-        col = index % 3
-        row = index / 3
-
-        child[:x] = 50 + (col * 250)
-        child[:y] = 50 + (row * 200)
-
-        # Recursively apply to nested children
-        apply_fallback_layout_to_hash(child) if child[:children]
-      end
-
-      graph
-    end
-
     # Renders graph to SVG document.
     #
-    # @param graph [Object] laid-out graph
+    # @param graph [Hash] laid-out graph
     # @param renderer_class [Class] renderer class
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document

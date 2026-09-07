@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'edge_router'
 
 module Sirena
   module Renderer
@@ -14,42 +15,143 @@ module Sirena
     #   renderer = FlowchartRenderer.new
     #   svg = renderer.render(laid_out_graph)
     class FlowchartRenderer < Base
+      # Rounded like mermaid draws a cluster, and far enough down that the
+      # title clears the top edge.
+      # The radius lives with the routing, because an endpoint on a
+      # corner has to land on the outline drawn here.
+      CLUSTER_CORNER = EdgeRouter::CLUSTER_CORNER
+      CLUSTER_TITLE_BASELINE = 20
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document(graph)
+        page = flatten(graph)
+        svg = create_document(page)
 
-        # Render edges first (so they appear under nodes)
-        render_edges(graph, svg) if graph[:edges]
-
-        # Render nodes
-        render_nodes(graph, svg) if graph[:children]
+        # mermaid's paint order: clusters sit behind everything, then
+        # edges, then the nodes that cover where the edges end.
+        render_clusters(page, svg)
+        render_edges(page, svg) if page[:edges]
+        render_nodes(page, svg) if page[:children]
 
         svg
       end
 
       protected
 
-      def calculate_width(graph)
-        return 800 unless graph[:children]
+      # The layout nests a cluster's contents inside it, ELK style, so a
+      # child's coordinates are relative to the box holding it. Everything
+      # below this point works in page coordinates on a flat list, so the
+      # tree is walked once here and the offsets added up.
+      def flatten(graph)
+        clusters = []
+        nodes = []
+        collect(graph[:children] || [], 0, 0, clusters, nodes)
 
-        max_x = graph[:children].map do |node|
+        graph.merge(children: nodes, clusters: clusters)
+      end
+
+      # Outermost first, which is the order mermaid paints nested boxes,
+      # so an inner cluster lands on top of the one holding it.
+      def collect(children, dx, dy, clusters, nodes)
+        children.each do |child|
+          placed = child.merge(x: (child[:x] || 0) + dx,
+                               y: (child[:y] || 0) + dy)
+
+          unless child[:children]
+            nodes << placed
+            next
+          end
+
+          # The same test Layout::Fallback#cluster? makes. Nothing
+          # coupled keeps them together: change one and change the other,
+          # or the layout and the renderer stop agreeing about what a box
+          # is. Transform::FlowchartTransform sets the marker.
+          clusters << placed.except(:children) if cluster?(child)
+          collect(child[:children], placed[:x], placed[:y], clusters, nodes)
+        end
+      end
+
+      def cluster?(child)
+        EdgeRouter.cluster?(child)
+      end
+
+      def render_clusters(graph, svg)
+        (graph[:clusters] || []).each { |cluster| render_cluster(cluster, svg) }
+      end
+
+      def render_cluster(cluster, svg)
+        group = Svg::Group.new.tap { |g| g.id = "cluster-#{cluster[:id]}" }
+        group.children << cluster_box(cluster)
+
+        label = (cluster[:labels] || []).first
+        group.children << cluster_title(cluster, label) if label
+
+        svg << group
+      end
+
+      def cluster_box(cluster)
+        Svg::Rect.new.tap do |rect|
+          rect.x = cluster[:x].to_i
+          rect.y = cluster[:y].to_i
+          rect.width = cluster[:width].to_i
+          rect.height = cluster[:height].to_i
+          rect.rx = CLUSTER_CORNER
+          rect.ry = CLUSTER_CORNER
+          apply_theme_to_cluster(rect)
+        end
+      end
+
+      # mermaid writes the title inside the box, centred along the top.
+      def cluster_title(cluster, label)
+        Svg::Text.new.tap do |text|
+          text.x = cluster[:x] + (cluster[:width].to_i / 2)
+          text.y = cluster[:y] + CLUSTER_TITLE_BASELINE
+          text.content = label[:text]
+          apply_theme_to_text(text)
+          text.text_anchor = 'middle'
+          text.dominant_baseline = 'middle'
+        end
+      end
+
+      # A cluster is a surface behind the nodes, not another node, so it
+      # borrows the palette's variant surface rather than the node fill.
+      def apply_theme_to_cluster(element)
+        element.fill = theme_color(:surface_variant) if theme_color(:surface_variant)
+        element.stroke = theme_color(:node_stroke) if theme_color(:node_stroke)
+        return unless theme_shape(:stroke_width)
+
+        element.stroke_width = theme_shape(:stroke_width).to_s
+      end
+
+      def calculate_width(graph)
+        boxes = drawn(graph)
+        return 800 if boxes.empty?
+
+        max_x = boxes.map do |node|
           (node[:x] || 0) + (node[:width] || 100)
-        end.max || 800
+        end.max
 
         max_x + 40 # Add padding
       end
 
       def calculate_height(graph)
-        return 600 unless graph[:children]
+        boxes = drawn(graph)
+        return 600 if boxes.empty?
 
-        max_y = graph[:children].map do |node|
+        max_y = boxes.map do |node|
           (node[:y] || 0) + (node[:height] || 50)
-        end.max || 600
+        end.max
 
         max_y + 40 # Add padding
+      end
+
+      # A cluster can reach past the nodes inside it, so the page is
+      # measured against the boxes as well.
+      def drawn(graph)
+        (graph[:children] || []) + (graph[:clusters] || [])
       end
 
       def render_nodes(graph, svg)
@@ -200,13 +302,23 @@ module Sirena
       end
 
       def render_edge(edge, graph, svg)
-        source = find_node(graph, edge[:sources]&.first)
-        target = find_node(graph, edge[:targets]&.first)
+        source = find_endpoint(graph, edge[:sources]&.first)
+        target = find_endpoint(graph, edge[:targets]&.first)
 
         return unless source && target
 
-        # Calculate edge path
-        path_data = calculate_edge_path(source, target, edge)
+        elk_bends = edge.dig(:sections, 0, :bendPoints)
+        # One route, so the path and its label cannot disagree.
+        points, label_route = edge_router.route(source, target, elk_bends)
+        route = EdgeRouter.ends_of(points)
+        # Generated routes carry their own bends; an ordinary route keeps
+        # whatever the layout left in the ELK section.
+        bends = if points.length > 2
+                  points[1...-1]
+                else
+                  elk_bends
+                end
+        path_data = calculate_edge_path(route, bends)
 
         # Create path element
         path = Svg::Path.new.tap do |p|
@@ -226,36 +338,36 @@ module Sirena
         # Render edge label if present
         if edge[:labels] && !edge[:labels].empty?
           label = edge[:labels].first
-          text = create_edge_label(source, target, label)
+          text = create_edge_label(label_route, label)
           group.children << text if text
         end
 
         svg << group
       end
 
-      def find_node(graph, node_id)
-        return nil unless graph[:children] && node_id
+      # An edge may end on a cluster: mermaid joins the boxes when an
+      # edge names a subgraph. A cluster carries the same x, y, width and
+      # height a node does, so the routing needs no special case — which
+      # is why this looks past the nodes, and why it is not called
+      # `find_node` any more.
+      def find_endpoint(graph, node_id)
+        return nil unless node_id
 
-        graph[:children].find { |n| n[:id] == node_id }
+        (graph[:children] || []).find { |n| n[:id] == node_id } ||
+          (graph[:clusters] || []).find { |c| c[:id] == node_id }
       end
 
-      def calculate_edge_path(source, target, edge)
-        # Simple straight line path
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
-
-        # Use sections if available (from elkrb layout)
-        if edge[:sections] && !edge[:sections].empty?
-          section = edge[:sections].first
-          if section[:bendPoints] && !section[:bendPoints].empty?
-            return create_path_with_bends(sx, sy, tx, ty,
-                                          section[:bendPoints])
-          end
-        end
+      def calculate_edge_path(route, bends)
+        sx, sy, tx, ty = route
+        return create_path_with_bends(sx, sy, tx, ty, bends) if bends&.any?
 
         "M #{sx} #{sy} L #{tx} #{ty}"
+      end
+
+      # One router for the whole document. It holds nothing between
+      # calls, so the same object answers every edge.
+      def edge_router
+        @edge_router ||= EdgeRouter.new
       end
 
       def create_path_with_bends(sx, sy, tx, ty, bend_points)
@@ -274,13 +386,11 @@ module Sirena
         %w[arrow dotted_arrow thick_arrow].include?(arrow_type)
       end
 
-      def create_edge_label(source, target, label)
-        # Position label at midpoint of edge
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
-
+      # The midpoint of the run that was actually drawn. Measuring from
+      # the centres instead left a label on a trimmed edge sitting
+      # inside the box the line no longer starts in.
+      def create_edge_label(route, label)
+        sx, sy, tx, ty = route
         mid_x = (sx + tx) / 2
         mid_y = (sy + ty) / 2
 

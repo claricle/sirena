@@ -21,3 +21,11 @@ AllCops:
 # quoting, and with `$,` set the message itself is corrupted.
 Style/RedundantArgument:
   Enabled: false
+
+# The benchmark files are deliberately not named `_spec.rb`: that is what
+# keeps them out of `rspec`'s default pattern, so a normal run carries no
+# clock reading and no fixture with thousands of boxes in it. `rake
+# benchmark` runs them by their own pattern.
+RSpec/SpecFilePathSuffix:
+  Exclude:
+    - 'spec/benchmarks/**/*'

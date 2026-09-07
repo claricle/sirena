@@ -1033,9 +1033,13 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       # followed happened to parse anyway". The tree can: a title is
       # captured only on the first reading, because on the second there
       # is no header left to hang one on.
+      #
+      # The brackets are not part of the captured text. The cluster
+      # renderer draws this string as the box label, so the grammar
+      # captures `T` and not `[T]`.
       source = "flowchart TD\nsubgraph A end [T]\nX-->Y\nend\n"
 
-      expect(subgraph_title_of(source)).to eq("[T]")
+      expect(subgraph_title_of(source)).to eq("T")
     end
 
     # More than one space, both between two names and in front of a
