@@ -722,6 +722,113 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  # Mermaid strips comments with `/^\s*%%(?!{)[^\n]+\n?/gm`, read from
+  # mermaid 11.12.0's own `cleanupComments`. The `^` is anchored to a line
+  # start, so a `%%` with a statement in front of it is never stripped and
+  # never a comment — it is content, and mmdc reads `A%%c` as one node
+  # called `A%%c`.
+  #
+  # `line_end` used to end a statement at such a `%%`. That was wrong for
+  # every input it took, in one of two ways, and both are pinned below.
+  # Three scanners are defined as running "up to `line_end`", so ending a
+  # statement at a `%%` quietly shortened all three. They now run past it,
+  # which is what mermaid does — it strips a comment only at a line start,
+  # so a mid-line `%%` is ordinary text.
+  #
+  # Nothing downstream reads either value today, so the change is invisible
+  # in the SVG. Pinned here because "invisible" is exactly how it would rot.
+  describe "a %% inside a declaration the scanners read" do
+    def capture(source, key)
+      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+      found = nil
+      walk = lambda do |node|
+        case node
+        when Array then node.each { |child| walk.call(child) }
+        when Hash
+          found ||= node[key].to_s if node.key?(key)
+          node.each_value { |child| walk.call(child) }
+        end
+      end
+      walk.call(tree)
+      found
+    end
+
+    it "keeps a spaced %% in a style property list" do
+      source = "graph TD\nA-->B\nstyle A fill:red %% c\n"
+
+      expect(capture(source, :style_props)).to eq(" fill:red %% c")
+    end
+
+    it "keeps an abutting %% in a click callback name" do
+      source = "graph TD\nA-->B\nclick A cb%%c\n"
+
+      expect(capture(source, :click_action)).to eq("cb%%c")
+    end
+
+    # Neither value reaches the renderer, so the widened text cannot change
+    # a diagram. If that stops being true, this is the example that says so.
+    {
+      "a style property list" => ["style A fill:red %% c", "style A fill:red"],
+      "a click callback" => ["click A cb%%c", "click A cb"]
+    }.each do |label, (with_comment, without)|
+      it "draws #{label} the same either way" do
+        widened = engine.render("graph TD\nA-->B\n#{with_comment}\n").to_s
+        plain = engine.render("graph TD\nA-->B\n#{without}\n").to_s
+
+        expect(widened).to eq(plain)
+      end
+    end
+
+    # The class name is the one of the three that does NOT run past it: a
+    # `%` cannot be in a class name here. mmdc draws this with the name
+    # `foo%%c`, so it is an under-acceptance, and closing it is the same
+    # `%`-in-a-name widening this PR declines to make for node ids.
+    it "refuses an abutting %% in a class name, which mmdc draws" do
+      expect(renders?("graph TD\nA-->B\nclass A foo%%c\n")).to be(false)
+    end
+  end
+
+  describe "a comment at the end of a statement line" do
+    # With a gap in front of it mmdc refuses the whole diagram, and this
+    # used to draw the statement. Widening node ids is what brought the
+    # numeric and non-ASCII rows into the same arm.
+    [
+      "graph TD\nA %% c",
+      "graph TD\n1 %% c",
+      "graph TD\né %% c",
+      "graph TD\nA-->B %% c",
+      "graph TD\n1-->2 %% c",
+      "graph TD\nA[T] %% c",
+      "graph TD\nA-->B\nclass A foo %% c",
+      "graph TD\nA-->B\nclick A \"u\" %% c"
+    ].each do |source|
+      it "refuses #{source.lines.last.chomp.inspect}, as mmdc does" do
+        expect(renders?("#{source}\n")).to be(false)
+      end
+    end
+
+    # Tight against the statement mmdc draws it, as part of the node's own
+    # name. This refuses it rather than drawing `A` and dropping the rest,
+    # and closing the gap means letting `%` into a node id — a widening
+    # this PR does not make.
+    it "refuses A%%c, which mmdc reads as one node called A%%c" do
+      expect(renders?("graph TD\nA%%c\n")).to be(false)
+    end
+
+    # A comment on its OWN line is untouched by all of this: it is the one
+    # shape mermaid's regex actually strips, leading whitespace and all.
+    {
+      "on the line after a statement" => "graph TD\nA\n%% c\n",
+      "indented on its own line" => "graph TD\nA\n  %% c\n",
+      "after a statement and a separator" => "graph TD\nA;\n%% c\n",
+      "before every statement" => "graph TD\n%% c\nA\n"
+    }.each do |label, source|
+      it "still takes a comment #{label}" do
+        expect(renders?(source)).to be(true)
+      end
+    end
+  end
+
   describe "the separator rule itself" do
     # `statement_end` must never be repeated directly: its `line_end` arm
     # succeeds zero-width at EOF, so repeating it would spin forever. Getting
@@ -931,6 +1038,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       %(click A cb"x),
       %(click A cb"x "tip"),
       %(click A " "),
+      # The other three of mermaid's four link targets. `_blank` is
+      # already exercised above ("click mixing bare tokens and quoted
+      # strings"); these three were reached by no example at all once
+      # `RESERVED_WORDS` took over their node-id role and left the click
+      # tail as `link_target`'s only reader.
+      %(click A "u" _self),
+      %(click A "u" _parent),
+      %(click A "u" _top),
       "click A cb,x",
       "click A cb!x",
       "click A cb#x",
