@@ -120,8 +120,14 @@ module Sirena
         # Captured as :unquoted, not :string, so the transform can tell an
         # unquoted scalar from a quoted one. What it does with that
         # distinction is `dropped_by_mermaid?`'s responsibility, not this rule's.
+        #
+        # `.`, `+` and `~` are in the set because js-yaml reads them and
+        # mermaid draws them: `0.0`, `+0`, `~` and `.nan` are values it
+        # resolves falsy, and `1.5` and `+7` values it keeps. Without them
+        # the whole line failed to parse. None of the three ends a value -
+        # a comma or a closing brace does - so the rule stays unambiguous.
         rule(:unquoted_value) do
-          match['a-zA-Z0-9_\-'].repeat(1).as(:unquoted)
+          match['a-zA-Z0-9_\-.+~'].repeat(1).as(:unquoted)
         end
 
         root(:diagram)

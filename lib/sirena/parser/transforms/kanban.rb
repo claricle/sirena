@@ -2,6 +2,8 @@
 
 require "parslet"
 
+require_relative "../metadata_yaml"
+
 module Sirena
   module Parser
     module Transforms
@@ -9,51 +11,6 @@ module Sirena
       class Kanban < Parslet::Transform
         # Helper class to build kanban board from indented lines
         class BoardBuilder
-          # js-yaml resolves these spellings, and only these, to false or
-          # null. `True`/`TRUE` resolve to boolean true and stay truthy;
-          # `no`, `off`, `n` and `y` are plain strings here.
-          YAML_FALSY_WORDS = %w[false False FALSE null Null NULL].freeze
-          private_constant :YAML_FALSY_WORDS
-
-          # Spellings js-yaml resolves as a number. Measured against mmdc
-          # 11.12.0. Case matters unevenly: the radix prefix is
-          # lowercase-only, so `0x0` and `0o0` resolve while `0X0` and `0O0`
-          # stay strings, but the exponent marker is case-insensitive and
-          # `0e0` and `0E0` both resolve. YAML_HEX's DIGITS are lowercase-only
-          # where js-yaml's are not - it resolves `0xFF` to 255 - so the
-          # pattern is narrower than js-yaml, not merely than its own name.
-          # Immaterial while only the falsy half is mirrored: every hex zero
-          # is digit-only, so no uppercase digit can change a verdict.
-          #
-          # YAML_FLOAT's exponent accepts an unsigned or negative form, and
-          # only those two: `unquoted_value` admits `-` but not `+`, so `0e0`
-          # and `0e-0` both reach here and resolve, while `0e+0` cannot.
-          #
-          # `_` is a digit separator. A run of any length counts and one may
-          # follow a radix prefix (`0_0`, `0__0`, `0x_0`), but it may never
-          # lead (`_0`, `__0`, `-_0`) and cannot bridge into a prefix
-          # (`0_x0`). Int and float disagree about a TRAILING separator, so
-          # they stay separate patterns: the int resolver rejects one, so
-          # `0_` and `0_0_` stay strings, while the float mantissa is
-          # `[0-9][0-9_]*` and accepts one, so `0_e0` resolves. The exponent
-          # itself takes no separators, so `0e0_0` and `0_e_0` stay strings.
-          #
-          # Re-verify against the copy mermaid BUNDLES - js-yaml 4.1.x, in
-          # `mermaid/dist/chunks/mermaid.esm/chunk-PWCFYZI5.mjs` - not against
-          # whatever `js-yaml` resolves to in node_modules. mermaid-cli carries
-          # 4.3.1 alongside it, which dropped digit separators entirely and
-          # would invert every separator verdict below.
-          #
-          # `0.0`, `~` and `.nan` are falsy to mermaid but cannot reach here:
-          # unquoted_value admits neither `.` nor `~`. Widening that charset
-          # means re-probing these patterns.
-          YAML_DECIMAL = /\A-?\d+(?:_+\d+)*\z/
-          YAML_HEX = /\A-?0x_*[0-9a-f]+(?:_+[0-9a-f]+)*\z/
-          YAML_OCTAL = /\A-?0o_*[0-7]+(?:_+[0-7]+)*\z/
-          YAML_BINARY = /\A-?0b_*[01]+(?:_+[01]+)*\z/
-          YAML_FLOAT = /\A-?\d[\d_]*[eE]-?\d+\z/
-          private_constant :YAML_DECIMAL, :YAML_HEX, :YAML_OCTAL,
-                           :YAML_BINARY, :YAML_FLOAT
           attr_reader :columns
 
           def initialize
@@ -224,28 +181,28 @@ module Sirena
           # still rendered as its raw text where mermaid renders the resolved
           # value - `1e0` draws `1`, `0x10` draws `16`. That divergence is
           # pre-existing and belongs to the card-conformance bucket.
+          #
+          # The resolution itself is MetadataYaml's, the same table the
+          # flowchart body is read with. `no`, `off`, `True` and `0_1` stay
+          # truthy there, and `false`, `null`, `~`, `.nan` and every zero
+          # resolve falsy, which is what mermaid's js-yaml 4.1.1 does.
           def dropped_by_mermaid?(text, unquoted:)
             return true if text.empty?
             return false unless unquoted
 
-            YAML_FALSY_WORDS.include?(text) || yaml_zero?(text)
+            falsy_to_js?(MetadataYaml.plain_scalar(text))
           end
 
-          def yaml_zero?(text)
-            case text
-            when YAML_DECIMAL then digits_of(text).to_i.zero?
-            when YAML_HEX then digits_of(text)[/0x(.+)/, 1].to_i(16).zero?
-            when YAML_OCTAL then digits_of(text)[/0o(.+)/, 1].to_i(8).zero?
-            when YAML_BINARY then digits_of(text)[/0b(.+)/, 1].to_i(2).zero?
-            when YAML_FLOAT then digits_of(text).to_f.zero?
+          # JavaScript's own falsy set, over the values js-yaml can hand
+          # back for a plain scalar: false, null, any zero and NaN. An empty
+          # string is already gone above, and a non-empty one is truthy.
+          def falsy_to_js?(value)
+            case value
+            when nil, false then true
+            when Float then value.zero? || value.nan?
+            when Numeric then value.zero?
             else false
             end
-          end
-
-          # The patterns above have already vetted where a separator may sit,
-          # so they can be dropped before conversion.
-          def digits_of(text)
-            text.delete('_')
           end
 
           def get_indent_size(indent_data)
