@@ -235,15 +235,27 @@ RSpec.describe Sirena::Engine do
       ['a directive above a class diagram',
        "%%{init: {'theme':'dark'}}%%\nclassDiagram\nA <|-- B\n",
        :class_diagram],
-      # Both strips must be global. With either one narrowed to a single
-      # substitution the suite stays green without these two rows, and both
-      # sources render under mmdc 11.12.0.
+      # Every row below puts its directive on the HEADER LINE, and that is
+      # the whole point of them. `COMMENT` deletes any directive that ends
+      # its own line, so an own-line row cannot tell whether `DIRECTIVE`
+      # did the work -- it passes either way. Only sharing the line removes
+      # that fallback. Three separate mutants survived the full suite until
+      # these rows existed: both strips narrowed to a single substitution,
+      # and the colonless alternative deleted. All sources render under
+      # mmdc 11.12.0.
       ['two directives sharing the header line',
        "%%{init: {'theme':'dark'}}%%%%{init: {'look':'classic'}}%% " \
        "sequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
       ['two comment lines above the header',
        "%% a\n%% b\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      # mermaid's own directiveRegex carries `(?:(\w+)\s*:|(\w+))`, so a
+      # directive needs no colon. The stacked-directive row above holds the
+      # only other colonless directive in the suite and it sits on its own
+      # line, so `COMMENT` rescues it.
+      ['a colonless directive on the header line',
+       "%%{wrap}%% sequenceDiagram\nAlice->>Bob: hi\n",
        :sequence]
     ].each do |name, source, expected|
       it "names #{expected} past #{name}" do
