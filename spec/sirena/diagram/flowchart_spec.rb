@@ -169,6 +169,103 @@ RSpec.describe Sirena::Diagram::Flowchart do
 
       expect(flowchart.valid?).to be true
     end
+
+    # Everything downstream keys off the box's id, so a box without one
+    # used to pass here and then draw a cluster nobody could reach.
+    it 'returns false when a box has no id' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: '', node_ids: %w[A]
+      )
+
+      expect(flowchart.valid?).to be false
+    end
+
+    # The box counts as drawable, so the layout makes room for it and
+    # the cluster comes out empty.
+    it 'returns false when a box names a member that is not there' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 's', node_ids: %w[A gone]
+      )
+
+      expect(flowchart.valid?).to be false
+    end
+
+    # An empty box stays a plain node in mermaid, so a member may name
+    # another box just as well as a node.
+    it 'takes a box whose member names another box' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'one', node_ids: %w[e1]
+      )
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(id: 'e1')
+
+      expect(flowchart.valid?).to be true
+    end
+
+    # `parent_id` and `child_ids` say the same thing from two ends and
+    # both are believed: the transform reads the parent, `drawable?`
+    # counts the children. A model where they disagree draws wrong.
+    it 'returns false when a child names a parent that does not list it' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'outer', node_ids: %w[A]
+      )
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'inner', parent_id: 'outer', node_ids: %w[A]
+      )
+
+      expect(flowchart.valid?).to be false
+    end
+
+    it 'returns false when a parent lists a child that names nobody' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'outer', child_ids: %w[inner]
+      )
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'inner', node_ids: %w[A]
+      )
+
+      expect(flowchart.valid?).to be false
+    end
+
+    it 'returns false when a parent lists a child nobody declared' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'outer', node_ids: %w[A], child_ids: %w[gone]
+      )
+
+      expect(flowchart.valid?).to be false
+    end
+
+    # A source may declare the same box twice. Only the first object
+    # carries the nesting, so the check reads every box of that name.
+    it 'takes a box redeclared empty beside the one that holds things' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
+                                                            label: 'A')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'b', parent_id: 'a', node_ids: %w[A]
+      )
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
+        id: 'a', child_ids: %w[b]
+      )
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(id: 'b')
+
+      expect(flowchart.valid?).to be true
+    end
   end
 
   describe '#find_node' do

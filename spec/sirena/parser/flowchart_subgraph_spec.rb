@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "benchmark"
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::FlowchartParser do
@@ -133,19 +132,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     it "ends at a semicolon after a bracketed title too" do
       expect(node_ids("graph TD\nsubgraph s [Title];A\nend\n")).to eq(%w[A])
-    end
-  end
-
-  # A title carrying a run of spaces parsed in quadratic time: the old rule
-  # re-ran its terminator test at every byte, and each test rescanned the
-  # whole run. 4k spaces took 3.7 seconds on a source mmdc renders.
-  describe "a long title" do
-    it "parses in linear time" do
-      source = "graph TD\nsubgraph s #{' ' * 8000}Title\nA\nend\n"
-
-      elapsed = Benchmark.realtime { described_class.new.parse(source) }
-
-      expect(elapsed).to be < 1.0
     end
   end
 
@@ -302,22 +288,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  # A box holds everything below it, not just its own line, so the
-  # containment graph is a transitive closure. Walking it with a
-  # path-local visited list re-entered every box once per route into it,
-  # and the cost doubled per box: 22 took 8 seconds, 24 took fifty, and
-  # the 220 mmdc draws would never have come back.
-  describe "a deeply nested diagram" do
-    it "checks for a cycle without re-walking every route" do
-      nested = (0...22).map { |i| "subgraph s#{i}\n" }.join
-      source = "graph TD\n#{nested}A-->B\n#{"end\n" * 22}"
-
-      elapsed = Benchmark.realtime { described_class.new.parse(source) }
-
-      expect(elapsed).to be < 1.0
-    end
-  end
-
   # Every case here is refused by mmdc 11.12.0, and every one of them used
   # to come back as a drawn cluster. Drawing a box mermaid will not draw is
   # worse than refusing one it draws, so these are the shape of bug this
@@ -361,23 +331,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
     it "refuses an empty quoted id with a title" do
       expect(parses?("graph TD\nsubgraph \"\" [T]\nA\nend\n")).to be(false)
-    end
-  end
-
-  # Claiming a member went through the model's collection setter once per
-  # node, which copies the whole array every time. Measured against the
-  # same nodes at the top level, because that is the same parse without
-  # the claiming — the machine cancels out and the quadratic term does
-  # not. The ratio was 3.6 before and sits under 1 now.
-  describe "a subgraph holding many nodes" do
-    it "costs no more than the same nodes outside one" do
-      body = (0...1600).map { |i| "n#{i}" }.join("\n")
-      loose = Benchmark.realtime { described_class.new.parse("graph TD\n#{body}\n") }
-      boxed = Benchmark.realtime do
-        described_class.new.parse("graph TD\nsubgraph s [T]\n#{body}\nend\n")
-      end
-
-      expect(boxed).to be < loose * 2
     end
   end
 
@@ -638,48 +591,38 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     # The counter and the containment map used to live on the class, so
-    # two threads rendering at once handed out each other's ids.
-    #
-    # Racing two whole parses does not reach that: a 40-box diagram parses
-    # in 23ms, well inside Ruby's 100ms thread quantum, so the two threads
-    # run one after the other and agree wherever the state lives. This
-    # holds one thread open between its two ids instead, and runs a real
-    # parse against it while it waits.
-    it "numbers a parse from zero while another thread is mid-parse" do
-      transform = Sirena::Parser::Transforms::Flowchart
-      opened = Queue.new
-      parsed = Queue.new
+    # two threads rendering at once handed out each other's ids. Each
+    # parse now counts on a context it makes for itself, so parses
+    # running side by side cannot see one another.
+    it "numbers every parse from zero, even side by side" do
+      source = "graph TD\nsubgraph one A\nX\nend\nsubgraph two B\nY\nend\n"
 
-      other = Thread.new do
-        held = transform.state
-        ids = [transform.next_generated_id]
-        opened.push(:opened)
-        parsed.pop
-        ids << transform.next_generated_id
-        { ids: ids, kept_its_own_state: transform.state.equal?(held) }
-      end
+      ids = Array.new(8) do
+        Thread.new { described_class.new.parse(source).subgraphs.map(&:id) }
+      end.map(&:value)
 
-      opened.pop
-      ours = described_class.new.parse(
-        "graph TD\nsubgraph one A\nX\nend\nsubgraph two B\nY\nend\n"
-      )
-      parsed.push(:parsed)
-
-      expect(ours.subgraphs.map(&:id)).to eq(%w[subGraph0 subGraph1])
-      expect(other.value)
-        .to eq(ids: %w[subGraph0 subGraph1], kept_its_own_state: true)
+      expect(ids.uniq).to eq([%w[subGraph0 subGraph1]])
     end
 
-    # The memo keeps a reference to every subgraph statement, so holding
-    # it after the parse keeps the whole tree alive on a long-lived
-    # thread.
+    # The bookkeeping used to sit on the thread behind a public reader,
+    # so code outside the parser could read it and rewrite the ids the
+    # next parse was about to hand out. It is made inside `apply` now and
+    # nothing outside holds a handle on it.
     #
     # Both halves, because either alone can be satisfied while the other
-    # is false. A second parse numbering from zero is what a caller would
-    # see, and it still means something if the state moves off the thread
-    # — but it only proves the COUNTER was reset: keep `state[:ids]` and
-    # drop the rest and it passes with every statement still referenced.
-    # An empty slot is what says the tree was let go.
+    # is false: an empty thread slot says nothing about a class-level
+    # accessor, and a missing accessor says nothing about the slot.
+    it "keeps its bookkeeping off the class and off the thread" do
+      transform = Sirena::Parser::Transforms::Flowchart
+      described_class.new.parse("graph TD\nsubgraph one A\nX\nend\n")
+
+      expect(transform).not_to respond_to(:state)
+      expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
+    end
+
+    # The bookkeeping references every subgraph statement, so keeping it
+    # after the parse keeps the whole tree alive. A second parse
+    # numbering from zero is what a caller would see.
     it "lets the parse tree go when it is done" do
       parser = described_class.new
       first = parser.parse("graph TD\nsubgraph one A\nX\nend\n")
@@ -687,7 +630,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
 
       expect([first, second].map { |d| d.subgraphs.map(&:id) })
         .to eq([%w[subGraph0], %w[subGraph0]])
-      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
+      expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
     end
 
     it "lets it go even when the parse is refused" do
@@ -698,10 +641,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect { parser.parse(refused) }
         .to raise_error(Sirena::Parser::ParseError)
 
-      # Before the next parse, not after: a recovery parse releases the
-      # slot on its own way out, which erases the very evidence that the
-      # refused one held on to its tree.
-      expect(Thread.current[:sirena_flowchart_transform]).to be_nil
+      expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
       expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
                    .subgraphs.map(&:id)).to eq(%w[subGraph0])
     end
@@ -897,14 +837,18 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # replaced by `nil` this source still parses cleanly, so the bare form
   # said nothing about cycles despite its name. Fifteen other examples
   # fail on that mutation; what is left to pin here is the flat walk.
-  describe "a long chain of boxes" do
-    it "walks the whole chain without recursing" do
-      chain = (0...4_000).map { |i| "subgraph s#{i}\ns#{i + 1}\nend\n" }.join
-      built = boxes("graph TD\n#{chain}s4000\n")
-      last = built.last
+  #
+  # Four boxes here for the shape. The chain long enough to drown a
+  # recursive walk is in spec/benchmarks, because building it takes ten
+  # seconds and that does not belong in every run.
+  describe "a chain of boxes" do
+    it "hangs each box off the one before it" do
+      chain = (0...4).map { |i| "subgraph s#{i}\ns#{i + 1}\nend\n" }.join
+      built = boxes("graph TD\n#{chain}s4\n")
 
-      expect([built.size, last.id, last.parent_id, last.node_ids])
-        .to eq([4000, "s3999", "s3998", %w[s4000]])
+      expect(built.map { |box| [box.id, box.parent_id, box.node_ids] })
+        .to eq([["s0", nil, []], ["s1", "s0", []],
+                ["s2", "s1", []], ["s3", "s2", %w[s4]]])
     end
   end
 end

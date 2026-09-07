@@ -90,7 +90,7 @@ module Sirena
       # diagram-specific graph conversion logic.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Object] elkrb graph object with nodes and edges
+      # @return [Hash] elkrb graph hash with nodes and edges
       # @raise [NotImplementedError] if not implemented by subclass
       def to_graph(diagram)
         raise NotImplementedError,

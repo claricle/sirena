@@ -15,6 +15,55 @@ module Sirena
       # Handles transformation of nodes, edges, subgraphs, and styling
       # directives from Parslet parse trees into Flowchart diagram objects.
       class Flowchart < Parslet::Transform
+        # One parse's bookkeeping.
+        #
+        # It used to sit in `Thread.current` behind a public `.state`, so
+        # any code in the host app could read or rewrite the ids the next
+        # parse was about to hand out, and a parse that raised had to
+        # remember to clear the slot or it kept the whole parse tree
+        # alive. Made inside `apply` and passed down instead, it is
+        # reachable from nowhere else and goes away with the parse.
+        #
+        # A gem runs inside somebody else's app, and these used to be
+        # shared on the class: 11 of 36 concurrent parses of a 60-box
+        # diagram handed out ids that disagreed with the sequential
+        # answer. Every parse now counts on its own object, so two
+        # threads cannot see each other at all.
+        class Context
+          # Generated ids, keyed by statement IDENTITY: two subgraphs
+          # written the same way are still two boxes, and each needs its
+          # own id.
+          attr_reader :ids
+
+          # Who claimed whom, as won rather than as written. Read by the
+          # cycle check once the whole diagram has been walked.
+          attr_reader :ownership
+
+          # The box holding each id, so a member lookup is indexed rather
+          # than a scan over every box.
+          attr_reader :boxes
+
+          # Ids already spoken for. The first box to name an id keeps it.
+          attr_reader :claimed
+
+          def initialize
+            @ids = {}.compare_by_identity
+            @ownership = {}
+            @boxes = {}
+            @claimed = {}
+            @counter = -1
+          end
+
+          # mermaid names a box carrying a free title `subGraph<n>`, and
+          # counts from zero within one diagram.
+          #
+          # @return [String] the next generated subgraph id
+          def next_generated_id
+            @counter += 1
+            "subGraph#{@counter}"
+          end
+        end
+
         # Two ways a name can fail, and they are not the same thing.
         # Mermaid does not know `nope`, and says so in words a corpus case
         # quotes. Mermaid does know `bang`, and draws it as a curved
@@ -287,17 +336,18 @@ module Sirena
           # Process statements (remaining elements)
           statements = tree[1..-1] || []
 
-          assign_ids(statements)
-          process_statements(diagram, statements)
-          reject_ownership_cycles
-          promote_referenced_subgraphs(diagram)
+          # Made here and passed down, so it belongs to this parse alone.
+          # Nothing outside can reach it, and it is let go — with every
+          # subgraph statement it references — the moment `apply` returns
+          # or raises.
+          context = Context.new
+
+          assign_ids(statements, context)
+          process_statements(diagram, statements, context)
+          reject_ownership_cycles(context)
+          promote_referenced_subgraphs(diagram, context)
 
           diagram
-        ensure
-          # The memo holds a reference to every subgraph statement, so
-          # leaving it behind keeps the whole parse tree alive on a
-          # long-lived thread until something else parses.
-          release_state
         end
 
         def self.canonical_direction(value)
@@ -305,22 +355,22 @@ module Sirena
         end
         private_class_method :canonical_direction
 
-        def self.process_statements(diagram, statements, parents = [])
+        def self.process_statements(diagram, statements, context, parents = [])
           statements.each do |stmt|
             next unless stmt.is_a?(Hash)
 
             if stmt[:node]
               # Node with edges
-              process_node_edge_statement(diagram, stmt, parents.last)
+              process_node_edge_statement(diagram, stmt, parents.last, context)
             elsif stmt[:node_id]
               # Standalone node
               node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
-              claim_member(parents.last, stmt[:node_id].to_s)
+              claim_member(parents.last, stmt[:node_id].to_s, context)
             elsif stmt[:subgraph_keyword]
-              process_subgraph(diagram, stmt, parents)
+              process_subgraph(diagram, stmt, context, parents)
             elsif stmt[:direction_keyword]
-              set_direction(parents.last, stmt[:dir_value])
+              set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword] || stmt[:classdef_keyword] ||
                   stmt[:class_keyword] || stmt[:click_keyword]
               # Styling directives (acknowledge but don't fully implement)
@@ -337,15 +387,15 @@ module Sirena
         # FREE title gets a generated `subGraph<n>` — so `subgraph s Some
         # Title` containing `s` is fine, and containing `subGraph0` is the
         # cycle. Only a bare or bracket-titled declaration keeps its word.
-        def self.process_subgraph(diagram, stmt, parents = [])
-          id = subgraph_id(stmt)
+        def self.process_subgraph(diagram, stmt, context, parents = [])
+          id = subgraph_id(stmt, context)
           ancestry = parents + [id]
-          record_subgraph(diagram, stmt, id, parents.last)
+          record_subgraph(diagram, stmt, id, parents.last, context)
           return unless stmt[:subgraph_statements]
 
           sub_stmts = stmt[:subgraph_statements]
           sub_stmts = [sub_stmts] unless sub_stmts.is_a?(Array)
-          process_statements(diagram, sub_stmts, ancestry)
+          process_statements(diagram, sub_stmts, context, ancestry)
         end
 
         # Ids are handed out in one pass before anything reads them.
@@ -357,25 +407,27 @@ module Sirena
         # before it hands anything out. Measured on mmdc 11.12.0:
         # `subgraph a One` holding `subgraph b Two` makes b subGraph0 and
         # a subGraph1.
-        def self.assign_ids(statements)
+        def self.assign_ids(statements, context)
           statements = [statements] unless statements.is_a?(Array)
 
           statements.each do |stmt|
             next unless stmt.is_a?(Hash) && stmt[:subgraph_keyword]
 
-            assign_ids(stmt[:subgraph_statements]) if stmt[:subgraph_statements]
-            state[:ids][stmt] = allocate_id(stmt)
+            if stmt[:subgraph_statements]
+              assign_ids(stmt[:subgraph_statements], context)
+            end
+            context.ids[stmt] = allocate_id(stmt, context)
           end
         end
 
         # A quoted id arrives as a Hash, and `to_s` on that gave
         # `{string: "s"}`, so a quoted self-parent slipped through.
-        def self.subgraph_id(stmt)
-          state[:ids][stmt] ||= allocate_id(stmt)
+        def self.subgraph_id(stmt, context)
+          context.ids[stmt] ||= allocate_id(stmt, context)
         end
 
-        def self.allocate_id(stmt)
-          generated_id?(stmt) ? next_generated_id : written_id(stmt)
+        def self.allocate_id(stmt, context)
+          generated_id?(stmt) ? context.next_generated_id : written_id(stmt)
         end
 
         # A free title always generates one. So does a bare id carrying
@@ -424,43 +476,14 @@ module Sirena
         # then `b` holding `a`, then `a` holding `b` draws clusters `c`
         # and `b` — the last claim loses, so nothing closes. Walking the
         # written source instead refused a diagram mmdc draws.
-        def self.reject_ownership_cycles
-          loop_found = Diagram::Containment.looping_pair(state[:ownership])
+        def self.reject_ownership_cycles(context)
+          loop_found = Diagram::Containment.looping_pair(context.ownership)
           return if loop_found.nil?
 
           parent, child = loop_found
           raise Parser::ParseError,
                 "Setting #{parent} as parent of #{child} would create " \
                 'a cycle.'
-        end
-
-        def self.next_generated_id
-          state[:counter] += 1
-          "subGraph#{state[:counter]}"
-        end
-
-        # One parse's bookkeeping, kept off the class. A gem runs inside
-        # somebody else's app, and these used to be shared: 11 of 36
-        # concurrent parses of a 60-box diagram handed out ids that
-        # disagreed with the sequential answer.
-        #
-        # `Thread#[]` is fiber-local, which is the narrower of the two and
-        # still right here: `apply` runs a parse start to finish without
-        # yielding, so no parse can straddle two fibers.
-        #
-        # Ids are keyed by identity, because two subgraphs written the
-        # same way are still two boxes and each needs its own.
-        def self.state
-          Thread.current[:sirena_flowchart_transform] ||= fresh_state
-        end
-
-        def self.fresh_state
-          { ids: {}.compare_by_identity, ownership: {}, counter: -1,
-            boxes: {}, claimed: {} }
-        end
-
-        def self.release_state
-          Thread.current[:sirena_flowchart_transform] = nil
         end
 
         # Declaration order is kept in the model. Ownership is independent:
@@ -471,16 +494,16 @@ module Sirena
         # it loses, the box is still built and still holds what it
         # contains — it just does not become anybody's child, and the
         # earlier claimant adopts it once the walk is over.
-        def self.record_subgraph(diagram, stmt, id, parent)
+        def self.record_subgraph(diagram, stmt, id, parent, context)
           box = Diagram::FlowchartSubgraph.new
           box.id = id
           box.declared_title = subgraph_label(stmt)
           diagram.subgraphs << box
           # First box wins the name, matching how a node is claimed, and
           # every later mention adds to that one.
-          holding = (state[:boxes][id] ||= box)
+          holding = (context.boxes[id] ||= box)
 
-          holder = claim(parent, id)
+          holder = claim(parent, id, context)
           return if holder.nil?
 
           # The box that HOLDS the id, not the one just built. Writing a
@@ -525,16 +548,16 @@ module Sirena
         # already claimed.
         #
         # @return [Diagram::FlowchartSubgraph, nil] the box that took it
-        def self.claim(parent, id)
-          box = enclosing(parent)
-          return nil if box.nil? || id.empty? || state[:claimed][id]
+        def self.claim(parent, id, context)
+          box = enclosing(parent, context)
+          return nil if box.nil? || id.empty? || context.claimed[id]
 
-          state[:claimed][id] = true
+          context.claimed[id] = true
           # The edge the cycle check reads. Only a WINNING claim makes
           # one, which is what stops a losing claim from closing a loop
           # that mermaid never sees. No `include?` guard: an id is
           # claimed once, so it can be listed only once.
-          (state[:ownership][box.id] ||= []) << id
+          (context.ownership[box.id] ||= []) << id
           box
         end
 
@@ -543,16 +566,16 @@ module Sirena
         # went through the model's collection setter once per member —
         # 1,600 nodes in one box took 2.3 seconds instead of half a
         # millisecond.
-        def self.claim_member(parent, node_id)
-          box = claim(parent, node_id)
+        def self.claim_member(parent, node_id, context)
+          box = claim(parent, node_id, context)
           box.node_ids << node_id if box
         end
 
         # Indexed rather than searched. Scanning every box for every node
         # made a 240-subgraph diagram take four times as long to parse as
         # it did before subgraphs were modelled.
-        def self.enclosing(parent)
-          parent.nil? ? nil : state[:boxes][parent]
+        def self.enclosing(parent, context)
+          parent.nil? ? nil : context.boxes[parent]
         end
 
         # `direction` inside a box turns that box's contents, and mmdc
@@ -560,8 +583,8 @@ module Sirena
         # 11.12.0, where `flowchart TD` followed by `direction LR` still
         # stacks its nodes vertically. So there is nothing to do when no
         # box encloses it.
-        def self.set_direction(parent, value)
-          box = enclosing(parent)
+        def self.set_direction(parent, value, context)
+          box = enclosing(parent, context)
           box.direction = value.to_s if box
         end
 
@@ -580,9 +603,9 @@ module Sirena
         # `find_node` per box rescans the whole collection each time, and
         # a chain of 2,000 boxes spent 17 seconds in the transform where
         # this takes under one.
-        def self.promote_referenced_subgraphs(diagram)
+        def self.promote_referenced_subgraphs(diagram, context)
           holders = holders_by_member(diagram)
-          promoted = surviving_boxes
+          promoted = surviving_boxes(context)
           return if promoted.empty?
 
           promoted.each_value { |box| adopt(holders[box.id], box) }
@@ -603,8 +626,8 @@ module Sirena
         #
         # Measured before deleting the loop — 2,312 sources, 301 calls to
         # the old predicate, zero that disagreed with `drawable?`.
-        def self.surviving_boxes
-          state[:boxes].select { |_id, box| box.drawable? }
+        def self.surviving_boxes(context)
+          context.boxes.select { |_id, box| box.drawable? }
         end
 
         def self.holders_by_member(diagram)
@@ -633,10 +656,16 @@ module Sirena
           holder.child_ids << box.id
         end
 
-        def self.process_node_edge_statement(diagram, stmt, parent)
+        # The last two arguments are new, and both default, so a caller
+        # written against the old two-argument form still works: with no
+        # enclosing box there is nothing to claim, and the throwaway
+        # context is only there to keep the claim path from special-casing
+        # its absence.
+        def self.process_node_edge_statement(diagram, stmt, parent = nil,
+                                             context = Context.new)
           node_data = extract_node_data(stmt[:node])
           add_or_update_node(diagram, node_data)
-          claim_member(parent, node_data[:node_id].to_s)
+          claim_member(parent, node_data[:node_id].to_s, context)
 
           # Process edges if present
           edges = stmt[:edges]
@@ -657,7 +686,7 @@ module Sirena
             # Extract and add target node
             target_node_data = extract_node_data(target_data)
             add_or_update_node(diagram, target_node_data)
-            claim_member(parent, target_node_data[:node_id].to_s)
+            claim_member(parent, target_node_data[:node_id].to_s, context)
 
             # Create edge
             edge = create_edge(source_id, target_node_data, arrow_type, label)

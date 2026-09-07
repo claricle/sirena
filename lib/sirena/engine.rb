@@ -174,7 +174,7 @@ module Sirena
     # @param diagram [Diagram::Base] diagram model
     # @param transform_class [Class] transform class
     # @param today [Date, nil] reference date, or nil for the real date
-    # @return [Object] graph structure
+    # @return [Hash] graph structure
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
@@ -194,8 +194,8 @@ module Sirena
     # available. In the future, this will attempt to use elkrb for
     # proper graph layout computation.
     #
-    # @param graph [Object] graph structure
-    # @return [Object] graph with computed positions
+    # @param graph [Hash] graph structure
+    # @return [Hash] graph with computed positions
     def layout_graph(graph)
       log 'Computing layout...'
 
@@ -209,7 +209,7 @@ module Sirena
 
     # Renders graph to SVG document.
     #
-    # @param graph [Object] laid-out graph
+    # @param graph [Hash] laid-out graph
     # @param renderer_class [Class] renderer class
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document

@@ -99,10 +99,12 @@ module Sirena
       # `direction` written inside the box, which turns its contents
       # independently of the diagram's own direction. nil when unwritten.
       #
-      # Read by nothing yet. The fallback grid ignores layout options
-      # entirely, so carrying this into the layout would be a setting
-      # that cannot take effect; it lands with the real layout engine.
-      # Keeping it on the model means the source is not thrown away.
+      # Read by nothing yet, so it changes nothing on the page. The
+      # fallback grid ignores layout options entirely, and the diagram's
+      # OWN `direction` is dropped the same way: `flowchart LR` puts its
+      # nodes exactly where `flowchart TD` does. Both start working
+      # together when the real layout engine lands. Keeping the value
+      # here means the source is not thrown away in the meantime.
       attribute :direction, :string
 
       # A method rather than a constructor default: the id is usually
@@ -120,6 +122,18 @@ module Sirena
       # @return [Boolean] true when there is a box worth drawing
       def drawable?
         !node_ids.empty? || !child_ids.empty?
+      end
+
+      # Validates the subgraph names itself.
+      #
+      # Everything downstream keys off the id: the layout hangs children
+      # on it, the renderer writes it into the cluster's group id, and an
+      # edge end that names a box finds it by id. A box with no id draws
+      # a cluster nobody can reach, so it is refused here instead.
+      #
+      # @return [Boolean] true if the subgraph is valid
+      def valid?
+        !id.nil? && !id.empty?
       end
     end
 
@@ -173,6 +187,9 @@ module Sirena
       # - It has at least one node or one subgraph worth drawing
       # - All nodes are valid
       # - All edges are valid
+      # - All subgraphs are valid
+      # - Every member a box names is in the diagram
+      # - `parent_id` and `child_ids` tell the same story
       # - Every edge end names a node, or a subgraph that gets drawn
       #
       # @return [Boolean] true if flowchart is valid
@@ -182,6 +199,9 @@ module Sirena
         return false if parent_cycle?(boxes)
         return false unless drawn_nodes.all?(&:valid?)
         return false unless edges.nil? || edges.all?(&:valid?)
+        return false unless boxes.all?(&:valid?)
+        return false unless members_named?(boxes, drawn_nodes)
+        return false unless nesting_agrees?(boxes)
 
         # An edge may name a subgraph rather than a node: mermaid joins
         # the cluster boxes and draws no node for either end. Only a box
@@ -224,6 +244,67 @@ module Sirena
       end
 
       private
+
+      # A box names its members rather than owning them, so a name that
+      # matches nothing leaves the box holding an empty seat: the box
+      # counts as drawable, the layout sizes it around no contents, and
+      # the picture shows a cluster with nothing in it.
+      #
+      # A member may name a node or another box. An empty subgraph stays
+      # a plain node in mermaid, so both spellings come out of a parse.
+      #
+      # @param boxes [Array<FlowchartSubgraph>] the diagram's subgraphs
+      # @param drawn_nodes [Array<FlowchartNode>] the diagram's nodes
+      # @return [Boolean] true when every named member is present
+      def members_named?(boxes, drawn_nodes)
+        # A hash rather than an array scan: one box can hold thousands of
+        # members, and asking an array for each of them is quadratic.
+        known = {}
+        drawn_nodes.each { |node| known[node.id] = true }
+        boxes.each { |box| known[box.id] = true }
+
+        boxes.all? do |box|
+          box.node_ids.all? { |member_id| known.key?(member_id) }
+        end
+      end
+
+      # `parent_id` and `child_ids` say the same thing from two ends, and
+      # the drawing believes both. The transform hangs a box off its
+      # `parent_id`, while `drawable?` counts `child_ids` — so a box
+      # listed as a child but pointing nowhere is drawn twice, and one
+      # pointing at a parent that does not list it stops the parent from
+      # being drawn at all. Nothing keeps the two in step on a model
+      # somebody builds by hand, so a model that argues with itself is
+      # refused here rather than drawn wrong.
+      #
+      # A parent nobody declared is not a disagreement: the transform
+      # puts such a box at the top level on purpose.
+      #
+      # Ids are looked up as groups, not one apiece, because a source may
+      # declare the same box twice. Only the first object carries the
+      # nesting; the second is an empty repeat of the same name.
+      #
+      # @param boxes [Array<FlowchartSubgraph>] the diagram's subgraphs
+      # @return [Boolean] true when both directions agree
+      def nesting_agrees?(boxes)
+        holders = boxes.group_by(&:id)
+
+        boxes.all? do |box|
+          named_by_parent?(holders, box) && children_name_back?(holders, box)
+        end
+      end
+
+      def named_by_parent?(holders, box)
+        parents = holders[box.parent_id]
+
+        parents.nil? || parents.any? { |parent| parent.child_ids.include?(box.id) }
+      end
+
+      def children_name_back?(holders, box)
+        box.child_ids.all? do |child_id|
+          holders.fetch(child_id, []).any? { |child| child.parent_id == box.id }
+        end
+      end
 
       # A box cannot be its own ancestor. The layout hangs each box off
       # its parent, so a ring of them hangs off itself: not one of the

@@ -54,47 +54,35 @@ module Sirena
       # before member nodes, so every cluster lists boxes before nodes. Parent
       # lookup is independent of declaration order, so a later cluster can
       # hold an earlier one.
+      #
+      # A box naming a parent nobody drew belongs at the top level. That
+      # is asked rather than written back, because the diagram belongs to
+      # the caller and a transform has no business editing it.
       def assemble(boxes, placed, nested)
         entries = boxes.map { |box| [box, transform_subgraph(box)] }
-        clusters_by_box = index_by_box(entries)
-        parents_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
 
-        attach_clusters(entries, parents_by_id)
-        loose = place_nodes(placed, nested, clusters_by_box)
-        loose + root_clusters(entries, parents_by_id)
-      end
-
-      def index_by_box(entries)
-        entries.each_with_object({}.compare_by_identity) do |(box, cluster), acc|
+        # Two indexes over the same pairs. Boxes are keyed by identity,
+        # because a source may declare the same id twice and each
+        # declaration is its own box; parents are keyed by id, because
+        # that is all a child has to name one by.
+        clusters_by_box = entries.each_with_object({}.compare_by_identity) do |(box, cluster), acc|
           acc[box] = cluster
         end
-      end
+        clusters_by_id = entries.to_h { |box, cluster| [box.id, cluster] }
 
-      def attach_clusters(entries, parents)
-        entries.each do |box, mine|
-          holder = holder_of(box, parents)
-          next unless holder
-
-          holder.fetch(:children).push(mine)
+        # Clusters first, so every cluster lists its boxes before its
+        # nodes.
+        entries.each do |box, cluster|
+          clusters_by_id[box.parent_id]&.fetch(:children)&.push(cluster)
         end
-      end
 
-      def root_clusters(entries, parents)
-        entries.reject { |box, _cluster| holder_of(box, parents) }.map(&:last)
-      end
-
-      def place_nodes(nodes, nested, clusters)
-        nodes.each_with_object([]) do |node, loose|
-          holder = clusters[nested[node[:id]]]
-          holder ? holder[:children] << node : loose << node
+        loose = placed.each_with_object([]) do |node, top_level|
+          holder = clusters_by_box[nested[node[:id]]]
+          holder ? holder[:children] << node : top_level << node
         end
-      end
 
-      # A box naming a parent nobody drew belongs at the top level. Asked
-      # rather than written back, because the diagram belongs to the
-      # caller and a transform has no business editing it.
-      def holder_of(box, clusters)
-        clusters[box.parent_id]
+        loose + entries.reject { |box, _| clusters_by_id[box.parent_id] }
+          .map(&:last)
       end
 
       # An empty subgraph draws no cluster in mermaid, so it is not
