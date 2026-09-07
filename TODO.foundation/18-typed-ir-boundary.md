@@ -124,7 +124,8 @@ the foundation close with the architecture issue #2 asks for half-built.
   `docs/ir-type-map.md` with evidence. No exception list.
 - `rake type:new[demo]` produces a type that satisfies the IR boundary,
   and the file count in `TODO.architecture/07-adding-a-type.md`, its
-  file-count spec, `docs/adding-a-diagram-type.md` and `LAYERS.md`'s
+  file-count spec, `docs/adding-a-diagram-type.md` and
+  `TODO.architecture/LAYERS.md`'s
   new-type row all agree with what it generates. Adding the IR changes
   that count; this item owns moving every copy of it.
 - No IR field names or encodes a notation-specific construct — asserted
