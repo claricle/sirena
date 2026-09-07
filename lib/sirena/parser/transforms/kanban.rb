@@ -2,6 +2,8 @@
 
 require "parslet"
 
+require_relative "../metadata_yaml"
+
 module Sirena
   module Parser
     module Transforms
@@ -28,14 +30,27 @@ module Sirena
             # Track minimum indentation
             @min_indent = indent_size if @min_indent.nil? || indent_size < @min_indent
 
-            item = {
-              id: line_data[:id].to_s,
-              text: line_data[:text].to_s,
-              indent: indent_size,
-              metadata: line_data[:metadata]
-            }
+            id = line_data[:id].to_s
 
-            @items << item
+            # An item with no bracket label displays its id, which is what
+            # mermaid renders. Resolved here, once: add_card reads this field
+            # directly, and add_column reads it through column_title, which
+            # may override it with a `label:` from the metadata.
+            #
+            # The metadata is parsed here rather than in add_card so that
+            # add_column can consult it too; parse_metadata returns {} for a
+            # nil subtree, so this is always a Hash.
+            #
+            # `|| id` relies on an absent label being nil rather than "",
+            # since `""` is truthy in Ruby and would not fall back. That
+            # holds only because labelled_item captures with `repeat(1)`, so
+            # a label that matched is never empty.
+            @items << {
+              id: id,
+              text: line_data[:text]&.to_s || id,
+              indent: indent_size,
+              metadata: parse_metadata(line_data[:metadata])
+            }
           end
 
           def finalize
@@ -59,7 +74,7 @@ module Sirena
           def add_column(item)
             column = {
               id: item[:id],
-              title: item[:text],
+              title: column_title(item),
               cards: []
             }
 
@@ -67,22 +82,32 @@ module Sirena
             @current_column = column
           end
 
+          # The card's own `id` and `text` beat a metadata entry of the same
+          # name, because mermaid ignores `@{ id: ... }` and `@{ text: ... }`.
+          # Merging the metadata FIRST makes that true by construction, with
+          # no exclusion list to keep in step as fields are added.
+          #
+          # A `label:` on a card is kept as its own attribute and drawn as a
+          # separate "Label:" row. That diverges from mermaid, which renders
+          # the label as the card's primary text and draws no such row. The
+          # divergence is pre-existing; correcting it belongs to the
+          # card-conformance bucket.
           def add_card(item)
             # Cards must belong to a column
             return unless @current_column
 
-            card = {
+            @current_column[:cards] << item[:metadata].merge(
               id: item[:id],
               text: item[:text]
-            }
+            )
+          end
 
-            # Extract metadata if present
-            if item[:metadata]
-              metadata = parse_metadata(item[:metadata])
-              card.merge!(metadata)
-            end
-
-            @current_column[:cards] << card
+          # A `label:` replaces a COLUMN's display text, which is what mermaid
+          # renders. A label mermaid would treat as unset is already gone by
+          # here - parse_metadata drops it - so falling back to the bracket
+          # text, or to the id, is a plain `||`.
+          def column_title(item)
+            item[:metadata][:label] || item[:text]
           end
 
           def parse_metadata(metadata_data)
@@ -101,8 +126,10 @@ module Sirena
               next unless entry.is_a?(Hash)
               next unless entry[:key] && entry[:value]
 
-              key = entry[:key].to_s
               value = extract_value(entry[:value])
+              next if dropped_by_mermaid?(value, unquoted: entry[:value].key?(:unquoted))
+
+              key = entry[:key].to_s
 
               # Map to known metadata fields
               case key
@@ -125,14 +152,56 @@ module Sirena
             result
           end
 
+          # Always a Hash of `{string: ...}` or `{unquoted: ...}`: every branch
+          # of `metadata_value` captures with `.as(:string)` or `.as(:unquoted)`,
+          # and the caller has already skipped a nil value. So no guard here.
+          #
+          # An empty quoted string captures as `{string: []}`, because the
+          # shared grammar takes the body with `.repeat`, and `[].to_s` is the
+          # literal "[]". Parslet::Slice answers false to `to_ary`, so
+          # `Array()` wraps a slice rather than splitting it; `join` then
+          # handles both shapes.
           def extract_value(value_data)
-            return "" if value_data.nil?
+            Array(value_data[:string] || value_data[:unquoted]).join
+          end
 
-            if value_data.is_a?(Hash) && value_data[:string]
-              # It's a string wrapped in :string key
-              value_data[:string].to_s
-            else
-              value_data.to_s
+          # Mermaid gates every field on JS truthiness - the kanban renderer
+          # reads `if (doc?.label)`, and icon, assigned, ticket and priority
+          # the same way - AFTER js-yaml resolves the scalar. A value
+          # resolving to false, null or zero is therefore never set and the
+          # field falls back. Dropping the entry mirrors that: with no entry
+          # there is no metadata row and no height reserved for one.
+          #
+          # An empty value is dropped. Only a QUOTED one can be empty -
+          # `unquoted_value` captures with `repeat(1)` - so that rule and the
+          # unquoted resolution below never both apply. Past it, a non-empty
+          # quoted string is always truthy, so `'0'` and `"false"` override.
+          #
+          # Only the falsy half of resolution is mirrored. A truthy scalar is
+          # still rendered as its raw text where mermaid renders the resolved
+          # value - `1e0` draws `1`, `0x10` draws `16`. That divergence is
+          # pre-existing and belongs to the card-conformance bucket.
+          #
+          # The resolution itself is MetadataYaml's, the same table the
+          # flowchart body is read with. `no`, `off`, `True` and `0_1` stay
+          # truthy there, and `false`, `null`, `~`, `.nan` and every zero
+          # resolve falsy, which is what mermaid's js-yaml 4.1.1 does.
+          def dropped_by_mermaid?(text, unquoted:)
+            return true if text.empty?
+            return false unless unquoted
+
+            falsy_to_js?(MetadataYaml.plain_scalar(text))
+          end
+
+          # JavaScript's own falsy set, over the values js-yaml can hand
+          # back for a plain scalar: false, null, any zero and NaN. An empty
+          # string is already gone above, and a non-empty one is truthy.
+          def falsy_to_js?(value)
+            case value
+            when nil, false then true
+            when Float then value.zero? || value.nan?
+            when Numeric then value.zero?
+            else false
             end
           end
 
