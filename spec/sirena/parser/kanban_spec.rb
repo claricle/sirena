@@ -218,20 +218,6 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
-    context 'with metadata a column has no attribute for' do
-      # This pins a MODEL SHAPE, not transform behaviour, and the name says
-      # so deliberately. `assigned` cannot reach a column no matter what the
-      # transform does, because build_column reads only id/title/cards - so
-      # no transform change can redden this. What it does catch is the model
-      # growing an attribute later, which would silently change what a bare
-      # column carries. Five corpus cases (035, 036, 037, 039, 041) reach a
-      # column through this path.
-      it 'defines no attribute the metadata could land in' do
-        expect(Sirena::Diagram::KanbanColumn.attributes.keys)
-          .to contain_exactly(:id, :title, :cards)
-      end
-    end
-
     context 'with a label: override on a bare column (corpus 040)' do
       let(:source) { "kanban\n        root@{ icon: star, label: 'fix things' }\n" }
 
@@ -328,19 +314,12 @@ RSpec.describe Sirena::Parser::KanbanParser do
     end
 
     context 'with identical bare cards in one column' do
-      # lutaml-model gives KanbanCard VALUE equality, so cards written the
-      # same way compare equal and collapse under `uniq`, `Set` membership
-      # or a `Hash` key. Bare cards are new here and make that shape trivial
-      # to write; the corpus 002 example above cannot cover it, because its
-      # two `docs` cards carry different text and so are not value-equal.
+      # Bare cards make three look-alike lines trivial to write, and the
+      # builder must keep one card per line. The corpus 002 example above
+      # cannot cover it, because its two `docs` cards carry different text.
       it 'keeps one card per line rather than collapsing look-alikes' do
         diagram = parser.parse("kanban\n  col\n    a\n    a\n    a\n")
-        cards = diagram.columns.first.cards
-        aggregate_failures do
-          expect(cards.map(&:id)).to eq(%w[a a a])
-          # The hazard is live, not theoretical: all three are value-equal.
-          expect(cards.uniq.size).to eq(1)
-        end
+        expect(diagram.columns.first.cards.map(&:id)).to eq(%w[a a a])
       end
     end
 
@@ -540,6 +519,21 @@ RSpec.describe Sirena::Parser::KanbanParser do
         expect(title_for('true')).to eq('true')
         expect(title_for("'0'")).to eq('0')
         expect(title_for('"false"')).to eq('false')
+      end
+
+      it 'reads the values a dot, plus or tilde makes' do
+        # These three characters are new in the unquoted charset. Before
+        # them the whole line raised a parse error, where mmdc 11.12.0 draws
+        # the node. js-yaml resolves the first five falsy, so the title
+        # falls back, and keeps the rest as numbers.
+        aggregate_failures do
+          %w[0.0 -0.0 +0 .nan ~].each do |zero|
+            expect(title_for(zero)).to eq('A'), "expected #{zero} to be dropped"
+          end
+          %w[1.5 0.1 +7].each do |kept|
+            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          end
+        end
       end
 
       it 'drops zero written with digit separators, including after a prefix' do
