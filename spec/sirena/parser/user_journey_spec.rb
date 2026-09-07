@@ -569,18 +569,55 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       it 'refuses a long unclosed block without rescanning it per line' do
         # Before the block opener was refused outright, each of these lines
         # succeeded as a task and each scanned to the end of the source
-        # first: 2000 lines took 20.0s against 1.0s now, and the gap widens
-        # with the line count. The bound is loose enough for a slow machine
-        # and still an order of magnitude under the old cost.
+        # first: 2000 lines took 20.0s against 1.2s now, and the gap widens
+        # with the line count.
+        #
+        # Score the two assertions honestly. The REFUSAL is what kills a
+        # restored fallthrough, and another example in this file already
+        # refuses the same shape on a single line. What the RATIO adds is the
+        # COST: a regression that still refuses but goes quadratic again
+        # changes no parse result, so nothing else here can see it.
+        #
+        # The control is the SAME 2000 openers with their braces CLOSED. It
+        # drives `acc_descr_open` and `acc_block_body` over the same byte
+        # count and never reaches the refusal, so the ratio isolates that one
+        # property and divides the machine's speed out of it.
+        #
+        # This was a bare `elapsed < 10`, and that is the weaker form rather
+        # than merely the untidier one. On an 8-core box the example measured
+        # 1.22s, 1.23s and 1.43s on a quiet machine but 10.01s under 32 busy
+        # loops, where it FAILED. The ratio held 2.65-3.36x quiet against
+        # 1.98-3.36x under that same load, so the load costs it none of its
+        # headroom. The bound of 8 is the one the line-bounded example above
+        # already uses. To reproduce either, run
+        #   bundle exec rspec spec/sirena/parser/user_journey_spec.rb \
+        #     -e 'refuses a long unclosed block'
+        # with `ruby -e 'loop {}'` started four times per core beforehand.
+        #
+        # Each side is the MINIMUM of three runs, for the reason given on the
+        # line-bounded example: noise only ever ADDS time, so a scheduler
+        # spike has to hit all three samples to survive. Both sides assert
+        # their OUTCOME inside the timed block, so neither can quietly become
+        # a fast no-op and pass this on speed alone.
         source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
+        control = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}section S\nT: 1: M\n"
         expect(source.bytesize).to be > 30_000
 
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /Parse error/)
-        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        refused = Array.new(3) do
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          expect { parser.parse(source) }
+            .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        end.min
 
-        expect(elapsed).to be < 10
+        accepted = Array.new(3) do
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          expect(parser.parse(control).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+            .to eq([['S', ['T']]])
+          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+        end.min
+
+        expect(refused).to be < accepted * 8
       end
 
       it 'parses a long run of U+2028 inside a block in linear time' do
