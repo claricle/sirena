@@ -57,16 +57,21 @@ module Sirena
     }.freeze
 
     # Mermaid deletes directives and then comments before it looks for a
-    # diagram keyword, so neither is part of the header. Detection here read
+    # diagram keyword, so neither is part of the header. Every upstream
+    # claim in this file was verified against the mermaid bundled inside the
+    # installed mmdc -- mmdc 11.12.0 ships mermaid 11.16.1, so the two
+    # version numbers quoted around here agree rather than conflict.
+    # Detection here read
     # the source as written, so `%%{init: ...}%%` on the first line reached
     # no pattern and the source died with DiagramTypeError before the parser
     # -- which already reads both constructs -- ever saw it.
     #
-    # This is mermaid 11.16.1's own pattern, transcribed rather than
-    # reinvented. It ships at
-    # `dist/chunks/mermaid.core/chunk-I66GZJ75.mjs:4990` and is applied by
-    # `removeDirectives` (`chunk-NSK5VX7P.mjs:123-125`) and again by
-    # `detectType` (`chunk-I66GZJ75.mjs:5006-5008`). Transcribing buys the
+    # This is mermaid's own `directiveRegex`, transcribed rather than
+    # reinvented, and applied by its `removeDirectives` and again by its
+    # `detectType`. Grep those symbol names in `dist/mermaid.js` -- the
+    # hashed `chunk-*.mjs` names under `dist/chunks/` are build artifacts
+    # that change on every release, so a line citation into them rots
+    # before anyone reads it. Transcribing buys the
     # awkward part: the closing `}%%` is OPTIONAL, so an unterminated
     # directive swallows the rest of the document and the header with it.
     # `%%{init: {'theme':'dark'}` above a sequenceDiagram is
@@ -88,11 +93,13 @@ module Sirena
       (?:\}%{2})?
     /xi
 
-    # `anyCommentRegex`, `chunk-I66GZJ75.mjs:4991`.
+    # mermaid's `anyCommentRegex`, beside `directiveRegex` in
+    # `dist/mermaid.js`. Its `m` flag is a no-op: the pattern has no
+    # anchors.
     COMMENT = /\s*%%.*\n/
 
-    # `cleanupText`, `mermaid.core.mjs:1000-1005`, runs first in
-    # `preprocessDiagram` (:1030-1042) -- so every regex after it sees LF
+    # mermaid's `cleanupText` runs first inside its `preprocessDiagram`
+    # -- both greppable in `dist/mermaid.js` -- so every regex after it sees LF
     # only. Skipping it is not cosmetic: Ruby's `.` excludes just `\n`,
     # where JavaScript's also excludes `\r`, and the two disagree in BOTH
     # directions on a bare CR. `"%% a\rb\nsequenceDiagram"` is nil to mmdc

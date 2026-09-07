@@ -189,7 +189,10 @@ RSpec.describe Sirena::Engine do
       engine.send(:detect_diagram_type, source)
     end
 
-    # Every row is a shape mmdc 11.12.0 renders. The decoy row is the sharp
+    # Every row is a shape mmdc 11.12.0 renders -- that is the CLI we run,
+    # and it bundles mermaid 11.16.1, which is the version the engine's
+    # comments quote. The two numbers agree rather than conflict.
+    # The decoy row is the sharp
     # one: `flowchart` is the FIRST entry in DIAGRAM_TYPE_PATTERNS, so a
     # strip that left the directive's body behind would answer :flowchart
     # for a sequence diagram rather than merely failing.
