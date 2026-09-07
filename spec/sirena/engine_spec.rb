@@ -252,7 +252,16 @@ RSpec.describe Sirena::Engine do
       ['a bare carriage return that keeps the header off the first line',
        "%% a\rb\nsequenceDiagram\nAlice->>Bob: hi\n"],
       ['a comment and a directive over an unknown keyword',
-       "%% note\n%%{init: {'theme':'dark'}}%%\nnonsense\nA-->B\n"]
+       "%% note\n%%{init: {'theme':'dark'}}%%\nnonsense\nA-->B\n"],
+      # A deleted comment leaves a newline behind, so the halves of a
+      # keyword it sat inside stay apart. Dropping the text instead would
+      # splice `sequence` onto `Diagram` and name a type mmdc refuses --
+      # the only shape in 62,002 measured inputs that tells the two apart,
+      # and one no fuzz alphabet built from whole keywords can reach.
+      ['a comment splitting a keyword in half',
+       "sequence%% x\nDiagram\nAlice->>Bob: hi\n"],
+      ['a comment splitting the flowchart keyword in half',
+       "flow%% c\nchart TD\nA-->B\n"]
     ].each do |name, source|
       it "still refuses #{name}" do
         expect { detect(source) }.to raise_error(
