@@ -537,7 +537,11 @@ RSpec.describe Sirena::Source do
         # sees it. mmdc draws no title for the first row and "false"
         # for the second.
         %(title: !!bool "false") => nil,
-        %(title: !!str "false") => "false"
+        %(title: !!str "false") => "false",
+        # ...and the same for the other quoting styles, so the rows pin
+        # the claim the comment actually makes rather than one style of it.
+        %(title: !!bool 'false') => nil,
+        "title: !!bool |-\n  false" => nil
       }.each do |yaml, drawn|
         it "resolves #{yaml.inspect} to #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)
