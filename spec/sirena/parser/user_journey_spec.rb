@@ -586,38 +586,52 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
         # This was a bare `elapsed < 10`, and that is the weaker form rather
         # than merely the untidier one. On an 8-core box the example measured
         # 1.22s, 1.23s and 1.43s on a quiet machine but 10.01s under 32 busy
-        # loops, where it FAILED. The ratio held 2.65-3.36x quiet against
-        # 1.98-3.36x under that same load, so the load costs it none of its
-        # headroom. The bound of 8 is the one the line-bounded example above
-        # already uses. To reproduce either, run
+        # loops, where it FAILED. Under STEADY load the ratio costs no
+        # headroom -- 2.96-3.25x against 64 spinners, where the old form
+        # failed 4 times out of 4. The bound of 8 is the one the
+        # line-bounded example above already uses. To reproduce, run
         #   bundle exec rspec spec/sirena/parser/user_journey_spec.rb \
         #     -e 'refuses a long unclosed block'
         # with `ruby -e 'loop {}'` started four times per core beforehand.
         #
-        # Each side is the MINIMUM of three runs, for the reason given on the
-        # line-bounded example: noise only ever ADDS time, so a scheduler
-        # spike has to hit all three samples to survive. Both sides assert
-        # their OUTCOME inside the timed block, so neither can quietly become
-        # a fast no-op and pass this on speed alone.
+        # The two sides are measured as ADJACENT PAIRS and the minimum is
+        # taken over the per-pair RATIOS, not over each side separately.
+        # Measuring the sides in separate phases is what makes this flake:
+        # load that ends between the phases inflates only the first, `min`
+        # cannot smooth it because the phases are consecutive, and the
+        # example goes red with nothing broken -- reproduced 5 times out of
+        # 5, worst ratio 12.3 against a bound of 8. Pairing puts both halves
+        # of every sample in the same load regime, so a transient cancels.
+        # Noise only ever ADDS time, so a spike must hit all three pairs.
+        # Both sides assert their OUTCOME inside the timed block, so neither
+        # can quietly become a fast no-op and pass this on speed alone.
+        #
+        # Scored honestly: the ratio buys machine independence and pays for
+        # it. A uniform constant-factor regression -- 10x per character on
+        # the branch BOTH sides share -- moves numerator and denominator
+        # together and survives this form, where the old absolute bound
+        # killed it. That kill was never portable: pristine runs 1.24s here,
+        # so `< 10` only ever caught regressions above roughly 8x on THIS
+        # machine and nothing at all on a slower one.
         source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
         control = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}section S\nT: 1: M\n"
         expect(source.bytesize).to be > 30_000
 
-        refused = Array.new(3) do
+        ratios = Array.new(3) do
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           expect { parser.parse(source) }
             .to raise_error(Sirena::Parser::ParseError, /Parse error/)
-          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-        end.min
+          refused = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
-        accepted = Array.new(3) do
           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           expect(parser.parse(control).sections.map { |s| [s.name, s.tasks.map(&:name)] })
             .to eq([['S', ['T']]])
-          Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          accepted = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+
+          refused / accepted
         end.min
 
-        expect(refused).to be < accepted * 8
+        expect(ratios).to be < 8
       end
 
       it 'parses a long run of U+2028 inside a block in linear time' do
