@@ -380,12 +380,16 @@ RSpec.describe MermaidDiff do
     # wrapped. `gem 'rexml'` is unpinned, so a version that stops wrapping
     # turns damaged mmdc output from one lost case into a crashed sweep.
     # Measured: with that wrapping removed the three rows above still pass
-    # and these two raise ArgumentError, so they are the only rows here
-    # that can see it.
+    # and these rows raise instead, so they are the only ones here that
+    # can see it. The last row raises RuntimeError rather than
+    # ArgumentError: keep it, because the two above pin only the one
+    # class, and a rescue narrowed to ArgumentError -- ordinary
+    # hygiene -- lets RuntimeError escape with every other row green.
     it 'requires a valid SVG document' do
       damaged = ['', 'plain text', '<svg>',
                  "<?xml version='1.0' encoding='NOT-A-CHARSET'?><svg/>",
-                 "<svg>\xFF\xFE</svg>"]
+                 "<svg>\xFF\xFE</svg>",
+                 '<svg>&#xZZ;</svg>']
 
       damaged.each do |svg|
         expect(oracle_verdict(svg)).to be(:error)
