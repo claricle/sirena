@@ -7,194 +7,215 @@ nav_order: 3
 
 = CLI Reference
 
-Complete reference for all Sirena command-line interface commands.
+Complete reference for the Sirena command-line interface.
 
-== Global Options
+== Getting Help
 
-These options are available for all commands:
+Running `sirena` without a command displays the command list. The root help
+forms below do the same:
 
-`--verbose, -v`::
-Enable verbose output for debugging
+[source,shell]
+----
+sirena
+sirena help
+sirena -h
+sirena --help
+----
 
-`--help, -h`::
-Show help for the command
+Use `help` with a command name for that command's usage and options:
+
+[source,shell]
+----
+sirena help render
+sirena help batch
+----
+
+The CLI also provides a command tree:
+
+[source,shell]
+----
+sirena tree
+----
+
+`--help` and `-h` are root-level help forms, not command options. For example,
+`sirena render --help` treats `--help` as the input file and fails if that file
+does not exist. Use `sirena help render` instead.
 
 == Commands
 
 === render
 
-Render a single Mermaid diagram to SVG.
+Render one Mermaid diagram as SVG.
 
 [source,shell]
 ----
-sirena render INPUT [OPTIONS]
+sirena render [FILE]
 ----
 
-==== Arguments
+==== Argument
 
-`INPUT`:: Path to input Mermaid file (.mmd)
+`FILE`::
+  Optional Mermaid input file. When omitted, or when `FILE` is `-`, Sirena
+  reads Mermaid source from standard input.
 
 ==== Options
 
-`--output, -o PATH`:: Output SVG file path (default: stdout)
+`--output PATH`, `-o PATH`::
+  Write SVG to `PATH`. Without this option, SVG is written to standard output.
 
-`--type, -t TYPE`:: Explicitly specify diagram type (auto-detected if not provided)
+`--format FORMAT`, `-f FORMAT`::
+  Output format. Defaults to `svg`; SVG is the only supported format.
 
-`--theme THEME`:: Theme to use: default, dark, light, high-contrast
+`--theme THEME`, `-t THEME`::
+  A built-in theme identifier or a path to a theme YAML file. Built-in themes
+  are `default`, `dark`, `light`, and `high_contrast`.
+
+`--verbose`, `-v`::
+  Enable verbose output. It defaults to false. On an error, verbose mode also
+  prints the backtrace.
 
 ==== Examples
 
-Render to stdout:
+Render a file to an SVG file:
+
 [source,shell]
 ----
-sirena render diagram.mmd
+sirena render diagram.mmd -o diagram.svg
 ----
 
-Render to file:
+Render standard input, with either supported stdin form:
+
 [source,shell]
 ----
-sirena render diagram.mmd -o output.svg
+cat diagram.mmd | sirena render
+cat diagram.mmd | sirena render -
 ----
 
-Specify diagram type:
-[source,shell]
-----
-sirena render diagram.mmd -t flowchart -o output.svg
-----
+Select SVG explicitly and use a built-in theme:
 
-Use dark theme:
 [source,shell]
 ----
-sirena render diagram.mmd --theme dark -o output.svg
+sirena render diagram.mmd -f svg -t dark -o diagram.svg
+sirena render diagram.mmd -t high_contrast -o diagram.svg
 ----
 
 === batch
 
-Render multiple Mermaid diagrams in a directory.
+Render Mermaid files in a directory.
 
 [source,shell]
 ----
-sirena batch INPUT_DIR [OPTIONS]
+sirena batch [OPTIONS]
 ----
 
-==== Arguments
-
-`INPUT_DIR`:: Directory containing Mermaid files
+`batch` has no positional argument; use `--input` or `-i` to choose input.
 
 ==== Options
 
-`--output, -o DIR`:: Output directory for SVG files (default: current directory)
+`--input PATH`, `-i PATH`::
+  Input directory or file. Defaults to the current directory (`.`).
 
-`--theme THEME`:: Theme to use for all diagrams
+`--output PATH`, `-o PATH`::
+  Output directory. Defaults to `output`.
 
-`--recursive, -r`:: Process subdirectories recursively
+`--theme THEME`, `-t THEME`::
+  A built-in theme identifier or a path to a theme YAML file. There is no
+  explicit option default.
 
-==== Examples
+`--verbose`, `-v`::
+  Enable verbose output. It defaults to false.
 
-Render all diagrams in a directory:
+When the input is a directory, Sirena recursively matches `**/*.mmd` and writes
+an `.svg` file under the output directory with the same relative path. The glob
+excludes dotfiles and does not descend into hidden subdirectories of the
+selected input directory.
+
+For example:
+
 [source,shell]
 ----
-sirena batch diagrams/ -o output/
+sirena batch -i diagrams -o output
+sirena batch -i diagrams -o output -t dark
 ----
 
-Process recursively:
-[source,shell]
-----
-sirena batch diagrams/ -o output/ --recursive
-----
+Batch status is reported in its summary. Current edge-case behavior is:
+
+* A nonexistent input path prints `No .mmd files found` and exits 0.
+* A direct `.mmd` file input currently creates the output directory, then
+  reports an `Errno::EISDIR` failure while writing to it; its summary reports
+  the failure and the command exits 0.
+* A file that fails to render does not stop later files. The summary records
+  successes and failures, and this per-file failure path exits 0.
 
 === types
 
-List all supported diagram types.
+List the diagram types registered by the current executable:
 
 [source,shell]
 ----
 sirena types
 ----
 
-==== Output
+Output begins with `Supported diagram types:` followed by these identifiers,
+one per line:
 
-Displays all 24 supported diagram types with their identifiers.
-
-==== Example
-
-[source,shell]
 ----
-sirena types
-----
-
-Output:
-----
-Supported diagram types:
-  - architecture
-  - block
-  - c4
-  - class
-  - er
-  - error
-  - flowchart
-  - gantt
-  - gitgraph
-  - info
-  - journey
-  - kanban
-  - mindmap
-  - packet
-  - pie
-  - quadrant
-  - radar
-  - requirement
-  - sankey
-  - sequence
-  - state
-  - timeline
-  - treemap
-  - xychart
+flowchart
+sequence
+class_diagram
+state_diagram
+er_diagram
+user_journey
+pie
+gantt
+timeline
+quadrant
+git_graph
+mindmap
+kanban
+radar
+block
+requirement
+xychart
+architecture
+sankey
+packet
+treemap
+c4
+info
+error
 ----
 
 === version
 
-Display Sirena version.
+Show the Sirena version:
 
 [source,shell]
 ----
 sirena version
+sirena --version
+sirena -V
 ----
 
-==== Example
+Each form prints:
 
-[source,shell]
 ----
-sirena version
-----
-
-Output:
-----
-Sirena version 0.1.0
+sirena version 0.1.0
 ----
 
 == Environment Variables
 
-`SIRENA_THEME`:: Default theme (overridden by --theme option)
+The CLI does not currently read any `SIRENA_*` environment variables.
 
-`SIRENA_VERBOSE`:: Enable verbose mode (set to 1 or true)
+== Exit Behavior
 
-==== Example
+Successful commands and root help exit 0. Errors handled by `render`, such as a
+missing input file or an unsupported format, print `Error: ...` and exit 1.
 
-[source,shell]
-----
-export SIRENA_THEME=dark
-export SIRENA_VERBOSE=1
-sirena render diagram.mmd -o output.svg
-----
-
-== Exit Codes
-
-`0`:: Success
-`1`:: General error
-`2`:: File not found
-`3`:: Parse error
-`4`:: Render error
+`batch` records individual render failures in its summary instead of aborting.
+The missing-path, direct-file, and per-file-failure cases described above all
+currently exit 0; check the summary rather than relying on the process status
+alone for those cases.
 
 == Next Steps
 
