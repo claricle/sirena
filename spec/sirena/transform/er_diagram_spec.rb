@@ -104,12 +104,22 @@ RSpec.describe Sirena::Transform::ErDiagramTransform do
       expect(options['elk.direction']).to eq('RIGHT')
     end
 
-    it 'raises error for invalid diagram' do
-      invalid_diagram = Sirena::Diagram::ErDiagram.new
+    it 'raises error for an entity missing its name' do
+      invalid_diagram = Sirena::Diagram::ErDiagram.new.tap do |d|
+        d.entities << Sirena::Diagram::ErEntity.new(id: 'CUSTOMER')
+      end
 
       expect do
         transform.to_graph(invalid_diagram)
       end.to raise_error(Sirena::Transform::TransformError)
+    end
+
+    it 'converts an empty diagram to an empty graph' do
+      graph = transform.to_graph(Sirena::Diagram::ErDiagram.new)
+
+      expect(graph[:id]).to eq('er_diagram')
+      expect(graph[:children]).to eq([])
+      expect(graph[:edges]).to eq([])
     end
   end
 end

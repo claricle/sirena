@@ -30,12 +30,23 @@ module Sirena
       # Cardinality symbol size
       CARDINALITY_SIZE = 15
 
+      # Padding around a diagram that has something in it.
+      DIAGRAM_PADDING = 20
+
+      # Padding mermaid puts around an ER diagram that holds nothing: 8px on
+      # each side of a zero-size content box, so the canvas comes out 16x16.
+      # Measured from spec/fixtures_mermaid/er/061_spec_mermaidapi_spec_60.svg,
+      # whose source is the bare `erDiagram` keyword. Sirena keeps its own
+      # "0 0" viewBox origin, which every non-empty ER reference in that
+      # directory uses; only the extent is copied.
+      EMPTY_DIAGRAM_PADDING = 8
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document(graph)
+        svg = create_document(graph, padding: padding_for(graph))
 
         # Render edges first (so they appear under nodes)
         render_relationships(graph, svg) if graph[:edges]
@@ -48,7 +59,29 @@ module Sirena
 
       protected
 
+      # Padding for this graph. An empty ER diagram gets mermaid's 8px, so
+      # the whole canvas is 16x16; anything else gets the normal 20px.
+      def padding_for(graph)
+        empty_er_graph?(graph) ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
+      end
+
+      # An empty ER diagram is one that carries BOTH collection keys and holds
+      # nothing in either. Key presence is tested separately from the values
+      # because a default-valued Hash (`Hash.new([])`) holds no key at all yet
+      # answers `[]` to a lookup, so a value test by itself would call it
+      # empty and shrink it. Values are compared with `== []` rather than
+      # asked `empty?`, so a non-collection value is false here rather than
+      # raising.
+      #
+      # Every other shape is sized by calculate_width/calculate_height from
+      # what the lookups return rather than from key presence.
+      def empty_er_graph?(graph)
+        graph.key?(:children) && graph.key?(:edges) &&
+          graph[:children] == [] && graph[:edges] == []
+      end
+
       def calculate_width(graph)
+        return 0 if empty_er_graph?(graph)
         return 800 unless graph[:children]
 
         max_x = graph[:children].map do |node|
@@ -59,6 +92,7 @@ module Sirena
       end
 
       def calculate_height(graph)
+        return 0 if empty_er_graph?(graph)
         return 600 unless graph[:children]
 
         max_y = graph[:children].map do |node|
