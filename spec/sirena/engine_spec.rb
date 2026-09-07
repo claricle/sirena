@@ -234,25 +234,33 @@ RSpec.describe Sirena::Engine do
        :flowchart],
       ['a directive above a class diagram',
        "%%{init: {'theme':'dark'}}%%\nclassDiagram\nA <|-- B\n",
-       :class_diagram]
+       :class_diagram],
+      # Both strips must be global. With either one narrowed to a single
+      # substitution the suite stays green without these two rows, and both
+      # sources render under mmdc 11.12.0.
+      ['two directives sharing the header line',
+       "%%{init: {'theme':'dark'}}%%%%{init: {'look':'classic'}}%% " \
+       "sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['two comment lines above the header',
+       "%% a\n%% b\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence]
     ].each do |name, source, expected|
       it "names #{expected} past #{name}" do
         expect(detect(source)).to eq(expected)
       end
     end
 
-    # The refusals matter as much as the detections: a strip that merely
-    # deleted every line opening with `%%` would answer :sequence for the
-    # first three of these, and mmdc refuses all four.
+    # The refusals matter as much as the detections. Each row below is the
+    # sole killer of one rule mutant, so none is here for symmetry: drop the
+    # rule it names and only that row goes red. mmdc 11.12.0 refuses every
+    # one of them. Rows whose refusal was already covered by the message
+    # assertion above were removed rather than left looking like coverage.
     [
-      ['a directive with no diagram after it',
-       "%%{init: {'theme':'dark'}}%%\n"],
       ['a directive left unterminated, which swallows the header',
        "%%{init: {'theme':'dark'}\nsequenceDiagram\nAlice->>Bob: hi\n"],
       ['a bare carriage return that keeps the header off the first line',
        "%% a\rb\nsequenceDiagram\nAlice->>Bob: hi\n"],
-      ['a comment and a directive over an unknown keyword',
-       "%% note\n%%{init: {'theme':'dark'}}%%\nnonsense\nA-->B\n"],
       # A deleted comment leaves a newline behind, so the halves of a
       # keyword it sat inside stay apart. Dropping the text instead would
       # splice `sequence` onto `Diagram` and name a type mmdc refuses --
