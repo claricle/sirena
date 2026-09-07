@@ -1,0 +1,44 @@
+<svg
+ width="560.0"
+ height="560.0"
+ viewBox="0 0 560.0 560.0"
+ version="1.2"
+ baseProfile="tiny"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="40.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="80.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="120.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="160.0"/>
+<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="200.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="80.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="180.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="380.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="480.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311225" y2="380.0"/>
+<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311228" y2="179.99999999999997"/>
+<polygon fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" points="280.0,146.66666666666669 337.7350269189626,246.66666666666669 424.3375672974065,363.3333333333333 280.0,313.3333333333333 193.39745962155612,330.0 280.0,280.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="146.66666666666669" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="337.7350269189626" cy="246.66666666666669" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="424.3375672974065" cy="363.3333333333333" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="313.3333333333333" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="193.39745962155612" cy="330.0" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="280.0" r="3.0"/>
+<polygon fill="#7c3aed" fill-opacity="0.3" stroke="#7c3aed" stroke-width="2" points="280.0,113.33333333333331 395.47005383792515,213.33333333333337 453.20508075688775,380.0 280.0,446.6666666666667 106.79491924311225,380.0 164.52994616207485,213.33333333333331"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="113.33333333333331" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="395.47005383792515" cy="213.33333333333337" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="453.20508075688775" cy="380.0" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="446.6666666666667" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="106.79491924311225" cy="380.0" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="164.52994616207485" cy="213.33333333333331" r="3.0"/>
+<text fill="#000000" x="280.0" y="54.9" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Frontend</text>
+<text fill="#000000" x="479.1858428704209" y="165.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Backend</text>
+<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Database</text>
+<text fill="#000000" x="280.0" y="514.9" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">DevOps</text>
+<text fill="#000000" x="80.81415712957909" y="406.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Testing</text>
+<text fill="#000000" x="80.81415712957912" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">Documentation</text>
+<circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
+<text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Current State</text>
+<circle fill="#7c3aed" stroke="none" cx="20.0" cy="540.0" r="5.0"/>
+<text fill="#000000" x="35.0" y="544.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Target State</text>
+</svg>

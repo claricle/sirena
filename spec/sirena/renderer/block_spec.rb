@@ -87,8 +87,19 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
       it 'renders connections' do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('<path')
-        expect(xml).to include('marker-end')
+        expect(xml).to include('d="M 70 80 L 70 100"')
+      end
+
+      # The renderer still asks for a marker. It used to be emitted as
+      # `marker-end="url(#arrowhead)"`, which no document ever defined, so
+      # the arrow drew as a bare line. The SVG layer draws the head now.
+      it 'draws the arrowhead the connection asks for' do
+        xml = renderer.render(layout).to_xml
+
+        expect(xml).not_to include('marker-end')
+        expect(xml)
+          .to include('<polygon fill="#000000" ' \
+                      'points="70.0,100.0 66.0,92.0 74.0,92.0"/>')
       end
     end
 

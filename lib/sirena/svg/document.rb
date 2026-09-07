@@ -25,11 +25,13 @@ module Sirena
       SVG_NAMESPACE = SvgNamespace.uri
       XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/'
       SVG_VERSION = '1.2'
+      SVG_BASE_PROFILE = 'tiny'
 
       attribute :width, :float
       attribute :height, :float
       attribute :view_box, :string
       attribute :version, :string
+      attribute :base_profile, :string
       attribute :xmlns, :string
       attribute :children, Element, collection: true
 
@@ -41,6 +43,7 @@ module Sirena
         map_attribute 'height', to: :height
         map_attribute 'viewBox', to: :view_box
         map_attribute 'version', to: :version
+        map_attribute 'baseProfile', to: :base_profile
         map_attribute 'xmlns', to: :xmlns
 
         map_element 'g', to: :children
@@ -65,6 +68,7 @@ module Sirena
         self.height = height
         self.view_box = view_box || calculate_view_box(width, height)
         self.version = SVG_VERSION
+        self.base_profile = SVG_BASE_PROFILE
         self.xmlns = SVG_NAMESPACE
         self.children = []
       end
@@ -93,6 +97,7 @@ module Sirena
           ['height', height],
           ['viewBox', view_box],
           ['version', version],
+          ['baseProfile', base_profile],
           ['xmlns', xmlns]
         ].each do |name, value|
           parts << Escaping.attribute(name, value) unless value.nil?

@@ -3,6 +3,7 @@
  height="560.0"
  viewBox="0 0 560.0 560.0"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="40.0"/>
@@ -30,12 +31,12 @@
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="380.0" r="3.0"/>
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="135.66243270259352" cy="363.3333333333333" r="3.0"/>
 <circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="251.13248654051873" cy="263.3333333333333" r="3.0"/>
-<text fill="#000000" x="280.0" y="50.0" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="middle">A</text>
-<text fill="#000000" x="479.1858428704209" y="165.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="auto">B</text>
-<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="auto">C</text>
-<text fill="#000000" x="280.0" y="510.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="middle">D</text>
-<text fill="#000000" x="80.81415712957909" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="hanging">E</text>
-<text fill="#000000" x="80.81415712957912" y="164.99999999999997" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold" dominant-baseline="hanging">F</text>
+<text fill="#000000" x="280.0" y="54.9" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">A</text>
+<text fill="#000000" x="479.1858428704209" y="165.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">B</text>
+<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">C</text>
+<text fill="#000000" x="280.0" y="514.9" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">D</text>
+<text fill="#000000" x="80.81415712957909" y="406.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">E</text>
+<text fill="#000000" x="80.81415712957912" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="bold">F</text>
 <circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
 <text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0">TeamA</text>
 <circle fill="#7c3aed" stroke="none" cx="20.0" cy="540.0" r="5.0"/>
