@@ -178,5 +178,64 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       label_texts = texts.map(&:content)
       expect(label_texts).to include('places')
     end
+
+    context 'with a graph that has no entities and no relationships' do
+      let(:empty_graph) { { id: 'er_diagram', children: [], edges: [] } }
+
+      # Only the 16x16 extent comes from mermaid. mmdc emits
+      # viewBox="-8 -8 16 16" here, from centring a zero-size bounding box;
+      # Sirena keeps the "0 0" origin all its other diagrams use.
+      it 'matches the 16x16 extent mermaid gives an empty ER diagram' do
+        svg = renderer.render(empty_graph)
+
+        expect(svg.width).to eq(16)
+        expect(svg.height).to eq(16)
+        expect(svg.view_box).to eq('0 0 16 16')
+        expect(svg.children).to eq([])
+      end
+    end
+
+    context 'with entities but no relationships' do
+      let(:entity_only_graph) do
+        { id: 'er_diagram', children: [graph[:children].first], edges: [] }
+      end
+
+      # A diagram with entities and no relationships is the ordinary case.
+      # It must keep its content size, so the empty check needs both keys to
+      # be empty, not either one.
+      it 'draws the entities at content size, not the empty canvas' do
+        svg = renderer.render(entity_only_graph)
+
+        expect(svg.width).to eq(270)
+        expect(svg.height).to eq(210)
+        expect(svg.children.map(&:id)).to eq(['entity-CUSTOMER'])
+      end
+    end
+
+    context 'with a graph whose collection keys are absent' do
+      it 'keeps the no-content defaults rather than the empty canvas' do
+        svg = renderer.render({ id: 'er_diagram' })
+
+        expect(svg.width).to eq(840)
+        expect(svg.height).to eq(640)
+      end
+
+      # A default-valued Hash answers `[]` to a lookup while holding no key
+      # at all. Absent keys are an unknown shape, not an empty diagram, so
+      # these keep the no-content defaults.
+      it 'is not fooled by a Hash that defaults its lookups to empty' do
+        defaulted = -> { Hash.new { [] }.merge!(id: 'er_diagram') }
+        neither = defaulted.call
+        children_only = defaulted.call.merge!(children: [])
+        edges_only = defaulted.call.merge!(edges: [])
+
+        sizes = [neither, children_only, edges_only].map do |graph|
+          svg = renderer.render(graph)
+          [svg.width, svg.height]
+        end
+
+        expect(sizes).to eq([[880, 680], [880, 680], [880, 680]])
+      end
+    end
   end
 end

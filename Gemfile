@@ -6,7 +6,7 @@ gemspec
 
 gem 'benchmark'
 gem 'rake'
-# corpus_sweep parses its own SVG output to refuse malformed passes.
+# corpus_sweep and the kanban integration spec both parse SVG output.
 gem 'rexml'
 gem 'rspec'
 # Exact versions on purpose. A floating rubocop turns a green lane red on

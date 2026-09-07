@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'rexml/document'
 
 RSpec.describe Sirena::Engine do
   describe '#render' do
@@ -49,6 +50,23 @@ RSpec.describe Sirena::Engine do
 
       it 'detects ER diagram type' do
         expect { engine.render(source) }.not_to raise_error
+      end
+    end
+
+    context 'with an empty ER diagram' do
+      # The bare keyword, which is all three empty rows of the ER corpus
+      # hold: spec/mermaid/er/059, 060 and 061.
+      let(:source) { 'erDiagram' }
+
+      let(:document) { REXML::Document.new(engine.render(source)) }
+
+      # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
+      # Sirena keeps its own "0 0" origin and matches the 16x16 extent.
+      it 'renders the 16x16 empty canvas with nothing in it' do
+        expect(document.root.attributes['width']).to eq('16.0')
+        expect(document.root.attributes['height']).to eq('16.0')
+        expect(document.root.attributes['viewBox']).to eq('0 0 16 16')
+        expect(document.root.elements.to_a).to eq([])
       end
     end
 
