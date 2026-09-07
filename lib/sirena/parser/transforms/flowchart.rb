@@ -252,16 +252,32 @@ module Sirena
             e.label = label_str if label_str && !label_str.empty?
           end
         end
+        private_class_method :create_edge
+
+        # The only link styles the grammar can hand over. `:plain` takes
+        # no prefix, which is what keeps `-->` named `arrow` and `---`
+        # named `line`.
+        LINK_STYLE_PREFIXES = {
+          plain: nil,
+          dotted: 'dotted',
+          thick: 'thick'
+        }.freeze
+        private_constant :LINK_STYLE_PREFIXES
 
         # The grammar hands over a one-pair Hash whose KEY is the link
-        # style — `:plain`, `:dotted` or `:thick` — and whose value is the
-        # spelling it matched, so `{ thick: '==>' }` is a thick link that
-        # carries a head. `:plain` takes no prefix, which is what keeps
-        # `-->` named `arrow` and `---` named `line`.
+        # style and whose value is the spelling it matched, so
+        # `{ thick: '==>' }` is a thick link that carries a head. An
+        # unknown key is a grammar bug, so it raises instead of building a
+        # made-up type.
         def self.canonical_arrow_type(link_shape)
           style, spelling = link_shape.first
+          unless LINK_STYLE_PREFIXES.key?(style)
+            raise ArgumentError, "unknown link style: #{style.inspect}"
+          end
+
           head = spelling.to_s.end_with?('>') ? 'arrow' : 'line'
-          style == :plain ? head : "#{style}_#{head}"
+          prefix = LINK_STYLE_PREFIXES[style]
+          prefix ? "#{prefix}_#{head}" : head
         end
         private_class_method :canonical_arrow_type
 

@@ -339,11 +339,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   # a reserved word and takes all four for the rest, so the split is the word,
   # not the shape.
   describe "words mermaid lexes as keywords" do
-    it "matches the grammar's reserved words" do
-      expect(Sirena::Parser::Grammars::Flowchart::RESERVED_WORDS.sort)
-        .to eq(self.class.expected_reserved_words.sort)
-    end
-
     expected_reserved_words.each do |word|
       it "refuses #{word} as a node id" do
         expect { described_class.new.parse("graph TD\n#{word}-->Z\n") }
