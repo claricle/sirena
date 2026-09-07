@@ -530,7 +530,14 @@ RSpec.describe Sirena::Source do
         # A radix prefix is an integer to the loader and to the plain
         # resolver, so `!!int 0x10` and a bare `0x10` both draw 16.
         "title: !!int 0x10" => "16",
-        "title: 0x10" => "16"
+        "title: 0x10" => "16",
+        # An explicit tag beats quoting, in the loader and here.
+        # libyaml reports a tagged scalar as unquoted whatever its
+        # style, so the tag branch decides and the quoting one never
+        # sees it. mmdc draws no title for the first row and "false"
+        # for the second.
+        %(title: !!bool "false") => nil,
+        %(title: !!str "false") => "false"
       }.each do |yaml, drawn|
         it "resolves #{yaml.inspect} to #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)
