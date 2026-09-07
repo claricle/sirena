@@ -21,7 +21,8 @@ module Sirena
           @diagram = Diagram::StateDiagram.new
           @state_counter = 0
 
-          # Tree is an array: [header, direction, ...statements]
+          # A diagram with statements is an array containing the header and
+          # statements in source order; a header-only diagram is the header hash.
           if tree.is_a?(Array)
             tree.each do |item|
               process_item(item) if item.is_a?(Hash)
@@ -38,7 +39,7 @@ module Sirena
         def process_item(item)
           return unless item.is_a?(Hash)
 
-          # Process header to get direction
+          # Process a top-level direction statement
           if item[:direction] && item[:direction][:dir_value]
             @diagram.direction = extract_text(item[:direction][:dir_value])
           end
@@ -56,38 +57,79 @@ module Sirena
           elsif stmt[:from] && stmt[:to]
             # Transition
             process_transition(stmt)
-          elsif stmt[:note_keyword]
-            # Note statement - skip for now
+          elsif stmt[:note_keyword] || stmt[:style_keyword]
+            # Notes and styling directives are parsed and dropped, and that
+            # is a GAP, not parity. Measured against mmdc 11.12.0: a note
+            # renders its own node and its text -- `note right of A / hello`
+            # produces a 10,403-byte SVG containing "hello", against 7,992
+            # bytes without it. The diagram model carries neither, so nothing
+            # downstream could draw them yet.
             nil
           elsif stmt[:state_id] && !stmt[:keyword]
-            # Standalone state
-            ensure_state_exists(extract_text(stmt[:state_id]))
+            # Standalone state, with or without a description
+            process_standalone_state(stmt)
           elsif stmt[:concurrent_sep]
             # Concurrent separator - handled in composite context
             nil
           end
+          # A `direction` statement reaches here only from inside a
+          # composite, and falls through on purpose: the model has no
+          # composite container to hang it on, and mermaid scopes it to the
+          # composite rather than to the diagram.
         end
 
         def process_state_declaration(stmt)
           state_id = extract_text(stmt[:state_id])
+          label = state_label(stmt)
+          description = description_of(stmt)
 
           if stmt[:marker]
-            # Special state marker (choice, fork, join)
-            marker_type = extract_text(stmt[:marker][:marker_type])
-            add_special_state(state_id, marker_type)
+            # Special state marker (choice, fork, join). No label: mmdc
+            # 11.12.0 has no shape for `state "X" as Y <<choice>>` either.
+            add_special_state(state_id, extract_text(stmt[:marker][:marker_type]))
           elsif stmt[:composite]
             # Composite state with nested statements
-            process_composite_state(state_id, stmt[:composite])
-          elsif stmt[:description]
-            # State with description
-            description = extract_text(stmt[:description]).strip
-            # Remove leading colon if present
-            description = description.sub(/^:\s*/, '')
-            add_or_update_state(state_id, state_id, description)
+            state = process_composite_state(state_id, label, stmt[:composite])
+            append_display_text(state, label)
           else
-            # Regular state
-            ensure_state_exists(state_id)
+            state = add_or_update_state(state_id, label)
+            append_display_text(state, label)
+            if description
+              state.description = description
+              append_display_text(state, description)
+            end
           end
+        end
+
+        # nil rather than "" when there is no description: every non-nil
+        # value is recorded as display text.
+        def description_of(stmt)
+          extract_text(stmt[:description]) if stmt[:description]
+        end
+
+        def process_standalone_state(stmt)
+          state_id = extract_text(stmt[:state_id])
+          state = ensure_state_exists(state_id)
+          return unless stmt[:description]
+
+          description = extract_text(stmt[:description])
+          state.description = description
+          append_display_text(state, description)
+        end
+
+        # `state "Idle mode" as Idle` labels the state Idle "Idle mode";
+        # without the alias the id is its own label.
+        def state_label(stmt)
+          return unless stmt[:state_label]
+
+          label = extract_text(stmt[:state_label]).strip
+          return if label.empty?
+
+          label
+        end
+
+        def append_display_text(state, text)
+          state.descriptions << text if text && !text.empty?
         end
 
         def process_transition(stmt)
@@ -118,9 +160,9 @@ module Sirena
           end
         end
 
-        def process_composite_state(parent_id, composite_data)
+        def process_composite_state(parent_id, label, composite_data)
           # Create parent state
-          parent_state = add_or_update_state(parent_id, parent_id)
+          parent_state = add_or_update_state(parent_id, label)
 
           # Process nested statements
           if composite_data.is_a?(Hash) || composite_data.is_a?(Array)
@@ -193,7 +235,8 @@ module Sirena
         end
 
         def ensure_state_exists(state_id)
-          return if @diagram.find_state(state_id)
+          existing = @diagram.find_state(state_id)
+          return existing if existing
 
           state = Diagram::StateNode.new.tap do |s|
             s.id = state_id
@@ -201,29 +244,29 @@ module Sirena
             s.state_type = 'normal'
           end
           @diagram.states << state
+          state
         end
 
         def add_special_state(state_id, state_type)
-          state = Diagram::StateNode.new.tap do |s|
-            s.id = state_id
-            s.label = state_id
-            s.state_type = state_type
-          end
-          @diagram.states << state
+          existing = @diagram.find_state(state_id)
+          return existing if existing
+
+          state = ensure_state_exists(state_id)
+          state.label = nil
+          state.state_type = state_type
+          state
         end
 
-        def add_or_update_state(state_id, label, description = nil)
+        def add_or_update_state(state_id, label = nil)
           existing = @diagram.find_state(state_id)
           if existing
-            existing.label = label unless label.to_s.empty?
-            existing.description = description if description
+            existing.label = label if label && !label.empty?
             existing
           else
             state = Diagram::StateNode.new.tap do |s|
               s.id = state_id
-              s.label = label
+              s.label = label || state_id
               s.state_type = 'normal'
-              s.description = description
             end
             @diagram.states << state
             state

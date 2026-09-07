@@ -14,7 +14,7 @@ module Sirena
     # - Special states (start [*], end [*], choice, fork, join)
     # - Transitions with triggers and guard conditions
     # - Composite/nested states
-    # - Direction specification (TD, LR, etc.)
+    # - Direction statements (TB, BT, LR, RL)
     #
     # @example Parse a simple state diagram
     #   parser = StateDiagramParser.new
@@ -26,43 +26,38 @@ module Sirena
       # @return [Diagram::StateDiagram] the parsed state diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        grammar = Grammars::StateDiagram.new
-        transform = Transforms::StateDiagram.new
-
-        begin
-          tree = grammar.parse(source)
-          transform.apply(tree)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, format_parse_error(e, source)
-        end
+        tree = parse_with_grammar(Grammars::StateDiagram.new, source)
+        Transforms::StateDiagram.new.apply(tree)
       end
 
       private
 
-      def format_parse_error(error, source)
-        # Get the failure cause and position
-        cause = error.parse_failure_cause
-        pos = cause.pos
+      # Formats a Parslet parse error with context.
+      #
+      # No rescue around this, unlike flowchart's copy. `Cause#pos` is a
+      # `Parslet::Position` at every one of parslet 3.0.0's construction
+      # sites, which is what `failure_position` reads; the shape the old
+      # hand-rolled formatter here assumed — the Fixnum the gem's own
+      # docstring still promises — does not occur, and every failure this
+      # grammar can produce was run through this method to confirm it.
+      #
+      # @param cause [Parslet::Cause] the deepest failure
+      # @param source [String] the source that failed to parse
+      # @return [String] formatted error message
+      def format_parse_error(cause, source)
+        lines = source.lines("\n")
+        line_num, col_num = failure_position(cause, source)
 
-        # Get line and column - handle boundary conditions
-        return "Parse error: #{error.message}" if pos.nil? || pos < 0 || pos > source.length
+        context = if line_num <= lines.length
+                    lines[line_num - 1].chomp("\n")
+                  else
+                    '(end of input)'
+                  end
 
-        lines = source[0...pos].split("\n")
-        line_num = lines.size
-        col_num = lines.last&.size || 0
-
-        # Get the problematic line
-        all_lines = source.split("\n")
-        problem_line = all_lines[line_num - 1] || ''
-
-        # Build error message
-        msg = "Parse error at line #{line_num}, column #{col_num}\n"
-        msg += "  #{problem_line}\n"
-        msg += "  #{' ' * col_num}^\n" if col_num >= 0
-        msg += "Expected: #{cause.expected_string}"
-        msg
-      rescue StandardError => e
-        "Parse error: #{error.message} (#{e.message})"
+        "Parse error at line #{line_num}, column #{col_num}:\n" \
+          "#{context}\n" \
+          "#{caret_for(lines[line_num - 1], col_num)}\n" \
+          "#{failure_message(cause)}"
       end
     end
   end
