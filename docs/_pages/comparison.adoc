@@ -95,7 +95,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 |Man pages
 
 |**Open Source**
-|MIT
+|BSD-2-Clause
 |MIT
 |GPL/Apache
 |EPL
@@ -399,7 +399,7 @@ Different tools for different diagram types:
 |Tool |License |Commercial Use
 
 |**Sirena**
-|MIT
+|BSD-2-Clause
 |✅ Unrestricted
 
 |**Mermaid.js**

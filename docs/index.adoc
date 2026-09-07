@@ -163,4 +163,4 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 == License
 
-Sirena is open source under the MIT License.
+Sirena is open source under the BSD-2-Clause license.
