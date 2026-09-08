@@ -28,7 +28,7 @@ comparing puts the 24 parsers into four groups:
 whose only job is to name three classes.
 
 `flowchart` looks like group 2 and is not. It calls `normalize_line_ends`
-(`lib/sirena/parser/flowchart.rb:33`, defined at `:47`) before parsing, which
+(`lib/sirena/parser/flowchart.rb:33`, defined at `:69`) before parsing, which
 folds a lone `\r` into a newline; `block.rb` and `requirement.rb` have no such
 call. Measured: `graph TD\rA[Start]-->B[End]\r` renders today and raises
 `ParseError` against a declarative body with the normalisation dropped. Reducing
@@ -148,9 +148,10 @@ violates LAYERS.md's "geometry, no styling" contract. Move it with the other
 five, and search `lib/sirena/` — not just the renderers.
 
 The theme system exists — `Theme::Registry`, four built-in YAML themes,
-a `--theme` CLI flag — and is structurally unused, because
-`Renderer::Base#theme_color` rescues `NoMethodError` and returns `nil`.
-So every call site reads `theme_color(:x) || '#hardcoded'`, and the
+a `--theme` CLI flag — and DOES return theme-varying values:
+`theme_color(:primary)` gives `"#007bff"` for default and `"#3794ff"` for
+dark. The waste is that every call site still reads
+`theme_color(:x) || '#hardcoded'`, so the
 hardcoded fallback is what renders.
 
 ### Steps

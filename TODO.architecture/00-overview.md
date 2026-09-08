@@ -229,7 +229,7 @@ below it uses.
 
 `Renderer.for` takes the theme because that is where a renderer already
 keeps it: `renderer/base.rb:42` is `initialize(theme: nil)` and `render`
-takes one argument (`engine.rb:272` builds it with
+takes one argument (`engine.rb:218` builds it with
 `renderer_class.new(theme: theme)`). Keeping that shape means item 06
 changes how a renderer is *found*, not how it is *called* — no renderer
 signature migration, and no window where converted and unconverted

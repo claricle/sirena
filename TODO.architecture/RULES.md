@@ -37,7 +37,7 @@ type missing from the registry is a type the contract never sees. Item
 
 ## R3 — Registration is data, not code
 
-`lib/sirena.rb` is 328 lines: the same require-and-register block
+`lib/sirena.rb` is one long require-and-register block: the same
 copy-pasted 24 times. When the same block appears more than twice, it is
 a table plus a loop.
 

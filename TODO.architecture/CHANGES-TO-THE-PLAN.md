@@ -142,7 +142,7 @@ purpose:
   03  naming            Transform -> Layout, pure rename
   04  typed Scene       kill the 24 undocumented hash shapes
   05  boilerplate       12 parsers, 9 doc-creators, 6 palettes (3 names)
-  06  registry          lib/sirena.rb 328 lines -> under 40
+  06  registry          lib/sirena.rb 300+ lines -> under 40
   07  adding a type     generator, shared examples, one onboarding page
 ```
 
@@ -204,7 +204,7 @@ disagreement was only about *when*. It's scheduled, not deleted.
 **Instead of:** a two-level registry, notation plugin objects, RubyGems
 discovery for external notations, and a blocking API contract document.
 
-**Do:** one type table plus convention-based class lookup. 328 lines
+**Do:** one type table plus convention-based class lookup. 300+ lines
 becomes under 40, and the dead top-level `self.render` at
 `lib/sirena.rb:38` gets deleted.
 
@@ -533,7 +533,7 @@ is to look.
 Worth an afternoon each:
 
 ```
-  lib/sirena.rb                 328 lines of copy-paste, plus a dead
+  lib/sirena.rb                 300+ lines of copy-paste, plus a dead
                                 self.render at line 38
 
   lib/sirena/engine.rb          the pipeline in one file: the regex

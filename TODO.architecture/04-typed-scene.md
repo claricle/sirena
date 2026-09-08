@@ -16,14 +16,15 @@ this item changes rendered output, so it cannot close before 03a lands
 This is the item that makes every later fix cheaper. It is also the
 longest. Do it one type at a time and it is mechanical.
 
-Read `WORKED-EXAMPLE.md` before starting. It shows pie converted in
-full; every type follows that shape.
+Read `WORKED-EXAMPLE.md` before starting. It shows the shape to copy for
+pie — with one gap it names honestly at its own line 262, so it is not a
+full conversion. Every type follows that shape.
 
 ## Why
 
 After item 03, `Layout::X` still emits a plain Hash and `Renderer::X`
 digs through it: `node.dig(:metadata, :shape) || 'rect'`
-(`renderer/flowchart.rb:62`). There are **24 private hash shapes and no
+(`renderer/flowchart.rb:164`). There are **24 private hash shapes and no
 documentation of any of them**. To change what a layout emits, you have
 to read the renderer to find out what it expects.
 
@@ -190,7 +191,7 @@ alone will not find it. Move it upstream with the rest.
 The alternative — Scene carries an origin, the renderer applies it —
 fails in two directions. Miss one draw site and connected geometry pulls
 apart. Apply it twice and content slides into its own padding.
-`git_graph` applies `@offset_x`/`@offset_y` at 16 separate sites, so
+`git_graph` applies `@offset_x`/`@offset_y` at many separate sites, so
 both are reachable.
 
 Measured 2026-08-27: `grep -rn "@[a-z_]*offset\|padding = "
@@ -204,7 +205,8 @@ matching the Diagram layer.
 **Never add an `xml do` block to a Scene class.** Scenes are internal
 geometry; they are never read from or written to XML. That block is
 exactly what went wrong in the Svg layer — three declarations of every
-attribute, two of them dead (item 02).
+attribute, of which item 02 deletes only the `xml do` block; the
+accessors and `writes_attributes` both participate in output.
 
 ## Steps
 

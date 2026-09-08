@@ -156,8 +156,9 @@ One commit — and one PR — per rename.
    Other inner classes — `Diagram::GanttTask`, `Diagram::BlockStyle` —
    keep their names. They are not addressed by a registry key.
 
-**No deprecated aliases.** The gem is pre-1.0 with nothing released, and
-breaking changes are explicitly allowed (`00-overview.md`). Update every
+**No deprecated aliases.** `v0.1.0` IS tagged and published on RubyGems,
+so "nothing released" is false — but the gem is pre-1.0 and breaking
+changes are explicitly allowed (`00-overview.md:91`). Update every
 caller in `spec/`, `scripts/` and `lib/tasks/` and delete the old names.
 
 ## Done when

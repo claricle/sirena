@@ -1,7 +1,7 @@
 # 06 — Registry as data
 
 **Goal:** a diagram type is declared in exactly one place.
-**Size:** 1 PR. `lib/sirena.rb` goes from 328 lines to under 40.
+**Size:** 1 PR. `lib/sirena.rb` goes from over 300 lines to under 40.
 **Prerequisite:** items 03 and 04. Item 03 for the uniform class names
 convention lookup needs; **item 04 because this item deletes
 `Layout::Grid`**, and Grid cannot go until item 04 has converted the
@@ -10,7 +10,7 @@ destructive.
 
 ## Why
 
-`lib/sirena.rb` is 328 lines: the same block copy-pasted 24 times.
+`lib/sirena.rb` is over 300 lines: the same block copy-pasted 24 times.
 
 ```ruby
 require_relative 'sirena/parser/pie'
@@ -30,7 +30,7 @@ hardcoded in `Engine::DIAGRAM_TYPE_PATTERNS` (`engine.rb:32`). Adding a
 type means editing two files in two different shapes and hoping the
 symbols match.
 
-There is also dead code to delete by name: `lib/sirena.rb:38` defines a
+There is also dead code to delete by name: `lib/sirena.rb:39` defines a
 stray top-level `def self.render` on `main`, referencing a bare `Engine`
 constant. It would raise `NameError` if anything ever called it.
 
@@ -110,7 +110,7 @@ TYPES = {
    `TYPES`. What goes away is the detector's *separate inventory*, and
    with it registry-versus-detector parity. What replaces it is
    table-versus-fixtures parity.
-4. Delete the stray `self.render` at `lib/sirena.rb:38`.
+4. Delete the stray `self.render` at `lib/sirena.rb:39`.
 5. `Engine` holds no type constants. Its render method's **core
    pipeline** is the four lines from `00-overview.md`, the first being
    `type = Notation::Mermaid.detect(source)` — detection moved, it did

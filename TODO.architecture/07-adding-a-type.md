@@ -45,7 +45,7 @@ number:
   | commit | what it added | production files |
   |---|---|---|
   | `22996b9` | semicolon statement separators | 1 — the grammar |
-  | `c09c975` | strip comments before metadata | 2 — grammar, flowchart transform |
+  | `c09c975` | strip comments before metadata | 3 — grammar, flowchart transform, YAML metadata parser |
   | node-metadata series | `@{ shape: ... }` syntax | 4 — plus a YAML composer and a shape table |
   | `4f77b61` | the full sequence arrow set | 5, across four layers |
 
