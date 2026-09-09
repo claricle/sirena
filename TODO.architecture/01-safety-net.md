@@ -146,6 +146,18 @@ of 24, not 23.
    executed by anybody. Moved literally, all 13 existing guards disappear
    and nothing replaces them.
 
+   **This step DOES change rendered output, once, and it is the only
+   place in items 01-03 that does.** A bare header renders today while
+   `valid?` already refuses it:
+
+       valid=false   svg=true      # source "kanban\n"
+
+   The oracle says refusing is correct — mmdc exits 1 on `kanban`,
+   `flowchart`, `sequenceDiagram` and `classDiagram` alone. So sirena
+   rendering a bare header is the defect, and this guard closes it.
+   Record it in the PR body as an intended behaviour change carrying
+   that evidence; do not let it read as a regression.
+
    Pick one, explicitly, in the PR:
 
    - **Template method.** `Base#to_graph` becomes the public entry point,

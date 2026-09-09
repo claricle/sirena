@@ -178,14 +178,39 @@ hardcoded fallback is what renders.
 3. Replace `theme_color(:x) || '#hex'` with `theme_color(:x)`, and make
    the theme guarantee a value. A missing key is a bug in the theme
    YAML: it should fail a spec, not silently fall back at runtime.
+
+   **This REQUIRES adding keys, and the "Do not" below is amended for
+   exactly this reason.** Measured 2026-09-09: renderers call
+   `theme_color` with 26 distinct keys; `ColorPalette` defines 19; and
+   **16 of the 26 are absent, so they return `nil` today and the
+   hardcoded fallback is what actually renders.**
+
+       axis_line, border, border_color, edge_color, field_background,
+       field_border, field_text, grid_line, group_background, highlight,
+       node_bg, node_text, section_bg, text, text_color, title_text
+
+   Re-derive with:
+
+       ruby -Ilib -rsirena -e 'used = Dir.glob("lib/**/*.rb").flat_map { |f| File.read(f).scan(/theme_color\(:([a-z_]+)\)/).flatten }.uniq; p used - Sirena::Theme::ColorPalette.attributes.keys.map(&:to_s)'
+
+   Dropping the fallbacks without adding these 16 turns 16 colours into
+   `nil`. Add exactly these keys, carrying the value each fallback
+   already supplies, so the rendered output does not move. Info's blue
+   is the worked example: it comes from the `node_bg` fallback
+   `#E3F2FD`, and substituting the existing `node_fill` yields
+   `#ffffff` — a visible change this step must not make.
 4. Add a spec that renders one diagram of every type under all four
    built-in themes and asserts `default` and `dark` output differ. That
    is the test that would have caught this.
 
 ### Do not
 
-- Do not redesign the theme schema or add new theme keys beyond
-  `palette`. The four built-in YAML themes stay as they are.
+- Do not redesign the theme schema. **Adding the 16 keys named in step
+  3 IS required and is the exception** — without them, removing the
+  fallbacks turns 16 colours into `nil`. Add nothing else beyond those
+  and `palette`. The four built-in YAML themes keep their existing
+  values; only the missing keys are added, each carrying the colour its
+  fallback already produced.
 - Do not pick "nicer" colours. Move the existing ones into the theme
   unchanged; a colour change is a separate, visible decision.
 
