@@ -32,6 +32,9 @@ module Sirena
         # Render services on top
         render_services(layout, svg) if layout[:services]
 
+        # Render junctions - routing points with no label or icon
+        render_junctions(layout, svg) if layout[:junctions]
+
         svg
       end
 
@@ -171,6 +174,34 @@ module Sirena
           g.children << label
         end
 
+        svg << g
+      end
+
+      def render_junctions(layout, svg)
+        layout[:junctions].each do |junction_id, junction_info|
+          render_junction(junction_info, svg)
+        end
+      end
+
+      def render_junction(junction_info, svg)
+        junction = junction_info[:junction]
+        x = junction_info[:x]
+        y = junction_info[:y]
+        width = junction_info[:width]
+        height = junction_info[:height]
+
+        g = Svg::Group.new.tap do |elem|
+          elem.id = "junction-#{junction.id}"
+        end
+
+        dot = Svg::Circle.new.tap do |circle|
+          circle.cx = x + (width / 2)
+          circle.cy = y + (height / 2)
+          circle.r = width / 2
+          apply_theme_to_node(circle)
+        end
+
+        g.children << dot
         svg << g
       end
 
