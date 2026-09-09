@@ -25,7 +25,7 @@ module Sirena
     BLOCK_MARKERS = %w[
       admonitionblock audioblock colist dlist exampleblock imageblock
       listingblock literalblock olist openblock paragraph quoteblock
-      sidebarblock stemblock table tableblock ulist verseblock videoblock
+      sidebarblock stemblock tableblock ulist verseblock videoblock
     ].freeze
 
     LAYOUT_BODY_MARKER = 'main-content-wrap'
@@ -42,14 +42,30 @@ module Sirena
 
       attr_reader :rel_path
 
+      # Attribute name never preceded by a word or hyphen character. Without
+      # this, `\b` matches inside `data-class="x"` because `-` is a
+      # non-word character, so a plain `\bclass=` regex reads a
+      # `data-class` attribute as `class`.
+      CLASS_ATTR = /(?<![\w-])class=["']([^"']*)["']/i
+      HREF_ATTR = /(?<![\w-])href=["']([^"']*)["']/i
+      SRC_ATTR = /(?<![\w-])src=["']([^"']*)["']/i
+      STYLESHEET_LINK = /(?<![\w-])rel=["']stylesheet["']/i
+
       def content
         @content ||= File.read(@path)
+      end
+
+      # HTML comments stripped, so markup commented out of the page (a
+      # dead stylesheet link, a disabled block) cannot satisfy a check
+      # whose whole point is proving the markup is genuinely rendered.
+      def markup
+        @markup ||= content.gsub(/<!--.*?-->/m, '')
       end
 
       def class_tokens
         return @class_tokens if @class_tokens
 
-        classes = content.scan(/\bclass=["']([^"']*)["']/i).flatten
+        classes = markup.scan(CLASS_ATTR).flatten
         @class_tokens = classes.flat_map { |value| value.split(/\s+/) }
       end
 
@@ -60,15 +76,15 @@ module Sirena
       def stylesheet_hrefs
         return @stylesheet_hrefs if @stylesheet_hrefs
 
-        stylesheet_tags = content.scan(/<link\b[^>]*>/i).grep(/\brel=["']stylesheet["']/i)
-        @stylesheet_hrefs = stylesheet_tags.filter_map { |tag| tag[/\bhref=["']([^"']*)["']/i, 1] }
+        stylesheet_tags = markup.scan(/<link\b[^>]*>/i).grep(STYLESHEET_LINK)
+        @stylesheet_hrefs = stylesheet_tags.filter_map { |tag| tag[HREF_ATTR, 1] }
       end
 
       def script_srcs
         return @script_srcs if @script_srcs
 
-        script_tags = content.scan(/<script\b[^>]*>/i)
-        @script_srcs = script_tags.filter_map { |tag| tag[/\bsrc=["']([^"']*)["']/i, 1] }
+        script_tags = markup.scan(/<script\b[^>]*>/i)
+        @script_srcs = script_tags.filter_map { |tag| tag[SRC_ATTR, 1] }
       end
     end
 
@@ -197,9 +213,17 @@ module Sirena
         next if protocol_relative?(ref)
 
         resolved = strip_baseurl(ref)
-        next if @site_dir.join(resolved.delete_prefix('/')).exist?
+        if resolved.nil?
+          failures << "asset: #{ref} (referenced by #{referencing_page}) does not begin with baseurl #{@baseurl.inspect}"
+          next
+        end
 
-        failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{resolved}"
+        # Only the path component resolves to a file -- a query string or
+        # fragment is not part of the filename a server looks up.
+        file_path = resolved.split(/[?#]/, 2).first.to_s
+        next if @site_dir.join(file_path.delete_prefix('/')).exist?
+
+        failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
       end
 
       if @config['search_enabled'] == true && !@site_dir.join(SEARCH_INDEX_PATH).exist?
@@ -229,10 +253,16 @@ module Sirena
       ref.start_with?('//')
     end
 
+    # `nil` means ref does not live under the configured baseurl at all --
+    # a real deployment at that baseurl would 404 it, and it is NOT the
+    # same thing as a same-named file happening to exist in `_site`'s
+    # physical layout (which carries no baseurl prefix directories).
+    # Segment-bounded: `/sirenax/...` must not match a `/sirena` baseurl.
     def strip_baseurl(ref)
-      return ref if @baseurl.empty? || !ref.start_with?(@baseurl)
+      return ref if @baseurl.empty?
+      return ref[@baseurl.length..] if ref == @baseurl || ref.start_with?("#{@baseurl}/")
 
-      ref.sub(@baseurl, '')
+      nil
     end
   end
 end

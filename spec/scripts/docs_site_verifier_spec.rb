@@ -179,6 +179,26 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # Example 6b — R7, NESTED index. Example 6 only exercises the top-level
+  # `dir == '.'` arm; a mutant that collapsed every index source to the
+  # same top-level `_diagram_types/index.html` survived every other
+  # example because none of them nested an index.adoc in a subdirectory.
+  it 'collapses a nested index.adoc to its own subdirectory, not the site root' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, 'examples/index')
+      write_page(site_dir, 'diagram_types/examples/index/index.html', page_html)
+      write_page(site_dir, '_diagram_types/examples/index.html', page_html)
+      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/examples/index'))
+      FileUtils.rm(File.join(site_dir, '_diagram_types/examples/index.html'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/examples/index.adoc missing at diagram_types/examples/index/index.html',
+        'manifest: _diagram_types/examples/index.adoc missing at _diagram_types/examples/index.html'
+      )
+    end
+  end
+
   # Example 7 — R8. Strip the layout marker while keeping the stylesheet
   # links, proving R8 is not a duplicate of R9.
   it 'names the page lacking the layout marker while its theme stylesheet stays intact' do
@@ -236,6 +256,21 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # Example 10b — R11, the layout-marker half. A2 has two site-wide
+  # clauses (layout marker, stylesheet); example 10 above only pins the
+  # stylesheet one. A mutant that scopes the LAYOUT check to diagram pages
+  # only survived every example until this was added.
+  it 'reports a non-diagram page missing the layout marker' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'pages/comparison/index.html', page_html(layout_marker: 'main-content-wrapX'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'layout: pages/comparison/index.html missing layout marker "main-content-wrap"'
+      )
+    end
+  end
+
   # Example 11 — R12
   it 'names the diagram page carrying no recognized block marker' do
     Dir.mktmpdir do |tmp|
@@ -248,32 +283,64 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
-  # Example 12 — R13. Three pages, each a shape a hand-picked marker set
-  # got wrong in an earlier revision: table-only, list-only, and
-  # examples.rake's own default-metadata output (listing + image, no
-  # paragraph). None exists in today's real _site.
-  it 'passes a table-only page, a list-only page, and examples.rake default-metadata output' do
+  # Example 12 — R13. Four pages, each a shape a hand-picked marker set
+  # got wrong in an earlier revision: table-only, list-only, listing-only
+  # and image-only (examples.rake's default-metadata output, split so
+  # neither masks the other -- see the note on the LOW finding below).
+  # None exists in today's real _site.
+  it 'passes a table-only page, a list-only page, a listing-only page and an image-only page' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, 'table-page')
-      write_source(docs_dir, 'list-page')
-      write_source(docs_dir, 'examples-metadata-page')
+      %w[table-page list-page listing-page image-page].each { |name| write_source(docs_dir, name) }
 
-      table_body = '<table class="tableblock"><tr><td>x</td></tr></table>'
-      write_page(site_dir, 'diagram_types/table-page/index.html', page_html_with_body(table_body))
-      write_page(site_dir, '_diagram_types/table-page/index.html', page_html_with_body(table_body))
-      write_page(site_dir, 'diagram_types/list-page/index.html', page_html_with_body('<ul class="ulist"><li>x</li></ul>'))
-      write_page(site_dir, '_diagram_types/list-page/index.html', page_html_with_body('<ul class="ulist"><li>x</li></ul>'))
-      write_page(
-        site_dir, 'diagram_types/examples-metadata-page/index.html',
-        page_html_with_body('<div class="listingblock">x</div><div class="imageblock">x</div>')
-      )
-      write_page(
-        site_dir, '_diagram_types/examples-metadata-page/index.html',
-        page_html_with_body('<div class="listingblock">x</div><div class="imageblock">x</div>')
-      )
+      bodies = {
+        'table-page' => '<table class="tableblock"><tr><td>x</td></tr></table>',
+        'list-page' => '<ul class="ulist"><li>x</li></ul>',
+        'listing-page' => '<div class="listingblock">x</div>',
+        'image-page' => '<div class="imageblock">x</div>',
+      }
+      bodies.each do |name, body|
+        write_page(site_dir, "diagram_types/#{name}/index.html", page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/#{name}/index.html", page_html_with_body(body))
+      end
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 12b — R13, negative direction. Codex found `table` (the bare
+  # context, not `tableblock`) sitting in BLOCK_MARKERS, contradicting this
+  # file's own comment that Asciidoctor never emits it bare. A page whose
+  # only class is literally "table" must still be reported.
+  it 'does not accept bare "table" as a recognized block marker' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'table'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # Example 12c — R13, the LOW Codex found: deleting `imageblock` from
+  # BLOCK_MARKERS left every example green because the one page exercising
+  # it also carried `listingblock`. Example 12 above now keeps the two
+  # markers on SEPARATE pages, so each is independently load-bearing; this
+  # example pins that directly by deleting the marker from a page's own
+  # class list and expecting a failure.
+  it 'reports an image-only page whose sole marker class is missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, 'image-only')
+      body = '<div class="not-a-real-marker">x</div>'
+      write_page(site_dir, 'diagram_types/image-only/index.html', page_html_with_body(body))
+      write_page(site_dir, '_diagram_types/image-only/index.html', page_html_with_body(body))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/image-only/index.html has no recognized Asciidoctor block marker',
+        'content: _diagram_types/image-only/index.html has no recognized Asciidoctor block marker'
+      )
     end
   end
 
@@ -504,14 +571,137 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
-  # Example 29 — R2
-  it 'refuses when theme: is absent or empty' do
+  # Example 29 — R2, empty string.
+  it 'refuses when theme: is empty' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => '' })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'config: theme is absent or empty'
       )
+    end
+  end
+
+  # Example 29b — R2, key genuinely ABSENT (nil), not merely an empty
+  # string. `theme.nil? || theme.to_s.empty?` collapses to `theme == ''`
+  # and stays true for '' -- but a config with no `theme:` key at all
+  # (Psych parses that as nil) is only caught by the `.nil?` half.
+  it 'refuses when theme: is not set at all' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => nil })
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'config: theme is absent or empty'
+      )
+    end
+  end
+
+  # ----------------------------------------------------------------------
+  # The five findings from the first Codex round on this file. Each is a
+  # constructed input Codex ran against the real implementation; every one
+  # is reproduced here as its own example so it cannot regress silently.
+
+  # HIGH-1a. A commented-out stylesheet link must not satisfy A2's
+  # stylesheet clause -- text-matching without stripping comments made a
+  # dead link indistinguishable from a live one.
+  it 'reports a page whose only theme stylesheet link is inside an HTML comment' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
+      html = <<~HTML
+        <html><head><!-- <link rel="stylesheet" href="#{href}"> --></head>
+        <body><div class="main-content-wrap"><div class="paragraph"><p>hi</p></div></div></body></html>
+      HTML
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"'
+      )
+    end
+  end
+
+  # HIGH-1b. `data-class="main-content-wrap"` is a different attribute
+  # from `class="main-content-wrap"` -- a `\b`-based regex cannot tell
+  # them apart because `-` is a non-word character.
+  it 'reports a page whose layout marker sits in a data-class attribute, not class' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub('class="main-content-wrap"', 'data-class="main-content-wrap"')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"'
+      )
+    end
+  end
+
+  # HIGH-1c. The sole content marker, commented out, must not satisfy A3.
+  it 'reports a diagram page whose only block marker is inside an HTML comment' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html_with_body('<!-- <div class="paragraph"><p>hi</p></div> -->')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # HIGH-2a. A site-absolute ref missing the baseurl prefix must be
+  # reported, even though the SAME relative path happens to exist
+  # physically in `_site` (which carries no baseurl directory at all) --
+  # under a real deployment at that baseurl, the un-prefixed URL 404s.
+  it 'reports a stylesheet URL missing the required baseurl prefix' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub(%(href="#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets), 'href="/assets')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'asset: /assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
+          'does not begin with baseurl "/sirena"'
+      )
+    end
+  end
+
+  # HIGH-2b. `/sirenax/...` is a different path than `/sirena/...` --
+  # `start_with?(baseurl)` alone would strip the substring and wrongly
+  # resolve it. The boundary must be segment-aware.
+  it 'reports a stylesheet URL whose path merely starts with the baseurl string' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub(%(href="#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets), 'href="/sirenax/assets')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'asset: /sirenax/assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
+          'does not begin with baseurl "/sirena"'
+      )
+    end
+  end
+
+  # MEDIUM-2. A query string is not part of the file path a server looks
+  # up -- `?v=1` on an otherwise-valid asset URL must not turn it into a
+  # false failure.
+  it 'does not report a valid asset carrying a cache-busting query string as missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub('.css">', '.css?v=1">')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
