@@ -262,4 +262,87 @@ RSpec.describe Sirena::Parser::SequenceParser do
       expect(message.to_id).to eq("B")
     end
   end
+
+  # mmdc treats a bare `;` as a statement separator, equivalent to a
+  # newline: spec/mermaid/sequence/026_parser_should_handle_semicolons_25
+  # compresses a whole diagram onto one line this way and mmdc renders it
+  # exactly as the multi-line form.
+  describe "#parse bare `;` as a statement separator" do
+    it "accepts `;` directly after the sequenceDiagram header" do
+      diagram = parser.parse("sequenceDiagram;A->>B: hi")
+
+      expect(diagram.messages.first.message_text).to eq("hi")
+    end
+
+    it "splits a message, a note, and a second message joined by `;`" do
+      diagram = parser.parse(
+        "sequenceDiagram;A->>B: Hello Bob, how are you?;" \
+        "Note right of B: B thinks;B-->>A: I am good thanks!;"
+      )
+
+      expect(diagram.messages.map(&:message_text))
+        .to eq(["Hello Bob, how are you?", "I am good thanks!"])
+      expect(diagram.notes.first.text).to eq("B thinks")
+      expect(diagram.notes.first.position).to eq("right_of")
+    end
+
+    it "does not require a trailing newline after the final `;`" do
+      diagram = parser.parse("sequenceDiagram;A->>B: hi;")
+
+      expect(diagram.messages.first.message_text).to eq("hi")
+    end
+
+    # The lookahead guard's negative case: a `;` NOT followed by a real
+    # statement (or eof) is left as literal text rather than treated as a
+    # separator. Mirrors spec/mermaid/sequence/046_parser_should_handle_
+    # special_characters_in_notes_45 (note text "-:<>,;# comment", where
+    # "# comment" is not a statement), already passing before this change.
+    it "leaves a `;` embedded in note text alone when nothing parseable follows it" do
+      diagram = parser.parse(
+        "sequenceDiagram\nA->>B: hi\nNote right of B: a;# not a statement\n"
+      )
+
+      expect(diagram.notes.first.text).to eq("a;# not a statement")
+    end
+
+    # The entity guard: `#9829;` is mmdc's HTML entity syntax (renders "♥"),
+    # not a separator, mirroring spec/mermaid/sequence/030_spec_diagram_
+    # spec_29 (already passing before this change).
+    it "does not split message text on an HTML entity's own `;`" do
+      diagram = parser.parse("sequenceDiagram\nA->>B: I #9829; you!\n")
+
+      expect(diagram.messages.first.message_text).to eq("I #9829; you!")
+    end
+
+    # The case the lookahead alone cannot cover: an entity's `;` sitting
+    # right before the real newline. Nothing follows it on the line, so
+    # `statement.present? | eof` both fail there too, and only the
+    # html_entity alternative keeps the entity's own `;` from being read as
+    # the message's trailing terminator (which would drop it).
+    it "keeps the entity's `;` when the entity ends the message text" do
+      diagram = parser.parse("sequenceDiagram\nA->>B: I love #9829;\n")
+
+      expect(diagram.messages.first.message_text).to eq("I love #9829;")
+    end
+  end
+
+  # spec/mermaid/sequence/053 and 054: `alt`/`par` with NO label, `;` in
+  # place of the newline the label would otherwise end on.
+  describe "#parse alt/par with no label, separated by `;`" do
+    it "parses an alt block with an empty label" do
+      diagram = parser.parse(
+        "sequenceDiagram\nA->>B: hi\nalt;B-->>A: ok\nend\n"
+      )
+
+      expect(diagram.messages.map(&:message_text)).to eq(%w[hi ok])
+    end
+
+    it "parses a par block with an empty label" do
+      diagram = parser.parse(
+        "sequenceDiagram\nA->>B: hi\npar;B-->>A: ok\nend\n"
+      )
+
+      expect(diagram.messages.map(&:message_text)).to eq(%w[hi ok])
+    end
+  end
 end

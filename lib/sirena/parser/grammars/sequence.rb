@@ -24,7 +24,33 @@ module Sirena
         end
 
         rule(:header) do
-          str('sequenceDiagram').as(:header) >> ws?
+          str('sequenceDiagram').as(:header) >> semicolon.maybe >> ws?
+        end
+
+        # mmdc treats a bare `;` as a statement separator, equivalent to a
+        # newline (`A->>B: hi;C->>D: bye` parses as two statements, same as
+        # one per line). common.rb's `line_end` only accepts `;` immediately
+        # before a real newline/eof, so it never fires as a mid-line
+        # separator — and it is NOT overridden wholesale here, because
+        # `line_end` also gates every *_label free-text capture below
+        # (alt/par/loop/opt/critical/box), and those labels can legitimately
+        # CONTAIN a literal `;` as plain text (spec/mermaid/sequence/
+        # 049_parser_should_handle_special_characters_in_alt_48.mmd, already
+        # passing — widening `line_end` itself would truncate it instead of
+        # treating it as a separator).
+        #
+        # A bare `;` counts as a separator only when a real statement (or
+        # eof) follows it — checked with a lookahead, not merely "is there a
+        # semicolon here". Without that guard, note/message text containing
+        # a literal `;` that ISN'T a separator (spec/mermaid/sequence/
+        # 046_parser_should_handle_special_characters_in_notes_45.mmd: note
+        # text "-:<>,;# comment", where "# comment" is not a statement)
+        # would be truncated and leave unparseable trailing text, turning a
+        # currently-passing case into a hard parse failure. Used only where
+        # a `;` genuinely closes a statement: message and note text, and
+        # their trailing terminators.
+        rule(:statement_separator) do
+          (semicolon >> (statement.present? | eof)) | line_end
         end
 
         rule(:statements) do
@@ -63,7 +89,7 @@ module Sirena
             arrow.as(:arrow) >> space? >>
             identifier.as(:to) >> space? >>
             message_text.maybe.as(:text) >>
-            line_end
+            statement_separator
         end
 
         # Arrow types including activation modifiers
@@ -110,7 +136,15 @@ module Sirena
 
         rule(:message_text) do
           colon >> space? >>
-            (line_end.absent? >> any).repeat.as(:message_text)
+            (html_entity | (statement_separator.absent? >> any)).repeat.as(:message_text)
+        end
+
+        # `#9829;` (mmdc: renders "♥") is an HTML numeric/named entity, not a
+        # statement separator — its `;` must not trigger statement_separator.
+        # Matched as one atomic token so message_text's stop-check never
+        # evaluates the entity's own semicolon in isolation.
+        rule(:html_entity) do
+          hash >> match['a-zA-Z0-9'].repeat(1) >> semicolon
         end
 
         # Notes
@@ -119,8 +153,8 @@ module Sirena
             note_position.as(:position) >> space.repeat(1) >>
             note_participants.as(:participants) >> space? >>
             colon >> space? >>
-            (line_end.absent? >> any).repeat.as(:note_text) >>
-            line_end
+            (statement_separator.absent? >> any).repeat.as(:note_text) >>
+            statement_separator
         end
 
         rule(:note_position) do
@@ -179,10 +213,17 @@ module Sirena
             str('end') >> line_end
         end
 
+        # `alt;Bob-->Alice: ...` (mmdc: an alt block with NO label, `;` in
+        # place of the newline it would otherwise take). The first branch
+        # only fires when `;` is the very next character — a `;` embedded
+        # later in real label text (case 049 above) never reaches it, and
+        # falls through to the second branch unchanged.
         rule(:alt_structure) do
           str('alt') >> space? >>
-            (line_end.absent? >> any).repeat.as(:alt_label) >>
-            line_end >>
+            (
+              (semicolon >> str('').as(:alt_label)) |
+              ((line_end.absent? >> any).repeat.as(:alt_label) >> line_end)
+            ) >>
             ws? >>
             statements.as(:alt_statements) >>
             ws? >>
@@ -207,10 +248,13 @@ module Sirena
             str('end') >> line_end
         end
 
+        # Same no-label bare-`;` shape as alt_structure above.
         rule(:par_structure) do
           str('par') >> space? >>
-            (line_end.absent? >> any).repeat.as(:par_label) >>
-            line_end >>
+            (
+              (semicolon >> str('').as(:par_label)) |
+              ((line_end.absent? >> any).repeat.as(:par_label) >> line_end)
+            ) >>
             ws? >>
             statements.as(:par_statements) >>
             ws? >>
