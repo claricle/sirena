@@ -87,6 +87,30 @@ RSpec.describe Sirena::Engine do
                         /\ARendering failed: failed to allocate memory/)
     end
 
+    # A real stack overflow's backtrace runs to thousands of frames --
+    # measured at 1,044,280 bytes for one bomb through an unguarded type.
+    # `BatchCommand` stores `PipelineError#message` per failed file, so
+    # embedding the backtrace in it meant a hostile batch re-accumulated
+    # megabytes inside the very structure meant to survive exhaustion.
+    #
+    # `set_backtrace` before handing this to the stub, rather than driving
+    # a real multi-thousand-frame overflow: it proves the same property --
+    # the message excludes whatever `backtrace` holds -- for a fraction of
+    # the cost, and it lets the assertion pin an EXACT frame list on the
+    # cause instead of merely a frame count.
+    it 'keeps the message short and the backtrace on the cause, not the message' do
+      overflow = SystemStackError.new('stack level too deep')
+      overflow.set_backtrace(%w[fake:1 fake:2 fake:3])
+
+      begin
+        rendering(overflow).call
+      rescue Sirena::Engine::PipelineError => e
+        expect(e.message).to eq('Rendering failed: stack level too deep')
+        expect(e.cause).to be(overflow)
+        expect(e.cause.backtrace).to eq(%w[fake:1 fake:2 fake:3])
+      end
+    end
+
     it 'lets an exit request through untouched' do
       expect(&rendering(SystemExit)).to raise_error(SystemExit)
     end
