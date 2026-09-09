@@ -123,4 +123,141 @@ RSpec.describe Sirena::Parser::ErDiagramParser do
       )
     end
   end
+
+  describe 'style classes' do
+    it 'carries the class assigned via ::: (A1)' do
+      diagram = parser.parse("erDiagram\nCAR:::someclass")
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[someclass])
+    end
+
+    it 'carries multiple classes in source order (A2)' do
+      diagram = parser.parse("erDiagram\nPERSON:::anotherclass,someclass")
+
+      expect(diagram.find_entity('PERSON').classes)
+        .to eq(%w[anotherclass someclass])
+    end
+
+    it 'records each classDef with its own style text (A3)' do
+      source = <<~MERMAID
+        erDiagram
+        classDef someclass fill:#f96
+        classDef anotherclass color:blue
+      MERMAID
+      diagram = parser.parse(source)
+
+      expect(diagram.class_defs).to eq(
+        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue'
+      )
+    end
+
+    it 'keeps a class on an entity with an attribute block (A4)' do
+      source = "erDiagram\nCAR:::x {\nstring make\n}"
+      diagram = parser.parse(source)
+      entity = diagram.find_entity('CAR')
+
+      expect(entity.classes).to eq(%w[x])
+      expect(entity.attributes.map(&:name)).to eq(%w[make])
+    end
+
+    it 'keeps a class on an entity with an empty block (A5)' do
+      # An empty block yields a nil :attributes capture. Routing on
+      # :entity_id alone (not :entity_id && :attributes) is what keeps
+      # this case from losing its class.
+      diagram = parser.parse("erDiagram\nCAR:::x {\n}")
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[x])
+    end
+
+    it 'gives an unclassed entity an empty class list (A6)' do
+      diagram = parser.parse("erDiagram\nCAR")
+
+      expect(diagram.find_entity('CAR').classes).to eq([])
+    end
+
+    it 'keeps classes on both relationship ends (A7)' do
+      # Each end captures under a DIFFERENT name (:from_classes,
+      # :to_classes). Giving both the same name would drop the from-end
+      # class silently when Parslet merges the statement hash.
+      source = "erDiagram\nA:::x ||--o{ B:::y : label"
+      diagram = parser.parse(source)
+      rel = diagram.relationships.first
+
+      expect(diagram.find_entity('A').classes).to eq(%w[x])
+      expect(diagram.find_entity('B').classes).to eq(%w[y])
+      expect(rel.cardinality_from).to eq('one')
+      expect(rel.cardinality_to).to eq('zero_or_more')
+    end
+
+    it 'accepts a space after the comma (A8)' do
+      diagram = parser.parse("erDiagram\nCAR:::a, b")
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+    end
+
+    it 'lets one classDef name several classes (A11)' do
+      diagram = parser.parse("erDiagram\nclassDef a, b fill:#f9f")
+
+      expect(diagram.class_defs).to eq('a' => 'fill:#f9f', 'b' => 'fill:#f9f')
+    end
+
+    it 'does not duplicate a repeated assignment (A12)' do
+      diagram = parser.parse("erDiagram\nCAR:::a\nCAR:::a")
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[a])
+    end
+
+    it 'adds rather than replaces on a second entity-path assignment (A13)' do
+      source = "erDiagram\nCAR:::a\nCAR:::b {\nstring m\n}"
+      diagram = parser.parse(source)
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+    end
+
+    it 'adds rather than replaces on the relationship path too (A13b)' do
+      source = "erDiagram\nCAR:::a\nCAR:::b ||--o{ X : r"
+      diagram = parser.parse(source)
+
+      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+    end
+
+    it 'does not include a trailing semicolon in the style text (A15)' do
+      diagram = parser.parse("erDiagram\nclassDef x fill:#f96;")
+
+      expect(diagram.class_defs).to eq('x' => 'fill:#f96')
+    end
+
+    it 'accumulates a repeated classDef for the same name (A16)' do
+      # Verified against mermaid's own parser: two classDef statements for
+      # one name both survive, in source order — not the last one alone.
+      source = "erDiagram\nclassDef a fill:red\nclassDef a stroke:blue"
+      diagram = parser.parse(source)
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red,stroke:blue')
+    end
+
+    # These six all raise TODAY, so a whole-file revert leaves them green —
+    # mutation-check.sh will say STAYED GREEN, correctly. Keep them anyway:
+    # each is the set mermaid itself rejects (verified against its own
+    # parser, see the plan's harness), and nothing else in this suite
+    # notices if the grammar is ever widened past mermaid.
+    it 'rejects what mermaid rejects (A14)' do
+      fragments = [
+        'CAR:::',
+        'CAR::x',
+        'CAR:::a,',
+        'CAR:::1bad',
+        'classDef x',
+        'CAR:::--'
+      ]
+
+      fragments.each do |fragment|
+        source = "erDiagram\n#{fragment}"
+
+        expect { parser.parse(source) }.to raise_error(
+          Sirena::Parser::ParseError
+        )
+      end
+    end
+  end
 end

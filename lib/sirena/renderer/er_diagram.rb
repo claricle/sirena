@@ -103,18 +103,20 @@ module Sirena
       end
 
       def render_entities(graph, svg)
+        class_defs = graph[:class_defs] || {}
         graph[:children].each do |node|
-          render_entity(node, svg)
+          render_entity(node, svg, class_defs)
         end
       end
 
-      def render_entity(node, svg)
+      def render_entity(node, svg, class_defs)
         x = node[:x] || 0
         y = node[:y] || 0
         width = node[:width] || 150
         height = node[:height] || 100
 
         metadata = node[:metadata] || {}
+        styles = entity_styles(node, class_defs)
 
         # Create group for the entity
         group = Svg::Group.new.tap do |g|
@@ -127,24 +129,25 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = '#f9f9f9'
-          r.stroke = '#333333'
-          r.stroke_width = '2'
+          r.fill = styles['fill'] || '#f9f9f9'
+          r.stroke = styles['stroke'] || '#333333'
+          r.stroke_width = styles['stroke-width'] || '2'
         end
         group.children << box
 
         # Render entity content
-        render_entity_content(node, metadata, group)
+        render_entity_content(node, metadata, group, styles)
 
         svg << group
       end
 
-      def render_entity_content(node, metadata, group)
+      def render_entity_content(node, metadata, group, styles)
         x = node[:x] || 0
         y = node[:y] || 0
         width = node[:width] || 150
 
         current_y = y + BOX_PADDING + ENTITY_NAME_FONT_SIZE
+        name_color = styles['color'] || '#000000'
 
         # Render entity name
         name = metadata[:name] || node[:id]
@@ -152,7 +155,7 @@ module Sirena
           t.x = x + width / 2
           t.y = current_y
           t.content = name
-          t.fill = '#000000'
+          t.fill = name_color
           t.font_family = 'Arial, sans-serif'
           t.font_size = ENTITY_NAME_FONT_SIZE.to_s
           t.text_anchor = 'middle'
@@ -176,11 +179,11 @@ module Sirena
         attributes = metadata[:attributes] || []
         current_y += BOX_PADDING
         attributes.each do |attr|
-          current_y = render_attribute(x, current_y, width, attr, group)
+          current_y = render_attribute(x, current_y, styles, attr, group)
         end
       end
 
-      def render_attribute(x, y, _width, attribute, group)
+      def render_attribute(x, y, styles, attribute, group)
         # Build attribute text with key type marker
         parts = []
         parts << attribute[:key_type] if attribute[:key_type] &&
@@ -196,13 +199,53 @@ module Sirena
           t.x = x + BOX_PADDING
           t.y = y + ATTRIBUTE_FONT_SIZE
           t.content = attr_text
-          t.fill = '#000000'
+          t.fill = styles['color'] || '#000000'
           t.font_family = 'monospace'
           t.font_size = ATTRIBUTE_FONT_SIZE.to_s
         end
         group.children << text
 
         y + LINE_HEIGHT
+      end
+
+      # Resolves the style properties an entity's classes apply, by name and
+      # not by position — an index-keyed lookup would silently swap two
+      # entities' colours the moment their class lists diverge in length.
+      # Classes merge left to right: a later class overrides an earlier one
+      # only on a property both declare, and each contributes any property
+      # the other did not.
+      #
+      # @param node [Hash] the graph node, holding metadata[:classes]
+      # @param class_defs [Hash{String => String}] declared classDef styles
+      # @return [Hash{String => String}] resolved property => value
+      def entity_styles(node, class_defs)
+        classes = (node[:metadata] || {})[:classes] || []
+
+        classes.each_with_object({}) do |class_name, styles|
+          declaration = class_defs[class_name]
+          next unless declaration
+
+          styles.merge!(parse_declaration(declaration))
+        end
+      end
+
+      # Parses a `classDef` style run ("fill:#f96,stroke:#333") into a
+      # property => value Hash. A chunk with no colon is skipped rather than
+      # raising — `classDef x foo` and `classDef x font-family:Arial,sans-serif`
+      # both parse under mermaid, and the second is exactly this shape after
+      # the comma split, so failing here would crash a render on
+      # mermaid-valid input.
+      #
+      # @param text [String] raw style text
+      # @return [Hash{String => String}] property => value, both sides
+      #   stripped
+      def parse_declaration(text)
+        text.split(',').each_with_object({}) do |chunk, styles|
+          key, value = chunk.split(':', 2)
+          next unless value
+
+          styles[key.strip] = value.strip
+        end
       end
 
       def render_relationships(graph, svg)

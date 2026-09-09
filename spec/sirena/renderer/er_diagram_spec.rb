@@ -237,5 +237,168 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         expect(sizes).to eq([[880, 680], [880, 680], [880, 680]])
       end
     end
+
+    describe 'classDef styles' do
+      def entity_node(id, classes: [], attributes: [])
+        {
+          id: id, x: 0, y: 0, width: 150, height: 100,
+          metadata: { name: id, classes: classes, attributes: attributes }
+        }
+      end
+
+      def rect_for(svg, entity_id)
+        svg.children.find { |c| c.id == "entity-#{entity_id}" }
+          .children.grep(Sirena::Svg::Rect).first
+      end
+
+      it 'applies a class fill; an unclassed entity keeps the default (C1)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a']),
+                     entity_node('OTHER')],
+          edges: [],
+          class_defs: { 'a' => 'fill:#f96' }
+        }
+        svg = renderer.render(classed_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#f96')
+        expect(rect_for(svg, 'OTHER').fill).to eq('#f9f9f9')
+      end
+
+      # Resolves classes BY NAME, not by position in the class list — an
+      # index-keyed implementation passes every OTHER example here and is
+      # only killed by this one plus D1's PERSON-fill clause.
+      it 'merges two classes, later wins only on a conflict (C2)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: %w[a b])],
+          edges: [],
+          class_defs: { 'a' => 'fill:#111,stroke:#0a0', 'b' => 'fill:#222' }
+        }
+        svg = renderer.render(classed_graph)
+        rect = rect_for(svg, 'CAR')
+
+        expect(rect.fill).to eq('#222')
+        expect(rect.stroke).to eq('#0a0')
+      end
+
+      it 'applies color to this entity, and not another one (C3)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [
+            entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }]),
+            entity_node('OTHER', attributes: [{ name: 'x' }])
+          ],
+          edges: [],
+          class_defs: { 'a' => 'color:blue' }
+        }
+        svg = renderer.render(classed_graph)
+
+        car_texts = svg.children.find { |c| c.id == 'entity-CAR' }
+          .children.grep(Sirena::Svg::Text)
+        other_texts = svg.children.find { |c| c.id == 'entity-OTHER' }
+          .children.grep(Sirena::Svg::Text)
+
+        expect(car_texts.map(&:fill).uniq).to eq(['blue'])
+        expect(other_texts.map(&:fill).uniq).to eq(['#000000'])
+        expect(rect_for(svg, 'CAR').fill).to eq('#f9f9f9')
+      end
+
+      # Order (ghost, known) is load-bearing: an abort-on-first-unknown
+      # implementation dies on "ghost" before reaching "known" and this
+      # mutant survives if the order is ever reversed.
+      it 'ignores an undeclared class without aborting the rest (C4)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: %w[ghost known])],
+          edges: [],
+          class_defs: { 'known' => 'fill:#0f0' }
+        }
+        svg = renderer.render(classed_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#0f0')
+      end
+
+      it 'applies stroke and stroke-width (C5)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'stroke:#333,stroke-width:4px' }
+        }
+        svg = renderer.render(classed_graph)
+        rect = rect_for(svg, 'CAR')
+
+        expect(rect.stroke).to eq('#333')
+        expect(rect.stroke_width).to eq('4px')
+      end
+
+      it 'resolves a property key with surrounding space (C6)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => ' fill : #f96' }
+        }
+        svg = renderer.render(classed_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#f96')
+      end
+
+      it 'resolves a spaced value, trimmed (C7)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill: #f96' }
+        }
+        svg = renderer.render(classed_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#f96')
+      end
+
+      # Both "foo" and "font-family:Arial,sans-serif" parse under mermaid.
+      # A colon-less chunk must render, not raise.
+      #
+      # A whole-file revert to base cannot exercise this: base never calls
+      # parse_declaration at all, so it neither raises nor differs from the
+      # fixed behaviour here, and mutation-check.sh correctly reports STAYED
+      # GREEN. Verified against the actual regression instead, by hand: with
+      # `next unless value` removed from parse_declaration, this example
+      # raises NoMethodError; restored, it passes. Keep it.
+      it 'renders a colon-less style chunk instead of raising (C9)' do
+        no_colon_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'foo' }
+        }
+        multi_value_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'font-family:Arial,sans-serif' }
+        }
+
+        expect { renderer.render(no_colon_graph) }.not_to raise_error
+        expect { renderer.render(multi_value_graph) }.not_to raise_error
+        expect(rect_for(renderer.render(no_colon_graph), 'CAR').fill)
+          .to eq('#f9f9f9')
+        expect(rect_for(renderer.render(multi_value_graph), 'CAR').fill)
+          .to eq('#f9f9f9')
+      end
+
+      it 'keeps a colon inside a value intact (C10)' do
+        classed_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:#f96:extra' }
+        }
+        svg = renderer.render(classed_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#f96:extra')
+      end
+    end
   end
 end
