@@ -96,22 +96,42 @@ RSpec.describe Sirena::Commands::BatchCommand do
     end
   end
 
+  # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
+  # raises for the same two classes -- not load-bearing to the assertion
+  # below, only to reading the report as a person would.
+  def exhaustion_message_for(exhaustion_class)
+    exhaustion_class == SystemStackError ? 'stack level too deep' : 'failed to allocate memory'
+  end
+
   # Exhaustion can arrive from OUTSIDE the engine's boundary: reading the
   # file happens in this class, not in the engine, and a file large enough
   # to exhaust the heap raises here where the engine never sees it. Without
   # this example the widened rescue in BatchCommand is dead code that the
   # engine's own boundary happens to cover.
-  it 'survives exhaustion raised while reading a file, not only while rendering' do
-    in_batch_dir do |input, output|
-      bomb_path = File.join(input, '2-bomb.mmd')
-      allow(File).to receive(:read).and_call_original
-      exhausted = NoMemoryError.new('failed to allocate memory')
-      allow(File).to receive(:read).with(bomb_path).and_raise(exhausted)
+  #
+  # Both members of EXHAUSTION_ERRORS, not just NoMemoryError: pinning only
+  # one leaves a rescue narrowed to that single class -- `rescue
+  # NoMemoryError, StandardError` -- passing every example here, with a
+  # constructed SystemStackError from this same File.read boundary
+  # escaping uncaught. The engine spec already drives each member through
+  # its own boundary as two separate examples; this loop does the
+  # equivalent for the batch boundary, over the constant itself rather
+  # than a name copied from it, so a future third member is covered
+  # without anyone remembering to add a case.
+  Sirena::EXHAUSTION_ERRORS.each do |exhaustion_class|
+    it "survives #{exhaustion_class} raised while reading a file, not only while rendering" do
+      in_batch_dir do |input, output|
+        bomb_path = File.join(input, '2-bomb.mmd')
+        message = exhaustion_message_for(exhaustion_class)
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read)
+          .with(bomb_path).and_raise(exhaustion_class.new(message))
 
-      report = run_batch(input, output)
+        report = run_batch(input, output)
 
-      expect(Dir.children(output).sort).to eq(['1-ok.svg', '3-ok.svg'])
-      expect(report).to include('2-bomb.mmd: failed to allocate memory')
+        expect(Dir.children(output).sort).to eq(['1-ok.svg', '3-ok.svg'])
+        expect(report).to include("2-bomb.mmd: #{message}")
+      end
     end
   end
 

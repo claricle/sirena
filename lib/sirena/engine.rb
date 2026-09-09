@@ -121,9 +121,13 @@ module Sirena
       # here a deeply nested document takes the whole host down instead of
       # failing one render.
       #
-      # `backtrace` is nil on an exception that was never raised, which a
-      # caller can hand us through a stubbed collaborator; `join` on nil
-      # would turn a reportable failure into a NoMethodError.
+      # `&.` rather than `.`: free insurance, not a reachable path. Ruby's
+      # `raise` only leaves `backtrace` nil when the exception was never
+      # actually raised, and anything caught here already went through a
+      # real `raise` -- even `and_raise(instance)` in a stub does, so no
+      # spec can drive `backtrace` to nil at this line without being
+      # vacuous. Measured, not assumed: verified directly against Ruby's
+      # `raise` semantics before writing this comment.
       raise PipelineError,
             "Rendering failed: #{e.message}\n#{e.backtrace&.join("\n")}"
     end
