@@ -122,10 +122,12 @@ module Sirena
 
       # Validates the note has required attributes.
       #
+      # Text may be empty — mmdc renders `Note over A:` with no trailing
+      # content as an empty label, not a malformed note.
+      #
       # @return [Boolean] true if note is valid
       def valid?
-        !text.nil? && !text.empty? &&
-          !position.nil? && !participant_ids.empty?
+        !text.nil? && !position.nil? && !participant_ids.empty?
       end
     end
 

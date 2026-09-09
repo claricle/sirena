@@ -42,26 +42,166 @@ module Sirena
             message
         end
 
+        # An actor name is a bounded run of text, not a programming
+        # identifier: mermaid accepts spaces, parentheses, dashes, `=` and
+        # a leading digit (`Alice ()`, `Alice-in-Wonderland`, `1`).
+        #
+        # `actor_stop` names every boundary an actor name yields to. It
+        # includes `arrow_base` rather than `arrow` because the activation
+        # suffix is `.maybe`, so the two are equivalent as a boundary and
+        # `arrow_base` says what is meant. `%%` is required even though a
+        # bare `%` stays name material: `line_end` lets every statement
+        # carry a trailing comment, so an actor name has to yield to `%%`
+        # or `participant Alice %% who` would swallow the comment into the
+        # id. `alias_keyword` needs surrounding whitespace so it splits
+        # `participant 1 as text` at the keyword without eating a name like
+        # `Cast Away` (`t A` is not ` as `). `@{` (never a bare `@`) is the
+        # shape-metadata opener.
+        rule(:alias_keyword) { space.repeat(1) >> str('as') >> space.repeat(1) }
+
+        rule(:actor_stop) do
+          arrow_base | colon | comma | semicolon | str('%%') |
+            alias_keyword | str('@{') | newline
+        end
+
+        # `+` and `<` are never actor-name material, in any position —
+        # mermaid rejects `participant A+B` and `participant A<B` outright,
+        # not just where they would collide with the activation suffix
+        # (`A->>+B`) or an arrow spelling (`<<->>`). Measured against
+        # mermaid 11.16.1's own parser directly.
+        #
+        # A dash is consumed unless the very next thing is another dash or
+        # the start of a genuine arrow — that is the only real ambiguity a
+        # trailing dash creates (`A--->B` must not read as actor `A-` plus
+        # arrow `-->`). `newline` is deliberately absent from this set,
+        # unlike the general `actor_stop` gate above: a trailing dash at
+        # end-of-statement is exactly as legal as one at end-of-file (both
+        # already work — `participant A-` at EOF gives `"A-"`), and mmdc
+        # accepts `participant A-` followed by more statements the same
+        # way. The general gate still stops an ordinary character at a
+        # newline, so a name still cannot span multiple lines.
+        rule(:actor_char) do
+          actor_stop.absent? >>
+            (match['^+<-'] |
+              (str('-') >>
+                (str('-') | arrow_base | colon | comma | semicolon |
+                  str('%%') | alias_keyword | str('@{')).absent?))
+        end
+
+        # An arrow-tail character cannot open a name: `A->)B` is a bad
+        # arrow, not a message into an actor called `)B`. `/` joins the
+        # same set — it opens three reversed-arrow spellings (`/|-`,
+        # `/|--`, `//-`, `//--`), so `A->>/B` is a bad arrow rather than a
+        # message to `/B`; measured, mermaid rejects it there while
+        # accepting `/` elsewhere in a name.
+        rule(:actor_lead) { match[')|>/'].absent? >> actor_char }
+
+        rule(:actor_name) { actor_lead >> actor_char.repeat }
+
+        # `actor_name` above is shared by every OTHER actor reference
+        # (notes, activate/deactivate) and stays untouched. Declarations
+        # and message endpoints get their own rules below: mermaid's real
+        # grammar treats the two very differently, and forcing one token
+        # to cover both is what created phantom actors and rejected valid
+        # input in three places at once (measured against mermaid
+        # 11.16.1's own parser and lexer directly).
+        #
+        # A declaration has no arrow next to it, so there is nothing for
+        # a `+`, a `-` run, or a leading `/` to be ambiguous with —
+        # `actor_char`'s bans on those exist only to protect a message's
+        # arrow and activation-suffix syntax. Measured: `participant
+        # A+B`, `participant /B`, `participant )B`, `participant |B` and
+        # `participant A--B` all succeed with those literal ids; only `<`
+        # and `>` are ever rejected.
+        rule(:declaration_stop) do
+          match['<>'] | colon | comma | semicolon | str('%%') |
+            alias_keyword | str('@{') | newline
+        end
+
+        rule(:declaration_char) { declaration_stop.absent? >> any }
+
+        rule(:declaration_name) { declaration_char.repeat(1) }
+
+        # A message endpoint sits next to an arrow, so it keeps
+        # `actor_char`'s arrow-safety, but two of its restrictions are
+        # wrong for a message specifically:
+        #
+        # - `alias_keyword` must NOT stop a message name. Measured: `A as
+        #   Z->>B: m` and `A->>B as Z: m` both parse in mermaid with `as`
+        #   as ordinary text — ` as ` only splits id from label inside a
+        #   `participant`/`actor` statement, never inside a message.
+        # - `(` and `)` must stop a message name instead of joining it.
+        #   Unlike a declaration's literal `Alice ()`, a `()` touching a
+        #   message endpoint is mermaid's own central-connection
+        #   decoration (jison terminal `()`, `LINETYPE.CENTRAL_CONNECTION`
+        #   /`_REVERSE`/`_DUAL`) and never becomes part of the actor's
+        #   identity: `A ()->>B: m` and `A->>() B: m` both resolve to the
+        #   two declared actors `A`/`B`, not to phantom actors `A ()` /
+        #   `() B`.
+        rule(:message_actor_stop) do
+          arrow_base | colon | comma | semicolon | str('%%') |
+            str('@{') | lparen | rparen | newline
+        end
+
+        rule(:message_actor_char) do
+          message_actor_stop.absent? >>
+            (match['^+<()-'] |
+              (str('-') >> (str('-') | message_actor_stop).absent?))
+        end
+
+        rule(:message_actor_lead) do
+          match[')|>/'].absent? >> message_actor_char
+        end
+
+        rule(:message_actor_name) do
+          message_actor_lead >> message_actor_char.repeat
+        end
+
+        # The decoration is parsed and discarded, not modeled — Sirena
+        # does not draw the central-connection marker, so only the
+        # phantom-actor bug needs closing here. No embedded whitespace
+        # rule of its own: the message rule wraps it in `space?` on both
+        # sides, matching jison's `()` token lexing in the
+        # whitespace-skipping INITIAL state (`A()->>B` and `A ()->>B`
+        # are both legal).
+        rule(:central_connection) { str('()') }
+
+        # Shape metadata (`@{"type":"boundary"}`) is parsed and discarded,
+        # not validated as JSON — a nested `{...}` on one line still ends
+        # the payload at its first `}` (no corpus case has one). Bounded
+        # to one line — `newline.absent?` is load-bearing, not tidiness:
+        # an unclosed `@{` would otherwise scan into a later statement's
+        # closing brace and silently discard everything between, rather
+        # than raising. `repeat(1)`, not `repeat`: mermaid rejects an
+        # empty `@{}`, so the payload must not be empty either.
+        rule(:shape_metadata) do
+          str('@{') >>
+            (str('}').absent? >> newline.absent? >> any).repeat(1) >>
+            str('}')
+        end
+
         # Participant declarations
         rule(:participant_declaration) do
           str('participant') >> space.repeat(1) >>
-            identifier.as(:id) >> space? >>
+            declaration_name.as(:id) >> shape_metadata.maybe >> space? >>
             (str('as') >> space.repeat(1) >> label.as(:label)).maybe >>
             line_end.as(:participant)
         end
 
         rule(:actor_declaration) do
           str('actor') >> space.repeat(1) >>
-            identifier.as(:id) >> space? >>
+            declaration_name.as(:id) >> shape_metadata.maybe >> space? >>
             (str('as') >> space.repeat(1) >> label.as(:label)).maybe >>
             line_end.as(:actor)
         end
 
         # Messages with arrows (order matters: longest patterns first)
         rule(:message) do
-          identifier.as(:from) >> space? >>
+          message_actor_name.as(:from) >> space? >>
+            central_connection.maybe >> space? >>
             arrow.as(:arrow) >> space? >>
-            identifier.as(:to) >> space? >>
+            central_connection.maybe >> space? >>
+            message_actor_name.as(:to) >> space? >>
             message_text.maybe.as(:text) >>
             line_end
         end
@@ -130,21 +270,25 @@ module Sirena
         end
 
         rule(:note_participants) do
-          identifier.as(:participant) >>
+          actor_name.as(:participant) >>
             (space? >> comma >> space? >>
-             identifier.as(:participant)).repeat
+             actor_name.as(:participant)).repeat
         end
 
-        # Activation/Deactivation commands
+        # Activation/Deactivation commands. Widened to `actor_name` for
+        # construct completeness: an actor name is one construct, and
+        # leaving these two sites on `identifier` would make
+        # `participant 1` parse while `activate 1` failed on the very same
+        # actor.
         rule(:activation_command) do
           str('activate') >> space.repeat(1) >>
-            identifier.as(:activate) >>
+            actor_name.as(:activate) >>
             line_end
         end
 
         rule(:deactivation_command) do
           str('deactivate') >> space.repeat(1) >>
-            identifier.as(:deactivate) >>
+            actor_name.as(:deactivate) >>
             line_end
         end
 
