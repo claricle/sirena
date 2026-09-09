@@ -40,11 +40,13 @@ module Sirena
             # Edge: has from and to
             diagram.edges << create_edge(stmt)
           elsif stmt[:stmt_type]
-            # Check statement type to distinguish group from service
-            if extract_text(stmt[:stmt_type]) == 'group'
+            case extract_text(stmt[:stmt_type])
+            when 'group'
               diagram.groups << create_group(stmt)
-            elsif extract_text(stmt[:stmt_type]) == 'service'
+            when 'service'
               diagram.services << create_service(stmt)
+            when 'junction'
+              diagram.junctions << create_junction(stmt)
             end
           end
         end
@@ -65,6 +67,13 @@ module Sirena
           service.icon = extract_text(data[:icon]) if data[:icon]
           service.group_id = extract_text(data[:group]) if data[:group] && !data[:group].to_s.empty?
           service
+        end
+
+        def create_junction(data)
+          junction = Diagram::ArchitectureDiagram::Junction.new
+          junction.id = extract_text(data[:id]) if data[:id]
+          junction.group_id = extract_text(data[:group]) if data[:group] && !data[:group].to_s.empty?
+          junction
         end
 
         def create_edge(data)

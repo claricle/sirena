@@ -23,6 +23,13 @@ module Sirena
         attribute :group_id, :string
       end
 
+      # Junction (routing point) in architecture diagram. Carries no icon
+      # or label - it exists only so edges can bend between services.
+      class Junction < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :group_id, :string
+      end
+
       # Edge (relationship) between services
       class Edge < Lutaml::Model::Serializable
         attribute :from_id, :string
@@ -37,6 +44,7 @@ module Sirena
       attribute :acc_descr, :string
       attribute :groups, Group, collection: true, default: -> { [] }
       attribute :services, Service, collection: true, default: -> { [] }
+      attribute :junctions, Junction, collection: true, default: -> { [] }
       attribute :edges, Edge, collection: true, default: -> { [] }
 
       # Returns the diagram type identifier.
