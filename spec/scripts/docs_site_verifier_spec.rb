@@ -1,0 +1,529 @@
+# frozen_string_literal: true
+
+require 'tmpdir'
+require 'fileutils'
+require 'yaml'
+require_relative '../../scripts/verify_docs_site'
+
+# Defined outside the RSpec.describe block deliberately: RuboCop's
+# Lint/ConstantDefinitionInBlock autocorrect turns a block-level constant
+# into a block-LOCAL variable, and dev.md documents that autocorrect
+# silently making a later example's own assignment shadow the "constant"
+# instead of raising. Keeping these at file scope avoids the hazard rather
+# than relying on nobody running `rubocop -a` on this file later.
+DOCS_SITE_VERIFIER_DEFAULT_THEME = 'just-the-docs'
+DOCS_SITE_VERIFIER_DEFAULT_BASEURL = '/sirena'
+
+RSpec.describe Sirena::DocsSiteVerifier do
+  # -- fixture builders -------------------------------------------------
+  # `def`s, not `let`s: every one takes arguments (rspec.rubystyle.guide has
+  # no rule against this; `let` has no arity, see dev.md's RSpec `let` note).
+
+  def write_config(docs_dir, overrides = {})
+    config = {
+      'theme' => DOCS_SITE_VERIFIER_DEFAULT_THEME,
+      'baseurl' => DOCS_SITE_VERIFIER_DEFAULT_BASEURL,
+      'search_enabled' => true,
+      'include' => ['_diagram_types'],
+      'collections' => {
+        'diagram_types' => { 'permalink' => '/:collection/:path/' },
+      },
+    }.merge(overrides)
+    File.write(File.join(docs_dir, '_config.yml'), YAML.dump(config))
+  end
+
+  def write_source(docs_dir, relative)
+    path = File.join(docs_dir, '_diagram_types', "#{relative}.adoc")
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "= #{File.basename(relative)}\n\nplaceholder\n")
+  end
+
+  def write_page(site_dir, relative_html_path, html)
+    path = File.join(site_dir, relative_html_path)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, html)
+  end
+
+  def write_asset(site_dir, relative_path, content = '/* asset */')
+    path = File.join(site_dir, relative_path)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, content)
+  end
+
+  # A fully valid rendered page: theme stylesheet + layout marker + a
+  # recognized Asciidoctor block marker. Every knob defaults to the
+  # correct value so a test overriding exactly one produces exactly one
+  # failure.
+  def page_html(theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL,
+                 marker: 'paragraph', layout_marker: 'main-content-wrap', stylesheet: true, extra: {})
+    stylesheet_tag = stylesheet ? %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">) : ''
+    script_tag = extra[:script] ? %(<script src="#{extra[:script]}"></script>) : ''
+    link_tag = extra[:link] ? %(<link rel="#{extra[:link][:rel]}" href="#{extra[:link][:href]}">) : ''
+    anchor_tag = extra[:dangling_anchor] ? %(<a href="#{baseurl}/does-not-exist-anywhere">x</a>) : ''
+    <<~HTML
+      <html><head>#{stylesheet_tag}#{link_tag}</head>
+      <body>
+        <div class="#{layout_marker}">
+          #{script_tag}
+          <div class="#{marker}"><p>hi</p></div>
+          #{anchor_tag}
+        </div>
+      </body></html>
+    HTML
+  end
+
+  # Builds a docs_dir/site_dir pair with one diagram source ("mindmap")
+  # rendered, correctly, at both the collection path and the include path,
+  # plus the theme asset it references. Every other example starts from
+  # this and breaks exactly one thing.
+  def build_valid_site(tmp, config_overrides: {})
+    docs_dir = File.join(tmp, 'docs')
+    site_dir = File.join(docs_dir, '_site')
+    FileUtils.mkdir_p(docs_dir)
+
+    write_config(docs_dir, config_overrides)
+    write_source(docs_dir, 'mindmap')
+    write_page(site_dir, 'diagram_types/mindmap/index.html', page_html)
+    write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+    write_asset(site_dir, "assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css")
+    write_asset(site_dir, 'assets/js/search-data.json')
+
+    [docs_dir, site_dir]
+  end
+
+  def verifier_for(docs_dir, site_dir, baseurl: nil)
+    described_class.new(docs_dir: docs_dir, site_dir: site_dir, baseurl: baseurl)
+  end
+
+  # ----------------------------------------------------------------------
+  # Example 1 — green control. Also, per the plan, the dangling
+  # site-absolute <a href> doubles as R23's detector: if the verifier ever
+  # started collecting anchor refs, this example alone would catch it.
+  it 'reports no failures for a complete site, and does not collect a dangling <a href>' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 2 — R3
+  it 'names the source and path when the collection-path page is absent' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.rm_rf(File.join(site_dir, 'diagram_types'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html'
+      )
+    end
+  end
+
+  # Example 3 — R4
+  it 'names the source and path when the include-path page is absent and include: names _diagram_types' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.rm_rf(File.join(site_dir, '_diagram_types'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html'
+      )
+    end
+  end
+
+  # Example 4 — R5
+  it 'reports no failures when include: omits _diagram_types and _site has no include-path copy' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'include' => [] })
+      FileUtils.rm_rf(File.join(site_dir, '_diagram_types'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 5 — R6
+  it 'requires a nested source at both nested paths' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, 'examples/flowchart-examples')
+      write_page(site_dir, 'diagram_types/examples/flowchart-examples/index.html', page_html)
+      write_page(site_dir, '_diagram_types/examples/flowchart-examples/index.html', page_html)
+      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/examples'))
+      FileUtils.rm_rf(File.join(site_dir, '_diagram_types/examples'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
+          'diagram_types/examples/flowchart-examples/index.html',
+        'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
+          '_diagram_types/examples/flowchart-examples/index.html'
+      )
+    end
+  end
+
+  # Example 6 — R7
+  it 'requires index.adoc at diagram_types/index/index.html and _diagram_types/index.html' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, 'index')
+      write_page(site_dir, 'diagram_types/index/index.html', page_html)
+      write_page(site_dir, '_diagram_types/index.html', page_html)
+      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/index'))
+      FileUtils.rm(File.join(site_dir, '_diagram_types/index.html'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/index.adoc missing at diagram_types/index/index.html',
+        'manifest: _diagram_types/index.adoc missing at _diagram_types/index.html'
+      )
+    end
+  end
+
+  # Example 7 — R8. Strip the layout marker while keeping the stylesheet
+  # links, proving R8 is not a duplicate of R9.
+  it 'names the page lacking the layout marker while its theme stylesheet stays intact' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(layout_marker: 'main-content-wrapX'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"'
+      )
+    end
+  end
+
+  # Example 8 — R9. Strip the stylesheet while keeping the layout marker
+  # and a theme-named <script src>, so an implementation reading R9 as
+  # "any ref containing the theme name" is defeated.
+  it 'names the page linking no theme stylesheet while the layout marker and a theme-named script stay' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(stylesheet: false, extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}.js" })
+      )
+      write_asset(site_dir, "assets/js/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}.js")
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        "layout: diagram_types/mindmap/index.html links no stylesheet naming theme #{DOCS_SITE_VERIFIER_DEFAULT_THEME.inspect}"
+      )
+    end
+  end
+
+  # Example 9 — R10. theme: is "pico" while the page links just-the-docs
+  # CSS, so a hardcoded "just-the-docs" string cannot pass by accident.
+  it 'reports a page linking only just-the-docs CSS when theme: is pico' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => 'pico' })
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "pico"',
+        'layout: _diagram_types/mindmap/index.html links no stylesheet naming theme "pico"'
+      )
+    end
+  end
+
+  # Example 10 — R11. A2 is site-wide: a non-diagram page missing the
+  # stylesheet is reported too.
+  it 'reports a non-diagram page missing the theme stylesheet' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'pages/comparison/index.html', page_html(stylesheet: false))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'layout: pages/comparison/index.html links no stylesheet naming theme "just-the-docs"'
+      )
+    end
+  end
+
+  # Example 11 — R12
+  it 'names the diagram page carrying no recognized block marker' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # Example 12 — R13. Three pages, each a shape a hand-picked marker set
+  # got wrong in an earlier revision: table-only, list-only, and
+  # examples.rake's own default-metadata output (listing + image, no
+  # paragraph). None exists in today's real _site.
+  it 'passes a table-only page, a list-only page, and examples.rake default-metadata output' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_source(docs_dir, 'table-page')
+      write_source(docs_dir, 'list-page')
+      write_source(docs_dir, 'examples-metadata-page')
+
+      table_body = '<table class="tableblock"><tr><td>x</td></tr></table>'
+      write_page(site_dir, 'diagram_types/table-page/index.html', page_html_with_body(table_body))
+      write_page(site_dir, '_diagram_types/table-page/index.html', page_html_with_body(table_body))
+      write_page(site_dir, 'diagram_types/list-page/index.html', page_html_with_body('<ul class="ulist"><li>x</li></ul>'))
+      write_page(site_dir, '_diagram_types/list-page/index.html', page_html_with_body('<ul class="ulist"><li>x</li></ul>'))
+      write_page(
+        site_dir, 'diagram_types/examples-metadata-page/index.html',
+        page_html_with_body('<div class="listingblock">x</div><div class="imageblock">x</div>')
+      )
+      write_page(
+        site_dir, '_diagram_types/examples-metadata-page/index.html',
+        page_html_with_body('<div class="listingblock">x</div><div class="imageblock">x</div>')
+      )
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 13 — R14, lead-role form only.
+  it 'accepts a page whose only marked div is class="paragraph lead"' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      body = '<div class="paragraph lead"><p>hi</p></div>'
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html_with_body(body))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html_with_body(body))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 14 — R14, anchored form only.
+  it 'accepts a page whose only marked div is <div id="..." class="paragraph">' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      body = '<div id="example-metadata" class="paragraph"><p>hi</p></div>'
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html_with_body(body))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html_with_body(body))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 15 — R15
+  it 'reports a page in the underscore tree missing every marker' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # Example 16 — R16
+  it 'does not report a non-diagram page missing every marker' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'pages/comparison/index.html', page_html(marker: 'not-a-real-marker'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 17 — R17, "collected from every page". The unique missing
+  # asset sits on the page that sorts LAST under Dir.glob's sorted order,
+  # so a first-page-only implementation would miss it.
+  it 'reports a unique missing asset referenced only by the last-traversed non-diagram page' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      # 'pages/zzz-last' sorts after 'diagram_types/...' and '_diagram_types/...'
+      write_page(
+        site_dir, 'pages/zzz-last/index.html',
+        page_html(extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/only-here.js" })
+      )
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/only-here.js (referenced by pages/zzz-last/index.html) " \
+          'does not resolve to /assets/js/only-here.js'
+      )
+    end
+  end
+
+  # Example 18 — R17, "resolved once". Three pages share one missing
+  # asset; it must be reported exactly once.
+  it 'reports one missing asset referenced by three pages exactly once' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      missing_script = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/shared-missing.js"
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { script: missing_script }))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(extra: { script: missing_script }))
+      write_page(site_dir, 'pages/other/index.html', page_html(extra: { script: missing_script }))
+
+      expect(verifier_for(docs_dir, site_dir).failures.length).to eq(1)
+      expect(verifier_for(docs_dir, site_dir).failures.first).to include('shared-missing.js')
+    end
+  end
+
+  # Example 19 — R18. A supplied baseurl different from the config's is
+  # what gets stripped.
+  it 'strips the supplied --baseurl, not the config baseurl, when resolving refs' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(baseurl: '/other-base'))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(baseurl: '/other-base'))
+      write_asset(site_dir, 'assets/css/just-the-docs-default.css')
+
+      failures = verifier_for(docs_dir, site_dir, baseurl: '/other-base').failures
+      expect(failures).to eq([])
+    end
+  end
+
+  # Example 20 — R19
+  it 'reports a missing asset referenced only by a link[rel=stylesheet]' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { link: { rel: 'stylesheet', href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css" } })
+      )
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css (referenced by diagram_types/mindmap/index.html) " \
+          'does not resolve to /assets/css/missing.css'
+      )
+    end
+  end
+
+  # Example 21 — R20
+  it 'reports a missing asset referenced only by a script[src]' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js" })
+      )
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js (referenced by diagram_types/mindmap/index.html) " \
+          'does not resolve to /assets/js/missing.js'
+      )
+    end
+  end
+
+  # Example 22 — R21, external
+  it 'does not report an external https stylesheet as missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { link: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/x.css' } })
+      )
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 23 — R21, relative
+  it 'does not report a relative stylesheet as missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { link: { rel: 'stylesheet', href: 'assets/css/relative.css' } })
+      )
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 24 — R22
+  it 'does not report a protocol-relative stylesheet as missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { link: { rel: 'stylesheet', href: '//cdn.example.com/x.css' } })
+      )
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 25 — R23, anchor
+  it 'does not report a dangling site-absolute <a href> as a missing asset' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 26 — R23, non-stylesheet <link>. Site-absolute, unlike a real
+  # canonical link, so the site-absolute filter cannot mask this the way
+  # it masks real rel="canonical" hrefs.
+  it 'does not report a dangling site-absolute link[rel=preload] as a missing asset' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_page(
+        site_dir, 'diagram_types/mindmap/index.html',
+        page_html(extra: { link: { rel: 'preload', href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/does-not-exist.woff2" } })
+      )
+      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # Example 27 — R24
+  it 'requires the search index when search_enabled is true, and not when false' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.rm(File.join(site_dir, 'assets/js/search-data.json'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'asset: search index "assets/js/search-data.json" missing'
+      )
+
+      docs_dir2, site_dir2 = build_valid_site(File.join(tmp, 'no-search'), config_overrides: { 'search_enabled' => false })
+      FileUtils.rm(File.join(site_dir2, 'assets/js/search-data.json'))
+
+      expect(verifier_for(docs_dir2, site_dir2).failures).to eq([])
+    end
+  end
+
+  # Example 28 — R1
+  it 'refuses, naming the template found, when the collection permalink differs' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(
+        tmp, config_overrides: { 'collections' => { 'diagram_types' => { 'permalink' => '/:path/' } } }
+      )
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'config: collections.diagram_types.permalink is "/:path/", expected "/:collection/:path/"'
+      )
+    end
+  end
+
+  # Example 29 — R2
+  it 'refuses when theme: is absent or empty' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => '' })
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'config: theme is absent or empty'
+      )
+    end
+  end
+
+  def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
+    stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
+    <<~HTML
+      <html><head>#{stylesheet_tag}</head>
+      <body>
+        <div class="main-content-wrap">
+          #{body_html}
+        </div>
+      </body></html>
+    HTML
+  end
+end
