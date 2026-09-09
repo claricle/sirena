@@ -208,18 +208,32 @@ module Sirena
         y + LINE_HEIGHT
       end
 
+      # Every entity carries an implicit `default` class ahead of whatever
+      # it was explicitly assigned — verified against mermaid's own db,
+      # whose `cssClasses` opens with the literal string "default" for
+      # every entity, assigned or not (`"default"`, `"default a"`,
+      # `"default a b a"`). A `classDef default` is stored like any other
+      # name (grammar and process_class_def need no change for this); this
+      # is the one place it has to be applied even when nothing assigned it.
+      DEFAULT_CLASS = 'default'
+      private_constant :DEFAULT_CLASS
+
       # Resolves the style properties an entity's classes apply, by name and
       # not by position — an index-keyed lookup would silently swap two
       # entities' colours the moment their class lists diverge in length.
       # Classes merge left to right: a later class overrides an earlier one
       # only on a property both declare, and each contributes any property
-      # the other did not.
+      # the other did not. NOT deduped upstream, so a repeated assignment
+      # moves that class to the end and lets it win a later conflict —
+      # verified against mermaid: `CAR:::a,b` then `CAR:::a` resolves
+      # `fill:red` (the trailing "a"), not `fill:blue`.
       #
       # @param node [Hash] the graph node, holding metadata[:classes]
       # @param class_defs [Hash{String => String}] declared classDef styles
       # @return [Hash{String => String}] resolved property => value
       def entity_styles(node, class_defs)
-        classes = (node[:metadata] || {})[:classes] || []
+        assigned = (node[:metadata] || {})[:classes] || []
+        classes = [DEFAULT_CLASS, *assigned]
 
         classes.each_with_object({}) do |class_name, styles|
           declaration = class_defs[class_name]

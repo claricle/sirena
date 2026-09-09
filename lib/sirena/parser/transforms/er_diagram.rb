@@ -157,14 +157,17 @@ module Sirena
         end
 
         # Appends rather than replaces, so `CAR:::a,b` and `CAR:::a` on one
-        # line plus `CAR:::b` on the next reach the same state. Deduped so a
-        # repeated assignment cannot make the resolved style order-sensitive.
+        # line plus `CAR:::b` on the next reach the same state. NOT deduped:
+        # verified against mermaid's own db that a repeated assignment stays
+        # in `cssClasses` (`"default a b a"` for `CAR:::a,b` then `CAR:::a`),
+        # so the resolved style IS order-sensitive — a repeat moves that
+        # class to the end and lets it win a later conflict. Deduping here
+        # was wrong; see the renderer's entity_styles for where the order is
+        # applied.
         def add_entity_classes(entity, slice)
           return if slice.nil?
 
-          split_class_names(slice).each do |name|
-            entity.classes << name unless entity.classes.include?(name)
-          end
+          entity.classes.concat(split_class_names(slice))
         end
 
         def split_class_names(slice)

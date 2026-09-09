@@ -399,6 +399,49 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
 
         expect(rect_for(svg, 'CAR').fill).to eq('#f96:extra')
       end
+
+      # Verified against mermaid's own db: every entity's cssClasses opens
+      # with the literal "default", assigned or not.
+      it 'applies the implicit default class even with no assignment (C11)' do
+        default_graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR')],
+          edges: [],
+          class_defs: { 'default' => 'fill:red' }
+        }
+        svg = renderer.render(default_graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
+
+      it 'lets an explicit class override a conflicting default property (C12)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'default' => 'fill:red,stroke:green', 'a' => 'fill:blue' }
+        }
+        svg = renderer.render(graph)
+        rect = rect_for(svg, 'CAR')
+
+        expect(rect.fill).to eq('blue')
+        expect(rect.stroke).to eq('green')
+      end
+
+      # Verified against mermaid's own db: cssClasses is "default a b a" for
+      # `CAR:::a,b` then `CAR:::a` — the repeat is NOT deduped, so it moves
+      # "a" to the end and lets it win over the intervening "b".
+      it 'lets a later duplicate assignment win over an intervening class (C13)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: %w[a b a])],
+          edges: [],
+          class_defs: { 'a' => 'fill:red', 'b' => 'fill:blue' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
     end
   end
 end

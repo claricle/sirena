@@ -203,6 +203,41 @@ RSpec.describe 'ErDiagram Integration' do
       expect(rect.attributes['fill']).to eq('red')
       expect(rect.attributes['stroke']).to eq('blue')
     end
+
+    # Verified against mermaid's own db: cssClasses is "default a b a" —
+    # the trailing repeat of "a" wins on the conflicting fill.
+    it 'lets a repeated class assignment win in source order (D4)' do
+      source = <<~MERMAID
+        erDiagram
+        CAR:::a,b
+        CAR:::a
+        classDef a fill:red
+        classDef b fill:blue
+      MERMAID
+
+      svg = engine.render(source)
+      doc = REXML::Document.new(svg)
+      rect = doc.get_elements("//*[@id='entity-CAR']//rect").first
+
+      expect(rect.attributes['fill']).to eq('red')
+    end
+
+    # Verified against mermaid's own db: cssClasses is "default" for an
+    # entity with no explicit assignment at all — a declared classDef
+    # default applies to it anyway.
+    it 'applies a declared classDef default with no explicit assignment (D5)' do
+      source = <<~MERMAID
+        erDiagram
+        CAR
+        classDef default fill:red
+      MERMAID
+
+      svg = engine.render(source)
+      doc = REXML::Document.new(svg)
+      rect = doc.get_elements("//*[@id='entity-CAR']//rect").first
+
+      expect(rect.attributes['fill']).to eq('red')
+    end
   end
 
   describe 'DiagramRegistry integration' do

@@ -201,10 +201,14 @@ RSpec.describe Sirena::Parser::ErDiagramParser do
       expect(diagram.class_defs).to eq('a' => 'fill:#f9f', 'b' => 'fill:#f9f')
     end
 
-    it 'does not duplicate a repeated assignment (A12)' do
+    it 'keeps a repeated assignment in source order, not deduped (A12)' do
+      # Verified against mermaid's own db: cssClasses is "default a a" for
+      # this source, not "default a" — a repeat is NOT collapsed. Whether
+      # that matters is a rendering question (a later duplicate can win a
+      # conflict); the parser's job is only to keep what was written.
       diagram = parser.parse("erDiagram\nCAR:::a\nCAR:::a")
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[a])
+      expect(diagram.find_entity('CAR').classes).to eq(%w[a a])
     end
 
     it 'adds rather than replaces on a second entity-path assignment (A13)' do
