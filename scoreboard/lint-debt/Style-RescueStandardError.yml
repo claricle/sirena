@@ -1,0 +1,9 @@
+---
+cop: Style/RescueStandardError
+rows:
+- file: lib/sirena/commands/batch.rb
+  count: 1
+- file: lib/tasks/examples.rake
+  count: 2
+- file: lib/tasks/generate_mermaid_fixtures.rake
+  count: 2

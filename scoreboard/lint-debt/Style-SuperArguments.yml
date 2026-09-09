@@ -1,0 +1,5 @@
+---
+cop: Style/SuperArguments
+rows:
+- file: lib/sirena/svg/group.rb
+  count: 1

@@ -1,0 +1,45 @@
+---
+cop: Naming/MethodParameterName
+rows:
+- file: lib/sirena/layout/fallback.rb
+  count: 2
+- file: lib/sirena/renderer/block.rb
+  count: 6
+- file: lib/sirena/renderer/c4.rb
+  count: 10
+- file: lib/sirena/renderer/class_diagram.rb
+  count: 8
+- file: lib/sirena/renderer/edge_router.rb
+  count: 4
+- file: lib/sirena/renderer/er_diagram.rb
+  count: 2
+- file: lib/sirena/renderer/flowchart.rb
+  count: 16
+- file: lib/sirena/renderer/gantt.rb
+  count: 4
+- file: lib/sirena/renderer/git_graph.rb
+  count: 4
+- file: lib/sirena/renderer/kanban.rb
+  count: 6
+- file: lib/sirena/renderer/mindmap.rb
+  count: 16
+- file: lib/sirena/renderer/pie.rb
+  count: 2
+- file: lib/sirena/renderer/quadrant.rb
+  count: 2
+- file: lib/sirena/renderer/requirement.rb
+  count: 8
+- file: lib/sirena/renderer/sankey.rb
+  count: 8
+- file: lib/sirena/renderer/sequence.rb
+  count: 19
+- file: lib/sirena/renderer/state_diagram.rb
+  count: 14
+- file: lib/sirena/renderer/timeline.rb
+  count: 9
+- file: lib/sirena/transform/mindmap.rb
+  count: 1
+- file: lib/sirena/transform/treemap.rb
+  count: 2
+- file: spec/sirena/renderer/flowchart_cluster_spec.rb
+  count: 16

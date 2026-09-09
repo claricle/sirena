@@ -1,0 +1,9 @@
+---
+cop: Layout/HashAlignment
+rows:
+- file: lib/sirena/diagram/c4.rb
+  count: 1
+- file: lib/sirena/diagram/sankey.rb
+  count: 2
+- file: lib/sirena/diagram/timeline.rb
+  count: 3

@@ -1,0 +1,5 @@
+---
+cop: RSpec/SpecFilePathSuffix
+rows:
+- file: spec/benchmarks/flowchart_subgraph_benchmark.rb
+  count: 1

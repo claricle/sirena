@@ -1,0 +1,5 @@
+---
+cop: Naming/PredicateMethod
+rows:
+- file: lib/sirena/transform/gantt.rb
+  count: 1

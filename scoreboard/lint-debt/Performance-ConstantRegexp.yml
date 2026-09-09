@@ -1,0 +1,5 @@
+---
+cop: Performance/ConstantRegexp
+rows:
+- file: spec/sirena/cli_spec.rb
+  count: 1

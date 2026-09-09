@@ -1,0 +1,3 @@
+module Fixture
+  VALUE = 'debt'.freeze
+end

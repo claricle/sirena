@@ -1,0 +1,13 @@
+---
+cop: Layout/EmptyLinesAroundClassBody
+rows:
+- file: lib/sirena/parser/base.rb
+  count: 1
+- file: lib/sirena/parser/grammars/git_graph.rb
+  count: 1
+- file: lib/sirena/parser/grammars/packet.rb
+  count: 1
+- file: lib/sirena/parser/grammars/radar.rb
+  count: 1
+- file: lib/sirena/parser/grammars/xy_chart.rb
+  count: 1

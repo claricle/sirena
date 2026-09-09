@@ -1,0 +1,7 @@
+---
+cop: Layout/FirstHashElementIndentation
+rows:
+- file: lib/sirena/parser/transforms/treemap.rb
+  count: 2
+- file: scripts/extract_mermaid_tests.rb
+  count: 2

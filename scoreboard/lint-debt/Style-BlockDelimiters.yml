@@ -1,0 +1,5 @@
+---
+cop: Style/BlockDelimiters
+rows:
+- file: lib/tasks/generate_mermaid_fixtures.rake
+  count: 2
