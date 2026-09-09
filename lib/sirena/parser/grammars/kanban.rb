@@ -37,16 +37,20 @@ module Sirena
         #
         # Named alternation branches rather than folding the bracket label
         # into one rule as a `.maybe`.
-        # Both parse today's inputs identically, so this is about ordering:
         # `bare_item` is the most permissive branch and must stay last, or a
         # later branch that also starts with an identifier would never be
-        # reached. A branch keyed on something an identifier cannot start -
-        # `:::hot`, say - stays reachable either way. Naming the branches
-        # keeps that order explicit rather than implied, which is how the
-        # other grammars in this directory are written - see `mindmap.rb`'s
-        # `node` rule.
+        # reached. `shaped_item` and `labelled_item` both require a specific
+        # delimiter (`(` or `[`) right after the id, so their relative order
+        # does not matter - Parslet fails one and tries the next without
+        # consuming input. `unlabelled_shaped_item` opens on `(`, something
+        # an identifier can never start with, so it stays reachable
+        # wherever it sits. Naming the branches keeps the order explicit
+        # rather than implied, which is how the other grammars in this
+        # directory are written - see `mindmap.rb`'s `node` rule.
         rule(:item) do
-          reserved_token.absent? >> (labelled_item | bare_item) >> metadata.maybe
+          reserved_token.absent? >>
+            (labelled_item | shaped_item | unlabelled_shaped_item | bare_item) >>
+            metadata.maybe
         end
 
         # `kanban` is the diagram's own header token, and mermaid reserves it
@@ -74,6 +78,29 @@ module Sirena
             lbracket >>
             match('[^\]]').repeat(1).as(:text) >>
             rbracket
+        end
+
+        # Round shape with an id: id(text) - mermaid's rounded-node syntax,
+        # the same shorthand flowchart's `shape_rounded` parses. Sirena's
+        # kanban renderer always draws a rounded rect for every item
+        # regardless of source syntax (see Renderer::Kanban#render_column
+        # and #render_card), so the delimiter is parsed only to recover the
+        # label - no separate shape field is modeled, matching how the
+        # bracket label above works.
+        rule(:shaped_item) do
+          identifier.as(:id) >>
+            lparen >>
+            match('[^)]').repeat(1).as(:text) >>
+            rparen
+        end
+
+        # Round shape with no id: (text). Mermaid auto-assigns an id here;
+        # BoardBuilder does too, deterministically - see
+        # Transforms::Kanban::BoardBuilder#resolve_id.
+        rule(:unlabelled_shaped_item) do
+          lparen >>
+            match('[^)]').repeat(1).as(:text) >>
+            rparen
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label

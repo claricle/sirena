@@ -230,15 +230,11 @@ RSpec.describe Sirena::Parser::KanbanParser do
     context 'with constructs at the bare node boundary' do
       # Two directions on purpose: the accept half dies if the bare
       # alternative is removed, the refuse half dies if it is widened past an
-      # identifier. Round shapes and directives belong to later buckets and
+      # identifier. Round shapes are covered below (corpus 017, 022, 023,
+      # 031); directives (::icon, :::class) belong to a later bucket and
       # must keep failing rather than being swallowed as literal labels.
       it 'accepts a bare identifier' do
         expect(parser.parse("kanban\n  root\n").columns.map(&:id)).to eq(['root'])
-      end
-
-      it 'still refuses a round-bracket shape' do
-        expect { parser.parse("kanban\n  root(Root)\n") }
-          .to raise_error(Sirena::Parser::ParseError)
       end
 
       it 'still refuses a class directive' do
@@ -256,6 +252,58 @@ RSpec.describe Sirena::Parser::KanbanParser do
               .to raise_error(Sirena::Parser::ParseError), line
           end
         end
+      end
+    end
+
+    context 'with a round shape and no id (corpus 017)' do
+      let(:source) { "kanban\n    (root)\n" }
+
+      it 'auto-assigns an id and titles the column from the shape text' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.size).to eq(1)
+        expect(diagram.columns.first.id).to eq('kanban-1')
+        expect(diagram.columns.first.title).to eq('root')
+      end
+
+      it 'assigns the next id deterministically for a second unlabelled shape' do
+        diagram = parser.parse("kanban\n  (Col A)\n  (Col B)\n")
+        expect(diagram.columns.map(&:id)).to eq(%w[kanban-1 kanban-2])
+        expect(diagram.columns.map(&:title)).to eq(['Col A', 'Col B'])
+      end
+    end
+
+    context 'with an id and a round shape on a child (corpus 022, 023)' do
+      # 022 indents the root; 023 does not. Indentation of the root line
+      # never decides which items become columns - only the MINIMUM
+      # indentation among all items does - so both parse identically.
+      {
+        '022' => "kanban\n    root\n      theId(child1)\n",
+        '023' => "kanban\nroot\n      theId(child1)\n"
+      }.each do |corpus_id, source|
+        it "accepts the shaped child (corpus #{corpus_id})" do
+          diagram = parser.parse(source)
+          aggregate_failures do
+            expect(diagram.columns.map(&:id)).to eq(['root']), corpus_id
+            card = diagram.columns.first.cards.first
+            expect(card.id).to eq('theId'), corpus_id
+            expect(card.text).to eq('child1'), corpus_id
+          end
+        end
+      end
+    end
+
+    context 'with round-shaped items and a blank row together (corpus 031)' do
+      let(:source) do
+        "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"
+      end
+
+      it 'keeps every card across the blank row' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.map(&:id)).to eq(['root'])
+        column = diagram.columns.first
+        expect(column.title).to eq('Root')
+        expect(column.cards.map(&:id)).to eq(%w[Child a b])
+        expect(column.cards.map(&:text)).to eq(['Child', 'a', 'New Stuff'])
       end
     end
 
