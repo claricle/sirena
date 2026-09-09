@@ -13,6 +13,7 @@ module Sirena
       DEFAULT_GROUP_PADDING = 30
       DEFAULT_SPACING = 40
       DEFAULT_ICON_SIZE = 24
+      DEFAULT_JUNCTION_SIZE = 12
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -27,15 +28,17 @@ module Sirena
 
         # Calculate positions
         service_positions = position_services(diagram, hierarchy)
+        junction_positions = position_junctions(diagram, hierarchy)
         group_bounds = calculate_group_bounds(diagram, service_positions)
-        edge_positions = position_edges(diagram, service_positions)
+        edge_positions = position_edges(diagram, service_positions.merge(junction_positions))
 
         {
           services: service_positions,
+          junctions: junction_positions,
           groups: group_bounds,
           edges: edge_positions,
-          width: calculate_total_width(service_positions, group_bounds),
-          height: calculate_total_height(service_positions, group_bounds),
+          width: calculate_total_width(service_positions, junction_positions, group_bounds),
+          height: calculate_total_height(service_positions, junction_positions, group_bounds),
         }
       end
 
@@ -45,6 +48,7 @@ module Sirena
         hierarchy = {
           groups: {},
           services_by_group: {},
+          junctions_by_group: {},
         }
 
         # Map groups
@@ -69,6 +73,13 @@ module Sirena
           group_id = service.group_id || :root
           hierarchy[:services_by_group][group_id] ||= []
           hierarchy[:services_by_group][group_id] << service
+        end
+
+        # Map junctions to groups
+        diagram.junctions.each do |junction|
+          group_id = junction.group_id || :root
+          hierarchy[:junctions_by_group][group_id] ||= []
+          hierarchy[:junctions_by_group][group_id] << junction
         end
 
         hierarchy
@@ -151,6 +162,40 @@ module Sirena
             end
           end
         end
+      end
+
+      # Junctions lay out on their own row-per-group grid, same shape as
+      # position_services but with a fixed small size since a junction has
+      # no label or icon to size against.
+      def position_junctions(diagram, hierarchy)
+        positions = {}
+        current_x = DEFAULT_SPACING
+        current_y = DEFAULT_SPACING
+
+        groups_to_layout = [:root] + diagram.groups.map(&:id)
+
+        groups_to_layout.each do |group_id|
+          junctions = hierarchy[:junctions_by_group][group_id] || []
+          next if junctions.empty?
+
+          junctions.each do |junction|
+            positions[junction.id] = {
+              junction: junction,
+              x: current_x,
+              y: current_y,
+              width: DEFAULT_JUNCTION_SIZE,
+              height: DEFAULT_JUNCTION_SIZE,
+              group_id: group_id,
+            }
+
+            current_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+          end
+
+          current_x = DEFAULT_SPACING
+          current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+        end
+
+        positions
       end
 
       def calculate_service_dimensions(service)
@@ -255,18 +300,20 @@ module Sirena
         end
       end
 
-      def calculate_total_width(service_positions, group_bounds)
+      def calculate_total_width(service_positions, junction_positions, group_bounds)
         max_service_x = service_positions.values.map { |s| s[:x] + s[:width] }.max || 0
+        max_junction_x = junction_positions.values.map { |j| j[:x] + j[:width] }.max || 0
         max_group_x = group_bounds.values.map { |g| g[:x] + g[:width] }.max || 0
 
-        [max_service_x, max_group_x].max + DEFAULT_SPACING
+        [max_service_x, max_junction_x, max_group_x].max + DEFAULT_SPACING
       end
 
-      def calculate_total_height(service_positions, group_bounds)
+      def calculate_total_height(service_positions, junction_positions, group_bounds)
         max_service_y = service_positions.values.map { |s| s[:y] + s[:height] }.max || 0
+        max_junction_y = junction_positions.values.map { |j| j[:y] + j[:height] }.max || 0
         max_group_y = group_bounds.values.map { |g| g[:y] + g[:height] }.max || 0
 
-        [max_service_y, max_group_y].max + DEFAULT_SPACING
+        [max_service_y, max_junction_y, max_group_y].max + DEFAULT_SPACING
       end
     end
   end

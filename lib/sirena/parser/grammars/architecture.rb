@@ -29,9 +29,11 @@ module Sirena
         rule(:statement) do
           title_statement |
           acc_title_statement |
+          acc_descr_block_statement |
           acc_descr_statement |
           group_def |
           service_def |
+          junction_def |
           edge_def
         end
 
@@ -56,6 +58,13 @@ module Sirena
           line_end
         end
 
+        # Accessibility description, multiline block form: accDescr { ... }
+        rule(:acc_descr_block_statement) do
+          str("accDescr") >> space? >> lbrace >>
+          (rbrace.absent? >> any).repeat.as(:acc_descr) >>
+          rbrace >> line_end
+        end
+
         # Group definition
         rule(:group_def) do
           str("group").as(:stmt_type) >> space.repeat(1) >>
@@ -66,12 +75,22 @@ module Sirena
           line_end
         end
 
-        # Service definition
+        # Service definition. Icon and label are both optional - a bare
+        # "service db" with neither is valid architecture-beta syntax.
         rule(:service_def) do
           str("service").as(:stmt_type) >> space.repeat(1) >>
           arch_identifier.as(:id) >>
-          icon_spec >>
-          label_spec >>
+          icon_spec.maybe >>
+          label_spec.maybe >>
+          in_clause.maybe.as(:group) >>
+          line_end
+        end
+
+        # Junction definition - a routing point with no icon or label,
+        # used purely to bend edges between services.
+        rule(:junction_def) do
+          str("junction").as(:stmt_type) >> space.repeat(1) >>
+          arch_identifier.as(:id) >>
           in_clause.maybe.as(:group) >>
           line_end
         end
