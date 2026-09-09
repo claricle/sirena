@@ -121,15 +121,17 @@ module Sirena
       # here a deeply nested document takes the whole host down instead of
       # failing one render.
       #
-      # `&.` rather than `.`: free insurance, not a reachable path. Ruby's
-      # `raise` only leaves `backtrace` nil when the exception was never
-      # actually raised, and anything caught here already went through a
-      # real `raise` -- even `and_raise(instance)` in a stub does, so no
-      # spec can drive `backtrace` to nil at this line without being
-      # vacuous. Measured, not assumed: verified directly against Ruby's
-      # `raise` semantics before writing this comment.
-      raise PipelineError,
-            "Rendering failed: #{e.message}\n#{e.backtrace&.join("\n")}"
+      # The message carries `e.message` only, never `e.backtrace`. A real
+      # stack overflow's backtrace runs to thousands of frames -- measured
+      # at 1,044,280 bytes for one bomb through an unguarded type -- and
+      # embedding that here meant every failure in a batch kept a
+      # megabyte-sized string alive in `BatchCommand`'s error list: the
+      # very structure meant to survive exhaustion re-accumulating it.
+      # Raising inside the rescue that caught `e` chains it onto
+      # `PipelineError` as `cause` automatically, so `e` and its backtrace
+      # are still one `.cause` away for anyone debugging; they are just
+      # not baked into the string every caller of `#message` receives.
+      raise PipelineError, "Rendering failed: #{e.message}"
     end
 
     private
