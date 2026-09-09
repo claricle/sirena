@@ -238,6 +238,23 @@ RSpec.describe 'ErDiagram Integration' do
 
       expect(rect.attributes['fill']).to eq('red')
     end
+
+    # Verified against mermaid's own db (stores "FILL:red" verbatim) and a
+    # real browser (getComputedStyle resolves it to rgb(255, 0, 0) anyway,
+    # since CSS property names are case-insensitive).
+    it 'applies a classDef property regardless of its declared case (D6)' do
+      source = <<~MERMAID
+        erDiagram
+        CAR:::a
+        classDef a FILL:red
+      MERMAID
+
+      svg = engine.render(source)
+      doc = REXML::Document.new(svg)
+      rect = doc.get_elements("//*[@id='entity-CAR']//rect").first
+
+      expect(rect.attributes['fill']).to eq('red')
+    end
   end
 
   describe 'DiagramRegistry integration' do

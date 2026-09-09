@@ -442,6 +442,35 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
 
         expect(rect_for(svg, 'CAR').fill).to eq('red')
       end
+
+      # Verified against mermaid's own db and a real browser: mermaid stores
+      # "FILL:red" verbatim, case untouched, and the browser applies it
+      # anyway (getComputedStyle -> rgb(255, 0, 0)) because CSS property
+      # names are case-insensitive. Sirena has no CSS engine and must fold
+      # the case itself before looking a property up.
+      it 'matches a classDef property name regardless of case (C14)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'FILL:red' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
+
+      it 'merges mixed-case property names from different classes (C15)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: %w[a b])],
+          edges: [],
+          class_defs: { 'a' => 'fill:green', 'b' => 'FILL:red' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
     end
   end
 end

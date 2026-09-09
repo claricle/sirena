@@ -250,15 +250,25 @@ module Sirena
       # the comma split, so failing here would crash a render on
       # mermaid-valid input.
       #
+      # The key is downcased; the value is not. Verified against mermaid's
+      # own db: it stores a style declaration VERBATIM, case untouched
+      # ("FILL:red" stays "FILL:red") — case-insensitive matching is a
+      # property of CSS itself, applied by the browser when it computes
+      # `style="FILL:red !important"`. Sirena has no CSS engine and looks
+      # property names up by literal lowercase key (`styles['fill']`), so
+      # without this the browser and sirena disagree on mermaid-valid input.
+      # Nothing in the CSS property-name spec extends that to values, so
+      # only the key is folded.
+      #
       # @param text [String] raw style text
-      # @return [Hash{String => String}] property => value, both sides
-      #   stripped
+      # @return [Hash{String => String}] property => value, key downcased,
+      #   both sides stripped
       def parse_declaration(text)
         text.split(',').each_with_object({}) do |chunk, styles|
           key, value = chunk.split(':', 2)
           next unless value
 
-          styles[key.strip] = value.strip
+          styles[key.strip.downcase] = value.strip
         end
       end
 
