@@ -116,9 +116,16 @@ module Sirena
     rescue DiagramTypeError
       # Re-raise diagram type errors without wrapping
       raise
-    rescue StandardError => e
+    rescue *EXHAUSTION_ERRORS, StandardError => e
+      # `EXHAUSTION_ERRORS` are not `StandardError`, so without naming them
+      # here a deeply nested document takes the whole host down instead of
+      # failing one render.
+      #
+      # `backtrace` is nil on an exception that was never raised, which a
+      # caller can hand us through a stubbed collaborator; `join` on nil
+      # would turn a reportable failure into a NoMethodError.
       raise PipelineError,
-            "Rendering failed: #{e.message}\n#{e.backtrace.join("\n")}"
+            "Rendering failed: #{e.message}\n#{e.backtrace&.join("\n")}"
     end
 
     private

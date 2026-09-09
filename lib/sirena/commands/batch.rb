@@ -79,7 +79,11 @@ module Sirena
 
           @stats[:success] += 1
           puts "✅"
-        rescue => e
+        rescue *Sirena::EXHAUSTION_ERRORS, StandardError => e
+          # Batch promises to survive a bad file and report it. `File.read`
+          # runs inside this block too, so exhaustion can arrive from
+          # outside the engine's own boundary and has to be named here as
+          # well as there.
           @stats[:failed] += 1
           @stats[:errors] << { file: relative, error: e.message }
           puts "❌ #{e.class.name}"
