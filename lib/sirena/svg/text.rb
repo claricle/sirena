@@ -47,6 +47,7 @@ module Sirena
         map_attribute 'dominant-baseline', to: :dominant_baseline
 
         map_content to: :content
+        map_element 'tspan', to: :tspans
       end
 
       # Override to_xml to include text content.
