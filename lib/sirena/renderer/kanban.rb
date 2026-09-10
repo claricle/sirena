@@ -5,6 +5,7 @@ require_relative "../svg/rect"
 require_relative "../svg/text"
 require_relative "../svg/group"
 require_relative "../svg/line"
+require_relative "markdown_text"
 
 module Sirena
   module Renderer
@@ -21,6 +22,13 @@ module Sirena
     #   renderer = Renderer::Kanban.new(theme: my_theme)
     #   svg = renderer.render(layout)
     class Kanban < Base
+      # Height of one extra rendered line — a card's own hard line break, or
+      # a metadata row. Mirrors Transform::Kanban::EXTRA_LINE_HEIGHT: this
+      # renderer positions elements below a label whose height that constant
+      # already accounts for, so the two must agree.
+      EXTRA_LINE_HEIGHT = 18
+      private_constant :EXTRA_LINE_HEIGHT
+
       # Renders the layout structure to SVG.
       #
       # @param layout [Hash] layout data from Transform::Kanban
@@ -102,7 +110,7 @@ module Sirena
       # @param svg [Svg::Document] SVG document
       # @return [void]
       def render_column_header(column, x, y, svg)
-        header_height = 50
+        header_height = column[:header_height]
 
         # Header background
         header_bg = Svg::Rect.new.tap do |r|
@@ -118,16 +126,20 @@ module Sirena
         svg.add_element(header_bg)
 
         # Header text
+        header_x = x + column[:width] / 2
+
         header_text = Svg::Text.new.tap do |t|
-          t.x = x + column[:width] / 2
+          t.x = header_x
           t.y = y + header_height / 2 + 5
           t.text_anchor = "middle"
           t.fill = "#ffffff"
           t.font_size = (theme_typography(:font_size) || 14).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
           t.font_weight = "bold"
-          t.content = column[:title]
         end
+
+        lines = MarkdownText.parse_lines(column[:title])
+        MarkdownText.assign_markdown_text(header_text, lines, x: header_x, base_font_weight: "bold")
 
         svg.add_element(header_text)
 
@@ -199,11 +211,11 @@ module Sirena
         svg.add_element(card_bg)
 
         # Card text
-        render_card_text(card, x, y, svg)
+        label_line_count = render_card_text(card, x, y, svg)
 
         # Metadata if present
         if card[:has_metadata]
-          render_card_metadata(card, x, y, svg)
+          render_card_metadata(card, x, y, label_line_count, svg)
         end
       end
 
@@ -213,20 +225,27 @@ module Sirena
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
       # @param svg [Svg::Document] SVG document
-      # @return [void]
+      # @return [Integer] number of lines the label actually rendered, after
+      #   markdown parsing and truncation — what `render_card_metadata` needs
+      #   to start below the label rather than at a fixed offset
       def render_card_text(card, x, y, svg)
         text_y = y + 25
+        text_x = x + 10
+        lines = MarkdownText.truncate_runs(MarkdownText.parse_lines(card[:text]), 25)
 
         text = Svg::Text.new.tap do |t|
-          t.x = x + 10
+          t.x = text_x
           t.y = text_y
           t.fill = theme_color(:text) || "#1f2937"
           t.font_size = (theme_typography(:font_size) || 13).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.content = truncate_text(card[:text], 25)
         end
 
+        MarkdownText.assign_markdown_text(text, lines, x: text_x)
+
         svg.add_element(text)
+
+        lines.length
       end
 
       # Renders card metadata
@@ -234,11 +253,16 @@ module Sirena
       # @param card [Hash] card data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
+      # @param label_line_count [Integer] lines the card's own label actually
+      #   rendered, from `render_card_text` — metadata starts below all of
+      #   them rather than at the single-line offset a multi-line label would
+      #   overlap
       # @param svg [Svg::Document] SVG document
       # @return [void]
-      def render_card_metadata(card, x, y, svg)
-        metadata_y = y + 50
-        line_height = 18
+      def render_card_metadata(card, x, y, label_line_count, svg)
+        extra_label_lines = [label_line_count - 1, 0].max
+        metadata_y = y + 50 + (extra_label_lines * EXTRA_LINE_HEIGHT)
+        line_height = EXTRA_LINE_HEIGHT
 
         card[:metadata].each_with_index do |(key, value), index|
           next if value.nil? || value.to_s.empty?
@@ -278,17 +302,6 @@ module Sirena
       # @return [String] formatted key
       def format_metadata_key(key)
         key.to_s.capitalize
-      end
-
-      # Truncates text to a maximum length
-      #
-      # @param text [String] text to truncate
-      # @param max_length [Integer] maximum length
-      # @return [String] truncated text
-      def truncate_text(text, max_length)
-        return text if text.length <= max_length
-
-        "#{text[0...max_length - 3]}..."
       end
     end
   end
