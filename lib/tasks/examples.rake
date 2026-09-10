@@ -180,8 +180,11 @@ module ExampleTasks
     return false if File.symlink?(path)
 
     # An existing entry that is not a plain file — a FIFO, a socket, a
-    # directory — is not something this task created, and File.rename would
-    # replace it just the same.
+    # directory — is not something this task created. File.rename replaces
+    # a FIFO or socket silently; against a directory it raises Errno::EISDIR
+    # instead. Either way this refuses it up front with one clear,
+    # deliberate error rather than a silent replacement or an OS error
+    # surfacing from inside a write.
     !File.exist?(path) || File.lstat(path).file?
   end
 
@@ -320,6 +323,16 @@ module ExampleTasks
           write_svg(svg_file, svg, examples_dir)
           puts "  \u2713 #{basename}.svg"
           total_generated += 1
+        rescue SystemCallError
+          # An I/O failure, not a render failure: the OS refused the write
+          # itself (a full disk, Errno::EFBIG), and the source may render
+          # perfectly well. Folding this into the render-failure rescue
+          # below let handle_failed_svgs mistake it for the source failing
+          # to render, and for an allowlisted source that meant deleting the
+          # previous good SVG on the strength of a write failure. This must
+          # abort the task instead, the same way an unreadable diagram
+          # directory already does (see 'refusing what it did not create').
+          raise
         rescue StandardError => e
           puts "  \u2717 #{basename}.svg - ERROR: #{e.message}"
           failed_renders << [mmd_file.delete_prefix("#{examples_dir}/"), svg_file]
