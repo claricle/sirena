@@ -306,6 +306,8 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
 
       def path_points(svg_string, edge_id)
         d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
+        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
+
         d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
       end
 
@@ -470,6 +472,8 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # edge is grouped under - not on the group tag itself.
       def path_points(svg_string, edge_id)
         d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
+        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
+
         d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
       end
 
@@ -514,6 +518,8 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # handling; the corpus here never asserts against a group box.
       def path_points(svg_string, edge_id)
         d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
+        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
+
         d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
       end
 
