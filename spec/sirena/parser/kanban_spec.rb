@@ -353,6 +353,50 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
+    context 'with a markdown-string body on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. A quoted body that
+      # itself opens and closes with a backtick - `"`text`"` - is mermaid's
+      # markdown-string syntax: it strips the backtick pair and renders the
+      # content through markdown (measured against mmdc 11.12.0: `col("`Hi
+      # **urgent**`")` draws `Hi <strong>urgent</strong>`). Sirena has no
+      # markdown renderer anywhere in the codebase, so the former behaviour
+      # - matching this as an ordinary quoted body - kept the backticks as
+      # literal text and drew `` `Hi **urgent**` `` instead. Refused
+      # explicitly now, the same way the malformed bodies above are, rather
+      # than silently drawing something mermaid does not.
+      it 'refuses a backtick-wrapped quoted body on an id-prefixed shape' do
+        expect { parser.parse("kanban\n  col(\"`Hello`\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses a backtick-wrapped quoted body on an unlabelled shape' do
+        expect { parser.parse("kanban\n  (\"`Hello`\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an empty backtick-wrapped body the same way mermaid does' do
+        expect { parser.parse("kanban\n  col(\"``\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'keeps an ordinary quoted body that merely contains a backtick pair' do
+        diagram = parser.parse("kanban\n  col(\"Hello `code` world\")\n")
+        expect(diagram.columns.first.title).to eq('Hello `code` world')
+      end
+
+      # A body with a single, unmatched backtick - `"`Hello"` with no
+      # closing backtick before the quote - is not the markdown-string
+      # shape above, so this fix leaves it alone: it stays a literal quoted
+      # body, matching the sibling malformed-body pin two contexts up.
+      # mmdc 11.12.0 actually lexer-errors on this one too ("Unrecognized
+      # text"), a pre-existing gap this High does not cover - it is about
+      # the closed backtick pair, not a lone backtick.
+      it 'keeps a quoted body that opens with a backtick but never closes one' do
+        diagram = parser.parse("kanban\n  col(\"`Hello\")\n")
+        expect(diagram.columns.first.title).to eq('`Hello')
+      end
+    end
+
     context 'with a shape-delimiter character in an unquoted round-shaped label' do
       # Not from the corpus - a Codex-constructed input. `round_text`'s
       # unquoted alternative excluded only `)`, the shape's own closer, so

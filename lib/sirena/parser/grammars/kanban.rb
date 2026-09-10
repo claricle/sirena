@@ -117,9 +117,25 @@ module Sirena
         # mid-label, and rejects a body carrying one (measured against mmdc
         # 11.12.0). `[` and `{` are not delimiters to it there and stay
         # literal, so they are not excluded - both parse in mermaid.
+        #
+        # A quoted body that itself opens and closes with a backtick -
+        # `"`text`"` - is mermaid's separate markdown-string syntax: it
+        # strips the backtick pair and renders the content through
+        # markdown, formatting included (`col("`Hi **urgent**`")` draws
+        # `Hi <strong>urgent</strong>` in mmdc 11.12.0). Sirena has no
+        # markdown renderer anywhere in the codebase, so matching this as
+        # an ordinary quoted body would keep the backticks as literal text
+        # and silently draw something mermaid does not. Refused instead,
+        # the same way an empty or unterminated quoted body is refused
+        # below, rather than half-supporting a shape nothing here
+        # understands.
         rule(:round_text) do
-          (str('"') >> match('[^"]').repeat(1).as(:text) >> str('"')) |
+          (str('"') >> markdown_string_body.absent? >> match('[^"]').repeat(1).as(:text) >> str('"')) |
             (str('"').absent? >> match('[^()\]}]').repeat(1).as(:text))
+        end
+
+        rule(:markdown_string_body) do
+          str('`') >> match('[^"`]').repeat >> str('`') >> str('"')
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label
