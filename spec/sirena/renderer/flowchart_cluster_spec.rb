@@ -731,6 +731,15 @@ RSpec.describe Sirena::Engine do
       [path_end, head_tip]
     end
 
+    # The shoelace formula. Three DISTINCT points can still be
+    # collinear — a head with two coincident vertices and one apart from
+    # them has two unique points, which `.uniq.size > 1` cannot tell
+    # from a real triangle. Area is what actually says the head has a
+    # visible shape.
+    def triangle_area(a, b, c)
+      ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs / 2.0
+    end
+
     it "keeps the arrowhead on the same face the path leaves through" do
       leaf_node, cluster_node = contained_node_and_cluster
       graph = { id: "g", children: [leaf_node, cluster_node],
@@ -762,7 +771,7 @@ RSpec.describe Sirena::Engine do
         .split.map { |pair| pair.split(",").map(&:to_f) }
 
       expect(head_tip).to eq([88.5, 104.0])
-      expect(head_points.uniq.size).to be > 1
+      expect(triangle_area(*head_points)).to be > 0
     end
 
     # Two DIFFERENT boxes can share a centre too. There is no straight

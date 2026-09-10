@@ -206,16 +206,53 @@ module Sirena
         return graph if dx.zero? && dy.zero?
 
         graph.merge(children: shift_boxes(graph[:children], dx, dy),
-                    clusters: shift_boxes(graph[:clusters], dx, dy))
+                    clusters: shift_boxes(graph[:clusters], dx, dy),
+                    edges: shift_edges(graph[:edges], dx, dy))
       end
 
       def shift_boxes(boxes, dx, dy)
         (boxes || []).map { |box| box.merge(x: (box[:x] || 0) + dx, y: (box[:y] || 0) + dy) }
       end
 
+      # A self loop's own bends are recomputed from the (now shifted)
+      # node at render time, but an edge that arrives with its route
+      # already drawn — real ELK output, or a graph built by hand — is
+      # drawn exactly where its bend points say, and never touches the
+      # node again. Shifting the boxes and leaving those points behind
+      # walks the node one way and the line it is supposedly attached to
+      # nowhere, so the route has to move with the page too.
+      def shift_edges(edges, dx, dy)
+        (edges || []).map { |edge| shift_edge(edge, dx, dy) }
+      end
+
+      def shift_edge(edge, dx, dy)
+        sections = edge[:sections]
+        return edge unless sections&.any?
+
+        edge.merge(sections: sections.map { |section| shift_section(section, dx, dy) })
+      end
+
+      def shift_section(section, dx, dy)
+        bend_points = section[:bendPoints]
+        return section unless bend_points&.any?
+
+        section.merge(bendPoints: bend_points.map { |point| shift_point(point, dx, dy) })
+      end
+
+      def shift_point(point, dx, dy)
+        point.merge(x: (point[:x] || 0) + dx, y: (point[:y] || 0) + dy)
+      end
+
       # How far below zero the worst self loop reaches, on each axis.
       # Reuses the exact bends and label anchor `render_edge` draws
-      # later, so this can never disagree with what actually gets drawn.
+      # later, so this can never disagree with what actually gets drawn —
+      # except that a bend or an anchor is a POINT and the label drawn
+      # there is not: `create_edge_label` centres it on `x` and leaves it
+      # sitting on its default SVG baseline at `y`, so the text itself
+      # reaches half its width either side of `x` and the whole of its
+      # height above `y`. Reusing only the anchor found the point safely
+      # inside the page while Chrome still measured the glyphs clipped
+      # above and beside it, which is what `loop_label_extent` corrects.
       def self_loop_overflow(graph)
         side = self_loop_side(graph)
         min_x, min_y = (graph[:edges] || []).reduce([0.0, 0.0]) do |(x, y), edge|
@@ -226,12 +263,29 @@ module Sirena
           next [x, y] if bends.empty?
 
           label_x, label_y = loop_label_anchor(node, bends)
-          xs = bends.map { |point| point[:x] } + [label_x]
-          ys = bends.map { |point| point[:y] } + [label_y]
+          half_width, height = loop_label_extent(edge)
+          xs = bends.map { |point| point[:x] } + [label_x - half_width]
+          ys = bends.map { |point| point[:y] } + [label_y - height]
           [[x, *xs].min, [y, *ys].min]
         end
 
         [min_x.negative? ? -min_x : 0.0, min_y.negative? ? -min_y : 0.0]
+      end
+
+      # Half the loop label's own width, and the whole of its height —
+      # the reach its text adds on top of the anchor point
+      # `loop_label_anchor` returns. `text_anchor` centres a label
+      # horizontally, so it is `x` minus half the width at its narrowest;
+      # nothing here sets `dominant-baseline`, so the glyphs sit entirely
+      # above `y`, SVG's default text baseline. [0.0, 0.0] when there is
+      # no label to draw, since nothing then reaches past the anchor.
+      def loop_label_extent(edge)
+        label = edge[:labels]&.first
+        return [0.0, 0.0] unless label
+
+        font_size = theme_typography(:font_size_small) || 11
+        dims = TextMeasurement.measure(label[:text], font_size: font_size)
+        [dims[:width] / 2.0, dims[:height]]
       end
 
       def self_loop_node(graph, edge)

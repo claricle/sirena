@@ -720,6 +720,12 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # arrive in. Nothing produces it today — the fallback grid writes no
     # `sections` at all, and elkrb is declared but not wired — so this
     # fixture stands in for that layout rather than reproducing one.
+    #
+    # One of the supplied points sits below zero, which also exercises
+    # the self-loop-overflow shift: the whole page — the node AND this
+    # route — is nudged down by 10 so nothing is clipped. The pinned
+    # numbers are the ORIGINAL points plus that 10, not a copy of
+    # rendered output: 30 and -10 become 40 and 0.
     it "keeps supplied bends for a self link" do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
@@ -730,7 +736,7 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       }
       xml = described_class.new.render(graph).to_xml
 
-      expect(path_points(xml)[1..2]).to eq([[80.0, 30.0], [80.0, -10.0]])
+      expect(path_points(xml)[1..2]).to eq([[80.0, 40.0], [80.0, 0.0]])
     end
 
     # A long label widens the layout box without widening the drawn circle.

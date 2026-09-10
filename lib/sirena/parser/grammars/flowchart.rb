@@ -1105,9 +1105,12 @@ module Sirena
         # has no node in front of the link at all. `x-->B` is that shape
         # and it is left exactly where it was.
         #
-        # Sirena models no `x`/`o` link-start marker, so stopping the id
-        # makes the statement fail. That is safer than drawing a different
-        # graph with `1x` or `#x` as the node.
+        # The split link now parses too: `#x-->B` draws `#` and `B`
+        # joined by a plain `arrow`, same as mmdc. `Transforms::Flowchart
+        # .link_type` is what reads the marker — it honours a leading
+        # `x`/`o` only when the trailing one matches it, so a lone
+        # leading marker like this one falls back to the head it finds
+        # at the other end rather than failing the statement.
         rule(:id_before_xo_link) do
           (xo_link_open.absent? >> restart_step).repeat(1) >>
             xo_link_open.present?
