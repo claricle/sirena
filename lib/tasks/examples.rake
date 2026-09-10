@@ -102,7 +102,8 @@ module ExampleTasks
         puts "  ✗ #{file}"
         puts "    listed as known unrenderable but rendered successfully"
       end
-      exit 1
+      raise ValidationFailed, "validation failed: #{failed.size} failing, " \
+                             "#{unexpectedly_renderable.size} unexpectedly renderable"
     else
       puts "\n✅ All renderable examples validated successfully!"
     end
@@ -250,6 +251,10 @@ module ExampleTasks
   # caller can require and call directly, and only a script's entry point may
   # decide a process exit status.
   class UnexpectedRenderFailure < StandardError; end
+
+  # `exit` in a plain method kills the caller's whole process, so only the
+  # rake task below may decide an exit status.
+  class ValidationFailed < StandardError; end
 
   def handle_failed_svgs(failed_renders, examples_dir, started_at)
     unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
@@ -532,7 +537,12 @@ namespace :examples do
     require 'yaml'
 
     examples_dir = File.expand_path('../../examples', __dir__)
-    ExampleTasks.validate_examples(examples_dir)
+    begin
+      ExampleTasks.validate_examples(examples_dir)
+    rescue ExampleTasks::ValidationFailed => e
+      warn e.message
+      exit 1
+    end
   end
 
   desc "Generate all examples and copy to docs"
