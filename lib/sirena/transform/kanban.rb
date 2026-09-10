@@ -28,8 +28,9 @@ module Sirena
       CARD_HEIGHT = 80
       CARD_PADDING = 10
 
-      # Metadata display height per item
-      METADATA_LINE_HEIGHT = 18
+      # Height of one extra rendered line below a card's first line — a
+      # metadata row, or a markdown hard line break in the card text.
+      EXTRA_LINE_HEIGHT = 18
 
       # Transforms the diagram into a layout structure.
       #
@@ -155,19 +156,18 @@ module Sirena
       # them, and Transform has no dependency on Renderer to keep those
       # layers apart.
       #
-      # Reuses METADATA_LINE_HEIGHT for both rather than a second
-      # constant: the card renders its text at font-size 13 as `1.2em`
-      # per line (~15.6px), and METADATA_LINE_HEIGHT (18) already covers
-      # that with room to spare. A separate constant would need the
-      # renderer's actual font size, which Transform doesn't have and
-      # shouldn't need for a fixed-layout board.
+      # Reuses EXTRA_LINE_HEIGHT for both rather than a second constant: the
+      # card renders its text at font-size 13 as `1.2em` per line (~15.6px),
+      # and EXTRA_LINE_HEIGHT (18) already covers that with room to spare. A
+      # separate constant would need the renderer's actual font size, which
+      # Transform doesn't have and shouldn't need for a fixed-layout board.
       #
       # @param card [Diagram::KanbanCard] card
       # @return [Numeric] card height
       def calculate_card_height(card)
         base_height = CARD_HEIGHT
-        base_height += card.metadata.size * METADATA_LINE_HEIGHT if card.has_metadata?
-        base_height += card.text.to_s.count("\n") * METADATA_LINE_HEIGHT
+        base_height += card.metadata.size * EXTRA_LINE_HEIGHT if card.has_metadata?
+        base_height += card.text.to_s.count("\n") * EXTRA_LINE_HEIGHT
         base_height
       end
 
