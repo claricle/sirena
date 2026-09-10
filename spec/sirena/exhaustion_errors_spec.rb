@@ -1,5 +1,6 @@
-require 'tempfile'
 # frozen_string_literal: true
+
+require 'tempfile'
 
 require 'spec_helper'
 require 'timeout'
@@ -198,6 +199,30 @@ RSpec.describe Sirena::Engine do
 
         expect(cause).to be_a(SystemStackError)
       end
+    end
+
+    # The constructor rescues `*EXHAUSTION_ERRORS`, and nothing else pinned
+    # that list. Narrowing it to `SystemStackError` alone, or widening it to
+    # `Exception`, left every other example in this file green -- so the two
+    # examples below fix each end of it. One proves `NoMemoryError` is
+    # inside the list, the other proves `Interrupt` is outside it.
+    #
+    # Both raise a CONSTRUCTED error rather than building a real bomb. A
+    # real bomb's depth is a property of the running VM: the 2,000-level
+    # YAML above stops exhausting the stack at
+    # `RUBY_THREAD_VM_STACK_SIZE=33554432` and raises a lutaml parse error
+    # instead. That makes it fine as a demonstration and useless as a pin.
+    it 'wraps a NoMemoryError raised while loading the theme' do
+      allow(Sirena::Theme::Registry).to receive(:get).and_raise(NoMemoryError.new('constructed'))
+
+      expect { described_class.new }
+        .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed: constructed/)
+    end
+
+    it 'lets an Interrupt through instead of wrapping it' do
+      allow(Sirena::Theme::Registry).to receive(:get).and_raise(Interrupt)
+
+      expect { described_class.new }.to raise_error(Interrupt)
     end
   end
 end
