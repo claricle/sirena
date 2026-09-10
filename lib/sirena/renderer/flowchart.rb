@@ -110,10 +110,11 @@ module Sirena
       # This is NOT a bound, and a first version of this constant that
       # tried to be one (`1.0`, set from ASCII alone) was refuted by
       # measuring real scripts rather than raising the number until
-      # nothing failed. `overflow: 'hidden'` on the document — see
-      # `#render` — is what actually keeps an underestimate from
-      # distorting or escaping the page; this constant only decides how
-      # RARELY that backstop has to do anything.
+      # nothing failed. `overflow: 'hidden'` on the document is SVG's
+      # SPECIFIED way to clip a viewport's content to its own bounds —
+      # see `#render` for what that specification is measured to buy
+      # here, which is less than it sounds. This constant only decides
+      # how RARELY an underestimate reaches that edge at all.
       #
       # Measured with Chrome against Sirena's own rendered `<text>`
       # (Arial, Helvetica, sans-serif at font-size 12 — the theme's
@@ -127,14 +128,24 @@ module Sirena
       #   A combining sequence (e + acute, 2 codepoints)        0.56
       #   Arabic ligature U+FDFD (Bismillah, ONE codepoint)     6.49
       #
-      # The last row is why this can never be a bound. East Asian
-      # Width classifies U+FDFD as `N` (Neutral) — the identical
-      # bucket Unicode gives an ordinary Latin letter — so a table keyed
-      # on any codepoint PROPERTY, not merely a wider flat ratio, puts
-      # it beside `@` and still misses it by 6.5x. Short of a real font
-      # metrics table (the dependency `TextMeasurement`'s own docs say
-      # this gem avoids), no per-codepoint number bounds what a font's
-      # ligature substitution can do with a single input character.
+      # The last row is why this can never be a bound. East Asian Width
+      # classifies U+FDFD as `N` (Neutral) — NOT the same class as `A`
+      # or `@`, which are both `Na` (Narrow): a table keyed on that
+      # property could in principle score them apart. What it proves is
+      # narrower and still fatal to any character-count approach: one
+      # 6.49em character disproves every SMALLER constant, and Unicode
+      # properties alone do not supply reliable advances for an
+      # unspecified font — EAW describes how much horizontal space a
+      # character is conventionally given in East Asian typesetting, not
+      # what any particular font's ligature or shaping table does with
+      # it. This does not prove no scalar exists for a FIXED font
+      # configuration (Arial, Helvetica, sans-serif, as the theme names
+      # it); it proves that deriving one from codepoint properties
+      # rather than measuring the font is not reliable. Short of a real
+      # font metrics table (the dependency `TextMeasurement`'s own docs
+      # say this gem avoids), no per-codepoint number bounds what a
+      # font's ligature substitution can do with a single input
+      # character.
       #
       # 1.5 clears every row above except the ligature — CJK and emoji
       # included, both of which `1.0` (this constant's first value)
@@ -179,21 +190,22 @@ module Sirena
 
       # Renders a laid-out graph to SVG.
       #
-      # `overflow: 'hidden'` states, in the document itself, that a self
-      # loop's label must never be allowed to distort or escape past the
-      # rest of the page — see `WIDE_CHAR_WIDTH_RATIO` for why no
-      # character-count estimate can guarantee that on its own. It is
-      # measured to make NO visual difference in Chrome specifically:
-      # screenshotting the same pathological label with and without the
-      # attribute, root document and nested alike, came back
+      # `overflow: 'hidden'` is SVG's SPECIFIED way to clip a viewport's
+      # rendering to its own bounds — see `WIDE_CHAR_WIDTH_RATIO` for why
+      # no character-count estimate can size that viewport correctly on
+      # its own. What the specified behaviour actually BUYS here was
+      # measured, not assumed, and the measurement is smaller than the
+      # attribute sounds: screenshotting the same pathological label
+      # with and without it, root document and nested alike, came back
       # byte-identical (`compare -metric AE` reports 0 differing
-      # pixels) — Chrome already contains SVG content to its own box by
+      # pixels). Chrome already contains SVG content to its own box by
       # default, contrary to the SVG2 spec's stated `visible` default
-      # for a root `<svg>`. The attribute is kept anyway, at zero cost,
-      # because Chrome is the only renderer this could be measured
-      # against; it is not a proven fix for every renderer Metanorma may
-      # use, only a standards-correct statement of intent for the ones
-      # that follow the spec's default more literally than Chrome does.
+      # for a root `<svg>` — so in every context this could be measured
+      # against, the attribute changed nothing. It is kept anyway, at
+      # zero cost, because it states the specified policy explicitly
+      # rather than leaving it to an unwritten default; whether that
+      # matters for any renderer other than Chrome was not measured and
+      # is not claimed here.
       #
       # `clear_self_loop_overflow` and `self_loop_reach` still do real
       # work sizing the page from the loop's BENDS, which are exact

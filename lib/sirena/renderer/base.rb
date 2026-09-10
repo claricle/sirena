@@ -69,7 +69,7 @@ module Sirena
       #   for the root element, e.g. `'hidden'`. nil (the default) omits it,
       #   which keeps every renderer's output byte-for-byte what it always
       #   was; a renderer opts in deliberately, the way `FlowchartRenderer`
-      #   does for the self-loop safety net documented on `#render`.
+      #   does for the self-loop overflow policy documented on `#render`.
       # @return [Svg::Document] new SVG document
       def create_document(graph, padding: 20, overflow: nil)
         width = calculate_width(graph) + (padding * 2)
