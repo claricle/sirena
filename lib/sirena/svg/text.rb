@@ -2,6 +2,7 @@
 
 require 'lutaml/model'
 require_relative 'element'
+require_relative 'tspan'
 
 module Sirena
   module Svg
@@ -21,6 +22,7 @@ module Sirena
       attribute :font_style, :string
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
+      attribute :tspans, Tspan, collection: true
 
       writes_attributes :x, :y, :dx, :dy, :text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline
 
@@ -53,8 +55,16 @@ module Sirena
       # under `mixed: true`. Renderers assign a plain String, but
       # `from_xml` yields an Array, so join rather than interpolate —
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
+      #
+      # `content` and `tspans` are mutually exclusive by convention: a
+      # renderer building markdown-styled runs sets `tspans` and leaves
+      # `content` unset, everything else keeps assigning plain `content` as
+      # it always has. Every existing call site is unaffected — this branch
+      # is only taken when a renderer opts in by setting `tspans`.
       def to_xml
         attrs = build_attributes
+        return "<text#{attrs}>#{Array(tspans).map(&:to_xml).join}</text>" unless Array(tspans).empty?
+
         "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
       end
     end
