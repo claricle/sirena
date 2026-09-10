@@ -55,8 +55,21 @@ module ExampleTasks
       # render failure — so validation reported success on broken metadata.
       theme = theme_for(mmd_file)
 
+      # And BUILD THE ENGINE here too, for the same reason one level down.
+      # `theme_for` only reads the .yml; the theme it NAMES is loaded inside
+      # `Sirena.render`, which put a broken theme FILE back inside the rescue
+      # — so an allowlisted source whose theme would not load was still
+      # counted "known unrenderable" and validation still reported success.
+      #
+      # `Engine.new` does the theme loading in its constructor, so a theme
+      # that cannot load raises HERE and fails the task loudly. Verified
+      # equivalent to the previous call for every built-in theme:
+      # `Sirena.render(src, theme: t, today: d)` and
+      # `Engine.new(theme: t, today: d).render(src)` are byte-identical.
+      engine = Sirena::Engine.new(theme: theme, today: EXAMPLE_TODAY)
+
       begin
-        Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
+        engine.render(source)
         if expected_unrenderable
           unexpectedly_renderable << relative_path
           print 'F'

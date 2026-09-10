@@ -8,7 +8,9 @@ require 'securerandom'
 require 'stringio'
 require 'yaml'
 
-# The generation task deletes files. Nothing else in the suite calls it: the
+# The generation task no longer deletes anything -- that ability was removed
+# after three rounds of guards each produced a new deletion path, and only
+# the two prune helpers can delete now. Nothing else in the suite calls it: the
 # conformance gate reads what is on disk, so it catches an orphan that already
 # shipped and says nothing about whether the sweeper removes one. Disabling the
 # sweep left the whole suite green, which is why this exists.
@@ -776,6 +778,69 @@ RSpec.describe ExampleTasks do
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(Psych::SyntaxError)
+    end
+
+    # One level deeper than the example above, and the level Codex found: the
+    # .yml is VALID, and the theme it NAMES is the broken file. `theme_for`
+    # only reads the sidecar, so the theme itself was loaded inside
+    # `Sirena.render` -- back within the rescue that classifies render
+    # failures. An allowlisted source whose theme would not load was counted
+    # K and validation reported success, which is the same defect wearing a
+    # second layer.
+    it 'does not report success when an expected-unrenderable source names a theme that will not load' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      broken_theme = File.join(examples_dir, 'broken-theme.yml')
+      File.write(broken_theme, "colors: [\n")
+
+      write(source_path, "gantt\n  title Broken\n")
+      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: #{broken_theme}\n")
+
+      expect { described_class.validate_examples(examples_dir) }
+        .to raise_error(Lutaml::Model::InvalidFormatError)
+    end
+  end
+
+  # The capability, not a watcher on its use. `generate` and `validate` used to
+  # be able to delete, and three rounds of guards each produced a new deletion
+  # path; the fix was to take the ability away, leaving deletion only in the two
+  # helpers whose names say they delete.
+  #
+  # Codex's Low was that nothing tests the TASK wiring: an in-memory mutation
+  # inserting a prune call into the generation task left all 49 examples green.
+  # Invoking rake tasks from this file would fight its design -- it loads the
+  # rake file to test the HELPERS and invokes no task. This asserts the boundary
+  # those helpers sit behind instead, which is the property that actually
+  # matters and cannot drift silently.
+  describe 'the deletion boundary' do
+    # A `let`, not a constant: `Lint/ConstantDefinitionInBlock` fires on a
+    # constant here, and its autocorrect turns one into a block-local, which
+    # has silently made a spec assert nothing before.
+    #
+    # Only methods on ExampleTasks itself. The `clean` task in the namespace
+    # below is deliberately destructive and is out of scope.
+    let(:permitted_deleters) do
+      %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg]
+    end
+
+    def module_body(source)
+      first = source.index { |line| line.start_with?('module ExampleTasks') }
+      last = (first...source.size).find { |i| source[i].rstrip == 'end' }
+      (first..last)
+    end
+
+    it 'confines every deletion call to the methods allowed to delete' do
+      source = File.readlines(TASKS_RAKE_FILE)
+      current = nil
+      offenders = []
+
+      module_body(source).each do |i|
+        current = Regexp.last_match(1) if source[i] =~ /^\s*def\s+([a-z_?!]+)/
+        next unless source[i].match?(/File\.delete|File\.unlink|FileUtils\.rm/)
+
+        offenders << "#{current}:#{i + 1}" unless permitted_deleters.include?(current)
+      end
+
+      expect(offenders).to be_empty
     end
   end
 end
