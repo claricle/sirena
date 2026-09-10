@@ -270,9 +270,14 @@ module Sirena
 
     # `permitted_classes: [Date]` because an unquoted `approved_on:
     # 2026-09-10` is the conventional way to write that field and YAML
-    # parses it as a Date, not a String -- `safe_load_file`'s default
-    # whitelist has neither, so the whole file refused to load. Nothing
-    # here reads `approved_on` back; a Date is permitted only so a
+    # parses it as a Date, not a String. `safe_load_file` permits String
+    # by default but NOT Date, so an unquoted entry refused to load the
+    # whole file. Measured:
+    #
+    #   YAML.safe_load(%(a: "2026-09-10")) -> OK, String
+    #   YAML.safe_load(%(a: 2026-09-10))   -> Psych::DisallowedClass
+    #
+    # Nothing here reads `approved_on` back; a Date is permitted only so a
     # human-natural entry does not blow up the loader.
     def load_exceptions
       path = File.join(root, "scoreboard", "lint-exceptions.yml")
