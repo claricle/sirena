@@ -75,6 +75,20 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                             [described_class::Run.new(text: 'Line two', bold: false, italic: false)]
                           ])
     end
+
+    # Two separate marked spans, not nested inside each other. This
+    # distinguishes "each open closes at its own nearest valid closer"
+    # from a bug that would instead close the first `**` at the LAST `**`
+    # in the line, swallowing "plain" into one giant bold run.
+    it 'keeps two separate bold spans on one line distinct, not merged' do
+      lines = described_class.parse_lines('**a** plain **b**')
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'a', bold: true, italic: false),
+                            described_class::Run.new(text: ' plain ', bold: false, italic: false),
+                            described_class::Run.new(text: 'b', bold: true, italic: false)
+                          ]])
+    end
   end
 
   describe '.build_markdown_tspans' do
