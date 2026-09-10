@@ -139,10 +139,18 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
       # Mirrors the round-2 Codex review: service a(server)[A] / junction j /
       # j:R -- L:a. The junction's default placement lands to the RIGHT of
       # a, but the edge hint asks for j's right face to meet a's left face
-      # - which only makes visual sense if j is to the LEFT. Repositioning
-      # j this late is unsafe (group bounds and other junctions may already
-      # depend on it), so the fix mirrors which face of each node the
-      # drawn line attaches to instead of moving either node.
+      # - which only makes visual sense if j is to the LEFT.
+      #
+      # Earlier fix (deleted here): the transform mirrored which face of
+      # each node the drawn line attached to, so the straight line here
+      # never crossed the service's interior. That property now lives one
+      # layer up - ArchitectureRenderer's ArchitectureEdgeRouter draws
+      # around the obstacle instead (see
+      # spec/sirena/renderer/architecture_edge_router_spec.rb, "with the
+      # B--T diagonal case" and "with a third-party obstacle in the way"),
+      # so a straight line between anchor points CAN cross a box at this
+      # layer now - the transform's only remaining job is to hand back the
+      # literal declared side, unmirrored.
       let(:diagram) do
         Sirena::Diagram::ArchitectureDiagram.new(
           services: [
@@ -158,21 +166,47 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
         )
       end
 
-      def segment_crosses_rectangle?(x1, y1, x2, y2, rect)
-        (1...200).any? do |i|
-          t = i / 200.0
-          x = x1 + ((x2 - x1) * t)
-          y = y1 + ((y2 - y1) * t)
-          x > rect[:x] && x < rect[:x] + rect[:width] && y > rect[:y] && y < rect[:y] + rect[:height]
-        end
-      end
-
-      it "does not route the edge through the service's interior" do
+      it "resolves to the literal declared side, never a mirrored one" do
         graph = transform.to_graph(diagram)
-        service = graph[:services]["a"]
         edge = graph[:edges].first
 
-        expect(segment_crosses_rectangle?(edge[:from_x], edge[:from_y], edge[:to_x], edge[:to_y], service)).to be(false)
+        expect(edge[:from_side]).to eq("R")
+        expect(edge[:to_side]).to eq("L")
+      end
+    end
+
+    context "with a grammar-valid but multi-character position token" do
+      # a:RT -- L:b. The grammar's match("[LRTB]").repeat(1) has no upper
+      # bound, so "RT" parses cleanly - grammar-valid input, not something
+      # this diagram type refuses. ArchitectureEdgeRouter::FACE_NORMAL only
+      # has single-character keys ("L"/"R"/"T"/"B"), so passing "RT" through
+      # raises the moment the router's search actually runs (the straight
+      # line short-circuit hides it when nothing forces a detour). The old
+      # pre-router code never raised here - calculate_connection_point's
+      # case/when/else silently defaulted an unrecognized value - so this
+      # is a regression the router's stricter FACE_NORMAL lookup
+      # introduced, fixed at the boundary where the raw token first meets
+      # a real diagram: never hand the router something it cannot look up.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", icon: "server"),
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "b", label: "B", icon: "server"),
+          ],
+          groups: [],
+          edges: [
+            Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "a", to_id: "b", from_position: "RT",
+                                                           to_position: "L"),
+          ]
+        )
+      end
+
+      it "falls back to a recognized face rather than passing the raw token through" do
+        graph = transform.to_graph(diagram)
+        edge = graph[:edges].first
+
+        expect(%w[L R T B].include?(edge[:from_side])).to be(true)
+        expect(%w[L R T B].include?(edge[:to_side])).to be(true)
       end
     end
 
