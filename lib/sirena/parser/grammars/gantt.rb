@@ -158,93 +158,19 @@ module Sirena
           (colon.absent? >> line_end.absent? >> any).repeat(1)
         end
 
-        # Task details can have multiple formats:
-        # :tag, date, duration
-        # :id, after other_id, duration
-        # :id, start, end
-        # :after id, duration
-        # :duration
+        # Task details are a comma-separated list of fields, in any order
+        # mermaid allows: status tags (done/active/crit/milestone), an id,
+        # "after <id>", "until <id>", a date, and a duration. Mermaid itself
+        # classifies each field by shape rather than by position, so the
+        # grammar captures the raw fields and the transform (gantt.rb)
+        # classifies them the same way.
         rule(:task_details) do
-          task_with_tags |
-            task_with_id_and_dependency |
-            task_with_dependency |
-            task_with_dates |
-            task_with_duration_only
+          (task_field.as(:field) >>
+            (space? >> comma >> space? >> task_field.as(:field)).repeat).as(:parts)
         end
 
-        # Task with tags (done, active, crit, milestone)
-        rule(:task_with_tags) do
-          tags.as(:tags) >>
-            (space? >> comma >> space? >> task_timing).maybe
-        end
-
-        # Task with ID and after dependency (:id, after other_id, duration)
-        rule(:task_with_id_and_dependency) do
-          task_id.as(:id) >> space? >> comma >> space? >>
-            str("after") >> space.repeat(1) >>
-            task_id.as(:after_task) >>
-            (space? >> comma >> space? >> (task_end_date | task_duration)).maybe
-        end
-
-        # Task with after dependency (after other_id, duration)
-        rule(:task_with_dependency) do
-          str("after") >> space.repeat(1) >>
-            task_id.as(:after_task) >>
-            (space? >> comma >> space? >> (task_end_date | task_duration)).maybe
-        end
-
-        # Task with until dependency
-        rule(:task_with_until) do
-          task_date.as(:start_date) >>
-            comma >> space? >>
-            str("until") >> space.repeat(1) >>
-            task_id.as(:until_task)
-        end
-
-        # Task with explicit dates
-        rule(:task_with_dates) do
-          task_id.as(:id) >> space? >> comma >> space? >> task_timing
-        end
-
-        # Task with duration only
-        rule(:task_with_duration_only) do
-          space? >> task_timing
-        end
-
-        # Task timing (dates or duration)
-        rule(:task_timing) do
-          task_date.as(:start_date) >>
-            (space? >> comma >> space? >> (task_end_date | task_duration)).maybe |
-            task_duration.as(:duration)
-        end
-
-        rule(:task_end_date) do
-          str("until") >> space.repeat(1) >> task_id.as(:until_task) |
-            task_date.as(:end_date)
-        end
-
-        # Tags (space-separated only, no comma between tags)
-        rule(:tags) do
-          space? >> task_tag >> (space.repeat(1) >> task_tag).repeat
-        end
-
-        rule(:task_tag) do
-          str("done") | str("active") | str("crit") | str("milestone")
-        end
-
-        # Task ID
-        rule(:task_id) do
-          match["a-zA-Z0-9_-"].repeat(1)
-        end
-
-        # Date in various formats (must contain date separator)
-        rule(:task_date) do
-          match["0-9"].repeat(1) >> match["-/:"] >> match["0-9-/:"].repeat
-        end
-
-        # Duration (e.g., 30d, 2w, 48h, 1M)
-        rule(:task_duration) do
-          match["0-9"].repeat(1) >> match["dwMh"]
+        rule(:task_field) do
+          (comma.absent? >> line_end.absent? >> any).repeat(1)
         end
       end
     end

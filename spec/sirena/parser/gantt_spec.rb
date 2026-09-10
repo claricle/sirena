@@ -102,5 +102,64 @@ RSpec.describe Sirena::Parser::GanttParser do
 
       expect(diagram.excludes).to include("weekends")
     end
+
+    # Task detail fields (tags, id, dates, duration, after/until) are a
+    # comma-separated list with no fixed position — mermaid classifies each
+    # field by its own shape rather than by where it sits (corpus gantt/005).
+    it "parses a tag, an id, and explicit start and end dates in one task" do
+      source = <<~GANTT
+        gantt
+          section Tasks
+          Completed task            :done,    des1, 2014-01-06,2014-01-08
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.tags).to eq(["done"])
+      expect(task.id).to eq("des1")
+      expect(task.start_date).to eq("2014-01-06")
+      expect(task.end_date).to eq("2014-01-08")
+    end
+
+    it "parses multiple comma-separated tags followed by a duration" do
+      source = <<~GANTT
+        gantt
+          section Tasks
+          Create tests for parser             :crit, active, 3d
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.tags).to eq(%w[crit active])
+      expect(task.duration).to eq("3d")
+      expect(task.id).to be_nil
+    end
+
+    it "parses comma-separated tags followed by an after-dependency and a duration" do
+      source = <<~GANTT
+        gantt
+          section Tasks
+          Implement parser and jison          :crit, done, after des1, 2d
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.tags).to eq(%w[crit done])
+      expect(task.after_task).to eq("des1")
+      expect(task.duration).to eq("2d")
+    end
+
+    it "parses an after-dependency with trailing whitespace before its comma" do
+      source = <<~GANTT
+        gantt
+          section Tasks
+          Add gantt diagram to demo page      :after a1  , 20h
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.after_task).to eq("a1")
+      expect(task.duration).to eq("20h")
+    end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "timeout"
 require "sirena/renderer/gantt"
 require "sirena/transform/gantt"
 require "sirena/parser/gantt"
@@ -74,6 +75,53 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
       # Should contain colored rectangles for tasks
       expect(xml).to include("<rect")
       expect(xml).to include("fill")
+    end
+
+    it "renders a task tagged with an id and explicit start/end dates (corpus gantt/005)" do
+      source = <<~GANTT
+        gantt
+          section A section
+          Completed task            :done,    des1, 2014-01-06,2014-01-08
+      GANTT
+
+      parser = Sirena::Parser::GanttParser.new
+      diagram = parser.parse(source)
+
+      transform = Sirena::Transform::GanttTransform.new
+      graph = transform.to_graph(diagram)
+
+      svg = renderer.render(graph)
+      xml = svg.to_xml
+
+      expect(xml).to include("Completed task")
+      expect(xml).to include("<rect")
+    end
+
+    # mermaid accepts any year, so an explicit far-future date is valid
+    # input (corpus gantt/001). calculate_label_interval used to cap at a
+    # flat 30-day step regardless of range, which for a multi-millennium
+    # span builds tens of thousands of label/grid-line nodes and blows
+    # well past the corpus sweep's 10s timeout.
+    it "bounds the number of axis labels for a multi-millennium timeline" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Section
+          A task : a1, 2022-10-20, 12d
+          Far task : f1, 9999-10-01, 30d
+      GANTT
+
+      parser = Sirena::Parser::GanttParser.new
+      diagram = parser.parse(source)
+
+      transform = Sirena::Transform::GanttTransform.new
+      graph = transform.to_graph(diagram)
+
+      xml = nil
+      Timeout.timeout(5) { xml = renderer.render(graph).to_xml }
+
+      grid_line_count = xml.scan('stroke-dasharray="2,2"').length
+      expect(grid_line_count).to be <= 41
     end
 
     it "renders timeline axis" do

@@ -49,8 +49,18 @@ RSpec.describe Sirena::Engine do
   end
 
   describe 'the clock is an injected input wherever it matters' do
+    # corpus gantt/001 dates every task explicitly (down to a literal
+    # 9999-10-01), so once the parser stopped dropping durations it no
+    # longer needs `today` for anything and the render-level assertions
+    # below went green for the wrong reason: gantt/001 rendered the same
+    # for two ten-year-apart pins because nothing in it reads the clock,
+    # not because the clock was still being read. A partial date plus an
+    # explicit axisFormat forces the pinned YEAR into the rendered text —
+    # `dateFormat MM/DD` alone hides it (see the "takes the year of a
+    # partial date" example below), so the axis label needs %Y too.
     let(:source) do
-      corpus_source('gantt', '001_rendering_gantt_spec_gantt_0.mmd')
+      "gantt\n  dateFormat MM/DD\n  axisFormat %Y-%m-%d\n  " \
+        "section Section\n  Task one : t1, 08/17, 3d\n"
     end
     let(:early) { Date.new(2020, 1, 1) }
     let(:late) { Date.new(2031, 6, 15) }

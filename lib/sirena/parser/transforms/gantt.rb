@@ -10,6 +10,11 @@ module Sirena
       # Converts the parse tree output from Grammars::Gantt into a
       # fully-formed Diagram::GanttChart object with sections and tasks.
       class Gantt
+        TAG_KEYWORDS = %w[done active crit milestone].freeze
+        DURATION_PATTERN = /\A\d+[dwMh]\z/
+        DATE_PATTERN = %r{\A\d+[-/:][\d\-/:]*\z}
+        private_constant :TAG_KEYWORDS, :DURATION_PATTERN, :DATE_PATTERN
+
         # Transform parse tree into Gantt diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -136,51 +141,40 @@ module Sirena
           @current_section.tasks << task
         end
 
+        # Task details are a comma-separated list of fields with no fixed
+        # position (mermaid allows tags, an id, "after"/"until", a date, and
+        # a duration in any order) — classify each field by its own shape,
+        # the same way mermaid's own parser does.
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
-          # Extract tags
-          if details[:tags]
-            extract_tags(task, details[:tags])
+          dates = []
+          extract_task_fields(details[:parts]).each do |field|
+            classify_task_field(task, field, dates)
           end
 
-          # Extract task ID
-          if details[:id]
-            task.id = extract_text(details[:id])
-          end
-
-          # Extract timing information
-          if details[:start_date]
-            task.start_date = extract_text(details[:start_date])
-          end
-
-          if details[:end_date]
-            task.end_date = extract_text(details[:end_date])
-          end
-
-          if details[:duration]
-            task.duration = extract_text(details[:duration])
-          end
-
-          if details[:after_task]
-            task.after_task = extract_text(details[:after_task])
-          end
-
-          if details[:until_task]
-            task.until_task = extract_text(details[:until_task])
-          end
+          task.start_date = dates[0] if dates[0]
+          task.end_date = dates[1] if dates[1]
         end
 
-        def extract_tags(task, tags_data)
-          tags_array = if tags_data.is_a?(Array)
-                         tags_data
-                       else
-                         [tags_data]
-                       end
+        def extract_task_fields(parts)
+          Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }
+        end
 
-          tags_array.each do |tag_item|
-            tag = extract_text(tag_item)
-            task.tags << tag unless tag.empty?
+        def classify_task_field(task, field, dates)
+          case field
+          when *TAG_KEYWORDS
+            task.tags << field
+          when /\Aafter\s+(.+)\z/
+            task.after_task = Regexp.last_match(1)
+          when /\Auntil\s+(.+)\z/
+            task.until_task = Regexp.last_match(1)
+          when DURATION_PATTERN
+            task.duration = field
+          when DATE_PATTERN
+            dates << field
+          else
+            task.id = field
           end
         end
 
