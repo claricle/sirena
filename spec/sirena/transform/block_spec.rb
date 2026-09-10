@@ -13,12 +13,6 @@ RSpec.describe Sirena::Transform::BlockTransform do
       # skips a row before it lands (see the comment in calculate_y_position).
       let(:source) { File.read("spec/mermaid/block/002_rendering_block_spec_block_1.mmd") }
 
-      it "positions every block without raising on the skipped rows" do
-        diagram = parser.parse(source)
-
-        expect { transform.to_graph(diagram) }.not_to raise_error
-      end
-
       it "treats a skipped row as contributing zero height rather than nil" do
         diagram = parser.parse(source)
         blocks = transform.to_graph(diagram)[:blocks]
