@@ -68,16 +68,27 @@ module Sirena
       # `Engine#render` end to end — costs ~1.25s total, down from ~76s
       # measured against the previous 200-char cap. A kanban card's text is
       # diagram source an attacker can shape, so whatever reaches kramdown
-      # has to stay bounded regardless of what markers it contains; no real
-      # card or column label with actual markup in it is anywhere near this
-      # long. `parse_lines` falls back to unstyled literal lines rather
-      # than calling kramdown past this length.
+      # has to stay bounded regardless of what markers it contains.
+      #
+      # This is a real trade-off, not a theoretical one: an entirely
+      # ordinary label can cross this cap. `"Please review the **proposed**
+      # deployment plan asap"` is 51 characters and has exactly one bold
+      # word — `parse_lines` still falls back to unstyled literal lines for
+      # it, printing the `**` markers literally. Bounding kramdown's
+      # worst-case cost means accepting that this label, and any other real
+      # label past 50 characters, loses its styling entirely rather than
+      # drawing a line between "attacker-shaped" and "merely long".
       MAX_PARSEABLE_LENGTH = 50
 
       # The only two characters that can ever start a span under `Parser`
       # (see `MAX_PARSEABLE_LENGTH` above) — matches kramdown's own
       # `Emphasis::EMPHASIS_START`.
       EMPHASIS_MARKER = /[*_]/
+
+      # The only two block types `parse_lines` knows how to walk — anything
+      # else in the parsed tree means the whole label falls back to
+      # `literal_lines`. See the `root.children.any?` guard in `parse_lines`.
+      PLAIN_BLOCK_TYPES = [:p, :blank].freeze
 
       module_function
 
@@ -103,6 +114,36 @@ module Sirena
         return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
 
         root, = Parser.parse(raw)
+
+        # A line led by a tab or 4+ spaces (kramdown's own `:codeblock`
+        # block parser, excluded from `Parser`'s `@block_parsers`) matches
+        # neither `:paragraph` nor `:blank_line`, so kramdown's own
+        # line-scanning fallback (`Parser::Kramdown#parse_blocks`'s
+        # `add_text` branch) appends a bare `:text` block directly under
+        # root instead of wrapping it in `:p`. Reconstructing that block's
+        # text from the tree fragments it — kramdown still span-parses
+        # inside its own fallback, so a stray marker elsewhere in the same
+        # text splits the fallback block off from its neighbouring `:p`
+        # siblings and produces several independent literal lines where
+        # mermaid renders one. `Parser.parse("\t*hello* world")` is exactly
+        # this: kramdown emits a `:text` block ("\t"), a `:p` ("hello",
+        # `:em`) and a `:text` block (" world") as three siblings, and the
+        # per-node literal handling this replaced turned that into three
+        # fragmented lines with the `*` markers gone.
+        #
+        # No construct this restricted `Parser` can produce should crash or
+        # corrupt the renderer, matching mermaid's own "unsupported
+        # construct -> literal passthrough" behavior — so the moment any
+        # unexpected block type shows up ANYWHERE in the tree, the whole
+        # label is unrecoverable as styled markdown and falls back to the
+        # exact same simple, correct path already used for over-length
+        # input: `literal_lines` on the raw text, untouched by kramdown.
+        # That guarantees no fragmentation and no marker loss by
+        # construction, at the cost of that one label losing styling
+        # entirely — the same trade-off already accepted above for
+        # `MAX_PARSEABLE_LENGTH`.
+        return literal_lines(raw) if root.children.any? { |block| !PLAIN_BLOCK_TYPES.include?(block.type) }
+
         lines = []
 
         root.children.each do |block|
@@ -111,25 +152,6 @@ module Sirena
             lines.concat(split_on_hard_breaks(flatten_runs(block, bold: false, italic: false)))
           when :blank
             block.value.count("\n").times { lines << [] }
-          else
-            # Reachable: a line a tab or 4+ leading spaces (kramdown's own
-            # `:codeblock` block parser, excluded from `Parser`'s
-            # `@block_parsers`) matches neither `:paragraph` nor
-            # `:blank_line`, so kramdown's line-scanning fallback
-            # (`Parser::Kramdown#parse_blocks`'s `add_text` branch) appends
-            # a bare `:text` block directly under root instead of wrapping
-            # it in `:p` — no construct this restricted `Parser` can
-            # produce should crash the renderer, matching mermaid's own
-            # "unsupported construct -> literal passthrough" behavior that
-            # `literal_lines` and the disabled `codespan` span parser
-            # already give every other case in this file. That fallback
-            # block's `value` always carries exactly one trailing `\n`
-            # kramdown's own line-scan appended (verified against every
-            # shape this branch can reach); `delete_suffix` drops it so a
-            # single tab-led line doesn't gain a spurious blank line after
-            # it the way an unstripped one would.
-            literal = literal_text_of(block).delete_suffix("\n")
-            lines.concat(split_on_hard_breaks([Run.new(text: literal, bold: false, italic: false)]))
           end
         end
 

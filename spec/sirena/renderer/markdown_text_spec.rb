@@ -128,8 +128,8 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # `parse_lines`'s marker-free early exit (below) takes it straight to
     # `literal_lines`. Kept because it's the foreman's exact repro shape and
     # it must still never crash; the examples further down force text
-    # through the real kramdown-based path to actually exercise the fixed
-    # `else` branch this comment describes.
+    # through the real kramdown-based path to actually exercise the
+    # unexpected-block fallback this comment describes.
     it 'treats a tab-leading line as literal text instead of crashing' do
       lines = described_class.parse_lines("\tIndented Label")
 
@@ -145,17 +145,15 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # Same shapes as the two examples above, but with a trailing unflanked
     # `*` so the raw text contains a marker character and reaches the real
     # kramdown-based path instead of the marker-free early exit — this is
-    # what actually exercises `parse_lines`'s fixed block-level `else`
-    # branch. Mutation-check: restore the `raise` in that branch. Watched
-    # red: both examples raise instead of returning literal text. A trailing
-    # UNFLANKED `*` (no closing partner) is required, not any marker: a
-    # well-formed pair like `*word*` resolves to a real `:em` node even
-    # inside this fallback shape (kramdown span-parses top-level fallback
-    # text same as it would inside a `:p`), which fragments the single
-    # source line into several sibling blocks — a real but separate
-    # behavior this fix doesn't need to handle differently, since mermaid
-    # itself gives none of this whitespace-leading shape any defined
-    # rendering to begin with.
+    # what actually exercises `parse_lines`'s unexpected-block fallback.
+    # Mutation-check: delete the `return literal_lines(raw) if
+    # root.children.any? { ... }` guard. Watched red: both examples raise
+    # `NoMethodError` walking a bare root-level `:text` block that isn't `:p`
+    # or `:blank`. A trailing UNFLANKED `*` (no closing partner) is required,
+    # not any marker: a well-formed pair like `*word*` still fragments the
+    # tree into several sibling blocks (see the regression guard below for
+    # exactly that shape), which is also caught by the same guard — either
+    # marker shape demonstrates it, this one happens to be the simplest.
     it 'treats a tab-leading line with a marker as literal text via the real parse path' do
       lines = described_class.parse_lines("\tIndented Label*")
 
@@ -168,13 +166,18 @@ RSpec.describe Sirena::Renderer::MarkdownText do
       expect(lines).to eq([[described_class::Run.new(text: '    Four spaces label*', bold: false, italic: false)]])
     end
 
-    # Same fallback block, reached from a second line after a hard break
+    # Same fallback shape, reached from a second line after a hard break
     # rather than the first line of the text — the blank line between "a"
     # and the tab-led "b" is what breaks kramdown's lazy paragraph
     # continuation (verified: a tab-led SECOND line with no intervening
     # blank stays inside the `:p` and never reaches this fallback at all).
     # The marker on "a*" keeps the whole raw string off the early-exit path
-    # (see the two examples above) without touching the tab-led block itself.
+    # (see the two examples above).
+    #
+    # Whole-string fallback and per-node reconstruction happen to agree here
+    # — "a*" never shares a block with the tab-led "b", so nothing is lost
+    # either way — which is exactly why this shape alone can't stand in for
+    # the regression guard below: it can't tell the two mechanisms apart.
     it 'treats a tab-leading line after a blank line as literal text, on its own line' do
       lines = described_class.parse_lines("a*\n\n\tb")
 
@@ -185,6 +188,29 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                           ])
     end
 
+    # Round-3 Codex High: the round-2 fallback above reconstructed literal
+    # text per unexpected NODE rather than falling back for the whole
+    # STRING, and kramdown span-parses inside its own block-level fallback —
+    # so a marker anywhere in the text can split a single source line into
+    # several independent sibling blocks, each then treated as its own
+    # literal line. `"\t*hello* world"` is exactly this: kramdown emits a
+    # root-level `:text` ("\t"), `:em` ("hello"), `:text` (" world") — three
+    # siblings, none of them `:p` — and the per-node handling this replaced
+    # turned that into three fragmented, unstyled lines with the `*`
+    # characters silently gone. Real mermaid renders this input literally,
+    # unchanged, as ONE line — exactly what `literal_lines` already gives
+    # every other unparseable label.
+    #
+    # Mutation-check: replace the `root.children.any? { ... }` guard's whole
+    # `literal_lines(raw)` fallback with the old per-node reconstruction.
+    # Watched red: `parse_lines` returns three lines
+    # (`["\t", "hello", " world"]`) instead of matching `literal_lines`.
+    it 'falls back to the whole raw string, not a fragmented per-node reconstruction' do
+      raw = "\t*hello* world"
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
     # Guards the OTHER shape of "indented mid-label text": a four-space-led
     # line immediately continuing a paragraph (no blank line between) stays
     # inside kramdown's lazy `:p` continuation and never reaches the
@@ -192,11 +218,18 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # hard break, splitting into two lines exactly as it did before this
     # fix (the leading spaces on "b" are literal content, not consumed as
     # indentation, since no `:codeblock` parser is active to interpret them).
+    #
+    # A trailing unflanked `*` on "a" is required, same reason as the tab-led
+    # examples above: with no marker at all the raw text never reaches
+    # `Parser.parse` (`parse_lines`'s marker-free early exit takes it
+    # straight to `literal_lines`), so an unmarked version of this example
+    # would pass even with `Parser.parse` replaced by an unconditional
+    # exception — it would never call it.
     it 'keeps an indented continuation line inside the paragraph, unaffected by the fallback' do
-      lines = described_class.parse_lines("a\n    b")
+      lines = described_class.parse_lines("a*\n    b")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: 'a', bold: false, italic: false)],
+                            [described_class::Run.new(text: 'a*', bold: false, italic: false)],
                             [described_class::Run.new(text: '    b', bold: false, italic: false)]
                           ])
     end
@@ -205,11 +238,19 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # -1)`'s parts back together instead of starting a new line per part
     # (drop the `lines << [] if index.positive?`). Watched red: one
     # line/run with both sentences run together instead of two line-groups.
+    #
+    # A trailing unflanked `*` on the first line is required: with no marker
+    # at all, `parse_lines`'s marker-free early exit sends the raw text
+    # straight to `literal_lines` (which also splits on "\n", coincidentally
+    # producing the same two-line shape) without ever calling
+    # `split_on_hard_breaks` — so an unmarked version of this example would
+    # pass even with `split_on_hard_breaks` itself replaced by an
+    # unconditional exception.
     it 'splits on a literal newline as a hard line break' do
-      lines = described_class.parse_lines("Line one\nLine two")
+      lines = described_class.parse_lines("Line one*\nLine two")
 
       expect(lines).to eq([
-                            [described_class::Run.new(text: 'Line one', bold: false, italic: false)],
+                            [described_class::Run.new(text: 'Line one*', bold: false, italic: false)],
                             [described_class::Run.new(text: 'Line two', bold: false, italic: false)]
                           ])
     end
@@ -261,12 +302,21 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # The fallback still respects hard line breaks — it skips kramdown,
     # not line-splitting. A leading `*` keeps this on the LENGTH guard
     # specifically rather than the marker-free early exit above.
+    #
+    # Asserts the whole result, not just `lines.last`: a mutation returning
+    # `literal_lines(raw).last(1)` (dropping every line but the last) still
+    # satisfies an assertion on `lines.last` alone, since `.last` of a
+    # one-element array is that element either way.
     it 'still splits on hard line breaks in the unstyled fallback' do
-      long_text = "*#{'x' * described_class::MAX_PARSEABLE_LENGTH}\nsecond"
+      first_line = "*#{'x' * described_class::MAX_PARSEABLE_LENGTH}"
+      long_text = "#{first_line}\nsecond"
 
       lines = described_class.parse_lines(long_text)
 
-      expect(lines.last).to eq([described_class::Run.new(text: 'second', bold: false, italic: false)])
+      expect(lines).to eq([
+                            [described_class::Run.new(text: first_line, bold: false, italic: false)],
+                            [described_class::Run.new(text: 'second', bold: false, italic: false)]
+                          ])
     end
 
     # Amplification High: text with no `*` character at all can still be
