@@ -263,7 +263,7 @@ module Sirena
       # Splits a `classDef` style run ("fill:#f96,stroke:#333") into its raw
       # comma-separated chunks, then REPLAYS a copy of every chunk whose
       # text contains the lowercase substring "color" — anywhere, key or
-      # value — onto the end of the list.
+      # value — onto the end of the list, EXCEPT one declaring `fill`.
       #
       # Verified against mermaid's own db (`ErDB#addClass`): each style
       # chunk is tested with `/color/.exec(s)` (no `i` flag, so only a
@@ -272,14 +272,47 @@ module Sirena
       # after this class's own `styles` array when compiling. A declaration
       # naming `stroke:currentcolor` this way ends up LAST among same-key
       # entries even when a later, unrelated `stroke:red` chunk follows it
-      # in source — `classDef a stroke:currentcolor,stroke:red` resolves to
-      # `currentcolor`, not `red`, because the replay lands after both.
+      # in source — `classDef a stroke:currentcolor,stroke:#0000ff`
+      # resolves to `currentcolor`, not `#0000ff`, because the replay
+      # lands after both.
+      #
+      # `textStyles` dresses the LABEL, not the box, and the two buckets
+      # collide on every property they name alike — which is what makes
+      # the replay visible on the box at all. `fill` is the one that does
+      # not collide: on the label it is the text colour, so a replayed
+      # `fill` never reaches the box's own fill. Measured with mmdc on an
+      # erDiagram entity carrying an attribute block, one class assigned:
+      #
+      #   stroke:currentcolor,stroke:#0000ff  ->  currentcolor
+      #   fill:currentcolor,fill:#0000ff      ->  #0000ff
+      #   stroke:#00ff00,stroke:#0000ff       ->  #0000ff
+      #   fill:#00ff00,fill:#0000ff           ->  #0000ff
+      #
+      # Row one is why the replay exists. Row two is why `fill` is exempt:
+      # replaying it reverses that row to `currentcolor`.
       #
       # @param declaration [String] raw style text for one class
       # @return [Array<String>] chunks, with colour-bearing ones repeated
       def class_chunks(declaration)
         chunks = declaration.split(',')
-        chunks + chunks.select { |chunk| chunk.include?('color') }
+        chunks + chunks.select { |chunk| replayed_chunk?(chunk) }
+      end
+
+      # Whether CHUNK is one whose `textStyles` replay is still visible on
+      # the entity BOX. See `class_chunks` for the measurement behind the
+      # `fill` exemption.
+      #
+      # The key is compared case-insensitively because mermaid stores it
+      # verbatim and leaves folding to the browser, so `FILL:` and `fill:`
+      # are the same declaration by the time either is painted.
+      #
+      # @param chunk [String] one raw comma-separated chunk
+      # @return [Boolean]
+      def replayed_chunk?(chunk)
+        return false unless chunk.include?('color')
+
+        key, value = mermaid_split(chunk)
+        !value.nil? && key.strip.downcase != 'fill'
       end
 
       # Applies a run of raw chunks into the shared, exact-case styles Hash,

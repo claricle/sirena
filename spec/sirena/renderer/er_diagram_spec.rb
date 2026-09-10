@@ -541,7 +541,8 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       end
 
       # Verified against mermaid's own db (ErDB#addClass): any chunk whose
-      # text contains the substring "color" is replayed a second time at
+      # text contains the substring "color", other than one declaring
+      # `fill`, is replayed a second time at
       # the end of its class's declarations, so it wins over a LATER
       # same-property chunk that does not itself mention "color".
       # `stroke:currentcolor,stroke:red` resolves to currentcolor, not the
@@ -556,6 +557,24 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         svg = renderer.render(graph)
 
         expect(rect_for(svg, 'CAR').stroke).to eq('currentcolor')
+      end
+
+      # The replay lands in mermaid's `textStyles`, which dresses the LABEL,
+      # not the box. `fill` is the one property where the two buckets mean
+      # different things -- on the label it is the text colour -- so a
+      # replayed `fill` never reaches the box. Measured with mmdc on this
+      # exact source: `fill:currentcolor,fill:blue` paints the box blue,
+      # while the C19 stroke pair above keeps currentcolor.
+      it 'does not replay a colour-bearing FILL over a later one (C24)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:currentcolor,fill:blue' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('blue')
       end
 
       # Verified by Codex against the installed mermaid 11.16.1 bundle and
