@@ -69,6 +69,15 @@ module Sirena
       @verbose = verbose
       @theme = load_theme(theme)
       @today = today
+    rescue *EXHAUSTION_ERRORS => e
+      # Theme loading parses attacker-supplied YAML, and it happens HERE --
+      # before `render` is ever called, so `render`'s own rescue cannot see
+      # it. A host embedding sirena and catching `StandardError` still loses
+      # its whole process, because neither exhaustion class is one.
+      #
+      # Reproduce with a theme whose YAML nests 2000 deep:
+      #   Sirena::Engine.new(theme: bomb_path)   # raised raw SystemStackError
+      raise PipelineError, "Theme loading failed: #{e.message}"
     end
 
     # Renders Mermaid source code to SVG.

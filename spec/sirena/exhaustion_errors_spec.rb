@@ -1,3 +1,4 @@
+require 'tempfile'
 # frozen_string_literal: true
 
 require 'spec_helper'
@@ -167,5 +168,35 @@ RSpec.describe Sirena::Engine do
 
     expect { Sirena.render(source) }
       .to raise_error(Sirena::Engine::PipelineError, /stack level too deep/)
+  end
+
+  describe 'Sirena::Engine.new' do
+    # Theme loading runs in the constructor, so `#render`'s rescue never sees
+    # it. A host embedding sirena and catching StandardError loses its whole
+    # process, because neither exhaustion class is a StandardError.
+    it 'turns an exhausting theme into a PipelineError instead of killing the host' do
+      Tempfile.create(['bomb', '.yml']) do |file|
+        file.write("name: #{'[' * 2000}x#{']' * 2000}\n")
+        file.flush
+
+        expect { described_class.new(theme: file.path) }
+          .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed/)
+      end
+    end
+
+    it 'keeps the original exhaustion error reachable as the cause' do
+      Tempfile.create(['bomb', '.yml']) do |file|
+        file.write("name: #{'[' * 2000}x#{']' * 2000}\n")
+        file.flush
+
+        cause = begin
+          described_class.new(theme: file.path)
+        rescue Sirena::Engine::PipelineError => e
+          e.cause
+        end
+
+        expect(cause).to be_a(SystemStackError)
+      end
+    end
   end
 end
