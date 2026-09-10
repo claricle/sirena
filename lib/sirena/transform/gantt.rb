@@ -104,8 +104,8 @@ module Sirena
 
       def resolve_task_dependency(task)
         if task.after_task
-          ref_task = @task_map[task.after_task]
-          return false unless ref_task && ref_task.calculated_end
+          ref_task = latest_dependency(task.after_task)
+          return false unless ref_task
 
           task.calculated_start = ref_task.calculated_end
           if task.duration
@@ -129,6 +129,19 @@ module Sirena
         end
 
         false
+      end
+
+      # "after a c" names every task this one waits on, space-separated —
+      # mermaid starts it once ALL of them are done, i.e. after the LATEST
+      # of their ends. Returns nil while any referenced id is unknown or has
+      # not yet resolved its own end, so the caller's fixed-point loop tries
+      # again on a later iteration instead of starting early on a partial
+      # answer. A single id is just the one-element case of the same rule.
+      def latest_dependency(after_task)
+        ref_tasks = after_task.split.map { |id| @task_map[id] }
+        return nil unless ref_tasks.all? { |ref_task| ref_task&.calculated_end }
+
+        ref_tasks.max_by(&:calculated_end)
       end
 
       # Date.parse fills whatever the input omits from the system clock, so

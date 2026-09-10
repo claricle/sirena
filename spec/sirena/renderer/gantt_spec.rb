@@ -156,5 +156,66 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
       # Should include timeline with date labels
       expect(xml).to include("<text")
     end
+
+    # `dateFormat YYYYMMDD` has no separator, so its date fields ("20240101")
+    # used to fall through the id-by-shape branch and overwrite the id the
+    # three-slot positional rule had already assigned — the task then had no
+    # id, `resolve_task_dependency` could never find it, and both bars
+    # rendered as 20px stubs (Codex round 3 High, gantt.rb:202). Fixed, the
+    # bars carry their real 2-day widths and sit flush against each other,
+    # exactly as mmdc renders this input (widths 317/317, U.x = T.x + T.width).
+    it "renders real task widths, not 20px stubs, when dateFormat is compact digits" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYYMMDD
+          section Tasks
+          T : t, 20240101, 20240103
+          U : u, after t, 20240105
+      GANTT
+
+      parser = Sirena::Parser::GanttParser.new
+      diagram = parser.parse(source)
+
+      transform = Sirena::Transform::GanttTransform.new
+      graph = transform.to_graph(diagram)
+
+      xml = renderer.render(graph).to_xml
+      bars = xml.scan(/<rect fill="#{Regexp.escape(described_class::TASK_COLORS[:default])}"[^>]*\/>/)
+      t_x, t_width = bars[0].match(/x="([0-9.]+)"[^>]*width="([0-9.]+)"/).captures.map(&:to_f)
+      u_x = bars[1].match(/x="([0-9.]+)"/)[1].to_f
+
+      expect(t_width).to be > 20
+      expect(u_x).to be_within(0.01).of(t_x + t_width)
+    end
+
+    # "after a c" names two dependencies; mermaid starts the task once BOTH
+    # are done, i.e. after the LATEST of their ends. The resolver used to
+    # look up the literal string "a c" as one task id, find nothing, and
+    # leave the task's dates nil forever (Codex round 3 High, gantt.rb:186).
+    # mmdc places T flush against C's end (C ends later than A) at the same
+    # relative geometry asserted here.
+    it "starts a task after the latest of several space-separated dependencies" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Tasks
+          A : a, 2024-01-01, 2024-01-03
+          C : c, 2024-01-01, 2024-01-05
+          T : t, after a c, 2d
+      GANTT
+
+      parser = Sirena::Parser::GanttParser.new
+      diagram = parser.parse(source)
+
+      transform = Sirena::Transform::GanttTransform.new
+      graph = transform.to_graph(diagram)
+
+      xml = renderer.render(graph).to_xml
+      bars = xml.scan(/<rect fill="#{Regexp.escape(described_class::TASK_COLORS[:default])}"[^>]*\/>/)
+      _a_x, _a_width, c_x, c_width, t_x, _t_width =
+        bars.flat_map { |bar| bar.match(/x="([0-9.]+)"[^>]*width="([0-9.]+)"/).captures }.map(&:to_f)
+
+      expect(t_x).to be_within(0.01).of(c_x + c_width)
+    end
   end
 end

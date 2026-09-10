@@ -152,17 +152,26 @@ module Sirena
         # same as a bare date would, so it must still count towards that
         # three-slot rule; only once the id is settled does it get stripped
         # out on its own.
+        #
+        # Once the id came from position, the two fields left are always
+        # start/end values, even when one fails the date-shape check below —
+        # `dateFormat YYYYMMDD` produces separator-less dates like
+        # "20240101" that DATE_PATTERN does not match. Re-applying id-by-
+        # shape there would stomp the id `process_task_details` already
+        # assigned, so `classify_value_field` is told whether the id is
+        # already settled and never treats a leftover field as an id twice.
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
           fields = extract_task_fields(details[:parts])
           positional_fields = reject_tag_fields(task, fields)
-          task.id = positional_fields.shift if positional_fields.length == 3
+          id_from_position = positional_fields.length == 3
+          task.id = positional_fields.shift if id_from_position
 
           value_fields = reject_dependency_fields(task, positional_fields)
 
           dates = []
-          value_fields.each { |field| classify_value_field(task, field, dates) }
+          value_fields.each { |field| classify_value_field(task, field, dates, id_from_position) }
           assign_dates(task, dates)
         end
 
@@ -192,11 +201,10 @@ module Sirena
           end
         end
 
-        def classify_value_field(task, field, dates)
-          case field
-          when DURATION_PATTERN
+        def classify_value_field(task, field, dates, id_from_position)
+          if field.match?(DURATION_PATTERN)
             task.duration = field
-          when DATE_PATTERN
+          elsif field.match?(DATE_PATTERN) || id_from_position
             dates << field
           else
             task.id = field

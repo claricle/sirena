@@ -182,9 +182,10 @@ RSpec.describe Sirena::Parser::GanttParser do
       expect(task_b.end_date).to eq("2024-01-10")
     end
 
-    # Three value fields (excluding tags and after/until) is mermaid's
-    # "id, start, end/duration" shape. The id is always the first of the
-    # three, even when its text happens to look like a date.
+    # Three value fields (tags stripped, but an after/until dependency still
+    # counted — see the "counts an after-dependency..." example below) is
+    # mermaid's "id, start, end/duration" shape. The id is always the first
+    # of the three, even when its text happens to look like a date.
     it "treats the first of three value fields as the id, even when it is date-shaped" do
       source = <<~GANTT
         gantt
@@ -220,6 +221,26 @@ RSpec.describe Sirena::Parser::GanttParser do
       expect(task.after_task).to eq("a")
       expect(task.start_date).to be_nil
       expect(task.end_date).to eq("2024-01-06")
+    end
+
+    # `dateFormat YYYYMMDD` produces separator-less date fields like
+    # "20240101", which DATE_PATTERN does not match (it requires a
+    # "-", "/" or ":"). Once the id already came from position, a leftover
+    # field like that must still be treated as a date and never re-trigger
+    # id-by-shape classification, or it silently overwrites the real id.
+    it "keeps the positional id when trailing dates have no separator (compact dateFormat)" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYYMMDD
+          section Tasks
+          T: t, 20240101, 20240103
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.id).to eq("t")
+      expect(task.start_date).to eq("20240101")
+      expect(task.end_date).to eq("20240103")
     end
   end
 end

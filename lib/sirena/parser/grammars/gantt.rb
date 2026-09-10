@@ -160,10 +160,13 @@ module Sirena
 
         # Task details are a comma-separated list of fields, in any order
         # mermaid allows: status tags (done/active/crit/milestone), an id,
-        # "after <id>", "until <id>", a date, and a duration. Mermaid itself
-        # classifies each field by shape rather than by position, so the
-        # grammar captures the raw fields and the transform (gantt.rb)
-        # classifies them the same way.
+        # "after <id...>", "until <id>", a date, and a duration. The grammar
+        # only captures the raw fields; it does not classify them. Mermaid
+        # classifies by POSITION when exactly three value fields remain
+        # after tags are stripped (id, start, end/duration, in that order),
+        # and by SHAPE otherwise — fields are not freely interchangeable
+        # (mmdc rejects "3d, 2024-01-10" with "Invalid date:3d"). See
+        # Transforms::Gantt#process_task_details for the actual rule.
         rule(:task_details) do
           (task_field.as(:field) >>
             (space? >> comma >> space? >> task_field.as(:field)).repeat).as(:parts)
