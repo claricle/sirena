@@ -94,6 +94,11 @@ module Sirena
             else
               value.values.first.to_s
             end
+          when Array
+            # Parslet's `.repeat` (no minimum) yields [] rather than a
+            # slice when it matches zero characters, e.g. an empty
+            # `accDescr {}` block - treat that the same as no text.
+            value.map { |v| extract_text(v) }.join
           when String
             value
           else

@@ -193,6 +193,25 @@ RSpec.describe Sirena::Parser::Architecture do
       end
     end
 
+    context "with an empty multiline accessibility description block" do
+      # Parslet's `.repeat` (no minimum) yields [] rather than a slice when
+      # it matches zero characters, and extract_text used to stringify that
+      # array literally as "[]" instead of treating it as no text.
+      let(:input) do
+        <<~MERMAID
+          architecture-beta
+              accDescr {}
+              service a(server)[A]
+        MERMAID
+      end
+
+      it "parses the empty block as an empty description, not the literal \"[]\"" do
+        result = parser.parse(input)
+
+        expect(result.acc_descr).to eq("")
+      end
+    end
+
     context "with a junction" do
       # spec/mermaid/architecture/011: junctions route edges between
       # services and carry no icon or label of their own.

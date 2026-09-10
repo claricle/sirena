@@ -28,8 +28,8 @@ module Sirena
 
         # Calculate positions
         service_positions = position_services(diagram, hierarchy)
-        junction_positions = position_junctions(diagram, hierarchy)
-        group_bounds = calculate_group_bounds(diagram, service_positions)
+        junction_positions = position_junctions(diagram, hierarchy, service_positions)
+        group_bounds = calculate_group_bounds(diagram, service_positions, junction_positions)
         edge_positions = position_edges(diagram, service_positions.merge(junction_positions))
 
         {
@@ -166,8 +166,13 @@ module Sirena
 
       # Junctions lay out on their own row-per-group grid, same shape as
       # position_services but with a fixed small size since a junction has
-      # no label or icon to size against.
-      def position_junctions(diagram, hierarchy)
+      # no label or icon to size against. A group that already has services
+      # anchors its junction row past them (vertically centered on that
+      # row) instead of at the group's default origin, so a junction never
+      # lands on the same coordinates as a service in its own group. A
+      # group with no services keeps the threaded fallback cursor, so
+      # junction-only groups still stack without colliding with each other.
+      def position_junctions(diagram, hierarchy, service_positions)
         positions = {}
         current_x = DEFAULT_SPACING
         current_y = DEFAULT_SPACING
@@ -178,24 +183,41 @@ module Sirena
           junctions = hierarchy[:junctions_by_group][group_id] || []
           next if junctions.empty?
 
+          group_services = service_positions.values.select { |pos| pos[:group_id] == group_id }
+          row_x, row_y = junction_row_origin(group_services, current_x, current_y)
+
           junctions.each do |junction|
             positions[junction.id] = {
               junction: junction,
-              x: current_x,
-              y: current_y,
+              x: row_x,
+              y: row_y,
               width: DEFAULT_JUNCTION_SIZE,
               height: DEFAULT_JUNCTION_SIZE,
               group_id: group_id,
             }
 
-            current_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+            row_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
           end
 
-          current_x = DEFAULT_SPACING
-          current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+          if group_services.any?
+            current_y = [current_y, row_y + DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING].max
+          else
+            current_x = DEFAULT_SPACING
+            current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+          end
         end
 
         positions
+      end
+
+      def junction_row_origin(group_services, fallback_x, fallback_y)
+        return [fallback_x, fallback_y] if group_services.empty?
+
+        row_x = group_services.map { |s| s[:x] + s[:width] }.max + DEFAULT_SPACING
+        row_top = group_services.map { |s| s[:y] }.min
+        row_y = row_top + ((DEFAULT_SERVICE_HEIGHT - DEFAULT_JUNCTION_SIZE) / 2.0)
+
+        [row_x, row_y]
       end
 
       def calculate_service_dimensions(service)
@@ -211,28 +233,28 @@ module Sirena
         }
       end
 
-      def calculate_group_bounds(diagram, service_positions)
+      def calculate_group_bounds(diagram, service_positions, junction_positions)
         bounds = {}
 
         diagram.groups.each do |group|
-          # Find all services in this group
-          group_services = service_positions.values.select do |pos|
-            pos[:group_id] == group.id
-          end
+          # Find all services and junctions in this group - a group made
+          # entirely of junctions still needs a boundary drawn around them.
+          group_members = service_positions.values.select { |pos| pos[:group_id] == group.id } +
+            junction_positions.values.select { |pos| pos[:group_id] == group.id }
 
           # Find all child groups
           child_groups = diagram.groups.select { |g| g.parent_id == group.id }
 
-          if group_services.empty? && child_groups.empty?
+          if group_members.empty? && child_groups.empty?
             next
           end
 
           # Calculate bounding box
-          if group_services.any?
-            min_x = group_services.map { |s| s[:x] }.min
-            min_y = group_services.map { |s| s[:y] }.min
-            max_x = group_services.map { |s| s[:x] + s[:width] }.max
-            max_y = group_services.map { |s| s[:y] + s[:height] }.max
+          if group_members.any?
+            min_x = group_members.map { |m| m[:x] }.min
+            min_y = group_members.map { |m| m[:y] }.min
+            max_x = group_members.map { |m| m[:x] + m[:width] }.max
+            max_y = group_members.map { |m| m[:y] + m[:height] }.max
           else
             # Use child group bounds
             min_x = Float::INFINITY
