@@ -57,16 +57,17 @@ module Sirena
       # `from_xml` yields an Array, so join rather than interpolate —
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
       #
-      # `content` and `tspans` are mutually exclusive by convention: a
-      # renderer building markdown-styled runs sets `tspans` and leaves
-      # `content` unset, everything else keeps assigning plain `content` as
-      # it always has. Every existing call site is unaffected — this branch
-      # is only taken when a renderer opts in by setting `tspans`.
+      # Every renderer call site sets exactly one of `content`/`tspans`, but
+      # `from_xml` populates both independently from ordinary mixed SVG
+      # content (`<text>foo<tspan>bar</tspan></text>`), so `to_xml` emits
+      # both when both are present rather than silently dropping one —
+      # `content` first, matching how `from_xml` would have populated it
+      # from text preceding the first `<tspan>` in the source.
       def to_xml
         attrs = build_attributes
-        return "<text#{attrs}>#{Array(tspans).map(&:to_xml).join}</text>" unless Array(tspans).empty?
+        body = Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
 
-        "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
+        "<text#{attrs}>#{body}</text>"
       end
     end
   end
