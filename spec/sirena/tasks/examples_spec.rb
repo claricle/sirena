@@ -143,8 +143,8 @@ RSpec.describe ExampleTasks do
   # shipping its stale picture forever. Deleting the call in :generate left the
   # whole suite green before these.
   describe '.handle_failed_svgs' do
-    def handle(failures)
-      described_class.handle_failed_svgs(failures, examples_dir)
+    def handle(failures, started_at = Time.now)
+      described_class.handle_failed_svgs(failures, examples_dir, started_at)
     end
 
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
@@ -165,13 +165,31 @@ RSpec.describe ExampleTasks do
       expect { handle([[expected_source, missing]]) }.not_to output.to_stdout
     end
 
-    # An unexpected failure is a regression, not a cleanup. Exiting before any
+    # A run that recorded this failure, then paused before reaching cleanup
+    # while another run finished and wrote a good SVG to the same path, must
+    # not destroy that fresh output on the strength of its own stale
+    # observation. `write` sets the file's mtime to now, strictly after
+    # `started_at` was captured, which is exactly the shape of a second run's
+    # output landing after the first run began.
+    it "keeps another run's SVG that was written after this run started" do
+      started_at = Time.now
+      sleep 0.05
+      svg = write(expected_svg, '<svg>written by another run</svg>')
+
+      expect { handle([[expected_source, svg]], started_at) }.to output(/kept/).to_stdout
+      expect(File.read(svg)).to eq('<svg>written by another run</svg>')
+    end
+
+    # An unexpected failure is a regression, not a cleanup. Raising before any
     # delete is what keeps a real breakage from quietly erasing the evidence.
-    it 'exits without deleting anything when an unexpected source failed' do
+    # A plain StandardError, not SystemExit: this is a library method a
+    # caller can require and call directly, and it must not end that
+    # caller's whole process.
+    it 'raises without deleting anything when an unexpected source failed' do
       svg = write('flowchart/01-basic.svg')
 
       expect { handle([['flowchart/01-basic.mmd', svg]]) }
-        .to raise_error(SystemExit).and(output(/Unexpected/).to_stdout)
+        .to raise_error(described_class::UnexpectedRenderFailure).and(output(/Unexpected/).to_stdout)
       expect(File).to exist(svg)
     end
 
@@ -181,7 +199,7 @@ RSpec.describe ExampleTasks do
 
       expect do
         handle([[expected_source, kept], ['flowchart/01-basic.mmd', unexpected_svg]])
-      end.to raise_error(SystemExit).and(output(/Unexpected/).to_stdout)
+      end.to raise_error(described_class::UnexpectedRenderFailure).and(output(/Unexpected/).to_stdout)
       expect(File).to exist(kept)
     end
 
@@ -255,6 +273,22 @@ RSpec.describe ExampleTasks do
 
       expect { silently { described_class.generate_examples(examples_dir) } }
         .to raise_error(Errno::EFBIG)
+      expect(File.read(svg)).to eq('<svg>previous good output</svg>')
+    end
+
+    # Malformed metadata is an operational failure, not evidence the source
+    # itself fails to render. Reading it inside the render-failure rescue
+    # gave a bad .yml on an allowlisted source the same deletion permission
+    # as a genuine render failure, and deleted the still-good SVG below.
+    it 'propagates a metadata error instead of treating it as a render failure' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      svg_path = source_path.sub(/\.mmd\z/, '.svg')
+      write(source_path, source)
+      svg = write(svg_path, '<svg>previous good output</svg>')
+      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: [\n")
+
+      expect { silently { described_class.generate_examples(examples_dir) } }
+        .to raise_error(Psych::SyntaxError)
       expect(File.read(svg)).to eq('<svg>previous good output</svg>')
     end
 
