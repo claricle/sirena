@@ -297,6 +297,25 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>urgent</tspan>})
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>Todo </tspan>})
       end
+
+      # Coverage gap closed: every example above checks tspan CONTENT
+      # (`.text`/`include`), never that the positioning and styling
+      # ATTRIBUTES that make a hard break or an italic run visually correct
+      # actually reach the output XML. A mutation nil-ing every tspan's `x`
+      # (or `font_style`) left the suite green before this example existed.
+      it 'carries x on the line-starting tspan after a hard break, and font-style on an italic run' do
+        xml = renderer.render(layout_with(card_text: "Line one\nLine two")).to_xml
+        parsed = REXML::Document.new(xml)
+        second_line = REXML::XPath.first(parsed, '//tspan[text()="Line two"]')
+
+        expect(second_line.attributes['x']).not_to be_nil
+        expect(second_line.attributes['dy']).to eq('1.2em')
+
+        italic_xml = renderer.render(layout_with(card_text: 'Hello *urgent*')).to_xml
+        italic_run = REXML::XPath.first(REXML::Document.new(italic_xml), '//tspan[text()="urgent"]')
+
+        expect(italic_run.attributes['font-style']).to eq('italic')
+      end
     end
   end
 end
