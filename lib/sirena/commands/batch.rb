@@ -87,7 +87,14 @@ module Sirena
           @stats[:failed] += 1
           @stats[:errors] << { file: relative, error: e.message }
           puts "❌ #{e.class.name}"
-          puts "   #{e.message}" if options[:verbose]
+          if options[:verbose]
+            puts "   #{e.message}"
+            # Printed, never stored: `@stats[:errors]` above outlives the
+            # whole run, and a cause's trace is what must not accumulate
+            # there.
+            diagnostics = Sirena::ErrorReport.cause_diagnostics(e)
+            puts diagnostics.lines.map { |l| "   #{l}" }.join unless diagnostics.empty?
+          end
         end
       end
 

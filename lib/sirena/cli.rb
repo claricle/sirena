@@ -141,7 +141,11 @@ module Sirena
       # even build one -- `NoMemoryError` from `File.read` or a hostile
       # `--theme` reaches this method through the rescue above, and
       # `--verbose` on that failure must not itself crash the CLI.
-      warn error.backtrace&.join("\n") if options[:verbose]
+      if options[:verbose]
+        warn error.backtrace&.join("\n")
+        diagnostics = ErrorReport.cause_diagnostics(error)
+        warn diagnostics unless diagnostics.empty?
+      end
       exit 1
     end
   end
