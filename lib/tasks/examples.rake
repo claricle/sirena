@@ -227,24 +227,40 @@ module ExampleTasks
   # and no longer true. The conformance gate detects a newly failing source
   # either way by matching the unrenderable sources by name; deletion is about
   # not shipping a stale picture, not about detection.
-  def remove_failed_svg(svg_file, examples_dir)
+  # `started_at` is when the enclosing run began generating, threaded in from
+  # the caller rather than read here: a run that recorded this failure, then
+  # paused before reaching cleanup while another run finished and wrote a good
+  # SVG to the very same path, must not destroy that fresh output on the
+  # strength of its own stale observation. An SVG last written at or after
+  # this run started cannot be the stale file this run is entitled to remove.
+  def remove_failed_svg(svg_file, examples_dir, started_at)
     return unless File.exist?(svg_file)
     return unless manageable?(examples_dir, svg_file)
+
+    if File.mtime(svg_file) >= started_at
+      puts "    kept #{File.basename(svg_file)}, written after this run started"
+      return
+    end
 
     File.delete(svg_file)
     puts "    removed #{File.basename(svg_file)}, which no longer renders"
   end
 
-  def handle_failed_svgs(failed_renders, examples_dir)
+  # Raised rather than exiting the process: this is a plain library method a
+  # caller can require and call directly, and only a script's entry point may
+  # decide a process exit status.
+  class UnexpectedRenderFailure < StandardError; end
+
+  def handle_failed_svgs(failed_renders, examples_dir, started_at)
     unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
     unless unexpected_sources.empty?
       puts "\n⚠️  Unexpected render failure: example sources failed to render."
       puts "   Unexpected: #{unexpected_sources.sort.join(', ')}; SVGs that did render have " \
            "already been rewritten, while nothing was deleted."
-      exit 1
+      raise UnexpectedRenderFailure, "unexpected render failure: #{unexpected_sources.sort.join(', ')}"
     end
 
-    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file, examples_dir) }
+    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file, examples_dir, started_at) }
   end
 
   # A render that produced no document must not destroy the document already
@@ -316,9 +332,13 @@ module ExampleTasks
         # From the source path, not rebuilt from the directory: a directory
         # named with glob syntax made those two disagree.
         svg_file = mmd_file.sub(/\.mmd\z/, '.svg')
+        # Read outside the render-failure rescue below: a malformed .yml is a
+        # metadata problem, not evidence the source fails to render, and
+        # folding it into failed_renders gave a bad .yml on an allowlisted
+        # source the same deletion permission as a genuine render failure.
+        theme = theme_for(mmd_file)
 
         begin
-          theme = theme_for(mmd_file)
           svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
           write_svg(svg_file, svg, examples_dir)
           puts "  \u2713 #{basename}.svg"
@@ -377,9 +397,14 @@ namespace :examples do
       exit 1
     end
 
+    started_at = Time.now
     total_generated, failed_renders = ExampleTasks.generate_examples(examples_dir)
 
-    ExampleTasks.handle_failed_svgs(failed_renders, examples_dir)
+    begin
+      ExampleTasks.handle_failed_svgs(failed_renders, examples_dir, started_at)
+    rescue ExampleTasks::UnexpectedRenderFailure
+      exit 1
+    end
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
