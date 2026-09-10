@@ -84,9 +84,17 @@ module Sirena
         # accepts `participant A-` followed by more statements the same
         # way. The general gate still stops an ordinary character at a
         # newline, so a name still cannot span multiple lines.
+        # `>` joins `<` as never `actor_name` material, matching the same
+        # fix applied to `message_actor_char` — it was missing here too.
+        # Measured against mermaid 11.16.1 directly: `activate A>B`,
+        # `deactivate A>B` and `Note over A>B: n` all raise on mermaid;
+        # base created actor `"A>B"` for all three, reading straight past
+        # the `>`. Round-2 Codex finding, in scope: same missing exclusion
+        # as the message-actor fix, just in the sibling rule that serves
+        # activation and note references instead of messages.
         rule(:actor_char) do
           actor_stop.absent? >>
-            (match['^+<-'] |
+            (match['^+<>-'] |
               (str('-') >>
                 (str('-') | arrow_base | colon | comma | semicolon |
                   str('%%') | alias_keyword | str('@{')).absent?))
@@ -179,19 +187,41 @@ module Sirena
         # a `()` that follows a dash is swallowed by the same continuation
         # branch that swallows the dash, so it is never offered to the
         # bare-`()` central-connection alternative at all.
-        #   `A ()->>B: m`   -> actors "A", "B"        (no dash before `()`)
-        #   `A- ()->>B: m`  -> actor  "A- ()"          (dash fuses it in)
-        #   `A-()->>B: m`   -> actor  "A-()"           (no space needed)
-        # Tried before the plain dash branch below, since Parslet
-        # alternation is first-match and this is the more specific case.
-        rule(:message_actor_paren_unit) do
-          str('-') >> space.repeat >> central_connection
+        #
+        # ROUND-2 CORRECTION: the first version of this rule handled only
+        # ONE fused `()` pair and could fire with no name before it at
+        # all. Both were real gaps against the actual lexer regex, not
+        # cosmetic — `[\-]*` in that regex is the DASH-RUN, but the
+        # regex's mandatory FIRST segment (`[^\/\\+()+<->:\n,;]+`, itself
+        # excluding `-`) has to match at least one character before the
+        # dash-continuation group can even be attempted. That single fact
+        # explains both findings at once:
+        #   - a name with NOTHING before the dash has no first segment to
+        #     continue, so mermaid refuses it outright (`-()->>B: m`
+        #     raises; so does `A()->>-()B: m`, since the "to" side there
+        #     is exactly that empty-prefix case) — this rule is therefore
+        #     reachable only from the REPEAT below, never from
+        #     `message_actor_lead`.
+        #   - once a dash-continuation is legitimately entered, mermaid's
+        #     tail-run character class does not stop at one `()` pair —
+        #     it keeps consuming (more pairs, spaces between them) until
+        #     a genuine stop. Measured: `A-()()`, `A-()()()` and
+        #     `A- () ()` (space before AND between) all fuse into ONE id.
+        #     `.repeat` below is that loop, not a fixed second pair.
+        #
+        # A THIRD patch to the old one-pair, no-prefix-check version was
+        # considered and rejected in favour of this generalisation: both
+        # gaps trace to the same missing structural fact above, so one
+        # rule change closes both rather than adding a second branch that
+        # would still cap the fusion at two pairs.
+        rule(:message_actor_continuation) do
+          str('-') >> space.repeat >> central_connection >>
+            (space.repeat >> central_connection).repeat
         end
 
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
-            (message_actor_paren_unit |
-              match['^+<>()-'] |
+            (match['^+<>()-'] |
               (str('-') >> (str('-') | message_actor_stop).absent?))
         end
 
@@ -210,8 +240,14 @@ module Sirena
           match[')|>/\\\\'].absent? >> message_actor_char
         end
 
+        # `message_actor_continuation` is tried only HERE, in the repeat —
+        # never as part of `message_actor_lead` above — which is what
+        # makes an empty prefix before a dash-fusion unreachable. Tried
+        # before the plain `message_actor_char` branch since it is the
+        # more specific case and Parslet alternation is first-match.
         rule(:message_actor_name) do
-          message_actor_lead >> message_actor_char.repeat
+          message_actor_lead >>
+            (message_actor_continuation | message_actor_char).repeat
         end
 
         # The decoration is parsed and discarded, not modeled — Sirena

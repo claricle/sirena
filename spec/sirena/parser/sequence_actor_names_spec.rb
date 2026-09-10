@@ -547,4 +547,110 @@ RSpec.describe Sirena::Parser::SequenceParser do
       expect(diagram.participants.map(&:id)).to eq(%w[A B])
     end
   end
+
+  # Round 2: Codex read `5c769f8` itself and found two gaps IN that
+  # commit's own fusion rule, plus ruled the disclosed `>`-in-actor_char
+  # gap in scope. Withdrew its own shared-root-cause premise from round 1
+  # once shown the two Highs live in disjoint rules — recorded here so
+  # the correction has a paper trail next to the findings it produced.
+  describe "the dash-fused () identity repeats for every fused pair" do
+    # High: the round-1 fix handled exactly ONE fused `()` pair — a
+    # SECOND one right after it fell through to the plain central-
+    # connection alternative and was silently discarded, creating a
+    # phantom actor ("A-()" beside the declared "A-()()") and sending the
+    # message from it instead. This input previously RAISED (see the
+    # "requires an established actor prefix" describe block below), so
+    # turning a rejection into silent identity corruption is what makes
+    # this a High rather than a residual gap. Measured:
+    # `db.getActors()` on this source returns exactly ["A-()()", "B"].
+    it "fuses every consecutive () pair after one dash, not just the first" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A-()()\nA-()()->>B: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()()", "B"])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id] })
+        .to eq([["A-()()", "B"]])
+    end
+
+    it "fuses three consecutive () pairs after one dash" do
+      diagram = parser.parse("sequenceDiagram\nA-()()()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()()()", "B"])
+    end
+
+    it "fuses fused pairs separated by spaces, matching mmdc" do
+      diagram = parser.parse("sequenceDiagram\nA-() ()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-() ()", "B"])
+    end
+
+    it "fuses a space before the first pair together with a space between pairs" do
+      diagram = parser.parse("sequenceDiagram\nA- () ()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A- () ()", "B"])
+    end
+
+    # Regression pin: trailing plain text (not a second () pair) after a
+    # fused dash was already correct before this round — the generalised
+    # rule must not narrow back to "exactly one () pair" and reject it.
+    it "still fuses trailing plain text after a () pair, unchanged by the generalisation" do
+      diagram = parser.parse("sequenceDiagram\nA-()foo->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()foo", "B"])
+    end
+  end
+
+  describe "dash fusion requires an established actor prefix" do
+    # Medium: `message_actor_lead` delegated straight into the fusion
+    # branch, so a message could OPEN with "-()" and nothing before it —
+    # mermaid's lexer requires its mandatory first segment (which itself
+    # excludes `-`) to match at least one character before the dash-
+    # continuation group can fire at all, so a bare `-()` has nothing to
+    # continue and mermaid refuses it outright. This is what the parent
+    # commit already did correctly (it raised here too); the fusion
+    # rule's round-1 shape accidentally reopened it.
+    it "rejects a message actor name that opens with -(), matching mmdc" do
+      expect { parser.parse("sequenceDiagram\n-()->>B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # Medium: the same empty-prefix gap let a RECIPIENT bypass the
+    # central-connection restriction from the "a central connection never
+    # combines with an activation suffix" describe block above — here
+    # there is no activation suffix at all, but `-()` still has nothing
+    # before it on the "to" side (right after a genuine leading central
+    # connection on the "from" side), and mermaid raises "Expecting
+    # 'ACTOR', got '-'" rather than accepting recipient "-()B".
+    it "rejects a recipient opening with -() right after a real central connection" do
+      expect { parser.parse("sequenceDiagram\nA()->>-()B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  describe "the actor_char > exclusion — same fix as message_actor_char, sibling rule" do
+    # Medium, ruled in scope by Codex on request: `actor_char` (used by
+    # `activate`/`deactivate`/note-participant references, NOT messages)
+    # had the identical missing `>` exclusion that Medium 3 from round 1
+    # fixed in `message_actor_char`. Measured against mermaid 11.16.1
+    # directly: all three raise; base created actor "A>B" for each,
+    # reading straight past the `>`.
+    it "rejects an interior > at activate, matching mmdc" do
+      source = "sequenceDiagram\nA->>B: m\nactivate A>B\n"
+
+      expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "rejects an interior > at deactivate, matching mmdc" do
+      source = "sequenceDiagram\nA->>B: m\nactivate A\ndeactivate A>B\n"
+
+      expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "rejects an interior > in a note participant, matching mmdc" do
+      source = "sequenceDiagram\nA->>B: m\nNote over A>B: n\n"
+
+      expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+    end
+  end
 end
