@@ -645,6 +645,7 @@ RSpec.describe ExampleTasks do
       expect(described_class.theme_for(mmd)).to eq('default')
     end
   end
+
   describe '.validate_examples' do
     # `exit` in a plain method takes the caller's whole process down, so a host
     # that requires this file loses everything on one bad example. Only the rake
