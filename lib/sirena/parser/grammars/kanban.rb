@@ -111,9 +111,15 @@ module Sirena
         # first character isn't a `"`. Mirrors `square_shape` in
         # mindmap.rb, the existing precedent for quoted content inside a
         # bracketed shape in this grammar family.
+        #
+        # The unquoted body excludes `(`, `)`, `]` and `}` - mermaid's own
+        # lexer treats all four as node-shape delimiters even unquoted
+        # mid-label, and rejects a body carrying one (measured against mmdc
+        # 11.12.0). `[` and `{` are not delimiters to it there and stay
+        # literal, so they are not excluded - both parse in mermaid.
         rule(:round_text) do
           (str('"') >> match('[^"]').repeat(1).as(:text) >> str('"')) |
-            (str('"').absent? >> match('[^)]').repeat(1).as(:text))
+            (str('"').absent? >> match('[^()\]}]').repeat(1).as(:text))
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label

@@ -353,6 +353,28 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
+    context 'with a shape-delimiter character in an unquoted round-shaped label' do
+      # Not from the corpus - a Codex-constructed input. `round_text`'s
+      # unquoted alternative excluded only `)`, the shape's own closer, so
+      # it accepted `(`, `]` and `}` too - mermaid's lexer treats all
+      # three as node-shape delimiters even unquoted and rejects them
+      # (measured against mmdc 11.12.0). `[` and `{` are not delimiters to
+      # mermaid there, so they stay accepted on both sides.
+      ['(', ']', '}'].each do |delimiter|
+        it "refuses an unquoted label carrying a literal #{delimiter.inspect}" do
+          expect { parser.parse("kanban\n  col(a#{delimiter}b)\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      ['[', '{'].each do |literal|
+        it "keeps an unquoted label carrying a literal #{literal.inspect}" do
+          diagram = parser.parse("kanban\n  col(a#{literal}b)\n")
+          expect(diagram.columns.first.title).to eq("a#{literal}b")
+        end
+      end
+    end
+
     context 'with round-shaped items and a blank row together (corpus 031)' do
       let(:source) do
         "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"
