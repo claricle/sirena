@@ -59,15 +59,51 @@ module Sirena
       #
       # Every renderer call site sets exactly one of `content`/`tspans`, but
       # `from_xml` populates both independently from ordinary mixed SVG
-      # content (`<text>foo<tspan>bar</tspan></text>`), so `to_xml` emits
-      # both when both are present rather than silently dropping one —
-      # `content` first, matching how `from_xml` would have populated it
-      # from text preceding the first `<tspan>` in the source.
+      # content (`<text>foo<tspan>bar</tspan></text>`), so `body` has to
+      # decide how to put them back together — see it for how true
+      # interleaving is preserved rather than assumed away.
       def to_xml
-        attrs = build_attributes
-        body = Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
+        "<text#{build_attributes}>#{body}</text>"
+      end
 
-        "<text#{attrs}>#{body}</text>"
+      private
+
+      # `content` and `tspans` are separate collections with no ordering
+      # between them, but genuinely interleaved mixed content
+      # (`<text>A<tspan>B</tspan>C</text>`) needs one. lutaml-model already
+      # records that order during `from_xml`: `element_order` (from
+      # `Lutaml::Xml::XmlOrderable`, mixed in via `Serializable`) holds one
+      # entry per text run and per child element, in source sequence — it's
+      # what `Transformation#should_use_element_order?` itself checks for
+      # before trusting it. A renderer-constructed instance never sets it
+      # (confirmed: `Svg::Text.new.tap { |t| t.content = "x" }.element_order`
+      # is `nil`), so every existing call site — which sets exactly one of
+      # `content`/`tspans` — falls straight to the simple path unchanged.
+      #
+      # @return [String]
+      def body
+        return interleaved_body if element_order && !element_order.empty?
+
+        Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
+      end
+
+      # Replays `element_order` in place: each text node's own content in
+      # sequence, each element node standing in for the next parsed
+      # `<tspan>` — `tspans` is themselves already in document order, so
+      # consuming it as a queue lines each one up with the element_order
+      # entry it came from.
+      #
+      # @return [String]
+      def interleaved_body
+        remaining_tspans = Array(tspans).dup
+
+        element_order.map do |node|
+          if node.node_type == :text
+            Escaping.escape_text(node.text_content)
+          else
+            remaining_tspans.shift.to_xml
+          end
+        end.join
       end
     end
   end
