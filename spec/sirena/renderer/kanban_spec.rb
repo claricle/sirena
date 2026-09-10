@@ -228,6 +228,7 @@ RSpec.describe Sirena::Renderer::Kanban do
         xml = renderer.render(layout_with(card_text: 'Hello **urgent**')).to_xml
 
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>urgent</tspan>})
+        expect(xml).to include('<tspan>Hello </tspan>')
         expect(xml).not_to include('**')
       end
 
