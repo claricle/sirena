@@ -102,6 +102,28 @@ module Sirena
       EDGE_LABEL_LIFT = 5.0
       private_constant :EDGE_LABEL_LIFT
 
+      # `TextMeasurement`'s average ratio is deliberately an average — the
+      # right choice for sizing a box AROUND text, the wrong one for
+      # proving nothing hangs PAST an edge of the page. The self-loop
+      # overflow math below needs a ratio that never UNDERESTIMATES a
+      # real character, whatever the label says, so it gets its own.
+      #
+      # Measured with Chrome against Sirena's own rendered `<text>`
+      # (Arial, Helvetica, sans-serif at font-size 12 — the theme's
+      # `font_size_small`), ten repeats of each character, widest to
+      # narrowest:
+      #
+      #   @ 0.889   W 0.830   % 0.784   M/m 0.738   O/G 0.692
+      #   w 0.645   A 0.599   0 0.507   , . 0.275    i/l 0.229
+      #
+      # `@` is the widest character measured. This constant sits above it
+      # with headroom for characters never measured (accented Latin,
+      # other scripts), rather than pinned exactly to the worst case
+      # found — a bound proven against ten characters is not a bound
+      # proven against every character a label can hold.
+      WIDE_CHAR_WIDTH_RATIO = 1.0
+      private_constant :WIDE_CHAR_WIDTH_RATIO
+
       # A self loop is a two-corner polyline. It goes out past the node
       # edge by SELF_LOOP_DEPTH of the node's shorter side, capped at
       # SELF_LOOP_MAX_DEPTH, and spreads SELF_LOOP_HALF_SPAN either side
@@ -243,33 +265,66 @@ module Sirena
         point.merge(x: (point[:x] || 0) + dx, y: (point[:y] || 0) + dy)
       end
 
-      # How far below zero the worst self loop reaches, on each axis.
-      # Reuses the exact bends and label anchor `render_edge` draws
-      # later, so this can never disagree with what actually gets drawn —
-      # except that a bend or an anchor is a POINT and the label drawn
-      # there is not: `create_edge_label` centres it on `x` and leaves it
-      # sitting on its default SVG baseline at `y`, so the text itself
-      # reaches half its width either side of `x` and the whole of its
-      # height above `y`. Reusing only the anchor found the point safely
-      # inside the page while Chrome still measured the glyphs clipped
-      # above and beside it, which is what `loop_label_extent` corrects.
-      def self_loop_overflow(graph)
+      # The full reach of every self loop in the graph, as one bounding
+      # box — nil when there are none. Reuses the exact bends and label
+      # anchor `render_edge` draws later, so this can never disagree with
+      # what actually gets drawn — except that a bend or an anchor is a
+      # POINT and the label drawn there is not: `create_edge_label`
+      # centres it on `x` and leaves it sitting on its default SVG
+      # baseline at `y`, so the text itself reaches half its width either
+      # side of `x` and the whole of its height above `y`, never below.
+      # `loop_label_extent` supplies that half-width and height as a
+      # BOUND rather than an average, so the box drawn here is never
+      # smaller than what Chrome actually renders.
+      #
+      # Both `self_loop_overflow` (page shifted for a loop hanging off
+      # the top or left) and `calculate_width`/`calculate_height` (page
+      # grown for one hanging off the right or bottom) read this same
+      # box, so the two can never disagree about where a loop reaches.
+      def self_loop_bounds(graph)
         side = self_loop_side(graph)
-        min_x, min_y = (graph[:edges] || []).reduce([0.0, 0.0]) do |(x, y), edge|
+        (graph[:edges] || []).reduce(nil) do |bounds, edge|
           node = self_loop_node(graph, edge)
-          next [x, y] unless node
+          next bounds unless node
 
           bends = edge_bends(edge, node, node, side)
-          next [x, y] if bends.empty?
+          next bounds if bends.empty?
 
           label_x, label_y = loop_label_anchor(node, bends)
           half_width, height = loop_label_extent(edge)
-          xs = bends.map { |point| point[:x] } + [label_x - half_width]
-          ys = bends.map { |point| point[:y] } + [label_y - height]
-          [[x, *xs].min, [y, *ys].min]
-        end
+          xs = bends.map { |point| point[:x] } + [label_x - half_width, label_x + half_width]
+          ys = bends.map { |point| point[:y] } + [label_y - height, label_y]
 
-        [min_x.negative? ? -min_x : 0.0, min_y.negative? ? -min_y : 0.0]
+          merge_bounds(bounds, xs.min, xs.max, ys.min, ys.max)
+        end
+      end
+
+      def merge_bounds(bounds, min_x, max_x, min_y, max_y)
+        return { min_x: min_x, max_x: max_x, min_y: min_y, max_y: max_y } unless bounds
+
+        { min_x: [bounds[:min_x], min_x].min, max_x: [bounds[:max_x], max_x].max,
+          min_y: [bounds[:min_y], min_y].min, max_y: [bounds[:max_y], max_y].max }
+      end
+
+      # How far below zero the worst self loop reaches, on each axis.
+      def self_loop_overflow(graph)
+        bounds = self_loop_bounds(graph)
+        return [0.0, 0.0] unless bounds
+
+        [bounds[:min_x].negative? ? -bounds[:min_x] : 0.0,
+         bounds[:min_y].negative? ? -bounds[:min_y] : 0.0]
+      end
+
+      # How far past the box-based page edge the worst self loop reaches,
+      # on each axis. `calculate_width`/`calculate_height` fold this in
+      # alongside the node- and cluster-based extent, since a loop's
+      # bends and label are drawn past its own node and neither one is a
+      # box `drawn(graph)` already counts.
+      def self_loop_reach(graph)
+        bounds = self_loop_bounds(graph)
+        return [0.0, 0.0] unless bounds
+
+        [bounds[:max_x], bounds[:max_y]]
       end
 
       # Half the loop label's own width, and the whole of its height —
@@ -279,13 +334,20 @@ module Sirena
       # nothing here sets `dominant-baseline`, so the glyphs sit entirely
       # above `y`, SVG's default text baseline. [0.0, 0.0] when there is
       # no label to draw, since nothing then reaches past the anchor.
+      #
+      # The width is a BOUND (`WIDE_CHAR_WIDTH_RATIO`), not
+      # `TextMeasurement`'s average — see the constant for why. The
+      # height is still `TextMeasurement`'s, since neither finding
+      # touched it and mmdc's own measurement never showed it short.
       def loop_label_extent(edge)
         label = edge[:labels]&.first
         return [0.0, 0.0] unless label
 
         font_size = theme_typography(:font_size_small) || 11
-        dims = TextMeasurement.measure(label[:text], font_size: font_size)
-        [dims[:width] / 2.0, dims[:height]]
+        text = label[:text].to_s
+        width = text.length * font_size * WIDE_CHAR_WIDTH_RATIO
+        height = font_size * TextMeasurement::HEIGHT_RATIO
+        [width / 2.0, height]
       end
 
       def self_loop_node(graph, edge)
@@ -343,6 +405,11 @@ module Sirena
         element.stroke_width = theme_shape(:stroke_width).to_s
       end
 
+      # A self loop can reach past its own node on the right, and neither
+      # its bends nor its label is a box this counts on its own — see
+      # `self_loop_reach`. Without folding that in, a loop thrown right
+      # or the label past it clips against a viewBox sized for the boxes
+      # alone.
       def calculate_width(graph)
         boxes = drawn(graph)
         return 800 if boxes.empty?
@@ -351,7 +418,7 @@ module Sirena
           (node[:x] || 0) + (node[:width] || 100)
         end.max
 
-        max_x + 40 # Add padding
+        [max_x, self_loop_reach(graph)[0]].max + 40 # Add padding
       end
 
       def calculate_height(graph)
@@ -362,7 +429,7 @@ module Sirena
           (node[:y] || 0) + (node[:height] || 50)
         end.max
 
-        max_y + 40 # Add padding
+        [max_y, self_loop_reach(graph)[1]].max + 40 # Add padding
       end
 
       # A cluster can reach past the nodes inside it, so the page is

@@ -694,11 +694,15 @@ module Sirena
         #
         # `node_id` carries a dot the same way a bare name does — see its
         # own comment above — so `A.-B` reads exactly as mmdc reads it,
-        # as the single node `"A.-B"`, not a link. This guard only runs
-        # once a shape or a class has already closed the name, which is
-        # where Sirena and mmdc part ways: the other five — `A:::c.-B`,
-        # `A[x]:::c.-B` and the three `.->` forms — are still refused
-        # rather than read as a link.
+        # as the single node `"A.-B"`, not a link: that is the no-shape
+        # fallback above, where `dot_absent` stands in for `:shape`
+        # itself. A real shape bypasses the guard outright — `A[x].-B`
+        # and `A@{ shape: rect }.->B` both draw as mmdc draws them —
+        # unless an inline class follows the shape, which is the second
+        # place the guard runs. That second use is where Sirena and mmdc
+        # part ways: the other five — `A:::c.-B`, `A[x]:::c.-B` and the
+        # three `.->` forms — are still refused rather than read as a
+        # link.
         rule(:dot_absent) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
@@ -1244,9 +1248,11 @@ module Sirena
         end
 
         # An arrowhead opening with nothing after it that could continue an
-        # id. Sirena has no `x--` or `x-.-` link of its own yet, so
-        # `id_before_xo_link` stops the id at the restart and the source is
-        # refused until the crossed head has a shape to draw.
+        # id. The crossed and circled links this opens ARE drawn — `x--x`,
+        # `x-.-x` and the rest parse into real edges, see
+        # `Transforms::Flowchart.link_type` — so this rule refuses nothing
+        # on its own; it only decides where the id ends. `id_before_xo_link`
+        # above is what actually stops the id at the restart.
         rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }
 
         # Mermaid's lexer spells its id charset out, so an id is not
