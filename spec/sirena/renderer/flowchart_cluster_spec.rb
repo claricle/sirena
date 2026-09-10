@@ -710,6 +710,61 @@ RSpec.describe Sirena::Engine do
         .to eq("M 110.7 60.9 L 250.7 100.6")
     end
 
+    # A node can sit inside the cluster its own edge names — mermaid
+    # draws that from a bare node under a subgraph header. The head used
+    # to read its approach off the OTHER end's raw centre, which ignores
+    # that A sits inside s: the path left through the cluster's TOP face
+    # (the only way out `EdgeRouter` found), while the head — aimed at
+    # A's centre, which sits BELOW the cluster's own centre — landed on
+    # the BOTTOM face instead. The two must agree on which face, because
+    # they are the same drawn line.
+    def contained_node_and_cluster
+      [leaf("a", x: 70.0, y: 104.0, width: 37.0, height: 34.0),
+       cluster("s", x: 50.0, y: 50.0, width: 77.0, height: 108.0)]
+    end
+
+    def edge_geometry(xml, edge_id)
+      group = xml[%r{<g id="edge-#{edge_id}">.*?</g>}m]
+      path_end = path_points(group[/<path[^>]*\bd="([^"]*)"/, 1]).last
+      head_tip = group[/<polygon[^>]*\bpoints="([^"]*)"/, 1]
+        .split.first.split(",").map(&:to_f)
+      [path_end, head_tip]
+    end
+
+    it "keeps the arrowhead on the same face the path leaves through" do
+      leaf_node, cluster_node = contained_node_and_cluster
+      graph = { id: "g", children: [leaf_node, cluster_node],
+                edges: [{ id: "a_to_s", sources: %w[a], targets: %w[s],
+                          metadata: { arrow_type: "arrow" } }] }
+      xml = renderer.render(graph).to_xml
+      path_end, head_tip = edge_geometry(xml, "a_to_s")
+
+      expect(head_tip).to eq(path_end)
+    end
+
+    # Reversed, the same mismatch degenerated further: the head's
+    # approach (A's raw centre) landed EXACTLY on A's own boundary,
+    # giving a zero-area, invisible arrowhead — three identical points.
+    # Reaching A back from s, the path itself still ends at A's own
+    # CENTRE — a plain node's end is never trimmed, since the node is
+    # painted over the line — so this does not repeat the equality
+    # above. What matters here is the head: it lands on A's real top
+    # edge either way, but the point it approached FROM used to be
+    # exactly that same edge point too, giving a triangle with no area.
+    it "draws a real, nonzero head when the cluster is the source instead" do
+      leaf_node, cluster_node = contained_node_and_cluster
+      graph = { id: "g", children: [leaf_node, cluster_node],
+                edges: [{ id: "s_to_a", sources: %w[s], targets: %w[a],
+                          metadata: { arrow_type: "arrow" } }] }
+      xml = renderer.render(graph).to_xml
+      _, head_tip = edge_geometry(xml, "s_to_a")
+      head_points = xml[%r{<g id="edge-s_to_a">.*?<polygon[^>]*\bpoints="([^"]*)"}m, 1]
+        .split.map { |pair| pair.split(",").map(&:to_f) }
+
+      expect(head_tip).to eq([88.5, 104.0])
+      expect(head_points.uniq.size).to be > 1
+    end
+
     # Two DIFFERENT boxes can share a centre too. There is no straight
     # direction to trim in that case, so the route must bend visibly.
     it "loops two different boxes that share a centre" do
@@ -979,12 +1034,37 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    # BT and RL throw the loop up and left instead — the two directions
+    # `create_document` never grows into, since its own comment says it
+    # only grows the right and bottom. A loop's label reaches
+    # EDGE_LABEL_LIFT further than its own corners, so the label is what
+    # first crosses zero even when the corners themselves still clear it.
+    it "stays inside the page when the loop is thrown up or left" do
+      ["flowchart BT\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
+       "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n"].each do |src|
+        xml = render(src)
+        group = xml[%r{<g id="edge-s_to_s".*?</g>}m]
+        label = [group[/<text[^>]*\bx="(-?[\d.]+)"/, 1].to_f,
+                 group[/<text[^>]*\by="(-?[\d.]+)"/, 1].to_f]
+        points = loop_points(xml) << label
+
+        aggregate_failures(src) do
+          expect(points.map(&:first).min).to be >= 0, src
+          expect(points.map(&:last).min).to be >= 0, src
+        end
+      end
+    end
+
     # The same collapse, reached through a node instead. An empty
     # subgraph named by an edge is drawn as a plain node, so `s --> s`
     # arrives here rather than at the cluster branch above.
-    # Every shape, because the ends anchor either side of the middle of
-    # the BOTTOM face — TD throws the loop downward, not sideways — the
-    # one pair of points a circle, a rhombus and a hexagon all reach.
+    # Every shape, because the ends anchor either side of the same point
+    # on the boundary where the loop's two corners meet it, and TD
+    # throws the loop straight down, not sideways. A rectangle and a
+    # hexagon meet it on their flat bottom face; a circle and a rhombus
+    # have no flat face there, so theirs lands a touch above the true
+    # bottom instead — the lower arc, the two lower sloped edges — the
+    # one pair of points all four shapes reach.
     # Anchoring a third of the way down put the loop on the bounding box
     # instead, eight units clear of a rhombus's drawn edge.
     {

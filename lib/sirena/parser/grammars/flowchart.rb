@@ -692,10 +692,13 @@ module Sirena
         # reads the dot of `A.-B` and of `A[x]:::c.-B` as name text and
         # refuses `A.->B`, `A:::c.->B` and `A[x]:::c.->B` outright.
         #
-        # Sirena's own names take no dot, so it refuses all six of those
-        # — `A.-B`, `A:::c.-B`, `A[x]:::c.-B` and the three `.->` forms —
-        # rather than naming a node or a class after one. Refusing is what
-        # it did before; reading a link there would not be.
+        # `node_id` carries a dot the same way a bare name does — see its
+        # own comment above — so `A.-B` reads exactly as mmdc reads it,
+        # as the single node `"A.-B"`, not a link. This guard only runs
+        # once a shape or a class has already closed the name, which is
+        # where Sirena and mmdc part ways: the other five — `A:::c.-B`,
+        # `A[x]:::c.-B` and the three `.->` forms — are still refused
+        # rather than read as a link.
         rule(:dot_absent) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of

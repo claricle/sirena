@@ -140,7 +140,7 @@ module Sirena
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        page = flatten(graph)
+        page = clear_self_loop_overflow(flatten(graph))
         svg = create_document(page)
 
         # mermaid's paint order: clusters sit behind everything, then
@@ -189,6 +189,56 @@ module Sirena
 
       def cluster?(child)
         EdgeRouter.cluster?(child)
+      end
+
+      # A self loop can reach past its own node on any side, and a BT or
+      # RL diagram throws it up or left — past the zero the page is
+      # pinned to. `create_document` only ever grows the right and
+      # bottom, so a loop escaping the other way is not a bigger page,
+      # it is a clipped one. mmdc never draws that: its own viewBox stays
+      # non-negative because mermaid's layout reserves the room for a
+      # loop before placing anything. Sirena's fallback layout does not
+      # know loops exist, so the whole page is nudged down and right
+      # here instead, by however far the worst loop — and the label past
+      # it — reaches beyond zero.
+      def clear_self_loop_overflow(graph)
+        dx, dy = self_loop_overflow(graph)
+        return graph if dx.zero? && dy.zero?
+
+        graph.merge(children: shift_boxes(graph[:children], dx, dy),
+                    clusters: shift_boxes(graph[:clusters], dx, dy))
+      end
+
+      def shift_boxes(boxes, dx, dy)
+        (boxes || []).map { |box| box.merge(x: (box[:x] || 0) + dx, y: (box[:y] || 0) + dy) }
+      end
+
+      # How far below zero the worst self loop reaches, on each axis.
+      # Reuses the exact bends and label anchor `render_edge` draws
+      # later, so this can never disagree with what actually gets drawn.
+      def self_loop_overflow(graph)
+        side = self_loop_side(graph)
+        min_x, min_y = (graph[:edges] || []).reduce([0.0, 0.0]) do |(x, y), edge|
+          node = self_loop_node(graph, edge)
+          next [x, y] unless node
+
+          bends = edge_bends(edge, node, node, side)
+          next [x, y] if bends.empty?
+
+          label_x, label_y = loop_label_anchor(node, bends)
+          xs = bends.map { |point| point[:x] } + [label_x]
+          ys = bends.map { |point| point[:y] } + [label_y]
+          [[x, *xs].min, [y, *ys].min]
+        end
+
+        [min_x.negative? ? -min_x : 0.0, min_y.negative? ? -min_y : 0.0]
+      end
+
+      def self_loop_node(graph, edge)
+        source_id = edge[:sources]&.first
+        return nil unless source_id && source_id == edge[:targets]&.first
+
+        find_endpoint(graph, source_id)
       end
 
       def render_clusters(graph, svg)
@@ -436,7 +486,7 @@ module Sirena
         end
 
         group.children << path
-        render_edge_heads(group, source, target, type, bends)
+        render_edge_heads(group, route, source, target, type, bends)
 
         # Render edge label if present
         if edge[:labels] && !edge[:labels].empty?
@@ -522,17 +572,30 @@ module Sirena
 
       # Clipped to the node's outline the way mermaid clips it, aiming
       # along the segment that actually leaves or arrives — so the line
-      # stops exactly where its head sits. It reads the SAME geometry the
-      # head does, because a line and its head that disagree draw the
-      # picture this change exists to fix. Running to the centres instead
-      # showed the line through a node the theme painted `none`.
+      # stops exactly where its head sits. There is no route yet to read
+      # this off — building one is what this is for — so it is worked
+      # out from the node centres, the same way `head_tip_geometry` falls
+      # back to when a route has no cluster end to trust instead. Running
+      # to the centres unclipped showed the line through a node the theme
+      # painted `none`.
       #
       # Rounded like the heads are: an outline crossing at an angle lands
       # on a long decimal, and 87 of 232 sampled path coordinates carried
       # one before this.
       def edge_end(bends, source, target, which)
-        head_geometry(bends, source, target, which)
+        boundary_geometry(bends, source, target, which)
           .values_at(:tip_x, :tip_y).map { |n| n.round(1) }
+      end
+
+      # The node-centre geometry `edge_end` builds a route from, before
+      # any route exists to hand a head instead.
+      def boundary_geometry(bends, source, target, which)
+        node, other = which == :target ? [target, source] : [source, target]
+        approach = which == :target ? bends.last : bends.first
+        from_x, from_y = approach ? [approach[:x], approach[:y]] : node_centre(other)
+        tip_x, tip_y = node_boundary(node, from_x, from_y)
+
+        { tip_x: tip_x, tip_y: tip_y, from_x: from_x, from_y: from_y }
       end
 
       # The graph names the direction it flows in; a graph built by hand
@@ -646,32 +709,46 @@ module Sirena
       # An invisible link needs no guard of its own: it has no entry in
       # EDGE_HEADS, so it falls out here with everything else that draws
       # no head.
-      def render_edge_heads(group, source, target, type, bends)
+      def render_edge_heads(group, route, source, target, type, bends)
         shape =
           EDGE_HEADS[type.sub(/\A(?:thick|dotted)_/, '').delete_suffix('_both')]
         return unless shape
 
         edge_head_ends(type).each do |which|
-          draw_edge_head(group, head_geometry(bends, source, target, which),
-                         shape)
+          draw_edge_head(
+            group, head_tip_geometry(route, bends, source, target, which), shape
+          )
         end
       end
 
-      # The head points along the segment it sits on, not along the span:
-      # a path that bends and arrives vertically was drawing a diagonal
-      # arrow. The target head follows the last bend point in, the source
-      # head follows the first one out.
-      def head_geometry(bends, source, target, which)
-        node, other = which == :target ? [target, source] : [source, target]
+      # The head's tip and approach, read off the route the path itself
+      # draws rather than recomputed from the node centres. A cluster's
+      # end was already pulled onto its outline by `EdgeRouter` — corner
+      # rounding, containment and all — so that end is trusted outright:
+      # recomputing it from "the other node's centre" disagreed whenever
+      # a node sat inside the cluster it pointed at, landing the head on
+      # the wrong face or, reversed, on top of its own tip.
+      #
+      # A plain node's end stays at its centre in the route (the node is
+      # painted over the line, so it never needed trimming) and is
+      # projected onto its outline here, same as before — only the point
+      # it approaches FROM changes, from the other node's raw centre to
+      # the route's own near end, which is the same point on an ordinary
+      # straight run and the correct one when a cluster sits between them.
+      def head_tip_geometry(route, bends, source, target, which)
+        node = which == :target ? target : source
+        other = which == :target ? :source : :target
         approach = which == :target ? bends.last : bends.first
-        from_x, from_y = if approach
-                           [approach[:x], approach[:y]]
-                         else
-                           node_centre(other)
-                         end
-        tip_x, tip_y = node_boundary(node, from_x, from_y)
+        from_x, from_y = approach ? [approach[:x], approach[:y]] : route_end(route, other)
+        tip_x, tip_y =
+          EdgeRouter.cluster?(node) ? route_end(route, which) : node_boundary(node, from_x, from_y)
 
         { tip_x: tip_x, tip_y: tip_y, from_x: from_x, from_y: from_y }
+      end
+
+      # The [x, y] a route ends with — the source end or the target end.
+      def route_end(route, which)
+        which == :target ? route.last(2) : route.first(2)
       end
 
       def edge_head_ends(type)
