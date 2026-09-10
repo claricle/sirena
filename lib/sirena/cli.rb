@@ -133,7 +133,7 @@ module Sirena
 
     # Handles errors and exits with appropriate code.
     #
-    # @param error [StandardError] the error to handle
+    # @param error [StandardError, SystemStackError, NoMemoryError] the error to handle
     # @return [void]
     def handle_error(error)
       warn "Error: #{error.message}"

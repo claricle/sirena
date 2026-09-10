@@ -103,9 +103,10 @@ RSpec.describe Sirena::Engine do
       overflow = SystemStackError.new('stack level too deep')
       overflow.set_backtrace(%w[fake:1 fake:2 fake:3])
 
-      begin
-        rendering(overflow).call
-      rescue Sirena::Engine::PipelineError => e
+      # The block form, not a bare `begin`/`rescue`: a rescue whose body holds
+      # the assertions runs NOTHING when nothing raises, so the example passes
+      # while asserting zero things.
+      expect(&rendering(overflow)).to raise_error(Sirena::Engine::PipelineError) do |e|
         expect(e.message).to eq('Rendering failed: stack level too deep')
         expect(e.cause).to be(overflow)
         expect(e.cause.backtrace).to eq(%w[fake:1 fake:2 fake:3])
