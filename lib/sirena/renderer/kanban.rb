@@ -22,6 +22,13 @@ module Sirena
     #   renderer = Renderer::Kanban.new(theme: my_theme)
     #   svg = renderer.render(layout)
     class Kanban < Base
+      # Height of one extra rendered line — a card's own hard line break, or
+      # a metadata row. Mirrors Transform::Kanban::EXTRA_LINE_HEIGHT: this
+      # renderer positions elements below a label whose height that constant
+      # already accounts for, so the two must agree.
+      EXTRA_LINE_HEIGHT = 18
+      private_constant :EXTRA_LINE_HEIGHT
+
       # Renders the layout structure to SVG.
       #
       # @param layout [Hash] layout data from Transform::Kanban
@@ -103,7 +110,7 @@ module Sirena
       # @param svg [Svg::Document] SVG document
       # @return [void]
       def render_column_header(column, x, y, svg)
-        header_height = 50
+        header_height = column[:header_height]
 
         # Header background
         header_bg = Svg::Rect.new.tap do |r|
@@ -204,11 +211,11 @@ module Sirena
         svg.add_element(card_bg)
 
         # Card text
-        render_card_text(card, x, y, svg)
+        label_line_count = render_card_text(card, x, y, svg)
 
         # Metadata if present
         if card[:has_metadata]
-          render_card_metadata(card, x, y, svg)
+          render_card_metadata(card, x, y, label_line_count, svg)
         end
       end
 
@@ -218,7 +225,9 @@ module Sirena
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
       # @param svg [Svg::Document] SVG document
-      # @return [void]
+      # @return [Integer] number of lines the label actually rendered, after
+      #   markdown parsing and truncation — what `render_card_metadata` needs
+      #   to start below the label rather than at a fixed offset
       def render_card_text(card, x, y, svg)
         text_y = y + 25
         text_x = x + 10
@@ -235,6 +244,8 @@ module Sirena
         MarkdownText.assign_markdown_text(text, lines, x: text_x)
 
         svg.add_element(text)
+
+        lines.length
       end
 
       # Renders card metadata
@@ -242,11 +253,16 @@ module Sirena
       # @param card [Hash] card data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
+      # @param label_line_count [Integer] lines the card's own label actually
+      #   rendered, from `render_card_text` — metadata starts below all of
+      #   them rather than at the single-line offset a multi-line label would
+      #   overlap
       # @param svg [Svg::Document] SVG document
       # @return [void]
-      def render_card_metadata(card, x, y, svg)
-        metadata_y = y + 50
-        line_height = 18
+      def render_card_metadata(card, x, y, label_line_count, svg)
+        extra_label_lines = [label_line_count - 1, 0].max
+        metadata_y = y + 50 + (extra_label_lines * EXTRA_LINE_HEIGHT)
+        line_height = EXTRA_LINE_HEIGHT
 
         card[:metadata].each_with_index do |(key, value), index|
           next if value.nil? || value.to_s.empty?

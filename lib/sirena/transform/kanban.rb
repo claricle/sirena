@@ -76,13 +76,16 @@ module Sirena
         current_x = 0
 
         columns.each do |column|
+          header_height = calculate_header_height(column)
+
           positioned << {
             id: column.id,
             title: column.title,
             x: current_x,
             y: 0,
             width: COLUMN_WIDTH,
-            height: calculate_column_height(column),
+            height: calculate_column_height(column, header_height),
+            header_height: header_height,
             card_count: column.cards.size,
             original: column
           }
@@ -103,7 +106,7 @@ module Sirena
         positioned_columns.each do |column_data|
           column = column_data[:original]
           column_x = column_data[:x]
-          current_y = COLUMN_HEADER_HEIGHT + COLUMN_PADDING
+          current_y = column_data[:header_height] + COLUMN_PADDING
 
           column.cards.each do |card|
             card_height = calculate_card_height(card)
@@ -128,19 +131,35 @@ module Sirena
         cards
       end
 
+      # Calculates the header height for a column, growing past
+      # `COLUMN_HEADER_HEIGHT` for each hard line break embedded in the
+      # column title (from a markdown newline, rendered as an extra
+      # `<tspan>` line by Renderer::MarkdownText#parse_lines) — the same
+      # `count("\n")` approach `calculate_card_height` already uses for
+      # card text, for the same reason: this layer only needs how many
+      # extra lines there are, not what's on them.
+      #
+      # @param column [Diagram::KanbanColumn] column
+      # @return [Numeric] header height
+      def calculate_header_height(column)
+        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * EXTRA_LINE_HEIGHT)
+      end
+
       # Calculates the height needed for a column
       #
       # @param column [Diagram::KanbanColumn] column
+      # @param header_height [Numeric] this column's own header height, from
+      #   `calculate_header_height`
       # @return [Numeric] column height
-      def calculate_column_height(column)
-        return COLUMN_HEADER_HEIGHT + COLUMN_PADDING if column.cards.empty?
+      def calculate_column_height(column, header_height)
+        return header_height + COLUMN_PADDING if column.cards.empty?
 
         # Header + padding + sum of card heights + spacing between cards
         total_card_height = column.cards.sum { |card| calculate_card_height(card) }
         total_spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
         bottom_padding = COLUMN_PADDING
 
-        COLUMN_HEADER_HEIGHT + COLUMN_PADDING +
+        header_height + COLUMN_PADDING +
           total_card_height + total_spacing + bottom_padding
       end
 

@@ -19,6 +19,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               y: 0,
               width: 200,
               height: 150,
+              header_height: 50,
               card_count: 1
             }
           ],
@@ -70,6 +71,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               y: 0,
               width: 200,
               height: 150,
+              header_height: 50,
               card_count: 1
             },
             {
@@ -79,6 +81,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               y: 0,
               width: 200,
               height: 150,
+              header_height: 50,
               card_count: 1
             }
           ],
@@ -137,6 +140,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               y: 0,
               width: 200,
               height: 180,
+              header_height: 50,
               card_count: 1
             }
           ],
@@ -187,7 +191,7 @@ RSpec.describe Sirena::Renderer::Kanban do
     end
 
     context 'with markdown in card and column labels' do
-      def layout_with(card_text:, column_title: 'Todo')
+      def layout_with(card_text:, column_title: 'Todo', header_height: 50)
         {
           columns: [
             {
@@ -197,6 +201,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               y: 0,
               width: 200,
               height: 150,
+              header_height: header_height,
               card_count: 1
             }
           ],
@@ -355,6 +360,84 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(first_half.attributes['font-weight']).to eq('bold')
         expect(second_half.attributes['font-weight']).to eq('bold')
         expect(second_half.attributes['dy']).to eq('1.2em')
+      end
+
+      # Round 3 Codex High: the column header background rect and the
+      # header text's own baseline both used to assume a single-line
+      # title — `render_column_header`'s `header_height` was a hardcoded
+      # local `50`, independent of anything Transform computed for a
+      # title with embedded hard breaks. A 3-line title grew nothing, so
+      # its lower tspans spilled past the header rect onto the board
+      # background below it.
+      #
+      # Mutation-check: revert `header_height` to the hardcoded local
+      # `50`. Watched red: the header rect's height assertion fails
+      # (stays "50.0"), and the last line's computed baseline lands past
+      # the (unchanged) header bottom instead of inside it.
+      it 'grows the column header rect to fit a multi-line title, keeping the tspans inside it' do
+        layout = layout_with(card_text: 'plain', column_title: "One\nTwo\nThree", header_height: 86)
+        xml = renderer.render(layout).to_xml
+        parsed = REXML::Document.new(xml)
+
+        header_rect = REXML::XPath.first(parsed, "//rect[@height='86.0']")
+        header_text = REXML::XPath.first(parsed, '//text[tspan]')
+        tspan_count = header_text.elements.to_a('tspan').size
+
+        expect(header_rect).not_to be_nil
+        expect(tspan_count).to eq(3)
+
+        font_size = header_text.attributes['font-size'].to_f
+        first_baseline = header_text.attributes['y'].to_f
+        last_baseline = first_baseline + ((tspan_count - 1) * font_size * 1.2)
+        header_bottom = header_rect.attributes['y'].to_f + header_rect.attributes['height'].to_f
+
+        expect(last_baseline).to be < header_bottom
+      end
+
+      # Round 3 Codex High: card metadata used to start at a fixed `y + 50`
+      # regardless of how many lines the card's own label actually
+      # rendered, so a multi-line label's later lines overlapped the
+      # metadata rows drawn below it.
+      #
+      # Mutation-check: revert `render_card_metadata`'s `metadata_y` to
+      # the hardcoded `y + 50`. Watched red: the metadata label's y stays
+      # at the single-line offset, landing above the label's own last
+      # rendered line instead of below it.
+      it "starts card metadata below a multi-line label's actual rendered height" do
+        layout = {
+          columns: [
+            { id: 'todo', title: 'Todo', x: 0, y: 0, width: 200, height: 200, header_height: 50, card_count: 1 }
+          ],
+          cards: [
+            {
+              id: 'card',
+              text: "A\nB\nC",
+              column_id: 'todo',
+              x: 10,
+              y: 60,
+              width: 180,
+              height: 134,
+              metadata: { assigned: 'Alice' },
+              has_metadata: true
+            }
+          ],
+          width: 200,
+          height: 200
+        }
+
+        xml = renderer.render(layout).to_xml
+        parsed = REXML::Document.new(xml)
+
+        label_text = REXML::XPath.first(parsed, '//text[tspan]')
+        label_tspan_count = label_text.elements.to_a('tspan').size
+        metadata_label = REXML::XPath.first(parsed, "//text[.='Assigned:']")
+
+        font_size = label_text.attributes['font-size'].to_f
+        first_baseline = label_text.attributes['y'].to_f
+        last_label_baseline = first_baseline + ((label_tspan_count - 1) * font_size * 1.2)
+
+        expect(label_tspan_count).to eq(3)
+        expect(metadata_label.attributes['y'].to_f).to be > last_label_baseline
       end
     end
   end
