@@ -43,6 +43,7 @@ module Sirena
           id: diagram.id || 'er_diagram',
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
+          class_defs: diagram.class_defs,
           layoutOptions: layout_options
         }
       end
@@ -60,6 +61,7 @@ module Sirena
             labels: entity_labels(entity),
             metadata: {
               name: entity.name,
+              classes: entity.classes,
               attributes: entity.attributes.map { |a| attribute_to_hash(a) }
             }
           }

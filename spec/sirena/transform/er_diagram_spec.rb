@@ -121,5 +121,22 @@ RSpec.describe Sirena::Transform::ErDiagramTransform do
       expect(graph[:children]).to eq([])
       expect(graph[:edges]).to eq([])
     end
+
+    it 'carries the declared classDef styles into the graph' do
+      diagram.add_class_def('highlight', 'fill:#f96')
+
+      graph = transform.to_graph(diagram)
+
+      expect(graph[:class_defs]).to eq({ 'highlight' => 'fill:#f96' })
+    end
+
+    it "carries each entity's assigned classes into its node metadata" do
+      diagram.entities.first.classes << 'highlight'
+
+      graph = transform.to_graph(diagram)
+
+      customer_node = graph[:children].find { |n| n[:id] == 'CUSTOMER' }
+      expect(customer_node[:metadata][:classes]).to eq(['highlight'])
+    end
   end
 end

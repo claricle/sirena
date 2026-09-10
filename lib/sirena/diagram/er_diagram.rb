@@ -55,6 +55,12 @@ module Sirena
       attribute :attributes, ErAttribute, collection: true,
                                           default: -> { [] }
 
+      # Names of the style classes assigned to this entity via `:::`, in
+      # source order, not deduped — see `Diagram::ErDiagram#add_class_def`
+      # and the style cascade resolver for why order and repeats matter.
+      attribute :classes, :string, collection: true,
+                                   default: -> { [] }
+
       # Validates the entity has required fields.
       #
       # A missing attribute collection, or a nil member inside it, makes the
@@ -173,6 +179,35 @@ module Sirena
       # @return [Symbol] :er_diagram
       def diagram_type
         :er_diagram
+      end
+
+      # Style classes declared by `classDef`, as name => raw style text.
+      #
+      # Not a lutaml attribute, matching `Diagram::TreemapDiagram` — the
+      # only other model here carrying classDef. Value equality on this
+      # model ignores `class_defs` as a consequence; recorded because it
+      # is real, not because it is desired.
+      #
+      # @return [Hash{String => String}] declared classes
+      def class_defs
+        @class_defs ||= {}
+      end
+
+      # Records a `classDef` declaration.
+      #
+      # A repeated `classDef` for the same name ACCUMULATES rather than
+      # replaces — mermaid's own db stores every declaration for a name in
+      # source order, and a later conflicting property wins. Comma-joining
+      # here reproduces that: the style cascade resolver already resolves
+      # a comma-separated run left to right, so a later duplicate key
+      # overwrites an earlier one the same way two merged classes do.
+      #
+      # @param name [String] the class name
+      # @param styles [String] the raw style text
+      # @return [String] the combined style text now stored for this name
+      def add_class_def(name, styles)
+        existing = class_defs[name]
+        class_defs[name] = existing ? "#{existing},#{styles}" : styles
       end
 
       # Validates the ER diagram structure.

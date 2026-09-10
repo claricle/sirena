@@ -175,9 +175,45 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       )
     end
   end
+
+  describe '#class_defs and #add_class_def' do
+    let(:diagram) { described_class.new }
+
+    it 'starts empty' do
+      expect(diagram.class_defs).to eq({})
+    end
+
+    it 'records a declaration by name' do
+      diagram.add_class_def('a', 'fill:red')
+
+      expect(diagram.class_defs).to eq({ 'a' => 'fill:red' })
+    end
+
+    it 'accumulates a repeated declaration for the same name, comma-joined' do
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('a', 'stroke:green')
+
+      expect(diagram.class_defs['a']).to eq('fill:red,stroke:green')
+    end
+
+    it 'keeps declarations for different names independent' do
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('b', 'fill:blue')
+
+      expect(diagram.class_defs).to eq({ 'a' => 'fill:red', 'b' => 'fill:blue' })
+    end
+  end
 end
 
 RSpec.describe Sirena::Diagram::ErEntity do
+  describe '#classes' do
+    it 'defaults to an empty array' do
+      entity = described_class.new(id: 'CUSTOMER', name: 'CUSTOMER')
+
+      expect(entity.classes).to eq([])
+    end
+  end
+
   describe '#valid?' do
     it 'returns true for entity with id and name' do
       entity = described_class.new(id: 'CUSTOMER', name: 'CUSTOMER')

@@ -54,21 +54,35 @@ module Sirena
         def process_statement(diagram, stmt)
           return unless stmt.is_a?(Hash)
 
-          if stmt[:entity_id] && stmt[:attributes]
-            # Entity definition with attributes
+          if stmt[:classdef_names]
+            # Style class declaration
+            process_class_def(diagram, stmt)
+          elsif stmt[:entity_id]
+            # Entity, with or without an attribute block
             process_entity_definition(diagram, stmt)
           elsif stmt[:from_id] && stmt[:to_id] && stmt[:pattern]
             # Relationship
             process_relationship(diagram, stmt)
-          elsif stmt[:entity_id]
-            # Stand-alone entity declaration
-            ensure_entity(diagram, stmt[:entity_id].to_s)
           end
         end
 
+        def process_class_def(diagram, stmt)
+          styles = stmt[:classdef_styles].to_s
+          split_class_names(stmt[:classdef_names]).each do |name|
+            diagram.add_class_def(name, styles)
+          end
+        end
+
+        # Handles both `CAR { ... }` and a bare `CAR`. An empty attribute
+        # block yields a nil `:attributes`, so routing every `:entity_id`
+        # statement through here (rather than only ones carrying
+        # `:attributes`) is what keeps `CAR:::x {}` from losing its
+        # classes.
         def process_entity_definition(diagram, stmt)
           entity_id = stmt[:entity_id].to_s
           entity = find_or_create_entity(diagram, entity_id)
+
+          add_entity_classes(entity, stmt[:entity_classes])
 
           # Process attributes
           if stmt[:attributes]
@@ -92,9 +106,9 @@ module Sirena
           to_id = stmt[:to_id].to_s
           pattern = stmt[:pattern]
 
-          # Ensure entities exist
-          ensure_entity(diagram, from_id)
-          ensure_entity(diagram, to_id)
+          # Ensure entities exist, and carry any `:::` classes on either end
+          add_entity_classes(ensure_entity(diagram, from_id), stmt[:from_classes])
+          add_entity_classes(ensure_entity(diagram, to_id), stmt[:to_classes])
 
           # Parse relationship pattern
           card_from = extract_text(pattern[:card_from])
@@ -140,6 +154,21 @@ module Sirena
 
         def ensure_entity(diagram, entity_id)
           find_or_create_entity(diagram, entity_id)
+        end
+
+        # Appends rather than replaces, so `CAR:::a,b` on one line and
+        # `CAR:::a` on a later line both reach the entity's class list.
+        # NOT deduped: the style cascade resolver is order-sensitive — a
+        # repeated assignment moves that class to the end and lets it win
+        # a later conflict.
+        def add_entity_classes(entity, slice)
+          return if slice.nil?
+
+          entity.classes.concat(split_class_names(slice))
+        end
+
+        def split_class_names(slice)
+          slice.to_s.split(',').map(&:strip)
         end
 
         def extract_text(value)
