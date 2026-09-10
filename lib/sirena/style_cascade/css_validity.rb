@@ -92,8 +92,6 @@ module Sirena
       # @return [Boolean] whether VALUE is a CSS <length> `stroke-width`
       #   would accept
       def self.length?(value)
-        return false if value.nil? || value.empty?
-
         CSS_LENGTH.match?(value)
       end
     end
