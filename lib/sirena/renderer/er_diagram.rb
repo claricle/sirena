@@ -130,9 +130,9 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = box_fill(styles, attributed) || '#f9f9f9'
-          r.stroke = box_style(styles, 'stroke') || '#333333'
-          r.stroke_width = box_style(styles, 'stroke-width') || '2'
+          r.fill = box_property(styles, 'fill', attributed) || '#f9f9f9'
+          r.stroke = box_property(styles, 'stroke', attributed) || '#333333'
+          r.stroke_width = box_property(styles, 'stroke-width', attributed) || '2'
         end
         group.children << box
 
@@ -333,22 +333,70 @@ module Sirena
       # keeps everything after the first colon, giving `red:blue`, which
       # mermaid never produces.
       #
+      # `-1` is required to match JavaScript's `split`: Ruby's default
+      # `split` drops a TRAILING empty field, so `"fill:".split(':')` gives
+      # `["fill"]` and a value-clearing declaration reads as "no colon" and
+      # is skipped, leaving a stale earlier `fill:red` in place. JavaScript
+      # (and this, with `-1`) both give `["fill", ""]` instead — `present`
+      # below is what then treats that resolved empty value as "never
+      # validly declared" once a caller reads it back, matching a browser
+      # dropping an empty CSS declaration and mermaid's own JS-falsy read.
+      #
       # @param chunk [String] one raw "key:value(:ignored)" chunk
       # @return [Array(String, String), Array(String, nil), Array()]
       #   [key, value] — value is nil when the chunk has no colon, and both
       #   are nil (empty array) for an empty chunk
       def mermaid_split(chunk)
-        parts = chunk.split(':')
+        parts = chunk.split(':', -1)
         [parts[0], parts[1]]
       end
 
-      # Case-insensitive box lookup — the counterpart to the exact-case
-      # `styles['color']` reads used for text. Resolves the property the
-      # BROWSER would end up with: among every entry whose key matches
-      # PROPERTY case-insensitively, the one latest in `styles`' (insertion)
-      # order wins, same as the last matching CSS declaration in a rendered
-      # `style` attribute. Do not use this for `color` — see
-      # `apply_chunks`'s second bullet.
+      # An empty string is a validly-parsed but empty CSS value — mermaid's
+      # own override read is JS-falsy on it, and the browser drops an empty
+      # declaration (`fill:`) during cascade — so both treat it as though
+      # the property was never declared. Applied to the exact-key
+      # (attributed) read below; the case-insensitive `box_style` path
+      # below reaches the same result through `css_valid?` instead, since
+      # an empty string is not valid CSS for any property this file models.
+      #
+      # @param value [String, nil]
+      # @return [String, nil] VALUE, or nil if it is nil or empty
+      def present(value)
+        value.nil? || value.empty? ? nil : value
+      end
+
+      # Picks the entry nearest the end of VALUES whose value passes the
+      # block, treating an explicitly-cleared empty value (see `present`)
+      # as absent rather than invalid. When nothing validates, falls back
+      # to the raw last-declared value instead of nil — a hostile or
+      # malformed value must still reach the rendered SVG verbatim
+      # (escaped by the XML serializer, not by us silently discarding it
+      # for our own default), which is exactly the guarantee the D2
+      # integration spec pins. Only used where that guarantee applies —
+      # see `ambient_color` below for the one caller that must NOT fall
+      # back this way.
+      #
+      # @param values [Array<String, nil>] raw candidate values, in
+      #   source order
+      # @yield [String] validity predicate
+      # @return [String, nil] the winning value, or nil if VALUES held
+      #   nothing but absent (nil or empty) entries
+      def last_valid_or_raw(values, &)
+        present_values = values.filter_map { |value| present(value) }
+        return nil if present_values.empty?
+
+        present_values.reverse_each.find(&) || present_values.last
+      end
+
+      # Case-insensitive box lookup for a BARE entity, modeling the
+      # browser's cascade on the box's `style=` attribute: among every
+      # entry whose key matches PROPERTY case-insensitively, in source
+      # order, the value nearest the end wins — same as the last matching
+      # CSS declaration in a rendered `style` attribute — but an entry
+      # whose value the browser's CSS parser would reject is skipped,
+      # exactly as an invalid declaration never reaches the cascade at
+      # all. Do not use this for `color` — see `apply_chunks`'s second
+      # bullet.
       #
       # @param styles [Hash{String => String}] resolved, exact-case entity
       #   styles
@@ -356,29 +404,173 @@ module Sirena
       # @return [String, nil] the winning value, or nil if PROPERTY was
       #   never declared under any case
       def box_style(styles, property)
-        styles.select { |key, _| key.downcase == property }.values.last
+        values = styles.select { |key, _| key.downcase == property }.values
+        last_valid_or_raw(values) { |value| css_valid?(property, value) }
+      end
+
+      # `currentColor` on a bare entity's box resolves, in a real browser,
+      # against that SAME element's `color` CSS property — which mermaid
+      # routes onto the box's `style=` attribute under any casing EXCEPT a
+      # literal lowercase `color` key (that one is a label style, see the
+      # exact-case `styles['color']` reads above, and never reaches the
+      # box's style attribute at all). Substitute the concrete value now,
+      # since a standalone SVG has no browser cascade left to resolve it
+      # at paint time.
+      #
+      # @param value [String, nil] PROPERTY's already-resolved raw value
+      # @param styles [Hash{String => String}] resolved, exact-case entity
+      #   styles
+      # @return [String, nil] VALUE, or the ambient colour declared for
+      #   this box if VALUE is `currentColor` (any case) and one exists
+      def resolve_current_color(value, styles)
+        return value unless value&.downcase == 'currentcolor'
+
+        ambient_color(styles) || value
+      end
+
+      # The ambient colour a bare entity's box would compute `color` as:
+      # every key matching `color` case-insensitively EXCEPT the literal
+      # lowercase key, which is the label style excluded from the box's
+      # own `style=` attribute — see `resolve_current_color` above. Unlike
+      # `box_style`, an invalid ambient declaration is simply absent
+      # rather than falling back to its raw text — `resolve_current_color`
+      # already has a safe literal default (leave `currentColor` as
+      # written, which a standalone browser resolves to black, matching
+      # mermaid with no ambient colour set), so there is no verbatim
+      # guarantee to uphold here the way there is for the fill/stroke
+      # attribute itself.
+      #
+      # @param styles [Hash{String => String}] resolved, exact-case entity
+      #   styles
+      # @return [String, nil] the winning ambient colour, or nil if none
+      #   was validly declared
+      def ambient_color(styles)
+        values = styles.select { |key, _| key != 'color' && key.downcase == 'color' }.values
+        values.filter_map { |value| present(value) }
+          .reverse_each.find { |value| css_color?(value) }
+      end
+
+      # Colour-valued box properties resolve `currentColor` against the
+      # box's ambient colour (see `resolve_current_color`); length-valued
+      # ones do not.
+      COLOR_PROPERTIES = %w[fill stroke].freeze
+      private_constant :COLOR_PROPERTIES
+
+      # Whether VALUE is syntactically valid CSS for PROPERTY. A small
+      # table, not a CSS grammar — enough to tell a real declaration from
+      # `FILL:bogus`, not to validate every legal `rgb()` argument. A
+      # property this table has no opinion on is always valid, so
+      # `box_style` never rejects a property it does not model.
+      #
+      # @param property [String] lowercase property name
+      # @param value [String]
+      # @return [Boolean]
+      def css_valid?(property, value)
+        case property
+        when 'fill', 'stroke' then css_color?(value)
+        when 'stroke-width' then css_length?(value)
+        else true
+        end
+      end
+
+      CSS_HEX_COLOR = /\A#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\z/i
+      private_constant :CSS_HEX_COLOR
+
+      CSS_COLOR_FUNCTION = /\A(?:rgb|rgba|hsl|hsla)\(.+\)\z/i
+      private_constant :CSS_COLOR_FUNCTION
+
+      CSS_LENGTH = %r{\A\d+(?:\.\d+)?(?:px|em|rem|%|pt|cm|mm|in|pc|ex|ch|vw|vh)?\z}i
+      private_constant :CSS_LENGTH
+
+      # The CSS Color Module Level 4 extended keyword set, plus `none` (a
+      # valid `fill`/`stroke` paint keyword, not a general colour) and the
+      # two keywords that resolve dynamically (`currentcolor`) or to
+      # nothing (`transparent`). Not exhaustive of every legal CSS
+      # <color> (system colours, `color(...)`, `lab()` and friends are
+      # not corpus-observed here) — sufficient to separate a real
+      # declaration from `bogus`.
+      CSS_COLOR_KEYWORDS = %w[
+        aliceblue antiquewhite aqua aquamarine azure beige bisque black
+        blanchedalmond blue blueviolet brown burlywood cadetblue
+        chartreuse chocolate coral cornflowerblue cornsilk crimson cyan
+        currentcolor darkblue darkcyan darkgoldenrod darkgray darkgreen
+        darkgrey darkkhaki darkmagenta darkolivegreen darkorange
+        darkorchid darkred darksalmon darkseagreen darkslateblue
+        darkslategray darkslategrey darkturquoise darkviolet deeppink
+        deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite
+        forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray
+        green greenyellow grey honeydew hotpink indianred indigo ivory
+        khaki lavender lavenderblush lawngreen lemonchiffon lightblue
+        lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen
+        lightgrey lightpink lightsalmon lightseagreen lightskyblue
+        lightslategray lightslategrey lightsteelblue lightyellow lime
+        limegreen linen magenta maroon mediumaquamarine mediumblue
+        mediumorchid mediumpurple mediumseagreen mediumslateblue
+        mediumspringgreen mediumturquoise mediumvioletred midnightblue
+        mintcream mistyrose moccasin navajowhite navy none oldlace olive
+        olivedrab orange orangered orchid palegoldenrod palegreen
+        paleturquoise palevioletred papayawhip peachpuff peru pink plum
+        powderblue purple rebeccapurple red rosybrown royalblue
+        saddlebrown salmon sandybrown seagreen seashell sienna silver
+        skyblue slateblue slategray slategrey snow springgreen steelblue
+        tan teal thistle tomato transparent turquoise violet wheat white
+        whitesmoke yellow yellowgreen
+      ].freeze
+      private_constant :CSS_COLOR_KEYWORDS
+
+      # @param value [String]
+      # @return [Boolean] whether VALUE is a CSS colour (or the `none`
+      #   paint keyword) mermaid's browser cascade would accept, rather
+      #   than dropping the declaration
+      def css_color?(value)
+        downcased = value.downcase
+        CSS_COLOR_KEYWORDS.include?(downcased) ||
+          CSS_HEX_COLOR.match?(value) ||
+          CSS_COLOR_FUNCTION.match?(value)
+      end
+
+      # @param value [String]
+      # @return [Boolean] whether VALUE is a CSS <length> `stroke-width`
+      #   would accept
+      def css_length?(value)
+        CSS_LENGTH.match?(value)
       end
 
       # An attributed entity's outer box does NOT go through the browser's
       # CSS cascade the way a bare entity's does — mermaid draws it via a
-      # different, row-based shape whose fill comes from a direct, EXACT-key
-      # Map read (`stylesMap.get("fill")`, mermaid's own `userNodeOverrides`)
-      # rather than an inline `style="..."` attribute the browser resolves
-      # case-insensitively. Verified by Codex against the installed mermaid
-      # 11.16.1 bundle and a real Chrome computation:
+      # different, row-based shape whose fill, stroke, AND stroke-width
+      # each come from a direct, EXACT-key Map read (`stylesMap.get(...)`,
+      # mermaid's own `userNodeOverrides`) rather than an inline
+      # `style="..."` attribute the browser resolves case-insensitively.
+      # Verified by Codex against the installed mermaid 11.16.1 bundle and
+      # a real Chrome computation, for all three properties:
       # `classDef a fill:red,FILL:blue,fill:green` on a bare CAR computes
       # blue (what `box_style` gives), but on `CAR:::a { string make }` it
-      # computes green — the last literal lowercase `fill`, ignoring `FILL`
-      # entirely. Only `fill` is verified to differ this way; stroke and
-      # stroke-width keep resolving through `box_style` either way.
+      # computes green — the last literal lowercase `fill`, ignoring
+      # `FILL` entirely. `stroke:red,STROKE:blue,stroke:green,
+      # stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px` computes
+      # green/4px attributed, blue/8px bare — the same split, on both
+      # properties.
+      #
+      # `currentColor` is never resolved against an ambient colour on this
+      # path — an attributed box carries no `style=` attribute for the
+      # browser to cascade a `color` property through, so it has no
+      # ambient colour to read under any case, and the exact-key value is
+      # used verbatim.
       #
       # @param styles [Hash{String => String}] resolved, exact-case entity
       #   styles
+      # @param property [String] lowercase property name to resolve
       # @param attributed [Boolean] whether this entity has any attributes
-      # @return [String, nil] the winning fill, or nil if never declared
-      #   under the case this path reads
-      def box_fill(styles, attributed)
-        attributed ? styles['fill'] : box_style(styles, 'fill')
+      # @return [String, nil] the winning value, or nil if never validly
+      #   declared under the case this path reads
+      def box_property(styles, property, attributed)
+        if attributed
+          present(styles[property])
+        else
+          value = box_style(styles, property)
+          COLOR_PROPERTIES.include?(property) ? resolve_current_color(value, styles) : value
+        end
       end
 
       def render_relationships(graph, svg)

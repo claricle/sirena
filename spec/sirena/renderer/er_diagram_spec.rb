@@ -557,6 +557,79 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
 
         expect(rect_for(svg, 'CAR').stroke).to eq('currentcolor')
       end
+
+      # Verified by Codex against the installed mermaid 11.16.1 bundle and
+      # a real Chrome computation: an attributed entity's stroke and
+      # stroke-width read the same exact-case Map fill does (C18), not
+      # the case-insensitive cascade — this declaration computes
+      # green/4px attributed, where C16's bare fill equivalent computes
+      # blue/8px.
+      it 'resolves stroke and stroke-width by exact lowercase key on an attributed entity (C20)' do
+        graph = {
+          id: 'er_diagram',
+          children: [
+            entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])
+          ],
+          edges: [],
+          class_defs: { 'a' => 'stroke:red,STROKE:blue,stroke:green,' \
+                                'stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px' }
+        }
+        svg = renderer.render(graph)
+        rect = rect_for(svg, 'CAR')
+
+        expect(rect.stroke).to eq('green')
+        expect(rect.stroke_width).to eq('4px')
+      end
+
+      # Verified against a real browser: mermaid emits
+      # "fill:currentColor !important;COLOR:red !important" for a bare
+      # entity's box, and the browser's `color` cascade resolves
+      # currentColor to red. Sirena has no cascade left to replay at
+      # paint time, so it must substitute the concrete value now.
+      it 'resolves currentColor against an ambient COLOR override on a bare entity (C21)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:currentColor,COLOR:red' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
+
+      # Ruby's default String#split drops a trailing empty field, so
+      # "fill:".split(':') read as "no colon" and this value-clearing
+      # declaration was silently ignored, leaving the stale earlier
+      # "red". Mermaid's own JS split keeps it, and the browser drops
+      # the resulting empty CSS declaration, computing its default.
+      it 'lets a trailing empty value clear an earlier declaration (C22)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:red,fill:' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('#f9f9f9')
+      end
+
+      # Verified against a real browser: Chrome rejects "bogus" as an
+      # invalid <color>, drops that declaration entirely during
+      # cascade, and computes red from the earlier valid "fill:red" —
+      # not black from "bogus".
+      it 'keeps an earlier valid value when a later same-property one is invalid CSS (C23)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:red,FILL:bogus' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('red')
+      end
     end
   end
 end
