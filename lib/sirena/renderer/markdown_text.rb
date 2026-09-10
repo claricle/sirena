@@ -52,6 +52,7 @@ module Sirena
       #
       # @api private
       def scan(text, bold:, italic:)
+        closers = precompute_closers(text)
         runs = []
         buffer = +''
         i = 0
@@ -59,7 +60,7 @@ module Sirena
         while i < text.length
           marker = marker_at(text, i)
 
-          if marker && (close_at = closer_for(text, i, marker))
+          if marker && (close_at = closer_for(text, i, marker, closers))
             runs << Run.new(text: buffer, bold: bold, italic: italic) unless buffer.empty?
             buffer = +''
             inner_start = i + marker.length
@@ -97,19 +98,74 @@ module Sirena
       # candidate itself fails the opening half of that rule, so a caller
       # never has to check both halves separately.
       #
+      # `closers` is the `{marker => positions}` table from
+      # `precompute_closers`: `closer_table(text, marker)[pos]` is exactly
+      # what a linear `text.index(marker, pos)` scan (skipping past each
+      # failed candidate) would have found starting from `pos`, computed
+      # once for every `pos` up front instead of rescanned per call — see
+      # `closer_table` for why this is an exact rewrite, not an
+      # approximation.
+      #
       # @api private
-      def closer_for(text, open_at, marker)
+      def closer_for(text, open_at, marker, closers)
         return nil unless flanked_open?(text, open_at, marker)
 
-        pos = open_at + marker.length
+        closers[marker][open_at + marker.length]
+      end
 
-        while (idx = text.index(marker, pos))
-          return idx if flanked_close?(text, idx)
+      # Builds the `{ITALIC => ..., BOLD => ...}` closer-position tables
+      # `closer_for` looks up, one pass over `text` per marker.
+      #
+      # @api private
+      def precompute_closers(text)
+        { ITALIC => closer_table(text, ITALIC), BOLD => closer_table(text, BOLD) }
+      end
 
-          pos = idx + marker.length
+      # `table[pos]` is what the old `closer_for`'s `while (idx =
+      # text.index(marker, pos)) ... pos = idx + marker.length` loop would
+      # return when started at `pos`: the first later occurrence of
+      # `marker` whose preceding character is non-whitespace, skipping past
+      # a failed occurrence by a full marker length rather than by one
+      # character (which matters for `**`, where two candidates can
+      # overlap by one character inside a run of three or more `*`s).
+      #
+      # This is a bottom-up memoization of that loop, not a re-derivation
+      # of its answer: `table[pos]` is defined by the same recurrence the
+      # loop executes (find the next occurrence; if it closes, stop;
+      # otherwise continue from just past it), so it returns bit-for-bit
+      # what the loop returned, in O(1) per lookup instead of O(n) per
+      # scan. Filled from the end of `text` backwards so every
+      # `table[idx + marker.length]` it reads has already been computed.
+      #
+      # @api private
+      def closer_table(text, marker)
+        length = marker.length
+        next_occurrence = next_occurrence_table(text, marker)
+        table = Array.new(text.length + 1)
+
+        (text.length - length).downto(0) do |pos|
+          idx = next_occurrence[pos]
+          table[pos] = idx && (flanked_close?(text, idx) ? idx : table[idx + length])
         end
 
-        nil
+        table
+      end
+
+      # `table[pos]` is the smallest index >= `pos` where `marker` occurs
+      # in `text`, or nil — the plain-search half of `text.index(marker,
+      # pos)`, computed once for the whole text instead of once per
+      # candidate.
+      #
+      # @api private
+      def next_occurrence_table(text, marker)
+        length = marker.length
+        table = Array.new(text.length + 1)
+
+        (text.length - length).downto(0) do |pos|
+          table[pos] = text[pos, length] == marker ? pos : table[pos + 1]
+        end
+
+        table
       end
 
       # @api private
