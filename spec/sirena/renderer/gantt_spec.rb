@@ -121,7 +121,13 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
       Timeout.timeout(5) { xml = renderer.render(graph).to_xml }
 
       grid_line_count = xml.scan('stroke-dasharray="2,2"').length
-      expect(grid_line_count).to be <= 41
+      label_y = described_class::MARGIN_TOP + described_class::TIMELINE_HEIGHT - 10
+      label_count = xml.scan(/<text[^>]*\sy="#{label_y}[^0-9]/).length
+
+      # Both bounds matter: the upper one is the timeout fix under test, the
+      # lower one catches an axis that silently stopped rendering entirely.
+      expect(grid_line_count).to be_between(1, 41)
+      expect(label_count).to be_between(1, 41)
     end
 
     it "renders timeline axis" do

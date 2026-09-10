@@ -143,38 +143,68 @@ module Sirena
 
         # Task details are a comma-separated list of fields with no fixed
         # position (mermaid allows tags, an id, "after"/"until", a date, and
-        # a duration in any order) — classify each field by its own shape,
-        # the same way mermaid's own parser does.
+        # a duration in any order). Tags and after/until are unambiguous
+        # keywords, consumed first regardless of position. What is left —
+        # the "value fields" — mermaid classifies by POSITION when there
+        # are three of them (id, start, end/duration — the id is always
+        # first, even when its text happens to look like a date, corpus
+        # gantt/NNN), and by shape otherwise.
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
-          dates = []
-          extract_task_fields(details[:parts]).each do |field|
-            classify_task_field(task, field, dates)
-          end
+          fields = extract_task_fields(details[:parts])
+          value_fields = consume_keyword_fields(task, fields)
+          value_fields = value_fields.dup
+          task.id = value_fields.shift if value_fields.length == 3
 
-          task.start_date = dates[0] if dates[0]
-          task.end_date = dates[1] if dates[1]
+          dates = []
+          value_fields.each { |field| classify_value_field(task, field, dates) }
+          assign_dates(task, dates)
         end
 
         def extract_task_fields(parts)
           Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }
         end
 
-        def classify_task_field(task, field, dates)
+        def consume_keyword_fields(task, fields)
+          fields.reject do |field|
+            case field
+            when *TAG_KEYWORDS
+              task.tags << field
+              true
+            when /\Aafter\s+(.+)\z/
+              task.after_task = Regexp.last_match(1)
+              true
+            when /\Auntil\s+(.+)\z/
+              task.until_task = Regexp.last_match(1)
+              true
+            end
+          end
+        end
+
+        def classify_value_field(task, field, dates)
           case field
-          when *TAG_KEYWORDS
-            task.tags << field
-          when /\Aafter\s+(.+)\z/
-            task.after_task = Regexp.last_match(1)
-          when /\Auntil\s+(.+)\z/
-            task.until_task = Regexp.last_match(1)
           when DURATION_PATTERN
             task.duration = field
           when DATE_PATTERN
             dates << field
           else
             task.id = field
+          end
+        end
+
+        # A lone date is normally the start. After an "after" dependency,
+        # though, the dependency supplies the start (see
+        # GanttTransform#resolve_task_dependency, which reads calculated
+        # start from the referenced task and never consults `start_date`
+        # once `after_task` is set) — so a single trailing date there is the
+        # end, or `resolve_task_dependency` never finds an end to compute.
+        def assign_dates(task, dates)
+          if dates.length == 1 && task.after_task
+            task.end_date = dates[0]
+          else
+            task.start_date = dates[0] if dates[0]
+            task.end_date = dates[1] if dates[1]
           end
         end
 

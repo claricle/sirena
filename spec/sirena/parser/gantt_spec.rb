@@ -161,5 +161,43 @@ RSpec.describe Sirena::Parser::GanttParser do
       expect(task.after_task).to eq("a1")
       expect(task.duration).to eq("20h")
     end
+
+    # An after-dependency supplies the START; a single date field left over
+    # is therefore the task's END, never its start (GanttTransform reads
+    # calculated_start only from the referenced task once after_task is
+    # set, and end_date only from this field — see
+    # GanttTransform#resolve_task_dependency).
+    it "treats a lone date after an after-dependency as the end date" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Tasks
+          Task A :a, 2024-01-01, 2024-01-03
+          Task B :b, after a, 2024-01-10
+      GANTT
+
+      task_b = parser.parse(source).sections.first.tasks[1]
+
+      expect(task_b.start_date).to be_nil
+      expect(task_b.end_date).to eq("2024-01-10")
+    end
+
+    # Three value fields (excluding tags and after/until) is mermaid's
+    # "id, start, end/duration" shape. The id is always the first of the
+    # three, even when its text happens to look like a date.
+    it "treats the first of three value fields as the id, even when it is date-shaped" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Tasks
+          A : 2024-01-01, 2024-02-01, 2024-02-03
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.id).to eq("2024-01-01")
+      expect(task.start_date).to eq("2024-02-01")
+      expect(task.end_date).to eq("2024-02-03")
+    end
   end
 end
