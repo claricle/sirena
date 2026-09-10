@@ -6,8 +6,12 @@
 # grammar. `Sirena::LintDebt` checks both halves mechanically -- an
 # entry outside either rule is refused, not silently accepted.
 #
-# Empty on day one. Every future entry needs the four fields below plus
-# an `# approved: <user> <date>` comment naming who signed it off.
+# Empty on day one. Every future entry needs all FOUR fields shown below.
+# `approved_by` and `approved_on` are checked mechanically by
+# `refuse_unsigned!` -- an entry missing either is refused, not
+# accepted in silence. They are FIELDS, not a `# approved:` comment: a
+# YAML comment is invisible to the parser, so a rule written that way
+# could never be read by anything.
 #
 # exceptions:
 #   - cop: Metrics/CyclomaticComplexity

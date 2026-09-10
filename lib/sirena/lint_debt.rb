@@ -162,6 +162,15 @@ module Sirena
     end
 
     def run_rubocop_in(dir, config, ignore_disable_comments:)
+      # The BASENAME here is load-bearing, so do not rename it casually.
+      # RuboCop resolves `Include`/`Exclude` relative to the config's own
+      # directory only when the basename starts with `.rubocop`, and
+      # relative to the WORKING directory otherwise. This config is written
+      # into a temp dir and run against the repo, so it needs the
+      # working-directory form -- hence a plain `rubocop.yml` with no dot.
+      # Under a dotted name the whole RSpec class silently vanishes: 955 of
+      # the 8,877 counted offences, with no error and an identical
+      # "files inspected" line.
       config_path = File.join(File.realpath(dir), "rubocop.yml")
       File.write(config_path, config.to_yaml)
 
@@ -223,7 +232,13 @@ module Sirena
     end
 
     def own_config
-      @own_config ||= YAML.load_file(File.join(root, ".rubocop.yml"))
+      # `safe_load_file`, not `load_file`: this parses a config file, and
+      # the safe loader refuses to instantiate arbitrary Ruby objects from
+      # it. Measured on this repo's own `.rubocop.yml` -- it has no YAML
+      # anchors (`grep -cE '(^|\s)[&*][A-Za-z_]' .rubocop.yml` -> 0), so no
+      # `aliases: true` is needed and the safe loader reads all 5 top-level
+      # keys unchanged.
+      @own_config ||= YAML.safe_load_file(File.join(root, ".rubocop.yml"))
     end
 
     def remote_inherit_from
@@ -304,10 +319,27 @@ module Sirena
       cop = exception.fetch("cop")
       file = exception.fetch("file")
 
+      refuse_unsigned!(exception, cop, file)
       refuse_wrong_class!(cop, file)
       refuse_wrong_location!(cop, file)
       refuse_missing_file!(cop, file)
       refuse_stale_entry!(cop, file, current_rows)
+    end
+
+    # `scoreboard/lint-exceptions.yml` says every entry carries four fields.
+    # Until this guard existed it required two, so an entry naming nobody and
+    # dated never was accepted in silence and the file documented a rule
+    # nothing read. An exception to a debt ratchet is the exact place a
+    # missing signature matters.
+    def refuse_unsigned!(exception, cop, file)
+      %w[approved_by approved_on].each do |field|
+        value = exception[field]
+        next unless value.nil? || value.to_s.strip.empty?
+
+        raise ExecutionError,
+              "exception #{cop}/#{file}: #{field} is required " \
+              "and must name who signed it off"
+      end
     end
 
     def refuse_wrong_class!(cop, file)

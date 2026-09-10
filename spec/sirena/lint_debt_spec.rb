@@ -155,6 +155,34 @@ RSpec.describe Sirena::LintDebt do
 
     let(:grammar_file) { "lib/sirena/parser/grammars/flowchart.rb" }
 
+    # The allowlist file states every entry carries four fields; the code
+    # required two, so an entry naming nobody and dated never was subtracted
+    # from the debt in silence. Each half is pinned separately -- one example
+    # asserting "some field is required" passes while the other goes
+    # unchecked.
+    let(:err_class) { Sirena::LintDebt::ExecutionError }
+
+    def signed_entry
+      { "cop" => "Metrics/MethodLength", "file" => grammar_file,
+        "approved_by" => "r", "approved_on" => "2026-09-10" }
+    end
+
+    %w[approved_by approved_on].each do |field|
+      it "refuses an exception missing #{field}" do
+        write_long_method_offence(grammar_file)
+        write_exceptions([signed_entry.reject { |k, _| k == field }])
+
+        expect { debt.total }.to raise_error(err_class, /#{field} is/)
+      end
+
+      it "refuses a blank #{field}" do
+        write_long_method_offence(grammar_file)
+        write_exceptions([signed_entry.merge(field => "  ")])
+
+        expect { debt.total }.to raise_error(err_class, /#{field} is/)
+      end
+    end
+
     it "subtracts nothing when empty" do
       write_exceptions([])
       expect(debt.total).to eq(1)
@@ -164,7 +192,8 @@ RSpec.describe Sirena::LintDebt do
       before do
         write_long_method_offence(grammar_file)
         write_exceptions(
-          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
+          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file,
+             "approved_by" => "r", "approved_on" => "2026-09-10" }],
         )
       end
 
@@ -207,6 +236,8 @@ RSpec.describe Sirena::LintDebt do
             {
               "cop" => "Style/FrozenStringLiteralComment",
               "file" => "debt.rb",
+              "approved_by" => "r",
+              "approved_on" => "2026-09-10",
             },
           ],
         )
@@ -222,7 +253,8 @@ RSpec.describe Sirena::LintDebt do
     context "with a file outside the grammar path" do
       before do
         write_exceptions(
-          [{ "cop" => "Metrics/MethodLength", "file" => "debt.rb" }],
+          [{ "cop" => "Metrics/MethodLength", "file" => "debt.rb",
+             "approved_by" => "r", "approved_on" => "2026-09-10" }],
         )
       end
 
@@ -240,6 +272,8 @@ RSpec.describe Sirena::LintDebt do
             {
               "cop" => "Metrics/MethodLength",
               "file" => "lib/sirena/parser/grammars/missing.rb",
+              "approved_by" => "r",
+              "approved_on" => "2026-09-10",
             },
           ],
         )
@@ -256,7 +290,8 @@ RSpec.describe Sirena::LintDebt do
       before do
         write(grammar_file, "module X; end\n")
         write_exceptions(
-          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
+          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file,
+             "approved_by" => "r", "approved_on" => "2026-09-10" }],
         )
       end
 
