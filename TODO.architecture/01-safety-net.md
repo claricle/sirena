@@ -152,11 +152,22 @@ of 24, not 23.
 
        valid=false   svg=true      # source "kanban\n"
 
-   The oracle says refusing is correct — mmdc exits 1 on `kanban`,
-   `flowchart`, `sequenceDiagram` and `classDiagram` alone. So sirena
-   rendering a bare header is the defect, and this guard closes it.
-   Record it in the PR body as an intended behaviour change carrying
-   that evidence; do not let it read as a regression.
+   **The oracle does NOT justify refusing it.** Measured 2026-09-10 with
+   a real browser: `mmdc` exits 0 on bare `kanban`, `flowchart` and
+   `sequenceDiagram`, and only `classDiagram` errors. An earlier note
+   here claimed mmdc rejected all four; that measurement was taken
+   without `PUPPETEER_EXECUTABLE_PATH` set, so every call failed with
+   "Could not find Chrome" — including a valid populated control. It was
+   measuring a missing browser, not invalid syntax.
+
+       PUPPETEER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+         mmdc -i bare.mmd -o out.svg -e svg -q; echo $?
+
+   So universalising this guard REFUSES INPUT MERMAID RENDERS. Fix the
+   model's `valid?` contract first — a bare header is a valid empty
+   diagram, not an invalid one — and only then move the guard. Record it
+   in the PR body as an intended behaviour change with that evidence; do
+   not let it read as a regression, and do not cite the oracle for it.
 
    Pick one, explicitly, in the PR:
 

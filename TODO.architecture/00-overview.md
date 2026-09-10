@@ -296,12 +296,15 @@ after 01 is protected by 01.
 | 07 | Adding a type in an hour | 2 PRs | the point of the plan |
 | 08 | Then the corpus burndown | ongoing | the pass rate finally moves |
 
-**Items 01-03 and 06 change no rendered output at all, WITH ONE MEASURED
-EXCEPTION named in item 01.** Universalising the `valid?` guard refuses
-a bare header such as `kanban\n`, which sirena renders today. That is a
-deliberate change and the oracle backs it — mmdc exits 1 on `kanban`,
-`flowchart`, `sequenceDiagram` and `classDiagram` alone, so rendering
-them is the defect and refusing them is the fix. See item 01 step 6.
+**Items 01-03 and 06 change no rendered output at all, WITH ONE EXCEPTION
+named in item 01.** Universalising the `valid?` guard refuses a bare header
+such as `kanban\n`, which sirena renders today. **The oracle does NOT back
+that refusal** — with a real browser, mmdc exits 0 on bare `kanban`,
+`flowchart` and `sequenceDiagram`; only `classDiagram` errors. An earlier
+note here cited mmdc as justification and was wrong: that run had no
+`PUPPETEER_EXECUTABLE_PATH`, so every call failed for want of Chrome,
+including a valid control. Item 01 step 6 now carries the correction and
+the command.
 
 Item 02 used to be the other exception, because it carried the escaping
 fix; that fix landed on main ahead of this plan, so what is left of item
