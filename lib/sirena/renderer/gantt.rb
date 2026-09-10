@@ -32,6 +32,16 @@ module Sirena
       TIMELINE_HEIGHT = 40
       TITLE_Y = 40
 
+      # Target for the axis label/grid-line INTERVAL, not a hard count. A
+      # fixed 30-day interval is fine for ordinary charts, but a task dated
+      # far in the future (mermaid accepts any year) can push total_days
+      # into the millions — stepping by 30 there builds tens of thousands
+      # of SVG nodes for a chart nobody can read anyway. The draw loop is
+      # `(0..total_days).step(interval)`, inclusive of both endpoints, so
+      # the realized count is `(total_days / interval).floor + 1` — at most
+      # MAX_TIMELINE_LABELS + 1, not MAX_TIMELINE_LABELS.
+      MAX_TIMELINE_LABELS = 40
+
       # Task status colors
       TASK_COLORS = {
         done: "#5CB85C",      # Green
@@ -310,8 +320,9 @@ module Sirena
         return 1 if total_days <= 7
         return 7 if total_days <= 60
         return 14 if total_days <= 120
+        return 30 if total_days <= 30 * MAX_TIMELINE_LABELS
 
-        30
+        (total_days.to_f / MAX_TIMELINE_LABELS).ceil
       end
 
       def format_date(date, format)
