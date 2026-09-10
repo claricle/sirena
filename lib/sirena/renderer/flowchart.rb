@@ -104,24 +104,44 @@ module Sirena
 
       # `TextMeasurement`'s average ratio is deliberately an average — the
       # right choice for sizing a box AROUND text, the wrong one for
-      # proving nothing hangs PAST an edge of the page. The self-loop
-      # overflow math below needs a ratio that never UNDERESTIMATES a
-      # real character, whatever the label says, so it gets its own.
+      # reducing how often a self loop's label runs past the room this
+      # sizes for it.
+      #
+      # This is NOT a bound, and a first version of this constant that
+      # tried to be one (`1.0`, set from ASCII alone) was refuted by
+      # measuring real scripts rather than raising the number until
+      # nothing failed. `overflow: 'hidden'` on the document — see
+      # `#render` — is what actually keeps an underestimate from
+      # distorting or escaping the page; this constant only decides how
+      # RARELY that backstop has to do anything.
       #
       # Measured with Chrome against Sirena's own rendered `<text>`
       # (Arial, Helvetica, sans-serif at font-size 12 — the theme's
-      # `font_size_small`), ten repeats of each character, widest to
-      # narrowest:
+      # `font_size_small`), em-per-character:
       #
-      #   @ 0.889   W 0.830   % 0.784   M/m 0.738   O/G 0.692
-      #   w 0.645   A 0.599   0 0.507   , . 0.275    i/l 0.229
+      #   ASCII widest (ten repeats each, ' @' the max)         0.889
+      #   CJK Han / Hiragana / Fullwidth Latin                  1.00–1.02
+      #   Emoji, incl. a 7-codepoint ZWJ family (one glyph)     1.25–1.42
+      #   Devanagari (plain and a 3-codepoint conjunct)         0.75–0.81
+      #   Arabic (a plain letter)                               0.71
+      #   A combining sequence (e + acute, 2 codepoints)        0.56
+      #   Arabic ligature U+FDFD (Bismillah, ONE codepoint)     6.49
       #
-      # `@` is the widest character measured. This constant sits above it
-      # with headroom for characters never measured (accented Latin,
-      # other scripts), rather than pinned exactly to the worst case
-      # found — a bound proven against ten characters is not a bound
-      # proven against every character a label can hold.
-      WIDE_CHAR_WIDTH_RATIO = 1.0
+      # The last row is why this can never be a bound. East Asian
+      # Width classifies U+FDFD as `N` (Neutral) — the identical
+      # bucket Unicode gives an ordinary Latin letter — so a table keyed
+      # on any codepoint PROPERTY, not merely a wider flat ratio, puts
+      # it beside `@` and still misses it by 6.5x. Short of a real font
+      # metrics table (the dependency `TextMeasurement`'s own docs say
+      # this gem avoids), no per-codepoint number bounds what a font's
+      # ligature substitution can do with a single input character.
+      #
+      # 1.5 clears every row above except the ligature — CJK and emoji
+      # included, both of which `1.0` (this constant's first value)
+      # UNDERSHOT despite being set with headroom over ASCII, which is
+      # the tell that ASCII-only measurement was never going to
+      # generalise.
+      WIDE_CHAR_WIDTH_RATIO = 1.5
       private_constant :WIDE_CHAR_WIDTH_RATIO
 
       # A self loop is a two-corner polyline. It goes out past the node
@@ -159,11 +179,43 @@ module Sirena
 
       # Renders a laid-out graph to SVG.
       #
+      # `overflow: 'hidden'` states, in the document itself, that a self
+      # loop's label must never be allowed to distort or escape past the
+      # rest of the page — see `WIDE_CHAR_WIDTH_RATIO` for why no
+      # character-count estimate can guarantee that on its own. It is
+      # measured to make NO visual difference in Chrome specifically:
+      # screenshotting the same pathological label with and without the
+      # attribute, root document and nested alike, came back
+      # byte-identical (`compare -metric AE` reports 0 differing
+      # pixels) — Chrome already contains SVG content to its own box by
+      # default, contrary to the SVG2 spec's stated `visible` default
+      # for a root `<svg>`. The attribute is kept anyway, at zero cost,
+      # because Chrome is the only renderer this could be measured
+      # against; it is not a proven fix for every renderer Metanorma may
+      # use, only a standards-correct statement of intent for the ones
+      # that follow the spec's default more literally than Chrome does.
+      #
+      # `clear_self_loop_overflow` and `self_loop_reach` still do real
+      # work sizing the page from the loop's BENDS, which are exact
+      # numbers, not text estimates; only a label's own contribution to
+      # that sizing is a best-effort hint rather than a guarantee. When
+      # the hint is wrong, the label's own excess is invisible past the
+      # page edge — CHROME MEASURED, not merely intended — while
+      # everything else in the diagram (nodes, other edges, the loop's
+      # own bends) stays exactly where the exact numbers put it. mmdc
+      # does not carry this limit — measured directly, it sizes the
+      # SAME pathological label correctly (viewBox grows to 737px,
+      # `mmdc -i` on a `flowchart RL` self loop reading `|﷽﷽﷽﷽|`) —
+      # because it drives an actual Chrome layout of the label as HTML
+      # and reads the box back. That is the gap: mmdc MEASURES, sirena
+      # ESTIMATES, and adding a headless browser to a pure-Ruby renderer
+      # to close it is a different, much bigger change than this one.
+      #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         page = clear_self_loop_overflow(flatten(graph))
-        svg = create_document(page)
+        svg = create_document(page, overflow: 'hidden')
 
         # mermaid's paint order: clusters sit behind everything, then
         # edges, then the nodes that cover where the edges end.
@@ -268,14 +320,18 @@ module Sirena
       # The full reach of every self loop in the graph, as one bounding
       # box — nil when there are none. Reuses the exact bends and label
       # anchor `render_edge` draws later, so this can never disagree with
-      # what actually gets drawn — except that a bend or an anchor is a
-      # POINT and the label drawn there is not: `create_edge_label`
-      # centres it on `x` and leaves it sitting on its default SVG
-      # baseline at `y`, so the text itself reaches half its width either
-      # side of `x` and the whole of its height above `y`, never below.
-      # `loop_label_extent` supplies that half-width and height as a
-      # BOUND rather than an average, so the box drawn here is never
-      # smaller than what Chrome actually renders.
+      # what actually gets drawn on the BEND side of the box — except
+      # that a bend or an anchor is a POINT and the label drawn there is
+      # not: `create_edge_label` centres it on `x` and leaves it sitting
+      # on its default SVG baseline at `y`, so the text itself reaches
+      # half its width either side of `x` and the whole of its height
+      # above `y`, never below. `loop_label_extent` supplies that
+      # half-width and height as a wide HINT, not a bound — no
+      # per-character number is one, see the constant it reads — so this
+      # box can still be smaller than what Chrome renders for an extreme
+      # script. Chrome contains that gap on its own, measured — see
+      # `#render` — so a wrong answer here costs legibility of one
+      # label, never the rest of the page.
       #
       # Both `self_loop_overflow` (page shifted for a loop hanging off
       # the top or left) and `calculate_width`/`calculate_height` (page
@@ -335,10 +391,15 @@ module Sirena
       # above `y`, SVG's default text baseline. [0.0, 0.0] when there is
       # no label to draw, since nothing then reaches past the anchor.
       #
-      # The width is a BOUND (`WIDE_CHAR_WIDTH_RATIO`), not
-      # `TextMeasurement`'s average — see the constant for why. The
+      # The width is a wider HINT (`WIDE_CHAR_WIDTH_RATIO`), not
+      # `TextMeasurement`'s average and not a bound either — see the
+      # constant for why no per-character number can be one. Chrome
+      # measured a wrong answer here as staying CONTAINED regardless —
+      # see `#render` — so the failure mode of this hint being wrong is
+      # an invisible label tail, not a distorted or escaping page. The
       # height is still `TextMeasurement`'s, since neither finding
-      # touched it and mmdc's own measurement never showed it short.
+      # touched it and mmdc's
+      # own measurement never showed it short.
       def loop_label_extent(edge)
         label = edge[:labels]&.first
         return [0.0, 0.0] unless label

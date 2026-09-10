@@ -65,8 +65,13 @@ module Sirena
       #
       # @param graph [Object] the graph to get dimensions from
       # @param padding [Numeric] half the growth added to each dimension
+      # @param overflow [String, nil] SVG `overflow` presentation attribute
+      #   for the root element, e.g. `'hidden'`. nil (the default) omits it,
+      #   which keeps every renderer's output byte-for-byte what it always
+      #   was; a renderer opts in deliberately, the way `FlowchartRenderer`
+      #   does for the self-loop safety net documented on `#render`.
       # @return [Svg::Document] new SVG document
-      def create_document(graph, padding: 20)
+      def create_document(graph, padding: 20, overflow: nil)
         width = calculate_width(graph) + (padding * 2)
         height = calculate_height(graph) + (padding * 2)
 
@@ -74,6 +79,7 @@ module Sirena
           doc.width = width
           doc.height = height
           doc.view_box = "0 0 #{width} #{height}"
+          doc.overflow = overflow
         end
       end
 

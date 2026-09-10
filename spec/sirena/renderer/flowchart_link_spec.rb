@@ -814,6 +814,51 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(view_box_width).to be >= anchor_x + real_half_width
     end
 
+    # The two specs above were measured only against ASCII, and the
+    # constant they defend (`WIDE_CHAR_WIDTH_RATIO`, then `1.0`) was
+    # never checked against a non-Latin script before shipping. It
+    # failed on one: 80 repeats of a Han character — an ordinary, common
+    # CJK label, not an adversarial one — plus the label's own pipe
+    # delimiters. Chrome's `getBBox()` on Sirena's own rendered label
+    # reads 986.40625 wide; at the old ratio the computed margin was
+    # -1.203125 (measured directly against that reverted constant, not
+    # inferred). `1.5` was chosen FROM a wider measurement pass across
+    # scripts (CJK, fullwidth Latin, Devanagari, Arabic, a combining
+    # sequence, an emoji) — see the constant's own comment — and this
+    # pins the one row from that pass an ASCII-only bound had already
+    # failed, so raising the ratio again without re-measuring a real
+    # script cannot silently pass this the way it passed the ASCII
+    # table.
+    it "shifts a self loop far enough to clear an ordinary CJK label, not just ASCII" do
+      xml = Sirena.render(
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{"\u{4E2D}" * 80}| s\n"
+      )
+      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
+        .find { |t| !t.include?("dominant-baseline") }
+      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
+      real_half_width = 986.40625 / 2.0
+
+      expect(anchor_x - real_half_width).to be >= 0
+    end
+
+    # No character-count ratio bounds every script — see
+    # `WIDE_CHAR_WIDTH_RATIO`'s own comment for the measured proof (a
+    # single Arabic ligature codepoint renders at 6.49em, in the same
+    # Unicode East-Asian-Width class as an ordinary Latin letter, so no
+    # class-derived table catches it either). `overflow="hidden"` is
+    # the fallback for whatever that ratio still gets wrong: Chrome
+    # measured it as making no pixel difference there (it already
+    # contains by default), but it costs nothing and states the intent
+    # explicitly for a renderer that follows the SVG spec's `visible`
+    # default for a root element more literally than Chrome does.
+    it "declares overflow hidden on every flowchart document, not just ones with a self loop" do
+      with_loop = Sirena.render("flowchart RL\ns -->|x| s\n")
+      without_loop = Sirena.render("flowchart LR\nA-->B\n")
+
+      expect(with_loop).to match(/<svg\b.*?overflow="hidden"/m)
+      expect(without_loop).to match(/<svg\b.*?overflow="hidden"/m)
+    end
+
     # A long label widens the layout box without widening the drawn circle.
     it "starts a wide circle loop's depth at its drawn edge" do
       xml = Sirena.render(

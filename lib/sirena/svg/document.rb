@@ -31,6 +31,7 @@ module Sirena
       attribute :view_box, :string
       attribute :version, :string
       attribute :xmlns, :string
+      attribute :overflow, :string
       attribute :children, Element, collection: true
 
       xml do
@@ -42,6 +43,7 @@ module Sirena
         map_attribute 'viewBox', to: :view_box
         map_attribute 'version', to: :version
         map_attribute 'xmlns', to: :xmlns
+        map_attribute 'overflow', to: :overflow
 
         map_element 'g', to: :children
         map_element 'rect', to: :children
@@ -59,13 +61,17 @@ module Sirena
       # @param width [Numeric] Document width
       # @param height [Numeric] Document height
       # @param view_box [String] ViewBox specification
-      def initialize(width: nil, height: nil, view_box: nil, **args)
+      # @param overflow [String, nil] SVG `overflow` presentation attribute,
+      #   e.g. `'hidden'`. Omitted from the output when nil, which is every
+      #   renderer but flowchart's today — see `FlowchartRenderer#render`.
+      def initialize(width: nil, height: nil, view_box: nil, overflow: nil, **args)
         super(**args)
         self.width = width
         self.height = height
         self.view_box = view_box || calculate_view_box(width, height)
         self.version = SVG_VERSION
         self.xmlns = SVG_NAMESPACE
+        self.overflow = overflow
         self.children = []
       end
 
@@ -93,7 +99,8 @@ module Sirena
           ['height', height],
           ['viewBox', view_box],
           ['version', version],
-          ['xmlns', xmlns]
+          ['xmlns', xmlns],
+          ['overflow', overflow]
         ].each do |name, value|
           parts << Escaping.attribute(name, value) unless value.nil?
         end
