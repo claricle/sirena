@@ -224,14 +224,38 @@ RSpec.describe ExampleTasks do
     # The nil case is caught before any write, so it cannot see the rename.
     # Only a write that dies PARTWAY can, which is the case that left a
     # 1,100-byte SVG truncated to 32.
-    it 'keeps the previous SVG whole when the write dies partway' do
+    #
+    # A write failure is not a render failure and must not be swallowed into
+    # failed_renders: doing that once let handle_failed_svgs mistake a full
+    # disk for the source failing to render, and delete the SVG below on the
+    # strength of it. So this now propagates out of generate_examples rather
+    # than being caught, the same way an unreadable diagram directory does.
+    it 'keeps the previous SVG whole and fails the task when the write dies partway' do
       write('flowchart/01-basic.mmd', source)
       svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
       fail_temporary_write_partway
 
-      silently { described_class.generate_examples(examples_dir) }
-
+      expect { silently { described_class.generate_examples(examples_dir) } }
+        .to raise_error(Errno::EFBIG)
       expect(File.read(svg)).to eq('<svg>previous</svg>')
+    end
+
+    # The scenario that actually loses data: a write failure lands on a
+    # source that handle_failed_svgs would treat as an EXPECTED failure, so
+    # the old code never got as far as reporting an "unexpected" failure and
+    # exiting — it quietly deleted the still-good SVG and reported success.
+    # Proven at generate_examples alone: the fix is that it never reaches
+    # handle_failed_svgs as a failed render in the first place.
+    it 'never treats a write failure on an allowlisted source as an expected render failure' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      svg_path = source_path.sub(/\.mmd\z/, '.svg')
+      write(source_path, source)
+      svg = write(svg_path, '<svg>previous good output</svg>')
+      fail_temporary_write_partway
+
+      expect { silently { described_class.generate_examples(examples_dir) } }
+        .to raise_error(Errno::EFBIG)
+      expect(File.read(svg)).to eq('<svg>previous good output</svg>')
     end
 
     # A symlinked diagram directory resolves outside examples/, and the loop
