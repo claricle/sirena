@@ -15,7 +15,7 @@ module Sirena
       DEFAULT_ICON_SIZE = 24
       DEFAULT_JUNCTION_SIZE = 12
 
-      MIRRORED_CONNECTION_SIDE = { "L" => "R", "R" => "L", "T" => "B", "B" => "T" }.freeze
+      VALID_SIDES = %w[L R T B].freeze
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -120,50 +120,7 @@ module Sirena
           current_y += DEFAULT_SERVICE_HEIGHT + DEFAULT_SPACING * 2
         end
 
-        # Apply edge-based adjustments if needed
-        adjust_positions_for_edges(diagram, positions)
-
         positions
-      end
-
-      def adjust_positions_for_edges(diagram, positions)
-        # This is a simple adjustment - could be enhanced with force-directed layout
-        diagram.edges.each do |edge|
-          from = positions[edge.from_id]
-          to = positions[edge.to_id]
-          next unless from && to
-
-          # If positions suggest directional hints, try to respect them
-          if edge.from_position == "R" && edge.to_position == "L"
-            # From should be to the left of to
-            if from[:x] > to[:x]
-              temp_x = from[:x]
-              from[:x] = to[:x]
-              to[:x] = temp_x
-            end
-          elsif edge.from_position == "L" && edge.to_position == "R"
-            # From should be to the right of to
-            if from[:x] < to[:x]
-              temp_x = from[:x]
-              from[:x] = to[:x]
-              to[:x] = temp_x
-            end
-          elsif edge.from_position == "T" && edge.to_position == "B"
-            # From should be above to
-            if from[:y] > to[:y]
-              temp_y = from[:y]
-              from[:y] = to[:y]
-              to[:y] = temp_y
-            end
-          elsif edge.from_position == "B" && edge.to_position == "T"
-            # From should be below to
-            if from[:y] < to[:y]
-              temp_y = from[:y]
-              from[:y] = to[:y]
-              to[:y] = temp_y
-            end
-          end
-        end
       end
 
       # Junctions lay out on their own row-per-group grid, same shape as
@@ -300,6 +257,12 @@ module Sirena
         bounds
       end
 
+      # The declared (or defaulted) side is used literally, never mirrored -
+      # a junction or service positioned on the "wrong" side of its hint is
+      # no longer worked around here by lying about which face the line
+      # attaches to. ArchitectureRenderer's ArchitectureEdgeRouter draws
+      # around whatever is in the way instead, so the transform only needs
+      # to hand it the real anchor point and the real declared side.
       def position_edges(diagram, service_positions)
         diagram.edges.map do |edge|
           from = service_positions[edge.from_id]
@@ -307,7 +270,8 @@ module Sirena
 
           next unless from && to
 
-          from_side, to_side = resolve_connection_sides(edge, from, to)
+          from_side = valid_side(edge.from_position, "R")
+          to_side = valid_side(edge.to_position, "L")
           from_point = calculate_connection_point(from, from_side)
           to_point = calculate_connection_point(to, to_side)
 
@@ -317,40 +281,21 @@ module Sirena
             from_y: from_point[:y],
             to_x: to_point[:x],
             to_y: to_point[:y],
+            from_side: from_side,
+            to_side: to_side,
           }
         end.compact
       end
 
-      # A junction has no row of its own to anchor against the far side of
-      # an edge the way position_services does for service-to-service
-      # edges (adjust_positions_for_edges), so a junction can end up on
-      # the wrong side of whatever it connects to - the stated hint then
-      # asks for a face-to-face connection that is physically behind one
-      # of the nodes, and the straight line drawn between them cuts
-      # through it. Reposition-then-redraw would risk moving a service
-      # that group bounds and other junctions were already placed
-      # against, so this mirrors which FACE of each node the line
-      # attaches to instead, using the nodes' real positions - never
-      # service-to-service, where positions are already hint-consistent
-      # by the time this runs.
-      def resolve_connection_sides(edge, from, to)
-        from_side = edge.from_position || "R"
-        to_side = edge.to_position || "L"
-
-        return [from_side, to_side] unless from.key?(:junction) || to.key?(:junction)
-        return [from_side, to_side] if sides_face_each_other?(from_side, to_side, from, to)
-
-        [MIRRORED_CONNECTION_SIDE[from_side], MIRRORED_CONNECTION_SIDE[to_side]]
-      end
-
-      def sides_face_each_other?(from_side, to_side, from, to)
-        case [from_side, to_side]
-        when %w[R L] then from[:x] <= to[:x]
-        when %w[L R] then from[:x] >= to[:x]
-        when %w[B T] then from[:y] <= to[:y]
-        when %w[T B] then from[:y] >= to[:y]
-        else true
-        end
+      # The grammar's position token is match("[LRTB]").repeat(1) - one OR
+      # MORE, no upper bound - so a grammar-valid edge like `a:RT -- L:b`
+      # parses to from_position == "RT". ArchitectureEdgeRouter::
+      # FACE_NORMAL only has single-character keys, so an un-clamped value
+      # reaches the router and raises the moment a detour is actually
+      # needed. Falling back to +default+ here keeps that contract at the
+      # one place every declared side passes through.
+      def valid_side(position, default)
+        VALID_SIDES.include?(position) ? position : default
       end
 
       def calculate_connection_point(service_pos, position)
