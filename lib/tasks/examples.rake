@@ -146,6 +146,29 @@ module ExampleTasks
   # The examples folder itself must be a real directory. A link there is
   # resolved by realpath and then trusted, so every containment check below
   # would be measuring against somewhere else entirely.
+  # Serialises everything that WRITES to the examples tree.
+  #
+  # `prune_orphan_svgs` decided what to delete, then deleted it, and between
+  # those two steps a source could be restored and its SVG regenerated -- the
+  # delete still removed the fresh file. Re-deciding closer to the delete
+  # narrows that window; it does not close it, because there is no atomic
+  # "delete only if still an orphan" on a POSIX filesystem.
+  #
+  # So generate and prune take the same lock instead, and cannot interleave.
+  # The lock is `flock` on the examples DIRECTORY itself: no lock file to
+  # create, gitignore, leave behind on a crash, or mistake for an example.
+  # Verified: a second holder is refused while the first holds it, and gets
+  # the lock once it is released.
+  def with_examples_lock(examples_dir)
+    root = verified_root(examples_dir)
+    return yield unless File.directory?(root)
+
+    File.open(root) do |handle|
+      handle.flock(File::LOCK_EX)
+      yield
+    end
+  end
+
   def verified_root(examples_dir)
     raise "examples root must not be a link: #{examples_dir}" if File.symlink?(examples_dir)
 
@@ -220,12 +243,24 @@ module ExampleTasks
   end
 
   def prune_orphan_svgs(examples_dir)
-    orphans = orphan_svgs(examples_dir)
-    orphans.each do |svg_file|
+    removed = 0
+    orphan_svgs(examples_dir).each do |svg_file|
+      # Re-decided here, not trusted from the list above. The lock makes an
+      # interleaved `generate` impossible; this also covers a source restored
+      # by hand, which no lock of ours can serialise.
+      next unless still_orphaned?(examples_dir, svg_file)
+
       File.delete(svg_file)
+      removed += 1
       puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, which no longer has a source"
     end
-    orphans.size
+    removed
+  end
+
+  # Whether SVG_FILE is STILL an orphan at this instant, rather than at the
+  # moment the list was built.
+  def still_orphaned?(examples_dir, svg_file)
+    orphan_svgs(examples_dir).include?(svg_file)
   end
 
   # The SVG beside a source EXPECTED_UNRENDERABLE_SOURCES names. Such a source
@@ -422,7 +457,10 @@ namespace :examples do
       exit 1
     end
 
-    total_generated, failed_renders = ExampleTasks.generate_examples(examples_dir)
+    total_generated, failed_renders =
+      ExampleTasks.with_examples_lock(examples_dir) do
+        ExampleTasks.generate_examples(examples_dir)
+      end
 
     begin
       ExampleTasks.handle_failed_svgs(failed_renders, examples_dir)
@@ -440,13 +478,15 @@ namespace :examples do
   task :prune do
     examples_dir = File.expand_path('../../examples', __dir__)
 
-    puts "Pruning example SVGs with no source..."
-    removed = ExampleTasks.prune_orphan_svgs(examples_dir)
-    puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
+    ExampleTasks.with_examples_lock(examples_dir) do
+      puts "Pruning example SVGs with no source..."
+      removed = ExampleTasks.prune_orphan_svgs(examples_dir)
+      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
 
-    puts "\nPruning example SVGs beside a source that never renders..."
-    removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
-    puts removed.zero? ? "Nothing to prune." : "Removed #{removed} stale SVG(s)."
+      puts "\nPruning example SVGs beside a source that never renders..."
+      removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
+      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} stale SVG(s)."
+    end
   end
 
   desc "Copy generated examples to docs/assets/examples"
