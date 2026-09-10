@@ -38,6 +38,21 @@ module Sirena
       # italic* end**`) produces a run that is both at once.
       Run = Data.define(:text, :bold, :italic)
 
+      # kramdown's `:emphasis` parser backtracks: a marker that fails to
+      # find a well-flanked close re-scans the remainder of the text before
+      # falling back to literal text, and that re-scan can itself contain
+      # more failing markers. Measured directly against `Parser` (bypassing
+      # this module's own code, to confirm the cost is kramdown's): `"**a "
+      # * 75` (300 attacker-controlled chars of ambiguous bold markers)
+      # takes ~170ms, `"**a " * 500` (2,000 chars) takes ~44s — worse than
+      # quadratic, and worse than the Unicode `String#[]` blowup this
+      # rewrite exists to fix. A kanban card's text is diagram source an
+      # attacker can shape, so this has to stay bounded regardless of what
+      # markers it contains; no real card or column label is anywhere near
+      # this long. `parse_lines` falls back to unstyled literal lines
+      # rather than calling kramdown past this length.
+      MAX_PARSEABLE_LENGTH = 200
+
       module_function
 
       # Splits text on hard line breaks and parses each line's markup.
@@ -58,6 +73,7 @@ module Sirena
       def parse_lines(text)
         raw = text.to_s
         return [[]] if raw.empty?
+        return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
 
         root, = Parser.parse(raw)
         lines = []
@@ -74,6 +90,19 @@ module Sirena
         end
 
         lines
+      end
+
+      # The `MAX_PARSEABLE_LENGTH` fallback: every literal `\n`-delimited
+      # line becomes one unstyled run, with no markup parsing at all — the
+      # same line-splitting a label this long would get either way, minus
+      # the bold/italic detection that isn't worth kramdown's worst case
+      # for text no real board is going to have this much of.
+      #
+      # @api private
+      def literal_lines(raw)
+        raw.split("\n", -1).map do |line|
+          line.empty? ? [] : [Run.new(text: line, bold: false, italic: false)]
+        end
       end
 
       # Walks one `:p` block's children into a flat run list: nesting is
