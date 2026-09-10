@@ -471,6 +471,48 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
 
         expect(rect_for(svg, 'CAR').fill).to eq('red')
       end
+
+      # Verified against mermaid's own bundle and a real browser: mermaid
+      # emits "fill:green !important;FILL:blue !important" for this exact
+      # declaration (its own Map collapses the two "fill" chunks in place,
+      # keeping "FILL" as a distinct later entry), and Chrome computes blue
+      # from that, not green. A parse-time downcase collapses all three
+      # chunks into one Ruby key and makes the LAST literal chunk win
+      # instead, giving green — this is the regression box_style fixes.
+      it 'resolves same-property mixed-case conflicts in source order, not literal-last (C16)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('blue')
+      end
+
+      # Verified against mermaid's own bundle: isLabelStyle
+      # (handDrawnShapeStyles.ts) checks `key === "color"`, exact case, so
+      # an uppercase COLOR is routed as a box style and never reaches the
+      # text label at all. A parse-time downcase folds COLOR into the same
+      # Ruby key a real lowercase `color:` would use, so a caller reading
+      # text color picks it up and colours the entity name red — this is
+      # the wrong-element regression box_style (and the exact-case
+      # `styles['color']` reads) fix.
+      it 'does not let an uppercase COLOR style the entity name (C17)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])],
+          edges: [],
+          class_defs: { 'a' => 'fill:currentColor,COLOR:red' }
+        }
+        svg = renderer.render(graph)
+
+        car_texts = svg.children.find { |c| c.id == 'entity-CAR' }
+          .children.grep(Sirena::Svg::Text)
+
+        expect(car_texts.map(&:fill).uniq).to eq(['#000000'])
+      end
     end
   end
 end

@@ -129,9 +129,9 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = styles['fill'] || '#f9f9f9'
-          r.stroke = styles['stroke'] || '#333333'
-          r.stroke_width = styles['stroke-width'] || '2'
+          r.fill = box_style(styles, 'fill') || '#f9f9f9'
+          r.stroke = box_style(styles, 'stroke') || '#333333'
+          r.stroke_width = box_style(styles, 'stroke-width') || '2'
         end
         group.children << box
 
@@ -147,6 +147,12 @@ module Sirena
         width = node[:width] || 150
 
         current_y = y + BOX_PADDING + ENTITY_NAME_FONT_SIZE
+        # Exact-case lookup, not `box_style` — verified against mermaid's
+        # own bundle (isLabelStyle in handDrawnShapeStyles.ts): only a
+        # literal lowercase "color" key is routed to the label; any other
+        # case (`COLOR`, `Color`) is a box style instead, matched
+        # case-insensitively there. Folding this lookup would route an
+        # uppercase COLOR onto the entity name.
         name_color = styles['color'] || '#000000'
 
         # Render entity name
@@ -199,6 +205,8 @@ module Sirena
           t.x = x + BOX_PADDING
           t.y = y + ATTRIBUTE_FONT_SIZE
           t.content = attr_text
+          # Exact-case lookup — see the comment on the same lookup in
+          # render_entity_content.
           t.fill = styles['color'] || '#000000'
           t.font_family = 'monospace'
           t.font_size = ATTRIBUTE_FONT_SIZE.to_s
@@ -250,26 +258,56 @@ module Sirena
       # the comma split, so failing here would crash a render on
       # mermaid-valid input.
       #
-      # The key is downcased; the value is not. Verified against mermaid's
-      # own db: it stores a style declaration VERBATIM, case untouched
-      # ("FILL:red" stays "FILL:red") — case-insensitive matching is a
-      # property of CSS itself, applied by the browser when it computes
-      # `style="FILL:red !important"`. Sirena has no CSS engine and looks
-      # property names up by literal lowercase key (`styles['fill']`), so
-      # without this the browser and sirena disagree on mermaid-valid input.
-      # Nothing in the CSS property-name spec extends that to values, so
-      # only the key is folded.
+      # Neither side is folded. Verified against mermaid's own db: it stores
+      # a style declaration VERBATIM, case untouched ("FILL:red" stays
+      # "FILL:red"). Case-insensitive matching is the BROWSER's doing, on
+      # the finished CSS text, not mermaid's — so folding here, before that
+      # point, changes results mermaid never produces:
+      #
+      # - `fill:red,FILL:blue,fill:green` must compute blue in Chrome, not
+      #   green. Downcasing collapses all three into one Ruby key up front,
+      #   which loses the exact-case Hash entries mermaid's own Map keeps
+      #   ("fill" and "FILL" are different keys to it too) and makes the
+      #   LAST literal chunk win regardless of case — wrong order.
+      #   `entity_styles` merges classes with a plain `Hash#merge!`, whose
+      #   in-place update on a repeated key already reproduces the ordering
+      #   a case-preserving Map gives mermaid; box_style below is what does
+      #   the browser's case-insensitive resolution, once, at lookup.
+      # - `COLOR:red` (uppercase) must be a BOX style, not a label one —
+      #   mermaid's own isLabelStyle check (`key === "color"`,
+      #   handDrawnShapeStyles.ts) is exact-case, so `COLOR` fails it.
+      #   Downcasing here would fold it into the same key as a real
+      #   lowercase `color:`, and a caller reading text color
+      #   (`styles['color']`) would pick it up and colour the wrong
+      #   element.
       #
       # @param text [String] raw style text
-      # @return [Hash{String => String}] property => value, key downcased,
+      # @return [Hash{String => String}] property => value, exact case,
       #   both sides stripped
       def parse_declaration(text)
         text.split(',').each_with_object({}) do |chunk, styles|
           key, value = chunk.split(':', 2)
           next unless value
 
-          styles[key.strip.downcase] = value.strip
+          styles[key.strip] = value.strip
         end
+      end
+
+      # Case-insensitive box lookup — the counterpart to the exact-case
+      # `styles['color']` reads used for text. Resolves the property the
+      # BROWSER would end up with: among every entry whose key matches
+      # PROPERTY case-insensitively, the one latest in `styles`' (insertion)
+      # order wins, same as the last matching CSS declaration in a rendered
+      # `style` attribute. Do not use this for `color` — see
+      # `parse_declaration`'s second bullet.
+      #
+      # @param styles [Hash{String => String}] resolved, exact-case entity
+      #   styles
+      # @param property [String] lowercase property name to resolve
+      # @return [String, nil] the winning value, or nil if PROPERTY was
+      #   never declared under any case
+      def box_style(styles, property)
+        styles.select { |key, _| key.downcase == property }.values.last
       end
 
       def render_relationships(graph, svg)
