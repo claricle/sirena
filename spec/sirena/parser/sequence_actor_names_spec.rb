@@ -599,6 +599,40 @@ RSpec.describe Sirena::Parser::SequenceParser do
 
       expect(diagram.participants.map(&:id)).to eq(["A-()foo", "B"])
     end
+
+    # ROUND 3, High: round 2's continuation only re-entered on ANOTHER
+    # `()` pair immediately — text between pairs ("foo" here) fell
+    # through to a DIFFERENT rule, and the trailing `()` AFTER that text
+    # could never reach the fusion mechanism at all, so it was discarded
+    # as a decoration and a phantom actor "A-()()foo" was created beside
+    # the declared "A-()()foo()". This input previously RAISED (see the
+    # prefix describe block below), so — same shape as round 2's own
+    # High — turning a rejection into silent identity corruption is what
+    # makes it a High. Fixed by porting the real lexer's tail-run as ONE
+    # wide `.repeat`, not a loop of paired tokens. Measured:
+    # `db.getActors()` on this source returns exactly ["A-()()foo()", "B"].
+    it "fuses () pairs across intervening plain text into one identity, matching mmdc" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A-()()foo()\nA-()()foo()->>B: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()()foo()", "B"])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id] })
+        .to eq([["A-()()foo()", "B"]])
+    end
+
+    # Positive control, not a disclosed gap: an unmatched `(` (no closing
+    # `)`) is ordinary tail material once a dash-continuation is open —
+    # the real regex's tail-run class does not pair-match parens, it is a
+    # flat character class. Deliberately NOT special-cased in the grammar
+    # (there is no `central_connection`-shaped rule for it); it falls out
+    # of the same wide tail run finding 1 needed, which is the point of
+    # porting the real regex instead of patching around its edges again.
+    it "fuses an unmatched ( into the identity, matching mmdc" do
+      diagram = parser.parse("sequenceDiagram\nA-(foo->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-(foo", "B"])
+    end
   end
 
   describe "dash fusion requires an established actor prefix" do
@@ -625,6 +659,70 @@ RSpec.describe Sirena::Parser::SequenceParser do
     it "rejects a recipient opening with -() right after a real central connection" do
       expect { parser.parse("sequenceDiagram\nA()->>-()B: m\n") }
         .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # ROUND 3, Medium: round 2's prefix check lived only in a rule the
+    # LEAD never reaches (the fusion rule itself) — but the lead still
+    # fell through to `message_actor_char`'s own dash branch (built for a
+    # MID-name trailing dash, e.g. `Alice-in-Wonderland`) whenever a
+    # SPACE separated the leading dash from the `()`, since that branch
+    # only checks "not another dash, not a stop", and a space is neither.
+    # `- ()->>B: m` (space, no prior actor) and `A()->>- -()B: m` (the
+    # recipient, same shape after a real leading central connection) both
+    # reached that fallback and produced sender/recipient "-" / "- -()B".
+    # Mermaid rejects both regardless of the space — its first segment
+    # excludes `-` unconditionally, not "unless a space follows". Fixed
+    # by giving the lead its OWN character rule
+    # (`message_actor_lead_char`) that never has a dash branch at all, so
+    # neither round 2's nor round 3's route to a leading dash is
+    # reachable from the lead any more.
+    it "rejects a message actor name opening with a dash then space then (), matching mmdc" do
+      expect { parser.parse("sequenceDiagram\n- ()->>B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "rejects a recipient opening with dash-space-dash-() after a real central connection" do
+      expect { parser.parse("sequenceDiagram\nA()->>- -()B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # A message actor name can never open with a bare dash at all, with
+    # or without anything paren-shaped ever appearing — this is the
+    # general fact behind every example in this describe block. Pinned
+    # directly since `message_actor_lead_char` (not the fusion rule) is
+    # what has to hold for it, and no `()` is involved to camouflage
+    # which rule failed. Measured: mermaid rejects both.
+    ["-foo->>B: m", "-B->>C: m"].each do |source|
+      it "rejects #{source.inspect}, no () involved, matching mmdc" do
+        expect { parser.parse("sequenceDiagram\n#{source}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+  end
+
+  describe "the dash-continuation lookahead protects real arrows" do
+    # Not a Codex finding — added alongside the round-3 port because the
+    # port widens what a dash can open into (any tail run, not just a
+    # `()`-triggered one), which makes "does this dash open a real arrow"
+    # the thing actually protecting every message from being misread.
+    # `--` gets its own case: no `arrow_base` spelling is exactly "--",
+    # every dotted/reversed spelling needs more after it, yet mermaid
+    # rejects a bare double dash unconditionally — even with ordinary
+    # text following, which rules out "it just protects a known arrow
+    # prefix" as the explanation. Measured against mermaid 11.16.1
+    # directly for all five.
+    ["A--foo->>B: m", "A---foo->>B: m", "A-)foo->>B: m",
+     "A-x->>B: m", "A--x->>B: m"].each do |source|
+      it "rejects #{source.inspect}, matching mmdc" do
+        expect { parser.parse("sequenceDiagram\n#{source}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "still accepts a single dash followed by ordinary text" do
+      diagram = parser.parse("sequenceDiagram\nA-foo->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-foo", "B"])
     end
   end
 

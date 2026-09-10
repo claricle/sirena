@@ -180,45 +180,61 @@ module Sirena
             str('@{') | lparen | rparen | newline
         end
 
-        # A trailing dash fuses with `()` into the actor's OWN identity
-        # instead of being read as the central-connection decoration —
-        # measured against mermaid 11.16.1's own ACTOR lexer regex
-        # directly (`[^\/\\+()+<->:\n,;]+((?!(...|\(\)))[\-]*[^+<->:\n,;]+)*`):
-        # a `()` that follows a dash is swallowed by the same continuation
-        # branch that swallows the dash, so it is never offered to the
-        # bare-`()` central-connection alternative at all.
+        # THREE rounds of patching this rule each found a new gap, and
+        # round 3's two findings were the tell: both trace to sirena
+        # having TWO hand-written mechanisms (a "plain trailing dash"
+        # branch in `message_actor_char`, and a separate "dash-then-()"
+        # fusion rule) where mermaid's own ACTOR lexer regex
+        # (`[^\/\\+()+<->:\n,;]+((?!(-x|--x|-\)|--\)|...|--))[\-]*[^+<->:\n,;]+)*`)
+        # has exactly ONE: a dash-continuation, gated by a lookahead that
+        # only protects real arrow spellings and a bare "--" run, then
+        # followed by ONE wide run of almost anything. This is that one
+        # mechanism, ported directly rather than patched a fourth time:
         #
-        # ROUND-2 CORRECTION: the first version of this rule handled only
-        # ONE fused `()` pair and could fire with no name before it at
-        # all. Both were real gaps against the actual lexer regex, not
-        # cosmetic — `[\-]*` in that regex is the DASH-RUN, but the
-        # regex's mandatory FIRST segment (`[^\/\\+()+<->:\n,;]+`, itself
-        # excluding `-`) has to match at least one character before the
-        # dash-continuation group can even be attempted. That single fact
-        # explains both findings at once:
-        #   - a name with NOTHING before the dash has no first segment to
-        #     continue, so mermaid refuses it outright (`-()->>B: m`
-        #     raises; so does `A()->>-()B: m`, since the "to" side there
-        #     is exactly that empty-prefix case) — this rule is therefore
-        #     reachable only from the REPEAT below, never from
-        #     `message_actor_lead`.
-        #   - once a dash-continuation is legitimately entered, mermaid's
-        #     tail-run character class does not stop at one `()` pair —
-        #     it keeps consuming (more pairs, spaces between them) until
-        #     a genuine stop. Measured: `A-()()`, `A-()()()` and
-        #     `A- () ()` (space before AND between) all fuse into ONE id.
-        #     `.repeat` below is that loop, not a fixed second pair.
-        #
-        # A THIRD patch to the old one-pair, no-prefix-check version was
-        # considered and rejected in favour of this generalisation: both
-        # gaps trace to the same missing structural fact above, so one
-        # rule change closes both rather than adding a second branch that
-        # would still cap the fusion at two pairs.
-        rule(:message_actor_continuation) do
-          str('-') >> space.repeat >> central_connection >>
-            (space.repeat >> central_connection).repeat
+        # - The lookahead is `arrow_base | str('--')` below. Reusing
+        #   `arrow_base` (already independently verified against mmdc,
+        #   and unchanged across all three rounds of review) is safer
+        #   than re-deriving mermaid's literal alternation list by hand a
+        #   second time. `--` needs its own entry because NO arrow_base
+        #   spelling is exactly "--" — every dotted/reversed spelling
+        #   needs more after it — yet mermaid rejects a bare double dash
+        #   unconditionally even with ordinary text following. Measured:
+        #   `A--foo->>B: m` and `A---foo->>B: m` both raise on mermaid
+        #   (proving the ban is unconditional, not "protects a known
+        #   arrow prefix"); `A-foo->>B: m` (one dash) is accepted.
+        # - Once the lookahead passes and the dash is consumed, the tail
+        #   is ONE wide `.repeat` — not a loop of `()` pairs, not
+        #   separate from plain trailing text. This is what makes `()`
+        #   pairs, letters and even a lone UNMATCHED `(` all fuse in the
+        #   SAME run: `A-()()foo()` (round 3's own High) and `A-(foo`
+        #   (a gap this port closes as a side effect, not a new patch)
+        #   both go through this one rule now. Measured against mermaid
+        #   11.16.1 directly for every case below.
+        rule(:message_actor_continuation_stop) do
+          arrow_base | str('--') | colon | comma | semicolon | str('%%') |
+            str('@{') | newline
         end
 
+        rule(:message_actor_continuation_tail_char) do
+          message_actor_continuation_stop.absent? >> match['^+<>-']
+        end
+
+        rule(:message_actor_continuation) do
+          message_actor_continuation_stop.absent? >> str('-') >>
+            message_actor_continuation_tail_char.repeat(1)
+        end
+
+        # Kept as a fallback, not because it is still load-bearing for any
+        # case this file's own spec suite exercises (every case it used
+        # to be needed for is now reached by `message_actor_continuation`
+        # above, tried first), but because removing it is a SEPARATE,
+        # unverified claim from fixing the two reported findings, and
+        # this round is already the third correction to this exact
+        # region. `message_actor_stop.absent?` here still correctly
+        # refuses when `message_actor_continuation_stop` already refused
+        # for the same reason (arrow_base match), so it cannot reopen the
+        # `--`/arrow gaps closed above — confirmed by the mutation matrix
+        # below, which deletes this rule as one of its mutants.
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
             (match['^+<>()-'] |
@@ -236,15 +252,26 @@ module Sirena
         # reversed-arrow spellings (`\|-`, `\|--`, `\\-`, `\\--`).
         # Measured: `A->>\B: m` raises on mermaid (`got 'INVALID'`); base
         # accepted it and rendered actor `"\\B"`.
-        rule(:message_actor_lead) do
-          match[')|>/\\\\'].absent? >> message_actor_char
+        #
+        # The LEAD-only character rule for point 1 above: the plain
+        # character class only, deliberately WITHOUT `message_actor_char`'s
+        # dash branch, so a message actor name can never open with `-` —
+        # neither `-foo`, `-B`, `-()`, nor `- ()`.
+        rule(:message_actor_lead_char) do
+          message_actor_stop.absent? >> match['^+<>()-']
         end
 
-        # `message_actor_continuation` is tried only HERE, in the repeat —
-        # never as part of `message_actor_lead` above — which is what
-        # makes an empty prefix before a dash-fusion unreachable. Tried
-        # before the plain `message_actor_char` branch since it is the
-        # more specific case and Parslet alternation is first-match.
+        rule(:message_actor_lead) do
+          match[')|>/\\\\'].absent? >> message_actor_lead_char
+        end
+
+        # `message_actor_continuation` is tried only in the repeat below —
+        # never as part of `message_actor_lead` above — which combined
+        # with the lead using `message_actor_lead_char` (not
+        # `message_actor_char`) is what makes an empty prefix before a
+        # dash-fusion unreachable from either direction. Tried before the
+        # plain `message_actor_char` branch since it is the more specific
+        # case and Parslet alternation is first-match.
         rule(:message_actor_name) do
           message_actor_lead >>
             (message_actor_continuation | message_actor_char).repeat
