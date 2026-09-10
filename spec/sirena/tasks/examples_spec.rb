@@ -137,6 +137,52 @@ RSpec.describe ExampleTasks do
     ensure
       FileUtils.remove_entry(outside) if outside
     end
+
+    # BLOCKER. The list of orphans was built once and then deleted from, so a
+    # source restored between those two steps lost its freshly generated SVG.
+    # Codex reproduced it by pausing prune mid-loop; this reproduces it
+    # deterministically by making the first look see the orphan and the second
+    # see the restored source, which is exactly what the pause created.
+    it 'keeps an SVG whose source is restored after the orphan list was built' do
+      restored = write('flowchart/03-restored.svg')
+      stale_list = [restored]
+
+      # First call: the orphan list, as prune builds it. Every later call sees
+      # the world after the source came back.
+      allow(described_class).to receive(:orphan_svgs).and_return(stale_list, [])
+
+      expect(silently { described_class.prune_orphan_svgs(examples_dir) }).to eq(0)
+      expect(File).to exist(restored)
+    end
+
+    it 'still deletes an orphan that is an orphan on both looks' do
+      orphan = write('flowchart/04-gone.svg')
+
+      expect(silently { described_class.prune_orphan_svgs(examples_dir) }).to eq(1)
+      expect(File).not_to exist(orphan)
+    end
+  end
+
+  describe '.with_examples_lock' do
+    # generate and prune both take this, so they cannot interleave at all --
+    # the re-decide above covers a source restored by hand, which no lock of
+    # ours can serialise.
+    it 'refuses a second holder while the first holds it' do
+      held = nil
+      described_class.with_examples_lock(examples_dir) do
+        held = File.open(examples_dir) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
+      end
+
+      expect(held).to be(false)
+    end
+
+    it 'releases the lock when the block raises' do
+      expect { described_class.with_examples_lock(examples_dir) { raise 'boom' } }
+        .to raise_error('boom')
+
+      after = File.open(examples_dir) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
+      expect(after).to eq(0)
+    end
   end
 
   # generate never deletes a stale SVG itself — it only reports one, so a run
