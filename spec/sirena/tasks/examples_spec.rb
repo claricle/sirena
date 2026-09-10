@@ -645,4 +645,22 @@ RSpec.describe ExampleTasks do
       expect(described_class.theme_for(mmd)).to eq('default')
     end
   end
+  describe '.validate_examples' do
+    # `exit` in a plain method takes the caller's whole process down, so a host
+    # that requires this file loses everything on one bad example. Only the rake
+    # task may decide an exit status.
+    it 'raises instead of exiting when an example fails to render' do
+      write('flowchart/01-broken.mmd', "flowchart TD\n  A --> \n")
+
+      expect { described_class.validate_examples(examples_dir) }
+        .to raise_error(ExampleTasks::ValidationFailed, /validation failed/)
+    end
+
+    it 'does not raise SystemExit, which would kill an embedding host' do
+      write('flowchart/01-broken.mmd', "flowchart TD\n  A --> \n")
+
+      expect { described_class.validate_examples(examples_dir) }
+        .not_to raise_error(SystemExit)
+    end
+  end
 end
