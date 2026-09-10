@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "rubocop"
+require "bundler"
+require "date"
 require "yaml"
 require "json"
 require "tmpdir"
@@ -230,9 +232,19 @@ module Sirena
       end
     end
 
+    # Reads declared gem names through Bundler's own DSL evaluator, not a
+    # text pattern -- a regex only matches the spellings it was written
+    # for, and `gem('rubocop-rspec', ...)` (no space before the opening
+    # paren) is valid Ruby that `gem\s+['"]` never matches, silently
+    # dropping that plugin and its whole cop family. Bundler is the same
+    # interpreter that decides what this project actually depends on, so
+    # there is no way to spell a real gem declaration that this misses.
     def pinned_plugins
-      gemfile = File.read(File.join(root, "Gemfile"))
-      gemfile.scan(/^\s*gem\s+["']?(rubocop-[a-z_]+)["']?/).flatten
+      dsl = Bundler::Dsl.new
+      dsl.eval_gemfile(File.join(root, "Gemfile"))
+      dsl.dependencies.map(&:name).grep(/\Arubocop-/)
+    rescue Bundler::GemfileError => e
+      raise ExecutionError, "could not parse #{root}/Gemfile: #{e.message}"
     end
 
     def target_ruby_version
@@ -256,11 +268,18 @@ module Sirena
       @exceptions ||= load_exceptions
     end
 
+    # `permitted_classes: [Date]` because an unquoted `approved_on:
+    # 2026-09-10` is the conventional way to write that field and YAML
+    # parses it as a Date, not a String -- `safe_load_file`'s default
+    # whitelist has neither, so the whole file refused to load. Nothing
+    # here reads `approved_on` back; a Date is permitted only so a
+    # human-natural entry does not blow up the loader.
     def load_exceptions
       path = File.join(root, "scoreboard", "lint-exceptions.yml")
       return [] unless File.exist?(path)
 
-      Array((YAML.safe_load_file(path) || {})["exceptions"])
+      data = YAML.safe_load_file(path, permitted_classes: [Date])
+      Array((data || {})["exceptions"])
     end
 
     def apply_exceptions(current_rows)

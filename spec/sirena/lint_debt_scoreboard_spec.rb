@@ -45,6 +45,24 @@ RSpec.describe Sirena::LintDebtScoreboard do
       )
     end
 
+    it "refuses an increase on a row that already existed" do
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+      )
+      board.record!
+
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\n" \
+        "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
+      )
+
+      expect { board.record! }.to raise_error(
+        described_class::RefusedError, /debt increased/
+      )
+    end
+
     it "records with the override, then clears the marker on the next run" do
       board.record!
       write("second.rb", "module Fixture\n  Y = 'x'.freeze\nend\n")
@@ -139,6 +157,43 @@ RSpec.describe Sirena::LintDebtScoreboard do
       expect(diff.added).to include(
         ["Layout/SpaceAroundOperators", "seed_c.rb"],
       )
+    end
+
+    it "reports a row whose count increased as changed" do
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+      )
+      board.record!
+
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\n" \
+        "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
+      )
+
+      diff = board.diff
+      expect(diff).not_to be_clean
+      expect(diff.changed.map { |c| [c.cop, c.file, c.from, c.to] }).to include(
+        ["Layout/SpaceAroundOperators", "op.rb", 1, 2],
+      )
+    end
+
+    it "reports a fixed offence as removed" do
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+      )
+      board.record!
+
+      write(
+        "op.rb",
+        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
+      )
+
+      diff = board.diff
+      expect(diff).not_to be_clean
+      expect(diff.removed).to include(["Layout/SpaceAroundOperators", "op.rb"])
     end
   end
 end

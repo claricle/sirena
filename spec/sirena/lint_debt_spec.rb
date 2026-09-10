@@ -24,6 +24,22 @@ RSpec.describe Sirena::LintDebt do
     it "contributes zero rows for a clean file" do
       expect(debt.rows.map(&:file)).not_to include("clean.rb")
     end
+
+    it "derives a plugin from Gemfile syntax a text pattern would miss" do
+      write(
+        "Gemfile",
+        "source 'https://rubygems.org'\ngemspec\n" \
+        "gem('rubocop-rspec', '= 3.9.0')\n",
+      )
+      write(
+        "plugin_spec.rb",
+        "# frozen_string_literal: true\n\n" \
+        "RSpec.describe Fixture do\n  " \
+        "it 'does something', :skip do\n  end\nend\n",
+      )
+
+      expect(debt.rows.map(&:cop)).to include("RSpec/PendingWithoutReason")
+    end
   end
 
   describe "#by_source" do
@@ -123,6 +139,28 @@ RSpec.describe Sirena::LintDebt do
       )
       write_exceptions(
         [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
+      )
+
+      expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
+      expect(debt.exceptions_applied).to eq(1)
+    end
+
+    it "accepts an unquoted YAML date in approved_on" do
+      grammar_file = "lib/sirena/parser/grammars/flowchart.rb"
+      body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
+      write(
+        grammar_file,
+        "# frozen_string_literal: true\n\n" \
+        "module Fixture\n  " \
+        "def self.long_method\n#{body}  end\nend\n",
+      )
+      write(
+        "scoreboard/lint-exceptions.yml",
+        "exceptions:\n  " \
+        "- cop: Metrics/MethodLength\n    " \
+        "file: #{grammar_file}\n    " \
+        "approved_by: reviewer\n    " \
+        "approved_on: 2026-09-10\n",
       )
 
       expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
