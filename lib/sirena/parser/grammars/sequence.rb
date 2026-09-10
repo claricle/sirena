@@ -180,61 +180,92 @@ module Sirena
             str('@{') | lparen | rparen | newline
         end
 
-        # THREE rounds of patching this rule each found a new gap, and
-        # round 3's two findings were the tell: both trace to sirena
-        # having TWO hand-written mechanisms (a "plain trailing dash"
-        # branch in `message_actor_char`, and a separate "dash-then-()"
-        # fusion rule) where mermaid's own ACTOR lexer regex
-        # (`[^\/\\+()+<->:\n,;]+((?!(-x|--x|-\)|--\)|...|--))[\-]*[^+<->:\n,;]+)*`)
-        # has exactly ONE: a dash-continuation, gated by a lookahead that
-        # only protects real arrow spellings and a bare "--" run, then
-        # followed by ONE wide run of almost anything. This is that one
-        # mechanism, ported directly rather than patched a fourth time:
+        # FOUR rounds of patching this rule each found a new gap, and the
+        # fourth (a differential fuzz against mermaid, 10,568 generated
+        # inputs, all 1,939 sirena-accepted ones cross-checked in Chrome
+        # — this grammar's own hand-written approximations had exhausted
+        # every gate we already had) found two more, both the SAME shape
+        # as the first three: a HAND-DERIVED stand-in for a piece of
+        # mermaid's real regex, each stand-in accurate on the cases it
+        # was checked against and wrong on one it wasn't. The fix each
+        # time was to stop deriving and start copying:
         #
-        # - The lookahead is `arrow_base | str('--')` below. Reusing
-        #   `arrow_base` (already independently verified against mmdc,
-        #   and unchanged across all three rounds of review) is safer
-        #   than re-deriving mermaid's literal alternation list by hand a
-        #   second time. `--` needs its own entry because NO arrow_base
-        #   spelling is exactly "--" — every dotted/reversed spelling
-        #   needs more after it — yet mermaid rejects a bare double dash
-        #   unconditionally even with ordinary text following. Measured:
-        #   `A--foo->>B: m` and `A---foo->>B: m` both raise on mermaid
-        #   (proving the ban is unconditional, not "protects a known
-        #   arrow prefix"); `A-foo->>B: m` (one dash) is accepted.
-        # - Once the lookahead passes and the dash is consumed, the tail
-        #   is ONE wide `.repeat` — not a loop of `()` pairs, not
-        #   separate from plain trailing text. This is what makes `()`
-        #   pairs, letters and even a lone UNMATCHED `(` all fuse in the
-        #   SAME run: `A-()()foo()` (round 3's own High) and `A-(foo`
-        #   (a gap this port closes as a side effect, not a new patch)
-        #   both go through this one rule now. Measured against mermaid
-        #   11.16.1 directly for every case below.
-        rule(:message_actor_continuation_stop) do
-          arrow_base | str('--') | colon | comma | semicolon | str('%%') |
-            str('@{') | newline
+        # - The regex has TWO SEPARATE things where this rule had
+        #   conflated them into one per-character check: an ENTRY
+        #   lookahead, evaluated ONCE at the position of the triggering
+        #   dash, and a TAIL character class, evaluated per character
+        #   while consuming the run that follows. Round 3's version
+        #   re-ran a stop-check (including `arrow_base` and sirena's own
+        #   `%%`/`@{` extensions) at EVERY tail character, which is not
+        #   what the real regex does — its tail class
+        #   (`[^\+<\->\->:\n,;]`) is a flat set with no arrow-awareness
+        #   at all. Measured: `B->>A-(%%C: m` — mermaid consumes the
+        #   embedded `%%` as ordinary tail material and sends message
+        #   "m"; the per-character recheck stopped there instead,
+        #   producing recipient "A-(" and an EMPTY message. Same root
+        #   cause exposed `A-(//-B: m`: mermaid reads the whole
+        #   "A-(//-B" as one actor and rejects the missing arrow; the
+        #   recheck matched `arrow_base`'s reversed-arrow spelling
+        #   mid-tail and stopped there instead, letting `->>` parse as a
+        #   real arrow it should never have reached.
+        #   `message_actor_continuation_tail_char` below is now the
+        #   regex's OWN flat class, ported directly rather than built
+        #   from sirena's existing rule references.
+        # - The entry lookahead itself was still incomplete: `arrow_base`
+        #   (independently verified, unchanged across all four rounds)
+        #   covers every COMPLETE arrow spelling, but mermaid's lookahead
+        #   ALSO independently bans a bare `-/` and a bare `-\` even when
+        #   nothing arrow-shaped ever follows — measured directly against
+        #   the compiled lookahead: `"A-/ZZZ"` and `"A-\ZZZ"` both stop
+        #   at `"A"`, same as `"A--ZZZ"`, while `"A-fooZZZ"`,
+        #   `"A-(ZZZ"` and `"A-%ZZZ"` all continue past it. No
+        #   `arrow_base` alternative is exactly "-/" or "-\" — every
+        #   slash/backslash spelling in `reversed_arrow` needs a THIRD
+        #   character sirena already covers, or a fourth like `-//`
+        #   which `solid_arrow` already has. `-/` and `-\` alone were
+        #   simply missing, so `B->>A-/(): m` and `B->>A-\(): m` fused
+        #   the guard character into the identity instead of refusing.
+        #   `message_actor_continuation_entry_stop` below adds exactly
+        #   those two, verified empirically against every candidate
+        #   prefix the compiled lookahead actually protects, not
+        #   re-derived from the regex source text a second time (that is
+        #   how `-/` was missed the first time — hand-reading nested
+        #   backslash escapes in a 200-character alternation).
+        rule(:message_actor_continuation_entry_stop) do
+          arrow_base | str('--') | str('-/') | str('-\\')
         end
 
+        # The regex's own tail class, `[^\+<\->\->:\n,;]`, transliterated
+        # directly: excludes only `+ < - > : \n , ;`. No arrow-awareness,
+        # no `%%`/`@{` — those are sirena's OWN extensions for comments
+        # and shape metadata, real everywhere ELSE in this grammar, but
+        # never part of mermaid's ACTOR token and specifically NOT part
+        # of an already-open fusion tail (finding 1's `%%` case above).
+        # `\r` sits alongside `\n` because sirena's own `newline` rule
+        # (used elsewhere) accepts CRLF; excluding both characters
+        # individually gives the same boundary a rule-based check would,
+        # without needing a rule reference inside a character class.
         rule(:message_actor_continuation_tail_char) do
-          message_actor_continuation_stop.absent? >> match['^+<>-']
+          match["^+<>:\n\r,;-"]
         end
 
         rule(:message_actor_continuation) do
-          message_actor_continuation_stop.absent? >> str('-') >>
+          message_actor_continuation_entry_stop.absent? >> str('-') >>
             message_actor_continuation_tail_char.repeat(1)
         end
 
-        # Kept as a fallback, not because it is still load-bearing for any
-        # case this file's own spec suite exercises (every case it used
-        # to be needed for is now reached by `message_actor_continuation`
-        # above, tried first), but because removing it is a SEPARATE,
-        # unverified claim from fixing the two reported findings, and
-        # this round is already the third correction to this exact
-        # region. `message_actor_stop.absent?` here still correctly
-        # refuses when `message_actor_continuation_stop` already refused
-        # for the same reason (arrow_base match), so it cannot reopen the
-        # `--`/arrow gaps closed above — confirmed by the mutation matrix
-        # below, which deletes this rule as one of its mutants.
+        # CORRECTED (round 4): this comment previously claimed the dash
+        # branch below was no longer load-bearing for anything this
+        # file's own spec suite exercises. A fuzz round disproved that by
+        # construction: `A->>B-` at true EOF (no trailing newline) is
+        # accepted with recipient "B-" only because THIS branch fires —
+        # deleting only this branch makes it raise. Mermaid rejects that
+        # input too, so this branch is preserving a pre-existing
+        # incompatibility, not covering ground `message_actor_continuation`
+        # already reaches; it is real, existing behaviour from before
+        # this rule existed, kept because removing it is a separate,
+        # unverified change from fixing the reported findings. Left in
+        # place, documented accurately rather than as redundant.
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
             (match['^+<>()-'] |

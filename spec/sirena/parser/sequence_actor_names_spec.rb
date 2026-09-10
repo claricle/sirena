@@ -761,4 +761,114 @@ RSpec.describe Sirena::Parser::SequenceParser do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
   end
+
+  # ROUND 4: a differential fuzz (10,568 generated inputs, all 1,939
+  # sirena-accepted ones cross-checked against mermaid in Chrome) found
+  # two more gaps in the round-3 port — both from re-deriving pieces of
+  # mermaid's `rules[60]` by hand a second time instead of transliterating
+  # them. Two hand-built specs (the two matching regex calls in round 3's
+  # own report) proved those two CASES, not that the port was equivalent
+  # to the real regex — this describe block is the correction.
+  describe "the tail character class does not re-check token boundaries" do
+    # High: round 3's tail rechecked a stop condition (including
+    # `arrow_base` and sirena's own `%%` comment marker) at EVERY
+    # character of an open fusion, not just at entry. Mermaid's own tail
+    # class (`[^\+<\->\->:\n,;]`) has no such recheck — it is flat.
+    # Measured: `db.getActors()` + `getMessages()` on this source give
+    # mermaid recipient "A-(%%C" and message "m"; round 3 stopped the
+    # identity at "A-(" and lost the arrow's message text entirely
+    # (empty string), because it read `%%` as sirena's OWN comment
+    # marker mid-identifier — something mermaid's real lexer has no
+    # concept of once an ACTOR token is already open.
+    it "consumes an embedded %% as ordinary tail material, matching mmdc" do
+      diagram = parser.parse("sequenceDiagram\nB->>A-(%%C: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["B", "A-(%%C"])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id, m.message_text] })
+        .to eq([["B", "A-(%%C", "m"]])
+    end
+
+    # Same root cause, the reversed-arrow spelling side: mermaid reads
+    # the WHOLE "A-(//-B" as one actor and then has no arrow left to
+    # parse the statement, so it raises. Round 3's per-character recheck
+    # matched `arrow_base`'s "//-" mid-tail and stopped there instead,
+    # so `->>` then read as a genuine arrow into "B" — turning a mermaid
+    # REJECTION into an accepted, wrongly-split message. Measured against
+    # mermaid directly.
+    it "does not let arrow_base end a fusion mid-tail, matching mmdc" do
+      expect { parser.parse("sequenceDiagram\nA-(//-B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # Positive control at the SAME character sequence: when a real arrow
+    # follows an actor that was never fused (a plain letter, not a
+    # dash-continuation), "//-" plus more of the reversed-arrow spelling
+    # legitimately ends the actor and starts the message. Distinguishes
+    # "the tail class is now too permissive generally" from "it correctly
+    # stops being permissive once no fusion is open" — measured against
+    # mermaid, which also accepts this one.
+    it "still lets a genuine reversed arrow end an unfused actor" do
+      diagram = parser.parse("sequenceDiagram\nA-(//-B->>C: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-(//-B", "C"])
+    end
+  end
+
+  describe "the continuation entry lookahead bans a bare -/ and -\\" do
+    # Medium: `arrow_base` covers every COMPLETE arrow spelling, but
+    # mermaid's compiled lookahead independently bans a bare `-/` and a
+    # bare `-\` even when nothing arrow-shaped ever follows — verified
+    # directly against the compiled `rules[60]` lookahead: `"A-/ZZZ"` and
+    # `"A-\ZZZ"` both stop at `"A"`, the same as `"A--ZZZ"`, while
+    # `"A-fooZZZ"` and `"A-(ZZZ"` continue past it. No `arrow_base`
+    # alternative is exactly "-/" or "-\" (every slash/backslash spelling
+    # needs a third character sirena already has); these two were simply
+    # missing. Measured: mermaid rejects all four constructions below,
+    # and the prior (pre-port) grammar rejected them too.
+    ["B->>A-/(): m", "B->>A-\\(): m", "A-/(->>B: m", "A-\\(->>B: m"].each do |source|
+      it "rejects #{source.inspect}, matching mmdc" do
+        expect { parser.parse("sequenceDiagram\n#{source}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # Regression pin: a single `/` NOT immediately after a dash was
+    # already legitimate tail material before this round (it is ordinary
+    # text inside an open fusion, same as any other non-excluded
+    # character) — the new bans on bare "-/"/"-\" must not overreach into
+    # banning `/` generally.
+    it "still fuses an ordinary / that does not directly follow the dash" do
+      diagram = parser.parse("sequenceDiagram\nA- /foo()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A- /foo()", "B"])
+    end
+  end
+
+  describe "the message_actor_char dash fallback, corrected" do
+    # A fuzz round disproved the belief (passed to me as a question, not
+    # asserted) that this branch had become dead weight after the round-3
+    # port: `A->>B-` at TRUE end of file (no trailing newline) is
+    # accepted with recipient "B-" only because this branch fires — with
+    # it removed, the same input raises. Mermaid rejects this input too
+    # (confirmed directly), so the branch is preserving a PRE-EXISTING
+    # incompatibility with mermaid that predates every round of this PR,
+    # not covering ground the fusion rule already reaches. Kept
+    # deliberately; this pin exists so a future round does not remove it
+    # believing it unreachable.
+    it "still accepts a trailing dash recipient at true end of file" do
+      diagram = parser.parse("sequenceDiagram\nA->>B-")
+
+      expect(diagram.participants.map(&:id)).to eq(["A", "B-"])
+    end
+
+    # Same source with a trailing newline added is a DIFFERENT case —
+    # mermaid rejects both, but sirena's own behaviour differs between
+    # them (a newline gives `line_end` somewhere else to match instead),
+    # which is why the EOF form above needs its own pin rather than
+    # reusing an existing newline-terminated example.
+    it "still rejects the same recipient when a trailing newline follows" do
+      expect { parser.parse("sequenceDiagram\nA->>B-\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
 end
