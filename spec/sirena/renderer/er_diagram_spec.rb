@@ -388,7 +388,12 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
           .to eq('#f9f9f9')
       end
 
-      it 'keeps a colon inside a value intact (C10)' do
+      # Verified against mermaid's own bundle and a real browser: its
+      # `styles2Map` does `style.split(":")` with no limit and destructures
+      # only the first two parts, so `fill:red:blue` resolves to plain
+      # `red` and Chrome computes red from mermaid's own output — the
+      # `:blue` segment is dropped, never folded into the value.
+      it 'discards everything after the second colon in a value (C10)' do
         classed_graph = {
           id: 'er_diagram',
           children: [entity_node('CAR', classes: ['a'])],
@@ -397,7 +402,7 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         }
         svg = renderer.render(classed_graph)
 
-        expect(rect_for(svg, 'CAR').fill).to eq('#f96:extra')
+        expect(rect_for(svg, 'CAR').fill).to eq('#f96')
       end
 
       # Verified against mermaid's own db: every entity's cssClasses opens
@@ -512,6 +517,45 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
           .children.grep(Sirena::Svg::Text)
 
         expect(car_texts.map(&:fill).uniq).to eq(['#000000'])
+      end
+
+      # Verified by Codex against the installed mermaid 11.16.1 bundle and a
+      # real browser: an attributed entity's outer box is NOT drawn through
+      # the same code path a bare entity's is, and does not go through the
+      # browser's case-insensitive CSS cascade at all — it reads only the
+      # exact lowercase `fill` key directly. The same class on a bare
+      # entity resolves this to blue (C16); here it resolves to green,
+      # because `FILL:blue` is invisible to this path.
+      it 'resolves fill by exact lowercase key on an attributed entity (C18)' do
+        graph = {
+          id: 'er_diagram',
+          children: [
+            entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])
+          ],
+          edges: [],
+          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').fill).to eq('green')
+      end
+
+      # Verified against mermaid's own db (ErDB#addClass): any chunk whose
+      # text contains the substring "color" is replayed a second time at
+      # the end of its class's declarations, so it wins over a LATER
+      # same-property chunk that does not itself mention "color".
+      # `stroke:currentcolor,stroke:red` resolves to currentcolor, not the
+      # textually-later red.
+      it 'replays a colour-bearing chunk after a later same-property one (C19)' do
+        graph = {
+          id: 'er_diagram',
+          children: [entity_node('CAR', classes: ['a'])],
+          edges: [],
+          class_defs: { 'a' => 'stroke:currentcolor,stroke:red' }
+        }
+        svg = renderer.render(graph)
+
+        expect(rect_for(svg, 'CAR').stroke).to eq('currentcolor')
       end
     end
   end

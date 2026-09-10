@@ -117,6 +117,7 @@ module Sirena
 
         metadata = node[:metadata] || {}
         styles = entity_styles(node, class_defs)
+        attributed = !metadata[:attributes].to_a.empty?
 
         # Create group for the entity
         group = Svg::Group.new.tap do |g|
@@ -129,7 +130,7 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = box_style(styles, 'fill') || '#f9f9f9'
+          r.fill = box_fill(styles, attributed) || '#f9f9f9'
           r.stroke = box_style(styles, 'stroke') || '#333333'
           r.stroke_width = box_style(styles, 'stroke-width') || '2'
         end
@@ -239,6 +240,14 @@ module Sirena
       # @param node [Hash] the graph node, holding metadata[:classes]
       # @param class_defs [Hash{String => String}] declared classDef styles
       # @return [Hash{String => String}] resolved property => value
+      # Classes merge left to right into ONE Hash, not per-class then
+      # `Hash#merge!` — mermaid resolves every class's declarations into a
+      # single Map at the very end (`styles2Map` in its own bundle), so a
+      # chunk from an earlier class and a same-exact-case chunk from a later
+      # class must update the SAME Map slot in the SAME left-to-right pass.
+      # Plain assignment into one accumulator reproduces that: a repeated
+      # exact key updates its value in place (keeping its first position,
+      # same as `Map#set` on an existing key) and a new key is appended.
       def entity_styles(node, class_defs)
         assigned = (node[:metadata] || {})[:classes] || []
         classes = [DEFAULT_CLASS, *assigned]
@@ -247,13 +256,35 @@ module Sirena
           declaration = class_defs[class_name]
           next unless declaration
 
-          styles.merge!(parse_declaration(declaration))
+          apply_chunks(class_chunks(declaration), styles)
         end
       end
 
-      # Parses a `classDef` style run ("fill:#f96,stroke:#333") into a
-      # property => value Hash. A chunk with no colon is skipped rather than
-      # raising — `classDef x foo` and `classDef x font-family:Arial,sans-serif`
+      # Splits a `classDef` style run ("fill:#f96,stroke:#333") into its raw
+      # comma-separated chunks, then REPLAYS a copy of every chunk whose
+      # text contains the lowercase substring "color" — anywhere, key or
+      # value — onto the end of the list.
+      #
+      # Verified against mermaid's own db (`ErDB#addClass`): each style
+      # chunk is tested with `/color/.exec(s)` (no `i` flag, so only a
+      # literal lowercase "color" substring matches) and, on a match, pushed
+      # a SECOND time into a separate `textStyles` array that gets appended
+      # after this class's own `styles` array when compiling. A declaration
+      # naming `stroke:currentcolor` this way ends up LAST among same-key
+      # entries even when a later, unrelated `stroke:red` chunk follows it
+      # in source — `classDef a stroke:currentcolor,stroke:red` resolves to
+      # `currentcolor`, not `red`, because the replay lands after both.
+      #
+      # @param declaration [String] raw style text for one class
+      # @return [Array<String>] chunks, with colour-bearing ones repeated
+      def class_chunks(declaration)
+        chunks = declaration.split(',')
+        chunks + chunks.select { |chunk| chunk.include?('color') }
+      end
+
+      # Applies a run of raw chunks into the shared, exact-case styles Hash,
+      # left to right. A chunk with no colon is skipped rather than raising
+      # — `classDef x foo` and `classDef x font-family:Arial,sans-serif`
       # both parse under mermaid, and the second is exactly this shape after
       # the comma split, so failing here would crash a render on
       # mermaid-valid input.
@@ -268,11 +299,11 @@ module Sirena
       #   green. Downcasing collapses all three into one Ruby key up front,
       #   which loses the exact-case Hash entries mermaid's own Map keeps
       #   ("fill" and "FILL" are different keys to it too) and makes the
-      #   LAST literal chunk win regardless of case — wrong order.
-      #   `entity_styles` merges classes with a plain `Hash#merge!`, whose
-      #   in-place update on a repeated key already reproduces the ordering
-      #   a case-preserving Map gives mermaid; box_style below is what does
-      #   the browser's case-insensitive resolution, once, at lookup.
+      #   LAST literal chunk win regardless of case — wrong order. Plain
+      #   assignment into one accumulator, above, already reproduces the
+      #   ordering a case-preserving Map gives mermaid; box_style below is
+      #   what does the browser's case-insensitive resolution, once, at
+      #   lookup.
       # - `COLOR:red` (uppercase) must be a BOX style, not a label one —
       #   mermaid's own isLabelStyle check (`key === "color"`,
       #   handDrawnShapeStyles.ts) is exact-case, so `COLOR` fails it.
@@ -281,16 +312,34 @@ module Sirena
       #   (`styles['color']`) would pick it up and colour the wrong
       #   element.
       #
-      # @param text [String] raw style text
-      # @return [Hash{String => String}] property => value, exact case,
-      #   both sides stripped
-      def parse_declaration(text)
-        text.split(',').each_with_object({}) do |chunk, styles|
-          key, value = chunk.split(':', 2)
+      # @param chunks [Array<String>] raw "key:value" chunks, in order
+      # @param styles [Hash{String => String}] accumulator, mutated in place
+      # @return [Hash{String => String}] the same accumulator, for chaining
+      def apply_chunks(chunks, styles)
+        chunks.each do |chunk|
+          key, value = mermaid_split(chunk)
           next unless value
 
           styles[key.strip] = value.strip
         end
+      end
+
+      # Splits one "key:value" chunk the way mermaid's own `styles2Map`
+      # does: `style.split(":")` with NO limit, destructured to only the
+      # first two elements. A third colon-separated segment is silently
+      # DROPPED, not folded into the value — `fill:red:blue` resolves to
+      # `red`, and Chrome computes red from mermaid's own output for that
+      # source. `String#split(':', 2)` (the previous behaviour here) instead
+      # keeps everything after the first colon, giving `red:blue`, which
+      # mermaid never produces.
+      #
+      # @param chunk [String] one raw "key:value(:ignored)" chunk
+      # @return [Array(String, String), Array(String, nil), Array()]
+      #   [key, value] — value is nil when the chunk has no colon, and both
+      #   are nil (empty array) for an empty chunk
+      def mermaid_split(chunk)
+        parts = chunk.split(':')
+        [parts[0], parts[1]]
       end
 
       # Case-insensitive box lookup — the counterpart to the exact-case
@@ -299,7 +348,7 @@ module Sirena
       # PROPERTY case-insensitively, the one latest in `styles`' (insertion)
       # order wins, same as the last matching CSS declaration in a rendered
       # `style` attribute. Do not use this for `color` — see
-      # `parse_declaration`'s second bullet.
+      # `apply_chunks`'s second bullet.
       #
       # @param styles [Hash{String => String}] resolved, exact-case entity
       #   styles
@@ -308,6 +357,28 @@ module Sirena
       #   never declared under any case
       def box_style(styles, property)
         styles.select { |key, _| key.downcase == property }.values.last
+      end
+
+      # An attributed entity's outer box does NOT go through the browser's
+      # CSS cascade the way a bare entity's does — mermaid draws it via a
+      # different, row-based shape whose fill comes from a direct, EXACT-key
+      # Map read (`stylesMap.get("fill")`, mermaid's own `userNodeOverrides`)
+      # rather than an inline `style="..."` attribute the browser resolves
+      # case-insensitively. Verified by Codex against the installed mermaid
+      # 11.16.1 bundle and a real Chrome computation:
+      # `classDef a fill:red,FILL:blue,fill:green` on a bare CAR computes
+      # blue (what `box_style` gives), but on `CAR:::a { string make }` it
+      # computes green — the last literal lowercase `fill`, ignoring `FILL`
+      # entirely. Only `fill` is verified to differ this way; stroke and
+      # stroke-width keep resolving through `box_style` either way.
+      #
+      # @param styles [Hash{String => String}] resolved, exact-case entity
+      #   styles
+      # @param attributed [Boolean] whether this entity has any attributes
+      # @return [String, nil] the winning fill, or nil if never declared
+      #   under the case this path reads
+      def box_fill(styles, attributed)
+        attributed ? styles['fill'] : box_style(styles, 'fill')
       end
 
       def render_relationships(graph, svg)
