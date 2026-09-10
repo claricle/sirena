@@ -1,18 +1,30 @@
 # frozen_string_literal: true
 
+require "kramdown"
 require_relative "../svg/tspan"
 
 module Sirena
   module Renderer
     # Parses mermaid's markdown subset used inside diagram label text: bold
-    # (`**text**`), italic (`*text*`, nestable with bold), and a literal
-    # newline as a hard line break. Nothing else — no code spans, links,
-    # headers or lists. See docs/plans/kanban-markdown-labels.md for the
-    # mmdc measurements this subset and its flanking rule are drawn from.
+    # (`**text**`), italic (`*text*`, nestable with bold, in either order,
+    # including `***both***`), and a literal newline as a hard line break —
+    # including one embedded inside a bold/italic run, which keeps that
+    # run's styling on both sides of the break. Nothing else — no code
+    # spans, links, headers or lists; mermaid's own rendering of these
+    # labels doesn't support more than this. See
+    # docs/plans/kanban-markdown-labels.md for the mmdc measurements this
+    # subset is drawn from.
     #
-    # Not a general markdown parser: mermaid's own rendering of these labels
-    # doesn't support more than this, and matching a real markdown gem's
-    # output would diverge from the mmdc oracle sirena is scored against.
+    # Parsing is delegated to `kramdown` (see the private `Parser` below)
+    # rather than hand-rolled: mermaid itself runs a real markdown lexer
+    # (`marked`) over label text rather than scanning characters, and a
+    # hand-rolled scanner got bold/italic nesting, triple markers and
+    # break-spanning emphasis wrong in ways a real parser doesn't. `Parser`
+    # restricts kramdown to exactly the block/span parsers this subset
+    # needs (`:paragraph`/`:blank_line` and `:emphasis` — nothing else) so
+    # kramdown's own HTML, smart-quote, codespan, footnote, table, header
+    # and list handling never fires; whatever isn't bold/italic markup
+    # comes back as literal text, character for character, matching mmdc.
     #
     # Also builds the `<tspan>` runs a parsed label turns into on an
     # `Svg::Text` element, and truncates parsed lines to a visible-character
@@ -26,158 +38,106 @@ module Sirena
       # italic* end**`) produces a run that is both at once.
       Run = Data.define(:text, :bold, :italic)
 
-      BOLD = '**'
-      ITALIC = '*'
-
       module_function
 
       # Splits text on hard line breaks and parses each line's markup.
+      #
+      # The whole text is parsed as one kramdown document rather than
+      # split-then-parsed line by line: kramdown keeps a `\n` that isn't
+      # preceded by a blank line embedded, literally, inside whatever span
+      # it falls in (including inside an open bold/italic run), so a break
+      # inside `**a\nb**` stays part of one bold span instead of being cut
+      # into two independently-parsed halves that can't see each other's
+      # marker state. `split_on_hard_breaks` below is what turns those
+      # embedded `\n`s (and the blank-line gaps between kramdown's
+      # top-level blocks) into the line-array shape callers expect.
       #
       # @param text [String] raw label text, possibly containing `**`/`*`
       #   markers and literal newlines
       # @return [Array<Array<Run>>] one run array per line
       def parse_lines(text)
-        text.to_s.split("\n", -1).map { |line| parse_line(line) }
-      end
+        raw = text.to_s
+        return [[]] if raw.empty?
 
-      # @api private
-      def parse_line(line)
-        scan(line, bold: false, italic: false)
-      end
+        root, = Parser.parse(raw)
+        lines = []
 
-      # Recursive-descent scan of one line (or the inner content of an
-      # already-opened marker). Returns a flat run list: nesting is
-      # represented by the returned runs' bold/italic flags, not by any
-      # tree structure the caller has to walk.
-      #
-      # @api private
-      def scan(text, bold:, italic:)
-        closers = precompute_closers(text)
-        runs = []
-        buffer = +''
-        i = 0
-
-        while i < text.length
-          marker = marker_at(text, i)
-
-          if marker && (close_at = closer_for(text, i, marker, closers))
-            runs << Run.new(text: buffer, bold: bold, italic: italic) unless buffer.empty?
-            buffer = +''
-            inner_start = i + marker.length
-            runs.concat(scan(text[inner_start...close_at],
-                             bold: bold || marker == BOLD,
-                             italic: italic || marker == ITALIC))
-            i = close_at + marker.length
-          elsif marker
-            buffer << marker
-            i += marker.length
+        root.children.each do |block|
+          case block.type
+          when :p
+            lines.concat(split_on_hard_breaks(flatten_runs(block, bold: false, italic: false)))
+          when :blank
+            block.value.count("\n").times { lines << [] }
           else
-            buffer << text[i]
-            i += 1
+            raise "unexpected kramdown block #{block.type.inspect} in a markdown label"
           end
         end
 
-        runs << Run.new(text: buffer, bold: bold, italic: italic) unless buffer.empty?
-        runs
+        lines
       end
 
-      # The longer marker always wins: `**` is checked before `*`, so a
-      # bold delimiter is never seen as two independent italic ones.
+      # Walks one `:p` block's children into a flat run list: nesting is
+      # represented by the returned runs' bold/italic flags, not by any
+      # tree structure the caller has to walk. A run's `text` may still
+      # contain an embedded `\n` at this point — `split_on_hard_breaks`
+      # resolves that afterward, once the whole block's styling has been
+      # flattened out.
       #
       # @api private
-      def marker_at(text, i)
-        return BOLD if text[i, 2] == BOLD
-        return ITALIC if text[i] == ITALIC
-
-        nil
+      def flatten_runs(node, bold:, italic:)
+        node.children.flat_map do |child|
+          case child.type
+          when :text
+            [Run.new(text: child.value, bold: bold, italic: italic)]
+          when :strong
+            flatten_runs(child, bold: true, italic: italic)
+          when :em
+            flatten_runs(child, bold: bold, italic: true)
+          else
+            raise "unexpected kramdown span #{child.type.inspect} in a markdown label"
+          end
+        end
       end
 
-      # A marker only opens when the character right after it is not
-      # whitespace, and only closes when the character right before it is
-      # not whitespace. `closer_for` returns nil (never opens) when the
-      # candidate itself fails the opening half of that rule, so a caller
-      # never has to check both halves separately.
-      #
-      # `closers` is the `{marker => positions}` table from
-      # `precompute_closers`: `closer_table(text, marker)[pos]` is exactly
-      # what a linear `text.index(marker, pos)` scan (skipping past each
-      # failed candidate) would have found starting from `pos`, computed
-      # once for every `pos` up front instead of rescanned per call — see
-      # `closer_table` for why this is an exact rewrite, not an
-      # approximation.
+      # Splits a flat run list on embedded `\n`s into line arrays, keeping
+      # each half's bold/italic flags — so a run that broke mid-span still
+      # carries its styling on both sides of the break.
       #
       # @api private
-      def closer_for(text, open_at, marker, closers)
-        return nil unless flanked_open?(text, open_at, marker)
+      def split_on_hard_breaks(runs)
+        lines = [[]]
 
-        closers[marker][open_at + marker.length]
-      end
-
-      # Builds the `{ITALIC => ..., BOLD => ...}` closer-position tables
-      # `closer_for` looks up, one pass over `text` per marker.
-      #
-      # @api private
-      def precompute_closers(text)
-        { ITALIC => closer_table(text, ITALIC), BOLD => closer_table(text, BOLD) }
-      end
-
-      # `table[pos]` is what the old `closer_for`'s `while (idx =
-      # text.index(marker, pos)) ... pos = idx + marker.length` loop would
-      # return when started at `pos`: the first later occurrence of
-      # `marker` whose preceding character is non-whitespace, skipping past
-      # a failed occurrence by a full marker length rather than by one
-      # character (which matters for `**`, where two candidates can
-      # overlap by one character inside a run of three or more `*`s).
-      #
-      # This is a bottom-up memoization of that loop, not a re-derivation
-      # of its answer: `table[pos]` is defined by the same recurrence the
-      # loop executes (find the next occurrence; if it closes, stop;
-      # otherwise continue from just past it), so it returns bit-for-bit
-      # what the loop returned, in O(1) per lookup instead of O(n) per
-      # scan. Filled from the end of `text` backwards so every
-      # `table[idx + marker.length]` it reads has already been computed.
-      #
-      # @api private
-      def closer_table(text, marker)
-        length = marker.length
-        next_occurrence = next_occurrence_table(text, marker)
-        table = Array.new(text.length + 1)
-
-        (text.length - length).downto(0) do |pos|
-          idx = next_occurrence[pos]
-          table[pos] = idx && (flanked_close?(text, idx) ? idx : table[idx + length])
+        runs.each do |run|
+          run.text.split("\n", -1).each_with_index do |part, index|
+            lines << [] if index.positive?
+            lines.last << run.with(text: part) unless part.empty?
+          end
         end
 
-        table
+        lines
       end
 
-      # `table[pos]` is the smallest index >= `pos` where `marker` occurs
-      # in `text`, or nil — the plain-search half of `text.index(marker,
-      # pos)`, computed once for the whole text instead of once per
-      # candidate.
+      # `kramdown`, restricted to exactly the block and span parsers this
+      # subset needs. Subclassing and reassigning `@block_parsers` /
+      # `@span_parsers` is kramdown's own documented extension point (see
+      # `Kramdown::Parser::Kramdown`'s class comment) rather than a
+      # private-API reach, and it's cheaper than post-filtering a tree that
+      # may have already thrown styling information away before we get to
+      # see it — e.g. left with the default span parsers, `<b>` inside
+      # `**<b>&"x**` swallows what would otherwise be the bold run's
+      # closing `**` (no `strong` node is ever produced), and a straight
+      # `"` gets turned into a smart-quote element instead of staying
+      # literal.
       #
       # @api private
-      def next_occurrence_table(text, marker)
-        length = marker.length
-        table = Array.new(text.length + 1)
-
-        (text.length - length).downto(0) do |pos|
-          table[pos] = text[pos, length] == marker ? pos : table[pos + 1]
+      class Parser < ::Kramdown::Parser::Kramdown
+        def initialize(source, options)
+          super
+          @block_parsers = [:blank_line, :paragraph]
+          @span_parsers = [:emphasis]
         end
-
-        table
       end
-
-      # @api private
-      def flanked_open?(text, open_at, marker)
-        next_char = text[open_at + marker.length]
-        !next_char.nil? && !next_char.match?(/\s/)
-      end
-
-      # @api private
-      def flanked_close?(text, close_at)
-        !text[close_at - 1].match?(/\s/)
-      end
+      private_constant :Parser
 
       # Assigns a markdown-parsed label onto a `Svg::Text` element.
       #
@@ -318,12 +278,21 @@ module Sirena
       # whole runs from the end and appending "..." to the run that
       # crosses the boundary.
       #
+      # The 3-character ellipsis cost is reserved against `budget` up
+      # front, once — not against whatever's left of `remaining` when the
+      # overflowing run happens to be reached. Reserving it per-run instead
+      # undercounts: several already-kept runs can each consume part of
+      # `remaining` without ever needing the reservation themselves, so by
+      # the time the overflowing run pays it, the total visible length
+      # (kept runs + this run's cut + "...") comes out over `budget`.
+      #
       # @param runs [Array<Run>]
-      # @param budget [Integer] visible characters available
+      # @param budget [Integer] visible characters available, ellipsis
+      #   included
       # @return [Array<Run>]
       # @api private
       def truncate_line(runs, budget)
-        remaining = budget
+        remaining = [budget - 3, 0].max
         kept = []
 
         runs.each do |run|
@@ -331,8 +300,7 @@ module Sirena
             kept << run
             remaining -= run.text.length
           else
-            visible = [remaining - 3, 0].max
-            kept << run.with(text: "#{run.text[0, visible]}...")
+            kept << run.with(text: "#{run.text[0, remaining]}...")
             break
           end
         end
