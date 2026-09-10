@@ -90,7 +90,7 @@ module Sirena
         rule(:shaped_item) do
           identifier.as(:id) >>
             lparen >>
-            match('[^)]').repeat(1).as(:text) >>
+            round_text >>
             rparen
         end
 
@@ -99,8 +99,21 @@ module Sirena
         # Transforms::Kanban::BoardBuilder#resolve_id.
         rule(:unlabelled_shaped_item) do
           lparen >>
-            match('[^)]').repeat(1).as(:text) >>
+            round_text >>
             rparen
+        end
+
+        # Text inside a round shape - id(text) or (text). A quoted body is
+        # tried first so it can contain an unescaped `)`, mermaid's own
+        # rule for `Todo (urgent)`, and the surrounding quotes are excluded
+        # from the capture rather than kept as literal characters - mermaid
+        # strips them too. Falls back to the plain, unquoted body when the
+        # first character isn't a `"`. Mirrors `square_shape` in
+        # mindmap.rb, the existing precedent for quoted content inside a
+        # bracketed shape in this grammar family.
+        rule(:round_text) do
+          (str('"') >> match('[^"]').repeat(1).as(:text) >> str('"')) |
+            match('[^)]').repeat(1).as(:text)
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label

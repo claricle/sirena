@@ -292,6 +292,49 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
+    context 'with a quoted label on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. `shaped_item` and
+      # `unlabelled_shaped_item` captured a quoted body as literal
+      # characters, quotes included, and ended the shape at the first
+      # unquoted `)` - so a label containing one broke the parse entirely.
+      # Mirrors mindmap.rb's `square_shape`, the existing precedent for
+      # quoted content inside a bracketed shape: the quotes are stripped,
+      # and a quoted body may contain the shape's own delimiter.
+      it 'strips the quotes from an id-prefixed round shape' do
+        diagram = parser.parse("kanban\n  col(\"Hello\")\n")
+        expect(diagram.columns.first.title).to eq('Hello')
+      end
+
+      it 'strips the quotes from an unlabelled round shape' do
+        diagram = parser.parse("kanban\n  (\"Task\")\n")
+        expect(diagram.columns.first.title).to eq('Task')
+      end
+
+      it 'keeps a paren inside a quoted id-prefixed label' do
+        diagram = parser.parse("kanban\n  col(\"Todo (urgent)\")\n")
+        expect(diagram.columns.first.title).to eq('Todo (urgent)')
+      end
+
+      it 'keeps a paren inside a quoted unlabelled label' do
+        diagram = parser.parse("kanban\n  (\"Fix (today)\")\n")
+        expect(diagram.columns.first.title).to eq('Fix (today)')
+      end
+
+      it 'parses a column and a child both carrying a quoted label' do
+        diagram = parser.parse("kanban\n  col(\"Hello\")\n    (\"Task\")\n")
+        column = diagram.columns.first
+        expect(column.title).to eq('Hello')
+        expect(column.cards.first.text).to eq('Task')
+      end
+
+      it 'parses a paren inside quotes on both the column and its child, where the unquoted form failed to parse at all' do
+        diagram = parser.parse("kanban\n  col(\"Todo (urgent)\")\n    (\"Fix (today)\")\n")
+        column = diagram.columns.first
+        expect(column.title).to eq('Todo (urgent)')
+        expect(column.cards.first.text).to eq('Fix (today)')
+      end
+    end
+
     context 'with round-shaped items and a blank row together (corpus 031)' do
       let(:source) do
         "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"
