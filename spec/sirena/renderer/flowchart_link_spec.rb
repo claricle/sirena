@@ -767,6 +767,53 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       end
     end
 
+    # The margin check above recomputes its own expectation with
+    # `TextMeasurement`, the same average the shift itself used to use —
+    # so it could never catch that average being too small. This one
+    # pins a real number instead: Chrome's `getBBox()` on Sirena's own
+    # rendered `<text fill="#000000" ... font-size="12.0">|WWWWWWWW|`
+    # (ten characters, the label's own pipe delimiters included) reads
+    # 96.84375 wide, not the 60 `TextMeasurement`'s 0.5-per-character
+    # average predicts. A shift sized off that average left the label's
+    # real left edge at x=-18.421875 while its anchor sat safely at
+    # x=30 — this asserts against the pinned real half-width instead, so
+    # reverting the bound back to an average reddens it.
+    it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
+      xml = Sirena.render(
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n"
+      )
+      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
+        .find { |t| !t.include?("dominant-baseline") }
+      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
+      real_half_width = 96.84375 / 2.0
+
+      expect(anchor_x - real_half_width).to be >= 0
+    end
+
+    # `calculate_width` used to total only node and cluster boxes, never
+    # a self loop's own reach, so a loop thrown right by the diagram's
+    # flow — or its label — could draw past the page `create_document`
+    # sized for those boxes alone. Chrome's `getBBox()` on Sirena's own
+    # rendered label here (Arial 12px, 32 characters with the pipes)
+    # reads 86.21875 wide with its right edge at x=286.109375, while the
+    # base renderer's viewBox ended at 270: clipped, despite these
+    # narrow glyphs being OVERESTIMATED rather than underestimated — a
+    # different half of the same bug. Pinning the real width, rather
+    # than recomputing it, is what makes this spec able to fail on the
+    # code that clipped it.
+    it "grows the page for a self loop's label reaching past the last box" do
+      xml = Sirena.render(
+        "flowchart LR\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{'i' * 30}| s\n"
+      )
+      tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
+        .find { |t| !t.include?("dominant-baseline") }
+      anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
+      real_half_width = 86.21875 / 2.0
+      view_box_width = xml[/viewBox="0 0 ([\d.]+) /, 1].to_f
+
+      expect(view_box_width).to be >= anchor_x + real_half_width
+    end
+
     # A long label widens the layout box without widening the drawn circle.
     it "starts a wide circle loop's depth at its drawn edge" do
       xml = Sirena.render(
