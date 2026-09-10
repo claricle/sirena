@@ -739,6 +739,30 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(path_points(xml)[1..2]).to eq([[80.0, 40.0], [80.0, 0.0]])
     end
 
+    # The self-loop-overflow shift used to clear only the label's own
+    # ANCHOR point. SVG draws the text past that: centred sideways
+    # (`text-anchor: middle`) and sitting whole above its baseline
+    # vertically, since nothing here sets `dominant-baseline`. A margin
+    # only as wide as the anchor still clips the glyphs — measured
+    # against this exact input, Chrome's `getBBox()` put the BT label at
+    # y=-11 and the RL label at x=-17.8 while their anchors sat at zero.
+    it "keeps a loop label's own text clear of the page edge, not just its anchor" do
+      { "BT" => :y, "RL" => :x }.each do |direction, axis|
+        xml = Sirena.render(
+          "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n"
+        )
+        tag = xml[%r{<text\b[^>]*>[^<]*</text>}]
+        x = tag[/\bx="([^"]*)"/, 1].to_f
+        y = tag[/\by="([^"]*)"/, 1].to_f
+        font_size = tag[/font-size="([^"]*)"/, 1].to_f
+        text = tag[/>([^<]*)</, 1]
+        dims = Sirena::TextMeasurement.measure(text, font_size: font_size)
+
+        margin = axis == :y ? y - dims[:height] : x - (dims[:width] / 2.0)
+        expect(margin).to be >= 0, "#{direction}: margin was #{margin}"
+      end
+    end
+
     # A long label widens the layout box without widening the drawn circle.
     it "starts a wide circle loop's depth at its drawn edge" do
       xml = Sirena.render(
