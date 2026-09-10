@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative '../style_cascade'
 
 module Sirena
   module Renderer
@@ -40,6 +41,14 @@ module Sirena
       # "0 0" viewBox origin, which every non-empty ER reference in that
       # directory uses; only the extent is copied.
       EMPTY_DIAGRAM_PADDING = 8
+
+      # Defaults applied when the style cascade resolves nothing for a
+      # property — same defaults this renderer always used before
+      # classDef support existed.
+      DEFAULT_FILL = '#f9f9f9'
+      DEFAULT_STROKE = '#333333'
+      DEFAULT_STROKE_WIDTH = '2'
+      DEFAULT_TEXT_COLOR = '#000000'
 
       # Renders a laid-out graph to SVG.
       #
@@ -103,18 +112,32 @@ module Sirena
       end
 
       def render_entities(graph, svg)
+        resolver = StyleCascade::Resolver.new(graph[:class_defs] || {})
+
         graph[:children].each do |node|
-          render_entity(node, svg)
+          render_entity(node, svg, resolver)
         end
       end
 
-      def render_entity(node, svg)
+      def render_entity(node, svg, resolver)
         x = node[:x] || 0
         y = node[:y] || 0
         width = node[:width] || 150
         height = node[:height] || 100
 
         metadata = node[:metadata] || {}
+        styles = resolver.resolve(metadata[:classes] || [])
+        # An entity carrying at least one attribute draws its box through
+        # the EXACT-KEY, unvalidated read (`styles.attributed`) — modeling
+        # mermaid's rough.js `userNodeOverrides` path. A bare entity draws
+        # through the case-insensitive, validity-gated cascade read
+        # (`styles.cascade`) — modeling the real browser's `style="..."`
+        # cascade on mermaid's plain-shape output. Both paths preserve a
+        # hostile or malformed declared value verbatim rather than
+        # dropping it (see `StyleCascade::ResolvedStyles`), which is what
+        # the D2 XSS-escaping contract relies on — the value reaches the
+        # XML serializer below unmodified, and IT does the escaping.
+        attributed = !metadata[:attributes].to_a.empty?
 
         # Create group for the entity
         group = Svg::Group.new.tap do |g|
@@ -127,24 +150,29 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = '#f9f9f9'
-          r.stroke = '#333333'
-          r.stroke_width = '2'
+          r.fill = box_style_value(styles, 'fill', attributed) || DEFAULT_FILL
+          r.stroke = box_style_value(styles, 'stroke', attributed) || DEFAULT_STROKE
+          r.stroke_width = box_style_value(styles, 'stroke-width', attributed) || DEFAULT_STROKE_WIDTH
         end
         group.children << box
 
         # Render entity content
-        render_entity_content(node, metadata, group)
+        render_entity_content(node, metadata, group, styles)
 
         svg << group
       end
 
-      def render_entity_content(node, metadata, group)
+      def box_style_value(styles, property, attributed)
+        attributed ? styles.attributed(property) : styles.cascade(property)
+      end
+
+      def render_entity_content(node, metadata, group, styles)
         x = node[:x] || 0
         y = node[:y] || 0
         width = node[:width] || 150
 
         current_y = y + BOX_PADDING + ENTITY_NAME_FONT_SIZE
+        label_color = styles.label_color || DEFAULT_TEXT_COLOR
 
         # Render entity name
         name = metadata[:name] || node[:id]
@@ -152,7 +180,7 @@ module Sirena
           t.x = x + width / 2
           t.y = current_y
           t.content = name
-          t.fill = '#000000'
+          t.fill = label_color
           t.font_family = 'Arial, sans-serif'
           t.font_size = ENTITY_NAME_FONT_SIZE.to_s
           t.text_anchor = 'middle'
@@ -176,11 +204,11 @@ module Sirena
         attributes = metadata[:attributes] || []
         current_y += BOX_PADDING
         attributes.each do |attr|
-          current_y = render_attribute(x, current_y, width, attr, group)
+          current_y = render_attribute(x, current_y, width, attr, group, label_color)
         end
       end
 
-      def render_attribute(x, y, _width, attribute, group)
+      def render_attribute(x, y, _width, attribute, group, label_color)
         # Build attribute text with key type marker
         parts = []
         parts << attribute[:key_type] if attribute[:key_type] &&
@@ -196,7 +224,7 @@ module Sirena
           t.x = x + BOX_PADDING
           t.y = y + ATTRIBUTE_FONT_SIZE
           t.content = attr_text
-          t.fill = '#000000'
+          t.fill = label_color
           t.font_family = 'monospace'
           t.font_size = ATTRIBUTE_FONT_SIZE.to_s
         end
