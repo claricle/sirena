@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "tmpdir"
 require "fileutils"
 
 # A hermetic, network-free rubocop project under spec/fixtures/lint_debt/
