@@ -99,6 +99,83 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
       end
     end
 
+    context "with a junction in a group that has no services of its own" do
+      # Mirrors the round-2 Codex review: group g(cloud)[G] / service a(server)[A]
+      # (outside g) / junction j in g. The junction's own group has no
+      # services to anchor its row against, so it falls back to a shared
+      # cursor - which must clear every service in the WHOLE diagram, not
+      # just start at DEFAULT_SPACING regardless of what other groups
+      # already placed there.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", icon: "server"),
+          ],
+          junctions: [
+            Sirena::Diagram::ArchitectureDiagram::Junction.new(id: "j", group_id: "g"),
+          ],
+          groups: [
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "g", label: "G", icon: "cloud"),
+          ],
+          edges: []
+        )
+      end
+
+      def rectangles_overlap?(a, b)
+        a[:x] < b[:x] + b[:width] && b[:x] < a[:x] + a[:width] &&
+          a[:y] < b[:y] + b[:height] && b[:y] < a[:y] + a[:height]
+      end
+
+      it "does not place the junction on a service positioned under a different group" do
+        graph = transform.to_graph(diagram)
+        service = graph[:services]["a"]
+        junction = graph[:junctions]["j"]
+
+        expect(rectangles_overlap?(service, junction)).to be(false)
+      end
+    end
+
+    context "with a junction positioned on the wrong side of a directional edge" do
+      # Mirrors the round-2 Codex review: service a(server)[A] / junction j /
+      # j:R -- L:a. The junction's default placement lands to the RIGHT of
+      # a, but the edge hint asks for j's right face to meet a's left face
+      # - which only makes visual sense if j is to the LEFT. Repositioning
+      # j this late is unsafe (group bounds and other junctions may already
+      # depend on it), so the fix mirrors which face of each node the
+      # drawn line attaches to instead of moving either node.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", icon: "server"),
+          ],
+          junctions: [
+            Sirena::Diagram::ArchitectureDiagram::Junction.new(id: "j", group_id: nil),
+          ],
+          groups: [],
+          edges: [
+            Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "j", to_id: "a", from_position: "R", to_position: "L"),
+          ]
+        )
+      end
+
+      def segment_crosses_rectangle?(x1, y1, x2, y2, rect)
+        (1...200).any? do |i|
+          t = i / 200.0
+          x = x1 + ((x2 - x1) * t)
+          y = y1 + ((y2 - y1) * t)
+          x > rect[:x] && x < rect[:x] + rect[:width] && y > rect[:y] && y < rect[:y] + rect[:height]
+        end
+      end
+
+      it "does not route the edge through the service's interior" do
+        graph = transform.to_graph(diagram)
+        service = graph[:services]["a"]
+        edge = graph[:edges].first
+
+        expect(segment_crosses_rectangle?(edge[:from_x], edge[:from_y], edge[:to_x], edge[:to_y], service)).to be(false)
+      end
+    end
+
     context "with a group whose only member is a junction" do
       # Mirrors the round-5 Codex review: group g(cloud)[G] / junction j in g
       let(:diagram) do

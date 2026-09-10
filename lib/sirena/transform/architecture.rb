@@ -15,6 +15,8 @@ module Sirena
       DEFAULT_ICON_SIZE = 24
       DEFAULT_JUNCTION_SIZE = 12
 
+      MIRRORED_CONNECTION_SIDE = { "L" => "R", "R" => "L", "T" => "B", "B" => "T" }.freeze
+
       # Converts an architecture diagram to a positioned layout structure
       #
       # @param diagram [Diagram::ArchitectureDiagram] the diagram to transform
@@ -170,12 +172,14 @@ module Sirena
       # anchors its junction row past them (vertically centered on that
       # row) instead of at the group's default origin, so a junction never
       # lands on the same coordinates as a service in its own group. A
-      # group with no services keeps the threaded fallback cursor, so
-      # junction-only groups still stack without colliding with each other.
+      # group with no services falls back to a shared cursor that starts
+      # below every already-placed service in ANY group (not just its
+      # own), so a junction-only group can never land on a service that
+      # was laid out under a different group entirely.
       def position_junctions(diagram, hierarchy, service_positions)
         positions = {}
         current_x = DEFAULT_SPACING
-        current_y = DEFAULT_SPACING
+        current_y = junction_fallback_floor(service_positions)
 
         groups_to_layout = [:root] + diagram.groups.map(&:id)
 
@@ -218,6 +222,17 @@ module Sirena
         row_y = row_top + ((DEFAULT_SERVICE_HEIGHT - DEFAULT_JUNCTION_SIZE) / 2.0)
 
         [row_x, row_y]
+      end
+
+      # A junction-only group (no services of its own) has no row to
+      # anchor against, so it falls back to a shared cursor. That cursor
+      # must start below every service in the WHOLE diagram, not just
+      # DEFAULT_SPACING - otherwise it reuses the same origin position_services
+      # already gave to a service in an unrelated group.
+      def junction_fallback_floor(service_positions)
+        return DEFAULT_SPACING if service_positions.empty?
+
+        service_positions.values.map { |pos| pos[:y] + pos[:height] }.max + DEFAULT_SPACING
       end
 
       def calculate_service_dimensions(service)
@@ -292,9 +307,9 @@ module Sirena
 
           next unless from && to
 
-          # Calculate connection points based on position hints
-          from_point = calculate_connection_point(from, edge.from_position || "R")
-          to_point = calculate_connection_point(to, edge.to_position || "L")
+          from_side, to_side = resolve_connection_sides(edge, from, to)
+          from_point = calculate_connection_point(from, from_side)
+          to_point = calculate_connection_point(to, to_side)
 
           {
             edge: edge,
@@ -304,6 +319,38 @@ module Sirena
             to_y: to_point[:y],
           }
         end.compact
+      end
+
+      # A junction has no row of its own to anchor against the far side of
+      # an edge the way position_services does for service-to-service
+      # edges (adjust_positions_for_edges), so a junction can end up on
+      # the wrong side of whatever it connects to - the stated hint then
+      # asks for a face-to-face connection that is physically behind one
+      # of the nodes, and the straight line drawn between them cuts
+      # through it. Reposition-then-redraw would risk moving a service
+      # that group bounds and other junctions were already placed
+      # against, so this mirrors which FACE of each node the line
+      # attaches to instead, using the nodes' real positions - never
+      # service-to-service, where positions are already hint-consistent
+      # by the time this runs.
+      def resolve_connection_sides(edge, from, to)
+        from_side = edge.from_position || "R"
+        to_side = edge.to_position || "L"
+
+        return [from_side, to_side] unless from.key?(:junction) || to.key?(:junction)
+        return [from_side, to_side] if sides_face_each_other?(from_side, to_side, from, to)
+
+        [MIRRORED_CONNECTION_SIDE[from_side], MIRRORED_CONNECTION_SIDE[to_side]]
+      end
+
+      def sides_face_each_other?(from_side, to_side, from, to)
+        case [from_side, to_side]
+        when %w[R L] then from[:x] <= to[:x]
+        when %w[L R] then from[:x] >= to[:x]
+        when %w[B T] then from[:y] <= to[:y]
+        when %w[T B] then from[:y] >= to[:y]
+        else true
+        end
       end
 
       def calculate_connection_point(service_pos, position)
