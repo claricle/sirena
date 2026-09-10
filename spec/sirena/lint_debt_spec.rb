@@ -167,19 +167,30 @@ RSpec.describe Sirena::LintDebt do
         "approved_by" => "r", "approved_on" => "2026-09-10" }
     end
 
+    # A `def`, not a `let`: it takes an argument, and `let` has no arity.
+    # The message must be right for THIS field, not merely mention it --
+    # `/approved_on is/` passed while the text told the reader to add a
+    # name when what they needed was a date.
+    def signature_message(field)
+      tail = field == "approved_by" ? "name who signed" : "carry the date"
+      Regexp.new("#{field} is required and must #{tail}")
+    end
+
     %w[approved_by approved_on].each do |field|
       it "refuses an exception missing #{field}" do
         write_long_method_offence(grammar_file)
         write_exceptions([signed_entry.reject { |k, _| k == field }])
 
-        expect { debt.total }.to raise_error(err_class, /#{field} is/)
+        expect { debt.total }
+          .to raise_error(err_class, signature_message(field))
       end
 
       it "refuses a blank #{field}" do
         write_long_method_offence(grammar_file)
         write_exceptions([signed_entry.merge(field => "  ")])
 
-        expect { debt.total }.to raise_error(err_class, /#{field} is/)
+        expect { debt.total }
+          .to raise_error(err_class, signature_message(field))
       end
     end
 

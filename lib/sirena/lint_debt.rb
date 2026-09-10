@@ -331,14 +331,24 @@ module Sirena
     # dated never was accepted in silence and the file documented a rule
     # nothing read. An exception to a debt ratchet is the exact place a
     # missing signature matters.
+    # Each field gets its OWN sentence. A shared "must name who signed it
+    # off" told anyone hitting the `approved_on` case to add a name when
+    # what they need is a date -- the kind of message that costs a person
+    # ten minutes at the worst possible moment.
+    SIGNATURE_FIELDS = {
+      "approved_by" => "name who signed it off",
+      "approved_on" => "carry the date it was signed off",
+    }.freeze
+    private_constant :SIGNATURE_FIELDS
+
     def refuse_unsigned!(exception, cop, file)
-      %w[approved_by approved_on].each do |field|
+      SIGNATURE_FIELDS.each do |field, requirement|
         value = exception[field]
         next unless value.nil? || value.to_s.strip.empty?
 
         raise ExecutionError,
               "exception #{cop}/#{file}: #{field} is required " \
-              "and must name who signed it off"
+              "and must #{requirement}"
       end
     end
 
