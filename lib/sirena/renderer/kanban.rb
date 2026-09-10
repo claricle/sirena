@@ -131,7 +131,8 @@ module Sirena
           t.font_weight = "bold"
         end
 
-        MarkdownText.assign_markdown_text(header_text, MarkdownText.parse_lines(column[:title]), x: header_x, base_font_weight: "bold")
+        lines = MarkdownText.parse_lines(column[:title])
+        MarkdownText.assign_markdown_text(header_text, lines, x: header_x, base_font_weight: "bold")
 
         svg.add_element(header_text)
 
