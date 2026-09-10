@@ -268,6 +268,21 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect { REXML::Document.new(xml) }.not_to raise_error
       end
 
+      # A markdown-styled run is the first attacker-facing markdown-to-XML
+      # surface: label text an author writes ends up inside a `<tspan>`.
+      # `<`, `&` and `"` must come out escaped, and REXML must still parse
+      # the result, or a hostile label breaks or injects into the document.
+      it 'escapes XML-significant characters inside a styled run' do
+        xml = renderer.render(layout_with(card_text: 'Plain **<b>&"x**')).to_xml
+
+        expect(xml).to include('<tspan font-weight="bold">&lt;b&gt;&amp;"x</tspan>')
+        expect(xml).not_to include('<b>')
+
+        parsed = REXML::Document.new(xml)
+        bold_tspan = REXML::XPath.first(parsed, '//tspan[@font-weight="bold"]')
+        expect(bold_tspan.text).to eq('<b>&"x')
+      end
+
       # Column header integration: markdown in the title renders the same
       # way as card text, and a header's pre-existing bold baseline
       # (`font_weight = "bold"` on the whole `Svg::Text`, set unconditionally
