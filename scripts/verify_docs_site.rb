@@ -48,10 +48,15 @@ module Sirena
     # the corpus this script exists to check. Pre-cleaning the markup into
     # valid XML before handing it to REXML would need its own regex-based
     # transform, which relocates this defect class rather than removing
-    # it. A gem-based HTML5 parser (Nokogiri) would work, but the plan
-    # deliberately keeps this script stdlib-only so the CI step needs no
-    # `bundle exec` -- pulling in a gem changes that design decision and
-    # is bigger than this fix.
+    # it. So this script now uses a real HTML5 parser (Nokogiri) instead.
+    #
+    # That REVERSES an earlier decision to keep the script stdlib-only so
+    # the CI step needed no bundle. The constraint was worth less than
+    # correctness -- the hand-rolled scanner lost three review rounds -- and
+    # the cost was paid rather than hidden: `nokogiri` is declared in
+    # docs/Gemfile, and the workflow's verify step runs under that bundle,
+    # which is the only one it installs. Bare `ruby` here dies with
+    # LoadError; both invocations were checked to give identical output.
     # Every tag on a page, as { name:, attrs: }, with the CONTENT of
     # inert and raw-text elements excluded.
     #
@@ -95,8 +100,7 @@ module Sirena
 
       def self.attributes_of(element)
         element.attribute_nodes.to_h do |attribute|
-          value = attribute.value
-          [attribute.name.downcase, value.empty? || value]
+          [attribute.name.downcase, attribute.value]
         end
       end
       private_class_method :attributes_of
@@ -195,7 +199,12 @@ module Sirena
     private
 
     def html_pages
-      Dir.glob(@site_dir.join('**/*.html').to_s).map { |path| Page.new(path, @site_dir.to_s) }
+      # `.select { File.file? }` because a DIRECTORY named `index.html`
+      # matches the glob, and reading it raises Errno::EISDIR. Same
+      # defect as the `exist?`-versus-`file?` checks below, one level over.
+      Dir.glob(@site_dir.join('**/*.html').to_s)
+        .select { |path| File.file?(path) }
+        .map { |path| Page.new(path, @site_dir.to_s) }
     end
 
     # R1, R2
@@ -221,14 +230,14 @@ module Sirena
 
       diagram_sources.each do |rel|
         collection_path = "diagram_types/#{rel}/index.html"
-        unless @site_dir.join(collection_path).exist?
+        unless @site_dir.join(collection_path).file?
           failures << "manifest: _diagram_types/#{rel}.adoc missing at #{collection_path}"
         end
 
         next unless include_active
 
         include_path = include_path_for(rel)
-        unless @site_dir.join(include_path).exist?
+        unless @site_dir.join(include_path).file?
           failures << "manifest: _diagram_types/#{rel}.adoc missing at #{include_path}"
         end
       end

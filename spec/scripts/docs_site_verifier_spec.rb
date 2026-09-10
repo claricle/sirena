@@ -257,6 +257,53 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # `Pathname#exist?` is true for a DIRECTORY too, so a directory named
+  # `index.html` satisfied the manifest check while no HTML file was there.
+  # The file already uses `.file?` where it matters (the search index, and
+  # the asset resolver, which carries a comment saying exactly this) -- these
+  # two sites were the ones that missed it.
+  it 'does not accept a directory standing in for a collection page' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.rm_f(File.join(site_dir, '_diagram_types/mindmap/index.html'))
+      FileUtils.mkdir_p(File.join(site_dir, '_diagram_types/mindmap/index.html'))
+
+      expect(verifier_for(docs_dir, site_dir).failures)
+        .to include(a_string_matching(%r{_diagram_types/mindmap/index\.html}))
+    end
+  end
+
+  # An EMPTY attribute value is present-but-broken, not absent. Mapping it to
+  # `true` dropped it from every downstream check that greps for Strings, so a
+  # `<script src="">` — a script tag that loads nothing — was invisible.
+  #
+  # **This corrects the data model; it does not change a verdict today.** The
+  # asset check filters a non-site-absolute ref before resolving it, so an
+  # empty ref is collected and then skipped either way. Said plainly rather
+  # than claimed as a closed false negative, because the honest claim is the
+  # narrower one.
+  #
+  # Two earlier versions of this spec were vacuous and the mutation caught
+  # both: one asserted the theme-stylesheet failure, which fires with or
+  # without the sentinel, and one asserted an asset failure that never fires.
+  # This asserts the thing that actually differs.
+  #
+  # Nokogiri cannot tell `<script src>` from `<script src="">` — both give ""
+  # — and nothing tested an attribute for `true`, so the sentinel was dead
+  # weight as well as harmful.
+  it 'keeps an empty attribute value instead of turning it into true' do
+    Dir.mktmpdir do |tmp|
+      _docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub('</head>', '<script src=""></script></head>')
+      path = File.join(site_dir, 'pages/comparison/index.html')
+      write_page(site_dir, 'pages/comparison/index.html', html)
+
+      page = Sirena::DocsSiteVerifier::Page.new(path, site_dir)
+
+      expect(page.script_srcs).to eq([''])
+    end
+  end
+
   # Example 10b — R11, the layout-marker half. A2 has two site-wide
   # clauses (layout marker, stylesheet); example 10 above only pins the
   # stylesheet one. A mutant that scopes the LAYOUT check to diagram pages

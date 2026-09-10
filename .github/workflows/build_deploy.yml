@@ -41,10 +41,16 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      # Run under the DOCS bundle, not bare `ruby`. The verifier parses the
+      # built HTML with nokogiri now, and the setup-ruby step above installs
+      # docs/Gemfile only -- bare `ruby` here would die with LoadError. Both
+      # invocations were checked to give identical output on a built site.
       - name: Verify docs site output
         run: >-
-          ruby scripts/verify_docs_site.rb
+          bundle exec ruby ../scripts/verify_docs_site.rb
+          --docs-dir .
           --baseurl "${{ steps.pages.outputs.base_path }}"
+        working-directory: docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
