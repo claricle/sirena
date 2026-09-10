@@ -31,14 +31,17 @@ module Sirena
         end
 
         rule(:statement) do
-          entity_definition |
+          class_def_statement |
+            entity_definition |
             relationship |
             entity_declaration
         end
 
         # Entity with attribute block
         rule(:entity_definition) do
-          identifier.as(:entity_id) >> space? >>
+          identifier.as(:entity_id) >>
+            (str(':::') >> class_name_list.as(:entity_classes)).maybe >>
+            space? >>
             lbrace >> ws? >>
             attributes.maybe.as(:attributes) >>
             ws? >> rbrace >>
@@ -46,17 +49,48 @@ module Sirena
         end
 
         # Relationship between entities
+        #
+        # The two ends capture under DIFFERENT names. Parslet merges a
+        # statement's captures into one hash, so giving both ends
+        # `:entity_classes` drops the from-end silently, warning only on
+        # stderr. A7 in the parser spec is the guard.
         rule(:relationship) do
-          identifier.as(:from_id) >> space? >>
+          identifier.as(:from_id) >>
+            (str(':::') >> class_name_list.as(:from_classes)).maybe >>
+            space? >>
             relationship_pattern.as(:pattern) >> space? >>
-            identifier.as(:to_id) >> space? >>
+            identifier.as(:to_id) >>
+            (str(':::') >> class_name_list.as(:to_classes)).maybe >>
+            space? >>
             relationship_label.maybe.as(:label) >>
             line_end
         end
 
         # Stand-alone entity (no body, no relationship)
         rule(:entity_declaration) do
-          identifier.as(:entity_id) >> line_end
+          identifier.as(:entity_id) >>
+            (str(':::') >> class_name_list.as(:entity_classes)).maybe >>
+            line_end
+        end
+
+        # Style class declaration: `classDef name[,name] <styles>`
+        #
+        # The style run ends at `line_end`, not at a newline, and `line_end`
+        # opens with `semicolon.maybe` — so `classDef x fill:#f96;` captures
+        # `fill:#f96` and mermaid's optional trailing `;` is not part of the
+        # style text. A15 pins it.
+        rule(:class_def_statement) do
+          str('classDef') >> space.repeat(1) >>
+            class_name_list.as(:classdef_names) >> space.repeat(1) >>
+            (line_end.absent? >> any).repeat(1).as(:classdef_styles) >>
+            line_end
+        end
+
+        # One or more class names. Names are the inherited `identifier`;
+        # mermaid accepts more, and its `:::` and `classDef` sides disagree
+        # with each other about what. See the plan's declared gap 1.
+        rule(:class_name_list) do
+          identifier >> (comma >> space? >> identifier).repeat
         end
 
         # Attributes within entity block
