@@ -814,6 +814,92 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # ----------------------------------------------------------------------
+  # The findings from the fourth Codex round, against the `TagTokenizer`
+  # introduced to fix round 3. All three are constructed inputs Codex ran
+  # against the real implementation.
+
+  # HIGH-4a. A `<template>` nested inside another `<template>` must not let
+  # the OUTER template's still-inert tail resume tokenizing as live markup.
+  # `skip_uninspected_content` used to `scan_until` the FIRST `</template>`
+  # unconditionally, which closes only the INNER template here -- the
+  # stylesheet link, layout marker and content marker that follow it are
+  # still inside the outer template and must stay inert.
+  it 'reports a page whose live-looking markup sits inside a template nested in another template' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
+      html = <<~HTML
+        <html><head></head>
+        <body>
+          <template>
+            <template></template>
+            <link rel="stylesheet" href="#{href}">
+            <div class="main-content-wrap"><div class="paragraph"><p>hi</p></div></div>
+          </template>
+        </body></html>
+      HTML
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # HIGH-4b. A `<textarea>`'s content is its raw text VALUE, per the HTML5
+  # spec -- markup typed there (e.g. as a code-sample placeholder) is never
+  # parsed into real elements, so a stylesheet link, layout marker or
+  # content marker living only inside a `<textarea>` has not actually
+  # shipped, the same as script/style content.
+  it 'reports a page whose live-looking markup sits only inside a textarea' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
+      html = <<~HTML
+        <html><head></head>
+        <body>
+          <textarea>
+            <link rel="stylesheet" href="#{href}">
+            <div class="main-content-wrap"><div class="paragraph"><p>hi</p></div></div>
+          </textarea>
+        </body></html>
+      HTML
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # MEDIUM-4. The nested-directory guard added for stylesheet/script refs
+  # in round 3 (`resolves_within_site_dir?`, using `.file?`) never touched
+  # this SEPARATE search-index check, which still used `.exist?` --
+  # `.exist?` is true for a directory, so a directory happening to sit at
+  # `assets/js/search-data.json` satisfied the requirement without a real
+  # search index ever being built.
+  it 'reports the search index missing when a directory sits at its path instead of a file' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      search_index = File.join(site_dir, 'assets/js/search-data.json')
+      FileUtils.rm(search_index)
+      FileUtils.mkdir_p(search_index)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'asset: search index "assets/js/search-data.json" missing'
+      )
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML

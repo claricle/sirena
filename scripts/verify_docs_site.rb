@@ -53,18 +53,22 @@ module Sirena
     # `bundle exec` -- pulling in a gem changes that design decision and
     # is bigger than this fix.
     class TagTokenizer
-      # `script`/`style` content is raw TEXT per the HTML5 spec -- a
-      # literal `<` inside inline JS or CSS is not a tag. `template`
-      # content IS real markup, but it is INERT: the browser never
-      # renders it and JS must clone it in before it counts as part of
-      # the page, so a stylesheet link or class living only inside a
-      # `<template>` has not actually shipped. Both cases are handled
-      # the same way here -- skip straight to the matching close tag --
-      # because for THIS verifier's purpose (is markup really live) an
-      # untokenized child is the correct outcome for either reason.
-      RAW_TEXT_ELEMENTS = %w[script style].freeze
-      INERT_ELEMENTS = %w[template].freeze
-      SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + INERT_ELEMENTS).freeze
+      # `script`/`style`/`textarea` content is raw TEXT per the HTML5 spec
+      # -- a literal `<` inside inline JS, CSS or a textarea's placeholder
+      # value is not a tag, and none of the three can contain a real
+      # nested instance of itself (the first matching close tag always
+      # ends it). `template` content IS real markup, but it is INERT: the
+      # browser never renders it and JS must clone it in before it counts
+      # as part of the page, so a stylesheet link or class living only
+      # inside a `<template>` has not actually shipped -- and unlike the
+      # raw-text elements, `<template>` genuinely CAN nest as real markup,
+      # so skipping it needs to track depth rather than stop at the first
+      # close tag, or a `<template><template>...</template>...</template>`
+      # would resume tokenizing the outer template's still-inert tail as
+      # if it were live.
+      RAW_TEXT_ELEMENTS = %w[script style textarea].freeze
+      NESTABLE_INERT_ELEMENTS = %w[template].freeze
+      SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS).freeze
       TAG_NAME = /[a-zA-Z][\w-]*/
       ATTR_NAME = /[a-zA-Z_:][\w:.-]*/
 
@@ -137,11 +141,31 @@ module Sirena
       end
 
       # See SKIPPED_CONTENT_ELEMENTS above for why both raw-text and
-      # inert elements skip to their close tag unscanned.
+      # inert elements skip to their close tag unscanned, and why only
+      # NESTABLE_INERT_ELEMENTS needs depth tracking to find the RIGHT
+      # close tag rather than the first one.
       def skip_uninspected_content(tag_name)
         return unless SKIPPED_CONTENT_ELEMENTS.include?(tag_name)
 
-        @scanner.scan_until(/<\/#{tag_name}\s*>/i)
+        if NESTABLE_INERT_ELEMENTS.include?(tag_name)
+          skip_nestable_content(tag_name)
+        else
+          @scanner.scan_until(/<\/#{tag_name}\s*>/i)
+        end
+      end
+
+      # Tracks nesting depth across every open/close boundary of `tag_name`
+      # so a `<template>` inside a `<template>` closes only the inner one.
+      # An unterminated tag (malformed input) consumes to end-of-string,
+      # matching the raw-text branch's behaviour on the same input.
+      def skip_nestable_content(tag_name)
+        boundary = /<(\/?)#{tag_name}\b[^>]*>/i
+        depth = 1
+        while depth.positive?
+          return unless @scanner.scan_until(boundary)
+
+          depth += @scanner[1] == '/' ? -1 : 1
+        end
       end
     end
 
@@ -336,7 +360,7 @@ module Sirena
         failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
       end
 
-      if @config['search_enabled'] == true && !@site_dir.join(SEARCH_INDEX_PATH).exist?
+      if @config['search_enabled'] == true && !@site_dir.join(SEARCH_INDEX_PATH).file?
         failures << "asset: search index #{SEARCH_INDEX_PATH.inspect} missing"
       end
 
