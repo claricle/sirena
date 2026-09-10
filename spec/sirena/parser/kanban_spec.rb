@@ -335,6 +335,24 @@ RSpec.describe Sirena::Parser::KanbanParser do
       end
     end
 
+    context 'with a malformed quoted label on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. When the quoted
+      # alternative in `round_text` failed - an empty body, or no closing
+      # quote at all - the plain alternative silently accepted the leading
+      # `"` as an ordinary character, so `col("")` rendered the literal
+      # text `""` instead of failing. Mermaid rejects both inputs
+      # (`Expecting 'NODE_DESCR', got 'NODE_DEND'`), so Sirena must too.
+      it 'refuses an empty quoted body rather than rendering literal quotes' do
+        expect { parser.parse("kanban\n  col(\"\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an unterminated quoted body rather than keeping the leading quote' do
+        expect { parser.parse("kanban\n  col(\"unterminated)\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
     context 'with round-shaped items and a blank row together (corpus 031)' do
       let(:source) do
         "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"

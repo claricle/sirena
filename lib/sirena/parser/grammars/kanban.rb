@@ -113,7 +113,7 @@ module Sirena
         # bracketed shape in this grammar family.
         rule(:round_text) do
           (str('"') >> match('[^"]').repeat(1).as(:text) >> str('"')) |
-            match('[^)]').repeat(1).as(:text)
+            (str('"').absent? >> match('[^)]').repeat(1).as(:text))
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label

@@ -70,12 +70,18 @@ module Sirena
 
           # A shape with no id (`(text)`) never captures `:id`. Mermaid
           # still draws it - it auto-assigns one - so this does too,
-          # deterministically: a random id would vary in digit length, and
-          # TextMeasurement sizes text from it, so the same source would
-          # render at a different size between runs. Same reasoning as
-          # Transforms::Block.anonymous_id; the hyphen keeps generated ids
-          # out of the author's namespace, since identifier_char is
-          # `[a-zA-Z0-9_]` and can never spell one.
+          # deterministically: parsing the same source twice must produce
+          # the same diagram, and a random id would break that on every
+          # call (see the `kanban-1` / `kanban-2` assertions in
+          # spec/sirena/parser/kanban_spec.rb). Unlike
+          # Transforms::Block.anonymous_id, this id is never displayed -
+          # `unlabelled_shaped_item` always captures its own `:text`, so
+          # `resolve_id`'s output never reaches TextMeasurement and its
+          # length has no effect on layout (measured: extending it by
+          # 1,000 characters left the rendered SVG byte-identical). The
+          # hyphen keeps generated ids out of the author's namespace,
+          # since identifier_char is `[a-zA-Z0-9_]` and can never spell
+          # one.
           def resolve_id(id_slice)
             return id_slice.to_s if id_slice
 
