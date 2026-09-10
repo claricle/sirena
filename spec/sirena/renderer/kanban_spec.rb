@@ -303,18 +303,58 @@ RSpec.describe Sirena::Renderer::Kanban do
       # ATTRIBUTES that make a hard break or an italic run visually correct
       # actually reach the output XML. A mutation nil-ing every tspan's `x`
       # (or `font_style`) left the suite green before this example existed.
+      #
+      # Mutation-check: change `build_markdown_tspans` to `t.x = x` -> `t.x
+      # = 0`. Watched red with the presence-only `not_to be_nil` in place
+      # (proving that assertion alone caught nothing); asserting the actual
+      # value (card x 10 + document padding 40 + card text inset 10) is what
+      # catches it.
       it 'carries x on the line-starting tspan after a hard break, and font-style on an italic run' do
         xml = renderer.render(layout_with(card_text: "Line one\nLine two")).to_xml
         parsed = REXML::Document.new(xml)
         second_line = REXML::XPath.first(parsed, '//tspan[text()="Line two"]')
 
-        expect(second_line.attributes['x']).not_to be_nil
+        expect(second_line.attributes['x']).to eq('60.0')
         expect(second_line.attributes['dy']).to eq('1.2em')
 
         italic_xml = renderer.render(layout_with(card_text: 'Hello *urgent*')).to_xml
         italic_run = REXML::XPath.first(REXML::Document.new(italic_xml), '//tspan[text()="urgent"]')
 
         expect(italic_run.attributes['font-style']).to eq('italic')
+      end
+
+      # Full-render coverage gap closed: every example above renders at
+      # most ONE styling property per tspan through the actual XML. Nothing
+      # exercised two properties landing on the SAME tspan through the real
+      # `Renderer::Kanban#render` -> `to_xml` path — only `parse_lines`-level
+      # `Run` structs were checked for that combination.
+      #
+      # Mutation-check: change `build_markdown_tspans`'s independent `if
+      # run.bold ...` / `if run.italic ...` to an `if`/`elsif` pair.
+      # Watched red: the single tspan carries `font-style="italic"` but
+      # loses `font-weight="bold"`.
+      it 'renders ***both*** as one tspan carrying both bold and italic' do
+        xml = renderer.render(layout_with(card_text: '***both***')).to_xml
+        run = REXML::XPath.first(REXML::Document.new(xml), '//tspan[text()="both"]')
+
+        expect(run.attributes['font-weight']).to eq('bold')
+        expect(run.attributes['font-style']).to eq('italic')
+      end
+
+      # Mutation-check: move the `font_weight`/`font_style` assignments
+      # inside the `if new_line` branch's guard so a line-starting run's
+      # OWN styling is skipped (only the `x`/`dy` reset survives). Watched
+      # red: the second tspan ("b", which is both line-starting AND bold)
+      # loses `font-weight="bold"` while the first ("a") keeps it.
+      it 'keeps bold on both halves of a bold run split by a hard break' do
+        xml = renderer.render(layout_with(card_text: "**a\nb**")).to_xml
+        parsed = REXML::Document.new(xml)
+        first_half = REXML::XPath.first(parsed, '//tspan[text()="a"]')
+        second_half = REXML::XPath.first(parsed, '//tspan[text()="b"]')
+
+        expect(first_half.attributes['font-weight']).to eq('bold')
+        expect(second_half.attributes['font-weight']).to eq('bold')
+        expect(second_half.attributes['dy']).to eq('1.2em')
       end
     end
   end
