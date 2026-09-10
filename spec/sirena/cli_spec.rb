@@ -63,23 +63,37 @@ RSpec.describe Sirena::Cli do
       expect(&rendering(NotImplementedError)).to raise_error(NotImplementedError)
     end
 
-    # `String.new(capacity:)` fails the allocation at the VM level before
-    # Ruby's `raise` machinery ever runs, so the resulting NoMemoryError
-    # never gets a backtrace populated -- unlike every other exception in
-    # this file, which goes through a real `raise` and always has one.
-    # `--verbose` asking `handle_error` to print that backtrace must not
-    # itself crash the CLI.
+    # A real allocation can reach the VM's C-level memory error path
+    # before `raise` ever runs, and that path skips backtrace
+    # population -- so `NoMemoryError#backtrace` can be nil, unlike
+    # every other exception in this file. `--verbose` asking
+    # `handle_error` to print that backtrace must not itself crash the
+    # CLI.
     #
-    # The allocation has to happen INSIDE the stubbed call (a block
-    # implementation), not via `and_raise(instance)`: `and_raise` performs
-    # its own `raise`, and Ruby's `raise` populates a nil backtrace at
-    # the point it re-raises from -- which would silently give this
-    # example a real backtrace and test nothing. Confirmed directly: an
-    # already-nil-backtrace exception handed to `and_raise` arrives at
-    # the rescue WITH a backtrace, populated by `and_raise`'s own raise.
+    # `String.new(capacity: 2**62)` used to be how this was forced, but
+    # that depends on the platform's C `long`: on Windows (`LLP64`,
+    # 32-bit `long`) the same call fails converting the argument and
+    # raises `RangeError: bignum too big to convert into 'long'`
+    # instead, WITH a normal backtrace, never reaching the allocator at
+    # all -- confirmed on PR #36's Windows CI (Ruby 3.3/3.4/4.0, all
+    # three windows-latest jobs failed on the message and the missing
+    # blank line; macOS and ubuntu, all three Rubies, passed). So the
+    # old version pinned a platform's argument-conversion behaviour,
+    # not the property this example is named for.
+    #
+    # Stubbing `#backtrace` on the exception instance is the portable
+    # replacement: it overrides the reader, so it returns nil no matter
+    # how the exception is raised. `and_raise(instance)` performs its
+    # own `raise`, which sets a real backtrace internally, but the
+    # stub is a method override and wins regardless -- confirmed
+    # directly, `e.backtrace` still reads nil after the exception has
+    # passed through `and_raise`'s `raise`. No VM allocation, no
+    # platform dependency.
     it 'reports a backtrace-less exhaustion under --verbose without crashing' do
+      exhausted = NoMemoryError.new('failed to allocate memory')
+      allow(exhausted).to receive(:backtrace).and_return(nil)
       fake_command = instance_double(Sirena::Commands::RenderCommand)
-      allow(fake_command).to receive(:run) { String.new(capacity: 2**62) }
+      allow(fake_command).to receive(:run).and_raise(exhausted)
       allow(Sirena::Commands::RenderCommand).to receive(:new)
         .and_return(fake_command)
 
