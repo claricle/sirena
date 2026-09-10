@@ -48,9 +48,14 @@ module ExampleTasks
       source = File.read(mmd_file)
       relative_path = mmd_file.sub(examples_dir + '/', '')
       expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(relative_path)
+      # Read outside the render-failure rescue below, the same as generation:
+      # a malformed .yml is a metadata problem, not evidence the source fails
+      # to render, and folding it into the rescue gave a bad .yml on an
+      # allowlisted source the same "known unrenderable" pass as a genuine
+      # render failure — so validation reported success on broken metadata.
+      theme = theme_for(mmd_file)
 
       begin
-        theme = theme_for(mmd_file)
         Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
         if expected_unrenderable
           unexpectedly_renderable << relative_path
@@ -223,28 +228,27 @@ module ExampleTasks
     orphans.size
   end
 
-  # A source that stops rendering must not keep shipping its old SVG. Leaving
-  # it behind means the packaged output is still there, still valid-looking,
-  # and no longer true. The conformance gate detects a newly failing source
-  # either way by matching the unrenderable sources by name; deletion is about
-  # not shipping a stale picture, not about detection.
-  # `started_at` is when the enclosing run began generating, threaded in from
-  # the caller rather than read here: a run that recorded this failure, then
-  # paused before reaching cleanup while another run finished and wrote a good
-  # SVG to the very same path, must not destroy that fresh output on the
-  # strength of its own stale observation. An SVG last written at or after
-  # this run started cannot be the stale file this run is entitled to remove.
-  def remove_failed_svg(svg_file, examples_dir, started_at)
-    return unless File.exist?(svg_file)
-    return unless manageable?(examples_dir, svg_file)
+  # The SVG beside a source EXPECTED_UNRENDERABLE_SOURCES names. Such a source
+  # never renders, so any SVG still sitting beside it is a leftover from
+  # before the source was added to that list — stale in exactly the way an
+  # orphan is, just with its .mmd still present, so orphan_svgs' "no source"
+  # test does not catch it.
+  def known_unrenderable_svgs(examples_dir)
+    root = verified_root(examples_dir)
+    EXPECTED_UNRENDERABLE_SOURCES
+      .map { |source| File.join(root, source.sub(/\.mmd\z/, '.svg')) }
+      .select { |svg| plain_svg?(svg) }
+      .select { |svg| manageable?(examples_dir, svg) }
+      .sort
+  end
 
-    if File.mtime(svg_file) >= started_at
-      puts "    kept #{File.basename(svg_file)}, written after this run started"
-      return
+  def prune_known_unrenderable_svgs(examples_dir)
+    stale = known_unrenderable_svgs(examples_dir)
+    stale.each do |svg_file|
+      File.delete(svg_file)
+      puts "    removed #{svg_file.sub("#{examples_dir}/", '')}, beside a source that never renders"
     end
-
-    File.delete(svg_file)
-    puts "    removed #{File.basename(svg_file)}, which no longer renders"
+    stale.size
   end
 
   # Raised rather than exiting the process: this is a plain library method a
@@ -256,7 +260,18 @@ module ExampleTasks
   # rake task below may decide an exit status.
   class ValidationFailed < StandardError; end
 
-  def handle_failed_svgs(failed_renders, examples_dir, started_at)
+  # A source that stops rendering must not keep shipping its old SVG looking
+  # still valid. But :generate runs concurrently with nothing standing guard,
+  # so deleting HERE is exactly the write this run cannot prove is safe: three
+  # rounds of guards (a SystemCallError re-raise, an mtime check, moving
+  # metadata reads outside the rescue) each closed one race and opened
+  # another — a paused run's stale mtime check firing after a concurrent
+  # writer's fresh SVG, and a sidecar failure elsewhere still reaching this
+  # path. The capability is removed rather than guarded a fourth time: this
+  # method only reports, so nothing under :generate can delete a file it did
+  # not just write. Deleting the stale SVG is `rake examples:prune`'s job — a
+  # deliberate, standalone run with no concurrent writer to race.
+  def handle_failed_svgs(failed_renders, examples_dir)
     unexpected_sources = failed_renders.map(&:first) - EXPECTED_UNRENDERABLE_SOURCES
     unless unexpected_sources.empty?
       puts "\n⚠️  Unexpected render failure: example sources failed to render."
@@ -265,7 +280,12 @@ module ExampleTasks
       raise UnexpectedRenderFailure, "unexpected render failure: #{unexpected_sources.sort.join(', ')}"
     end
 
-    failed_renders.map(&:last).each { |svg_file| remove_failed_svg(svg_file, examples_dir, started_at) }
+    stale = failed_renders.map(&:last).select { |svg_file| File.exist?(svg_file) }
+    return if stale.empty?
+
+    puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still packaged:"
+    stale.each { |svg_file| puts "    #{svg_file.delete_prefix("#{examples_dir}/")}" }
+    puts "   Run 'rake examples:prune' to delete them."
   end
 
   # A render that produced no document must not destroy the document already
@@ -402,11 +422,10 @@ namespace :examples do
       exit 1
     end
 
-    started_at = Time.now
     total_generated, failed_renders = ExampleTasks.generate_examples(examples_dir)
 
     begin
-      ExampleTasks.handle_failed_svgs(failed_renders, examples_dir, started_at)
+      ExampleTasks.handle_failed_svgs(failed_renders, examples_dir)
     rescue ExampleTasks::UnexpectedRenderFailure
       exit 1
     end
@@ -417,13 +436,17 @@ namespace :examples do
     puts "=" * 60
   end
 
-  desc "Delete example SVGs whose source is gone (destructive, deliberate)"
+  desc "Delete example SVGs whose source is gone or never renders (destructive, deliberate)"
   task :prune do
     examples_dir = File.expand_path('../../examples', __dir__)
 
     puts "Pruning example SVGs with no source..."
     removed = ExampleTasks.prune_orphan_svgs(examples_dir)
     puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
+
+    puts "\nPruning example SVGs beside a source that never renders..."
+    removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
+    puts removed.zero? ? "Nothing to prune." : "Removed #{removed} stale SVG(s)."
   end
 
   desc "Copy generated examples to docs/assets/examples"

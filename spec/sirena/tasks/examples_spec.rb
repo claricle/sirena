@@ -139,12 +139,13 @@ RSpec.describe ExampleTasks do
     end
   end
 
-  # The only thing standing between a source that stops rendering and the gem
-  # shipping its stale picture forever. Deleting the call in :generate left the
-  # whole suite green before these.
+  # generate never deletes a stale SVG itself — it only reports one, so a run
+  # racing a concurrent writer can never destroy fresh output. Deleting is
+  # `.prune_known_unrenderable_svgs`'s job, exercised in its own describe
+  # block below.
   describe '.handle_failed_svgs' do
-    def handle(failures, started_at = Time.now)
-      described_class.handle_failed_svgs(failures, examples_dir, started_at)
+    def handle(failures)
+      described_class.handle_failed_svgs(failures, examples_dir)
     end
 
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
@@ -152,11 +153,11 @@ RSpec.describe ExampleTasks do
     # hand let a reorder of the constant pair the two up wrongly.
     let(:expected_svg) { expected_source.sub(/\.mmd\z/, '.svg') }
 
-    it 'deletes the stale SVG of a source that is expected not to render' do
+    it 'reports, but does not delete, the stale SVG of a source that is expected not to render' do
       svg = write(expected_svg)
 
-      expect { handle([[expected_source, svg]]) }.to output.to_stdout
-      expect(File).not_to exist(svg)
+      expect { handle([[expected_source, svg]]) }.to output(/no longer render.*prune/m).to_stdout
+      expect(File).to exist(svg)
     end
 
     it 'says nothing when the stale SVG is already gone' do
@@ -165,23 +166,21 @@ RSpec.describe ExampleTasks do
       expect { handle([[expected_source, missing]]) }.not_to output.to_stdout
     end
 
-    # A run that recorded this failure, then paused before reaching cleanup
-    # while another run finished and wrote a good SVG to the same path, must
-    # not destroy that fresh output on the strength of its own stale
-    # observation. `write` sets the file's mtime to now, strictly after
-    # `started_at` was captured, which is exactly the shape of a second run's
-    # output landing after the first run began.
-    it "keeps another run's SVG that was written after this run started" do
-      started_at = Time.now
-      sleep 0.05
+    # A run that recorded this failure can race a concurrent run finishing and
+    # writing a good SVG to the same path. Nothing here can distinguish the
+    # two, which is exactly why deletion does not happen in this path at all:
+    # the concurrent writer's fresh output survives by construction, not by a
+    # timing check.
+    it "never touches another run's SVG, even one written after this run started" do
       svg = write(expected_svg, '<svg>written by another run</svg>')
 
-      expect { handle([[expected_source, svg]], started_at) }.to output(/kept/).to_stdout
+      handle([[expected_source, svg]])
+
       expect(File.read(svg)).to eq('<svg>written by another run</svg>')
     end
 
     # An unexpected failure is a regression, not a cleanup. Raising before any
-    # delete is what keeps a real breakage from quietly erasing the evidence.
+    # report is what keeps a real breakage from being read as routine.
     # A plain StandardError, not SystemExit: this is a library method a
     # caller can require and call directly, and it must not end that
     # caller's whole process.
@@ -208,6 +207,55 @@ RSpec.describe ExampleTasks do
 
       expect { handle([]) }.not_to raise_error
       expect(File).to exist(svg)
+    end
+  end
+
+  # The deliberate, standalone counterpart to .handle_failed_svgs' report: a
+  # human runs this with no concurrent :generate to race, so it is the only
+  # place a stale known-unrenderable SVG is actually removed.
+  describe '.known_unrenderable_svgs and .prune_known_unrenderable_svgs' do
+    let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
+    let(:expected_svg) { expected_source.sub(/\.mmd\z/, '.svg') }
+
+    it 'finds the stale SVG beside a source that never renders' do
+      svg = write(expected_svg)
+      write(expected_source)
+
+      expect(described_class.known_unrenderable_svgs(examples_dir)).to eq([svg])
+    end
+
+    it 'ignores a source that renders normally' do
+      write('flowchart/01-basic.svg')
+      write('flowchart/01-basic.mmd')
+
+      expect(described_class.known_unrenderable_svgs(examples_dir)).to eq([])
+    end
+
+    it 'deletes the stale SVG and reports how many it removed' do
+      svg = write(expected_svg)
+
+      expect(described_class.prune_known_unrenderable_svgs(examples_dir)).to eq(1)
+      expect(File).not_to exist(svg)
+    end
+
+    it 'does nothing when there is no stale SVG to prune' do
+      expect(described_class.prune_known_unrenderable_svgs(examples_dir)).to eq(0)
+    end
+
+    # Same containment discipline as every other write path here: a symlink
+    # sitting at the expected SVG path resolves somewhere this task has no
+    # claim on, so it must not be followed.
+    it 'refuses a stale SVG slot that is a symlink out of the tree' do
+      outside = Dir.mktmpdir('sirena-outside')
+      target = File.join(outside, 'victim.svg')
+      File.write(target, '<svg>outside</svg>')
+      FileUtils.mkdir_p(File.dirname(File.join(examples_dir, expected_svg)))
+      File.symlink(target, File.join(examples_dir, expected_svg))
+
+      expect(described_class.prune_known_unrenderable_svgs(examples_dir)).to eq(0)
+      expect(File.exist?(target)).to be(true)
+    ensure
+      FileUtils.remove_entry(outside) if outside
     end
   end
 
@@ -657,11 +705,31 @@ RSpec.describe ExampleTasks do
         .to raise_error(ExampleTasks::ValidationFailed, /validation failed/)
     end
 
-    it 'does not raise SystemExit, which would kill an embedding host' do
-      write('flowchart/01-broken.mmd', "flowchart TD\n  A --> \n")
+    # Malformed metadata is an operational failure, not evidence the source
+    # fails to render. Reading it inside the render-failure rescue let a bad
+    # .yml on an ordinary source pass as an ordinary render failure — the
+    # right classification here, but the wrong reason, and the next example
+    # proves why that distinction matters.
+    it 'propagates a metadata error instead of treating it as a render failure' do
+      write('flowchart/01-basic.mmd', "flowchart TD\n  A --> B\n")
+      write('flowchart/01-basic.yml', "theme: [\n")
 
       expect { described_class.validate_examples(examples_dir) }
-        .not_to raise_error(SystemExit)
+        .to raise_error(Psych::SyntaxError)
+    end
+
+    # The defect this closes: on an EXPECTED_UNRENDERABLE_SOURCES entry, a
+    # malformed .yml used to be caught by the same rescue that classifies a
+    # genuine "known unrenderable" render failure, so validation counted it as
+    # K and reported success — silently hiding a broken sidecar file behind a
+    # documented one.
+    it 'does not report success when an expected-unrenderable source has malformed metadata' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      write(source_path, "gantt\n  title Broken\n")
+      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: [\n")
+
+      expect { described_class.validate_examples(examples_dir) }
+        .to raise_error(Psych::SyntaxError)
     end
   end
 end
