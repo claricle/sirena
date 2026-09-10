@@ -409,4 +409,142 @@ RSpec.describe Sirena::Parser::SequenceParser do
       expect(parser.parse(source).notes.map(&:text)).to eq([""])
     end
   end
+
+  # PR #38 Codex round (2 High, 3 Medium, 1 Low), all constructed against
+  # mermaid 11.16.1's own parser and lexer directly (`getDiagramFromText`
+  # + `mermaid.render`, actor text read off the rendered SVG).
+  describe "the dash-fused () identity" do
+    # High: a trailing dash fuses `()` into the actor's OWN identity
+    # instead of being read as the central-connection decoration — base
+    # stripped it unconditionally and created a phantom actor "A-" beside
+    # the declared "A- ()". Measured: `db.getActors()` on this source
+    # returns exactly ["A- ()", "B"].
+    it "fuses a dash-then-space-then-() into the actor identity, matching mmdc" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A- ()\nA- ()->>B: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(["A- ()", "B"])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id] })
+        .to eq([["A- ()", "B"]])
+    end
+
+    it "fuses a dash directly touching () with no space, matching mmdc" do
+      diagram = parser.parse("sequenceDiagram\nA-()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()", "B"])
+    end
+
+    # A dash-less () must still discard as a plain decoration — the
+    # regression this fix must not reopen (already covered above by the
+    # 010 fixture; pinned again here as the minimal contrast case, right
+    # next to the two it is easy to confuse it with).
+    it "still discards () with no preceding dash as a plain decoration" do
+      diagram = parser.parse("sequenceDiagram\nA ()->>B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A B])
+    end
+  end
+
+  describe "the whitespace-sensitive as-alias split in a declaration" do
+    # High: mermaid's own ID-then-AS lexer rule
+    # (`[^<>:\n,;@\s]+(?=\s+as\s)`) requires the id before ` as ` to have
+    # NO embedded whitespace. Base split at the FIRST ` as ` regardless,
+    # truncating the id to "A B" while the message line (which correctly
+    # never splits on `as`) kept using the full "A B as C" — two
+    # different identities for what mermaid treats as one actor. Measured:
+    # `db.getActors()` on this source returns exactly ["A B as C", "D"].
+    it "does not split a multiword declaration at ' as ', matching mmdc" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A B as C\nA B as C->>D: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(["A B as C", "D"])
+      expect(diagram.messages.map { |m| [m.from_id, m.to_id] })
+        .to eq([["A B as C", "D"]])
+    end
+
+    it "still splits a whitespace-free declaration id at ' as '" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A as C\nA->>D: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A D])
+      expect(diagram.participants.map(&:label)).to eq(%w[C D])
+    end
+  end
+
+  describe "message actor character exclusions — > everywhere, \\ at the lead" do
+    # Medium: `>` was excluded only from the leading-character set, so an
+    # interior `>` kept reading past it and merged "B>C" into one actor.
+    # Mermaid excludes `>` throughout, not just at the lead. Measured:
+    # mermaid raises on this source.
+    it "rejects an interior > in a message actor name, matching mmdc" do
+      expect { parser.parse("sequenceDiagram\nA->>B>C: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # A leading backslash opens three reversed-arrow spellings (`\|-`,
+    # `\|--`, `\\-`, `\\--`), the same reason `/` is already excluded at
+    # the lead. Measured: mermaid raises on this source.
+    it "rejects a message operand opening with a backslash, matching mmdc" do
+      expect { parser.parse("sequenceDiagram\nA->>\\B: m\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  describe "the bare @ ban in a declaration id" do
+    # Medium: base stopped a declaration id only at `@{`, leaving a bare
+    # `@` as ordinary id material. Mermaid bans `@` outright. Measured:
+    # mermaid raises on this source.
+    it "rejects a bare @ in a declaration id, matching mmdc" do
+      expect { parser.parse("sequenceDiagram\nparticipant A@B\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "still parses @{...} shape metadata right after a declaration id" do
+      diagram = parser.parse(
+        "sequenceDiagram\nparticipant A@{\"type\":\"boundary\"}\nA->>B: m\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A B])
+    end
+  end
+
+  describe "a central connection never combines with an activation suffix" do
+    # Medium: base's grammar let the SECOND `central_connection.maybe`
+    # match after an activation suffix had already been consumed,
+    # accepting a combination mermaid rejects regardless of which side
+    # carries which. Measured: mermaid raises on all three orderings
+    # below ("Expecting 'ACTOR'"/"'+'").
+    ["A->>+()B: m", "A->>()+B: m", "A()->>+B: m"].each do |source|
+      it "rejects #{source.inspect}, matching mmdc" do
+        expect { parser.parse("sequenceDiagram\n#{source}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # `A-()->>+B` only looks like a counterexample: mermaid accepts it
+    # because the `()` there is fused into the FROM actor's own identity
+    # (the dash-fusion fix above), not a real central connection — so the
+    # activation suffix has nothing to conflict with. Asserting only
+    # "does not raise" would stay green for a fix that dropped the
+    # activation record instead of routing it past the central-connection
+    # ban; the activation record itself is the property being claimed.
+    it "still activates through a dash-fused () identity, matching mmdc" do
+      diagram = parser.parse(
+        "sequenceDiagram\nA-()->>+B: m\ndeactivate B\n"
+      )
+
+      expect(diagram.participants.map(&:id)).to eq(["A-()", "B"])
+      expect(diagram.activations.map { |a| [a.participant_id, a.start_index, a.end_index] })
+        .to eq([["B", 0, 1]])
+    end
+
+    it "still accepts a plain central connection with no activation suffix" do
+      diagram = parser.parse("sequenceDiagram\nA->>()B: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A B])
+    end
+  end
 end

@@ -64,11 +64,15 @@ module Sirena
             alias_keyword | str('@{') | newline
         end
 
-        # `+` and `<` are never actor-name material, in any position —
-        # mermaid rejects `participant A+B` and `participant A<B` outright,
-        # not just where they would collide with the activation suffix
-        # (`A->>+B`) or an arrow spelling (`<<->>`). Measured against
-        # mermaid 11.16.1's own parser directly.
+        # `+` and `<` are never `actor_name` material (used by note/activate/
+        # deactivate references) — they would collide with the activation
+        # suffix (`A->>+B`) or an arrow spelling (`<<->>`). This does NOT
+        # generalise to a `participant`/`actor` DECLARATION: a declaration
+        # has no arrow to collide with, and mermaid accepts `participant
+        # A+B` outright (id "A+B") — see `declaration_stop` below, which
+        # bans `<>` but deliberately not `+`. Measured against mermaid
+        # 11.16.1's own parser directly; a stale version of this comment
+        # once claimed `participant A+B` was rejected too.
         #
         # A dash is consumed unless the very next thing is another dash or
         # the start of a genuine arrow — that is the only real ambiguity a
@@ -113,14 +117,39 @@ module Sirena
         # A+B`, `participant /B`, `participant )B`, `participant |B` and
         # `participant A--B` all succeed with those literal ids; only `<`
         # and `>` are ever rejected.
+        # Bare `@` is banned outright, not just the `@{` shape-metadata
+        # opener — measured against mermaid 11.16.1: `participant A@B`
+        # raises `Expecting 'ACTOR', got 'INVALID'`. Banning only `@{`
+        # left a bare `@` as ordinary id material, which mermaid never
+        # accepts (`shape_metadata` below still matches `@{...}` right
+        # after this stop point when metadata is actually present).
         rule(:declaration_stop) do
           match['<>'] | colon | comma | semicolon | str('%%') |
-            alias_keyword | str('@{') | newline
+            str('@') | newline
         end
 
         rule(:declaration_char) { declaration_stop.absent? >> any }
 
-        rule(:declaration_name) { declaration_char.repeat(1) }
+        # The `as`-alias split only fires when the id BEFORE it has no
+        # embedded whitespace — mermaid's own ID-then-AS lexer rule
+        # (`[^<>:\n,;@\s]+(?=\s+as\s)`) excludes whitespace from that id
+        # entirely. When the id DOES contain whitespace, `as` is not a
+        # keyword boundary and the whole thing — "as" included — stays one
+        # id. Measured against mermaid 11.16.1 directly:
+        #   `participant A as C`     -> id "A", label "C" (alias applies)
+        #   `participant A B as C`   -> id "A B as C", no label at all
+        # `declaration_word_char` is deliberately narrower than
+        # `declaration_char` (it also excludes whitespace) so the
+        # lookahead below only fires on a whitespace-free run, exactly
+        # matching that lexer rule.
+        rule(:declaration_word_char) do
+          (declaration_stop | space).absent? >> any
+        end
+
+        rule(:declaration_name) do
+          (declaration_word_char.repeat(1) >> alias_keyword.present?) |
+            declaration_char.repeat(1)
+        end
 
         # A message endpoint sits next to an arrow, so it keeps
         # `actor_char`'s arrow-safety, but two of its restrictions are
@@ -143,14 +172,42 @@ module Sirena
             str('@{') | lparen | rparen | newline
         end
 
+        # A trailing dash fuses with `()` into the actor's OWN identity
+        # instead of being read as the central-connection decoration —
+        # measured against mermaid 11.16.1's own ACTOR lexer regex
+        # directly (`[^\/\\+()+<->:\n,;]+((?!(...|\(\)))[\-]*[^+<->:\n,;]+)*`):
+        # a `()` that follows a dash is swallowed by the same continuation
+        # branch that swallows the dash, so it is never offered to the
+        # bare-`()` central-connection alternative at all.
+        #   `A ()->>B: m`   -> actors "A", "B"        (no dash before `()`)
+        #   `A- ()->>B: m`  -> actor  "A- ()"          (dash fuses it in)
+        #   `A-()->>B: m`   -> actor  "A-()"           (no space needed)
+        # Tried before the plain dash branch below, since Parslet
+        # alternation is first-match and this is the more specific case.
+        rule(:message_actor_paren_unit) do
+          str('-') >> space.repeat >> central_connection
+        end
+
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
-            (match['^+<()-'] |
+            (message_actor_paren_unit |
+              match['^+<>()-'] |
               (str('-') >> (str('-') | message_actor_stop).absent?))
         end
 
+        # `>` joins `<` as never message-actor material, in any position —
+        # not just leading. Measured: `A->>B>C: m` raises on mermaid
+        # (`got 'INVALID'`); base only excluded `>` from the immediate
+        # arrow-tail set below, not from `message_actor_char`, so it kept
+        # reading past an interior `>` and merged `B>C` into one actor.
+        #
+        # `\` joins the arrow-tail set for the same reason `/` is already
+        # there: a name cannot OPEN with it, because it also opens the
+        # reversed-arrow spellings (`\|-`, `\|--`, `\\-`, `\\--`).
+        # Measured: `A->>\B: m` raises on mermaid (`got 'INVALID'`); base
+        # accepted it and rendered actor `"\\B"`.
         rule(:message_actor_lead) do
-          match[')|>/'].absent? >> message_actor_char
+          match[')|>/\\\\'].absent? >> message_actor_char
         end
 
         rule(:message_actor_name) do
@@ -198,12 +255,34 @@ module Sirena
         # Messages with arrows (order matters: longest patterns first)
         rule(:message) do
           message_actor_name.as(:from) >> space? >>
-            central_connection.maybe >> space? >>
-            arrow.as(:arrow) >> space? >>
-            central_connection.maybe >> space? >>
+            message_signal.as(:arrow) >> space? >>
             message_actor_name.as(:to) >> space? >>
             message_text.maybe.as(:text) >>
             line_end
+        end
+
+        # A central-connection decoration and an activation suffix never
+        # coexist on the same message — measured against mermaid 11.16.1
+        # directly: `A->>+()B`, `A->>()+B`, `A()->>+B`, `A<<->>+()B` and
+        # `A<<->>()+B` all raise ("Expecting 'ACTOR'"/"'+'"/"'-'"),
+        # whichever side carries the decoration and whichever carries the
+        # suffix. `A-()->>+B` only looks like a counterexample: there the
+        # `()` is fused into the FROM actor's own identity by
+        # `message_actor_paren_unit` above, so no real central connection
+        # reaches this rule at all, and the plain third branch below
+        # applies instead.
+        #
+        # A branch with `()` present therefore uses `arrow_base` alone —
+        # no `activation_suffix` component exists to try. Parslet
+        # alternation is first-match, so the connection branches are tried
+        # before the plain one; `central_connection` stays uncaptured
+        # here, same as before this rule existed — it is parsed and
+        # discarded either way.
+        rule(:message_signal) do
+          (central_connection >> space? >> arrow_base.as(:arrow_base) >>
+            space? >> central_connection.maybe) |
+            (arrow_base.as(:arrow_base) >> space? >> central_connection) |
+            arrow
         end
 
         # Arrow types including activation modifiers
