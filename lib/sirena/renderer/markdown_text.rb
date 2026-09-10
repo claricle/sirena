@@ -38,20 +38,46 @@ module Sirena
       # italic* end**`) produces a run that is both at once.
       Run = Data.define(:text, :bold, :italic)
 
+      # A run of text with neither `*` nor `_` can never come back styled:
+      # `Parser`'s only active span parser is `:emphasis`, and kramdown's
+      # own `EMPHASIS_START` (`Kramdown::Parser::Kramdown::Emphasis`) is
+      # `/(?:\*\*?|__?)/` — those two characters are the only way any span
+      # parser ever fires under this restricted `Parser`. Verified directly
+      # against `Parser`: escapes, entities, raw HTML and smart quotes all
+      # come back as plain `:text` regardless of length. So `parse_lines`
+      # skips kramdown entirely for such text (see the `raw.match?` guard
+      # below) — this is the cost `MAX_PARSEABLE_LENGTH` bounds for
+      # everyone else, not a separate optimization with its own risk: a
+      # markdown-free diagram (the overwhelming majority) pays zero parse
+      # cost per label regardless of how many cards it has.
+      #
       # kramdown's `:emphasis` parser backtracks: a marker that fails to
       # find a well-flanked close re-scans the remainder of the text before
       # falling back to literal text, and that re-scan can itself contain
       # more failing markers. Measured directly against `Parser` (bypassing
-      # this module's own code, to confirm the cost is kramdown's): `"**a "
-      # * 75` (300 attacker-controlled chars of ambiguous bold markers)
-      # takes ~170ms, `"**a " * 500` (2,000 chars) takes ~44s — worse than
-      # quadratic, and worse than the Unicode `String#[]` blowup this
-      # rewrite exists to fix. A kanban card's text is diagram source an
-      # attacker can shape, so this has to stay bounded regardless of what
-      # markers it contains; no real card or column label is anywhere near
-      # this long. `parse_lines` falls back to unstyled literal lines
-      # rather than calling kramdown past this length.
-      MAX_PARSEABLE_LENGTH = 200
+      # this module's own code, to confirm the cost is kramdown's, and
+      # confirming `_` counts too — kramdown's emphasis grammar treats `*`
+      # and `_` as interchangeable markers): the worst pattern found,
+      # `"**_a " * n` (mixing both marker characters so each `_` reopens
+      # kramdown's backtracking on the immediately preceding failed `**`),
+      # costs ~3.6ms at 50 chars, ~6.9ms at 60, ~9.3ms at 70, ~14ms at 80 —
+      # four other marker-density shapes tried at the same lengths
+      # (`"**a "`, `"**__a "`, `"_a*_a* "`, `"*_a "`) all cost less. At 50
+      # chars a diagram-level worst case — every one of 300 cards holding
+      # exactly this pattern at exactly this length, run through
+      # `Engine#render` end to end — costs ~1.25s total, down from ~76s
+      # measured against the previous 200-char cap. A kanban card's text is
+      # diagram source an attacker can shape, so whatever reaches kramdown
+      # has to stay bounded regardless of what markers it contains; no real
+      # card or column label with actual markup in it is anywhere near this
+      # long. `parse_lines` falls back to unstyled literal lines rather
+      # than calling kramdown past this length.
+      MAX_PARSEABLE_LENGTH = 50
+
+      # The only two characters that can ever start a span under `Parser`
+      # (see `MAX_PARSEABLE_LENGTH` above) — matches kramdown's own
+      # `Emphasis::EMPHASIS_START`.
+      EMPHASIS_MARKER = /[*_]/
 
       module_function
 
@@ -73,6 +99,7 @@ module Sirena
       def parse_lines(text)
         raw = text.to_s
         return [[]] if raw.empty?
+        return literal_lines(raw) unless raw.match?(EMPHASIS_MARKER)
         return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
 
         root, = Parser.parse(raw)
@@ -85,7 +112,24 @@ module Sirena
           when :blank
             block.value.count("\n").times { lines << [] }
           else
-            raise "unexpected kramdown block #{block.type.inspect} in a markdown label"
+            # Reachable: a line a tab or 4+ leading spaces (kramdown's own
+            # `:codeblock` block parser, excluded from `Parser`'s
+            # `@block_parsers`) matches neither `:paragraph` nor
+            # `:blank_line`, so kramdown's line-scanning fallback
+            # (`Parser::Kramdown#parse_blocks`'s `add_text` branch) appends
+            # a bare `:text` block directly under root instead of wrapping
+            # it in `:p` — no construct this restricted `Parser` can
+            # produce should crash the renderer, matching mermaid's own
+            # "unsupported construct -> literal passthrough" behavior that
+            # `literal_lines` and the disabled `codespan` span parser
+            # already give every other case in this file. That fallback
+            # block's `value` always carries exactly one trailing `\n`
+            # kramdown's own line-scan appended (verified against every
+            # shape this branch can reach); `delete_suffix` drops it so a
+            # single tab-led line doesn't gain a spurious blank line after
+            # it the way an unstripped one would.
+            literal = literal_text_of(block).delete_suffix("\n")
+            lines.concat(split_on_hard_breaks([Run.new(text: literal, bold: false, italic: false)]))
           end
         end
 
@@ -123,9 +167,30 @@ module Sirena
           when :em
             flatten_runs(child, bold: bold, italic: true)
           else
-            raise "unexpected kramdown span #{child.type.inspect} in a markdown label"
+            # Not reachable through this restricted `Parser` today (verified:
+            # escapes, entities, raw HTML and smart quotes all stay `:text`
+            # with `:emphasis` as the only active span parser) — kept as a
+            # symmetric guard against a future kramdown release adding a span
+            # node type this method doesn't already handle, matching the
+            # block-level fallback above. Degrades to literal text under
+            # whichever bold/italic context was already active at this
+            # position, rather than crashing.
+            [Run.new(text: literal_text_of(child), bold: bold, italic: italic)]
           end
         end
+      end
+
+      # Extracts a node's literal text regardless of shape: a leaf node
+      # (kramdown's own `:text`, or the fallback `:text` block
+      # `parse_lines`'s `else` produces for a line no active block parser
+      # claims) carries it directly as `value`; a structural node with none
+      # carries it on its children instead, so recurse into those.
+      #
+      # @api private
+      def literal_text_of(node)
+        return node.value if node.value.is_a?(String)
+
+        node.children.map { |child| literal_text_of(child) }.join
       end
 
       # Splits a flat run list on embedded `\n`s into line arrays, keeping

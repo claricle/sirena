@@ -113,6 +113,94 @@ RSpec.describe Sirena::Renderer::MarkdownText do
       expect(lines).to eq([[described_class::Run.new(text: '`code`', bold: false, italic: false)]])
     end
 
+    # Blocker regression guard: a tab or 4+ leading spaces matches neither
+    # kramdown's `:paragraph` parser (excludes lines starting with tab/OPT_SPACE
+    # overflow) nor `:blank_line`, and `:codeblock` isn't registered, so
+    # kramdown's own line-scanning fallback (`Parser::Kramdown#parse_blocks`'s
+    # `add_text(@src.scan(/.*\n/))` branch) appends a bare `:text` block
+    # directly under root instead of wrapping it in `:p`. Reproduced with the
+    # real CLI before this fix: `kanban\n  col[Column]\n    c1[<TAB>Indented
+    # Label]` crashed `bundle exec exe/sirena render` with "unexpected
+    # kramdown block :text in a markdown label". Ordinary diagram source, not
+    # a crafted edge case.
+    #
+    # No `*`/`_` in this text, so it never reaches kramdown at all —
+    # `parse_lines`'s marker-free early exit (below) takes it straight to
+    # `literal_lines`. Kept because it's the foreman's exact repro shape and
+    # it must still never crash; the examples further down force text
+    # through the real kramdown-based path to actually exercise the fixed
+    # `else` branch this comment describes.
+    it 'treats a tab-leading line as literal text instead of crashing' do
+      lines = described_class.parse_lines("\tIndented Label")
+
+      expect(lines).to eq([[described_class::Run.new(text: "\tIndented Label", bold: false, italic: false)]])
+    end
+
+    it 'treats a four-space-leading line as literal text instead of crashing' do
+      lines = described_class.parse_lines('    Four spaces label')
+
+      expect(lines).to eq([[described_class::Run.new(text: '    Four spaces label', bold: false, italic: false)]])
+    end
+
+    # Same shapes as the two examples above, but with a trailing unflanked
+    # `*` so the raw text contains a marker character and reaches the real
+    # kramdown-based path instead of the marker-free early exit — this is
+    # what actually exercises `parse_lines`'s fixed block-level `else`
+    # branch. Mutation-check: restore the `raise` in that branch. Watched
+    # red: both examples raise instead of returning literal text. A trailing
+    # UNFLANKED `*` (no closing partner) is required, not any marker: a
+    # well-formed pair like `*word*` resolves to a real `:em` node even
+    # inside this fallback shape (kramdown span-parses top-level fallback
+    # text same as it would inside a `:p`), which fragments the single
+    # source line into several sibling blocks — a real but separate
+    # behavior this fix doesn't need to handle differently, since mermaid
+    # itself gives none of this whitespace-leading shape any defined
+    # rendering to begin with.
+    it 'treats a tab-leading line with a marker as literal text via the real parse path' do
+      lines = described_class.parse_lines("\tIndented Label*")
+
+      expect(lines).to eq([[described_class::Run.new(text: "\tIndented Label*", bold: false, italic: false)]])
+    end
+
+    it 'treats a four-space-leading line with a marker as literal text via the real parse path' do
+      lines = described_class.parse_lines('    Four spaces label*')
+
+      expect(lines).to eq([[described_class::Run.new(text: '    Four spaces label*', bold: false, italic: false)]])
+    end
+
+    # Same fallback block, reached from a second line after a hard break
+    # rather than the first line of the text — the blank line between "a"
+    # and the tab-led "b" is what breaks kramdown's lazy paragraph
+    # continuation (verified: a tab-led SECOND line with no intervening
+    # blank stays inside the `:p` and never reaches this fallback at all).
+    # The marker on "a*" keeps the whole raw string off the early-exit path
+    # (see the two examples above) without touching the tab-led block itself.
+    it 'treats a tab-leading line after a blank line as literal text, on its own line' do
+      lines = described_class.parse_lines("a*\n\n\tb")
+
+      expect(lines).to eq([
+                            [described_class::Run.new(text: 'a*', bold: false, italic: false)],
+                            [],
+                            [described_class::Run.new(text: "\tb", bold: false, italic: false)]
+                          ])
+    end
+
+    # Guards the OTHER shape of "indented mid-label text": a four-space-led
+    # line immediately continuing a paragraph (no blank line between) stays
+    # inside kramdown's lazy `:p` continuation and never reaches the
+    # fallback block at all — the embedded `\n` still becomes an ordinary
+    # hard break, splitting into two lines exactly as it did before this
+    # fix (the leading spaces on "b" are literal content, not consumed as
+    # indentation, since no `:codeblock` parser is active to interpret them).
+    it 'keeps an indented continuation line inside the paragraph, unaffected by the fallback' do
+      lines = described_class.parse_lines("a\n    b")
+
+      expect(lines).to eq([
+                            [described_class::Run.new(text: 'a', bold: false, italic: false)],
+                            [described_class::Run.new(text: '    b', bold: false, italic: false)]
+                          ])
+    end
+
     # Mutation-check: in `split_on_hard_breaks`, join `run.text.split("\n",
     # -1)`'s parts back together instead of starting a new line per part
     # (drop the `lines << [] if index.positive?`). Watched red: one
@@ -143,14 +231,25 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # Regression guard for a kramdown-specific DoS found while building
     # this rewrite: kramdown's `:emphasis` parser backtracks on ambiguous
     # markers at worse-than-quadratic cost (measured directly against
-    # kramdown, bypassing this module: `"**a " * 500`, 2,000 chars, took
-    # ~44s). No real card or column label is anywhere near
-    # `MAX_PARSEABLE_LENGTH`, so text past it never reaches kramdown at
-    # all — mutation-check: delete the length guard in `parse_lines`.
-    # Watched red: this example still passes its length assertion but the
-    # returned run comes back styled (bold `true`) instead of literal.
+    # kramdown, bypassing this module: `"**_a " * n`, the worst pattern
+    # found, costs ~1.25s aggregate across 300 cards at exactly
+    # `MAX_PARSEABLE_LENGTH` each). No real card or column label with
+    # actual markup in it is anywhere near `MAX_PARSEABLE_LENGTH`, so text
+    # past it never reaches kramdown at all — mutation-check: delete the
+    # length guard in `parse_lines`. Watched red: this example still
+    # passes its length assertion but the run comes back split into
+    # several styled bold runs instead of one literal one.
+    #
+    # Uses well-formed `**x** ` pairs, not ambiguous single markers: kramdown
+    # never resolves `"*a " * 100` into any `:strong`/`:em` node even well
+    # under the length cap (proven directly against `Parser` above), so that
+    # shape can't tell "the fallback skipped kramdown" apart from "kramdown
+    # ran and found nothing to style" — deleting the guard would leave this
+    # example green for the wrong reason. `"**x** "` DOES parse into
+    # `:strong` nodes under the cap, so only the guard being live explains a
+    # single unstyled run here.
     it 'falls back to unstyled literal text past MAX_PARSEABLE_LENGTH, never parsing markup' do
-      long_text = "*a " * 100
+      long_text = "**x** " * 10
 
       expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
 
@@ -160,13 +259,27 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     end
 
     # The fallback still respects hard line breaks — it skips kramdown,
-    # not line-splitting.
+    # not line-splitting. A leading `*` keeps this on the LENGTH guard
+    # specifically rather than the marker-free early exit above.
     it 'still splits on hard line breaks in the unstyled fallback' do
-      long_text = "#{'x' * (described_class::MAX_PARSEABLE_LENGTH + 1)}\nsecond"
+      long_text = "*#{'x' * described_class::MAX_PARSEABLE_LENGTH}\nsecond"
 
       lines = described_class.parse_lines(long_text)
 
       expect(lines.last).to eq([described_class::Run.new(text: 'second', bold: false, italic: false)])
+    end
+
+    # Amplification High: text with no `*` character at all can still be
+    # styled, because kramdown's `:emphasis` parser also fires on `_`
+    # (`EMPHASIS_START = /(?:\*\*?|__?)/`). Mutation-check: narrow
+    # `EMPHASIS_MARKER` to `/\*/`. Watched red: this comes back as one
+    # literal run instead of one italic one, since the narrowed predicate
+    # would send underscore-only text straight to `literal_lines` without
+    # ever calling kramdown.
+    it 'still parses underscore-only italic markup through the marker-free early exit guard' do
+      lines = described_class.parse_lines('_italic_')
+
+      expect(lines).to eq([[described_class::Run.new(text: 'italic', bold: false, italic: true)]])
     end
 
     # Boundary: markup exactly at the cap still gets parsed normally.
