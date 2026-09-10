@@ -230,15 +230,11 @@ RSpec.describe Sirena::Parser::KanbanParser do
     context 'with constructs at the bare node boundary' do
       # Two directions on purpose: the accept half dies if the bare
       # alternative is removed, the refuse half dies if it is widened past an
-      # identifier. Round shapes and directives belong to later buckets and
+      # identifier. Round shapes are covered below (corpus 017, 022, 023,
+      # 031); directives (::icon, :::class) belong to a later bucket and
       # must keep failing rather than being swallowed as literal labels.
       it 'accepts a bare identifier' do
         expect(parser.parse("kanban\n  root\n").columns.map(&:id)).to eq(['root'])
-      end
-
-      it 'still refuses a round-bracket shape' do
-        expect { parser.parse("kanban\n  root(Root)\n") }
-          .to raise_error(Sirena::Parser::ParseError)
       end
 
       it 'still refuses a class directive' do
@@ -256,6 +252,185 @@ RSpec.describe Sirena::Parser::KanbanParser do
               .to raise_error(Sirena::Parser::ParseError), line
           end
         end
+      end
+    end
+
+    context 'with a round shape and no id (corpus 017)' do
+      let(:source) { "kanban\n    (root)\n" }
+
+      it 'auto-assigns an id and titles the column from the shape text' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.size).to eq(1)
+        expect(diagram.columns.first.id).to eq('kanban-1')
+        expect(diagram.columns.first.title).to eq('root')
+      end
+
+      it 'assigns the next id deterministically for a second unlabelled shape' do
+        diagram = parser.parse("kanban\n  (Col A)\n  (Col B)\n")
+        expect(diagram.columns.map(&:id)).to eq(%w[kanban-1 kanban-2])
+        expect(diagram.columns.map(&:title)).to eq(['Col A', 'Col B'])
+      end
+    end
+
+    context 'with an id and a round shape on a child (corpus 022, 023)' do
+      # 022 indents the root; 023 does not. Indentation of the root line
+      # never decides which items become columns - only the MINIMUM
+      # indentation among all items does - so both parse identically.
+      {
+        '022' => "kanban\n    root\n      theId(child1)\n",
+        '023' => "kanban\nroot\n      theId(child1)\n"
+      }.each do |corpus_id, source|
+        it "accepts the shaped child (corpus #{corpus_id})" do
+          diagram = parser.parse(source)
+          aggregate_failures do
+            expect(diagram.columns.map(&:id)).to eq(['root']), corpus_id
+            card = diagram.columns.first.cards.first
+            expect(card.id).to eq('theId'), corpus_id
+            expect(card.text).to eq('child1'), corpus_id
+          end
+        end
+      end
+    end
+
+    context 'with a quoted label on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. `shaped_item` and
+      # `unlabelled_shaped_item` captured a quoted body as literal
+      # characters, quotes included, and ended the shape at the first
+      # unquoted `)` - so a label containing one broke the parse entirely.
+      # Mirrors mindmap.rb's `square_shape`, the existing precedent for
+      # quoted content inside a bracketed shape: the quotes are stripped,
+      # and a quoted body may contain the shape's own delimiter.
+      it 'strips the quotes from an id-prefixed round shape' do
+        diagram = parser.parse("kanban\n  col(\"Hello\")\n")
+        expect(diagram.columns.first.title).to eq('Hello')
+      end
+
+      it 'strips the quotes from an unlabelled round shape' do
+        diagram = parser.parse("kanban\n  (\"Task\")\n")
+        expect(diagram.columns.first.title).to eq('Task')
+      end
+
+      it 'keeps a paren inside a quoted id-prefixed label' do
+        diagram = parser.parse("kanban\n  col(\"Todo (urgent)\")\n")
+        expect(diagram.columns.first.title).to eq('Todo (urgent)')
+      end
+
+      it 'keeps a paren inside a quoted unlabelled label' do
+        diagram = parser.parse("kanban\n  (\"Fix (today)\")\n")
+        expect(diagram.columns.first.title).to eq('Fix (today)')
+      end
+
+      it 'parses a column and a child both carrying a quoted label' do
+        diagram = parser.parse("kanban\n  col(\"Hello\")\n    (\"Task\")\n")
+        column = diagram.columns.first
+        expect(column.title).to eq('Hello')
+        expect(column.cards.first.text).to eq('Task')
+      end
+
+      it 'parses a paren inside quotes on both the column and its child, where the unquoted form failed to parse at all' do
+        diagram = parser.parse("kanban\n  col(\"Todo (urgent)\")\n    (\"Fix (today)\")\n")
+        column = diagram.columns.first
+        expect(column.title).to eq('Todo (urgent)')
+        expect(column.cards.first.text).to eq('Fix (today)')
+      end
+    end
+
+    context 'with a malformed quoted label on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. When the quoted
+      # alternative in `round_text` failed - an empty body, or no closing
+      # quote at all - the plain alternative silently accepted the leading
+      # `"` as an ordinary character, so `col("")` rendered the literal
+      # text `""` instead of failing. Mermaid rejects both inputs
+      # (`Expecting 'NODE_DESCR', got 'NODE_DEND'`), so Sirena must too.
+      it 'refuses an empty quoted body rather than rendering literal quotes' do
+        expect { parser.parse("kanban\n  col(\"\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an unterminated quoted body rather than keeping the leading quote' do
+        expect { parser.parse("kanban\n  col(\"unterminated)\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    context 'with a markdown-string body on a round-shaped item' do
+      # Not from the corpus - a Codex-constructed input. A quoted body that
+      # itself opens and closes with a backtick - `"`text`"` - is mermaid's
+      # markdown-string syntax: it strips the backtick pair and renders the
+      # content through markdown (measured against mmdc 11.12.0: `col("`Hi
+      # **urgent**`")` draws `Hi <strong>urgent</strong>`). Sirena has no
+      # markdown renderer anywhere in the codebase, so the former behaviour
+      # - matching this as an ordinary quoted body - kept the backticks as
+      # literal text and drew `` `Hi **urgent**` `` instead. Refused
+      # explicitly now, the same way the malformed bodies above are, rather
+      # than silently drawing something mermaid does not.
+      it 'refuses a backtick-wrapped quoted body on an id-prefixed shape' do
+        expect { parser.parse("kanban\n  col(\"`Hello`\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses a backtick-wrapped quoted body on an unlabelled shape' do
+        expect { parser.parse("kanban\n  (\"`Hello`\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'refuses an empty backtick-wrapped body the same way mermaid does' do
+        expect { parser.parse("kanban\n  col(\"``\")\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'keeps an ordinary quoted body that merely contains a backtick pair' do
+        diagram = parser.parse("kanban\n  col(\"Hello `code` world\")\n")
+        expect(diagram.columns.first.title).to eq('Hello `code` world')
+      end
+
+      # A body with a single, unmatched backtick - `"`Hello"` with no
+      # closing backtick before the quote - is not the markdown-string
+      # shape above, so this fix leaves it alone: it stays a literal quoted
+      # body, matching the sibling malformed-body pin two contexts up.
+      # mmdc 11.12.0 actually lexer-errors on this one too ("Unrecognized
+      # text"), a pre-existing gap this High does not cover - it is about
+      # the closed backtick pair, not a lone backtick.
+      it 'keeps a quoted body that opens with a backtick but never closes one' do
+        diagram = parser.parse("kanban\n  col(\"`Hello\")\n")
+        expect(diagram.columns.first.title).to eq('`Hello')
+      end
+    end
+
+    context 'with a shape-delimiter character in an unquoted round-shaped label' do
+      # Not from the corpus - a Codex-constructed input. `round_text`'s
+      # unquoted alternative excluded only `)`, the shape's own closer, so
+      # it accepted `(`, `]` and `}` too - mermaid's lexer treats all
+      # three as node-shape delimiters even unquoted and rejects them
+      # (measured against mmdc 11.12.0). `[` and `{` are not delimiters to
+      # mermaid there, so they stay accepted on both sides.
+      ['(', ']', '}'].each do |delimiter|
+        it "refuses an unquoted label carrying a literal #{delimiter.inspect}" do
+          expect { parser.parse("kanban\n  col(a#{delimiter}b)\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      ['[', '{'].each do |literal|
+        it "keeps an unquoted label carrying a literal #{literal.inspect}" do
+          diagram = parser.parse("kanban\n  col(a#{literal}b)\n")
+          expect(diagram.columns.first.title).to eq("a#{literal}b")
+        end
+      end
+    end
+
+    context 'with round-shaped items and a blank row together (corpus 031)' do
+      let(:source) do
+        "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]\n"
+      end
+
+      it 'keeps every card across the blank row' do
+        diagram = parser.parse(source)
+        expect(diagram.columns.map(&:id)).to eq(['root'])
+        column = diagram.columns.first
+        expect(column.title).to eq('Root')
+        expect(column.cards.map(&:id)).to eq(%w[Child a b])
+        expect(column.cards.map(&:text)).to eq(['Child', 'a', 'New Stuff'])
       end
     end
 
