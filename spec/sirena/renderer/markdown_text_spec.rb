@@ -76,4 +76,33 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                           ])
     end
   end
+
+  describe '.build_markdown_tspans' do
+    # Mutation-check: this is the bug the fix closes. Before it, a blank
+    # line (empty runs array) had no first run to hang its `dy` shift on,
+    # so the shift was silently dropped instead of carried onto the next
+    # line. Watched red: only one tspan comes back, with no `dy` at all.
+    it "carries a blank line's height onto the next line instead of dropping it" do
+      lines = described_class.parse_lines("Title\n\nSubtitle")
+
+      tspans = described_class.build_markdown_tspans(lines, x: 5)
+
+      expect(tspans.map { |t| [t.content, t.dy] }).to eq([
+                                                           ['Title', nil],
+                                                           ['Subtitle', '2.4em']
+                                                         ])
+    end
+
+    # Two blank lines in a row accumulate to three line-heights, not one.
+    it 'accumulates across more than one consecutive blank line' do
+      lines = described_class.parse_lines("A\n\n\nB")
+
+      tspans = described_class.build_markdown_tspans(lines, x: 5)
+
+      expect(tspans.map { |t| [t.content, t.dy] }).to eq([
+                                                           ['A', nil],
+                                                           ['B', '3.6em']
+                                                         ])
+    end
+  end
 end

@@ -228,6 +228,14 @@ module Sirena
       # down one line height. The very first line needs neither — it
       # starts at the parent <text> element's own x/y.
       #
+      # A blank line (`parse_lines` splitting on two adjacent `\n`s)
+      # produces an empty runs array, so it has no run to carry its own
+      # `dy`. Its line-height is carried forward as `pending_lines` and
+      # folded into the next line's leading shift instead of being
+      # dropped — two blank lines in a row shift the following line down
+      # by three line-heights (`2.4em` waiting plus its own `1.2em`), not
+      # one.
+      #
       # @param lines [Array<Array<Run>>] from `parse_lines`, already
       #   truncated if truncation applies at this call site
       # @param x [Numeric] the label's horizontal anchor, repeated on every
@@ -238,19 +246,38 @@ module Sirena
       # @return [Array<Svg::Tspan>]
       # @api private
       def build_markdown_tspans(lines, x:, base_font_weight: nil)
+        pending_lines = 0
+
         lines.each_with_index.flat_map do |runs, line_index|
+          pending_lines += 1 if line_index.positive?
+
           runs.each_with_index.map do |run, run_index|
-            new_line = line_index.positive? && run_index.zero?
+            new_line = run_index.zero? && pending_lines.positive?
 
             Svg::Tspan.new.tap do |t|
-              t.x = x if new_line
-              t.dy = "1.2em" if new_line
+              if new_line
+                t.x = x
+                t.dy = line_height_dy(pending_lines)
+                pending_lines = 0
+              end
               t.font_weight = "bold" if run.bold || base_font_weight == "bold"
               t.font_style = "italic" if run.italic
               t.content = run.text
             end
           end
         end
+      end
+
+      # `line_count * 1.2em`, computed in tenths rather than `Float`
+      # multiplication: `3 * 1.2` is `3.5999999999999996` in binary
+      # floating point, which would put a wrong `dy` in the SVG.
+      #
+      # @param line_count [Integer] number of accumulated line-heights
+      # @return [String]
+      # @api private
+      def line_height_dy(line_count)
+        tenths = line_count * 12
+        "#{tenths / 10}.#{tenths % 10}em"
       end
 
       # Truncates markdown-parsed lines to at most `max_length` visible
