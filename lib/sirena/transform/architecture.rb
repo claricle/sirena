@@ -13,6 +13,9 @@ module Sirena
       DEFAULT_GROUP_PADDING = 30
       DEFAULT_SPACING = 40
       DEFAULT_ICON_SIZE = 24
+      DEFAULT_JUNCTION_SIZE = 12
+
+      MIRRORED_CONNECTION_SIDE = { "L" => "R", "R" => "L", "T" => "B", "B" => "T" }.freeze
 
       # Converts an architecture diagram to a positioned layout structure
       #
@@ -27,15 +30,17 @@ module Sirena
 
         # Calculate positions
         service_positions = position_services(diagram, hierarchy)
-        group_bounds = calculate_group_bounds(diagram, service_positions)
-        edge_positions = position_edges(diagram, service_positions)
+        junction_positions = position_junctions(diagram, hierarchy, service_positions)
+        group_bounds = calculate_group_bounds(diagram, service_positions, junction_positions)
+        edge_positions = position_edges(diagram, service_positions.merge(junction_positions))
 
         {
           services: service_positions,
+          junctions: junction_positions,
           groups: group_bounds,
           edges: edge_positions,
-          width: calculate_total_width(service_positions, group_bounds),
-          height: calculate_total_height(service_positions, group_bounds),
+          width: calculate_total_width(service_positions, junction_positions, group_bounds),
+          height: calculate_total_height(service_positions, junction_positions, group_bounds),
         }
       end
 
@@ -45,6 +50,7 @@ module Sirena
         hierarchy = {
           groups: {},
           services_by_group: {},
+          junctions_by_group: {},
         }
 
         # Map groups
@@ -69,6 +75,13 @@ module Sirena
           group_id = service.group_id || :root
           hierarchy[:services_by_group][group_id] ||= []
           hierarchy[:services_by_group][group_id] << service
+        end
+
+        # Map junctions to groups
+        diagram.junctions.each do |junction|
+          group_id = junction.group_id || :root
+          hierarchy[:junctions_by_group][group_id] ||= []
+          hierarchy[:junctions_by_group][group_id] << junction
         end
 
         hierarchy
@@ -153,6 +166,75 @@ module Sirena
         end
       end
 
+      # Junctions lay out on their own row-per-group grid, same shape as
+      # position_services but with a fixed small size since a junction has
+      # no label or icon to size against. A group that already has services
+      # anchors its junction row past them (vertically centered on that
+      # row) instead of at the group's default origin, so a junction never
+      # lands on the same coordinates as a service in its own group. A
+      # group with no services falls back to a shared cursor that starts
+      # below every already-placed service in ANY group (not just its
+      # own), so a junction-only group can never land on a service that
+      # was laid out under a different group entirely.
+      def position_junctions(diagram, hierarchy, service_positions)
+        positions = {}
+        current_x = DEFAULT_SPACING
+        current_y = junction_fallback_floor(service_positions)
+
+        groups_to_layout = [:root] + diagram.groups.map(&:id)
+
+        groups_to_layout.each do |group_id|
+          junctions = hierarchy[:junctions_by_group][group_id] || []
+          next if junctions.empty?
+
+          group_services = service_positions.values.select { |pos| pos[:group_id] == group_id }
+          row_x, row_y = junction_row_origin(group_services, current_x, current_y)
+
+          junctions.each do |junction|
+            positions[junction.id] = {
+              junction: junction,
+              x: row_x,
+              y: row_y,
+              width: DEFAULT_JUNCTION_SIZE,
+              height: DEFAULT_JUNCTION_SIZE,
+              group_id: group_id,
+            }
+
+            row_x += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+          end
+
+          if group_services.any?
+            current_y = [current_y, row_y + DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING].max
+          else
+            current_x = DEFAULT_SPACING
+            current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
+          end
+        end
+
+        positions
+      end
+
+      def junction_row_origin(group_services, fallback_x, fallback_y)
+        return [fallback_x, fallback_y] if group_services.empty?
+
+        row_x = group_services.map { |s| s[:x] + s[:width] }.max + DEFAULT_SPACING
+        row_top = group_services.map { |s| s[:y] }.min
+        row_y = row_top + ((DEFAULT_SERVICE_HEIGHT - DEFAULT_JUNCTION_SIZE) / 2.0)
+
+        [row_x, row_y]
+      end
+
+      # A junction-only group (no services of its own) has no row to
+      # anchor against, so it falls back to a shared cursor. That cursor
+      # must start below every service in the WHOLE diagram, not just
+      # DEFAULT_SPACING - otherwise it reuses the same origin position_services
+      # already gave to a service in an unrelated group.
+      def junction_fallback_floor(service_positions)
+        return DEFAULT_SPACING if service_positions.empty?
+
+        service_positions.values.map { |pos| pos[:y] + pos[:height] }.max + DEFAULT_SPACING
+      end
+
       def calculate_service_dimensions(service)
         label = service.label || service.id
         label_dims = measure_text(label, font_size: 14)
@@ -166,28 +248,28 @@ module Sirena
         }
       end
 
-      def calculate_group_bounds(diagram, service_positions)
+      def calculate_group_bounds(diagram, service_positions, junction_positions)
         bounds = {}
 
         diagram.groups.each do |group|
-          # Find all services in this group
-          group_services = service_positions.values.select do |pos|
-            pos[:group_id] == group.id
-          end
+          # Find all services and junctions in this group - a group made
+          # entirely of junctions still needs a boundary drawn around them.
+          group_members = service_positions.values.select { |pos| pos[:group_id] == group.id } +
+            junction_positions.values.select { |pos| pos[:group_id] == group.id }
 
           # Find all child groups
           child_groups = diagram.groups.select { |g| g.parent_id == group.id }
 
-          if group_services.empty? && child_groups.empty?
+          if group_members.empty? && child_groups.empty?
             next
           end
 
           # Calculate bounding box
-          if group_services.any?
-            min_x = group_services.map { |s| s[:x] }.min
-            min_y = group_services.map { |s| s[:y] }.min
-            max_x = group_services.map { |s| s[:x] + s[:width] }.max
-            max_y = group_services.map { |s| s[:y] + s[:height] }.max
+          if group_members.any?
+            min_x = group_members.map { |m| m[:x] }.min
+            min_y = group_members.map { |m| m[:y] }.min
+            max_x = group_members.map { |m| m[:x] + m[:width] }.max
+            max_y = group_members.map { |m| m[:y] + m[:height] }.max
           else
             # Use child group bounds
             min_x = Float::INFINITY
@@ -225,9 +307,9 @@ module Sirena
 
           next unless from && to
 
-          # Calculate connection points based on position hints
-          from_point = calculate_connection_point(from, edge.from_position || "R")
-          to_point = calculate_connection_point(to, edge.to_position || "L")
+          from_side, to_side = resolve_connection_sides(edge, from, to)
+          from_point = calculate_connection_point(from, from_side)
+          to_point = calculate_connection_point(to, to_side)
 
           {
             edge: edge,
@@ -237,6 +319,38 @@ module Sirena
             to_y: to_point[:y],
           }
         end.compact
+      end
+
+      # A junction has no row of its own to anchor against the far side of
+      # an edge the way position_services does for service-to-service
+      # edges (adjust_positions_for_edges), so a junction can end up on
+      # the wrong side of whatever it connects to - the stated hint then
+      # asks for a face-to-face connection that is physically behind one
+      # of the nodes, and the straight line drawn between them cuts
+      # through it. Reposition-then-redraw would risk moving a service
+      # that group bounds and other junctions were already placed
+      # against, so this mirrors which FACE of each node the line
+      # attaches to instead, using the nodes' real positions - never
+      # service-to-service, where positions are already hint-consistent
+      # by the time this runs.
+      def resolve_connection_sides(edge, from, to)
+        from_side = edge.from_position || "R"
+        to_side = edge.to_position || "L"
+
+        return [from_side, to_side] unless from.key?(:junction) || to.key?(:junction)
+        return [from_side, to_side] if sides_face_each_other?(from_side, to_side, from, to)
+
+        [MIRRORED_CONNECTION_SIDE[from_side], MIRRORED_CONNECTION_SIDE[to_side]]
+      end
+
+      def sides_face_each_other?(from_side, to_side, from, to)
+        case [from_side, to_side]
+        when %w[R L] then from[:x] <= to[:x]
+        when %w[L R] then from[:x] >= to[:x]
+        when %w[B T] then from[:y] <= to[:y]
+        when %w[T B] then from[:y] >= to[:y]
+        else true
+        end
       end
 
       def calculate_connection_point(service_pos, position)
@@ -255,18 +369,20 @@ module Sirena
         end
       end
 
-      def calculate_total_width(service_positions, group_bounds)
+      def calculate_total_width(service_positions, junction_positions, group_bounds)
         max_service_x = service_positions.values.map { |s| s[:x] + s[:width] }.max || 0
+        max_junction_x = junction_positions.values.map { |j| j[:x] + j[:width] }.max || 0
         max_group_x = group_bounds.values.map { |g| g[:x] + g[:width] }.max || 0
 
-        [max_service_x, max_group_x].max + DEFAULT_SPACING
+        [max_service_x, max_junction_x, max_group_x].max + DEFAULT_SPACING
       end
 
-      def calculate_total_height(service_positions, group_bounds)
+      def calculate_total_height(service_positions, junction_positions, group_bounds)
         max_service_y = service_positions.values.map { |s| s[:y] + s[:height] }.max || 0
+        max_junction_y = junction_positions.values.map { |j| j[:y] + j[:height] }.max || 0
         max_group_y = group_bounds.values.map { |g| g[:y] + g[:height] }.max || 0
 
-        [max_service_y, max_group_y].max + DEFAULT_SPACING
+        [max_service_y, max_junction_y, max_group_y].max + DEFAULT_SPACING
       end
     end
   end

@@ -40,11 +40,13 @@ module Sirena
             # Edge: has from and to
             diagram.edges << create_edge(stmt)
           elsif stmt[:stmt_type]
-            # Check statement type to distinguish group from service
-            if extract_text(stmt[:stmt_type]) == 'group'
+            case extract_text(stmt[:stmt_type])
+            when 'group'
               diagram.groups << create_group(stmt)
-            elsif extract_text(stmt[:stmt_type]) == 'service'
+            when 'service'
               diagram.services << create_service(stmt)
+            when 'junction'
+              diagram.junctions << create_junction(stmt)
             end
           end
         end
@@ -67,6 +69,13 @@ module Sirena
           service
         end
 
+        def create_junction(data)
+          junction = Diagram::ArchitectureDiagram::Junction.new
+          junction.id = extract_text(data[:id]) if data[:id]
+          junction.group_id = extract_text(data[:group]) if data[:group] && !data[:group].to_s.empty?
+          junction
+        end
+
         def create_edge(data)
           edge = Diagram::ArchitectureDiagram::Edge.new
           edge.from_id = extract_text(data[:from]) if data[:from]
@@ -85,6 +94,11 @@ module Sirena
             else
               value.values.first.to_s
             end
+          when Array
+            # Parslet's `.repeat` (no minimum) yields [] rather than a
+            # slice when it matches zero characters, e.g. an empty
+            # `accDescr {}` block - treat that the same as no text.
+            value.map { |v| extract_text(v) }.join
           when String
             value
           else

@@ -158,5 +158,138 @@ RSpec.describe Sirena::Parser::Architecture do
         expect(edge.label).to eq("HTTP")
       end
     end
+
+    context "with a bare service (no icon, no label, no group)" do
+      # spec/mermaid/architecture/017 and 029: "service db" with nothing else.
+      let(:input) { "architecture-beta\n            service db\n" }
+
+      it "parses the service with nil icon and label" do
+        result = parser.parse(input)
+
+        service = result.services.first
+        expect(service.id).to eq("db")
+        expect(service.icon).to be_nil
+        expect(service.label).to be_nil
+        expect(service.group_id).to be_nil
+      end
+    end
+
+    context "with a multiline accessibility description block" do
+      # spec/mermaid/architecture/021 and 028: accDescr { ... } rather than
+      # the single-line accDescr: form.
+      let(:input) do
+        <<~MERMAID
+          architecture-beta
+              accDescr {
+                  Accessibility Description
+              }
+        MERMAID
+      end
+
+      it "parses the block content as the accessibility description" do
+        result = parser.parse(input)
+
+        expect(result.acc_descr).to eq("Accessibility Description")
+      end
+    end
+
+    context "with an empty multiline accessibility description block" do
+      # Parslet's `.repeat` (no minimum) yields [] rather than a slice when
+      # it matches zero characters, and extract_text used to stringify that
+      # array literally as "[]" instead of treating it as no text.
+      let(:input) do
+        <<~MERMAID
+          architecture-beta
+              accDescr {}
+              service a(server)[A]
+        MERMAID
+      end
+
+      it "parses the empty block as an empty description, not the literal \"[]\"" do
+        result = parser.parse(input)
+
+        expect(result.acc_descr).to eq("")
+      end
+    end
+
+    context "with a junction" do
+      # spec/mermaid/architecture/011: junctions route edges between
+      # services and carry no icon or label of their own.
+      let(:input) do
+        <<~MERMAID
+          architecture-beta
+                      group hub(cloud)[Hub]
+                      service left(server)[Left] in hub
+                      service right(server)[Right] in hub
+
+                      junction mid in hub
+                      left:R -- L:mid
+                      mid:R -- L:right
+        MERMAID
+      end
+
+      it "parses the junction separately from services and groups" do
+        result = parser.parse(input)
+
+        expect(result.junctions.size).to eq(1)
+        junction = result.junctions.first
+        expect(junction.id).to eq("mid")
+        expect(junction.group_id).to eq("hub")
+        expect(result.services.map(&:id)).to eq(%w[left right])
+      end
+
+      it "parses edges that reference the junction as an endpoint" do
+        result = parser.parse(input)
+
+        expect(result.edges.map { |e| [e.from_id, e.to_id] })
+          .to eq([%w[left mid], %w[mid right]])
+      end
+    end
+
+    context "with corpus fixtures" do
+      it "parses fixture 011 (a group full of junctions)" do
+        source = File.read("spec/mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd")
+
+        result = parser.parse(source)
+
+        expect(result.junctions.map(&:id))
+          .to eq(%w[mid 1Leftofmid 2Leftofmid 3Leftofmid 1RightOfMid 2RightOfMid 3RightOfMid])
+      end
+
+      it "parses fixture 017 (a bare service)" do
+        source = File.read("spec/mermaid/architecture/017_parser_should_handle_a_simple_radar_definition_16.mmd")
+
+        result = parser.parse(source)
+
+        expect(result.services.map(&:id)).to eq(["db"])
+      end
+
+      it "parses fixture 021 (multiline accDescr)" do
+        source = File.read("spec/mermaid/architecture/021_parser_should_handle_multiline_accessibility_description_20.mmd")
+
+        result = parser.parse(source)
+
+        expect(result.acc_descr).to eq("Accessibility Description")
+      end
+
+      it "parses fixture 028 (title, accTitle and multiline accDescr together)" do
+        source = File.read("spec/mermaid/architecture/028_parsertest_architecture_test_27.mmd")
+
+        result = parser.parse(source)
+
+        expect(result.title).to eq("sample title")
+        expect(result.acc_title).to eq("sample accTitle")
+        expect(result.acc_descr).to eq("sample accDescr")
+      end
+
+      it "parses fixture 029 (a bare service inside a group)" do
+        source = File.read("spec/mermaid/architecture/029_spec_xss_spec_28.mmd")
+
+        result = parser.parse(source)
+
+        expect(result.services.map(&:id)).to eq(["db"])
+        expect(result.services.first.icon).to be_nil
+      end
+    end
   end
 end

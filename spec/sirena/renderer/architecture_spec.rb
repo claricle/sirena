@@ -196,5 +196,35 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
         expect(svg_string).to include("HTTP")
       end
     end
+
+    context "with a junction" do
+      let(:junction) { Sirena::Diagram::ArchitectureDiagram::Junction.new(id: "mid", group_id: nil) }
+
+      let(:layout_with_junction) do
+        layout_copy = layout.dup
+        layout_copy[:junctions] = {
+          "mid" => {
+            junction: junction,
+            x: 300,
+            y: 40,
+            width: 12,
+            height: 12,
+            group_id: :root,
+          },
+        }
+        layout_copy
+      end
+
+      it "renders a circle centered on the junction, not a labeled box" do
+        svg = renderer.render(layout_with_junction)
+        svg_string = svg.to_s
+
+        expect(svg_string).to include('id="junction-mid"')
+        expect(svg_string).to include('cx="306.0"')
+        expect(svg_string).to include('cy="46.0"')
+        expect(svg_string).to include('r="6.0"')
+        expect(svg_string).not_to include('id="service-mid"')
+      end
+    end
   end
 end
