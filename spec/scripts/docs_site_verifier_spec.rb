@@ -678,22 +678,35 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
-  # HIGH-2/3. The old hand-rolled scanner counted `</template>` occurrences,
-  # so the same characters inside an attribute value or a script string ended
-  # a skip that was never open, and every check after it read inert markup as
-  # live. A real HTML5 parser cannot make that mistake; these pin it.
+  # HIGH-2/3, and the shape matters. The old scanner counted `</template>`
+  # occurrences, so the same characters inside an attribute value or a
+  # `<script>` string CLOSED a skip that was still open -- and everything
+  # after it, still inside the template and therefore inert, was read as
+  # live markup. So the discriminating input is a trap INSIDE a template
+  # followed by content that must stay inert.
+  #
+  # A trap followed by genuinely live content proves nothing: both the old
+  # scanner and a real parser pass it. That version of this spec stayed
+  # green against the reverted file, which is how it was caught.
   {
-    'inside an attribute value' => '<div data-x="</template>"></div>',
-    'inside a script string' => '<script>var s = "</template>";</script>'
+    'an attribute value' => '<div data-x="</template>"></div>',
+    'a script string' => '<script>var s = "</template>";</script>'
   }.each do |placement, trap|
-    it "is not fooled by a closing template tag #{placement}" do
+    it "does not read template content as live when #{placement} holds a closing tag" do
       Dir.mktmpdir do |tmp|
         docs_dir, site_dir = build_valid_site(tmp)
-        html = page_html_with_body(%(#{trap}<div class="paragraph">Real content</div>))
+        html = page_html_with_body(
+          %(<template>#{trap}<div class="paragraph">Inert</div></template>),
+        )
         write_page(site_dir, 'diagram_types/mindmap/index.html', html)
         write_page(site_dir, '_diagram_types/mindmap/index.html', html)
 
-        expect(verifier_for(docs_dir, site_dir).failures).to be_empty
+        expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+          'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+          'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+          'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
+          'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+        )
       end
     end
   end
