@@ -145,18 +145,30 @@ module Sirena
 
       # Calculates the height needed for a card
       #
+      # Grows for two independent things that each add extra rendered
+      # lines below the card's first line: metadata rows, and hard line
+      # breaks embedded in the card's own text (from markdown newlines,
+      # rendered as extra `<tspan>` lines — see
+      # Renderer::MarkdownText#parse_lines). The break count is a plain
+      # `count("\n")` on the raw text rather than a markdown parse: this
+      # layer only needs how many extra lines there are, not what's on
+      # them, and Transform has no dependency on Renderer to keep those
+      # layers apart.
+      #
+      # Reuses METADATA_LINE_HEIGHT for both rather than a second
+      # constant: the card renders its text at font-size 13 as `1.2em`
+      # per line (~15.6px), and METADATA_LINE_HEIGHT (18) already covers
+      # that with room to spare. A separate constant would need the
+      # renderer's actual font size, which Transform doesn't have and
+      # shouldn't need for a fixed-layout board.
+      #
       # @param card [Diagram::KanbanCard] card
       # @return [Numeric] card height
       def calculate_card_height(card)
         base_height = CARD_HEIGHT
-
-        # Add height for metadata if present
-        if card.has_metadata?
-          metadata_count = card.metadata.size
-          base_height + (metadata_count * METADATA_LINE_HEIGHT)
-        else
-          base_height
-        end
+        base_height += card.metadata.size * METADATA_LINE_HEIGHT if card.has_metadata?
+        base_height += card.text.to_s.count("\n") * METADATA_LINE_HEIGHT
+        base_height
       end
 
       # Calculates the bounding box for the entire board
