@@ -20,20 +20,32 @@ RSpec.describe Sirena::LintDebtScoreboard do
   end
 
   describe "#record!" do
-    it "bootstraps without needing the override" do
-      summary = board.record!
+    context "when recording for the first time" do
+      let(:summary) { board.record! }
+      let(:cop_file) do
+        YAML.safe_load_file(
+          File.join(board.directory, "Style-FrozenStringLiteralComment.yml"),
+        )
+      end
 
-      expect(summary[:bootstrap]).to be(true)
-      expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
-        "recorded_with_override: false",
-      )
-      stored = YAML.safe_load_file(
-        File.join(board.directory, "Style-FrozenStringLiteralComment.yml"),
-      )
-      expect(stored).to eq(
-        "cop" => "Style/FrozenStringLiteralComment",
-        "rows" => [{ "file" => "debt.rb", "count" => 1 }],
-      )
+      before { summary }
+
+      it "reports a bootstrap" do
+        expect(summary[:bootstrap]).to be(true)
+      end
+
+      it "marks the scoreboard as recorded without an override" do
+        expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
+          "recorded_with_override: false",
+        )
+      end
+
+      it "stores the fixture's one cop file" do
+        expect(cop_file).to eq(
+          "cop" => "Style/FrozenStringLiteralComment",
+          "rows" => [{ "file" => "debt.rb", "count" => 1 }],
+        )
+      end
     end
 
     it "refuses to record a new row without the override" do
@@ -45,60 +57,74 @@ RSpec.describe Sirena::LintDebtScoreboard do
       )
     end
 
-    it "refuses an increase on a row that already existed" do
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
-      )
-      board.record!
+    context "when an existing row's count increases" do
+      before do
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+        )
+        board.record!
 
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
-      )
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\n" \
+          "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
+        )
+      end
 
-      expect { board.record! }.to raise_error(
-        described_class::RefusedError, /debt increased/
-      )
+      it "refuses the record without the override" do
+        expect { board.record! }.to raise_error(
+          described_class::RefusedError, /debt increased/
+        )
+      end
     end
 
-    it "records with the override, then clears the marker on the next run" do
-      board.record!
-      write("second.rb", "module Fixture\n  Y = 'x'.freeze\nend\n")
+    context "when recording with the override" do
+      before do
+        board.record!
+        write("second.rb", "module Fixture\n  Y = 'x'.freeze\nend\n")
 
-      ENV["SIRENA_LINT_DEBT_ALLOW_INCREASE"] = "1"
-      board.record!
-      ENV.delete("SIRENA_LINT_DEBT_ALLOW_INCREASE")
+        ENV["SIRENA_LINT_DEBT_ALLOW_INCREASE"] = "1"
+        board.record!
+        ENV.delete("SIRENA_LINT_DEBT_ALLOW_INCREASE")
+      end
 
-      expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
-        "recorded_with_override: true",
-      )
+      it "marks the scoreboard as recorded with an override" do
+        expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
+          "recorded_with_override: true",
+        )
+      end
 
-      board.record!
+      it "clears the override marker on the next clean record" do
+        board.record!
 
-      expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
-        "recorded_with_override: false",
-      )
+        expect(File.read(File.join(board.directory, "_meta.yml"))).to include(
+          "recorded_with_override: false",
+        )
+      end
     end
 
-    it "prunes a cop file whose rows dropped to zero" do
-      board.record!
-      write(".rubocop_todo.yml", "")
-      write(
-        "debt.rb",
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  VALUE = 'debt'\nend\n",
-      )
+    context "when a cop's rows drop to zero" do
+      before do
+        board.record!
+        write(".rubocop_todo.yml", "")
+        write(
+          "debt.rb",
+          "# frozen_string_literal: true\n\n" \
+          "module Fixture\n  VALUE = 'debt'\nend\n",
+        )
 
-      ENV["SIRENA_LINT_DEBT_ALLOW_INCREASE"] = "1"
-      board.record!
-      ENV.delete("SIRENA_LINT_DEBT_ALLOW_INCREASE")
+        ENV["SIRENA_LINT_DEBT_ALLOW_INCREASE"] = "1"
+        board.record!
+        ENV.delete("SIRENA_LINT_DEBT_ALLOW_INCREASE")
+      end
 
-      cop_file = File.join(
-        board.directory, "Style-FrozenStringLiteralComment.yml"
-      )
-      expect(File.exist?(cop_file)).to be(false)
+      it "prunes the cop's scoreboard file" do
+        cop_file = File.join(
+          board.directory, "Style-FrozenStringLiteralComment.yml"
+        )
+        expect(File.exist?(cop_file)).to be(false)
+      end
     end
   end
 
@@ -108,92 +134,135 @@ RSpec.describe Sirena::LintDebtScoreboard do
       expect(board.diff).to be_clean
     end
 
-    it "flags a suppressed offence seeded via the todo file (route A)" do
-      board.record!
-      write("seed_a.rb", "module Fixture\n  Y = 'seed_a'.freeze\nend\n")
-      todo = File.read(File.join(root, ".rubocop_todo.yml"))
-      write(
-        ".rubocop_todo.yml",
-        "#{todo}Style/FrozenStringLiteralComment:\n  " \
-        "Exclude:\n    - seed_a.rb\n",
-      )
+    context "with an offence seeded via the todo file (route A)" do
+      before do
+        board.record!
+        write("seed_a.rb", "module Fixture\n  Y = 'seed_a'.freeze\nend\n")
+        todo = File.read(File.join(root, ".rubocop_todo.yml"))
+        write(
+          ".rubocop_todo.yml",
+          "#{todo}Style/FrozenStringLiteralComment:\n  " \
+          "Exclude:\n    - seed_a.rb\n",
+        )
+      end
 
-      diff = board.diff
-      expect(diff).not_to be_clean
-      expect(diff.added).to include(
-        ["Style/FrozenStringLiteralComment", "seed_a.rb"],
-      )
+      let(:diff) { board.diff }
+
+      it "is not clean" do
+        expect(diff).not_to be_clean
+      end
+
+      it "flags the seeded offence as added" do
+        expect(diff.added).to include(
+          ["Style/FrozenStringLiteralComment", "seed_a.rb"],
+        )
+      end
     end
 
-    it "flags a suppressed offence seeded via a fresh Exclude (route B)" do
-      board.record!
-      write("seed_b.rb", "module Fixture\n  Y = 'seed_b'.freeze\nend\n")
-      write(
-        ".rubocop.yml",
-        "inherit_from:\n  - .rubocop_todo.yml\nAllCops:\n  NewCops: enable\n" \
-        "Style/FrozenStringLiteralComment:\n  Exclude:\n    - seed_b.rb\n",
-      )
+    context "with an offence seeded via a fresh Exclude (route B)" do
+      before do
+        board.record!
+        write("seed_b.rb", "module Fixture\n  Y = 'seed_b'.freeze\nend\n")
+        write(
+          ".rubocop.yml",
+          "inherit_from:\n  - .rubocop_todo.yml\n" \
+          "AllCops:\n  NewCops: enable\n" \
+          "Style/FrozenStringLiteralComment:\n  Exclude:\n    - seed_b.rb\n",
+        )
+      end
 
-      diff = board.diff
-      expect(diff).not_to be_clean
-      expect(diff.added).to include(
-        ["Style/FrozenStringLiteralComment", "seed_b.rb"],
-      )
+      let(:diff) { board.diff }
+
+      it "is not clean" do
+        expect(diff).not_to be_clean
+      end
+
+      it "flags the seeded offence as added" do
+        expect(diff.added).to include(
+          ["Style/FrozenStringLiteralComment", "seed_b.rb"],
+        )
+      end
     end
 
-    it "flags a suppressed offence seeded via an inline directive (route C)" do
-      board.record!
-      write(
-        "seed_c.rb",
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  " \
-        "Y = 1+1 " \
-        "# rubocop:disable Layout/SpaceAroundOperators\n" \
-        "end\n",
-      )
+    context "with an offence seeded via an inline directive (route C)" do
+      before do
+        board.record!
+        write(
+          "seed_c.rb",
+          "# frozen_string_literal: true\n\n" \
+          "module Fixture\n  " \
+          "Y = 1+1 " \
+          "# rubocop:disable Layout/SpaceAroundOperators\n" \
+          "end\n",
+        )
+      end
 
-      diff = board.diff
-      expect(diff).not_to be_clean
-      expect(diff.added).to include(
-        ["Layout/SpaceAroundOperators", "seed_c.rb"],
-      )
+      let(:diff) { board.diff }
+
+      it "is not clean" do
+        expect(diff).not_to be_clean
+      end
+
+      it "flags the seeded offence as added" do
+        expect(diff.added).to include(
+          ["Layout/SpaceAroundOperators", "seed_c.rb"],
+        )
+      end
     end
 
-    it "reports a row whose count increased as changed" do
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
-      )
-      board.record!
+    context "when an existing row's count increases" do
+      before do
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+        )
+        board.record!
 
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
-      )
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\n" \
+          "module Fixture\n  X = 1+1\n  Y = 2+2\nend\n",
+        )
+      end
 
-      diff = board.diff
-      expect(diff).not_to be_clean
-      expect(diff.changed.map { |c| [c.cop, c.file, c.from, c.to] }).to include(
-        ["Layout/SpaceAroundOperators", "op.rb", 1, 2],
-      )
+      let(:diff) { board.diff }
+
+      it "is not clean" do
+        expect(diff).not_to be_clean
+      end
+
+      it "reports the row as changed" do
+        rows = diff.changed.map { |c| [c.cop, c.file, c.from, c.to] }
+
+        expect(rows).to include(["Layout/SpaceAroundOperators", "op.rb", 1, 2])
+      end
     end
 
-    it "reports a fixed offence as removed" do
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
-      )
-      board.record!
+    context "when an offence is fixed" do
+      before do
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1+1\nend\n",
+        )
+        board.record!
 
-      write(
-        "op.rb",
-        "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
-      )
+        write(
+          "op.rb",
+          "# frozen_string_literal: true\n\nmodule Fixture\n  X = 1 + 1\nend\n",
+        )
+      end
 
-      diff = board.diff
-      expect(diff).not_to be_clean
-      expect(diff.removed).to include(["Layout/SpaceAroundOperators", "op.rb"])
+      let(:diff) { board.diff }
+
+      it "is not clean" do
+        expect(diff).not_to be_clean
+      end
+
+      it "reports the row as removed" do
+        expect(diff.removed).to include(
+          ["Layout/SpaceAroundOperators", "op.rb"],
+        )
+      end
     end
   end
 end

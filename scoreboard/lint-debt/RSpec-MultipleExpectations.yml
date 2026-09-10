@@ -31,10 +31,6 @@ rows:
   count: 3
 - file: spec/sirena/layout/fallback_spec.rb
   count: 4
-- file: spec/sirena/lint_debt_scoreboard_spec.rb
-  count: 7
-- file: spec/sirena/lint_debt_spec.rb
-  count: 3
 - file: spec/sirena/parser/architecture_spec.rb
   count: 7
 - file: spec/sirena/parser/block_spec.rb

@@ -18,6 +18,9 @@ RSpec.describe Sirena::LintDebt do
       expect(debt.rows.map { |r| [r.cop, r.file, r.count] }).to eq(
         [["Style/FrozenStringLiteralComment", "debt.rb", 1]],
       )
+    end
+
+    it "reports the fixture's total offence count" do
       expect(debt.total).to eq(1)
     end
 
@@ -25,20 +28,24 @@ RSpec.describe Sirena::LintDebt do
       expect(debt.rows.map(&:file)).not_to include("clean.rb")
     end
 
-    it "derives a plugin from Gemfile syntax a text pattern would miss" do
-      write(
-        "Gemfile",
-        "source 'https://rubygems.org'\ngemspec\n" \
-        "gem('rubocop-rspec', '= 3.9.0')\n",
-      )
-      write(
-        "plugin_spec.rb",
-        "# frozen_string_literal: true\n\n" \
-        "RSpec.describe Fixture do\n  " \
-        "it 'does something', :skip do\n  end\nend\n",
-      )
+    context "with a Gemfile using paren-call gem syntax" do
+      before do
+        write(
+          "Gemfile",
+          "source 'https://rubygems.org'\ngemspec\n" \
+          "gem('rubocop-rspec', '= 3.9.0')\n",
+        )
+        write(
+          "plugin_spec.rb",
+          "# frozen_string_literal: true\n\n" \
+          "RSpec.describe Fixture do\n  " \
+          "it 'does something', :skip do\n  end\nend\n",
+        )
+      end
 
-      expect(debt.rows.map(&:cop)).to include("RSpec/PendingWithoutReason")
+      it "derives the plugin a text pattern would miss" do
+        expect(debt.rows.map(&:cop)).to include("RSpec/PendingWithoutReason")
+      end
     end
   end
 
@@ -49,40 +56,53 @@ RSpec.describe Sirena::LintDebt do
   end
 
   describe "inertness to .rubocop.yml" do
-    it "ignores a fresh local inherit_from suppressing everything" do
-      write(".rubocop_extra.yml", "AllCops:\n  DisabledByDefault: true\n")
-      write(
-        ".rubocop.yml",
-        "inherit_from:\n  - .rubocop_todo.yml\n  - .rubocop_extra.yml\n" \
-        "AllCops:\n  NewCops: enable\n",
-      )
+    context "with a fresh local inherit_from suppressing everything" do
+      before do
+        write(".rubocop_extra.yml", "AllCops:\n  DisabledByDefault: true\n")
+        write(
+          ".rubocop.yml",
+          "inherit_from:\n  - .rubocop_todo.yml\n  - .rubocop_extra.yml\n" \
+          "AllCops:\n  NewCops: enable\n",
+        )
+      end
 
-      expect(debt.total).to eq(1)
+      it "still reports the fixture's one offence" do
+        expect(debt.total).to eq(1)
+      end
     end
 
-    it "ignores a fresh cop-level Exclude added directly" do
-      write(
-        ".rubocop.yml",
-        "inherit_from:\n  - .rubocop_todo.yml\nAllCops:\n  NewCops: enable\n" \
-        "Style/FrozenStringLiteralComment:\n  Exclude:\n    - debt.rb\n",
-      )
+    context "with a fresh cop-level Exclude added directly" do
+      before do
+        write(
+          ".rubocop.yml",
+          "inherit_from:\n  - .rubocop_todo.yml\n" \
+          "AllCops:\n  NewCops: enable\n" \
+          "Style/FrozenStringLiteralComment:\n  Exclude:\n    - debt.rb\n",
+        )
+      end
 
-      expect(debt.total).to eq(1)
+      it "still reports the fixture's one offence" do
+        expect(debt.total).to eq(1)
+      end
     end
 
-    it "ignores an inline rubocop:disable directive" do
-      write(
-        "inline.rb",
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  " \
-        "X = 1+1 " \
-        "# rubocop:disable Layout/SpaceAroundOperators\n" \
-        "end\n",
-      )
+    context "with an inline rubocop:disable directive" do
+      before do
+        write(
+          "inline.rb",
+          "# frozen_string_literal: true\n\n" \
+          "module Fixture\n  " \
+          "X = 1+1 " \
+          "# rubocop:disable Layout/SpaceAroundOperators\n" \
+          "end\n",
+        )
+      end
 
-      expect(debt.rows.map { |r| [r.cop, r.file] }).to include(
-        ["Layout/SpaceAroundOperators", "inline.rb"],
-      )
+      it "still reports the disabled offence" do
+        expect(debt.rows.map { |r| [r.cop, r.file] }).to include(
+          ["Layout/SpaceAroundOperators", "inline.rb"],
+        )
+      end
     end
   end
 
@@ -123,97 +143,128 @@ RSpec.describe Sirena::LintDebt do
       )
     end
 
+    def write_long_method_offence(file)
+      body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
+      write(
+        file,
+        "# frozen_string_literal: true\n\n" \
+        "module Fixture\n  " \
+        "def self.long_method\n#{body}  end\nend\n",
+      )
+    end
+
+    let(:grammar_file) { "lib/sirena/parser/grammars/flowchart.rb" }
+
     it "subtracts nothing when empty" do
       write_exceptions([])
       expect(debt.total).to eq(1)
     end
 
-    it "subtracts an eligible metrics-cop row on a grammar-path file" do
-      grammar_file = "lib/sirena/parser/grammars/flowchart.rb"
-      body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
-      write(
-        grammar_file,
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  " \
-        "def self.long_method\n#{body}  end\nend\n",
-      )
-      write_exceptions(
-        [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
-      )
+    context "with an eligible metrics-cop row on a grammar-path file" do
+      before do
+        write_long_method_offence(grammar_file)
+        write_exceptions(
+          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
+        )
+      end
 
-      expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
-      expect(debt.exceptions_applied).to eq(1)
+      it "subtracts the row from #rows" do
+        expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
+      end
+
+      it "counts the exception as applied" do
+        expect(debt.exceptions_applied).to eq(1)
+      end
     end
 
-    it "accepts an unquoted YAML date in approved_on" do
-      grammar_file = "lib/sirena/parser/grammars/flowchart.rb"
-      body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
-      write(
-        grammar_file,
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  " \
-        "def self.long_method\n#{body}  end\nend\n",
-      )
-      write(
-        "scoreboard/lint-exceptions.yml",
-        "exceptions:\n  " \
-        "- cop: Metrics/MethodLength\n    " \
-        "file: #{grammar_file}\n    " \
-        "approved_by: reviewer\n    " \
-        "approved_on: 2026-09-10\n",
-      )
+    context "with an unquoted YAML date in approved_on" do
+      before do
+        write_long_method_offence(grammar_file)
+        write(
+          "scoreboard/lint-exceptions.yml",
+          "exceptions:\n  " \
+          "- cop: Metrics/MethodLength\n    " \
+          "file: #{grammar_file}\n    " \
+          "approved_by: reviewer\n    " \
+          "approved_on: 2026-09-10\n",
+        )
+      end
 
-      expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
-      expect(debt.exceptions_applied).to eq(1)
+      it "accepts the date instead of crashing the loader" do
+        expect(debt.rows.map(&:cop)).not_to include("Metrics/MethodLength")
+      end
+
+      it "counts the exception as applied" do
+        expect(debt.exceptions_applied).to eq(1)
+      end
     end
 
-    it "refuses a cop outside the metrics class" do
-      grammar_file = "lib/sirena/parser/grammars/flowchart.rb"
-      write(grammar_file, "module X; end\n")
-      write_exceptions(
-        [{ "cop" => "Style/FrozenStringLiteralComment", "file" => "debt.rb" }],
-      )
+    context "with a cop outside the metrics class" do
+      before do
+        write(grammar_file, "module X; end\n")
+        write_exceptions(
+          [
+            {
+              "cop" => "Style/FrozenStringLiteralComment",
+              "file" => "debt.rb",
+            },
+          ],
+        )
+      end
 
-      expect { debt.total }.to raise_error(
-        described_class::ExecutionError, /metrics class/
-      )
+      it "refuses the exception" do
+        expect { debt.total }.to raise_error(
+          described_class::ExecutionError, /metrics class/
+        )
+      end
     end
 
-    it "refuses a file outside the grammar path" do
-      write_exceptions(
-        [{ "cop" => "Metrics/MethodLength", "file" => "debt.rb" }],
-      )
+    context "with a file outside the grammar path" do
+      before do
+        write_exceptions(
+          [{ "cop" => "Metrics/MethodLength", "file" => "debt.rb" }],
+        )
+      end
 
-      expect { debt.total }.to raise_error(
-        described_class::ExecutionError, /grammars/
-      )
+      it "refuses the exception" do
+        expect { debt.total }.to raise_error(
+          described_class::ExecutionError, /grammars/
+        )
+      end
     end
 
-    it "refuses an entry whose file does not exist" do
-      write_exceptions(
-        [
-          {
-            "cop" => "Metrics/MethodLength",
-            "file" => "lib/sirena/parser/grammars/missing.rb",
-          },
-        ],
-      )
+    context "with an entry whose file does not exist" do
+      before do
+        write_exceptions(
+          [
+            {
+              "cop" => "Metrics/MethodLength",
+              "file" => "lib/sirena/parser/grammars/missing.rb",
+            },
+          ],
+        )
+      end
 
-      expect { debt.total }.to raise_error(
-        described_class::ExecutionError, /does not exist/
-      )
+      it "refuses the exception" do
+        expect { debt.total }.to raise_error(
+          described_class::ExecutionError, /does not exist/
+        )
+      end
     end
 
-    it "refuses a stale entry matching no current row" do
-      grammar_file = "lib/sirena/parser/grammars/flowchart.rb"
-      write(grammar_file, "module X; end\n")
-      write_exceptions(
-        [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
-      )
+    context "with a stale entry matching no current row" do
+      before do
+        write(grammar_file, "module X; end\n")
+        write_exceptions(
+          [{ "cop" => "Metrics/MethodLength", "file" => grammar_file }],
+        )
+      end
 
-      expect { debt.total }.to raise_error(
-        described_class::ExecutionError, /no current offence/
-      )
+      it "refuses the exception" do
+        expect { debt.total }.to raise_error(
+          described_class::ExecutionError, /no current offence/
+        )
+      end
     end
   end
 end
