@@ -648,9 +648,73 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'diagram_types/mindmap/index.html', html)
       write_page(site_dir, '_diagram_types/mindmap/index.html', html)
 
+      # FOUR failures, not two. A marker commented out of the page renders
+      # nothing, so the page fails on both halves -- missing marker AND no
+      # rendered text. The second half is what catches a page that KEEPS its
+      # marker and still shows nothing, which the marker check alone passed.
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+      )
+    end
+  end
+
+  # HIGH-1d. Marker presence is a PROXY for "this page has content".
+  # A page can carry the marker and render nothing at all, which is what
+  # the marker check alone passed for the whole life of this verifier.
+  it 'reports a diagram page carrying a block marker that renders no text' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html_with_body('<div class="paragraph"></div>')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+      )
+    end
+  end
+
+  # HIGH-2/3. The old hand-rolled scanner counted `</template>` occurrences,
+  # so the same characters inside an attribute value or a script string ended
+  # a skip that was never open, and every check after it read inert markup as
+  # live. A real HTML5 parser cannot make that mistake; these pin it.
+  {
+    'inside an attribute value' => '<div data-x="</template>"></div>',
+    'inside a script string' => '<script>var s = "</template>";</script>'
+  }.each do |placement, trap|
+    it "is not fooled by a closing template tag #{placement}" do
+      Dir.mktmpdir do |tmp|
+        docs_dir, site_dir = build_valid_site(tmp)
+        html = page_html_with_body(%(#{trap}<div class="paragraph">Real content</div>))
+        write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+        write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+        expect(verifier_for(docs_dir, site_dir).failures).to be_empty
+      end
+    end
+  end
+
+  # The other direction, and it is the one a scanner got wrong: an UNCLOSED
+  # `<template>` swallows everything after it, exactly as a browser does, so
+  # that content is genuinely inert and the page really does render nothing.
+  # The old scanner's `scan_until` found no closing tag, left the position
+  # unmoved, and carried on reading the swallowed markup as live.
+  it 'treats markup after an unclosed template as inert, not live' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html_with_body('<template><div class="paragraph">Swallowed</div>')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
       )
     end
   end

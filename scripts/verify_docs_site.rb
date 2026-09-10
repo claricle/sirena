@@ -11,7 +11,7 @@
 require 'yaml'
 require 'optparse'
 require 'pathname'
-require 'strscan'
+require 'nokogiri'
 
 module Sirena
   # Pure verification core: docs dir + site dir + baseurl in, an array of
@@ -52,125 +52,56 @@ module Sirena
     # deliberately keeps this script stdlib-only so the CI step needs no
     # `bundle exec` -- pulling in a gem changes that design decision and
     # is bigger than this fix.
+    # Every tag on a page, as { name:, attrs: }, with the CONTENT of
+    # inert and raw-text elements excluded.
+    #
+    # This used to be a hand-rolled scanner and it lost three times, all the
+    # same way: counting `</template>` occurrences cannot tell a real closing
+    # tag from the same characters inside an attribute value or a `<script>`
+    # string, and a failed `scan_until` left the position unmoved so
+    # inspection silently resumed INSIDE the content it meant to skip.
+    #
+    # A real HTML5 parser removes the possibility rather than guarding it.
+    # Measured, on markup carrying every one of those traps at once:
+    #
+    #   <script>const x = "</template>";</script>   the string ends nothing
+    #   <div data-x="</template>">                  the attribute ends nothing
+    #   <template>  (never closed)                  recovers, nothing leaks
+    #
+    #   live classes found: ["live", "live-2"]      inert-1/2/3 all excluded
+    #
+    # `attrs` maps a lowercased attribute name to its value, or `true` for a
+    # boolean attribute with no value -- the same contract the scanner had.
     class TagTokenizer
-      # `script`/`style`/`textarea` content is raw TEXT per the HTML5 spec
-      # -- a literal `<` inside inline JS, CSS or a textarea's placeholder
-      # value is not a tag, and none of the three can contain a real
-      # nested instance of itself (the first matching close tag always
-      # ends it). `template` content IS real markup, but it is INERT: the
-      # browser never renders it and JS must clone it in before it counts
-      # as part of the page, so a stylesheet link or class living only
-      # inside a `<template>` has not actually shipped -- and unlike the
-      # raw-text elements, `<template>` genuinely CAN nest as real markup,
-      # so skipping it needs to track depth rather than stop at the first
-      # close tag, or a `<template><template>...</template>...</template>`
-      # would resume tokenizing the outer template's still-inert tail as
-      # if it were live.
+      # `script`/`style`/`textarea` hold raw TEXT, so nothing inside them is
+      # markup at all. `template` content IS markup but is INERT: the browser
+      # never renders it and JS must clone it in first, so a stylesheet link
+      # or class living only inside a `<template>` has not actually shipped.
+      #
+      # The ELEMENTS themselves are still reported; only their children are
+      # dropped. That is what the scanner did, and callers rely on it --
+      # `a4_theme_assets` needs to see that a `<script>` tag exists.
       RAW_TEXT_ELEMENTS = %w[script style textarea].freeze
       NESTABLE_INERT_ELEMENTS = %w[template].freeze
       SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS).freeze
-      TAG_NAME = /[a-zA-Z][\w-]*/
-      ATTR_NAME = /[a-zA-Z_:][\w:.-]*/
 
-      # Returns an array of { name:, attrs: } for every tag in `markup`.
-      # `attrs` maps a lowercased attribute name to its value (a String),
-      # or `true` for a boolean attribute with no value.
       def self.tags(markup)
-        new(markup).tags
-      end
-
-      def initialize(markup)
-        @scanner = StringScanner.new(markup)
-        @tags = []
-      end
-
-      # `while` on skip_until's own return, not `@scanner.eos?` -- once
-      # only closing tags remain, `skip_until(/<(?![!\/])/)` matches
-      # nothing FOREVER without moving the scanner, and an `eos?` guard
-      # never sees that: it stays false while trailing markup remains
-      # unconsumed. Real HTML always ends in closing tags, so this path
-      # is not a corner case, it is every real page -- the verifier hung
-      # indefinitely on any of them until this was caught by hand.
-      def tags
-        while @scanner.skip_until(/<(?![!\/])/)
-          name = @scanner.scan(TAG_NAME)
-          next unless name
-
-          attrs, self_closing = scan_attributes
-          @tags << { name: name.downcase, attrs: attrs }
-          skip_uninspected_content(name.downcase) unless self_closing
-        end
-        @tags
-      end
-
-      private
-
-      def scan_attributes
-        attrs = {}
-        loop do
-          @scanner.skip(/\s+/)
-          return [attrs, false] if @scanner.eos?
-
-          closer = @scanner.scan(%r{/>|>})
-          return [attrs, closer == '/>'] if closer
-
-          attr_name = @scanner.scan(ATTR_NAME)
-          unless attr_name
-            @scanner.getch # malformed input -- advance so this cannot loop forever
-            next
-          end
-
-          @scanner.skip(/\s*/)
-          if @scanner.scan('=')
-            @scanner.skip(/\s*/)
-            attrs[attr_name.downcase] = scan_attribute_value
-          else
-            attrs[attr_name.downcase] = true
-          end
+        document = Nokogiri::HTML5.parse(markup)
+        document.css(SKIPPED_CONTENT_ELEMENTS.join(",")).each { |el| el.children.unlink }
+        document.css("*").map do |el|
+          { name: el.name.downcase, attrs: attributes_of(el) }
         end
       end
 
-      def scan_attribute_value
-        if @scanner.scan('"')
-          @scanner.scan_until(/"/)&.delete_suffix('"').to_s
-        elsif @scanner.scan('\'')
-          @scanner.scan_until(/'/)&.delete_suffix("'").to_s
-        else
-          @scanner.scan(/[^\s>]*/).to_s
+      def self.attributes_of(element)
+        element.attribute_nodes.to_h do |attribute|
+          value = attribute.value
+          [attribute.name.downcase, value.empty? || value]
         end
       end
-
-      # See SKIPPED_CONTENT_ELEMENTS above for why both raw-text and
-      # inert elements skip to their close tag unscanned, and why only
-      # NESTABLE_INERT_ELEMENTS needs depth tracking to find the RIGHT
-      # close tag rather than the first one.
-      def skip_uninspected_content(tag_name)
-        return unless SKIPPED_CONTENT_ELEMENTS.include?(tag_name)
-
-        if NESTABLE_INERT_ELEMENTS.include?(tag_name)
-          skip_nestable_content(tag_name)
-        else
-          @scanner.scan_until(/<\/#{tag_name}\s*>/i)
-        end
-      end
-
-      # Tracks nesting depth across every open/close boundary of `tag_name`
-      # so a `<template>` inside a `<template>` closes only the inner one.
-      # An unterminated tag (malformed input) consumes to end-of-string,
-      # matching the raw-text branch's behaviour on the same input.
-      def skip_nestable_content(tag_name)
-        boundary = /<(\/?)#{tag_name}\b[^>]*>/i
-        depth = 1
-        while depth.positive?
-          return unless @scanner.scan_until(boundary)
-
-          depth += @scanner[1] == '/' ? -1 : 1
-        end
-      end
+      private_class_method :attributes_of
     end
 
-    # One page's rendered HTML, read once and queried by every assertion
-    # that needs it.
     class Page
       def initialize(path, site_dir)
         @path = path
@@ -192,6 +123,26 @@ module Sirena
 
       def tags
         @tags ||= TagTokenizer.tags(markup)
+      end
+
+      # The visible text of the rendered body, whitespace-collapsed.
+      #
+      # A class token is a PROXY for "this page has content" and it fails the
+      # obvious way: `<div class="main-content-wrap"><div class="paragraph">
+      # </div></div>` carries the marker and renders nothing. The property is
+      # that the page SHOWS something, so assert that instead.
+      #
+      # Content inside script/style/textarea/template is excluded for the same
+      # reason the tokenizer excludes it: a paragraph living only inside a
+      # `<template>` has not shipped.
+      def rendered_text
+        return @rendered_text if @rendered_text
+
+        document = Nokogiri::HTML5.parse(markup)
+        document.css(TagTokenizer::SKIPPED_CONTENT_ELEMENTS.join(","))
+          .each { |element| element.children.unlink }
+        region = document.css(".#{LAYOUT_BODY_MARKER}").first || document
+        @rendered_text = region.text.gsub(/\s+/, " ").strip
       end
 
       def class_tokens
@@ -326,11 +277,23 @@ module Sirena
 
     # R12-R16
     def a3_document_content(pages)
-      diagram_pages(pages).filter_map do |page|
-        next if page.class_tokens.intersect?(BLOCK_MARKERS)
+      diagram_pages(pages).flat_map { |page| content_failures_for(page) }
+    end
 
-        "content: #{page.rel_path} has no recognized Asciidoctor block marker"
+    # Both halves are required and neither implies the other. A page can
+    # carry a block marker and render nothing (an empty `<div
+    # class="paragraph">`), and a page can show text with no marker at all
+    # if the conversion silently fell back to raw output.
+    def content_failures_for(page)
+      failures = []
+      unless page.class_tokens.intersect?(BLOCK_MARKERS)
+        failures << "content: #{page.rel_path} has no recognized " \
+                    "Asciidoctor block marker"
       end
+      if page.rendered_text.empty?
+        failures << "content: #{page.rel_path} renders no text in #{LAYOUT_BODY_MARKER}"
+      end
+      failures
     end
 
     def diagram_pages(pages)

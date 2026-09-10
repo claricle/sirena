@@ -8,6 +8,13 @@ gem 'benchmark'
 gem 'rake'
 # corpus_sweep and the kanban integration spec both parse SVG output.
 gem 'rexml'
+# verify_docs_site parses the BUILT HTML. It uses a real HTML5 parser
+# rather than scanning for tags: a hand-rolled scanner cannot tell a
+# `</template>` inside an attribute value or a `<script>` string from a
+# real closing tag, and three review findings on this branch were exactly
+# that. Already resolved transitively; declared here so it cannot vanish
+# when whatever pulls it in stops doing so.
+gem 'nokogiri'
 gem 'rspec'
 # Exact versions on purpose. A floating rubocop turns a green lane red on
 # a release nobody here made, and "0 offences" only means something if the
