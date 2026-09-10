@@ -1,3 +1,9 @@
+> **Read `TODO.architecture/00-overview.md` first.** It reorders this
+> work: the structural items move to the front, several items here get
+> smaller, and a few are deferred with a recorded trigger. The research
+> in this directory is still the reference for the items that survive —
+> `TODO.architecture/00-overview.md` has the mapping.
+
 # Sirena Foundation Plan (rev 7)
 
 **Date**: 2026-08-11. Revised after a maximum-effort adversarial audit
