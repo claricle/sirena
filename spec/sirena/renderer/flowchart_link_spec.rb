@@ -751,7 +751,11 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
         xml = Sirena.render(
           "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n"
         )
-        tag = xml[%r{<text\b[^>]*>[^<]*</text>}]
+        # The cluster title and the node label both set `dominant-baseline`;
+        # the edge label is the one text element that does not, which is
+        # what picks it out of the three the diagram draws.
+        tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
+          .find { |t| !t.include?("dominant-baseline") }
         x = tag[/\bx="([^"]*)"/, 1].to_f
         y = tag[/\by="([^"]*)"/, 1].to_f
         font_size = tag[/font-size="([^"]*)"/, 1].to_f
