@@ -199,6 +199,27 @@ hardcoded fallback is what renders.
    is the worked example: it comes from the `node_bg` fallback
    `#E3F2FD`, and substituting the existing `node_fill` yields
    `#ffffff` — a visible change this step must not make.
+   **FOUR of those keys cannot take a single value, so "one value per key"
+   is not a sufficient plan.** Measured 2026-09-10 by pairing every
+   `theme_color(:x) || "#hex"` in `lib/` with its literal:
+
+       axis_line    ["#9ca3af", "#000000"]
+       grid_line    ["#cccccc", "#e5e7eb"]
+       text         ["#1f2937", "#000000"]
+       text_color   ["#333", "#666"]
+
+   Re-derive with:
+
+       ruby -Ilib -rsirena -e 'p = Hash.new { |h,k| h[k] = [] }; Dir.glob("lib/**/*.rb").each { |f| File.read(f).scan(/theme_color\(:([a-z_]+)\)\s*\|\|\s*"(#[0-9a-fA-F]{3,8}|[a-z]+)")/ { |k,v| p[k] << v } }; p.each { |k,v| puts "#{k} #{v.uniq.inspect}" if v.uniq.size > 1 }'
+
+   The conflict is real inside a single render: a quadrant chart draws
+   `rect` borders at `#cccccc` and axis `line`s at `#666666`, and both ask
+   for `grid_line`. Picking either value changes the other element.
+
+   So these four need SEPARATE ROLES, not one key each — the caller wants
+   two different things and the key name hides that. Name the roles from
+   what each call site draws, and amend the permitted-key list to match.
+   The other ten missing keys take a single value and are unaffected.
 4. Add a spec that renders one diagram of every type under all four
    built-in themes and asserts `default` and `dark` output differ. That
    is the test that would have caught this.
