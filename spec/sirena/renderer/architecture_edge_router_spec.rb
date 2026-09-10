@@ -192,13 +192,29 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
 
             points = router.route(from: endpoint(a, from_side), to: endpoint(b, to_side), obstacles: [obstacle])
 
-            next if points.length == 2 # straight line: geometry decides direction, not this test
+            if points.length == 2
+              # A straight line's direction is fixed by geometry, not by
+              # the declared faces, so it is not checked against
+              # exit_direction/entry_direction below - but it still has to
+              # be SAFE. route's fallback (both the "straight line is
+              # already clear" case and the "no bent route found" case)
+              # returns the straight line regardless of whether it is
+              # actually clear, so a broken direction constraint that
+              # makes search_grid unable to satisfy it degrades straight
+              # into the obstacle this test placed in the way. Skipping
+              # silently here is the exact gap spec-auditor, Codex round 3
+              # and Copilot each found independently - confirmed by
+              # flipping FACE_NORMAL["R"] by hand: every combo that fell
+              # back to a straight line under that mutation crossed this
+              # obstacle.
+              expect(path_clear_of?(points, obstacle)).to be(true)
+            else
+              actual_first = { x: points[1][:x] <=> points[0][:x], y: points[1][:y] <=> points[0][:y] }
+              expect(actual_first).to eq(exit_direction(a, from_side))
 
-            actual_first = { x: points[1][:x] <=> points[0][:x], y: points[1][:y] <=> points[0][:y] }
-            expect(actual_first).to eq(exit_direction(a, from_side))
-
-            actual_last = { x: points[-1][:x] <=> points[-2][:x], y: points[-1][:y] <=> points[-2][:y] }
-            expect(actual_last).to eq(entry_direction(b, to_side))
+              actual_last = { x: points[-1][:x] <=> points[-2][:x], y: points[-1][:y] <=> points[-2][:y] }
+              expect(actual_last).to eq(entry_direction(b, to_side))
+            end
           end
         end
       end
