@@ -276,20 +276,30 @@ module Sirena
       # resolves to `currentcolor`, not `#0000ff`, because the replay
       # lands after both.
       #
-      # `textStyles` dresses the LABEL, not the box, and the two buckets
-      # collide on every property they name alike — which is what makes
-      # the replay visible on the box at all. `fill` is the one that does
-      # not collide: on the label it is the text colour, so a replayed
-      # `fill` never reaches the box's own fill. Measured with mmdc on an
-      # erDiagram entity carrying an attribute block, one class assigned:
+      # `textStyles` is applied after this class's own styles, so a replayed
+      # chunk lands last among same-key entries. mermaid defuses that for
+      # `fill` by RENAMING it: the chunk pushed into `textStyles` becomes
+      # `bgFill:...`, which no longer collides with the box's `fill`.
+      #
+      # That rename is CASE-SENSITIVE, which is why the exemption below is
+      # too. Executing mermaid's own db API for these declarations returns
+      #
+      #   textStyles: ["bgFill:currentcolor", "FILL:currentcolor", "stroke:currentcolor"]
+      #
+      # — lowercase `fill` rewritten, `FILL` left alone to collide as before.
+      # Folding the key here would exempt `FILL` as well and change a
+      # behaviour mermaid does not change.
+      #
+      # Measured with mmdc on an erDiagram entity carrying an attribute
+      # block, one class assigned:
       #
       #   stroke:currentcolor,stroke:#0000ff  ->  currentcolor
       #   fill:currentcolor,fill:#0000ff      ->  #0000ff
       #   stroke:#00ff00,stroke:#0000ff       ->  #0000ff
       #   fill:#00ff00,fill:#0000ff           ->  #0000ff
       #
-      # Row one is why the replay exists. Row two is why `fill` is exempt:
-      # replaying it reverses that row to `currentcolor`.
+      # Row one is why the replay exists. Row two is why lowercase `fill`
+      # is exempt: replaying it reverses that row to `currentcolor`.
       #
       # @param declaration [String] raw style text for one class
       # @return [Array<String>] chunks, with colour-bearing ones repeated
@@ -302,9 +312,10 @@ module Sirena
       # the entity BOX. See `class_chunks` for the measurement behind the
       # `fill` exemption.
       #
-      # The key is compared case-insensitively because mermaid stores it
-      # verbatim and leaves folding to the browser, so `FILL:` and `fill:`
-      # are the same declaration by the time either is painted.
+      # The key is compared EXACTLY, not folded. mermaid's rename of `fill`
+      # to `bgFill` is case-sensitive, so `FILL:` is still replayed and
+      # still collides. Folding here would exempt it too, and change a
+      # behaviour this commit has no business changing.
       #
       # @param chunk [String] one raw comma-separated chunk
       # @return [Boolean]
@@ -312,7 +323,7 @@ module Sirena
         return false unless chunk.include?('color')
 
         key, value = mermaid_split(chunk)
-        !value.nil? && key.strip.downcase != 'fill'
+        !value.nil? && key.strip != 'fill'
       end
 
       # Applies a run of raw chunks into the shared, exact-case styles Hash,

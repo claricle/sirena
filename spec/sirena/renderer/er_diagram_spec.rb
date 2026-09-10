@@ -541,12 +541,16 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
       end
 
       # Verified against mermaid's own db (ErDB#addClass): any chunk whose
-      # text contains the substring "color", other than one declaring
-      # `fill`, is replayed a second time at
+      # text contains the substring "color" is replayed a second time at
       # the end of its class's declarations, so it wins over a LATER
       # same-property chunk that does not itself mention "color".
       # `stroke:currentcolor,stroke:red` resolves to currentcolor, not the
       # textually-later red.
+      #
+      # The replay is universal; what differs is whether the copy still
+      # names the same property. mermaid renames a lowercase `fill` copy to
+      # `bgFill`, so it stops colliding -- see C24. `stroke` is not renamed,
+      # which is what this example pins.
       it 'replays a colour-bearing chunk after a later same-property one (C19)' do
         graph = {
           id: 'er_diagram',
@@ -559,12 +563,17 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         expect(rect_for(svg, 'CAR').stroke).to eq('currentcolor')
       end
 
-      # The replay lands in mermaid's `textStyles`, which dresses the LABEL,
-      # not the box. `fill` is the one property where the two buckets mean
-      # different things -- on the label it is the text colour -- so a
-      # replayed `fill` never reaches the box. Measured with mmdc on this
-      # exact source: `fill:currentcolor,fill:blue` paints the box blue,
-      # while the C19 stroke pair above keeps currentcolor.
+      # mermaid appends its `textStyles` replay after the class's own
+      # styles, so a replayed chunk lands last among same-key entries. It
+      # defuses that for `fill` by RENAMING the replayed copy to `bgFill`,
+      # which no longer collides with the box. Executing mermaid's own db
+      # API returns `textStyles: ["bgFill:currentcolor", "FILL:currentcolor",
+      # "stroke:currentcolor"]` -- lowercase rewritten, `FILL` left alone.
+      #
+      # So the exemption is exact-lowercase, and the two mixed-case
+      # examples below are the ones that pin that. An earlier fix folded
+      # the key and silently changed `FILL` from currentcolor to blue;
+      # nothing in the suite caught it.
       it 'does not replay a colour-bearing FILL over a later one (C24)' do
         graph = {
           id: 'er_diagram',
@@ -575,6 +584,20 @@ RSpec.describe Sirena::Renderer::ErDiagramRenderer do
         svg = renderer.render(graph)
 
         expect(rect_for(svg, 'CAR').fill).to eq('blue')
+      end
+
+      %w[FILL FiLl].each do |key|
+        it "still replays a #{key} chunk, which mermaid does not rename (C25 #{key})" do
+          graph = {
+            id: 'er_diagram',
+            children: [entity_node('CAR', classes: ['a'])],
+            edges: [],
+            class_defs: { 'a' => "#{key}:currentcolor,#{key}:blue" }
+          }
+          svg = renderer.render(graph)
+
+          expect(rect_for(svg, 'CAR').fill).to eq('currentcolor')
+        end
       end
 
       # Verified by Codex against the installed mermaid 11.16.1 bundle and
