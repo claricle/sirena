@@ -139,6 +139,49 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                             described_class::Run.new(text: 'b', bold: true, italic: false)
                           ]])
     end
+
+    # Regression guard for a kramdown-specific DoS found while building
+    # this rewrite: kramdown's `:emphasis` parser backtracks on ambiguous
+    # markers at worse-than-quadratic cost (measured directly against
+    # kramdown, bypassing this module: `"**a " * 500`, 2,000 chars, took
+    # ~44s). No real card or column label is anywhere near
+    # `MAX_PARSEABLE_LENGTH`, so text past it never reaches kramdown at
+    # all — mutation-check: delete the length guard in `parse_lines`.
+    # Watched red: this example still passes its length assertion but the
+    # returned run comes back styled (bold `true`) instead of literal.
+    it 'falls back to unstyled literal text past MAX_PARSEABLE_LENGTH, never parsing markup' do
+      long_text = "*a " * 100
+
+      expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
+
+      lines = described_class.parse_lines(long_text)
+
+      expect(lines).to eq([[described_class::Run.new(text: long_text, bold: false, italic: false)]])
+    end
+
+    # The fallback still respects hard line breaks — it skips kramdown,
+    # not line-splitting.
+    it 'still splits on hard line breaks in the unstyled fallback' do
+      long_text = "#{'x' * (described_class::MAX_PARSEABLE_LENGTH + 1)}\nsecond"
+
+      lines = described_class.parse_lines(long_text)
+
+      expect(lines.last).to eq([described_class::Run.new(text: 'second', bold: false, italic: false)])
+    end
+
+    # Boundary: markup exactly at the cap still gets parsed normally.
+    it 'still parses markup at exactly MAX_PARSEABLE_LENGTH characters' do
+      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**bold**".length)
+      text = "**bold**#{padding}"
+      expect(text.length).to eq(described_class::MAX_PARSEABLE_LENGTH)
+
+      lines = described_class.parse_lines(text)
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'bold', bold: true, italic: false),
+                            described_class::Run.new(text: padding, bold: false, italic: false)
+                          ]])
+    end
   end
 
   describe '.build_markdown_tspans' do
