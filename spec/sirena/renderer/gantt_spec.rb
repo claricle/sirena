@@ -93,8 +93,13 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
       svg = renderer.render(graph)
       xml = svg.to_xml
 
+      # The timeline and section backgrounds are also <rect> elements, so a
+      # bare `include("<rect")` passes even with the task bar itself never
+      # drawn. Pin the bar's own color and its rounded-corner geometry,
+      # which only render_task_bar produces.
+      done_color = described_class::TASK_COLORS[:done]
       expect(xml).to include("Completed task")
-      expect(xml).to include("<rect")
+      expect(xml).to match(/<rect fill="#{Regexp.escape(done_color)}"[^>]*\brx="/)
     end
 
     # mermaid accepts any year, so an explicit far-future date is valid

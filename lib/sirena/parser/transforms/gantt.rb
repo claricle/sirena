@@ -143,19 +143,23 @@ module Sirena
 
         # Task details are a comma-separated list of fields with no fixed
         # position (mermaid allows tags, an id, "after"/"until", a date, and
-        # a duration in any order). Tags and after/until are unambiguous
-        # keywords, consumed first regardless of position. What is left —
-        # the "value fields" — mermaid classifies by POSITION when there
-        # are three of them (id, start, end/duration — the id is always
-        # first, even when its text happens to look like a date, corpus
-        # gantt/NNN), and by shape otherwise.
+        # a duration in any order). Tags are unambiguous keywords, consumed
+        # first regardless of position. What is left occupies id/start/end —
+        # THREE positional slots — and mermaid classifies by POSITION when
+        # there are exactly three (the id is always first, even when its
+        # text happens to look like a date, corpus gantt/NNN), and by shape
+        # otherwise. An "after"/"until" dependency fills the start slot the
+        # same as a bare date would, so it must still count towards that
+        # three-slot rule; only once the id is settled does it get stripped
+        # out on its own.
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
           fields = extract_task_fields(details[:parts])
-          value_fields = consume_keyword_fields(task, fields)
-          value_fields = value_fields.dup
-          task.id = value_fields.shift if value_fields.length == 3
+          positional_fields = reject_tag_fields(task, fields)
+          task.id = positional_fields.shift if positional_fields.length == 3
+
+          value_fields = reject_dependency_fields(task, positional_fields)
 
           dates = []
           value_fields.each { |field| classify_value_field(task, field, dates) }
@@ -166,12 +170,18 @@ module Sirena
           Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }
         end
 
-        def consume_keyword_fields(task, fields)
+        def reject_tag_fields(task, fields)
+          fields.reject do |field|
+            next false unless TAG_KEYWORDS.include?(field)
+
+            task.tags << field
+            true
+          end
+        end
+
+        def reject_dependency_fields(task, fields)
           fields.reject do |field|
             case field
-            when *TAG_KEYWORDS
-              task.tags << field
-              true
             when /\Aafter\s+(.+)\z/
               task.after_task = Regexp.last_match(1)
               true

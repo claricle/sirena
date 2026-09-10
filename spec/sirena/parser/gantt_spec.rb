@@ -199,5 +199,27 @@ RSpec.describe Sirena::Parser::GanttParser do
       expect(task.start_date).to eq("2024-02-01")
       expect(task.end_date).to eq("2024-02-03")
     end
+
+    # An "after"/"until" dependency fills the same positional slot a bare
+    # date would (id, start, end), so it must count toward the three-value
+    # id rule above even though it is stripped out separately afterward.
+    # Counting only the fields left once the dependency is already gone
+    # under-counts to two, skips the id assignment, and silently drops a
+    # date-shaped id that a later "after <that id>" reference depends on.
+    it "counts an after-dependency field toward the three-value id rule" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Tasks
+          T: 2024-01-01, after a, 2024-01-06
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.id).to eq("2024-01-01")
+      expect(task.after_task).to eq("a")
+      expect(task.start_date).to be_nil
+      expect(task.end_date).to eq("2024-01-06")
+    end
   end
 end
