@@ -3,6 +3,7 @@
 require 'tmpdir'
 require 'fileutils'
 require 'yaml'
+require 'timeout'
 require_relative '../../scripts/verify_docs_site'
 
 # Defined outside the RSpec.describe block deliberately: RuboCop's
@@ -702,6 +703,114 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, '_diagram_types/mindmap/index.html', html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
+  # ----------------------------------------------------------------------
+  # The findings from the third Codex round, after the regex-based
+  # matching from rounds 1-2 was replaced with TagTokenizer, a
+  # StringScanner-based structural tag/attribute scanner (see its class
+  # comment for why REXML was tried and rejected).
+
+  # HIGH-3a. `<template>` content is real markup, but the browser never
+  # renders it and nothing here clones it in -- a stylesheet link, layout
+  # marker and content marker that exist only inside a <template> have not
+  # actually shipped.
+  it 'reports a page whose stylesheet, layout marker and content marker exist only inside a <template>' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
+      html = <<~HTML
+        <html><head></head>
+        <body>
+          <template>
+            <link rel="stylesheet" href="#{href}">
+            <div class="main-content-wrap"><div class="paragraph"><p>hi</p></div></div>
+          </template>
+        </body></html>
+      HTML
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
+  # HIGH-3b. Attribute parsing is grammar-based, not whitespace-shaped --
+  # `src = "…"` (spaced `=`) is exactly as much a `src` attribute as
+  # `src="…"`, so a missing target must still be reported.
+  it 'reports a missing script asset whose src attribute has whitespace around the equals sign' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      missing = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js"
+      html = page_html.sub('</head>', %(<script src = "#{missing}"></script></head>))
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        "asset: #{missing} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/js/missing.js"
+      )
+    end
+  end
+
+  # MEDIUM-3a. `File.exist?` is true for a directory. A stylesheet href
+  # that resolves to a directory sharing the asset's name is not a file a
+  # server can return, so it must be reported the same as a missing one.
+  it 'reports a stylesheet asset that resolves to a directory, not a file' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.mkdir_p(File.join(site_dir, 'assets/css/phantom.css'))
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/phantom.css"
+      html = page_html.sub('</head>', %(<link rel="stylesheet" href="#{href}"></head>))
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/css/phantom.css"
+      )
+    end
+  end
+
+  # MEDIUM-3b. `../` in a ref can walk the resolved path outside `_site`
+  # entirely, onto a real file that happens to sit next to it in `docs/`.
+  # That file existing is not the asset existing.
+  it 'reports a stylesheet asset whose ../ reference resolves outside _site' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      File.write(File.join(docs_dir, 'outside.css'), '/* not part of the deployed site */')
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/../outside.css"
+      html = page_html.sub('</head>', %(<link rel="stylesheet" href="#{href}"></head>))
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /../outside.css"
+      )
+    end
+  end
+
+  # BLOCKER, found by hand while re-verifying this round rather than
+  # reported by Codex. `TagTokenizer#tags` must terminate on ordinary
+  # HTML, which always ends in closing tags after the last opening tag.
+  # The original `until @scanner.eos?` guard never became true while that
+  # trailing markup stayed unconsumed once `skip_until` had nothing left
+  # to match, so the verifier hung forever on every real page, not on a
+  # corner case -- this pins termination with an explicit timeout so a
+  # regression reads as a named failure, not a mysterious CI hang.
+  it 'does not hang tokenizing a page whose only remaining markup after the last tag is closing tags' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+
+      failures = Timeout.timeout(2) { verifier_for(docs_dir, site_dir).failures }
+      expect(failures).to eq([])
     end
   end
 

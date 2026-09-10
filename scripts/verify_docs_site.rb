@@ -11,6 +11,7 @@
 require 'yaml'
 require 'optparse'
 require 'pathname'
+require 'strscan'
 
 module Sirena
   # Pure verification core: docs dir + site dir + baseurl in, an array of
@@ -32,6 +33,118 @@ module Sirena
     SEARCH_INDEX_PATH = 'assets/js/search-data.json'
     REQUIRED_DIAGRAM_PERMALINK = '/:collection/:path/'
 
+    # A minimal but STRUCTURAL HTML tag/attribute tokenizer. Not a DOM
+    # parser -- no tree, no nesting -- but it walks each tag's grammar
+    # (name, then `name(=value)?` pairs, values quoted or not) with a
+    # scanner instead of grepping for a substring, so it cannot mistake
+    # text INSIDE an attribute value for another attribute, and it is not
+    # sensitive to whitespace around `=`.
+    #
+    # REXML (stdlib) was tried first and rejected on MEASUREMENT: it is an
+    # XML parser, and Jekyll/just-the-docs output is HTML5 with unclosed
+    # void elements (`<meta charset="utf-8">`, no self-closing slash),
+    # which is invalid XML. `REXML::Document.new` raised
+    # `Missing end tag for 'meta'` on 5 of 5 real pages tried -- 100% of
+    # the corpus this script exists to check. Pre-cleaning the markup into
+    # valid XML before handing it to REXML would need its own regex-based
+    # transform, which relocates this defect class rather than removing
+    # it. A gem-based HTML5 parser (Nokogiri) would work, but the plan
+    # deliberately keeps this script stdlib-only so the CI step needs no
+    # `bundle exec` -- pulling in a gem changes that design decision and
+    # is bigger than this fix.
+    class TagTokenizer
+      # `script`/`style` content is raw TEXT per the HTML5 spec -- a
+      # literal `<` inside inline JS or CSS is not a tag. `template`
+      # content IS real markup, but it is INERT: the browser never
+      # renders it and JS must clone it in before it counts as part of
+      # the page, so a stylesheet link or class living only inside a
+      # `<template>` has not actually shipped. Both cases are handled
+      # the same way here -- skip straight to the matching close tag --
+      # because for THIS verifier's purpose (is markup really live) an
+      # untokenized child is the correct outcome for either reason.
+      RAW_TEXT_ELEMENTS = %w[script style].freeze
+      INERT_ELEMENTS = %w[template].freeze
+      SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + INERT_ELEMENTS).freeze
+      TAG_NAME = /[a-zA-Z][\w-]*/
+      ATTR_NAME = /[a-zA-Z_:][\w:.-]*/
+
+      # Returns an array of { name:, attrs: } for every tag in `markup`.
+      # `attrs` maps a lowercased attribute name to its value (a String),
+      # or `true` for a boolean attribute with no value.
+      def self.tags(markup)
+        new(markup).tags
+      end
+
+      def initialize(markup)
+        @scanner = StringScanner.new(markup)
+        @tags = []
+      end
+
+      # `while` on skip_until's own return, not `@scanner.eos?` -- once
+      # only closing tags remain, `skip_until(/<(?![!\/])/)` matches
+      # nothing FOREVER without moving the scanner, and an `eos?` guard
+      # never sees that: it stays false while trailing markup remains
+      # unconsumed. Real HTML always ends in closing tags, so this path
+      # is not a corner case, it is every real page -- the verifier hung
+      # indefinitely on any of them until this was caught by hand.
+      def tags
+        while @scanner.skip_until(/<(?![!\/])/)
+          name = @scanner.scan(TAG_NAME)
+          next unless name
+
+          attrs, self_closing = scan_attributes
+          @tags << { name: name.downcase, attrs: attrs }
+          skip_uninspected_content(name.downcase) unless self_closing
+        end
+        @tags
+      end
+
+      private
+
+      def scan_attributes
+        attrs = {}
+        loop do
+          @scanner.skip(/\s+/)
+          return [attrs, false] if @scanner.eos?
+
+          closer = @scanner.scan(%r{/>|>})
+          return [attrs, closer == '/>'] if closer
+
+          attr_name = @scanner.scan(ATTR_NAME)
+          unless attr_name
+            @scanner.getch # malformed input -- advance so this cannot loop forever
+            next
+          end
+
+          @scanner.skip(/\s*/)
+          if @scanner.scan('=')
+            @scanner.skip(/\s*/)
+            attrs[attr_name.downcase] = scan_attribute_value
+          else
+            attrs[attr_name.downcase] = true
+          end
+        end
+      end
+
+      def scan_attribute_value
+        if @scanner.scan('"')
+          @scanner.scan_until(/"/)&.delete_suffix('"').to_s
+        elsif @scanner.scan('\'')
+          @scanner.scan_until(/'/)&.delete_suffix("'").to_s
+        else
+          @scanner.scan(/[^\s>]*/).to_s
+        end
+      end
+
+      # See SKIPPED_CONTENT_ELEMENTS above for why both raw-text and
+      # inert elements skip to their close tag unscanned.
+      def skip_uninspected_content(tag_name)
+        return unless SKIPPED_CONTENT_ELEMENTS.include?(tag_name)
+
+        @scanner.scan_until(/<\/#{tag_name}\s*>/i)
+      end
+    end
+
     # One page's rendered HTML, read once and queried by every assertion
     # that needs it.
     class Page
@@ -41,15 +154,6 @@ module Sirena
       end
 
       attr_reader :rel_path
-
-      # Attribute name never preceded by a word or hyphen character. Without
-      # this, `\b` matches inside `data-class="x"` because `-` is a
-      # non-word character, so a plain `\bclass=` regex reads a
-      # `data-class` attribute as `class`.
-      CLASS_ATTR = /(?<![\w-])class=["']([^"']*)["']/i
-      HREF_ATTR = /(?<![\w-])href=["']([^"']*)["']/i
-      SRC_ATTR = /(?<![\w-])src=["']([^"']*)["']/i
-      STYLESHEET_LINK = /(?<![\w-])rel=["']stylesheet["']/i
 
       def content
         @content ||= File.read(@path)
@@ -62,10 +166,14 @@ module Sirena
         @markup ||= content.gsub(/<!--.*?-->/m, '')
       end
 
+      def tags
+        @tags ||= TagTokenizer.tags(markup)
+      end
+
       def class_tokens
         return @class_tokens if @class_tokens
 
-        classes = markup.scan(CLASS_ATTR).flatten
+        classes = tags.filter_map { |tag| tag[:attrs]['class'] }.grep(String)
         @class_tokens = classes.flat_map { |value| value.split(/\s+/) }
       end
 
@@ -76,15 +184,17 @@ module Sirena
       def stylesheet_hrefs
         return @stylesheet_hrefs if @stylesheet_hrefs
 
-        stylesheet_tags = markup.scan(/<link\b[^>]*>/i).grep(STYLESHEET_LINK)
-        @stylesheet_hrefs = stylesheet_tags.filter_map { |tag| tag[HREF_ATTR, 1] }
+        @stylesheet_hrefs = tags.select { |tag| tag[:name] == 'link' && tag[:attrs]['rel'] == 'stylesheet' }
+          .filter_map { |tag| tag[:attrs]['href'] }
+          .grep(String)
       end
 
       def script_srcs
         return @script_srcs if @script_srcs
 
-        script_tags = markup.scan(/<script\b[^>]*>/i)
-        @script_srcs = script_tags.filter_map { |tag| tag[SRC_ATTR, 1] }
+        @script_srcs = tags.select { |tag| tag[:name] == 'script' }
+          .filter_map { |tag| tag[:attrs]['src'] }
+          .grep(String)
       end
     end
 
@@ -221,7 +331,7 @@ module Sirena
         # Only the path component resolves to a file -- a query string or
         # fragment is not part of the filename a server looks up.
         file_path = resolved.split(/[?#]/, 2).first.to_s
-        next if @site_dir.join(file_path.delete_prefix('/')).exist?
+        next if resolves_within_site_dir?(file_path)
 
         failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
       end
@@ -243,6 +353,23 @@ module Sirena
         end
       end
       refs
+    end
+
+    # `../` in a ref can walk the resolved path outside `_site` entirely
+    # (e.g. `/sirena/../_config.yml` resolves to a real file one
+    # directory up, in `docs/`, not in `docs/_site/`). Cleanpath collapses
+    # the traversal, then the result must still sit AT OR UNDER `_site`'s
+    # own absolute path before it counts as a resolved asset -- and it
+    # must be a regular FILE there. `exist?` is also true for a directory,
+    # and a `<link href>` pointing at a directory that happens to share
+    # the asset's name is not a stylesheet a server can return.
+    def resolves_within_site_dir?(file_path)
+      site_root = @site_dir.expand_path
+      candidate = site_root.join(file_path.delete_prefix('/')).expand_path
+
+      return false unless candidate.file?
+
+      candidate.to_s.start_with?("#{site_root}/")
     end
 
     def site_absolute?(ref)
