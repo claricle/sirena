@@ -254,6 +254,20 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect { REXML::Document.new(xml) }.not_to raise_error
       end
 
+      # A hard line break composes with truncation the same way: when the
+      # SECOND line alone overflows the remaining budget, it is dropped
+      # whole, never cut partway through. Only the first line ever gets a
+      # partial "..." cut.
+      it 'drops a later line whole on overflow, never truncating it mid-line' do
+        long_text = "Short\n#{'q' * 30}"
+        xml = renderer.render(layout_with(card_text: long_text)).to_xml
+
+        expect(xml).to include('Short')
+        expect(xml).not_to include('q')
+        expect(xml).not_to include('...')
+        expect { REXML::Document.new(xml) }.not_to raise_error
+      end
+
       # Column header integration: markdown in the title renders the same
       # way as card text, and a header's pre-existing bold baseline
       # (`font_weight = "bold"` on the whole `Svg::Text`, set unconditionally
