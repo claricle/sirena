@@ -641,8 +641,18 @@ RSpec.describe Sirena::Parser::SequenceParser do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
+    # `deactivate A>B` alone is not enough to isolate this: on the
+    # unfixed grammar it accepts "A>B" as one id, and the id was never
+    # ACTIVATED — so it raises "Trying to deactivate an inactive
+    # participant", a runtime check completely unrelated to the `>`
+    # exclusion, and the spec would pass for the wrong reason. Activating
+    # "A>B" FIRST makes it a matched pair: the unfixed grammar accepts
+    # both lines and the runtime check has nothing to object to, so this
+    # only raises when the grammar itself rejects the interior `>`.
+    # Confirmed against 5c769f8 directly: unfixed code parses this to
+    # activation ["A>B", 1, 1] with no error; fixed code raises.
     it "rejects an interior > at deactivate, matching mmdc" do
-      source = "sequenceDiagram\nA->>B: m\nactivate A\ndeactivate A>B\n"
+      source = "sequenceDiagram\nA->>B: m\nactivate A>B\ndeactivate A>B\n"
 
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
