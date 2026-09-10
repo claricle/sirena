@@ -12,8 +12,7 @@ module Sirena
       class Gantt
         TAG_KEYWORDS = %w[done active crit milestone].freeze
         DURATION_PATTERN = /\A\d+[dwMh]\z/
-        DATE_PATTERN = %r{\A\d+[-/:][\d\-/:]*\z}
-        private_constant :TAG_KEYWORDS, :DURATION_PATTERN, :DATE_PATTERN
+        private_constant :TAG_KEYWORDS, :DURATION_PATTERN
 
         # Transform parse tree into Gantt diagram.
         #
@@ -141,37 +140,39 @@ module Sirena
           @current_section.tasks << task
         end
 
-        # Task details are a comma-separated list of fields with no fixed
-        # position (mermaid allows tags, an id, "after"/"until", a date, and
-        # a duration in any order). Tags are unambiguous keywords, consumed
-        # first regardless of position. What is left occupies id/start/end —
-        # THREE positional slots — and mermaid classifies by POSITION when
-        # there are exactly three (the id is always first, even when its
-        # text happens to look like a date, corpus gantt/NNN), and by shape
-        # otherwise. An "after"/"until" dependency fills the start slot the
-        # same as a bare date would, so it must still count towards that
-        # three-slot rule; only once the id is settled does it get stripped
-        # out on its own.
+        # Task details are a comma-separated list of fields (mermaid allows
+        # tags, an id, "after"/"until", a date, and a duration). Tags are
+        # unambiguous keywords, consumed first regardless of position. What
+        # is left occupies id/start/end — THREE positional slots — and
+        # mermaid classifies by POSITION when there are exactly three (the
+        # id is always first, even when its text happens to look like a
+        # date, corpus gantt/NNN). An "after"/"until" dependency fills the
+        # start slot the same as a bare date would, so it must still count
+        # towards that three-slot rule; only once the id is settled does it
+        # get stripped out on its own.
         #
-        # Once the id came from position, the two fields left are always
-        # start/end values, even when one fails the date-shape check below —
-        # `dateFormat YYYYMMDD` produces separator-less dates like
-        # "20240101" that DATE_PATTERN does not match. Re-applying id-by-
-        # shape there would stomp the id `process_task_details` already
-        # assigned, so `classify_value_field` is told whether the id is
-        # already settled and never treats a leftover field as an id twice.
+        # Outside the three-slot case there is no id field at all — every
+        # remaining value is a start/end/duration, by position, never by
+        # shape. Measured against mmdc: `T: 20240101, 20240103` under
+        # `dateFormat YYYYMMDD` renders both compact fields as dates with no
+        # id (mermaid auto-generates one); a single non-date, non-duration
+        # field on its own (`T: someid`) is a parse ERROR in mermaid, not an
+        # id. So `classify_value_field` never falls back to treating a field
+        # as an id — DURATION_PATTERN is the only shape test, and everything
+        # else is a date, whether or not it looks like one (this is also
+        # what keeps a leftover compact date from stomping the id that the
+        # three-slot rule already assigned).
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
           fields = extract_task_fields(details[:parts])
           positional_fields = reject_tag_fields(task, fields)
-          id_from_position = positional_fields.length == 3
-          task.id = positional_fields.shift if id_from_position
+          task.id = positional_fields.shift if positional_fields.length == 3
 
           value_fields = reject_dependency_fields(task, positional_fields)
 
           dates = []
-          value_fields.each { |field| classify_value_field(task, field, dates, id_from_position) }
+          value_fields.each { |field| classify_value_field(task, field, dates) }
           assign_dates(task, dates)
         end
 
@@ -201,13 +202,11 @@ module Sirena
           end
         end
 
-        def classify_value_field(task, field, dates, id_from_position)
+        def classify_value_field(task, field, dates)
           if field.match?(DURATION_PATTERN)
             task.duration = field
-          elsif field.match?(DATE_PATTERN) || id_from_position
-            dates << field
           else
-            task.id = field
+            dates << field
           end
         end
 

@@ -104,8 +104,10 @@ RSpec.describe Sirena::Parser::GanttParser do
     end
 
     # Task detail fields (tags, id, dates, duration, after/until) are a
-    # comma-separated list with no fixed position — mermaid classifies each
-    # field by its own shape rather than by where it sits (corpus gantt/005).
+    # comma-separated list. Tags are stripped by keyword; what is left is
+    # classified by POSITION — the id is always first when exactly three
+    # value fields remain, regardless of what its text looks like
+    # (corpus gantt/005).
     it "parses a tag, an id, and explicit start and end dates in one task" do
       source = <<~GANTT
         gantt
@@ -224,10 +226,10 @@ RSpec.describe Sirena::Parser::GanttParser do
     end
 
     # `dateFormat YYYYMMDD` produces separator-less date fields like
-    # "20240101", which DATE_PATTERN does not match (it requires a
-    # "-", "/" or ":"). Once the id already came from position, a leftover
-    # field like that must still be treated as a date and never re-trigger
-    # id-by-shape classification, or it silently overwrites the real id.
+    # "20240101". Once the id already came from the three-slot positional
+    # rule, a leftover field like that must still be treated as a date and
+    # never re-trigger id-by-shape classification, or it silently
+    # overwrites the real id.
     it "keeps the positional id when trailing dates have no separator (compact dateFormat)" do
       source = <<~GANTT
         gantt
@@ -239,6 +241,29 @@ RSpec.describe Sirena::Parser::GanttParser do
       task = parser.parse(source).sections.first.tasks.first
 
       expect(task.id).to eq("t")
+      expect(task.start_date).to eq("20240101")
+      expect(task.end_date).to eq("20240103")
+    end
+
+    # Outside the three-slot case there is no id field at all: with no
+    # explicit id given, two leftover fields are always start/end BY
+    # POSITION, never an id-by-shape guess — even when the first one fails
+    # to look like a date, which a compact `dateFormat YYYYMMDD` value
+    # always does. Measured against mmdc: `T: 20240101, 20240103` renders
+    # both fields as the task's dates, with mermaid auto-generating the id
+    # (Codex High, gantt.rb:207 — this exact input used to produce
+    # `id="20240103"` with both dates nil).
+    it "treats two leftover compact-date fields as start/end when no id is given" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYYMMDD
+          section Tasks
+          T: 20240101, 20240103
+      GANTT
+
+      task = parser.parse(source).sections.first.tasks.first
+
+      expect(task.id).to be_nil
       expect(task.start_date).to eq("20240101")
       expect(task.end_date).to eq("20240103")
     end

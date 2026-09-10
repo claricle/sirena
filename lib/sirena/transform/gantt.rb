@@ -59,31 +59,53 @@ module Sirena
       end
 
       def calculate_task_dates
+        task_sequence = @diagram.sections.flat_map(&:tasks)
+
         # First pass: calculate tasks with explicit dates
-        @diagram.sections.each do |section|
-          section.tasks.each do |task|
-            calculate_task_date(task) if task.start_date && !task.after_task
-          end
+        task_sequence.each do |task|
+          calculate_task_date(task) if task.start_date && !task.after_task
         end
 
-        # Second pass: resolve dependencies
+        # Second pass: resolve dependencies, including a task's IMPLICIT
+        # dependency on the one immediately before it in declaration order
+        # when it names no start and no "after"/"until" but does carry a
+        # duration — mermaid schedules it flush against the previous
+        # task's end. Measured against mmdc: `T: crit, active, 3d` with
+        # nothing else starts where the previous task ends, chaining
+        # across section boundaries too, and even when that previous
+        # task's own end came from ANOTHER dependency rather than an
+        # explicit date — see `chain_from_previous_task`.
         max_iterations = 100
         iteration = 0
         loop do
           changed = false
-          @diagram.sections.each do |section|
-            section.tasks.each do |task|
-              if !task.calculated_start && (task.after_task || task.until_task)
-                if resolve_task_dependency(task)
-                  changed = true
-                end
-              end
+          task_sequence.each_with_index do |task, index|
+            next if task.calculated_start
+
+            if task.after_task || task.until_task
+              changed = true if resolve_task_dependency(task)
+            elsif task.duration && index.positive?
+              changed = true if chain_from_previous_task(task, task_sequence[index - 1])
             end
           end
 
           iteration += 1
           break if !changed || iteration >= max_iterations
         end
+      end
+
+      # The predecessor is found by POSITION, not by id — the previous
+      # task may have no id at all (ids are optional). Runs inside the
+      # same fixed-point loop as `resolve_task_dependency` so a chain
+      # whose predecessor is itself still resolving (e.g. via its own
+      # "after") converges once the predecessor does, instead of reading
+      # a stale nil on the first pass.
+      def chain_from_previous_task(task, previous_task)
+        return false unless previous_task&.calculated_end
+
+        task.calculated_start = previous_task.calculated_end
+        task.calculated_end = add_duration(task.calculated_start, task.duration)
+        true
       end
 
       def calculate_task_date(task)

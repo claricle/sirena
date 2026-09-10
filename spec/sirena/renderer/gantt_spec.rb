@@ -217,5 +217,39 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
 
       expect(t_x).to be_within(0.01).of(c_x + c_width)
     end
+
+    # A task naming only tags and a duration — no start date, no "after",
+    # no "until" — is scheduled immediately after the PREVIOUS task in
+    # declaration order (mermaid's implicit chaining). The parser accepts
+    # this comma-tag form (it used to raise ParseError before this diff),
+    # but nothing scheduled it: it skipped the first pass (no start_date)
+    # and the second pass (no after_task/until_task), so its calculated
+    # dates stayed nil forever and it rendered as a 20px stub at the origin
+    # (Codex High, transform/gantt.rb:65). mmdc starts it flush against the
+    # previous task's end.
+    it "chains a duration-only tagged task after the previous task" do
+      source = <<~GANTT
+        gantt
+          dateFormat YYYY-MM-DD
+          section Tasks
+          A : a, 2024-01-01, 2d
+          T : crit, active, 3d
+      GANTT
+
+      parser = Sirena::Parser::GanttParser.new
+      diagram = parser.parse(source)
+
+      transform = Sirena::Transform::GanttTransform.new
+      graph = transform.to_graph(diagram)
+
+      xml = renderer.render(graph).to_xml
+      a_bar = xml.match(/<rect fill="#{Regexp.escape(described_class::TASK_COLORS[:default])}"[^>]*\/>/)[0]
+      a_x, a_width = a_bar.match(/x="([0-9.]+)"[^>]*width="([0-9.]+)"/).captures.map(&:to_f)
+      t_bar = xml.match(/<rect fill="#{Regexp.escape(described_class::TASK_COLORS[:critical])}"[^>]*\/>/)[0]
+      t_x, t_width = t_bar.match(/x="([0-9.]+)"[^>]*width="([0-9.]+)"/).captures.map(&:to_f)
+
+      expect(t_width).to be > 20
+      expect(t_x).to be_within(0.01).of(a_x + a_width)
+    end
   end
 end
