@@ -75,34 +75,46 @@ module Sirena
       # Splits a `classDef` style run ("fill:#f96,stroke:#333") into its
       # raw comma-separated chunks, then REPLAYS a copy of every chunk
       # whose text contains the lowercase substring "color" — anywhere,
-      # key or value — onto the end of the list.
+      # key or value — onto the end of the list, with the literal
+      # substring "fill" rewritten to "bgFill" in that replayed copy only.
       #
       # Verified against mermaid's own db (`ErDB#addClass`): each style
       # chunk is tested with `/color/.exec(s)` (no `i` flag, so only a
-      # literal lowercase "color" substring matches) and, on a match,
-      # pushed a SECOND time into a separate `textStyles` array appended
-      # after this class's own `styles` array when compiling. A
-      # declaration naming `stroke:currentcolor` this way ends up LAST
-      # among same-key entries even when a later, unrelated `stroke:red`
-      # chunk follows it in source.
+      # literal lowercase "color" substring matches) and, on a match, a
+      # COPY with "fill"->"bgFill" applied (`a.replace("fill","bgFill")`,
+      # first occurrence only, mirrored here by `String#sub`) is pushed a
+      # SECOND time into a separate `textStyles` array appended after this
+      # class's own `styles` array when compiling — the ORIGINAL chunk
+      # still goes into `styles` unrenamed. A declaration naming
+      # `stroke:currentcolor` ends up LAST among same-key `stroke` entries
+      # even when a later, unrelated `stroke:red` chunk follows it in
+      # source, because "stroke" contains no "fill" substring and the
+      # replay keeps its own key.
       #
-      # Real mermaid also rewrites the literal substring "fill" to
-      # "bgFill" in the replayed copy before pushing it
-      # (`a.replace("fill","bgFill")`). This is safely omitted here: the
-      # rewrite only ever affects a chunk whose property IS "fill", and
-      # replaying an unmodified "fill:X" chunk onto an already-identical
-      # "fill" entry is a no-op regardless of the key it lands under — the
-      # renamed key ("bgFill") is never read by anything downstream
-      # either. Replaying it unrenamed, as done here, produces the same
-      # final result while staying simple; verified with a real `mmdc`
-      # render of `classDef a fill:currentcolor,FILL:blue` on an
-      # attributed entity (`fill="currentcolor"` either way).
+      # The rename is NOT a no-op to skip: an EARLIER account here argued
+      # replaying an unrenamed "fill:X" chunk onto an already-identical
+      # "fill" entry changes nothing — true only when no OTHER chunk
+      # writes to "fill" in between. It is false the moment a later,
+      # legitimate same-key chunk exists: `fill:currentcolor,fill:blue`
+      # sets fill=currentcolor, then fill=blue (the real, later
+      # declaration) — an UNRENAMED replay of the first chunk would land
+      # on "fill" a third time and silently revert the legitimate "blue"
+      # back to the stale "currentcolor". The rename is what stops that:
+      # the replay lands on "bgFill" instead, a key nothing downstream
+      # reads, so it cannot clobber a later "fill" write. Verified against
+      # a real `mmdc` render: `classDef a fill:currentcolor,fill:blue` on
+      # an attributed entity computes `fill="blue"` in mermaid; matching
+      # that is exactly what requires the rename.
       #
       # @param declaration [String] raw style text for one class
       # @return [Array<String>] chunks, with colour-bearing ones repeated
+      #   (renamed copy appended, original left untouched)
       def expand_declaration(declaration)
         chunks = declaration.split(',')
-        chunks + chunks.select { |chunk| chunk.include?('color') }
+        replayed = chunks.select { |chunk| chunk.include?('color') }
+          .map { |chunk| chunk.sub('fill', 'bgFill') }
+
+        chunks + replayed
       end
 
       # Splits every "key:value" chunk the way mermaid's own `styles2Map`

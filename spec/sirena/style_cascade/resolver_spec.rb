@@ -30,6 +30,20 @@ RSpec.describe Sirena::StyleCascade::Resolver do
       expect(styles.attributed('stroke')).to eq('currentcolor')
     end
 
+    # The replay is RENAMED ("fill" -> "bgFill" in the replayed copy only)
+    # specifically so it cannot clobber a LEGITIMATE later same-key
+    # write. `fill` declared twice, with the first occurrence
+    # color-bearing, is the case that distinguishes a renamed replay from
+    # an unrenamed one — verified against a real mmdc render: mermaid
+    # computes fill="blue" here, not "currentcolor".
+    it 'lets a later legitimate "fill" declaration win over an earlier color-bearing "fill" one' do
+      resolver = described_class.new({ 'a' => 'fill:currentcolor,fill:blue' })
+
+      styles = resolver.resolve(['a'])
+
+      expect(styles.attributed('fill')).to eq('blue')
+    end
+
     it 'does not replay a chunk that never mentions "color"' do
       resolver = described_class.new({ 'a' => 'stroke:red,stroke:blue' })
 
