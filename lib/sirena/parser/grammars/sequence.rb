@@ -32,7 +32,8 @@ module Sirena
         end
 
         rule(:statement) do
-          participant_declaration |
+          comment_statement |
+            participant_declaration |
             actor_declaration |
             note_statement |
             box_statement |
@@ -40,6 +41,33 @@ module Sirena
             deactivation_command |
             control_structure |
             message
+        end
+
+        # A line starting with a bare `%` (not opening `%{`) is a whole-line
+        # comment to mermaid, contributing zero statements — mermaid's own
+        # comment rule takes priority over its actor rule at the start of a
+        # statement, so a leading `%` swallows the rest of the line whatever
+        # punctuation follows it. `message_actor_lead` already refuses to let
+        # a message actor START with a bare `%` (`mermaid_token_opener`,
+        # below), so it agrees such a line is never a message — but until
+        # this rule it had no statement to fall back to, so the whole
+        # diagram failed instead of skipping one line.
+        #
+        # No `.as(...)`: Parslet hands back a raw slice, and
+        # `Transforms::Sequence` already skips any non-Hash entry in
+        # `statements` (see `apply`/`process_statements`), so a comment line
+        # contributes nothing, matching mermaid.
+        #
+        # A comment line does not swallow the statement after it
+        # (`%c\nA->>B: m\n` still yields participants `A`, `B`). A line
+        # starting `%%` also parses to zero participants, matching mermaid,
+        # but NOT through this rule — `diagram`'s own `ws?` right after
+        # `header` already consumes it via `common.rb`'s `comment` rule
+        # (`%%` to end of line) before `statements` ever gets a chance to
+        # try this one. Do not read that case as evidence for this rule.
+        rule(:comment_statement) do
+          str('%') >> str('{').absent? >>
+            (line_end.absent? >> any).repeat >> line_end
         end
 
         # An actor name is a bounded run of text, not a programming
@@ -287,6 +315,13 @@ module Sirena
         # Measured: `A->>\B: m` raises on mermaid (`got 'INVALID'`); base
         # accepted it and rendered actor `"\\B"`.
         #
+        # `|` does NOT join this set: no arrow spelling starts with a bare
+        # `|` (the pipe-bearing spellings — `-|/`, `-|\`, `--|/`, `--|\` —
+        # all need a leading dash first, which `message_actor_lead` already
+        # never consumes). Measured against mermaid 11.16.1: `A-->|: m` and
+        # `A-x|: m` both give recipient `"|"` verbatim; a leading pipe is
+        # ordinary actor-name material, not a collision to protect against.
+        #
         # The LEAD-only character rule for point 1 above: the plain
         # character class only, deliberately WITHOUT `message_actor_char`'s
         # dash branch, so a message actor name can never open with `-` —
@@ -296,7 +331,7 @@ module Sirena
         end
 
         rule(:message_actor_lead) do
-          match[')|>/\\\\'].absent? >> mermaid_token_opener.absent? >>
+          match[')>/\\\\'].absent? >> mermaid_token_opener.absent? >>
             message_actor_lead_char
         end
 
