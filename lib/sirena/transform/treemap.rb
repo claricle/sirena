@@ -5,7 +5,7 @@ require_relative '../diagram/treemap'
 module Sirena
   module Transform
     # Layout calculator for treemap diagrams
-    class Treemap
+    class Treemap < Base
       PADDING = 10
       MIN_CELL_SIZE = 40
       LABEL_HEIGHT = 20
@@ -15,7 +15,7 @@ module Sirena
       #
       # @param diagram [Diagram::TreemapDiagram] the treemap diagram
       # @return [Hash] layout data with positioned cells and dimensions
-      def to_graph(diagram)
+      def build_graph(diagram)
         total_value = diagram.total_value
         return default_layout(diagram) if total_value <= 0
 

@@ -13,7 +13,7 @@ module Sirena
     # @example Transform a mindmap
     #   transform = Transform::Mindmap.new
     #   layout = transform.to_graph(diagram)
-    class Mindmap
+    class Mindmap < Base
       # Horizontal spacing between sibling nodes
       NODE_HORIZONTAL_SPACING = 120
 
@@ -31,7 +31,7 @@ module Sirena
       #
       # @param diagram [Diagram::Mindmap] the mindmap diagram
       # @return [Hash] layout data with nodes and connections
-      def to_graph(diagram)
+      def build_graph(diagram)
         return empty_graph unless diagram.root
 
         # Position nodes using tree layout

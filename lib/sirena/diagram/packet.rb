@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "base"
+
 module Sirena
   module Diagram
     # Represents a packet diagram showing network packet structures
@@ -11,8 +13,20 @@ module Sirena
         @fields = []
       end
 
-      def type
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :packet
+      def diagram_type
         :packet
+      end
+
+      # Packet diagrams have no validation rules yet. See
+      # TODO.foundation's corpus burndown for real validation; this is
+      # deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
 
       # Add a field to the packet

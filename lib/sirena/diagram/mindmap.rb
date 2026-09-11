@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -48,6 +49,21 @@ module Sirena
       def add_node(node)
         nodes << node
         @root = node if node.root?
+      end
+
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :mindmap
+      def diagram_type
+        :mindmap
+      end
+
+      # Mindmaps have no validation rules yet. See TODO.foundation's
+      # corpus burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
   end

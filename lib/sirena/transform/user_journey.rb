@@ -39,9 +39,7 @@ module Sirena
       # @param diagram [Diagram::UserJourney] the user journey to transform
       # @return [Hash] elkrb-compatible graph hash
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'user_journey',
           children: transform_tasks(diagram),

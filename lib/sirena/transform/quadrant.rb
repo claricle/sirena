@@ -26,9 +26,7 @@ module Sirena
       # @param diagram [Diagram::QuadrantChart] the quadrant diagram
       # @return [Hash] data structure for rendering with SVG coordinates
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         # Calculate dimensions
         width = DEFAULT_WIDTH
         height = DEFAULT_HEIGHT
