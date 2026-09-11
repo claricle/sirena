@@ -2,7 +2,9 @@
 
 require 'date'
 require 'fileutils'
+require 'digest'
 require 'securerandom'
+require 'tmpdir'
 
 # Rendering must not depend on the day it ran. Gantt derives its whole date
 # range from the reference date, so an unpinned run produces different output
@@ -168,17 +170,40 @@ module ExampleTasks
   # "delete only if still an orphan" on a POSIX filesystem.
   #
   # So generate and prune take the same lock instead, and cannot interleave.
-  # The lock is `flock` on the examples DIRECTORY itself: no lock file to
-  # create, gitignore, leave behind on a crash, or mistake for an example.
-  # Verified: a second holder is refused while the first holds it, and gets
-  # the lock once it is released.
+  # The lock is `flock` on a file in the system temp directory, keyed by the
+  # examples root. Do not lock the root directory itself: Windows refuses to
+  # open a directory (Errno::EISDIR). A lock file inside the tree would need
+  # ignoring and could be mistaken for an example.
   def with_examples_lock(examples_dir)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
 
-    File.open(root) do |handle|
+    File.open(examples_lock_path(root), File::RDWR | File::CREAT, 0o644) do |handle|
       handle.flock(File::LOCK_EX)
       yield
+    end
+  end
+
+  def examples_lock_path(root)
+    key = Digest::SHA256.hexdigest(File.realpath(root))
+    File.join(Dir.tmpdir, "sirena-examples-#{key}.lock")
+  end
+
+  # Copies each diagram directory's SVGs into docs_assets_dir with the same
+  # literal-children and no-link predicates generation and pruning use, so a
+  # link inside examples/ never pulls in files from outside it.
+  #
+  # @return [Array<Array(String, Integer)>] diagram type and count copied
+  def copy_to_docs(examples_dir, docs_assets_dir)
+    dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
+    dirs.filter_map do |dir|
+      svg_files = children(dir).select { |path| plain_svg?(path) }
+      next if svg_files.empty?
+
+      target_dir = File.join(docs_assets_dir, File.basename(dir))
+      FileUtils.mkdir_p(target_dir)
+      svg_files.each { |svg_file| FileUtils.cp(svg_file, target_dir) }
+      [File.basename(dir), svg_files.size]
     end
   end
 
@@ -511,26 +536,12 @@ namespace :examples do
 
     FileUtils.mkdir_p(docs_assets_dir)
 
-    total_copied = 0
-
-    Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }.sort.each do |dir|
-      diagram_type = File.basename(dir)
-      target_dir = File.join(docs_assets_dir, diagram_type)
-
-      svg_files = Dir.glob(File.join(dir, '*.svg'))
-      next if svg_files.empty?
-
-      FileUtils.mkdir_p(target_dir)
-
-      svg_files.each do |svg_file|
-        FileUtils.cp(svg_file, target_dir)
-        total_copied += 1
-      end
-
-      puts "✓ Copied #{svg_files.size} #{diagram_type} examples to docs/assets/examples/"
+    copied = ExampleTasks.copy_to_docs(examples_dir, docs_assets_dir)
+    copied.each do |diagram_type, count|
+      puts "✓ Copied #{count} #{diagram_type} examples to docs/assets/examples/"
     end
 
-    puts "\n✅ #{total_copied} examples copied to documentation!"
+    puts "\n✅ #{copied.sum { |_, count| count }} examples copied to documentation!"
   end
 
   desc "Generate AsciiDoc include files for documentation"
