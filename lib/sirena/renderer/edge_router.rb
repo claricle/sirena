@@ -349,8 +349,8 @@ module Sirena
       end
 
       def centre_of(box)
-        { x: (box[:x] || 0) + ((box[:width] || 100) / 2),
-          y: (box[:y] || 0) + ((box[:height] || 50) / 2) }
+        { x: (box[:x] || 0) + ((box[:width] || 100) / 2.0),
+          y: (box[:y] || 0) + ((box[:height] || 50) / 2.0) }
       end
 
       # How far along the ray to the other centre this box's border sits.

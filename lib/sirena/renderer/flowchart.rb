@@ -102,6 +102,11 @@ module Sirena
       EDGE_LABEL_LIFT = 5.0
       private_constant :EDGE_LABEL_LIFT
 
+      # A `<text>` with no font-size anywhere is drawn at the user agent's
+      # `medium`, which is 16px.
+      SVG_DEFAULT_FONT_SIZE = 16.0
+      private_constant :SVG_DEFAULT_FONT_SIZE
+
       # `TextMeasurement`'s average ratio is deliberately an average — the
       # right choice for sizing a box AROUND text, the wrong one for
       # reducing how often a self loop's label runs past the room this
@@ -416,11 +421,20 @@ module Sirena
         label = edge[:labels]&.first
         return [0.0, 0.0] unless label
 
-        font_size = theme_typography(:font_size_small) || 11
+        font_size = edge_label_font_size
         text = label[:text].to_s
         width = text.length * font_size * WIDE_CHAR_WIDTH_RATIO
         height = font_size * TextMeasurement::HEIGHT_RATIO
         [width / 2.0, height]
+      end
+
+      # The size `create_edge_label` actually draws at: the theme's small
+      # size, else the normal size `apply_theme_to_text` sets, else the SVG
+      # default. Keep the two in step, or loop room is sized for text the
+      # page does not draw.
+      def edge_label_font_size
+        theme_typography(:font_size_small) ||
+          theme_typography(:font_size_normal) || SVG_DEFAULT_FONT_SIZE
       end
 
       def self_loop_node(graph, edge)

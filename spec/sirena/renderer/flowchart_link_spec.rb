@@ -790,6 +790,23 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
       expect(anchor_x - real_half_width).to be >= 0
     end
 
+    # The loop's room is sized at the font the label is DRAWN at. A theme
+    # with no small size draws the label at its normal size, and one with
+    # neither leaves it at the SVG default of 16. Each pair below draws the
+    # label at one size, so the pages must match.
+    it "sizes a loop label's room at the font size it is drawn at" do
+      source = "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
+               "s -->|a much longer label| s\n"
+      view_box = lambda do |typography|
+        Sirena::Engine.new(theme: { typography: typography })
+          .render(source)[/viewBox="([^"]*)"/, 1]
+      end
+
+      expect([view_box.call({}), view_box.call({ font_size_normal: 20.0 })])
+        .to eq([view_box.call({ font_size_small: 16.0 }),
+                view_box.call({ font_size_small: 20.0, font_size_normal: 20.0 })])
+    end
+
     # `calculate_width` used to total only node and cluster boxes, never
     # a self loop's own reach, so a loop thrown right by the diagram's
     # flow — or its label — could draw past the page `create_document`
