@@ -1,0 +1,15 @@
+---
+cop: Style/ClassAndModuleChildren
+rows:
+- file: lib/sirena/theme/color_palette.rb
+  count: 1
+- file: lib/sirena/theme/effect_styles.rb
+  count: 1
+- file: lib/sirena/theme/registry.rb
+  count: 1
+- file: lib/sirena/theme/shape_styles.rb
+  count: 1
+- file: lib/sirena/theme/spacing_config.rb
+  count: 1
+- file: lib/sirena/theme/typography.rb
+  count: 1

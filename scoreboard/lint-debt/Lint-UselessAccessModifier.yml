@@ -1,0 +1,5 @@
+---
+cop: Lint/UselessAccessModifier
+rows:
+- file: lib/sirena/parser/transforms/mindmap.rb
+  count: 1

@@ -1,0 +1,5 @@
+---
+cop: Style/Semicolon
+rows:
+- file: spec/sirena/renderer/block_spec.rb
+  count: 4

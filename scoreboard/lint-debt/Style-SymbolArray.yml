@@ -1,0 +1,13 @@
+---
+cop: Style/SymbolArray
+rows:
+- file: Rakefile
+  count: 1
+- file: lib/sirena/renderer/sequence.rb
+  count: 1
+- file: lib/sirena/svg/element.rb
+  count: 1
+- file: lib/tasks/examples.rake
+  count: 1
+- file: spec/sirena/svg/escaping_boundary_spec.rb
+  count: 3

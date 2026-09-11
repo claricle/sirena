@@ -1,0 +1,7 @@
+---
+cop: Lint/SymbolConversion
+rows:
+- file: lib/sirena/renderer/pie.rb
+  count: 1
+- file: lib/sirena/renderer/quadrant.rb
+  count: 1

@@ -1,0 +1,15 @@
+---
+cop: Layout/EmptyLineAfterGuardClause
+rows:
+- file: lib/sirena/parser/mindmap.rb
+  count: 1
+- file: lib/sirena/parser/transforms/c4.rb
+  count: 1
+- file: lib/sirena/parser/transforms/er_diagram.rb
+  count: 1
+- file: lib/sirena/parser/transforms/mindmap.rb
+  count: 3
+- file: lib/sirena/parser/transforms/sequence.rb
+  count: 1
+- file: lib/tasks/benchmark.rake
+  count: 1

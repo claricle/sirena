@@ -1,0 +1,7 @@
+---
+cop: Style/RedundantRegexpArgument
+rows:
+- file: scripts/extract_mermaid_tests.rb
+  count: 11
+- file: spec/sirena/renderer/quadrant_spec.rb
+  count: 2

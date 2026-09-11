@@ -1,0 +1,19 @@
+---
+cop: RSpec/DescribeClass
+rows:
+- file: spec/fixtures_spec.rb
+  count: 1
+- file: spec/integration/class_diagram_integration_spec.rb
+  count: 1
+- file: spec/integration/er_diagram_integration_spec.rb
+  count: 1
+- file: spec/integration/flowchart_integration_spec.rb
+  count: 1
+- file: spec/integration/git_graph_integration_spec.rb
+  count: 1
+- file: spec/integration/requirement_integration_spec.rb
+  count: 1
+- file: spec/integration/state_diagram_integration_spec.rb
+  count: 1
+- file: spec/integration/user_journey_integration_spec.rb
+  count: 1

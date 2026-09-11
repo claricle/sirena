@@ -1,0 +1,13 @@
+---
+cop: Style/FormatStringToken
+rows:
+- file: lib/sirena/renderer/mindmap.rb
+  count: 3
+- file: lib/tasks/examples.rake
+  count: 2
+- file: lib/tasks/generate_mermaid_fixtures.rake
+  count: 9
+- file: scripts/corpus_sweep.rb
+  count: 15
+- file: scripts/corpus_verdicts.rb
+  count: 10

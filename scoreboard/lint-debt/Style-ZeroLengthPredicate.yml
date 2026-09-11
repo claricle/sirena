@@ -1,0 +1,5 @@
+---
+cop: Style/ZeroLengthPredicate
+rows:
+- file: lib/sirena/transform/requirement.rb
+  count: 1

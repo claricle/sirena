@@ -1,0 +1,21 @@
+# The signed exception allowlist for sirena's rubocop debt.
+#
+# TODO.foundation/09-rubocop-todo-burndown.md permits exactly one kind of
+# entry: a metrics-class cop, on a single file under
+# lib/sirena/parser/grammars/, where refactoring provably worsens the
+# grammar. `Sirena::LintDebt` checks both halves mechanically -- an
+# entry outside either rule is refused, not silently accepted.
+#
+# Empty on day one. Every future entry needs all FOUR fields shown below.
+# `approved_by` and `approved_on` are checked mechanically by
+# `refuse_unsigned!` -- an entry missing either is refused, not
+# accepted in silence. They are FIELDS, not a `# approved:` comment: a
+# YAML comment is invisible to the parser, so a rule written that way
+# could never be read by anything.
+#
+# exceptions:
+#   - cop: Metrics/CyclomaticComplexity
+#     file: lib/sirena/parser/grammars/flowchart.rb
+#     approved_by: <user>
+#     approved_on: <date>
+exceptions: []

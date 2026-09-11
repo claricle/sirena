@@ -1,0 +1,7 @@
+---
+cop: Layout/SpaceAroundOperators
+rows:
+- file: lib/sirena/renderer/requirement.rb
+  count: 4
+- file: scripts/extract_mermaid_tests.rb
+  count: 1

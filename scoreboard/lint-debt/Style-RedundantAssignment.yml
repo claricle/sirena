@@ -1,0 +1,27 @@
+---
+cop: Style/RedundantAssignment
+rows:
+- file: lib/sirena/parser/c4.rb
+  count: 1
+- file: lib/sirena/parser/er_diagram.rb
+  count: 1
+- file: lib/sirena/parser/error.rb
+  count: 1
+- file: lib/sirena/parser/gantt.rb
+  count: 1
+- file: lib/sirena/parser/info.rb
+  count: 1
+- file: lib/sirena/parser/pie.rb
+  count: 1
+- file: lib/sirena/parser/quadrant.rb
+  count: 1
+- file: lib/sirena/parser/sankey.rb
+  count: 1
+- file: lib/sirena/parser/sequence.rb
+  count: 1
+- file: lib/sirena/parser/timeline.rb
+  count: 1
+- file: lib/sirena/theme.rb
+  count: 1
+- file: lib/tasks/benchmark.rake
+  count: 1

@@ -1,0 +1,5 @@
+---
+cop: Style/RedundantLineContinuation
+rows:
+- file: lib/sirena/renderer/packet.rb
+  count: 1

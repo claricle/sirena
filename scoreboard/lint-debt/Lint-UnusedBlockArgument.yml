@@ -1,0 +1,13 @@
+---
+cop: Lint/UnusedBlockArgument
+rows:
+- file: lib/sirena/renderer/architecture.rb
+  count: 2
+- file: lib/sirena/renderer/block.rb
+  count: 1
+- file: lib/sirena/transform/architecture.rb
+  count: 1
+- file: lib/sirena/transform/block.rb
+  count: 1
+- file: lib/tasks/examples.rake
+  count: 1

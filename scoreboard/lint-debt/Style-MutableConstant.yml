@@ -1,0 +1,5 @@
+---
+cop: Style/MutableConstant
+rows:
+- file: scripts/extract_mermaid_tests.rb
+  count: 2

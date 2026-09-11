@@ -1,0 +1,21 @@
+---
+cop: Lint/UnusedMethodArgument
+rows:
+- file: lib/sirena/renderer/git_graph.rb
+  count: 1
+- file: lib/sirena/renderer/packet.rb
+  count: 1
+- file: lib/sirena/transform/block.rb
+  count: 2
+- file: lib/sirena/transform/git_graph.rb
+  count: 3
+- file: lib/sirena/transform/kanban.rb
+  count: 1
+- file: lib/sirena/transform/mindmap.rb
+  count: 1
+- file: lib/sirena/transform/packet.rb
+  count: 1
+- file: lib/sirena/transform/requirement.rb
+  count: 1
+- file: lib/sirena/transform/treemap.rb
+  count: 1

@@ -1,0 +1,7 @@
+---
+cop: Layout/TrailingWhitespace
+rows:
+- file: lib/sirena/parser/transforms/c4.rb
+  count: 3
+- file: lib/sirena/parser/transforms/xy_chart.rb
+  count: 1

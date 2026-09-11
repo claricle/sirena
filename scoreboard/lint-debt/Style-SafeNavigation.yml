@@ -1,0 +1,9 @@
+---
+cop: Style/SafeNavigation
+rows:
+- file: lib/sirena/parser/transforms/flowchart.rb
+  count: 2
+- file: lib/sirena/renderer/pie.rb
+  count: 1
+- file: lib/sirena/transform/gantt.rb
+  count: 2
