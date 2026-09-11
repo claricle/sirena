@@ -78,7 +78,10 @@ RSpec.describe Sirena::Engine do
       end
     end
 
-    context 'with treemap corpus cases' do
+    # :corpus - sweeps the whole fixture directory and only asserts the
+    # output looks SVG-shaped. Runs in `spec:corpus`, isolated from the
+    # coverage-collecting `spec:unit` run: see .simplecov and Rakefile.
+    context 'with treemap corpus cases', :corpus do
       # Globbing at definition time means an empty or moved directory
       # would silently define zero examples and still pass, so guard it.
       it 'finds treemap corpus cases to render' do
