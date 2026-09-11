@@ -59,6 +59,17 @@ module Sirena
         box.dig(:metadata, :cluster) == true
       end
 
+      # The exact centre of a laid-out box. The flowchart renderer aims
+      # heads and outlines at this same point, so keep one copy: two drifted
+      # apart once and put routed ends half a pixel off their heads.
+      #
+      # @param box [Hash] a laid-out box
+      # @return [Hash] :x and :y of the centre
+      def self.centre(box)
+        { x: (box[:x] || 0) + ((box[:width] || 100) / 2.0),
+          y: (box[:y] || 0) + ((box[:height] || 50) / 2.0) }
+      end
+
       # The two ends of a run, flattened for the path and label builders.
       #
       # @param points [Array<Hash>] the points of a run
@@ -186,8 +197,8 @@ module Sirena
       # with the same centre have none, so route from the source's top to
       # the target's bottom with two bends beyond both boxes.
       def coincident_loop(source, target)
-        source_centre = centre_of(source)
-        target_centre = centre_of(target)
+        source_centre = EdgeRouter.centre(source)
+        target_centre = EdgeRouter.centre(target)
         return nil unless near?(source_centre, target_centre)
 
         source_top, = vertical_outline(source, source_centre[:y])
@@ -230,8 +241,8 @@ module Sirena
       # end pulled back to the border of the box it leaves when that box
       # is a cluster.
       def trimmed_route(source, target)
-        from = centre_of(source)
-        to = centre_of(target)
+        from = EdgeRouter.centre(source)
+        to = EdgeRouter.centre(target)
         out = step_out(source, from, to)
         back = step_out(target, to, from)
 
@@ -346,11 +357,6 @@ module Sirena
 
         [{ x: source_x, y: source_y }, { x: outside_x, y: source_y },
          { x: outside_x, y: target_y }, { x: target_x, y: target_y }]
-      end
-
-      def centre_of(box)
-        { x: (box[:x] || 0) + ((box[:width] || 100) / 2.0),
-          y: (box[:y] || 0) + ((box[:height] || 50) / 2.0) }
       end
 
       # How far along the ray to the other centre this box's border sits.

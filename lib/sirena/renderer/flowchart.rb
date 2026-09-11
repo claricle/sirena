@@ -964,8 +964,7 @@ module Sirena
       end
 
       def node_centre(node)
-        [(node[:x] || 0) + ((node[:width] || 100) / 2.0),
-         (node[:y] || 0) + ((node[:height] || 50) / 2.0)]
+        EdgeRouter.centre(node).values_at(:x, :y)
       end
 
       # A head drawn at the node's centre is under the node, and the nodes
