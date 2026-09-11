@@ -132,7 +132,8 @@ module Sirena
       end
     end
 
-    # Error raised during parsing.
-    class ParseError < StandardError; end
+    # Error raised during parsing. A Sirena::Error so Engine#render can let
+    # it propagate unwrapped instead of collapsing it into PipelineError.
+    class ParseError < Sirena::Error; end
   end
 end

@@ -80,7 +80,11 @@ module Sirena
     # @option options [Date, nil] :today reference date override
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
-    # @raise [PipelineError] if any pipeline stage fails
+    # @raise [Parser::ParseError] if the source fails to parse
+    # @raise [Transform::TransformError] if the diagram fails its own
+    #   validity check
+    # @raise [Renderer::RenderError] if rendering itself fails
+    # @raise [PipelineError] if a stage fails with no error class of its own
     def render(mermaid_source, options = {})
       @verbose = options[:verbose] if options.key?(:verbose)
 
@@ -113,12 +117,18 @@ module Sirena
       log "Render complete, #{svg_xml.length} bytes"
 
       svg_xml
-    rescue DiagramTypeError
-      # Re-raise diagram type errors without wrapping
+    rescue Error
+      # Every layer raises its own Sirena::Error subclass (DiagramTypeError,
+      # Parser::ParseError, Transform::TransformError, Renderer::RenderError)
+      # naming the stage that failed. Wrapping one into PipelineError would
+      # erase exactly the field the corpus harness records as `stage`, so
+      # let it propagate unwrapped instead.
       raise
     rescue StandardError => e
-      raise PipelineError,
-            "Rendering failed: #{e.message}\n#{e.backtrace.join("\n")}"
+      # A failure with no layer error of its own. `e` becomes `cause`
+      # automatically because we are still inside the rescue; never
+      # stringify a backtrace into the message.
+      raise PipelineError, "Rendering failed: #{e.class}: #{e.message}"
     end
 
     private
