@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -59,7 +60,7 @@ module Sirena
     end
 
     # Represents a Mermaid block diagram
-    class BlockDiagram < Lutaml::Model::Serializable
+    class BlockDiagram < Base
       attribute :columns, :integer, default: -> { 1 }
       attribute :blocks, Block, collection: true, default: -> { [] }
       attribute :connections, BlockConnection, collection: true, default: -> { [] }
@@ -75,6 +76,22 @@ module Sirena
 
       def add_style(style)
         styles << style
+      end
+
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :block
+      def diagram_type
+        :block
+      end
+
+      # Block diagrams have no validation rules yet. See
+      # TODO.foundation's corpus burndown for real validation; this is
+      # deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
   end

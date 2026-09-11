@@ -23,9 +23,7 @@ module Sirena
       # @param diagram [Diagram::Flowchart] the flowchart to transform
       # @return [Hash] elkrb-compatible graph hash
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'flowchart',
           children: transform_children(diagram),

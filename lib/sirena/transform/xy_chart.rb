@@ -13,7 +13,7 @@ module Sirena
     # @example Transform an XY chart
     #   transform = Transform::XYChart.new
     #   layout = transform.to_graph(diagram)
-    class XYChart
+    class XYChart < Base
       # Default chart dimensions
       DEFAULT_WIDTH = 800
       DEFAULT_HEIGHT = 500
@@ -28,7 +28,7 @@ module Sirena
       #
       # @param diagram [Diagram::XYChart] the XY chart diagram
       # @return [Hash] layout data with axes, datasets, and dimensions
-      def to_graph(diagram)
+      def build_graph(diagram)
         # Calculate plot area
         plot_width = DEFAULT_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
         plot_height = DEFAULT_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM

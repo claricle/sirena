@@ -24,9 +24,7 @@ module Sirena
       # @param diagram [Diagram::Pie] the pie diagram to transform
       # @return [Hash] data structure for rendering
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'pie',
           title: diagram.title,

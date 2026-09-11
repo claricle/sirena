@@ -13,7 +13,7 @@ module Sirena
     # @example Transform a packet diagram
     #   transform = Transform::Packet.new
     #   layout = transform.to_graph(diagram)
-    class Packet
+    class Packet < Base
       # Default number of bits per row (standard packet width)
       BITS_PER_ROW = 32
 
@@ -35,7 +35,7 @@ module Sirena
       #
       # @param diagram [Diagram::PacketDiagram] the packet diagram
       # @return [Hash] layout data with positioned fields and dimensions
-      def to_graph(diagram)
+      def build_graph(diagram)
         return empty_layout if diagram.fields.empty?
 
         # Calculate the number of rows needed

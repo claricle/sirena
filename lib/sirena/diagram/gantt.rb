@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -57,7 +58,7 @@ module Sirena
     end
 
     # Gantt chart diagram model
-    class GanttChart < Lutaml::Model::Serializable
+    class GanttChart < Base
       attribute :title, :string
       attribute :date_format, :string, default: -> { "YYYY-MM-DD" }
       attribute :axis_format, :string
@@ -70,6 +71,21 @@ module Sirena
         super
         @sections ||= []
         @excludes ||= []
+      end
+
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :gantt
+      def diagram_type
+        :gantt
+      end
+
+      # Gantt charts have no validation rules yet. See TODO.foundation's
+      # corpus burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
   end

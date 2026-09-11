@@ -38,9 +38,7 @@ module Sirena
       # @param diagram [Diagram::C4] the C4 diagram to transform
       # @return [Hash] elkrb-compatible graph hash
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         # Build hierarchy with boundaries as containers
         root_elements = diagram.elements.select { |e| e.boundary_id.nil? }
         root_boundaries = diagram.boundaries.select { |b| b.parent_id.nil? }

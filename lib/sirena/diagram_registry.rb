@@ -13,14 +13,16 @@ module Sirena
   #     :flowchart,
   #     parser: Parser::FlowchartGrammar,
   #     transform: Transform::FlowchartTransform,
-  #     renderer: Renderer::FlowchartRenderer
+  #     renderer: Renderer::FlowchartRenderer,
+  #     model: Diagram::Flowchart
   #   )
   #
   # @example Retrieving handlers for a type
   #   handlers = DiagramRegistry.get(:flowchart)
   #   # => { parser: Parser::FlowchartGrammar,
   #   #      transform: Transform::FlowchartTransform,
-  #   #      renderer: Renderer::FlowchartRenderer }
+  #   #      renderer: Renderer::FlowchartRenderer,
+  #   #      model: Diagram::Flowchart }
   #
   # @example Listing registered types
   #   DiagramRegistry.types
@@ -35,6 +37,10 @@ module Sirena
       # @param parser [Class] the parser class for this diagram type
       # @param transform [Class] the transform class for this diagram type
       # @param renderer [Class] the renderer class for this diagram type
+      # @param model [Class] the Diagram::Base subclass this type's parser
+      #   returns. Named here so the contract spec (spec/contract_spec.rb)
+      #   has a single source for which class to check, instead of a
+      #   hand-kept list living apart from the registry.
       # @return [Hash] the registered handler hash
       #
       # @example Register a new diagram type
@@ -42,21 +48,23 @@ module Sirena
       #     :flowchart,
       #     parser: Parser::FlowchartGrammar,
       #     transform: Transform::FlowchartTransform,
-      #     renderer: Renderer::FlowchartRenderer
+      #     renderer: Renderer::FlowchartRenderer,
+      #     model: Diagram::Flowchart
       #   )
-      def register(type, parser:, transform:, renderer:)
+      def register(type, parser:, transform:, renderer:, model:)
         @handlers[type] = {
           parser: parser,
           transform: transform,
-          renderer: renderer
+          renderer: renderer,
+          model: model
         }
       end
 
       # Retrieves handlers for a diagram type.
       #
       # @param type [Symbol] the diagram type identifier
-      # @return [Hash, nil] hash with :parser, :transform, and :renderer
-      #   keys, or nil if type not registered
+      # @return [Hash, nil] hash with :parser, :transform, :renderer, and
+      #   :model keys, or nil if type not registered
       #
       # @example Get handlers for a type
       #   handlers = DiagramRegistry.get(:flowchart)

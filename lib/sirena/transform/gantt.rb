@@ -19,7 +19,7 @@ module Sirena
       # @param diagram [Diagram::GanttChart] the Gantt diagram to transform
       # @return [Hash] data structure for rendering
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
+      def build_graph(diagram)
         @diagram = diagram
         @task_map = build_task_map(diagram)
 

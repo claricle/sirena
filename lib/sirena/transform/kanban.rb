@@ -12,7 +12,7 @@ module Sirena
     # @example Transform a kanban board
     #   transform = Transform::Kanban.new
     #   layout = transform.to_graph(diagram)
-    class Kanban
+    class Kanban < Base
       # Horizontal spacing between columns
       COLUMN_HORIZONTAL_SPACING = 60
 
@@ -35,7 +35,7 @@ module Sirena
       #
       # @param diagram [Diagram::Kanban] the kanban diagram
       # @return [Hash] layout data with columns, cards, and dimensions
-      def to_graph(diagram)
+      def build_graph(diagram)
         return empty_graph if diagram.columns.empty?
 
         # Position columns horizontally

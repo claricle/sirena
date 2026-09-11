@@ -23,9 +23,7 @@ module Sirena
       # @param diagram [Diagram::StateDiagram] the state diagram to transform
       # @return [Hash] elkrb-compatible graph hash
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'state_diagram',
           children: transform_states(diagram),

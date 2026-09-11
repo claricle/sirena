@@ -22,9 +22,7 @@ module Sirena
       # @param diagram [Diagram::Info] the info diagram to transform
       # @return [Hash] data structure for rendering
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'info',
           title: diagram.title,

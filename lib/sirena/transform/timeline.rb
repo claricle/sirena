@@ -19,9 +19,7 @@ module Sirena
       # @param diagram [Diagram::Timeline] the timeline diagram to transform
       # @return [Hash] data structure for rendering
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, "Invalid diagram" unless diagram.valid?
-
+      def build_graph(diagram)
         @diagram = diagram
 
         # Collect all events and determine timeline bounds

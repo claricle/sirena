@@ -29,9 +29,7 @@ module Sirena
       # @param diagram [Diagram::RequirementDiagram] the requirement diagram to transform
       # @return [Hash] positioned layout hash
       # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Diagram cannot be nil' if diagram.nil?
-
+      def build_graph(diagram)
         # Calculate positions for requirements and elements
         nodes_layout = calculate_node_positions(diagram)
 
