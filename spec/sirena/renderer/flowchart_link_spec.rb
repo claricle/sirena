@@ -807,6 +807,21 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
                 view_box.call({ font_size_small: 20.0, font_size_normal: 20.0 })])
     end
 
+    # Every built-in theme sets both sizes, and they differ. The small one
+    # is what the label is drawn at, so the normal one must not size the
+    # room. The normal size alone does not move the layout.
+    it "sizes a loop label's room at the small size when both are set" do
+      source = "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
+               "s -->|a much longer label| s\n"
+      view_box = lambda do |typography|
+        Sirena::Engine.new(theme: { typography: typography })
+          .render(source)[/viewBox="([^"]*)"/, 1]
+      end
+
+      expect(view_box.call({ font_size_small: 12.0, font_size_normal: 20.0 }))
+        .to eq(view_box.call({ font_size_small: 12.0 }))
+    end
+
     # `calculate_width` used to total only node and cluster boxes, never
     # a self loop's own reach, so a loop thrown right by the diagram's
     # flow — or its label — could draw past the page `create_document`
