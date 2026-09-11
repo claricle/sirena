@@ -169,11 +169,14 @@ RSpec.describe ExampleTasks do
     # generate and prune both take this, so they cannot interleave at all --
     # the re-decide above covers a source restored by hand, which no lock of
     # ours can serialise.
+    def try_lock
+      path = described_class.examples_lock_path(examples_dir)
+      File.open(path, File::RDWR | File::CREAT) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
+    end
+
     it 'refuses a second holder while the first holds it' do
       held = nil
-      described_class.with_examples_lock(examples_dir) do
-        held = File.open(examples_dir) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
-      end
+      described_class.with_examples_lock(examples_dir) { held = try_lock }
 
       expect(held).to be(false)
     end
@@ -182,8 +185,42 @@ RSpec.describe ExampleTasks do
       expect { described_class.with_examples_lock(examples_dir) { raise 'boom' } }
         .to raise_error('boom')
 
-      after = File.open(examples_dir) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
-      expect(after).to eq(0)
+      expect(try_lock).to eq(0)
+    end
+
+    # Windows refuses to open a directory. Refuse it here too, so a lock taken
+    # on the examples root itself fails on every platform, not only there.
+    it 'never opens the examples directory itself' do
+      allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
+        raise Errno::EISDIR, path.to_s if File.directory?(path.to_s)
+
+        original.call(path, *rest, &block)
+      end
+
+      expect { |probe| described_class.with_examples_lock(examples_dir, &probe) }
+        .to yield_control
+    end
+  end
+
+  describe '.copy_to_docs' do
+    # A link inside examples/ resolves somewhere this task has no claim on,
+    # whether it is a whole diagram directory or one SVG.
+    it 'copies plain SVGs and skips a linked directory or file' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+          File.write(File.join(outside, 'secret.svg'), '<svg/>')
+          File.symlink(outside, File.join(examples_dir, 'linked'))
+          File.symlink(File.join(outside, 'secret.svg'),
+                       File.join(examples_dir, 'flowchart', 'b.svg'))
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect([copied, Dir.glob('**/*', base: docs).sort])
+            .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+        end
+      end
     end
   end
 
