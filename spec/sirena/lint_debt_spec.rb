@@ -129,7 +129,7 @@ RSpec.describe Sirena::LintDebt do
     it "raises when rubocop cannot run its config" do
       write(
         ".rubocop.yml",
-        "inherit_from:\n  - https://example.invalid/does-not-exist.yml\n",
+        "inherit_from:\n  - http://127.0.0.1:1/does-not-exist.yml\n",
       )
 
       expect { debt.total }.to raise_error(described_class::ExecutionError)
@@ -192,6 +192,39 @@ RSpec.describe Sirena::LintDebt do
         expect { debt.total }
           .to raise_error(err_class, signature_message(field))
       end
+    end
+
+    # A malformed file must stop the rake task with a message naming the
+    # entry, not an error its rescue of ExecutionError lets through.
+    it "refuses an exception missing cop" do
+      write_exceptions([signed_entry.except("cop")])
+
+      expect { debt.total }.to raise_error(
+        err_class, "exception ?/#{grammar_file}: cop is required"
+      )
+    end
+
+    it "refuses an exception missing file" do
+      write_exceptions([signed_entry.except("file")])
+
+      expect { debt.total }.to raise_error(
+        err_class, "exception Metrics/MethodLength/?: file is required"
+      )
+    end
+
+    it "refuses an entry that is not a mapping" do
+      write_exceptions(["Metrics/MethodLength"])
+
+      expect { debt.total }.to raise_error(
+        err_class, %r{"Metrics/MethodLength": must be a mapping}
+      )
+    end
+
+    it "refuses a file whose top level is not a mapping" do
+      write("scoreboard/lint-exceptions.yml", "- cop: Metrics/MethodLength\n")
+
+      expect { debt.total }
+        .to raise_error(err_class, /top level must be a mapping/)
     end
 
     it "subtracts nothing when empty" do

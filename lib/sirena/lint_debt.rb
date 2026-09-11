@@ -298,8 +298,16 @@ module Sirena
       path = File.join(root, "scoreboard", "lint-exceptions.yml")
       return [] unless File.exist?(path)
 
-      data = YAML.safe_load_file(path, permitted_classes: [Date])
-      Array((data || {})["exceptions"])
+      data = YAML.safe_load_file(path, permitted_classes: [Date]) || {}
+      refuse_non_mapping_file!(data, path)
+      Array(data["exceptions"])
+    end
+
+    def refuse_non_mapping_file!(data, path)
+      return if data.is_a?(Hash)
+
+      raise ExecutionError,
+            "#{path}: top level must be a mapping with an exceptions list"
     end
 
     def apply_exceptions(current_rows)
@@ -316,6 +324,7 @@ module Sirena
     end
 
     def validate_exception!(exception, current_rows)
+      refuse_incomplete!(exception)
       cop = exception.fetch("cop")
       file = exception.fetch("file")
 
@@ -340,6 +349,31 @@ module Sirena
       "approved_on" => "carry the date it was signed off",
     }.freeze
     private_constant :SIGNATURE_FIELDS
+
+    # Every entry must be a mapping naming both a cop and a file -- the two
+    # `fetch`es in `validate_exception!` depend on it. Anything else would
+    # escape the rake tasks' rescue of `ExecutionError` as a raw KeyError or
+    # NoMethodError instead of a message naming the entry.
+    REQUIRED_FIELDS = %w[cop file].freeze
+    private_constant :REQUIRED_FIELDS
+
+    def refuse_incomplete!(exception)
+      refuse_non_mapping!(exception)
+      REQUIRED_FIELDS.each do |field|
+        next if exception.key?(field)
+
+        label = "#{exception['cop'] || '?'}/#{exception['file'] || '?'}"
+        raise ExecutionError, "exception #{label}: #{field} is required"
+      end
+    end
+
+    def refuse_non_mapping!(exception)
+      return if exception.is_a?(Hash)
+
+      raise ExecutionError,
+            "exception #{exception.inspect}: must be a mapping of cop, " \
+            "file, approved_by and approved_on"
+    end
 
     def refuse_unsigned!(exception, cop, file)
       SIGNATURE_FIELDS.each do |field, requirement|
