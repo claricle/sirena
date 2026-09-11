@@ -266,10 +266,13 @@ module Sirena
         # this rule existed, kept because removing it is a separate,
         # unverified change from fixing the reported findings. Left in
         # place, documented accurately rather than as redundant.
+        # A dash followed by `/` or `\` ends the name, as it does for a
+        # continuation: `A->>B-/C: m` and `A->>B-\C: m` are rejected.
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
             (match['^+<>()-'] |
-              (str('-') >> (str('-') | message_actor_stop).absent?))
+              (str('-') >>
+                (str('-') | str('/') | str('\\') | message_actor_stop).absent?))
         end
 
         # `>` joins `<` as never message-actor material, in any position —
@@ -293,7 +296,32 @@ module Sirena
         end
 
         rule(:message_actor_lead) do
-          match[')|>/\\\\'].absent? >> message_actor_lead_char
+          match[')|>/\\\\'].absent? >> mermaid_token_opener.absent? >>
+            message_actor_lead_char
+        end
+
+        # Where mermaid's lexer starts a token, two of its rules run before
+        # its actor rule and take the text instead, so a message endpoint
+        # can never start with either:
+        #
+        # - `%` not opening `%{`: the rest of the line is a comment.
+        #   `A->>%B: m` is rejected; `A->>%{x: m` is not.
+        # - a number followed by a space or newline: it is read as a
+        #   number, not a name. `A->>8 : m` and `1 ->> 2: m` are rejected;
+        #   `A->>8: m` and `A->>1.555 : m` (three decimals) are not.
+        #
+        # A `%%` right after an endpoint's first character needs no rule
+        # here: `%%` already ends the name, and the comment it opens leaves
+        # the message without its required `: text`.
+        rule(:mermaid_token_opener) do
+          (str('%') >> str('{').absent?) |
+            (lexed_number >> match[" \n"])
+        end
+
+        rule(:lexed_number) do
+          (match['0-9'].repeat(1) >>
+            (str('.') >> match['0-9'].repeat(1, 2)).maybe) |
+            (str('.') >> match['0-9'].repeat(1, 2))
         end
 
         # `message_actor_continuation` is tried only in the repeat below —
@@ -351,7 +379,7 @@ module Sirena
           message_actor_name.as(:from) >> space? >>
             message_signal.as(:arrow) >> space? >>
             message_actor_name.as(:to) >> space? >>
-            message_text.maybe.as(:text) >>
+            message_text.as(:text) >>
             line_end
         end
 
