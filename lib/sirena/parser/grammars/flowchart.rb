@@ -638,6 +638,9 @@ module Sirena
         # `1end_`, `1end2` and `1endx` are all ids.
         rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
 
+        # One `x` or `o` and then a link body, with nothing between them.
+        rule(:flush_link_marker) { match['xo'] >> link_body }
+
         # Node with optional shape and edges
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
@@ -654,16 +657,53 @@ module Sirena
 
         # Node with its optional shape, inline class and metadata.
         # Every optional part is captured whether or not it is present, so
-        # the tree has one shape instead of one per combination.
+        # the tree has one shape instead of one per combination. Parslet
+        # omits a `.maybe` that wraps its own `.as`, which is why the
+        # transform previously needed a rule per combination.
+        # On its second branch the `:shape` slot comes back nil:
+        # `dot_absent` is a zero-width lookahead and captures nothing. It
+        # is there only to refuse the flush dot a bare name would
+        # otherwise swallow.
         #
         # The shape opening abuts the id, with no gap of any kind: mmdc
         # refuses `A [B]`, `A\t[B]`, `A\n[B]` and `A %% c\n[B]` alike.
+        #
+        # `flush_link_marker.absent?` on the first line is the other
+        # refusal. A lone `x` or `o` sitting flush against a link body is
+        # mermaid's link-START marker, not a node called `x`: mmdc reads
+        # `x===B` as a link with nothing on its left and refuses it, while
+        # it draws `xx===B` and `x === B` — the marker has to be one
+        # character and flush. This rule is the edge TARGET as well as the
+        # statement's own node, so the guard governs both positions, and
+        # mmdc refuses `A --> x---B` for the same reason it refuses
+        # `x===B`.
         rule(:node_with_shape) do
-          node_id.as(:node_id) >>
-            node_shape.maybe.as(:shape) >>
-            inline_class.maybe.as(:inline_class) >>
+          flush_link_marker.absent? >>
+            node_id.as(:node_id) >>
+            (node_shape.as(:shape) | dot_absent.as(:shape)) >>
+            (inline_class >> dot_absent).maybe.as(:inline_class) >>
             node_metadata.maybe.as(:metadata)
         end
+
+        # A shape and a `@{...}` block each close the node's name, and a
+        # link may then sit flush against it: mmdc draws `A[x].-B` and
+        # `A@{ shape: rect }.->B`. A bare name is still growing, and so is
+        # the class name of `A:::c` — each takes a `.` in mermaid, so mmdc
+        # reads the dot of `A.-B` and of `A[x]:::c.-B` as name text and
+        # refuses `A.->B`, `A:::c.->B` and `A[x]:::c.->B` outright.
+        #
+        # `node_id` carries a dot the same way a bare name does — see its
+        # own comment above — so `A.-B` reads exactly as mmdc reads it,
+        # as the single node `"A.-B"`, not a link: that is the no-shape
+        # fallback above, where `dot_absent` stands in for `:shape`
+        # itself. A real shape bypasses the guard outright — `A[x].-B`
+        # and `A@{ shape: rect }.->B` both draw as mmdc draws them —
+        # unless an inline class follows the shape, which is the second
+        # place the guard runs. That second use is where Sirena and mmdc
+        # part ways: the other five — `A:::c.-B`, `A[x]:::c.-B` and the
+        # three `.->` forms — are still refused rather than read as a
+        # link.
+        rule(:dot_absent) { str('.').absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
         # giving a node a shape or a label, usable as a statement of its own
@@ -856,67 +896,67 @@ module Sirena
             reserved_keyword.absent? >> node_with_shape.as(:target)
         end
 
-        # Arrow types
+        # Link forms
+        # Every symbol-only link mermaid draws, probed one at a time
+        # against mmdc rather than counted from the docs. The form that
+        # carries its label in the middle — `A -- text --> B` — is a
+        # different shape and is still refused; see the spec that pins it.
+        #
+        # `->` and `==` are deliberately absent: sirena accepted both and
+        # mermaid rejects them.
+        # `~` never opens a visible link, so this alternation is
+        # mutually exclusive and its order is free.
         rule(:arrow) do
-          thick_arrow | dotted_arrow | plain_arrow
+          (invisible_link | visible_link).as(:token)
         end
 
-        # Bare `==` is not a link (mmdc rejects `A==B`). A thick link has
-        # at least two `=` before an arrowhead or at least three without
-        # one. The headed arm comes first so its `>` is not left for the
-        # target.
-        #
-        # The open arm carries `trailing_xo_marker.absent?` for the same
-        # reason the other two links do. Mermaid's thick link is
-        # `[xo<]?==+[=xo>]`, so the trailing `x` belongs to the LINK: mmdc
-        # draws `A===xB` as `A` and `B` joined by one crossed-head link,
-        # and refuses `A===x`, `A===o` and `A===x --- Z`.
-        rule(:thick_arrow) do
-          (str('=').repeat(2) >> str('>') |
-            str('=').repeat(3) >> trailing_xo_marker.absent?).as(:thick)
-        end
+        # `~~~` takes no markers at all. mmdc rejects `~~~>` outright, and
+        # it never reads an `o` or an `x` beside a tilde run as a marker
+        # either — `A o~~~o B` is refused, and written flush `Ao~~~oB` is
+        # DRAWN, as the two nodes `Ao` and `oB` with an invisible link
+        # between them. Sirena gives both the same answers.
+        rule(:invisible_link) { str('~~~') >> str('~').repeat }
 
-        # A dotted link has one or more dots. As with a plain link, put the
-        # headed arm first and guard only the open arm from consuming an
-        # unsupported crossed or circled arrowhead.
-        rule(:dotted_arrow) do
-          (str('-') >> str('.').repeat(1) >> str('->') |
-            str('-') >> str('.').repeat(1) >> str('-') >>
-              trailing_xo_marker.absent?).as(:dotted)
-        end
+        # The vocabulary is generated, not listed. Enumerating it missed
+        # forms mmdc renders — `====`, `-.-x`, `<--x`, `o----o` among them
+        # — and got `o--x` wrong on top of that.
+        #
+        # A leading marker is taken here whatever it is; whether mermaid
+        # honours it depends on the marker at the other end, which the
+        # transform decides.
+        #
+        # Headed first: parslet's alternation takes the first branch that
+        # matches, and `long_link` would swallow the `---` of `--->` and
+        # leave the `>` for the target to start with, which nothing can
+        # parse — the whole diagram would be thrown away.
+        rule(:visible_link) { link_start.maybe >> (headed_link | long_link) }
 
-        # Mermaid's plain link is `--+[-xo>]`: two or more dashes, then ONE
-        # of `-`, `x`, `o`, `>`. The dashes are counted rather than
-        # spelled, so `A----B`, `A--->B` and `A-----B` all draw one edge.
-        #
-        # A bare `->` is NOT a plain link: mmdc refuses `A->B`, `A -> B`,
-        # `A ->B` and `A-> B` alike.
-        #
-        # The arrowhead arm goes first because Parslet does not backtrack
-        # into an alternative that already matched, and the open arm would
-        # otherwise eat the dashes that the `>` needs.
-        rule(:plain_arrow) do
-          (str('--') >> str('-').repeat >> str('>') |
-            str('--') >> str('-').repeat(1) >>
-              trailing_xo_marker.absent?).as(:plain)
-        end
+        rule(:link_start) { match['ox<'] }
+        rule(:link_end) { match['>xo'] }
 
-        # A trailing `x` or `o` belongs to the LINK, not to the node behind
-        # it. All three of mermaid's links carry one: the plain link is
-        # `[xo<]?--+[-xo>]`, the thick one `[xo<]?==+[=xo>]` and the dotted
-        # one `[xo<]?-?\.+-[xo>]?`. So `A---x` and `A===x` are each one
-        # link carrying a crossed arrowhead, and `A---x --- Z` and
-        # `A===x --- Z` are refused for holding two links with no node
-        # between them.
-        #
-        # Sirena draws no crossed or circled arrowhead, so the marker is
-        # REFUSED rather than drawn with the wrong head. Modelling these
-        # heads is the change that also owns `1x-->B`.
-        #
-        # Only the arrowhead-less forms need the guard: after `-->` or
-        # `-.->` mermaid has already closed the link, so the `x` in
-        # `A-->x` really is a node.
-        rule(:trailing_xo_marker) { match['xo'] }
+        rule(:headed_link) { link_body >> link_end }
+
+        # The three bodies part on a `-`, an `=`, or a dot no other body
+        # carries — a dotted one may open with the dot itself — so this
+        # alternation is mutually exclusive and its order is free. Only
+        # the one above is load-bearing.
+        rule(:link_body) { solid_body | thick_body | dotted_body }
+
+        rule(:solid_body) { str('--') >> str('-').repeat }
+        rule(:thick_body) { str('==') >> str('=').repeat }
+
+        # The opening hyphen is optional. mmdc draws `.-`, `..->` and
+        # `<.-x` exactly as it draws `-.-`, `-..->` and `<-.-x`, and this
+        # rule refused the whole leading-dot half of the family.
+        rule(:dotted_body) { str('-').maybe >> str('.').repeat(1) >> str('-') }
+
+        # Without a marker the body has to be longer than its minimum:
+        # mmdc draws `---` and `===` and refuses `--` and `==`. A dotted
+        # body carries a dot already, so its own minimum — `.-` — is a
+        # link on its own and it stands here unchanged.
+        rule(:long_link) { long_solid | long_thick | dotted_body }
+        rule(:long_solid) { str('---') >> str('-').repeat }
+        rule(:long_thick) { str('===') >> str('=').repeat }
 
         # Edge label: can be in pipes |label|
         rule(:edge_label) do
@@ -1069,9 +1109,12 @@ module Sirena
         # has no node in front of the link at all. `x-->B` is that shape
         # and it is left exactly where it was.
         #
-        # Sirena models no `x`/`o` link-start marker, so stopping the id
-        # makes the statement fail. That is safer than drawing a different
-        # graph with `1x` or `#x` as the node.
+        # The split link now parses too: `#x-->B` draws `#` and `B`
+        # joined by a plain `arrow`, same as mmdc. `Transforms::Flowchart
+        # .link_type` is what reads the marker — it honours a leading
+        # `x`/`o` only when the trailing one matches it, so a lone
+        # leading marker like this one falls back to the head it finds
+        # at the other end rather than failing the statement.
         rule(:id_before_xo_link) do
           (xo_link_open.absent? >> restart_step).repeat(1) >>
             xo_link_open.present?
@@ -1099,8 +1142,8 @@ module Sirena
         # is where a link starts. `x`, `o` and `>` are NOT excluded,
         # because mermaid renders `a-o-->B` and `a-x-->B`. `A->B` fails
         # because the hyphen joins the id here and `>B` cannot continue a
-        # statement — not because `->` is unknown; `A -> B` is
-        # `plain_arrow`'s refusal instead.
+        # statement — not because `->` is unknown; `A -> B` is refused by
+        # `visible_link`, which spells its shortest solid body `--`.
         rule(:id_hyphen) { str('-') >> match['-.'].absent? }
 
         rule(:reserved_word) do
@@ -1141,10 +1184,13 @@ module Sirena
         #
         # Nothing about what follows changes it. mmdc draws `1.-a --- Z`
         # as THREE nodes — `1`, `a` and the target — because `.-` opened a
-        # dotted link between the first two. Sirena has no link for that
-        # opening (`dotted_arrow` builds `-.-` and `-.->`, not a run that
-        # starts on the dot), so the id stops at it instead of drawing a
-        # node that is not on mermaid's page.
+        # dotted link between the first two. `dotted_body` does now spell
+        # that opening, so the gap is no longer in the vocabulary: it is
+        # this rule, which stops the id at the dot run rather than let it
+        # start a link, and `1.-a --- Z` is still refused where the
+        # spaced `1 .- a --- Z` draws all three. The id stopping short is
+        # better than drawing a node that is not on mermaid's page, so the
+        # refusal stands until the restart itself is modelled.
         #
         # `arrowhead_dot_dash` below keeps the id in the same spot but is
         # the weaker of the two: it treats the opening as a link only when
@@ -1202,9 +1248,11 @@ module Sirena
         end
 
         # An arrowhead opening with nothing after it that could continue an
-        # id. Sirena has no `x--` or `x-.-` link of its own yet, so
-        # `id_before_xo_link` stops the id at the restart and the source is
-        # refused until the crossed head has a shape to draw.
+        # id. The crossed and circled links this opens ARE drawn — `x--x`,
+        # `x-.-x` and the rest parse into real edges, see
+        # `Transforms::Flowchart.link_type` — so this rule refuses nothing
+        # on its own; it only decides where the id ends. `id_before_xo_link`
+        # above is what actually stops the id at the restart.
         rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }
 
         # Mermaid's lexer spells its id charset out, so an id is not
