@@ -296,7 +296,22 @@ module ExampleTasks
     if path == GEM_ROOT || path.start_with?("#{GEM_ROOT}#{File::SEPARATOR}")
       existing = path
       existing = File.dirname(existing) until File.exist?(existing)
-      if File.realpath(existing) != File.expand_path(existing)
+
+      # Compared against GEM_ROOT's OWN resolution, not against the literal
+      # path: GEM_ROOT itself may sit beneath a symlink this task has no
+      # claim on (confirmed by execution -- macOS's Dir.mktmpdir routes
+      # through /var -> private/var, and a checkout can legitimately sit
+      # under a symlinked mount), which is not this task's business (see
+      # GEM_ROOT's comment). Comparing the literal path against realpath
+      # unconditionally made THIS check false-positive on exactly the kind
+      # of path it must not: every nested directory under a GEM_ROOT that
+      # itself resolves through any symlink, with no symlink actually
+      # introduced below it. Only a symlink on the portion BELOW GEM_ROOT
+      # (the part this task actually owns) is checked.
+      real_gem_root = File.realpath(GEM_ROOT)
+      suffix = existing == GEM_ROOT ? nil : existing.delete_prefix("#{GEM_ROOT}#{File::SEPARATOR}")
+      expected = suffix ? File.join(real_gem_root, suffix) : real_gem_root
+      if File.realpath(existing) != expected
         raise "#{label} sits beneath a symlinked directory: #{path}"
       end
     end
