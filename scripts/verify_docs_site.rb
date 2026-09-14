@@ -135,21 +135,8 @@ module Sirena
         @content ||= File.read(@path)
       end
 
-      # This gsub predates Nokogiri::HTML5 and is redundant for the property
-      # it was written for: a real HTML5 parser already treats `<!-- ... -->`
-      # as inert (verified -- a commented-out `<link>` never appears in
-      # `doc.css('link')`), so a dead stylesheet link or disabled block
-      # commented out of the page cannot satisfy a check either way. Kept
-      # because it guards a DIFFERENT, narrower risk this file has not
-      # measured: a `-->` inside a string value could in principle end the
-      # strip early and corrupt the markup handed to Nokogiri. Not one of
-      # this round's findings; recorded so it is not mistaken for reviewed.
-      def markup
-        @markup ||= content.gsub(/<!--.*?-->/m, '')
-      end
-
       def tags
-        @tags ||= TagTokenizer.tags(markup)
+        @tags ||= TagTokenizer.tags(content)
       end
 
       # The visible text of the rendered body, whitespace-collapsed.
@@ -165,7 +152,7 @@ module Sirena
       def rendered_text
         return @rendered_text if @rendered_text
 
-        document = Nokogiri::HTML5.parse(markup)
+        document = Nokogiri::HTML5.parse(content)
         document.css(TagTokenizer::SKIPPED_CONTENT_ELEMENTS.join(","))
           .each { |element| element.children.unlink }
         region = document.css(CONTENT_REGION_SELECTOR).first ||

@@ -1137,6 +1137,33 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # MEDIUM-6. `Page#markup` used to strip comments with
+  # `content.gsub(/<!--.*?-->/m, '')` BEFORE handing markup to Nokogiri.
+  # That regex looks for the first `<!--` and the first `-->` after it --
+  # so a `<!--`-shaped STRING inside a `<script>`, followed later by a
+  # real `<!-- comment -->`, made the lazy match span from the fake open to
+  # the real close, deleting every real element in between. Verified
+  # directly: `%(<script>const marker = "<!--";</script><div
+  # class="paragraph">Visible</div><!-- comment -->).gsub(/<!--.*?-->/m,
+  # '')` leaves `<script>const marker = "` with everything after it gone,
+  # including the live `<div>`. A real HTML5 parser needs no such
+  # preprocessing -- Nokogiri already excludes comment nodes structurally
+  # (verified: a `<!-- comment -->` sibling of a live `<div>` never
+  # contributes to `.text`, and never shows up as a `document.css` match),
+  # so the pre-strip only ever subtracts content it did not need to.
+  it 'does not delete real content between a false comment-open in a script and a later real comment' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html_with_body(
+        %(<script>const marker = "<!--";</script><div class="paragraph"><p>hi</p></div><!-- trailing comment -->)
+      )
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML
