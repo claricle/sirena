@@ -19,13 +19,20 @@ require 'open3'
 # reports -- recorded in the gate record for this branch, not re-checked on
 # every run (that would just re-run the suite twice for no gate purpose).
 namespace :spec do
-  # Undocumented on purpose: `spec:corpus` below is the entry point. This
-  # runner exists only so `spec:corpus` can force COVERAGE off around it --
+  # `spec:corpus` below is the entry point -- this runner exists only so
+  # `spec:corpus` can force COVERAGE off around its own invocation.
   # RSpec::Core::RakeTask spawns its rspec run via `sh`, which always
-  # inherits the parent process's ENV, so the corpus sweep would otherwise
-  # be instrumented whenever COVERAGE=true reaches this task from anywhere
-  # (the invoking shell, CI, or an earlier coverage:measure chained on the
-  # same command line) rather than only when this file itself set it.
+  # inherits the parent process's ENV, so a run of THIS task started by
+  # `spec:corpus` would otherwise be instrumented whenever COVERAGE=true
+  # reaches it from anywhere (the invoking shell, CI, or an earlier
+  # coverage:measure chained on the same command line) rather than only
+  # when this file itself set it. That protection is scoped to going
+  # through `spec:corpus`, not to this task itself: no `desc` is written
+  # here, but RSpec::Core::RakeTask assigns its own default ("Run RSpec
+  # code examples") when none is given, so `rake -T` lists
+  # `spec:corpus_runner` by name -- calling it directly (with COVERAGE=true
+  # already in the environment) runs it instrumented same as any other bare
+  # rspec invocation of a suite subset would, and is not this task's to fix.
   RSpec::Core::RakeTask.new(:corpus_runner) do |task|
     task.rspec_opts = '--tag corpus'
   end
@@ -35,6 +42,15 @@ namespace :spec do
     previous_coverage_env = ENV.fetch('COVERAGE', nil)
     begin
       ENV.delete('COVERAGE')
+      # Same hazard as coverage:measure's spec:unit call below: a Rake task
+      # only ever runs once per process, so `rake spec:corpus_runner
+      # spec:corpus` on one command line -- reachable since corpus_runner is
+      # listed in `rake -T`, see above -- would otherwise leave this invoke
+      # a silent no-op (corpus_runner already marked complete from the
+      # earlier, direct, top-level invocation), so `spec:corpus` would
+      # report success without running the corpus sweep again. Reenable so
+      # this call always actually runs it.
+      Rake::Task['spec:corpus_runner'].reenable
       Rake::Task['spec:corpus_runner'].invoke
     ensure
       ENV['COVERAGE'] = previous_coverage_env
