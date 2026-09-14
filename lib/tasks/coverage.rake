@@ -3,6 +3,7 @@
 require 'rspec/core/rake_task'
 require 'json'
 require 'fileutils'
+require 'open3'
 
 # TODO.foundation/03-coverage-gate.md item 1: the corpus fixture sweeps
 # (examples tagged :corpus -- spec/sirena/parser/{error,info,quadrant}_spec.rb
@@ -32,19 +33,37 @@ end
 namespace :coverage do
   desc 'Run spec:unit under SimpleCov (.simplecov enforces the line floor)'
   task :measure do
-    ENV['COVERAGE'] = 'true'
-    Rake::Task['spec:unit'].invoke
+    # Restore rather than leave set: ENV survives past this task in the same
+    # process, so `rake coverage:measure spec:corpus` on one command line
+    # would otherwise leave COVERAGE=true for spec:corpus's own subprocess
+    # too, and spec_helper.rb requires simplecov for ANY process that sees
+    # it -- defeating the corpus-exclusion this task depends on.
+    previous_coverage_env = ENV.fetch('COVERAGE', nil)
+    begin
+      ENV['COVERAGE'] = 'true'
+      Rake::Task['spec:unit'].invoke
+    ensure
+      ENV['COVERAGE'] = previous_coverage_env
+    end
   end
 
   desc 'Changed-line gate: every lib/ line this branch touches vs --base must be 100% covered'
   task :changed_lines do
     base = ENV['COVERAGE_BASE'] || 'origin/main'
+    # A ref starting with `-` would be read as another option by `git diff`
+    # rather than a revision, in this task's own staleness check below and
+    # not just inside simplecov patch (which guards its own call the same
+    # way). Reject it here too, before either git invocation runs.
+    raise "COVERAGE_BASE #{base.inspect} looks like an option, not a ref" if base.start_with?('-')
+
     # --find-renames: a pure rename (no content change) then diffs to
     # nothing instead of counting the whole moved file as new/uncovered.
-    # A changed file SimpleCov never tracked (specs, rake tasks, docs,
-    # this file) carries no coverage.json entry, so `simplecov patch`
-    # scores it out of scope automatically -- that IS the file-scope rule:
-    # only files the coverage report already carries are gated.
+    # A changed file outside `.simplecov`'s `cover 'lib/**/*.rb'` glob
+    # (specs, rake tasks, docs, this file) carries no coverage.json entry,
+    # so `simplecov patch` scores it out of scope automatically -- that IS
+    # the file-scope rule. A changed file INSIDE lib/ always carries an
+    # entry, 0% if the suite never loads it, so it cannot escape this gate
+    # the same way.
     #
     # Do not point --input at coverage/coverage.json directly: simplecov
     # patch's --minimum gates every criterion present in the input file
@@ -55,8 +74,29 @@ namespace :coverage do
     # the real report (coverage/coverage.json) still carries branch data
     # untouched for anyone reading it directly.
     unless File.exist?('coverage/coverage.json')
-      abort "coverage/coverage.json is missing -- run `rake coverage:measure` " \
+      raise 'coverage/coverage.json is missing -- run `rake coverage:measure` ' \
             '(or `rake coverage:guard`, which does both) before coverage:changed_lines'
+    end
+
+    # A report generated before this diff's own edits would silently pass
+    # them (simplecov patch has no lines to compare a fresher change
+    # against). Run coverage:measure again if any of these are listed.
+    # `git diff --name-only` alone misses a brand-new file that was never
+    # `git add`ed -- add `ls-files --others --exclude-standard` (untracked,
+    # unignored) the same way simplecov patch's own ChangedLines does, or a
+    # just-created uncovered file passes silently.
+    diff_output, diff_status = Open3.capture2('git', 'diff', '--name-only', '--merge-base', base)
+    raise "git diff --name-only --merge-base #{base} failed" unless diff_status.success?
+
+    untracked_output, untracked_status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard')
+    raise 'git ls-files --others --exclude-standard failed' unless untracked_status.success?
+
+    changed_paths = (diff_output.split("\n") + untracked_output.split("\n")).uniq
+    report_mtime = File.mtime('coverage/coverage.json')
+    stale = changed_paths.select { |path| File.exist?(path) && File.mtime(path) > report_mtime }
+    unless stale.empty?
+      raise "coverage/coverage.json predates a newer edit to #{stale.join(', ')} -- " \
+            'run `rake coverage:measure` again before coverage:changed_lines'
     end
 
     FileUtils.mkdir_p('tmp')
