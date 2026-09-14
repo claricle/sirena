@@ -223,6 +223,41 @@ RSpec.describe ExampleTasks do
         end
       end
     end
+
+    it 'refuses a docs root that is itself a link' do
+      Dir.mktmpdir('sirena-outside') do |outside|
+        FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+        File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+        linked_docs = "#{outside}-link"
+        File.symlink(outside, linked_docs)
+
+        expect { described_class.copy_to_docs(examples_dir, linked_docs) }
+          .to raise_error(/docs assets root must not be a link/)
+      ensure
+        FileUtils.rm_f(linked_docs) if linked_docs
+      end
+    end
+
+    # `FileUtils.mkdir_p` treats an existing symlinked directory as "already
+    # there" and does nothing, so `FileUtils.cp` right after it would follow
+    # the link and write the SVG wherever it points -- outside docs_dir
+    # entirely. Reproduced before this guard existed: the copy landed inside
+    # `outside/`, never inside `docs/flowchart/`.
+    it 'skips a diagram type whose docs target is already a link, rather than writing through it' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+          File.symlink(outside, File.join(docs, 'flowchart'))
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect(copied).to eq([])
+          expect(File.symlink?(File.join(docs, 'flowchart'))).to be(true)
+          expect(File).not_to exist(File.join(outside, 'a.svg'))
+        end
+      end
+    end
   end
 
   # generate never deletes a stale SVG itself — it only reports one, so a run
