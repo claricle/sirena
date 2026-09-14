@@ -261,8 +261,24 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `index.html` satisfied the manifest check while no HTML file was there.
   # The file already uses `.file?` where it matters (the search index, and
   # the asset resolver, which carries a comment saying exactly this) -- these
-  # two sites were the ones that missed it.
-  it 'does not accept a directory standing in for a collection page' do
+  # two sites were the ones that missed it. Manifest completeness has TWO
+  # such guards -- collection path and include path -- and they need their
+  # own example each: a spec built against one cannot exercise the other,
+  # since `include_path_for('mindmap')` and the collection path are
+  # different strings.
+  it 'does not accept a directory standing in for the collection-path page' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      FileUtils.rm_f(File.join(site_dir, 'diagram_types/mindmap/index.html'))
+      FileUtils.mkdir_p(File.join(site_dir, 'diagram_types/mindmap/index.html'))
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html'
+      )
+    end
+  end
+
+  it 'does not accept a directory standing in for the include-path page' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       FileUtils.rm_f(File.join(site_dir, '_diagram_types/mindmap/index.html'))
