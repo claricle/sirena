@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../renderer/markdown_text"
+
 module Sirena
   module Transform
     # Transforms a Kanban diagram into a positioned layout structure.
@@ -169,11 +171,24 @@ module Sirena
       # lines below the card's first line: metadata rows, and hard line
       # breaks embedded in the card's own text (from markdown newlines,
       # rendered as extra `<tspan>` lines — see
-      # Renderer::MarkdownText#parse_lines). The break count is a plain
-      # `count("\n")` on the raw text rather than a markdown parse: this
-      # layer only needs how many extra lines there are, not what's on
-      # them, and Transform has no dependency on Renderer to keep those
-      # layers apart.
+      # Renderer::MarkdownText#parse_lines).
+      #
+      # Codex round 5 High: the break count used to be a plain
+      # `count("\n")` on the raw text, on the theory that this layer only
+      # needs how many extra lines there are, not what's on them, so it
+      # didn't need a dependency on Renderer. That's wrong once a card's
+      # text has enough lines to cross
+      # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` —
+      # `Renderer::Kanban#render_card_text` truncates to that budget and
+      # silently DROPS whole lines past it, so a raw newline count still
+      # allocates height for lines that never render. Reproduced directly:
+      # a card with 100 one-character lines sized to height 1862 (as if all
+      # 100 lines render) while the renderer only ever draws lines within
+      # the budget. Getting the true rendered line count right means
+      # replicating the renderer's own truncation, not just its line
+      # height — `rendered_line_count` below calls the exact same
+      # `parse_lines`/`truncate_runs` pair `render_card_text` does, so the
+      # two layers can't drift apart on this again.
       #
       # Reuses EXTRA_LINE_HEIGHT for both rather than a second constant: the
       # card renders its text at font-size 13 as `1.2em` per line (~15.6px),
@@ -186,8 +201,25 @@ module Sirena
       def calculate_card_height(card)
         base_height = CARD_HEIGHT
         base_height += card.metadata.size * EXTRA_LINE_HEIGHT if card.has_metadata?
-        base_height += card.text.to_s.count("\n") * EXTRA_LINE_HEIGHT
+        base_height += (rendered_line_count(card.text) - 1) * EXTRA_LINE_HEIGHT
         base_height
+      end
+
+      # The number of lines `card.text` actually renders as, after the same
+      # markdown parsing and character-budget truncation
+      # `Renderer::Kanban#render_card_text` applies. Always at least 1: an
+      # empty or all-dropped body still occupies the card's first line, the
+      # same as `count("\n") == 0` did before this method replaced it.
+      #
+      # @param text [String, nil]
+      # @return [Integer]
+      # @api private
+      def rendered_line_count(text)
+        lines = Renderer::MarkdownText.truncate_runs(
+          Renderer::MarkdownText.parse_lines(text),
+          Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET
+        )
+        [lines.length, 1].max
       end
 
       # Calculates the bounding box for the entire board

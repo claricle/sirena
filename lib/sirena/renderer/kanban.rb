@@ -231,7 +231,7 @@ module Sirena
       def render_card_text(card, x, y, svg)
         text_y = y + 25
         text_x = x + 10
-        lines = MarkdownText.truncate_runs(MarkdownText.parse_lines(card[:text]), 25)
+        lines = MarkdownText.truncate_runs(MarkdownText.parse_lines(card[:text]), MarkdownText::CARD_TEXT_CHAR_BUDGET)
 
         text = Svg::Text.new.tap do |t|
           t.x = text_x
