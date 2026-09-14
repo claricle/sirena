@@ -194,14 +194,29 @@ module ExampleTasks
   # literal-children and no-link predicates generation and pruning use, so a
   # link inside examples/ never pulls in files from outside it.
   #
+  # The destination gets the same treatment, in the other direction: a
+  # pre-existing entry named after a diagram type that is itself a symlink
+  # would make `FileUtils.mkdir_p` see "already a directory" and do nothing,
+  # then `FileUtils.cp` would follow it and write the SVG through the link to
+  # wherever it points. Reproduced before this guard existed: a symlink at
+  # docs_assets_dir/flowchart pointing outside the repo received the copied
+  # SVG instead of docs_assets_dir itself.
+  #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
+    raise "docs assets root must not be a link: #{docs_assets_dir}" if File.symlink?(docs_assets_dir)
+
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
     dirs.filter_map do |dir|
       svg_files = children(dir).select { |path| plain_svg?(path) }
       next if svg_files.empty?
 
       target_dir = File.join(docs_assets_dir, File.basename(dir))
+      if File.symlink?(target_dir)
+        puts "  ⚠️  skipped #{File.basename(dir)}, its docs target is a symlink"
+        next
+      end
+
       FileUtils.mkdir_p(target_dir)
       svg_files.each { |svg_file| FileUtils.cp(svg_file, target_dir) }
       [File.basename(dir), svg_files.size]
