@@ -266,6 +266,11 @@ RSpec.describe Sirena::LintDebt do
       expect(debt.total).to eq(1)
     end
 
+    it "reports zero exempted when there are no exceptions" do
+      write_exceptions([])
+      expect(debt.exempted_count).to eq(0)
+    end
+
     context "with an eligible metrics-cop row on a grammar-path file" do
       before do
         write_long_method_offence(grammar_file)
@@ -281,6 +286,19 @@ RSpec.describe Sirena::LintDebt do
 
       it "counts the exception as applied" do
         expect(debt.exceptions_applied).to eq(1)
+      end
+
+      # `by_source`'s three layer counts run before the exception allowlist
+      # (see its docstring), so this exempted row still counts once against
+      # each of them while `total` has already had it subtracted -- the two
+      # only ever agree via `exempted_count`, never directly.
+      it "counts the subtracted row in #exempted_count" do
+        expect(debt.exempted_count).to eq(1)
+      end
+
+      it "keeps by_source's sum equal to total plus exempted_count" do
+        expect(debt.by_source.values.sum)
+          .to eq(debt.total + debt.exempted_count)
       end
     end
 

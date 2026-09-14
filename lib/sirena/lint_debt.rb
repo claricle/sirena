@@ -90,6 +90,13 @@ module Sirena
       exceptions.size
     end
 
+    # How much of `measured_rows`' count the signed exception allowlist
+    # subtracted before `rows`/`total` were derived from it. Zero when
+    # `scoreboard/lint-exceptions.yml` carries no exceptions.
+    def exempted_count
+      measured_rows.sum(&:count) - total
+    end
+
     def rubocop_version
       RuboCop::Version::STRING
     end
@@ -98,6 +105,15 @@ module Sirena
     # doubly-suppressed offence is attributed to whichever layer's
     # removal makes it visible. The order is fixed: the todo file, then
     # `.rubocop.yml`'s own keys, then inline directives.
+    #
+    # Each layer count comes from its own direct rubocop invocation, run
+    # BEFORE the signed exception allowlist -- unlike `total`/`rows`, this
+    # method never calls `apply_exceptions`. Attributing an exempted row to
+    # one layer would be a guess: `apply_exceptions` only knows a row's
+    # (cop, file), not which layer's removal exposed it. So the two are
+    # deliberately allowed to diverge, by exactly `exempted_count`, rather
+    # than silently reconciled: `by_source.values.sum ==
+    # total + exempted_count`, not `== total`.
     def by_source
       @by_source ||= {
         "todo" => todo_layer_count,
@@ -112,6 +128,7 @@ module Sirena
         "total" => total,
         "by_source" => by_source,
         "exceptions_applied" => exceptions_applied,
+        "exempted" => exempted_count,
         "rows" => rows.map { |row| row_to_h(row) },
       }
     end
@@ -146,8 +163,13 @@ module Sirena
             "arguments -- remove it before measuring debt"
     end
 
+    # Memoized: `exempted_count` calls this a second time (after `rows`
+    # already has), and each call is its own `bundle exec rubocop`
+    # subprocess -- unmemoized, every report would pay for it twice.
     def measured_rows
-      rows_from(run_rubocop(synthesized_config, ignore_disable_comments: true))
+      @measured_rows ||= rows_from(
+        run_rubocop(synthesized_config, ignore_disable_comments: true),
+      )
     end
 
     def rows_from(result)
