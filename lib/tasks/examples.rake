@@ -303,7 +303,20 @@ module ExampleTasks
   # -- no POSIX primitive makes "create, or verify-and-accept an existing
   # real directory" one atomic step -- but it collapses the race window from
   # this whole method's run to the gap between one syscall and the next.
+  #
+  # `Dir.mkdir` alone is not recursive: a genuinely fresh checkout with no
+  # docs/assets directory at all yet -- not an attack, the ordinary first
+  # run -- raised a raw Errno::ENOENT here instead of creating the tree, a
+  # real regression caught by execution before this comment existed.
+  # `FileUtils.mkdir_p` on the PARENT restores that, and does not reopen the
+  # race this method exists to close: the parent was never the protected
+  # leaf (every caller already walked it via `verified_root`'s ancestor
+  # check, or -- for target_dir's parent, docs_assets_dir -- this same
+  # method's own atomic creation one call earlier), and `Dir.mkdir` below
+  # still owns path itself atomically regardless of how the parent came to
+  # exist.
   def create_real_directory(path, label:)
+    FileUtils.mkdir_p(File.dirname(path))
     Dir.mkdir(path)
   rescue Errno::EEXIST
     raise "#{label} became a symlink: #{path}" if File.lstat(path).symlink?

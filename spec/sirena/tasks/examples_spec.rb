@@ -224,6 +224,26 @@ RSpec.describe ExampleTasks do
       end
     end
 
+    # `create_real_directory` uses `Dir.mkdir` for the atomic guarantee on
+    # docs_assets_dir itself, which is not recursive -- a genuinely fresh
+    # checkout with no docs/assets directory at all yet, not an attack, is
+    # the ordinary first run. Reproduced before this case was handled: a
+    # docs_assets_dir several levels below a directory that does not exist
+    # yet raised a raw Errno::ENOENT instead of creating the tree.
+    it 'creates docs_assets_dir and every ancestor when none of them exist yet' do
+      Dir.mktmpdir('sirena-outside') do |outside|
+        FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+        File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+        docs = File.join(outside, 'nested', 'docs', 'assets', 'examples')
+        expect(File).not_to exist(File.dirname(docs))
+
+        copied = described_class.copy_to_docs(examples_dir, docs)
+
+        expect([copied, Dir.glob('**/*', base: docs).sort])
+          .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+      end
+    end
+
     it 'refuses a docs root that is itself a link' do
       Dir.mktmpdir('sirena-outside') do |outside|
         FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
