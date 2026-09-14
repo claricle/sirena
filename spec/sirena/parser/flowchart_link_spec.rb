@@ -44,8 +44,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "<====>" => "thick_arrow_both", "<===" => "line",
       "o==x" => "cross", "x==o" => "circle",
       "o===" => "line", "<====" => "line",
+      # A mismatched leading marker drops thickness against a real trailing
+      # arrowhead too, not only against a cross/circle end (the rows above
+      # only exercised the latter).
+      "o==>" => "arrow", "x==>" => "arrow",
       "-.-" => "dotted_line", "-.->" => "dotted_arrow",
       "-.-x" => "dotted_cross", "-.-o" => "dotted_circle",
+      # Dotted never drops, matched or not — unlike thickness above.
+      "o-.->" => "dotted_arrow", "x-.->" => "dotted_arrow",
       "-..-" => "dotted_line", "-..->" => "dotted_arrow",
       "-...-" => "dotted_line",
       "o-.-o" => "dotted_circle_both", "x-.-x" => "dotted_cross_both",
