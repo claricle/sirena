@@ -18,4 +18,5 @@ gem "rubocop", "1.89.0"
 gem "rubocop-performance", "1.26.1", require: false
 gem "rubocop-rake", "0.7.1", require: false
 gem "rubocop-rspec", "3.10.2", require: false
+gem 'simplecov', require: false
 gem 'svg_conform', '~> 0.2.0'

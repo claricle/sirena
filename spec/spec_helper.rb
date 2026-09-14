@@ -1,5 +1,15 @@
 # frozen_string_literal: true
 
+# ENV-gated: `rake coverage:measure` sets COVERAGE=true and runs only
+# `spec:unit` (the :corpus-tagged fixture sweeps are excluded there), so
+# corpus results never reach the coverage this starts tracking. Plain
+# `bundle exec rspec` / `rake spec` still run everything, uninstrumented.
+# See TODO.foundation/03-coverage-gate.md item 1 and the Rakefile.
+if ENV["COVERAGE"] == "true"
+  require "simplecov"
+  SimpleCov.start
+end
+
 require "sirena"
 
 RSpec.configure do |config|
