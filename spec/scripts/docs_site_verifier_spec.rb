@@ -1064,6 +1064,54 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # ----------------------------------------------------------------------
+  # The findings from the fifth Codex round, run against the real
+  # just-the-docs theme via a live Jekyll build. Each is reproduced here as
+  # a constructed input against the implementation directly.
+
+  # HIGH-5. just-the-docs' own `_layouts/default.html` nests BOTH the real
+  # content region (`<main>`) and the theme footer (`<footer>`, sibling of
+  # `<main>`) inside `.main-content-wrap`:
+  #   <div class="main-content-wrap">
+  #     <div id="main-content" class="main-content">
+  #       <main>...page content...</main>
+  #       <footer>...back-to-top / "This site uses Just the Docs" text...</footer>
+  #     </div>
+  #   </div>
+  # The footer ALWAYS renders visible text, so scoping `rendered_text` to
+  # `.main-content-wrap` can never see an empty page -- confirmed against a
+  # real Jekyll build (theme just-the-docs, back_to_top enabled, an
+  # otherwise-empty page): rendered `<main>` text was "", but the verifier's
+  # `.main-content-wrap`-scoped text was "Back to top This site uses Just
+  # the Docs, a documentation theme for Jekyll."
+  it 'reports empty content even when the theme footer pads .main-content-wrap with visible text' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
+      html = <<~HTML
+        <html><head><link rel="stylesheet" href="#{href}"></head>
+        <body>
+          <div class="main-content-wrap">
+            <div id="main-content" class="main-content">
+              <main><div class="paragraph"></div></main>
+              <footer>
+                <p><a href="#top">Back to top</a></p>
+                <div>This site uses <a href="https://github.com/just-the-docs/just-the-docs">Just the Docs</a>, a documentation theme for Jekyll.</div>
+              </footer>
+            </div>
+          </div>
+        </body></html>
+      HTML
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+      )
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML

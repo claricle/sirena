@@ -30,6 +30,23 @@ module Sirena
     ].freeze
 
     LAYOUT_BODY_MARKER = 'main-content-wrap'
+    # just-the-docs' `_layouts/default.html` nests the real content region
+    # (`<main>`) and the theme footer as SIBLINGS, both inside
+    # `.main-content-wrap`:
+    #   <div class="main-content-wrap">
+    #     <div id="main-content" class="main-content">
+    #       <main>...</main>
+    #       <footer>...</footer>
+    #     </div>
+    #   </div>
+    # so `.main-content-wrap` (and `#main-content`, which also wraps the
+    # footer) can never read as empty -- the footer always renders visible
+    # text ("This site uses Just the Docs..." at minimum). `<main>` is the
+    # narrowest element that excludes it. Confirmed against the installed
+    # gem: `gem contents just-the-docs | grep _layouts` ->
+    # `_layouts/default.html`, and against a real Jekyll build (see the
+    # regression spec this constant backs).
+    CONTENT_REGION_SELECTOR = 'main'
     SEARCH_INDEX_PATH = 'assets/js/search-data.json'
     REQUIRED_DIAGRAM_PERMALINK = '/:collection/:path/'
 
@@ -151,7 +168,8 @@ module Sirena
         document = Nokogiri::HTML5.parse(markup)
         document.css(TagTokenizer::SKIPPED_CONTENT_ELEMENTS.join(","))
           .each { |element| element.children.unlink }
-        region = document.css(".#{LAYOUT_BODY_MARKER}").first || document
+        region = document.css(CONTENT_REGION_SELECTOR).first ||
+          document.css(".#{LAYOUT_BODY_MARKER}").first || document
         @rendered_text = region.text.gsub(/\s+/, " ").strip
       end
 
