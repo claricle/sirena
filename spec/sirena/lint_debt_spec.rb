@@ -116,6 +116,40 @@ RSpec.describe Sirena::LintDebt do
       ENV["RUBOCOP_OPTS"] = original
     end
 
+    # A file the fixture's default `TargetRubyVersion` (3.2) flags via
+    # `Style/ArrayIntersect` (its minimum is 3.1) but an ambient `2.7`
+    # override would silently suppress.
+    def write_array_intersect_offence
+      write(
+        "array_intersect.rb",
+        "# frozen_string_literal: true\n\n" \
+        "a = [1]\n" \
+        "b = [1, 2]\n" \
+        "(a & b).any? ? a : b\n",
+      )
+    end
+
+    def with_target_ruby_version_override(value)
+      original = ENV.fetch("RUBOCOP_TARGET_RUBY_VERSION", nil)
+      ENV["RUBOCOP_TARGET_RUBY_VERSION"] = value
+      yield
+    ensure
+      ENV["RUBOCOP_TARGET_RUBY_VERSION"] = original
+    end
+
+    # `RUBOCOP_TARGET_RUBY_VERSION` is read BEFORE the `TargetRubyVersion`
+    # this class synthesises (rubocop's own `TargetRuby::SOURCES` puts the
+    # env var ahead of the config), so an ambient shell value can quietly
+    # drop a version-gated cop and LOWER the count. Measured on the real
+    # repo: exporting this to `2.7` dropped the counted total from 8877 to
+    # 8874 with no error.
+    it "ignores RUBOCOP_TARGET_RUBY_VERSION" do
+      with_target_ruby_version_override("2.7") do
+        write_array_intersect_offence
+        expect(debt.rows.map(&:cop)).to include("Style/ArrayIntersect")
+      end
+    end
+
     it "refuses to run under a .rubocop options dotfile" do
       write(".rubocop", "--format simple\n")
 

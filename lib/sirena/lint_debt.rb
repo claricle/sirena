@@ -53,6 +53,21 @@ module Sirena
 
     OPTIONS_DOTFILE = ".rubocop"
 
+    # Every ambient rubocop env var this class refuses to run under.
+    # `RUBOCOP_TARGET_RUBY_VERSION` is checked BEFORE the `TargetRubyVersion`
+    # this class sets in `synthesized_all_cops` (rubocop's own
+    # `TargetRuby::SOURCES` puts `RuboCopEnvVar` ahead of `RuboCopConfig`),
+    # so leaving it ambient let a shell's exported value silently change
+    # which cops run and LOWER the reported total -- measured: exporting
+    # `RUBOCOP_TARGET_RUBY_VERSION=2.7` dropped this repo's count from
+    # 8877 to 8874 with no error. Cleared here for the same reason
+    # `RUBOCOP_OPTS`/`RUBOCOP_VERSION` already are.
+    CLEARED_RUBOCOP_ENV = {
+      "RUBOCOP_OPTS" => nil,
+      "RUBOCOP_VERSION" => nil,
+      "RUBOCOP_TARGET_RUBY_VERSION" => nil,
+    }.freeze
+
     Row = Data.define(:cop, :file, :count)
 
     def initialize(root:)
@@ -185,8 +200,7 @@ module Sirena
       args = rubocop_args(
         config_path, ignore_disable_comments: ignore_disable_comments
       )
-      env = { "RUBOCOP_OPTS" => nil, "RUBOCOP_VERSION" => nil }
-      Open3.capture3(env, *args, chdir: root)
+      Open3.capture3(CLEARED_RUBOCOP_ENV, *args, chdir: root)
     end
 
     def rubocop_args(config_path, ignore_disable_comments:)
