@@ -109,6 +109,20 @@ module Sirena
       # `literal_lines`. See the `root.children.any?` guard in `parse_lines`.
       PLAIN_BLOCK_TYPES = [:p, :blank].freeze
 
+      # The visible-character budget `Renderer::Kanban#render_card_text`
+      # truncates a card's parsed lines to (via `truncate_runs`). Shared
+      # here rather than kept as a private literal on `Renderer::Kanban`
+      # because `Transform::Kanban#calculate_card_height` needs the exact
+      # same budget to size a card correctly — sizing from the raw text's
+      # newline count instead of this module's own truncated line count
+      # diverges once a card has enough lines to cross the budget: the
+      # renderer silently drops the excess lines, but a raw count still
+      # allocates height for them (Codex round 5 High, reproduced with a
+      # 100-line, one-character-per-line card: raw-newline sizing assumes
+      # all 100 lines render, the renderer only ever draws lines within
+      # this budget).
+      CARD_TEXT_CHAR_BUDGET = 25
+
       module_function
 
       # Splits text on hard line breaks and parses each line's markup.
@@ -262,6 +276,27 @@ module Sirena
       # above is measured, both unsafe and safe. See this method's spec for
       # every pair cited here, each pinned against real mmdc.
       #
+      # Codex round 5 High: the `next_run` search below used to scan `after`
+      # RAW, so a second escaped marker sitting between the orphan and the
+      # real closing run could itself get matched as `next_run` — its
+      # captured length (always 1, an escaped marker is always exactly one
+      # character) masked the real, differently-sized closing run further
+      # on, so this method returned `false` and let an unsafe interaction
+      # through unflagged. Reproduced directly: `\**a \* b**` (an escaped
+      # `\*` opens, followed by the real orphan `*`, then ANOTHER escaped
+      # `\*` sits before the real `**` closer) — before this fix, `next_run`
+      # matched that second escaped marker's own `*` (length 1, "safe") and
+      # never looked further to find the real `**` (length 2, unsafe);
+      # `unsafe_escaped_delimiter_interaction?` returned `false` and
+      # `parse_lines` rendered fully literal `**a \* b**`, while real mmdc
+      # fragments it (`*<em>a * b</em>*`, verified directly against `marked`
+      # above this method's spec). Blanking out every escaped-chars match
+      # first (with a single placeholder character, not deleting it — two
+      # real runs either side of an escaped marker must stay separated, not
+      # merge into one longer run) means `next_run` can only ever match a
+      # REAL, unescaped run, the same guarantee `real_marker_count` already
+      # relies on for its own escaped-chars handling above.
+      #
       # @param raw [String]
       # @return [Boolean]
       # @api private
@@ -274,7 +309,9 @@ module Sirena
           orphan_run = after[/\A#{Regexp.escape(marker)}+/]
           next unless orphan_run&.length == 1
 
-          next_run = after[orphan_run.length..][/#{Regexp.escape(marker)}+/]
+          search_region = after[orphan_run.length..]
+            .gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, " ")
+          next_run = search_region[/#{Regexp.escape(marker)}+/]
           return true if next_run && next_run.length != 1
         end
 

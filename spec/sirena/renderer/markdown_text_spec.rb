@@ -598,6 +598,35 @@ RSpec.describe Sirena::Renderer::MarkdownText do
       expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
     end
 
+    # Codex round 5 High: a SECOND escaped marker sitting between the
+    # orphan and the real closing run used to get matched as next_run
+    # itself (an escaped marker is always exactly one character, so it
+    # always looked "safe") and masked the real, mismatched closer further
+    # on. Verified directly against real marked before writing this: the
+    # raw below renders as a fragmented, styled emphasis span, not literal
+    # text; before this fix, unsafe_escaped_delimiter_interaction? returned
+    # false here and parse_lines rendered fully unstyled text instead (not
+    # even the safe fallback this guard exists to produce).
+    #
+    # Mutation-check: replace the gsub(...ESCAPED_CHARS, " ") in
+    # unsafe_escaped_delimiter_interaction? with a no-op (search the raw
+    # after substring directly). Watched red: this comes back styled
+    # instead of matching literal_lines(raw).
+    #
+    # This example alone doesn't pin the gsub specifically — a guard
+    # broadened to fire on ANY next_run (dropping the length-mismatch
+    # check too) also passes it. It's the sibling example below ("does not
+    # fall back when a lone orphan cleanly pairs with a same-length
+    # closer") that catches that broader mutation; the two together pin
+    # the real property, matching how every other example in this
+    # `describe` block already covers one distinguishing shape rather than
+    # standing alone.
+    it 'falls back to literal text when a second escaped marker sits between the orphan and the real closer' do
+      raw = '\**a \* b**'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
     # A lone orphan is not unsafe by itself — only a length MISMATCH with
     # the run that eventually closes it is. Verified directly against real
     # mmdc before writing this: `task1[a\**b*]` renders `a*<em>b</em>`,
