@@ -15,7 +15,8 @@ Owner ruled best-effort sizing acceptable, with this card opened.
 Sirena sizes text by counting characters. `TextMeasurement` multiplies
 `font_size * 0.5` per character, and every transform sizes its boxes from
 that. Self-loop label overflow uses a separate, wider hint,
-`WIDE_CHAR_WIDTH_RATIO = 1.0` in `lib/sirena/renderer/flowchart.rb`.
+`WIDE_CHAR_WIDTH_RATIO = 1.5` in `lib/sirena/renderer/flowchart.rb`, raised
+from an initial `1.0` in this same PR.
 
 **No scalar bounds it, and that is measured, not argued.** Real advances,
 read from the font tables with `ttfunk`, Arial and Helvetica agreeing
@@ -23,8 +24,9 @@ exactly (`units_per_em` 2048):
 
     A = 0.667 em      @ = 1.015 em      W = 0.944 em
 
-So `1.0` is already exceeded by an ordinary `@`. Widening further does not
-help, because the characters that break it are not in the font at all:
+So the initial `1.0` was already exceeded by an ordinary `@`, which is why
+the hint was raised to `1.5`. Widening further does not help past that,
+because the characters that break it are not in the font at all:
 
     U+4E2D  中     ABSENT from Arial and Helvetica
     U+FDFD  ﷽     ABSENT from Arial and Helvetica, renders at 6.49 em
