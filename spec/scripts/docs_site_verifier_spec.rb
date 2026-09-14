@@ -458,8 +458,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   end
 
   # Example 18 — R17, "resolved once". Three pages share one missing
-  # asset; it must be reported exactly once.
-  it 'reports one missing asset referenced by three pages exactly once' do
+  # asset; it must be reported exactly once, attributed to the FIRST
+  # page collected (`refs[ref] ||= page.rel_path`), not whichever page
+  # happens to be walked last. A mutant that flips `||=` to `=` reports
+  # the same count with the same asset name and stayed green here until
+  # the referencing page itself was pinned.
+  it 'reports one missing asset referenced by three pages exactly once, attributed to the first' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       missing_script = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/shared-missing.js"
@@ -467,8 +471,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(extra: { script: missing_script }))
       write_page(site_dir, 'pages/other/index.html', page_html(extra: { script: missing_script }))
 
-      expect(verifier_for(docs_dir, site_dir).failures.length).to eq(1)
-      expect(verifier_for(docs_dir, site_dir).failures.first).to include('shared-missing.js')
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures.length).to eq(1)
+      # '_diagram_types/...' sorts before 'diagram_types/...' and
+      # 'pages/...' under Dir.glob's default sorted order.
+      expect(failures.first).to eq(
+        "asset: #{missing_script} (referenced by _diagram_types/mindmap/index.html) " \
+          'does not resolve to /assets/js/shared-missing.js'
+      )
     end
   end
 
