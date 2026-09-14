@@ -1012,6 +1012,22 @@ RSpec.describe ExampleTasks do
       %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg]
     end
 
+    # Derived from the classes themselves, not hand-typed: a three-pattern
+    # regex (File.delete/File.unlink/FileUtils.rm) missed FileUtils.remove_entry
+    # entirely -- an in-memory mutation reintroducing deletion through it
+    # produced no offenders, because nothing about that call matched any of
+    # the three patterns. This walks every File/Dir/FileUtils singleton
+    # method whose name reads as a delete and builds the pattern from that
+    # list, so a future deletion call needs a new NAME, not a new pattern, to
+    # slip past.
+    let(:deletion_call_pattern) do
+      qualified_names = { File => File.singleton_methods, Dir => Dir.singleton_methods,
+                          FileUtils => FileUtils.singleton_methods }
+        .flat_map { |klass, methods| methods.grep(/delete|unlink|remove|\Arm/).map { |m| "#{klass}.#{m}" } }
+
+      Regexp.union(qualified_names.map { |name| /#{Regexp.escape(name)}\b/ })
+    end
+
     def module_body(source)
       first = source.index { |line| line.start_with?('module ExampleTasks') }
       last = (first...source.size).find { |i| source[i].rstrip == 'end' }
@@ -1025,7 +1041,7 @@ RSpec.describe ExampleTasks do
 
       module_body(source).each do |i|
         current = Regexp.last_match(1) if source[i] =~ /^\s*def\s+([a-z_?!]+)/
-        next unless source[i].match?(/File\.delete|File\.unlink|FileUtils\.rm/)
+        next unless source[i].match?(deletion_call_pattern)
 
         offenders << "#{current}:#{i + 1}" unless permitted_deleters.include?(current)
       end
