@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base'
+
 module Sirena
   module Transform
     # Transforms a RadarChart diagram into a positioned layout structure.

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base'
+
 module Sirena
   module Transform
     # Transforms an XYChart diagram into a positioned layout structure.
