@@ -4,7 +4,10 @@
 # source config and content claim it should. `jekyll build` exits 0 even when
 # a page is missing, mis-themed, unstyled, or references a dead asset -- this
 # checks the OUTPUT, not the exit code. See TODO.foundation/15-docs-site-build.md
-# and docs/plans/docs-site-build-integrity.md for the full rationale.
+# for the full rationale. (A local planning doc used to be cited here too --
+# docs/plans/ is untracked and local-only, per this repo's own convention, so
+# that reference resolved on exactly one machine and nowhere else, including
+# CI and a fresh checkout.)
 #
 # Usage: ruby scripts/verify_docs_site.rb [--docs-dir DIR] [--baseurl BASEURL]
 
