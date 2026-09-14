@@ -53,10 +53,18 @@ module Sirena
         # this rule it had no statement to fall back to, so the whole
         # diagram failed instead of skipping one line.
         #
-        # No `.as(...)`: Parslet hands back a raw slice, and
-        # `Transforms::Sequence` already skips any non-Hash entry in
-        # `statements` (see `apply`/`process_statements`), so a comment line
-        # contributes nothing, matching mermaid.
+        # No `.as(...)` in this rule. `root` is `diagram`, which always pairs
+        # `statements` with `header.as(:header)`, and Parslet drops an
+        # unnamed match when composing it alongside a named one rather than
+        # handing it up as an array entry — verified by parsing the real
+        # `diagram` root, not this rule in isolation (calling `statements`
+        # directly returns a bare `Parslet::Slice`, a code path the parser
+        # never actually takes): `g.parse("sequenceDiagram\n%c\nA->>B: m\n")`
+        # comes back `[{header: ...}, {from: "A", ...}]`, two entries, not
+        # three — the comment line leaves nothing behind for
+        # `Transforms::Sequence`'s `is_a?(Hash)` guards in
+        # `apply`/`process_statements` to skip. Those guards are real and
+        # matter for other rules; they simply never see this one.
         #
         # A comment line does not swallow the statement after it
         # (`%c\nA->>B: m\n` still yields participants `A`, `B`). A line
