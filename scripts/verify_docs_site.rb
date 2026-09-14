@@ -163,9 +163,33 @@ module Sirena
         document = Nokogiri::HTML5.parse(content)
         document.css(TagTokenizer::SKIPPED_CONTENT_ELEMENTS.join(","))
           .each { |element| element.children.unlink }
-        region = document.css(CONTENT_REGION_SELECTOR).first ||
-          document.css(".#{LAYOUT_BODY_MARKER}").first || document
-        @rendered_text = region.text.gsub(/\s+/, " ").strip
+        @rendered_region, @rendered_text_region = pick_content_region(document)
+        @rendered_text = @rendered_region.text.gsub(/\s+/, " ").strip
+      end
+
+      # Which region `rendered_text` actually read, so a caller reporting
+      # "renders no text" can name the region it checked instead of always
+      # naming `LAYOUT_BODY_MARKER` -- a page CAN have `<main>` empty while
+      # `.main-content-wrap` genuinely shows text (the theme footer), and a
+      # message hardcoding the wrapper name would then be false.
+      def rendered_text_region
+        rendered_text
+        @rendered_text_region
+      end
+
+      # `rendered_text` alone is INCOMPLETE as "this page shows something":
+      # a real Asciidoctor image-only block
+      # (`<div class="imageblock"><div class="content"><img alt="..."
+      # src="..."></div></div>`) has NO text node at all -- `alt` is an
+      # attribute, not text content -- yet it is genuinely shipped, visible
+      # content. Confirmed directly: `Nokogiri::HTML5.parse(real_imageblock
+      # _html).text == ""`. An `<img>` inside the same region `rendered_text`
+      # already picked (so still subject to the same skipped-element
+      # stripping) counts too.
+      def renders_content?
+        return true unless rendered_text.empty?
+
+        @rendered_region.css('img').any?
       end
 
       # A skipped element (script/style/textarea/template) is still
@@ -201,6 +225,23 @@ module Sirena
         @script_srcs = tags.select { |tag| tag[:name] == 'script' }
           .filter_map { |tag| tag[:attrs]['src'] }
           .grep(String)
+      end
+
+      private
+
+      # Returns [region, name] -- the element `rendered_text` reads, and a
+      # human-readable name for it, in the same preference order
+      # `rendered_text` used to apply inline: the real content region first,
+      # then the theme wrapper, then the whole document as a last resort for
+      # markup with neither (e.g. a hand-built spec fixture).
+      def pick_content_region(document)
+        if (main = document.css(CONTENT_REGION_SELECTOR).first)
+          [main, CONTENT_REGION_SELECTOR]
+        elsif (wrap = document.css(".#{LAYOUT_BODY_MARKER}").first)
+          [wrap, LAYOUT_BODY_MARKER]
+        else
+          [document, 'the page']
+        end
       end
     end
 
@@ -342,8 +383,8 @@ module Sirena
         failures << "content: #{page.rel_path} has no recognized " \
                     "Asciidoctor block marker"
       end
-      if page.rendered_text.empty?
-        failures << "content: #{page.rel_path} renders no text in #{LAYOUT_BODY_MARKER}"
+      unless page.renders_content?
+        failures << "content: #{page.rel_path} renders no text in #{page.rendered_text_region}"
       end
       failures
     end

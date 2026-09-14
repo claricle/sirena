@@ -357,11 +357,20 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp)
       %w[table-page list-page listing-page image-page].each { |name| write_source(docs_dir, name) }
 
+      # MEDIUM-10, found by Codex. The image-page body used to be
+      # `<div class="imageblock">x</div>` -- artificial text that masked
+      # the real shape entirely. A real Asciidoctor `imageblock` (see
+      # https://docs.asciidoctor.org html5 converter output) is
+      # `<div class="imageblock"><div class="content"><img ...></div></div>`
+      # -- `alt` is an attribute, not a text node, so a genuine image-only
+      # page has NO text at all. Confirmed directly:
+      # `Nokogiri::HTML5.parse(real_imageblock_html).text == ""`.
       bodies = {
         'table-page' => '<table class="tableblock"><tr><td>x</td></tr></table>',
         'list-page' => '<ul class="ulist"><li>x</li></ul>',
         'listing-page' => '<div class="listingblock">x</div>',
-        'image-page' => '<div class="imageblock">x</div>',
+        'image-page' => '<div class="imageblock"><div class="content">' \
+                         '<img src="diagram.png" alt="Example"></div></div>',
       }
       bodies.each do |name, body|
         write_page(site_dir, "diagram_types/#{name}/index.html", page_html_with_body(body))
@@ -1106,9 +1115,15 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'diagram_types/mindmap/index.html', html)
       write_page(site_dir, '_diagram_types/mindmap/index.html', html)
 
+      # MEDIUM-9, found by Codex. The old message always named
+      # `LAYOUT_BODY_MARKER`, which was false here: `rendered_text` reads
+      # `<main>` when it exists (per the HIGH-5 fix above), so THIS page's
+      # empty-content failure is about `<main>`, not `.main-content-wrap`
+      # -- the wrapper genuinely renders text (the footer) and saying so
+      # would contradict the fix this spec exists to pin.
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+        'content: diagram_types/mindmap/index.html renders no text in main',
+        'content: _diagram_types/mindmap/index.html renders no text in main'
       )
     end
   end
