@@ -115,6 +115,25 @@ module Sirena
       NESTABLE_INERT_ELEMENTS = %w[template].freeze
       SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS).freeze
 
+      # NOT the same set as SKIPPED_CONTENT_ELEMENTS above, on purpose.
+      # `script`/`style`/`template` content never reaches the visible page --
+      # correct to treat as both "not markup" (TagTokenizer's job) and "not
+      # rendered" (Page#rendered_text's job). `textarea` shares the raw-text
+      # PARSING rule (a real HTML5 parser never treats its content as markup
+      # either) but NOT the rendering rule: a browser shows a textarea's
+      # initial content as visible text inside the widget. Codex found this
+      # directly: `pass:[<textarea>Visible</textarea>]` through the installed
+      # Asciidoctor 2.0.26 converter produces a `paragraph`-marked page whose
+      # only content is that textarea, which the shared list wrongly
+      # classified as content-empty. `rendered_text` must strip only the
+      # elements that are genuinely invisible, not everything that happens to
+      # parse as raw text. Derived from RAW_TEXT_ELEMENTS/NESTABLE_INERT_ELEMENTS
+      # above, not a second hardcoded literal -- so a future addition to
+      # either of those (e.g. a new raw-text element) is visible-by-default
+      # here too, instead of silently staying invisible until this list is
+      # separately remembered and updated.
+      INVISIBLE_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS - %w[textarea] + NESTABLE_INERT_ELEMENTS).freeze
+
       def self.tags(markup)
         document = Nokogiri::HTML5.parse(markup)
         document.css(SKIPPED_CONTENT_ELEMENTS.join(",")).each { |el| el.children.unlink }
@@ -154,14 +173,17 @@ module Sirena
       # </div></div>` carries the marker and renders nothing. The property is
       # that the page SHOWS something, so assert that instead.
       #
-      # Content inside script/style/textarea/template is excluded for the same
-      # reason the tokenizer excludes it: a paragraph living only inside a
-      # `<template>` has not shipped.
+      # Content inside script/style/template is excluded: a paragraph living
+      # only inside a `<template>` has not shipped, and script/style content
+      # is never text a browser shows. `textarea` is NOT in that list, even
+      # though it shares the raw-text parsing rule -- unlike the other three,
+      # a browser DOES render a textarea's initial content as visible text
+      # inside the widget (see INVISIBLE_CONTENT_ELEMENTS on TagTokenizer).
       def rendered_text
         return @rendered_text if @rendered_text
 
         document = Nokogiri::HTML5.parse(content)
-        document.css(TagTokenizer::SKIPPED_CONTENT_ELEMENTS.join(","))
+        document.css(TagTokenizer::INVISIBLE_CONTENT_ELEMENTS.join(","))
           .each { |element| element.children.unlink }
         @rendered_region, @rendered_text_region = pick_content_region(document)
         @rendered_text = @rendered_region.text.gsub(/\s+/, " ").strip
@@ -186,10 +208,19 @@ module Sirena
       # _html).text == ""`. An `<img>` inside the same region `rendered_text`
       # already picked (so still subject to the same skipped-element
       # stripping) counts too.
+      #
+      # Codex found the same gap on `videoblock`: a real
+      # `video::id[youtube]` converts to `<div class="videoblock"><div
+      # class="content"><iframe src="..." ...></iframe></div></div>` -- also
+      # no text node -- through the installed Asciidoctor 2.0.26 converter.
+      # An `<iframe>` is genuinely shipped, visible content the same way an
+      # `<img>` is, so it counts on the same terms: presence in the checked
+      # region, no `src` validation (matching the existing `<img>` check,
+      # which also does not require `src`).
       def renders_content?
         return true unless rendered_text.empty?
 
-        @rendered_region.css('img').any?
+        @rendered_region.css('img, iframe').any?
       end
 
       # A skipped element (script/style/textarea/template) is still

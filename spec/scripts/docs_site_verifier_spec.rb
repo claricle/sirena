@@ -418,6 +418,40 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # Example 12d — MEDIUM found by Codex round 6. `renders_content?` counted
+  # `<img>` as visible content but nothing else non-text, and `rendered_text`
+  # stripped `<textarea>` alongside script/style/template as if its content
+  # were equally invisible. Both are real Asciidoctor 2.0.26 converter
+  # outputs, not hypothetical shapes:
+  # `Asciidoctor.convert('video::dQw4w9WgXcQ[youtube]')` ->
+  # `<div class="videoblock"><div class="content"><iframe src="..."
+  # ...></iframe></div></div>` (no text, no img);
+  # `Asciidoctor.convert('pass:[<textarea>Visible</textarea>]')` ->
+  # `<div class="paragraph"><p><textarea>Visible</textarea></p></div>` (a
+  # browser renders "Visible" inside the widget, unlike script/style/template
+  # content, which never reaches the page). Confirmed directly against the
+  # installed gem before this fix: both bodies made `renders_content?`
+  # return `false`.
+  it 'passes a video-only page and a textarea-content page' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      %w[video-page textarea-page].each { |name| write_source(docs_dir, name) }
+
+      bodies = {
+        'video-page' => '<div class="videoblock"><div class="content">' \
+                         '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" ' \
+                         'frameborder="0" allowfullscreen></iframe></div></div>',
+        'textarea-page' => '<div class="paragraph"><p><textarea>Visible</textarea></p></div>',
+      }
+      bodies.each do |name, body|
+        write_page(site_dir, "diagram_types/#{name}/index.html", page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/#{name}/index.html", page_html_with_body(body))
+      end
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
   # Example 13 — R14, lead-role form only.
   it 'accepts a page whose only marked div is class="paragraph lead"' do
     Dir.mktmpdir do |tmp|
