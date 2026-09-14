@@ -179,12 +179,50 @@ module Sirena
       # though it shares the raw-text parsing rule -- unlike the other three,
       # a browser DOES render a textarea's initial content as visible text
       # inside the widget (see INVISIBLE_CONTENT_ELEMENTS on TagTokenizer).
+      #
+      # `[hidden]` is a SEPARATE exclusion from the element-name lists above:
+      # it is an ATTRIBUTE, reachable on any element, not a fixed set of tag
+      # names. Codex found this directly on round 7:
+      # `Asciidoctor.convert('pass:[<span hidden>Invisible</span>]')` ->
+      # `<div class="paragraph"><p><span hidden>Invisible</span></p></div>`,
+      # a real, valid block marker whose only text a browser never shows.
+      # Unlinking the whole element, not just its children, is correct here
+      # -- unlike script/style/template, a `<span hidden>` is not "content
+      # that isn't markup", it is markup that never reaches the page at all,
+      # so nothing about it (its own text, or any `<img>`/`<iframe>`/`<svg>`
+      # nested inside it) should count as rendered.
+      #
+      # DELIBERATE SCOPE, not an oversight (Codex round 8 pushed on this):
+      # the WHATWG spec's `hidden` section names two cases where treating
+      # `[hidden]` as unconditionally invisible is not literally true --
+      # author CSS with higher specificity than the UA's `[hidden] {
+      # display: none }` rule can override the Hidden state, and the Hidden
+      # Until Found state (`hidden="until-found"`) keeps a generated box
+      # (border/margin/padding paint) even though its CONTENT stays
+      # unrendered until find-in-page reveals it. Both confirmed live
+      # against the installed Asciidoctor gem and the fetched WHATWG spec
+      # text. Neither changes this method's behavior, for two reasons: (1)
+      # this script is a structural HTML content check, not a CSS cascade
+      # engine -- it has no way to know whether some OTHER stylesheet rule
+      # overrides the attribute, the same reason it does not evaluate any
+      # other `style=`/CSS-driven visibility; (2) both shapes are
+      # unreachable in this repo's real docs today (`grep -rn 'hidden\|pass:
+      # \[' docs/**/*.adoc` -> zero hits) and would require deliberately
+      # written raw HTML (`pass:[...]`) nobody has written -- only the
+      # CSS-override shape (`pass:[<span hidden
+      # style="display:block">...]`) is self-contradictory; `until-found` is
+      # coherent, ordinary markup, just out of this check's scope. Even
+      # reached, an `until-found` box with no visible text is not the kind
+      # of shipped content this check exists to verify (see the file
+      # header) -- a bare border with nothing inside is not a rendered
+      # diagram or a rendered sentence.
       def rendered_text
         return @rendered_text if @rendered_text
 
         document = Nokogiri::HTML5.parse(content)
         document.css(TagTokenizer::INVISIBLE_CONTENT_ELEMENTS.join(","))
           .each { |element| element.children.unlink }
+        document.css("[hidden]").each(&:unlink)
         @rendered_region, @rendered_text_region = pick_content_region(document)
         @rendered_text = @rendered_region.text.gsub(/\s+/, " ").strip
       end
@@ -217,10 +255,20 @@ module Sirena
       # `<img>` is, so it counts on the same terms: presence in the checked
       # region, no `src` validation (matching the existing `<img>` check,
       # which also does not require `src`).
+      #
+      # Codex found a third shape on round 7: Asciidoctor's own image
+      # converter supports `opts=inline,format=svg`, which embeds the raw
+      # `<svg>...</svg>` markup directly instead of wrapping it in an
+      # `<img>`. Confirmed directly against the installed gem:
+      # `Asciidoctor.convert('image::path[opts=inline,format=svg]')` ->
+      # `<div class="imageblock"><div class="content"><svg ...>...</svg>
+      # </div></div>` -- no text, no `img`, no `iframe`, yet genuinely
+      # visible. Same terms as `img`/`iframe`: presence only, no content
+      # validation.
       def renders_content?
         return true unless rendered_text.empty?
 
-        @rendered_region.css('img, iframe').any?
+        @rendered_region.css('img, iframe, svg').any?
       end
 
       # A skipped element (script/style/textarea/template) is still

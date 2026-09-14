@@ -452,6 +452,70 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # Example 12e — MEDIUM found by Codex round 7, both directions of the same
+  # boundary Example 12d fixed for `img`/`iframe`/`textarea`.
+  #
+  # Direction 1 (false negative): Asciidoctor's own image converter supports
+  # `opts=inline,format=svg`, which embeds the raw `<svg>` markup directly
+  # instead of wrapping it in an `<img>`. Confirmed against the installed
+  # gem: `Asciidoctor.convert('image::path[opts=inline,format=svg]')` ->
+  # `<div class="imageblock"><div class="content"><svg ...>...</svg>
+  # </div></div>` -- no text node, no `<img>`, no `<iframe>`, yet a browser
+  # shows the shape. `renders_content?` must count `<svg>` the same way it
+  # already counts `<img>`/`<iframe>`.
+  #
+  # Direction 2 (false positive, the opposite mistake): the HTML5 boolean
+  # `hidden` attribute makes a browser render an element `display: none`
+  # regardless of its text content. Confirmed against the installed gem:
+  # `Asciidoctor.convert('pass:[<span hidden>Invisible</span>]')` ->
+  # `<div class="paragraph"><p><span hidden>Invisible</span></p></div>` --
+  # a real, valid block marker, whose only text is a string a browser never
+  # shows. `rendered_text` must exclude `[hidden]` elements, not just the
+  # element-NAME-based SKIPPED/INVISIBLE_CONTENT_ELEMENTS lists, or a page
+  # with nothing but hidden text reads as "renders content" when it renders
+  # none.
+  #
+  # Direction 2b (spec-auditor gap, round 8): the two shapes above both put
+  # the discriminating content as a CHILD of the `[hidden]` element, so
+  # neither can tell "unlink the whole `[hidden]` element" apart from
+  # "unlink only its children" -- a strictly weaker fix that would still
+  # pass both. `hidden-svg-page` puts `hidden` directly ON the
+  # content-bearing tag (`<svg hidden>`, not a wrapper around it): a
+  # children-only unlink would leave the now-childless `<svg>` tag in the
+  # DOM, where `renders_content?`'s `'img, iframe, svg'` selector would
+  # still find it and wrongly report the page as showing content, even
+  # though a browser never renders a `hidden` element at all. Confirmed
+  # directly: reverting `rendered_text`'s `[hidden]` unlink to
+  # `.each { |el| el.children.unlink }` leaves this page's `failures`
+  # empty; the real code (unlinking the element itself) correctly reports it.
+  it 'rejects a hidden-text-only page and accepts an inline-SVG-only page' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      %w[hidden-text-page inline-svg-page hidden-svg-page].each { |name| write_source(docs_dir, name) }
+
+      bodies = {
+        'hidden-text-page' => '<div class="paragraph"><p><span hidden>Invisible</span></p></div>',
+        'inline-svg-page' => '<div class="imageblock"><div class="content">' \
+                              '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
+                              '<rect width="10" height="10" fill="red"/></svg></div></div>',
+        'hidden-svg-page' => '<div class="imageblock"><div class="content">' \
+                              '<svg hidden xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
+                              '<rect width="10" height="10" fill="red"/></svg></div></div>',
+      }
+      bodies.each do |name, body|
+        write_page(site_dir, "diagram_types/#{name}/index.html", page_html_with_body(body))
+        write_page(site_dir, "_diagram_types/#{name}/index.html", page_html_with_body(body))
+      end
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
+        'content: diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap',
+        'content: _diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap'
+      )
+    end
+  end
+
   # Example 13 — R14, lead-role form only.
   it 'accepts a page whose only marked div is class="paragraph lead"' do
     Dir.mktmpdir do |tmp|
