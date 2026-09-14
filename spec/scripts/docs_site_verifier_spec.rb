@@ -856,6 +856,20 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # MEDIUM-2, the other half. The same comment (scripts/verify_docs_site.rb)
+  # names a fragment alongside a query string; only the query string had a
+  # spec until this one.
+  it 'does not report a valid asset carrying a URL fragment as missing' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html.sub('.css">', '.css#section">')
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
   # ----------------------------------------------------------------------
   # The findings from the third Codex round, after the regex-based
   # matching from rounds 1-2 was replaced with TagTokenizer, a

@@ -118,9 +118,15 @@ module Sirena
         @content ||= File.read(@path)
       end
 
-      # HTML comments stripped, so markup commented out of the page (a
-      # dead stylesheet link, a disabled block) cannot satisfy a check
-      # whose whole point is proving the markup is genuinely rendered.
+      # This gsub predates Nokogiri::HTML5 and is redundant for the property
+      # it was written for: a real HTML5 parser already treats `<!-- ... -->`
+      # as inert (verified -- a commented-out `<link>` never appears in
+      # `doc.css('link')`), so a dead stylesheet link or disabled block
+      # commented out of the page cannot satisfy a check either way. Kept
+      # because it guards a DIFFERENT, narrower risk this file has not
+      # measured: a `-->` inside a string value could in principle end the
+      # strip early and corrupt the markup handed to Nokogiri. Not one of
+      # this round's findings; recorded so it is not mistaken for reviewed.
       def markup
         @markup ||= content.gsub(/<!--.*?-->/m, '')
       end
