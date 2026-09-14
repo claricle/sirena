@@ -1,0 +1,5 @@
+---
+cop: Layout/SpaceAfterComma
+rows:
+- file: scripts/extract_mermaid_tests.rb
+  count: 1

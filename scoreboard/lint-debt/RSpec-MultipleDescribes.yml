@@ -1,0 +1,11 @@
+---
+cop: RSpec/MultipleDescribes
+rows:
+- file: spec/sirena/diagram/class_diagram_spec.rb
+  count: 1
+- file: spec/sirena/diagram/er_diagram_spec.rb
+  count: 1
+- file: spec/sirena/diagram/state_diagram_spec.rb
+  count: 1
+- file: spec/sirena/diagram/user_journey_spec.rb
+  count: 1
