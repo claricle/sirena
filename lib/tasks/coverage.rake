@@ -19,9 +19,26 @@ require 'open3'
 # reports -- recorded in the gate record for this branch, not re-checked on
 # every run (that would just re-run the suite twice for no gate purpose).
 namespace :spec do
-  desc 'Run only the corpus fixture sweep (spec/mermaid/**), isolated from coverage'
-  RSpec::Core::RakeTask.new(:corpus) do |task|
+  # Undocumented on purpose: `spec:corpus` below is the entry point. This
+  # runner exists only so `spec:corpus` can force COVERAGE off around it --
+  # RSpec::Core::RakeTask spawns its rspec run via `sh`, which always
+  # inherits the parent process's ENV, so the corpus sweep would otherwise
+  # be instrumented whenever COVERAGE=true reaches this task from anywhere
+  # (the invoking shell, CI, or an earlier coverage:measure chained on the
+  # same command line) rather than only when this file itself set it.
+  RSpec::Core::RakeTask.new(:corpus_runner) do |task|
     task.rspec_opts = '--tag corpus'
+  end
+
+  desc 'Run only the corpus fixture sweep (spec/mermaid/**), isolated from coverage'
+  task :corpus do
+    previous_coverage_env = ENV.fetch('COVERAGE', nil)
+    begin
+      ENV.delete('COVERAGE')
+      Rake::Task['spec:corpus_runner'].invoke
+    ensure
+      ENV['COVERAGE'] = previous_coverage_env
+    end
   end
 
   desc 'Run every spec except the corpus fixture sweep'
@@ -41,6 +58,12 @@ namespace :coverage do
     previous_coverage_env = ENV.fetch('COVERAGE', nil)
     begin
       ENV['COVERAGE'] = 'true'
+      # A Rake task only ever runs once per process -- `invoke` is a no-op
+      # on a task already marked complete. `rake spec:unit coverage:measure`
+      # on one command line would otherwise skip the instrumented run
+      # entirely (spec:unit already ran, uninstrumented, as its own
+      # top-level task) and this task would silently do nothing.
+      Rake::Task['spec:unit'].reenable
       Rake::Task['spec:unit'].invoke
     ensure
       ENV['COVERAGE'] = previous_coverage_env
@@ -84,14 +107,17 @@ namespace :coverage do
     # `git diff --name-only` alone misses a brand-new file that was never
     # `git add`ed -- add `ls-files --others --exclude-standard` (untracked,
     # unignored) the same way simplecov patch's own ChangedLines does, or a
-    # just-created uncovered file passes silently.
-    diff_output, diff_status = Open3.capture2('git', 'diff', '--name-only', '--merge-base', base)
+    # just-created uncovered file passes silently. `-z` on both: git quotes
+    # a non-ASCII path in newline-delimited output (e.g. "caf\303\251.rb"),
+    # and that quoted string never matches a real path on disk, so the
+    # unquoted, NUL-delimited form is the only one safe to split and stat.
+    diff_output, diff_status = Open3.capture2('git', 'diff', '--name-only', '-z', '--merge-base', base)
     raise "git diff --name-only --merge-base #{base} failed" unless diff_status.success?
 
-    untracked_output, untracked_status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard')
+    untracked_output, untracked_status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard', '-z')
     raise 'git ls-files --others --exclude-standard failed' unless untracked_status.success?
 
-    changed_paths = (diff_output.split("\n") + untracked_output.split("\n")).uniq
+    changed_paths = (diff_output.split("\0") + untracked_output.split("\0")).uniq
     report_mtime = File.mtime('coverage/coverage.json')
     stale = changed_paths.select { |path| File.exist?(path) && File.mtime(path) > report_mtime }
     unless stale.empty?
