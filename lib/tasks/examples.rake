@@ -511,16 +511,23 @@ module ExampleTasks
   # A symlinked diagram directory resolves outside examples/, and the loop
   # would then write and delete there while reporting success. Skipped by
   # name so the run says which one it refused.
+  #
+  # Checked before File.directory?, not after: File.directory? follows a
+  # symlink to judge its TARGET, so a dangling one (pointing nowhere) failed
+  # that check first and fell out silently below with no warning at all --
+  # unlike a symlink that resolves to a real directory, which reached the
+  # warning. Both are refused; only a dangling one was refused silently.
   def diagram_dirs(examples_dir)
     children(verified_root(examples_dir)).select do |entry|
       name = File.basename(entry)
       next false if name.start_with?('.')
-      next false unless File.directory?(entry)
 
       if File.symlink?(entry)
         puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that leaves examples/"
         next false
       end
+      next false unless File.directory?(entry)
+
       true
     end
   end

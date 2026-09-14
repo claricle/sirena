@@ -988,6 +988,20 @@ RSpec.describe ExampleTasks do
     ensure
       FileUtils.remove_entry(outside) if outside
     end
+
+    # diagram_dirs checked File.directory? before File.symlink?, so a symlink
+    # whose target does not exist failed the directory check first and was
+    # skipped with no warning at all -- unlike a symlink to a real directory
+    # outside examples/, which prints one. A human staring at a diagram type
+    # that vanished deserves the same clue either way.
+    it 'warns about a symlinked diagram directory even when its target is missing' do
+      File.symlink(File.join(examples_dir, 'nonexistent-target'),
+                   File.join(examples_dir, 'dangling'))
+
+      output = capture { described_class.validate_examples(examples_dir) }
+
+      expect(output).to include('skipped dangling, a symlinked directory that leaves examples/')
+    end
   end
 
   # The capability, not a watcher on its use. `generate` and `validate` used to
