@@ -5,6 +5,7 @@ require 'fileutils'
 require 'digest'
 require 'securerandom'
 require 'tmpdir'
+require 'yaml'
 
 # Rendering must not depend on the day it ran. Gantt derives its whole date
 # range from the reference date, so an unpinned run produces different output
