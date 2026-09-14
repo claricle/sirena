@@ -27,6 +27,18 @@ EXPECTED_UNRENDERABLE_SOURCES = [
 module ExampleTasks
   module_function
 
+  # The gem's own checkout root. Every real examples_dir/docs_assets_dir this
+  # task is ever given lives under it -- both are built via
+  # File.expand_path('../../X', __dir__) in the rake tasks below -- so nothing
+  # above this line is this task's business to judge for a symlinked ancestor.
+  # `verified_root` walks ancestors only within this boundary, not all the way
+  # to filesystem `/`: an unbounded walk falsely flags an ordinary OS symlink
+  # no caller here can avoid (macOS routes `Dir.mktmpdir` -- what every spec's
+  # examples_dir/docs_assets_dir actually is -- through `/var -> private/var`)
+  # as a violation. Confirmed by execution: `File.symlink?('/var')` and
+  # `File.symlink?('/tmp')` are both true on this machine.
+  GEM_ROOT = File.expand_path('../..', __dir__)
+
   # The one place an example's theme is decided. Both :generate and :validate
   # read it here so they cannot drift into rendering the same source two ways.
   def theme_for(mmd_file)
@@ -241,22 +253,55 @@ module ExampleTasks
       # its target, with the link itself left in place). Each file needs the
       # same refusal the directory got, one level down -- decided for every
       # file first, so the write below never has to reason about a skip.
-      blocked, writable = svg_files.partition do |svg_file|
-        File.symlink?(File.join(target_dir, File.basename(svg_file)))
+      #
+      # A DIRECT symlink at the leaf is not the only way through: a leaf that
+      # is a real DIRECTORY containing an inner symlink of the same basename
+      # is not itself a symlink, so the check above alone passes it -- and
+      # `FileUtils.cp` then treats that directory as a destination CONTAINER,
+      # writing to File.join(leaf_dir, basename(svg_file)), which resolves
+      # the inner symlink and follows it. Reproduced before this second
+      # condition existed: `target_dir/a.svg/` as a real directory containing
+      # `target_dir/a.svg/a.svg -> outside/a.svg` let the copy overwrite
+      # `outside/a.svg`. Mirrors `manageable?`'s own idiom for the same
+      # question (an existing non-plain-file entry is not something this
+      # task may write through).
+      pairs = svg_files.map { |svg_file| [svg_file, File.join(target_dir, File.basename(svg_file))] }
+      blocked, writable = pairs.partition do |_svg_file, destination|
+        File.symlink?(destination) || (File.exist?(destination) && !File.lstat(destination).file?)
       end
-      blocked.each do |svg_file|
-        puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink"
+      blocked.map(&:first).each do |svg_file|
+        puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink or already exists as something other than a plain file"
       end
-      writable.each { |svg_file| FileUtils.cp(svg_file, File.join(target_dir, File.basename(svg_file))) }
+      writable.each { |svg_file, destination| FileUtils.cp(svg_file, destination) }
 
       [File.basename(dir), writable.size]
     end
   end
 
-  def verified_root(examples_dir, label: 'examples root')
-    raise "#{label} must not be a link: #{examples_dir}" if File.symlink?(examples_dir)
+  # The root itself must be a real directory with no symlinked ANCESTOR
+  # either, not just not itself a link. A symlinked intermediate directory
+  # (e.g. docs/assets -> outside the repo) passes a leaf-only check: the
+  # literal path handed in is not itself a symlink, only reached through one.
+  # Reproduced before this ancestor check existed: `docs/assets` symlinked
+  # outside the repo left `docs/assets/examples` (an ordinary directory, just
+  # reached through the symlinked ancestor) passing straight through, so
+  # every write under it landed wherever `docs/assets` actually resolved.
+  #
+  # The ancestor walk is bounded to GEM_ROOT (see its comment) rather than
+  # walked to filesystem `/`.
+  def verified_root(path, label: 'examples root')
+    path = File.expand_path(path)
+    raise "#{label} must not be a link: #{path}" if File.symlink?(path)
 
-    examples_dir
+    if path == GEM_ROOT || path.start_with?("#{GEM_ROOT}#{File::SEPARATOR}")
+      existing = path
+      existing = File.dirname(existing) until File.exist?(existing)
+      if File.realpath(existing) != File.expand_path(existing)
+        raise "#{label} sits beneath a symlinked directory: #{path}"
+      end
+    end
+
+    path
   end
 
   # The two depths the gemspec packages and the conformance gate pairs: an

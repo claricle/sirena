@@ -284,6 +284,59 @@ RSpec.describe ExampleTasks do
         end
       end
     end
+
+    # A DIRECT symlink at the leaf is not the only way through: a leaf that is
+    # a real DIRECTORY containing an inner symlink of the same basename is not
+    # itself a symlink, so the guard above alone passes it -- and
+    # `FileUtils.cp(svg_file, target_dir)` then treats that directory as a
+    # destination CONTAINER, writing to File.join(target_dir,
+    # basename(svg_file)) itself, which resolves the inner symlink and
+    # follows it. Reproduced before this second condition existed: the copy
+    # landed inside `outside/` while `docs/flowchart/a.svg/` stayed a
+    # directory holding the untouched inner link.
+    it 'refuses to write through a docs SVG slot that is a directory holding an inner link of the same name' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>new</svg>')
+          File.write(File.join(outside, 'secret.svg'), 'outside original')
+          FileUtils.mkdir_p(File.join(docs, 'flowchart', 'a.svg'))
+          File.symlink(File.join(outside, 'secret.svg'),
+                       File.join(docs, 'flowchart', 'a.svg', 'a.svg'))
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect([copied, File.directory?(File.join(docs, 'flowchart', 'a.svg')),
+                  File.read(File.join(outside, 'secret.svg'))])
+            .to eq([[['flowchart', 0]], true, 'outside original'])
+        end
+      end
+    end
+
+    # `docs/assets` itself is not the leaf `verified_root` receives -- the
+    # literal path `docs_assets_dir` names (e.g. `docs/assets/examples`) is
+    # not itself a link, only reached through a symlinked ANCESTOR. A
+    # leaf-only check let this straight through; reproduced before the
+    # ancestor walk existed: `docs/assets` symlinked outside the repo
+    # received every copy. The walk is bounded to GEM_ROOT (see its comment
+    # in lib/tasks/examples.rake), so this stubs GEM_ROOT to the test's own
+    # tmpdir -- the same boundary a real call site gets from its own
+    # checkout root, without reaching into the real gem checkout.
+    it 'refuses a docs root reached through a symlinked ancestor, not just a link itself' do
+      Dir.mktmpdir('sirena-root') do |root|
+        stub_const('ExampleTasks::GEM_ROOT', root)
+
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+          File.symlink(outside, File.join(root, 'assets'))
+          docs_assets_dir = File.join(root, 'assets', 'examples')
+
+          expect { described_class.copy_to_docs(examples_dir, docs_assets_dir) }
+            .to raise_error(/docs assets root sits beneath a symlinked directory/)
+        end
+      end
+    end
   end
 
   # generate never deletes a stale SVG itself — it only reports one, so a run
