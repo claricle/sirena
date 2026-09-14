@@ -204,7 +204,7 @@ module ExampleTasks
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
-    raise "docs assets root must not be a link: #{docs_assets_dir}" if File.symlink?(docs_assets_dir)
+    verified_root(docs_assets_dir, label: 'docs assets root')
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
     dirs.filter_map do |dir|
@@ -223,8 +223,8 @@ module ExampleTasks
     end
   end
 
-  def verified_root(examples_dir)
-    raise "examples root must not be a link: #{examples_dir}" if File.symlink?(examples_dir)
+  def verified_root(examples_dir, label: 'examples root')
+    raise "#{label} must not be a link: #{examples_dir}" if File.symlink?(examples_dir)
 
     examples_dir
   end
