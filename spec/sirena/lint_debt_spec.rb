@@ -55,6 +55,15 @@ RSpec.describe Sirena::LintDebt do
     end
   end
 
+  describe "#report" do
+    # Every other #exempted_count spec calls the method directly, so none
+    # of them would notice #report's own "exempted" key going missing or
+    # stale -- this pins the JSON contract itself.
+    it "includes exempted_count under the exempted key" do
+      expect(debt.report["exempted"]).to eq(debt.exempted_count)
+    end
+  end
+
   describe "inertness to .rubocop.yml" do
     context "with a fresh local inherit_from suppressing everything" do
       before do
