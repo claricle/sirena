@@ -284,8 +284,9 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.rm_f(File.join(site_dir, '_diagram_types/mindmap/index.html'))
       FileUtils.mkdir_p(File.join(site_dir, '_diagram_types/mindmap/index.html'))
 
-      expect(verifier_for(docs_dir, site_dir).failures)
-        .to include(a_string_matching(%r{_diagram_types/mindmap/index\.html}))
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html'
+      )
     end
   end
 
