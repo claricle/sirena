@@ -898,6 +898,34 @@ RSpec.describe ExampleTasks do
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(Lutaml::Model::InvalidFormatError)
     end
+
+    # The classification arithmetic itself, not just the reads that happen
+    # before it: a genuine render failure on an allowlisted source must reach
+    # `known_unrenderable` and must NOT fail the task. Asserted on the printed
+    # count rather than a bare `not_to raise_error`, so a mutant that folds
+    # `known_unrenderable` into `failure_count` cannot pass silently.
+    it 'counts a real render failure on an expected-unrenderable source as known, not failed' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      write(source_path, "flowchart TD\n  A --> \n")
+
+      output = capture { described_class.validate_examples(examples_dir) }
+
+      expect(output).to include('Known unrenderable: 1')
+      expect(output).to include('Failed: 0')
+    end
+
+    # The mirror image: an allowlisted source that starts rendering again must
+    # fail validation loudly, or an EXPECTED_UNRENDERABLE_SOURCES entry rots
+    # into a permanent excuse nobody revisits once Sirena actually fixes it.
+    it 'raises when an expected-unrenderable source unexpectedly renders' do
+      source_path = EXPECTED_UNRENDERABLE_SOURCES.first
+      write(source_path, "gantt\n  title Broken\n")
+      allow(Sirena::Engine).to receive(:new)
+        .and_return(instance_double(Sirena::Engine, render: '<svg/>'))
+
+      expect { described_class.validate_examples(examples_dir) }
+        .to raise_error(ExampleTasks::ValidationFailed, /unexpectedly renderable/)
+    end
   end
 
   # The capability, not a watcher on its use. `generate` and `validate` used to
