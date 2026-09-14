@@ -25,7 +25,7 @@ module Sirena
     # @abstract Subclass and implement #build_graph. Do not override #call
     #   or #to_graph — #call runs the validity guard and calls #build_graph;
     #   #to_graph delegates to #call and exists only for Engine's current
-    #   call site (engine.rb:186).
+    #   call site (engine.rb:184).
     class Base
       # The date a transform treats as "today".
       #
@@ -110,7 +110,7 @@ module Sirena
       end
 
       # Delegates to #call. This is the method name `Engine` calls today
-      # (engine.rb:186) — kept so that call site keeps working unchanged.
+      # (engine.rb:184) — kept so that call site keeps working unchanged.
       # The guard lives in #call, not here, so this method has nothing left
       # to do once Engine calls #call directly.
       #

@@ -143,7 +143,7 @@ module Sirena
     # Retrieves handlers for a diagram type.
     #
     # @param type [Symbol] diagram type identifier
-    # @return [Hash] hash with :parser, :transform, :renderer keys
+    # @return [Hash] hash with :parser, :transform, :renderer, :model keys
     # @raise [DiagramTypeError] if type is not registered
     def retrieve_handlers(type)
       handlers = DiagramRegistry.get(type)

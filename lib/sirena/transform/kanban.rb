@@ -38,7 +38,9 @@ module Sirena
       # @param diagram [Diagram::Kanban] the kanban diagram
       # @return [Hash] layout data with columns, cards, and dimensions
       def build_graph(diagram)
-        return empty_graph if diagram.columns.empty?
+        # diagram.columns.nil? is treated as "no columns" here to match
+        # Diagram::Kanban#valid?, which accepts nil as equivalent to empty.
+        return empty_graph if diagram.columns.nil? || diagram.columns.empty?
 
         # Position columns horizontally
         positioned_columns = position_columns(diagram.columns)
