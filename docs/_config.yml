@@ -73,7 +73,7 @@ back_to_top: true
 back_to_top_text: "Back to top"
 
 # Footer content
-footer_content: 'Copyright &copy; 2025 Ribose. Sirena is open source under the MIT license.'
+footer_content: 'Copyright &copy; 2025 Ribose. Sirena is open source under the BSD-2-Clause license.'
 
 # Color scheme
 color_scheme: light
