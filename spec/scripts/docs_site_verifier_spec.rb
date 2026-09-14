@@ -1164,6 +1164,28 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # MEDIUM-7. `class_tokens` read from `tags`, which (deliberately, per the
+  # `TagTokenizer` class comment) still reports a skipped element ITSELF --
+  # only its children are dropped. That means the skipped element's OWN
+  # `class` attribute leaked into `class_tokens` too, so
+  # `<template class="paragraph">` alone satisfied the content-marker
+  # check even though a `<template>`'s content never ships. The visible
+  # fallback text elsewhere on the page carries no marker at all, so the
+  # only Asciidoctor marker on the page is the inert one.
+  it 'reports no recognized marker when the only marker class sits on a skipped element itself' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      html = page_html_with_body(%(<template class="paragraph"></template><p>Visible fallback text</p>))
+      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
+      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+
+      expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+      )
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML

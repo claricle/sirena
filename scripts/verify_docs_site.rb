@@ -160,10 +160,18 @@ module Sirena
         @rendered_text = region.text.gsub(/\s+/, " ").strip
       end
 
+      # A skipped element (script/style/textarea/template) is still
+      # reported BY ITSELF in `tags` -- `a4_theme_assets` needs to see that
+      # a `<script>` tag exists -- but its own `class` attribute is not
+      # renderable content, the same as its children are not. Without this
+      # exclusion, `<template class="paragraph">` alone satisfied the
+      # content-marker check, even though a `<template>`'s content never
+      # ships.
       def class_tokens
         return @class_tokens if @class_tokens
 
-        classes = tags.filter_map { |tag| tag[:attrs]['class'] }.grep(String)
+        classes = tags.reject { |tag| TagTokenizer::SKIPPED_CONTENT_ELEMENTS.include?(tag[:name]) }
+          .filter_map { |tag| tag[:attrs]['class'] }.grep(String)
         @class_tokens = classes.flat_map { |value| value.split(/\s+/) }
       end
 
