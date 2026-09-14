@@ -1,5 +1,105 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="200" viewBox="0 0 400 200" version="1.2" xmlns="http://www.w3.org/2000/svg">
-  <rect x="50" y="50" width="300" height="100" fill="#f0f0f0" stroke="#000000" stroke-width="2"/>
-  <text x="200" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#000000">Flowchart (parser needs fixes)</text>
+<svg
+ width="772.0"
+ height="764.0"
+ viewBox="0 0 772.0 764.0"
+ version="1.2"
+ baseProfile="tiny"
+ xmlns="http://www.w3.org/2000/svg"
+>
+<g id="edge-Start_to_Input">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 110.5 67.0 L 360.5 67.0"/>
+  <polygon fill="#000000" points="360.5,67.0 352.5,71.0 352.5,63.0"/>
+</g>
+<g id="edge-Input_to_Validate">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 360.5 67.0 L 612.0 77.0"/>
+  <polygon fill="#000000" points="612.0,77.0 603.8474,80.679 604.1652,72.6853"/>
+</g>
+<g id="edge-Validate_to_Process">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 612.0 77.0 L 107.0 267.0"/>
+  <polygon fill="#000000" points="107.0,267.0 113.079,260.4391 115.8961,267.9267"/>
+  <text fill="#000000" x="359.5" y="167.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
+</g>
+<g id="edge-Validate_to_Error">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 612.0 77.0 L 350.0 267.0"/>
+  <polygon fill="#000000" points="350.0,267.0 354.128,259.0653 358.8246,265.5416"/>
+  <text fill="#000000" x="481.0" y="167.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
+</g>
+<g id="edge-Error_to_Input">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 350.0 267.0 L 360.5 67.0"/>
+  <polygon fill="#000000" points="360.5,67.0 364.0751,75.1987 356.0861,74.7793"/>
+</g>
+<g id="edge-Process_to_Calculate">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 107.0 267.0 L 621.0 267.0"/>
+  <polygon fill="#000000" points="621.0,267.0 613.0,271.0 613.0,263.0"/>
+</g>
+<g id="edge-Calculate_to_Output">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 621.0 267.0 L 117.5 467.0"/>
+  <polygon fill="#000000" points="117.5,467.0 123.4583,460.3292 126.4116,467.7642"/>
+</g>
+<g id="edge-Output_to_Save">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 117.5 467.0 L 379.5 477.0"/>
+  <polygon fill="#000000" points="379.5,477.0 371.3533,480.692 371.6584,472.6978"/>
+</g>
+<g id="edge-Save_to_DB">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 379.5 477.0 L 593.0 467.0"/>
+  <polygon fill="#000000" points="593.0,467.0 585.1959,471.3699 584.8216,463.3787"/>
+  <text fill="#000000" x="486.25" y="467.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
+</g>
+<g id="edge-Save_to_Display">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 379.5 477.0 L 114.0 667.0"/>
+  <polygon fill="#000000" points="114.0,667.0 118.1779,659.0914 122.8336,665.5972"/>
+  <text fill="#000000" x="246.75" y="567.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
+</g>
+<g id="edge-DB_to_Display">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 593.0 467.0 L 114.0 667.0"/>
+  <polygon fill="#000000" points="114.0,667.0 119.8411,660.2264 122.9235,667.6088"/>
+</g>
+<g id="edge-Display_to_End">
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 114.0 667.0 L 353.5 667.0"/>
+  <polygon fill="#000000" points="353.5,667.0 345.5,671.0 345.5,663.0"/>
+</g>
+<g id="node-Start">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="121.0" height="34.0"/>
+  <text fill="#000000" x="110.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Start Process</text>
+</g>
+<g id="node-Input">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="121.0" height="34.0"/>
+  <text fill="#000000" x="360.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Receive Input</text>
+</g>
+<g id="node-Validate">
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="612.0,50 674.0,77.0 612.0,104.0 550,77.0"/>
+  <text fill="#000000" x="612.0" y="81.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Valid Input?</text>
+</g>
+<g id="node-Process">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="114.0" height="34.0"/>
+  <text fill="#000000" x="107.0" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Process Data</text>
+</g>
+<g id="node-Error">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="250.0" width="100.0" height="34.0"/>
+  <text fill="#000000" x="350.0" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Show Error</text>
+</g>
+<g id="node-Calculate">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="250.0" width="142.0" height="34.0"/>
+  <text fill="#000000" x="621.0" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Calculate Result</text>
+</g>
+<g id="node-Output">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="450.0" width="135.0" height="34.0"/>
+  <text fill="#000000" x="117.5" y="471.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Generate Output</text>
+</g>
+<g id="node-Save">
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="379.5,450 459.0,477.0 379.5,504.0 300,477.0"/>
+  <text fill="#000000" x="379.5" y="481.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Save to Database?</text>
+</g>
+<g id="node-DB">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="450.0" width="86.0" height="34.0"/>
+  <text fill="#000000" x="593.0" y="471.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
+</g>
+<g id="node-Display">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="650.0" width="128.0" height="34.0"/>
+  <text fill="#000000" x="114.0" y="671.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Display Result</text>
+</g>
+<g id="node-End">
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="650.0" width="107.0" height="34.0"/>
+  <text fill="#000000" x="353.5" y="671.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">End Process</text>
+</g>
 </svg>

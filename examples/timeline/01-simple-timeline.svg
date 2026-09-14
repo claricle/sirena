@@ -3,6 +3,7 @@
  height="440.0"
  viewBox="0 0 960 440"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <text fill="#000000" x="480.0" y="40.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="bold">History of Programming Languages</text>

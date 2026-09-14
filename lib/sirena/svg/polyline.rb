@@ -25,6 +25,8 @@ module Sirena
         map_attribute 'stroke-width', to: :stroke_width
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
       end
 
       # Helper to build points string from coordinates array
