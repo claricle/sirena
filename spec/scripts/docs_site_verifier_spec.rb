@@ -872,9 +872,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
   # ----------------------------------------------------------------------
   # The findings from the third Codex round, after the regex-based
-  # matching from rounds 1-2 was replaced with TagTokenizer, a
-  # StringScanner-based structural tag/attribute scanner (see its class
-  # comment for why REXML was tried and rejected).
+  # matching from rounds 1-2 was replaced with TagTokenizer -- originally a
+  # StringScanner-based structural tag/attribute scanner, later rewritten
+  # onto Nokogiri::HTML5 (see its class comment for both changes and why
+  # REXML was tried and rejected in between).
 
   # HIGH-3a. `<template>` content is real markup, but the browser never
   # renders it and nothing here clones it in -- a stylesheet link, layout

@@ -50,14 +50,22 @@ module Sirena
     SEARCH_INDEX_PATH = 'assets/js/search-data.json'
     REQUIRED_DIAGRAM_PERMALINK = '/:collection/:path/'
 
-    # A minimal but STRUCTURAL HTML tag/attribute tokenizer. Not a DOM
-    # parser -- no tree, no nesting -- but it walks each tag's grammar
-    # (name, then `name(=value)?` pairs, values quoted or not) with a
-    # scanner instead of grepping for a substring, so it cannot mistake
-    # text INSIDE an attribute value for another attribute, and it is not
-    # sensitive to whitespace around `=`.
+    # A thin wrapper over Nokogiri::HTML5 -- a real DOM parser -- that
+    # returns every tag on a page as { name:, attrs: }, with the CONTENT of
+    # inert and raw-text elements excluded (see SKIPPED_CONTENT_ELEMENTS
+    # below).
     #
-    # REXML (stdlib) was tried first and rejected on MEASUREMENT: it is an
+    # This used to be a hand-rolled STRUCTURAL scanner: not a DOM parser at
+    # all -- no tree, no nesting -- but it walked each tag's grammar (name,
+    # then `name(=value)?` pairs, values quoted or not) with a
+    # StringScanner instead of grepping for a substring. It lost three
+    # review rounds, all the same way: counting `</template>` occurrences
+    # cannot tell a real closing tag from the same characters inside an
+    # attribute value or a `<script>` string, and a failed `scan_until`
+    # left the position unmoved so inspection silently resumed INSIDE the
+    # content it meant to skip.
+    #
+    # REXML (stdlib) was tried next and rejected on MEASUREMENT: it is an
     # XML parser, and Jekyll/just-the-docs output is HTML5 with unclosed
     # void elements (`<meta charset="utf-8">`, no self-closing slash),
     # which is invalid XML. `REXML::Document.new` raised
@@ -74,14 +82,6 @@ module Sirena
     # docs/Gemfile, and the workflow's verify step runs under that bundle,
     # which is the only one it installs. Bare `ruby` here dies with
     # LoadError; both invocations were checked to give identical output.
-    # Every tag on a page, as { name:, attrs: }, with the CONTENT of
-    # inert and raw-text elements excluded.
-    #
-    # This used to be a hand-rolled scanner and it lost three times, all the
-    # same way: counting `</template>` occurrences cannot tell a real closing
-    # tag from the same characters inside an attribute value or a `<script>`
-    # string, and a failed `scan_until` left the position unmoved so
-    # inspection silently resumed INSIDE the content it meant to skip.
     #
     # A real HTML5 parser removes the possibility rather than guarding it.
     # Measured, on markup carrying every one of those traps at once:
@@ -92,8 +92,13 @@ module Sirena
     #
     #   live classes found: ["live", "live-2"]      inert-1/2/3 all excluded
     #
-    # `attrs` maps a lowercased attribute name to its value, or `true` for a
-    # boolean attribute with no value -- the same contract the scanner had.
+    # `attrs` maps a lowercased attribute name to its value. Nokogiri
+    # returns a boolean attribute's value as an empty string, never `true`
+    # (verified: `<input disabled>`'s `disabled` attribute value is `""`,
+    # a String) -- unlike the old hand-rolled scanner, which used `true` as
+    # a sentinel for "present with no value". A caller checking `attrs['x']`
+    # for truthiness still works either way; one comparing against the
+    # literal value `true` would not, and none currently does.
     class TagTokenizer
       # `script`/`style`/`textarea` hold raw TEXT, so nothing inside them is
       # markup at all. `template` content IS markup but is INERT: the browser
