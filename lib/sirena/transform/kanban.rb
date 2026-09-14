@@ -28,8 +28,9 @@ module Sirena
       CARD_HEIGHT = 80
       CARD_PADDING = 10
 
-      # Metadata display height per item
-      METADATA_LINE_HEIGHT = 18
+      # Height of one extra rendered line below a card's first line — a
+      # metadata row, or a markdown hard line break in the card text.
+      EXTRA_LINE_HEIGHT = 18
 
       # Transforms the diagram into a layout structure.
       #
@@ -75,13 +76,16 @@ module Sirena
         current_x = 0
 
         columns.each do |column|
+          header_height = calculate_header_height(column)
+
           positioned << {
             id: column.id,
             title: column.title,
             x: current_x,
             y: 0,
             width: COLUMN_WIDTH,
-            height: calculate_column_height(column),
+            height: calculate_column_height(column, header_height),
+            header_height: header_height,
             card_count: column.cards.size,
             original: column
           }
@@ -102,7 +106,7 @@ module Sirena
         positioned_columns.each do |column_data|
           column = column_data[:original]
           column_x = column_data[:x]
-          current_y = COLUMN_HEADER_HEIGHT + COLUMN_PADDING
+          current_y = column_data[:header_height] + COLUMN_PADDING
 
           column.cards.each do |card|
             card_height = calculate_card_height(card)
@@ -127,36 +131,63 @@ module Sirena
         cards
       end
 
+      # Calculates the header height for a column, growing past
+      # `COLUMN_HEADER_HEIGHT` for each hard line break embedded in the
+      # column title (from a markdown newline, rendered as an extra
+      # `<tspan>` line by Renderer::MarkdownText#parse_lines) — the same
+      # `count("\n")` approach `calculate_card_height` already uses for
+      # card text, for the same reason: this layer only needs how many
+      # extra lines there are, not what's on them.
+      #
+      # @param column [Diagram::KanbanColumn] column
+      # @return [Numeric] header height
+      def calculate_header_height(column)
+        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * EXTRA_LINE_HEIGHT)
+      end
+
       # Calculates the height needed for a column
       #
       # @param column [Diagram::KanbanColumn] column
+      # @param header_height [Numeric] this column's own header height, from
+      #   `calculate_header_height`
       # @return [Numeric] column height
-      def calculate_column_height(column)
-        return COLUMN_HEADER_HEIGHT + COLUMN_PADDING if column.cards.empty?
+      def calculate_column_height(column, header_height)
+        return header_height + COLUMN_PADDING if column.cards.empty?
 
         # Header + padding + sum of card heights + spacing between cards
         total_card_height = column.cards.sum { |card| calculate_card_height(card) }
         total_spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
         bottom_padding = COLUMN_PADDING
 
-        COLUMN_HEADER_HEIGHT + COLUMN_PADDING +
+        header_height + COLUMN_PADDING +
           total_card_height + total_spacing + bottom_padding
       end
 
       # Calculates the height needed for a card
       #
+      # Grows for two independent things that each add extra rendered
+      # lines below the card's first line: metadata rows, and hard line
+      # breaks embedded in the card's own text (from markdown newlines,
+      # rendered as extra `<tspan>` lines — see
+      # Renderer::MarkdownText#parse_lines). The break count is a plain
+      # `count("\n")` on the raw text rather than a markdown parse: this
+      # layer only needs how many extra lines there are, not what's on
+      # them, and Transform has no dependency on Renderer to keep those
+      # layers apart.
+      #
+      # Reuses EXTRA_LINE_HEIGHT for both rather than a second constant: the
+      # card renders its text at font-size 13 as `1.2em` per line (~15.6px),
+      # and EXTRA_LINE_HEIGHT (18) already covers that with room to spare. A
+      # separate constant would need the renderer's actual font size, which
+      # Transform doesn't have and shouldn't need for a fixed-layout board.
+      #
       # @param card [Diagram::KanbanCard] card
       # @return [Numeric] card height
       def calculate_card_height(card)
         base_height = CARD_HEIGHT
-
-        # Add height for metadata if present
-        if card.has_metadata?
-          metadata_count = card.metadata.size
-          base_height + (metadata_count * METADATA_LINE_HEIGHT)
-        else
-          base_height
-        end
+        base_height += card.metadata.size * EXTRA_LINE_HEIGHT if card.has_metadata?
+        base_height += card.text.to_s.count("\n") * EXTRA_LINE_HEIGHT
+        base_height
       end
 
       # Calculates the bounding box for the entire board
