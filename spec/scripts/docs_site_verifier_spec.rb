@@ -980,6 +980,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # to match, so the verifier hung forever on every real page, not on a
   # corner case -- this pins termination with an explicit timeout so a
   # regression reads as a named failure, not a mysterious CI hang.
+  #
+  # DIAGNOSTIC, not a live risk today: `TagTokenizer` is now a thin
+  # `Nokogiri::HTML5` wrapper (see its class comment), which does not hang
+  # on ordinary valid HTML regardless of anything in this file. Keep this
+  # spec; it becomes the only check that catches a regression back to a
+  # hand-rolled/backtracking tokenizer.
   it 'does not hang tokenizing a page whose only remaining markup after the last tag is closing tags' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
