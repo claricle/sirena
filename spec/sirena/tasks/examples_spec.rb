@@ -7,6 +7,7 @@ require 'tmpdir'
 require 'securerandom'
 require 'stringio'
 require 'yaml'
+require 'English'
 
 # The generation task no longer deletes anything -- that ability was removed
 # after three rounds of guards each produced a new deletion path, and only
@@ -776,6 +777,33 @@ RSpec.describe ExampleTasks do
       write('flowchart/01-basic.yml', YAML.dump('title' => 'Basic'))
 
       expect(described_class.theme_for(mmd)).to eq('default')
+    end
+
+    # This file's own doc comment claims ExampleTasks is a plain library a
+    # caller may require and call directly -- but every caller in this repo
+    # happens to `require 'yaml'` first (the rake tasks in their bodies, this
+    # spec file at its own top), so a module that forgot to require it itself
+    # would pass every other example here anyway: `yaml` is already loaded
+    # into the process by the time any of them run. Only a fresh process that
+    # loads the rake file WITHOUT requiring yaml first can catch a missing
+    # `require 'yaml'` inside the module.
+    it 'resolves YAML without depending on a caller having required it first' do
+      script = <<~RUBY
+        require 'rake'
+        Rake.application = Rake::Application.new
+        load #{TASKS_RAKE_FILE.inspect}
+        Dir.mktmpdir do |dir|
+          mmd = File.join(dir, 'a.mmd')
+          File.write(mmd, 'flowchart TD')
+          File.write(File.join(dir, 'a.yml'), 'theme: dark')
+          print ExampleTasks.theme_for(mmd)
+        end
+      RUBY
+
+      output = IO.popen([RbConfig.ruby, '-rtmpdir', '-e', script], err: [:child, :out], &:read)
+
+      expect($CHILD_STATUS).to be_success
+      expect(output).to eq('dark')
     end
   end
 
