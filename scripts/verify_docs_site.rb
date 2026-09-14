@@ -235,7 +235,16 @@ module Sirena
     def a0_config_guard
       failures = []
 
-      permalink = @config.dig('collections', 'diagram_types', 'permalink')
+      # Jekyll accepts a documented array shorthand for `collections:`
+      # (e.g. `collections: [diagram_types]`) and normalizes it to a Hash
+      # itself before a real build ever sees it -- but that normalization
+      # never runs here, since this script parses `_config.yml` directly
+      # with `YAML.safe_load_file`. An Array in that shape would make
+      # `Hash#dig` call `Array#dig` with a String key, which raises
+      # TypeError instead of returning nil, so the guard is required
+      # before digging any further, not just an optimization.
+      collections = @config['collections']
+      permalink = collections.is_a?(Hash) ? collections.dig('diagram_types', 'permalink') : nil
       if permalink != REQUIRED_DIAGRAM_PERMALINK
         failures << "config: collections.diagram_types.permalink is #{permalink.inspect}, " \
                      "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"

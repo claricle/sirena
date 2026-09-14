@@ -1112,6 +1112,31 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # MEDIUM-5. Jekyll's documented array shorthand for `collections:`
+  # (`collections: [diagram_types]`, normalized by Jekyll itself into a
+  # Hash with default options) is a plain Array once this script parses
+  # `_config.yml` with `YAML.safe_load_file` -- Jekyll's own normalization
+  # never runs here. `Hash#dig('collections', 'diagram_types', 'permalink')`
+  # then calls `Array#dig('diagram_types', 'permalink')`, and Array#dig
+  # requires an Integer index, so a String key raises TypeError. Verified
+  # directly: `{"collections" => ["diagram_types"]}.dig("collections",
+  # "diagram_types", "permalink")` raises
+  # "TypeError: no implicit conversion of String into Integer". The
+  # contract of `failures` is an array of strings, never a raised error.
+  it 'reports a config failure instead of raising when collections uses the array shorthand' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      write_config(docs_dir, 'collections' => ['diagram_types'])
+
+      expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
+
+      failures = verifier_for(docs_dir, site_dir).failures
+      expect(failures).to include(
+        'config: collections.diagram_types.permalink is nil, expected "/:collection/:path/"'
+      )
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML
