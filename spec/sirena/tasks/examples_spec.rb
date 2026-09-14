@@ -337,6 +337,67 @@ RSpec.describe ExampleTasks do
         end
       end
     end
+
+    # The four guards above are all check-then-act: each decides at one
+    # moment whether a name is safe, and a later call opens or creates that
+    # same name at a different moment. Something else with write access to
+    # docs_assets_dir during this task's run -- a concurrent process, not a
+    # remote input -- can swap a symlink into the gap between the two.
+    # Reproduced by deterministically racing the exact call FileUtils.cp
+    # used to make in that gap: a symlink appears only AFTER the per-file
+    # guard clears the destination, immediately before the write that
+    # follows. Before this method used rename instead of `FileUtils.cp`,
+    # this overwrote the file the raced-in symlink pointed to, outside
+    # docs_assets_dir entirely, and the task still reported success.
+    it 'does not write through a destination symlink raced in after the per-file guard clears it' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
+          victim = File.join(outside, 'victim.svg')
+          File.write(victim, 'KEEP ME')
+          destination = File.join(docs, 'flowchart', 'a.svg')
+
+          allow(FileUtils).to receive(:cp).and_wrap_original do |original, source, dest, **kwargs|
+            File.symlink(victim, dest) if dest == destination
+            original.call(source, dest, **kwargs)
+          end
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect([copied, File.symlink?(destination), File.read(victim)])
+            .to eq([[['flowchart', 1]], false, 'KEEP ME'])
+        end
+      end
+    end
+
+    # Same shape, one level up: the one-time File.symlink?(target_dir) check
+    # only covers the moment it runs. `FileUtils.mkdir_p` treats an existing
+    # symlinked directory as already there and does nothing further, so a
+    # symlink raced into target_dir's name right after that check, before
+    # the directory actually gets created, used to make `mkdir_p` no-op
+    # through the link and every SVG for that diagram type land in the
+    # attacker's directory instead of docs_assets_dir. `Dir.mkdir` (used now
+    # in place of `mkdir_p`) has no such tolerance: it fails outright on
+    # anything already at that name.
+    it 'refuses rather than writing into a target_dir symlink raced in right before creation' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-attacker') do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
+          target_dir = File.join(docs, 'flowchart')
+
+          allow(Dir).to receive(:mkdir).and_wrap_original do |original, path, *rest|
+            File.symlink(attacker, target_dir) if path == target_dir && !File.exist?(path)
+            original.call(path, *rest)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs) }
+            .to raise_error(/docs target for flowchart became a symlink/)
+          expect([File.symlink?(target_dir), Dir.children(attacker)]).to eq([true, []])
+        end
+      end
+    end
   end
 
   # generate never deletes a stale SVG itself — it only reports one, so a run
@@ -1076,7 +1137,7 @@ RSpec.describe ExampleTasks do
     # Only methods on ExampleTasks itself. The `clean` task in the namespace
     # below is deliberately destructive and is out of scope.
     let(:permitted_deleters) do
-      %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg]
+      %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg copy_through_rename]
     end
 
     # Derived from the classes themselves, not hand-typed: a three-pattern
