@@ -227,9 +227,40 @@ module ExampleTasks
   # docs_assets_dir/flowchart pointing outside the repo received the copied
   # SVG instead of docs_assets_dir itself.
   #
+  # A guard-then-act pair like that is not enough on its own, even once both
+  # halves are individually correct: `create_real_directory`/`manageable?`
+  # below only decide what to do at the moment they run, and `FileUtils.cp`
+  # opens whatever name it is given at the moment IT runs, which can be a
+  # different moment. Something else with write access to docs_assets_dir
+  # during this task's run window -- a concurrent process, not a remote
+  # input -- can swap a symlink into target_dir or a leaf name in the gap
+  # between the check and the write. Reproduced by deterministically racing
+  # both gaps against the real code: a symlink swapped into target_dir
+  # between the check and `FileUtils.mkdir_p` put every SVG for that type
+  # into the attacker's directory instead (`mkdir_p` no-ops on "already
+  # exists", symlink included); a symlink swapped into a leaf destination
+  # between the partition check and `FileUtils.cp` overwrote the file it
+  # pointed to outside docs_assets_dir, with the task still reporting
+  # success. `write_svg` below already closes this exact shape of race for
+  # generation, with a temporary-file-plus-rename pattern: `Dir.mkdir` and
+  # `File.rename` are each one syscall that either succeeds cleanly or fails
+  # outright on anything already at that name, including a symlink planted a
+  # moment before -- neither one ever writes through an existing entry the
+  # way `mkdir_p`/`cp` do. `create_real_directory` and `copy_through_rename`
+  # below apply that same pattern here, so nothing raced into place between
+  # a guard and its matching write can redirect either one.
+  #
+  # Not wrapped in `with_examples_lock`: that lock only serializes this
+  # gem's OWN generate/prune tasks against each other and buys nothing
+  # against an external actor, which is the threat model above. It is
+  # applied at the rake task level below anyway, for the same reason
+  # generate/prune take it -- so this method cannot read examples_dir mid
+  # regeneration by another of this gem's own tasks.
+  #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
     verified_root(docs_assets_dir, label: 'docs assets root')
+    create_real_directory(docs_assets_dir, label: 'docs assets root')
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
     dirs.filter_map do |dir|
@@ -242,39 +273,63 @@ module ExampleTasks
         next
       end
 
-      FileUtils.mkdir_p(target_dir)
+      create_real_directory(target_dir, label: "docs target for #{File.basename(dir)}")
 
-      # The directory-level check above does not cover this: `FileUtils.cp`
-      # takes a directory as its destination and writes to
-      # File.join(target_dir, basename(svg_file)) itself, so a pre-existing
-      # symlink at THAT leaf name is what `cp` actually opens. `cp` follows a
-      # destination symlink and writes through it (verified: a symlinked leaf
-      # pointed outside docs_assets_dir and received the copied content at
-      # its target, with the link itself left in place). Each file needs the
-      # same refusal the directory got, one level down -- decided for every
-      # file first, so the write below never has to reason about a skip.
-      #
-      # A DIRECT symlink at the leaf is not the only way through: a leaf that
-      # is a real DIRECTORY containing an inner symlink of the same basename
-      # is not itself a symlink, so the check above alone passes it -- and
-      # `FileUtils.cp` then treats that directory as a destination CONTAINER,
-      # writing to File.join(leaf_dir, basename(svg_file)), which resolves
-      # the inner symlink and follows it. Reproduced before this second
-      # condition existed: `target_dir/a.svg/` as a real directory containing
-      # `target_dir/a.svg/a.svg -> outside/a.svg` let the copy overwrite
-      # `outside/a.svg`. Mirrors `manageable?`'s own idiom for the same
-      # question (an existing non-plain-file entry is not something this
-      # task may write through).
-      pairs = svg_files.map { |svg_file| [svg_file, File.join(target_dir, File.basename(svg_file))] }
-      blocked, writable = pairs.partition do |_svg_file, destination|
-        File.symlink?(destination) || (File.exist?(destination) && !File.lstat(destination).file?)
-      end
-      blocked.map(&:first).each do |svg_file|
-        puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink or already exists as something other than a plain file"
-      end
-      writable.each { |svg_file, destination| FileUtils.cp(svg_file, destination) }
+      copied = svg_files.count do |svg_file|
+        destination = File.join(target_dir, File.basename(svg_file))
+        unless manageable?(target_dir, destination)
+          puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, " \
+               'its docs copy target is a symlink or already exists as something other than a plain file'
+          next false
+        end
 
-      [File.basename(dir), writable.size]
+        copy_through_rename(svg_file, destination)
+        true
+      end
+
+      [File.basename(dir), copied]
+    end
+  end
+
+  # One syscall that either creates a fresh real directory or fails outright
+  # on anything already at that name -- unlike `FileUtils.mkdir_p`, which
+  # treats "already exists" as success without asking what kind of thing it
+  # is, including a symlink. The ordinary, expected case (this task has run
+  # here before, a real directory is already sitting at path) still has to
+  # succeed silently, so `Errno::EEXIST` is not itself an error here: it is
+  # only an error if what is actually at path, checked fresh via `lstat`
+  # right after the syscall that found it, turns out not to be a plain real
+  # directory. That check cannot be glued to the `Dir.mkdir` syscall itself
+  # -- no POSIX primitive makes "create, or verify-and-accept an existing
+  # real directory" one atomic step -- but it collapses the race window from
+  # this whole method's run to the gap between one syscall and the next.
+  def create_real_directory(path, label:)
+    Dir.mkdir(path)
+  rescue Errno::EEXIST
+    raise "#{label} became a symlink: #{path}" if File.lstat(path).symlink?
+    raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
+  end
+
+  # Same shape as `write_svg` below, for the same reason: `FileUtils.cp`
+  # opens destination and writes through whatever is already there,
+  # including a symlink planted after `manageable?` cleared this call to
+  # proceed. `File.rename` replaces the directory ENTRY at destination
+  # atomically -- never the file a symlink there points to -- so whatever
+  # raced into place between the guard and this call cannot redirect the
+  # write; at worst it gets silently replaced by the real copy, same as an
+  # ordinary rerun overwriting a previous one.
+  def copy_through_rename(source, destination)
+    temporary = File.join(File.dirname(destination), ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
+    created = false
+    begin
+      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
+        created = true
+        IO.copy_stream(source, file)
+      end
+      File.rename(temporary, destination)
+      created = false
+    ensure
+      FileUtils.rm_f(temporary) if created
     end
   end
 
@@ -289,6 +344,21 @@ module ExampleTasks
   #
   # The ancestor walk is bounded to GEM_ROOT (see its comment) rather than
   # walked to filesystem `/`.
+  #
+  # The `start_with?` membership test below is a case-SENSITIVE string
+  # comparison, which can under-match on a case-insensitive filesystem
+  # (APFS and NTFS both default to this) if a caller ever hands in a path
+  # differing only in case from GEM_ROOT's own recorded casing -- silently
+  # skipping the whole ancestor walk rather than raising. Not reachable
+  # through either rake task today: GEM_ROOT and every examples_dir/
+  # docs_assets_dir this task is given are both built from the same
+  # `__dir__` literal in one process, so their casing always agrees.
+  # Verified by direct execution that a differently-cased root DOES skip the
+  # walk; left as a known boundary rather than papered over with a
+  # case-fold, which would be wrong on a case-SENSITIVE filesystem where two
+  # differently-cased paths are genuinely different files. A future caller
+  # that builds GEM_ROOT and its argument paths from different sources would
+  # need to normalize casing itself before calling this.
   def verified_root(path, label: 'examples root')
     path = File.expand_path(path)
     raise "#{label} must not be a link: #{path}" if File.symlink?(path)
@@ -642,14 +712,20 @@ namespace :examples do
 
   desc "Copy generated examples to docs/assets/examples"
   task :copy_to_docs do
-    require 'fileutils'
-
     examples_dir = File.expand_path('../../examples', __dir__)
     docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
 
-    FileUtils.mkdir_p(docs_assets_dir)
-
-    copied = ExampleTasks.copy_to_docs(examples_dir, docs_assets_dir)
+    # No pre-creation of docs_assets_dir here: ExampleTasks.copy_to_docs
+    # creates it itself, AFTER its own verified_root guard runs, not before.
+    # Creating it here first (as this task used to) meant `FileUtils.mkdir_p`
+    # would walk through a symlinked ancestor and leave a real, empty
+    # directory outside the repo even when the guard went on to abort the
+    # task for exactly that ancestor -- reproduced by execution: a symlink at
+    # docs/assets left `outside_target/examples` created before the guard
+    # ever ran.
+    copied = ExampleTasks.with_examples_lock(examples_dir) do
+      ExampleTasks.copy_to_docs(examples_dir, docs_assets_dir)
+    end
     copied.each do |diagram_type, count|
       puts "✓ Copied #{count} #{diagram_type} examples to docs/assets/examples/"
     end
