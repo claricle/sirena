@@ -150,6 +150,34 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     end
   end
 
+  describe '#add_class_def' do
+    let(:diagram) { described_class.new }
+
+    it 'records a single declaration verbatim' do
+      diagram.add_class_def('a', 'fill:red')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red')
+    end
+
+    it 'accumulates a repeated declaration for the same name, not replaces it' do
+      # Mermaid's own db stores every classDef for one name as an array in
+      # source order rather than overwriting; verified against its parser.
+      # Comma-joining reproduces that, since parse_declaration already
+      # resolves a comma run left to right.
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('a', 'stroke:blue')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red,stroke:blue')
+    end
+
+    it 'keeps declarations for different names independent' do
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('b', 'fill:blue')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red', 'b' => 'fill:blue')
+    end
+  end
+
   describe '#identifying_relationships' do
     let(:diagram) { described_class.new }
 
