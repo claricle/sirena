@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../error'
+
 module Sirena
   module Renderer
     # Abstract base class for diagram renderers.
@@ -248,7 +250,9 @@ module Sirena
       end
     end
 
-    # Error raised during rendering.
-    class RenderError < StandardError; end
+    # Error raised during rendering. A Sirena::Error so Engine#render can
+    # let it propagate unwrapped instead of collapsing it into
+    # PipelineError.
+    class RenderError < Sirena::Error; end
   end
 end

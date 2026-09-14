@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'parslet'
+require_relative '../error'
 
 module Sirena
   module Parser
@@ -132,7 +133,8 @@ module Sirena
       end
     end
 
-    # Error raised during parsing.
-    class ParseError < StandardError; end
+    # Error raised during parsing. A Sirena::Error so Engine#render can let
+    # it propagate unwrapped instead of collapsing it into PipelineError.
+    class ParseError < Sirena::Error; end
   end
 end
