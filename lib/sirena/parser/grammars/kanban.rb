@@ -37,16 +37,20 @@ module Sirena
         #
         # Named alternation branches rather than folding the bracket label
         # into one rule as a `.maybe`.
-        # Both parse today's inputs identically, so this is about ordering:
         # `bare_item` is the most permissive branch and must stay last, or a
         # later branch that also starts with an identifier would never be
-        # reached. A branch keyed on something an identifier cannot start -
-        # `:::hot`, say - stays reachable either way. Naming the branches
-        # keeps that order explicit rather than implied, which is how the
-        # other grammars in this directory are written - see `mindmap.rb`'s
-        # `node` rule.
+        # reached. `shaped_item` and `labelled_item` both require a specific
+        # delimiter (`(` or `[`) right after the id, so their relative order
+        # does not matter - Parslet fails one and tries the next without
+        # consuming input. `unlabelled_shaped_item` opens on `(`, something
+        # an identifier can never start with, so it stays reachable
+        # wherever it sits. Naming the branches keeps the order explicit
+        # rather than implied, which is how the other grammars in this
+        # directory are written - see `mindmap.rb`'s `node` rule.
         rule(:item) do
-          reserved_token.absent? >> (labelled_item | bare_item) >> metadata.maybe
+          reserved_token.absent? >>
+            (labelled_item | shaped_item | unlabelled_shaped_item | bare_item) >>
+            metadata.maybe
         end
 
         # `kanban` is the diagram's own header token, and mermaid reserves it
@@ -74,6 +78,64 @@ module Sirena
             lbracket >>
             match('[^\]]').repeat(1).as(:text) >>
             rbracket
+        end
+
+        # Round shape with an id: id(text) - mermaid's rounded-node syntax,
+        # the same shorthand flowchart's `shape_rounded` parses. Sirena's
+        # kanban renderer always draws a rounded rect for every item
+        # regardless of source syntax (see Renderer::Kanban#render_column
+        # and #render_card), so the delimiter is parsed only to recover the
+        # label - no separate shape field is modeled, matching how the
+        # bracket label above works.
+        rule(:shaped_item) do
+          identifier.as(:id) >>
+            lparen >>
+            round_text >>
+            rparen
+        end
+
+        # Round shape with no id: (text). Mermaid auto-assigns an id here;
+        # BoardBuilder does too, deterministically - see
+        # Transforms::Kanban::BoardBuilder#resolve_id.
+        rule(:unlabelled_shaped_item) do
+          lparen >>
+            round_text >>
+            rparen
+        end
+
+        # Text inside a round shape - id(text) or (text). A quoted body is
+        # tried first so it can contain an unescaped `)`, mermaid's own
+        # rule for `Todo (urgent)`, and the surrounding quotes are excluded
+        # from the capture rather than kept as literal characters - mermaid
+        # strips them too. Falls back to the plain, unquoted body when the
+        # first character isn't a `"`. Mirrors `square_shape` in
+        # mindmap.rb, the existing precedent for quoted content inside a
+        # bracketed shape in this grammar family.
+        #
+        # The unquoted body excludes `(`, `)`, `]` and `}` - mermaid's own
+        # lexer treats all four as node-shape delimiters even unquoted
+        # mid-label, and rejects a body carrying one (measured against mmdc
+        # 11.12.0). `[` and `{` are not delimiters to it there and stay
+        # literal, so they are not excluded - both parse in mermaid.
+        #
+        # A quoted body that itself opens and closes with a backtick -
+        # `"`text`"` - is mermaid's separate markdown-string syntax: it
+        # strips the backtick pair and renders the content through
+        # markdown, formatting included (`col("`Hi **urgent**`")` draws
+        # `Hi <strong>urgent</strong>` in mmdc 11.12.0). Sirena has no
+        # markdown renderer anywhere in the codebase, so matching this as
+        # an ordinary quoted body would keep the backticks as literal text
+        # and silently draw something mermaid does not. Refused instead,
+        # the same way an empty or unterminated quoted body is refused
+        # below, rather than half-supporting a shape nothing here
+        # understands.
+        rule(:round_text) do
+          (str('"') >> markdown_string_body.absent? >> match('[^"]').repeat(1).as(:text) >> str('"')) |
+            (str('"').absent? >> match('[^()\]}]').repeat(1).as(:text))
+        end
+
+        rule(:markdown_string_body) do
+          str('`') >> match('[^"`]').repeat >> str('`') >> str('"')
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label
