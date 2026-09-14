@@ -56,6 +56,60 @@ module Sirena
       error: /\A\s*(error|Error)/i
     }.freeze
 
+    # Mermaid deletes directives and then comments before it looks for a
+    # diagram keyword, so neither is part of the header. Every upstream
+    # claim in this file was verified against the mermaid bundled inside the
+    # installed mmdc -- mmdc 11.12.0 ships mermaid 11.16.1, so the two
+    # version numbers quoted around here agree rather than conflict.
+    # Detection here read
+    # the source as written, so `%%{init: ...}%%` on the first line reached
+    # no pattern and the source died with DiagramTypeError before the parser
+    # -- which already reads both constructs -- ever saw it.
+    #
+    # This is mermaid's own `directiveRegex`, transcribed rather than
+    # reinvented, and applied by its `removeDirectives` and again by its
+    # `detectType`. Grep those symbol names in `dist/mermaid.js` -- the
+    # hashed `chunk-*.mjs` names under `dist/chunks/` are build artifacts
+    # that change on every release, so a line citation into them rots
+    # before anyone reads it. Transcribing buys the
+    # awkward part: the closing `}%%` is OPTIONAL, so an unterminated
+    # directive swallows the rest of the document and the header with it.
+    # `%%{init: {'theme':'dark'}` above a sequenceDiagram is
+    # UnknownDiagramError to mmdc, and a per-line strip would have drawn it.
+    #
+    # JavaScript's four capture groups are dropped; nothing reads them.
+    #
+    # Applied ONCE, where mermaid applies it twice (`removeDirectives`, then
+    # `detectType` again over the result). Measured across 62,002 inputs --
+    # the 1,997 corpus cases and a 60,005-case fuzz -- the two disagree on a
+    # single input, a doubled `%%{%%{` opener that mmdc refuses and this
+    # draws. Nothing in the corpus reaches it, and a second pass here would
+    # not be faithful either: mermaid runs a differently-anchored comment
+    # strip between its two.
+    DIRECTIVE = /
+      %{2}\{\s*
+      (?:\w+\s*:|\w+)\s*
+      (?:\w+|(?:(?!\}%{2}).|\r?\n)*)?\s*
+      (?:\}%{2})?
+    /xi
+
+    # mermaid's `anyCommentRegex`, beside `directiveRegex` in
+    # `dist/mermaid.js`. Its `m` flag is a no-op: the pattern has no
+    # anchors.
+    COMMENT = /\s*%%.*\n/
+
+    # mermaid's `cleanupText` runs first inside its `preprocessDiagram`
+    # -- both greppable in `dist/mermaid.js` -- so every regex after it sees LF
+    # only. Skipping it is not cosmetic: Ruby's `.` excludes just `\n`,
+    # where JavaScript's also excludes `\r`, and the two disagree in BOTH
+    # directions on a bare CR. `"%% a\rb\nsequenceDiagram"` is nil to mmdc
+    # and was :sequence without this line; `"%% note\rsequenceDiagram"` is
+    # :sequence to mmdc and was nil. A 30,005-case fuzz missed both, because
+    # its alphabet emitted CRLF and never a lone CR.
+    LINE_FEEDS = /\r\n?/
+
+    private_constant :DIRECTIVE, :COMMENT, :LINE_FEEDS
+
     attr_reader :verbose, :theme
 
     # Creates a new Engine instance.
@@ -129,8 +183,10 @@ module Sirena
     # @return [Symbol] diagram type identifier
     # @raise [DiagramTypeError] if type cannot be detected
     def detect_diagram_type(source)
+      detectable = detectable_source(source)
+
       DIAGRAM_TYPE_PATTERNS.each do |type, pattern|
-        return type if source.match?(pattern)
+        return type if detectable.match?(pattern)
       end
 
       raise DiagramTypeError,
@@ -138,6 +194,27 @@ module Sirena
             'Source must start with one of: graph, flowchart, ' \
             'sequenceDiagram, classDiagram, stateDiagram, ' \
             'erDiagram, journey, gantt, or pie'
+    end
+
+    # The source as mermaid's detector sees it. Only detection uses this:
+    # the parser is handed the source as written, because every grammar
+    # already carries a `comment` rule and these cases parse clean once
+    # they get past this method.
+    #
+    # Frontmatter is the one thing `preprocessDiagram` strips that this
+    # does not, and it is left out on purpose rather than by oversight.
+    # Measured over all 1,997 corpus cases: stripping it detects exactly
+    # one more (`unknown/079_platform_yari2_78.mmd` -> er_diagram) and that
+    # case then dies in the parser, which has no frontmatter rule --
+    # `Failed to match sequence (WS? HEADER WS? STATEMENTS? WS?) at line 1
+    # char 1`. Frontmatter also carries a title and a config that change
+    # the picture, so reading it is a diagram feature rather than a
+    # detection fix, and half of one buys a worse error and no drawing.
+    #
+    # @param source [String] Mermaid source code
+    # @return [String] source as mermaid's detector reads it
+    def detectable_source(source)
+      source.gsub(LINE_FEEDS, "\n").gsub(DIRECTIVE, '').gsub(COMMENT, "\n")
     end
 
     # Retrieves handlers for a diagram type.

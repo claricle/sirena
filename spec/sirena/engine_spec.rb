@@ -166,4 +166,148 @@ RSpec.describe Sirena::Engine do
       expect(engine.verbose).to be true
     end
   end
+
+  # Mermaid deletes `%%{init: ...}%%` directives and `%%` comments before it
+  # looks for a diagram keyword, so a source that opens with one still names
+  # its type. Detection here read the source as written and raised
+  # DiagramTypeError instead, which killed 31 corpus cases across four types
+  # before the parser -- which already reads both constructs -- ever saw them.
+  #
+  # These assert the detected TYPE rather than the rendered SVG, because the
+  # type is the property and the SVG is a symptom of it. Going through
+  # #render would also conflate detection with parsing: the bare-CR row below
+  # detects :sequence and then fails in the grammar, whose `newline` rule
+  # takes "\n" and "\r\n" and not a lone "\r".
+  describe 'diagram type detection' do
+    let(:engine) { described_class.new }
+
+    # A `def` here is scoped to this example group. `let` cannot take an
+    # argument -- `let(:x) { |a| a }` yields the RSpec example, not the
+    # source -- and a `def` at file level would land on Object and be
+    # visible to every other spec file in the suite.
+    def detect(source)
+      engine.send(:detect_diagram_type, source)
+    end
+
+    # Every row is a shape mmdc 11.12.0 renders -- that is the CLI we run,
+    # and it bundles mermaid 11.16.1, which is the version the engine's
+    # comments quote. The two numbers agree rather than conflict.
+    # The decoy row is the sharp
+    # one: `flowchart` is the FIRST entry in DIAGRAM_TYPE_PATTERNS, so a
+    # strip that left the directive's body behind would answer :flowchart
+    # for a sequence diagram rather than merely failing.
+    [
+      ['a single leading directive',
+       "%%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['two stacked directives',
+       "%%{init: {'theme':'dark'}}%%\n%%{wrap}%%\nsequenceDiagram\n" \
+       "Alice->>Bob: hi\n",
+       :sequence],
+      ['a directive with blank lines around it',
+       "\n%%{init: {'theme':'dark'}}%%\n\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['an indented directive',
+       "   %%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive broken over lines',
+       "%%{init: {\n  'theme':'dark'\n}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive and the header on one line',
+       "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['CRLF line endings',
+       "%%{init: {'theme':'dark'}}%%\r\nsequenceDiagram\r\nAlice->>Bob: hi\r\n",
+       :sequence],
+      ['a directive after the header',
+       "sequenceDiagram\n%%{init: {'theme':'dark'}}%%\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a plain comment before the header',
+       "%% just a note\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a comment ended by a bare carriage return',
+       "%% note\rsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive whose body names another diagram type',
+       "%%{init: {'themeCSS':'flowchart'}}%%\nsequenceDiagram\n" \
+       "Alice->>Bob: hi\n",
+       :sequence],
+      ['a directive above a flowchart',
+       "%%{init: {'theme':'dark'}}%%\nflowchart TD\nA-->B\n",
+       :flowchart],
+      ['a directive above a class diagram',
+       "%%{init: {'theme':'dark'}}%%\nclassDiagram\nA <|-- B\n",
+       :class_diagram],
+      # Every row below puts its directive on the HEADER LINE, and that is
+      # the whole point of them. `COMMENT` deletes any directive that ends
+      # its own line, so an own-line row cannot tell whether `DIRECTIVE`
+      # did the work -- it passes either way. Only sharing the line removes
+      # that fallback. Three separate mutants survived the full suite until
+      # these rows existed: both strips narrowed to a single substitution,
+      # and the colonless alternative deleted. All sources render under
+      # mmdc 11.12.0.
+      ['two directives sharing the header line',
+       "%%{init: {'theme':'dark'}}%%%%{init: {'look':'classic'}}%% " \
+       "sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['two comment lines above the header',
+       "%% a\n%% b\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      # mermaid's own directiveRegex carries `(?:(\w+)\s*:|(\w+))`, so a
+      # directive needs no colon. The stacked-directive row above holds the
+      # only other colonless directive in the suite and it sits on its own
+      # line, so `COMMENT` rescues it.
+      ['a colonless directive on the header line',
+       "%%{wrap}%% sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence]
+    ].each do |name, source, expected|
+      it "names #{expected} past #{name}" do
+        expect(detect(source)).to eq(expected)
+      end
+    end
+
+    # The refusals matter as much as the detections. Each row below is the
+    # sole killer of one rule mutant, so none is here for symmetry: drop the
+    # rule it names and only that row goes red. mmdc 11.12.0 refuses every
+    # one of them. Rows whose refusal was already covered by the message
+    # assertion above were removed rather than left looking like coverage.
+    [
+      ['a directive left unterminated, which swallows the header',
+       "%%{init: {'theme':'dark'}\nsequenceDiagram\nAlice->>Bob: hi\n"],
+      ['a bare carriage return that keeps the header off the first line',
+       "%% a\rb\nsequenceDiagram\nAlice->>Bob: hi\n"],
+      # A deleted comment leaves a newline behind, so the halves of a
+      # keyword it sat inside stay apart. Dropping the text instead would
+      # splice `sequence` onto `Diagram` and name a type mmdc refuses --
+      # the only shape in 62,002 measured inputs that tells the two apart,
+      # and one no fuzz alphabet built from whole keywords can reach.
+      ['a comment splitting a keyword in half',
+       "sequence%% x\nDiagram\nAlice->>Bob: hi\n"],
+      ['a comment splitting the flowchart keyword in half',
+       "flow%% c\nchart TD\nA-->B\n"]
+    ].each do |name, source|
+      it "still refuses #{name}" do
+        expect { detect(source) }.to raise_error(
+          described_class::DiagramTypeError
+        )
+      end
+    end
+
+    it 'draws a directive-carrying source end to end' do
+      # Detection was the whole gap, so this is the payoff: the same source
+      # that raised DiagramTypeError now reaches the renderer. The
+      # assertion names the drawn participants rather than `<svg>`, which
+      # an empty document would also satisfy.
+      #
+      # It deliberately does NOT claim to prove the parser gets the source
+      # as written. The grammars read a directive as a comment, so the
+      # stripped copy would draw the same picture, and no assertion here
+      # could tell the two apart.
+      svg = engine.render(
+        "%%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n"
+      )
+
+      expect(svg).to include('Alice').and include('Bob')
+    end
+  end
 end
