@@ -196,20 +196,30 @@ module Sirena
     # synthetic rows instead of the real corpus and the real committed file.
     #
     # A case regresses when the committed row says it passed and the fresh
-    # row says it now fails. A case is an unrecorded improvement when the
-    # fresh row passes but the committed file does not already say so --
-    # that covers both "committed as failing" and "not in the committed
-    # file at all" (a case added to the corpus since the last `rake
-    # corpus`), because both mean the file needs a fresh `rake corpus` and
-    # a commit before it can be trusted again.
+    # row says it now fails -- INCLUDING a case that vanished from the fresh
+    # run entirely (deleted from spec/mermaid, or renamed), because a
+    # passing case disappearing without a trace is exactly what the ratchet
+    # exists to catch; iterating fresh_pass alone would miss this (Codex
+    # finding, 2026-09-14: a deleted passing case produced an empty diff).
+    # A case is an unrecorded improvement when the fresh row passes but the
+    # committed file does not already say so -- that covers both "committed
+    # as failing" and "not in the committed file at all" (a case added to
+    # the corpus since the last `rake corpus`), because both mean the file
+    # needs a fresh `rake corpus` and a commit before it can be trusted
+    # again.
     def diff_scoreboards(committed_rows, fresh_rows)
       committed_pass = committed_rows.to_h { |row| [row["case"], row["pass"]] }
       fresh_pass = fresh_rows.to_h { |row| [row["case"], row["pass"]] }
+      all_cases = committed_pass.keys | fresh_pass.keys
 
-      regressed = fresh_pass.select { |c, pass| committed_pass[c] == true && !pass }
-      unrecorded = fresh_pass.select { |c, pass| pass && !committed_pass.fetch(c, false) }
+      regressed = all_cases.select do |c|
+        committed_pass[c] == true && fresh_pass.fetch(c, false) != true
+      end
+      unrecorded = all_cases.select do |c|
+        fresh_pass[c] == true && committed_pass.fetch(c, false) != true
+      end
 
-      { regressed: regressed.keys.sort, unrecorded: unrecorded.keys.sort }
+      { regressed: regressed.sort, unrecorded: unrecorded.sort }
     end
 
     # Fresh run vs. the committed scoreboard. Fails on either drift

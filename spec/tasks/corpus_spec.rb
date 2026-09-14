@@ -172,6 +172,31 @@ RSpec.describe Sirena::Corpus do
       expect(diff[:unrecorded]).to eq(["a"])
     end
 
+    it "flags a case that passed before and is now entirely missing from the fresh run as regressed" do
+      # A case can vanish from the fresh run by deletion (or rename) under
+      # spec/mermaid, not just by failing outright. Iterating fresh_pass
+      # alone (as the first version of this method did) misses this
+      # entirely: a deleted passing case produced an empty diff on both
+      # sides, silently defeating the whole ratchet.
+      committed = [{ "case" => "a", "pass" => true }]
+      fresh = []
+
+      diff = described_class.diff_scoreboards(committed, fresh)
+
+      expect(diff[:regressed]).to eq(["a"])
+      expect(diff[:unrecorded]).to eq([])
+    end
+
+    it "does not flag a case that failed before and is now entirely missing from the fresh run" do
+      committed = [{ "case" => "a", "pass" => false }]
+      fresh = []
+
+      diff = described_class.diff_scoreboards(committed, fresh)
+
+      expect(diff[:regressed]).to eq([])
+      expect(diff[:unrecorded]).to eq([])
+    end
+
     it "reports nothing when every case matches the committed file" do
       committed = [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => false }]
       fresh = [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => false }]

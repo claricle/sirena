@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'parslet'
+require_relative '../error'
 
 module Sirena
   module Parser

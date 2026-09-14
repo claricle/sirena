@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../error'
+
 module Sirena
   module Renderer
     # Abstract base class for diagram renderers.
