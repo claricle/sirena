@@ -290,18 +290,17 @@ module Sirena
             message_actor_continuation_tail_char.repeat(1)
         end
 
-        # CORRECTED (round 4): this comment previously claimed the dash
-        # branch below was no longer load-bearing for anything this
-        # file's own spec suite exercises. A fuzz round disproved that by
-        # construction: `A->>B-` at true EOF (no trailing newline) is
-        # accepted with recipient "B-" only because THIS branch fires —
-        # deleting only this branch makes it raise. Mermaid rejects that
-        # input too, so this branch is preserving a pre-existing
-        # incompatibility, not covering ground `message_actor_continuation`
-        # already reaches; it is real, existing behaviour from before
-        # this rule existed, kept because removing it is a separate,
-        # unverified change from fixing the reported findings. Left in
-        # place, documented accurately rather than as redundant.
+        # CORRECTED (round 5): the EOF case this comment used to justify
+        # keeping this branch no longer reaches a successful parse at all —
+        # `A->>B-` at true end of file now raises (spec: "rejects a
+        # trailing dash recipient at true end of file"), because THIS diff
+        # makes `message_text` mandatory. `message_actor_stop` never
+        # matches at true EOF, so the branch still consumes the trailing
+        # dash, but nothing is left to satisfy the now-required `: text`.
+        # Whether that makes the branch fully unreachable was not
+        # re-derived here — removing it is a separate, unverified change
+        # from the four rules this diff scopes; left in place rather than
+        # deleted on an unverified claim.
         # A dash followed by `/` or `\` ends the name, as it does for a
         # continuation: `A->>B-/C: m` and `A->>B-\C: m` are rejected.
         rule(:message_actor_char) do
