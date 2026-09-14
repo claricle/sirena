@@ -269,47 +269,90 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                           ]])
     end
 
+    # Codex round 3 High: a backslash-escaped marker was rendered as
+    # styling instead of staying literal. Real mmdc (`marked`'s lexer)
+    # treats `\*` as an escape — the backslash is consumed and the `*`
+    # that follows is plain text, so it can't pair with a later `*` to
+    # open italics. Verified directly against real mmdc:
+    # `task1[\*escaped* text]` renders `<p>*escaped* text</p>`, no `<em>`.
+    # `Parser` restricted kramdown to only `:emphasis` before this fix, so
+    # the backslash itself came back as literal text and the following
+    # `*...*` still paired up and opened italics.
+    #
+    # Mutation-check: drop `:escaped_chars` from `Parser`'s `@span_parsers`.
+    # Watched red: "escaped" comes back as its own italic run instead of
+    # the whole string staying one literal run.
+    it 'treats a backslash-escaped marker as literal, never a style trigger' do
+      lines = described_class.parse_lines('\*escaped* text')
+
+      expect(lines).to eq([[described_class::Run.new(text: '*escaped* text', bold: false, italic: false)]])
+    end
+
+    # Same fix, but escaped markers sitting next to REAL emphasis on the
+    # same line — distinguishes "escapes are recognized" from "escapes
+    # happen to disable all emphasis parsing on the line". mmdc:
+    # `task1[**a** \*b\* **c**]` -> `<strong>a</strong> *b* <strong>c</strong>`.
+    it 'keeps an escaped marker literal alongside real emphasis on the same line' do
+      lines = described_class.parse_lines('**a** \*b\* **c**')
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'a', bold: true, italic: false),
+                            described_class::Run.new(text: ' *b* ', bold: false, italic: false),
+                            described_class::Run.new(text: 'c', bold: true, italic: false)
+                          ]])
+    end
+
     # Regression guard for a kramdown-specific DoS found while building
     # this rewrite: kramdown's `:emphasis` parser backtracks on ambiguous
     # markers at worse-than-quadratic cost (measured directly against
     # kramdown, bypassing this module: `"**_a " * n`, the worst pattern
-    # found, costs ~1.25s aggregate across 300 cards at exactly
-    # `MAX_PARSEABLE_LENGTH` each). No real card or column label with
-    # actual markup in it is anywhere near `MAX_PARSEABLE_LENGTH`, so text
-    # past it never reaches kramdown at all — mutation-check: delete the
-    # length guard in `parse_lines`. Watched red: this example still
-    # passes its length assertion but the run comes back split into
-    # several styled bold runs instead of one literal one.
+    # found, costs ~1.2s aggregate across 300 cards at exactly
+    # `MAX_EMPHASIS_MARKERS` each). No real card or column label needs more
+    # than a handful of markers, so a label carrying more markers than
+    # `MAX_EMPHASIS_MARKERS` never reaches kramdown at all — mutation-check:
+    # delete the marker-count guard in `parse_lines`. Watched red: this
+    # example still passes its marker-count assertion but the run comes
+    # back split into several styled bold runs instead of one literal one.
     #
     # Uses well-formed `**x** ` pairs, not ambiguous single markers: kramdown
     # never resolves `"*a " * 100` into any `:strong`/`:em` node even well
-    # under the length cap (proven directly against `Parser` above), so that
-    # shape can't tell "the fallback skipped kramdown" apart from "kramdown
-    # ran and found nothing to style" — deleting the guard would leave this
-    # example green for the wrong reason. `"**x** "` DOES parse into
-    # `:strong` nodes under the cap, so only the guard being live explains a
-    # single unstyled run here.
-    it 'falls back to unstyled literal text past MAX_PARSEABLE_LENGTH, never parsing markup' do
+    # under the marker-count cap (proven directly against `Parser` above),
+    # so that shape can't tell "the fallback skipped kramdown" apart from
+    # "kramdown ran and found nothing to style" — deleting the guard would
+    # leave this example green for the wrong reason. `"**x** "` DOES parse
+    # into `:strong` nodes under the cap, so only the guard being live
+    # explains a single unstyled run here.
+    it 'falls back to unstyled literal text past MAX_EMPHASIS_MARKERS, never parsing markup' do
       long_text = "**x** " * 10
 
-      expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
+      expect(long_text.count('*_')).to be > described_class::MAX_EMPHASIS_MARKERS
 
       lines = described_class.parse_lines(long_text)
 
       expect(lines).to eq([[described_class::Run.new(text: long_text, bold: false, italic: false)]])
     end
 
-    # The fallback still respects hard line breaks — it skips kramdown,
-    # not line-splitting. A leading `*` keeps this on the LENGTH guard
-    # specifically rather than the marker-free early exit above.
+    # The marker-count fallback still respects hard line breaks — it skips
+    # kramdown, not line-splitting. Built from well-formed `**x** ` pairs
+    # (as in the primary marker-count regression guard above), not
+    # ambiguous single markers: an unmatched `*` would come back literal
+    # from kramdown's own flanking rules regardless of whether the guard
+    # fires, so that shape can't distinguish "the guard is live" from "the
+    # guard is dead but kramdown found nothing to style" — this mutation
+    # would NOT have been caught by a single-marker version of this
+    # example. Killed (red) with the marker-count guard commented out:
+    # comes back as a styled bold run instead of one literal line.
     #
     # Asserts the whole result, not just `lines.last`: a mutation returning
     # `literal_lines(raw).last(1)` (dropping every line but the last) still
     # satisfies an assertion on `lines.last` alone, since `.last` of a
     # one-element array is that element either way.
-    it 'still splits on hard line breaks in the unstyled fallback' do
-      first_line = "*#{'x' * described_class::MAX_PARSEABLE_LENGTH}"
+    it 'still splits on hard line breaks in the marker-count unstyled fallback' do
+      first_line = '**x** ' * 8
       long_text = "#{first_line}\nsecond"
+
+      expect(long_text.count('*_')).to be > described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.length).to be <= described_class::MAX_PARSEABLE_LENGTH
 
       lines = described_class.parse_lines(long_text)
 
@@ -317,6 +360,98 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                             [described_class::Run.new(text: first_line, bold: false, italic: false)],
                             [described_class::Run.new(text: 'second', bold: false, italic: false)]
                           ])
+    end
+
+    # Codex round 4 High: an escaped marker used to count toward
+    # `MAX_EMPHASIS_MARKERS` the same as a real one, even though
+    # `:escaped_chars` consumes it as one cheap, fixed-cost substitution
+    # before `:emphasis` ever sees it — it can never reach the backtracking
+    # this guard exists to bound. Verified directly against real mmdc:
+    # `task1[\*\*\*...(31 times)]` renders 31 bare stars, no backslashes,
+    # cheaply. Before this fix, 31 escaped markers wrongly tripped the
+    # guard and fell back to `literal_lines`, which keeps every backslash
+    # in the output — visibly wrong output, not just lost styling.
+    #
+    # Mutation-check: revert `real_marker_count` to `raw.count('*_')`.
+    # Watched red: the backslashes stay in the output instead of kramdown's
+    # `:escaped_chars` stripping them down to bare stars.
+    it 'does not count escaped markers toward MAX_EMPHASIS_MARKERS' do
+      raw = '\*' * (described_class::MAX_EMPHASIS_MARKERS + 1)
+
+      lines = described_class.parse_lines(raw)
+
+      expect(lines).to eq([[
+                            described_class::Run.new(
+                              text: '*' * (described_class::MAX_EMPHASIS_MARKERS + 1), bold: false, italic: false
+                            )
+                          ]])
+    end
+
+    # The LENGTH backstop still respects hard line breaks too, independent
+    # of the marker-count guard above — built from a single leading `*`
+    # (one marker total, nowhere near `MAX_EMPHASIS_MARKERS`) followed by
+    # filler past `MAX_PARSEABLE_LENGTH`, so only the length backstop
+    # explains the fallback here.
+    it 'still splits on hard line breaks in the length-backstop unstyled fallback' do
+      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length + 1)
+      first_line = "**x**#{padding}"
+      long_text = "#{first_line}\nsecond"
+
+      expect(first_line.count('*_')).to be <= described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
+
+      lines = described_class.parse_lines(long_text)
+
+      expect(lines).to eq([
+                            [described_class::Run.new(text: first_line, bold: false, italic: false)],
+                            [described_class::Run.new(text: 'second', bold: false, italic: false)]
+                          ])
+    end
+
+    # The length backstop is independent of the marker-count guard and
+    # must be reachable on its own: a huge label with only ONE marker pair
+    # (nowhere near `MAX_EMPHASIS_MARKERS`) still has to fall back once it
+    # crosses `MAX_PARSEABLE_LENGTH`, or the backstop constant is dead code
+    # no spec would ever catch. Mutation-check: delete the length guard in
+    # `parse_lines`. Watched red: this example's marker count stays low
+    # (proving the marker-count guard alone would NOT have triggered a
+    # fallback) but the run still comes back as one literal run rather than
+    # a styled bold run once the length guard is live.
+    it 'falls back on length alone when marker count is low but the label is huge' do
+      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**x**".length + 1)
+      long_text = "**x**#{padding}"
+
+      expect(long_text.count('*_')).to be <= described_class::MAX_EMPHASIS_MARKERS
+      expect(long_text.length).to be > described_class::MAX_PARSEABLE_LENGTH
+
+      lines = described_class.parse_lines(long_text)
+
+      expect(lines).to eq([[described_class::Run.new(text: long_text, bold: false, italic: false)]])
+    end
+
+    # The actual behavior this round's High fixes: an ordinary label with
+    # normal prose length but only a couple of markers must render STYLED,
+    # not fall back — this is the exact case Codex cited (a 51-character
+    # label with one bold word losing its styling under the old
+    # length-only cap). Verified directly against real mmdc: `<strong>` is
+    # rendered around "proposed".
+    it 'styles an ordinary long label with few markers instead of falling back' do
+      long_text = 'Please review the **proposed** deployment plan asap and get back to ' \
+                  'the team before the end of the day tomorrow'
+
+      expect(long_text.length).to be > 50
+      expect(long_text.count('*_')).to be <= described_class::MAX_EMPHASIS_MARKERS
+
+      lines = described_class.parse_lines(long_text)
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'Please review the ', bold: false, italic: false),
+                            described_class::Run.new(text: 'proposed', bold: true, italic: false),
+                            described_class::Run.new(
+                              text: ' deployment plan asap and get back to the team before the end of ' \
+                                    'the day tomorrow', bold: false, italic: false
+                            )
+                          ]])
     end
 
     # Amplification High: text with no `*` character at all can still be
@@ -332,18 +467,162 @@ RSpec.describe Sirena::Renderer::MarkdownText do
       expect(lines).to eq([[described_class::Run.new(text: 'italic', bold: false, italic: true)]])
     end
 
-    # Boundary: markup exactly at the cap still gets parsed normally.
-    it 'still parses markup at exactly MAX_PARSEABLE_LENGTH characters' do
-      padding = "a" * (described_class::MAX_PARSEABLE_LENGTH - "**bold**".length)
-      text = "**bold**#{padding}"
+    # Boundary: exactly MAX_EMPHASIS_MARKERS markers still gets parsed
+    # normally (the guard is `> MAX_EMPHASIS_MARKERS`, not `>=`). Verified
+    # directly against `Parser` before writing this: 15 well-formed `*a* `
+    # spans (2 markers each = 30 total) come back as 15 italic "a" runs
+    # with 14 plain-space runs between them — kramdown trims the
+    # paragraph's OWN trailing whitespace, so there's no 15th trailing
+    # space run.
+    it 'parses markup normally at exactly MAX_EMPHASIS_MARKERS markers' do
+      segment_count = described_class::MAX_EMPHASIS_MARKERS / 2
+      text = '*a* ' * segment_count
+      expect(text.count('*_')).to eq(described_class::MAX_EMPHASIS_MARKERS)
+
+      lines = described_class.parse_lines(text)
+
+      expected_runs = [described_class::Run.new(text: 'a', bold: false, italic: true)]
+      (segment_count - 1).times do
+        expected_runs << described_class::Run.new(text: ' ', bold: false, italic: false)
+        expected_runs << described_class::Run.new(text: 'a', bold: false, italic: true)
+      end
+
+      expect(lines).to eq([expected_runs])
+    end
+
+    # One marker past the boundary falls back to fully literal text, even
+    # though the trailing lone `*` here isn't well-formed markup anyway —
+    # the guard fires on raw count before kramdown ever runs, so the text
+    # doesn't need to be valid markup to prove the guard is live.
+    it 'falls back once marker count exceeds MAX_EMPHASIS_MARKERS by one' do
+      segment_count = described_class::MAX_EMPHASIS_MARKERS / 2
+      text = "#{'*a* ' * segment_count}*"
+      expect(text.count('*_')).to eq(described_class::MAX_EMPHASIS_MARKERS + 1)
+
+      lines = described_class.parse_lines(text)
+
+      expect(lines).to eq([[described_class::Run.new(text: text, bold: false, italic: false)]])
+    end
+
+    # Boundary for `MAX_PARSEABLE_LENGTH` itself: the marker-count boundary
+    # pair above never exercises this guard at all — both its examples stay
+    # far under
+    # `MAX_PARSEABLE_LENGTH`. Uses a well-formed `'**x**'` pair as filler
+    # (matching `'falls back on length alone...'` above), not a bare
+    # unmatched marker — an unmatched marker comes back literal from
+    # kramdown's own flanking rules regardless of whether this guard fires,
+    # so it can't distinguish "the guard is live" from "kramdown found
+    # nothing to style" (the same trap already caught once this session for
+    # a different spec in this file). Mutation-check: change `>` to `>=` on
+    # the `MAX_PARSEABLE_LENGTH` guard in `parse_lines`. Watched red: the
+    # at-the-cap example below falls back to literal instead of styling.
+    it 'parses markup normally at exactly MAX_PARSEABLE_LENGTH characters' do
+      padding = 'a' * (described_class::MAX_PARSEABLE_LENGTH - '**x**'.length)
+      text = "**x**#{padding}"
       expect(text.length).to eq(described_class::MAX_PARSEABLE_LENGTH)
 
       lines = described_class.parse_lines(text)
 
       expect(lines).to eq([[
-                            described_class::Run.new(text: 'bold', bold: true, italic: false),
+                            described_class::Run.new(text: 'x', bold: true, italic: false),
                             described_class::Run.new(text: padding, bold: false, italic: false)
                           ]])
+    end
+
+    it 'falls back once length exceeds MAX_PARSEABLE_LENGTH by one' do
+      padding = 'a' * (described_class::MAX_PARSEABLE_LENGTH - '**x**'.length + 1)
+      text = "**x**#{padding}"
+      expect(text.length).to eq(described_class::MAX_PARSEABLE_LENGTH + 1)
+
+      lines = described_class.parse_lines(text)
+
+      expect(lines).to eq([[described_class::Run.new(text: text, bold: false, italic: false)]])
+    end
+
+    # Underscore escape coverage: the two escape specs above ('treats a
+    # backslash-escaped marker as
+    # literal...' and 'keeps an escaped marker literal alongside real
+    # emphasis...') only ever use `\*`, even though `EMPHASIS_MARKER =
+    # /[*_]/` and this module's own comments claim `:escaped_chars` covers
+    # both markers. Verified directly against the real (unmutated) code
+    # before writing this — already correct, this is pure spec-coverage,
+    # no production change — and against real mmdc:
+    # `task1[\_escaped_ text]` renders `<p>_escaped_ text</p>`, no `<em>`.
+    #
+    # Mutation-check: drop `:escaped_chars` from `Parser`'s `@span_parsers`
+    # (same mutation the `\*` version above is checked against). Watched
+    # red: "escaped" comes back as its own italic run instead of the whole
+    # string staying one literal run.
+    it 'treats a backslash-escaped underscore as literal, never a style trigger' do
+      lines = described_class.parse_lines('\_escaped_ text')
+
+      expect(lines).to eq([[described_class::Run.new(text: '_escaped_ text', bold: false, italic: false)]])
+    end
+
+    # Codex round 4 High: an escaped marker that leaves exactly one
+    # unescaped marker of the same character immediately behind it, which
+    # then meets a differently-sized run later, diverges from real mmdc
+    # (see `unsafe_escaped_delimiter_interaction?`'s comment for the full
+    # measurement). Before this fix, `parse_lines` ran these straight
+    # through kramdown's `:emphasis`/`:escaped_chars` combination and got a
+    # DIFFERENT wrong answer for each: the `**`-opened case merged into one
+    # bold run instead of fragmenting, and the escape-first case lost
+    # emphasis entirely instead of fragmenting. Falling back to
+    # `literal_lines` doesn't reproduce mmdc's fragmented spans either (that
+    # would need mmdc's own flanking algorithm), but it is SAFE — no
+    # crash, no wrong styling — matching the trade-off this module already
+    # accepts for `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH`.
+    #
+    # Mutation-check: delete the `unsafe_escaped_delimiter_interaction?`
+    # guard in `parse_lines`. Watched red: both examples below come back
+    # styled (a single bold run, and a fully literal run respectively)
+    # instead of matching `literal_lines(raw)` exactly.
+    it 'falls back to literal text when an escaped marker leaves a lone orphan before a mismatched closer' do
+      raw = '**a \** b**'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    it 'falls back to literal text for the escape-first form of the same interaction' do
+      raw = '\**a**'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    # The same interaction with `_` instead of `*`, proving the guard isn't
+    # marker-specific. mmdc: `task1[__a \__ b__]` renders
+    # `<em><em>a _</em> b</em>_`; this module falls back to literal instead.
+    it 'falls back to literal text for the same interaction with underscore markers' do
+      raw = '__a \__ b__'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    # A lone orphan is not unsafe by itself — only a length MISMATCH with
+    # the run that eventually closes it is. Verified directly against real
+    # mmdc before writing this: `task1[a\**b*]` renders `a*<em>b</em>`,
+    # matching this module unchanged (a clean single-to-single pairing).
+    # Guards against a guard that's too broad: mutation-check by loosening
+    # the guard to fire on ANY lone orphan regardless of what follows it
+    # (drop the `next_run.length != 1` condition). Watched red: this comes
+    # back as `literal_lines(raw)` instead of the styled runs below.
+    it 'does not fall back when a lone orphan cleanly pairs with a same-length closer' do
+      lines = described_class.parse_lines('a\**b*')
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'a*', bold: false, italic: false),
+                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                          ]])
+    end
+
+    # A run of two or more unescaped markers right after the escape pairs
+    # cleanly with itself and is never treated as a lone orphan. Verified
+    # directly against real mmdc: `task1[**\*x\***]` renders
+    # `<strong>*x*</strong>`, matching this module unchanged.
+    it 'does not fall back when the escape is followed by a two-or-more marker run' do
+      lines = described_class.parse_lines('**\*x\***')
+
+      expect(lines).to eq([[described_class::Run.new(text: '*x*', bold: true, italic: false)]])
     end
   end
 

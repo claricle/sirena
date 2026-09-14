@@ -7,13 +7,15 @@ module Sirena
   module Renderer
     # Parses mermaid's markdown subset used inside diagram label text: bold
     # (`**text**`), italic (`*text*`, nestable with bold, in either order,
-    # including `***both***`), and a literal newline as a hard line break —
+    # including `***both***`), a backslash-escaped marker staying literal
+    # (`\*not italic*`), and a literal newline as a hard line break —
     # including one embedded inside a bold/italic run, which keeps that
     # run's styling on both sides of the break. Nothing else — no code
     # spans, links, headers or lists; mermaid's own rendering of these
-    # labels doesn't support more than this. See
-    # docs/plans/kanban-markdown-labels.md for the mmdc measurements this
-    # subset is drawn from.
+    # labels doesn't support more than this. Every claim above is pinned by
+    # an mmdc-verified spec in this file's spec, cited inline where it
+    # matters (see `MAX_EMPHASIS_MARKERS` and `Parser` below for the two
+    # places mermaid's actual behavior shaped a non-obvious choice here).
     #
     # Parsing is delegated to `kramdown` (see the private `Parser` below)
     # rather than hand-rolled: mermaid itself runs a real markdown lexer
@@ -21,10 +23,11 @@ module Sirena
     # hand-rolled scanner got bold/italic nesting, triple markers and
     # break-spanning emphasis wrong in ways a real parser doesn't. `Parser`
     # restricts kramdown to exactly the block/span parsers this subset
-    # needs (`:paragraph`/`:blank_line` and `:emphasis` — nothing else) so
-    # kramdown's own HTML, smart-quote, codespan, footnote, table, header
-    # and list handling never fires; whatever isn't bold/italic markup
-    # comes back as literal text, character for character, matching mmdc.
+    # needs (`:paragraph`/`:blank_line`, `:emphasis` and `:escaped_chars` —
+    # nothing else) so kramdown's own HTML, smart-quote, codespan,
+    # footnote, table, header and list handling never fires; whatever
+    # isn't bold/italic markup or an escaped marker comes back as literal
+    # text, character for character, matching mmdc.
     #
     # Also builds the `<tspan>` runs a parsed label turns into on an
     # `Svg::Text` element, and truncates parsed lines to a visible-character
@@ -39,50 +42,66 @@ module Sirena
       Run = Data.define(:text, :bold, :italic)
 
       # A run of text with neither `*` nor `_` can never come back styled:
-      # `Parser`'s only active span parser is `:emphasis`, and kramdown's
-      # own `EMPHASIS_START` (`Kramdown::Parser::Kramdown::Emphasis`) is
-      # `/(?:\*\*?|__?)/` — those two characters are the only way any span
-      # parser ever fires under this restricted `Parser`. Verified directly
-      # against `Parser`: escapes, entities, raw HTML and smart quotes all
+      # `Parser`'s only active span parsers are `:emphasis` and
+      # `:escaped_chars`, and kramdown's own `EMPHASIS_START`
+      # (`Kramdown::Parser::Kramdown::Emphasis`) is `/(?:\*\*?|__?)/` —
+      # those two characters are the only way `:emphasis` ever fires, and
+      # `:escaped_chars` only fires on a literal backslash. Verified
+      # directly against `Parser`: entities, raw HTML and smart quotes all
       # come back as plain `:text` regardless of length. So `parse_lines`
       # skips kramdown entirely for such text (see the `raw.match?` guard
-      # below) — this is the cost `MAX_PARSEABLE_LENGTH` bounds for
-      # everyone else, not a separate optimization with its own risk: a
-      # markdown-free diagram (the overwhelming majority) pays zero parse
-      # cost per label regardless of how many cards it has.
+      # below) — a markdown-free diagram (the overwhelming majority) pays
+      # zero parse cost per label regardless of how many cards it has.
       #
       # kramdown's `:emphasis` parser backtracks: a marker that fails to
       # find a well-flanked close re-scans the remainder of the text before
       # falling back to literal text, and that re-scan can itself contain
-      # more failing markers. Measured directly against `Parser` (bypassing
-      # this module's own code, to confirm the cost is kramdown's, and
-      # confirming `_` counts too — kramdown's emphasis grammar treats `*`
-      # and `_` as interchangeable markers): the worst pattern found,
-      # `"**_a " * n` (mixing both marker characters so each `_` reopens
-      # kramdown's backtracking on the immediately preceding failed `**`),
-      # costs ~3.6ms at 50 chars, ~6.9ms at 60, ~9.3ms at 70, ~14ms at 80 —
-      # four other marker-density shapes tried at the same lengths
-      # (`"**a "`, `"**__a "`, `"_a*_a* "`, `"*_a "`) all cost less. At 50
-      # chars a diagram-level worst case — every one of 300 cards holding
-      # exactly this pattern at exactly this length, run through
-      # `Engine#render` end to end — costs ~1.25s total, down from ~76s
-      # measured against the previous 200-char cap. A kanban card's text is
-      # diagram source an attacker can shape, so whatever reaches kramdown
-      # has to stay bounded regardless of what markers it contains.
+      # more failing markers. This used to be bounded by capping raw
+      # LENGTH (`raw.length > 50`), but that bounds the wrong quantity: an
+      # entirely ordinary label can cross a length cap while carrying no
+      # backtracking risk at all — verified directly, `"Please review the
+      # **proposed** deployment plan asap and get back to the team before
+      # the end of the day tomorrow"` is 111 characters with exactly one
+      # bold word (4 `*` characters total) and costs ~0.2ms to parse, yet
+      # a 50-character length cap would have rejected it and printed the
+      # `**` markers literally.
       #
-      # This is a real trade-off, not a theoretical one: an entirely
-      # ordinary label can cross this cap. `"Please review the **proposed**
-      # deployment plan asap"` is 51 characters and has exactly one bold
-      # word — `parse_lines` still falls back to unstyled literal lines for
-      # it, printing the `**` markers literally. Bounding kramdown's
-      # worst-case cost means accepting that this label, and any other real
-      # label past 50 characters, loses its styling entirely rather than
-      # drawing a line between "attacker-shaped" and "merely long".
-      MAX_PARSEABLE_LENGTH = 50
+      # The actual cost driver is how many `*`/`_` characters are packed
+      # together, not the label's total length — measured directly against
+      # `Parser` (bypassing this module's own code): a fixed small marker
+      # count stays fast even at enormous surrounding length (30 markers
+      # spread across 3,000,000 filler characters costs ~59ms; 10 markers
+      # across 1,000,000 costs ~17.5ms), while packing markers adjacent to
+      # each other is what gets expensive — confirming `_` counts too
+      # (kramdown's emphasis grammar treats `*` and `_` as interchangeable
+      # markers), the worst pattern found is `"**_a " * n` (mixing both
+      # marker characters so each `_` reopens kramdown's backtracking on
+      # the immediately preceding failed `**`; four other marker-density
+      # shapes tried at the same marker counts, `"**a "`, `"**__a "`,
+      # `"_a*_a* "`, `"*_a "`, all cost less): ~4ms at 30 markers, ~49ms at
+      # 60, ~206ms at 90. At 30 markers, a diagram-level worst case — every
+      # one of 300 cards holding exactly this pattern, run through
+      # `Engine#render` end to end — costs ~1.2s total. A kanban card's
+      # text is diagram source an attacker can shape, so whatever reaches
+      # kramdown has to stay bounded regardless of what markers it
+      # contains — but bounding on marker COUNT rather than raw length
+      # leaves any label with only a marker or two untouched, however long.
+      MAX_EMPHASIS_MARKERS = 30
 
-      # The only two characters that can ever start a span under `Parser`
-      # (see `MAX_PARSEABLE_LENGTH` above) — matches kramdown's own
-      # `Emphasis::EMPHASIS_START`.
+      # A backstop independent of `MAX_EMPHASIS_MARKERS` above: kramdown's
+      # per-character parse cost is linear once marker density is low
+      # (measured up to 3,000,000 characters above), so this exists only
+      # to keep one label from building an arbitrarily large AST rather
+      # than to guard against backtracking — no real kanban card or column
+      # title approaches this length regardless of markup.
+      MAX_PARSEABLE_LENGTH = 10_000
+
+      # The only two characters that can ever start an `:emphasis` span
+      # under `Parser` (see `MAX_EMPHASIS_MARKERS` above) — matches
+      # kramdown's own `Emphasis::EMPHASIS_START`. `\` (the
+      # `:escaped_chars` trigger) doesn't need its own check here: text
+      # with a backslash but no `*`/`_` has nothing an escape could ever
+      # act on differently from plain literal text.
       EMPHASIS_MARKER = /[*_]/
 
       # The only two block types `parse_lines` knows how to walk — anything
@@ -112,6 +131,8 @@ module Sirena
         return [[]] if raw.empty?
         return literal_lines(raw) unless raw.match?(EMPHASIS_MARKER)
         return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
+        return literal_lines(raw) if real_marker_count(raw) > MAX_EMPHASIS_MARKERS
+        return literal_lines(raw) if unsafe_escaped_delimiter_interaction?(raw)
 
         root, = Parser.parse(raw)
 
@@ -141,7 +162,7 @@ module Sirena
         # That guarantees no fragmentation and no marker loss by
         # construction, at the cost of that one label losing styling
         # entirely — the same trade-off already accepted above for
-        # `MAX_PARSEABLE_LENGTH`.
+        # `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH`.
         return literal_lines(raw) if root.children.any? { |block| !PLAIN_BLOCK_TYPES.include?(block.type) }
 
         lines = []
@@ -158,17 +179,106 @@ module Sirena
         lines
       end
 
-      # The `MAX_PARSEABLE_LENGTH` fallback: every literal `\n`-delimited
-      # line becomes one unstyled run, with no markup parsing at all — the
-      # same line-splitting a label this long would get either way, minus
-      # the bold/italic detection that isn't worth kramdown's worst case
-      # for text no real board is going to have this much of.
+      # The `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` fallback: every
+      # literal `\n`-delimited line becomes one unstyled run, with no
+      # markup parsing at all — the same line-splitting this label would
+      # get either way, minus the bold/italic detection that isn't worth
+      # kramdown's worst case for text this marker-dense (or, for the
+      # length backstop, this long).
       #
       # @api private
       def literal_lines(raw)
         raw.split("\n", -1).map do |line|
           line.empty? ? [] : [Run.new(text: line, bold: false, italic: false)]
         end
+      end
+
+      # Codex round 4 High: `raw.count('*_')` (the prior implementation of
+      # the `MAX_EMPHASIS_MARKERS` guard) counted a backslash-escaped marker
+      # the same as a real one, even though `:escaped_chars` consumes an
+      # escaped marker as one cheap, fixed-cost substitution before
+      # `:emphasis` ever sees it — it can never touch the backtracking
+      # `MAX_EMPHASIS_MARKERS` exists to bound (see the cost comment above).
+      # Reproduced directly: `parse_lines('\\*' * 31)` used to trip the
+      # guard and fall back to `literal_lines`, which keeps every backslash
+      # in the output; real mmdc renders 31 bare stars, no backslashes, at
+      # negligible cost. Counting only the markers that can actually reach
+      # `:emphasis` fixes it: with 31 escaped markers this now returns 0,
+      # stays under the cap, and reaches the real `Parser`, where
+      # `:escaped_chars` alone produces the correct 31 bare stars.
+      #
+      # Strips exactly the substrings kramdown's own `:escaped_chars` span
+      # parser would consume, using kramdown's own `ESCAPED_CHARS` regex
+      # (`Kramdown::Parser::Kramdown::ESCAPED_CHARS`) rather than a
+      # hand-copied pattern, so this can't silently drift from what
+      # `Parser` actually escapes on a future kramdown upgrade. `String#gsub`
+      # matches left to right, non-overlapping — the same order kramdown's
+      # own scanner consumes escape pairs in, which matters for a string
+      # like `\\\\*` (an escaped backslash immediately followed by a real,
+      # countable marker): the first two characters are consumed as one
+      # pair, leaving the `*` to be counted, not swallowed by a second,
+      # overlapping match starting on the inner backslash.
+      #
+      # @param raw [String]
+      # @return [Integer]
+      # @api private
+      def real_marker_count(raw)
+        raw.gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, '').count('*_')
+      end
+
+      # Codex round 4 High: registering `:emphasis` and `:escaped_chars` as
+      # independent span parsers doesn't reproduce mermaid's actual
+      # escape-vs-emphasis interaction once an escaped marker leaves exactly
+      # ONE unescaped marker of the same character immediately behind it
+      # (`\\**` leaves a lone `*`) and that lone marker later meets a
+      # same-character run of a DIFFERENT length — typically the run closing
+      # an outer bold/italic span. `marked`'s delimiter-run flanking
+      # algorithm and kramdown's own emphasis matching resolve that length
+      # mismatch differently; kramdown here either drops emphasis entirely
+      # or merges the lone marker into the wrong span, while `mmdc`
+      # fragments it into extra literal/styled spans. Measured directly,
+      # four pairs, real mmdc vs this module before this fix (`task1[...]`
+      # inside a kanban label):
+      #   `**a \\** b**` -> mmdc `<em><em>a *</em> b</em>*`, this module
+      #     `<strong>a ** b</strong>` (wrong: one bold run, not fragmented).
+      #   `\\**a**` -> mmdc `*<em>a</em>*`, this module `**a**` (wrong: fully
+      #     literal, no `<em>` at all).
+      #   `__a \\__ b__` -> same shape and same divergence with `_`.
+      # A lone marker is NOT unsafe by itself — measured equally directly,
+      # three shapes that keep this module unchanged because they already
+      # match mmdc: an orphan run of length 0 (escape isn't adjacent to
+      # another marker at all: `\\*escaped* text`), length 2+ (the orphan
+      # pairs cleanly with itself: `**\\*x\\***` -> mmdc and this module both
+      # `<strong>*x*</strong>`), and a lone orphan whose next same-character
+      # run is ALSO length 1, i.e. a clean single-to-single pairing with no
+      # length mismatch (`a\\**b*` -> mmdc and this module both
+      # `a*<em>b</em>`). Only the length-1-meets-mismatched-length shape is
+      # unsafe; this label falls back to `literal_lines` for it rather than
+      # risk a wrong (not just unstyled) render — the same trade-off already
+      # accepted for `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` above.
+      #
+      # Not a general proof this module now matches `marked`'s emphasis
+      # algorithm for every delimiter-length combination — only the shape
+      # above is measured, both unsafe and safe. See this method's spec for
+      # every pair cited here, each pinned against real mmdc.
+      #
+      # @param raw [String]
+      # @return [Boolean]
+      # @api private
+      def unsafe_escaped_delimiter_interaction?(raw)
+        raw.scan(::Kramdown::Parser::Kramdown::ESCAPED_CHARS) do
+          marker = ::Regexp.last_match(1)
+          next unless %w[* _].include?(marker)
+
+          after = raw[::Regexp.last_match.end(0)..]
+          orphan_run = after[/\A#{Regexp.escape(marker)}+/]
+          next unless orphan_run&.length == 1
+
+          next_run = after[orphan_run.length..][/#{Regexp.escape(marker)}+/]
+          return true if next_run && next_run.length != 1
+        end
+
+        false
       end
 
       # Walks one `:p` block's children into a flat run list: nesting is
@@ -245,12 +355,22 @@ module Sirena
       # `"` gets turned into a smart-quote element instead of staying
       # literal.
       #
+      # `:escaped_chars` (kramdown's `\X` -> literal `X` rule, covering `*`
+      # and `_` among other characters) sits alongside `:emphasis` rather
+      # than being left out: without it, `\*escaped*` came back with
+      # "escaped" wrongly italicized, because the bare backslash passed
+      # through as literal text while the `*...*` on either side of it
+      # still paired up as a real emphasis span. Real mmdc (`marked`'s
+      # lexer) treats a backslash-escaped marker as literal and inert —
+      # verified directly: `\*escaped* text` renders `<p>*escaped*
+      # text</p>`, no `<em>`.
+      #
       # @api private
       class Parser < ::Kramdown::Parser::Kramdown
         def initialize(source, options)
           super
           @block_parsers = [:blank_line, :paragraph]
-          @span_parsers = [:emphasis]
+          @span_parsers = [:emphasis, :escaped_chars]
         end
       end
       private_constant :Parser
