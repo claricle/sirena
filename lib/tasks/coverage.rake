@@ -46,14 +46,14 @@ namespace :coverage do
     # scores it out of scope automatically -- that IS the file-scope rule:
     # only files the coverage report already carries are gated.
     #
-    # simplecov patch's --minimum gates every MEASURED criterion (line,
-    # branch, method) uniformly, with no per-criterion flag. .simplecov
-    # enables branch coverage for the report, so branch data is present in
-    # coverage.json and gating straight off it would silently enforce 100%
-    # branch on every changed line today -- ahead of this item's own staged
-    # branch timeline. So the gate reads a scratch copy of the report with
-    # branch/method data stripped, keeping this task line-only; branch stays
-    # measured and visible in the real report untouched.
+    # Do not point --input at coverage/coverage.json directly: simplecov
+    # patch's --minimum gates every criterion present in the input file
+    # (line, branch, method) uniformly, with no per-criterion flag, and
+    # .simplecov turns branch coverage on. Feeding it the raw report would
+    # silently also enforce 100% branch on every changed line. Strip
+    # branch/method from a scratch copy first so this task stays line-only;
+    # the real report (coverage/coverage.json) still carries branch data
+    # untouched for anyone reading it directly.
     unless File.exist?('coverage/coverage.json')
       abort "coverage/coverage.json is missing -- run `rake coverage:measure` " \
             '(or `rake coverage:guard`, which does both) before coverage:changed_lines'
