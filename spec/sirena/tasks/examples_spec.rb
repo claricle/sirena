@@ -258,6 +258,32 @@ RSpec.describe ExampleTasks do
         end
       end
     end
+
+    # One level deeper than the directory-level guard above: `target_dir`
+    # itself is a real directory, but the SVG's own slot inside it is a link.
+    # `FileUtils.cp(svg_file, target_dir)` resolves that to
+    # File.join(target_dir, basename(svg_file)) and opens it for writing,
+    # which follows the link -- reproduced before this guard existed, with
+    # the copy landing inside `outside/` while `docs/flowchart/a.svg` stayed
+    # a symlink pointing there.
+    it 'refuses to write through a docs SVG slot that is itself a link' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>new</svg>')
+          FileUtils.mkdir_p(File.join(docs, 'flowchart'))
+          File.write(File.join(outside, 'secret.svg'), 'outside original')
+          File.symlink(File.join(outside, 'secret.svg'),
+                       File.join(docs, 'flowchart', 'a.svg'))
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect([copied, File.symlink?(File.join(docs, 'flowchart', 'a.svg')),
+                  File.read(File.join(outside, 'secret.svg'))])
+            .to eq([[['flowchart', 0]], true, 'outside original'])
+        end
+      end
+    end
   end
 
   # generate never deletes a stale SVG itself — it only reports one, so a run
@@ -925,6 +951,42 @@ RSpec.describe ExampleTasks do
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(ExampleTasks::ValidationFailed, /unexpectedly renderable/)
+    end
+
+    # :generate walks sources through diagram_dirs + plain_mmd?, which skip a
+    # symlink; this used a raw Dir.glob instead, which follows one -- a
+    # symlinked .mmd resolved outside examples/ was read and rendered exactly
+    # like a real source. Asserted on Total rather than a raise, because the
+    # defect is the file being counted and read at all, not any error it
+    # happens to produce.
+    it 'does not read a source file that is a symlink out of the tree' do
+      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+      outside = Dir.mktmpdir('sirena-outside')
+      File.write(File.join(outside, 'escaped.mmd'), "flowchart TD\n  A --> B\n")
+      File.symlink(File.join(outside, 'escaped.mmd'),
+                   File.join(examples_dir, 'flowchart', 'a.mmd'))
+
+      output = capture { described_class.validate_examples(examples_dir) }
+
+      expect(output).to include('Total:  0')
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
+
+    # The directory case, the same way generation is guarded: a symlinked
+    # diagram directory resolves outside examples/ entirely, and a raw
+    # Dir.glob('*/*.mmd') follows it just as readily as it would a symlinked
+    # leaf file.
+    it 'does not read sources inside a diagram directory that is a symlink out of the tree' do
+      outside = Dir.mktmpdir('sirena-outside')
+      File.write(File.join(outside, 'escaped.mmd'), "flowchart TD\n  A --> B\n")
+      File.symlink(outside, File.join(examples_dir, 'linked'))
+
+      output = capture { described_class.validate_examples(examples_dir) }
+
+      expect(output).to include('Total:  0')
+    ensure
+      FileUtils.remove_entry(outside) if outside
     end
   end
 
