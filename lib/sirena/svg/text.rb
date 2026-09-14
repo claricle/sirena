@@ -87,21 +87,36 @@ module Sirena
         Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
       end
 
-      # Replays `element_order` in place: each text node's own content in
-      # sequence, each element node standing in for the next parsed
-      # `<tspan>` — `tspans` is themselves already in document order, so
-      # consuming it as a queue lines each one up with the element_order
-      # entry it came from.
+      # Replays `element_order` in place: each `:text` entry stands in for
+      # the next item of `content`, each `tspan` `:element` entry stands in
+      # for the next item of `tspans` — both collections are themselves
+      # already in document order, so consuming each as its own queue lines
+      # every entry up with the `element_order` slot it came from.
+      #
+      # Reads from the `content`/`tspans` queues rather than replaying
+      # `node.text_content` off the `element_order` node directly: the node
+      # only ever holds what `from_xml` parsed, so replaying it would
+      # silently ignore a later `content =` reassignment on the same
+      # instance and keep re-emitting the original parsed text forever.
+      #
+      # Any entry that is neither `:text` nor a `tspan` element (an XML
+      # comment, a processing instruction, or some other child element this
+      # class has no attribute for) is skipped rather than treated as a
+      # stand-in for the next tspan: consuming `remaining_tspans` for it
+      # would misattribute — or, once the real tspans run out, crash on
+      # `nil.to_xml` for — an entry that was never a tspan to begin with.
       #
       # @return [String]
       def interleaved_body
         remaining_tspans = Array(tspans).dup
+        remaining_content = Array(content).dup
 
-        element_order.map do |node|
-          if node.node_type == :text
-            Escaping.escape_text(node.text_content)
-          else
-            remaining_tspans.shift.to_xml
+        element_order.filter_map do |node|
+          case node.node_type
+          when :text
+            Escaping.escape_text(remaining_content.shift.to_s)
+          when :element
+            remaining_tspans.shift&.to_xml if node.name == 'tspan'
           end
         end.join
       end

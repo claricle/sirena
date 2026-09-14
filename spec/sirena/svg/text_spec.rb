@@ -45,5 +45,49 @@ RSpec.describe Sirena::Svg::Text do
 
       expect(xml).to eq(original)
     end
+
+    # Codex round 3 High: `interleaved_body` used to replay `node.text_content`
+    # straight off the frozen `element_order` snapshot `from_xml` captured,
+    # instead of reading the model's current `content`. Any later mutation of
+    # `content` on a parsed instance was silently invisible to `to_xml` —
+    # confirmed directly: assigning new `content` after `from_xml` left
+    # `to_xml` re-emitting the original parsed text unchanged.
+    #
+    # Mutation-check: revert `interleaved_body` to read `node.text_content`
+    # instead of shifting from a `content` queue. Watched red: the
+    # reassigned text never appears in the output.
+    it 'reflects a content mutation made after from_xml' do
+      text = described_class.from_xml('<text>A<tspan>B</tspan>C</text>')
+      text.content = %w[X Y]
+
+      expect(text.to_xml).to eq('<text>X<tspan>B</tspan>Y</text>')
+    end
+
+    # Codex round 3 Medium: `interleaved_body` treated every non-`:text`
+    # `element_order` entry as a stand-in for the next parsed `<tspan>`.
+    # Real mixed SVG content can carry an XML comment inside `<text>`
+    # (`node_type == :comment`) or, more subtly, an element that is not a
+    # `tspan` at all — neither is tracked by any attribute this class
+    # declares, so treating either as "the next tspan" either crashes
+    # (`nil.to_xml` once `tspans` runs out) or silently steals a real
+    # tspan meant for a later position. Reproduced directly before this
+    # fix: a comment raised `NoMethodError`, and an interleaved unmapped
+    # `<foo>` element consumed the one real `<tspan>` ahead of it, leaving
+    # it later with nothing to shift.
+    #
+    # Mutation-check: replace the `node.name == 'tspan'` guard with a bare
+    # `node.node_type == :element`. Watched red: this example raises
+    # `NoMethodError` on the comment case below it in the same run.
+    it 'skips an XML comment inside the text without crashing or losing surrounding content' do
+      text = described_class.from_xml('<text>A<!-- note -->B<tspan>C</tspan></text>')
+
+      expect(text.to_xml).to eq('<text>AB<tspan>C</tspan></text>')
+    end
+
+    it 'skips an unmapped child element without misaligning the real tspan after it' do
+      text = described_class.from_xml('<text>A<foo>ignored</foo>B<tspan>C</tspan></text>')
+
+      expect(text.to_xml).to eq('<text>AB<tspan>C</tspan></text>')
+    end
   end
 end
