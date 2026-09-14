@@ -58,8 +58,8 @@ RSpec.describe Sirena::Engine do
     end
 
     it "raises RenderError, not PipelineError, when the renderer itself fails" do
-      # No real corpus input reaches the renderer stage today -- nothing in
-      # lib/ currently raises RenderError -- so this is stubbed, the same
+      # Real input does reach the renderer stage, but nothing in lib/
+      # currently raises RenderError from it -- so this is stubbed, the same
       # way the "no layer of its own" example below stubs Layout::Fallback.
       broken_renderer = instance_double(Sirena::Renderer::FlowchartRenderer)
       allow(Sirena::Renderer::FlowchartRenderer).to receive(:new).and_return(broken_renderer)
