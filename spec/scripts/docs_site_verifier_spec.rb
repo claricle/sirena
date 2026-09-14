@@ -1187,6 +1187,40 @@ RSpec.describe Sirena::DocsSiteVerifier do
     end
   end
 
+  # MEDIUM-8, found by Codex against a real Jekyll config load. Jekyll's own
+  # config loader (`Jekyll::Configuration#safe_load_file`, backed by the
+  # `safe_yaml` gem) accepts YAML anchors/aliases -- a documented, ordinary
+  # way to avoid repeating `permalink:` across every collection -- and
+  # resolves them correctly. Plain `YAML.safe_load_file` (what this script
+  # uses) does NOT allow aliases unless told to, and raises instead of
+  # returning a Hash. Verified directly: the same `_config.yml` shape
+  # (`collections: {diagram_types: {<<: *defaults}}`) that
+  # `Jekyll::Configuration.new.safe_load_file` resolves to
+  # `{"permalink"=>"/:collection/:path/"}` makes plain
+  # `YAML.safe_load_file` raise `Psych::AliasesNotEnabled`. A config Jekyll
+  # itself builds successfully must not crash this verifier.
+  it 'reads a real _config.yml that uses a YAML anchor/alias for collection options' do
+    Dir.mktmpdir do |tmp|
+      docs_dir, site_dir = build_valid_site(tmp)
+      config_yaml = <<~YAML
+        defaults: &defaults
+          permalink: "/:collection/:path/"
+        theme: #{DOCS_SITE_VERIFIER_DEFAULT_THEME}
+        baseurl: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}
+        search_enabled: true
+        include:
+          - _diagram_types
+        collections:
+          diagram_types:
+            <<: *defaults
+      YAML
+      File.write(File.join(docs_dir, '_config.yml'), config_yaml)
+
+      expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
+      expect(verifier_for(docs_dir, site_dir).failures).to eq([])
+    end
+  end
+
   def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
     stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
     <<~HTML

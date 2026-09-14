@@ -207,7 +207,14 @@ module Sirena
     def initialize(docs_dir:, site_dir:, baseurl: nil)
       @docs_dir = Pathname.new(docs_dir)
       @site_dir = Pathname.new(site_dir)
-      @config = YAML.safe_load_file(@docs_dir.join('_config.yml').to_s)
+      # Jekyll's own config loader (backed by the `safe_yaml` gem) accepts
+      # YAML anchors/aliases -- an ordinary way to avoid repeating
+      # `permalink:` across every collection -- and resolves them. Plain
+      # `YAML.safe_load_file` refuses aliases by default and raises
+      # `Psych::AliasesNotEnabled` instead of returning a Hash, so a
+      # `_config.yml` Jekyll itself builds successfully would crash this
+      # verifier instead of being checked.
+      @config = YAML.safe_load_file(@docs_dir.join('_config.yml').to_s, aliases: true)
       @baseurl = (baseurl || @config['baseurl']).to_s
     end
 
