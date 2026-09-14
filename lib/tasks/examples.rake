@@ -46,7 +46,14 @@ module ExampleTasks
     puts ". rendered   K known unrenderable   F failure"
     puts ""
 
-    Dir.glob(File.join(examples_dir, '*/*.mmd')).sort.each do |mmd_file|
+    # Enumerated the same way :generate walks sources -- diagram_dirs skips a
+    # symlinked diagram directory and plain_mmd? skips a symlinked .mmd -- not
+    # a raw Dir.glob, which followed both and read whatever they pointed at.
+    mmd_files = diagram_dirs(examples_dir)
+      .flat_map { |dir| children(dir).select { |path| plain_mmd?(path) } }
+      .sort
+
+    mmd_files.each do |mmd_file|
       total += 1
       source = File.read(mmd_file)
       relative_path = mmd_file.sub(examples_dir + '/', '')
@@ -218,8 +225,25 @@ module ExampleTasks
       end
 
       FileUtils.mkdir_p(target_dir)
-      svg_files.each { |svg_file| FileUtils.cp(svg_file, target_dir) }
-      [File.basename(dir), svg_files.size]
+      copied = svg_files.count do |svg_file|
+        destination = File.join(target_dir, File.basename(svg_file))
+        # The directory-level check above does not cover this: `FileUtils.cp`
+        # takes a directory as its destination and writes to
+        # File.join(target_dir, basename(svg_file)) itself, so a pre-existing
+        # symlink at THAT leaf name is what `cp` actually opens. `cp` follows
+        # a destination symlink and writes through it (verified: a symlinked
+        # leaf pointed outside docs_assets_dir and received the copied
+        # content at its target, with the link itself left in place). Each
+        # file needs the same refusal the directory got, one level down.
+        if File.symlink?(destination)
+          puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink"
+          next false
+        end
+
+        FileUtils.cp(svg_file, destination)
+        true
+      end
+      [File.basename(dir), copied]
     end
   end
 
