@@ -175,7 +175,14 @@ module Sirena
       def calculate_y_position(row, row_heights)
         return DEFAULT_SPACING if row == 0
 
-        row_heights[0...row].sum + (DEFAULT_SPACING * (row + 1))
+        # A row that never receives an actual block leaves its row_heights
+        # entry nil - either a block's span is wider than the column count
+        # and jumps straight past the row, or the row is filled entirely by
+        # "space" placeholders. A skipped row holds nothing, so it
+        # contributes zero height. (Following a row that an earlier block
+        # filled exactly does NOT skip anything - measured 2026-09-10 with
+        # "columns 2\nA:2\nB\nC\nD": rows come out 0,1,1,2 with no gap.)
+        row_heights[0...row].compact.sum + (DEFAULT_SPACING * (row + 1))
       end
 
       def calculate_connections(diagram, blocks_layout)
