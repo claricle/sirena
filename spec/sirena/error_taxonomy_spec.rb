@@ -57,6 +57,18 @@ RSpec.describe Sirena::Engine do
         .to raise_error(Sirena::Transform::TransformError, "Invalid diagram")
     end
 
+    it "raises RenderError, not PipelineError, when the renderer itself fails" do
+      # No real corpus input reaches the renderer stage today -- nothing in
+      # lib/ currently raises RenderError -- so this is stubbed, the same
+      # way the "no layer of its own" example below stubs Layout::Fallback.
+      broken_renderer = instance_double(Sirena::Renderer::FlowchartRenderer)
+      allow(Sirena::Renderer::FlowchartRenderer).to receive(:new).and_return(broken_renderer)
+      allow(broken_renderer).to receive(:render).and_raise(Sirena::Renderer::RenderError, "boom")
+
+      expect { engine.render("graph TD\nA-->B\n") }
+        .to raise_error(Sirena::Renderer::RenderError, "boom")
+    end
+
     # DiagramTypeError was already unwrapped before this fix (the old
     # rescue clause named it explicitly), so a fresh example here would
     # stay green against the unfixed code and prove nothing about this

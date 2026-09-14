@@ -3,8 +3,8 @@
 require "spec_helper"
 require "open3"
 
-# TODO.architecture/01-safety-net.md, Part B step 0 (Codex round, 2026-09-14).
-# Each pipeline layer's own Error class inherits Sirena::Error so
+# TODO.architecture/01-safety-net.md, Part B step 0. Each pipeline layer's
+# own Error class inherits Sirena::Error so
 # Engine#render can propagate it unwrapped. That constant used to be
 # defined only inline inside lib/sirena.rb's own require chain, so a
 # process that requires a component file directly -- "sirena/parser",

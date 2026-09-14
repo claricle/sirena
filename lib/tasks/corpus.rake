@@ -199,8 +199,8 @@ module Sirena
     # row says it now fails -- INCLUDING a case that vanished from the fresh
     # run entirely (deleted from spec/mermaid, or renamed), because a
     # passing case disappearing without a trace is exactly what the ratchet
-    # exists to catch; iterating fresh_pass alone would miss this (Codex
-    # finding, 2026-09-14: a deleted passing case produced an empty diff).
+    # exists to catch; iterating fresh_pass alone would miss this, since a
+    # deleted case never appears there at all.
     # A case is an unrecorded improvement when the fresh row passes but the
     # committed file does not already say so -- that covers both "committed
     # as failing" and "not in the committed file at all" (a case added to
