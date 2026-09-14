@@ -195,38 +195,25 @@ module Sirena
 
       # Renders a laid-out graph to SVG.
       #
-      # `overflow: 'hidden'` is SVG's SPECIFIED way to clip a viewport's
-      # rendering to its own bounds — see `WIDE_CHAR_WIDTH_RATIO` for why
-      # no character-count estimate can size that viewport correctly on
-      # its own. What the specified behaviour actually BUYS here was
-      # measured, not assumed, and the measurement is smaller than the
-      # attribute sounds: screenshotting the same pathological label
-      # with and without it, root document and nested alike, came back
-      # byte-identical (`compare -metric AE` reports 0 differing
-      # pixels). Chrome already contains SVG content to its own box by
-      # default, contrary to the SVG2 spec's stated `visible` default
-      # for a root `<svg>` — so in every context this could be measured
-      # against, the attribute changed nothing. It is kept anyway, at
-      # zero cost, because it states the specified policy explicitly
-      # rather than leaving it to an unwritten default; whether that
-      # matters for any renderer other than Chrome was not measured and
-      # is not claimed here.
+      # `overflow: 'hidden'` states SVG's specified clip policy explicitly
+      # rather than leaving it to an unwritten default — see
+      # `WIDE_CHAR_WIDTH_RATIO` for why no character-count estimate can
+      # size a viewport correctly on its own. Do not rely on this
+      # attribute to bound a clipped label: the actual bound comes from
+      # geometry, not from this attribute (browsers that already clip an
+      # `<svg>` box by default see no change from setting it).
       #
-      # `clear_self_loop_overflow` and `self_loop_reach` still do real
-      # work sizing the page from the loop's BENDS, which are exact
-      # numbers, not text estimates; only a label's own contribution to
-      # that sizing is a best-effort hint rather than a guarantee. When
-      # the hint is wrong, the label's own excess is invisible past the
-      # page edge — CHROME MEASURED, not merely intended — while
-      # everything else in the diagram (nodes, other edges, the loop's
-      # own bends) stays exactly where the exact numbers put it. mmdc
-      # does not carry this limit — measured directly, it sizes the
-      # SAME pathological label correctly (viewBox grows to 737px,
-      # `mmdc -i` on a `flowchart RL` self loop reading `|﷽﷽﷽﷽|`) —
-      # because it drives an actual Chrome layout of the label as HTML
-      # and reads the box back. That is the gap: mmdc MEASURES, sirena
-      # ESTIMATES, and adding a headless browser to a pure-Ruby renderer
-      # to close it is a different, much bigger change than this one.
+      # `clear_self_loop_overflow` and `self_loop_reach` size the page
+      # from the loop's BENDS, which are exact numbers, not text
+      # estimates; only a label's own contribution to that sizing is a
+      # best-effort hint rather than a guarantee. When the hint is wrong,
+      # the label's own excess clips past the page edge, while everything
+      # else in the diagram (nodes, other edges, the loop's own bends)
+      # stays exactly where the exact numbers put it. Closing this
+      # requires measuring or controlling rendered text geometry (e.g.
+      # driving a real browser layout of the label), which is a
+      # different, much bigger change than this one — see
+      # `TODO.foundation/20-text-measurement.md`.
       #
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
