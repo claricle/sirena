@@ -47,11 +47,9 @@ module ExampleTasks
     puts ""
 
     # Enumerated the same way :generate walks sources -- diagram_dirs skips a
-    # symlinked diagram directory and plain_mmd? skips a symlinked .mmd -- not
-    # a raw Dir.glob, which followed both and read whatever they pointed at.
-    mmd_files = diagram_dirs(examples_dir)
-      .flat_map { |dir| children(dir).select { |path| plain_mmd?(path) } }
-      .sort
+    # symlinked diagram directory and mmd_files_in skips a symlinked .mmd --
+    # not a raw Dir.glob, which followed both and read whatever they pointed at.
+    mmd_files = diagram_dirs(examples_dir).flat_map { |dir| mmd_files_in(dir) }.sort
 
     mmd_files.each do |mmd_file|
       total += 1
@@ -166,6 +164,14 @@ module ExampleTasks
     path.end_with?('.mmd') && File.file?(path) && !File.symlink?(path)
   end
 
+  # The one place a diagram directory's sources are listed. :generate walks
+  # this per directory; :validate flattens it across all of them -- both need
+  # the same skip of a symlinked .mmd, so both call this rather than each
+  # writing out children(dir).select { plain_mmd? } on its own.
+  def mmd_files_in(dir)
+    children(dir).select { |path| plain_mmd?(path) }
+  end
+
   # The examples folder itself must be a real directory. A link there is
   # resolved by realpath and then trusted, so every containment check below
   # would be measuring against somewhere else entirely.
@@ -225,25 +231,25 @@ module ExampleTasks
       end
 
       FileUtils.mkdir_p(target_dir)
-      copied = svg_files.count do |svg_file|
-        destination = File.join(target_dir, File.basename(svg_file))
-        # The directory-level check above does not cover this: `FileUtils.cp`
-        # takes a directory as its destination and writes to
-        # File.join(target_dir, basename(svg_file)) itself, so a pre-existing
-        # symlink at THAT leaf name is what `cp` actually opens. `cp` follows
-        # a destination symlink and writes through it (verified: a symlinked
-        # leaf pointed outside docs_assets_dir and received the copied
-        # content at its target, with the link itself left in place). Each
-        # file needs the same refusal the directory got, one level down.
-        if File.symlink?(destination)
-          puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink"
-          next false
-        end
 
-        FileUtils.cp(svg_file, destination)
-        true
+      # The directory-level check above does not cover this: `FileUtils.cp`
+      # takes a directory as its destination and writes to
+      # File.join(target_dir, basename(svg_file)) itself, so a pre-existing
+      # symlink at THAT leaf name is what `cp` actually opens. `cp` follows a
+      # destination symlink and writes through it (verified: a symlinked leaf
+      # pointed outside docs_assets_dir and received the copied content at
+      # its target, with the link itself left in place). Each file needs the
+      # same refusal the directory got, one level down -- decided for every
+      # file first, so the write below never has to reason about a skip.
+      blocked, writable = svg_files.partition do |svg_file|
+        File.symlink?(File.join(target_dir, File.basename(svg_file)))
       end
-      [File.basename(dir), copied]
+      blocked.each do |svg_file|
+        puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, its docs copy target is a symlink"
+      end
+      writable.each { |svg_file| FileUtils.cp(svg_file, File.join(target_dir, File.basename(svg_file))) }
+
+      [File.basename(dir), writable.size]
     end
   end
 
@@ -458,7 +464,7 @@ module ExampleTasks
     diagram_dirs(examples_dir).each do |dir|
       diagram_type = File.basename(dir)
       puts "\n\u{1F4CA} Generating examples for #{diagram_type}..."
-      mmd_files = children(dir).select { |path| plain_mmd?(path) }
+      mmd_files = mmd_files_in(dir)
 
       if mmd_files.empty?
         puts "  \u26a0\ufe0f  No examples found for #{diagram_type}"
