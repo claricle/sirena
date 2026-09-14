@@ -84,6 +84,15 @@ module Sirena
       def body
         return interleaved_body if element_order && !element_order.empty?
 
+        simple_body
+      end
+
+      # The `element_order`-free path above, and the fallback `interleaved_body`
+      # uses when `content`/`tspans` no longer match the shape `element_order`
+      # recorded (see the cardinality check there).
+      #
+      # @return [String]
+      def simple_body
         Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
       end
 
@@ -106,8 +115,26 @@ module Sirena
       # would misattribute — or, once the real tspans run out, crash on
       # `nil.to_xml` for — an entry that was never a tspan to begin with.
       #
+      # Codex round 4 Medium: replaying `element_order` assumes `content` has
+      # exactly as many items as recorded `:text` slots, and `tspans`
+      # exactly as many as recorded `tspan` slots — true for a `from_xml`
+      # instance untouched since parsing, and for a same-count reassignment
+      # (`text.content = %w[X Y]` onto 2 `:text` slots, already covered
+      # above). A caller that reassigns to a DIFFERENT count breaks that
+      # assumption: reproduced directly, `Text.from_xml('<text>A<tspan>B</tspan>C</text>')`
+      # (2 `:text` slots) then `.content = %w[X Y Z]` used to serialize
+      # `<text>X<tspan>B</tspan>Y</text>` — "Z" silently dropped, with no
+      # error, because `remaining_content.shift` just runs out. Once the
+      # counts no longer match what `element_order` recorded, that recorded
+      # order can't be trusted to still describe the current `content`, so
+      # this falls back to `simple_body` (the same safe path used when there
+      # is no `element_order` at all) rather than replay a mapping that's
+      # known to be wrong.
+      #
       # @return [String]
       def interleaved_body
+        return simple_body unless cardinality_matches?
+
         remaining_tspans = Array(tspans).dup
         remaining_content = Array(content).dup
 
@@ -119,6 +146,18 @@ module Sirena
             remaining_tspans.shift&.to_xml if node.name == 'tspan'
           end
         end.join
+      end
+
+      # True when `content`/`tspans`' current sizes still match what
+      # `element_order` recorded at parse time — see `interleaved_body`'s
+      # comment for why a mismatch makes replaying `element_order` unsafe.
+      #
+      # @return [Boolean]
+      def cardinality_matches?
+        text_slots = element_order.count { |node| node.node_type == :text }
+        tspan_slots = element_order.count { |node| node.node_type == :element && node.name == 'tspan' }
+
+        Array(content).size == text_slots && Array(tspans).size == tspan_slots
       end
     end
   end

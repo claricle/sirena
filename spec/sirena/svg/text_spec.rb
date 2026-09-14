@@ -89,5 +89,31 @@ RSpec.describe Sirena::Svg::Text do
 
       expect(text.to_xml).to eq('<text>AB<tspan>C</tspan></text>')
     end
+
+    # Codex round 4 Medium: `interleaved_body` (and the mutation spec just
+    # above proving it reflects a same-count reassignment) both assumed
+    # `content`'s size still matches the `:text` slots `element_order`
+    # recorded. A reassignment to a DIFFERENT count breaks that: before
+    # this fix, 3 items replayed against 2 `:text` slots shifted "X" and
+    # "Y" into the two slots and silently dropped "Z" — no error, no
+    # indication anything was lost. Falls back to the same simple
+    # concatenation used when there's no `element_order` at all, rather
+    # than replay a mapping already known not to fit.
+    #
+    # Mutation-check: delete the `cardinality_matches?` guard in
+    # `interleaved_body`. Watched red: "Z" goes missing from the output.
+    it "falls back to simple concatenation when a reassignment does not match element_order's recorded count" do
+      text = described_class.from_xml('<text>A<tspan>B</tspan>C</text>')
+      text.content = %w[X Y Z]
+
+      expect(text.to_xml).to eq('<text>XYZ<tspan>B</tspan></text>')
+    end
+
+    it 'falls back to simple concatenation when tspans shrink below element_order\'s recorded count too' do
+      text = described_class.from_xml('<text>A<tspan>B</tspan>C<tspan>D</tspan>E</text>')
+      text.tspans = [Sirena::Svg::Tspan.new.tap { |t| t.content = 'Z' }]
+
+      expect(text.to_xml).to eq('<text>ACE<tspan>Z</tspan></text>')
+    end
   end
 end
