@@ -6,13 +6,12 @@
 #
 # Corpus results are never in a REPORT THAT SHIPS: lib/tasks/coverage.rake's
 # `--tag ~corpus` and spec/spec_helper.rb's `filter_run_excluding corpus:`
-# both exclude every :corpus-tagged example whenever COVERAGE=true; if either
-# is ever bypassed, spec/spec_helper.rb's `after(:suite)` backstop makes the
-# run fail loudly instead (SimpleCov may still write a corpus-inflated
-# coverage.json to disk, but the process exits non-zero, so it never ships as
-# a passing measurement). An example that reads corpus fixtures WITHOUT the
-# :corpus tag is untouched by either exclusion and still runs instrumented --
-# tag it, don't rely on the fixture directory.
+# exclude every :corpus-tagged example whenever COVERAGE=true; if either is
+# bypassed, spec/spec_helper.rb's `after(:suite)` backstop fails the run
+# loudly instead (a corpus-inflated coverage.json may still land on disk, but
+# the non-zero exit stops it shipping as a passing measurement). Untagged
+# examples that merely read corpus fixtures are NOT covered by this -- tag
+# them, don't rely on the fixture directory.
 SimpleCov.configure do
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
