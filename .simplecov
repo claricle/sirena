@@ -50,8 +50,10 @@ SimpleCov.configure do
   # commands.rb gap `cover` added). 92 is item 1's SECOND PR (86->92 pass).
   #
   # 88.50, not 91.60: determinism_spec.rb's full-corpus sweep is now tagged
-  # :corpus (lib/tasks/coverage.rake) and excluded -- five measured spec:unit
-  # runs land at 11348-11351/12807 covered lines (88.61-88.63%); see the
-  # gate record for the pre-tag figure.
+  # :corpus (lib/tasks/coverage.rake) and excluded -- 24 measured spec:unit
+  # runs (clean `coverage/` dir each time, two independent sessions of 12)
+  # land at 11342-11351/12807 covered lines (88.56-88.63%), clearing this
+  # floor with 7+ lines to spare at the observed low end; see the gate
+  # record for the measurement method and the pre-tag number.
   minimum_coverage line: 88.50
 end
