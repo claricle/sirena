@@ -1,41 +1,31 @@
 # frozen_string_literal: true
 
 # Configuration only -- SimpleCov.start is called from spec/spec_helper.rb,
-# not from here. `require "simplecov"` auto-loads this file by walking up
-# from the process's working directory looking for `.simplecov`; calling
-# `.start` from inside it is deprecated in the installed SimpleCov (1.2.0).
+# not from here; calling `.start` from inside this file is deprecated in the
+# installed SimpleCov (1.2.0).
 #
-# This file is loaded by ANY process that `require "simplecov"`, including
-# `spec:corpus` if it ever opts in by accident -- but `spec:corpus` never
-# requires simplecov at all (see Rakefile), so its coverage never reaches
-# .resultset.json / coverage.json and can never inflate the numbers below.
-# TODO.foundation/03-coverage-gate.md item 1 ("corpus results provably
-# absent from the coverage number") is enforced by that omission, not by a
-# filter in this file -- there is nothing here for a filter to exclude.
+# `spec:corpus` never requires simplecov at all (see lib/tasks/coverage.rake),
+# so corpus coverage never reaches coverage.json even though this file would
+# still be auto-loaded if it ever did. "Corpus results provably absent"
+# (TODO.foundation/03-coverage-gate.md item 1) means every :corpus-tagged
+# example -- one that reads corpus fixtures without that tag still runs
+# inside spec:unit, instrumented like anything else.
 SimpleCov.configure do
   enable_coverage :branch
+  # Visible in the report (Line floor comment below) but carries no minimum
+  # yet -- staged separately (TODO.foundation/03-coverage-gate.md, "Bars").
 
-  formats :html, :json # coverage/coverage.json feeds `simplecov patch` (Rakefile: coverage:changed_lines)
+  formats :html, :json # coverage/coverage.json feeds `simplecov patch` (lib/tasks/coverage.rake: coverage:changed_lines)
 
-  # Every lib/ file on disk matching `lib/**/*.rb` (see `cover` below) enters
-  # the report at 0% even if the suite never requires it. Without this, a
-  # file `spec:unit` never loads carries no
-  # coverage.json entry at all, and both the global floor and
-  # coverage:changed_lines score it as "no coverable lines" -- a pass, not a
-  # gap. `cover` also restricts the report to this glob; lib/ does hold
-  # non-.rb files (lib/tasks/*.rake, lib/sirena/theme/builtin/*.yml --
-  # confirmed via `find lib -type f ! -name "*.rb"`), but neither path that
-  # could bring a file into the report can bring one of THOSE in: the
-  # disk-expansion that injects an unloaded .rb file above
-  # (`SimpleCov::UnloadedFileInjector.discover`, gem source) globs with
-  # `Dir.glob(glob, base: root)` against this same literal `lib/**/*.rb`
-  # pattern, and the restriction step that would otherwise drop an
-  # out-of-glob file (`SimpleCov::Result#apply_cover_filters!`) matches
-  # against the identical pattern -- a `.rake`/`.yml` path satisfies neither,
-  # loaded or not (require/load tracking is not what decides this). Confirmed
-  # empirically, not just against the gem source: this session's
-  # `coverage/coverage.json` (188 files) has zero entries ending in `.rake`
-  # or `.yml`.
+  # `cover` below expands to include every lib/ file on disk matching
+  # `lib/**/*.rb`, even one `spec:unit` never requires -- it enters the
+  # report at 0%, not "no coverable lines" (which would count as a pass for
+  # both this floor and coverage:changed_lines). The same glob is also a
+  # restriction: `lib/tasks/*.rake` and `lib/sirena/theme/builtin/*.yml`
+  # never appear in the report, loaded or not -- `cover` matches by
+  # extension (`SimpleCov::UnloadedFileInjector.discover` /
+  # `SimpleCov::Result#apply_cover_filters!`, gem source), not by whether
+  # Ruby's Coverage module ever saw the file.
   cover 'lib/**/*.rb'
 
   # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a
@@ -52,28 +42,16 @@ SimpleCov.configure do
   group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
   group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}
 
-  # Line floor: today's measured baseline on `spec:unit` (`rake
-  # coverage:measure`), with a deliberate margin below the peak -- line
-  # coverage here is order-sensitive (lib/sirena/renderer/base.rb:119's
-  # rescue and its two call sites in renderer/flowchart.rb:126,404 resolve
-  # differently depending on example execution order), so do not raise this
-  # floor off a single run; re-measure across several seeds first, or it
-  # will flake. TODO.foundation/03-coverage-gate.md's 92 floor is this
-  # item's SECOND PR (the 86->92 test pass), not this one.
+  # Line floor: measured baseline on `spec:unit` (`rake coverage:measure`),
+  # margin below the peak. Order-sensitive -- rescue/call-site pairs in
+  # renderer/{base,flowchart,pie}.rb resolve differently by execution order,
+  # so re-measure across several seeds before raising this off one run (see
+  # the gate record for the exact flipping lines and the version.rb/
+  # commands.rb gap `cover` added). 92 is item 1's SECOND PR (86->92 pass).
   #
-  # The `cover 'lib/**/*.rb'` line above added lib/sirena/version.rb (loaded
-  # once by the gemspec before SimpleCov.start ever runs, so Ruby's
-  # single-execution `require` leaves it looking untouched here even though
-  # it ran) and lib/sirena/commands/{batch,render}.rb (genuinely exercised by
-  # no example) to what this floor is measured against, which is why it
-  # reads lower than the 92.30 an incomplete report gave. Closing either gap
-  # for real is out of scope here -- that belongs with the 86->92 test pass.
-  #
-  # Branch coverage is measured and visible in the report (enable_coverage
-  # :branch above) but deliberately carries no minimum yet -- the same
-  # order-sensitivity swings it by about 0.8pp here, and the branch bar is
-  # a staged timeline owned by other items besides (55->70 on item 06's PR,
-  # then 07/14, then 03b's completion pass; TODO.foundation/03-coverage-gate.md,
-  # "Bars"), not by this instrumentation PR.
-  minimum_coverage line: 91.60
+  # 88.50, not 91.60: determinism_spec.rb's full-corpus sweep is now tagged
+  # :corpus (lib/tasks/coverage.rake) and excluded -- five measured spec:unit
+  # runs land at 11348-11351/12807 covered lines (88.61-88.63%); see the
+  # gate record for the pre-tag figure.
+  minimum_coverage line: 88.50
 end
