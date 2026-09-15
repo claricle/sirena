@@ -143,7 +143,7 @@ module Sirena
     # Retrieves handlers for a diagram type.
     #
     # @param type [Symbol] diagram type identifier
-    # @return [Hash] hash with :parser, :transform, :renderer keys
+    # @return [Hash] hash with :parser, :transform, :renderer, :model keys
     # @raise [DiagramTypeError] if type is not registered
     def retrieve_handlers(type)
       handlers = DiagramRegistry.get(type)
@@ -178,10 +178,8 @@ module Sirena
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
-      # Only Transform::Base subclasses consume a reference date. Seven
-      # transforms (git_graph, kanban, mindmap, packet, radar, treemap,
-      # xy_chart) stand outside that hierarchy and read no clock at all, so
-      # pinning them is meaningless — sending today= to them just crashed.
+      # Every registered transform inherits Transform::Base and so has
+      # today=; the respond_to? guard is defensive, not load-bearing.
       transform.today = today if today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'

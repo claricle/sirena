@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -31,6 +32,21 @@ module Sirena
       attribute :orientation, :string, default: -> { "LR" }
       attribute :commits, Commit, collection: true, default: -> { [] }
       attribute :branches, Branch, collection: true, default: -> { [] }
+
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :git_graph
+      def diagram_type
+        :git_graph
+      end
+
+      # Git graphs have no validation rules yet. See TODO.foundation's
+      # corpus burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
+      end
     end
   end
 end

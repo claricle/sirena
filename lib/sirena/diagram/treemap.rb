@@ -14,8 +14,19 @@ module Sirena
         @class_defs = {}
       end
 
-      def type
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :treemap
+      def diagram_type
         :treemap
+      end
+
+      # Treemaps have no validation rules yet. See TODO.foundation's
+      # corpus burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
 
       # Add a root-level node
