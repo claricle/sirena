@@ -150,14 +150,25 @@ namespace :coverage do
     # out of scope, not as a failure (`CoverageFile.exact_index` / its lookup
     # in `compute_rows`), so a changed lib/ file the report never saw would
     # otherwise pass this gate vacuously. Fail closed instead: every changed
-    # path under `.simplecov`'s tracked glob must already have an entry.
-    missing = changed_paths.select do |path|
-      path.start_with?('lib/') && path.end_with?('.rb') && !line_only_report['coverage'].key?(path)
+    # path under `.simplecov`'s tracked glob must already have an entry, AND
+    # that entry's own `lines` array must cover the file's CURRENT line
+    # count -- a stale report that already had a (shorter) entry for this
+    # path passes the key check above but still can't score a line added
+    # past where it stopped measuring: `compute_rows` looks up hits by line
+    # number into that array, finds nothing past its end, and scores the
+    # changed line as out of scope rather than uncovered (Codex round 14
+    # High, reproduced: a changed line beyond a stale entry produced
+    # `rows=[]` and exit 0, not a failure).
+    stale_entry = changed_paths.select do |path|
+      next false unless path.start_with?('lib/') && path.end_with?('.rb')
+
+      entry = line_only_report['coverage'][path]
+      entry.nil? || !File.exist?(path) || entry['lines'].length < File.readlines(path).length
     end
-    unless missing.empty?
-      raise "coverage/coverage.json has no entry for #{missing.join(', ')} -- the report " \
-            'predates this change even though its mtime looks newer; run ' \
-            '`rake coverage:measure` again before coverage:changed_lines'
+    unless stale_entry.empty?
+      raise "coverage/coverage.json has no entry (or a shorter one than the file's current line " \
+            "count) for #{stale_entry.join(', ')} -- the report predates this change even though " \
+            'its mtime looks newer; run `rake coverage:measure` again before coverage:changed_lines'
     end
 
     File.write('tmp/coverage-line-only.json', JSON.generate(line_only_report))
