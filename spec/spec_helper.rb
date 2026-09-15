@@ -7,9 +7,9 @@
 # closes the bare-invocation gap -- a CLI `--tag corpus` (e.g. `rake
 # spec:corpus_runner`) wins over it outright (see the gate record for the
 # rspec-core mechanism). The `after(:suite)` hook below is the real
-# guarantee: it checks what actually ran, not what a filter INTENDED to
-# exclude, and fails loudly instead of letting corpus-inflated coverage.json
-# ship silently.
+# guarantee: it checks what the filter SCHEDULED to run (not merely what it
+# INTENDED to exclude), and fails loudly instead of letting corpus-inflated
+# coverage.json ship silently.
 if ENV["COVERAGE"] == "true"
   require "simplecov"
   SimpleCov.start
@@ -35,14 +35,19 @@ RSpec.configure do |config|
     # Belt-and-suspenders: a CLI `--tag corpus` (e.g. `rake spec:corpus_runner`
     # called directly with COVERAGE still set) deletes the exclude rule above
     # outright -- see the comment near `SimpleCov.start`. This checks what
-    # RAN, so no filter precedence trick can make it pass silently.
+    # the filter SCHEDULED (RSpec.world.filtered_examples), so no filter
+    # precedence trick can make it pass silently. Fail-safe, not fail-unsafe:
+    # under --fail-fast a scheduled-but-never-executed corpus example can
+    # still trip this (RSpec aborts before entering its group), producing a
+    # false-positive raise rather than a silent miss.
     config.after(:suite) do
-      ran = RSpec.world.filtered_examples.values.flatten.select { |e| e.metadata[:corpus] }
-      next if ran.empty?
+      scheduled = RSpec.world.filtered_examples.values.flatten.select { |e| e.metadata[:corpus] }
+      next if scheduled.empty?
 
-      raise "COVERAGE=true ran #{ran.size} :corpus-tagged example(s) instrumented " \
-            "(#{ran.first.full_description.inspect} and #{ran.size - 1} more) -- this " \
-            'would inflate coverage.json. Run without COVERAGE, or exclude with --tag ~corpus.'
+      raise "COVERAGE=true scheduled #{scheduled.size} :corpus-tagged example(s) to run " \
+            "instrumented (#{scheduled.first.full_description.inspect} and " \
+            "#{scheduled.size - 1} more) -- this would inflate coverage.json. Run without " \
+            'COVERAGE, or exclude with --tag ~corpus.'
     end
   end
   config.example_status_persistence_file_path = 'spec/examples.txt'
