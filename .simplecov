@@ -8,10 +8,9 @@
 # `--tag ~corpus` and spec/spec_helper.rb's `filter_run_excluding corpus:`
 # exclude every :corpus-tagged example whenever COVERAGE=true; if either is
 # bypassed, spec/spec_helper.rb's `after(:suite)` backstop fails the run
-# loudly instead (a corpus-inflated coverage.json may still land on disk, but
-# the non-zero exit stops it shipping as a passing measurement). Untagged
-# examples that merely read corpus fixtures are NOT covered by this -- tag
-# them, don't rely on the fixture directory.
+# loudly instead of shipping a corpus-inflated report. Untagged examples that
+# merely read corpus fixtures are NOT covered -- tag them, don't rely on the
+# fixture directory.
 SimpleCov.configure do
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
