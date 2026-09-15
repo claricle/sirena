@@ -759,6 +759,40 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                             described_class::Run.new(text: 'b', bold: false, italic: true)
                           ]])
     end
+
+    # The regression the old Guard B (a per-character run-length stack
+    # walk) was unsound over: kramdown and real `marked` agree exactly on
+    # this shape (`<strong>a*a</strong>`), even though its `*`-run shape
+    # `[2,1,2]` is identical to the genuinely-unsafe `"**foo* bar**"`
+    # above — a pure length model can't tell them apart, but
+    # `unsafe_emphasis_divergence?` (which actually runs both parses and
+    # compares them) can, since it checks flanking context, not just run
+    # lengths. Verified directly against real `marked.parseInline`:
+    # `**a*a**` -> `<strong>a*a</strong>`.
+    #
+    # Mutation-check: temporarily restore the old Guard B call in place of
+    # `unsafe_emphasis_divergence?`. Watched red: this falls back to
+    # `literal_lines`, `**a*a**`, instead of one bold run.
+    it 'keeps a run-length sequence styled when it matches marked exactly, unlike the superficially identical Guard B case' do
+      lines = described_class.parse_lines('**a*a**')
+
+      expect(lines).to eq([[described_class::Run.new(text: 'a*a', bold: true, italic: false)]])
+    end
+
+    # A second, genuine kramdown/marked divergence `unsafe_emphasis_divergence?`
+    # catches where the old Guard B never modeled cross-type nesting at
+    # all: kramdown parses this as one italic run with the inner `*b*`
+    # left as literal markers inside it (verified directly:
+    # `<em>a *b* c</em>`), while real `marked.parseInline` parses the
+    # inner span too (`<em>a <em>b</em> c</em>`, nested italic-in-italic).
+    # Neither shape is reproducible without genuinely re-parsing, so this
+    # falls back to `literal_lines` rather than risk either wrong render —
+    # same trade-off as every other guard in this file.
+    it 'falls back to literal text for a cross-type nesting shape marked and kramdown resolve differently' do
+      raw = '_a *b* c_'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
   end
 
   describe '.build_markdown_tspans' do
