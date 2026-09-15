@@ -1,24 +1,18 @@
 # frozen_string_literal: true
 
 # ENV-gated: `rake coverage:measure` sets COVERAGE=true and runs only
-# `spec:unit` (the :corpus-tagged fixture sweeps are excluded there via
+# `spec:unit` (:corpus-tagged fixture sweeps excluded via
 # lib/tasks/coverage.rake's `--tag ~corpus`), so corpus results never reach
 # the coverage this starts tracking. Plain `bundle exec rspec` / `rake spec`
 # still run everything, uninstrumented (SimpleCov.start never runs without
 # COVERAGE=true).
 #
-# `filter_run_excluding corpus:` below closes the bare-invocation gap (a
-# `COVERAGE=true bundle exec rspec` with no `--tag` at all would otherwise
-# still run :corpus-tagged examples instrumented) -- but it does NOT close
-# `COVERAGE=true bundle exec rspec --tag corpus` or `... rake
-# spec:corpus_runner`: RSpec::Core::ConfigurationOptions applies a CLI
-# `--tag` INCLUDE after this config-level EXCLUDE runs, and
-# FilterManager#add deletes the losing rule from the other side entirely
-# (rspec-core 3.13.6, filter_manager.rb) -- the CLI flag wins outright, not
-# merely overrides for that run. So the `after(:suite)` hook below is the
-# real guarantee: it inspects what actually ran, not what any filter
-# INTENDED to exclude, and fails loudly rather than let a corpus-inflated
-# coverage.json ship silently.
+# `filter_run_excluding corpus:` below only closes the bare-invocation gap --
+# a CLI `--tag corpus` (e.g. `rake spec:corpus_runner`) wins over it outright
+# (see the gate record for the exact rspec-core mechanism). The
+# `after(:suite)` hook below is the real guarantee: it checks what actually
+# ran, not what a filter INTENDED to exclude, and fails loudly instead of
+# letting corpus-inflated coverage.json ship silently.
 if ENV["COVERAGE"] == "true"
   require "simplecov"
   SimpleCov.start

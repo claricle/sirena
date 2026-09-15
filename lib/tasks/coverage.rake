@@ -20,15 +20,14 @@ namespace :spec do
   # `spec:corpus` below is the entry point -- this runner exists only so
   # `spec:corpus` can force COVERAGE off first. RSpec::Core::RakeTask spawns
   # its rspec run via `sh`, which inherits ENV, so calling
-  # `spec:corpus_runner` directly (`rake -T` lists it even with no `desc`
-  # here, since RSpec::Core::RakeTask assigns its own default) with
-  # COVERAGE=true already set used to run it instrumented same as any bare
-  # rspec call would. spec/spec_helper.rb's `filter_run_excluding corpus:`
-  # now closes that at the RSpec-config level regardless of which task
-  # started the process: with COVERAGE=true set, `--tag corpus`'s include
-  # and the config's exclude cancel out, so this runs zero examples and
-  # SimpleCov's own floor check fails loudly instead of silently reporting
-  # corpus-inflated coverage.
+  # `spec:corpus_runner` directly with COVERAGE=true already set still runs
+  # it instrumented: the CLI `--tag corpus` here wins over
+  # spec/spec_helper.rb's config-level `filter_run_excluding corpus:` (RSpec
+  # applies the CLI tag after spec_helper's config runs, so it does NOT
+  # "cancel out" with the exclude). spec/spec_helper.rb's `after(:suite)`
+  # hook is the real guard for this path: it raises loudly if any
+  # :corpus-tagged example ran while COVERAGE=true, instead of letting
+  # corpus-inflated coverage.json ship silently.
   RSpec::Core::RakeTask.new(:corpus_runner) do |task|
     task.rspec_opts = '--tag corpus'
   end
