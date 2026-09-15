@@ -24,8 +24,16 @@ EXPECTED_UNRENDERABLE_SOURCES = [
 ].freeze
 
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.
+# `extend self` rather than `module_function`: the internal, race-sensitive
+# helpers below (directory_identity, within_pinned_directory,
+# manageable_relative?, create_real_directory, copy_through_rename,
+# copy_type_into_pinned_docs_root, atomic_write) are marked
+# `private_class_method` at the bottom of this module so they sit behind the
+# small task-facing API (copy_to_docs, generate_examples, validate_examples,
+# write_svg, the prune_* methods) rather than fully public on it --
+# `module_function` has no way to keep some of its methods off that surface.
 module ExampleTasks
-  module_function
+  extend self
 
   # The gem's own checkout root. Every real examples_dir/docs_assets_dir this
   # task is ever given lives under it -- both are built via
@@ -65,6 +73,15 @@ module ExampleTasks
 
     mmd_files.each do |mmd_file|
       total += 1
+      # Same check-list-once-read-later shape `copy_through_rename` closed
+      # for the docs-assets copy (see its comment): `mmd_files_in` filters
+      # `plain_mmd?` when the list above is built, then this reads by name
+      # later with no re-check. Accepted as-is rather than fixed alongside:
+      # the payload here has to survive being interpreted as Mermaid and
+      # rendered before it reaches any output, unlike the copy path's raw
+      # byte-for-byte read, so the blast radius is a validation run
+      # rendering unexpected content, not a verbatim file leak. Revisit if
+      # this task's threat model changes (e.g. moves to a shared machine).
       source = File.read(mmd_file)
       relative_path = mmd_file.sub("#{examples_dir}/", '')
       expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(relative_path)
@@ -221,7 +238,7 @@ module ExampleTasks
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
     verified_root(docs_assets_dir, label: 'docs assets root')
-    create_real_directory(docs_assets_dir, label: 'docs assets root')
+    docs_identity = create_real_directory(docs_assets_dir, label: 'docs assets root')
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
     work = dirs.filter_map do |dir|
@@ -229,7 +246,7 @@ module ExampleTasks
       svg_files.empty? ? nil : [File.basename(dir), svg_files]
     end
 
-    within_pinned_directory(docs_assets_dir, label: 'docs assets root') do
+    within_pinned_directory(docs_assets_dir, expected_identity: docs_identity, label: 'docs assets root') do
       work.filter_map { |type, svg_files| copy_type_into_pinned_docs_root(type, svg_files) }
     end
   end
@@ -244,9 +261,9 @@ module ExampleTasks
       return nil
     end
 
-    create_real_directory(type, label: "docs target for #{type}")
+    type_identity = create_real_directory(type, label: "docs target for #{type}")
 
-    copied = within_pinned_directory(type, label: "docs target for #{type}") do
+    copied = within_pinned_directory(type, expected_identity: type_identity, label: "docs target for #{type}") do
       svg_files.count do |svg_file|
         destination = File.basename(svg_file)
         unless manageable_relative?(destination)
@@ -279,9 +296,15 @@ module ExampleTasks
   # Enters PATH by its filesystem identity, not by trusting its name still
   # points at the same place by the time the block runs. See `copy_to_docs`
   # above for why this exists and what it does and does not close.
-  def within_pinned_directory(path, label:)
-    expected_identity = directory_identity(path, label: label)
-
+  #
+  # EXPECTED_IDENTITY is the caller's, captured by `create_real_directory`
+  # the moment it last confirmed PATH was good -- not re-derived here from a
+  # fresh, independent by-name lookup of PATH. A fresh lookup here would only
+  # ever compare two reads of whatever PATH resolves to AT THAT LATER MOMENT
+  # against each other, which cannot detect a swap that already happened
+  # entirely before this method was ever called (see `create_real_directory`
+  # for exactly that gap and how it is closed instead).
+  def within_pinned_directory(path, expected_identity:, label:)
     Dir.chdir(path) do
       actual_identity = directory_identity('.', label: label)
       if actual_identity != expected_identity
@@ -315,34 +338,110 @@ module ExampleTasks
   # (callers already walk it via `verified_root`, or this method's own prior
   # call for docs_assets_dir), so recursing through it cannot reopen the
   # race this method exists to close.
+  # @return [Array(Integer, Integer)] PATH's directory identity, captured the
+  #   moment this method last confirmed PATH was good -- the caller pins
+  #   `within_pinned_directory` to THIS value rather than a later, independent
+  #   by-name lookup of its own. Without that, `verified_root`'s ancestor
+  #   check (run once, well before this call) has no continuity into this
+  #   method or into `within_pinned_directory` after it: each re-derives its
+  #   own state fresh from PATH's name. `Dir.mkdir` itself resolves PATH by
+  #   name and follows whatever its ancestors currently are, so a symlink
+  #   raced into an ancestor between `verified_root`'s pass and the
+  #   `Dir.mkdir` call two lines below is followed silently -- no exception,
+  #   `Dir.mkdir` succeeds (the leaf genuinely is a fresh, plain directory,
+  #   just reached through the hijacked ancestor), and the post-EEXIST
+  #   symlink check below never runs because EEXIST never fires. Reproduced
+  #   by execution: racing exactly that swap makes this method return the
+  #   attacker's directory's identity with no error anywhere. Re-running
+  #   `verified_root` immediately after `Dir.mkdir` returns (or after the
+  #   EEXIST rescue confirms a pre-existing plain directory) narrows the race
+  #   to the gap between the two syscalls right here, rather than the whole
+  #   task's runtime.
   def create_real_directory(path, label:)
     FileUtils.mkdir_p(File.dirname(path))
-    Dir.mkdir(path)
-  rescue Errno::EEXIST
-    raise "#{label} became a symlink: #{path}" if File.lstat(path).symlink?
-    raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
+    begin
+      Dir.mkdir(path)
+    rescue Errno::EEXIST
+      raise "#{label} became a symlink: #{path}" if File.lstat(path).symlink?
+      raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
+    end
+
+    verified_root(path, label: label)
+    directory_identity(path, label: label)
   end
 
-  # Same shape as `write_svg` below, for the same reason: `FileUtils.cp`
-  # opens destination and writes through whatever is already there,
-  # including a symlink planted after `manageable?` cleared this call to
-  # proceed. `File.rename` replaces the directory ENTRY at destination
-  # atomically -- never the file a symlink there points to -- so whatever
-  # raced into place between the guard and this call cannot redirect the
-  # write; at worst it gets silently replaced by the real copy, same as an
-  # ordinary rerun overwriting a previous one.
-  def copy_through_rename(source, destination)
+  # The temp-file/EXCL/rename/cleanup shape both this method and `write_svg`
+  # below need: write into a sibling temporary file created with CREAT|EXCL
+  # (refuses to write through whatever already has that name -- a leftover
+  # from a killed run, or a link, rather than File.write, which follows
+  # whatever is already there), rename it into place atomically once the
+  # block finishes, and unlink the temporary if anything before the rename
+  # raises. Each caller decides whether DESTINATION is safe to write to
+  # before calling this (`manageable?`/`manageable_relative?`); this method
+  # only owns the write mechanics once that decision has been made.
+  #
+  # The temporary name is fixed-length, independent of DESTINATION's own
+  # basename: embedding a legal 255-byte target name once produced an
+  # illegal temporary one and ENAMETOOLONG.
+  def atomic_write(destination)
     temporary = File.join(File.dirname(destination), ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
     created = false
     begin
       File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
         created = true
-        IO.copy_stream(source, file)
+        yield file
       end
       File.rename(temporary, destination)
+      # Renamed, so the temporary name is vacant. Leaving `created` set made
+      # the ensure below unlink whatever next claimed that name.
       created = false
     ensure
+      # Only what this call made. Removing a name this call refused to write
+      # to would be the same mistake one step down.
       FileUtils.rm_f(temporary) if created
+    end
+  end
+
+  # Shares `atomic_write` with `write_svg` below, for the same reason:
+  # `FileUtils.cp` opens destination and writes through whatever is already
+  # there, including a symlink planted after `manageable?` cleared this call
+  # to proceed. `File.rename` (inside `atomic_write`) replaces the directory
+  # ENTRY at destination atomically -- never the file a symlink there points
+  # to -- so whatever raced into place between the guard and this call
+  # cannot redirect the write; at worst it gets silently replaced by the real
+  # copy, same as an ordinary rerun overwriting a previous one.
+  #
+  # The read side has its own, separate race: `svg_files` is validated by
+  # `plain_svg?` once when `copy_to_docs` builds its whole work list, long
+  # before this call ever reads SOURCE. Reproduced by execution: swapping
+  # SOURCE for a symlink to an outside file immediately before the read
+  # lands that file's exact bytes in a git-committed, shipped SVG -- the
+  # destination-side rename hardening above does nothing to stop it, because
+  # the vulnerable operation is the READ, not the rename.
+  #
+  # `File::RDONLY | File::NOFOLLOW` opens SOURCE and refuses a symlink
+  # atomically, in the one syscall that matters, rather than checking
+  # File.symlink? first and opening by name second with a gap in between.
+  # `NOFOLLOW` is not defined on every platform this gem ships to (Windows'
+  # C runtime has no O_NOFOLLOW), so it is used only where the constant
+  # exists; where it does not, this falls back to the same
+  # check-immediately-adjacent-to-use tradeoff every other guard in this
+  # file already makes against a filesystem with no atomic check-and-open.
+  def copy_through_rename(source, destination)
+    read_flags = File::RDONLY
+    read_flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+
+    atomic_write(destination) do |file|
+      raise "source became unsafe to read: #{source}" if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
+
+      begin
+        File.open(source, read_flags) { |src| IO.copy_stream(src, file) }
+      rescue Errno::ELOOP
+        # Only reachable where NOFOLLOW is defined: the open itself refused a
+        # symlink raced into SOURCE's name between the check above (a no-op
+        # on this platform) and this line, one syscall instead of two.
+        raise "source became unsafe to read: #{source}"
+      end
     end
   end
 
@@ -552,29 +651,7 @@ module ExampleTasks
     raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
     raise 'rendered no SVG document' unless svg_document?(svg)
 
-    # Independent of the target's basename: embedding a legal 255-byte name
-    # produced an illegal temporary one and ENAMETOOLONG.
-    temporary = File.join(File.dirname(svg_file),
-                          ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
-    created = false
-    begin
-      # CREAT|EXCL rather than File.write: the temporary path is predictable,
-      # and File.write follows whatever is already there. Anything sitting on
-      # that name — a leftover from a killed run, or a link — must abort the
-      # write rather than be written through onto its target.
-      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL) do |file|
-        created = true
-        file.write(svg)
-      end
-      File.rename(temporary, svg_file)
-      # Renamed, so the temporary name is vacant. Leaving `created` set made
-      # the ensure below unlink whatever next claimed that name.
-      created = false
-    ensure
-      # Only what this call made. Removing a name we refused to write to would
-      # be the same mistake one step down.
-      FileUtils.rm_f(temporary) if created
-    end
+    atomic_write(svg_file) { |file| file.write(svg) }
   end
 
   # Takes the root as an argument so a test can drive the real task against a
@@ -606,6 +683,10 @@ module ExampleTasks
         theme = theme_for(mmd_file)
 
         begin
+          # Same accepted gap as `validate_examples` above, same reasoning:
+          # `mmd_files_in` checked `plain_mmd?` once when the list was built,
+          # this reads by name later with no re-check, and the payload still
+          # has to survive Mermaid parsing before it reaches output.
           svg = Sirena.render(File.read(mmd_file), theme: theme, today: EXAMPLE_TODAY)
           write_svg(svg_file, svg, examples_dir)
           puts "  \u2713 #{basename}.svg"
@@ -654,4 +735,13 @@ module ExampleTasks
       true
     end
   end
+
+  # Internal plumbing only reachable through the task-facing API above
+  # (copy_to_docs, generate_examples, validate_examples, write_svg, the
+  # prune_* methods) -- none of these is called directly by anything outside
+  # this module (confirmed: no spec calls one via `described_class.<name>`),
+  # so nothing needs `.send` to keep working once these are no longer public.
+  private_class_method :directory_identity, :within_pinned_directory, :manageable_relative?,
+                       :create_real_directory, :copy_through_rename, :copy_type_into_pinned_docs_root,
+                       :atomic_write
 end
