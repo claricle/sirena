@@ -142,6 +142,24 @@ namespace :coverage do
       file.delete('branches')
       file.delete('methods')
     end
+
+    # The mtime check above only catches a report older than a file CURRENTLY
+    # on disk -- a report restored from a cache or an old checkout with its
+    # mtime touched forward defeats it while still predating this change.
+    # `simplecov patch` treats a changed path with no report entry as merely
+    # out of scope, not as a failure (`CoverageFile.exact_index` / its lookup
+    # in `compute_rows`), so a changed lib/ file the report never saw would
+    # otherwise pass this gate vacuously. Fail closed instead: every changed
+    # path under `.simplecov`'s tracked glob must already have an entry.
+    missing = changed_paths.select do |path|
+      path.start_with?('lib/') && path.end_with?('.rb') && !line_only_report['coverage'].key?(path)
+    end
+    unless missing.empty?
+      raise "coverage/coverage.json has no entry for #{missing.join(', ')} -- the report " \
+            'predates this change even though its mtime looks newer; run ' \
+            '`rake coverage:measure` again before coverage:changed_lines'
+    end
+
     File.write('tmp/coverage-line-only.json', JSON.generate(line_only_report))
 
     # Multi-arg form: bypasses the shell entirely, so a hostile COVERAGE_BASE
