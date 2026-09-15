@@ -1,19 +1,15 @@
 # frozen_string_literal: true
 
-# Configuration only -- SimpleCov.start is called from spec/spec_helper.rb,
-# not from here; calling `.start` from inside this file is deprecated in the
-# installed SimpleCov (1.2.0).
+# Configuration only -- SimpleCov.start is called from spec/spec_helper.rb, not
+# from here (calling `.start` here is deprecated in the installed SimpleCov
+# 1.2.0).
 #
-# `spec:corpus` never requires simplecov at all (see lib/tasks/coverage.rake),
-# so corpus coverage never reaches coverage.json even though this file would
-# still be auto-loaded if it ever did. "Corpus results provably absent"
-# (TODO.foundation/03-coverage-gate.md item 1) means every :corpus-tagged
-# example is excluded whenever COVERAGE=true, via both lib/tasks/coverage.rake's
-# `--tag ~corpus` AND spec/spec_helper.rb's `filter_run_excluding corpus:` --
-# the latter holds regardless of which task or flag started the process. An
-# example that reads corpus fixtures WITHOUT the :corpus tag is untouched by
-# either exclusion and still runs inside spec:unit, instrumented like anything
-# else -- the tag, not the fixture directory, is what this claim rests on.
+# Corpus results never reach this report: lib/tasks/coverage.rake's
+# `--tag ~corpus` and spec/spec_helper.rb's `filter_run_excluding corpus:`
+# (plus its `after(:suite)` backstop) both exclude every :corpus-tagged
+# example whenever COVERAGE=true. An example that reads corpus fixtures
+# WITHOUT the :corpus tag is untouched by either exclusion and still runs
+# instrumented -- tag it, don't rely on the fixture directory.
 SimpleCov.configure do
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
@@ -50,18 +46,10 @@ SimpleCov.configure do
   # margin below the peak. Order-sensitive -- rescue/call-site pairs in
   # renderer/{base,flowchart,pie}.rb resolve differently by execution order,
   # so re-measure across several seeds before raising this off one run. No
-  # gate record on this branch has yet named the exact flipping lines for
-  # all three files (renderer/base.rb and renderer/flowchart.rb are cited in
-  # earlier gate records; pie.rb is not) -- pin those before citing this
+  # gate record on this branch has named pie.rb's exact flipping lines yet
+  # (only base.rb/flowchart.rb are cited) -- pin those before citing this
   # comment as proof for pie.rb specifically. See the gate record for the
-  # version.rb/commands.rb gap `cover` added. 92 is item 1's SECOND PR
-  # (86->92 pass).
-  #
-  # 88.50, not 91.60: determinism_spec.rb's full-corpus sweep is now tagged
-  # :corpus (lib/tasks/coverage.rake) and excluded -- 24 measured spec:unit
-  # runs (clean `coverage/` dir each time, two independent sessions of 12)
-  # land at 11342-11351/12807 covered lines (88.56-88.63%), clearing this
-  # floor with 7+ lines to spare at the observed low end; see the gate
-  # record for the measurement method and the pre-tag number.
+  # measurement method, the exact runs, and the version.rb/commands.rb gap
+  # `cover` added.
   minimum_coverage line: 88.50
 end
