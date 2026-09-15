@@ -49,9 +49,13 @@ SimpleCov.configure do
   # Line floor: measured baseline on `spec:unit` (`rake coverage:measure`),
   # margin below the peak. Order-sensitive -- rescue/call-site pairs in
   # renderer/{base,flowchart,pie}.rb resolve differently by execution order,
-  # so re-measure across several seeds before raising this off one run (see
-  # the gate record for the exact flipping lines and the version.rb/
-  # commands.rb gap `cover` added). 92 is item 1's SECOND PR (86->92 pass).
+  # so re-measure across several seeds before raising this off one run. No
+  # gate record on this branch has yet named the exact flipping lines for
+  # all three files (renderer/base.rb and renderer/flowchart.rb are cited in
+  # earlier gate records; pie.rb is not) -- pin those before citing this
+  # comment as proof for pie.rb specifically. See the gate record for the
+  # version.rb/commands.rb gap `cover` added. 92 is item 1's SECOND PR
+  # (86->92 pass).
   #
   # 88.50, not 91.60: determinism_spec.rb's full-corpus sweep is now tagged
   # :corpus (lib/tasks/coverage.rake) and excluded -- 24 measured spec:unit
