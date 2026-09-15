@@ -21,8 +21,14 @@ SimpleCov.configure do
   # requires it. Without this, a file `spec:unit` never loads carries no
   # coverage.json entry at all, and both the global floor and
   # coverage:changed_lines score it as "no coverable lines" -- a pass, not a
-  # gap. `cover` also restricts the report to this glob, but every file under
-  # lib/ already matches it, so no in-scope file drops out.
+  # gap. `cover` also restricts the report to this glob; lib/ does hold
+  # non-.rb files (lib/tasks/*.rake, lib/sirena/theme/builtin/*.yml --
+  # confirmed via `find lib -type f ! -name "*.rb"`), but none of them drop
+  # out of scope because of this glob: Ruby's Coverage module (which
+  # SimpleCov reads) only ever tracks files loaded as Ruby source via
+  # `require`/`load` in the instrumented process, and `spec:unit` never
+  # requires or loads any of them, so they would carry no coverage.json
+  # entry regardless of what `cover` says.
   cover 'lib/**/*.rb'
 
   # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a

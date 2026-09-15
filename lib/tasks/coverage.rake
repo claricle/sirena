@@ -127,11 +127,17 @@ namespace :coverage do
     # a non-ASCII path in newline-delimited output (e.g. "caf\303\251.rb"),
     # and that quoted string never matches a real path on disk, so the
     # unquoted, NUL-delimited form is the only one safe to split and stat.
-    diff_output, diff_status = Open3.capture2('git', 'diff', '--name-only', '-z', '--merge-base', base)
-    raise "git diff --name-only --merge-base #{base} failed" unless diff_status.success?
+    diff_output, diff_stderr, diff_status =
+      Open3.capture3('git', 'diff', '--name-only', '-z', '--merge-base', base)
+    unless diff_status.success?
+      raise "git diff --name-only --merge-base #{base} failed: #{diff_stderr}"
+    end
 
-    untracked_output, untracked_status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard', '-z')
-    raise 'git ls-files --others --exclude-standard failed' unless untracked_status.success?
+    untracked_output, untracked_stderr, untracked_status =
+      Open3.capture3('git', 'ls-files', '--others', '--exclude-standard', '-z')
+    unless untracked_status.success?
+      raise "git ls-files --others --exclude-standard failed: #{untracked_stderr}"
+    end
 
     changed_paths = (diff_output.split("\0") + untracked_output.split("\0")).uniq
     report_mtime = File.mtime('coverage/coverage.json')
