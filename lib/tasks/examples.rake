@@ -250,6 +250,48 @@ module ExampleTasks
   # below apply that same pattern here, so nothing raced into place between
   # a guard and its matching write can redirect either one.
   #
+  # That closes the race for each INDIVIDUAL leaf operation, but not for the
+  # PATH COMPONENTS the loop below keeps re-resolving by name across many
+  # such operations. `verified_root`/`create_real_directory` confirm
+  # docs_assets_dir once, at the top; every later `Dir.mkdir`/`File.rename`
+  # for every diagram type still re-resolved "docs_assets_dir/<type>" by
+  # walking that name fresh, so a concurrent process swapping docs_assets_dir
+  # itself for a symlink after the one check at the top -- or swapping a
+  # single type's target_dir for a symlink partway through ITS OWN per-file
+  # loop, after target_dir's own one-time check -- redirected every operation
+  # from that point on. Confirmed by execution (Codex round 3, HANDOFF 7):
+  # racing a symlink into target_dir between the second and third SVG of a
+  # loop that had already copied the first two normally sent the rest into
+  # the attacker's directory, with the task still reporting success.
+  #
+  # `within_pinned_directory` below closes that: `Dir.chdir` resolves its
+  # argument to a specific directory once, and the kernel then tracks the
+  # process's current directory by that directory's own identity, not by
+  # re-resolving the path string -- so every RELATIVE name used after it
+  # (never one rejoined with the outer path) stays pinned to the same
+  # physical directory for as long as the block runs, regardless of what the
+  # outer name is renamed to or replaced with meanwhile. Verified directly:
+  # renaming the directory a chdir'd process is inside of, and replacing its
+  # old name with a symlink to an attacker directory, left every relative
+  # write still landing in the original directory and the attacker directory
+  # empty. `Dir.chdir` itself still has to resolve the name once to enter it,
+  # the same single-syscall-wide gap `create_real_directory` already accepts
+  # for the same reason (no POSIX primitive makes "verify, then use" one
+  # step) -- so this pins by directory IDENTITY (device + inode, captured
+  # right before the chdir and re-checked right after) rather than trusting
+  # the chdir succeeded into the place expected, and raises instead of
+  # proceeding on a mismatch. Verified directly: swapping the symlink in
+  # during that one-syscall gap is reliably caught, and aborts with nothing
+  # written to the attacker directory. A fully closed guarantee -- pinning
+  # BEFORE any name lookup at all -- needs a directory file descriptor
+  # opened first and directory-relative syscalls after (`openat`/`mkdirat`/
+  # `renameat`), which Ruby's stdlib does not expose portably; reaching them
+  # needs an FFI call to raw libc (`Fiddle`), which is not portable to
+  # Windows either -- this PR's whole target platform. Applied at two
+  # nesting levels below: once for docs_assets_dir across the whole method
+  # (closing the docs_assets_dir-level race), and once per diagram type
+  # inside it (closing the target_dir-level race for that type's own loop).
+  #
   # Not wrapped in `with_examples_lock`: that lock only serializes this
   # gem's OWN generate/prune tasks against each other and buys nothing
   # against an external actor, which is the threat model above. It is
@@ -257,28 +299,47 @@ module ExampleTasks
   # generate/prune take it -- so this method cannot read examples_dir mid
   # regeneration by another of this gem's own tasks.
   #
+  # `Dir.chdir` is process-wide and documented as not thread-safe against
+  # OTHER code running in the same process. Acceptable here because this
+  # whole module only ever runs as a single rake task's own CLI process --
+  # `lib/tasks/examples.rake` is loaded by the Rakefile alone
+  # (`Dir.glob('lib/tasks/**/*.rake').each { |r| load r }`), never
+  # `require`d by `lib/sirena.rb`, so it never runs as library code inside a
+  # caller's own multi-threaded application.
+  #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
     verified_root(docs_assets_dir, label: 'docs assets root')
     create_real_directory(docs_assets_dir, label: 'docs assets root')
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
-    dirs.filter_map do |dir|
+    work = dirs.filter_map do |dir|
       svg_files = children(dir).select { |path| plain_svg?(path) }
-      next if svg_files.empty?
+      svg_files.empty? ? nil : [File.basename(dir), svg_files]
+    end
 
-      target_dir = File.join(docs_assets_dir, File.basename(dir))
-      if File.symlink?(target_dir)
-        puts "  ⚠️  skipped #{File.basename(dir)}, its docs target is a symlink"
-        next
-      end
+    within_pinned_directory(docs_assets_dir, label: 'docs assets root') do
+      work.filter_map { |type, svg_files| copy_type_into_pinned_docs_root(type, svg_files) }
+    end
+  end
 
-      create_real_directory(target_dir, label: "docs target for #{File.basename(dir)}")
+  # Runs entirely relative to the CALLER's pin on docs_assets_dir (see
+  # `copy_to_docs` above) -- `type` and every destination below are bare
+  # names, never rejoined with docs_assets_dir's own path, so nothing here
+  # can be redirected by whatever that outer name is later changed to.
+  def copy_type_into_pinned_docs_root(type, svg_files)
+    if File.symlink?(type)
+      puts "  ⚠️  skipped #{type}, its docs target is a symlink"
+      return nil
+    end
 
-      copied = svg_files.count do |svg_file|
-        destination = File.join(target_dir, File.basename(svg_file))
-        unless manageable?(target_dir, destination)
-          puts "  ⚠️  skipped #{File.basename(dir)}/#{File.basename(svg_file)}, " \
+    create_real_directory(type, label: "docs target for #{type}")
+
+    copied = within_pinned_directory(type, label: "docs target for #{type}") do
+      svg_files.count do |svg_file|
+        destination = File.basename(svg_file)
+        unless manageable_relative?(destination)
+          puts "  ⚠️  skipped #{type}/#{destination}, " \
                'its docs copy target is a symlink or already exists as something other than a plain file'
           next false
         end
@@ -286,9 +347,50 @@ module ExampleTasks
         copy_through_rename(svg_file, destination)
         true
       end
-
-      [File.basename(dir), copied]
     end
+
+    [type, copied]
+  end
+
+  # The device+inode pair identifying the real filesystem object PATH names
+  # right now -- not the path string itself, which is exactly what a
+  # concurrent rename/symlink-swap can change out from under a name without
+  # changing what a process already inside it is pinned to. Used by
+  # `within_pinned_directory` to detect (not prevent -- see its comment) a
+  # swap in the one-syscall gap between checking a name and entering it.
+  def directory_identity(path, label:)
+    stat = File.lstat(path)
+    raise "#{label} is not a directory: #{path}" unless stat.directory?
+
+    [stat.dev, stat.ino]
+  end
+
+  # Enters PATH by its filesystem identity, not by trusting its name still
+  # points at the same place by the time the block runs. See `copy_to_docs`
+  # above for why this exists and what it does and does not close.
+  def within_pinned_directory(path, label:)
+    expected_identity = directory_identity(path, label: label)
+
+    Dir.chdir(path) do
+      actual_identity = directory_identity('.', label: label)
+      if actual_identity != expected_identity
+        raise "#{label} changed identity between verification and use: #{path}"
+      end
+
+      yield
+    end
+  end
+
+  # Same question `manageable?` below answers, for a NAME already relative
+  # to an `within_pinned_directory` pin rather than an absolute path under
+  # some root: containment is not a separate question here (the pin already
+  # guarantees that), only whether the name itself is safe to write through
+  # -- not a symlink, and not something other than a plain file already
+  # sitting there.
+  def manageable_relative?(name)
+    return false if File.symlink?(name)
+
+    !File.exist?(name) || File.lstat(name).file?
   end
 
   # One syscall that either creates a fresh real directory or fails outright
