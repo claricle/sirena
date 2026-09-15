@@ -359,17 +359,80 @@ RSpec.describe ExampleTasks do
       end
     end
 
+    # The ancestor check above runs ONCE, before `create_real_directory`
+    # ever calls `Dir.mkdir` -- nothing carried that verification forward
+    # into `Dir.mkdir` itself, which resolves docs_assets_dir by name and
+    # follows whatever its ancestors currently are. Reproduced before this
+    # was closed: racing docs/assets into a symlink in the gap between the
+    # ancestor check and Dir.mkdir made Dir.mkdir succeed silently -- no
+    # EEXIST, because the leaf genuinely was a fresh directory, just reached
+    # through the hijacked ancestor -- and every SVG landed under the
+    # attacker's directory while copy_to_docs reported success. Stubbing
+    # `Dir.mkdir` (the same technique the sibling target_dir race spec above
+    # uses) times the swap for the one syscall that matters: by the time
+    # `Dir.mkdir(docs_assets_dir)` runs, `FileUtils.mkdir_p` one line above
+    # it has already created `docs/assets` for real, so the swap here
+    # replaces that real directory with a symlink immediately before the
+    # leaf itself is created through it.
+    #
+    # `Dir.mkdir` itself does not fail here -- unlike the sibling test above,
+    # nothing already occupies the hijacked name, so it succeeds and leaves
+    # an empty leaf directory under the attacker's path. The re-verification
+    # this spec proves raises before anything is COPIED into that leaf: no
+    # SVG data ever reaches the attacker, which is the property that matters.
+    it 'refuses rather than writing through an ancestor symlink raced in between the ancestor check and directory creation' do
+      Dir.mktmpdir('sirena-root') do |root|
+        stub_const('ExampleTasks::GEM_ROOT', root)
+
+        Dir.mktmpdir('sirena-attacker') do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+          docs_assets_dir = File.join(root, 'docs', 'assets', 'examples')
+          hijacked_ancestor = File.join(root, 'docs', 'assets')
+
+          allow(Dir).to receive(:mkdir).and_wrap_original do |original, path, *rest|
+            if File.expand_path(path) == docs_assets_dir
+              FileUtils.rm_rf(hijacked_ancestor)
+              File.symlink(attacker, hijacked_ancestor)
+            end
+            original.call(path, *rest)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs_assets_dir) }
+            .to raise_error(/docs assets root sits beneath a symlinked directory/)
+          expect(Dir.children(File.join(attacker, 'examples'))).to eq([])
+        end
+      end
+    end
+
     # The four guards above are all check-then-act: each decides at one
     # moment whether a name is safe, and a later call opens or creates that
     # same name at a different moment. Something else with write access to
     # docs_assets_dir during this task's run -- a concurrent process, not a
     # remote input -- can swap a symlink into the gap between the two.
-    # Reproduced by deterministically racing the exact call FileUtils.cp
-    # used to make in that gap: a symlink appears only AFTER the per-file
-    # guard clears the destination, immediately before the write that
-    # follows. Before this method used rename instead of `FileUtils.cp`,
-    # this overwrote the file the raced-in symlink pointed to, outside
-    # docs_assets_dir entirely, and the task still reported success.
+    # Reproduced by racing the exact call `copy_through_rename` makes at the
+    # per-file destination: a symlink appears only AFTER the per-file guard
+    # clears it, immediately before the `File.rename` that lands this file.
+    # `File.rename` replaces the directory ENTRY at its destination
+    # atomically -- it never opens or follows whatever is already there --
+    # so the raced-in symlink is replaced outright, never written through.
+    #
+    # A prior version of this spec mocked `FileUtils.cp` instead, matching on
+    # `dest == destination` (the full file path). That never fired, on either
+    # this code or the `FileUtils.cp(svg_file, target_dir)` call this method
+    # replaced: `FileUtils.cp(source, dest)` with a directory `dest` receives
+    # the DIRECTORY as `dest`, never the joined file path, so the comparison
+    # was false in every case and the "attack" was never staged -- confirmed
+    # by `mutation-check.sh`, which found the example passed even against the
+    # unfixed, genuinely vulnerable `FileUtils.cp`-based code it was meant to
+    # catch. `to` below is matched the same way the sibling `Dir.mkdir` race
+    # spec above matches `path`: `File.expand_path` resolves the bare
+    # relative name `copy_through_rename` actually renames against the
+    # process's current directory, which the surrounding `Dir.chdir` pins to
+    # `docs/flowchart` for the whole per-file loop. Matched against
+    # `File.realpath(docs)`, not the raw mktmpdir path, for the same reason
+    # as that sibling spec: `Dir.chdir` resolves through macOS's
+    # `/var -> /private/var`.
     it 'does not write through a destination symlink raced in after the per-file guard clears it' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-outside') do |outside|
@@ -377,17 +440,54 @@ RSpec.describe ExampleTasks do
           File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
           victim = File.join(outside, 'victim.svg')
           File.write(victim, 'KEEP ME')
-          destination = File.join(docs, 'flowchart', 'a.svg')
+          destination = File.join(File.realpath(docs), 'flowchart', 'a.svg')
 
-          allow(FileUtils).to receive(:cp).and_wrap_original do |original, source, dest, **kwargs|
-            File.symlink(victim, dest) if dest == destination
-            original.call(source, dest, **kwargs)
+          allow(File).to receive(:rename).and_wrap_original do |original, from, to|
+            File.symlink(victim, to) if File.expand_path(to) == destination
+            original.call(from, to)
           end
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
           expect([copied, File.symlink?(destination), File.read(victim)])
             .to eq([[['flowchart', 1]], false, 'KEEP ME'])
+        end
+      end
+    end
+
+    # The destination side above is hardened by rename; the SOURCE side has
+    # its own, separate race, one step earlier: `svg_files` is validated by
+    # `plain_svg?` once when `copy_to_docs` builds its whole work list, long
+    # before `copy_through_rename` ever reads the source. Reproduced before
+    # this was closed: swapping the source for a symlink to a file outside
+    # the tree, timed to land immediately before the read opens it by name,
+    # put that outside file's exact bytes into a git-committed, shipped SVG
+    # -- the destination-side guard above does nothing to stop it, because
+    # the vulnerable operation is the READ, not the rename. Wrapping
+    # `File.open` times the swap for the one call that matters: the source
+    # is still a plain file everywhere else in the run, and becomes a
+    # symlink only in the gap right before it is opened for reading.
+    it 'does not read through a source symlink raced in immediately before the read' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          source = File.join(examples_dir, 'flowchart', 'a.svg')
+          File.write(source, '<svg>real content</svg>')
+          secret = File.join(outside, 'secret.txt')
+          File.write(secret, 'TOP SECRET')
+
+          allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
+            if path == source && File.file?(path) && !File.symlink?(path)
+              File.delete(source)
+              File.symlink(secret, source)
+            end
+            original.call(path, *rest, &block)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs) }
+            .to raise_error(/source became unsafe to read/)
+          expect(File).not_to exist(File.join(docs, 'flowchart', 'a.svg'))
+          expect(File.read(secret)).to eq('TOP SECRET')
         end
       end
     end
@@ -1251,7 +1351,7 @@ RSpec.describe ExampleTasks do
     # Only methods on ExampleTasks itself. The `clean` task in the namespace
     # below is deliberately destructive and is out of scope.
     let(:permitted_deleters) do
-      %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg copy_through_rename]
+      %w[prune_orphan_svgs prune_known_unrenderable_svgs write_svg copy_through_rename atomic_write]
     end
 
     # Derived from the classes themselves, not hand-typed: a three-pattern
