@@ -20,6 +20,7 @@ require 'English'
 # are the ones the task runs. Loading it defines tasks into the default Rake
 # application; none is invoked here.
 TASKS_RAKE_FILE = File.expand_path('../../../lib/tasks/examples.rake', __dir__)
+EXAMPLE_TASKS_FILE = File.expand_path('../../../lib/tasks/example_tasks.rb', __dir__)
 load TASKS_RAKE_FILE unless defined?(ExampleTasks)
 
 RSpec.describe ExampleTasks do
@@ -1276,7 +1277,7 @@ RSpec.describe ExampleTasks do
     end
 
     it 'confines every deletion call to the methods allowed to delete' do
-      source = File.readlines(TASKS_RAKE_FILE)
+      source = File.readlines(EXAMPLE_TASKS_FILE)
       current = nil
       offenders = []
 

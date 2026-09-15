@@ -236,7 +236,13 @@ RSpec.describe Sirena::Engine do
     it 'calls rand nowhere and the clock only in the injectable reader' do
       # lib/sirena.rb itself sits outside lib/sirena/, so the old glob
       # never scanned the file that registers every diagram type.
+      #
+      # lib/tasks/ is excluded: it is maintainer CLI tooling loaded only by
+      # the Rakefile, never required onto a render path (see this repo's
+      # CLAUDE.md) -- its SecureRandom use is a unique temp filename for an
+      # atomic write, not anything that reaches rendered output.
       offenders = Dir.glob(File.expand_path('../../lib/**/*.rb', __dir__))
+        .reject { |file| file.include?('/lib/tasks/') }
         .flat_map { |file| ambient_reads_in(file) }
 
       expect(offenders).to be_empty,
