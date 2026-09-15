@@ -155,4 +155,18 @@ RSpec.describe Sirena::DiagramRegistry do
       end
     end
   end
+
+  # The mirror of the test above: a bare `kanban` header parses to an empty
+  # board (no columns), and `Diagram::Kanban#valid?` treats that as valid on
+  # purpose (see the comment on that method) -- do not reintroduce a "must
+  # have at least one column" check there. This asserts both halves of that
+  # guarantee stay true together: the model-level predicate, and the
+  # Engine-level guarantee it backs now that Transform::Base#call runs the
+  # guard for kanban too.
+  describe 'a valid, empty model driven through Engine' do
+    it 'renders rather than raising' do
+      expect(Sirena::Diagram::Kanban.new.valid?).to be(true)
+      expect(Sirena::Engine.new.render("kanban\n")).to include('<svg')
+    end
+  end
 end
