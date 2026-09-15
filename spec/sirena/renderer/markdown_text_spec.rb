@@ -178,12 +178,16 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # — "a*" never shares a block with the tab-led "b", so nothing is lost
     # either way — which is exactly why this shape alone can't stand in for
     # the regression guard below: it can't tell the two mechanisms apart.
-    it 'treats a tab-leading line after a blank line as literal text, on its own line' do
+    #
+    # Codex round 6 High: the blank line between "a*" and "\tb" no longer
+    # produces its own `[]` line in the output — see `literal_lines`'
+    # comment for why (real mmdc collapses any blank-line gap to zero extra
+    # vertical space, matching a plain hard break, not a distinct row).
+    it 'treats a tab-leading line after a blank line as literal text, with the blank gap collapsed' do
       lines = described_class.parse_lines("a*\n\n\tb")
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'a*', bold: false, italic: false)],
-                            [],
                             [described_class::Run.new(text: "\tb", bold: false, italic: false)]
                           ])
     end
@@ -653,34 +657,52 @@ RSpec.describe Sirena::Renderer::MarkdownText do
 
       expect(lines).to eq([[described_class::Run.new(text: '*x*', bold: true, italic: false)]])
     end
+
+    # Codex round 6 High, the OTHER half of the fix (`literal_lines` above
+    # covers the marker-free fallback path; this covers the real kramdown
+    # `Parser` path, reached only when `raw` contains a `*`/`_`, so it's a
+    # genuinely different code path — the `:blank` case in `parse_lines`
+    # itself). A blank-line paragraph gap between two `:p` blocks used to
+    # push one empty `[]` line per blank `\n`; now it contributes none,
+    # matching real mmdc's zero-margin paragraph CSS (`card[**A**\n\nB]`
+    # renders `<p><strong>A</strong></p><p>B</p>` with the same single-line
+    # advance as a plain hard break).
+    #
+    # Mutation-check: reinstate the pre-fix `:blank` handling
+    # (`block.value.count("\n").times { lines << [] }`). Watched red: this
+    # comes back with an extra `[]` line between the two runs instead of
+    # the two lines concatenated directly.
+    it 'collapses a blank-line paragraph gap to no extra lines on the real kramdown parse path' do
+      lines = described_class.parse_lines("**A**\n\nB")
+
+      expect(lines).to eq([
+                            [described_class::Run.new(text: 'A', bold: true, italic: false)],
+                            [described_class::Run.new(text: 'B', bold: false, italic: false)]
+                          ])
+    end
   end
 
   describe '.build_markdown_tspans' do
-    # Mutation-check: this is the bug the fix closes. Before it, a blank
-    # line (empty runs array) had no first run to hang its `dy` shift on,
-    # so the shift was silently dropped instead of carried onto the next
-    # line. Watched red: only one tspan comes back, with no `dy` at all.
-    it "carries a blank line's height onto the next line instead of dropping it" do
-      lines = described_class.parse_lines("Title\n\nSubtitle")
+    # Codex round 6 High: a blank-line paragraph gap used to shift the
+    # following line down by one extra line-height per blank `\n`
+    # ("Title\n\nSubtitle" used to carry a 2.4em dy — one line-height for
+    # the blank plus one for the real advance). Verified directly against
+    # real mmdc: `card[Title\n\nSubtitle]` renders `<p>Title</p><p>Subtitle</p>`
+    # with zero paragraph margin, i.e. exactly the same single-line advance
+    # as a plain hard break — `card[Title\nSubtitle]` renders identically.
+    # `parse_lines` no longer produces an intervening empty runs array for
+    # any number of blank lines (see `literal_lines`), so this exercises
+    # both the producer and `build_markdown_tspans` together.
+    #
+    # Mutation-check: reinstate the pre-fix `literal_lines`
+    # (`raw.split("\n", -1)` with no paragraph collapsing) — watched red,
+    # dy comes back as `2.4em` instead of `1.2em`.
+    it 'advances by exactly one line-height across a blank-line gap, however many blank lines' do
+      one_blank = described_class.build_markdown_tspans(described_class.parse_lines("Title\n\nSubtitle"), x: 5)
+      two_blank = described_class.build_markdown_tspans(described_class.parse_lines("A\n\n\nB"), x: 5)
 
-      tspans = described_class.build_markdown_tspans(lines, x: 5)
-
-      expect(tspans.map { |t| [t.content, t.dy] }).to eq([
-                                                           ['Title', nil],
-                                                           ['Subtitle', '2.4em']
-                                                         ])
-    end
-
-    # Two blank lines in a row accumulate to three line-heights, not one.
-    it 'accumulates across more than one consecutive blank line' do
-      lines = described_class.parse_lines("A\n\n\nB")
-
-      tspans = described_class.build_markdown_tspans(lines, x: 5)
-
-      expect(tspans.map { |t| [t.content, t.dy] }).to eq([
-                                                           ['A', nil],
-                                                           ['B', '3.6em']
-                                                         ])
+      expect(one_blank.map { |t| [t.content, t.dy] }).to eq([['Title', nil], ['Subtitle', '1.2em']])
+      expect(two_blank.map { |t| [t.content, t.dy] }).to eq([['A', nil], ['B', '1.2em']])
     end
   end
 end

@@ -186,24 +186,58 @@ module Sirena
           when :p
             lines.concat(split_on_hard_breaks(flatten_runs(block, bold: false, italic: false)))
           when :blank
-            block.value.count("\n").times { lines << [] }
+            # Codex round 6 High: this used to push one empty `[]` line per
+            # blank-line `\n` in the gap, modeling a paragraph break as
+            # extra rendered rows. Real mmdc's CSS sets paragraph margins to
+            # zero, so any number of blank lines between two `:p` blocks (or
+            # a leading/trailing one, which kramdown also reports as a
+            # `:blank` block) renders with NO extra vertical space at all —
+            # adjacent `<p>` tags sit exactly like a single plain line
+            # break, and a leading/trailing one contributes nothing
+            # visible. Verified against real mmdc: `card[A\n\nB]` renders
+            # `<p>A</p><p>B</p>` with a normal single-line advance between
+            # them, not a doubled gap, and `card[A\n\n]` renders `<p>A</p>`
+            # alone with no trailing blank row. So a `:blank` block is
+            # walked (it must stay in `PLAIN_BLOCK_TYPES` so its presence
+            # doesn't trip the fallback-to-literal guard above) but
+            # contributes zero lines, regardless of how many `\n`s it
+            # spans.
           end
         end
 
         lines
       end
 
-      # The `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` fallback: every
-      # literal `\n`-delimited line becomes one unstyled run, with no
-      # markup parsing at all — the same line-splitting this label would
-      # get either way, minus the bold/italic detection that isn't worth
-      # kramdown's worst case for text this marker-dense (or, for the
-      # length backstop, this long).
+      # The `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` fallback — and,
+      # since `parse_lines` only reaches the kramdown `Parser` when `raw`
+      # contains a `*`/`_` at all, this is also the path ordinary
+      # marker-free card text takes: every literal `\n`-delimited line
+      # becomes one unstyled run, with no markup parsing at all — the same
+      # line-splitting this label would get either way, minus the
+      # bold/italic detection that isn't worth kramdown's worst case for
+      # text this marker-dense (or, for the length backstop, this long).
+      #
+      # Codex round 6 High: this used to split on every single `\n`,
+      # treating a blank-line paragraph gap the same as a real line — a
+      # `\n\n` (or more) run produced one or more empty `[]` lines in the
+      # output, same defect as the `:blank` case above and hit by the exact
+      # same repro (`card[A\n\n]`, `card[A\n\nB]`) since neither contains a
+      # marker and both take this path, not the kramdown one. Paragraphs
+      # (text separated by 2+ consecutive `\n`s) are split out first and
+      # concatenated with no separator lines between them — matching real
+      # mmdc's zero-margin paragraph CSS — and only a genuine single `\n`
+      # inside one paragraph still produces a per-line split (a real hard
+      # break, `card[A\nB]` renders `<p>A<br />B</p>` in real mmdc, unlike
+      # the blank-line case).
       #
       # @api private
       def literal_lines(raw)
-        raw.split("\n", -1).map do |line|
-          line.empty? ? [] : [Run.new(text: line, bold: false, italic: false)]
+        raw.split(/\n{2,}/, -1).flat_map do |paragraph|
+          next [] if paragraph.empty?
+
+          paragraph.split("\n", -1).map do |line|
+            line.empty? ? [] : [Run.new(text: line, bold: false, italic: false)]
+          end
         end
       end
 
@@ -461,13 +495,19 @@ module Sirena
       # down one line height. The very first line needs neither — it
       # starts at the parent <text> element's own x/y.
       #
-      # A blank line (`parse_lines` splitting on two adjacent `\n`s)
-      # produces an empty runs array, so it has no run to carry its own
-      # `dy`. Its line-height is carried forward as `pending_lines` and
-      # folded into the next line's leading shift instead of being
-      # dropped — two blank lines in a row shift the following line down
-      # by three line-heights (`2.4em` waiting plus its own `1.2em`), not
-      # one.
+      # Codex round 6 High: `parse_lines`/`literal_lines` used to produce an
+      # empty runs array for a blank-line paragraph gap, and this method
+      # carried that gap's height forward onto the next line's `dy` (two
+      # blank lines shifted the following line by three line-heights, not
+      # one) — but real mmdc's zero-margin paragraph CSS collapses any
+      # number of blank lines between two paragraphs to a single normal
+      # line-height advance, same as a plain hard break. Neither producer
+      # emits an empty runs array anymore (see `literal_lines` and the
+      # `:blank` case in `parse_lines`), so `pending_lines` in practice is
+      # now always exactly 1 for every non-first line — the accumulation
+      # loop below is kept general (it still does the right thing if a
+      # future caller ever does pass an empty runs array) rather than
+      # special-cased down to a per-line constant.
       #
       # @param lines [Array<Array<Run>>] from `parse_lines`, already
       #   truncated if truncation applies at this call site
