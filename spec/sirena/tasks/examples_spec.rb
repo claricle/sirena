@@ -400,21 +400,124 @@ RSpec.describe ExampleTasks do
     # attacker's directory instead of docs_assets_dir. `Dir.mkdir` (used now
     # in place of `mkdir_p`) has no such tolerance: it fails outright on
     # anything already at that name.
+    #
+    # `Dir.mkdir` is called with a name RELATIVE to the pin on docs_assets_dir
+    # now (see `copy_type_into_pinned_docs_root`), not the absolute
+    # target_dir path this race used to swap by exact string match -- so the
+    # stub below matches by resolving whatever `Dir.mkdir` actually receives
+    # against the process's current directory at the moment of the call,
+    # the same way the real filesystem would. Matched against `File.realpath`
+    # of docs, not the raw mktmpdir path: `Dir.chdir` (taken to pin
+    # docs_assets_dir before this point) resolves through macOS's `/var ->
+    # /private/var`, so `Dir.pwd` afterward is already the realpath, and a
+    # comparison against the un-resolved alias would never match.
     it 'refuses rather than writing into a target_dir symlink raced in right before creation' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-attacker') do |attacker|
           FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
           File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
-          target_dir = File.join(docs, 'flowchart')
+          target_dir = File.join(File.realpath(docs), 'flowchart')
 
           allow(Dir).to receive(:mkdir).and_wrap_original do |original, path, *rest|
-            File.symlink(attacker, target_dir) if path == target_dir && !File.exist?(path)
+            if File.expand_path(path) == target_dir && !File.exist?(path)
+              File.symlink(attacker, path)
+            end
             original.call(path, *rest)
           end
 
           expect { described_class.copy_to_docs(examples_dir, docs) }
             .to raise_error(/docs target for flowchart became a symlink/)
           expect([File.symlink?(target_dir), Dir.children(attacker)]).to eq([true, []])
+        end
+      end
+    end
+
+    # The gap `within_pinned_directory` cannot close by construction --
+    # entering a directory by name still has to resolve that name once --
+    # is detected instead: identity is captured right before the chdir and
+    # re-checked right after, so a symlink that wins this one-syscall race
+    # is caught rather than silently walked into.
+    it 'refuses rather than proceeding when docs_assets_dir changes identity right before the pin is taken' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-attacker') do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
+
+          allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
+            if File.expand_path(path) == docs
+              FileUtils.rm_rf(docs)
+              File.symlink(attacker, docs)
+            end
+            original.call(path, &block)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs) }
+            .to raise_error(/docs assets root changed identity between verification and use/)
+          expect(Dir.children(attacker)).to eq([])
+        end
+      end
+    end
+
+    # The same detection, one level down: target_dir's own identity can
+    # change in the gap between `create_real_directory` confirming it and
+    # `within_pinned_directory` entering it for the per-file loop. Matched
+    # against `File.realpath` of docs for the same reason as the sibling
+    # test above.
+    it 'refuses rather than proceeding when target_dir changes identity right before its own pin is taken' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-attacker') do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
+          target_dir = File.join(File.realpath(docs), 'flowchart')
+
+          allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
+            if File.expand_path(path) == target_dir
+              FileUtils.rm_rf(target_dir)
+              File.symlink(attacker, target_dir)
+            end
+            original.call(path, &block)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs) }
+            .to raise_error(/docs target for flowchart changed identity between verification and use/)
+          expect(Dir.children(attacker)).to eq([])
+        end
+      end
+    end
+
+    # Proves the actual gap Codex round 3 found (HANDOFF 7): the check done
+    # ONCE at loop start does not protect the rest of a multi-file loop.
+    # Deliberately timed for the SECOND file, after the first has already
+    # copied normally -- the harder-to-dismiss case, since it proves a
+    # confirmation done before the loop started does not cover what comes
+    # after it.
+    it 'keeps every later file pinned to the original target_dir, even after target_dir is renamed away and replaced mid-loop' do
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-attacker') do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>a</svg>')
+          File.write(File.join(examples_dir, 'flowchart', 'b.svg'), '<svg>b</svg>')
+          target_dir = File.join(docs, 'flowchart')
+          moved_aside = File.join(docs, 'flowchart-moved-by-attacker')
+
+          renames = 0
+          allow(File).to receive(:rename).and_wrap_original do |original, from, to|
+            result = original.call(from, to)
+            renames += 1
+            if renames == 1
+              # Mid-loop: swap the outer name AFTER the first file's write
+              # has already landed, exactly the loop-start-only-check gap.
+              FileUtils.mv(target_dir, moved_aside)
+              File.symlink(attacker, target_dir)
+            end
+            result
+          end
+
+          copied = described_class.copy_to_docs(examples_dir, docs)
+
+          expect(copied).to eq([['flowchart', 2]])
+          expect(Dir.children(attacker)).to eq([])
+          expect(Dir.children(moved_aside).sort).to eq(%w[a.svg b.svg])
         end
       end
     end
