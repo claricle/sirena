@@ -327,36 +327,17 @@ module ExampleTasks
     !File.exist?(name) || File.lstat(name).file?
   end
 
-  # `Dir.mkdir` fails outright on anything already at that name, unlike
-  # `FileUtils.mkdir_p` which accepts an existing symlink as success without
-  # asking what it is. `Errno::EEXIST` is therefore expected on a rerun, not
-  # an error -- but only once `lstat` right after confirms what's actually
-  # there is a plain real directory, never mkdir_p'd blindly.
+  # `Dir.mkdir` fails on anything already at that name, so `Errno::EEXIST` is
+  # expected on a rerun -- but only once `lstat` confirms what's there is a
+  # plain real directory. `FileUtils.mkdir_p` on the parent never recurses
+  # into `path` itself, so it cannot reopen the race this method closes.
   #
-  # `Dir.mkdir` is not recursive, so `FileUtils.mkdir_p` runs on the PARENT
-  # only, never on `path` itself: the parent is never the protected leaf
-  # (callers already walk it via `verified_root`, or this method's own prior
-  # call for docs_assets_dir), so recursing through it cannot reopen the
-  # race this method exists to close.
-  # @return [Array(Integer, Integer)] PATH's directory identity, captured the
-  #   moment this method last confirmed PATH was good -- the caller pins
-  #   `within_pinned_directory` to THIS value rather than a later, independent
-  #   by-name lookup of its own. Without that, `verified_root`'s ancestor
-  #   check (run once, well before this call) has no continuity into this
-  #   method or into `within_pinned_directory` after it: each re-derives its
-  #   own state fresh from PATH's name. `Dir.mkdir` itself resolves PATH by
-  #   name and follows whatever its ancestors currently are, so a symlink
-  #   raced into an ancestor between `verified_root`'s pass and the
-  #   `Dir.mkdir` call two lines below is followed silently -- no exception,
-  #   `Dir.mkdir` succeeds (the leaf genuinely is a fresh, plain directory,
-  #   just reached through the hijacked ancestor), and the post-EEXIST
-  #   symlink check below never runs because EEXIST never fires. Reproduced
-  #   by execution: racing exactly that swap makes this method return the
-  #   attacker's directory's identity with no error anywhere. Re-running
-  #   `verified_root` immediately after `Dir.mkdir` returns (or after the
-  #   EEXIST rescue confirms a pre-existing plain directory) narrows the race
-  #   to the gap between the two syscalls right here, rather than the whole
-  #   task's runtime.
+  # ALWAYS re-run `verified_root` after `Dir.mkdir`/EEXIST resolve, and pin
+  # callers to the identity THIS returns, not a fresh by-name lookup: a
+  # symlink raced into an ancestor between an earlier `verified_root` pass
+  # and this method's `Dir.mkdir` call is followed silently (mkdir succeeds,
+  # EEXIST never fires) unless the check runs again right here.
+  # @return [Array(Integer, Integer)] PATH's directory identity as of this check.
   def create_real_directory(path, label:)
     FileUtils.mkdir_p(File.dirname(path))
     begin
@@ -372,17 +353,13 @@ module ExampleTasks
 
   # The temp-file/EXCL/rename/cleanup shape both this method and `write_svg`
   # below need: write into a sibling temporary file created with CREAT|EXCL
-  # (refuses to write through whatever already has that name -- a leftover
-  # from a killed run, or a link, rather than File.write, which follows
-  # whatever is already there), rename it into place atomically once the
-  # block finishes, and unlink the temporary if anything before the rename
-  # raises. Each caller decides whether DESTINATION is safe to write to
-  # before calling this (`manageable?`/`manageable_relative?`); this method
-  # only owns the write mechanics once that decision has been made.
-  #
-  # The temporary name is fixed-length, independent of DESTINATION's own
-  # basename: embedding a legal 255-byte target name once produced an
-  # illegal temporary one and ENAMETOOLONG.
+  # (refuses whatever already has that name, unlike File.write which follows
+  # it), rename atomically once the block finishes, unlink the temporary if
+  # anything before the rename raises. Caller must confirm DESTINATION is
+  # safe to write to first (`manageable?`/`manageable_relative?`) -- this
+  # method only owns the write mechanics. Keep the temporary name
+  # fixed-length, independent of DESTINATION's basename, or a legal 255-byte
+  # target name can produce an illegal temporary one (ENAMETOOLONG).
   def atomic_write(destination)
     temporary = File.join(File.dirname(destination), ".sirena-#{Process.pid}-#{SecureRandom.hex(8)}.tmp")
     created = false
@@ -402,31 +379,19 @@ module ExampleTasks
     end
   end
 
-  # Shares `atomic_write` with `write_svg` below, for the same reason:
-  # `FileUtils.cp` opens destination and writes through whatever is already
-  # there, including a symlink planted after `manageable?` cleared this call
-  # to proceed. `File.rename` (inside `atomic_write`) replaces the directory
-  # ENTRY at destination atomically -- never the file a symlink there points
-  # to -- so whatever raced into place between the guard and this call
-  # cannot redirect the write; at worst it gets silently replaced by the real
-  # copy, same as an ordinary rerun overwriting a previous one.
+  # Uses `atomic_write` (not `FileUtils.cp`) so a symlink planted at
+  # DESTINATION after `manageable?` cleared this call cannot redirect the
+  # write -- `File.rename` replaces the directory entry atomically, never
+  # the file a symlink there points to.
   #
-  # The read side has its own, separate race: `svg_files` is validated by
-  # `plain_svg?` once when `copy_to_docs` builds its whole work list, long
-  # before this call ever reads SOURCE. Reproduced by execution: swapping
-  # SOURCE for a symlink to an outside file immediately before the read
-  # lands that file's exact bytes in a git-committed, shipped SVG -- the
-  # destination-side rename hardening above does nothing to stop it, because
-  # the vulnerable operation is the READ, not the rename.
-  #
-  # `File::RDONLY | File::NOFOLLOW` opens SOURCE and refuses a symlink
-  # atomically, in the one syscall that matters, rather than checking
-  # File.symlink? first and opening by name second with a gap in between.
-  # `NOFOLLOW` is not defined on every platform this gem ships to (Windows'
-  # C runtime has no O_NOFOLLOW), so it is used only where the constant
-  # exists; where it does not, this falls back to the same
-  # check-immediately-adjacent-to-use tradeoff every other guard in this
-  # file already makes against a filesystem with no atomic check-and-open.
+  # SOURCE has its own, separate race: `svg_files` is validated once when
+  # `copy_to_docs` builds its work list, long before this call reads SOURCE
+  # -- a symlink swapped in right before the read would leak an outside
+  # file's bytes into a shipped SVG, and the rename hardening above does not
+  # stop it, since the vulnerable operation is the read. `RDONLY | NOFOLLOW`
+  # closes it atomically in one syscall. `NOFOLLOW` is undefined on some
+  # platforms this gem ships to (Windows has no O_NOFOLLOW) -- where it is
+  # undefined, fall back to a `File.symlink?` check immediately before open.
   def copy_through_rename(source, destination)
     read_flags = File::RDONLY
     read_flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
