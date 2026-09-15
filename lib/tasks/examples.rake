@@ -211,14 +211,12 @@ module ExampleTasks
   # Copies each diagram dir's SVGs into docs_assets_dir with the same
   # literal-children/no-link predicates generation and pruning use.
   # docs_assets_dir and each type's target_dir are pinned by directory
-  # IDENTITY (device+inode, see `within_pinned_directory`) for the
-  # whole loop, not re-resolved by name per write -- a concurrent
-  # symlink swap mid-loop cannot redirect it, and the one `Dir.chdir`
-  # lookup itself is checked and raises on mismatch rather than
-  # proceeding. Not wrapped in `with_examples_lock` (that only
-  # serialises this gem's own tasks); `Dir.chdir` is process-wide and
-  # unsafe to reuse in code loaded into a caller's app -- fine only
-  # because this file runs solely as its own rake CLI process.
+  # IDENTITY (device+inode, see `within_pinned_directory`) for the whole
+  # loop, not re-resolved by name per write -- a concurrent symlink swap
+  # mid-loop cannot redirect it, and the one `Dir.chdir` lookup itself is
+  # checked and raises on mismatch. `Dir.chdir` is process-wide and unsafe
+  # to reuse in code loaded into a caller's app -- fine only because this
+  # file runs solely as its own rake CLI process.
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
