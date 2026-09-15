@@ -23,19 +23,18 @@ SimpleCov.configure do
   # coverage:changed_lines score it as "no coverable lines" -- a pass, not a
   # gap. `cover` also restricts the report to this glob; lib/ does hold
   # non-.rb files (lib/tasks/*.rake, lib/sirena/theme/builtin/*.yml --
-  # confirmed via `find lib -type f ! -name "*.rb"`), but none of them drop
-  # out of scope because of this glob: Ruby's Coverage module (which
-  # SimpleCov reads) only ever tracks files loaded as Ruby source via
-  # `require`/`load` in the instrumented process. The Rakefile's own
-  # `Dir.glob('lib/tasks/**/*.rake').each { |r| load r }` does load the
-  # .rake files -- but into the parent `rake` process, before
-  # `coverage:measure` ever runs; `RSpec::Core::RakeTask` then spawns
-  # `spec:unit` via `system(...)`, a genuinely separate OS process whose own
-  # Coverage instrumentation starts fresh and never sees what the parent
-  # loaded. The .yml files are never `require`d/`load`ed at all (read via
-  # `File.read` in `Sirena::Theme.load`, `lib/sirena/theme.rb`). Confirmed
-  # empirically, not just reasoned: a `coverage/coverage.json` this session
-  # generated (188 files) has zero entries ending in `.rake` or `.yml`.
+  # confirmed via `find lib -type f ! -name "*.rb"`), but neither path that
+  # could bring a file into the report can bring one of THOSE in: the
+  # disk-expansion that injects an unloaded .rb file above
+  # (`SimpleCov::UnloadedFileInjector.discover`, gem source) globs with
+  # `Dir.glob(glob, base: root)` against this same literal `lib/**/*.rb`
+  # pattern, and the restriction step that would otherwise drop an
+  # out-of-glob file (`SimpleCov::Result#apply_cover_filters!`) matches
+  # against the identical pattern -- a `.rake`/`.yml` path satisfies neither,
+  # loaded or not (require/load tracking is not what decides this). Confirmed
+  # empirically, not just against the gem source: this session's
+  # `coverage/coverage.json` (188 files) has zero entries ending in `.rake`
+  # or `.yml`.
   cover 'lib/**/*.rb'
 
   # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a
