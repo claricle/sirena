@@ -8,8 +8,12 @@
 # so corpus coverage never reaches coverage.json even though this file would
 # still be auto-loaded if it ever did. "Corpus results provably absent"
 # (TODO.foundation/03-coverage-gate.md item 1) means every :corpus-tagged
-# example -- one that reads corpus fixtures without that tag still runs
-# inside spec:unit, instrumented like anything else.
+# example is excluded whenever COVERAGE=true, via both lib/tasks/coverage.rake's
+# `--tag ~corpus` AND spec/spec_helper.rb's `filter_run_excluding corpus:` --
+# the latter holds regardless of which task or flag started the process. An
+# example that reads corpus fixtures WITHOUT the :corpus tag is untouched by
+# either exclusion and still runs inside spec:unit, instrumented like anything
+# else -- the tag, not the fixture directory, is what this claim rests on.
 SimpleCov.configure do
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
