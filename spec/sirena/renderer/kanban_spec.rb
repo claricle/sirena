@@ -394,6 +394,49 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(last_baseline).to be < header_bottom
       end
 
+      # Codex round 6 High: the spec above only pins the header rect
+      # GROWING to fit a multi-line title -- it doesn't catch the baseline
+      # itself overflowing that (correctly grown) rect, because a 3-line
+      # title happens to leave 4.4px of margin under the pre-fix formula
+      # (`y + header_height / 2 + 5`, which only centers correctly for ONE
+      # line). A 4-line title exhausts that margin and overflows: reproduced
+      # directly via the real renderer + REXML before this fix, header rect
+      # `y=40.0 h=104.0` (bottom `144.0`), 4th baseline at `147.4` -- `3.4px`
+      # past the rect's own bottom edge.
+      #
+      # `header_text_baseline` fixes this by centering the whole text BLOCK
+      # (shifting the first baseline up by half of the extra height the
+      # later lines add) rather than a single fixed baseline. Verified
+      # directly, real renderer + REXML, after this fix: first baseline
+      # `71.8`, last baseline `122.2`, comfortably inside `[40.0, 144.0]`.
+      #
+      # Mutation-check: revert `header_text_baseline` to the flat
+      # `y + header_height / 2 + 5`. Watched red: `last_baseline` computed
+      # below comes back `147.4`, past `header_bottom` (`144.0`).
+      it 'keeps every baseline of a 4-line column title inside its own header rect' do
+        layout = layout_with(card_text: 'plain', column_title: "One\nTwo\nThree\nFour", header_height: 104)
+        xml = renderer.render(layout).to_xml
+        parsed = REXML::Document.new(xml)
+
+        header_rect = REXML::XPath.first(parsed, "//rect[@height='104.0']")
+        header_text = REXML::XPath.first(parsed, '//text[tspan]')
+        tspan_count = header_text.elements.to_a('tspan').size
+
+        expect(header_rect).not_to be_nil
+        expect(tspan_count).to eq(4)
+
+        font_size = header_text.attributes['font-size'].to_f
+        first_baseline = header_text.attributes['y'].to_f
+        last_baseline = first_baseline + ((tspan_count - 1) * font_size * 1.2)
+        header_top = header_rect.attributes['y'].to_f
+        header_bottom = header_top + header_rect.attributes['height'].to_f
+
+        expect(first_baseline).to eq(71.8)
+        expect(last_baseline).to be_within(0.001).of(122.2)
+        expect(last_baseline).to be < header_bottom
+        expect(first_baseline).to be > header_top
+      end
+
       # Round 3 Codex High: card metadata used to start at a fixed `y + 50`
       # regardless of how many lines the card's own label actually
       # rendered, so a multi-line label's later lines overlapped the

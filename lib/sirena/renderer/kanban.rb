@@ -127,18 +127,19 @@ module Sirena
 
         # Header text
         header_x = x + column[:width] / 2
+        lines = MarkdownText.parse_lines(column[:title])
+        font_size = theme_typography(:font_size) || 14
 
         header_text = Svg::Text.new.tap do |t|
           t.x = header_x
-          t.y = y + header_height / 2 + 5
+          t.y = header_text_baseline(y, header_height, lines.length, font_size)
           t.text_anchor = "middle"
           t.fill = "#ffffff"
-          t.font_size = (theme_typography(:font_size) || 14).to_s
+          t.font_size = font_size.to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
           t.font_weight = "bold"
         end
 
-        lines = MarkdownText.parse_lines(column[:title])
         MarkdownText.assign_markdown_text(header_text, lines, x: header_x, base_font_weight: "bold")
 
         svg.add_element(header_text)
@@ -173,6 +174,49 @@ module Sirena
 
           svg.add_element(badge_text)
         end
+      end
+
+      # Codex round 6 High: this used to be a flat `y + header_height / 2 +
+      # 5`, which only centers correctly for a SINGLE line of text — every
+      # line past the first advances by a further `1.2em` below that fixed
+      # point (`assign_markdown_text`'s per-line `dy`), so a multi-line
+      # title's later lines kept sliding further past the header rect's own
+      # bottom edge the more lines it had. Reproduced directly via the real
+      # CLI + REXML: a 4-line title (`col[One\nTwo\nThree\nFour]`) sized a
+      # `header_height` of 104 (`Transform::Kanban::COLUMN_HEADER_HEIGHT`
+      # 50 plus 3 `Transform::Kanban::EXTRA_LINE_HEIGHT` (18) rows), but the
+      # 4th baseline landed at `147.4` — `3.4px` past the header rect's own
+      # bottom edge at `144`.
+      #
+      # Fixed by centering the whole text BLOCK rather than a single
+      # baseline: `+ 5` alone is the single-line fudge already tuned to
+      # visually center one baseline within `header_height` (unchanged for
+      # `line_count == 1`, so no regression there), and each additional
+      # line adds one more `1.2em` (`font_size * 1.2`, the same per-line
+      # advance `assign_markdown_text` actually renders — not a raw
+      # `count("\n")`, per the same "size from the renderer's own line
+      # count, not the raw text" fix already applied to
+      # `Transform::Kanban#calculate_card_height`) to the block's total
+      # height; shifting the FIRST baseline up by half of that added height
+      # keeps the block centered around the same point the single-line
+      # formula already centers on. Verified directly (real
+      # `Renderer::Kanban#render` + REXML) for the 4-line case above: first
+      # baseline moves from the old `97.0` to `71.8`, last baseline from the
+      # overflowing `147.4` to `122.2` — comfortably inside the header
+      # rect's bottom edge at `144.0` (`y=40.0` plus `header_height=104.0`),
+      # with room to spare on the top edge too.
+      #
+      # @param y [Numeric] the header rect's own top edge
+      # @param header_height [Numeric] the header rect's own height, from
+      #   `Transform::Kanban#calculate_header_height`
+      # @param line_count [Integer] number of lines `MarkdownText.parse_lines`
+      #   actually produced for this title
+      # @param font_size [Numeric] the header text's own font size, in px
+      # @return [Numeric] the first line's baseline `y`
+      # @api private
+      def header_text_baseline(y, header_height, line_count, font_size)
+        line_height = font_size * 1.2
+        y + (header_height / 2) + 5 - ((line_count - 1) * line_height / 2)
       end
 
       # Renders all cards
