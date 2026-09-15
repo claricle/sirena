@@ -26,9 +26,17 @@ SimpleCov.configure do
   # confirmed via `find lib -type f ! -name "*.rb"`), but none of them drop
   # out of scope because of this glob: Ruby's Coverage module (which
   # SimpleCov reads) only ever tracks files loaded as Ruby source via
-  # `require`/`load` in the instrumented process, and `spec:unit` never
-  # requires or loads any of them, so they would carry no coverage.json
-  # entry regardless of what `cover` says.
+  # `require`/`load` IN THE INSTRUMENTED PROCESS. The Rakefile's own
+  # `Dir.glob('lib/tasks/**/*.rake').each { |r| load r }` does load the
+  # .rake files -- but into the parent `rake` process, before
+  # `coverage:measure` ever runs; `RSpec::Core::RakeTask` then spawns
+  # `spec:unit` via `system(...)`, a genuinely separate OS process whose own
+  # Coverage instrumentation starts fresh and never sees what the parent
+  # loaded. The .yml files are never `require`d/`load`ed at all (read via
+  # `File.read` in `Sirena::Theme.load`, `lib/sirena/theme.rb`). Confirmed
+  # empirically, not just reasoned: this
+  # session's `coverage/coverage.json` (188 files) has zero entries ending
+  # in `.rake` or `.yml`.
   cover 'lib/**/*.rb'
 
   # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a

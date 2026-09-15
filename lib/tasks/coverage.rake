@@ -130,13 +130,13 @@ namespace :coverage do
     diff_output, diff_stderr, diff_status =
       Open3.capture3('git', 'diff', '--name-only', '-z', '--merge-base', base)
     unless diff_status.success?
-      raise "git diff --name-only --merge-base #{base} failed: #{diff_stderr}"
+      raise "git diff --name-only --merge-base #{base} failed: #{diff_stderr.strip}"
     end
 
     untracked_output, untracked_stderr, untracked_status =
       Open3.capture3('git', 'ls-files', '--others', '--exclude-standard', '-z')
     unless untracked_status.success?
-      raise "git ls-files --others --exclude-standard failed: #{untracked_stderr}"
+      raise "git ls-files --others --exclude-standard failed: #{untracked_stderr.strip}"
     end
 
     changed_paths = (diff_output.split("\0") + untracked_output.split("\0")).uniq
