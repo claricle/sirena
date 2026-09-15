@@ -391,26 +391,16 @@ RSpec.describe ExampleTasks do
       end
     end
 
-    # Same shape, one level up: the one-time File.symlink?(target_dir) check
-    # only covers the moment it runs. `FileUtils.mkdir_p` treats an existing
-    # symlinked directory as already there and does nothing further, so a
-    # symlink raced into target_dir's name right after that check, before
-    # the directory actually gets created, used to make `mkdir_p` no-op
-    # through the link and every SVG for that diagram type land in the
-    # attacker's directory instead of docs_assets_dir. `Dir.mkdir` (used now
-    # in place of `mkdir_p`) has no such tolerance: it fails outright on
-    # anything already at that name.
+    # `Dir.mkdir` fails outright on anything already at that name (unlike
+    # the `mkdir_p` this replaced), so racing a symlink into target_dir's
+    # name should make copy_to_docs raise, not silently redirect writes.
     #
-    # `Dir.mkdir` is called with a name RELATIVE to the pin on docs_assets_dir
-    # now (see `copy_type_into_pinned_docs_root`), not the absolute
-    # target_dir path this race used to swap by exact string match -- so the
-    # stub below matches by resolving whatever `Dir.mkdir` actually receives
-    # against the process's current directory at the moment of the call,
-    # the same way the real filesystem would. Matched against `File.realpath`
-    # of docs, not the raw mktmpdir path: `Dir.chdir` (taken to pin
-    # docs_assets_dir before this point) resolves through macOS's `/var ->
-    # /private/var`, so `Dir.pwd` afterward is already the realpath, and a
-    # comparison against the un-resolved alias would never match.
+    # The stub matches by resolving whatever `Dir.mkdir` actually receives
+    # against the process's CURRENT directory (relative to the pin on
+    # docs_assets_dir, not the absolute target_dir path), against
+    # `File.realpath(docs)` rather than the raw mktmpdir path -- `Dir.chdir`
+    # resolves through macOS's `/var -> /private/var`, so matching against
+    # the un-resolved alias would never fire.
     it 'refuses rather than writing into a target_dir symlink raced in right before creation' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-attacker') do |attacker|

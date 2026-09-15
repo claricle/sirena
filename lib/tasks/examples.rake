@@ -184,22 +184,15 @@ module ExampleTasks
     children(dir).select { |path| plain_mmd?(path) }
   end
 
-  # The examples folder itself must be a real directory. A link there is
-  # resolved by realpath and then trusted, so every containment check below
-  # would be measuring against somewhere else entirely.
-  # Serialises everything that WRITES to the examples tree.
-  #
-  # `prune_orphan_svgs` decided what to delete, then deleted it, and between
-  # those two steps a source could be restored and its SVG regenerated -- the
-  # delete still removed the fresh file. Re-deciding closer to the delete
-  # narrows that window; it does not close it, because there is no atomic
-  # "delete only if still an orphan" on a POSIX filesystem.
-  #
-  # So generate and prune take the same lock instead, and cannot interleave.
-  # The lock is `flock` on a file in the system temp directory, keyed by the
-  # examples root. Do not lock the root directory itself: Windows refuses to
-  # open a directory (Errno::EISDIR). A lock file inside the tree would need
-  # ignoring and could be mistaken for an example.
+  # The examples folder itself must be a real directory: a link there is
+  # resolved by realpath and trusted, so every containment check below would
+  # measure the wrong place. This serialises everything that WRITES to the
+  # examples tree -- there is no atomic "delete only if still an orphan" on a
+  # POSIX filesystem, so generate and prune share this lock instead of each
+  # re-deciding closer to their own delete. It locks a file in the system
+  # temp directory, not the root directory itself (Windows refuses to open a
+  # directory, Errno::EISDIR) and not a file inside the tree (would need
+  # excluding from every listing here).
   def with_examples_lock(examples_dir)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
@@ -215,97 +208,17 @@ module ExampleTasks
     File.join(Dir.tmpdir, "sirena-examples-#{key}.lock")
   end
 
-  # Copies each diagram directory's SVGs into docs_assets_dir with the same
-  # literal-children and no-link predicates generation and pruning use, so a
-  # link inside examples/ never pulls in files from outside it.
-  #
-  # The destination gets the same treatment, in the other direction: a
-  # pre-existing entry named after a diagram type that is itself a symlink
-  # would make `FileUtils.mkdir_p` see "already a directory" and do nothing,
-  # then `FileUtils.cp` would follow it and write the SVG through the link to
-  # wherever it points. Reproduced before this guard existed: a symlink at
-  # docs_assets_dir/flowchart pointing outside the repo received the copied
-  # SVG instead of docs_assets_dir itself.
-  #
-  # A guard-then-act pair like that is not enough on its own, even once both
-  # halves are individually correct: `create_real_directory`/`manageable?`
-  # below only decide what to do at the moment they run, and `FileUtils.cp`
-  # opens whatever name it is given at the moment IT runs, which can be a
-  # different moment. Something else with write access to docs_assets_dir
-  # during this task's run window -- a concurrent process, not a remote
-  # input -- can swap a symlink into target_dir or a leaf name in the gap
-  # between the check and the write. Reproduced by deterministically racing
-  # both gaps against the real code: a symlink swapped into target_dir
-  # between the check and `FileUtils.mkdir_p` put every SVG for that type
-  # into the attacker's directory instead (`mkdir_p` no-ops on "already
-  # exists", symlink included); a symlink swapped into a leaf destination
-  # between the partition check and `FileUtils.cp` overwrote the file it
-  # pointed to outside docs_assets_dir, with the task still reporting
-  # success. `write_svg` below already closes this exact shape of race for
-  # generation, with a temporary-file-plus-rename pattern: `Dir.mkdir` and
-  # `File.rename` are each one syscall that either succeeds cleanly or fails
-  # outright on anything already at that name, including a symlink planted a
-  # moment before -- neither one ever writes through an existing entry the
-  # way `mkdir_p`/`cp` do. `create_real_directory` and `copy_through_rename`
-  # below apply that same pattern here, so nothing raced into place between
-  # a guard and its matching write can redirect either one.
-  #
-  # That closes the race for each INDIVIDUAL leaf operation, but not for the
-  # PATH COMPONENTS the loop below keeps re-resolving by name across many
-  # such operations. `verified_root`/`create_real_directory` confirm
-  # docs_assets_dir once, at the top; every later `Dir.mkdir`/`File.rename`
-  # for every diagram type still re-resolved "docs_assets_dir/<type>" by
-  # walking that name fresh, so a concurrent process swapping docs_assets_dir
-  # itself for a symlink after the one check at the top -- or swapping a
-  # single type's target_dir for a symlink partway through ITS OWN per-file
-  # loop, after target_dir's own one-time check -- redirected every operation
-  # from that point on. Confirmed by execution (Codex round 3, HANDOFF 7):
-  # racing a symlink into target_dir between the second and third SVG of a
-  # loop that had already copied the first two normally sent the rest into
-  # the attacker's directory, with the task still reporting success.
-  #
-  # `within_pinned_directory` below closes that: `Dir.chdir` resolves its
-  # argument to a specific directory once, and the kernel then tracks the
-  # process's current directory by that directory's own identity, not by
-  # re-resolving the path string -- so every RELATIVE name used after it
-  # (never one rejoined with the outer path) stays pinned to the same
-  # physical directory for as long as the block runs, regardless of what the
-  # outer name is renamed to or replaced with meanwhile. Verified directly:
-  # renaming the directory a chdir'd process is inside of, and replacing its
-  # old name with a symlink to an attacker directory, left every relative
-  # write still landing in the original directory and the attacker directory
-  # empty. `Dir.chdir` itself still has to resolve the name once to enter it,
-  # the same single-syscall-wide gap `create_real_directory` already accepts
-  # for the same reason (no POSIX primitive makes "verify, then use" one
-  # step) -- so this pins by directory IDENTITY (device + inode, captured
-  # right before the chdir and re-checked right after) rather than trusting
-  # the chdir succeeded into the place expected, and raises instead of
-  # proceeding on a mismatch. Verified directly: swapping the symlink in
-  # during that one-syscall gap is reliably caught, and aborts with nothing
-  # written to the attacker directory. A fully closed guarantee -- pinning
-  # BEFORE any name lookup at all -- needs a directory file descriptor
-  # opened first and directory-relative syscalls after (`openat`/`mkdirat`/
-  # `renameat`), which Ruby's stdlib does not expose portably; reaching them
-  # needs an FFI call to raw libc (`Fiddle`), which is not portable to
-  # Windows either -- this PR's whole target platform. Applied at two
-  # nesting levels below: once for docs_assets_dir across the whole method
-  # (closing the docs_assets_dir-level race), and once per diagram type
-  # inside it (closing the target_dir-level race for that type's own loop).
-  #
-  # Not wrapped in `with_examples_lock`: that lock only serializes this
-  # gem's OWN generate/prune tasks against each other and buys nothing
-  # against an external actor, which is the threat model above. It is
-  # applied at the rake task level below anyway, for the same reason
-  # generate/prune take it -- so this method cannot read examples_dir mid
-  # regeneration by another of this gem's own tasks.
-  #
-  # `Dir.chdir` is process-wide and documented as not thread-safe against
-  # OTHER code running in the same process. Acceptable here because this
-  # whole module only ever runs as a single rake task's own CLI process --
-  # `lib/tasks/examples.rake` is loaded by the Rakefile alone
-  # (`Dir.glob('lib/tasks/**/*.rake').each { |r| load r }`), never
-  # `require`d by `lib/sirena.rb`, so it never runs as library code inside a
-  # caller's own multi-threaded application.
+  # Copies each diagram dir's SVGs into docs_assets_dir with the same
+  # literal-children/no-link predicates generation and pruning use.
+  # docs_assets_dir and each type's target_dir are pinned by directory
+  # IDENTITY (device+inode, see `within_pinned_directory`) for the
+  # whole loop, not re-resolved by name per write -- a concurrent
+  # symlink swap mid-loop cannot redirect it, and the one `Dir.chdir`
+  # lookup itself is checked and raises on mismatch rather than
+  # proceeding. Not wrapped in `with_examples_lock` (that only
+  # serialises this gem's own tasks); `Dir.chdir` is process-wide and
+  # unsafe to reuse in code loaded into a caller's app -- fine only
+  # because this file runs solely as its own rake CLI process.
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
@@ -393,30 +306,17 @@ module ExampleTasks
     !File.exist?(name) || File.lstat(name).file?
   end
 
-  # One syscall that either creates a fresh real directory or fails outright
-  # on anything already at that name -- unlike `FileUtils.mkdir_p`, which
-  # treats "already exists" as success without asking what kind of thing it
-  # is, including a symlink. The ordinary, expected case (this task has run
-  # here before, a real directory is already sitting at path) still has to
-  # succeed silently, so `Errno::EEXIST` is not itself an error here: it is
-  # only an error if what is actually at path, checked fresh via `lstat`
-  # right after the syscall that found it, turns out not to be a plain real
-  # directory. That check cannot be glued to the `Dir.mkdir` syscall itself
-  # -- no POSIX primitive makes "create, or verify-and-accept an existing
-  # real directory" one atomic step -- but it collapses the race window from
-  # this whole method's run to the gap between one syscall and the next.
+  # `Dir.mkdir` fails outright on anything already at that name, unlike
+  # `FileUtils.mkdir_p` which accepts an existing symlink as success without
+  # asking what it is. `Errno::EEXIST` is therefore expected on a rerun, not
+  # an error -- but only once `lstat` right after confirms what's actually
+  # there is a plain real directory, never mkdir_p'd blindly.
   #
-  # `Dir.mkdir` alone is not recursive: a genuinely fresh checkout with no
-  # docs/assets directory at all yet -- not an attack, the ordinary first
-  # run -- raised a raw Errno::ENOENT here instead of creating the tree, a
-  # real regression caught by execution before this comment existed.
-  # `FileUtils.mkdir_p` on the PARENT restores that, and does not reopen the
-  # race this method exists to close: the parent was never the protected
-  # leaf (every caller already walked it via `verified_root`'s ancestor
-  # check, or -- for target_dir's parent, docs_assets_dir -- this same
-  # method's own atomic creation one call earlier), and `Dir.mkdir` below
-  # still owns path itself atomically regardless of how the parent came to
-  # exist.
+  # `Dir.mkdir` is not recursive, so `FileUtils.mkdir_p` runs on the PARENT
+  # only, never on `path` itself: the parent is never the protected leaf
+  # (callers already walk it via `verified_root`, or this method's own prior
+  # call for docs_assets_dir), so recursing through it cannot reopen the
+  # race this method exists to close.
   def create_real_directory(path, label:)
     FileUtils.mkdir_p(File.dirname(path))
     Dir.mkdir(path)
@@ -448,32 +348,17 @@ module ExampleTasks
     end
   end
 
-  # The root itself must be a real directory with no symlinked ANCESTOR
-  # either, not just not itself a link. A symlinked intermediate directory
-  # (e.g. docs/assets -> outside the repo) passes a leaf-only check: the
-  # literal path handed in is not itself a symlink, only reached through one.
-  # Reproduced before this ancestor check existed: `docs/assets` symlinked
-  # outside the repo left `docs/assets/examples` (an ordinary directory, just
-  # reached through the symlinked ancestor) passing straight through, so
-  # every write under it landed wherever `docs/assets` actually resolved.
+  # Checks for a symlinked ANCESTOR too, not just the leaf itself: a
+  # leaf-only check lets a symlinked intermediate (e.g. `docs/assets` ->
+  # outside the repo) pass straight through, since the literal path is
+  # reached THROUGH the link. Bounded to GEM_ROOT (see its comment), not `/`.
   #
-  # The ancestor walk is bounded to GEM_ROOT (see its comment) rather than
-  # walked to filesystem `/`.
-  #
-  # The `start_with?` membership test below is a case-SENSITIVE string
-  # comparison, which can under-match on a case-insensitive filesystem
-  # (APFS and NTFS both default to this) if a caller ever hands in a path
-  # differing only in case from GEM_ROOT's own recorded casing -- silently
-  # skipping the whole ancestor walk rather than raising. Not reachable
-  # through either rake task today: GEM_ROOT and every examples_dir/
-  # docs_assets_dir this task is given are both built from the same
-  # `__dir__` literal in one process, so their casing always agrees.
-  # Verified by direct execution that a differently-cased root DOES skip the
-  # walk; left as a known boundary rather than papered over with a
-  # case-fold, which would be wrong on a case-SENSITIVE filesystem where two
-  # differently-cased paths are genuinely different files. A future caller
-  # that builds GEM_ROOT and its argument paths from different sources would
-  # need to normalize casing itself before calling this.
+  # The `start_with?` test is case-SENSITIVE, so it under-matches on a
+  # case-insensitive filesystem if a path differs from GEM_ROOT's own
+  # casing -- not reachable today since both share one `__dir__` literal.
+  # A future caller building them from different sources must normalize
+  # casing itself; do not "fix" this with a case-fold (wrong on a
+  # case-SENSITIVE filesystem).
   def verified_root(path, label: 'examples root')
     path = File.expand_path(path)
     raise "#{label} must not be a link: #{path}" if File.symlink?(path)
@@ -652,19 +537,14 @@ module ExampleTasks
     puts "   Run 'rake examples:prune' to delete them."
   end
 
-  # A render that produced no document must not destroy the document already
-  # there. `File.write` truncates before it writes, so handing it a nil render
-  # left a zero-byte SVG that the loop then counted as generated, and a write
-  # that died partway left the old file truncated.
+  # A nil or partial render must not destroy the document already there --
+  # `File.write` truncates before writing, so this renders into a sibling
+  # temporary file and renames it into place instead, and refuses outright
+  # unless the render actually looks like a complete SVG document.
   #
-  # Rendered into a sibling temporary file and renamed into place, so the
-  # visible file only ever changes as a whole, and refused outright unless the
-  # render actually looks like an SVG document.
-  # An SVG document, not a string that merely mentions one: an error page
-  # carrying an inline <svg> passed a substring check and replaced a good
-  # picture with itself. The whole start tag has to be there: matching one
-  # character after the name accepted `<svg/garbage` and `<svg width="1"`,
-  # and write_svg replaced a good picture with the first of those.
+  # `svg_document?` requires the WHOLE start tag, not a substring: matching
+  # only up through `<svg` accepts an error page that merely embeds one, or
+  # a truncated `<svg/garbage` or unclosed `<svg width="1"`.
   def svg_document?(svg)
     svg.is_a?(String) &&
       svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg(?:\s[^>]*)?/?>}m)
