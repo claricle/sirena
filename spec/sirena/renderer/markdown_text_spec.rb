@@ -680,6 +680,85 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                             [described_class::Run.new(text: 'B', bold: false, italic: false)]
                           ])
     end
+
+    # Codex round 6 High: kramdown's emphasis grammar disagrees with real
+    # `marked` on these four short, valid labels — not just unstyled, but
+    # WRONG (markers leak into the visible text, or inner markers vanish
+    # when they should render literally). Verified directly against real
+    # `marked.parseInline` before writing this:
+    #   `****foo****`     -> marked <strong><strong>foo</strong></strong>
+    #     (bold "foo", no markers); this module used to bold "**foo" and
+    #     leave a trailing plain "**".
+    #   `**foo* bar**`    -> marked <em><em>foo</em> bar</em>* (italic
+    #     "foo bar", trailing literal *); this module used to bold
+    #     "foo* bar" as one run.
+    #   `_*a*_`           -> marked <em><em>a</em></em> (italic "a", no
+    #     markers); this module used to italicize the literal text "*a*",
+    #     markers included.
+    #   `**foo **bar****` -> marked <strong>foo <strong>bar</strong></strong>
+    #     (bold "foo bar", no markers); this module used to bold
+    #     "foo **bar" and leave a trailing plain "**".
+    # `unsafe_delimiter_run_structure?` falls back to `literal_lines` for
+    # each of these rather than risk a wrong render — same trade-off as
+    # `unsafe_escaped_delimiter_interaction?` above.
+    #
+    # Mutation-check: delete the `unsafe_delimiter_run_structure?` guard in
+    # `parse_lines`. Watched red: all four come back styled (matching the
+    # WRONG shapes quoted above) instead of `literal_lines(raw)`.
+    it 'falls back to literal text for a 4-or-more marker run (Guard A)' do
+      raw = '****foo****'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    it 'falls back to literal text for a run-length sequence that leaves an interior run dangling (Guard B)' do
+      raw = '**foo* bar**'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    it 'falls back to literal text for a single-marker nested wrap across the two delimiter characters (Guard C)' do
+      raw = '_*a*_'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    it 'falls back to literal text when a trailing 4-run closes two nested bold spans' do
+      raw = '**foo **bar****'
+
+      expect(described_class.parse_lines(raw)).to eq(described_class.literal_lines(raw))
+    end
+
+    # Guard C is deliberately narrower than "any `*`/`_` adjacency": a
+    # SEQUENTIAL pair -- one span's close immediately followed by the next
+    # span's open -- is a different, already-safe shape and must not be
+    # routed to literal_lines. Verified directly against real `marked`:
+    # `*a*_b_` -> <em>a</em><em>b</em> (independent italics, no
+    # cross-interaction); `_a_*b*` likewise. An earlier, cruder
+    # adjacency-only version of Guard C false-positived on exactly these two
+    # during development.
+    #
+    # Mutation-check: broaden `nested_delimiter_wrap?` to match ANY
+    # `_(?!_)\*(?!\*)`/`\*(?!\*)_(?!_)` adjacency, dropping the `.*?` +
+    # mirrored-close requirement. Watched red: both examples below fall back
+    # to `literal_lines` instead of parsing as two independent styled runs.
+    it 'keeps a sequential (non-nested) run of two single markers of different characters styled' do
+      lines = described_class.parse_lines('*a*_b_')
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'a', bold: false, italic: true),
+                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                          ]])
+    end
+
+    it 'keeps the reverse-order sequential single-marker run styled too' do
+      lines = described_class.parse_lines('_a_*b*')
+
+      expect(lines).to eq([[
+                            described_class::Run.new(text: 'a', bold: false, italic: true),
+                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                          ]])
+    end
   end
 
   describe '.build_markdown_tspans' do

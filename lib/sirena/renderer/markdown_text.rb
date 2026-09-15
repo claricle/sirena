@@ -147,6 +147,7 @@ module Sirena
         return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH
         return literal_lines(raw) if real_marker_count(raw) > MAX_EMPHASIS_MARKERS
         return literal_lines(raw) if unsafe_escaped_delimiter_interaction?(raw)
+        return literal_lines(raw) if unsafe_delimiter_run_structure?(raw)
 
         root, = Parser.parse(raw)
 
@@ -350,6 +351,143 @@ module Sirena
         end
 
         false
+      end
+
+      # Codex round 6 High: kramdown's emphasis grammar is not `marked`'s
+      # CommonMark-style delimiter-run algorithm, and the two disagree —
+      # observably, on valid short labels — whenever a run of `*`/`_`
+      # markers has a structure kramdown's simpler matching can't resolve
+      # the way `marked` does. Four cases Codex cited directly, each
+      # verified against real `marked` (`marked.parseInline`):
+      #   `****foo****`   -> marked bold "foo", no markers; this module bold
+      #     `**foo` + plain `**` (wrong: markers leak into output).
+      #   `**foo* bar**`  -> marked italic "foo bar", trailing literal `*`;
+      #     this module bold `foo* bar` as one run (wrong: no fragmentation).
+      #   `_*a*_`         -> marked italic "a", no markers; this module
+      #     italic `*a*` (wrong: inner markers rendered as literal text).
+      #   `**foo **bar****` -> marked bold "foo bar", no markers; this
+      #     module bold `foo **bar` + plain `**` (wrong: markers leak).
+      # Rather than reimplement CommonMark's delimiter-run/flanking rules
+      # in full (disproportionate to closing 4 observed cases, and this
+      # module's whole design already trades full generality for a
+      # falls-back-to-literal safety net — see
+      # `unsafe_escaped_delimiter_interaction?` above), this extends that
+      # same safety net: detect the specific unsafe delimiter-run SHAPES
+      # below and fall back to `literal_lines` for them, safe-but-unstyled
+      # rather than wrong-but-styled.
+      #
+      # Three independent shapes, any one of which is unsafe:
+      #
+      # A) A maximal run of 4 or more of the same marker character.
+      #    Kramdown's `Emphasis::EMPHASIS_START` (`/(?:\*\*?|__?)/`) only
+      #    ever recognizes a 1- or 2-character token per match attempt, so
+      #    it has no native way to treat a 4+ run as one atomic delimiter
+      #    the way it specially handles a length-3 run (`***both***`).
+      #    Catches `****foo****`, `*****foo*****`, and the trailing 4-run
+      #    in `**foo **bar****`.
+      #
+      # B) A same-character run-length sequence that doesn't resolve
+      #    cleanly under kramdown's own matching rule: exact-length LIFO
+      #    closing, OR kramdown's length-3-closes-a-1-and-a-2 combined
+      #    match (the same mechanism `***both***` relies on, generalized to
+      #    two SEPARATE runs summing to 3, e.g. `*a **b***`) — applied per
+      #    character (`*` and `_` independently), walked as a stack. A
+      #    naive "every length appears an even number of times" check was
+      #    tried first and rejected: it both false-positives on already-safe
+      #    shapes (`*a **b***`, `**a**b**`, `_a_b_`, ...) and can't express
+      #    the length-3 combined close without a special case anyway.
+      #    Safe iff the full run sequence resolves to an empty stack, or
+      #    resolves to exactly one unmatched trailing run whose own removal
+      #    leaves everything before it empty (i.e. only the very last run in
+      #    the sequence is left dangling — kramdown treats a genuinely
+      #    unmatched trailing marker as literal text, which IS what `marked`
+      #    does too, so a single dangling trailing run is not itself unsafe).
+      #    Catches `**foo* bar**` (`*`-runs `[2,1,1]`: dropping the last run
+      #    leaves `[2,1]`, which does not resolve — unsafe) and
+      #    `**foo **bar****` (`*`-runs `[2,2,4]`, also caught independently
+      #    by Guard A above).
+      #
+      # C) A single (length-1) run of one marker character immediately
+      #    (zero-width) NESTED with a single run of the OTHER marker
+      #    character — one opens immediately inside the other's open, and
+      #    the matching closes mirror it (`_*...*_` or `*_..._*`). Guard B
+      #    alone can't see this: each character's OWN run sequence resolves
+      #    cleanly in isolation (`_*a*_`'s `_`-runs `[1,1]` and `*`-runs
+      #    `[1,1]` each resolve on their own), but kramdown still matches
+      #    the wrong pair of delimiters across the two characters. This is
+      #    deliberately narrower than "any `*`/`_` adjacency": a SEQUENTIAL
+      #    pair — one span closing immediately before the next one opens,
+      #    e.g. `*a*_b_` or `_a_*b*` — is NOT this shape and must stay safe
+      #    (both already match `marked` exactly; verified directly, and
+      #    caught as a false positive by an earlier, cruder adjacency-only
+      #    version of this guard during development). Only the NESTED wrap
+      #    is unsafe.
+      #
+      # Not a general proof this module now matches `marked`'s emphasis
+      # algorithm for every delimiter-length combination — same disclosure
+      # as `unsafe_escaped_delimiter_interaction?` above. Only the shapes
+      # above are measured, both unsafe and safe; see this method's spec for
+      # the corpus, each pinned against real `marked`.
+      #
+      # @param raw [String]
+      # @return [Boolean]
+      # @api private
+      def unsafe_delimiter_run_structure?(raw)
+        blanked = raw.gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, " ")
+
+        return true if blanked.scan(/\*+|_+/).any? { |run| run.length >= 4 }
+        return true if %w[* _].any? { |char| unsafe_character_run_sequence?(blanked, char) }
+
+        nested_delimiter_wrap?(blanked)
+      end
+
+      # The per-character stack walk for Guard B above: exact-length LIFO
+      # closing, plus kramdown's own length-3-combined close generalized to
+      # two separate runs.
+      #
+      # @param blanked [String] `raw` with every escaped-marker match
+      #   replaced by a same-length run of spaces
+      # @param char [String] `"*"` or `"_"`
+      # @return [Boolean]
+      # @api private
+      def unsafe_character_run_sequence?(blanked, char)
+        runs = blanked.scan(/#{::Regexp.escape(char)}+/).map(&:length)
+        !character_runs_resolve_cleanly?(runs)
+      end
+
+      # @param runs [Array<Integer>] one maximal run's length per element,
+      #   in source order, for a single marker character
+      # @return [Boolean]
+      # @api private
+      def character_runs_resolve_cleanly?(runs)
+        stack = []
+        runs.each do |len|
+          if stack.last == len
+            stack.pop
+          elsif stack.size >= 2 && stack[-2..].sum == len
+            stack.pop(2)
+          else
+            stack.push(len)
+          end
+        end
+
+        return true if stack.empty?
+        return false unless stack.size == 1
+
+        character_runs_resolve_cleanly?(runs[0..-2])
+      end
+
+      # Guard C above: a single `_` immediately opening a single `*` (or the
+      # reverse), with the matching closes mirroring the nesting later in
+      # the string — as opposed to one span's close immediately followed by
+      # the next span's open (sequential, safe).
+      #
+      # @param blanked [String]
+      # @return [Boolean]
+      # @api private
+      def nested_delimiter_wrap?(blanked)
+        blanked.match?(/(?<!_)_(?!_)\*(?!\*).*?(?<!\*)\*(?!\*)(?<!_)_(?!_)/) ||
+          blanked.match?(/(?<!\*)\*(?!\*)_(?!_).*?(?<!_)_(?!_)(?<!\*)\*(?!\*)/)
       end
 
       # Walks one `:p` block's children into a flat run list: nesting is
