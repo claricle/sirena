@@ -154,7 +154,13 @@ RSpec.describe Sirena::Engine do
     # Pinning must never be the reason a render breaks. Comparing outcomes
     # rather than asserting success keeps this honest about types that are
     # already failing for unrelated reasons.
-    it 'never changes whether a diagram type renders at all' do
+    #
+    # :corpus - sweeps the whole fixture directory and only compares two
+    # rescued outcome strings, so a type that raises the same way both times
+    # counts as passing without ever asserting the render is right. Runs in
+    # `spec:corpus`, isolated from the coverage-collecting `spec:unit` run:
+    # see .simplecov and lib/tasks/coverage.rake.
+    it 'never changes whether a diagram type renders at all', :corpus do
       differing = Dir.children(corpus).sort.filter_map do |type|
         file = Dir.glob(File.join(corpus, type, '*.mmd')).min
         next unless file

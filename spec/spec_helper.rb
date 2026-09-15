@@ -4,7 +4,7 @@
 # `spec:unit` (the :corpus-tagged fixture sweeps are excluded there), so
 # corpus results never reach the coverage this starts tracking. Plain
 # `bundle exec rspec` / `rake spec` still run everything, uninstrumented.
-# See TODO.foundation/03-coverage-gate.md item 1 and the Rakefile.
+# See TODO.foundation/03-coverage-gate.md item 1 and lib/tasks/coverage.rake.
 if ENV["COVERAGE"] == "true"
   require "simplecov"
   SimpleCov.start
