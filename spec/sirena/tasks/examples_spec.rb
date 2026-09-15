@@ -391,18 +391,13 @@ RSpec.describe ExampleTasks do
       end
     end
 
-    # The per-file guard is check-then-act: races a symlink into place right
-    # after it clears, immediately before `File.rename`. `File.rename`
-    # replaces the directory ENTRY atomically -- it never follows whatever
-    # is already there -- so the raced-in symlink is replaced, never written
-    # through. NOTE: a prior version mocked `FileUtils.cp` matching on
-    # `dest == destination` (the full file path); that never fires because
-    # `FileUtils.cp(source, dest)` with a directory `dest` receives the
-    # DIRECTORY, not the joined path -- mutation-check.sh caught this
-    # passing vacuously against the unfixed code. `File.expand_path` on `to`
-    # is required because the surrounding `Dir.chdir` pins the process to
-    # `docs/flowchart`, resolved via `File.realpath(docs)` to match macOS's
-    # `/var -> /private/var`.
+    # Races a symlink into place right after the per-file guard clears it,
+    # immediately before `File.rename` -- which replaces the directory
+    # entry atomically rather than following it. NOTE: mock against
+    # `FileUtils.cp` instead would never fire (a directory `dest` receives
+    # the DIRECTORY, not the joined path). `File.expand_path` on `to` is
+    # required: `Dir.chdir` pins the process to `docs/flowchart`, resolved
+    # via `File.realpath(docs)` to match macOS's `/var -> /private/var`.
     it 'does not write through a destination symlink raced in after the per-file guard clears it' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-outside') do |outside|

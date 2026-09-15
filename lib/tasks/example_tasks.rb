@@ -379,19 +379,12 @@ module ExampleTasks
     end
   end
 
-  # Uses `atomic_write` (not `FileUtils.cp`) so a symlink planted at
-  # DESTINATION after `manageable?` cleared this call cannot redirect the
-  # write -- `File.rename` replaces the directory entry atomically, never
-  # the file a symlink there points to.
-  #
-  # SOURCE has its own, separate race: `svg_files` is validated once when
-  # `copy_to_docs` builds its work list, long before this call reads SOURCE
-  # -- a symlink swapped in right before the read would leak an outside
-  # file's bytes into a shipped SVG, and the rename hardening above does not
-  # stop it, since the vulnerable operation is the read. `RDONLY | NOFOLLOW`
-  # closes it atomically in one syscall. `NOFOLLOW` is undefined on some
-  # platforms this gem ships to (Windows has no O_NOFOLLOW) -- where it is
-  # undefined, fall back to a `File.symlink?` check immediately before open.
+  # `atomic_write` (not `FileUtils.cp`) so a symlink at DESTINATION cannot
+  # redirect the write -- `File.rename` replaces the directory entry, never
+  # follows it. SOURCE is validated once when `copy_to_docs` builds its work
+  # list, long before this reads it -- `RDONLY | NOFOLLOW` re-checks
+  # atomically at the read. `NOFOLLOW` is undefined on some platforms this
+  # gem ships to (Windows) -- fall back to `File.symlink?` right before open.
   def copy_through_rename(source, destination)
     read_flags = File::RDONLY
     read_flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
