@@ -2,17 +2,14 @@
 
 # ENV-gated: `rake coverage:measure` sets COVERAGE=true and runs only
 # `spec:unit` (:corpus-tagged fixture sweeps excluded via
-# lib/tasks/coverage.rake's `--tag ~corpus`), so corpus results never reach
-# the coverage this starts tracking. Plain `bundle exec rspec` / `rake spec`
-# still run everything, uninstrumented (SimpleCov.start never runs without
-# COVERAGE=true).
-#
-# `filter_run_excluding corpus:` below only closes the bare-invocation gap --
-# a CLI `--tag corpus` (e.g. `rake spec:corpus_runner`) wins over it outright
-# (see the gate record for the exact rspec-core mechanism). The
-# `after(:suite)` hook below is the real guarantee: it checks what actually
-# ran, not what a filter INTENDED to exclude, and fails loudly instead of
-# letting corpus-inflated coverage.json ship silently.
+# lib/tasks/coverage.rake's `--tag ~corpus`); plain `bundle exec rspec` runs
+# everything, uninstrumented. `filter_run_excluding corpus:` below only
+# closes the bare-invocation gap -- a CLI `--tag corpus` (e.g. `rake
+# spec:corpus_runner`) wins over it outright (see the gate record for the
+# rspec-core mechanism). The `after(:suite)` hook below is the real
+# guarantee: it checks what actually ran, not what a filter INTENDED to
+# exclude, and fails loudly instead of letting corpus-inflated coverage.json
+# ship silently.
 if ENV["COVERAGE"] == "true"
   require "simplecov"
   SimpleCov.start
