@@ -17,8 +17,9 @@ SimpleCov.configure do
 
   formats :html, :json # coverage/coverage.json feeds `simplecov patch` (Rakefile: coverage:changed_lines)
 
-  # Every lib/ file on disk enters the report at 0% even if the suite never
-  # requires it. Without this, a file `spec:unit` never loads carries no
+  # Every lib/ file on disk matching `lib/**/*.rb` (see `cover` below) enters
+  # the report at 0% even if the suite never requires it. Without this, a
+  # file `spec:unit` never loads carries no
   # coverage.json entry at all, and both the global floor and
   # coverage:changed_lines score it as "no coverable lines" -- a pass, not a
   # gap. `cover` also restricts the report to this glob; lib/ does hold
