@@ -35,7 +35,6 @@ module Sirena
       #
       # @param diagram [Diagram::ClassDiagram] the class diagram to transform
       # @return [Hash] elkrb-compatible graph hash
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         {
           id: diagram.id || 'class_diagram',

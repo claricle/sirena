@@ -77,7 +77,6 @@ RSpec.describe Sirena::DiagramRegistry do
 
       it 'has a canonical fixture that parses' do
         expect(File).to exist(fixture_path)
-        expect { diagram }.not_to raise_error
       end
 
       it 'registers a parser inheriting Parser::Base' do

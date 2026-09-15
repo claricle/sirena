@@ -25,7 +25,6 @@ module Sirena
       #
       # @param diagram [Diagram::SankeyDiagram] the sankey diagram to transform
       # @return [Hash] data structure for rendering
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         @diagram = diagram
         @node_layers = {}

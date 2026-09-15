@@ -25,7 +25,6 @@ module Sirena
       #
       # @param diagram [Diagram::BlockDiagram] the block diagram to transform
       # @return [Hash] positioned layout hash
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         blocks_layout = calculate_column_layout(diagram)
         connections_layout = calculate_connections(diagram, blocks_layout)

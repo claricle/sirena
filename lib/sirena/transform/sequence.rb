@@ -34,7 +34,6 @@ module Sirena
       #
       # @param diagram [Diagram::Sequence] the sequence diagram to transform
       # @return [Hash] elkrb-compatible graph hash
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         {
           id: diagram.id || 'sequence',

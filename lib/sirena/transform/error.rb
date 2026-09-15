@@ -21,7 +21,6 @@ module Sirena
       #
       # @param diagram [Diagram::Error] the error diagram to transform
       # @return [Hash] data structure for rendering
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         {
           id: diagram.id || 'error',

@@ -18,7 +18,6 @@ module Sirena
       #
       # @param diagram [Diagram::ArchitectureDiagram] the diagram to transform
       # @return [Hash] positioned layout hash
-      # @raise [TransformError] if diagram is invalid
       def build_graph(diagram)
         # Build hierarchy
         hierarchy = build_hierarchy(diagram)
