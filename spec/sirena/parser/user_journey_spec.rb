@@ -514,19 +514,11 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       end
 
       it 'refuses a long unclosed block without rescanning it per line' do
-        # The control is the SAME 2000 openers with their braces CLOSED, so
-        # the ratio isolates the refusal's cost from the machine's speed.
-        #
-        # Do NOT split the two timed sides into separate phases and take
-        # `min` of each side separately -- that flakes under load (load
-        # ending between phases inflates only the first side). Measure as
-        # ADJACENT PAIRS and take the minimum over the per-pair ratios, so
-        # both halves of a sample share the same load regime.
-        #
-        # Known trade: a uniform constant-factor regression on the branch
-        # BOTH sides share moves numerator and denominator together and
-        # survives this form. That is accepted -- see the gate record for
-        # the bound's derivation.
+        # Control: the SAME 2000 openers with braces CLOSED, isolating the
+        # refusal's cost from machine speed. Do NOT split the two timed sides
+        # into separate phases and `min` each separately -- that flakes under
+        # load. Measure as ADJACENT PAIRS and take the minimum over the
+        # per-pair ratios, so both halves of a sample share one load regime.
         source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
         control = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}section S\nT: 1: M\n"
         expect(source.bytesize).to be > 30_000
