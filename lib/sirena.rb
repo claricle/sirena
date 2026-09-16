@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 require_relative 'sirena/version'
+require_relative 'sirena/error'
 
 module Sirena
-  class Error < StandardError; end
-
   # Convenience method for rendering mermaid diagrams to SVG
   #
   # @param mermaid_source [String] Mermaid diagram source code
