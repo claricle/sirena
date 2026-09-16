@@ -62,20 +62,13 @@ module Sirena
 
       # `%%{` opens a DIRECTIVE, not a comment -- `acc_comment_line` must
       # refuse it, or the `}` inside a directive's JSON body could close the
-      # accessibility block early (or the directive could swallow the line).
+      # accessibility block early. The tail `}%%` is REQUIRED (mermaid makes
+      # it optional) so an unterminated directive is refused, matching the
+      # oracle. Known divergence: mermaid strips `%%{x}%%` mid-line; this
+      # treats it as text.
       #
-      # The tail `}%%` is REQUIRED here even though mermaid's own directive
-      # pattern makes it optional: an optional tail here would leave a block
-      # open (and refused) on the same sources the oracle refuses too, so
-      # requiring it matches the oracle's verdict via a different mechanism.
-      # Known, pinned divergence: mermaid's directive strip isn't anchored to
-      # a line start (deletes `%%{x}%%` mid-line); this treats it as text.
-      #
-      # The body may not cross a line terminator (see the invariant on
-      # `acc_block_body`) -- do not make this unbounded, it reintroduces a
-      # quadratic scan per `%%{` in a block. This costs a directive split
-      # across lines inside a block, which neither this parser nor the oracle
-      # accepted before this rule existed either.
+      # Do not make the body unbounded -- it must stay LINE-BOUNDED per the
+      # invariant on `acc_block_body`, or it reintroduces a quadratic scan.
       rule(:acc_directive) do
         acc_nl >> acc_line_space.repeat >> str('%%{') >>
           (acc_nl.absent? >> str('}%%').absent? >> any).repeat >> str('}%%')
