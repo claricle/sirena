@@ -38,4 +38,7 @@ config:
 flowchart LR
   A-->B
 %%%%
-radar-beta\n${context}
+radar-beta
+title Best Radar Ever
+axis A, B, C
+curve c1{1, 2, 3}
