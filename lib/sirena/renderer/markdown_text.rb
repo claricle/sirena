@@ -143,6 +143,7 @@ module Sirena
       # @return [Array<Array<Run>>] one run array per line
       def parse_lines(text)
         raw = text.to_s
+        raw = raw.scrub unless raw.valid_encoding?
         return [[]] if raw.empty?
         return literal_lines(raw) unless raw.match?(EMPHASIS_MARKER)
         return literal_lines(raw) if raw.length > MAX_PARSEABLE_LENGTH

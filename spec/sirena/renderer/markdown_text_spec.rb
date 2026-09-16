@@ -4,6 +4,15 @@ require 'spec_helper'
 
 RSpec.describe Sirena::Renderer::MarkdownText do
   describe '.parse_lines' do
+    # Mutation-check: remove the `raw.scrub unless raw.valid_encoding?` guard.
+    # Watched red: raises ArgumentError instead of degrading to a run.
+    it 'degrades invalid UTF-8 byte sequences to a scrubbed literal run instead of raising' do
+      bad = ("hello" + "\xFF\xFE".dup.force_encoding("UTF-8")).dup
+
+      expect { described_class.parse_lines(bad) }.not_to raise_error
+      expect(described_class.parse_lines(bad)).to eq([[described_class::Run.new(text: bad.scrub, bold: false, italic: false)]])
+    end
+
     # Mutation-check: change `flatten_runs`'s `:strong` branch to pass
     # `bold` through unchanged instead of forcing it `true` (`flatten_runs(
     # child, bold: bold, italic: italic)`). Watched red: the run comes back
