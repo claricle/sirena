@@ -159,6 +159,28 @@ RSpec.describe HardenedMmdc do
       end
     end
 
+    # The complement to the test above: mmdc can print a real diagnostic
+    # BEFORE its child escapes and holds the pipe open. Giving up on EOF must
+    # not throw away what was already read — that diagnostic is the one
+    # piece of evidence explaining why the case is being abandoned.
+    it 'keeps a diagnostic already read even when a child escapes and the drain never reaches EOF' do
+      stub_const('HardenedMmdc::DRAIN_GRACE', 0.3)
+
+      Dir.mktmpdir do |dir|
+        pidfile = File.join(dir, 'child.pid')
+
+        prefix_path(fake_mmdc(dir, escaping_child_with_output(pidfile, 'syntax error'))) do
+          _status, output = Timeout.timeout(guard) do
+            described_class.run_mmdc(File.join(dir, 'in.mmd'), File.join(dir, 'out.svg'))
+          end
+
+          expect(output).to eq('syntax error')
+        end
+      ensure
+        kill_quietly(File.read(pidfile).to_i) if File.size?(pidfile)
+      end
+    end
+
     it 'passes source bytes to mmdc unchanged' do
       Dir.mktmpdir do |dir|
         input = File.join(dir, 'in.mmd')

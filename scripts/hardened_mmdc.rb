@@ -36,17 +36,32 @@ module HardenedMmdc
       pid = Process.spawn('mmdc', '-i', input, '-o', output,
                           out: stdout_w, err: stdout_w, pgroup: true)
       stdout_w.close
-      drain = Thread.new { stdout_r.read }
+      # Appended to as bytes arrive, not returned once at the end: a drain
+      # that never reaches EOF (an escaped descendant still holds the write
+      # end) still leaves whatever it already read sitting in this buffer,
+      # instead of losing it behind a `Thread#value` that never resolves.
+      buffer = +''
+      drain = Thread.new { drain_into(stdout_r, buffer) }
 
       descendants = descendants_of(pid)
       status = wait_with_deadline(pid, descendants: descendants)
       kill_group_id(pid)
-      [status, drain.join(DRAIN_GRACE) ? drain.value : '']
+      drain.join(DRAIN_GRACE)
+      [status, buffer]
     ensure
       kill_group(pid) if pid && status.nil?
       kill_each(descendants || [])
       drain&.kill
     end
+  end
+
+  # Reads in chunks rather than in one `read` call so a hung upstream that
+  # never reaches EOF still leaves everything read so far in `buffer` — the
+  # thread can be killed at any point without losing it.
+  def drain_into(io, buffer)
+    loop { buffer << io.readpartial(4096) }
+  rescue EOFError
+    nil
   end
 
   def wait_with_deadline(pid, descendants: nil)
@@ -175,6 +190,6 @@ module HardenedMmdc
   # unqualified top-level defs reachable only via `.send` (per the ORIGINAL
   # top-level scoping in mermaid_diff.rb, before this module existed).
   private_class_method :wait_with_deadline, :kill_group, :status_unless_killed,
-                       :kill_group_id, :kill_each, :descendants_of, :subtree_of,
+                       :kill_group_id, :kill_each, :descendants_of, :subtree_of, :drain_into,
                        :monotonic
 end

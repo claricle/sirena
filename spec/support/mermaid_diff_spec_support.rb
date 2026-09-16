@@ -284,6 +284,17 @@ module MermaidDiffSpecSupport
       "#!/bin/sh\n/bin/sleep 20.29 &\necho $! > '#{pidfile}'\n"
     end
 
+    # Same shape as escaping_child, but mmdc prints a diagnostic before its
+    # child escapes with the pipe's write end still open. The already-read
+    # bytes must survive even though the drain never reaches EOF.
+    def escaping_child_with_output(pidfile, diagnostic)
+      perl = %q(perl -e 'setpgrp(0,0); open(F, ">", $ARGV[0]) or die; ) +
+             %q(print F $$; close F; exec("/bin/sleep", "20.31")')
+      "#!/bin/sh\nprintf '%s' '#{diagnostic}'\n#{perl} '#{pidfile}' &\n" \
+        "while [ ! -s '#{pidfile}' ]; do sleep 0.01; done\n" \
+        "sleep 0.1\n"
+    end
+
     def interruptible_mmdc(pidfile)
       "#!/bin/sh\necho $$ > '#{pidfile}'\nexec /bin/sleep 20.71\n"
     end
