@@ -23,29 +23,14 @@ module HardenedMmdc
   # escaped the kill still holds the write end, and it will not let go.
   DRAIN_GRACE = 1
 
-  # Its own process group, so a hung Chromium goes down with it rather than
-  # outliving the deadline.
-  #
-  # The output is drained on a thread while we wait. Reading it afterwards
-  # deadlocked: a probe emitting 80KB of KaTeX warnings filled the 64KB pipe,
-  # mmdc blocked writing, and a diagram it renders was reported MMDC FAILED
-  # on the deadline.
-  #
-  # The ensure clause kills the tree as well as closing the pipe, or a SIGINT
-  # left mmdc and its Chromium children running after the harness exited.
-  #
-  # The group goes down on every path, not just the deadline. A child that
-  # stayed in it used to outlive a normally-exiting mmdc, and one of those
-  # accumulated per case.
-  #
-  # The wait on the drain is bounded because the group kill does not reach a
-  # child that left the group — Chromium does exactly that. Such a child still
-  # holds the pipe's write end, so reading to EOF waited on THAT process: one
-  # escaped Chromium held a 30s case open for 301.7s.
-  #
-  # The pipe is opened with a block so both ends close however we leave. They
-  # used to be closed by hand after the spawn, so a spawn that raised leaked
-  # the write end — measured at one descriptor per failure, 20 for 20.
+  # Spawned into its own process group so a hung Chromium goes down with it.
+  # Drain the output on a thread rather than reading it after the wait — a
+  # full pipe would otherwise block mmdc's write and starve the deadline.
+  # Bound the drain join: a child that escaped the group kill (Chromium does)
+  # still holds the pipe's write end and would hang EOF indefinitely. Keep
+  # the ensure clause killing the tree — a SIGINT here must not leave mmdc or
+  # Chromium running. Keep the pipe opened with a block so both ends always
+  # close, even when the spawn itself raises.
   def run_mmdc(input, output)
     IO.pipe do |stdout_r, stdout_w|
       pid = Process.spawn('mmdc', '-i', input, '-o', output,
@@ -81,21 +66,13 @@ module HardenedMmdc
     end
   end
 
-  # Killing mmdc's process group is not enough: puppeteer starts Chromium in
-  # a group of its own, and after the group kill it survived under PID 1 for
-  # seconds. The descendants have to be collected BEFORE the kill, because
-  # once the parent dies they are reparented and the trail is gone. A first
-  # snapshot is taken immediately after spawn and repeated while the leader is
-  # alive, so a child that escapes a normally exiting mmdc is still collected.
-  #
-  # Collecting the descendants means running `ps`, and mmdc can finish while
-  # that runs. The status it finished with is the verdict we came for, so it
-  # is handed back rather than thrown away — one that exited 7 in this window
-  # was reported as MMDC FAILED, for a source mermaid had a real answer to.
-  #
-  # ECHILD is the second pass over a case that timed out: the deadline already
-  # reaped mmdc here, and then `run_mmdc` cleans up again on the way out
-  # because it has no status. There is nothing left to wait for by then.
+  # Killing mmdc's process group alone is not enough — Chromium runs in a
+  # group of its own, so descendants must be collected BEFORE the kill or
+  # reparenting loses the trail. Return the exit status if mmdc finished
+  # while descendants were being collected, rather than discarding it: that
+  # is the verdict the caller came for. Callable a second time on a case that
+  # already timed out (`run_mmdc`'s cleanup runs unconditionally), so rescue
+  # ECHILD — there is nothing left to wait for by then.
   def kill_group(pid)
     doomed = descendants_of(pid)
     kill_group_id(pid)

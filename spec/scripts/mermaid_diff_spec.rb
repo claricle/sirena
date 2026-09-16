@@ -371,20 +371,13 @@ RSpec.describe MermaidDiff do
       expect(oracle_verdict(syntax_error_svg)).to be(:rejects)
     end
 
-    # The last two rows pin a contract that belongs to rexml, not to us.
-    # Both raise ArgumentError inside the parser rather than a parse error:
-    # a bogus encoding name from Encoding#encoding=, and invalid bytes from
-    # the gsub! in Text -- and mmdc output is read with File.binread, so
-    # invalid bytes arrive raw. valid_svg? only ever sees ParseException
-    # because TreeParser#parse rescues StandardError and re-raises it
-    # wrapped. `gem 'rexml'` is unpinned, so a version that stops wrapping
-    # turns damaged mmdc output from one lost case into a crashed sweep.
-    # Measured: with that wrapping removed the three rows above still pass
-    # and these rows raise instead, so they are the only ones here that
-    # can see it. The last row raises RuntimeError rather than
-    # ArgumentError: keep it, because the two above pin only the one
-    # class, and a rescue narrowed to ArgumentError -- ordinary
-    # hygiene -- lets RuntimeError escape with every other row green.
+    # Keep the last two rows even though the first three look sufficient:
+    # they are the only ones that raise ArgumentError/RuntimeError instead of
+    # a parse error, which is what exercises valid_svg?'s rescue of rexml
+    # wrapping the error in ParseException. Narrowing that rescue to
+    # ArgumentError, or dropping these rows, would let a rexml version that
+    # stops wrapping crash the sweep on damaged mmdc output while every
+    # other row here stays green.
     it 'requires a valid SVG document' do
       damaged = ['', 'plain text', '<svg>',
                  "<?xml version='1.0' encoding='NOT-A-CHARSET'?><svg/>",

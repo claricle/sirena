@@ -1,24 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Reports where sirena and mermaid disagree about a source.
+# Reports where sirena and mermaid disagree about a hand-written probe source
+# (the corpus only covers constructs mermaid's own tests happen to include).
 #
-# The corpus cannot answer this. It holds the sources mermaid's own test
-# suite happens to contain, so a construct nobody wrote a test for is
-# invisible to the sweep — sirena can accept input mermaid refuses, or refuse
-# input mermaid renders, and every gate stays green.
+# Usage: ruby scripts/mermaid_diff.rb [--only-gaps] scripts/probes/*.txt
 #
-# Usage:
-#   ruby scripts/mermaid_diff.rb scripts/probes/flowchart.txt
-#   ruby scripts/mermaid_diff.rb --only-gaps scripts/probes/*.txt
+# One probe record per file, separated by a line that is exactly `%%%%`
+# (not `---`, which opens frontmatter). Escape a literal `%%%%` line with one
+# leading backslash; a run of backslashes loses one per escape level.
 #
-# Probe files hold one source per record, separated by a line that is exactly
-# `%%%%`. A source that needs such a line writes `\%%%%`, and one that needs
-# THAT line writes `\\%%%%` — a leading run of backslashes loses one.
-# `---` cannot be the separator: it opens a frontmatter block.
-#
-# Exits nonzero on any disagreement, and on any infrastructure failure.
-# Needs a POSIX system and mmdc on PATH.
+# Exits nonzero on any disagreement or infrastructure failure. Needs a POSIX
+# system and mmdc on PATH.
 
 # The verdicts are only worth as much as the sirena that produced them, so
 # the Gemfile decides which one that is rather than whatever is installed.
@@ -92,23 +85,13 @@ rescue SystemCallError => e
   :error
 end
 
-# Records are kept byte for byte. Stripping them changed what was compared —
-# an indented frontmatter probe became a different source and the
-# disagreement it existed to catch vanished.
-# The separator is a line that is EXACTLY `%%%%`. Anything else on that line
-# is content: mermaid reads any `%%` line as a comment, and mmdc accepts both
-# `%%%%comment` and `%%%%` followed by blanks. Each of those split one probe
-# into two, and the halves got verdicts the real source never had.
-#
-# The escape drops ONE backslash from a run of them, so every line is
-# writable: `\%%%%` is the separator escaped, `\\%%%%` is a source whose own
-# line is `\%%%%`. It used to rewrite `\%%%%` and leave `\\%%%%` doubled, so
-# the one source you could not write was `\%%%%` — which mmdc 11.12.0 renders
-# and sirena rejects. The probe silently became a source with a bare `%%%%`
-# line instead, which both accept.
-#
-# Matching blanks here would strip the backslash off a `\%%%%   ` that no
-# longer needs one.
+# Records are kept byte for byte — do not strip them, that changes the
+# source being compared. The separator is a line that is EXACTLY `%%%%`;
+# anything else on that line (a trailing comment, blanks) is content and
+# must not split the probe. The escape drops only ONE backslash from a run:
+# `\%%%%` is the separator escaped, `\\%%%%` is a source whose own line is
+# `\%%%%`. Do not also match trailing blanks in ESCAPED_SEPARATOR — that
+# would strip the backslash off a `\%%%%   ` line that does not need it.
 SEPARATOR = /^%%%%\r?(?:\n|\z)/
 ESCAPED_SEPARATOR = /^\\(\\*%%%%)(?=\r?$)/
 
