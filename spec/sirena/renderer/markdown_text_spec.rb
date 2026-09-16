@@ -760,15 +760,8 @@ RSpec.describe Sirena::Renderer::MarkdownText do
                           ]])
     end
 
-    # The regression the old Guard B (a per-character run-length stack
-    # walk) was unsound over: kramdown and real `marked` agree exactly on
-    # this shape (`<strong>a*a</strong>`), even though its `*`-run shape
-    # `[2,1,2]` is identical to the genuinely-unsafe `"**foo* bar**"`
-    # above — a pure length model can't tell them apart, but
-    # `unsafe_emphasis_divergence?` (which actually runs both parses and
-    # compares them) can, since it checks flanking context, not just run
-    # lengths. Verified directly against real `marked.parseInline`:
-    # `**a*a**` -> `<strong>a*a</strong>`.
+    # `**a*a**` and the genuinely-unsafe `"**foo* bar**"` above share the
+    # same `*`-run shape `[2,1,2]`; only flanking context tells them apart.
     #
     # Mutation-check: temporarily restore the old Guard B call in place of
     # `unsafe_emphasis_divergence?`. Watched red: this falls back to

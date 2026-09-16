@@ -407,15 +407,10 @@ module Sirena
       #    `unsafe_emphasis_divergence?`, since it is proven correct in
       #    isolation and cheaper than a full parse-and-compare.
       #
-      # (There used to be a Guard B here: a per-character run-length stack
-      # walk. It was unsound — false-positived on `"**a*a**"` (kramdown and
-      # marked agree exactly, `<strong>a*a</strong>`, identical `*`-run
-      # shape `[2,1,2]` to the genuinely-unsafe `"**foo* bar**"`) because a
-      # pure length model has no way to see whitespace/punctuation flanking
-      # context. Replaced entirely — not patched — by
-      # `unsafe_emphasis_divergence?`; see that method's doc comment for
-      # the fix, a second gap it closes for free, and the convergence
-      # numbers.)
+      # A run-length-only check (no whitespace/punctuation flanking context)
+      # is unsound here: `"**a*a**"` and `"**foo* bar**"` share the same
+      # `*`-run shape `[2,1,2]` but only one is actually unsafe. Don't
+      # reintroduce one — `unsafe_emphasis_divergence?` below replaces it.
       #
       # Not a general proof this module now matches `marked`'s emphasis
       # algorithm for every delimiter-length combination — same disclosure
@@ -456,35 +451,15 @@ module Sirena
       # `literal_lines`, the same safe-but-unstyled trade-off as every other
       # guard in this file.
       #
-      # Replaces the former Guard B (a per-character run-length stack walk),
-      # which was unsound: it false-positived on `"**a*a**"` (kramdown and
-      # marked agree exactly -- `<strong>a*a</strong>` -- with the identical
-      # `*`-run shape `[2,1,2]` as the genuinely-unsafe `"**foo* bar**"`,
-      # because a pure length model has no way to see whitespace/punctuation
-      # flanking context) and, as a second gap closed for free by this
-      # replacement, also resolves `"_a *b* c_"` correctly (a cross-type
-      # nesting shape the old per-character stack walk never modeled at
-      # all).
-      #
-      # `EmphasisSimulator` converged against 23,244 fuzzed cases across
-      # four corpora -- flanking shapes, two independently-generated
-      # mixed-marker corpora, and an escape-interaction corpus -- each
-      # checked directly against real `marked`'s own runtime output: 0
-      # false positives, 0 false negatives.
-      #
-      # Paragraphs are matched to `:p` blocks positionally: `raw.split` on
-      # `\n{2,}` and `root.children.select { |b| b.type == :p }` correspond
-      # 1:1, in order -- every non-`:p`, non-`:blank` block already
-      # triggered the fallback in `parse_lines` before this method runs.
+      # Paragraphs are matched to `:p` blocks positionally -- relies on
+      # every non-`:p`, non-`:blank` block already having triggered the
+      # fallback in `parse_lines` before this method runs; don't call this
+      # without that guard in place first.
       #
       # Each paragraph is `strip`ped before simulation: kramdown drops a
       # paragraph's own leading/trailing whitespace before its span parsers
-      # ever run (verified directly: `"*a* " * 15` parses to 15 `:em`
-      # children with 14 plain-space children between them, no 16th
-      # trailing-space child) -- real marked does the same block-level trim
-      # before inline tokenization. Comparing the simulator's output against
-      # the UN-stripped raw paragraph would report a false divergence on
-      # that trailing whitespace alone, not a real emphasis mismatch.
+      # run, so comparing against the UN-stripped raw paragraph reports a
+      # false divergence on trailing whitespace alone, not a real mismatch.
       #
       # @param raw [String]
       # @param root [Kramdown::Element] the parsed root, from `Parser.parse`

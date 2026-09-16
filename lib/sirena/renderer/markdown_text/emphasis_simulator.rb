@@ -13,18 +13,11 @@ module Sirena
       # what real marked would produce for comparison against kramdown's
       # actual parse.
       #
-      # Converged against 23,244 fuzzed cases across four corpora (flanking
-      # shapes, two independently-generated mixed-marker corpora, and an
-      # escape-interaction corpus), each checked directly against real
-      # `marked`'s own runtime output: 0 false positives, 0 false negatives.
-      # Includes a "cross-marker sink" fix (`AST_SINK`/`UND_SINK` below)
-      # found via the larger mixed corpus: real marked's RDelim regexes have
-      # a first alternative that swallows one embedded opposite-marker
-      # character as inert filler immediately after certain
-      # `**...**`/`__...__` openings (e.g. `"_**_**"` -- real marked keeps
-      # the leading `_` literal because the embedded `_` is swallowed before
-      # the outer `_` scan ever reaches a real closing candidate) -- a naive
-      # "scan for the next same-marker run" model gets this wrong.
+      # A naive "scan for the next same-marker run" model gets `"_**_**"`
+      # wrong: real marked's RDelim regexes have a first alternative
+      # (`AST_SINK`/`UND_SINK` below) that swallows one embedded
+      # opposite-marker character as inert filler immediately after certain
+      # `**...**`/`__...__` openings, so don't drop that check.
       module EmphasisSimulator
         # RDelimAst/RDelimUnd's own alternative 1 -- ported from the live
         # `emStrongRDelimAst`/`emStrongRDelimUnd` regex objects' first
