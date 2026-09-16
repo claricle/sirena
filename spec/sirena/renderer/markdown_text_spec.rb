@@ -711,9 +711,17 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # each of these rather than risk a wrong render — same trade-off as
     # `unsafe_escaped_delimiter_interaction?` above.
     #
-    # Mutation-check: delete the `unsafe_delimiter_run_structure?` guard in
-    # `parse_lines`. Watched red: all four come back styled (matching the
-    # WRONG shapes quoted above) instead of `literal_lines(raw)`.
+    # NOT a mutation-check pin on `unsafe_delimiter_run_structure?` itself:
+    # verified directly that deleting that guard's call site leaves all four
+    # examples green, because the newer, more general
+    # `unsafe_emphasis_divergence?` (comparing kramdown's real parse against
+    # `EmphasisSimulator`) independently re-derives "unsafe" for each of
+    # these same four shapes and still falls back to `literal_lines`. These
+    # examples pin the end-to-end safety property (parse_lines never
+    # mis-renders these four shapes), not the cheap fast-path guard by name
+    # -- `unsafe_delimiter_run_structure?`'s own doc comment already
+    # discloses it is a redundant, cheaper-than-full-parse fast path rather
+    # than the sole guard against these inputs.
     it 'falls back to literal text for a 4-or-more marker run (Guard A)' do
       raw = '****foo****'
 
