@@ -5,19 +5,15 @@ require "kramdown"
 module Sirena
   module Renderer
     module MarkdownText
-      # A faithful port of marked's REAL emStrong tokenizer algorithm (a
-      # forward regex-driven scan, read directly from marked's own source),
-      # not the CommonMark "process emphasis" delimiter-stack algorithm --
-      # real marked does not implement that. Used only by
-      # `unsafe_emphasis_divergence?` (in `markdown_text.rb`), to predict
-      # what real marked would produce for comparison against kramdown's
-      # actual parse.
+      # A port of marked's REAL emStrong tokenizer (regex-driven scan, not
+      # CommonMark's delimiter-stack algorithm, which real marked doesn't
+      # implement). Used only by `unsafe_emphasis_divergence?` in
+      # `markdown_text.rb` to predict marked's output for comparison.
       #
       # A naive "scan for the next same-marker run" model gets `"_**_**"`
-      # wrong: real marked's RDelim regexes have a first alternative
-      # (`AST_SINK`/`UND_SINK` below) that swallows one embedded
-      # opposite-marker character as inert filler immediately after certain
-      # `**...**`/`__...__` openings, so don't drop that check.
+      # wrong -- don't drop the `AST_SINK`/`UND_SINK` check below, which
+      # swallows one embedded opposite-marker character after certain
+      # `**...**`/`__...__` openings, matching marked's own RDelim regexes.
       module EmphasisSimulator
         # RDelimAst/RDelimUnd's own alternative 1 -- ported from the live
         # `emStrongRDelimAst`/`emStrongRDelimUnd` regex objects' first
@@ -171,20 +167,15 @@ module Sirena
         end
 
         # Tokenizes one segment into {type: :text, text:} /
-        # {type: :em/:strong, tokens: [...]} nodes, mirroring marked's
-        # `Lexer#inlineTokens` restricted to escape + emStrong + plain text.
+        # {type: :em/:strong, tokens: [...]} nodes.
         #
-        # Run-length/flanking classification runs on `masked` -- every `\X`
-        # escape replaced by a same-length `+` placeholder -- never on
-        # `text` directly, mirroring real marked's own escape-then-emStrong
-        # pass ordering. An escaped `*`/`_` therefore never opens, closes,
-        # or extends a run. Output text always comes from `text`, with
-        # escapes resolved.
+        # Classification runs on `masked` (escapes replaced by same-length
+        # `+`), never on `text` -- an escaped `*`/`_` must never open,
+        # close, or extend a run. Output text always comes from `text`,
+        # with escapes resolved.
         #
-        # `prev_char` tracking mirrors marked's `r`/`i` bookkeeping exactly:
-        # only a plain literal-text run updates it (skipped if that run's
-        # last character is `_`) -- an escape token or emStrong match both
-        # reset it to nil.
+        # `prev_char` resets to nil after an escape token or emStrong
+        # match; only a plain literal-text run updates it.
         def tokenize(text)
           escaped_chars = ::Kramdown::Parser::Kramdown::ESCAPED_CHARS
           masked = text.gsub(escaped_chars) { "+" * ::Regexp.last_match(0).length }

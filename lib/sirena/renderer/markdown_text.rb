@@ -442,24 +442,17 @@ module Sirena
           blanked.match?(/(?<!\*)\*(?!\*)_(?!_).*?(?<!_)_(?!_)(?<!\*)\*(?!\*)/)
       end
 
-      # The general-purpose check Guard A and Guard C above hand off to:
-      # predicts what real `marked` would produce for each paragraph (via
-      # `EmphasisSimulator`, a port of marked's actual regex-driven emStrong
-      # tokenizer -- not CommonMark's delimiter-stack algorithm, which real
-      # marked does not implement) and compares it against what kramdown's
-      # `Parser` actually produced. Any divergence falls back to
-      # `literal_lines`, the same safe-but-unstyled trade-off as every other
-      # guard in this file.
+      # Predicts what real `marked` would produce for each paragraph (via
+      # `EmphasisSimulator`) and compares it against kramdown's actual
+      # parse; any divergence falls back to `literal_lines`.
       #
-      # Paragraphs are matched to `:p` blocks positionally -- relies on
-      # every non-`:p`, non-`:blank` block already having triggered the
-      # fallback in `parse_lines` before this method runs; don't call this
-      # without that guard in place first.
+      # Paragraphs are matched to `:p` blocks positionally -- don't call
+      # this without `parse_lines`'s earlier non-`:p`/non-`:blank` guard
+      # already in place, or the positional match breaks.
       #
-      # Each paragraph is `strip`ped before simulation: kramdown drops a
-      # paragraph's own leading/trailing whitespace before its span parsers
-      # run, so comparing against the UN-stripped raw paragraph reports a
-      # false divergence on trailing whitespace alone, not a real mismatch.
+      # Each paragraph is `strip`ped before simulation, matching kramdown's
+      # own block-level trim -- comparing un-stripped raw text reports a
+      # false divergence on trailing whitespace alone.
       #
       # @param raw [String]
       # @param root [Kramdown::Element] the parsed root, from `Parser.parse`
