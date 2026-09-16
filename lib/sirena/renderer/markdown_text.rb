@@ -442,15 +442,12 @@ module Sirena
           blanked.match?(/(?<!\*)\*(?!\*)_(?!_).*?(?<!_)_(?!_)(?<!\*)\*(?!\*)/)
       end
 
-      # Predicts what real `marked` would produce for each paragraph (via
-      # `EmphasisSimulator`) and compares it against kramdown's actual
-      # parse; any divergence falls back to `literal_lines`. Paragraphs are
-      # matched to `:p` blocks positionally -- don't call this without
+      # Predicts what real `marked` would produce per paragraph (via
+      # `EmphasisSimulator`) and compares it to kramdown's actual parse;
+      # falls back to `literal_lines` on any divergence. Requires
       # `parse_lines`'s earlier non-`:p`/non-`:blank` guard already in
-      # place, or the positional match breaks. Each paragraph is
-      # `strip`ped before simulation, matching kramdown's own block-level
-      # trim, or an un-stripped comparison reports a false divergence on
-      # trailing whitespace alone.
+      # place (paragraphs are matched to `:p` blocks positionally). Strips
+      # each paragraph first, matching kramdown's own block-level trim.
       #
       # @param raw [String]
       # @param root [Kramdown::Element] the parsed root, from `Parser.parse`
