@@ -1,0 +1,5 @@
+---
+cop: Style/StringLiteralsInInterpolation
+rows:
+- file: lib/tasks/benchmark.rake
+  count: 1
