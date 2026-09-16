@@ -135,25 +135,30 @@ module Sirena
               end
               return nil if h
 
-              a -= u
-              if a.positive?
-                scan_pos = r_end
-              else
-                u_used = [u, u + a + p].min
-                strong = ([o, u_used].min % 2).zero?
-                return [next_start + u_used, strong ? 2 : 1, strong]
-              end
+              result, a = resolve_close(a, u, p, o, next_start)
+              return result if result
+
+              scan_pos = r_end
             else
-              a -= u
-              if a.positive?
-                scan_pos = r_end
-              else
-                u_used = [u, u + a + p].min
-                strong = ([o, u_used].min % 2).zero?
-                return [next_start + u_used, strong ? 2 : 1, strong]
-              end
+              result, a = resolve_close(a, u, p, o, next_start)
+              return result if result
+
+              scan_pos = r_end
             end
           end
+        end
+
+        # Shared "resolve or keep scanning" step for a `:tight`/`:close`
+        # candidate: returns `[match, updated_a]` where `match` is the
+        # emStrong result once the opener's budget is exhausted, or `[nil,
+        # updated_a]` to keep scanning from `r_end`.
+        def resolve_close(a, u, p, o, next_start)
+          a -= u
+          return [nil, a] if a.positive?
+
+          u_used = [u, u + a + p].min
+          strong = ([o, u_used].min % 2).zero?
+          [[next_start + u_used, strong ? 2 : 1, strong], a]
         end
 
         def append_text(tokens, run_text)
@@ -194,7 +199,7 @@ module Sirena
             end
 
             ch = masked[pos]
-            match = EMPHASIS_MARKER.match?(ch) ? try_em_strong(masked, pos, prev_char) : nil
+            match = MarkdownText::EMPHASIS_MARKER.match?(ch) ? try_em_strong(masked, pos, prev_char) : nil
 
             if match
               end_pos, trim, strong = match
@@ -208,7 +213,7 @@ module Sirena
             start = pos
             pos += 1
             while pos < text.length
-              break if EMPHASIS_MARKER.match?(masked[pos])
+              break if MarkdownText::EMPHASIS_MARKER.match?(masked[pos])
 
               next_pair = text[pos, 2]
               break if next_pair&.match?(escaped_chars)
