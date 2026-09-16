@@ -30,12 +30,29 @@ RSpec.describe Sirena do
   end
 
   describe "component files, required standalone" do
-    %w[sirena/parser sirena/transform sirena/renderer].each do |path|
+    %w[sirena/parser sirena/transform sirena/renderer sirena/engine].each do |path|
       it "loads #{path} without first requiring the top-level sirena entry point" do
         out, status = require_standalone(path)
 
         expect(status).to be_success, "expected exit 0, got #{status.exitstatus}:\n#{out}"
       end
+    end
+
+    # A bare "loads without raising" assertion is vacuous for engine.rb:
+    # DiagramTypeError/PipelineError are referenced only inside method
+    # bodies, so a subprocess still exits 0 even with both error requires
+    # deleted (proven by executing that exact mutation). This example
+    # asserts the constants themselves exist and inherit Sirena::Error.
+    it "defines DiagramTypeError and PipelineError as Sirena::Error subclasses when required standalone" do
+      out, status = Open3.capture2e(
+        "ruby", "-Ilib", "-e",
+        'require "sirena/engine"; ' \
+        'puts Sirena::Engine::DiagramTypeError < Sirena::Error; ' \
+        'puts Sirena::Engine::PipelineError < Sirena::Error'
+      )
+
+      expect(status).to be_success, "expected exit 0, got #{status.exitstatus}:\n#{out}"
+      expect(out.lines.map(&:chomp)).to eq(%w[true true])
     end
   end
 end
