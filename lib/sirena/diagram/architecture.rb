@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
     # Architecture diagram model representing system architecture visualization
-    class ArchitectureDiagram < Lutaml::Model::Serializable
+    class ArchitectureDiagram < Base
       # Group (boundary) in architecture diagram
       class Group < Lutaml::Model::Serializable
         attribute :id, :string
@@ -38,8 +39,20 @@ module Sirena
       attribute :services, Service, collection: true, default: -> { [] }
       attribute :edges, Edge, collection: true, default: -> { [] }
 
-      def type
-        "architecture"
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :architecture
+      def diagram_type
+        :architecture
+      end
+
+      # Architecture diagrams have no validation rules yet — nothing here
+      # checks group/service/edge references. See TODO.foundation's corpus
+      # burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
   end

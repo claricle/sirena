@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base'
+
 module Sirena
   module Transform
     # Transforms a GitGraph diagram into a positioned layout structure.
@@ -18,7 +20,7 @@ module Sirena
     # @example Transform a git graph
     #   transform = Transform::GitGraph.new
     #   layout = transform.to_graph(diagram)
-    class GitGraph
+    class GitGraph < Base
       # Spacing between commits horizontally
       COMMIT_SPACING = 80
 
@@ -38,7 +40,7 @@ module Sirena
       #
       # @param diagram [Diagram::GitGraph] the git graph diagram
       # @return [Hash] layout data with commits, branches, and connections
-      def to_graph(diagram)
+      def build_graph(diagram)
         # Build commit lookup and parent tracking
         commits_by_id = build_commit_lookup(diagram.commits)
         branch_info = build_branch_info(diagram)
