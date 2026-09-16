@@ -128,29 +128,13 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       )
     end
 
-    # ---------------------------------------------------------------------
-    # accTitle / accDescr
-    #
-    # "The oracle" below means mermaid 11.16.1 driven by mermaid-cli 11.12.0.
-    # `mmdc --version` reports the CLI; the library that decides these
-    # verdicts is the mermaid in the CLI's node_modules, and the two carry
-    # different version numbers. To re-run any verdict quoted here, put the
-    # source in a file and render it — exit 0 is a render, non-zero a refusal:
-    #
-    #   printf 'journey\naccDescr {Desc}After: 3: Me\n' > /tmp/case.mmd
-    #   mmdc -i /tmp/case.mmd -o /tmp/case.svg; echo "exit $?"
-    #
-    # When measured, mmdc was at
-    # ~/.nvm/versions/node/v22.23.1/bin/mmdc.
-    # ---------------------------------------------------------------------
+    # "The oracle" below means mermaid 11.16.1 via mermaid-cli 11.12.0. To
+    # re-run a verdict: `mmdc -i case.mmd -o case.svg; echo "exit $?"` --
+    # exit 0 is a render, non-zero a refusal.
 
-    # The extracted fixture names mislead twice over: the files named
-    # "multiline" hold a single-line accTitle, and those named
-    # "title_definition" hold an accTitle rather than a title, so they expect
-    # a nil title. The seven files carrying a directive collapse to these
-    # three sources — 009_..._title_8 and 013_..._title_12 duplicate the
-    # first, 008_..._accdescr__7 the second, 009_..._multiline_..._8 the
-    # third. Only the second contains an accDescr.
+    # Fixture names are misleading: "multiline" files hold a single-line
+    # accTitle, and "title_definition" files hold an accTitle (nil title).
+    # Only the accdescr case actually contains an accDescr.
     describe 'an accessibility directive from the corpus' do
       cases = {
         '004_parser_should_handle_a_title_definition_3.mmd' => nil,
@@ -388,24 +372,10 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       end
 
       it 'reads a mid-line directive as text rather than as a directive' do
-        # A DIVERGENCE, pinned rather than endorsed. Mermaid's directive
-        # strip is NOT anchored to a line start, so it deletes `%%{x}%%` from
-        # the middle of a line; this grammar anchors both of its strips and
-        # so leaves it as text. In `directive` the `}` inside `{x}` therefore
-        # ends the block, `%%B` is left as an ordinary comment line, and the
-        # source parses — where the oracle strips the directive, never closes
-        # `accDescr {`, and REFUSES it.
-        #
-        # `comment` is the control that places the divergence on the
-        # directive rather than on mid-line `%%` in general: with a plain
-        # comment both tools refuse the source.
-        #
-        # The anchor is kept because it matches the comment rule beside it
-        # and flowchart's `metadata_comment_line`, and because no corpus case
-        # puts a directive mid-line. Unanchoring it changes what a directive
-        # IS, which wants its own oracle round rather than arriving as a side
-        # effect of this one — on the evidence so far it would move TOWARD
-        # the oracle on every shape measured.
+        # Known divergence, pinned: mermaid's directive strip isn't anchored
+        # to a line start (it strips `%%{x}%%` mid-line), this grammar's is,
+        # so this parses where the oracle refuses it. `comment` is the
+        # control -- a plain mid-line `%%` still gets refused by both.
         directive = "journey\naccDescr {A%%{x}%%B\nsection S\nT: 1: M\n"
         comment = "journey\naccDescr {A%% x}B\nsection S\nT: 1: M\n"
 
@@ -416,18 +386,10 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       end
 
       it 'does not read a directive split across two lines' do
-        # A DIVERGENCE, pinned. The oracle strips
-        # `%%{init: {` / `"theme":"dark"}}%%` across the line break and
-        # renders with the description `a\nb` — the same answer it gives the
-        # one-line spelling. Here the directive body stops at the line end,
-        # so the `}` inside the JSON closes the block, `}%%` is left stranded
-        # after it and the source is refused.
-        #
-        # The bound is deliberate and costs nothing that existed before:
-        # `origin/main` and the parser before this change both refuse this
-        # source too. Without it every `%%{` inside a block scanned to the
-        # end of the source hunting for `}%%`, and a block of them was
-        # quadratic.
+        # Known divergence, pinned: the oracle strips a directive split
+        # across lines and renders; here the directive body stops at the
+        # line end (required -- see the invariant on acc_block_body), so the
+        # `}` inside the JSON closes the block early and this refuses it.
         source = "journey\naccDescr {a\n%%{init: {\n\"theme\":\"dark\"}}%%\nb}\n" \
                  "section S\nT: 1: M\n"
 
@@ -523,26 +485,11 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       # only how long one takes.
 
       it 'keeps every alternative in the block body line-bounded' do
-        # THE INVARIANT. `acc_block_body` runs its alternation at every
-        # position in the block, so an alternative whose own repeat can reach
-        # the end of the source makes the whole parse quadratic in the length
-        # of the block. That has happened twice in this grammar — first in
-        # the block body itself, then in the directive rule added to repair
-        # it — so it is measured here rather than remembered.
-        #
-        # Each alternative is driven with 800 lines of its own trigger and
-        # compared against plain content, which is the single-character
-        # branch and linear by construction. Measured: the comment rule runs
-        # at about 1x the control and the directive rule at about 2.6x,
-        # against 26x for that same rule with its body unbounded.
-        #
-        # ADD A ROW when you add an alternative to `acc_block_comment`. One
-        # carrying this defect then fails on arrival instead of shipping.
-        # Every measurement is the MINIMUM of three runs. Noise only ever ADDS
-        # time, so the minimum is the robust statistic, and a scheduler spike
-        # has to hit all three samples to survive. A single sample is not
-        # enough here: measured under a loaded machine it put this ratio at
-        # 13.89x against a true value near 2.5x, which is a false failure.
+        # ADD A ROW here when you add an alternative to `acc_block_comment` --
+        # this is what catches an alternative that isn't LINE-BOUNDED (the
+        # invariant on `acc_block_body`) before it ships. Each side is the
+        # MINIMUM of three runs: noise only ever adds time, so a spike has to
+        # hit every sample to produce a false failure.
         block = lambda do |line|
           "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
         end
@@ -567,52 +514,19 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       end
 
       it 'refuses a long unclosed block without rescanning it per line' do
-        # Before the block opener was refused outright, each of these lines
-        # succeeded as a task and each scanned to the end of the source
-        # first: 2000 lines took 20.0s against 1.2s now, and the gap widens
-        # with the line count.
+        # The control is the SAME 2000 openers with their braces CLOSED, so
+        # the ratio isolates the refusal's cost from the machine's speed.
         #
-        # Score the two assertions honestly. The REFUSAL is what kills a
-        # restored fallthrough, and another example in this file already
-        # refuses the same shape on a single line. What the RATIO adds is the
-        # COST: a regression that still refuses but goes quadratic again
-        # changes no parse result, so nothing else here can see it.
+        # Do NOT split the two timed sides into separate phases and take
+        # `min` of each side separately -- that flakes under load (load
+        # ending between phases inflates only the first side). Measure as
+        # ADJACENT PAIRS and take the minimum over the per-pair ratios, so
+        # both halves of a sample share the same load regime.
         #
-        # The control is the SAME 2000 openers with their braces CLOSED. It
-        # drives `acc_descr_open` and `acc_block_body` over the same byte
-        # count and never reaches the refusal, so the ratio isolates that one
-        # property and divides the machine's speed out of it.
-        #
-        # This was a bare `elapsed < 10`, and that is the weaker form rather
-        # than merely the untidier one. On an 8-core box the example measured
-        # 1.22s, 1.23s and 1.43s on a quiet machine but 10.01s under 32 busy
-        # loops, where it FAILED. Under STEADY load the ratio costs no
-        # headroom -- 2.96-3.25x against 64 spinners, where the old form
-        # failed 4 times out of 4. The bound of 8 is the one the
-        # line-bounded example above already uses. To reproduce, run
-        #   bundle exec rspec spec/sirena/parser/user_journey_spec.rb \
-        #     -e 'refuses a long unclosed block'
-        # with `ruby -e 'loop {}'` started four times per core beforehand.
-        #
-        # The two sides are measured as ADJACENT PAIRS and the minimum is
-        # taken over the per-pair RATIOS, not over each side separately.
-        # Measuring the sides in separate phases is what makes this flake:
-        # load that ends between the phases inflates only the first, `min`
-        # cannot smooth it because the phases are consecutive, and the
-        # example goes red with nothing broken -- reproduced 5 times out of
-        # 5, worst ratio 12.3 against a bound of 8. Pairing puts both halves
-        # of every sample in the same load regime, so a transient cancels.
-        # Noise only ever ADDS time, so a spike must hit all three pairs.
-        # Both sides assert their OUTCOME inside the timed block, so neither
-        # can quietly become a fast no-op and pass this on speed alone.
-        #
-        # Scored honestly: the ratio buys machine independence and pays for
-        # it. A uniform constant-factor regression -- 10x per character on
-        # the branch BOTH sides share -- moves numerator and denominator
-        # together and survives this form, where the old absolute bound
-        # killed it. That kill was never portable: pristine runs 1.24s here,
-        # so `< 10` only ever caught regressions above roughly 8x on THIS
-        # machine and nothing at all on a slower one.
+        # Known trade: a uniform constant-factor regression on the branch
+        # BOTH sides share moves numerator and denominator together and
+        # survives this form. That is accepted -- see the gate record for
+        # the bound's derivation.
         source = "journey\n#{"accDescr {x: 3: Me\n" * 2000}"
         control = "journey\n#{"accDescr {x: 3: Me}\n" * 2000}section S\nT: 1: M\n"
         expect(source.bytesize).to be > 30_000
@@ -635,22 +549,11 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
       end
 
       it 'parses a long run of U+2028 inside a block in linear time' do
-        # U+2028 and U+2029 were in both `acc_nl` and the comment indent set.
-        # At every one of them the comment rule opened, the indent repeat ate
-        # the whole remaining run, the `%%` failed and all of it backtracked
-        # to consume one character. Both sources below parse identically, so
-        # only the clock can see the difference: the shared set took 6.2s
-        # against 0.09s here, a ratio of 103 where this asserts 15.
-        #
-        # The no-break space is the control. It is in the indent set and NOT
-        # in `acc_nl`, so it cannot open a comment, which is the one property
-        # that separates the two runs. Measuring against it rather than
-        # against a fixed number of seconds keeps the example honest on a
-        # machine of any speed.
-        #
-        # Each side is the MINIMUM of three runs, for the reason given on the
-        # line-bounded example above: noise only adds time, so a spike has to
-        # hit every sample to survive.
+        # `acc_nl` and `acc_line_space` must stay disjoint (see the
+        # invariant on `acc_line_space`) -- folding U+2028/U+2029 into both
+        # makes this quadratic again. The no-break space is the control: it
+        # is in the indent set and NOT in `acc_nl`, so it cannot open a
+        # comment, isolating the one property under test.
         terminator = 0x2028.chr(Encoding::UTF_8)
         control = 0x00A0.chr(Encoding::UTF_8)
         expect(terminator).not_to eq(control)
