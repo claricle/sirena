@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require_relative "../renderer/markdown_text"
+require_relative "../markdown_text"
 
 module Sirena
   module Transform
@@ -139,7 +139,7 @@ module Sirena
       # Calculates the header height for a column, growing past
       # `COLUMN_HEADER_HEIGHT` for each hard line break embedded in the
       # column title (from a markdown newline, rendered as an extra
-      # `<tspan>` line by Renderer::MarkdownText#parse_lines) — the same
+      # `<tspan>` line by Sirena::MarkdownText#parse_lines) — the same
       # `count("\n")` approach `calculate_card_height` already uses for
       # card text, for the same reason: this layer only needs how many
       # extra lines there are, not what's on them.
@@ -174,7 +174,7 @@ module Sirena
       # text. Line count must come from `rendered_line_count` (mirrors
       # `Renderer::Kanban#render_card_text`'s own parse+truncate), never a
       # raw `text.count("\n")` — once text crosses
-      # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` the renderer drops
+      # `Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET` the renderer drops
       # whole lines, so a raw count sizes for lines that never render.
       # Reuses EXTRA_LINE_HEIGHT, not a second constant, for the card's own
       # font size (13px * 1.2em/line): Transform has no renderer font size
@@ -199,9 +199,9 @@ module Sirena
       # @return [Integer]
       # @api private
       def rendered_line_count(text)
-        lines = Renderer::MarkdownText.truncate_runs(
-          Renderer::MarkdownText.parse_lines(text),
-          Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET
+        lines = Sirena::MarkdownText.truncate_runs(
+          Sirena::MarkdownText.parse_lines(text),
+          Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
         )
         [lines.length, 1].max
       end

@@ -127,7 +127,7 @@ module Sirena
 
         # Header text
         header_x = x + column[:width] / 2
-        lines = MarkdownText.parse_lines(column[:title])
+        lines = Sirena::MarkdownText.parse_lines(column[:title])
         font_size = theme_typography(:font_size) || 14
 
         header_text = Svg::Text.new.tap do |t|
@@ -183,7 +183,7 @@ module Sirena
       # keeps it centered on the same point as the single-line fudge.
       # @param y [Numeric] header rect's top edge
       # @param header_height [Numeric] header rect's own height
-      # @param line_count [Integer] lines `MarkdownText.parse_lines` produced
+      # @param line_count [Integer] lines `Sirena::MarkdownText.parse_lines` produced
       # @param font_size [Numeric] header text's own font size, in px
       # @return [Numeric] the first line's baseline `y`
       # @api private
@@ -248,7 +248,9 @@ module Sirena
       def render_card_text(card, x, y, svg)
         text_y = y + 25
         text_x = x + 10
-        lines = MarkdownText.truncate_runs(MarkdownText.parse_lines(card[:text]), MarkdownText::CARD_TEXT_CHAR_BUDGET)
+        lines = Sirena::MarkdownText.truncate_runs(
+          Sirena::MarkdownText.parse_lines(card[:text]), Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
+        )
 
         text = Svg::Text.new.tap do |t|
           t.x = text_x

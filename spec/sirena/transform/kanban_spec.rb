@@ -9,7 +9,7 @@ RSpec.describe Sirena::Transform::Kanban do
     # Asserted through the public `#to_graph` output rather than the private
     # `calculate_card_height`: what matters is the height a card actually
     # gets positioned with. Card text kept well under
-    # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` (25 visible
+    # `Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET` (25 visible
     # characters) — this test is about per-break growth, not truncation; a
     # fixture crossing the budget belongs to the spec below instead.
     it "grows a card's height by one EXTRA_LINE_HEIGHT per embedded hard break" do
