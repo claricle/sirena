@@ -1378,4 +1378,37 @@ RSpec.describe ExampleTasks do
       expect(offenders).to be_empty
     end
   end
+
+  # `extend self` plus a trailing `private_class_method` list keeps the
+  # race-sensitive helpers (directory_identity, within_pinned_directory,
+  # manageable_relative?, create_real_directory, copy_through_rename,
+  # copy_type_into_pinned_docs_root, atomic_write) off the module's public
+  # surface -- `module_function` could not do that for only some methods.
+  # Nothing anywhere else in this file calls any of the seven through
+  # `described_class.<name>`, so nothing else would notice one silently
+  # falling back onto the public list (e.g. a name dropped from the
+  # `private_class_method` call, or a new helper added without being added
+  # to it). Listed by hand rather than derived from the module, so a helper
+  # added without updating THIS list is exactly the gap this spec exists to
+  # catch, not something it could derive around.
+  describe 'internal helper privacy' do
+    let(:internal_helpers) do
+      [:directory_identity, :within_pinned_directory, :manageable_relative?,
+       :create_real_directory, :copy_through_rename, :copy_type_into_pinned_docs_root,
+       :atomic_write]
+    end
+
+    it 'keeps every race-sensitive helper off the public API' do
+      exposed = internal_helpers.select { |name| described_class.respond_to?(name) }
+
+      expect(exposed).to be_empty
+    end
+
+    it 'still keeps the task-facing API public' do
+      task_facing = [:copy_to_docs, :generate_examples, :validate_examples, :write_svg,
+                     :prune_orphan_svgs, :prune_known_unrenderable_svgs]
+
+      expect(task_facing.select { |name| described_class.respond_to?(name) }).to eq(task_facing)
+    end
+  end
 end
