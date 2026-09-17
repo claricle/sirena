@@ -1,0 +1,5 @@
+---
+cop: Layout/EmptyLines
+rows:
+- file: lib/sirena.rb
+  count: 1

@@ -18,19 +18,16 @@ module Sirena
             @current_column = nil
             @min_indent = nil
             @items = []
+            @anonymous_index = 0
           end
 
           def add_line(line_data)
-            # Skip empty lines
-            return if line_data.nil?
-            return unless line_data[:id]
-
             indent_size = get_indent_size(line_data[:indent])
 
             # Track minimum indentation
             @min_indent = indent_size if @min_indent.nil? || indent_size < @min_indent
 
-            id = line_data[:id].to_s
+            id = resolve_id(line_data[:id])
 
             # An item with no bracket label displays its id, which is what
             # mermaid renders. Resolved here, once: add_card reads this field
@@ -43,8 +40,8 @@ module Sirena
             #
             # `|| id` relies on an absent label being nil rather than "",
             # since `""` is truthy in Ruby and would not fall back. That
-            # holds only because labelled_item captures with `repeat(1)`, so
-            # a label that matched is never empty.
+            # holds only because labelled_item and shaped_item capture with
+            # `repeat(1)`, so a label that matched is never empty.
             @items << {
               id: id,
               text: line_data[:text]&.to_s || id,
@@ -70,6 +67,27 @@ module Sirena
           end
 
           private
+
+          # A shape with no id (`(text)`) never captures `:id`. Mermaid
+          # still draws it - it auto-assigns one - so this does too,
+          # deterministically: parsing the same source twice must produce
+          # the same diagram, and a random id would break that on every
+          # call (see the `kanban-1` / `kanban-2` assertions in
+          # spec/sirena/parser/kanban_spec.rb). Unlike
+          # Transforms::Block.anonymous_id, this id is never displayed -
+          # `unlabelled_shaped_item` always captures its own `:text`, so
+          # `resolve_id`'s output never reaches TextMeasurement and its
+          # length has no effect on layout (measured: extending it by
+          # 1,000 characters left the rendered SVG byte-identical). The
+          # hyphen keeps generated ids out of the author's namespace,
+          # since identifier_char is `[a-zA-Z0-9_]` and can never spell
+          # one.
+          def resolve_id(id_slice)
+            return id_slice.to_s if id_slice
+
+            @anonymous_index += 1
+            "kanban-#{@anonymous_index}"
+          end
 
           def add_column(item)
             column = {
@@ -225,10 +243,12 @@ module Sirena
           lines_array = Array(lines)
 
           lines_array.each do |line_data|
+            # An empty line never captures anything, so it contributes no
+            # entry at all to this array rather than a Hash lacking keys -
+            # this Hash check is the only filter empty lines need. It is
+            # NOT a stand-in for requiring `:id`: an unlabelled shaped item
+            # (`(text)`) is a Hash with no `:id` key and is a real item.
             next unless line_data.is_a?(Hash)
-
-            # Skip empty lines
-            next unless line_data[:id]
 
             builder.add_line(line_data)
           end

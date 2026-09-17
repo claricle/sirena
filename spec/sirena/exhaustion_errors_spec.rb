@@ -137,8 +137,10 @@ RSpec.describe Sirena::Engine do
 
   # A flowchart nested past the parser's own stack fails one render and
   # nothing else. `Parser::FlowchartParser#parse_tree` (flowchart.rb:58-60)
-  # converts that overflow into a ParseError itself, so this example rides
-  # the ORDINARY error path and proves the end-to-end shape, not the
+  # converts that overflow into a ParseError itself, and `Engine#render`
+  # unwraps every `Sirena::Error` subclass unchanged (engine.rb, `rescue
+  # Error`) so the corpus harness can read `stage` off it -- so this example
+  # rides the ORDINARY error path and proves the end-to-end shape, not the
   # widened rescue -- the one below proves the rescue.
   #
   # 4000 nested subgraphs is well past the boundary rather than close to
@@ -152,7 +154,7 @@ RSpec.describe Sirena::Engine do
     source = "graph TD\n#{opens}\nA\n#{"end\n" * 4000}"
 
     expect { Sirena.render(source) }
-      .to raise_error(Sirena::Engine::PipelineError, /nests too deeply/)
+      .to raise_error(Sirena::Parser::ParseError, /nests too deeply/)
   end
 
   # A `stateDiagram` parser does not convert an overflow, so this one really

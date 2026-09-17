@@ -91,8 +91,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
     in_batch_dir do |input, output|
       report = run_batch(input, output)
 
-      expect(report).to include('2-bomb.mmd: Rendering failed: ' \
-                                'Diagram nests too deeply to parse.')
+      expect(report).to include('2-bomb.mmd: Diagram nests too deeply to parse.')
     end
   end
 

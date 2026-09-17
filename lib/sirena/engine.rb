@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'error/diagram_type_error'
+require_relative 'error/pipeline_error'
+
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
   #
@@ -17,12 +20,6 @@ module Sirena
   #   engine = Sirena::Engine.new
   #   svg = engine.render(source, verbose: true)
   class Engine
-    # Error raised when diagram type cannot be detected
-    class DiagramTypeError < Error; end
-
-    # Error raised during pipeline execution
-    class PipelineError < Error; end
-
     # Mapping of diagram syntax prefixes to diagram types.
     #
     # A direction glyph needs no gap after the flowchart keyword. mmdc
@@ -89,7 +86,11 @@ module Sirena
     # @option options [Date, nil] :today reference date override
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
-    # @raise [PipelineError] if any pipeline stage fails
+    # @raise [Parser::ParseError] if the source fails to parse
+    # @raise [Transform::TransformError] if the diagram fails its own
+    #   validity check
+    # @raise [Renderer::RenderError] if rendering itself fails
+    # @raise [PipelineError] if a stage fails with no error class of its own
     def render(mermaid_source, options = {})
       @verbose = options[:verbose] if options.key?(:verbose)
 
@@ -122,10 +123,14 @@ module Sirena
       log "Render complete, #{svg_xml.length} bytes"
 
       svg_xml
-    rescue DiagramTypeError
-      # Re-raise diagram type errors without wrapping
+    rescue Error
+      # Every layer raises its own Sirena::Error subclass (DiagramTypeError,
+      # Parser::ParseError, Transform::TransformError, Renderer::RenderError)
+      # naming the stage that failed. Wrapping one into PipelineError would
+      # erase exactly the field the corpus harness records as `stage`, so
+      # let it propagate unwrapped instead.
       raise
-    rescue *EXHAUSTION_ERRORS, StandardError => e
+    rescue *EXHAUSTION_ERRORS => e
       # `EXHAUSTION_ERRORS` are not `StandardError`, so without naming them
       # here a deeply nested document takes the whole host down instead of
       # failing one render.
@@ -141,6 +146,11 @@ module Sirena
       # are still one `.cause` away for anyone debugging; they are just
       # not baked into the string every caller of `#message` receives.
       raise PipelineError, "Rendering failed: #{e.message}"
+    rescue StandardError => e
+      # A failure with no layer error of its own. `e` becomes `cause`
+      # automatically because we are still inside the rescue; never
+      # stringify a backtrace into the message.
+      raise PipelineError, "Rendering failed: #{e.class}: #{e.message}"
     end
 
     private
@@ -165,7 +175,7 @@ module Sirena
     # Retrieves handlers for a diagram type.
     #
     # @param type [Symbol] diagram type identifier
-    # @return [Hash] hash with :parser, :transform, :renderer keys
+    # @return [Hash] hash with :parser, :transform, :renderer, :model keys
     # @raise [DiagramTypeError] if type is not registered
     def retrieve_handlers(type)
       handlers = DiagramRegistry.get(type)
@@ -200,10 +210,8 @@ module Sirena
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
-      # Only Transform::Base subclasses consume a reference date. Seven
-      # transforms (git_graph, kanban, mindmap, packet, radar, treemap,
-      # xy_chart) stand outside that hierarchy and read no clock at all, so
-      # pinning them is meaningless — sending today= to them just crashed.
+      # Every registered transform inherits Transform::Base and so has
+      # today=; the respond_to? guard is defensive, not load-bearing.
       transform.today = today if today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'

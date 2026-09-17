@@ -122,10 +122,12 @@ module Sirena
 
       # Validates the note has required attributes.
       #
+      # Text may be empty — mmdc renders `Note over A:` with no trailing
+      # content as an empty label, not a malformed note.
+      #
       # @return [Boolean] true if note is valid
       def valid?
-        !text.nil? && !text.empty? &&
-          !position.nil? && !participant_ids.empty?
+        !text.nil? && !position.nil? && !participant_ids.empty?
       end
     end
 
@@ -181,16 +183,18 @@ module Sirena
       # Validates the sequence diagram structure.
       #
       # A sequence diagram is valid if:
-      # - It has at least one participant
       # - All participants are valid
       # - All messages are valid
       # - All message references point to existing participants
       # - All activations are valid
       # - All notes are valid
       #
+      # Zero participants is valid: `sequenceDiagram` with no body is a
+      # diagram mmdc renders (an empty canvas, no lifelines), not a rejection.
+      #
       # @return [Boolean] true if sequence diagram is valid
       def valid?
-        return false if participants.nil? || participants.empty?
+        return false if participants.nil?
         return false unless participants.all?(&:valid?)
         return false unless messages.nil? || messages.all?(&:valid?)
         return false unless activations.nil? || activations.all?(&:valid?)

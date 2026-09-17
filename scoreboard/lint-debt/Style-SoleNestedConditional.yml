@@ -1,0 +1,5 @@
+---
+cop: Style/SoleNestedConditional
+rows:
+- file: lib/sirena/transform/gantt.rb
+  count: 3

@@ -199,8 +199,18 @@ RSpec.describe Sirena::Engine do
     rects.map { |r| attr(r, "x") + attr(r, "width") }.max
   end
 
+  # Same, for the bottom edge — the axis a TD self-loop reaches past
+  # instead of the right edge an LR one does.
+  def box_bottom(xml)
+    rects = xml.scan(/<rect[^>]*>/)
+    return nil if rects.empty?
+
+    rects.map { |r| attr(r, "y") + attr(r, "height") }.max
+  end
+
   # On the DRAWN outline, not the bounding box around it. A circle and a
-  # rhombus only touch their bounding box at one point per side, so a
+  # rhombus only touch their bounding box at one point per side, and a
+  # rounded rectangle only along the flat middle of each face, so a
   # box-based check cannot tell a correct anchor from a detached one.
   def on_shape?(shape, x, y)
     case shape
@@ -213,9 +223,31 @@ RSpec.describe Sirena::Engine do
       pts = pairs.map { |pair| pair.split(",").map(&:to_f) }
       edges = pts.each_cons(2).to_a.push([pts.last, pts.first])
       edges.any? { |a, b| on_segment?(a, b, x, y) }
+    when /(?<![-\w])rx="/
+      rounded_outline_gap(bounds_of(shape), attr(shape, "rx"), x, y) <= 1
+
     else
       on_border?(bounds_of(shape), x, y)
     end
+  end
+
+  # How far a point sits from a rounded rectangle's outline, in units, so
+  # the one-unit tolerance the circle and polygon branches use carries
+  # over. `on_border?` measures the four straight sides only, so it reads
+  # a corner-arc anchor as detached: a rounded 37x34 node here carries a
+  # 17-unit radius, which leaves three units of flat bottom, and every
+  # self-loop end lands on the arc rather than in that gap.
+  #
+  # Signed distance to a rounded box: fold the point into one quadrant,
+  # take the radius out of the half extents, measure to the inset box,
+  # then put the radius back.
+  def rounded_outline_gap(rect, radius, x, y)
+    half_w = rect[:width] / 2.0
+    half_h = rect[:height] / 2.0
+    dx = (x - (rect[:x] + half_w)).abs - (half_w - radius)
+    dy = (y - (rect[:y] + half_h)).abs - (half_h - radius)
+    outside = Math.sqrt(([dx, 0].max**2) + ([dy, 0].max**2))
+    (outside + [dx, dy].max.clamp(..0) - radius).abs
   end
 
   # Within a unit of the segment, by area of the triangle it makes.
@@ -577,8 +609,9 @@ RSpec.describe Sirena::Engine do
 
       # The whole path. Counting decimal places only proves the number is
       # no longer than two, which rounding to one or to nothing also
-      # satisfies.
-      expect(path).to eq("M 300.0 93.98 L 68.5 67.0")
+      # satisfies. The start is where the ray between the two boxes' exact
+      # centres leaves `one` (386.5, 104.0 to 68.5, 67.0, crossing x = 300).
+      expect(path).to eq("M 300.0 93.94 L 68.5 67.0")
     end
 
     it "joins a box to a plain node" do
@@ -663,9 +696,10 @@ RSpec.describe Sirena::Engine do
       [cluster("s", source), cluster("t", target)]
     end
 
-    # An end nothing trimmed has to come back exactly as it went in.
-    # Rounding it moved every ordinary edge in the project.
-    it "leaves a node edge on the coordinates it was given" do
+    # A plain node-to-node run is clipped to the outline each end draws,
+    # not left at the raw centres — mirroring the arrowhead, which reads
+    # the same geometry so the line stops exactly where its head sits.
+    it "leaves a node edge on the coordinates its outline draws" do
       graph = { id: "g",
                 children: [leaf("a", x: 10.740735, y: 21.660485,
                                      width: 100.0, height: 50.0),
@@ -674,7 +708,71 @@ RSpec.describe Sirena::Engine do
                 edges: [{ id: "a_to_b", sources: %w[a], targets: %w[b] }] }
 
       expect(path_of(graph, "a_to_b"))
-        .to eq("M 60.740735 46.660485 L 300.7037 114.814705")
+        .to eq("M 110.7 60.9 L 250.7 100.6")
+    end
+
+    # A node can sit inside the cluster its own edge names — mermaid
+    # draws that from a bare node under a subgraph header. The head used
+    # to read its approach off the OTHER end's raw centre, which ignores
+    # that A sits inside s: the path left through the cluster's TOP face
+    # (the only way out `EdgeRouter` found), while the head — aimed at
+    # A's centre, which sits BELOW the cluster's own centre — landed on
+    # the BOTTOM face instead. The two must agree on which face, because
+    # they are the same drawn line.
+    def contained_node_and_cluster
+      [leaf("a", x: 70.0, y: 104.0, width: 37.0, height: 34.0),
+       cluster("s", x: 50.0, y: 50.0, width: 77.0, height: 108.0)]
+    end
+
+    def edge_geometry(xml, edge_id)
+      group = xml[%r{<g id="edge-#{edge_id}">.*?</g>}m]
+      path_end = path_points(group[/<path[^>]*\bd="([^"]*)"/, 1]).last
+      head_tip = group[/<polygon[^>]*\bpoints="([^"]*)"/, 1]
+        .split.first.split(",").map(&:to_f)
+      [path_end, head_tip]
+    end
+
+    # The shoelace formula. Three DISTINCT points can still be
+    # collinear — a head with two coincident vertices and one apart from
+    # them has two unique points, which `.uniq.size > 1` cannot tell
+    # from a real triangle. Area is what actually says the head has a
+    # visible shape.
+    def triangle_area(a, b, c)
+      ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs / 2.0
+    end
+
+    it "keeps the arrowhead on the same face the path leaves through" do
+      leaf_node, cluster_node = contained_node_and_cluster
+      graph = { id: "g", children: [leaf_node, cluster_node],
+                edges: [{ id: "a_to_s", sources: %w[a], targets: %w[s],
+                          metadata: { arrow_type: "arrow" } }] }
+      xml = renderer.render(graph).to_xml
+      path_end, head_tip = edge_geometry(xml, "a_to_s")
+
+      expect(head_tip).to eq(path_end)
+    end
+
+    # Reversed, the same mismatch degenerated further: the head's
+    # approach (A's raw centre) landed EXACTLY on A's own boundary,
+    # giving a zero-area, invisible arrowhead — three identical points.
+    # Reaching A back from s, the path itself still ends at A's own
+    # CENTRE — a plain node's end is never trimmed, since the node is
+    # painted over the line — so this does not repeat the equality
+    # above. What matters here is the head: it lands on A's real top
+    # edge either way, but the point it approached FROM used to be
+    # exactly that same edge point too, giving a triangle with no area.
+    it "draws a real, nonzero head when the cluster is the source instead" do
+      leaf_node, cluster_node = contained_node_and_cluster
+      graph = { id: "g", children: [leaf_node, cluster_node],
+                edges: [{ id: "s_to_a", sources: %w[s], targets: %w[a],
+                          metadata: { arrow_type: "arrow" } }] }
+      xml = renderer.render(graph).to_xml
+      _, head_tip = edge_geometry(xml, "s_to_a")
+      head_points = xml[%r{<g id="edge-s_to_a">.*?<polygon[^>]*\bpoints="([^"]*)"}m, 1]
+        .split.map { |pair| pair.split(",").map(&:to_f) }
+
+      expect(head_tip).to eq([88.5, 104.0])
+      expect(triangle_area(*head_points)).to be > 0
     end
 
     # Two DIFFERENT boxes can share a centre too. There is no straight
@@ -842,13 +940,13 @@ RSpec.describe Sirena::Engine do
         .to eq([[0.0, 0.0], [0.01, 0.0]])
     end
 
-    it "keeps ordinary ELK bend points" do
+    it "keeps ordinary ELK bend points, clipped to the outline each end aims at" do
       source = leaf("s", x: 0.0, y: 0.0, width: 100.0, height: 50.0)
       target = leaf("t", x: 200.0, y: 0.0, width: 100.0, height: 50.0)
       edge = { sections: [{ bendPoints: [{ x: 120.0, y: 80.0 }] }] }
 
       expect(path_of(graph_between(source, target, edge), "s_to_t"))
-        .to eq("M 50.0 25.0 L 120.0 80.0 L 250.0 25.0")
+        .to eq("M 81.8 50.0 L 120.0 80.0 L 200.0 46.2")
     end
 
     it "keeps eighty units beyond the right and bottom maxima" do
@@ -892,7 +990,8 @@ RSpec.describe Sirena::Engine do
 
       expect(on_border?(outer, *points.first)).to be(true)
       expect(on_border?(outer, *points.last)).to be(true)
-      expect(points.map(&:first).max).to be > outer[:x] + outer[:width]
+      # TD throws the loop downward, not sideways — see self_loop_side.
+      expect(points.map(&:last).max).to be > outer[:y] + outer[:height]
     end
 
     it "uses distinct border endpoints for a nonzero cluster self-edge" do
@@ -908,11 +1007,15 @@ RSpec.describe Sirena::Engine do
 
     # The loop reaches past the box it leaves, so the page has to still
     # cover it. It rides the slack the sizing already carries — and the
-    # rightmost box is the one that tests it, so a node on the right
-    # edge matters as much as a cluster.
+    # rightmost/bottommost box is the one that tests it, so a node on
+    # that edge matters as much as a cluster.
+    #
+    # TD throws its loop downward and LR throws its rightward (see
+    # self_loop_side), so the axis that has to clear the box differs per
+    # source — a TD loop never needs to reach past the box on the right.
     it "stays inside the page" do
-      ["flowchart TD\nsubgraph s\nA\nend\ns --> s\n",
-       "flowchart LR\nA --> B\nB --> B\n"].each do |src|
+      { "flowchart TD\nsubgraph s\nA\nend\ns --> s\n" => :y,
+        "flowchart LR\nA --> B\nB --> B\n" => :x }.each do |src, thrown_axis|
         xml = render(src)
         width = xml[/<svg[^>]*\bwidth="([^"]*)"/, 1].to_f
         height = xml[/<svg[^>]*\bheight="([^"]*)"/, 1].to_f
@@ -925,15 +1028,39 @@ RSpec.describe Sirena::Engine do
         expect(pts).not_to be_empty, "no edge path drawn for #{src}"
 
         aggregate_failures(src) do
-          # The loop is the thing that reaches furthest right, so a
-          # source whose loop vanished would not be testing the page.
-          expect(xs.max).to be > box_right(xml), src
+          # The loop is the thing that reaches furthest along the axis
+          # it is thrown on, so a source whose loop vanished would not
+          # be testing the page.
+          if thrown_axis == :x
+            expect(xs.max).to be > box_right(xml), src
+          else
+            expect(ys.max).to be > box_bottom(xml), src
+          end
           expect(xs.max).to be <= width, src
           expect(xs.min).to be >= 0, src
-          # The loop spreads vertically too, so the page has to hold
-          # that as well - the dimension this geometry actually moved.
           expect(ys.max).to be <= height, src
           expect(ys.min).to be >= 0, src
+        end
+      end
+    end
+
+    # BT and RL throw the loop up and left instead — the two directions
+    # `create_document` never grows into, since its own comment says it
+    # only grows the right and bottom. A loop's label reaches
+    # EDGE_LABEL_LIFT further than its own corners, so the label is what
+    # first crosses zero even when the corners themselves still clear it.
+    it "stays inside the page when the loop is thrown up or left" do
+      ["flowchart BT\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
+       "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n"].each do |src|
+        xml = render(src)
+        group = xml[%r{<g id="edge-s_to_s".*?</g>}m]
+        label = [group[/<text[^>]*\bx="(-?[\d.]+)"/, 1].to_f,
+                 group[/<text[^>]*\by="(-?[\d.]+)"/, 1].to_f]
+        points = loop_points(xml) << label
+
+        aggregate_failures(src) do
+          expect(points.map(&:first).min).to be >= 0, src
+          expect(points.map(&:last).min).to be >= 0, src
         end
       end
     end
@@ -941,8 +1068,13 @@ RSpec.describe Sirena::Engine do
     # The same collapse, reached through a node instead. An empty
     # subgraph named by an edge is drawn as a plain node, so `s --> s`
     # arrives here rather than at the cluster branch above.
-    # Every shape, because the ends anchor to the middle of the right
-    # side — the one point a circle, a rhombus and a hexagon all reach.
+    # Every shape, because the ends anchor either side of the same point
+    # on the boundary where the loop's two corners meet it, and TD
+    # throws the loop straight down, not sideways. A rectangle and a
+    # hexagon meet it on their flat bottom face; a circle and a rhombus
+    # have no flat face there, so theirs lands a touch above the true
+    # bottom instead — the lower arc, the two lower sloped edges — the
+    # one pair of points all four shapes reach.
     # Anchoring a third of the way down put the loop on the bounding box
     # instead, eight units clear of a rhombus's drawn edge.
     {
@@ -970,8 +1102,9 @@ RSpec.describe Sirena::Engine do
         # loop hanging in space beside the shape.
         expect(on_shape?(drawn, *points.first)).to be(true), shape
         expect(on_shape?(drawn, *points.last)).to be(true), shape
-        # It has to LEAVE the box, or it is a chord across the inside.
-        expect(points.map(&:first).max).to be > rect[:x] + rect[:width], shape
+        # It has to LEAVE the box, or it is a chord across the inside —
+        # downward for TD, the axis the loop is actually thrown on.
+        expect(points.map(&:last).max).to be > rect[:y] + rect[:height], shape
       end
     end
 

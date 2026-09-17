@@ -115,16 +115,16 @@ module Sirena
       # Validates the kanban board structure.
       #
       # A kanban is valid if:
-      # - It has at least one column
-      # - All columns are valid
-      # - All cards within columns are valid
+      # - It has no columns (a bare `kanban` header is a valid empty
+      #   diagram, matching what mmdc renders — do not reintroduce a
+      #   "must have at least one column" check here)
+      # - or every column it does have is valid
       #
       # @return [Boolean] true if kanban board is valid
       def valid?
-        return false if columns.nil? || columns.empty?
-        return false unless columns.all?(&:valid?)
+        return true if columns.nil? || columns.empty?
 
-        true
+        columns.all?(&:valid?)
       end
 
       # Adds a column to the board.

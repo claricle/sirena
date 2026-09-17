@@ -97,13 +97,16 @@ RSpec.describe Sirena::Parser::SequenceParser do
 
     # mmdc reads `A->|B` as `->` into an actor named `|B`. Treating the
     # pipe as part of the arrow named participant `B` instead, so the
-    # message pointed at the wrong lifeline while looking correct.
+    # message pointed at the wrong lifeline while looking correct. A
+    # leading `|` on a message endpoint is ordinary actor-name material
+    # (see `message_actor_lead`), so the fix is that `->` stays a 2-char
+    # arrow and the recipient is literally `|B`, matching mmdc — not that
+    # the line is rejected.
     ["->|", "-->|"].each do |not_an_arrow|
-      it "does not read #{not_an_arrow} as an arrow" do
+      it "does not read #{not_an_arrow} as an arrow, matching mmdc" do
         source = "sequenceDiagram\n    A#{not_an_arrow}B: m\n"
 
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError)
+        expect(parser.parse(source).participants.map(&:id)).to eq(%w[A |B])
       end
     end
   end

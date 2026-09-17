@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base'
+
 module Sirena
   module Transform
     # Transforms a RadarChart diagram into a positioned layout structure.
@@ -14,7 +16,7 @@ module Sirena
     # @example Transform a radar chart
     #   transform = Transform::Radar.new
     #   layout = transform.to_graph(diagram)
-    class Radar
+    class Radar < Base
       # Default radius of the chart
       DEFAULT_RADIUS = 200
 
@@ -31,7 +33,7 @@ module Sirena
       #
       # @param diagram [Diagram::RadarChart] the radar chart diagram
       # @return [Hash] layout data with axes, curves, and dimensions
-      def to_graph(diagram)
+      def build_graph(diagram)
         num_axes = diagram.axes.length
         return empty_layout if num_axes == 0
 
