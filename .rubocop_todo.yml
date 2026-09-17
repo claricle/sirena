@@ -388,6 +388,7 @@ RSpec/DescribeClass:
     - '**/spec/system/**/*'
     - '**/spec/views/**/*'
     - 'spec/fixtures_spec.rb'
+    - 'spec/spec_helper_corpus_guard_spec.rb'
     - 'spec/tasks/coverage_rake_spec.rb'
     - 'spec/integration/class_diagram_integration_spec.rb'
     - 'spec/integration/er_diagram_integration_spec.rb'
