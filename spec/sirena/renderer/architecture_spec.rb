@@ -230,6 +230,28 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
         expect(svg_string).to include('r="6.0"')
         expect(svg_string).not_to include('id="service-mid"')
       end
+
+      it "derives the radius from width, not height" do
+        # width and height are equal (12) everywhere else in this file, so
+        # this is the only case that can tell `circle.r = width / 2` apart
+        # from a version that reads height, or a fixed constant.
+        layout_copy = layout.dup
+        layout_copy[:junctions] = {
+          "mid" => {
+            junction: junction,
+            x: 300,
+            y: 40,
+            width: 20,
+            height: 12,
+            group_id: :root,
+          },
+        }
+
+        svg_string = renderer.render(layout_copy).to_s
+
+        expect(svg_string).to include('r="10.0"')
+        expect(svg_string).not_to include('r="6.0"')
+      end
     end
 
     context "with a cyclic group parent chain" do

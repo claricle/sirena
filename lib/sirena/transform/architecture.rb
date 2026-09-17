@@ -160,7 +160,8 @@ module Sirena
           if group_services.any?
             current_y = [current_y, row_y + DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING].max
           else
-            current_x = DEFAULT_SPACING
+            # current_x is never reassigned elsewhere in this method, so
+            # re-setting it to its own initial value here was a no-op.
             current_y += DEFAULT_JUNCTION_SIZE + DEFAULT_SPACING
           end
         end

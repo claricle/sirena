@@ -243,4 +243,100 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
       end
     end
   end
+
+  describe "#position_junctions (direct)" do
+    # These call the private method directly with hand-built inputs so the
+    # cursor arithmetic can be pinned exactly, independent of what
+    # position_services would ever actually produce.
+    let(:transform) { described_class.new }
+    let(:root_group) { :root }
+
+    def group_double(id)
+      Sirena::Diagram::ArchitectureDiagram::Group.new(id: id, label: id, icon: "cloud")
+    end
+
+    def junction_double(id)
+      Sirena::Diagram::ArchitectureDiagram::Junction.new(id: id, group_id: nil)
+    end
+
+    context "when a group has zero junctions but does have services" do
+      # Mirrors the `next if junctions.empty?` guard at position_junctions.
+      # Without it, a junction-less group would still fall into the
+      # group_services.any? branch and shift the cursor for every group
+      # that follows, using a row computed for junctions that don't exist.
+      let(:diagram) { Sirena::Diagram::ArchitectureDiagram.new(services: [], groups: [group_double("g1")], junctions: [], edges: []) }
+      let(:hierarchy) { { junctions_by_group: { root: [], "g1" => [junction_double("j1")] } } }
+      let(:service_positions) do
+        { "svcA" => { x: 0, y: 0, width: 20, height: 0, group_id: root_group } }
+      end
+
+      it "leaves the cursor untouched by the empty group" do
+        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+
+        # junction_fallback_floor(service_positions) = 0 + 0 + DEFAULT_SPACING = 40.
+        # If the empty root group were not skipped, its phantom row (built
+        # from svcA) would push this to 86 before g1 is ever reached.
+        expect(positions["j1"][:y]).to eq(40)
+      end
+    end
+
+    context "with a group with services, then two junction-only groups after it" do
+      # Exercises: per-junction row_x advancement within one group, the
+      # group_services.any? cursor update (row-relative), and the
+      # group_services.empty? cursor update (shared-floor fallback),
+      # chained so each group's effect is visible in the next group's
+      # position rather than only in its own.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [],
+          groups: [group_double("g1"), group_double("g2"), group_double("g3")],
+          junctions: [],
+          edges: []
+        )
+      end
+      let(:hierarchy) do
+        {
+          junctions_by_group: {
+            root: [],
+            "g1" => [junction_double("j1"), junction_double("j1b")],
+            "g2" => [junction_double("j2")],
+            "g3" => [junction_double("j3")],
+          },
+        }
+      end
+      let(:service_positions) do
+        # height: 0 (unlike any real service, which is always
+        # DEFAULT_SERVICE_HEIGHT) so the group's own row sits below the
+        # global junction_fallback_floor, making the row-relative branch
+        # (group_services.any?) actually raise the cursor instead of being
+        # dominated by the floor every time.
+        { "svcA" => { x: 0, y: 0, width: 20, height: 0, group_id: "g1" } }
+      end
+
+      it "advances row_x across junctions in the same group" do
+        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+
+        expect(positions["j1"][:x]).to eq(60)
+        expect(positions["j1b"][:x]).to eq(112)
+      end
+
+      it "raises the cursor from the row a group's own services sit on" do
+        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+
+        # row_top (0) + (DEFAULT_SERVICE_HEIGHT - DEFAULT_JUNCTION_SIZE) / 2.0 (34) = 34
+        expect(positions["j1"][:y]).to eq(34)
+        # group_services.any? branch: current_y = max(40, 34 + 12 + 40) = 86.
+        # g2 has no services of its own, so it falls back to this cursor.
+        expect(positions["j2"][:y]).to eq(86)
+      end
+
+      it "advances the shared cursor again after a junction-only group" do
+        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+
+        # g2 (junction-only) pushes current_y to 86 + 12 + 40 = 138 for g3.
+        expect(positions["j3"][:y]).to eq(138)
+        expect(positions["j3"][:y]).not_to eq(positions["j2"][:y])
+      end
+    end
+  end
 end
