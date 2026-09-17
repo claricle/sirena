@@ -81,19 +81,11 @@ namespace :coverage do
       ENV['COVERAGE'] = previous_coverage_env
     end
 
-    # coverage.json's own 'source' field lets coverage:changed_lines catch a
-    # backdated-mtime lib/*.rb edit below (content comparison, not just
-    # mtime) -- but .simplecov only instruments lib/**/*.rb, so a non-lib
-    # changed file (e.g. the one spec that alone exercised a lib/ line) has
-    # no such entry to compare against and gets mtime-only protection,
-    # which `touch -t` (or a rebase/cherry-pick that preserves an old mtime)
-    # defeats. Snapshot a content hash of the whole working tree here, while
-    # it's known-fresh, so changed_lines has the same non-mtime signal for
-    # every file, not just lib/*.rb ones. Best-effort: this task runs inside
-    # a git repo in every real invocation (changed_lines already hard-
-    # requires git for its own diff below, so a broken git already fails
-    # the pipeline there); skip quietly rather than failing coverage:measure
-    # itself if git is unavailable here.
+    # Snapshot a content hash of the whole tree so changed_lines below can
+    # catch a backdated-mtime edit to a non-lib file (spec files get no
+    # coverage.json 'source' entry to content-check against, unlike lib/*.rb).
+    # Best-effort: skip quietly if git fails here rather than failing this
+    # task -- changed_lines hard-requires git for its own diff regardless.
     tracked_out, _tracked_err, tracked_status = Open3.capture3('git', 'ls-files', '-z')
     untracked_out, _untracked_err, untracked_status =
       Open3.capture3('git', 'ls-files', '--others', '--exclude-standard', '-z')
@@ -214,19 +206,9 @@ namespace :coverage do
             'coverage:changed_lines'
     end
 
-    # Same idea, generalized to non-lib/*.rb changed files: those carry no
-    # coverage.json 'source' entry (`.simplecov` only instruments
-    # lib/**/*.rb), so without this they get mtime-only staleness
-    # protection, which a backdated mtime (`touch -t`, or a rebase/
-    # cherry-pick that preserves an old mtime) defeats -- e.g. gutting the
-    # one spec that alone exercised a lib/ line, then backdating its mtime
-    # ahead of the report. `coverage:measure` snapshots a content-hash
-    # manifest of the whole tree for exactly this; only enforce it when
-    # present -- a manifest-less coverage.json (every existing spec in this
-    # file builds one directly, without running coverage:measure) keeps the
-    # mtime-only behavior those specs already assert, and `coverage:guard` /
-    # any real CI invocation always runs measure immediately before this
-    # task in the same process, so the manifest is always there when it matters.
+    # Generalizes the content check above to non-lib files (no coverage.json
+    # entry to compare against there). Only enforced when the manifest
+    # coverage:measure writes is present -- absent, this stays mtime-only.
     manifest_path = 'tmp/coverage-source-manifest.json'
     if File.exist?(manifest_path) && !File.symlink?(manifest_path)
       source_manifest = JSON.parse(File.read(manifest_path))
