@@ -183,8 +183,7 @@ module Sirena
       # keeps it centered on the same point as the single-line fudge.
       # @param y [Numeric] header rect's top edge
       # @param header_height [Numeric] header rect's own height
-      # @param line_count [Integer] lines `MarkdownText.parse_lines`
-      #   produced for this title
+      # @param line_count [Integer] lines `MarkdownText.parse_lines` produced
       # @param font_size [Numeric] header text's own font size, in px
       # @return [Numeric] the first line's baseline `y`
       # @api private
