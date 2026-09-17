@@ -206,7 +206,7 @@ module Sirena
       def calculate_group_bounds(diagram, service_positions, junction_positions)
         bounds = {}
 
-        diagram.groups.each do |group|
+        deepest_groups_first(diagram.groups).each do |group|
           # Find all services and junctions in this group - a group made
           # entirely of junctions still needs a boundary drawn around them.
           group_members = service_positions.values.select { |pos| pos[:group_id] == group.id } +
@@ -253,6 +253,30 @@ module Sirena
         end
 
         bounds
+      end
+
+      # A parent group with no direct service/junction of its own must read
+      # its child group's bounds, so the child has to be processed first.
+      # diagram.groups is in source-declaration order, which puts a parent
+      # before a childless-of-its-own child when the mermaid source declares
+      # the parent group first (the natural way to write nesting) - sort by
+      # depth, deepest first, so every child is bounded before its parent
+      # looks it up. A parent_id cycle (malformed diagram) can't loop
+      # forever: `seen` stops recursion the second time an id reappears.
+      def deepest_groups_first(groups)
+        by_id = groups.to_h { |g| [g.id, g] }
+        depths = groups.to_h { |g| [g.id, group_depth(g, by_id, [])] }
+
+        groups.sort_by { |g| -depths[g.id] }
+      end
+
+      def group_depth(group, by_id, seen)
+        return 0 if seen.include?(group.id)
+
+        parent = group.parent_id && by_id[group.parent_id]
+        return 0 unless parent
+
+        1 + group_depth(parent, by_id, seen + [group.id])
       end
 
       # The declared (or defaulted) side is used literally, never mirrored -
