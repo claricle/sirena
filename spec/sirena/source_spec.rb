@@ -625,6 +625,15 @@ RSpec.describe Sirena::Source do
             .to raise_error(Sirena::Source::MalformedFrontmatter)
         end
       end
+
+      it "refuses a verbatim tag whose percent-decoded bytes are not valid UTF-8" do
+        # Psych validates encoding on scalar TEXT, not on a decoded tag
+        # string, so `node.tag[TAG, 1]` used to meet invalid bytes and
+        # `Regexp#match?` raised a bare ArgumentError instead of the
+        # engine's own MalformedFrontmatter.
+        expect { described_class.title("title: !<!%C0%80> T\n") }
+          .to raise_error(Sirena::Source::MalformedFrontmatter, /unknown tag/)
+      end
     end
 
     # The loader refuses the whole document, not just the title, so a tag
@@ -768,6 +777,25 @@ RSpec.describe Sirena::Source do
         it "prints #{yaml.inspect} as #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)
         end
+      end
+    end
+
+    describe "a very long bare number" do
+      # MAX_VALUES bounds how many scalars a document holds, not how long
+      # any ONE of them is: `String#to_i` on a bare-integer literal is
+      # superlinear in Ruby, so an uncounted all-digit scalar was a CPU-DoS
+      # vector through the public title API. The FLOAT and RADIX branches
+      # are separately bounded elsewhere and are not covered here.
+      it "draws a thousand-digit bare integer" do
+        # A double this large has already rounded to Infinity, same as
+        # `title: 1e400` would -- the point is that parsing it does not
+        # raise, not what string it prints.
+        expect(described_class.title("title: #{'9' * 1_000}")).to eq('Infinity')
+      end
+
+      it "refuses a bare integer one digit past the bound" do
+        expect { described_class.title("title: #{'9' * 1_001}") }
+          .to raise_error(Sirena::Source::MalformedFrontmatter, /too long/)
       end
     end
 
