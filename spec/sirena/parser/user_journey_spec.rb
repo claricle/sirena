@@ -271,6 +271,22 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to eq([['S', ['T']]])
       end
 
+      it 'lets a brace in a later, unrelated line close an earlier open block' do
+        # A stray `}` inside a later task's actor name closes the block
+        # early and silently drops every section/task in between -- here
+        # "section Alpha" and its task vanish entirely, with no error.
+        # Not a divergence: mermaid's own bundled lexer (11.16.1) does the
+        # identical thing, confirmed by driving its compiled journey parser
+        # directly with this exact source -- it emits only `addSection
+        # "Beta"` and `addTask "AnotherTask"`, never touching "Alpha". The
+        # grammar matches the oracle's silent-drop behavior, not a bug.
+        source = "journey\naccDescr {oops\nsection Alpha\n" \
+                 "RealTask: 5: Person}\nsection Beta\nAnotherTask: 2: Someone\n"
+
+        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          .to eq([['Beta', ['AnotherTask']]])
+      end
+
       it 'ends the block at the brace and reads what follows it' do
         # A DIVERGENCE NOW CLOSED. The oracle renders this source with the
         # description `Desc`, the section `S` and one task `After` — the
