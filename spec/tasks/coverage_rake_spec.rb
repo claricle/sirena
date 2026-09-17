@@ -261,8 +261,41 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       ENV['COVERAGE_BASE'] = base
       stub_sh!
 
-      expect { invoke! }.to raise_error(/predates the deletion of spec\/foo_spec\.rb.*run `rake coverage:measure` again before coverage:changed_lines/m)
+      expect { invoke! }.to raise_error(/spec\/foo_spec\.rb deleted vs COVERAGE_BASE=#{Regexp.escape(base.inspect)}.*Move COVERAGE_BASE past this deletion instead/m)
       expect(main_object).not_to have_received(:sh)
+    end
+
+    it 're-running coverage:measure does NOT clear the deleted-non-lib guard -- only moving COVERAGE_BASE does' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      commit!('spec/foo_spec.rb', "RSpec.describe('Foo') { it { } }\n")
+      old_base = head_sha
+      run_git! 'rm', '-q', 'spec/foo_spec.rb'
+      run_git! 'commit', '-q', '-m', 'delete spec/foo_spec.rb'
+      new_base = head_sha
+
+      source_lines = File.readlines('lib/foo.rb', chomp: true)
+      FileUtils.mkdir_p('coverage')
+      # A freshly generated report (current mtime, matching source) -- exactly what
+      # re-running `rake coverage:measure` produces -- still cannot satisfy this guard
+      # against old_base, because the guard has no freshness dimension.
+      report = {
+        'coverage' => {
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
+        }
+      }
+      File.write('coverage/coverage.json', JSON.generate(report))
+      ENV['COVERAGE_BASE'] = old_base
+      stub_sh!
+
+      expect { invoke! }.to raise_error(/Move COVERAGE_BASE past this deletion instead/)
+
+      # invoke! is a memoized subject -- call the task directly for the second
+      # invocation, and reenable first since a Rake::Task only runs once per
+      # application.
+      Rake::Task['coverage:changed_lines'].reenable
+      ENV['COVERAGE_BASE'] = new_base
+      expect { Rake::Task['coverage:changed_lines'].invoke }.not_to raise_error
     end
 
     it 'passes every fail-closed guard and reaches the real simplecov patch subprocess when the report is fresh and matches' do
