@@ -242,6 +242,48 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
         expect(bounds[:y] + bounds[:height]).to be >= junction[:y] + junction[:height]
       end
     end
+
+    context "with a parent group declared before its childless-of-its-own child" do
+      # A parent group with no direct service/junction reads its child's
+      # bounds in calculate_group_bounds. diagram.groups is source order,
+      # and mermaid's natural nesting syntax declares the parent group
+      # first (`group outer` then `group inner in outer`) - if bounds are
+      # built in that same order, the parent reads bounds["inner"] before
+      # "inner" has been processed, gets nil, and its min/max stay at their
+      # Float::INFINITY/-INFINITY seed forever, which later NaNs out in
+      # calculate_total_width/height's Infinity + -Infinity arithmetic.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s", label: "S", icon: "server", group_id: "inner"),
+          ],
+          junctions: [],
+          groups: [
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "outer", label: "Outer", icon: "cloud"),
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "outer"),
+          ],
+          edges: []
+        )
+      end
+
+      it "does not crash rendering the width and height" do
+        graph = transform.to_graph(diagram)
+
+        expect(graph[:width]).to be_a(Numeric).and be_finite
+        expect(graph[:height]).to be_a(Numeric).and be_finite
+      end
+
+      it "gives the outer group a bounding box that contains the inner group" do
+        graph = transform.to_graph(diagram)
+        outer = graph[:groups]["outer"]
+        inner = graph[:groups]["inner"]
+
+        expect(outer[:x]).to be <= inner[:x]
+        expect(outer[:y]).to be <= inner[:y]
+        expect(outer[:x] + outer[:width]).to be >= inner[:x] + inner[:width]
+        expect(outer[:y] + outer[:height]).to be >= inner[:y] + inner[:height]
+      end
+    end
   end
 
   describe "#position_junctions (direct)" do
