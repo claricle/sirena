@@ -241,6 +241,33 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       expect_sh_invoked_for_gate!(base)
     end
 
+    it 'raises when a changed non-lib file (e.g. its only covering spec) was deleted -- ' \
+       'the old report can no longer prove what ran against a lib/*.rb file it still covers' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      commit!('spec/foo_spec.rb', "RSpec.describe('Foo') { it { } }\n")
+      base = head_sha
+      run_git! 'rm', '-q', 'spec/foo_spec.rb'
+      run_git! 'commit', '-q', '-m', 'delete spec/foo_spec.rb'
+
+      source_lines = File.readlines('lib/foo.rb', chomp: true)
+      FileUtils.mkdir_p('coverage')
+      report = {
+        'coverage' => {
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
+        }
+      }
+      File.write('coverage/coverage.json', JSON.generate(report))
+      long_ago = Time.now - 3600
+      File.utime(long_ago, long_ago, 'lib/foo.rb')
+      File.utime(Time.now, Time.now, 'coverage/coverage.json')
+      ENV['COVERAGE_BASE'] = base
+      stub_sh!
+
+      expect { invoke! }.to raise_error(/predates the deletion of spec\/foo_spec\.rb.*run `rake coverage:measure` again before coverage:changed_lines/m)
+      expect(main_object).not_to have_received(:sh)
+    end
+
     it 'passes every fail-closed guard and reaches the real simplecov patch subprocess when the report is fresh and matches' do
       init_repo!
       commit!('lib/foo.rb', "class Foo\nend\n")
