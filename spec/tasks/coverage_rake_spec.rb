@@ -90,12 +90,9 @@ RSpec.describe 'lib/tasks/coverage.rake' do
     end
 
     # Asserts the exact argv the real `sh` call in coverage.rake is supposed
-    # to pass -- not just that guards upstream didn't raise. A prior version
-    # of these specs only checked "no known guard-message raised", which
-    # stayed green even with the `sh` call deleted entirely or its
-    # `--minimum` dropped to `0` (multi-agent-review Finding 1, 2026-09-17;
-    # reproduced both mutations against this exact assertion before trusting
-    # it -- see gate record).
+    # to pass -- not just that guards upstream didn't raise. Checking only
+    # "no known guard-message raised" stays green even with the `sh` call
+    # deleted entirely or its `--minimum` dropped to `0`.
     def expect_sh_invoked_for_gate!(base)
       expect(main_object).to have_received(:sh).with(
         'bundle', 'exec', 'simplecov', 'patch', '--input', 'tmp/coverage-line-only.json',
