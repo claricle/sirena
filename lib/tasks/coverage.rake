@@ -137,21 +137,11 @@ namespace :coverage do
     end
 
     # A deleted path has no mtime to compare against report_mtime, so the
-    # check above silently lets it through. A deleted lib/*.rb file is fine
-    # to let through here -- `simplecov patch --find-renames` below handles
-    # that deletion itself, and the coverage_rake_spec.rb example "skips a
-    # deleted lib/*.rb file..." depends on this task not raising for it. But
-    # a deleted SPEC file that was the only thing covering a still-present
-    # lib/*.rb line is a different problem: that line's report entry stays
-    # at its old (possibly 100%) coverage even though nothing exercises it
-    # anymore, and no other guard here catches it (the content-match check
-    # below only runs for lib/*.rb paths, and a deleted spec file is never
-    # inside lib/). Codex round 17, 2026-09-17: reproduced `simplecov patch`
-    # passing at 100% for a lib file whose sole covering spec was deleted in
-    # the same diff, using a report generated before that deletion. Fail
-    # closed on any deletion outside lib/*.rb, since the report can no
-    # longer prove what actually ran against the lib/*.rb files it still
-    # claims to cover.
+    # mtime check above silently lets it through. A deleted lib/*.rb file is
+    # fine -- `simplecov patch --find-renames` below handles that deletion
+    # itself. A deleted SPEC file is not: the report's coverage entry for
+    # whatever it alone exercised goes stale, and nothing else here catches
+    # that. Fail closed on any deletion outside lib/*.rb.
     deleted_non_lib = changed_paths.reject { |path| File.exist?(path) }
       .reject { |path| path.start_with?('lib/') && path.end_with?('.rb') }
     unless deleted_non_lib.empty?
