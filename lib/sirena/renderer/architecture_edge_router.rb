@@ -3,18 +3,15 @@
 module Sirena
   module Renderer
     # Routes one architecture-beta edge around whatever else is in the
-    # diagram, instead of drawing straight through it. Geometry only, no SVG.
+    # diagram, instead of drawing straight through it. Geometry only, no
+    # SVG. Not an extension of EdgeRouter (don't unify them): EdgeRouter
+    # trims two boxes with geometry-derived faces (flowchart); here faces
+    # are user-declared (`a:R -- T:b`) with arbitrarily many obstacles.
     #
-    # Not an extension of EdgeRouter, so don't try to unify them: EdgeRouter
-    # trims centre-to-centre between exactly two boxes with geometry-derived
-    # faces (flowchart); here faces are user-declared (`a:R -- T:b`) and
-    # there can be arbitrarily many obstacles to route around.
-    #
-    # Coordinate-compressed grid + direction-aware Dijkstra: a straight line
-    # is used when already clear; otherwise search for the shortest bent
-    # path that leaves/arrives on the declared faces without crossing any
-    # obstacle's interior (the edge's own source/target boxes are exempt
-    # only at the anchor point - see `route`).
+    # Coordinate-compressed grid + direction-aware Dijkstra: a straight
+    # line when already clear, else the shortest bent path that
+    # leaves/arrives on the declared faces without crossing an obstacle's
+    # interior (source/target boxes exempt only at the anchor - see `route`).
     class ArchitectureEdgeRouter
       # Outer escape line, added only when the natural grid (built purely
       # from existing box edges) has no clear path at all.
