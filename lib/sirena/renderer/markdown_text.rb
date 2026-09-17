@@ -320,12 +320,9 @@ module Sirena
       # for `<tspan>` children.
       #
       # @param text_element [Svg::Text] element to assign onto
-      # @param lines [Array<Array<Run>>] from `parse_lines`, already
-      #   truncated if truncation applies at this call site
-      # @param x [Numeric] the label's horizontal anchor, passed through to
-      #   `build_markdown_tspans`
-      # @param base_font_weight [String, nil] passed through to
-      #   `build_markdown_tspans`
+      # @param lines [Array<Array<Run>>] from `parse_lines`, truncated
+      # @param x [Numeric] the label's horizontal anchor
+      # @param base_font_weight [String, nil] passed to `build_markdown_tspans`
       # @return [void]
       def assign_markdown_text(text_element, lines, x:, base_font_weight: nil)
         if plain_line?(lines)
