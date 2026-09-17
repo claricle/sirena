@@ -391,6 +391,35 @@ RSpec.describe ExampleTasks do
       end
     end
 
+    # The two specs above only ever exercise `verified_root`'s GEM_ROOT
+    # branch on the RAISING arm -- an attack whose hijacked path can never
+    # equal `expected` regardless of how `expected` itself is computed, so a
+    # broken `expected` (e.g. built from the wrong operand, or dropping the
+    # suffix entirely) still raises and still passes both specs. Nothing
+    # anywhere else in this file stubs GEM_ROOT at all, so nothing exercises
+    # this branch's non-raising arm: whether `expected` is actually computed
+    # correctly for an ordinary, un-attacked nested path -- the shape every
+    # real invocation of this task takes, since a real GEM_ROOT is the gem's
+    # own checkout and a real docs_assets_dir sits beneath it. This is the
+    # only spec in the file where that arm is live: no symlink anywhere,
+    # GEM_ROOT stubbed so the branch is entered, and the assertion is that
+    # the ordinary copy succeeds rather than raising a false positive.
+    it 'succeeds on an ordinary nested docs root once GEM_ROOT makes the ancestor check live' do
+      Dir.mktmpdir('sirena-root') do |root|
+        stub_const('ExampleTasks::GEM_ROOT', root)
+
+        examples = File.join(root, 'examples')
+        FileUtils.mkdir_p(File.join(examples, 'flowchart'))
+        File.write(File.join(examples, 'flowchart', 'a.svg'), '<svg/>')
+        docs_assets_dir = File.join(root, 'docs', 'assets', 'examples')
+
+        copied = described_class.copy_to_docs(examples, docs_assets_dir)
+
+        expect([copied, Dir.glob('**/*', base: docs_assets_dir).sort])
+          .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+      end
+    end
+
     # Races a symlink into place right after the per-file guard clears it,
     # immediately before `File.rename` -- which replaces the directory
     # entry atomically rather than following it. NOTE: mock against
