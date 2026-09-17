@@ -94,6 +94,17 @@ RSpec.describe MermaidDiff do
 
       expect(verdict).to be(:rejects)
     end
+
+    # Parslet recurses once per nesting level and runs out of stack before it
+    # can report a parse failure. Measured: 200 levels raise an ordinary
+    # error, 400 already blow the stack. 2,000 leaves room for a deeper stack
+    # than this one. SystemStackError is not a StandardError, so it took the
+    # whole run down instead of being one rejected probe.
+    it 'answers instead of crashing when the parser runs out of stack' do
+      deep = "flowchart LR\n#{"  subgraph s\n" * 2000}  A --> B\n#{"  end\n" * 2000}"
+
+      expect(harness.send(:sirena_verdict, deep)).to be(:rejects)
+    end
   end
 
   describe 'asking mermaid for a verdict' do
