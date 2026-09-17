@@ -303,6 +303,21 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
+      it 'raises ParseError on a UTF-8-tagged source with an invalid byte sequence' do
+        # A different failure mode from the ISO-8859-1 case above: this source
+        # is tagged UTF-8 but is not valid UTF-8, so Parslet::Source.new raises
+        # ArgumentError ("invalid byte sequence in UTF-8") from StringScanner
+        # while indexing line endings -- before any grammar rule runs, and
+        # before an EncodingError could ever be raised. Parser::Base#parse
+        # documents ParseError as the one contract; a raw ArgumentError would
+        # break it.
+        source = (+"journey\naccTitle: \xFF\xFE\n").force_encoding(Encoding::UTF_8)
+        expect(source.valid_encoding?).to be(false)
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+
       it 'ends the directive text at the newline' do
         # An empty `accTitle:` is consumed and the next line keeps its own
         # meaning. mermaid's whitespace AFTER the delimiter crosses newlines

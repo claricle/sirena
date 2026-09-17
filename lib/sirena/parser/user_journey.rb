@@ -144,6 +144,14 @@ module Sirena
           # first. Re-raise as ParseError: that's the contract Base#parse
           # documents.
           raise ParseError, "Parse error: #{e.message}"
+        rescue ArgumentError => e
+          # A UTF-8-tagged string with an invalid byte sequence never reaches
+          # a grammar rule at all: Parslet::Source.new raises ArgumentError
+          # ("invalid byte sequence in UTF-8") from StringScanner while
+          # indexing line endings, before parsing starts. Same contract as
+          # the EncodingError branch above -- re-raise as ParseError rather
+          # than let a Ruby core class escape raw.
+          raise ParseError, "Parse error: #{e.message}"
         end
 
         build_diagram_from_tree(tree)
