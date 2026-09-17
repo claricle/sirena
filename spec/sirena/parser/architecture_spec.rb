@@ -194,12 +194,11 @@ RSpec.describe Sirena::Parser::Architecture do
     end
 
     context "with a multiline accessibility description block spanning several lines" do
-      # extract_text's Array branch (Parslet's `.repeat` yields an array of
-      # per-line slices for multi-line content) needs a case where the
-      # array actually has more than the zero-element case already covered
-      # below - otherwise `value.map { |v| extract_text(v) }.join` could be
-      # replaced by something that only handles the empty array and this
-      # would stay green.
+      # `(rbrace.absent? >> any).repeat.as(:acc_descr)` matches non-empty
+      # content as one Slice, not an Array of per-line slices - this spec
+      # exercises extract_text's String/else branch, not its Array branch.
+      # The Array branch only fires on the zero-match `[]` case below; see
+      # "extract_text's Array branch, called directly" for direct coverage.
       let(:input) do
         <<~MERMAID
           architecture-beta
@@ -233,6 +232,22 @@ RSpec.describe Sirena::Parser::Architecture do
         result = parser.parse(input)
 
         expect(result.acc_descr).to eq("")
+      end
+    end
+
+    describe "Sirena::Parser::Transforms::Architecture#extract_text's Array branch, called directly" do
+      # No grammar rule in this parser ever hands extract_text a multi-
+      # element Array (see the comment above) - this calls the private
+      # method directly to lock down the join behavior anyway.
+      let(:transform) { Sirena::Parser::Transforms::Architecture.new }
+
+      it "joins a multi-element array of strings" do
+        # Each element is stripped by extract_text's own recursion before
+        # the join, so a leading/trailing space on an element is lost -
+        # exercise that here rather than assume whitespace survives.
+        result = transform.send(:extract_text, ["Line one", "  Line two  "])
+
+        expect(result).to eq("Line oneLine two")
       end
     end
 
