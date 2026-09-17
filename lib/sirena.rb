@@ -39,6 +39,7 @@ module Sirena
 end
 
 # Load modules in dependency order
+require_relative 'sirena/js_number'
 require_relative 'sirena/source'
 require_relative 'sirena/text_measurement'
 require_relative 'sirena/layout/fallback'

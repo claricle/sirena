@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'psych'
+require_relative '../js_number'
 require_relative 'base'
 
 module Sirena
@@ -430,53 +431,9 @@ module Sirena
         case value
         when nil then 'null'
         when true, false then value.to_s
-        when Numeric then js_number(value.to_f)
+        when Numeric then Sirena::JsNumber.stringify(value)
         else value
         end
-      end
-
-      # Every YAML number mermaid reads is a double, and JavaScript prints
-      # one as the shortest decimal that reads back the same — plain while
-      # the decimal exponent sits in (-6, 21] and in exponent form outside.
-      # Ruby keeps a `.0`, turns to an exponent at 1e-5 and 1e16, and pads
-      # the exponent to two digits. Keys are compared as text, so
-      # 9007199254740992 and 9007199254740993 have to come out as one key.
-      def js_number(number)
-        return 'NaN' if number.nan?
-        return number.negative? ? '-Infinity' : 'Infinity' if number.infinite?
-        return '0' if number.zero?
-
-        digits, point = decimal_parts(number.abs)
-        "#{'-' if number.negative?}#{place_point(digits, point)}"
-      end
-
-      # `1.5` is the digits "15" with the point one in; `1e21` is "1" with
-      # the point 22 in. Ruby's own `to_s` already gives the shortest
-      # digits, so only where the point goes is left to work out.
-      def decimal_parts(magnitude)
-        mantissa, exponent = magnitude.to_s.split('e')
-        whole, fraction = mantissa.split('.')
-        digits = "#{whole}#{fraction}"
-        significant = digits.sub(/\A0+/, '')
-        point = whole.length - (digits.length - significant.length)
-        [significant.sub(/0+\z/, ''), point + exponent.to_i]
-      end
-
-      # ECMA-262's Number::toString, in its own terms: `digits` runs from
-      # the decimal point placed `point` digits in.
-      def place_point(digits, point)
-        return digits + ('0' * (point - digits.length)) if
-          point.between?(digits.length, 21)
-        return "#{digits[0, point]}.#{digits[point..]}" if
-          point.positive? && point <= 21
-        return "0.#{'0' * -point}#{digits}" if point > -6 && point <= 0
-
-        exponential(digits, point - 1)
-      end
-
-      def exponential(digits, exponent)
-        mantissa = digits.length == 1 ? digits : "#{digits[0]}.#{digits[1..]}"
-        "#{mantissa}e#{exponent.negative? ? '-' : '+'}#{exponent.abs}"
       end
 
       def unsupported(tag)
