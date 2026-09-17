@@ -244,7 +244,7 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
     # not part of this class's public geometry API).
     let(:heap_class) { described_class.const_get(:MinHeap) }
 
-    it "pops entries in ascending cost order, matching a stable sort" do
+    it "pops entries in ascending cost order" do
       costs = [37, 2, 15, 4, 26, 4, 100, 0, 8]
       heap = heap_class.new
       costs.each_with_index { |cost, index| heap.push(cost, index) }
