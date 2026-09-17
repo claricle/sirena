@@ -4,19 +4,16 @@ require "kramdown"
 require_relative "markdown_text/emphasis_simulator"
 
 module Sirena
-  # Parses mermaid's markdown subset used inside diagram label text: bold
-  # (`**text**`), italic (`*text*`, nestable in either order, including
-  # `***both***`), a backslash-escaped marker staying literal, and a
-  # literal newline as a hard line break — even inside an open bold or
-  # italic run. Nothing else: no code spans, links, headers or lists.
-  # Parsing is delegated to `kramdown` (see the private `Parser` below),
-  # restricted to exactly `:paragraph`/`:blank_line` and
-  # `:emphasis`/`:escaped_chars` — anything else stays literal.
+  # Parses mermaid's markdown subset used inside diagram label text: bold,
+  # italic (nestable either order, including `***both***`), a
+  # backslash-escaped marker staying literal, and a literal newline as a
+  # hard line break — even inside an open bold/italic run. Nothing else.
+  # Delegates to `kramdown` (private `Parser` below), restricted to
+  # `:paragraph`/`:blank_line` and `:emphasis`/`:escaped_chars` only.
   #
-  # Layer-neutral: no SVG/XML here. This is the text-shaping half shared by
-  # `Transform::Kanban` (sizing) and `Renderer::MarkdownText` (rendering to
-  # `<tspan>`s) — kept out of `renderer/` so `transform/` never has to
-  # require anything under it.
+  # Layer-neutral (no SVG/XML): shared by `Transform::Kanban` (sizing) and
+  # `Renderer::MarkdownText` (rendering), so `transform/` never has to
+  # require anything under `renderer/`.
   module MarkdownText
     # One styled run of text. `bold` and `italic` are independent booleans
     # rather than a single "style" enum because nesting (`**bold *and
@@ -121,18 +118,12 @@ module Sirena
       lines
     end
 
-    # `ASCII-8BIT` (`BINARY`) is the one encoding where every byte string
-    # is trivially "valid" (`valid_encoding?` is always true for it), so
-    # `parse_lines`'s own `raw.scrub unless raw.valid_encoding?` guard
-    # below never fires for a binary-tagged String — kramdown's internal
-    # `String#encode` then raises `Encoding::UndefinedConversionError` on
-    # the first non-ASCII byte instead of degrading. Transcoding an
-    # ASCII-8BIT string to UTF-8 first, with invalid/undefined bytes
-    # replaced, forces `raw.valid_encoding?` to reflect reality before
-    # that guard runs, so a marker-bearing binary-tagged label degrades to
-    # a scrubbed literal run instead of crashing. Scoped to ASCII-8BIT
-    # only: other non-UTF-8 encodings (e.g. ISO-8859-1) already report
-    # `valid_encoding?` meaningfully and are unaffected by this bug.
+    # `ASCII-8BIT` always reports `valid_encoding? == true`, so the
+    # `raw.scrub unless raw.valid_encoding?` guard below never fires for
+    # it and kramdown's own `String#encode` raises
+    # `Encoding::UndefinedConversionError` on a non-ASCII byte instead.
+    # Do not widen this past ASCII-8BIT: other encodings (e.g.
+    # ISO-8859-1) report `valid_encoding?` meaningfully already.
     #
     # @param raw [String]
     # @return [String]

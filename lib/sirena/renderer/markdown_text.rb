@@ -14,15 +14,12 @@ module Sirena
     module MarkdownText
       module_function
 
-      # Assigns a markdown-parsed label onto a `Svg::Text` element. A label
-      # with no markup and no hard line break keeps setting plain
-      # `content` — no `<tspan>` wrapper, same XML shape existing fixtures
-      # expect. Only a label needing per-run styling or a line break pays
-      # for `<tspan>` children.
+      # Assigns a markdown-parsed label onto a `Svg::Text` element. A plain
+      # label (no markup, no hard line break) keeps setting `content` — no
+      # `<tspan>` wrapper, same XML shape existing fixtures expect.
       #
       # @param text_element [Svg::Text] element to assign onto
-      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] from
-      #   `Sirena::MarkdownText.parse_lines`, truncated
+      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated, from `Sirena::MarkdownText.parse_lines`
       # @param x [Numeric] the label's horizontal anchor
       # @param base_font_weight [String, nil] passed to `build_markdown_tspans`
       # @return [void]
@@ -47,16 +44,13 @@ module Sirena
         runs.length <= 1 && runs.none? { |run| run.bold || run.italic }
       end
 
-      # Builds the <tspan> runs for a markdown-parsed label. Only the
-      # FIRST run of a line that followed a hard line break needs `x`
-      # (reset to the label's left/center) and `dy` (one line height) —
-      # every other run continues immediately after the previous one.
+      # Builds the <tspan> runs for a markdown-parsed label. Only the FIRST
+      # run of a line after a hard line break needs `x` (reset) and `dy`
+      # (one line height) — every other run continues the previous one.
       #
-      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] from
-      #   `Sirena::MarkdownText.parse_lines`, truncated
+      # @param lines [Array<Array<Sirena::MarkdownText::Run>>] truncated, from `Sirena::MarkdownText.parse_lines`
       # @param x [Numeric] the label's horizontal anchor
-      # @param base_font_weight [String, nil] "bold" for a bold-by-default
-      #   `Svg::Text` (e.g. a kanban column header)
+      # @param base_font_weight [String, nil] "bold" for a bold-by-default `Svg::Text` (e.g. a kanban column header)
       # @return [Array<Svg::Tspan>]
       # @api private
       def build_markdown_tspans(lines, x:, base_font_weight: nil)
