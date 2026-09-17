@@ -123,10 +123,9 @@ module Sirena
 
             case classification
             when :none
-              scan_pos = r_end
+              # not a delimiter run boundary here; keep scanning past it
             when :skip
               a += u
-              scan_pos = r_end
             when :tight
               if (o % 3 != 0) && ((o + u) % 3).zero?
                 p += u
@@ -138,13 +137,12 @@ module Sirena
               result, a = resolve_close(a, u, p, o, next_start)
               return result if result
 
-              scan_pos = r_end
             else
               result, a = resolve_close(a, u, p, o, next_start)
               return result if result
 
-              scan_pos = r_end
             end
+            scan_pos = r_end
           end
         end
 

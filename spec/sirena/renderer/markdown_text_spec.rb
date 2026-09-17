@@ -7,7 +7,7 @@ RSpec.describe Sirena::Renderer::MarkdownText do
     # Mutation-check: remove the `raw.scrub unless raw.valid_encoding?` guard.
     # Watched red: raises ArgumentError instead of degrading to a run.
     it 'degrades invalid UTF-8 byte sequences to a scrubbed literal run instead of raising' do
-      bad = ("hello" + "\xFF\xFE".dup.force_encoding("UTF-8")).dup
+      bad = "hello#{(+"\xFF\xFE").force_encoding('UTF-8')}"
 
       expect { described_class.parse_lines(bad) }.not_to raise_error
       expect(described_class.parse_lines(bad)).to eq([[described_class::Run.new(text: bad.scrub, bold: false, italic: false)]])
