@@ -184,13 +184,11 @@ module Sirena
       end
 
       # kramdown's emphasis grammar disagrees with `marked`'s on some valid
-      # short labels. Detects two unsafe delimiter-run SHAPES and falls
-      # back to `literal_lines` for them (a third, general check runs
-      # later; see `unsafe_emphasis_divergence?`): A) a maximal run of 4+
-      # of the same marker character, C) a length-1 run of one marker
-      # NESTED with a length-1 run of the other (`_*...*_`), as opposed to
-      # a SEQUENTIAL pair (`*a*_b_`), which must stay safe. A run-length
-      # check with no flanking context is unsound: see this method's spec.
+      # short labels. Falls back to `literal_lines` for two unsafe
+      # delimiter-run SHAPES (a third, general check runs later; see
+      # `unsafe_emphasis_divergence?`): A) 4+ of the same marker character
+      # in a row, C) a NESTED length-1 wrap of both markers (`_*...*_`,
+      # not a SEQUENTIAL `*a*_b_`, which must stay safe).
       #
       # @param raw [String]
       # @return [Boolean]
@@ -315,13 +313,11 @@ module Sirena
       end
       private_constant :Parser
 
-      # Assigns a markdown-parsed label onto a `Svg::Text` element.
-      #
-      # A label with no markup and no hard line break parses down to the
-      # original string in one unstyled run, and keeps setting plain
-      # `content` — no `<tspan>` wrapper, same XML shape every existing
-      # fixture and REXML `.text` check already expects. Only a label that
-      # needs per-run styling or a line break pays for `<tspan>` children.
+      # Assigns a markdown-parsed label onto a `Svg::Text` element. A label
+      # with no markup and no hard line break keeps setting plain
+      # `content` — no `<tspan>` wrapper, same XML shape existing fixtures
+      # expect. Only a label needing per-run styling or a line break pays
+      # for `<tspan>` children.
       #
       # @param text_element [Svg::Text] element to assign onto
       # @param lines [Array<Array<Run>>] from `parse_lines`, already
@@ -352,23 +348,15 @@ module Sirena
         runs.length <= 1 && runs.none? { |run| run.bold || run.italic }
       end
 
-      # Builds the <tspan> runs for a markdown-parsed label.
+      # Builds the <tspan> runs for a markdown-parsed label. Only the
+      # FIRST run of a line that followed a hard line break needs `x`
+      # (reset to the label's left/center) and `dy` (one line height) —
+      # every other run continues immediately after the previous one.
       #
-      # Every run after a line's first continues immediately after the
-      # previous run — no `x`/`dy` needed. Only the FIRST run of a line
-      # that followed a hard line break needs both: `x` to reset to the
-      # label's left edge (or center), and `dy` to move down one line
-      # height. The very first line needs neither. `pending_lines` is an
-      # accumulating counter, not a per-line constant, in case a future
-      # producer of `lines` ever passes an empty runs array for a line.
-      #
-      # @param lines [Array<Array<Run>>] from `parse_lines`, already
-      #   truncated if truncation applies at this call site
-      # @param x [Numeric] the label's horizontal anchor, repeated on every
-      #   line-starting run after the first
-      # @param base_font_weight [String, nil] "bold" when the surrounding
-      #   `Svg::Text` is bold by default (e.g. a kanban column header), so a
-      #   plain run still renders bold instead of losing the baseline weight
+      # @param lines [Array<Array<Run>>] from `parse_lines`, truncated
+      # @param x [Numeric] the label's horizontal anchor
+      # @param base_font_weight [String, nil] "bold" for a bold-by-default
+      #   `Svg::Text` (e.g. a kanban column header)
       # @return [Array<Svg::Tspan>]
       # @api private
       def build_markdown_tspans(lines, x:, base_font_weight: nil)
@@ -408,14 +396,10 @@ module Sirena
 
       # Truncates markdown-parsed lines to at most `max_length` visible
       # (post-markup) characters, cutting on run boundaries rather than
-      # mid-marker.
-      #
-      # A run within the FIRST line may be cut partway through, with
-      # "..." appended — this is the common case truncation exists for.
-      # A later line (one that only exists because of a hard line break)
-      # is kept whole or dropped whole, never cut partway through: mirrors
-      # how the raw-string truncation this replaces already treated its
-      # input as one unit, just applied after parsing instead of before.
+      # mid-marker. A run within the FIRST line may be cut partway through
+      # with "..." appended; a later line (one that only exists because of
+      # a hard line break) is kept whole or dropped whole, never cut
+      # partway through.
       #
       # @param lines [Array<Array<Run>>]
       # @param max_length [Integer] maximum visible characters to keep
@@ -443,14 +427,11 @@ module Sirena
       # Cuts a single line's runs to `budget` visible characters, trimming
       # whole runs from the end and appending "..." to the run that
       # crosses the boundary. The 3-character ellipsis cost is reserved
-      # against `budget` up front, once — not per-run when the overflowing
-      # run is reached, which undercounts: kept runs would each consume
-      # `remaining` without paying the reservation, pushing the final
-      # total (kept + cut run + "...") over `budget`.
+      # against `budget` up front, once — reserving it per-run instead
+      # undercounts, letting the total come out over `budget`.
       #
       # @param runs [Array<Run>]
-      # @param budget [Integer] visible characters available, ellipsis
-      #   included
+      # @param budget [Integer] visible characters, ellipsis included
       # @return [Array<Run>]
       # @api private
       def truncate_line(runs, budget)
