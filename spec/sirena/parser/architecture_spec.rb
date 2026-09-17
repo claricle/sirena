@@ -193,6 +193,30 @@ RSpec.describe Sirena::Parser::Architecture do
       end
     end
 
+    context "with a multiline accessibility description block spanning several lines" do
+      # extract_text's Array branch (Parslet's `.repeat` yields an array of
+      # per-line slices for multi-line content) needs a case where the
+      # array actually has more than the zero-element case already covered
+      # below - otherwise `value.map { |v| extract_text(v) }.join` could be
+      # replaced by something that only handles the empty array and this
+      # would stay green.
+      let(:input) do
+        <<~MERMAID
+          architecture-beta
+              accDescr {
+                  Line one here
+                  Line two here
+              }
+        MERMAID
+      end
+
+      it "joins every line of the block into one description" do
+        result = parser.parse(input)
+
+        expect(result.acc_descr).to eq("Line one here\n        Line two here")
+      end
+    end
+
     context "with an empty multiline accessibility description block" do
       # Parslet's `.repeat` (no minimum) yields [] rather than a slice when
       # it matches zero characters, and extract_text used to stringify that
