@@ -241,6 +241,14 @@ module Sirena
               max_x = [max_x, child_bounds[:x] + child_bounds[:width]].max
               max_y = [max_y, child_bounds[:y] + child_bounds[:height]].max
             end
+
+            # None of this group's children had bounds either (a chain of
+            # nested groups with no services/junctions anywhere in the
+            # subtree) - min_x is still its Float::INFINITY seed. Skip this
+            # group the same way a directly-empty leaf group already does,
+            # instead of writing an Infinity/-Infinity entry that would
+            # NaN out a level further up the same way the leaf case used to.
+            next if min_x == Float::INFINITY
           end
 
           bounds[group.id] = {
