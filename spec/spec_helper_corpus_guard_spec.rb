@@ -3,7 +3,6 @@
 require 'spec_helper'
 require 'open3'
 require 'tmpdir'
-require 'fileutils'
 
 # spec/spec_helper.rb's `after(:suite)` hook (registered only when
 # `ENV['COVERAGE'] == 'true'` at spec_helper.rb LOAD time) is what
@@ -31,7 +30,7 @@ require 'fileutils'
 # an earlier version of this spec unconditionally `rm_rf`'d the real
 # coverage/ directory to make that assertion cheap, which destroyed a report
 # `rake coverage:measure` had already generated on a real developer machine
-# (Codex review round 16, 2026-09-17: reproduced with a sentinel file).
+# (Codex review round 17, 2026-09-17: reproduced with a sentinel file).
 # Record its prior state (present or absent) and require it unchanged instead
 # of clearing it first.
 RSpec.describe 'spec_helper.rb corpus-tag coverage guard' do

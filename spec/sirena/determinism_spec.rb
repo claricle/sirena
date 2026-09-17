@@ -165,7 +165,7 @@ RSpec.describe Sirena::Engine do
     # rather than asserting success keeps this honest about types that are
     # already failing for unrelated reasons.
     #
-    # :corpus - sweeps the whole fixture directory and only compares two
+    # :corpus - sweeps one fixture per diagram type and only compares two
     # rescued outcome strings, so a type that raises the same way both times
     # counts as passing without ever asserting the render is right. Runs in
     # `spec:corpus`, isolated from the coverage-collecting `spec:unit` run:
