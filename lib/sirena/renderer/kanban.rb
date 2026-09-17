@@ -176,42 +176,16 @@ module Sirena
         end
       end
 
-      # Codex round 6 High: this used to be a flat `y + header_height / 2 +
-      # 5`, which only centers correctly for a SINGLE line of text — every
-      # line past the first advances by a further `1.2em` below that fixed
-      # point (`assign_markdown_text`'s per-line `dy`), so a multi-line
-      # title's later lines kept sliding further past the header rect's own
-      # bottom edge the more lines it had. Reproduced directly via the real
-      # CLI + REXML: a 4-line title (`col[One\nTwo\nThree\nFour]`) sized a
-      # `header_height` of 104 (`Transform::Kanban::COLUMN_HEADER_HEIGHT`
-      # 50 plus 3 `Transform::Kanban::EXTRA_LINE_HEIGHT` (18) rows), but the
-      # 4th baseline landed at `147.4` — `3.4px` past the header rect's own
-      # bottom edge at `144`.
-      #
-      # Fixed by centering the whole text BLOCK rather than a single
-      # baseline: `+ 5` alone is the single-line fudge already tuned to
-      # visually center one baseline within `header_height` (unchanged for
-      # `line_count == 1`, so no regression there), and each additional
-      # line adds one more `1.2em` (`font_size * 1.2`, the same per-line
-      # advance `assign_markdown_text` actually renders — not a raw
-      # `count("\n")`, per the same "size from the renderer's own line
-      # count, not the raw text" fix already applied to
-      # `Transform::Kanban#calculate_card_height`) to the block's total
-      # height; shifting the FIRST baseline up by half of that added height
-      # keeps the block centered around the same point the single-line
-      # formula already centers on. Verified directly (real
-      # `Renderer::Kanban#render` + REXML) for the 4-line case above: first
-      # baseline moves from the old `97.0` to `71.8`, last baseline from the
-      # overflowing `147.4` to `122.2` — comfortably inside the header
-      # rect's bottom edge at `144.0` (`y=40.0` plus `header_height=104.0`),
-      # with room to spare on the top edge too.
-      #
-      # @param y [Numeric] the header rect's own top edge
-      # @param header_height [Numeric] the header rect's own height, from
-      #   `Transform::Kanban#calculate_header_height`
-      # @param line_count [Integer] number of lines `MarkdownText.parse_lines`
-      #   actually produced for this title
-      # @param font_size [Numeric] the header text's own font size, in px
+      # Centers the whole multi-line text BLOCK, not just its first
+      # baseline: a flat `y + header_height / 2 + 5` only centers a SINGLE
+      # line, sliding later lines past the header rect's bottom edge.
+      # Shifting the FIRST baseline up by half the block's added height
+      # keeps it centered on the same point as the single-line fudge.
+      # @param y [Numeric] header rect's top edge
+      # @param header_height [Numeric] header rect's own height
+      # @param line_count [Integer] lines `MarkdownText.parse_lines`
+      #   produced for this title
+      # @param font_size [Numeric] header text's own font size, in px
       # @return [Numeric] the first line's baseline `y`
       # @api private
       def header_text_baseline(y, header_height, line_count, font_size)

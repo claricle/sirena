@@ -70,15 +70,12 @@ module Sirena
 
       # `content` and `tspans` are separate collections with no ordering
       # between them, but genuinely interleaved mixed content
-      # (`<text>A<tspan>B</tspan>C</text>`) needs one. lutaml-model already
-      # records that order during `from_xml`: `element_order` (from
-      # `Lutaml::Xml::XmlOrderable`, mixed in via `Serializable`) holds one
-      # entry per text run and per child element, in source sequence — it's
-      # what `Transformation#should_use_element_order?` itself checks for
-      # before trusting it. A renderer-constructed instance never sets it
-      # (confirmed: `Svg::Text.new.tap { |t| t.content = "x" }.element_order`
-      # is `nil`), so every existing call site — which sets exactly one of
-      # `content`/`tspans` — falls straight to the simple path unchanged.
+      # (`<text>A<tspan>B</tspan>C</text>`) needs one — `element_order`
+      # (from `Lutaml::Xml::XmlOrderable`) holds it, one entry per text run
+      # and child element, in source sequence, set only by `from_xml`. A
+      # renderer-constructed instance never sets it, so every existing call
+      # site (sets exactly one of `content`/`tspans`) falls to the simple
+      # path unchanged.
       #
       # @return [String]
       def body
@@ -97,39 +94,14 @@ module Sirena
       end
 
       # Replays `element_order` in place: each `:text` entry stands in for
-      # the next item of `content`, each `tspan` `:element` entry stands in
-      # for the next item of `tspans` — both collections are themselves
-      # already in document order, so consuming each as its own queue lines
-      # every entry up with the `element_order` slot it came from.
-      #
-      # Reads from the `content`/`tspans` queues rather than replaying
-      # `node.text_content` off the `element_order` node directly: the node
-      # only ever holds what `from_xml` parsed, so replaying it would
-      # silently ignore a later `content =` reassignment on the same
-      # instance and keep re-emitting the original parsed text forever.
-      #
-      # Any entry that is neither `:text` nor a `tspan` element (an XML
-      # comment, a processing instruction, or some other child element this
-      # class has no attribute for) is skipped rather than treated as a
-      # stand-in for the next tspan: consuming `remaining_tspans` for it
-      # would misattribute — or, once the real tspans run out, crash on
-      # `nil.to_xml` for — an entry that was never a tspan to begin with.
-      #
-      # Codex round 4 Medium: replaying `element_order` assumes `content` has
-      # exactly as many items as recorded `:text` slots, and `tspans`
-      # exactly as many as recorded `tspan` slots — true for a `from_xml`
-      # instance untouched since parsing, and for a same-count reassignment
-      # (`text.content = %w[X Y]` onto 2 `:text` slots, already covered
-      # above). A caller that reassigns to a DIFFERENT count breaks that
-      # assumption: reproduced directly, `Text.from_xml('<text>A<tspan>B</tspan>C</text>')`
-      # (2 `:text` slots) then `.content = %w[X Y Z]` used to serialize
-      # `<text>X<tspan>B</tspan>Y</text>` — "Z" silently dropped, with no
-      # error, because `remaining_content.shift` just runs out. Once the
-      # counts no longer match what `element_order` recorded, that recorded
-      # order can't be trusted to still describe the current `content`, so
-      # this falls back to `simple_body` (the same safe path used when there
-      # is no `element_order` at all) rather than replay a mapping that's
-      # known to be wrong.
+      # the next item of `content`, each `tspan` `:element` entry for the
+      # next item of `tspans` — both queues already in document order.
+      # Reads from those queues, not `node.text_content` directly, so a
+      # later `content =` reassignment is honored. An entry that is
+      # neither `:text` nor a `tspan` is skipped, not treated as a
+      # stand-in for the next tspan. Relies on `cardinality_matches?`
+      # first — see its comment for why a caller reassigning to a
+      # different count must not replay this mapping.
       #
       # @return [String]
       def interleaved_body
@@ -149,8 +121,11 @@ module Sirena
       end
 
       # True when `content`/`tspans`' current sizes still match what
-      # `element_order` recorded at parse time — see `interleaved_body`'s
-      # comment for why a mismatch makes replaying `element_order` unsafe.
+      # `element_order` recorded at parse time. A caller that reassigns to
+      # a DIFFERENT count (e.g. `.content = %w[X Y Z]` onto only 2 recorded
+      # `:text` slots) makes a naive `element_order` replay silently drop
+      # the extra items instead of erroring — `interleaved_body` falls back
+      # to `simple_body` instead when this returns false.
       #
       # @return [Boolean]
       def cardinality_matches?
