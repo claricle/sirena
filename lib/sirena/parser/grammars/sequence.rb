@@ -254,22 +254,24 @@ module Sirena
             message_actor_continuation_tail_char.repeat(1)
         end
 
-        # CORRECTED (round 4): this comment previously claimed the dash
-        # branch below was no longer load-bearing for anything this
-        # file's own spec suite exercises. A fuzz round disproved that by
-        # construction: `A->>B-` at true EOF (no trailing newline) is
-        # accepted with recipient "B-" only because THIS branch fires —
-        # deleting only this branch makes it raise. Mermaid rejects that
-        # input too, so this branch is preserving a pre-existing
-        # incompatibility, not covering ground `message_actor_continuation`
-        # already reaches; it is real, existing behaviour from before
-        # this rule existed, kept because removing it is a separate,
-        # unverified change from fixing the reported findings. Left in
-        # place, documented accurately rather than as redundant.
+        # CORRECTED (round 5): the EOF case this comment used to justify
+        # keeping this branch no longer reaches a successful parse at all —
+        # `A->>B-` at true end of file now raises (spec: "rejects a
+        # trailing dash recipient at true end of file"), because THIS diff
+        # makes `message_text` mandatory. `message_actor_stop` never
+        # matches at true EOF, so the branch still consumes the trailing
+        # dash, but nothing is left to satisfy the now-required `: text`.
+        # Whether that makes the branch fully unreachable was not
+        # re-derived here — removing it is a separate, unverified change
+        # from the four rules this diff scopes; left in place rather than
+        # deleted on an unverified claim.
+        # A dash followed by `/` or `\` ends the name, as it does for a
+        # continuation: `A->>B-/C: m` and `A->>B-\C: m` are rejected.
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
             (match['^+<>()-'] |
-              (str('-') >> (str('-') | message_actor_stop).absent?))
+              (str('-') >>
+                (str('-') | str('/') | str('\\') | message_actor_stop).absent?))
         end
 
         # `>` joins `<` as never message-actor material, in any position —
@@ -293,7 +295,32 @@ module Sirena
         end
 
         rule(:message_actor_lead) do
-          match[')|>/\\\\'].absent? >> message_actor_lead_char
+          match[')|>/\\\\'].absent? >> mermaid_token_opener.absent? >>
+            message_actor_lead_char
+        end
+
+        # Where mermaid's lexer starts a token, two of its rules run before
+        # its actor rule and take the text instead, so a message endpoint
+        # can never start with either:
+        #
+        # - `%` not opening `%{`: the rest of the line is a comment.
+        #   `A->>%B: m` is rejected; `A->>%{x: m` is not.
+        # - a number followed by a space or newline: it is read as a
+        #   number, not a name. `A->>8 : m` and `1 ->> 2: m` are rejected;
+        #   `A->>8: m` and `A->>1.555 : m` (three decimals) are not.
+        #
+        # A `%%` right after an endpoint's first character needs no rule
+        # here: `%%` already ends the name, and the comment it opens leaves
+        # the message without its required `: text`.
+        rule(:mermaid_token_opener) do
+          (str('%') >> str('{').absent?) |
+            (lexed_number >> match[" \n"])
+        end
+
+        rule(:lexed_number) do
+          (match['0-9'].repeat(1) >>
+            (str('.') >> match['0-9'].repeat(1, 2)).maybe) |
+            (str('.') >> match['0-9'].repeat(1, 2))
         end
 
         # `message_actor_continuation` is tried only in the repeat below —
@@ -351,7 +378,7 @@ module Sirena
           message_actor_name.as(:from) >> space? >>
             message_signal.as(:arrow) >> space? >>
             message_actor_name.as(:to) >> space? >>
-            message_text.maybe.as(:text) >>
+            message_text.as(:text) >>
             line_end
         end
 

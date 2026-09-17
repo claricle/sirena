@@ -845,30 +845,63 @@ RSpec.describe Sirena::Parser::SequenceParser do
   end
 
   describe "the message_actor_char dash fallback, corrected" do
-    # A fuzz round disproved the belief (passed to me as a question, not
-    # asserted) that this branch had become dead weight after the round-3
-    # port: `A->>B-` at TRUE end of file (no trailing newline) is
-    # accepted with recipient "B-" only because this branch fires — with
-    # it removed, the same input raises. Mermaid rejects this input too
-    # (confirmed directly), so the branch is preserving a PRE-EXISTING
-    # incompatibility with mermaid that predates every round of this PR,
-    # not covering ground the fusion rule already reaches. Kept
-    # deliberately; this pin exists so a future round does not remove it
-    # believing it unreachable.
-    it "still accepts a trailing dash recipient at true end of file" do
-      diagram = parser.parse("sequenceDiagram\nA->>B-")
-
-      expect(diagram.participants.map(&:id)).to eq(["A", "B-"])
+    # Mermaid rejects both forms: a message needs its `: text`. The EOF
+    # form is pinned separately because a newline gives `line_end`
+    # somewhere else to match, so the two can drift apart.
+    it "rejects a trailing dash recipient at true end of file" do
+      expect { parser.parse("sequenceDiagram\nA->>B-") }
+        .to raise_error(Sirena::Parser::ParseError)
     end
 
-    # Same source with a trailing newline added is a DIFFERENT case —
-    # mermaid rejects both, but sirena's own behaviour differs between
-    # them (a newline gives `line_end` somewhere else to match instead),
-    # which is why the EOF form above needs its own pin rather than
-    # reusing an existing newline-terminated example.
-    it "still rejects the same recipient when a trailing newline follows" do
+    it "rejects the same recipient when a trailing newline follows" do
       expect { parser.parse("sequenceDiagram\nA->>B-\n") }
         .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "keeps an ordinary dash inside a recipient name" do
+      diagram = parser.parse("sequenceDiagram\nA->>B-C: m\n")
+
+      expect(diagram.participants.map(&:id)).to eq(%w[A B-C])
+    end
+  end
+
+  # Every row was run through mermaid 11.16.1; the accepted rows carry the
+  # actor names mermaid itself produced. The
+  # rejected rows are what mermaid's lexer takes before its actor rule
+  # where a token starts: a `%` comment, a one-character-then-`%%`
+  # comment, a number followed by a space, and a dash then `/` or `\`
+  # ending the name. The accepted rows sit one character away from each.
+  describe "where mermaid's lexer takes an endpoint before its actor rule" do
+    {
+      "A->>%B: m" => nil,
+      "A->>+%B: m" => nil,
+      "A->>s%%x: m" => nil,
+      "A->>B%%x: m" => nil,
+      "A->>8 : m" => nil,
+      "A->>1.5 : m" => nil,
+      "1 ->> 2: hi" => nil,
+      "A->>B-/C: m" => nil,
+      "A->>B-\\C: m" => nil,
+      "A->>B" => nil,
+      "A->>%{x: m" => ["A", "%{x"],
+      "A->>B%C: m" => %w[A B%C],
+      "A->>8: m" => %w[A 8],
+      "A->>1.555 : m" => %w[A 1.555],
+      "1->>2: hi" => %w[1 2],
+      "A->>B:" => %w[A B],
+    }.each do |source, ids|
+      if ids
+        it "accepts #{source.inspect} with actors #{ids.inspect}, matching mmdc" do
+          diagram = parser.parse("sequenceDiagram\n#{source}\n")
+
+          expect(diagram.participants.map(&:id)).to eq(ids)
+        end
+      else
+        it "rejects #{source.inspect}, matching mmdc" do
+          expect { parser.parse("sequenceDiagram\n#{source}\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
     end
   end
 end
