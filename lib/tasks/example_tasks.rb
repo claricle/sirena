@@ -374,8 +374,7 @@ module ExampleTasks
       raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
     end
 
-    verified_root(path, label: label)
-    directory_identity(path, label: label)
+    verified_directory_identity(path, label: label)
   end
 
   # A non-creating sibling of create_real_directory: PATH is expected to
@@ -384,6 +383,8 @@ module ExampleTasks
   # it is still real, unlinked, and not reached through a symlinked
   # ancestor, and returns its identity so a caller can pin writes to it the
   # same way copy_to_docs pins docs_assets_dir and each type directory.
+  # create_real_directory's own post-creation re-check above reuses this
+  # rather than repeating its two lines.
   def verified_directory_identity(path, label:)
     verified_root(path, label: label)
     directory_identity(path, label: label)
