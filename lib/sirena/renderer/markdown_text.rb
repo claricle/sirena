@@ -68,17 +68,13 @@ module Sirena
 
       # Splits text on hard line breaks and parses each line's markup.
       #
-      # The whole text is parsed as one kramdown document rather than
-      # split-then-parsed line by line: kramdown keeps an embedded `\n`
-      # (one not preceded by a blank line) literally inside whatever span
-      # it falls in, including an open bold/italic run, so a break inside
-      # `**a\nb**` stays part of one bold span. `split_on_hard_breaks`
-      # below turns those embedded `\n`s (and the blank-line gaps between
-      # kramdown's top-level blocks) into the line-array shape callers
-      # expect.
+      # Parsed as one kramdown document, not split then parsed line by
+      # line: kramdown keeps an embedded `\n` literally inside whatever
+      # span it falls in (including an open bold/italic run), so
+      # `**a\nb**` stays one bold span. `split_on_hard_breaks` turns those
+      # embedded breaks into the line-array shape callers expect.
       #
-      # @param text [String] raw label text, possibly containing `**`/`*`
-      #   markers and literal newlines
+      # @param text [String] raw label text, markers and literal newlines
       # @return [Array<Array<Run>>] one run array per line
       def parse_lines(text)
         raw = text.to_s
@@ -92,23 +88,16 @@ module Sirena
 
         root, = Parser.parse(raw)
 
-        # A line led by a tab or 4+ spaces (kramdown's own `:codeblock`
-        # parser, excluded from `Parser`'s `@block_parsers`) matches
-        # neither `:paragraph` nor `:blank_line`, so kramdown's fallback
-        # line-scanning appends a bare `:text` block directly under root
-        # instead of wrapping it in `:p` — and a stray marker elsewhere in
-        # the same text fragments that block off from its `:p` siblings,
-        # producing several independent literal lines where mermaid
-        # renders one.
-        #
-        # No construct this restricted `Parser` can produce should crash
-        # or corrupt the renderer, matching mermaid's own "unsupported
-        # construct -> literal passthrough" behavior — so the moment any
-        # unexpected block type shows up ANYWHERE in the tree, the whole
-        # label falls back to `literal_lines` on the raw text, untouched
-        # by kramdown. That guarantees no fragmentation and no marker loss
-        # by construction, at the cost of losing styling entirely for that
-        # one label — the same trade-off already accepted above.
+        # A line led by a tab or 4+ spaces matches neither `:paragraph`
+        # nor `:blank_line` in this restricted `Parser`, so kramdown's own
+        # fallback appends a bare `:text` block under root instead of
+        # wrapping it in `:p` — fragmenting a label that also has a stray
+        # marker elsewhere into several literal lines where mermaid
+        # renders one. So the moment ANY unexpected block type shows up
+        # anywhere in the tree, the whole label falls back to
+        # `literal_lines` on the raw text, untouched by kramdown —
+        # guaranteeing no fragmentation or marker loss, at the cost of
+        # losing styling for that one label.
         return literal_lines(raw) if root.children.any? { |block| !PLAIN_BLOCK_TYPES.include?(block.type) }
         return literal_lines(raw) if unsafe_emphasis_divergence?(raw, root)
 
@@ -131,18 +120,13 @@ module Sirena
         lines
       end
 
-      # The `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` fallback — and,
-      # since `parse_lines` only reaches the kramdown `Parser` when `raw`
-      # contains a `*`/`_` at all, this is also the path ordinary
-      # marker-free card text takes: every literal `\n`-delimited line
-      # becomes one unstyled run, no markup parsing at all.
-      #
-      # Paragraphs (text separated by 2+ consecutive `\n`s) are split out
-      # first and concatenated with no separator lines between them,
-      # matching real mmdc's zero-margin paragraph CSS — do not split on
-      # every single `\n` without that distinction, or a blank-line gap
-      # produces a spurious empty line. Only a genuine single `\n` inside
-      # one paragraph still produces a per-line split (a real hard break).
+      # The `MAX_EMPHASIS_MARKERS`/`MAX_PARSEABLE_LENGTH` fallback, and
+      # also the path ordinary marker-free text takes: every literal
+      # `\n`-delimited line becomes one unstyled run. Paragraphs (2+
+      # consecutive `\n`s) are split out first and concatenated with no
+      # separator lines, matching mmdc's zero-margin paragraph CSS — do
+      # not split on every `\n` without that distinction, or a blank-line
+      # gap produces a spurious empty line.
       #
       # @api private
       def literal_lines(raw)
@@ -155,18 +139,13 @@ module Sirena
         end
       end
 
-      # Counts only the `*`/`_` markers that can actually reach
-      # `:emphasis` — a backslash-escaped marker is consumed by
-      # `:escaped_chars` as one cheap, fixed-cost substitution before
-      # `:emphasis` ever sees it, so it can never touch the backtracking
-      # `MAX_EMPHASIS_MARKERS` bounds. Do not count raw `*`/`_` occurrences
-      # here, or a label full of escaped markers trips the cap and loses
-      # its styling for no reason.
-      #
-      # Strips exactly the substrings kramdown's own `:escaped_chars` span
-      # parser would consume, using kramdown's own `ESCAPED_CHARS` regex
-      # rather than a hand-copied pattern, so this can't silently drift
-      # from what `Parser` actually escapes on a future kramdown upgrade.
+      # Counts only the `*`/`_` markers that can reach `:emphasis`: an
+      # escaped marker is consumed by `:escaped_chars` first as one
+      # fixed-cost substitution, so it never touches the backtracking
+      # `MAX_EMPHASIS_MARKERS` bounds. Do not count raw `*`/`_`
+      # occurrences, or an escaped-heavy label trips the cap for nothing.
+      # Strips exactly what kramdown's `ESCAPED_CHARS` regex would
+      # consume, so this can't drift from `Parser` on a kramdown upgrade.
       #
       # @param raw [String]
       # @return [Integer]
@@ -176,24 +155,15 @@ module Sirena
       end
 
       # True when an escaped marker leaves a lone (length-1) unescaped
-      # marker immediately behind it, and that lone marker later meets a
-      # same-character run of a DIFFERENT length — typically the run
-      # closing an outer bold/italic span. kramdown's emphasis matching and
-      # `marked`'s delimiter-run algorithm resolve that length mismatch
-      # differently; this label is unrecoverable without risking a WRONG
-      # (not just unstyled) render, so it falls back to `literal_lines`.
-      #
-      # A lone marker is NOT unsafe by itself: an orphan run of length 0
-      # (not adjacent to another marker), length 2+ (pairs cleanly with
-      # itself), or one whose next same-character run is ALSO length 1 (a
-      # clean single-to-single pairing) all already match mmdc unchanged.
-      # Only the length-1-meets-mismatched-length shape is unsafe. See this
-      # method's spec for the corpus, each pinned against real mmdc.
-      #
-      # Every escaped-chars match is blanked out with a placeholder
-      # character first (not deleted — two real runs either side of an
-      # escaped marker must stay separated, not merge into one longer run)
-      # so `next_run` can only ever match a REAL, unescaped run.
+      # marker behind it, later meeting a same-character run of a
+      # DIFFERENT length (typically an outer span's closer) — kramdown and
+      # `marked` resolve that length mismatch differently, risking a WRONG
+      # (not just unstyled) render, so this falls back to `literal_lines`.
+      # NOT unsafe: an orphan of length 0, length 2+, or one whose next
+      # same-character run is ALSO length 1 — those already match mmdc; see
+      # this method's spec for the pinned corpus. Escaped-chars matches are
+      # blanked with a placeholder (not deleted, so real runs on either
+      # side stay separated) so `next_run` can only match a REAL run.
       #
       # @param raw [String]
       # @return [Boolean]
@@ -218,35 +188,20 @@ module Sirena
 
       # kramdown's emphasis grammar is not `marked`'s CommonMark-style
       # delimiter-run algorithm, and the two disagree on some valid short
-      # labels. Rather than reimplement CommonMark's delimiter-run/flanking
-      # rules in full, this extends the same literal-fallback safety net:
-      # detect the specific unsafe delimiter-run SHAPES below and fall back
-      # to `literal_lines`, safe-but-unstyled rather than wrong-but-styled.
-      #
-      # Two independent shapes, either of which is unsafe (a third, general
-      # check — comparing the real parse against `EmphasisSimulator`'s
-      # prediction of what `marked` would produce — runs later in
+      # labels. Detects two unsafe delimiter-run SHAPES and falls back to
+      # `literal_lines` for them, safe-but-unstyled rather than
+      # wrong-but-styled (a third, general check runs later in
       # `parse_lines`; see `unsafe_emphasis_divergence?`):
       #
-      # A) A maximal run of 4+ of the same marker character: kramdown's
-      #    `Emphasis::EMPHASIS_START` only ever recognizes a 1- or
-      #    2-character token per match, with no native handling for a run
-      #    this long (it does special-case length 3, `***both***`).
+      # A) a maximal run of 4+ of the same marker character — kramdown's
+      #    `EMPHASIS_START` has no native handling for a run this long.
+      # C) a single (length-1) run of one marker character NESTED with a
+      #    single run of the other (`_*...*_`), as opposed to a SEQUENTIAL
+      #    pair (`*a*_b_`), which must stay safe.
       #
-      # C) A single (length-1) run of one marker character immediately
-      #    NESTED with a single run of the OTHER marker character, closes
-      #    mirroring the nesting (`_*...*_` or `*_..._*`) — deliberately
-      #    narrower than "any adjacency": a SEQUENTIAL pair (one span
-      #    closing immediately before the next opens, e.g. `*a*_b_`) is
-      #    NOT this shape and must stay safe. Only the NESTED wrap is
-      #    unsafe.
-      #
-      # A run-length-only check with no flanking context is unsound here —
-      # `"**a*a**"` and `"**foo* bar**"` share the same `*`-run shape but
-      # only one is unsafe. Don't reintroduce one; `unsafe_emphasis_divergence?`
-      # below replaces it. Not a general proof this matches `marked` for
-      # every delimiter combination — see this method's spec for the
-      # measured corpus, both unsafe and safe shapes.
+      # A run-length-only check with no flanking context is unsound: don't
+      # reintroduce one, `unsafe_emphasis_divergence?` below replaces it.
+      # See this method's spec for the measured corpus, both shapes.
       #
       # @param raw [String]
       # @return [Boolean]
