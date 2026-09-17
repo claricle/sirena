@@ -3,29 +3,18 @@
 module Sirena
   module Renderer
     # Routes one architecture-beta edge around whatever else is in the
-    # diagram, instead of drawing straight through it.
+    # diagram, instead of drawing straight through it. Geometry only, no SVG.
     #
-    # This is geometry only, in the same spirit as EdgeRouter: it takes an
-    # anchor point and declared face on each end, plus the boxes to avoid,
-    # and gives back the ordered points a path should pass through. Nothing
-    # here knows about SVG.
+    # Not an extension of EdgeRouter, so don't try to unify them: EdgeRouter
+    # trims centre-to-centre between exactly two boxes with geometry-derived
+    # faces (flowchart); here faces are user-declared (`a:R -- T:b`) and
+    # there can be arbitrarily many obstacles to route around.
     #
-    # Not an extension of EdgeRouter: EdgeRouter solves a different problem
-    # (centre-to-centre trim between exactly two boxes, cluster-corner
-    # rounding) for flowchart, where attachment faces are derived from
-    # geometry, not declared. Architecture-beta's faces are user-declared
-    # (`a:R -- T:b`) and the diagram can hold arbitrarily many boxes an edge
-    # has to route around, which EdgeRouter's two-box design does not
-    # attempt.
-    #
-    # Algorithm: coordinate-compressed grid + direction-aware shortest path.
-    # The grid lines are every obstacle's own edges plus the two anchor
-    # points; a straight line is used whenever it is already clear (the
-    # common case); otherwise a direction-constrained search finds the
-    # shortest bent path that leaves the source on its declared face and
-    # arrives at the target on its declared face without crossing any
-    # obstacle's interior - including the edge's own source/target boxes,
-    # which are exempt only at the exact anchor point (see `route`).
+    # Coordinate-compressed grid + direction-aware Dijkstra: a straight line
+    # is used when already clear; otherwise search for the shortest bent
+    # path that leaves/arrives on the declared faces without crossing any
+    # obstacle's interior (the edge's own source/target boxes are exempt
+    # only at the anchor point - see `route`).
     class ArchitectureEdgeRouter
       # Outer escape line, added only when the natural grid (built purely
       # from existing box edges) has no clear path at all.
@@ -102,18 +91,14 @@ module Sirena
       end
       private_constant :MinHeap
 
-      # @param from [Hash] the edge's source endpoint:
-      #   point: {x:,y:} anchor on box's declared face
-      #   box:   {x:,y:,width:,height:} the box the edge leaves - included
-      #          as a clearance obstacle (a straight or bent path may only
-      #          touch it at point, never cross its interior) even though
-      #          it is never in +obstacles+
-      #   side:  "L"/"R"/"T"/"B" - which face point sits on
-      # @param to [Hash] the edge's target endpoint, same shape as +from+
-      # @param obstacles [Array<Hash>] every OTHER box to route around. The
-      #   caller has already excluded the edge's own from/to nodes and any
-      #   group that is an ancestor of (or equal to) either endpoint's group.
-      # @return [Array<Hash>] ordered {x:,y:} points, from[:point] first and
+      # @param from [Hash] edge source: point {x:,y:} anchor on the declared
+      #   face; box {x:,y:,width:,height:} - a clearance obstacle a path may
+      #   only touch at point, never cross, even though it's never in
+      #   +obstacles+; side "L"/"R"/"T"/"B" - which face point sits on
+      # @param to [Hash] edge target, same shape as +from+
+      # @param obstacles [Array<Hash>] every OTHER box to route around (the
+      #   caller already excludes from/to and any ancestor-or-equal group)
+      # @return [Array<Hash>] ordered {x:,y:} points, from[:point] first,
       #   to[:point] last. Length 2 means a straight line was clear.
       def route(from:, to:, obstacles:)
         clearance_obstacles = obstacles + [from[:box], to[:box]]
