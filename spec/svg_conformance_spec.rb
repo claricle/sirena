@@ -57,9 +57,10 @@ CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'co
 
 # The size the baseline itself must not fall below. It guards the guard: an
 # emptied or truncated list would make the subset check pass against nothing.
-# 736 measured 2026-08-27, the same population `scripts/corpus_sweep.rb`
+# 898 measured 2026-09-17 (up from 736 on 2026-08-27, after independent
+# main-side corpus burndown work), the same population `scripts/corpus_sweep.rb`
 # counts by the same criterion.
-CONFORMANCE_RENDERED_FLOOR = 736
+CONFORMANCE_RENDERED_FLOOR = 898
 
 # The example sources Sirena cannot parse yet, so they ship no SVG. Named
 # rather than counted: a NEW source falling out of the shipped set is a
