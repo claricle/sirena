@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "open3"
 
 # TODO.architecture/01-safety-net.md, Part B step 0. Each pipeline layer's
 # own Error class inherits Sirena::Error so
@@ -22,13 +21,6 @@ require "open3"
 # this same process a silent no-op once spec_helper has already loaded the
 # whole gem.
 RSpec.describe Sirena do
-  # Scoped to this example group, not a top-level `def` -- matches the
-  # `def renders?` pattern in flowchart_semicolon_spec.rb rather than
-  # leaking a helper onto Object.
-  def require_standalone(path)
-    Open3.capture2e("ruby", "-Ilib", "-e", "require #{path.inspect}")
-  end
-
   describe "component files, required standalone" do
     %w[sirena/parser sirena/transform sirena/renderer sirena/engine].each do |path|
       it "loads #{path} without first requiring the top-level sirena entry point" do
