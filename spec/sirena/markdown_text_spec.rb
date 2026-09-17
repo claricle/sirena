@@ -13,6 +13,24 @@ RSpec.describe Sirena::MarkdownText do
       expect(described_class.parse_lines(bad)).to eq([[described_class::Run.new(text: bad.scrub, bold: false, italic: false)]])
     end
 
+    # Mutation-check: remove `transcode_binary_to_utf8`'s call (or its
+    # `raw.encoding == Encoding::ASCII_8BIT` guard). Watched red: raises
+    # Encoding::UndefinedConversionError from inside kramdown's own
+    # String#encode, because ASCII-8BIT always reports `valid_encoding? ==
+    # true`, so the `raw.scrub unless raw.valid_encoding?` guard above never
+    # fires for it.
+    it 'degrades an ASCII-8BIT-tagged string with a non-ASCII byte instead of raising' do
+      bad = (+"hello *world* caf\xE9").force_encoding('ASCII-8BIT')
+      expected_tail = (+"\xE9").force_encoding('ASCII-8BIT').encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+
+      expect { described_class.parse_lines(bad) }.not_to raise_error
+      expect(described_class.parse_lines(bad)).to eq([[
+                                                       described_class::Run.new(text: 'hello ', bold: false, italic: false),
+                                                       described_class::Run.new(text: 'world', bold: false, italic: true),
+                                                       described_class::Run.new(text: " caf#{expected_tail}", bold: false, italic: false)
+                                                     ]])
+    end
+
     # Mutation-check: change `flatten_runs`'s `:strong` branch to pass
     # `bold` through unchanged instead of forcing it `true` (`flatten_runs(
     # child, bold: bold, italic: italic)`). Watched red: the run comes back
