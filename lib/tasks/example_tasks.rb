@@ -228,17 +228,22 @@ module ExampleTasks
     flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
     raise "examples lock became unsafe to open: #{lock_path}" if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
 
-    begin
-      File.open(lock_path, flags, 0o644) do |handle|
-        if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
-          raise "examples lock became unsafe to open: #{lock_path}"
-        end
-
-        handle.flock(File::LOCK_EX)
-        yield
+    handle =
+      begin
+        File.open(lock_path, flags, 0o644)
+      rescue Errno::ELOOP
+        raise "examples lock became unsafe to open: #{lock_path}"
       end
-    rescue Errno::ELOOP
-      raise "examples lock became unsafe to open: #{lock_path}"
+
+    begin
+      if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+        raise "examples lock became unsafe to open: #{lock_path}"
+      end
+
+      handle.flock(File::LOCK_EX)
+      yield
+    ensure
+      handle.close
     end
   end
 

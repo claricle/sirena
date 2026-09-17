@@ -220,6 +220,17 @@ RSpec.describe ExampleTasks do
     ensure
       File.delete(lock_path) if lock_path && File.symlink?(lock_path)
     end
+
+    # An Errno::ELOOP raised INSIDE the block (i.e. by whatever the caller's
+    # own work does, once the lock is already held) is not this method's to
+    # explain -- rewriting it to "examples lock became unsafe to open" would
+    # blame the lock file for a failure that has nothing to do with it. Only
+    # an ELOOP from the open call itself (proven by the symlink spec above)
+    # earns that message.
+    it 'does not relabel an Errno::ELOOP raised by the caller once the lock is already held' do
+      expect { described_class.with_examples_lock(examples_dir) { raise Errno::ELOOP, 'unrelated failure' } }
+        .to raise_error(Errno::ELOOP, /unrelated failure/)
+    end
   end
 
   describe '.copy_to_docs' do
