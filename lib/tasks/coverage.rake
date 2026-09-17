@@ -145,8 +145,10 @@ namespace :coverage do
     deleted_non_lib = changed_paths.reject { |path| File.exist?(path) }
       .reject { |path| path.start_with?('lib/') && path.end_with?('.rb') }
     unless deleted_non_lib.empty?
-      raise "coverage/coverage.json predates the deletion of #{deleted_non_lib.join(', ')} -- " \
-            'run `rake coverage:measure` again before coverage:changed_lines'
+      raise "#{deleted_non_lib.join(', ')} deleted vs COVERAGE_BASE=#{base.inspect} -- " \
+            'this check has no way to confirm what still covers the lib/*.rb files that path ' \
+            'exercised, and re-running `rake coverage:measure` cannot clear it (it does not ' \
+            'change what changed vs COVERAGE_BASE). Move COVERAGE_BASE past this deletion instead.'
     end
 
     FileUtils.mkdir_p('tmp')
