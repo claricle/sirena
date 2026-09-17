@@ -4,6 +4,7 @@ require 'rspec/core/rake_task'
 require 'json'
 require 'fileutils'
 require 'open3'
+require 'digest'
 
 # TODO.foundation/03-coverage-gate.md item 1: the corpus fixture sweeps
 # (examples tagged :corpus -- spec/sirena/parser/{error,info,quadrant}_spec.rb,
@@ -79,6 +80,34 @@ namespace :coverage do
     ensure
       ENV['COVERAGE'] = previous_coverage_env
     end
+
+    # coverage.json's own 'source' field lets coverage:changed_lines catch a
+    # backdated-mtime lib/*.rb edit below (content comparison, not just
+    # mtime) -- but .simplecov only instruments lib/**/*.rb, so a non-lib
+    # changed file (e.g. the one spec that alone exercised a lib/ line) has
+    # no such entry to compare against and gets mtime-only protection,
+    # which `touch -t` (or a rebase/cherry-pick that preserves an old mtime)
+    # defeats. Snapshot a content hash of the whole working tree here, while
+    # it's known-fresh, so changed_lines has the same non-mtime signal for
+    # every file, not just lib/*.rb ones. Best-effort: this task runs inside
+    # a git repo in every real invocation (changed_lines already hard-
+    # requires git for its own diff below, so a broken git already fails
+    # the pipeline there); skip quietly rather than failing coverage:measure
+    # itself if git is unavailable here.
+    tracked_out, _tracked_err, tracked_status = Open3.capture3('git', 'ls-files', '-z')
+    untracked_out, _untracked_err, untracked_status =
+      Open3.capture3('git', 'ls-files', '--others', '--exclude-standard', '-z')
+
+    if tracked_status.success? && untracked_status.success?
+      manifest = (tracked_out.split("\0") + untracked_out.split("\0")).uniq.each_with_object({}) do |path, hash|
+        hash[path] = Digest::SHA256.file(path).hexdigest if File.file?(path) && !File.symlink?(path)
+      end
+      FileUtils.mkdir_p('tmp')
+      # Same symlink-write hazard as tmp/coverage-line-only.json below --
+      # clear any symlink left at this path rather than writing through it.
+      File.unlink('tmp/coverage-source-manifest.json') if File.symlink?('tmp/coverage-source-manifest.json')
+      File.write('tmp/coverage-source-manifest.json', JSON.generate(manifest))
+    end
   end
 
   desc 'Changed-line gate: every lib/ line this branch touches vs COVERAGE_BASE must be 100% covered'
@@ -151,6 +180,16 @@ namespace :coverage do
             'change what changed vs COVERAGE_BASE). Move COVERAGE_BASE past this deletion instead.'
     end
 
+    # coverage/coverage.json only ever comes from `rake coverage:measure` (a plain
+    # file SimpleCov writes itself) -- refuse a symlink here rather than following
+    # it. A PR that force-adds one (.gitignore does not block `git add -f`) could
+    # otherwise leak an arbitrary file's content into this task's own error
+    # messages below (a malformed target raises JSON::ParserError with a verbatim
+    # prefix of what File.read actually returned).
+    if File.symlink?('coverage/coverage.json')
+      raise 'coverage/coverage.json is a symlink -- refusing to read through it'
+    end
+
     FileUtils.mkdir_p('tmp')
     line_only_report = JSON.parse(File.read('coverage/coverage.json'))
     line_only_report['coverage'].each_value do |file|
@@ -175,6 +214,40 @@ namespace :coverage do
             'coverage:changed_lines'
     end
 
+    # Same idea, generalized to non-lib/*.rb changed files: those carry no
+    # coverage.json 'source' entry (`.simplecov` only instruments
+    # lib/**/*.rb), so without this they get mtime-only staleness
+    # protection, which a backdated mtime (`touch -t`, or a rebase/
+    # cherry-pick that preserves an old mtime) defeats -- e.g. gutting the
+    # one spec that alone exercised a lib/ line, then backdating its mtime
+    # ahead of the report. `coverage:measure` snapshots a content-hash
+    # manifest of the whole tree for exactly this; only enforce it when
+    # present -- a manifest-less coverage.json (every existing spec in this
+    # file builds one directly, without running coverage:measure) keeps the
+    # mtime-only behavior those specs already assert, and `coverage:guard` /
+    # any real CI invocation always runs measure immediately before this
+    # task in the same process, so the manifest is always there when it matters.
+    manifest_path = 'tmp/coverage-source-manifest.json'
+    if File.exist?(manifest_path) && !File.symlink?(manifest_path)
+      source_manifest = JSON.parse(File.read(manifest_path))
+      non_lib_stale = changed_paths.select do |path|
+        next false if path.start_with?('lib/') && path.end_with?('.rb')
+        next false unless File.exist?(path) && !File.symlink?(path)
+
+        source_manifest[path] != Digest::SHA256.file(path).hexdigest
+      end
+      unless non_lib_stale.empty?
+        raise "coverage/coverage.json predates a newer edit to #{non_lib_stale.join(', ')} " \
+              '(content differs from the coverage:measure-time snapshot, even though its mtime ' \
+              'does not show it) -- run `rake coverage:measure` again before coverage:changed_lines'
+      end
+    end
+
+    # Same symlink hazard as coverage/coverage.json above, but on the write side:
+    # `File.write` follows a symlink and overwrites whatever it points at. This
+    # scratch file is regenerated fresh every run, so clear any symlink left at
+    # this path (e.g. by a checked-out PR) before writing rather than following it.
+    File.unlink('tmp/coverage-line-only.json') if File.symlink?('tmp/coverage-line-only.json')
     File.write('tmp/coverage-line-only.json', JSON.generate(line_only_report))
 
     # Multi-arg form: bypasses the shell entirely, so a hostile COVERAGE_BASE
