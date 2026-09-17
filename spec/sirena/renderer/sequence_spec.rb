@@ -294,4 +294,22 @@ RSpec.describe Sirena::Renderer::SequenceRenderer do
       expect(message_line("<<->>", "x2", rtl)).to eq(88.0)
     end
   end
+
+  describe "empty diagram" do
+    # mmdc renders `sequenceDiagram` with no body as a near-empty canvas:
+    # no actor boxes, no lifelines, nothing in <g/>. Sirena used to reject
+    # this (diagram invalid without a participant); once zero participants
+    # became valid, the renderer's width/height formulas — sized for at
+    # least one lifeline pair — produced a 120x220 canvas with nothing
+    # drawn in it, a diagram mmdc never renders at any size. Both must be
+    # true: nothing drawn, AND a canvas that does not imply a phantom
+    # participant pair.
+    it "draws nothing and does not size the canvas as though a participant were present" do
+      xml = Sirena.render("sequenceDiagram")
+
+      expect(xml).not_to match(/<rect|<line|<polygon|<text/)
+      expect(xml).to match(%r{<svg[^>]*>\s*</svg>}m)
+      expect(xml).to include('viewBox="0 0 40 40"')
+    end
+  end
 end

@@ -109,14 +109,22 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
     # that list draws an arrowhead on `A===B` and `A-.-B` that mermaid
     # does not draw. Accepting those two headless spellings at all was
     # justified by this guarantee, so this is where it is pinned.
-    it 'renders marker-end only for a link with an arrowhead' do
-      { '-->' => true, '---' => false, '-.->' => true, '-.-' => false,
-        '==>' => true, '===' => false }.each do |link, has_arrowhead|
+    #
+    # Count the arrowhead we DRAW, not a `marker-end` attribute. That
+    # attribute was a proxy and it pointed the wrong way: before link
+    # heads existed this file emitted `marker-end="url(#arrowhead)"`
+    # with no `<marker>` and no `<defs>` anywhere in the document, so
+    # the assertion passed on all six rows while no arrowhead was
+    # rendered at all. Measured against mmdc 11.12.0, the polygon count
+    # below matches mermaid on every row.
+    it 'draws an arrowhead only for a link that has one' do
+      { '-->' => 1, '---' => 0, '-.->' => 1, '-.-' => 0,
+        '==>' => 1, '===' => 0 }.each do |link, arrowheads|
         source = "flowchart TD\n  A#{link}B\n"
         svg = Sirena.render(source)
         message = "source #{source.inspect}"
 
-        expect(svg.include?('marker-end')).to be(has_arrowhead), message
+        expect(svg.scan('<polygon').length).to eq(arrowheads), message
       end
     end
   end

@@ -1,0 +1,5 @@
+---
+cop: Style/ComparableBetween
+rows:
+- file: lib/sirena/parser/user_journey.rb
+  count: 1

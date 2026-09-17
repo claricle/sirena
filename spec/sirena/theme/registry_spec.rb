@@ -8,6 +8,15 @@ RSpec.describe Sirena::Theme::Registry do
     described_class.clear
   end
 
+  # The registry is one global hash. Clearing it and walking away left
+  # every spec that ran later rendering with no theme at all, so nothing
+  # in those diagrams was painted. That read as passing wherever a spec
+  # compared two colours which were both absent.
+  after do
+    described_class.clear
+    described_class.load_builtin_themes
+  end
+
   describe '.register' do
     it 'registers a theme' do
       theme = Sirena::Theme.new(name: 'test')

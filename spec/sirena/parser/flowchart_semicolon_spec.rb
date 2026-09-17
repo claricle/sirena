@@ -18,7 +18,12 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   def renders?(source)
     engine.render(source)
     true
-  rescue Sirena::Engine::PipelineError, Sirena::Engine::DiagramTypeError
+  rescue Sirena::Error
+    # Every pipeline failure Engine#render can raise -- DiagramTypeError,
+    # ParseError, TransformError, RenderError, or the residual
+    # PipelineError -- is a Sirena::Error subclass. One rescue covers all
+    # of them now that the taxonomy fix stopped collapsing everything
+    # into PipelineError.
     false
   end
 
