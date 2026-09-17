@@ -331,6 +331,109 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       expect(written['coverage']['lib/foo.rb']).not_to have_key('branches')
       expect(written['coverage']['lib/foo.rb']).not_to have_key('methods')
     end
+
+    it 'refuses to read coverage/coverage.json through a symlink' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      base = head_sha
+
+      FileUtils.mkdir_p('coverage')
+      File.write('../outside-target.json', JSON.generate('coverage' => {}))
+      File.symlink(File.expand_path('../outside-target.json'), 'coverage/coverage.json')
+      ENV['COVERAGE_BASE'] = base
+
+      expect { invoke! }.to raise_error(/coverage\/coverage\.json is a symlink -- refusing to read through it/)
+    end
+
+    it 'does not follow a symlink left at tmp/coverage-line-only.json -- clears it and writes a real file instead' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      base = head_sha
+      commit!('lib/foo.rb', "class Foo\n  def bar; end\nend\n")
+
+      source_lines = File.readlines('lib/foo.rb', chomp: true)
+      FileUtils.mkdir_p('coverage')
+      report = {
+        'coverage' => {
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
+        }
+      }
+      File.write('coverage/coverage.json', JSON.generate(report))
+      long_ago = Time.now - 3600
+      File.utime(long_ago, long_ago, 'lib/foo.rb')
+
+      # Create the symlink BEFORE touching coverage.json's mtime below: it is an
+      # untracked path, so `git ls-files --others --exclude-standard` puts it in
+      # changed_paths, and the staleness guard (coverage.rake:133) would otherwise
+      # see it as newer than the report and raise before this test ever reaches
+      # the symlink-write guard it means to exercise.
+      FileUtils.mkdir_p('tmp')
+      File.write('../outside-victim.txt', 'untouched')
+      File.symlink(File.expand_path('../outside-victim.txt'), 'tmp/coverage-line-only.json')
+
+      File.utime(Time.now, Time.now, 'coverage/coverage.json')
+      ENV['COVERAGE_BASE'] = base
+      stub_sh!
+
+      expect { invoke! }.not_to raise_error
+      expect(File.symlink?('tmp/coverage-line-only.json')).to be(false)
+      expect(File.read('../outside-victim.txt')).to eq('untouched')
+    end
+
+    it 'requires a report entry for a brand-new lib/*.rb file that was never `git add`ed' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      base = head_sha
+
+      FileUtils.mkdir_p('lib')
+      File.write('lib/untracked.rb', "class Untracked\nend\n") # deliberately never committed or added
+
+      FileUtils.mkdir_p('coverage')
+      File.write('coverage/coverage.json', JSON.generate('coverage' => {}))
+      long_ago = Time.now - 3600
+      File.utime(long_ago, long_ago, 'lib/untracked.rb')
+      File.utime(Time.now, Time.now, 'coverage/coverage.json')
+      ENV['COVERAGE_BASE'] = base
+      stub_sh!
+
+      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/untracked\.rb/m)
+      expect(main_object).not_to have_received(:sh)
+    end
+
+    it 'catches a gutted non-lib file with a backdated mtime, via the manifest coverage:measure writes' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      commit!('spec/foo_spec.rb', "RSpec.describe(Foo) { it('real') { expect(Foo.new).to be_a(Foo) } }\n")
+      base = head_sha
+      commit!('lib/foo.rb', "class Foo\n  def bar; end\nend\n")
+
+      source_lines = File.readlines('lib/foo.rb', chomp: true)
+      FileUtils.mkdir_p('coverage')
+      File.write('coverage/coverage.json', JSON.generate(
+                                             'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) } }
+                                           ))
+
+      # Run the REAL coverage:measure task (spec:unit itself stubbed to a
+      # no-op -- this spec is about the manifest measure writes, not about
+      # actually re-running the suite) so it snapshots spec/foo_spec.rb's
+      # real, un-gutted content into tmp/coverage-source-manifest.json.
+      Rake::Task['spec:unit'].clear
+      Rake::Task.define_task('spec:unit') { nil }
+      Rake::Task['coverage:measure'].invoke
+
+      # Now gut the spec that alone exercised lib/foo.rb, and backdate its
+      # mtime ahead of coverage.json's -- the mtime-only guard above would
+      # let this through silently; only the manifest's content hash catches it.
+      File.write('spec/foo_spec.rb', "RSpec.describe(Foo) {}\n")
+      long_ago = Time.now - 3600
+      File.utime(long_ago, long_ago, 'spec/foo_spec.rb')
+      File.utime(Time.now, Time.now, 'coverage/coverage.json', 'lib/foo.rb')
+      ENV['COVERAGE_BASE'] = base
+      stub_sh!
+
+      expect { invoke! }.to raise_error(/predates a newer edit to spec\/foo_spec\.rb.*coverage:measure-time snapshot.*run `rake coverage:measure` again/m)
+      expect(main_object).not_to have_received(:sh)
+    end
   end
 
   describe 'coverage:measure' do
