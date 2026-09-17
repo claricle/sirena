@@ -237,19 +237,10 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(xml).not_to include('**')
       end
 
-      # Truncation composes with markdown: a card text longer than 25
-      # rendered characters, where the cut falls INSIDE a bold run, still
-      # truncates on run boundaries rather than the raw markup string. A
-      # naive `text[0...22]` on "Hello **xxxx...xxx**" would cut through
-      # the closing `**`, leaving a stray asterisk and an unclosed style;
-      # `truncate_runs` cuts the already-parsed run instead, so the marker
-      # characters were never in the string being sliced.
-      #
-      # Mutation-check: change `render_card_text` to compute
-      # `truncate_text(card[:text], 25)` on the raw string and pass that
-      # (re-parsed) to `assign_markdown_text` instead of truncating the
-      # parsed runs. Watched red: a lone `*` appears in the output and the
-      # bold run never closes cleanly at "...".
+      # Truncation must cut on run boundaries (`truncate_runs`), not the
+      # raw markup string, even when the cut falls INSIDE a bold run: a
+      # naive `text[0...22]` on "Hello **xxxx...xxx**" would slice through
+      # the closing `**`, leaving a stray asterisk and an unclosed style.
       it 'truncates a markdown card label on run boundaries, never mid-marker' do
         long_text = "Hello **#{'x' * 30}**"
         xml = renderer.render(layout_with(card_text: long_text)).to_xml
@@ -362,18 +353,10 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(second_half.attributes['dy']).to eq('1.2em')
       end
 
-      # Round 3 Codex High: the column header background rect and the
-      # header text's own baseline both used to assume a single-line
-      # title — `render_column_header`'s `header_height` was a hardcoded
-      # local `50`, independent of anything Transform computed for a
-      # title with embedded hard breaks. A 3-line title grew nothing, so
-      # its lower tspans spilled past the header rect onto the board
-      # background below it.
-      #
-      # Mutation-check: revert `header_height` to the hardcoded local
-      # `50`. Watched red: the header rect's height assertion fails
-      # (stays "50.0"), and the last line's computed baseline lands past
-      # the (unchanged) header bottom instead of inside it.
+      # The column header rect and its text's baseline must grow with a
+      # multi-line title, not stay at a hardcoded single-line height — a
+      # header that doesn't grow spills its lower tspans past the rect
+      # onto the board background below it.
       it 'grows the column header rect to fit a multi-line title, keeping the tspans inside it' do
         layout = layout_with(card_text: 'plain', column_title: "One\nTwo\nThree", header_height: 86)
         xml = renderer.render(layout).to_xml
@@ -394,25 +377,12 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(last_baseline).to be < header_bottom
       end
 
-      # Codex round 6 High: the spec above only pins the header rect
-      # GROWING to fit a multi-line title -- it doesn't catch the baseline
-      # itself overflowing that (correctly grown) rect, because a 3-line
-      # title happens to leave 4.4px of margin under the pre-fix formula
-      # (`y + header_height / 2 + 5`, which only centers correctly for ONE
-      # line). A 4-line title exhausts that margin and overflows: reproduced
-      # directly via the real renderer + REXML before this fix, header rect
-      # `y=40.0 h=104.0` (bottom `144.0`), 4th baseline at `147.4` -- `3.4px`
-      # past the rect's own bottom edge.
-      #
-      # `header_text_baseline` fixes this by centering the whole text BLOCK
-      # (shifting the first baseline up by half of the extra height the
-      # later lines add) rather than a single fixed baseline. Verified
-      # directly, real renderer + REXML, after this fix: first baseline
-      # `71.8`, last baseline `122.2`, comfortably inside `[40.0, 144.0]`.
-      #
-      # Mutation-check: revert `header_text_baseline` to the flat
-      # `y + header_height / 2 + 5`. Watched red: `last_baseline` computed
-      # below comes back `147.4`, past `header_bottom` (`144.0`).
+      # The spec above only pins the header rect GROWING to fit a
+      # multi-line title — it doesn't catch the baseline itself overflowing
+      # that (correctly grown) rect, since a 3-line title happens to leave
+      # margin under the flat `y + header_height / 2 + 5` formula that a
+      # 4-line title exhausts. `header_text_baseline` must center the whole
+      # text BLOCK, not one fixed baseline, to keep every line inside.
       it 'keeps every baseline of a 4-line column title inside its own header rect' do
         layout = layout_with(card_text: 'plain', column_title: "One\nTwo\nThree\nFour", header_height: 104)
         xml = renderer.render(layout).to_xml

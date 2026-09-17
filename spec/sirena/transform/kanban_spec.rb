@@ -6,25 +6,12 @@ RSpec.describe Sirena::Transform::Kanban do
   let(:transform) { described_class.new }
 
   describe '#to_graph' do
-    # Round 2 of the markdown-labels feature grew `calculate_card_height`
-    # for a hard line break embedded in card text (from a markdown newline,
-    # rendered as an extra `<tspan>` line by
-    # Renderer::MarkdownText#parse_lines) — this had no spec anywhere.
-    #
-    # Asserted through the public `#to_graph` output rather than the
-    # private `calculate_card_height`: what matters is the height a card
-    # actually gets positioned with.
-    #
-    # Mutation-check: delete the `card.text.to_s.count("\n") *
-    # EXTRA_LINE_HEIGHT` term from `calculate_card_height`. Watched red:
-    # both cards come back at the same height.
-    #
-    # Card text kept well under `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET`
-    # (25 visible characters): this test is about the per-break growth, not
-    # truncation — a longer fixture that itself crossed the budget would
-    # have the renderer silently drop the third line, so the "one
-    # EXTRA_LINE_HEIGHT per break" claim would no longer hold (see the
-    # rendered_line_count-vs-truncation spec below for that case).
+    # Asserted through the public `#to_graph` output rather than the private
+    # `calculate_card_height`: what matters is the height a card actually
+    # gets positioned with. Card text kept well under
+    # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` (25 visible
+    # characters) — this test is about per-break growth, not truncation; a
+    # fixture crossing the budget belongs to the spec below instead.
     it "grows a card's height by one EXTRA_LINE_HEIGHT per embedded hard break" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
         d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'todo', title: 'Todo').tap do |column|
@@ -41,28 +28,15 @@ RSpec.describe Sirena::Transform::Kanban do
       expect(broken_height - plain_height).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
 
-    # Codex round 5 High: card height used to be sized from a raw
-    # `count("\n")`, which assumes every embedded line renders — but
-    # `Renderer::Kanban#render_card_text` truncates a card's parsed lines to
-    # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` visible characters and
-    # silently drops whole lines past that budget. A card whose text crosses
-    # the budget across 3 newline-delimited lines only ever renders 2 of
-    # them (`"Line one\nLine two\nLine three"` sums to 26 visible characters,
-    # one over the 25-character budget — verified directly against
-    # `Renderer::MarkdownText.truncate_runs` before writing this), so it
-    # should only grow by ONE `EXTRA_LINE_HEIGHT`, not two.
-    #
-    # Mutation-check: replace `rendered_line_count(card.text)` with
-    # `card.text.to_s.count("\n") + 1` (the pre-fix raw-newline count) in
-    # `calculate_card_height`. Watched red: this comes back needing TWO
-    # `EXTRA_LINE_HEIGHT`s instead of one.
-    #
-    # This example alone doesn't pin the truncation-aware line count
-    # specifically — a naive under-budget line count (e.g. capping at 2
-    # regardless of the actual budget) also passes it. It's the sibling
-    # example above ("grows a card's height by one EXTRA_LINE_HEIGHT per
-    # embedded hard break", an under-budget 3-line card) that catches that
-    # narrower mutation; the two together pin the real property.
+    # Card height must not be sized from a raw `count("\n")`, which assumes
+    # every embedded line renders: `Renderer::Kanban#render_card_text`
+    # truncates to `CARD_TEXT_CHAR_BUDGET` visible characters and drops
+    # whole lines past it. This fixture's 3 lines sum to 26 visible
+    # characters (one over budget), so only 2 render — height should grow
+    # by ONE `EXTRA_LINE_HEIGHT`, not two. Doesn't alone pin the
+    # truncation-aware count specifically (a naive cap-at-2 also passes
+    # it) — the sibling example above, an under-budget 3-line card, catches
+    # that narrower case; the two together pin the real property.
     it "grows a card's height only by the lines the renderer's own truncation actually keeps" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
         d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'todo', title: 'Todo').tap do |column|

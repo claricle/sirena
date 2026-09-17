@@ -170,34 +170,15 @@ module Sirena
 
       # Calculates the height needed for a card
       #
-      # Grows for two independent things that each add extra rendered
-      # lines below the card's first line: metadata rows, and hard line
-      # breaks embedded in the card's own text (from markdown newlines,
-      # rendered as extra `<tspan>` lines — see
-      # Renderer::MarkdownText#parse_lines).
-      #
-      # Codex round 5 High: the break count used to be a plain
-      # `count("\n")` on the raw text, on the theory that this layer only
-      # needs how many extra lines there are, not what's on them, so it
-      # didn't need a dependency on Renderer. That's wrong once a card's
-      # text has enough lines to cross
-      # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` —
-      # `Renderer::Kanban#render_card_text` truncates to that budget and
-      # silently DROPS whole lines past it, so a raw newline count still
-      # allocates height for lines that never render. Reproduced directly:
-      # a card with 100 one-character lines sized to height 1862 (as if all
-      # 100 lines render) while the renderer only ever draws lines within
-      # the budget. Getting the true rendered line count right means
-      # replicating the renderer's own truncation, not just its line
-      # height — `rendered_line_count` below calls the exact same
-      # `parse_lines`/`truncate_runs` pair `render_card_text` does, so the
-      # two layers can't drift apart on this again.
-      #
-      # Reuses EXTRA_LINE_HEIGHT for both rather than a second constant: the
-      # card renders its text at font-size 13 as `1.2em` per line (~15.6px),
-      # and EXTRA_LINE_HEIGHT (18) already covers that with room to spare. A
-      # separate constant would need the renderer's actual font size, which
-      # Transform doesn't have and shouldn't need for a fixed-layout board.
+      # Grows for metadata rows and extra rendered lines in the card's own
+      # text. Line count must come from `rendered_line_count` (mirrors
+      # `Renderer::Kanban#render_card_text`'s own parse+truncate), never a
+      # raw `text.count("\n")` — once text crosses
+      # `Renderer::MarkdownText::CARD_TEXT_CHAR_BUDGET` the renderer drops
+      # whole lines, so a raw count sizes for lines that never render.
+      # Reuses EXTRA_LINE_HEIGHT, not a second constant, for the card's own
+      # font size (13px * 1.2em/line): Transform has no renderer font size
+      # to base one on.
       #
       # @param card [Diagram::KanbanCard] card
       # @return [Numeric] card height

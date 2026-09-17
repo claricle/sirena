@@ -22,22 +22,13 @@ RSpec.describe Sirena::Svg::Text do
       expect(xml).to eq(original)
     end
 
-    # Round 3 Codex High: the fix above only proved content-then-tspan
-    # survives round-tripping — it never proved genuine INTERLEAVING does.
-    # Before this fix, `to_xml` grouped all plain-text `content` before all
-    # `tspans` regardless of source order: this input round-tripped as
-    # `<text>ACE<tspan>B</tspan><tspan>D</tspan></text>`, silently
-    # reordering "A", "C" and "E" ahead of "B" and "D". Not reachable
-    # through sirena's own renderer today (confirmed across two review
-    # rounds: nothing here constructs a `Svg::Text` with both content and
-    # tspans interleaved — always one or the other), but real should any
-    # future caller round-trip parsed SVG through this model.
-    #
-    # Mutation-check: revert `body` to the old
-    # `Escaping.escape_text(Array(content).join) +
-    # Array(tspans).map(&:to_xml).join` unconditionally. Watched red: "A",
-    # "C", "E" come back concatenated ahead of both tspans instead of
-    # interleaved with them.
+    # The fix above only proves content-then-tspan survives round-tripping —
+    # not genuine INTERLEAVING. A naive `body` that groups all `content`
+    # before all `tspans` regardless of source order would reorder "A", "C",
+    # "E" ahead of "B" and "D" here. Not reachable through sirena's own
+    # renderer today (nothing constructs a `Svg::Text` with content and
+    # tspans actually interleaved), but real for any future caller
+    # round-tripping parsed SVG through this model.
     it 'preserves true document order for genuinely interleaved content and tspans' do
       original = '<text>A<tspan>B</tspan>C<tspan>D</tspan>E</text>'
 
@@ -63,21 +54,12 @@ RSpec.describe Sirena::Svg::Text do
       expect(text.to_xml).to eq('<text>X<tspan>B</tspan>Y</text>')
     end
 
-    # Codex round 3 Medium: `interleaved_body` treated every non-`:text`
-    # `element_order` entry as a stand-in for the next parsed `<tspan>`.
-    # Real mixed SVG content can carry an XML comment inside `<text>`
-    # (`node_type == :comment`) or, more subtly, an element that is not a
-    # `tspan` at all — neither is tracked by any attribute this class
-    # declares, so treating either as "the next tspan" either crashes
-    # (`nil.to_xml` once `tspans` runs out) or silently steals a real
-    # tspan meant for a later position. Reproduced directly before this
-    # fix: a comment raised `NoMethodError`, and an interleaved unmapped
-    # `<foo>` element consumed the one real `<tspan>` ahead of it, leaving
-    # it later with nothing to shift.
-    #
-    # Mutation-check: replace the `node.name == 'tspan'` guard with a bare
-    # `node.node_type == :element`. Watched red: this example raises
-    # `NoMethodError` on the comment case below it in the same run.
+    # `interleaved_body` must not treat every non-`:text` `element_order`
+    # entry as a stand-in for the next parsed `<tspan>`: real mixed SVG
+    # content can carry an XML comment or an element this class has no
+    # attribute for. Either mistaken for "the next tspan" crashes
+    # (`nil.to_xml` once `tspans` runs out) or steals a real tspan meant
+    # for a later position.
     it 'skips an XML comment inside the text without crashing or losing surrounding content' do
       text = described_class.from_xml('<text>A<!-- note -->B<tspan>C</tspan></text>')
 
@@ -90,18 +72,11 @@ RSpec.describe Sirena::Svg::Text do
       expect(text.to_xml).to eq('<text>AB<tspan>C</tspan></text>')
     end
 
-    # Codex round 4 Medium: `interleaved_body` (and the mutation spec just
-    # above proving it reflects a same-count reassignment) both assumed
-    # `content`'s size still matches the `:text` slots `element_order`
-    # recorded. A reassignment to a DIFFERENT count breaks that: before
-    # this fix, 3 items replayed against 2 `:text` slots shifted "X" and
-    # "Y" into the two slots and silently dropped "Z" — no error, no
-    # indication anything was lost. Falls back to the same simple
-    # concatenation used when there's no `element_order` at all, rather
-    # than replay a mapping already known not to fit.
-    #
-    # Mutation-check: delete the `cardinality_matches?` guard in
-    # `interleaved_body`. Watched red: "Z" goes missing from the output.
+    # `interleaved_body` must not assume `content`'s size still matches the
+    # `:text` slots `element_order` recorded: a reassignment to a DIFFERENT
+    # count (3 items against 2 recorded `:text` slots) would silently drop
+    # the extra item with no error. Falls back to simple concatenation
+    # instead, the same path used when there's no `element_order` at all.
     it "falls back to simple concatenation when a reassignment does not match element_order's recorded count" do
       text = described_class.from_xml('<text>A<tspan>B</tspan>C</text>')
       text.content = %w[X Y Z]
