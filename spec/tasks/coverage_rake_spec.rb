@@ -74,7 +74,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       commit!('lib/foo.rb', "class Foo\nend\n")
       ENV['COVERAGE_BASE'] = 'HEAD'
 
-      expect { invoke! }.to raise_error(%r{coverage/coverage\.json is missing})
+      expect { invoke! }.to raise_error(%r{coverage/coverage\.json is missing.*rake coverage:measure.*rake coverage:guard.*coverage:changed_lines}m)
     end
 
     it 'raises with the git failure when COVERAGE_BASE does not resolve to a ref' do
@@ -100,7 +100,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       File.utime(Time.now, Time.now, 'lib/foo.rb')
       ENV['COVERAGE_BASE'] = base
 
-      expect { invoke! }.to raise_error(/predates a newer edit to lib\/foo\.rb/)
+      expect { invoke! }.to raise_error(/predates a newer edit to lib\/foo\.rb.*run `rake coverage:measure` again before coverage:changed_lines/)
     end
 
     it 'raises when the report has no entry at all for a changed lib/*.rb file' do
@@ -116,7 +116,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       File.utime(Time.now, Time.now, 'coverage/coverage.json')
       ENV['COVERAGE_BASE'] = base
 
-      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb/)
+      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb.*run `rake coverage:measure` again before.*coverage:changed_lines/m)
     end
 
     it 'raises when the report entry is present but its source content is stale (same length, different text)' do
@@ -137,7 +137,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       File.utime(Time.now, Time.now, 'coverage/coverage.json')
       ENV['COVERAGE_BASE'] = base
 
-      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb/)
+      expect { invoke! }.to raise_error(/no entry \(or a content mismatch.*for lib\/foo\.rb.*run `rake coverage:measure` again before.*coverage:changed_lines/m)
     end
 
     it 'ignores a changed file outside lib/ or not ending in .rb -- no report entry required' do
@@ -157,6 +157,33 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       # real `sh` call, which then fails for its own reasons (no gemfile-local
       # simplecov project state / nothing to patch) -- assert we got THAT far
       # by checking none of this task's own guard messages fired.
+      error = nil
+      begin
+        invoke!
+      rescue StandardError => e
+        error = e
+      end
+      guard_messages = [
+        /looks like an option/, %r{coverage/coverage\.json is missing}, /git diff --name-only/,
+        /git ls-files/, /predates a newer edit/, /no entry \(or a content mismatch/
+      ]
+      guard_messages.each { |pattern| expect(error&.message.to_s).not_to match(pattern) }
+    end
+
+    it 'skips a deleted lib/*.rb file for both the mtime and content-entry checks -- simplecov patch --find-renames handles it' do
+      init_repo!
+      commit!('lib/foo.rb', "class Foo\nend\n")
+      base = head_sha
+      run_git! 'rm', '-q', 'lib/foo.rb'
+      run_git! 'commit', '-q', '-m', 'delete lib/foo.rb'
+
+      FileUtils.mkdir_p('coverage')
+      # No entry for lib/foo.rb at all, and no way to set its mtime (it no
+      # longer exists) -- if either fail-closed check did not skip a missing
+      # file, this would raise.
+      File.write('coverage/coverage.json', JSON.generate('coverage' => {}))
+      ENV['COVERAGE_BASE'] = base
+
       error = nil
       begin
         invoke!
