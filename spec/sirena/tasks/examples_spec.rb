@@ -202,6 +202,24 @@ RSpec.describe ExampleTasks do
       expect { |probe| described_class.with_examples_lock(examples_dir, &probe) }
         .to yield_control
     end
+
+    # The lock path is predictable from examples_dir alone (see
+    # examples_lock_path), so an attacker who can predict the checkout path
+    # can plant a symlink there before this ever runs. Unlike every other
+    # write path in this file, the open here had no NOFOLLOW/symlink guard
+    # at all -- planting a symlink to a not-yet-existing file made this
+    # follow it and create that file for real, through the link.
+    it 'refuses to open a lock file that is a symlink' do
+      lock_path = described_class.examples_lock_path(examples_dir)
+      victim = File.join(Dir.tmpdir, "sirena-lock-victim-#{SecureRandom.hex(8)}")
+      File.symlink(victim, lock_path)
+
+      expect { described_class.with_examples_lock(examples_dir) { raise 'must not run' } }
+        .to raise_error(/examples lock became unsafe to open/)
+      expect(File).not_to exist(victim)
+    ensure
+      File.delete(lock_path) if lock_path && File.symlink?(lock_path)
+    end
   end
 
   describe '.copy_to_docs' do
@@ -417,7 +435,15 @@ RSpec.describe ExampleTasks do
     # the DIRECTORY, not the joined path). `File.expand_path` on `to` is
     # required: `Dir.chdir` pins the process to `docs/flowchart`, resolved
     # via `File.realpath(docs)` to match macOS's `/var -> /private/var`.
-    it 'does not write through a destination symlink raced in after the per-file guard clears it' do
+    #
+    # Named for what it actually proves: the race is injected at the
+    # `File.rename` call specifically, so this is a claim about THAT call,
+    # not about the destination write path in general -- the broader
+    # "nothing survives a broken atomic_write" property is the other seven
+    # specs across `.write_svg`/`.copy_to_docs`/`.generate_examples` that
+    # cover a debris-left-behind or partial-write failure, all of which
+    # would also catch a reverted `atomic_write`.
+    it 'refuses a destination symlink raced in right at the File.rename call' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-outside') do |outside|
           FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
@@ -464,6 +490,45 @@ RSpec.describe ExampleTasks do
           expect { described_class.copy_to_docs(examples_dir, docs) }
             .to raise_error(/source became unsafe to read/)
           expect(File).not_to exist(File.join(docs, 'flowchart', 'a.svg'))
+          expect(File.read(secret)).to eq('TOP SECRET')
+        end
+      end
+    end
+
+    # This machine defines File::NOFOLLOW (the spec above exercises that
+    # arm), so the platform this branch actually ships to -- Windows, where
+    # it is undefined -- is simulated by faking `File.const_defined?`. No
+    # atomic refusal exists there: the open already followed the swapped-in
+    # symlink and its bytes are already sitting in the temporary file by the
+    # time this runs. What closes here instead is the rename into
+    # DESTINATION -- SOURCE is re-checked once more right after the read,
+    # and since the attacker never put it back, the stale symlink is still
+    # there and the copy is discarded rather than completing.
+    it 'discards the copy instead of completing it when a NOFOLLOW-less platform already followed a raced-in source symlink' do
+      allow(File).to receive(:const_defined?).and_wrap_original do |original, name, *rest|
+        name == :NOFOLLOW ? false : original.call(name, *rest)
+      end
+
+      Dir.mktmpdir('sirena-docs') do |docs|
+        Dir.mktmpdir('sirena-outside') do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
+          source = File.join(examples_dir, 'flowchart', 'a.svg')
+          File.write(source, '<svg>real content</svg>')
+          secret = File.join(outside, 'secret.txt')
+          File.write(secret, 'TOP SECRET')
+
+          allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
+            if path == source && File.file?(path) && !File.symlink?(path)
+              File.delete(source)
+              File.symlink(secret, source)
+            end
+            original.call(path, *rest, &block)
+          end
+
+          expect { described_class.copy_to_docs(examples_dir, docs) }
+            .to raise_error(/source became unsafe to read/)
+          expect(File).not_to exist(File.join(docs, 'flowchart', 'a.svg'))
+          expect(Dir.glob(File.join(docs, 'flowchart', '.*.tmp'))).to be_empty
           expect(File.read(secret)).to eq('TOP SECRET')
         end
       end
@@ -907,6 +972,67 @@ RSpec.describe ExampleTasks do
       expect(File.read(victim)).to eq('KEEP ME')
     ensure
       FileUtils.remove_entry(outside) if outside
+    end
+
+    # `manageable?` above checks SVG_FILE by NAME, once -- nothing pinned its
+    # directory's identity before this method used to go straight from that
+    # check into `atomic_write`'s own `File.open`. A symlink raced into the
+    # diagram directory in that gap was followed straight through: a real,
+    # winnable race (reproduced independently during review), not a
+    # theoretical one. Same detection `copy_to_docs` already uses for
+    # docs_assets_dir and each type directory -- see its own "changes
+    # identity right before the pin is taken" specs above.
+    it 'refuses rather than proceeding when the diagram directory changes identity right before its own pin is taken' do
+      Dir.mktmpdir('sirena-attacker') do |attacker|
+        flowchart = File.join(examples_dir, 'flowchart')
+        FileUtils.mkdir_p(flowchart)
+        target = File.join(flowchart, 'a.svg')
+
+        allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
+          if File.expand_path(path) == flowchart
+            FileUtils.rm_rf(flowchart)
+            File.symlink(attacker, flowchart)
+          end
+          original.call(path, &block)
+        end
+
+        expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+          .to raise_error(/diagram directory changed identity between verification and use/)
+        expect(Dir.children(attacker)).to eq([])
+      end
+    end
+
+    # The deeper version of the same race: swap the directory right before
+    # the actual write syscall instead of right before the identity pin.
+    # Once `within_pinned_directory` has chdir'd in, the process is already
+    # resolved to the ORIGINAL directory by file descriptor, not by
+    # re-walking the name each time -- a rename of the outer name afterward
+    # cannot redirect a write that follows, unlike the old code, which took
+    # SVG_FILE's absolute path straight into `File.open` with no chdir at
+    # all and followed the swap into the attacker's directory. Moves the
+    # original aside rather than deleting it, the same way `copy_to_docs`'s
+    # own "renamed away and replaced mid-loop" spec does, so the write's
+    # actual destination stays inspectable afterward.
+    it 'does not write through a diagram directory symlink raced in right before the final write, even after the pin is taken' do
+      Dir.mktmpdir('sirena-attacker') do |attacker|
+        flowchart = File.join(examples_dir, 'flowchart')
+        FileUtils.mkdir_p(flowchart)
+        target = File.join(flowchart, 'a.svg')
+        moved_aside = File.join(examples_dir, 'flowchart-moved-by-attacker')
+
+        allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
+          if path.to_s.end_with?('.tmp') && File.realpath(Dir.pwd) == File.realpath(flowchart)
+            FileUtils.mv(flowchart, moved_aside)
+            File.symlink(attacker, flowchart)
+          end
+          original.call(path, *rest, &block)
+        end
+
+        described_class.write_svg(target, '<svg>new</svg>', examples_dir)
+
+        expect(Dir.children(attacker)).to eq([])
+        expect(File.read(File.join(moved_aside, 'a.svg'))).to eq('<svg>new</svg>')
+      end
     end
 
     # Once renamed, the temporary name belongs to nobody. Unlinking it anyway
