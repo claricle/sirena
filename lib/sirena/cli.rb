@@ -50,7 +50,13 @@ module Sirena
     def render(file = '-')
       require_relative 'commands/render'
       Commands::RenderCommand.new(file, options).run
-    rescue StandardError => e
+    rescue *EXHAUSTION_ERRORS, StandardError => e
+      # `RenderCommand#run` builds the theme (a hostile `--theme` YAML
+      # file) and reads the input file BEFORE `Engine#render` is ever
+      # called, so both sit outside the engine's own widened rescue.
+      # `EXHAUSTION_ERRORS` are not `StandardError`, so without naming
+      # them here the CLI process goes down raw instead of printing an
+      # error and exiting 1, exactly like an unguarded `batch` used to.
       handle_error(e)
     end
 
@@ -127,11 +133,19 @@ module Sirena
 
     # Handles errors and exits with appropriate code.
     #
-    # @param error [StandardError] the error to handle
+    # @param error [StandardError, SystemStackError, NoMemoryError] the error to handle
     # @return [void]
     def handle_error(error)
       warn "Error: #{error.message}"
-      warn error.backtrace.join("\n") if options[:verbose]
+      # `backtrace` is nil when the VM fails an allocation before it can
+      # even build one -- `NoMemoryError` from `File.read` or a hostile
+      # `--theme` reaches this method through the rescue above, and
+      # `--verbose` on that failure must not itself crash the CLI.
+      if options[:verbose]
+        warn error.backtrace&.join("\n")
+        diagnostics = ErrorReport.cause_diagnostics(error)
+        warn diagnostics unless diagnostics.empty?
+      end
       exit 1
     end
   end
