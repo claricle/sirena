@@ -64,6 +64,17 @@ module MermaidDiffSpecSupport
         '<style xmlns="http://www.w3.org/1999/xhtml">.error-icon{fill:#552222;}</style></svg>'
     end
 
+    # Writes arbitrary SVG-shaped content to a tempfile and yields its path, so
+    # a spec can drive MmdcOracle.direct_verdict against real bytes on disk
+    # rather than stubbing File.binread.
+    def with_svg_file(content)
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, 'probe.svg')
+        File.write(path, content)
+        yield path
+      end
+    end
+
     # Runs one probe with mmdc gone, swallowing the note it prints about it.
     def failing_verdict
       capture_stderr { harness.send(:mermaid_verdict, trivial_source) }
