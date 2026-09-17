@@ -43,12 +43,4 @@ RSpec.describe MmdcOracle do
       end
     end
   end
-
-  def with_svg_file(content)
-    Dir.mktmpdir do |dir|
-      path = File.join(dir, 'probe.svg')
-      File.write(path, content)
-      yield path
-    end
-  end
 end

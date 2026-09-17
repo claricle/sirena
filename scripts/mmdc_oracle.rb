@@ -44,20 +44,23 @@ module MmdcOracle
     return :error if status.nil?
 
     svg = File.binread(output) if File.file?(output)
-    # A successful exit with no valid SVG is still infrastructure failure
-    # even when nothing was written at all (svg is nil). Beyond that, this
-    # check is not limited to the successful path: `error_page?` is a regex
-    # over the markup, not an XML validity check, so a process that dies
-    # mid-write can leave a truncated document that still carries the
-    # error-role and XHTML-style markers a real rejection page has. Only a
-    # well-formed SVG earns the semantic :rejects verdict below — a
-    # malformed one, whatever the exit status, is a crash, not mermaid
-    # answering "no".
-    return :error if !valid_svg?(svg) && (successful?(status) || svg)
+    return :error if infrastructure_failure?(status, svg)
     return :rejects if svg && error_page?(svg)
     return :accepts if successful?(status)
 
     :ambiguous
+  end
+
+  # A successful exit with no valid SVG is still infrastructure failure even
+  # when nothing was written at all (svg is nil). Beyond that, this check is
+  # not limited to the successful path: `error_page?` is a regex over the
+  # markup, not an XML validity check, so a process that dies mid-write can
+  # leave a truncated document that still carries the error-role and
+  # XHTML-style markers a real rejection page has. Only a well-formed SVG
+  # earns the semantic :rejects verdict in `direct_verdict` — a malformed
+  # one, whatever the exit status, is a crash, not mermaid answering "no".
+  def infrastructure_failure?(status, svg)
+    !valid_svg?(svg) && (successful?(status) || svg)
   end
 
   def run_canary(dir, &)

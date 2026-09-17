@@ -6,7 +6,7 @@
 #
 # Usage: ruby scripts/mermaid_diff.rb [--only-gaps] scripts/probes/*.txt
 #
-# One probe record per file, separated by a line that is exactly `%%%%`
+# One source per record, separated by a line that is exactly `%%%%`
 # (not `---`, which opens frontmatter). Escape a literal `%%%%` line with one
 # leading backslash; a run of backslashes loses one per escape level.
 #
