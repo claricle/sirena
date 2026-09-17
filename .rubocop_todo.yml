@@ -378,7 +378,7 @@ RSpec/BeEq:
   Exclude:
     - 'spec/sirena/parser/radar_spec.rb'
 
-# Offense count: 8
+# Offense count: 9
 # Configuration parameters: IgnoredMetadata.
 RSpec/DescribeClass:
   Exclude:
@@ -388,6 +388,7 @@ RSpec/DescribeClass:
     - '**/spec/system/**/*'
     - '**/spec/views/**/*'
     - 'spec/fixtures_spec.rb'
+    - 'spec/tasks/coverage_rake_spec.rb'
     - 'spec/integration/class_diagram_integration_spec.rb'
     - 'spec/integration/er_diagram_integration_spec.rb'
     - 'spec/integration/flowchart_integration_spec.rb'
