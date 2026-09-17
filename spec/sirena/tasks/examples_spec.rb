@@ -391,19 +391,9 @@ RSpec.describe ExampleTasks do
       end
     end
 
-    # The two specs above only ever exercise `verified_root`'s GEM_ROOT
-    # branch on the RAISING arm -- an attack whose hijacked path can never
-    # equal `expected` regardless of how `expected` itself is computed, so a
-    # broken `expected` (e.g. built from the wrong operand, or dropping the
-    # suffix entirely) still raises and still passes both specs. Nothing
-    # anywhere else in this file stubs GEM_ROOT at all, so nothing exercises
-    # this branch's non-raising arm: whether `expected` is actually computed
-    # correctly for an ordinary, un-attacked nested path -- the shape every
-    # real invocation of this task takes, since a real GEM_ROOT is the gem's
-    # own checkout and a real docs_assets_dir sits beneath it. This is the
-    # only spec in the file where that arm is live: no symlink anywhere,
-    # GEM_ROOT stubbed so the branch is entered, and the assertion is that
-    # the ordinary copy succeeds rather than raising a false positive.
+    # The only spec exercising verified_root's non-raising GEM_ROOT arm: the
+    # two specs above only ever hit the raising arm, so a broken `expected`
+    # computation would still pass them.
     it 'succeeds on an ordinary nested docs root once GEM_ROOT makes the ancestor check live' do
       Dir.mktmpdir('sirena-root') do |root|
         stub_const('ExampleTasks::GEM_ROOT', root)
@@ -1379,18 +1369,9 @@ RSpec.describe ExampleTasks do
     end
   end
 
-  # `extend self` plus a trailing `private_class_method` list keeps the
-  # race-sensitive helpers (directory_identity, within_pinned_directory,
-  # manageable_relative?, create_real_directory, copy_through_rename,
-  # copy_type_into_pinned_docs_root, atomic_write) off the module's public
-  # surface -- `module_function` could not do that for only some methods.
-  # Nothing anywhere else in this file calls any of the seven through
-  # `described_class.<name>`, so nothing else would notice one silently
-  # falling back onto the public list (e.g. a name dropped from the
-  # `private_class_method` call, or a new helper added without being added
-  # to it). Listed by hand rather than derived from the module, so a helper
-  # added without updating THIS list is exactly the gap this spec exists to
-  # catch, not something it could derive around.
+  # Listed by hand, not derived from the module's own private_class_method
+  # call: a helper added to one but not the other must fail this spec, not
+  # silently pass by mirroring whatever the source currently says.
   describe 'internal helper privacy' do
     let(:internal_helpers) do
       [:directory_identity, :within_pinned_directory, :manageable_relative?,
