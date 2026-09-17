@@ -201,8 +201,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       expect_sh_invoked_for_gate!(base)
     end
 
-    it "requires a report entry for a changed lib/ file only when BOTH halves of the lib/*.rb " \
-       'test match (guards against && degrading to ||)' do
+    it 'requires a report entry only when a changed path matches BOTH halves of lib/*.rb (guards against && degrading to ||)' do
       init_repo!
       commit!('lib/foo.txt', "hello\n")
       base = head_sha
