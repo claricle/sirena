@@ -36,14 +36,9 @@ module Sirena
       # it re-triggers the quadratic rescan `acc_block_body`'s invariant below
       # exists to prevent (measurements in the gate record).
       #
-      # The FIRST unescaped `}` closes the block, even one that belongs to
-      # unrelated text further down the source (e.g. a later task's actor
-      # name) -- this can silently drop whatever sat between the opener and
-      # that brace. Not a bug to fix here: mermaid's own compiled lexer does
-      # the same thing (the `accDescr\s*\{` state scans `[^\}]*` then stops at
-      # the first `[\}]`, with no brace-nesting awareness), verified against
-      # its bundled parser. Making this brace-aware would diverge from the
-      # oracle, not match it.
+      # Do not make this brace-aware: the FIRST unescaped `}` must close the
+      # block, even one that belongs to unrelated text further down the
+      # source, to match the oracle's own lexer (see gate record).
       rule(:acc_descr_block) do
         acc_descr_open >> acc_block_body >> str('}')
       end
