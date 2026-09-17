@@ -136,21 +136,15 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
     end
 
     context "with a junction positioned on the wrong side of a directional edge" do
-      # Mirrors the round-2 Codex review: service a(server)[A] / junction j /
-      # j:R -- L:a. The junction's default placement lands to the RIGHT of
-      # a, but the edge hint asks for j's right face to meet a's left face
-      # - which only makes visual sense if j is to the LEFT.
+      # service a(server)[A] / junction j / j:R -- L:a. The junction's
+      # default placement lands to the RIGHT of a, but the edge hint asks
+      # for j's right face to meet a's left face.
       #
-      # Earlier fix (deleted here): the transform mirrored which face of
-      # each node the drawn line attached to, so the straight line here
-      # never crossed the service's interior. That property now lives one
-      # layer up - ArchitectureRenderer's ArchitectureEdgeRouter draws
-      # around the obstacle instead (see
-      # spec/sirena/renderer/architecture_edge_router_spec.rb, "with the
-      # B--T diagonal case" and "with a third-party obstacle in the way"),
-      # so a straight line between anchor points CAN cross a box at this
-      # layer now - the transform's only remaining job is to hand back the
-      # literal declared side, unmirrored.
+      # The transform does NOT mirror which face a line attaches to -
+      # ArchitectureEdgeRouter draws around the obstacle instead (see
+      # architecture_edge_router_spec.rb's obstacle-routing contexts), so
+      # this spec only needs to check the transform hands back the literal
+      # declared side, unmirrored.
       let(:diagram) do
         Sirena::Diagram::ArchitectureDiagram.new(
           services: [

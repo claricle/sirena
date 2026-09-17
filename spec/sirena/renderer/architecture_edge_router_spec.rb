@@ -168,21 +168,16 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
 
     context "with every declared exit and entry face" do
       # Parameterized over every (from_side, to_side) pair: the first move
-      # leaves in the outward normal of from_side, the last move arrives in
-      # the inward normal of to_side (the opposite of to_side's outward
-      # normal) - whenever the path has more than 2 points (a straight
-      # line's direction is fixed by geometry, not by this constraint, and
-      # is covered separately by the "nothing in the way" context).
+      # leaves in the outward normal of from_side, the last arrives in the
+      # inward normal of to_side, whenever the path has more than 2 points
+      # (a straight line's direction is fixed by geometry, not this
+      # constraint, and is covered by "nothing in the way" above).
       #
-      # Expectations come from exit_direction/entry_direction, which derive
-      # the answer from face_point's geometry against the box's own centre
-      # - never from FACE_NORMAL, the constant search_grid itself reads.
-      # Deriving the expectation from that same constant would only prove
-      # the router agrees with itself: a sabotaged FACE_NORMAL entry would
-      # produce a matching, equally wrong expectation and this spec would
-      # not notice. Confirmed by flipping FACE_NORMAL["R"] by hand before
-      # this fix - this spec stayed green at 16/16 while the two
-      # independent crossing-checker specs above correctly went red.
+      # Expectations must come from exit_direction/entry_direction (derived
+      # from face_point's geometry against the box's own centre), never from
+      # FACE_NORMAL - that's the constant search_grid itself reads, so
+      # deriving the expectation from it would only prove the router agrees
+      # with itself and miss a sabotaged FACE_NORMAL entry.
       %w[L R T B].each do |from_side|
         %w[L R T B].each do |to_side|
           it "leaves via #{from_side} and arrives via #{to_side} when bent" do
@@ -193,20 +188,14 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
             points = router.route(from: endpoint(a, from_side), to: endpoint(b, to_side), obstacles: [obstacle])
 
             if points.length == 2
-              # A straight line's direction is fixed by geometry, not by
-              # the declared faces, so it is not checked against
-              # exit_direction/entry_direction below - but it still has to
-              # be SAFE. route's fallback (both the "straight line is
-              # already clear" case and the "no bent route found" case)
-              # returns the straight line regardless of whether it is
-              # actually clear, so a broken direction constraint that
+              # A straight line's direction is fixed by geometry, not the
+              # declared faces, so it's not checked against exit_direction/
+              # entry_direction - but it still has to be SAFE. route's
+              # fallback returns the straight line regardless of whether
+              # it's actually clear, so a broken direction constraint that
               # makes search_grid unable to satisfy it degrades straight
-              # into the obstacle this test placed in the way. Skipping
-              # silently here is the exact gap spec-auditor, Codex round 3
-              # and Copilot each found independently - confirmed by
-              # flipping FACE_NORMAL["R"] by hand: every combo that fell
-              # back to a straight line under that mutation crossed this
-              # obstacle.
+              # into the obstacle this test placed in the way - don't skip
+              # this branch silently, it's the only check for that case.
               expect(path_clear_of?(points, obstacle)).to be(true)
             else
               actual_first = { x: points[1][:x] <=> points[0][:x], y: points[1][:y] <=> points[0][:y] }
