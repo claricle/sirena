@@ -230,6 +230,27 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
         end.not_to raise_error
       end
     end
+
+    context "when from and to share the exact same point" do
+      # from[:box] and to[:box] are the SAME box/side here, so from[:point]
+      # == to[:point] exactly - straight_clear? still returns false because
+      # a THIRD, unrelated obstacle's interior contains that point (a
+      # zero-length segment sitting strictly inside a box still counts as
+      # crossing it, per segment_crosses_box?'s own c1==c2 branch). That
+      # sends search_grid a start and goal at identical grid indices, which
+      # its own `return nil if start == goal` guard exists to handle -
+      # otherwise reconstruct would walk a state graph with no path to it.
+      it "falls back to the same point twice rather than raising" do
+        a = box(x: 100, y: 100)
+        anchor = { point: face_point(a, "R"), box: a, side: "R" }
+        blocker = box(x: 180, y: 100, width: 80, height: 80)
+
+        expect do
+          points = router.route(from: anchor, to: anchor, obstacles: [blocker])
+          expect(points).to eq([anchor[:point], anchor[:point]])
+        end.not_to raise_error
+      end
+    end
   end
 
   describe "the private MinHeap search_grid uses" do
