@@ -204,17 +204,13 @@ module ExampleTasks
   # The examples folder itself must be a real directory: a link there is
   # resolved by realpath and trusted, so every containment check below would
   # measure the wrong place. This serialises everything that WRITES to the
-  # examples tree -- there is no atomic "delete only if still an orphan" on a
-  # POSIX filesystem, so generate and prune share this lock instead of each
-  # re-deciding closer to their own delete. It locks a file in the system
-  # temp directory, not the root directory itself (Windows refuses to open a
-  # directory, Errno::EISDIR) and not a file inside the tree (would need
-  # excluding from every listing here). The lock path is fully predictable
-  # (see `examples_lock_path`), so the open uses the same NOFOLLOW-where-
-  # defined, symlink?-check-elsewhere fallback `copy_through_rename` uses,
-  # re-checked once more right after the open on platforms without NOFOLLOW,
-  # since a plain `CREAT` open (no `EXCL`, needed so the lock is reusable
-  # across runs) cannot refuse an existing symlink by itself.
+  # examples tree, locking a file in the system temp directory rather than
+  # the root itself (Windows refuses to open a directory) or a file inside
+  # the tree (would need excluding from every listing here). The lock path
+  # is predictable (see `examples_lock_path`), so the open uses the same
+  # NOFOLLOW-where-defined, symlink?-check-elsewhere fallback
+  # `copy_through_rename` uses, re-checked once more right after the open on
+  # platforms without NOFOLLOW.
   def with_examples_lock(examples_dir)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
