@@ -35,14 +35,12 @@ module Sirena
       #
       # @param diagram [Diagram::ErDiagram] the ER diagram to transform
       # @return [Hash] elkrb-compatible graph hash
-      # @raise [TransformError] if diagram is invalid
-      def to_graph(diagram)
-        raise TransformError, 'Invalid diagram' unless diagram.valid?
-
+      def build_graph(diagram)
         {
           id: diagram.id || 'er_diagram',
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
+          class_defs: diagram.class_defs,
           layoutOptions: layout_options
         }
       end
@@ -60,6 +58,7 @@ module Sirena
             labels: entity_labels(entity),
             metadata: {
               name: entity.name,
+              classes: entity.classes,
               attributes: entity.attributes.map { |a| attribute_to_hash(a) }
             }
           }

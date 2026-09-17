@@ -1,0 +1,577 @@
+# frozen_string_literal: true
+
+# Verifies that docs/_site (Jekyll's build output) actually contains what the
+# source config and content claim it should. `jekyll build` exits 0 even when
+# a page is missing, mis-themed, unstyled, or references a dead asset -- this
+# checks the OUTPUT, not the exit code. See TODO.foundation/15-docs-site-build.md
+# for the full rationale. (A local planning doc used to be cited here too --
+# docs/plans/ is untracked and local-only, per this repo's own convention, so
+# that reference resolved on exactly one machine and nowhere else, including
+# CI and a fresh checkout.)
+#
+# Usage: ruby scripts/verify_docs_site.rb [--docs-dir DIR] [--baseurl BASEURL]
+
+require 'yaml'
+require 'optparse'
+require 'pathname'
+require 'nokogiri'
+
+module Sirena
+  # Pure verification core: docs dir + site dir + baseurl in, an array of
+  # failure message strings out. No exit, no printing -- see the guarded
+  # entry point at the bottom of this file for that.
+  class DocsSiteVerifier
+    # Asciidoctor::Converter::Html5Converter's block-context handlers, each
+    # emitting exactly one of `<context>` or `<context>block` as an HTML
+    # class (verified against the real converter -- see the plan's A3
+    # section). `table`'s bare form is intentionally absent: Asciidoctor
+    # only ever emits `tableblock` for that context.
+    BLOCK_MARKERS = %w[
+      admonitionblock audioblock colist dlist exampleblock imageblock
+      listingblock literalblock olist openblock paragraph quoteblock
+      sidebarblock stemblock tableblock ulist verseblock videoblock
+    ].freeze
+
+    LAYOUT_BODY_MARKER = 'main-content-wrap'
+    # just-the-docs' `_layouts/default.html` nests the real content region
+    # (`<main>`) and the theme footer as SIBLINGS, both inside
+    # `.main-content-wrap`:
+    #   <div class="main-content-wrap">
+    #     <div id="main-content" class="main-content">
+    #       <main>...</main>
+    #       <footer>...</footer>
+    #     </div>
+    #   </div>
+    # so `.main-content-wrap` (and `#main-content`, which also wraps the
+    # footer) can never read as empty -- the footer always renders visible
+    # text ("This site uses Just the Docs..." at minimum). `<main>` is the
+    # narrowest element that excludes it. Confirmed against the installed
+    # gem: `gem contents just-the-docs | grep _layouts` ->
+    # `_layouts/default.html`, and against a real Jekyll build (see the
+    # regression spec this constant backs).
+    CONTENT_REGION_SELECTOR = 'main'
+    SEARCH_INDEX_PATH = 'assets/js/search-data.json'
+    REQUIRED_DIAGRAM_PERMALINK = '/:collection/:path/'
+
+    # A thin wrapper over Nokogiri::HTML5 -- a real DOM parser -- that
+    # returns every tag on a page as { name:, attrs: }, with the CONTENT of
+    # inert and raw-text elements excluded (see SKIPPED_CONTENT_ELEMENTS
+    # below).
+    #
+    # This used to be a hand-rolled STRUCTURAL scanner: not a DOM parser at
+    # all -- no tree, no nesting -- but it walked each tag's grammar (name,
+    # then `name(=value)?` pairs, values quoted or not) with a
+    # StringScanner instead of grepping for a substring. It lost three
+    # review rounds, all the same way: counting `</template>` occurrences
+    # cannot tell a real closing tag from the same characters inside an
+    # attribute value or a `<script>` string, and a failed `scan_until`
+    # left the position unmoved so inspection silently resumed INSIDE the
+    # content it meant to skip.
+    #
+    # REXML (stdlib) was tried next and rejected on MEASUREMENT: it is an
+    # XML parser, and Jekyll/just-the-docs output is HTML5 with unclosed
+    # void elements (`<meta charset="utf-8">`, no self-closing slash),
+    # which is invalid XML. `REXML::Document.new` raised
+    # `Missing end tag for 'meta'` on 5 of 5 real pages tried -- 100% of
+    # the corpus this script exists to check. Pre-cleaning the markup into
+    # valid XML before handing it to REXML would need its own regex-based
+    # transform, which relocates this defect class rather than removing
+    # it. So this script now uses a real HTML5 parser (Nokogiri) instead.
+    #
+    # That REVERSES an earlier decision to keep the script stdlib-only so
+    # the CI step needed no bundle. The constraint was worth less than
+    # correctness -- the hand-rolled scanner lost three review rounds -- and
+    # the cost was paid rather than hidden: `nokogiri` is declared in
+    # docs/Gemfile, and the workflow's verify step runs under that bundle,
+    # which is the only one it installs. Bare `ruby` here dies with
+    # LoadError; both invocations were checked to give identical output.
+    #
+    # A real HTML5 parser removes the possibility rather than guarding it.
+    # Measured, on markup carrying every one of those traps at once:
+    #
+    #   <script>const x = "</template>";</script>   the string ends nothing
+    #   <div data-x="</template>">                  the attribute ends nothing
+    #   <template>  (never closed)                  recovers, nothing leaks
+    #
+    #   live classes found: ["live", "live-2"]      inert-1/2/3 all excluded
+    #
+    # `attrs` maps a lowercased attribute name to its value. Nokogiri
+    # returns a boolean attribute's value as an empty string, never `true`
+    # (verified: `<input disabled>`'s `disabled` attribute value is `""`,
+    # a String) -- unlike the old hand-rolled scanner, which used `true` as
+    # a sentinel for "present with no value". A caller checking `attrs['x']`
+    # for truthiness still works either way; one comparing against the
+    # literal value `true` would not, and none currently does.
+    class TagTokenizer
+      # `script`/`style`/`textarea` hold raw TEXT, so nothing inside them is
+      # markup at all. `template` content IS markup but is INERT: the browser
+      # never renders it and JS must clone it in first, so a stylesheet link
+      # or class living only inside a `<template>` has not actually shipped.
+      #
+      # The ELEMENTS themselves are still reported; only their children are
+      # dropped. That is what the scanner did, and callers rely on it --
+      # `a4_theme_assets` needs to see that a `<script>` tag exists.
+      RAW_TEXT_ELEMENTS = %w[script style textarea].freeze
+      NESTABLE_INERT_ELEMENTS = %w[template].freeze
+      SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS).freeze
+
+      # NOT the same set as SKIPPED_CONTENT_ELEMENTS above, on purpose.
+      # `script`/`style`/`template` content never reaches the visible page --
+      # correct to treat as both "not markup" (TagTokenizer's job) and "not
+      # rendered" (Page#rendered_text's job). `textarea` shares the raw-text
+      # PARSING rule (a real HTML5 parser never treats its content as markup
+      # either) but NOT the rendering rule: a browser shows a textarea's
+      # initial content as visible text inside the widget. Codex found this
+      # directly: `pass:[<textarea>Visible</textarea>]` through the installed
+      # Asciidoctor 2.0.26 converter produces a `paragraph`-marked page whose
+      # only content is that textarea, which the shared list wrongly
+      # classified as content-empty. `rendered_text` must strip only the
+      # elements that are genuinely invisible, not everything that happens to
+      # parse as raw text. Derived from RAW_TEXT_ELEMENTS/NESTABLE_INERT_ELEMENTS
+      # above, not a second hardcoded literal -- so a future addition to
+      # either of those (e.g. a new raw-text element) is visible-by-default
+      # here too, instead of silently staying invisible until this list is
+      # separately remembered and updated.
+      INVISIBLE_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS - %w[textarea] + NESTABLE_INERT_ELEMENTS).freeze
+
+      def self.tags(markup)
+        document = Nokogiri::HTML5.parse(markup)
+        document.css(SKIPPED_CONTENT_ELEMENTS.join(",")).each { |el| el.children.unlink }
+        document.css("*").map do |el|
+          { name: el.name.downcase, attrs: attributes_of(el) }
+        end
+      end
+
+      def self.attributes_of(element)
+        element.attribute_nodes.to_h do |attribute|
+          [attribute.name.downcase, attribute.value]
+        end
+      end
+      private_class_method :attributes_of
+    end
+
+    class Page
+      def initialize(path, site_dir)
+        @path = path
+        @rel_path = Pathname.new(path).relative_path_from(Pathname.new(site_dir)).to_s
+      end
+
+      attr_reader :rel_path
+
+      def content
+        @content ||= File.read(@path)
+      end
+
+      def tags
+        @tags ||= TagTokenizer.tags(content)
+      end
+
+      # The visible text of the rendered body, whitespace-collapsed.
+      #
+      # A class token is a PROXY for "this page has content" and it fails the
+      # obvious way: `<div class="main-content-wrap"><div class="paragraph">
+      # </div></div>` carries the marker and renders nothing. The property is
+      # that the page SHOWS something, so assert that instead.
+      #
+      # Content inside script/style/template is excluded: a paragraph living
+      # only inside a `<template>` has not shipped, and script/style content
+      # is never text a browser shows. `textarea` is NOT in that list, even
+      # though it shares the raw-text parsing rule -- unlike the other three,
+      # a browser DOES render a textarea's initial content as visible text
+      # inside the widget (see INVISIBLE_CONTENT_ELEMENTS on TagTokenizer).
+      #
+      # `[hidden]` is a SEPARATE exclusion from the element-name lists above:
+      # it is an ATTRIBUTE, reachable on any element, not a fixed set of tag
+      # names. Codex found this directly on round 7:
+      # `Asciidoctor.convert('pass:[<span hidden>Invisible</span>]')` ->
+      # `<div class="paragraph"><p><span hidden>Invisible</span></p></div>`,
+      # a real, valid block marker whose only text a browser never shows.
+      # Unlinking the whole element, not just its children, is correct here
+      # -- unlike script/style/template, a `<span hidden>` is not "content
+      # that isn't markup", it is markup that never reaches the page at all,
+      # so nothing about it (its own text, or any `<img>`/`<iframe>`/`<svg>`
+      # nested inside it) should count as rendered.
+      #
+      # DELIBERATE SCOPE, not an oversight (Codex round 8 pushed on this):
+      # the WHATWG spec's `hidden` section names two cases where treating
+      # `[hidden]` as unconditionally invisible is not literally true --
+      # author CSS with higher specificity than the UA's `[hidden] {
+      # display: none }` rule can override the Hidden state, and the Hidden
+      # Until Found state (`hidden="until-found"`) keeps a generated box
+      # (border/margin/padding paint) even though its CONTENT stays
+      # unrendered until find-in-page reveals it. Both confirmed live
+      # against the installed Asciidoctor gem and the fetched WHATWG spec
+      # text. Neither changes this method's behavior, for two reasons: (1)
+      # this script is a structural HTML content check, not a CSS cascade
+      # engine -- it has no way to know whether some OTHER stylesheet rule
+      # overrides the attribute, the same reason it does not evaluate any
+      # other `style=`/CSS-driven visibility; (2) both shapes are
+      # unreachable in this repo's real docs today (`grep -rn 'hidden\|pass:
+      # \[' docs/**/*.adoc` -> zero hits) and would require deliberately
+      # written raw HTML (`pass:[...]`) nobody has written -- only the
+      # CSS-override shape (`pass:[<span hidden
+      # style="display:block">...]`) is self-contradictory; `until-found` is
+      # coherent, ordinary markup, just out of this check's scope. Even
+      # reached, an `until-found` box with no visible text is not the kind
+      # of shipped content this check exists to verify (see the file
+      # header) -- a bare border with nothing inside is not a rendered
+      # diagram or a rendered sentence.
+      def rendered_text
+        return @rendered_text if @rendered_text
+
+        document = Nokogiri::HTML5.parse(content)
+        document.css(TagTokenizer::INVISIBLE_CONTENT_ELEMENTS.join(","))
+          .each { |element| element.children.unlink }
+        document.css("[hidden]").each(&:unlink)
+        @rendered_region, @rendered_text_region = pick_content_region(document)
+        @rendered_text = @rendered_region.text.gsub(/\s+/, " ").strip
+      end
+
+      # Which region `rendered_text` actually read, so a caller reporting
+      # "renders no text" can name the region it checked instead of always
+      # naming `LAYOUT_BODY_MARKER` -- a page CAN have `<main>` empty while
+      # `.main-content-wrap` genuinely shows text (the theme footer), and a
+      # message hardcoding the wrapper name would then be false.
+      def rendered_text_region
+        rendered_text
+        @rendered_text_region
+      end
+
+      # `rendered_text` alone is INCOMPLETE as "this page shows something":
+      # a real Asciidoctor image-only block
+      # (`<div class="imageblock"><div class="content"><img alt="..."
+      # src="..."></div></div>`) has NO text node at all -- `alt` is an
+      # attribute, not text content -- yet it is genuinely shipped, visible
+      # content. Confirmed directly: `Nokogiri::HTML5.parse(real_imageblock
+      # _html).text == ""`. An `<img>` inside the same region `rendered_text`
+      # already picked (so still subject to the same skipped-element
+      # stripping) counts too.
+      #
+      # Codex found the same gap on `videoblock`: a real
+      # `video::id[youtube]` converts to `<div class="videoblock"><div
+      # class="content"><iframe src="..." ...></iframe></div></div>` -- also
+      # no text node -- through the installed Asciidoctor 2.0.26 converter.
+      # An `<iframe>` is genuinely shipped, visible content the same way an
+      # `<img>` is, so it counts on the same terms: presence in the checked
+      # region, no `src` validation (matching the existing `<img>` check,
+      # which also does not require `src`).
+      #
+      # Codex found a third shape on round 7: Asciidoctor's own image
+      # converter supports `opts=inline,format=svg`, which embeds the raw
+      # `<svg>...</svg>` markup directly instead of wrapping it in an
+      # `<img>`. Confirmed directly against the installed gem:
+      # `Asciidoctor.convert('image::path[opts=inline,format=svg]')` ->
+      # `<div class="imageblock"><div class="content"><svg ...>...</svg>
+      # </div></div>` -- no text, no `img`, no `iframe`, yet genuinely
+      # visible. Same terms as `img`/`iframe`: presence only, no content
+      # validation.
+      def renders_content?
+        return true unless rendered_text.empty?
+
+        @rendered_region.css('img, iframe, svg').any?
+      end
+
+      # A skipped element (script/style/textarea/template) is still
+      # reported BY ITSELF in `tags` -- `a4_theme_assets` needs to see that
+      # a `<script>` tag exists -- but its own `class` attribute is not
+      # renderable content, the same as its children are not. Without this
+      # exclusion, `<template class="paragraph">` alone satisfied the
+      # content-marker check, even though a `<template>`'s content never
+      # ships.
+      def class_tokens
+        return @class_tokens if @class_tokens
+
+        classes = tags.reject { |tag| TagTokenizer::SKIPPED_CONTENT_ELEMENTS.include?(tag[:name]) }
+          .filter_map { |tag| tag[:attrs]['class'] }.grep(String)
+        @class_tokens = classes.flat_map { |value| value.split(/\s+/) }
+      end
+
+      def has_class_token?(token)
+        class_tokens.include?(token)
+      end
+
+      def stylesheet_hrefs
+        return @stylesheet_hrefs if @stylesheet_hrefs
+
+        @stylesheet_hrefs = tags.select { |tag| tag[:name] == 'link' && tag[:attrs]['rel'] == 'stylesheet' }
+          .filter_map { |tag| tag[:attrs]['href'] }
+          .grep(String)
+      end
+
+      def script_srcs
+        return @script_srcs if @script_srcs
+
+        @script_srcs = tags.select { |tag| tag[:name] == 'script' }
+          .filter_map { |tag| tag[:attrs]['src'] }
+          .grep(String)
+      end
+
+      private
+
+      # Returns [region, name] -- the element `rendered_text` reads, and a
+      # human-readable name for it, in the same preference order
+      # `rendered_text` used to apply inline: the real content region first,
+      # then the theme wrapper, then the whole document as a last resort for
+      # markup with neither (e.g. a hand-built spec fixture).
+      def pick_content_region(document)
+        if (main = document.css(CONTENT_REGION_SELECTOR).first)
+          [main, CONTENT_REGION_SELECTOR]
+        elsif (wrap = document.css(".#{LAYOUT_BODY_MARKER}").first)
+          [wrap, LAYOUT_BODY_MARKER]
+        else
+          [document, 'the page']
+        end
+      end
+    end
+
+    def initialize(docs_dir:, site_dir:, baseurl: nil)
+      @docs_dir = Pathname.new(docs_dir)
+      @site_dir = Pathname.new(site_dir)
+      # Jekyll's own config loader (backed by the `safe_yaml` gem) accepts
+      # YAML anchors/aliases -- an ordinary way to avoid repeating
+      # `permalink:` across every collection -- and resolves them. Plain
+      # `YAML.safe_load_file` refuses aliases by default and raises
+      # `Psych::AliasesNotEnabled` instead of returning a Hash, so a
+      # `_config.yml` Jekyll itself builds successfully would crash this
+      # verifier instead of being checked.
+      @config = YAML.safe_load_file(@docs_dir.join('_config.yml').to_s, aliases: true)
+      @baseurl = (baseurl || @config['baseurl']).to_s
+    end
+
+    def failures
+      config_failures = a0_config_guard
+      return config_failures unless config_failures.empty?
+
+      pages = html_pages
+
+      a1_manifest_completeness +
+        a2_theme_layout_and_stylesheet(pages) +
+        a3_document_content(pages) +
+        a4_theme_assets(pages)
+    end
+
+    private
+
+    def html_pages
+      # `.select { File.file? }` because a DIRECTORY named `index.html`
+      # matches the glob, and reading it raises Errno::EISDIR. Same
+      # defect as the `exist?`-versus-`file?` checks below, one level over.
+      Dir.glob(@site_dir.join('**/*.html').to_s)
+        .select { |path| File.file?(path) }
+        .map { |path| Page.new(path, @site_dir.to_s) }
+    end
+
+    # R1, R2
+    def a0_config_guard
+      failures = []
+
+      # Jekyll accepts a documented array shorthand for `collections:`
+      # (e.g. `collections: [diagram_types]`) and normalizes it to a Hash
+      # itself before a real build ever sees it -- but that normalization
+      # never runs here, since this script parses `_config.yml` directly
+      # with `YAML.safe_load_file`. An Array in that shape would make
+      # `Hash#dig` call `Array#dig` with a String key, which raises
+      # TypeError instead of returning nil, so the guard is required
+      # before digging any further, not just an optimization.
+      collections = @config['collections']
+      permalink = collections.is_a?(Hash) ? collections.dig('diagram_types', 'permalink') : nil
+      if permalink != REQUIRED_DIAGRAM_PERMALINK
+        failures << "config: collections.diagram_types.permalink is #{permalink.inspect}, " \
+                     "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"
+      end
+
+      theme = @config['theme']
+      failures << 'config: theme is absent or empty' if theme.nil? || theme.to_s.empty?
+
+      failures
+    end
+
+    # R3-R7
+    def a1_manifest_completeness
+      failures = []
+      include_active = Array(@config['include']).include?('_diagram_types')
+
+      diagram_sources.each do |rel|
+        collection_path = "diagram_types/#{rel}/index.html"
+        unless @site_dir.join(collection_path).file?
+          failures << "manifest: _diagram_types/#{rel}.adoc missing at #{collection_path}"
+        end
+
+        next unless include_active
+
+        include_path = include_path_for(rel)
+        unless @site_dir.join(include_path).file?
+          failures << "manifest: _diagram_types/#{rel}.adoc missing at #{include_path}"
+        end
+      end
+
+      failures
+    end
+
+    def diagram_sources
+      diagram_dir = @docs_dir.join('_diagram_types')
+      Dir.glob(diagram_dir.join('**/*.adoc').to_s).map do |path|
+        Pathname.new(path).relative_path_from(diagram_dir).sub_ext('').to_s
+      end
+    end
+
+    # Pretty-permalink path for a diagram source, given as its collection-relative
+    # path with no extension (e.g. "mindmap", "index", "examples/flowchart-examples").
+    # `index` is literal under the collection permalink but collapses under
+    # `permalink: pretty`.
+    def include_path_for(rel)
+      dir = File.dirname(rel)
+      base = File.basename(rel)
+      if base == 'index'
+        dir == '.' ? '_diagram_types/index.html' : "_diagram_types/#{dir}/index.html"
+      else
+        "_diagram_types/#{rel}/index.html"
+      end
+    end
+
+    # R8-R11
+    def a2_theme_layout_and_stylesheet(pages)
+      failures = []
+      theme = @config['theme'].to_s
+
+      pages.each do |page|
+        unless page.has_class_token?(LAYOUT_BODY_MARKER)
+          failures << "layout: #{page.rel_path} missing layout marker #{LAYOUT_BODY_MARKER.inspect}"
+        end
+
+        next if page.stylesheet_hrefs.any? { |href| href.include?(theme) }
+
+        failures << "layout: #{page.rel_path} links no stylesheet naming theme #{theme.inspect}"
+      end
+
+      failures
+    end
+
+    # R12-R16
+    def a3_document_content(pages)
+      diagram_pages(pages).flat_map { |page| content_failures_for(page) }
+    end
+
+    # Both halves are required and neither implies the other. A page can
+    # carry a block marker and render nothing (an empty `<div
+    # class="paragraph">`), and a page can show text with no marker at all
+    # if the conversion silently fell back to raw output.
+    def content_failures_for(page)
+      failures = []
+      unless page.class_tokens.intersect?(BLOCK_MARKERS)
+        failures << "content: #{page.rel_path} has no recognized " \
+                    "Asciidoctor block marker"
+      end
+      unless page.renders_content?
+        failures << "content: #{page.rel_path} renders no text in #{page.rendered_text_region}"
+      end
+      failures
+    end
+
+    def diagram_pages(pages)
+      pages.select { |page| page.rel_path.start_with?('diagram_types/', '_diagram_types/') }
+    end
+
+    # R17-R24
+    def a4_theme_assets(pages)
+      failures = []
+      refs = collect_asset_refs(pages)
+
+      refs.each do |ref, referencing_page|
+        next unless site_absolute?(ref)
+        next if protocol_relative?(ref)
+
+        resolved = strip_baseurl(ref)
+        if resolved.nil?
+          failures << "asset: #{ref} (referenced by #{referencing_page}) does not begin with baseurl #{@baseurl.inspect}"
+          next
+        end
+
+        # Only the path component resolves to a file -- a query string or
+        # fragment is not part of the filename a server looks up.
+        file_path = resolved.split(/[?#]/, 2).first.to_s
+        next if resolves_within_site_dir?(file_path)
+
+        failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
+      end
+
+      if @config['search_enabled'] == true && !@site_dir.join(SEARCH_INDEX_PATH).file?
+        failures << "asset: search index #{SEARCH_INDEX_PATH.inspect} missing"
+      end
+
+      failures
+    end
+
+    # Distinct ref -> first referencing page, so each distinct asset is
+    # resolved (and reported) once no matter how many pages link it (R17).
+    def collect_asset_refs(pages)
+      refs = {}
+      pages.each do |page|
+        (page.stylesheet_hrefs + page.script_srcs).each do |ref|
+          refs[ref] ||= page.rel_path
+        end
+      end
+      refs
+    end
+
+    # `../` in a ref can walk the resolved path outside `_site` entirely
+    # (e.g. `/sirena/../_config.yml` resolves to a real file one
+    # directory up, in `docs/`, not in `docs/_site/`). Cleanpath collapses
+    # the traversal, then the result must still sit AT OR UNDER `_site`'s
+    # own absolute path before it counts as a resolved asset -- and it
+    # must be a regular FILE there. `exist?` is also true for a directory,
+    # and a `<link href>` pointing at a directory that happens to share
+    # the asset's name is not a stylesheet a server can return.
+    def resolves_within_site_dir?(file_path)
+      site_root = @site_dir.expand_path
+      candidate = site_root.join(file_path.delete_prefix('/')).expand_path
+
+      return false unless candidate.file?
+
+      candidate.to_s.start_with?("#{site_root}/")
+    end
+
+    def site_absolute?(ref)
+      ref.start_with?('/')
+    end
+
+    def protocol_relative?(ref)
+      ref.start_with?('//')
+    end
+
+    # `nil` means ref does not live under the configured baseurl at all --
+    # a real deployment at that baseurl would 404 it, and it is NOT the
+    # same thing as a same-named file happening to exist in `_site`'s
+    # physical layout (which carries no baseurl prefix directories).
+    # Segment-bounded: `/sirenax/...` must not match a `/sirena` baseurl.
+    def strip_baseurl(ref)
+      return ref if @baseurl.empty?
+      return ref[@baseurl.length..] if ref == @baseurl || ref.start_with?("#{@baseurl}/")
+
+      nil
+    end
+  end
+end
+
+if __FILE__ == $PROGRAM_NAME
+  options = { docs_dir: 'docs', baseurl: nil }
+
+  OptionParser.new do |opts|
+    opts.banner = 'Usage: ruby scripts/verify_docs_site.rb [options]'
+    opts.on('--docs-dir DIR', 'Path to the docs directory (default: docs)') { |v| options[:docs_dir] = v }
+    opts.on('--baseurl BASEURL', 'Baseurl used to resolve site-absolute asset refs') { |v| options[:baseurl] = v }
+  end.parse!
+
+  site_dir = File.join(options[:docs_dir], '_site')
+  verifier = Sirena::DocsSiteVerifier.new(docs_dir: options[:docs_dir], site_dir: site_dir, baseurl: options[:baseurl])
+  failures = verifier.failures
+
+  if failures.empty?
+    puts 'docs site verification: OK'
+  else
+    failures.each { |failure| puts "FAIL: #{failure}" }
+    puts "docs site verification: #{failures.size} failure(s)"
+  end
+
+  exit(failures.empty? ? 0 : 1)
+end

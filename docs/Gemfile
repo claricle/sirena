@@ -8,6 +8,13 @@ gem 'jekyll-seo-tag'
 gem 'jekyll-sitemap'
 gem 'just-the-docs'
 
+# The docs-site verifier (scripts/verify_docs_site.rb) parses the BUILT
+# HTML with a real HTML5 parser, and CI runs it under THIS bundle -- the
+# workflow only ever installs docs/Gemfile. Declared here so the verify
+# step cannot fail with LoadError on a machine where nothing else
+# happens to pull nokogiri in.
+gem 'nokogiri'
+
 group :jekyll_plugins do
   gem 'asciidoctor'
 end

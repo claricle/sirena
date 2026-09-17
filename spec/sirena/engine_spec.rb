@@ -122,8 +122,11 @@ RSpec.describe Sirena::Engine do
         # after the keyword, so this never reached the parser at all. It
         # still fails downstream, where an empty flowchart is refused on
         # main too, but it fails as a flowchart rather than as no type.
+        # The failure is the transform's own validity check, so it now
+        # propagates as TransformError rather than being collapsed into
+        # PipelineError (see the error-taxonomy fix in engine.rb).
         expect { engine.render('graph') }.to raise_error(
-          Sirena::Engine::PipelineError
+          Sirena::Transform::TransformError
         )
       end
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "base"
+
 module Sirena
   module Diagram
     # Represents a radar/spider chart diagram
@@ -13,8 +15,19 @@ module Sirena
         @options = {}
       end
 
-      def type
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :radar
+      def diagram_type
         :radar
+      end
+
+      # Radar charts have no validation rules yet. See TODO.foundation's
+      # corpus burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
 

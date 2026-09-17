@@ -10,6 +10,10 @@ module Sirena
       # Converts the parse tree output from Grammars::Gantt into a
       # fully-formed Diagram::GanttChart object with sections and tasks.
       class Gantt
+        TAG_KEYWORDS = %w[done active crit milestone].freeze
+        DURATION_PATTERN = /\A\d+[dwMh]\z/
+        private_constant :TAG_KEYWORDS, :DURATION_PATTERN
+
         # Transform parse tree into Gantt diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -136,51 +140,88 @@ module Sirena
           @current_section.tasks << task
         end
 
+        # Task details are a comma-separated list of fields (mermaid allows
+        # tags, an id, "after"/"until", a date, and a duration). Tags are
+        # unambiguous keywords, consumed first regardless of position. What
+        # is left occupies id/start/end — THREE positional slots — and
+        # mermaid classifies by POSITION when there are exactly three (the
+        # id is always first, even when its text happens to look like a
+        # date, corpus gantt/NNN). An "after"/"until" dependency fills the
+        # start slot the same as a bare date would, so it must still count
+        # towards that three-slot rule; only once the id is settled does it
+        # get stripped out on its own.
+        #
+        # Outside the three-slot case there is no id field at all — every
+        # remaining value is a start/end/duration, by position, never by
+        # shape. Measured against mmdc: `T: 20240101, 20240103` under
+        # `dateFormat YYYYMMDD` renders both compact fields as dates with no
+        # id (mermaid auto-generates one); a single non-date, non-duration
+        # field on its own (`T: someid`) is a parse ERROR in mermaid, not an
+        # id. So `classify_value_field` never falls back to treating a field
+        # as an id — DURATION_PATTERN is the only shape test, and everything
+        # else is a date, whether or not it looks like one (this is also
+        # what keeps a leftover compact date from stomping the id that the
+        # three-slot rule already assigned).
         def process_task_details(task, details)
           return unless details.is_a?(Hash)
 
-          # Extract tags
-          if details[:tags]
-            extract_tags(task, details[:tags])
-          end
+          fields = extract_task_fields(details[:parts])
+          positional_fields = reject_tag_fields(task, fields)
+          task.id = positional_fields.shift if positional_fields.length == 3
 
-          # Extract task ID
-          if details[:id]
-            task.id = extract_text(details[:id])
-          end
+          value_fields = reject_dependency_fields(task, positional_fields)
 
-          # Extract timing information
-          if details[:start_date]
-            task.start_date = extract_text(details[:start_date])
-          end
+          dates = []
+          value_fields.each { |field| classify_value_field(task, field, dates) }
+          assign_dates(task, dates)
+        end
 
-          if details[:end_date]
-            task.end_date = extract_text(details[:end_date])
-          end
+        def extract_task_fields(parts)
+          Array(parts.is_a?(Array) ? parts : [parts]).map { |part| extract_text(part[:field]) }
+        end
 
-          if details[:duration]
-            task.duration = extract_text(details[:duration])
-          end
+        def reject_tag_fields(task, fields)
+          fields.reject do |field|
+            next false unless TAG_KEYWORDS.include?(field)
 
-          if details[:after_task]
-            task.after_task = extract_text(details[:after_task])
-          end
-
-          if details[:until_task]
-            task.until_task = extract_text(details[:until_task])
+            task.tags << field
+            true
           end
         end
 
-        def extract_tags(task, tags_data)
-          tags_array = if tags_data.is_a?(Array)
-                         tags_data
-                       else
-                         [tags_data]
-                       end
+        def reject_dependency_fields(task, fields)
+          fields.reject do |field|
+            case field
+            when /\Aafter\s+(.+)\z/
+              task.after_task = Regexp.last_match(1)
+              true
+            when /\Auntil\s+(.+)\z/
+              task.until_task = Regexp.last_match(1)
+              true
+            end
+          end
+        end
 
-          tags_array.each do |tag_item|
-            tag = extract_text(tag_item)
-            task.tags << tag unless tag.empty?
+        def classify_value_field(task, field, dates)
+          if field.match?(DURATION_PATTERN)
+            task.duration = field
+          else
+            dates << field
+          end
+        end
+
+        # A lone date is normally the start. After an "after" dependency,
+        # though, the dependency supplies the start (see
+        # GanttTransform#resolve_task_dependency, which reads calculated
+        # start from the referenced task and never consults `start_date`
+        # once `after_task` is set) — so a single trailing date there is the
+        # end, or `resolve_task_dependency` never finds an end to compute.
+        def assign_dates(task, dates)
+          if dates.length == 1 && task.after_task
+            task.end_date = dates[0]
+          else
+            task.start_date = dates[0] if dates[0]
+            task.end_date = dates[1] if dates[1]
           end
         end
 

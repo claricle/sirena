@@ -20,8 +20,11 @@ module Sirena
       # State type: :normal, :start, :end, :choice, :fork, :join
       attribute :state_type, :string
 
-      # Optional description for composite states
+      # Most recently declared description for this state, if any
       attribute :description, :string
+
+      # Ordered display text declared by aliases and descriptions
+      attribute :descriptions, :string, collection: true, default: -> { [] }
 
       # Child states for composite/nested states
       attribute :children, StateNode, collection: true, default: -> { [] }
@@ -159,14 +162,19 @@ module Sirena
       # Validates the state diagram structure.
       #
       # A state diagram is valid if:
-      # - It has at least one state
+      # - It has a states collection, empty or not
       # - All states are valid
       # - All transitions are valid
       # - All transition references point to existing states
       #
+      # An EMPTY collection is fine: mmdc 11.12.0 draws a bare
+      # `stateDiagram-v2` as an empty picture rather than refusing it. A
+      # MISSING one is not, because the attribute defaults to `[]` and only
+      # a caller clearing it can produce nil.
+      #
       # @return [Boolean] true if state diagram is valid
       def valid?
-        return false if states.nil? || states.empty?
+        return false if states.nil?
         return false unless states.all?(&:valid?)
         return false unless transitions.nil? ||
                             transitions.all?(&:valid?)

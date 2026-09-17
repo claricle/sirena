@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'base'
 require_relative "../renderer/markdown_text"
 
 module Sirena
@@ -14,7 +15,7 @@ module Sirena
     # @example Transform a kanban board
     #   transform = Transform::Kanban.new
     #   layout = transform.to_graph(diagram)
-    class Kanban
+    class Kanban < Base
       # Horizontal spacing between columns
       COLUMN_HORIZONTAL_SPACING = 60
 
@@ -38,8 +39,10 @@ module Sirena
       #
       # @param diagram [Diagram::Kanban] the kanban diagram
       # @return [Hash] layout data with columns, cards, and dimensions
-      def to_graph(diagram)
-        return empty_graph if diagram.columns.empty?
+      def build_graph(diagram)
+        # diagram.columns.nil? is treated as "no columns" here to match
+        # Diagram::Kanban#valid?, which accepts nil as equivalent to empty.
+        return empty_graph if diagram.columns.nil? || diagram.columns.empty?
 
         # Position columns horizontally
         positioned_columns = position_columns(diagram.columns)

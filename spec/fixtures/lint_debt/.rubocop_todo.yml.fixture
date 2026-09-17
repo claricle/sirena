@@ -1,0 +1,6 @@
+# Fixture todo file. `LintDebt` never reads this -- it is a local
+# `inherit_from` entry, and the synthesised config keeps only the
+# remote (http) ones. Specs mutate a copy of this file to prove that.
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - "debt.rb"

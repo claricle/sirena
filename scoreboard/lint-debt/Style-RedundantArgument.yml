@@ -1,0 +1,23 @@
+---
+cop: Style/RedundantArgument
+rows:
+- file: lib/sirena/parser/base.rb
+  count: 2
+- file: lib/sirena/parser/block.rb
+  count: 1
+- file: lib/sirena/parser/class_diagram.rb
+  count: 1
+- file: lib/sirena/parser/flowchart.rb
+  count: 1
+- file: lib/sirena/parser/requirement.rb
+  count: 1
+- file: lib/sirena/parser/transforms/kanban.rb
+  count: 1
+- file: lib/sirena/parser/transforms/mindmap.rb
+  count: 2
+- file: lib/sirena/renderer/requirement.rb
+  count: 1
+- file: scripts/extract_mermaid_tests.rb
+  count: 1
+- file: spec/sirena/parser/error_position_spec.rb
+  count: 3

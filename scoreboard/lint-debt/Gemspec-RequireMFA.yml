@@ -1,0 +1,5 @@
+---
+cop: Gemspec/RequireMFA
+rows:
+- file: sirena.gemspec
+  count: 1

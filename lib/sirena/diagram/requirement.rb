@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -97,7 +98,7 @@ module Sirena
     end
 
     # Represents a Mermaid requirement diagram
-    class RequirementDiagram < Lutaml::Model::Serializable
+    class RequirementDiagram < Base
       attribute :requirements, Requirement, collection: true, default: -> { [] }
       attribute :elements, RequirementElement, collection: true, default: -> { [] }
       attribute :relationships, RequirementRelationship, collection: true, default: -> { [] }
@@ -127,6 +128,23 @@ module Sirena
 
       def add_class_assignment(assignment)
         class_assignments << assignment
+      end
+
+      # Returns the diagram type identifier.
+      #
+      # @return [Symbol] :requirement
+      def diagram_type
+        :requirement
+      end
+
+      # Requirement diagrams have no top-level validation rules yet — the
+      # relationship type check lives on RequirementRelationship#valid?
+      # above, and nothing here calls it. See TODO.foundation's corpus
+      # burndown for real validation; this is deliberately trivial.
+      #
+      # @return [Boolean] true
+      def valid?
+        true
       end
     end
   end
