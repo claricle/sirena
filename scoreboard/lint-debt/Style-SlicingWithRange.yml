@@ -1,0 +1,5 @@
+---
+cop: Style/SlicingWithRange
+rows:
+- file: lib/sirena/parser/transforms/flowchart.rb
+  count: 1

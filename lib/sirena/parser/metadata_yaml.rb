@@ -123,6 +123,56 @@ module Sirena
         )\z
       /x
 
+      # The part of js-yaml's scalar table that needs no document around
+      # it. Two readers want it: this composer, for a plain scalar in a
+      # flowchart body, and the kanban transform, whose grammar has already
+      # split the `@{ }` body into keys and values and so needs this one
+      # step. Sharing it keeps one js-yaml table in the gem, so the next
+      # change to js-yaml is one edit and not two.
+      module PlainScalars
+        def plain_scalar(text)
+          return JSON_WORDS[text] if JSON_WORDS.key?(text)
+          return json_int(text.delete('_')) if json_int?(text)
+          return json_float(text.delete('_')) if json_float?(text)
+
+          text
+        end
+
+        # js-yaml tries the integer resolver before the float one, and
+        # neither takes a trailing `_` — `1_` is a string.
+        def json_int?(text)
+          !text.end_with?('_') && JSON_INT.match?(text)
+        end
+
+        def json_float?(text)
+          !text.end_with?('_') && JSON_FLOAT.match?(text)
+        end
+
+        # Ruby reads the same three prefixes, but it also reads a bare
+        # leading zero as octal, where js-yaml stays in base 10 — and
+        # `Integer("08")` raises. So say the base for the plain form.
+        def json_int(digits)
+          digits.match?(/\A[-+]?0[box]/) ? Integer(digits) : Integer(digits, 10)
+        end
+
+        # The two words are named, not parsed: mermaid sees NaN, which is
+        # falsy and skips the key, and Infinity, which is a number and is
+        # refused like any other. `to_f` takes the rest and never raises, so
+        # an odd but legal form like `1.` or `.5` stays a number instead of
+        # throwing out of the parser.
+        def json_float(digits)
+          case digits.downcase
+          when '.inf', '+.inf' then Float::INFINITY
+          when '-.inf' then -Float::INFINITY
+          when '.nan' then Float::NAN
+          else digits.to_f
+          end
+        end
+      end
+
+      include PlainScalars
+      extend PlainScalars
+
       # @raise [Parser::ParseError] on YAML mermaid would also refuse
       def self.value(document)
         new(document).value
@@ -240,7 +290,7 @@ module Sirena
         return node.value if node.style != PLAIN_SCALAR ||
                              node.tag == NON_SPECIFIC_TAG
 
-        implicit(node.value)
+        plain_scalar(node.value)
       end
 
       # A plain scalar with nothing in it is no content at all to js-yaml.
@@ -294,45 +344,6 @@ module Sirena
 
       def tagged_null(text)
         NULL_WORDS.include?(text) ? nil : unresolvable(NULL_TAG)
-      end
-
-      def implicit(text)
-        return JSON_WORDS[text] if JSON_WORDS.key?(text)
-        return json_int(text.delete('_')) if json_int?(text)
-        return json_float(text.delete('_')) if json_float?(text)
-
-        text
-      end
-
-      # js-yaml tries the integer resolver before the float one, and
-      # neither takes a trailing `_` — `1_` is a string.
-      def json_int?(text)
-        !text.end_with?('_') && JSON_INT.match?(text)
-      end
-
-      def json_float?(text)
-        !text.end_with?('_') && JSON_FLOAT.match?(text)
-      end
-
-      # Ruby reads the same three prefixes, but it also reads a bare
-      # leading zero as octal, where js-yaml stays in base 10 — and
-      # `Integer("08")` raises. So say the base for the plain form.
-      def json_int(digits)
-        digits.match?(/\A[-+]?0[box]/) ? Integer(digits) : Integer(digits, 10)
-      end
-
-      # The two words are named, not parsed: mermaid sees NaN, which is
-      # falsy and skips the key, and Infinity, which is a number and is
-      # refused like any other. `to_f` takes the rest and never raises, so
-      # an odd but legal form like `1.` or `.5` stays a number instead of
-      # throwing out of the parser.
-      def json_float(digits)
-        case digits.downcase
-        when '.inf', '+.inf' then Float::INFINITY
-        when '-.inf' then -Float::INFINITY
-        when '.nan' then Float::NAN
-        else digits.to_f
-        end
       end
 
       def sequence(node)

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'error/diagram_type_error'
+require_relative 'error/pipeline_error'
+
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
   #
@@ -17,12 +20,6 @@ module Sirena
   #   engine = Sirena::Engine.new
   #   svg = engine.render(source, verbose: true)
   class Engine
-    # Error raised when diagram type cannot be detected
-    class DiagramTypeError < Error; end
-
-    # Error raised during pipeline execution
-    class PipelineError < Error; end
-
     # Mapping of diagram syntax prefixes to diagram types.
     #
     # A direction glyph needs no gap after the flowchart keyword. mmdc
@@ -80,7 +77,11 @@ module Sirena
     # @option options [Date, nil] :today reference date override
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
-    # @raise [PipelineError] if any pipeline stage fails
+    # @raise [Parser::ParseError] if the source fails to parse
+    # @raise [Transform::TransformError] if the diagram fails its own
+    #   validity check
+    # @raise [Renderer::RenderError] if rendering itself fails
+    # @raise [PipelineError] if a stage fails with no error class of its own
     def render(mermaid_source, options = {})
       @verbose = options[:verbose] if options.key?(:verbose)
 
@@ -113,12 +114,18 @@ module Sirena
       log "Render complete, #{svg_xml.length} bytes"
 
       svg_xml
-    rescue DiagramTypeError
-      # Re-raise diagram type errors without wrapping
+    rescue Error
+      # Every layer raises its own Sirena::Error subclass (DiagramTypeError,
+      # Parser::ParseError, Transform::TransformError, Renderer::RenderError)
+      # naming the stage that failed. Wrapping one into PipelineError would
+      # erase exactly the field the corpus harness records as `stage`, so
+      # let it propagate unwrapped instead.
       raise
     rescue StandardError => e
-      raise PipelineError,
-            "Rendering failed: #{e.message}\n#{e.backtrace.join("\n")}"
+      # A failure with no layer error of its own. `e` becomes `cause`
+      # automatically because we are still inside the rescue; never
+      # stringify a backtrace into the message.
+      raise PipelineError, "Rendering failed: #{e.class}: #{e.message}"
     end
 
     private
@@ -143,7 +150,7 @@ module Sirena
     # Retrieves handlers for a diagram type.
     #
     # @param type [Symbol] diagram type identifier
-    # @return [Hash] hash with :parser, :transform, :renderer keys
+    # @return [Hash] hash with :parser, :transform, :renderer, :model keys
     # @raise [DiagramTypeError] if type is not registered
     def retrieve_handlers(type)
       handlers = DiagramRegistry.get(type)
@@ -174,14 +181,12 @@ module Sirena
     # @param diagram [Diagram::Base] diagram model
     # @param transform_class [Class] transform class
     # @param today [Date, nil] reference date, or nil for the real date
-    # @return [Object] graph structure
+    # @return [Hash] graph structure
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
-      # Only Transform::Base subclasses consume a reference date. Seven
-      # transforms (git_graph, kanban, mindmap, packet, radar, treemap,
-      # xy_chart) stand outside that hierarchy and read no clock at all, so
-      # pinning them is meaningless — sending today= to them just crashed.
+      # Every registered transform inherits Transform::Base and so has
+      # today=; the respond_to? guard is defensive, not load-bearing.
       transform.today = today if today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'
@@ -194,78 +199,22 @@ module Sirena
     # available. In the future, this will attempt to use elkrb for
     # proper graph layout computation.
     #
-    # @param graph [Object] graph structure
-    # @return [Object] graph with computed positions
+    # @param graph [Hash] graph structure
+    # @return [Hash] graph with computed positions
     def layout_graph(graph)
       log 'Computing layout...'
 
       # TODO: Attempt to use elkrb when available
       # For now, use simple fallback positioning
-      apply_fallback_layout(graph)
+      Layout::Fallback.apply(graph)
 
       log 'Layout complete (using fallback positioning)'
       graph
     end
 
-    # Applies simple grid-based fallback layout.
-    #
-    # This is a placeholder for actual elkrb layout. It arranges
-    # nodes in a simple grid pattern. Handles both object-based
-    # and hash-based graph structures.
-    #
-    # @param graph [Object, Hash] graph structure
-    # @return [Object, Hash] graph with positions
-    def apply_fallback_layout(graph)
-      # Handle hash-based graph structure (elkrb-compatible)
-      if graph.is_a?(Hash) && graph[:children]
-        apply_fallback_layout_to_hash(graph)
-      # Handle object-based graph structure
-      elsif graph.respond_to?(:nodes)
-        nodes = graph.nodes
-        nodes.each_with_index do |node, index|
-          next unless node.respond_to?(:x=) && node.respond_to?(:y=)
-
-          # Simple grid layout: 3 columns
-          col = index % 3
-          row = index / 3
-
-          node.x = 50 + (col * 200)
-          node.y = 50 + (row * 150)
-        end
-      end
-
-      graph
-    end
-
-    # Applies fallback layout to hash-based graph structure.
-    #
-    # @param graph [Hash] graph hash with :children
-    # @return [Hash] graph with positions added
-    def apply_fallback_layout_to_hash(graph)
-      children = graph[:children] || []
-
-      # Apply layout to immediate children
-      children.each_with_index do |child, index|
-        # Skip if already has position
-        next if child[:x] && child[:y]
-
-        # Simple grid layout: 3 columns
-        col = index % 3
-        row = index / 3
-
-        child[:x] = 50 + (col * 250)
-        child[:y] = 50 + (row * 200)
-
-        # Recursively apply to nested children
-        apply_fallback_layout_to_hash(child) if child[:children]
-      end
-
-      graph
-    end
-
     # Renders graph to SVG document.
     #
-    # @param graph [Object] laid-out graph
+    # @param graph [Hash] laid-out graph
     # @param renderer_class [Class] renderer class
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document

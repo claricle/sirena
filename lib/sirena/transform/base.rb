@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'date'
+require_relative '../error'
+require_relative '../error/transform_error'
 
 module Sirena
   module Transform
@@ -15,14 +17,17 @@ module Sirena
     #
     # @example Define a custom transformer
     #   class FlowchartTransform < Transform::Base
-    #     def to_graph(diagram)
+    #     def build_graph(diagram)
     #       graph = create_graph
     #       # Add nodes and edges based on diagram structure
     #       graph
     #     end
     #   end
     #
-    # @abstract Subclass and implement #to_graph
+    # @abstract Subclass and implement #build_graph. Do not override #call
+    #   or #to_graph — #call runs the validity guard and calls #build_graph;
+    #   #to_graph delegates to #call and exists only for Engine's current
+    #   call site (engine.rb:184).
     class Base
       # The date a transform treats as "today".
       #
@@ -86,15 +91,50 @@ module Sirena
 
       # Converts a diagram model to an elkrb graph structure.
       #
-      # This method should be overridden by subclasses to implement
-      # diagram-specific graph conversion logic.
+      # This is the durable entry point: concrete, and it runs the validity
+      # guard exactly once, for every type, then hands off to the subclass's
+      # #build_graph. A subclass must never override #call itself — override
+      # #build_graph instead — or the guard stops running for that type.
+      #
+      # Named #call, not #to_graph, on purpose: TODO.architecture/04 and /06
+      # describe Engine moving to `handlers[:transform].new.call(...)` and
+      # retiring the `to_graph` name entirely. Putting the guard on #call
+      # means it survives that rename — #to_graph below is the only thing
+      # that goes away.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Object] elkrb graph object with nodes and edges
-      # @raise [NotImplementedError] if not implemented by subclass
+      # @return [Hash] elkrb graph hash with nodes and edges
+      # @raise [TransformError] if the diagram fails its own #valid? check
+      def call(diagram)
+        raise TransformError, 'Invalid diagram' if diagram.nil? || !diagram.valid?
+
+        build_graph(diagram)
+      end
+
+      # Delegates to #call. This is the method name `Engine` calls today
+      # (engine.rb:184) — kept so that call site keeps working unchanged.
+      # The guard lives in #call, not here, so this method has nothing left
+      # to do once Engine calls #call directly.
+      #
+      # @param diagram [Diagram::Base] the diagram model to convert
+      # @return [Hash] elkrb graph hash with nodes and edges
+      # @raise [TransformError] if the diagram fails its own #valid? check
       def to_graph(diagram)
+        call(diagram)
+      end
+
+      # Converts a valid diagram model to an elkrb graph structure.
+      #
+      # This method should be overridden by subclasses to implement
+      # diagram-specific graph conversion logic. By the time it runs,
+      # #call has already confirmed `diagram.valid?`.
+      #
+      # @param diagram [Diagram::Base] the diagram model to convert
+      # @return [Hash] elkrb graph hash with nodes and edges
+      # @raise [NotImplementedError] if not implemented by subclass
+      def build_graph(diagram)
         raise NotImplementedError,
-              "#{self.class} must implement #to_graph(diagram)"
+              "#{self.class} must implement #build_graph(diagram)"
       end
 
       protected
@@ -209,8 +249,5 @@ module Sirena
         }
       end
     end
-
-    # Error raised during transformation.
-    class TransformError < StandardError; end
   end
 end

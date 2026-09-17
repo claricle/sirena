@@ -66,6 +66,7 @@ module Sirena
 
       def calculate_width(graph)
         return 800 unless graph[:children]
+        return 0 if graph[:children].empty?
 
         # Calculate width based on participant count and spacing
         participant_count = graph[:children].length
@@ -76,6 +77,12 @@ module Sirena
       end
 
       def calculate_height(graph)
+        # No participants means no lifelines, so none of the fixed
+        # participant/padding overhead below applies either — mmdc draws
+        # an empty canvas for `sequenceDiagram` with no body, not a diagram
+        # sized as though a lifeline pair were present.
+        return 0 if (graph[:children] || []).empty?
+
         metadata = graph[:metadata] || {}
         message_count = metadata[:message_count] || 0
 

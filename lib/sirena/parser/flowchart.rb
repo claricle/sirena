@@ -31,11 +31,33 @@ module Sirena
         # A lone CR is folded before the grammar sees it; the shared
         # helper owns the parse and the failure message.
         source = normalize_line_ends(source)
-        tree = parse_with_grammar(Grammars::Flowchart.new, source)
-        Transforms::Flowchart.apply(tree)
+        Transforms::Flowchart.apply(parse_tree(source))
       end
 
       private
+
+      # A deeply nested diagram runs the grammar past the stack. mmdc
+      # renders 220 nested subgraphs and we refuse them, which is a gap —
+      # but letting a StackError out of a parse is not a gap, it is a
+      # crash in whatever called us.
+      #
+      # Only the grammar is wrapped. Both halves recurse, but the grammar
+      # spends far more stack per nested box, so on a source anyone can
+      # write it is the one that gives out first — measured here just
+      # under 190 nested boxes, a tree the transform then walks without
+      # trouble. A runaway recursion in the transform therefore stays
+      # visible instead of being reported as a diagram that nests too
+      # deeply. The depth moves with the stack the process was given, and
+      # a tree built by hand rather than parsed can still outrun the
+      # transform; neither changes which one a real source reaches first.
+      #
+      # @param source [String] the source with line ends already folded
+      # @return [Hash, Array] the parse tree
+      def parse_tree(source)
+        parse_with_grammar(Grammars::Flowchart.new, source)
+      rescue SystemStackError
+        raise ParseError, 'Diagram nests too deeply to parse.'
+      end
 
       # mermaid folds a CRLF and a lone CR into a newline before it reads
       # anything, so a bare `\r` ends a line, a comment and an accTitle's

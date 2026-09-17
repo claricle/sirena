@@ -1,0 +1,5 @@
+---
+cop: RSpec/RepeatedExample
+rows:
+- file: spec/sirena/renderer/mindmap_spec.rb
+  count: 2

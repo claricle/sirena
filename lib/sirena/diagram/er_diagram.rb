@@ -55,12 +55,20 @@ module Sirena
       attribute :attributes, ErAttribute, collection: true,
                                           default: -> { [] }
 
+      # Names of the style classes assigned to this entity via `:::`
+      attribute :classes, :string, collection: true,
+                                   default: -> { [] }
+
       # Validates the entity has required fields.
+      #
+      # A missing attribute collection, or a nil member inside it, makes the
+      # entity invalid rather than raising.
       #
       # @return [Boolean] true if entity is valid
       def valid?
         !id.nil? && !id.empty? && !name.nil? && !name.empty? &&
-          attributes.all?(&:valid?)
+          !attributes.nil? &&
+          attributes.all? { |attribute| attribute&.valid? }
       end
     end
 
@@ -171,20 +179,54 @@ module Sirena
         :er_diagram
       end
 
+      # Style classes declared by `classDef`, as name => style text.
+      #
+      # Not a lutaml attribute, matching TreemapDiagram — the only other
+      # model here carrying classDef. Consequence, recorded because it is
+      # real: value equality on this model ignores class_defs.
+      #
+      # @return [Hash{String => String}] declared classes
+      def class_defs
+        @class_defs ||= {}
+      end
+
+      # Records a `classDef` declaration.
+      #
+      # A repeated `classDef` for the same name ACCUMULATES rather than
+      # replaces — mermaid's own db stores every declaration for a name as
+      # an array in source order (verified against its parser: two
+      # `classDef a` statements with disjoint properties both survive, and
+      # on a conflicting property the LATER declaration wins). Comma-joining
+      # here reproduces that: `parse_declaration` already resolves a
+      # comma-separated run left to right, so a later duplicate key
+      # overwrites an earlier one the same way two classes merge in the
+      # renderer.
+      #
+      # @param name [String] the class name
+      # @param styles [String] the raw style text
+      # @return [String] the combined style text for this name
+      def add_class_def(name, styles)
+        existing = class_defs[name]
+        class_defs[name] = existing ? "#{existing},#{styles}" : styles
+      end
+
       # Validates the ER diagram structure.
       #
       # An ER diagram is valid if:
-      # - It has at least one entity
+      # - It has an entity collection, which may be empty
       # - All entities are valid
       # - All relationships are valid
       # - All relationship references point to existing entities
       #
+      # A nil entity or relationship makes the diagram invalid rather than
+      # raising. ErEntity#valid? answers the same way for a nil attribute.
+      #
       # @return [Boolean] true if ER diagram is valid
       def valid?
-        return false if entities.nil? || entities.empty?
-        return false unless entities.all?(&:valid?)
+        return false if entities.nil?
+        return false unless entities.all? { |entity| entity&.valid? }
         return false unless relationships.nil? ||
-                            relationships.all?(&:valid?)
+                            relationships.all? { |rel| rel&.valid? }
 
         # Validate relationship references
         entity_ids = entities.map(&:id)

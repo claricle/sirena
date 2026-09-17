@@ -21,8 +21,71 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       expect(diagram.valid?).to be true
     end
 
-    it 'returns false for diagram without entities' do
+    it 'returns true for a diagram with no entities' do
       diagram = described_class.new
+      expect(diagram.valid?).to be true
+    end
+
+    it 'returns false when the entity collection is missing' do
+      diagram = described_class.new(entities: nil)
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an embedded entity is invalid' do
+      diagram = described_class.new
+      diagram.entities << Sirena::Diagram::ErEntity.new(id: 'CUSTOMER')
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an embedded relationship is invalid' do
+      diagram = described_class.new
+      diagram.entities << Sirena::Diagram::ErEntity.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER'
+      )
+      diagram.entities << Sirena::Diagram::ErEntity.new(
+        id: 'ORDER',
+        name: 'ORDER'
+      )
+      diagram.relationships << Sirena::Diagram::ErRelationship.new(
+        from_id: 'CUSTOMER',
+        to_id: 'ORDER',
+        relationship_type: 'non-identifying',
+        cardinality_to: 'zero_or_more'
+      )
+
+      expect(diagram.valid?).to be false
+    end
+
+    # The valid entity is needed to reach the relationship branch at all.
+    it 'returns false when a relationship member is nil' do
+      diagram = described_class.new(relationships: [nil])
+      diagram.entities << Sirena::Diagram::ErEntity.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER'
+      )
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an entity member is nil' do
+      diagram = described_class.new(entities: [nil])
+
+      expect(diagram.valid?).to be false
+    end
+
+    it 'returns false when an empty diagram has dangling relationships' do
+      diagram = described_class.new
+      diagram.relationships << Sirena::Diagram::ErRelationship.new(
+        from_id: 'CUSTOMER',
+        to_id: 'ORDER',
+        relationship_type: 'non-identifying',
+        cardinality_from: 'one',
+        cardinality_to: 'zero_or_more'
+      )
+
       expect(diagram.valid?).to be false
     end
 
@@ -87,6 +150,34 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     end
   end
 
+  describe '#add_class_def' do
+    let(:diagram) { described_class.new }
+
+    it 'records a single declaration verbatim' do
+      diagram.add_class_def('a', 'fill:red')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red')
+    end
+
+    it 'accumulates a repeated declaration for the same name, not replaces it' do
+      # Mermaid's own db stores every classDef for one name as an array in
+      # source order rather than overwriting; verified against its parser.
+      # Comma-joining reproduces that, since parse_declaration already
+      # resolves a comma run left to right.
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('a', 'stroke:blue')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red,stroke:blue')
+    end
+
+    it 'keeps declarations for different names independent' do
+      diagram.add_class_def('a', 'fill:red')
+      diagram.add_class_def('b', 'fill:blue')
+
+      expect(diagram.class_defs).to eq('a' => 'fill:red', 'b' => 'fill:blue')
+    end
+  end
+
   describe '#identifying_relationships' do
     let(:diagram) { described_class.new }
 
@@ -128,6 +219,26 @@ RSpec.describe Sirena::Diagram::ErEntity do
 
     it 'returns false for entity without name' do
       entity = described_class.new(id: 'CUSTOMER')
+      expect(entity.valid?).to be false
+    end
+
+    it 'returns false when the attribute collection is missing' do
+      entity = described_class.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER',
+        attributes: nil
+      )
+
+      expect(entity.valid?).to be false
+    end
+
+    it 'returns false when an attribute member is nil' do
+      entity = described_class.new(
+        id: 'CUSTOMER',
+        name: 'CUSTOMER',
+        attributes: [nil]
+      )
+
       expect(entity.valid?).to be false
     end
   end

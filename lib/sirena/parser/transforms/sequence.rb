@@ -94,9 +94,9 @@ module Sirena
           elsif stmt[:position] && stmt[:note_text]
             add_note(diagram, stmt)
           elsif stmt[:activate]
-            track_activation(diagram, stmt[:activate].to_s, true)
+            track_activation(diagram, actor_id(stmt[:activate]), true)
           elsif stmt[:deactivate]
-            track_activation(diagram, stmt[:deactivate].to_s, false)
+            track_activation(diagram, actor_id(stmt[:deactivate]), false)
           elsif stmt[:box_label]
             process_box(diagram, stmt)
           elsif stmt[:loop_label]
@@ -115,7 +115,7 @@ module Sirena
         end
 
         def add_participant(diagram, stmt, actor_type)
-          id = stmt[:id].to_s
+          id = actor_id(stmt[:id])
           label = if stmt[:label]
                     extract_text(stmt[:label])
                   else
@@ -139,8 +139,8 @@ module Sirena
         end
 
         def add_message(diagram, stmt)
-          from_id = stmt[:from].to_s
-          to_id = stmt[:to].to_s
+          from_id = actor_id(stmt[:from])
+          to_id = actor_id(stmt[:to])
           message_text = stmt[:text] ? extract_text(stmt[:text]) : ''
 
           base = arrow_base(stmt[:arrow])
@@ -202,10 +202,10 @@ module Sirena
 
           participants = if stmt[:participants].is_a?(Array)
                            stmt[:participants].map do |p|
-                             p.is_a?(Hash) ? p[:participant].to_s : p.to_s
+                             actor_id(p.is_a?(Hash) ? p[:participant] : p)
                            end
                          elsif stmt[:participants].is_a?(Hash)
-                           [stmt[:participants][:participant].to_s]
+                           [actor_id(stmt[:participants][:participant])]
                          else
                            []
                          end
@@ -341,6 +341,14 @@ module Sirena
           end
         end
 
+        # An actor name is a bounded run of text, so a name that abuts a
+        # comma, colon or arrow (`participant A `, `Note over A , B: n`)
+        # carries the surrounding whitespace into the capture. Every
+        # capture site normalises through here rather than duplicating
+        # `.strip`, because each is reachable from legal mermaid and each
+        # unstripped id creates a phantom duplicate participant.
+        def actor_id(slice) = slice.to_s.strip
+
         def ensure_participant(diagram, participant_id)
           return if diagram.find_participant(participant_id)
 
@@ -353,20 +361,25 @@ module Sirena
           diagram.participants << participant
         end
 
+        # `message_text` is a Slice when non-empty and `[]` (Parslet's
+        # empty-repeat capture) when empty, so `[]` always means empty.
+        # It has to be recursed into rather than `.to_s`'d directly: the
+        # Hash arm receives `{message_text: []}`, and `[]` is truthy in
+        # Ruby, so a naive `value[:message_text].to_s` renders the literal
+        # two-character string "[]" instead of reaching the Array branch.
         def extract_text(value)
           case value
           when Hash
             if value[:string]
               value[:string].to_s
             elsif value[:message_text]
-              value[:message_text].to_s
+              extract_text(value[:message_text])
             else
-              value.values.first.to_s
+              extract_text(value.values.first)
             end
-          when String
-            value
-          else
-            value.to_s
+          when Array then ''
+          when String then value
+          else value.to_s
           end.strip
         end
       end

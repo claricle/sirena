@@ -104,12 +104,40 @@ RSpec.describe Sirena::Transform::ErDiagramTransform do
       expect(options['elk.direction']).to eq('RIGHT')
     end
 
-    it 'raises error for invalid diagram' do
-      invalid_diagram = Sirena::Diagram::ErDiagram.new
+    it 'raises error for an entity missing its name' do
+      invalid_diagram = Sirena::Diagram::ErDiagram.new.tap do |d|
+        d.entities << Sirena::Diagram::ErEntity.new(id: 'CUSTOMER')
+      end
 
       expect do
         transform.to_graph(invalid_diagram)
       end.to raise_error(Sirena::Transform::TransformError)
+    end
+
+    it 'converts an empty diagram to an empty graph' do
+      graph = transform.to_graph(Sirena::Diagram::ErDiagram.new)
+
+      expect(graph[:id]).to eq('er_diagram')
+      expect(graph[:children]).to eq([])
+      expect(graph[:edges]).to eq([])
+    end
+
+    it 'puts assigned classes on the node metadata (B1)' do
+      diagram.entities.first.classes << 'someclass'
+      graph = transform.to_graph(diagram)
+
+      customer = graph[:children].find { |n| n[:id] == 'CUSTOMER' }
+      expect(customer[:metadata][:classes]).to eq(%w[someclass])
+    end
+
+    it 'carries declared classes as a name -> styles map (B2)' do
+      diagram.add_class_def('someclass', 'fill:#f96')
+      diagram.add_class_def('anotherclass', 'color:blue')
+      graph = transform.to_graph(diagram)
+
+      expect(graph[:class_defs]).to eq(
+        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue'
+      )
     end
   end
 end

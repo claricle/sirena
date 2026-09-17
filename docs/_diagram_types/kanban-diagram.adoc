@@ -49,6 +49,20 @@ Where:
 * `column_id`: Unique identifier for the column
 * `Column Name`: Display name for the column
 
+The bracket label is optional. A column written as a bare identifier is
+drawn with its id as the title.
+
+.Bare Column Definition
+[source,mermaid]
+----
+kanban
+  column_id
+----
+
+`kanban` itself cannot be used as a column or card id, in any casing. It is
+the diagram's own keyword, and mermaid refuses it there too. Ids that only
+contain the word, such as `kanbanBoard`, are fine.
+
 === Cards
 
 Cards represent individual work items or tasks.
@@ -66,6 +80,17 @@ Where:
 * `card_id`: Unique identifier for the card
 * `Card Text`: Description of the work item
 
+A card may be a bare identifier too, and is then drawn with its id as the
+text.
+
+.Bare Card Definition
+[source,mermaid]
+----
+kanban
+  column_id[Column Name]
+    card_id
+----
+
 === Card Metadata
 
 Cards can include metadata for additional information.
@@ -75,6 +100,20 @@ Cards can include metadata for additional information.
 ----
 card_id[Card Text]@{ key: 'value', key2: 'value2' }
 ----
+
+Metadata may follow a bare identifier as well.
+
+.Metadata on a Bare Node
+[source,mermaid]
+----
+kanban
+  column_id
+    card_id@{ assigned: 'dev1' }
+----
+
+A metadata value is read the way mermaid reads it, with YAML rules. A value
+that comes out as `false`, `null`, `~` or any zero is dropped, and the field
+falls back to its default. Quote the value to keep it as text.
 
 ==== Supported Metadata Fields
 

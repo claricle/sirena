@@ -1,0 +1,5 @@
+---
+cop: Style/CaseLikeIf
+rows:
+- file: lib/sirena/parser/transforms/requirement.rb
+  count: 1

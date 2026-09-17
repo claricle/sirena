@@ -99,5 +99,33 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
 
       expect(paths).not_to be_empty
     end
+
+    # One spelling for each of the six types `canonical_arrow_type` can
+    # build — `arrow` `line` `dotted_arrow` `dotted_line` `thick_arrow`
+    # `thick_line`, in the order listed below — not a sample. The
+    # renderer decides the head from a hard-coded whitelist
+    # (`arrow_type?`) that lives apart from the generative rule, so the
+    # two can drift silently: adding `thick_line` and `dotted_line` to
+    # that list draws an arrowhead on `A===B` and `A-.-B` that mermaid
+    # does not draw. Accepting those two headless spellings at all was
+    # justified by this guarantee, so this is where it is pinned.
+    #
+    # Count the arrowhead we DRAW, not a `marker-end` attribute. That
+    # attribute was a proxy and it pointed the wrong way: before link
+    # heads existed this file emitted `marker-end="url(#arrowhead)"`
+    # with no `<marker>` and no `<defs>` anywhere in the document, so
+    # the assertion passed on all six rows while no arrowhead was
+    # rendered at all. Measured against mmdc 11.12.0, the polygon count
+    # below matches mermaid on every row.
+    it 'draws an arrowhead only for a link that has one' do
+      { '-->' => 1, '---' => 0, '-.->' => 1, '-.-' => 0,
+        '==>' => 1, '===' => 0 }.each do |link, arrowheads|
+        source = "flowchart TD\n  A#{link}B\n"
+        svg = Sirena.render(source)
+        message = "source #{source.inspect}"
+
+        expect(svg.scan('<polygon').length).to eq(arrowheads), message
+      end
+    end
   end
 end
