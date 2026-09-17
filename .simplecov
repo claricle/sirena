@@ -12,6 +12,17 @@
 # merely read corpus fixtures are NOT covered -- tag them, don't rely on the
 # fixture directory.
 SimpleCov.configure do
+  # A COVERAGE=true subprocess that is not spec:unit itself (e.g. a spec that
+  # shells out to prove the corpus-exclusion guard -- see
+  # spec/spec_helper_corpus_guard_spec.rb) would otherwise write into this
+  # same directory: SimpleCov merges any .resultset.json it finds here within
+  # its merge_timeout, so the child's corpus-tagged hits would land in the
+  # parent's coverage.json even though the child process itself never
+  # completes successfully. SIMPLECOV_COVERAGE_DIR lets such a caller point
+  # the child at a throwaway directory instead, without touching the real one
+  # coverage:changed_lines reads.
+  coverage_dir ENV.fetch('SIMPLECOV_COVERAGE_DIR', 'coverage')
+
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
   # yet -- staged separately (TODO.foundation/03-coverage-gate.md, "Bars").
