@@ -188,13 +188,20 @@ RSpec.describe 'StateDiagram Integration' do
 
     # The guard above must not reach the scalar label. Keying the shape on the
     # state id would turn every otherwise-unlabelled marker into a rectangle.
+    #
+    # Scoped to state-C's own group rather than counted across the whole
+    # document: the `C --> A` edge now draws a real arrowhead as a second,
+    # sibling `<polygon>` (Svg::Arrowhead — SVG Tiny 1.2 has no `<marker>` to
+    # reference, so the head is drawn inline; before that class existed no
+    # arrowhead was drawn anywhere in the gem). A page-wide count would fail
+    # on that unrelated polygon instead of testing what this example names.
     it 'keeps a marker without display text as an unlabelled polygon' do
       source = "stateDiagram-v2\nstate C <<choice>>\nC --> A\n"
       svg = Sirena::Engine.new.render(source)
       document = REXML::Document.new(svg)
       choice = REXML::XPath.first(document, "//*[@id='state-C']")
 
-      expect(svg.scan('<polygon').size).to eq(1)
+      expect(REXML::XPath.match(choice, 'polygon').size).to eq(1)
       expect(REXML::XPath.match(choice, 'rect')).to be_empty
       expect(REXML::XPath.match(choice, 'text').map(&:text)).to eq([])
     end

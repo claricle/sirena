@@ -525,8 +525,14 @@ RSpec.describe Sirena::Renderer::FlowchartRenderer do
          width="([\d.]+)"[^>]*height="([\d.]+)"/x
       ).captures.map(&:to_f)
 
+      # The written `y` is the geometric centre PLUS the 0.35em `middle`
+      # baseline shift Svg::Text folds in (Sirena::Svg::Text::BASELINE_SHIFTS)
+      # now that Tiny 1.2 forbids the `dominant-baseline` attribute: a Tiny
+      # 1.2 renderer has nothing to honour that property with, so the shift
+      # in the coordinate itself is what puts the glyph where the geometric
+      # centre says it belongs. 10.5 + 0.35 * 14px font-size = 15.4.
       expect(group[/<text[^>]*x="(-?[\d.]+)"/, 1].to_f).to eq(20.5)
-      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(10.5)
+      expect(group[/<text[^>]*y="(-?[\d.]+)"/, 1].to_f).to eq(15.4)
       expect([x + (width / 2), y + (height / 2)]).to eq([20.5, 10.5])
     end
 

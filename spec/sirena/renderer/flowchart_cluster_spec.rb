@@ -348,7 +348,14 @@ RSpec.describe Sirena::Engine do
       # The literal drop, not just "below the top". A baseline of 1 still
       # puts half a 14px middle-baselined title outside the box, and
       # "greater than the top edge" was happy with it.
-      expect(attr(title, "y") - outer[:y]).to eq(20)
+      #
+      # 20, plus the 0.35em `middle` baseline shift Svg::Text folds into `y`
+      # itself (Sirena::Svg::Text::BASELINE_SHIFTS) now that Tiny 1.2 forbids
+      # the `dominant-baseline` attribute: 20 + 0.35 * 14px font-size = 24.9.
+      # mmdc leaves the CSS property in place and never needs this shift; a
+      # Tiny 1.2 renderer has no `dominant-baseline` to honour, so the shift
+      # is what keeps the glyph centred where mmdc's title actually sits.
+      expect(attr(title, "y") - outer[:y]).to be_within(0.001).of(24.9)
       expect(attr(title, "y")).to be < outer[:y] + outer[:height]
     end
 

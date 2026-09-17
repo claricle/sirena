@@ -382,15 +382,23 @@ RSpec.describe ExampleTasks do
     let(:source) { "flowchart TD\n  A --> B\n" }
 
     it 'treats a directory named with glob syntax as one literal directory' do
-      FileUtils.mkdir_p([File.join(examples_dir, 'gantt'), File.join(examples_dir, 'g*')])
+      # `*` is a glob metacharacter everywhere and also an illegal path
+      # character on Windows, so it cannot prove this property on every
+      # platform this gem ships to. `{antt}` is a glob metacharacter too --
+      # Dir.glob brace-expands it to `antt`, so a pattern read from this
+      # literal name reaches the `gantt` sibling below exactly as `g*` would
+      # -- and `{`/`}` are legal in a Windows filename, so the property holds
+      # everywhere.
+      adversarial = File.join(examples_dir, 'g{antt}')
+      FileUtils.mkdir_p([File.join(examples_dir, 'gantt'), adversarial])
       File.write(File.join(examples_dir, 'gantt', '01.mmd'), source)
-      by_hand = File.join(examples_dir, 'g*', '01.svg')
+      by_hand = File.join(adversarial, '01.svg')
       File.write(by_hand, 'HAND WRITTEN')
 
       generated, = silently { described_class.generate_examples(examples_dir) }
 
-      # One, not two: globbing the literal name `g*` reaches gantt as well and
-      # renders it a second time under the wrong directory.
+      # One, not two: globbing the literal name `g{antt}` reaches gantt as
+      # well and renders it a second time under the wrong directory.
       expect(generated).to eq(1)
       expect([File.read(by_hand), File.exist?(File.join(examples_dir, 'gantt', '01.svg'))])
         .to eq(['HAND WRITTEN', true])
@@ -433,16 +441,24 @@ RSpec.describe ExampleTasks do
 
     # Swallowing the error made an unreadable directory look like an empty
     # one, so generation reported success having rewritten nothing.
+    #
+    # A real unreadable directory is not portable to prove this with: Windows
+    # NTFS is ACL-based, and `File.chmod` there only ever toggles the
+    # read-only attribute (Ruby docs), so `chmod(0o000, locked)` leaves the
+    # directory listable and the property untested. `Dir.children` raising is
+    # stubbed directly instead -- the property under test is that
+    # `generate_examples` propagates whatever `Dir.children` raises rather
+    # than rescuing it, which this proves without depending on how any one
+    # OS's permission model happens to be enforced.
     it 'fails loudly when a diagram directory cannot be read' do
       locked = File.join(examples_dir, 'locked')
       FileUtils.mkdir_p(locked)
       File.write(File.join(locked, 'a.mmd'), source)
-      File.chmod(0o000, locked)
+      allow(Dir).to receive(:children).and_call_original
+      allow(Dir).to receive(:children).with(locked).and_raise(Errno::EACCES.new(locked))
 
       expect { silently { described_class.generate_examples(examples_dir) } }
         .to raise_error(SystemCallError)
-    ensure
-      File.chmod(0o755, locked) if locked
     end
 
     # One table rather than one example per string: the property is where the
@@ -499,15 +515,23 @@ RSpec.describe ExampleTasks do
         .to eq(['ghost.svg'])
     end
 
+    # A FIFO proved this once, but `mkfifo` is a POSIX-only binary, and what
+    # it builds on Windows (where CI shells resolve it through Git's MSYS
+    # layer, if at all) is not a type native Ruby's File.lstat recognises as
+    # a FIFO either -- both the tool and the type it produces are
+    # unavailable on Windows, so nothing was actually exercised on that
+    # platform. `manageable?`'s guard is `File.lstat(path).file?`, which is
+    # false for every non-regular entry alike -- FIFO, socket or directory
+    # -- so an existing plain directory exercises the identical branch and
+    # is constructible on every platform this gem ships to.
     it 'leaves an entry that is not a plain file where it is' do
       flowchart = File.join(examples_dir, 'flowchart')
-      FileUtils.mkdir_p(flowchart)
-      fifo = File.join(flowchart, 'a.svg')
-      system('mkfifo', fifo)
+      not_a_file = File.join(flowchart, 'a.svg')
+      FileUtils.mkdir_p(not_a_file)
 
-      expect { described_class.write_svg(fifo, '<svg>x</svg>', examples_dir) }
+      expect { described_class.write_svg(not_a_file, '<svg>x</svg>', examples_dir) }
         .to raise_error(/refused an unsafe SVG target/)
-      expect(File.ftype(fifo)).to eq('fifo')
+      expect(File).to be_directory(not_a_file)
     end
 
     # The temporary name used to embed the target's, so a legal source name
