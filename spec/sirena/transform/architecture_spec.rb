@@ -278,6 +278,42 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
         expect(outer[:y] + outer[:height]).to be >= inner[:y] + inner[:height]
       end
     end
+
+    context "with a chain of nested groups that have no services or junctions anywhere" do
+      # The single-level fix above lets a parent read an already-bounded
+      # child. A THREE-deep chain where every group is empty exercises a
+      # different path: the middle group has no members of its own but a
+      # non-empty child_groups list, so it does not hit the direct-leaf
+      # skip either - it falls into the "use child group bounds" branch,
+      # finds its own child has no bounds entry, and (before this fix)
+      # wrote an Infinity/-Infinity entry of its own, which then NaN'd out
+      # the outermost group's max_x/max_y comparison one level further up.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [],
+          junctions: [],
+          groups: [
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "outer", label: "Outer", icon: "cloud"),
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "mid", label: "Mid", icon: "cloud", parent_id: "outer"),
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "mid"),
+          ],
+          edges: []
+        )
+      end
+
+      it "does not crash rendering the width and height" do
+        graph = transform.to_graph(diagram)
+
+        expect(graph[:width]).to be_a(Numeric).and be_finite
+        expect(graph[:height]).to be_a(Numeric).and be_finite
+      end
+
+      it "draws no bounding box for any of the three empty groups" do
+        graph = transform.to_graph(diagram)
+
+        expect(graph[:groups]).to be_empty
+      end
+    end
   end
 
   describe "#position_junctions (direct)" do
