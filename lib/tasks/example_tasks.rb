@@ -209,16 +209,12 @@ module ExampleTasks
   # re-deciding closer to their own delete. It locks a file in the system
   # temp directory, not the root directory itself (Windows refuses to open a
   # directory, Errno::EISDIR) and not a file inside the tree (would need
-  # excluding from every listing here).
-  # The lock path is fully predictable (see `examples_lock_path`), and unlike
-  # every other write path in this file the open here had no NOFOLLOW/symlink
-  # guard at all -- a symlink planted at that exact name before this ever
-  # runs was silently followed and whatever it pointed at got created and
-  # flock'd through. Same NOFOLLOW-where-defined, symlink?-check-elsewhere
-  # fallback `copy_through_rename` uses for its own open, re-checked once
-  # more right after the open for the platforms without NOFOLLOW, since a
-  # plain `CREAT` open (no `EXCL`, needed so the lock is reusable across
-  # runs) cannot refuse an existing symlink by itself.
+  # excluding from every listing here). The lock path is fully predictable
+  # (see `examples_lock_path`), so the open uses the same NOFOLLOW-where-
+  # defined, symlink?-check-elsewhere fallback `copy_through_rename` uses,
+  # re-checked once more right after the open on platforms without NOFOLLOW,
+  # since a plain `CREAT` open (no `EXCL`, needed so the lock is reusable
+  # across runs) cannot refuse an existing symlink by itself.
   def with_examples_lock(examples_dir)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
@@ -357,17 +353,11 @@ module ExampleTasks
   # expected on a rerun -- but only once `lstat` confirms what's there is a
   # plain real directory. `FileUtils.mkdir_p` on the parent never recurses
   # into `path` itself, so it cannot reopen the race this method closes.
-  #
-  # Checked once at the TOP, not left to each caller to remember: a caller
-  # that skips it (copy_type_into_pinned_docs_root did, safe today only
-  # because `type` happens to always be a bare basename) silently reopens the
-  # ancestor-symlink gap this whole method exists to close.
-  #
-  # ALSO re-run after `Dir.mkdir`/EEXIST resolve, and pin callers to the
-  # identity THIS returns, not a fresh by-name lookup: a symlink raced into
-  # an ancestor between the check above and this method's `Dir.mkdir` call
-  # is followed silently (mkdir succeeds, EEXIST never fires) unless the
-  # check runs again right here.
+  # Checked once at the TOP so no caller has to remember it, and re-run
+  # after `Dir.mkdir`/EEXIST resolve, pinning callers to the identity THIS
+  # returns rather than a fresh by-name lookup -- a symlink raced into an
+  # ancestor between the check above and `Dir.mkdir` is followed silently
+  # (mkdir succeeds, EEXIST never fires) unless the check runs again here.
   # @return [Array(Integer, Integer)] PATH's directory identity as of this check.
   def create_real_directory(path, label:)
     verified_root(path, label: label)
@@ -446,18 +436,14 @@ module ExampleTasks
       end
 
       # KNOWN, DISCLOSED GAP on a platform without NOFOLLOW (Windows): the
-      # check above and the open are still check-then-act, and no pure-Ruby
-      # equivalent of O_NOFOLLOW exists there to make them one syscall the
-      # way the NOFOLLOW branch above is. A swap timed inside that window is
-      # followed and its bytes are already copied into the temporary file by
-      # the time execution reaches here -- this cannot un-read them. What it
-      # CAN do: refuse to rename them into DESTINATION. If SOURCE is still a
-      # symlink right now, whatever the open just followed was unsafe, so
-      # the copy is discarded (atomic_write's own ensure unlinks the
-      # temporary) instead of completing -- confines a won race to this
-      # run's temp file rather than the shipped destination. An attacker who
-      # swaps SOURCE back to something else before this line runs defeats
-      # even this; that residual window is real and is not closed here.
+      # check above and the open are still check-then-act, so a swap timed
+      # inside that window is followed and already copied into the temp
+      # file by the time execution reaches here -- this cannot un-read it.
+      # What it CAN do: if SOURCE is still a symlink right now, discard the
+      # copy (atomic_write's own ensure unlinks the temp file) instead of
+      # renaming it into DESTINATION, confining a won race to this run's
+      # temp file. An attacker who swaps SOURCE back before this line runs
+      # defeats even this; that residual window is real and not closed here.
       if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
         raise "source became unsafe to read: #{source}"
       end
@@ -667,17 +653,12 @@ module ExampleTasks
   end
 
   # Pins the diagram directory's identity for this write the same way
-  # `copy_to_docs` pins docs_assets_dir and each type directory -- `atomic_write`
-  # used to take SVG_FILE's absolute path straight through with nothing
-  # re-verified in between, so a directory swapped for a symlink between
-  # `manageable?`'s check and the actual write redirected it; a live,
-  # winnable race, not a theoretical one. `within_pinned_directory` chdirs
-  # into the directory and re-checks its identity right after, so a swap
-  # either misses (caught by the symlink/EEXIST checks it runs into) or is
-  # detected (identity mismatch) before anything is written -- and once
-  # chdir'd in, every further syscall here resolves through that pin, not by
-  # re-walking SVG_FILE's name, so a swap of the outer name afterward cannot
-  # redirect the write that follows.
+  # `copy_to_docs` pins docs_assets_dir and each type directory, so a
+  # directory swapped for a symlink between `manageable?`'s check and the
+  # actual write cannot redirect it. `within_pinned_directory` chdirs in and
+  # re-checks identity right after, then every further syscall here resolves
+  # through that pin rather than re-walking SVG_FILE's name, so a swap of
+  # the outer name afterward cannot redirect the write that follows.
   def write_svg(svg_file, svg, examples_dir)
     raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
     raise 'rendered no SVG document' unless svg_document?(svg)

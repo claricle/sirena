@@ -440,20 +440,16 @@ RSpec.describe ExampleTasks do
     end
 
     # Races a symlink into place right after the per-file guard clears it,
-    # immediately before `File.rename` -- which replaces the directory
-    # entry atomically rather than following it. NOTE: mock against
-    # `FileUtils.cp` instead would never fire (a directory `dest` receives
-    # the DIRECTORY, not the joined path). `File.expand_path` on `to` is
-    # required: `Dir.chdir` pins the process to `docs/flowchart`, resolved
-    # via `File.realpath(docs)` to match macOS's `/var -> /private/var`.
-    #
-    # Named for what it actually proves: the race is injected at the
-    # `File.rename` call specifically, so this is a claim about THAT call,
-    # not about the destination write path in general -- the broader
-    # "nothing survives a broken atomic_write" property is the other seven
-    # specs across `.write_svg`/`.copy_to_docs`/`.generate_examples` that
-    # cover a debris-left-behind or partial-write failure, all of which
-    # would also catch a reverted `atomic_write`.
+    # immediately before `File.rename` -- which replaces the directory entry
+    # atomically rather than following it (a `FileUtils.cp` mock would never
+    # fire here: a directory `dest` receives the DIRECTORY, not the joined
+    # path). `File.expand_path` on `to` is required: `Dir.chdir` pins the
+    # process to `docs/flowchart`, resolved via `File.realpath(docs)` to
+    # match macOS's `/var -> /private/var`. Named for what it actually
+    # proves -- a claim about the `File.rename` call specifically, not the
+    # destination write path in general; that broader property is the other
+    # seven specs across `.write_svg`/`.copy_to_docs`/`.generate_examples`
+    # covering a debris-left-behind or partial-write failure.
     it 'refuses a destination symlink raced in right at the File.rename call' do
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-outside') do |outside|
