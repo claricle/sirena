@@ -210,13 +210,35 @@ module ExampleTasks
   # temp directory, not the root directory itself (Windows refuses to open a
   # directory, Errno::EISDIR) and not a file inside the tree (would need
   # excluding from every listing here).
+  # The lock path is fully predictable (see `examples_lock_path`), and unlike
+  # every other write path in this file the open here had no NOFOLLOW/symlink
+  # guard at all -- a symlink planted at that exact name before this ever
+  # runs was silently followed and whatever it pointed at got created and
+  # flock'd through. Same NOFOLLOW-where-defined, symlink?-check-elsewhere
+  # fallback `copy_through_rename` uses for its own open, re-checked once
+  # more right after the open for the platforms without NOFOLLOW, since a
+  # plain `CREAT` open (no `EXCL`, needed so the lock is reusable across
+  # runs) cannot refuse an existing symlink by itself.
   def with_examples_lock(examples_dir)
     root = verified_root(examples_dir)
     return yield unless File.directory?(root)
 
-    File.open(examples_lock_path(root), File::RDWR | File::CREAT, 0o644) do |handle|
-      handle.flock(File::LOCK_EX)
-      yield
+    lock_path = examples_lock_path(root)
+    flags = File::RDWR | File::CREAT
+    flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+    raise "examples lock became unsafe to open: #{lock_path}" if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+
+    begin
+      File.open(lock_path, flags, 0o644) do |handle|
+        if !File.const_defined?(:NOFOLLOW) && File.symlink?(lock_path)
+          raise "examples lock became unsafe to open: #{lock_path}"
+        end
+
+        handle.flock(File::LOCK_EX)
+        yield
+      end
+    rescue Errno::ELOOP
+      raise "examples lock became unsafe to open: #{lock_path}"
     end
   end
 
@@ -237,7 +259,6 @@ module ExampleTasks
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
-    verified_root(docs_assets_dir, label: 'docs assets root')
     docs_identity = create_real_directory(docs_assets_dir, label: 'docs assets root')
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
@@ -332,13 +353,19 @@ module ExampleTasks
   # plain real directory. `FileUtils.mkdir_p` on the parent never recurses
   # into `path` itself, so it cannot reopen the race this method closes.
   #
-  # ALWAYS re-run `verified_root` after `Dir.mkdir`/EEXIST resolve, and pin
-  # callers to the identity THIS returns, not a fresh by-name lookup: a
-  # symlink raced into an ancestor between an earlier `verified_root` pass
-  # and this method's `Dir.mkdir` call is followed silently (mkdir succeeds,
-  # EEXIST never fires) unless the check runs again right here.
+  # Checked once at the TOP, not left to each caller to remember: a caller
+  # that skips it (copy_type_into_pinned_docs_root did, safe today only
+  # because `type` happens to always be a bare basename) silently reopens the
+  # ancestor-symlink gap this whole method exists to close.
+  #
+  # ALSO re-run after `Dir.mkdir`/EEXIST resolve, and pin callers to the
+  # identity THIS returns, not a fresh by-name lookup: a symlink raced into
+  # an ancestor between the check above and this method's `Dir.mkdir` call
+  # is followed silently (mkdir succeeds, EEXIST never fires) unless the
+  # check runs again right here.
   # @return [Array(Integer, Integer)] PATH's directory identity as of this check.
   def create_real_directory(path, label:)
+    verified_root(path, label: label)
     FileUtils.mkdir_p(File.dirname(path))
     begin
       Dir.mkdir(path)
@@ -347,6 +374,17 @@ module ExampleTasks
       raise "#{label} exists but is not a directory: #{path}" unless File.lstat(path).directory?
     end
 
+    verified_root(path, label: label)
+    directory_identity(path, label: label)
+  end
+
+  # A non-creating sibling of create_real_directory: PATH is expected to
+  # already exist (write_svg's directory always came from diagram_dirs,
+  # which only yields directories that already exist) -- this only confirms
+  # it is still real, unlinked, and not reached through a symlinked
+  # ancestor, and returns its identity so a caller can pin writes to it the
+  # same way copy_to_docs pins docs_assets_dir and each type directory.
+  def verified_directory_identity(path, label:)
     verified_root(path, label: label)
     directory_identity(path, label: label)
   end
@@ -398,6 +436,23 @@ module ExampleTasks
         # Only reachable where NOFOLLOW is defined: the open itself refused a
         # symlink raced into SOURCE's name between the check above (a no-op
         # on this platform) and this line, one syscall instead of two.
+        raise "source became unsafe to read: #{source}"
+      end
+
+      # KNOWN, DISCLOSED GAP on a platform without NOFOLLOW (Windows): the
+      # check above and the open are still check-then-act, and no pure-Ruby
+      # equivalent of O_NOFOLLOW exists there to make them one syscall the
+      # way the NOFOLLOW branch above is. A swap timed inside that window is
+      # followed and its bytes are already copied into the temporary file by
+      # the time execution reaches here -- this cannot un-read them. What it
+      # CAN do: refuse to rename them into DESTINATION. If SOURCE is still a
+      # symlink right now, whatever the open just followed was unsafe, so
+      # the copy is discarded (atomic_write's own ensure unlinks the
+      # temporary) instead of completing -- confines a won race to this
+      # run's temp file rather than the shipped destination. An attacker who
+      # swaps SOURCE back to something else before this line runs defeats
+      # even this; that residual window is real and is not closed here.
+      if !File.const_defined?(:NOFOLLOW) && File.symlink?(source)
         raise "source became unsafe to read: #{source}"
       end
     end
@@ -605,11 +660,31 @@ module ExampleTasks
       svg.match?(%r{\A\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--.*?-->\s*)*<svg(?:\s[^>]*)?/?>}m)
   end
 
+  # Pins the diagram directory's identity for this write the same way
+  # `copy_to_docs` pins docs_assets_dir and each type directory -- `atomic_write`
+  # used to take SVG_FILE's absolute path straight through with nothing
+  # re-verified in between, so a directory swapped for a symlink between
+  # `manageable?`'s check and the actual write redirected it; a live,
+  # winnable race, not a theoretical one. `within_pinned_directory` chdirs
+  # into the directory and re-checks its identity right after, so a swap
+  # either misses (caught by the symlink/EEXIST checks it runs into) or is
+  # detected (identity mismatch) before anything is written -- and once
+  # chdir'd in, every further syscall here resolves through that pin, not by
+  # re-walking SVG_FILE's name, so a swap of the outer name afterward cannot
+  # redirect the write that follows.
   def write_svg(svg_file, svg, examples_dir)
     raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
     raise 'rendered no SVG document' unless svg_document?(svg)
 
-    atomic_write(svg_file) { |file| file.write(svg) }
+    directory = File.dirname(svg_file)
+    identity = verified_directory_identity(directory, label: 'diagram directory')
+
+    within_pinned_directory(directory, expected_identity: identity, label: 'diagram directory') do
+      basename = File.basename(svg_file)
+      raise "refused an unsafe SVG target: #{svg_file}" unless manageable_relative?(basename)
+
+      atomic_write(basename) { |file| file.write(svg) }
+    end
   end
 
   # Takes the root as an argument so a test can drive the real task against a
@@ -700,6 +775,6 @@ module ExampleTasks
   # this module (confirmed: no spec calls one via `described_class.<name>`),
   # so nothing needs `.send` to keep working once these are no longer public.
   private_class_method :directory_identity, :within_pinned_directory, :manageable_relative?,
-                       :create_real_directory, :copy_through_rename, :copy_type_into_pinned_docs_root,
-                       :atomic_write
+                       :create_real_directory, :verified_directory_identity, :copy_through_rename,
+                       :copy_type_into_pinned_docs_root, :atomic_write
 end
