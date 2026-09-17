@@ -27,12 +27,19 @@ require 'fileutils'
 # happens to share that directory -- exactly what this guard exists to
 # prevent (Codex review, 2026-09-17: reproduced real hits landing in the
 # parent's coverage/coverage.json without this). Point the child at a
-# throwaway directory instead and assert nothing landed in the real one.
+# throwaway directory instead and assert nothing about the real one changed --
+# an earlier version of this spec unconditionally `rm_rf`'d the real
+# coverage/ directory to make that assertion cheap, which destroyed a report
+# `rake coverage:measure` had already generated on a real developer machine
+# (Codex review round 16, 2026-09-17: reproduced with a sentinel file).
+# Record its prior state (present or absent) and require it unchanged instead
+# of clearing it first.
 RSpec.describe 'spec_helper.rb corpus-tag coverage guard' do
   it 'raises when COVERAGE=true schedules a :corpus-tagged example instrumented, ' \
-     "without polluting this repo's real coverage report" do
+     "without touching this repo's real coverage report" do
     real_coverage_dir = File.expand_path('../coverage', __dir__)
-    FileUtils.rm_rf(real_coverage_dir)
+    existed_before = File.exist?(real_coverage_dir)
+    entries_before = existed_before ? Dir.children(real_coverage_dir).sort : nil
 
     Dir.mktmpdir('corpus-guard-spec-coverage') do |scratch_dir|
       env = { 'COVERAGE' => 'true', 'SIMPLECOV_COVERAGE_DIR' => scratch_dir }
@@ -44,6 +51,7 @@ RSpec.describe 'spec_helper.rb corpus-tag coverage guard' do
       expect(out).to match(/COVERAGE=true scheduled \d+ :corpus-tagged example\(s\) to run instrumented/)
     end
 
-    expect(File).not_to exist(real_coverage_dir)
+    expect(File.exist?(real_coverage_dir)).to eq(existed_before)
+    expect(existed_before ? Dir.children(real_coverage_dir).sort : nil).to eq(entries_before)
   end
 end
