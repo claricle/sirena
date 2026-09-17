@@ -65,7 +65,6 @@ CONFORMANCE_RENDERED_FLOOR = 736
 # rather than counted: a NEW source falling out of the shipped set is a
 # regression, and a glob over whatever happens to exist cannot see one.
 CONFORMANCE_UNRENDERABLE_EXAMPLES = [
-  'gantt/01-simple-timeline.beta.mmd',
   'packet/01-basic-packet.beta.mmd'
 ].freeze
 
