@@ -156,14 +156,11 @@ module Sirena
 
       # True when an escaped marker leaves a lone (length-1) unescaped
       # marker behind it, later meeting a same-character run of a
-      # DIFFERENT length (typically an outer span's closer) — kramdown and
-      # `marked` resolve that length mismatch differently, risking a WRONG
-      # (not just unstyled) render, so this falls back to `literal_lines`.
-      # NOT unsafe: an orphan of length 0, length 2+, or one whose next
-      # same-character run is ALSO length 1 — those already match mmdc; see
-      # this method's spec for the pinned corpus. Escaped-chars matches are
-      # blanked with a placeholder (not deleted, so real runs on either
-      # side stay separated) so `next_run` can only match a REAL run.
+      # DIFFERENT length — kramdown and `marked` resolve that mismatch
+      # differently, risking a WRONG render, so this falls back to
+      # `literal_lines`. See this method's spec for the pinned corpus of
+      # unsafe vs. safe shapes. Escaped-chars matches are blanked with a
+      # placeholder (not deleted) so `next_run` can only match a REAL run.
       #
       # @param raw [String]
       # @return [Boolean]
@@ -186,22 +183,14 @@ module Sirena
         false
       end
 
-      # kramdown's emphasis grammar is not `marked`'s CommonMark-style
-      # delimiter-run algorithm, and the two disagree on some valid short
-      # labels. Detects two unsafe delimiter-run SHAPES and falls back to
-      # `literal_lines` for them, safe-but-unstyled rather than
-      # wrong-but-styled (a third, general check runs later in
-      # `parse_lines`; see `unsafe_emphasis_divergence?`):
-      #
-      # A) a maximal run of 4+ of the same marker character — kramdown's
-      #    `EMPHASIS_START` has no native handling for a run this long.
-      # C) a single (length-1) run of one marker character NESTED with a
-      #    single run of the other (`_*...*_`), as opposed to a SEQUENTIAL
-      #    pair (`*a*_b_`), which must stay safe.
-      #
-      # A run-length-only check with no flanking context is unsound: don't
-      # reintroduce one, `unsafe_emphasis_divergence?` below replaces it.
-      # See this method's spec for the measured corpus, both shapes.
+      # kramdown's emphasis grammar disagrees with `marked`'s on some valid
+      # short labels. Detects two unsafe delimiter-run SHAPES and falls
+      # back to `literal_lines` for them (a third, general check runs
+      # later; see `unsafe_emphasis_divergence?`): A) a maximal run of 4+
+      # of the same marker character, C) a length-1 run of one marker
+      # NESTED with a length-1 run of the other (`_*...*_`), as opposed to
+      # a SEQUENTIAL pair (`*a*_b_`), which must stay safe. A run-length
+      # check with no flanking context is unsound: see this method's spec.
       #
       # @param raw [String]
       # @return [Boolean]
@@ -309,18 +298,12 @@ module Sirena
       end
 
       # `kramdown`, restricted to exactly the block and span parsers this
-      # subset needs. Subclassing and reassigning `@block_parsers` /
-      # `@span_parsers` is kramdown's own documented extension point rather
-      # than a private-API reach, and it's cheaper than post-filtering a
-      # tree that may have already thrown styling information away —
-      # e.g. with the default span parsers, `<b>` inside `**<b>&"x**`
-      # swallows what would otherwise be the bold run's closing `**`.
-      #
-      # `:escaped_chars` (kramdown's `\X` -> literal `X` rule) sits
-      # alongside `:emphasis` rather than being left out: without it,
-      # `\*escaped*` came back with "escaped" wrongly italicized, since a
-      # bare backslash passes through as literal text while the `*...*` on
-      # either side of it still pairs up as a real emphasis span.
+      # subset needs (documented extension point: subclassing and
+      # reassigning `@block_parsers`/`@span_parsers`). `:escaped_chars`
+      # sits alongside `:emphasis` rather than being left out — without it
+      # a bare backslash passes through as literal text while the `*...*`
+      # on either side of it still pairs up as a real emphasis span,
+      # wrongly italicizing an escaped marker's surrounding text.
       #
       # @api private
       class Parser < ::Kramdown::Parser::Kramdown
@@ -334,13 +317,11 @@ module Sirena
 
       # Assigns a markdown-parsed label onto a `Svg::Text` element.
       #
-      # A label with no markup and no hard line break — the overwhelming
-      # majority of label text — parses down to exactly the original
-      # string in one unstyled run. That case keeps setting plain
-      # `content`, unchanged from before this feature existed: no `<tspan>`
-      # wrapper, same XML shape every existing corpus fixture and REXML
-      # `.text` checks already expect. Only a label that actually needs
-      # per-run styling or a line break pays for `<tspan>` children.
+      # A label with no markup and no hard line break parses down to the
+      # original string in one unstyled run, and keeps setting plain
+      # `content` — no `<tspan>` wrapper, same XML shape every existing
+      # fixture and REXML `.text` check already expects. Only a label that
+      # needs per-run styling or a line break pays for `<tspan>` children.
       #
       # @param text_element [Svg::Text] element to assign onto
       # @param lines [Array<Array<Run>>] from `parse_lines`, already
@@ -373,17 +354,13 @@ module Sirena
 
       # Builds the <tspan> runs for a markdown-parsed label.
       #
-      # Every run in a line after the first line continues immediately
-      # after the previous run — no `x`/`dy` needed, SVG just keeps
-      # advancing horizontally. Only the FIRST run of a line that followed
-      # a hard line break needs both: `x` to reset back to the label's left
-      # edge (or center, for a middle-anchored header), and `dy` to move
-      # down one line height. The very first line needs neither — it
-      # starts at the parent <text> element's own x/y.
-      #
-      # `pending_lines` is kept as an accumulating counter, not a per-line
-      # constant, in case a future producer of `lines` ever passes an empty
-      # runs array for a line (neither current producer does).
+      # Every run after a line's first continues immediately after the
+      # previous run — no `x`/`dy` needed. Only the FIRST run of a line
+      # that followed a hard line break needs both: `x` to reset to the
+      # label's left edge (or center), and `dy` to move down one line
+      # height. The very first line needs neither. `pending_lines` is an
+      # accumulating counter, not a per-line constant, in case a future
+      # producer of `lines` ever passes an empty runs array for a line.
       #
       # @param lines [Array<Array<Run>>] from `parse_lines`, already
       #   truncated if truncation applies at this call site
@@ -465,15 +442,11 @@ module Sirena
 
       # Cuts a single line's runs to `budget` visible characters, trimming
       # whole runs from the end and appending "..." to the run that
-      # crosses the boundary.
-      #
-      # The 3-character ellipsis cost is reserved against `budget` up
-      # front, once — not against whatever's left of `remaining` when the
-      # overflowing run happens to be reached. Reserving it per-run instead
-      # undercounts: several already-kept runs can each consume part of
-      # `remaining` without ever needing the reservation themselves, so by
-      # the time the overflowing run pays it, the total visible length
-      # (kept runs + this run's cut + "...") comes out over `budget`.
+      # crosses the boundary. The 3-character ellipsis cost is reserved
+      # against `budget` up front, once — not per-run when the overflowing
+      # run is reached, which undercounts: kept runs would each consume
+      # `remaining` without paying the reservation, pushing the final
+      # total (kept + cut run + "...") over `budget`.
       #
       # @param runs [Array<Run>]
       # @param budget [Integer] visible characters available, ellipsis
