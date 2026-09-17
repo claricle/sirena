@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'psych'
+require_relative '../js_number'
 
 module Sirena
   class Source
@@ -90,6 +91,15 @@ module Sirena
       # deliberately refuses some machine-generated titles mmdc renders, such
       # as its 531,441-element, roughly 1 MB alias expansion.
       MAX_VALUES = 10_000
+
+      # MAX_VALUES bounds how many scalars a document holds, not how long
+      # any ONE of them is: a single all-digit scalar costs nothing against
+      # that budget but `String#to_i` on a bare-integer literal is
+      # superlinear in Ruby (~0.5s at a million digits, worse beyond), and
+      # every double is already Infinity or 0 well before 1000 significant
+      # digits. Refuse rather than parse past that, the same way the other
+      # bounds do.
+      MAX_NUMBER_LENGTH = 1_000
 
       # @param yaml [String] the frontmatter block, without its fences
       def initialize(yaml)
@@ -250,6 +260,14 @@ module Sirena
       def check_tag(node)
         return if node.tag.nil?
 
+        # A percent-escaped custom tag URI (`!<!%C0%80>`) parses fine —
+        # Psych only validates encoding on scalar TEXT, not on a decoded
+        # tag string — so `String#[]` below can meet invalid bytes. Reject
+        # by name rather than let `Regexp#match?` raise a bare ArgumentError.
+        unless node.tag.valid_encoding?
+          raise MalformedFrontmatter, 'Frontmatter carries an unknown tag.'
+        end
+
         kind = node.tag[TAG, 1]
         return check_tag_fits(node, kind) if kind
 
@@ -360,10 +378,20 @@ module Sirena
         return Float::NAN if NAN.match?(text)
         return infinity(text) if INFINITY.match?(text)
         return radix(text) if RADIX.match?(text)
-        return text.delete('_').to_i if DECIMAL.match?(text)
+        return decimal(text) if DECIMAL.match?(text)
         return text.delete('_').to_f if FLOAT.match?(text)
 
         nil
+      end
+
+      def decimal(text)
+        reject_number_length if text.length > MAX_NUMBER_LENGTH
+
+        text.delete('_').to_i
+      end
+
+      def reject_number_length
+        raise MalformedFrontmatter, 'Frontmatter carries too long a number.'
       end
 
       def infinity(text)

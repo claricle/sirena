@@ -314,22 +314,22 @@ RSpec.describe Sirena::Engine do
     end
   end
 
-  describe "#render types with no title of their own" do
-    # Both models gained a title slot so the engine-level assignment is
-    # uniform; without it, setting a frontmatter title raised NoMethodError
-    # on two types that pass today.
-    #
-    # Neither renderer DRAWS a title, on this branch or on main — 10 of the
-    # 24 renderers do. That is a pre-existing gap in those renderers, not
-    # something this change introduces, and the assertions below say only
-    # that the diagrams render.
-    it "renders a block diagram carrying a frontmatter title" do
+  describe "#render types whose renderer never draws a title" do
+    # `title` lives on Diagram::Base and every model has it already, so
+    # `apply_frontmatter_title` never raises NoMethodError on any type —
+    # that was true before this change too. What these guard against is
+    # narrower: block and requirement diagrams are two types whose RENDERER
+    # doesn't draw a title at all, so a frontmatter title flowing into
+    # `diagram.title=` on one of them must not raise or otherwise break the
+    # render, even though the title never becomes visible in the output.
+    # The assertions below say only that the diagrams render.
+    it "does not raise setting a frontmatter title on a block diagram" do
       xml = engine.render("---\ntitle: T\n---\nblock-beta\n  A\n")
 
       expect(xml).to include("<svg")
     end
 
-    it "renders a requirement diagram carrying a frontmatter title" do
+    it "does not raise setting a frontmatter title on a requirement diagram" do
       source = "---\ntitle: T\n---\nrequirementDiagram\n" \
                "requirement R {\nid: 1\ntext: t\nrisk: low\n" \
                "verifymethod: test\n}\n"

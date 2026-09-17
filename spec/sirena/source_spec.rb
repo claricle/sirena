@@ -147,7 +147,7 @@ RSpec.describe Sirena::Source do
           .to raise_error(Sirena::Engine::PipelineError, /does not accept/)
       end
 
-      it "leaves an ordinary comment alone for every type" do
+      it "leaves an ordinary comment alone before a flowchart" do
         expect { Sirena::Engine.new.render("%% note\nflowchart LR\n  A-->B\n") }
           .not_to raise_error
       end
