@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'error/diagram_type_error'
+require_relative 'error/pipeline_error'
+
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
   #
@@ -17,12 +20,6 @@ module Sirena
   #   engine = Sirena::Engine.new
   #   svg = engine.render(source, verbose: true)
   class Engine
-    # Error raised when diagram type cannot be detected
-    class DiagramTypeError < Error; end
-
-    # Error raised during pipeline execution
-    class PipelineError < Error; end
-
     # Mapping of diagram syntax prefixes to diagram types.
     #
     # A direction glyph needs no gap after the flowchart keyword. mmdc

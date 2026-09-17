@@ -2,6 +2,7 @@
 
 require 'parslet'
 require_relative '../error'
+require_relative '../error/parse_error'
 
 module Sirena
   module Parser
@@ -132,9 +133,5 @@ module Sirena
         "#{line.to_s[0, column - 1].to_s.gsub(/[^\t]/, ' ')}^"
       end
     end
-
-    # Error raised during parsing. A Sirena::Error so Engine#render can let
-    # it propagate unwrapped instead of collapsing it into PipelineError.
-    class ParseError < Sirena::Error; end
   end
 end

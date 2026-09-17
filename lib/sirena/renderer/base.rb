@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../error'
+require_relative '../error/render_error'
 
 module Sirena
   module Renderer
@@ -255,10 +256,5 @@ module Sirena
         # Subclasses can implement this to add arrow markers
       end
     end
-
-    # Error raised during rendering. A Sirena::Error so Engine#render can
-    # let it propagate unwrapped instead of collapsing it into
-    # PipelineError.
-    class RenderError < Sirena::Error; end
   end
 end
