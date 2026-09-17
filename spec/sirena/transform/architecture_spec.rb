@@ -314,6 +314,41 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
         expect(graph[:groups]).to be_empty
       end
     end
+
+    context "with a cyclic group parent chain" do
+      # group a in b / group b in a - grammar-valid (nothing upstream
+      # validates that Group#parent_id chains terminate). group_depth walks
+      # that chain to order calculate_group_bounds' deepest-first pass;
+      # without its `seen` cutoff this recurses forever. ArchitectureRenderer
+      # has the equivalent guard for ancestor_group_ids, proven the same way
+      # (spec/sirena/renderer/architecture_spec.rb, "with a cyclic group
+      # parent chain") - this is group_depth's own version of that proof.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s1", label: "S1", icon: "server", group_id: "a"),
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s2", label: "S2", icon: "server", group_id: "b"),
+          ],
+          junctions: [],
+          groups: [
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "a", label: "A", icon: "cloud", parent_id: "b"),
+            Sirena::Diagram::ArchitectureDiagram::Group.new(id: "b", label: "B", icon: "cloud", parent_id: "a"),
+          ],
+          edges: []
+        )
+      end
+
+      it "does not loop forever ordering group bounds" do
+        expect { Timeout.timeout(2) { transform.to_graph(diagram) } }.not_to raise_error
+      end
+
+      it "still gives each group a finite bounding box around its own service" do
+        graph = Timeout.timeout(2) { transform.to_graph(diagram) }
+
+        expect(graph[:groups]["a"][:width]).to be_a(Numeric).and be_finite
+        expect(graph[:groups]["b"][:width]).to be_a(Numeric).and be_finite
+      end
+    end
   end
 
   describe "#position_junctions (direct)" do
