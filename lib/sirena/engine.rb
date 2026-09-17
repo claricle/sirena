@@ -66,6 +66,15 @@ module Sirena
       @verbose = verbose
       @theme = load_theme(theme)
       @today = today
+    rescue *EXHAUSTION_ERRORS => e
+      # Theme loading parses attacker-supplied YAML, and it happens HERE --
+      # before `render` is ever called, so `render`'s own rescue cannot see
+      # it. A host embedding sirena and catching `StandardError` still loses
+      # its whole process, because neither exhaustion class is one.
+      #
+      # Reproduce with a theme whose YAML nests 2000 deep:
+      #   Sirena::Engine.new(theme: bomb_path)   # raised raw SystemStackError
+      raise PipelineError, "Theme loading failed: #{e.message}"
     end
 
     # Renders Mermaid source code to SVG.
@@ -121,6 +130,22 @@ module Sirena
       # erase exactly the field the corpus harness records as `stage`, so
       # let it propagate unwrapped instead.
       raise
+    rescue *EXHAUSTION_ERRORS => e
+      # `EXHAUSTION_ERRORS` are not `StandardError`, so without naming them
+      # here a deeply nested document takes the whole host down instead of
+      # failing one render.
+      #
+      # The message carries `e.message` only, never `e.backtrace`. A real
+      # stack overflow's backtrace runs to thousands of frames -- measured
+      # at 1,044,280 bytes for one bomb through an unguarded type -- and
+      # embedding that here meant every failure in a batch kept a
+      # megabyte-sized string alive in `BatchCommand`'s error list: the
+      # very structure meant to survive exhaustion re-accumulating it.
+      # Raising inside the rescue that caught `e` chains it onto
+      # `PipelineError` as `cause` automatically, so `e` and its backtrace
+      # are still one `.cause` away for anyone debugging; they are just
+      # not baked into the string every caller of `#message` receives.
+      raise PipelineError, "Rendering failed: #{e.message}"
     rescue StandardError => e
       # A failure with no layer error of its own. `e` becomes `cause`
       # automatically because we are still inside the rescue; never
