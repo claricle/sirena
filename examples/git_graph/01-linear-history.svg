@@ -3,6 +3,7 @@
  height="380.0"
  viewBox="0 0 640.0 380.0"
  version="1.2"
+ baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <line fill="none" stroke="#db2777" stroke-width="2" x1="200.0" y1="220.0" x2="280.0" y2="220.0"/>

@@ -2,6 +2,7 @@
 
 require 'lutaml/model'
 require_relative 'element'
+require_relative 'numbers'
 require_relative 'tspan'
 
 module Sirena
@@ -24,7 +25,47 @@ module Sirena
       attribute :content, :string, collection: true
       attribute :tspans, Tspan, collection: true
 
-      writes_attributes :x, :y, :dx, :dy, :text_anchor, :font_family, :font_size, :font_weight, :font_style, :dominant_baseline
+      # How far below `y` the baseline sits, in ems -- stands in for
+      # `dominant-baseline` (rejected under :metanorma). Conventional
+      # approximations, NOT font metrics: `central` is deliberately
+      # collapsed onto `middle` since Sirena has none. An unnamed value
+      # stays on the alphabetic baseline (deliberate for `mathematical`).
+      #
+      # Needs a unitless font size in user units; a relative size from
+      # a foreign document (`2em`) has no parent to resolve against and
+      # reads as the bare number.
+      BASELINE_SHIFTS = {
+        'middle' => 0.35,
+        'central' => 0.35,
+        'hanging' => 0.8,
+        'text-before-edge' => 0.8,
+        'text-after-edge' => -0.2,
+        'ideographic' => -0.2
+      }.freeze
+
+      # The CSS initial font-size, used when a Text carries a baseline
+      # request but no size of its own. Every renderer sets one; this keeps
+      # a hand-built element from shifting by an arbitrary amount.
+      DEFAULT_FONT_SIZE = 16.0
+      private_constant :BASELINE_SHIFTS, :DEFAULT_FONT_SIZE
+
+      # `dx` and `dy` are folded into x/y rather than emitted. They stay in the
+      # xml block below, which is what `from_xml` reads: a parsed offset is
+      # honoured the same way a set one is.
+      #
+      # Written out rather than declared with .writes_attributes, because
+      # `x` and `y` are emitted from computed readers — see #offset_x and
+      # #baseline_y.
+      ATTRIBUTE_PAIRS = [
+        ['x', :offset_x],
+        ['y', :baseline_y],
+        ['text-anchor', :text_anchor],
+        ['font-family', :font_family],
+        ['font-size', :font_size],
+        ['font-weight', :font_weight],
+        ['font-style', :font_style]
+      ].map(&:freeze).freeze
+      private_constant :ATTRIBUTE_PAIRS
 
       xml do
         root 'text', mixed: true
@@ -44,26 +85,70 @@ module Sirena
         map_attribute 'stroke-width', to: :stroke_width
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
         map_attribute 'dominant-baseline', to: :dominant_baseline
 
         map_content to: :content
         map_element 'tspan', to: :tspans
       end
 
-      # Override to_xml to include text content.
+      protected
+
+      # A text element carries content, so it is not the self-closing tag
+      # the base class writes.
       #
       # `content` is a collection because lutaml-model 0.8 requires that
       # under `mixed: true`. Renderers assign a plain String, but
       # `from_xml` yields an Array, so join rather than interpolate —
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
+      # Content may hold newlines, so this is the one entry in #xml_lines
+      # that is not a single line. It is why Group indents entries rather
+      # than lines.
       #
       # Every renderer call site sets exactly one of `content`/`tspans`, but
       # `from_xml` populates both independently from ordinary mixed SVG
       # content (`<text>foo<tspan>bar</tspan></text>`), so `body` has to
       # decide how to put them back together — see it for how true
       # interleaving is preserved rather than assumed away.
-      def to_xml
+      #
+      # @return [String] XML string
+      def element_markup
         "<text#{build_attributes}>#{body}</text>"
+      end
+
+      def element_attributes
+        attribute_pairs(ATTRIBUTE_PAIRS)
+      end
+
+      # SVG dx/dy are per-glyph offset lists. Their :float declarations make
+      # lutaml keep only the leading number before this method sees the value.
+      def offset_x
+        offset = Numbers.read(dx)
+        return x if offset.nil?
+
+        computed_x = (Numbers.read(x) || 0.0) + offset
+        return x unless computed_x.finite?
+
+        Numbers.write(computed_x)
+      end
+
+      # `y` with the baseline request folded in.
+      #
+      # Returns the reader untouched when there is no shift, so a Text that
+      # never asked for one serialises exactly as it did before. It is also
+      # the only usable fallback when the computed coordinate overflows.
+      #
+      # @return [Object, nil] the y attribute value
+      def baseline_y
+        shift = baseline_shift
+        offset = Numbers.read(dy)
+        return y if shift.zero? && offset.nil?
+
+        computed_y = (Numbers.read(y) || 0.0) + (offset || 0.0) + shift
+        return y unless computed_y.finite?
+
+        Numbers.write(computed_y)
       end
 
       private
@@ -133,6 +218,19 @@ module Sirena
         tspan_slots = element_order.count { |node| node.node_type == :element && node.name == 'tspan' }
 
         Array(content).size == text_slots && Array(tspans).size == tspan_slots
+      end
+
+      # May be non-finite when the font size is: #baseline_y is the one place
+      # that can fall back, so the check lives there rather than here too.
+      #
+      # @return [Float] the baseline offset in user units
+      def baseline_shift
+        return 0.0 if Escaping.blank?(dominant_baseline)
+
+        ems = BASELINE_SHIFTS.fetch(dominant_baseline.to_s.strip.downcase, 0.0)
+        return 0.0 if ems.zero?
+
+        ems * (Numbers.read(font_size) || DEFAULT_FONT_SIZE)
       end
     end
   end

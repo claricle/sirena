@@ -31,16 +31,23 @@ module Sirena
         map_attribute 'font-weight', to: :font_weight
         map_attribute 'font-style', to: :font_style
         map_attribute 'fill', to: :fill
+        map_attribute 'fill-opacity', to: :fill_opacity
+        map_attribute 'stroke', to: :stroke
+        map_attribute 'stroke-width', to: :stroke_width
+        map_attribute 'stroke-opacity', to: :stroke_opacity
+        map_attribute 'opacity', to: :opacity
 
         map_content to: :content
       end
 
-      # Override to_xml to include text content, mirroring Text#to_xml:
+      protected
+
       # `content` is a collection because lutaml-model 0.8 requires that
       # under `mixed: true`, so join rather than interpolate.
-      def to_xml
-        attrs = build_attributes
-        "<tspan#{attrs}>#{Escaping.escape_text(Array(content).join)}</tspan>"
+      #
+      # @return [String] XML string
+      def element_markup
+        "<tspan#{build_attributes}>#{Escaping.escape_text(Array(content).join)}</tspan>"
       end
     end
   end

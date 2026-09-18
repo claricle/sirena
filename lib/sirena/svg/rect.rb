@@ -25,12 +25,7 @@ module Sirena
       # in the corpus.
       #
       # The attribute declaration and its lutaml mapping below stay, so
-      # fill-opacity itself parses and re-emits exactly once. That is NOT the
-      # same as a Rect round-tripping in full: the mapping block omits
-      # stroke_opacity, which Element declares and emits, so a from_xml Rect
-      # leaves that one unset. Harmless, since an unset lutaml attribute is
-      # treated as absent, but it is a separate gap and not a claim to make
-      # here.
+      # fill-opacity itself parses and re-emits exactly once.
       writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray
 
       xml do
@@ -50,6 +45,7 @@ module Sirena
         map_attribute 'stroke-dasharray', to: :stroke_dasharray
         map_attribute 'transform', to: :transform
         map_attribute 'opacity', to: :opacity
+        map_attribute 'stroke-opacity', to: :stroke_opacity
       end
     end
   end
