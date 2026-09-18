@@ -46,6 +46,15 @@ RSpec.describe Sirena::Svg do
       expect(rect(fill_opacity: '0.3').to_xml).to eq('<rect fill-opacity="0.3"/>')
     end
 
+    # An empty opacity="" is syntactically legal XML and means "not set", not
+    # zero. lutaml-model would coerce a :float attribute to 0.0 here, which
+    # composed_opacity cannot tell apart from a genuine opacity of zero --
+    # opacity is :string so Numbers.read sees the real "" and returns nil.
+    it 'leaves the components alone when opacity is the empty string' do
+      expect(Sirena::Svg::Rect.from_xml('<rect opacity="" fill-opacity="0.9"/>').to_xml)
+        .to eq('<rect fill-opacity="0.9"/>')
+    end
+
     # Nothing in the gem writes one, but the attribute is public. Inventing a
     # factor for a keyword would emit a number nobody asked for.
     it 'leaves a component it cannot multiply exactly as it was' do

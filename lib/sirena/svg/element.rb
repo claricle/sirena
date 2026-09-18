@@ -21,7 +21,7 @@ module Sirena
       attribute :stroke, :string
       attribute :stroke_width, :string
       attribute :stroke_opacity, :string
-      attribute :opacity, :float
+      attribute :opacity, :string
 
       # class_name is the only reader whose SVG name is not just its own
       # with underscores hyphenated.
