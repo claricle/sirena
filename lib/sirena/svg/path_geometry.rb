@@ -5,28 +5,19 @@ require 'strscan'
 module Sirena
   module Svg
     # Where a path starts and ends, and which way it is travelling there.
+    # Only the two ends matter (for drawing an arrowhead), so this walks
+    # commands for the current point and never builds the curves.
     #
-    # Needed because SVG Tiny 1.2 has no markers, so an arrowhead has to be
-    # drawn as its own shape at the right place and angle. Only the two ends
-    # matter, so this walks the commands for the current point and never
-    # builds the curves.
+    # A proper arc (not the zero-radius case, which SVG treats as a
+    # line) yields NO heading rather than guessing wrong -- its chord
+    # is not its tangent. Sirena never emits an arc on a path carrying
+    # a marker, so this never actually drops a head; computing one
+    # correctly would need the arc's centre parameterisation.
     #
-    # Curve tangents are taken from the adjacent control point, which is the
-    # exact tangent for a Bezier. A proper arc has no control point, and its
-    # chord is not its tangent — on a half-circle the two are 90 degrees apart
-    # — so it yields no heading rather than a head pointing the wrong way. A
-    # zero-radius arc is the exception because SVG renders it as a straight
-    # line. Sirena emits proper arcs only on rounded shapes and pie slices,
-    # never on a path carrying a marker, so nothing it renders loses an
-    # arrowhead to this; getting one there needs the arc's centre
-    # parameterisation.
-    #
-    # An unrecognised byte is skipped, and any numbers after it are read as
-    # more arguments for the command in force, which can move the anchor to a
-    # point the path never reaches. This is deliberate leniency, like #flush
-    # dropping a short argument group. It is reachable only through from_xml
-    # on a foreign document because no Sirena renderer emits malformed path
-    # data.
+    # An unrecognised byte is skipped and following numbers are read as
+    # more arguments for the command in force -- deliberate leniency,
+    # reachable only via from_xml on a foreign document (no Sirena
+    # renderer emits malformed path data).
     class PathGeometry
       # One anchor: a point on the path and the unit direction of travel
       # through it.

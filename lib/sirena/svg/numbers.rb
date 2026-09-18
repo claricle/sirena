@@ -6,16 +6,11 @@ module Sirena
   module Svg
     # Reading and writing the numbers that end up in SVG attributes.
     #
-    # Several callers needed the same two things and each would have grown
-    # its own version: turn whatever an attribute is holding into a Float, and
-    # turn a computed Float back into an attribute value that does not read
-    # as floating-point noise.
-    #
-    # `read` has to cope with more than Float(). lutaml-model leaves an unset
-    # attribute holding a sentinel object rather than nil, renderers assign
-    # opacities as strings, and a font size may carry a unit (`14px`). Any
-    # value it cannot make sense of comes back nil, which every caller treats
-    # as "not set" rather than as zero.
+    # `read` copes with more than Float(): lutaml-model leaves an unset
+    # attribute holding a sentinel object rather than nil, renderers
+    # assign opacities as strings, and a font size may carry a unit
+    # (14px). Anything it can't parse comes back nil -- treat that as
+    # "not set", never as zero.
     module Numbers
       # A leading SVG number: optional sign, digits with an optional decimal
       # part, optional exponent. Anything after it (a `px` unit, whitespace)

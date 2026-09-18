@@ -9,28 +9,17 @@ module Sirena
   module Svg
     # Draws the arrowheads a path asks for.
     #
-    # SVG Tiny 1.2 — the table the svg_conform :metanorma profile enforces —
-    # lets a `<marker>` be defined inside `<defs>` and gives no way to
-    # reference one: `marker-end` is not an allowed attribute on any element.
-    # So a marker request is honoured by drawing the arrowhead instead.
+    # SVG Tiny 1.2 (:metanorma profile) has no way to reference a
+    # <marker>, so marker-end="url(#...)" resolves to nothing -- draw
+    # the head directly here rather than adding <marker>/<defs> wiring.
     #
-    # Nothing was drawn before this either. The five renderers that ask for a
-    # head — flowchart, state_diagram, architecture, block and requirement —
-    # set `marker-end="url(#arrowhead)"`, and no document ever defined
-    # `#arrowhead`, so the request reached the document and resolved to
-    # nothing. sequence draws its own heads and asks for no marker.
+    # Visibility depends on where the renderer ends its edges, not this
+    # class -- edges stopping at the node boundary show it; centre-to-
+    # centre edges bury it under the node painted after (layout's bug
+    # in Engine#layout_graph, not this one's).
     #
-    # Whether the head is visible depends on where the renderer ends its
-    # edges. Ones that stop at the node boundary show it: across the 82 heads
-    # in the shipped examples, requirement draws 4 of 4 in the open and
-    # architecture 5 of 7. Ones that run centre to centre bury it under the
-    # target node, which is painted after the edge — flowchart hides all 39
-    # and state_diagram all 28, and block, which does both, shows 2 of 4.
-    # That is the fallback grid in Engine#layout_graph, not this class, and
-    # it is layout's to fix.
-    #
-    # Sirena has one marker and it is an arrowhead, so the reference is read
-    # as "put an arrowhead here" rather than looked up.
+    # Sirena has exactly one marker, so any reference is read as "draw
+    # an arrowhead" rather than looked up by name.
     class Arrowhead
       # Chosen by eye as stroke-width multiples so the head scales with the
       # line. These are not derived from mermaid-js's marker proportions.

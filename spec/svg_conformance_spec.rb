@@ -7,24 +7,12 @@ require 'rexml/document'
 require 'timeout'
 require 'yaml'
 
-# The gate. Sirena's SVG is embedded straight into Metanorma documents, so
-# "renders something" is not the bar — the document has to be conformant, and
-# it has to stay conformant when a renderer changes.
-#
-# Three populations, because they fail for different reasons:
-#
-#   * The SVGs under examples/ ship inside the gem. The gemspec packages
-#     whatever `git ls-files` returns, so a stale or empty file there goes out
-#     to every user. These are checked as files, not as renders.
-#   * The reference fixtures are the per-type shape the rest of the suite
-#     already trusts.
-#   * The mermaid corpus is the wide net: 1,997 sources across every diagram
-#     type, and the only place an attribute a single renderer emits shows up.
-#
-# The corpus pass renders all 1,997 sources and validates every document they
-# produce, with a floor guarding the rendered population. Worth every one of
-# them: each of the four conformance defects this gate was written for came out
-# of a renderer no unit spec covered.
+# The gate: output must stay svg_conform-conformant, not just "renders
+# something". Three populations checked differently because they fail
+# differently -- examples/ SVGs as shipped FILES (gemspec-packaged, so a
+# stale one ships to every user), reference fixtures as the per-type
+# shape, and the 1,997-source mermaid corpus as the wide net (floor-
+# guarded, not counted -- see CONFORMANCE_RENDERABLE_FILE below).
 CONFORMANCE_ROOT = File.expand_path('..', __dir__)
 
 # Asked of the gemspec rather than globbed, because the gemspec is what
@@ -40,19 +28,13 @@ CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'fixt
 CONFORMANCE_CORPUS_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', '*', '*.mmd')).freeze
 CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*', '*.mmd')).freeze
 
-# Which corpus cases render to a document today, by name. A count was the
-# first attempt and it was not enough: a case that regresses out of the
-# population while another gains its way in leaves the total where it was, so
-# the offender list is drawn from a different set and the gate stays green.
-# Identity sees the swap a number cannot.
-#
-# A floor, not an equality: additions are free, because item 06 raises this
-# every week and this gate must not stand in the way. Only a case that STOPS
-# rendering fails it.
+# Which corpus cases render today, by NAME not count -- a count can't see
+# a regressing case swap places with a gaining one. A floor, not an
+# equality: additions are free (item 06 raises this weekly), only a case
+# that STOPS rendering fails it.
 #
 # Regenerate after a real gain with
-# `CONFORMANCE_WRITE_RENDERABLE=1 bundle exec rspec spec/svg_conformance_spec.rb`,
-# which writes the file from the same predicate the gate reads it with.
+# `CONFORMANCE_WRITE_RENDERABLE=1 bundle exec rspec spec/svg_conformance_spec.rb`.
 CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'corpus-renderable.txt')
 
 # The size the baseline itself must not fall below. It guards the guard: an
@@ -78,16 +60,10 @@ RSpec.describe Sirena::Svg do
     SvgConform.validate(svg, profile: Sirena::Svg::CONFORMANCE_PROFILE)
   end
 
-  # svg_conform 0.2.1 reports on the elements and attributes it can find and
-  # never parses: measured against the real checker, it answers `valid?` for
-  # an unclosed tag, a mismatched pair, a raw `&`, a missing `</svg>` and for
-  # trailing junk after the root. So conformance alone would keep this gate
-  # green on output no XML parser would accept, which is the one thing a
-  # document embedded in Metanorma may not be.
-  #
-  # REXML is the whole check because Escaping escapes every `&` and strips
-  # the code points XML forbids, so Sirena cannot emit the undeclared entity
-  # REXML is lenient about.
+  # Needed alongside svg_conform, not redundant with it: svg_conform never
+  # parses, so it answers `valid?` true for an unclosed tag, a mismatched
+  # pair, a raw `&`, a missing `</svg>` -- don't drop this assuming
+  # conformance alone catches malformed XML.
   #
   # @return [String, nil] the parse error, or nil when the document parses
   def parse_error(svg)

@@ -25,42 +25,25 @@ module Sirena
       attribute :content, :string, collection: true
       attribute :tspans, Tspan, collection: true
 
-      # How far below `y` the baseline sits, in ems, for each value this map
-      # approximates. Renderers set only `middle`, `hanging` and `auto`;
-      # `central`, `text-before-edge`, `text-after-edge` and `ideographic`
-      # are reachable only through `from_xml`.
+      # How far below `y` the baseline sits, in ems, standing in for
+      # `dominant-baseline` (which SVG Tiny 1.2 / :metanorma rejects on
+      # <text>): the same shift applied to `y` reproduces the property's
+      # intent whether or not a renderer supports it.
       #
-      # SVG Tiny 1.2 has no `dominant-baseline`, so the svg_conform
-      # :metanorma profile rejects it on `<text>`. Renderers set it to say
-      # "centre this label on y" or "hang it below y", and that intent
-      # survives the translation: the same shift applied to `y` puts the
-      # baseline where the property would have put it, in a renderer that
-      # supports the property and in one that does not.
+      # These are conventional em approximations, NOT real font-metric
+      # measurements -- Sirena has no font metrics, so `central`
+      # (~0.5em, midpoint of ascent/descent) is deliberately collapsed
+      # onto `middle` (~0.35em, half x-height) rather than kept distinct.
       #
-      # These are the conventional em approximations, not measurements. A
-      # real translation reads the font's baseline table — `middle` is half
-      # an x-height, and the edge baselines come from ascent and descent —
-      # and Sirena has no font metrics at all; TextMeasurement approximates
-      # width by character count. `central` is the midpoint of ascent and
-      # descent (~0.5em), while `middle` is half the x-height (~0.35em); Sirena
-      # deliberately collapses them because it has no font metrics to separate
-      # them.
+      # A value this map does not name is left on the alphabetic
+      # baseline -- deliberate for `mathematical`, not a claim its
+      # baseline coincides with it. `use-script`/`no-change`/
+      # `reset-size` can't be resolved here at all.
       #
-      # So 0.35em stands in for half an x-height,
-      # `hanging` for a full ascender below `y`, `text-after-edge` for a
-      # descender above it. Any value the map does not name is left on the
-      # alphabetic baseline. For `mathematical`, that is a deliberate
-      # approximation rather than a claim that its baseline coincides with
-      # the alphabetic one. Contextual values such as `use-script`,
-      # `no-change` and `reset-size` cannot be resolved here either.
-      #
-      # Renderers set only `middle`, `hanging` and `auto`, and all three are
-      # reachable: radar.rb picks between them per axis label by angle.
-      #
-      # The shift is in ems, so it needs a font size in user units. Every
-      # renderer writes one unitless, which is what Numbers.read expects; a
-      # relative size parsed in from a foreign document (`2em`) would be read
-      # as the bare number, since there is no parent size to resolve against.
+      # The shift needs a unitless font size in user units (what
+      # Numbers.read expects); a relative size from a foreign document
+      # (`2em`) has no parent size to resolve against and reads as the
+      # bare number.
       BASELINE_SHIFTS = {
         'middle' => 0.35,
         'central' => 0.35,

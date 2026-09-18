@@ -183,29 +183,19 @@ module Sirena
 
       # Multiplies a component opacity by the whole-element one.
       #
-      # The translation is exact where a shape paints only one of fill and
-      # stroke. Where a stroke overlaps its own fill, the overlap is painted
-      # darker: `1 - (1 - a)^2` instead of `a`. SVG Tiny 1.2 has no object
-      # opacity, so no exact translation exists and this is the deviation
-      # Sirena accepts. It is confined to the inner half of a shape's own
-      # outline; the shipped examples reach it on stroked, filled, translucent
-      # rects such as the quadrant background.
+      # Exact only where a shape paints one of fill/stroke; where a
+      # stroke overlaps its own fill, SVG Tiny 1.2 has no object
+      # opacity so the overlap paints darker (1-(1-a)^2 vs a) --
+      # accepted deviation, not a bug to "fix" here.
       #
-      # On a container they are NOT equivalent, and this makes no attempt to
-      # be. Group opacity composites the group as one rendered surface, while
-      # these two are inherited paint properties: a child setting its own
-      # `fill-opacity` replaces the group's rather than multiplying by it,
-      # and overlapping children composite differently. Nothing sets
-      # `opacity` on a Group, so nothing Sirena emits takes that path — the
-      # six sites set it on leaf shapes: a Path, three Rects, a Text and an
-      # Arrowhead Polygon.
+      # NOT equivalent to Group opacity, and does not try to be: group
+      # opacity composites as one surface, while these are inherited
+      # paint properties a child's own fill-opacity replaces rather
+      # than multiplies. Only leaf shapes set opacity today.
       #
-      # A component value that is not a number is left exactly as it was.
-      # Non-finite operands also leave the component alone because Float::NAN
-      # cannot be clamped and an invalid attribute must not make the document
-      # fail to serialize. Nothing in the gem writes either kind, and
-      # inventing a factor for one would emit a number the caller never asked
-      # for.
+      # Non-numeric or non-finite components are left alone rather
+      # than invented -- do not clamp Float::NAN, it would emit a
+      # value nobody asked for and could break serialization.
       #
       # @param component [Object] fill-opacity or stroke-opacity as set
       # @return [Object, nil] the value to emit
