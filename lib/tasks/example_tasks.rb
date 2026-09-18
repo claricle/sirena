@@ -19,7 +19,6 @@ EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 # The only example sources legitimately unrenderable today.
 EXPECTED_UNRENDERABLE_SOURCES = [
-  'gantt/01-simple-timeline.beta.mmd',
   'packet/01-basic-packet.beta.mmd'
 ].freeze
 
