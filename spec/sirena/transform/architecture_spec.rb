@@ -135,6 +135,35 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
       end
     end
 
+    context "with a junction naming a group nobody declared" do
+      # service s1(server)[S1] / junction j1 in nosuchgroup / s1:R --> L:j1.
+      # `in <group>` names a group_id, not a reference to a declared
+      # Group — nothing upstream checks it resolves. position_junctions
+      # only walks [:root] + diagram.groups.map(&:id), so a group_id
+      # matching no declared group used to make the junction (and its
+      # edge) vanish from the graph with no error at all. Refused up
+      # front by ArchitectureDiagram#valid? instead.
+      let(:diagram) do
+        Sirena::Diagram::ArchitectureDiagram.new(
+          services: [
+            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s1", label: "S1", icon: "server"),
+          ],
+          junctions: [
+            Sirena::Diagram::ArchitectureDiagram::Junction.new(id: "j1", group_id: "nosuchgroup"),
+          ],
+          groups: [],
+          edges: [
+            Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "s1", to_id: "j1", from_position: "R", to_position: "L"),
+          ]
+        )
+      end
+
+      it "raises instead of silently dropping the junction and its edge" do
+        expect { transform.to_graph(diagram) }
+          .to raise_error(Sirena::Transform::TransformError)
+      end
+    end
+
     context "with a junction positioned on the wrong side of a directional edge" do
       # service a(server)[A] / junction j / j:R -- L:a. The junction's
       # default placement lands to the RIGHT of a, but the edge hint asks
@@ -317,12 +346,18 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
 
     context "with a cyclic group parent chain" do
       # group a in b / group b in a - grammar-valid (nothing upstream
-      # validates that Group#parent_id chains terminate). group_depth walks
-      # that chain to order calculate_group_bounds' deepest-first pass;
-      # without its `seen` cutoff this recurses forever. ArchitectureRenderer
-      # has the equivalent guard for ancestor_group_ids, proven the same way
-      # (spec/sirena/renderer/architecture_spec.rb, "with a cyclic group
-      # parent chain") - this is group_depth's own version of that proof.
+      # validates that Group#parent_id chains terminate). A group being
+      # its own ancestor is malformed regardless of whether each cyclic
+      # group happens to carry its own service, so
+      # ArchitectureDiagram#valid? refuses the whole shape up front
+      # (Containment.looping_pair, the same check Flowchart#parent_cycle?
+      # uses) rather than letting group_depth's recursion-cutoff produce a
+      # bounding box for it. That cutoff still exists to keep group_depth
+      # itself from looping forever on a diagram built by hand that
+      # bypasses #valid? — see spec/sirena/renderer/architecture_spec.rb,
+      # "with a cyclic group parent chain", which proves the renderer's
+      # own equivalent guard the same way, on a hand-built layout that
+      # never goes through #valid?.
       let(:diagram) do
         Sirena::Diagram::ArchitectureDiagram.new(
           services: [
@@ -338,15 +373,9 @@ RSpec.describe Sirena::Transform::ArchitectureTransform do
         )
       end
 
-      it "does not loop forever ordering group bounds" do
-        expect { Timeout.timeout(2) { transform.to_graph(diagram) } }.not_to raise_error
-      end
-
-      it "still gives each group a finite bounding box around its own service" do
-        graph = Timeout.timeout(2) { transform.to_graph(diagram) }
-
-        expect(graph[:groups]["a"][:width]).to be_a(Numeric).and be_finite
-        expect(graph[:groups]["b"][:width]).to be_a(Numeric).and be_finite
+      it "refuses the diagram instead of rendering a nonsensical hierarchy" do
+        expect { Timeout.timeout(2) { transform.to_graph(diagram) } }
+          .to raise_error(Sirena::Transform::TransformError)
       end
     end
   end

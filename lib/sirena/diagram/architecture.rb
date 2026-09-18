@@ -2,6 +2,7 @@
 
 require "lutaml/model"
 require_relative "base"
+require_relative "containment"
 
 module Sirena
   module Diagram
@@ -54,13 +55,46 @@ module Sirena
         :architecture
       end
 
-      # Architecture diagrams have no validation rules yet — nothing here
-      # checks group/service/edge references. See TODO.foundation's corpus
-      # burndown for real validation; this is deliberately trivial.
+      # A group cannot be its own ancestor, and every group_id a service,
+      # junction, or another group's parent_id names must belong to a
+      # declared group. Neither the grammar nor the parser refuses either
+      # shape. Left unchecked, a parent_id cycle poisons
+      # ArchitectureTransform's bounding-box arithmetic with
+      # Infinity/-Infinity that later NaNs a comparison, and an undeclared
+      # group_id is silently dropped from the render along with whatever
+      # was placed in it — this stops both at the door instead.
       #
-      # @return [Boolean] true
+      # @return [Boolean] true if the diagram is valid
       def valid?
+        return false if group_parent_cycle?
+        return false unless group_references_resolve?
+
         true
+      end
+
+      private
+
+      # Mirrors Flowchart#parent_cycle? — a group is its own ancestor.
+      #
+      # @return [Boolean] true when some group is its own ancestor
+      def group_parent_cycle?
+        graph = groups.each_with_object({}) do |group, acc|
+          next if group.parent_id.nil?
+
+          acc[group.id] = acc.fetch(group.id, []) | [group.parent_id]
+        end
+
+        !Containment.looping_pair(graph).nil?
+      end
+
+      # @return [Boolean] true when every parent_id and group_id names a
+      #   group actually declared in the diagram
+      def group_references_resolve?
+        known = groups.map(&:id)
+
+        groups.all? { |group| group.parent_id.nil? || known.include?(group.parent_id) } &&
+          services.all? { |service| service.group_id.nil? || known.include?(service.group_id) } &&
+          junctions.all? { |junction| junction.group_id.nil? || known.include?(junction.group_id) }
       end
     end
   end
