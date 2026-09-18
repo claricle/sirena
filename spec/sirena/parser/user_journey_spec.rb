@@ -206,6 +206,34 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to eq(['accTitleNode'])
       end
 
+      it 'matches accTitle/accDescr case-insensitively, as the oracle does' do
+        # Confirmed against mermaid 11.16.1's own compiled journey parser:
+        # `ACCDESCR: 3: Me` is read as a description with no task, not a task
+        # literally named "ACCDESCR".
+        source = "journey\nsection S\nACCDESCR: 3: Me\n"
+
+        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          .to eq([['S', []]])
+      end
+
+      it 'matches a mixed-case braced accDescr opener case-insensitively' do
+        source = "journey\nAccDescr {Desc}\nsection S\nT: 1: M\n"
+
+        expect(parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+          .to eq([['S', ['T']]])
+      end
+
+      it 'still takes a mixed-case keyword whole rather than as a prefix' do
+        # Same boundary as "takes the keyword whole rather than as a prefix"
+        # above, now checked with the keyword upper-cased -- word_ci has no
+        # boundary check of its own, it relies on the required colon failing
+        # to match the next character.
+        prefixed = "journey\nsection S\nACCTITLENODE: 3: Me\n"
+
+        expect(parser.parse(prefixed).sections.first.tasks.map(&:name))
+          .to eq(['ACCTITLENODE'])
+      end
+
       it 'reads a task-shaped directive as a directive' do
         # The shape that forced the colon gap: with the colon required to
         # touch the keyword, this fell through to the task rule and became a

@@ -21,15 +21,26 @@ module Sirena
       # attribute holds it yet.
       rule(:accessibility_decl) { acc_descr_block | acc_line }
 
+      # mermaid's own lexer matches these keywords case-insensitively (e.g.
+      # `ACCDESCR:` is a description, not a task literally named "ACCDESCR").
+      # Mirrors Grammars::StateDiagram#word_ci; duplicated rather than shared
+      # because that method is private to a `StateDiagram < Common` subclass
+      # and this grammar isn't part of that hierarchy.
+      def word_ci(word)
+        word.each_char
+          .map { |ch| ch.match?(/[a-z]/i) ? match["#{ch.downcase}#{ch.upcase}"] : str(ch) }
+          .reduce(:>>)
+      end
+
       # The gap around `:` must stay optional -- mermaid accepts `accDescr : x`.
       # `sp?` here is ASCII-only by design (mermaid's wider `\s` is a known,
       # unclosed gap; see acc_line_space for where the wider set IS required).
       rule(:acc_line) do
-        sp? >> (str('accTitle') | str('accDescr')) >> sp? >> str(':') >>
+        sp? >> (word_ci('accTitle') | word_ci('accDescr')) >> sp? >> str(':') >>
           (nl.absent? >> any).repeat >> (nl | any.absent?)
       end
 
-      rule(:acc_descr_open) { sp? >> str('accDescr') >> sp? >> str('{') }
+      rule(:acc_descr_open) { sp? >> word_ci('accDescr') >> sp? >> str('{') }
 
       # The braced form. The closing brace ends the block; nothing after it on
       # the same line is required -- do not add a line-end requirement here,
