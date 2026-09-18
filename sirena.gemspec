@@ -36,7 +36,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "elkrb"
   spec.add_dependency 'kramdown', '~> 2.5'
-  spec.add_dependency 'lutaml-model', '~> 0.8.0'
+  # Exact pin, not ~>: 0.8.32 broke collection-attribute scalar assignment.
+  spec.add_dependency 'lutaml-model', '= 0.8.31'
   spec.add_dependency 'moxml'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'

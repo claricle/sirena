@@ -133,7 +133,7 @@ RSpec.describe 'StateDiagram Integration' do
       engine = Sirena::Engine.new
 
       expect { engine.render('stateDiagram-v2 direction LR') }
-        .to raise_error(Sirena::Engine::PipelineError, /Parse error/)
+        .to raise_error(Sirena::Parser::ParseError, /Parse error/)
 
       document = REXML::Document.new(
         engine.render("stateDiagram-v2\ndirection LR\nA --> B\n")
@@ -156,7 +156,7 @@ RSpec.describe 'StateDiagram Integration' do
        "stateDiagram-v2 direction LR\nA --> B\n",
        "stateDiagram-v2\tdirection LR\nA --> B\n"].each do |source|
         expect { engine.render(source) }
-          .to raise_error(Sirena::Engine::PipelineError, /Parse error/), source
+          .to raise_error(Sirena::Parser::ParseError, /Parse error/), source
       end
 
       document = REXML::Document.new(
@@ -236,7 +236,7 @@ RSpec.describe 'StateDiagram Integration' do
       %w[class classDef click href scale default note state style
          Class CLASS clAsS NOTE Default classdef].each do |word|
         expect { engine.render("stateDiagram-v2\nA --> #{word}\n") }
-          .to raise_error(Sirena::Engine::PipelineError), word
+          .to raise_error(Sirena::Parser::ParseError), word
       end
 
       %w[classroom notes styles stateful].each do |word|
@@ -268,7 +268,7 @@ RSpec.describe 'StateDiagram Integration' do
 
       expect do
         engine.render("stateDiagram-v2\nstate \"A\\\"B\" as X\n")
-      end.to raise_error(Sirena::Engine::PipelineError, /Parse error/)
+      end.to raise_error(Sirena::Parser::ParseError, /Parse error/)
 
       group = rendered_state("stateDiagram-v2\nstate \"AB\" as X\n", 'X')
       expect(REXML::XPath.match(group, 'text').map(&:text)).to eq(['AB'])
@@ -294,7 +294,7 @@ RSpec.describe 'StateDiagram Integration' do
 
       ["stateDiagram-v2\nA :\n", "stateDiagram-v2\nA :"].each do |source|
         expect { engine.render(source) }
-          .to raise_error(Sirena::Engine::PipelineError, /Parse error/), source
+          .to raise_error(Sirena::Parser::ParseError, /Parse error/), source
       end
 
       state = rendered_state("stateDiagram-v2\nA : \n", 'A')

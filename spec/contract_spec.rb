@@ -149,7 +149,7 @@ RSpec.describe Sirena::DiagramRegistry do
         described_class.register(:kanban, **original, parser: stub_parser)
 
         expect { Sirena::Engine.new.render("kanban\n") }
-          .to raise_error(Sirena::Engine::PipelineError, /Invalid diagram/)
+          .to raise_error(Sirena::Transform::TransformError, /Invalid diagram/)
       ensure
         described_class.register(:kanban, **original)
       end

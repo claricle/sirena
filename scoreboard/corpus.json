@@ -50,9 +50,7 @@
   {
     "case": "architecture/009_rendering_architecture_spec_architecture_8.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/010_rendering_architecture_spec_architecture_9.mmd",
@@ -64,9 +62,7 @@
   {
     "case": "architecture/011_rendering_architecture_spec_architecture_10.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/012_rendering_architecture_spec_architecture_11.mmd",
@@ -100,9 +96,7 @@
   {
     "case": "architecture/017_parser_should_handle_a_simple_radar_definition_16.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/018_parser_should_handle_title_on_the_first_line_17.mmd",
@@ -122,9 +116,7 @@
   {
     "case": "architecture/021_parser_should_handle_multiline_accessibility_description_20.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/022_parsertest_architecture_test_21.mmd",
@@ -161,16 +153,12 @@
   {
     "case": "architecture/028_parsertest_architecture_test_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/029_spec_xss_spec_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "architecture/030_spec_svgdraw_spec_29.mmd",
@@ -199,9 +187,7 @@
   {
     "case": "block/002_rendering_block_spec_block_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "unknown",
-    "exception_class": "Sirena::Engine::PipelineError"
+    "pass": true
   },
   {
     "case": "block/003_rendering_block_spec_block_2.mmd",
@@ -270,9 +256,7 @@
   {
     "case": "block/013_parser_a_node_with_a_square_shape_and_a_label_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "unknown",
-    "exception_class": "Sirena::Engine::PipelineError"
+    "pass": true
   },
   {
     "case": "c4/001_rendering_c4_spec_c4_0.mmd",
@@ -3478,9 +3462,7 @@
   {
     "case": "er/002_platform_yari2_er_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er/003_example_er_2.mmd",
@@ -3888,9 +3870,7 @@
   {
     "case": "er_diagram/001_platform_yari2_0.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er_diagram/002_example_er_1.mmd",
@@ -4451,9 +4431,7 @@
   {
     "case": "er_diagram/042_parser_should_handle_an_accessibility_title__accdescr__41.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er_diagram/043_parser_should_be_possible_to_define_a_class_with_styles_42.mmd",
@@ -4920,9 +4898,7 @@
   {
     "case": "flowchart/030_parser_should_handle_double_edged_nodes_and_edges_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/030_parser_should_handle_open_ended_edges_25.mmd",
@@ -4948,9 +4924,7 @@
   {
     "case": "flowchart/032_parser_should_handle_double_edged_nodes_and_edges_on_thick_arrows_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/032_parser_should_handle_multiple_edges_27.mmd",
@@ -4983,9 +4957,7 @@
   {
     "case": "flowchart/034_parser_should_handle_double_edged_nodes_and_edges_on_dotted_arrows_29.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/035_parser_should_handle_basic_shape_data_statements_30.mmd",
@@ -5160,9 +5132,7 @@
   {
     "case": "flowchart/049_parser_should_handle_cross_ended_edges_44.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/049_parser_should_not_disturb_adding_multiple_nodes_after_each_other_44.mmd",
@@ -5172,9 +5142,7 @@
   {
     "case": "flowchart/050_parser_should_handle_open_ended_edges_45.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/050_parser_should_use_handle_bracket_end_character_inside_the_shape_data_45.mmd",
@@ -6104,44 +6072,32 @@
   {
     "case": "flowchart/157_parser_should_handle_text_without_space_152.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/158_parser_should_handle_with_space_153.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/159_parser_should_handle_text_with___154.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/160_parser_should_handle_space_and_space_between_vertices_and_link_155.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/161_parser_should_handle_space_and_caps_156.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/162_parser_should_handle_space_and_dir_157.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/163_parser_should_handle_space_and_send_158.mmd",
@@ -6160,44 +6116,32 @@
   {
     "case": "flowchart/165_parser_should_handle_space_and_dir__td__160.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/166_parser_should_handle_v_in_node_ids_only_v_161.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/167_parser_should_handle_v_in_node_ids_v_at_end_162.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/168_parser_should_handle_v_in_node_ids_v_in_middle_163.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/169_parser_should_handle_v_in_node_ids__v_at_start_164.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/170_parser_should_handle_keywords_165.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/171_parser_should_handle_keywords_166.mmd",
@@ -6659,30 +6603,22 @@
   {
     "case": "gantt/005_platform_click_security_loose_gantt_4.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/006_platform_click_security_other_gantt_5.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/007_platform_click_security_sandbox_gantt_6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/008_platform_click_security_strict_gantt_7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/009_example_gantt_8.mmd",
@@ -6753,9 +6689,7 @@
   {
     "case": "gantt/021_parser_should_handle_a_dateformat_definition_20.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/022_parser_should_allow_for_a_accessibility_title_and_multiline_description_accdescr__21.mmd",
@@ -7901,9 +7835,7 @@
   {
     "case": "kanban/017_parser_3_should_handle_a_simple_root_definition_with_a_shape_and_without_an_id_abc123_16.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/018_parser_knbn-4_should_not_distinguish_between_deeper_hierarchical_levels_in_the_kanban_definition_17.mmd",
@@ -7928,16 +7860,12 @@
   {
     "case": "kanban/022_parser_knbn-8_should_handle_an_id_and_type_for_a_node_definition_21.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/023_parser_knbn-9_should_handle_an_id_and_type_for_a_node_definition_22.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/024_parser_knbn-13_should_be_possible_to_set_an_icon_for_the_node_23.mmd",
@@ -7991,9 +7919,7 @@
   {
     "case": "kanban/031_parser_knbn-20_should_be_possible_to_have_meaningless_empty_rows_in_a_kanban_abc124_30.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/032_parser_knbn-21_should_be_possible_to_have_comments_in_a_kanban_31.mmd",
@@ -9066,9 +8992,7 @@
   {
     "case": "sequence/002_platform_issue-1874_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/002_rendering_sequencediagram-v2_spec_sequence_1.mmd",
@@ -9080,9 +9004,7 @@
   {
     "case": "sequence/003_platform_issue-1874_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/003_rendering_sequencediagram-v2_spec_sequence_2.mmd",
@@ -9206,9 +9128,7 @@
   {
     "case": "sequence/010_rendering_sequencediagram-v2_spec_sequence_9.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/011_parser_should_handle_two_actors_10.mmd",
@@ -9223,16 +9143,12 @@
   {
     "case": "sequence/011_rendering_sequencediagram-v2_spec_sequence_10.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/012_parser_should_handle_dashes_in_actor_names_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/012_parser_should_handle_two_actors_in_a_box_11.mmd",
@@ -9242,51 +9158,37 @@
   {
     "case": "sequence/012_rendering_sequencediagram-v2_spec_sequence_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/013_parser_should_handle_dashes_in_participant_names_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/013_parser_should_handle_two_actors_with_init_directive_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/013_rendering_sequencediagram-v2_spec_sequence_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/014_parser_should_handle_equals_in_participant_names_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/014_parser_should_handle_two_actors_with_init_directive_with_multiline_directive_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/014_rendering_sequencediagram-v2_spec_sequence_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/015_parser_should_alias_participants_14.mmd",
@@ -9301,9 +9203,7 @@
   {
     "case": "sequence/015_rendering_sequencediagram-v2_spec_sequence_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/016_parser_should_alias_a_mix_of_actors_and_participants_apa12_15.mmd",
@@ -9318,9 +9218,7 @@
   {
     "case": "sequence/016_rendering_sequencediagram-v2_spec_sequence_15.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/017_parser_should_alias_actors_apa13_16.mmd",
@@ -9335,9 +9233,7 @@
   {
     "case": "sequence/017_rendering_sequencediagram-v2_spec_sequence_16.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/018_parser_should_draw_two_actors_notes_to_the_left_17.mmd",
@@ -9376,9 +9272,7 @@
   {
     "case": "sequence/020_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_directive__19.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/020_parser_should_handle_in_sync_messages_19.mmd",
@@ -9388,16 +9282,12 @@
   {
     "case": "sequence/020_rendering_sequencediagram_spec_sequence_19.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/021_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_and_the_init_directive_sets_the_theme_to_dark_20.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/021_parser_should_handle_in_sync_dotted_messages_20.mmd",
@@ -9412,9 +9302,7 @@
   {
     "case": "sequence/022_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_and_the_init_directive_sets_the_theme_to_dark_and_fontfamily_to_menlo_fontsize_to_18_and_fontweight_to_800_21.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/022_parser_should_handle_in_arrow_messages_21.mmd",
@@ -9424,9 +9312,7 @@
   {
     "case": "sequence/022_platform_issue-1874_sequence_21.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/023_parser_should_draw_two_loops_22.mmd",
@@ -9443,9 +9329,7 @@
   {
     "case": "sequence/023_platform_issue-1874_sequence_22.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "sequence/024_example_sequence_23.mmd",
@@ -9477,9 +9361,7 @@
   {
     "case": "sequence/026_spec_diagram-orchestration_spec_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "sequence/027_parser_should_handle_one_leading_space_in_lines_in_a_sequencediagram_26.mmd",
@@ -9489,9 +9371,7 @@
   {
     "case": "sequence/027_spec_diagramapi_spec_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "sequence/028_parser_should_handle_several_leading_spaces_in_lines_in_a_sequencediagram_27.mmd",
@@ -9520,9 +9400,7 @@
   {
     "case": "sequence/030_parser_should_handle_different_line_breaks_29.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/030_spec_diagram_spec_29.mmd",
@@ -9532,23 +9410,17 @@
   {
     "case": "sequence/031_parser_should_handle_notes_and_messages_without_wrap_specified_30.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/031_spec_sequencediagram_spec_30.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "sequence/032_parser_should_handle_notes_and_messages_with_wrap_specified_31.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/032_spec_sequencediagram_spec_31.mmd",
@@ -9560,9 +9432,7 @@
   {
     "case": "sequence/033_parser_should_handle_notes_and_messages_with_nowrap_or_line_breaks_32.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/033_spec_sequencediagram_spec_32.mmd",
@@ -9603,9 +9473,7 @@
   {
     "case": "sequence/036_spec_mermaidapi_spec_35.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "sequence/037_parser_should_handle_opt_statements_36.mmd",
@@ -9804,9 +9672,7 @@
   {
     "case": "state/001_rendering_statediagram-v2_spec_state_0.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/002_example_state_1.mmd",
@@ -9816,16 +9682,12 @@
   {
     "case": "state/003_parser_space_before_and_after_the_colon_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/004_parser_no_spaces_before_and_after_the_colon_3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/005_parser_assemble_assemblies_state_assemble_state_assemblies_4.mmd",
@@ -9835,16 +9697,12 @@
   {
     "case": "state/006_parser_can_define_multiple_attributes_separated_by_commas_5.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/007_parser_can_define_multiple_attributes_separated_by_commas_6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/008_parser_super_simple_7.mmd",
@@ -9933,9 +9791,7 @@
   {
     "case": "state/020_parser_should_handle_state_definitions_with_separation_of_id_19.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/021_parser_should_state_definition_with_quotes_20.mmd",
@@ -9982,30 +9838,22 @@
   {
     "case": "state/027_parser_should_handle_multiline_notes_with_different_line_breaks_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/028_parser_should_handle_floating_notes_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/029_parser_should_handle_floating_notes_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/030_parser_should_handle_notes_for_composite_nested_states_29.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/031_parser_super_simple_30.mmd",
@@ -10101,9 +9949,7 @@
   {
     "case": "state/044_parser_should_handle_state_definitions_with_separation_of_id_43.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/045_parser_should_state_definition_with_quotes_44.mmd",
@@ -10150,16 +9996,12 @@
   {
     "case": "state/051_parser_should_handle_multiline_notes_with_different_line_breaks_50.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/052_parser_should_handle_floating_notes_51.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/053_parser_should_handle_floating_notes_52.mmd",
@@ -10178,51 +10020,37 @@
   {
     "case": "state/055_spec_diagram-orchestration_spec_54.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "state/056_spec_diagram-orchestration_spec_55.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "state/057_spec_diagram-orchestration_spec_56.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "state/058_spec_mermaidapi_spec_57.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "state/059_spec_mermaidapi_spec_58.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "state/060_spec_mermaidapi_spec_59.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state/061_spec_mermaidapi_spec_60.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/001_example_state_0.mmd",
@@ -10232,16 +10060,12 @@
   {
     "case": "state_diagram/002_parser_space_before_and_after_the_colon_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/003_parser_no_spaces_before_and_after_the_colon_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/004_parser_assemble__assemblies__state_assemble__state_assemblies_3.mmd",
@@ -10256,9 +10080,7 @@
   {
     "case": "state_diagram/005_parser_can_define_multiple_attributes_separated_by_commas_4.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/006_parser_an_attribute_can_have_a_dot_in_the_style_5.mmd",
@@ -10270,9 +10092,7 @@
   {
     "case": "state_diagram/006_parser_can_define_multiple_attributes_separated_by_commas_5.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/007_parser_an_attribute_can_have_a_space_in_the_style_6.mmd",
@@ -10312,9 +10132,7 @@
   {
     "case": "state_diagram/009_parser_can_define_multiple_attributes_separated_by_commas_8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/009_parser_simple_with_title_8.mmd",
@@ -10459,9 +10277,7 @@
   {
     "case": "state_diagram/019_parser_should_handle_state_definitions_with_separation_of_id_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/020_parser_should_handle_multiple_recursive_state_definitions_19.mmd",
@@ -10555,9 +10371,7 @@
   {
     "case": "state_diagram/026_parser_should_handle_multiline_notes_with_different_line_breaks_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/027_parser_should_handle_arrow_directions_definitions_26.mmd",
@@ -10569,16 +10383,12 @@
   {
     "case": "state_diagram/027_parser_should_handle_floating_notes_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/028_parser_should_handle_floating_notes_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/028_parser_should_handle_note_statements_27.mmd",
@@ -10590,16 +10400,12 @@
   {
     "case": "state_diagram/029_parser_should_handle_multiline_notes_with_different_line_breaks_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/029_parser_should_handle_notes_for_composite_nested_states_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/030_parser_should_handle_floating_notes_29.mmd",
@@ -10618,7 +10424,9 @@
   {
     "case": "state_diagram/031_parser_should_handle_floating_notes_30.mmd",
     "verdict": "invalid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "state_diagram/031_parser_simple_with_accdescription_30.mmd",
@@ -10866,9 +10674,7 @@
   {
     "case": "state_diagram/043_parser_should_handle_state_definitions_with_separation_of_id_42.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/043_parser_should_state_definition_with_quotes_42.mmd",
@@ -10983,9 +10789,7 @@
   {
     "case": "state_diagram/049_parser_should_handle_multiline_notes_with_different_line_breaks_48.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/049_parser_should_handle_note_statements_48.mmd",
@@ -11004,16 +10808,12 @@
   {
     "case": "state_diagram/050_parser_should_handle_floating_notes_49.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/050_parser_should_handle_multiline_notes_with_different_line_breaks_49.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/051_parser_should_handle_arrow_directions_definitions_50.mmd",
@@ -11025,9 +10825,7 @@
   {
     "case": "state_diagram/051_parser_should_handle_floating_notes_50.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/052_parser_should_handle_floating_notes_51.mmd",
@@ -11046,16 +10844,12 @@
   {
     "case": "state_diagram/052_parser_should_handle_notes_for_composite_nested_states_51.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/053_parser_should_handle_multiline_notes_with_different_line_breaks_52.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/053_parser_should_handle_notes_for_composite_states_52.mmd",
@@ -11179,9 +10973,7 @@
   {
     "case": "state_diagram/066_parser_should_handle_state_definitions_with_separation_of_id_65.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/067_parser_should_state_definition_with_quotes_66.mmd",
@@ -11228,16 +11020,12 @@
   {
     "case": "state_diagram/073_parser_should_handle_multiline_notes_with_different_line_breaks_72.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/074_parser_should_handle_floating_notes_73.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/075_parser_should_handle_floating_notes_74.mmd",
@@ -11347,9 +11135,7 @@
   {
     "case": "state_diagram/090_parser_should_handle_state_definitions_with_separation_of_id_89.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/091_parser_should_state_definition_with_quotes_90.mmd",
@@ -11396,16 +11182,12 @@
   {
     "case": "state_diagram/097_parser_should_handle_multiline_notes_with_different_line_breaks_96.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/098_parser_should_handle_floating_notes_97.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "state_diagram/099_parser_should_handle_floating_notes_98.mmd",
@@ -11583,50 +11365,40 @@
     "case": "unknown/004_platform_class_3.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/005_platform_class_4.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/006_platform_click_security_loose_5.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/007_platform_click_security_other_6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/008_platform_click_security_sandbox_7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/009_platform_click_security_strict_8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/010_platform_css1_9.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/011_platform_darshan_10.mmd",
@@ -11644,43 +11416,41 @@
     "case": "unknown/013_platform_gitgraph_12.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/014_platform_gitgraph2_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/015_platform_knsv_14.mmd",
     "verdict": "invalid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/016_platform_knsv_15.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/017_platform_knsv_16.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/018_platform_knsv_17.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/019_platform_knsv3_18.mmd",
@@ -11695,16 +11465,12 @@
   {
     "case": "unknown/021_platform_marker_unique_id_20.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/022_platform_marker_unique_id_21.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/023_platform_marker_unique_id_22.mmd",
@@ -11863,44 +11629,32 @@
   {
     "case": "unknown/045_platform_theme-directives_44.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/046_platform_theme-directives_45.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/047_platform_theme-directives_46.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/048_platform_theme-directives_47.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/049_platform_theme-directives_48.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/050_platform_theme-directives_49.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/051_platform_vertices_50.mmd",
@@ -11910,23 +11664,17 @@
   {
     "case": "unknown/052_platform_xss2_51.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/053_platform_xss2_52.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/054_platform_xss2_53.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/055_platform_xss3_54.mmd",
@@ -11994,9 +11742,7 @@
   {
     "case": "unknown/064_platform_yari_63.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/065_platform_yari_64.mmd",
@@ -12100,8 +11846,8 @@
     "case": "unknown/079_platform_yari2_78.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/080_parser_should_handle_nested_namespaces_and_relationships_79.mmd",
@@ -12111,9 +11857,7 @@
   {
     "case": "unknown/081_parser_should_parse_diagram_with_direction_80.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/082_parser_should_handle_a_sequencediagram_definition_with_a_title__81.mmd",
@@ -12174,16 +11918,12 @@
   {
     "case": "user_journey/004_parser_should_handle_a_title_definition_3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/004_parser_should_handle_an_accessibility_description_accdescr__3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/004_rendering_journey_spec_user_journey_3.mmd",
@@ -12195,9 +11935,7 @@
   {
     "case": "user_journey/005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/005_platform_user-journey_user_journey_4.mmd",
@@ -12236,23 +11974,17 @@
   {
     "case": "user_journey/008_parser_should_handle_an_accessibility_description_accdescr__7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/009_parser_should_handle_a_title_definition_8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/009_parser_should_handle_an_accessibility_multiline_description_accdescr__8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/010_parser_should_handle_a_section_definition_9.mmd",
@@ -12274,9 +12006,7 @@
   {
     "case": "user_journey/013_parser_should_handle_a_title_definition_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/014_spec_diagram-orchestration_spec_13.mmd",
