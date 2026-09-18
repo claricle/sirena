@@ -81,7 +81,7 @@ RSpec.describe Sirena::Svg do
     # Sirena wrote and Sirena re-read loses the fraction entirely -- which is
     # what happened before every class mapped them.
     it 'keeps the translated opacity when its own output is read back' do
-      lossy = %w[Rect Circle Ellipse Line Polygon Polyline Path Text Group].reject do |name|
+      lossy = %w[Rect Circle Ellipse Line Polygon Polyline Path Text Group Tspan].reject do |name|
         klass = described_class.const_get(name)
         subject = klass.new
         subject.opacity = 0.3
