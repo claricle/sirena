@@ -147,29 +147,25 @@ module Sirena
       def parse(source)
         grammar = UserJourneyGrammar.new
 
-        begin
-          tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Parse error: #{e.parse_failure_cause.ascii_tree}"
-        rescue EncodingError => e
-          # The accessibility rules' \uXXXX-escaped regexps carry a fixed
-          # encoding, so a non-UTF-8 source can reach them and Parslet lets
-          # the error escape raw. Catch the whole family, not one subclass --
-          # which one raises depends only on which regexp the source hits
-          # first. Re-raise as ParseError: that's the contract Base#parse
-          # documents.
-          raise ParseError, "Parse error: #{e.message}"
-        rescue ArgumentError => e
-          # A UTF-8-tagged string with an invalid byte sequence never reaches
-          # a grammar rule at all: Parslet::Source.new raises ArgumentError
-          # ("invalid byte sequence in UTF-8") from StringScanner while
-          # indexing line endings, before parsing starts. Same contract as
-          # the EncodingError branch above -- re-raise as ParseError rather
-          # than let a Ruby core class escape raw.
-          raise ParseError, "Parse error: #{e.message}"
-        end
-
+        tree = grammar.parse(source)
         build_diagram_from_tree(tree)
+      rescue Parslet::ParseFailed => e
+        raise ParseError, "Parse error: #{e.parse_failure_cause.ascii_tree}"
+      rescue EncodingError, ArgumentError => e
+        # Two distinct routes land here, both re-raised the same way. (1) The
+        # accessibility rules' \uXXXX-escaped regexps carry a fixed encoding,
+        # so a non-UTF-8 source can reach them and Parslet lets the
+        # EncodingError escape raw; a UTF-8-tagged string with an invalid
+        # byte sequence never reaches a grammar rule at all --
+        # Parslet::Source.new raises ArgumentError from StringScanner while
+        # indexing line endings, before parsing starts. (2) A source valid in
+        # some OTHER encoding (e.g. Big5-HKSCS) can pass grammar parsing, then
+        # raise ArgumentError from build_diagram_from_tree's `String#strip`
+        # calls -- so this rescue must wrap the whole method, not just
+        # grammar.parse. Re-raise as ParseError rather than let a Ruby core
+        # class escape raw: that's the contract parse_with_grammar documents
+        # for the other parsers in this gem.
+        raise ParseError, "Parse error: #{e.message}"
       end
 
       private
