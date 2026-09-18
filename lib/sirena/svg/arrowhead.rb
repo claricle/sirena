@@ -13,13 +13,8 @@ module Sirena
     # <marker>, so marker-end="url(#...)" resolves to nothing -- draw
     # the head directly here rather than adding <marker>/<defs> wiring.
     #
-    # Visibility depends on where the renderer ends its edges, not this
-    # class -- edges stopping at the node boundary show it; centre-to-
-    # centre edges bury it under the node painted after (layout's bug
-    # in Engine#layout_graph, not this one's).
-    #
-    # Sirena has exactly one marker, so any reference is read as "draw
-    # an arrowhead" rather than looked up by name.
+    # A head hidden under its node (centre-to-centre edges) is
+    # Engine#layout_graph's bug, not this class's.
     class Arrowhead
       # Chosen by eye as stroke-width multiples so the head scales with the
       # line. These are not derived from mermaid-js's marker proportions.

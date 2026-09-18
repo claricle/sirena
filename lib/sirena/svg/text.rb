@@ -25,25 +25,15 @@ module Sirena
       attribute :content, :string, collection: true
       attribute :tspans, Tspan, collection: true
 
-      # How far below `y` the baseline sits, in ems, standing in for
-      # `dominant-baseline` (which SVG Tiny 1.2 / :metanorma rejects on
-      # <text>): the same shift applied to `y` reproduces the property's
-      # intent whether or not a renderer supports it.
+      # How far below `y` the baseline sits, in ems -- stands in for
+      # `dominant-baseline` (rejected under :metanorma). Conventional
+      # approximations, NOT font metrics: `central` is deliberately
+      # collapsed onto `middle` since Sirena has none. An unnamed value
+      # stays on the alphabetic baseline (deliberate for `mathematical`).
       #
-      # These are conventional em approximations, NOT real font-metric
-      # measurements -- Sirena has no font metrics, so `central`
-      # (~0.5em, midpoint of ascent/descent) is deliberately collapsed
-      # onto `middle` (~0.35em, half x-height) rather than kept distinct.
-      #
-      # A value this map does not name is left on the alphabetic
-      # baseline -- deliberate for `mathematical`, not a claim its
-      # baseline coincides with it. `use-script`/`no-change`/
-      # `reset-size` can't be resolved here at all.
-      #
-      # The shift needs a unitless font size in user units (what
-      # Numbers.read expects); a relative size from a foreign document
-      # (`2em`) has no parent size to resolve against and reads as the
-      # bare number.
+      # Needs a unitless font size in user units; a relative size from
+      # a foreign document (`2em`) has no parent to resolve against and
+      # reads as the bare number.
       BASELINE_SHIFTS = {
         'middle' => 0.35,
         'central' => 0.35,

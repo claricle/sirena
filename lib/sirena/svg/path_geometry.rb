@@ -8,16 +8,13 @@ module Sirena
     # Only the two ends matter (for drawing an arrowhead), so this walks
     # commands for the current point and never builds the curves.
     #
-    # A proper arc (not the zero-radius case, which SVG treats as a
-    # line) yields NO heading rather than guessing wrong -- its chord
-    # is not its tangent. Sirena never emits an arc on a path carrying
-    # a marker, so this never actually drops a head; computing one
-    # correctly would need the arc's centre parameterisation.
+    # An arc's chord is not its tangent, so it yields NO heading rather
+    # than guessing wrong -- don't add arc tangents without the centre
+    # parameterisation.
     #
     # An unrecognised byte is skipped and following numbers are read as
     # more arguments for the command in force -- deliberate leniency,
-    # reachable only via from_xml on a foreign document (no Sirena
-    # renderer emits malformed path data).
+    # reachable only via from_xml on a foreign document.
     class PathGeometry
       # One anchor: a point on the path and the unit direction of travel
       # through it.

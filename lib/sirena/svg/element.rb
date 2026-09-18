@@ -183,19 +183,11 @@ module Sirena
 
       # Multiplies a component opacity by the whole-element one.
       #
-      # Exact only where a shape paints one of fill/stroke; where a
-      # stroke overlaps its own fill, SVG Tiny 1.2 has no object
-      # opacity so the overlap paints darker (1-(1-a)^2 vs a) --
-      # accepted deviation, not a bug to "fix" here.
-      #
-      # NOT equivalent to Group opacity, and does not try to be: group
-      # opacity composites as one surface, while these are inherited
-      # paint properties a child's own fill-opacity replaces rather
-      # than multiplies. Only leaf shapes set opacity today.
-      #
-      # Non-numeric or non-finite components are left alone rather
-      # than invented -- do not clamp Float::NAN, it would emit a
-      # value nobody asked for and could break serialization.
+      # Approximate where fill/stroke overlap (no object opacity in
+      # SVG Tiny 1.2) -- accepted deviation, not a bug to fix here.
+      # NOT equivalent to Group opacity -- do not reuse this for a
+      # container. Non-numeric/non-finite components are left alone,
+      # never clamped, to avoid emitting an invented value.
       #
       # @param component [Object] fill-opacity or stroke-opacity as set
       # @return [Object, nil] the value to emit
