@@ -78,7 +78,11 @@ RSpec.describe Sirena::Engine do
       end
     end
 
-    context 'with treemap corpus cases' do
+    # :corpus - sweeps the whole fixture directory and only asserts the
+    # output looks SVG-shaped. Runs in `spec:corpus`, isolated from the
+    # coverage-collecting `spec:unit` run: see .simplecov and
+    # lib/tasks/coverage.rake.
+    context 'with treemap corpus cases', :corpus do
       # Globbing at definition time means an empty or moved directory
       # would silently define zero examples and still pass, so guard it.
       it 'finds treemap corpus cases to render' do
@@ -167,6 +171,123 @@ RSpec.describe Sirena::Engine do
     it 'creates engine with verbose option' do
       engine = described_class.new(verbose: true)
       expect(engine.verbose).to be true
+    end
+  end
+
+  # Regression lock for the leading-directive detection gap that
+  # fix/init-directive-detection set out to fix: `Source.split` (merged via
+  # #15) already reads a diagram type past a `%%{init}%%` directive or a
+  # `%%` comment before `Engine` ever sees the raw source -- these pin that
+  # behaviour through the real production path rather than the
+  # since-superseded `detectable_source` this PR originally added.
+  #
+  # NOT covered here, and confirmed still broken on this exact tip:
+  # NBSP/em-space directive openers, a BOM behind a comment line, a doubled
+  # `%%{%%{` opener, U+2028/U+2029 inside a directive body, and non-UTF-8
+  # tagged source (ISO-8859-1/UTF-16LE/ASCII-8BIT/invalid-UTF-8 bytes) --
+  # the last raises a raw Encoding::CompatibilityError/ArgumentError out of
+  # Source.split or detect_diagram_type, caught only by #render's blanket
+  # StandardError rescue. Flagged separately; out of scope for this pass.
+  describe 'diagram type detection past a leading directive or comment' do
+    let(:engine) { described_class.new }
+
+    def detect(source)
+      preamble = Sirena::Source.split(source)
+      engine.send(:detect_diagram_type, preamble[:body])
+    end
+
+    [
+      ['a single leading directive',
+       "%%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['two stacked directives',
+       "%%{init: {'theme':'dark'}}%%\n%%{wrap}%%\nsequenceDiagram\n" \
+       "Alice->>Bob: hi\n",
+       :sequence],
+      ['a directive with blank lines around it',
+       "\n%%{init: {'theme':'dark'}}%%\n\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['an indented directive',
+       "   %%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive broken over lines',
+       "%%{init: {\n  'theme':'dark'\n}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive and the header on one line',
+       "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['CRLF line endings',
+       "%%{init: {'theme':'dark'}}%%\r\nsequenceDiagram\r\nAlice->>Bob: hi\r\n",
+       :sequence],
+      ['a directive after the header',
+       "sequenceDiagram\n%%{init: {'theme':'dark'}}%%\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a plain comment before the header',
+       "%% just a note\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a comment ended by a bare carriage return',
+       "%% note\rsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a directive whose body names another diagram type',
+       "%%{init: {'themeCSS':'flowchart'}}%%\nsequenceDiagram\n" \
+       "Alice->>Bob: hi\n",
+       :sequence],
+      ['a directive above a flowchart',
+       "%%{init: {'theme':'dark'}}%%\nflowchart TD\nA-->B\n",
+       :flowchart],
+      ['a directive above a class diagram',
+       "%%{init: {'theme':'dark'}}%%\nclassDiagram\nA <|-- B\n",
+       :class_diagram],
+      ['two directives sharing the header line',
+       "%%{init: {'theme':'dark'}}%%%%{init: {'look':'classic'}}%% " \
+       "sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['two comment lines above the header',
+       "%% a\n%% b\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a colonless directive on the header line',
+       "%%{wrap}%% sequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['an uppercase directive keyword',
+       "%%{INIT: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
+       :sequence],
+      ['a bare comment line with nothing after it',
+       "%%\nflowchart TD\nA-->B\n",
+       :flowchart]
+    ].each do |name, source, expected|
+      it "names #{expected} past #{name}" do
+        expect(detect(source)).to eq(expected)
+      end
+    end
+
+    [
+      ['a directive left unterminated, which swallows the header',
+       "%%{init: {'theme':'dark'}\nsequenceDiagram\nAlice->>Bob: hi\n"],
+      ['a bare carriage return that keeps the header off the first line',
+       "%% a\rb\nsequenceDiagram\nAlice->>Bob: hi\n"],
+      ['a comment splitting a keyword in half',
+       "sequence%% x\nDiagram\nAlice->>Bob: hi\n"],
+      ['a comment splitting the flowchart keyword in half',
+       "flow%% c\nchart TD\nA-->B\n"]
+    ].each do |name, source|
+      it "still refuses #{name}" do
+        expect { detect(source) }.to raise_error(
+          described_class::DiagramTypeError
+        )
+      end
+    end
+
+    it 'draws a directive sharing the header line, end to end' do
+      # Source.split lifts the directive off the body entirely (into
+      # preamble[:directives]), so the parser never sees it -- unlike the
+      # old detectable_source approach, this never depended on the
+      # grammar's own comment rule to skip it, and there is no rendering
+      # gap left to pin for this shape.
+      svg = engine.render(
+        "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n"
+      )
+
+      expect(svg).to include('Alice').and include('Bob')
     end
   end
 end

@@ -5,6 +5,7 @@ require_relative "../svg/rect"
 require_relative "../svg/text"
 require_relative "../svg/group"
 require_relative "../svg/line"
+require_relative "markdown_text"
 
 module Sirena
   module Renderer
@@ -21,6 +22,13 @@ module Sirena
     #   renderer = Renderer::Kanban.new(theme: my_theme)
     #   svg = renderer.render(layout)
     class Kanban < Base
+      # Height of one extra rendered line — a card's own hard line break, or
+      # a metadata row. Mirrors Transform::Kanban::EXTRA_LINE_HEIGHT: this
+      # renderer positions elements below a label whose height that constant
+      # already accounts for, so the two must agree.
+      EXTRA_LINE_HEIGHT = 18
+      private_constant :EXTRA_LINE_HEIGHT
+
       # Renders the layout structure to SVG.
       #
       # @param layout [Hash] layout data from Transform::Kanban
@@ -102,7 +110,7 @@ module Sirena
       # @param svg [Svg::Document] SVG document
       # @return [void]
       def render_column_header(column, x, y, svg)
-        header_height = 50
+        header_height = column[:header_height]
 
         # Header background
         header_bg = Svg::Rect.new.tap do |r|
@@ -118,16 +126,21 @@ module Sirena
         svg.add_element(header_bg)
 
         # Header text
+        header_x = x + column[:width] / 2
+        lines = Sirena::MarkdownText.parse_lines(column[:title])
+        font_size = theme_typography(:font_size) || 14
+
         header_text = Svg::Text.new.tap do |t|
-          t.x = x + column[:width] / 2
-          t.y = y + header_height / 2 + 5
+          t.x = header_x
+          t.y = header_text_baseline(y, header_height, lines.length, font_size)
           t.text_anchor = "middle"
           t.fill = "#ffffff"
-          t.font_size = (theme_typography(:font_size) || 14).to_s
+          t.font_size = font_size.to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
           t.font_weight = "bold"
-          t.content = column[:title]
         end
+
+        MarkdownText.assign_markdown_text(header_text, lines, x: header_x, base_font_weight: "bold")
 
         svg.add_element(header_text)
 
@@ -161,6 +174,22 @@ module Sirena
 
           svg.add_element(badge_text)
         end
+      end
+
+      # Centers the whole multi-line text BLOCK, not just its first
+      # baseline: a flat `y + header_height / 2 + 5` only centers a SINGLE
+      # line, sliding later lines past the header rect's bottom edge.
+      # Shifting the FIRST baseline up by half the block's added height
+      # keeps it centered on the same point as the single-line fudge.
+      # @param y [Numeric] header rect's top edge
+      # @param header_height [Numeric] header rect's own height
+      # @param line_count [Integer] lines `Sirena::MarkdownText.parse_lines` produced
+      # @param font_size [Numeric] header text's own font size, in px
+      # @return [Numeric] the first line's baseline `y`
+      # @api private
+      def header_text_baseline(y, header_height, line_count, font_size)
+        line_height = font_size * 1.2
+        y + (header_height / 2) + 5 - ((line_count - 1) * line_height / 2)
       end
 
       # Renders all cards
@@ -199,11 +228,11 @@ module Sirena
         svg.add_element(card_bg)
 
         # Card text
-        render_card_text(card, x, y, svg)
+        label_line_count = render_card_text(card, x, y, svg)
 
         # Metadata if present
         if card[:has_metadata]
-          render_card_metadata(card, x, y, svg)
+          render_card_metadata(card, x, y, label_line_count, svg)
         end
       end
 
@@ -213,20 +242,29 @@ module Sirena
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
       # @param svg [Svg::Document] SVG document
-      # @return [void]
+      # @return [Integer] number of lines the label actually rendered, after
+      #   markdown parsing and truncation — what `render_card_metadata` needs
+      #   to start below the label rather than at a fixed offset
       def render_card_text(card, x, y, svg)
         text_y = y + 25
+        text_x = x + 10
+        lines = Sirena::MarkdownText.truncate_runs(
+          Sirena::MarkdownText.parse_lines(card[:text]), Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
+        )
 
         text = Svg::Text.new.tap do |t|
-          t.x = x + 10
+          t.x = text_x
           t.y = text_y
           t.fill = theme_color(:text) || "#1f2937"
           t.font_size = (theme_typography(:font_size) || 13).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.content = truncate_text(card[:text], 25)
         end
 
+        MarkdownText.assign_markdown_text(text, lines, x: text_x)
+
         svg.add_element(text)
+
+        lines.length
       end
 
       # Renders card metadata
@@ -234,11 +272,16 @@ module Sirena
       # @param card [Hash] card data
       # @param x [Numeric] X position
       # @param y [Numeric] Y position
+      # @param label_line_count [Integer] lines the card's own label actually
+      #   rendered, from `render_card_text` — metadata starts below all of
+      #   them rather than at the single-line offset a multi-line label would
+      #   overlap
       # @param svg [Svg::Document] SVG document
       # @return [void]
-      def render_card_metadata(card, x, y, svg)
-        metadata_y = y + 50
-        line_height = 18
+      def render_card_metadata(card, x, y, label_line_count, svg)
+        extra_label_lines = [label_line_count - 1, 0].max
+        metadata_y = y + 50 + (extra_label_lines * EXTRA_LINE_HEIGHT)
+        line_height = EXTRA_LINE_HEIGHT
 
         card[:metadata].each_with_index do |(key, value), index|
           next if value.nil? || value.to_s.empty?
@@ -278,17 +321,6 @@ module Sirena
       # @return [String] formatted key
       def format_metadata_key(key)
         key.to_s.capitalize
-      end
-
-      # Truncates text to a maximum length
-      #
-      # @param text [String] text to truncate
-      # @param max_length [Integer] maximum length
-      # @return [String] truncated text
-      def truncate_text(text, max_length)
-        return text if text.length <= max_length
-
-        "#{text[0...max_length - 3]}..."
       end
     end
   end

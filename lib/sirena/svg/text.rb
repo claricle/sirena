@@ -3,6 +3,7 @@
 require 'lutaml/model'
 require_relative 'element'
 require_relative 'numbers'
+require_relative 'tspan'
 
 module Sirena
   module Svg
@@ -22,6 +23,7 @@ module Sirena
       attribute :font_style, :string
       attribute :dominant_baseline, :string
       attribute :content, :string, collection: true
+      attribute :tspans, Tspan, collection: true
 
       # How far below `y` the baseline sits, in ems, for each value this map
       # approximates. Renderers set only `middle`, `hanging` and `auto`;
@@ -115,6 +117,7 @@ module Sirena
         map_attribute 'dominant-baseline', to: :dominant_baseline
 
         map_content to: :content
+        map_element 'tspan', to: :tspans
       end
 
       protected
@@ -126,15 +129,19 @@ module Sirena
       # under `mixed: true`. Renderers assign a plain String, but
       # `from_xml` yields an Array, so join rather than interpolate —
       # otherwise a parsed Text serializes as `<text>["plain"]</text>`.
-      #
       # Content may hold newlines, so this is the one entry in #xml_lines
       # that is not a single line. It is why Group indents entries rather
       # than lines.
       #
+      # Every renderer call site sets exactly one of `content`/`tspans`, but
+      # `from_xml` populates both independently from ordinary mixed SVG
+      # content (`<text>foo<tspan>bar</tspan></text>`), so `body` has to
+      # decide how to put them back together — see it for how true
+      # interleaving is preserved rather than assumed away.
+      #
       # @return [String] XML string
       def element_markup
-        attrs = build_attributes
-        "<text#{attrs}>#{Escaping.escape_text(Array(content).join)}</text>"
+        "<text#{build_attributes}>#{body}</text>"
       end
 
       def element_attributes
@@ -172,6 +179,73 @@ module Sirena
       end
 
       private
+
+      # `content` and `tspans` are separate collections with no ordering
+      # between them, but genuinely interleaved mixed content
+      # (`<text>A<tspan>B</tspan>C</text>`) needs one — `element_order`
+      # (from `Lutaml::Xml::XmlOrderable`) holds it, one entry per text run
+      # and child element, in source sequence, set only by `from_xml`. A
+      # renderer-constructed instance never sets it, so every existing call
+      # site (sets exactly one of `content`/`tspans`) falls to the simple
+      # path unchanged.
+      #
+      # @return [String]
+      def body
+        return interleaved_body if element_order && !element_order.empty?
+
+        simple_body
+      end
+
+      # The `element_order`-free path above, and the fallback `interleaved_body`
+      # uses when `content`/`tspans` no longer match the shape `element_order`
+      # recorded (see the cardinality check there).
+      #
+      # @return [String]
+      def simple_body
+        Escaping.escape_text(Array(content).join) + Array(tspans).map(&:to_xml).join
+      end
+
+      # Replays `element_order` in place: each `:text` entry stands in for
+      # the next item of `content`, each `tspan` `:element` entry for the
+      # next item of `tspans` — both queues already in document order.
+      # Reads from those queues, not `node.text_content` directly, so a
+      # later `content =` reassignment is honored. An entry that is
+      # neither `:text` nor a `tspan` is skipped, not treated as a
+      # stand-in for the next tspan. Relies on `cardinality_matches?`
+      # first — see its comment for why a caller reassigning to a
+      # different count must not replay this mapping.
+      #
+      # @return [String]
+      def interleaved_body
+        return simple_body unless cardinality_matches?
+
+        remaining_tspans = Array(tspans).dup
+        remaining_content = Array(content).dup
+
+        element_order.filter_map do |node|
+          case node.node_type
+          when :text
+            Escaping.escape_text(remaining_content.shift.to_s)
+          when :element
+            remaining_tspans.shift&.to_xml if node.name == 'tspan'
+          end
+        end.join
+      end
+
+      # True when `content`/`tspans`' current sizes still match what
+      # `element_order` recorded at parse time. A caller that reassigns to
+      # a DIFFERENT count (e.g. `.content = %w[X Y Z]` onto only 2 recorded
+      # `:text` slots) makes a naive `element_order` replay silently drop
+      # the extra items instead of erroring — `interleaved_body` falls back
+      # to `simple_body` instead when this returns false.
+      #
+      # @return [Boolean]
+      def cardinality_matches?
+        text_slots = element_order.count { |node| node.node_type == :text }
+        tspan_slots = element_order.count { |node| node.node_type == :element && node.name == 'tspan' }
+
+        Array(content).size == text_slots && Array(tspans).size == tspan_slots
+      end
 
       # May be non-finite when the font size is: #baseline_y is the one place
       # that can fall back, so the check lives there rather than here too.
