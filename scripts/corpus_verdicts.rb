@@ -49,8 +49,8 @@
 
 require 'digest'
 require 'yaml'
-require 'tmpdir'
-require 'fileutils'
+require_relative 'hardened_mmdc'
+require_relative 'mmdc_oracle'
 
 CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
 REFERENCE_ROOT = File.expand_path('../spec/fixtures_mermaid', __dir__)
@@ -246,13 +246,17 @@ def classify(entry, group)
   ['unknown', 'no evidence']
 end
 
-# Re-checks one case against the installed mmdc. Returns true if it renders.
-def local_mmdc_renders?(path)
-  out = File.join(Dir.tmpdir, "verdict-#{Process.pid}.svg")
-  system('mmdc', '-i', path, '-o', out,
-         out: File::NULL, err: File::NULL)
-ensure
-  FileUtils.rm_f(out)
+# Re-checks one case against the installed mmdc using the shared oracle.
+#
+# Goes through HardenedMmdc rather than a bare Open3.capture3, for the same
+# reason scripts/mermaid_diff.rb does: mmdc's Chromium-backed process tree can
+# hang past any reasonable per-case budget. Measured directly — pointed this
+# call at a fake mmdc that only sleeps, and without the deadline/process-group
+# handling below it did not return on its own.
+def local_mmdc_verdict(path)
+  MmdcOracle.verdict(path) do |input, output|
+    HardenedMmdc.run_mmdc(input, output)
+  end.verdict
 end
 
 # Promotes an `invalid` row that the local mmdc actually renders. Leaves every
@@ -262,24 +266,32 @@ def verify_invalid!(rows, entries)
   by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ''), e] }
   checked = 0
   promoted = 0
+  errors = 0
 
   rows.each do |row|
     next unless row['verdict'] == 'invalid'
 
     entry = by_case[row['case']] or next
     checked += 1
-    if local_mmdc_renders?(entry[:path])
+    case local_mmdc_verdict(entry[:path])
+    when :accepts
       row['verdict'] = 'valid'
       row['evidence'] = 'local mmdc renders it (sidecar rejection was stale)'
       promoted += 1
-    else
+    when :rejects
       row['evidence'] = 'local mmdc rejects it too'
+    when :error
+      row['evidence'] = 'local mmdc could not be run'
+      errors += 1
     end
   end
 
-  warn "  verified #{checked} invalid case(s) against local mmdc; " \
+  warn "  checked #{checked} invalid case(s) against local mmdc; " \
        "#{promoted} promoted to valid"
+  errors
 end
+
+return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
 types = ARGV.reject { |a| a.start_with?('--') }
 write = ARGV.include?('--write')
@@ -308,7 +320,8 @@ rows = entries.map do |entry|
   }
 end
 
-verify_invalid!(rows, entries) if verify
+verification_errors = verify_invalid!(rows, entries) if verify
+abort "mmdc verification failed for #{verification_errors} case(s)" if verification_errors&.positive?
 
 tally = rows.group_by { |r| r['verdict'] }.transform_values(&:size)
 puts 'TYPE       VALID    INVALID  ARTIFACT  UNKNOWN'
