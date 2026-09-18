@@ -178,10 +178,26 @@ RSpec.describe Sirena::Engine do
     # Theme loading runs in the constructor, so `#render`'s rescue never sees
     # it. A host embedding sirena and catching StandardError loses its whole
     # process, because neither exhaustion class is a StandardError.
+    #
+    # Both examples below raise a CONSTRUCTED `SystemStackError` from
+    # `Theme.load` rather than driving a real bomb through the file path,
+    # for the same reason `'wraps a NoMemoryError...'` below does: a real
+    # bomb's depth is a property of the underlying YAML engine, not this
+    # codebase, and it stopped being a pin the day the YAML backend grew its
+    # own nesting-depth guard. A `name: [[[...x...]]]` YAML file 2000 deep
+    # used to overflow Ruby's stack when Psych parsed it; the current
+    # backend (Yeptris, since lutaml-model 0.8.37) refuses it at ANY depth
+    # with its own `Yeptris::ParseError` (verified 2,000 through 100,000
+    # deep, all refused the same way, never once reaching a real
+    # `SystemStackError`) — a real fix upstream, but it means the file no
+    # longer demonstrates what this example needs to pin: that a genuine,
+    # uncontrolled `SystemStackError` reaching `Theme.load` still becomes a
+    # `PipelineError` instead of killing the host.
     it 'turns an exhausting theme into a PipelineError instead of killing the host' do
       Tempfile.create(['bomb', '.yml']) do |file|
-        file.write("name: #{'[' * 2000}x#{']' * 2000}\n")
+        file.write("name: value\n")
         file.flush
+        allow(Sirena::Theme).to receive(:load).and_raise(SystemStackError.new('stack level too deep'))
 
         expect { described_class.new(theme: file.path) }
           .to raise_error(Sirena::Engine::PipelineError, /Theme loading failed/)
@@ -190,8 +206,9 @@ RSpec.describe Sirena::Engine do
 
     it 'keeps the original exhaustion error reachable as the cause' do
       Tempfile.create(['bomb', '.yml']) do |file|
-        file.write("name: #{'[' * 2000}x#{']' * 2000}\n")
+        file.write("name: value\n")
         file.flush
+        allow(Sirena::Theme).to receive(:load).and_raise(SystemStackError.new('stack level too deep'))
 
         cause = begin
           described_class.new(theme: file.path)
