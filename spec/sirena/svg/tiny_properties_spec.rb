@@ -93,6 +93,19 @@ RSpec.describe Sirena::Svg do
       expect(lossy).to be_empty
     end
 
+    # The test above only round-trips Sirena's OWN output, which never emits
+    # a raw `opacity=` attribute -- it always translates to fill/stroke-
+    # opacity first. Tspan's own opacity mapping is new in this PR (the
+    # other classes already had theirs), so it needs its own proof that a
+    # FOREIGN document's `opacity=` attribute -- one Sirena did not write --
+    # still folds into fill/stroke-opacity instead of being silently dropped.
+    it 'folds a foreign document\'s raw opacity into fill and stroke on Tspan' do
+      tspan = Sirena::Svg::Tspan.from_xml('<tspan opacity="0.5">text</tspan>')
+
+      expect(tspan.to_xml)
+        .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
+    end
+
     it 'translates opacity on a Group through its inherited paint properties' do
       group = Sirena::Svg::Group.new
       group.opacity = 0.3
