@@ -222,9 +222,13 @@ RSpec.describe Sirena::Svg do
     def render_example(mmd_path)
       metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
       metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
-      # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
-      Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
-                                         today: CONFORMANCE_EXAMPLE_TODAY)
+      # Same cap as render_or_skip, and for the same reason: a pathological
+      # source must fail this example, not hang the whole suite.
+      Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
+        # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
+        Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
+                                           today: CONFORMANCE_EXAMPLE_TODAY)
+      end
     end
 
     def relative(path)
