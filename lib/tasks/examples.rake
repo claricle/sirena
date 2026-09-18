@@ -1,14 +1,6 @@
 # frozen_string_literal: true
 
-require 'date'
-
-# Rendering must not depend on the day it ran. Gantt derives its whole date
-# range from the reference date, so an unpinned run produces different output
-# every day from identical source, which makes any diff meaningless.
-#
-# The SVGs under examples/*/generated/ are gitignored, so this does not dirty
-# git by itself — but the adoc files written by generate_docs ARE tracked.
-EXAMPLE_TODAY = Date.new(2026, 1, 1)
+require_relative 'example_tasks'
 
 namespace :examples do
   desc "Generate all example SVGs from source files"
@@ -25,94 +17,59 @@ namespace :examples do
       exit 1
     end
 
-    # Find all diagram type directories
-    diagram_dirs = Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }
-
-    total_generated = 0
-    total_failed = 0
-
-    diagram_dirs.sort.each do |dir|
-      diagram_type = File.basename(dir)
-      next if diagram_type == '.git' || diagram_type.start_with?('.')
-
-      puts "\n📊 Generating examples for #{diagram_type}..."
-
-      # Create generated/ directory
-      generated_dir = File.join(dir, 'generated')
-      FileUtils.mkdir_p(generated_dir)
-
-      # Find all .mmd files
-      mmd_files = Dir.glob(File.join(dir, '*.mmd'))
-
-      if mmd_files.empty?
-        puts "  ⚠️  No examples found for #{diagram_type}"
-        next
+    total_generated, failed_renders =
+      ExampleTasks.with_examples_lock(examples_dir) do
+        ExampleTasks.generate_examples(examples_dir)
       end
 
-      mmd_files.sort.each do |mmd_file|
-        basename = File.basename(mmd_file, '.mmd')
-        yml_file = File.join(dir, "#{basename}.yml")
-        svg_file = File.join(generated_dir, "#{basename}.svg")
-
-        # Read source
-        source = File.read(mmd_file)
-
-        # Read metadata if exists
-        metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-        theme = metadata['theme'] || 'default'
-
-        begin
-          # Render to SVG
-          svg = Sirena.render(source, theme: theme, today: EXAMPLE_TODAY)
-
-          # Write SVG
-          File.write(svg_file, svg)
-
-          puts "  ✓ #{basename}.svg"
-          total_generated += 1
-        rescue => e
-          puts "  ✗ #{basename}.svg - ERROR: #{e.message}"
-          total_failed += 1
-        end
-      end
+    begin
+      ExampleTasks.handle_failed_svgs(failed_renders, examples_dir)
+    rescue ExampleTasks::UnexpectedRenderFailure
+      exit 1
     end
-
     puts "\n" + "=" * 60
     puts "✅ Example generation complete!"
     puts "   Generated: #{total_generated}"
-    puts "   Failed: #{total_failed}"
+    puts "   Failed: #{failed_renders.size}"
     puts "=" * 60
+  end
+
+  desc "Delete example SVGs whose source is gone or never renders (destructive, deliberate)"
+  task :prune do
+    examples_dir = File.expand_path('../../examples', __dir__)
+
+    ExampleTasks.with_examples_lock(examples_dir) do
+      puts "Pruning example SVGs with no source..."
+      removed = ExampleTasks.prune_orphan_svgs(examples_dir)
+      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
+
+      puts "\nPruning example SVGs beside a source that never renders..."
+      removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
+      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} stale SVG(s)."
+    end
   end
 
   desc "Copy generated examples to docs/assets/examples"
   task :copy_to_docs do
-    require 'fileutils'
-
     examples_dir = File.expand_path('../../examples', __dir__)
     docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
 
-    FileUtils.mkdir_p(docs_assets_dir)
-
-    total_copied = 0
-
-    # Find all generated/ directories
-    Dir.glob(File.join(examples_dir, '*/generated')).sort.each do |generated_dir|
-      diagram_type = File.basename(File.dirname(generated_dir))
-      target_dir = File.join(docs_assets_dir, diagram_type)
-
-      FileUtils.mkdir_p(target_dir)
-
-      # Copy all SVG files
-      svg_files = Dir.glob(File.join(generated_dir, '*.svg'))
-      svg_files.each do |svg_file|
-        FileUtils.cp(svg_file, target_dir)
-        total_copied += 1
-      end
-
-      puts "✓ Copied #{svg_files.size} #{diagram_type} examples to docs/assets/examples/"
+    # No pre-creation of docs_assets_dir here: ExampleTasks.copy_to_docs
+    # creates it itself, AFTER its own verified_root guard runs, not before.
+    # Creating it here first (as this task used to) meant `FileUtils.mkdir_p`
+    # would walk through a symlinked ancestor and leave a real, empty
+    # directory outside the repo even when the guard went on to abort the
+    # task for exactly that ancestor -- reproduced by execution: a symlink at
+    # docs/assets left `outside_target/examples` created before the guard
+    # ever ran.
+    copied = ExampleTasks.with_examples_lock(examples_dir) do
+      ExampleTasks.copy_to_docs(examples_dir, docs_assets_dir)
+    end
+    copied.each do |diagram_type, count|
+      puts "✓ Copied #{count} #{diagram_type} examples to docs/assets/examples/"
     end
 
-    puts "\n✅ #{total_copied} examples copied to documentation!"
+    puts "\n✅ #{copied.sum { |_, count| count }} examples copied to documentation!"
   end
 
   desc "Generate AsciiDoc include files for documentation"
@@ -152,7 +109,6 @@ namespace :examples do
         description = metadata['description'] || 'Example diagram'
         complexity = metadata['complexity'] || 'basic'
         use_cases = metadata['use_cases'] || []
-        keywords = metadata['keywords'] || []
 
         content << "==== Example #{index + 1}: #{title}"
         content << ""
@@ -193,49 +149,14 @@ namespace :examples do
   desc "Validate all examples (parse and render)"
   task :validate do
     require 'sirena'
+    require 'yaml'
 
     examples_dir = File.expand_path('../../examples', __dir__)
-
-    failed = []
-    passed = 0
-    total = 0
-
-    puts "Validating examples..."
-    puts ""
-
-    Dir.glob(File.join(examples_dir, '*/*.mmd')).sort.each do |mmd_file|
-      total += 1
-      source = File.read(mmd_file)
-      relative_path = mmd_file.sub(examples_dir + '/', '')
-
-      begin
-        Sirena.render(source, today: EXAMPLE_TODAY)
-        passed += 1
-        print '.'
-      rescue => e
-        failed << { file: relative_path, error: e.message }
-        print 'F'
-      end
-    end
-
-    puts "\n\n"
-    puts "=" * 60
-    puts "Validation Results"
-    puts "=" * 60
-    puts "Total:  #{total}"
-    puts "Passed: #{passed} (#{(passed.to_f / total * 100).round(1)}%)"
-    puts "Failed: #{failed.size}"
-    puts "=" * 60
-
-    if failed.any?
-      puts "\nFailures:"
-      failed.each do |f|
-        puts "  ✗ #{f[:file]}"
-        puts "    #{f[:error]}"
-      end
+    begin
+      ExampleTasks.validate_examples(examples_dir)
+    rescue ExampleTasks::ValidationFailed => e
+      warn e.message
       exit 1
-    else
-      puts "\n✅ All examples validated successfully!"
     end
   end
 
@@ -325,7 +246,7 @@ namespace :examples do
       examples.sort.each do |mmd_file|
         basename = File.basename(mmd_file, '.mmd')
         yml_file = File.join(dir, "#{basename}.yml")
-        svg_file = File.join(dir, 'generated', "#{basename}.svg")
+        svg_file = File.join(dir, "#{basename}.svg")
 
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
         title = metadata['title'] || basename
@@ -362,7 +283,7 @@ namespace :examples do
       Each diagram type has its own directory with:
       - `*.mmd` - Mermaid source files
       - `*.yml` - Metadata for each example
-      - `generated/` - Auto-generated SVG files (git-ignored)
+      - `*.svg` - Rendered output, regenerated in place and committed
 
       ## Usage
 
@@ -423,7 +344,10 @@ namespace :examples do
 
     # Create .gitignore
     gitignore_content = <<~GITIGNORE
-      # Ignore generated SVG files
+      # Stale generated/ directories from older checkouts. Nothing writes them
+      # now — the shipped SVGs sit beside their sources — but leaving the rule
+      # keeps an old working copy quiet and stops `git add examples/` sweeping
+      # stale output back in.
       */generated/
 
       # Ignore macOS files
@@ -447,7 +371,7 @@ namespace :examples do
     puts "  3. Build docs: rake examples:build"
   end
 
-  desc "Clean all generated files"
+  desc "Clean stale generated directories and documentation copies"
   task :clean do
     require 'fileutils'
 
@@ -455,7 +379,8 @@ namespace :examples do
     docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
     docs_examples_dir = File.expand_path('../../docs/_diagram_types/examples', __dir__)
 
-    # Clean generated/ directories
+    # Clean the stale generated/ directories older checkouts left behind.
+    # The shipped SVGs sit beside their sources now and are not touched.
     Dir.glob(File.join(examples_dir, '*/generated')).each do |dir|
       FileUtils.rm_rf(dir)
       puts "✓ Removed #{dir}"
@@ -473,6 +398,6 @@ namespace :examples do
       puts "✓ Removed #{docs_examples_dir}"
     end
 
-    puts "\n✅ Cleaned all generated files!"
+    puts "\n✅ Cleaned stale generated directories and documentation copies!"
   end
 end
