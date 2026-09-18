@@ -18,6 +18,18 @@ module MermaidDiffSpecSupport
       "flowchart LR\n  A --> B\n"
     end
 
+    # `yeptris` (lutaml-model's YAML backend as of 0.8.37) prints a one-time
+    # namespace notice to stderr the first time any process requires
+    # `yeptris/psych` -- unconditionally, regardless of PATH or env, so it
+    # cannot be filtered by scrubbing the child's environment the way
+    # `corpus_verdicts.rb`'s spec does a few examples down. Every call here
+    # spawns a fresh `ruby scripts/mermaid_diff.rb` process, so every one
+    # pays it. Stripped by exact text, not swallowed wholesale, so a
+    # genuine stderr line from the harness itself still reaches the
+    # assertion.
+    YEPTRIS_NAMESPACE_NOTICE = /\Ayeptris: "yeptris\/psych" defines the namespace only.*\n/
+    private_constant :YEPTRIS_NAMESPACE_NOTICE
+
     def run_harness(source, *options, mmdc: accepting_mmdc, relative: false)
       Dir.mktmpdir do |dir|
         probe = File.join(dir, 'probe.txt')
@@ -40,11 +52,12 @@ module MermaidDiffSpecSupport
           )
         end
 
-        if relative
-          Dir.chdir(File.expand_path('../..', __dir__), &capture)
-        else
-          capture.call
-        end
+        stdout, stderr, status = if relative
+                                   Dir.chdir(File.expand_path('../..', __dir__), &capture)
+                                 else
+                                   capture.call
+                                 end
+        [stdout, stderr.sub(YEPTRIS_NAMESPACE_NOTICE, ''), status]
       end
     end
 
