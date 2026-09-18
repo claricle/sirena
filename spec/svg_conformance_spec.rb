@@ -269,7 +269,7 @@ RSpec.describe Sirena::Svg do
     # Duplicated render inputs must drift loudly here instead of blaming every
     # checked-in SVG as stale.
     it 'uses the generation task rendering defaults' do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'examples.rake'))
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'example_tasks.rb'))
 
       expect(task_source).to include(
         "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
@@ -282,7 +282,7 @@ RSpec.describe Sirena::Svg do
     end
 
     it 'uses the conformance gate named unrenderable examples' do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'examples.rake'))
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'example_tasks.rb'))
       sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  '#{source}'" }.join(",\n")
 
       expect(task_source).to include(
