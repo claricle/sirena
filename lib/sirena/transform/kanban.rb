@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative "../markdown_text"
 
 module Sirena
   module Transform
@@ -30,8 +31,9 @@ module Sirena
       CARD_HEIGHT = 80
       CARD_PADDING = 10
 
-      # Metadata display height per item
-      METADATA_LINE_HEIGHT = 18
+      # Height of one extra rendered line below a card's first line — a
+      # metadata row, or a markdown hard line break in the card text.
+      EXTRA_LINE_HEIGHT = 18
 
       # Transforms the diagram into a layout structure.
       #
@@ -79,13 +81,16 @@ module Sirena
         current_x = 0
 
         columns.each do |column|
+          header_height = calculate_header_height(column)
+
           positioned << {
             id: column.id,
             title: column.title,
             x: current_x,
             y: 0,
             width: COLUMN_WIDTH,
-            height: calculate_column_height(column),
+            height: calculate_column_height(column, header_height),
+            header_height: header_height,
             card_count: column.cards.size,
             original: column
           }
@@ -106,7 +111,7 @@ module Sirena
         positioned_columns.each do |column_data|
           column = column_data[:original]
           column_x = column_data[:x]
-          current_y = COLUMN_HEADER_HEIGHT + COLUMN_PADDING
+          current_y = column_data[:header_height] + COLUMN_PADDING
 
           column.cards.each do |card|
             card_height = calculate_card_height(card)
@@ -131,36 +136,74 @@ module Sirena
         cards
       end
 
+      # Calculates the header height for a column, growing past
+      # `COLUMN_HEADER_HEIGHT` for each hard line break embedded in the
+      # column title (from a markdown newline, rendered as an extra
+      # `<tspan>` line by Sirena::MarkdownText#parse_lines) — the same
+      # `count("\n")` approach `calculate_card_height` already uses for
+      # card text, for the same reason: this layer only needs how many
+      # extra lines there are, not what's on them.
+      #
+      # @param column [Diagram::KanbanColumn] column
+      # @return [Numeric] header height
+      def calculate_header_height(column)
+        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * EXTRA_LINE_HEIGHT)
+      end
+
       # Calculates the height needed for a column
       #
       # @param column [Diagram::KanbanColumn] column
+      # @param header_height [Numeric] this column's own header height, from
+      #   `calculate_header_height`
       # @return [Numeric] column height
-      def calculate_column_height(column)
-        return COLUMN_HEADER_HEIGHT + COLUMN_PADDING if column.cards.empty?
+      def calculate_column_height(column, header_height)
+        return header_height + COLUMN_PADDING if column.cards.empty?
 
         # Header + padding + sum of card heights + spacing between cards
         total_card_height = column.cards.sum { |card| calculate_card_height(card) }
         total_spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
         bottom_padding = COLUMN_PADDING
 
-        COLUMN_HEADER_HEIGHT + COLUMN_PADDING +
+        header_height + COLUMN_PADDING +
           total_card_height + total_spacing + bottom_padding
       end
 
       # Calculates the height needed for a card
       #
+      # Grows for metadata rows and extra rendered lines in the card's own
+      # text. Line count must come from `rendered_line_count` (mirrors
+      # `Renderer::Kanban#render_card_text`'s own parse+truncate), never a
+      # raw `text.count("\n")` — once text crosses
+      # `Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET` the renderer drops
+      # whole lines, so a raw count sizes for lines that never render.
+      # Reuses EXTRA_LINE_HEIGHT, not a second constant, for the card's own
+      # font size (13px * 1.2em/line): Transform has no renderer font size
+      # to base one on.
+      #
       # @param card [Diagram::KanbanCard] card
       # @return [Numeric] card height
       def calculate_card_height(card)
         base_height = CARD_HEIGHT
+        base_height += card.metadata.size * EXTRA_LINE_HEIGHT if card.has_metadata?
+        base_height += (rendered_line_count(card.text) - 1) * EXTRA_LINE_HEIGHT
+        base_height
+      end
 
-        # Add height for metadata if present
-        if card.has_metadata?
-          metadata_count = card.metadata.size
-          base_height + (metadata_count * METADATA_LINE_HEIGHT)
-        else
-          base_height
-        end
+      # The number of lines `card.text` actually renders as, after the same
+      # markdown parsing and character-budget truncation
+      # `Renderer::Kanban#render_card_text` applies. Always at least 1: an
+      # empty or all-dropped body still occupies the card's first line, the
+      # same as `count("\n") == 0` did before this method replaced it.
+      #
+      # @param text [String, nil]
+      # @return [Integer]
+      # @api private
+      def rendered_line_count(text)
+        lines = Sirena::MarkdownText.truncate_runs(
+          Sirena::MarkdownText.parse_lines(text),
+          Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
+        )
+        [lines.length, 1].max
       end
 
       # Calculates the bounding box for the entire board

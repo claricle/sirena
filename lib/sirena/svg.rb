@@ -11,6 +11,7 @@ require_relative 'svg/path'
 require_relative 'svg/line'
 require_relative 'svg/polygon'
 require_relative 'svg/polyline'
+require_relative 'svg/tspan'
 require_relative 'svg/text'
 require_relative 'svg/ellipse'
 
