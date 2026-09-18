@@ -337,4 +337,17 @@ RSpec.describe Sirena::Svg::PathGeometry do
       expect([anchor.x, anchor.y]).to eq([0.0, 0.0])
     end
   end
+
+  # A byte sequence that is not valid UTF-8 makes StringScanner's own regex
+  # match raise ArgumentError rather than simply fail to match, escaping the
+  # documented "unrecognised byte is skipped" leniency -- reachable via
+  # from_xml on a foreign document, which is not obligated to send valid d.
+  it 'has no origin or terminus rather than raising on an invalid byte sequence' do
+    invalid = +"M 0 0 L \xFF\xFE 10 10"
+    invalid.force_encoding('UTF-8')
+
+    expect { described_class.new(invalid) }.not_to raise_error
+    expect(origin(invalid)).to be_nil
+    expect(terminus(invalid)).to be_nil
+  end
 end

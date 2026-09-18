@@ -90,7 +90,16 @@ module Sirena
         scanner = StringScanner.new(data)
         loop do
           token = arc_flag_position?(letter, numbers) ? ARC_FLAG_TOKEN : TOKEN
-          break unless scanner.scan_until(token)
+          # An invalid byte sequence makes the scan regex itself raise rather
+          # than simply fail to match -- stop here the same way a genuine
+          # non-match does, rather than letting a foreign document's garbage
+          # encoding escape as an uncaught ArgumentError.
+          matched = begin
+            scanner.scan_until(token)
+          rescue ArgumentError
+            nil
+          end
+          break unless matched
 
           command = scanner[1]
           number = scanner[2]
