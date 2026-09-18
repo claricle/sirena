@@ -362,6 +362,21 @@ RSpec.describe Sirena::Parser::UserJourneyParser do
           .to raise_error(Sirena::Parser::ParseError)
       end
 
+      it 'raises ParseError on a source valid in a non-UTF-8 encoding that only fails once the tree is built' do
+        # A third failure mode: this source is valid Big5-HKSCS throughout
+        # and passes grammar parsing entirely, then raises ArgumentError from
+        # `String#strip` inside build_diagram_from_tree, on the actor slice.
+        # Before the parse-time rescue widened to cover the whole method,
+        # this escaped as a raw ArgumentError (via Sirena::Engine as
+        # PipelineError), not the ParseError this parser's contract promises.
+        source = "journey\naccTitle: description\nsection S\nTask: 1: é\n"
+          .encode('Big5-HKSCS')
+        expect(source.valid_encoding?).to be(true)
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError, /invalid byte sequence/)
+      end
+
       it 'ends the directive text at the newline' do
         # An empty `accTitle:` is consumed and the next line keeps its own
         # meaning. mermaid's whitespace AFTER the delimiter crosses newlines
