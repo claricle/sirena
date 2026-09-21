@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "rake"
+require "tmpdir"
 
 # lib/tasks/corpus.rake is loaded by the Rakefile via `Dir.glob(...).each { |r|
 # load r }`, never `require`d, so it is not on Sirena's own require path.
@@ -215,6 +216,48 @@ RSpec.describe Sirena::Corpus do
 
       expect(diff[:regressed]).to eq([])
       expect(diff[:unrecorded]).to eq([])
+    end
+  end
+
+  describe ".fail_on_drift!" do
+    let(:committed) { [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => false }] }
+
+    it "exits non-zero when one case regressed" do
+      fresh = [{ "case" => "a", "pass" => false }, { "case" => "b", "pass" => false }]
+
+      expect { described_class.fail_on_drift!(committed, fresh) }
+        .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        .and output(/REGRESSED.*\n  a\n/m).to_stdout
+    end
+
+    it "exits non-zero when one case improved without being recorded" do
+      fresh = [{ "case" => "a", "pass" => true }, { "case" => "b", "pass" => true }]
+
+      expect { described_class.fail_on_drift!(committed, fresh) }
+        .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        .and output(/IMPROVED BUT NOT RECORDED.*\n  b\n/m).to_stdout
+    end
+
+    it "returns without exiting when the fresh run matches" do
+      expect { described_class.fail_on_drift!(committed, committed) }.to output(/corpus:check: clean/).to_stdout
+    end
+  end
+
+  describe "a seeded detection failure" do
+    it "lands in the scoreboard rows as the detect stage with its exception class" do
+      Dir.mktmpdir do |root|
+        FileUtils.mkdir_p(File.join(root, "seed"))
+        File.write(File.join(root, "seed", "001.mmd"), "this is not a diagram\n")
+        stub_const("Sirena::Corpus::CORPUS_ROOT", root)
+
+        results = described_class.run_cases(described_class.cases(nil))
+        rows = described_class.rows_for_scoreboard(results, {})
+
+        expect(rows).to eq([{
+          "case" => "seed/001.mmd", "verdict" => "unknown", "pass" => false,
+          "stage" => "detect", "exception_class" => "Sirena::Engine::DiagramTypeError"
+        }])
+      end
     end
   end
 end
