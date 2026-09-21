@@ -29,11 +29,12 @@ module Sirena
           (str('classDiagram-v2').as(:header) >>
             space? >> (newline | comment | eof).present? >> ws?) |
             (str('classDiagram').as(:header) >> header_end >>
-              ws? >>
-              direction.maybe.as(:direction))
+              space? >> direction_value.maybe.as(:direction) >> space? >>
+              (newline | comment | eof).present? >> ws?)
         end
 
-        # `classDiagramX` is not a header.
+        # `classDiagramX` is not a header, and the line ends after the header:
+        # `classDiagram `A`` is rejected by mmdc.
         rule(:header_end) do
           (name_char | str('-')).absent?
         end
@@ -263,8 +264,9 @@ module Sirena
           class_ref >> line_end
         end
 
-        # A class name with the generic mmdc lets follow it anywhere a class
-        # is mentioned: `Class1~T~ <|-- Class02`, `Car~T~ : +wheels`.
+        # A class name with the generic mmdc lets follow it on a standalone
+        # class, a colon member and a relationship end: `Class1~T~ <|-- Class02`,
+        # `Car~T~ : +wheels`.
         rule(:class_ref) do
           class_name.as(:class_id) >> generic_suffix.as(:generic)
         end
@@ -295,7 +297,7 @@ module Sirena
         end
 
         rule(:backtick_name) do
-          str('`') >> (str('`').absent? >> newline.absent? >> any).repeat(1) >> str('`')
+          str('`') >> (str('`').absent? >> any).repeat(1) >> str('`')
         end
 
         rule(:plain_class_name) do

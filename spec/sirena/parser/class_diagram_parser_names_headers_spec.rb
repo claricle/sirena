@@ -3,7 +3,7 @@
 require "spec_helper"
 
 # How a class is named and how the diagram is headed: backticks, hyphens,
-# generics on any mention, the `:::css` shorthand and `classDiagram-v2`.
+# generics on relationship ends and members, the `:::css` shorthand and `classDiagram-v2`.
 # Every accept/reject below was checked against mmdc 11.12.0.
 RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
   let(:parser) { described_class.new }
@@ -71,6 +71,22 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
           .to raise_error(Sirena::Parser::ParseError)
       end
     end
+  end
+
+  it "keeps a name that spans lines inside backticks, as mmdc does" do
+    diagram = parser.parse("classDiagram\nclass `A\nB`\n")
+
+    expect(diagram.entities.map(&:id)).to eq(["A\nB"])
+  end
+
+  it "reports a binary-tagged source with non-ASCII bytes as a ParseError" do
+    source = "classDiagram\nclass ".b + "\xFF\n".b
+
+    expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+  end
+
+  it "reads a direction on the plain header" do
+    expect(parser.parse("classDiagram LR\nclass A\n").direction).to eq("LR")
   end
 
   describe "generics on a class mention" do
@@ -208,7 +224,9 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "a direction on the header line" => "classDiagram-v2 LR\nclass A\n",
       "an unknown suffix" => "classDiagram-v2x\nclass A\n",
       "another version" => "classDiagram-v3\nclass A\n",
-      "a suffix on the plain header" => "classDiagramX\nclass A\n"
+      "a suffix on the plain header" => "classDiagramX\nclass A\n",
+      "a backticked class glued to the header" => "classDiagram`A`\n",
+      "a backticked class after the header on its line" => "classDiagram `A`\n"
     }.each do |name, source|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse(source) }
