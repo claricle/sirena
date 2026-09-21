@@ -17,6 +17,7 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "a name with a hyphen before a digit" => ["class C1-2", "C1-2"],
       "a name that starts with a digit" => ["class 1", "1"],
       "a non-ASCII name" => ["class é", "é"],
+      "a letter that is not Unicode L" => ["class \u1885", "\u1885"],
       "a dotted name" => ["class A.B.C", "A.B.C"],
       "a backticked standalone class" => ["`Car`", "Car"],
       "a hyphenated standalone class" => ["Ca-r", "Ca-r"]
@@ -68,7 +69,9 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "a non-ASCII digit" => "class \u0661",
       "a non-ASCII digit after a letter" => "class A\u0661",
       "a fullwidth digit" => "class \uFF11",
-      "a superscript digit" => "class \u00B2"
+      "a superscript digit" => "class \u00B2",
+      "an astral letter" => "class \u{10400}",
+      "a letter newer than mermaid's table" => "class \u0560"
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }

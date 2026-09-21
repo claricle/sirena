@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'common'
+require_relative 'mermaid_unicode_text'
 
 module Sirena
   module Parser
@@ -278,11 +279,13 @@ module Sirena
           (space? >> generic_params).maybe
         end
 
-        # A word character in a class name or a CSS class: letters in any
-        # script, ASCII digits, and underscore. mmdc accepts `class 1` and
-        # `class é` but rejects `class ١` (a non-ASCII digit).
+        # A word character in a class name or a CSS class: ASCII letters and
+        # digits, underscore, and the letters in mermaid's own table
+        # (`MERMAID_UNICODE_TEXT`). mmdc accepts `class 1` and `class é`, and
+        # rejects `class ١` (a non-ASCII digit) and `class 𐐀` (an astral
+        # letter, absent from the table).
         rule(:name_char) do
-          match['\p{L}0-9_']
+          match["A-Za-z0-9_#{MERMAID_UNICODE_TEXT}"]
         end
 
         # Class name: words joined by a single `.` (namespace-qualified) or a
