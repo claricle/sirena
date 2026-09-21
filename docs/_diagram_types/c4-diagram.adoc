@@ -345,7 +345,7 @@ C4Container
 
 == Layout Configuration
 
-Configure diagram layout using [`UpdateLayoutConfig()`](lib/sirena/transform/c4.rb:254):
+Configure diagram layout using [`UpdateLayoutConfig()`](lib/sirena/parser/grammars/c4.rb:64):
 
 [source,mermaid]
 ----
@@ -480,10 +480,10 @@ C4 diagrams are implemented using the standard 7-file Parslet architecture:
 
 1. [`Diagram::C4`](lib/sirena/diagram/c4.rb:224) - Data model with elements, boundaries, relationships
 2. [`Parser::Grammars::C4`](lib/sirena/parser/grammars/c4.rb:13) - Parslet grammar for C4 syntax
-3. [`Parser::Transforms::C4`](lib/sirena/parser/transforms/c4.rb:13) - Parse tree to diagram model transformer
-4. [`Parser::C4Parser`](lib/sirena/parser/c4.rb:29) - Main parser class
-5. [`Transform::C4Transform`](lib/sirena/transform/c4.rb:17) - Diagram to graph transformer
-6. [`Renderer::C4Renderer`](lib/sirena/renderer/c4.rb:16) - SVG renderer
+3. [`Parser::Builders::C4`](lib/sirena/parser/builders/c4.rb:13) - Parse tree to diagram model builder
+4. [`Parser::C4`](lib/sirena/parser/c4.rb:29) - Main parser class
+5. [`Layout::C4`](lib/sirena/layout/c4.rb:17) - Diagram to graph layout
+6. [`Renderer::C4`](lib/sirena/renderer/c4.rb:16) - SVG renderer
 7. Layout - Automatic hierarchical layout via ELK
 
 === Rendering Pipeline
@@ -491,7 +491,7 @@ C4 diagrams are implemented using the standard 7-file Parslet architecture:
 The C4 rendering pipeline:
 
 1. **Parse** - Convert Mermaid source to [`C4`](lib/sirena/diagram/c4.rb:224) model
-2. **Transform** - Convert to graph structure with positions
+2. **Graph** - Convert to graph structure with positions
 3. **Layout** - Calculate positions for elements and boundaries
 4. **Render** - Generate SVG with C4 styling
 
