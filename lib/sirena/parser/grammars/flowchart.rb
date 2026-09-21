@@ -420,7 +420,9 @@ module Sirena
         # the item, so `fill:#f9f,;B` is fine while `fill:red,;B` is not.
         rule(:empty_comma_item) do
           comma |
-            (hash.absent? >> comma_gap.absent? >> declaration_char).repeat >>
+            hash.maybe >>
+            (space >> hash | hash.absent? >> comma_gap.absent? >>
+              declaration_char).repeat >>
               (comma_gap | hash >> hashed_comma_gap_scan)
         end
 
@@ -447,8 +449,10 @@ module Sirena
         # The `#` has to arrive before the first `;` for the swallow to
         # start: mmdc reads `style A fill:red;stroke:#333` as a style plus a
         # node, because the `;` comes first.
+        # A `#` after a space, as in `stroke: #fff`, is ordinary text.
         rule(:hashed_head) do
-          (hash.absent? >> declaration_char).repeat >> hash
+          hash.maybe >>
+            (space >> hash | hash.absent? >> declaration_char).repeat >> hash
         end
 
         # What may follow that one `;` is a style component, not a node and

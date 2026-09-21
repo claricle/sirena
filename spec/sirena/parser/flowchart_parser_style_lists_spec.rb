@@ -60,6 +60,23 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a hash after a space" do
+    [
+      "style A fill:red,stroke: #fff,color:blue;B",
+      "classDef x fill:red,stroke: #fff,color:blue;B",
+      "style A #x a:b;B"
+    ].each do |declaration|
+      it "does not swallow the node after #{declaration.inspect}" do
+        source = "graph TD\nA\n#{declaration}\n"
+        expect(node_ids.call(source)).to eq(%w[A B])
+      end
+    end
+
+    it "still swallows the `;` after `fill:#f9f`" do
+      expect(node_ids.call("graph TD\nA\nstyle A fill:#f9f;B\n")).to eq(%w[A])
+    end
+  end
+
   describe "a multi-class classDef" do
     it "takes `classDef a,b props` and keeps the diagram's nodes" do
       source = "graph TD\nA\nclassDef first,second fill:#bbb,stroke:red\n"
