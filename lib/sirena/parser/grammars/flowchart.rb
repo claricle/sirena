@@ -917,12 +917,13 @@ module Sirena
         end
 
         rule(:inline_thick) do
-          inline_halves(str('=='), thick_close, str('=='))
+          inline_halves(str('=='), thick_close, str('='))
         end
 
-        # A dot never doubles as text the way a hyphen does: `.-` is
-        # already a complete link, so nothing is left to refuse.
-        rule(:inline_dotted) { inline_halves(str('-.'), dotted_close, nil) }
+        # A thick or dotted label cannot carry even one of its own body
+        # characters, `=` or `.`: mmdc refuses `A == a=b ==> B` and
+        # `A -. a.b .-> B`. Only the solid body may hold a single hyphen.
+        rule(:inline_dotted) { inline_halves(str('-.'), dotted_close, str('.')) }
 
         # A closing link carries at least one character more than the
         # opening half, a head or another body character, so `--` alone
@@ -941,13 +942,14 @@ module Sirena
 
         # The label runs to the closing link, across lines as mermaid reads
         # it, and starts on a character that is not whitespace: mermaid
-        # refuses `A -- --> B`. `forbidden` is the doubled character of the
-        # body, which mermaid cannot lex inside the label either.
+        # refuses `A -- --> B`. `forbidden` is the body text mermaid cannot
+        # lex inside the label. Whitespace is mermaid's own set, and a whole
+        # comment line inside a multiline label is deleted before it reads.
         #
         # A whitespace run is consumed whole and checked once for what
         # follows it, so a long run costs one pass, not one per character.
         def inline_halves(open, close, forbidden)
-          blank = match[" \t\r\n"]
+          blank = comment_line | line_space | match["\r\n"]
           closing = link_start.maybe >> close
           char = closing.absent? >> blank.absent? >> any
           char = forbidden.absent? >> char if forbidden

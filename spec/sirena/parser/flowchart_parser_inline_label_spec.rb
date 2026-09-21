@@ -45,7 +45,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "A x-- t --> B" => "an opening x that is not closed",
       "A x== t ==> B" => "an opening x on a thick link",
       "A o== t ==> B" => "an opening o on a thick link",
-      "A o-- t --x B" => "an o closed by an x"
+      "A o-- t --x B" => "an o closed by an x",
+      "A == a=b ==> B" => "a lone = in a thick label",
+      "A -. a.b .-> B" => "a dot in a dotted label",
+      "A -- \u00A0 --> B" => "a label of only no-break spaces"
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -73,16 +76,34 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       end
     end
 
+    it "trims the no-break spaces around a label" do
+      expect(edge_tuples("A --\u00A0text\u00A0--> B").first[2]).to eq("text")
+    end
+
+    it "drops a comment line from a label that spans lines" do
+      expect(edge_tuples("A -- text\n%% comment\n--> B").first[2])
+        .to eq("text")
+    end
+
     it "keeps the lines of a label that spans them" do
       expect(edge_tuples("A -- one\ntwo\n--> B").first[2]).to eq("one\ntwo")
     end
 
-    it "parses a long run of spaces inside the label in linear time" do
-      source = "A -- a#{' ' * 20_000}b --> B"
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      edge_tuples(source)
-      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
-        .to be < 2
+    {
+      "spaces" => "A -- a#{' ' * 20_000}b --> B",
+      "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
+      "equals of an unclosed thick label" => "A == a#{'=' * 20_000}"
+    }.each do |what, source|
+      it "parses a long run of #{what} in linear time" do
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        begin
+          edge_tuples(source)
+        rescue Sirena::Parser::ParseError
+          nil
+        end
+        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+          .to be < 2
+      end
     end
   end
 
