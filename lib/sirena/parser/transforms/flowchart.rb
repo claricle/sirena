@@ -696,16 +696,14 @@ module Sirena
         # its absence.
         def self.process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
-          node_data = extract_node_data(stmt[:node])
-          add_or_update_node(diagram, node_data)
-          claim_member(parent, node_data[:node_id].to_s, context)
+          sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
+                                  context)
 
           # Process edges if present
           edges = stmt[:edges]
           return unless edges
 
           edges = [edges] unless edges.is_a?(Array)
-          source_id = node_data[:node_id]
 
           edges.each do |edge_data|
             next unless edge_data.is_a?(Hash)
@@ -721,23 +719,34 @@ module Sirena
             # slice is read here, where the link is the only thing meant.
             link_token = link_token(edge_data)
             label = edge_data[:label]
-            target_data = edge_data[:target]
 
-            next unless target_data
+            next unless edge_data[:target]
 
-            # Extract and add target node
-            target_node_data = extract_node_data(target_data)
-            add_or_update_node(diagram, target_node_data)
-            claim_member(parent, target_node_data[:node_id].to_s, context)
+            targets = declare_group(diagram, edge_data[:target],
+                                    edge_data[:group], parent, context)
 
-            # Create edge
-            edge = create_edge(source_id, target_node_data, link_token, label)
-            diagram.edges << edge
+            # `A & B --> C & D` links every source to every target.
+            sources.product(targets).each do |source, target|
+              diagram.edges << create_edge(source[:node_id], target,
+                                           link_token, label)
+            end
 
-            # For chaining, next edge source is current target
-            source_id = target_node_data[:node_id]
+            # For chaining, the next edge's sources are these targets
+            sources = targets
           end
         end
+
+        # The nodes one side of a link names: the first, and any that
+        # `&` joined to it. Returns their node data, in source order.
+        def self.declare_group(diagram, first, rest, parent, context)
+          [first, *rest].map do |node_hash|
+            node_data = extract_node_data(node_hash)
+            add_or_update_node(diagram, node_data)
+            claim_member(parent, node_data[:node_id].to_s, context)
+            node_data
+          end
+        end
+        private_class_method :declare_group
 
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece

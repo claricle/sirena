@@ -649,7 +649,7 @@ module Sirena
         # Node with optional shape and edges
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
-            node_with_shape.as(:node) >>
+            node_with_shape.as(:node) >> amp_group.as(:group) >>
             (ws? >> edge_chain).maybe.as(:edges) >>
             loose_statement_end
         end
@@ -898,7 +898,16 @@ module Sirena
         rule(:edge) do
           (piped_edge | inline_label_edge) >>
             ws? >>
-            reserved_keyword.absent? >> node_with_shape.as(:target)
+            reserved_keyword.absent? >> node_with_shape.as(:target) >>
+            amp_group.as(:group)
+        end
+
+        # `A & B`: further nodes joined to the one before, which then
+        # share whatever link comes next. Mermaid takes only spaces around
+        # the `&`.
+        rule(:amp_group) do
+          (space.repeat >> str('&') >> space.repeat >>
+            reserved_keyword.absent? >> node_with_shape).repeat
         end
 
         rule(:piped_edge) do

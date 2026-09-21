@@ -12,4 +12,8 @@ module FlowchartParserHelpers
     parse_flowchart(source).edges
       .map { |e| [e.source_id, e.target_id, e.label, e.arrow_type] }
   end
+
+  def edge_links(source)
+    parse_flowchart(source).edges.map { |e| "#{e.source_id}>#{e.target_id}" }
+  end
 end
