@@ -46,6 +46,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids(source)).to eq(%w[A B e2])
     end
 
+    it "sets no node for a class shorthand addressed to the edge" do
+      expect(node_ids("A e1@--> B\ne1:::foo")).to eq(%w[A B])
+    end
+
     it "is still a node when a plain mention repeats the id" do
       source = "A e1@--> B\ne1 --> C"
 

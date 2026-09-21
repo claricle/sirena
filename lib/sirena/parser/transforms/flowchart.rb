@@ -761,11 +761,12 @@ module Sirena
         end
         private_class_method :declare_group
 
-        # `e1@{ animate: true }` sets properties on the edge named `e1`,
-        # and mermaid draws no node for it.
+        # `e1@{ animate: true }` and `e1:::foo` set properties on the edge
+        # named `e1`, and mermaid draws no node for it.
         def self.edge_properties?(stmt, context)
           node = stmt[:node]
-          node[:metadata] && !stmt[:edges] && Array(stmt[:group]).empty? &&
+          (node[:metadata] || (node[:inline_class] && !node[:shape])) &&
+            !stmt[:edges] && Array(stmt[:group]).empty? &&
             context.edge_ids.include?(node[:node_id].to_s)
         end
         private_class_method :edge_properties?
