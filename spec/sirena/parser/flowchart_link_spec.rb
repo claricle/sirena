@@ -237,16 +237,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
-  describe "a labelled link" do
-    it "is refused rather than misparsed" do
-      # mmdc renders `A -- text --> B` as one labelled edge. Sirena does
-      # not support that form yet; what matters is that it fails rather
-      # than quietly producing a node called `text`.
-      expect { described_class.new.parse("flowchart TD\n  A -- text --> B\n") }
-        .to raise_error(Sirena::Parser::ParseError)
-    end
-  end
-
   # mmdc reads a lone `x` or `o` sitting flush against a link body as the
   # link's START marker, so the line has nothing on its left and mmdc
   # refuses it. The marker has to be exactly one character and flush:

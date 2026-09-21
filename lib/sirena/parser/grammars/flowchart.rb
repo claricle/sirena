@@ -892,14 +892,66 @@ module Sirena
           edge >> (ws? >> edge).repeat
         end
 
-        # Single edge with optional label
+        # Single edge. A symbol-only link is tried first, as mermaid's
+        # lexer does: `A --x B` is a link with a cross head, and only a
+        # link that cannot end where it starts opens `A -- text --x B`.
         rule(:edge) do
-          arrow.as(:arrow) >>
-            ws? >>
-            edge_label.maybe.as(:label) >>
+          (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target)
         end
+
+        rule(:piped_edge) do
+          arrow.as(:arrow) >> ws? >> edge_label.maybe.as(:label)
+        end
+
+        # `A -- text --> B`: the label sits between the two halves of the
+        # link, and the transform joins the halves back into one token, so
+        # `<-- t -->` is a double arrow and `-. t .->` a dotted one.
+        rule(:inline_label_edge) do
+          inline_solid | inline_thick | inline_dotted
+        end
+
+        rule(:inline_solid) do
+          inline_halves(str('--'), solid_close, str('--'))
+        end
+
+        rule(:inline_thick) do
+          inline_halves(str('=='), thick_close, str('=='))
+        end
+
+        # A dot never doubles as text the way a hyphen does: `.-` is
+        # already a complete link, so nothing is left to refuse.
+        rule(:inline_dotted) { inline_halves(str('-.'), dotted_close, nil) }
+
+        # A closing link carries at least one character more than the
+        # opening half, a head or another body character, so `--` alone
+        # never closes.
+        rule(:solid_close) do
+          str('--') >> (match['>xo'] | (str('-').repeat(1) >> match['>xo'].maybe))
+        end
+
+        rule(:thick_close) do
+          str('==') >> (match['>xo'] | (str('=').repeat(1) >> match['>xo'].maybe))
+        end
+
+        rule(:dotted_close) do
+          str('-').maybe >> str('.').repeat(1) >> str('-') >> match['>xo'].maybe
+        end
+
+        # The label runs to the closing link, on one line, and starts on a
+        # character that is not whitespace: mermaid refuses `A -- --> B`.
+        # `forbidden` is the doubled character of the body, which mermaid
+        # cannot lex inside the label either.
+        def inline_halves(open, close, forbidden)
+          closing = space.repeat >> link_start.maybe >> close
+          char = closing.absent? >> newline.absent? >> any
+          char = forbidden.absent? >> char if forbidden
+          (link_start.maybe >> open).as(:open) >> space.repeat >>
+            (space.absent? >> char >> char.repeat).as(:label) >>
+            space.repeat >> (link_start.maybe >> close).as(:close)
+        end
+        private :inline_halves
 
         # Link forms
         # Every symbol-only link mermaid draws, probed one at a time

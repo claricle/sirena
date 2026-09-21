@@ -4882,9 +4882,7 @@
   {
     "case": "flowchart/031_parser_should_handle_double_edged_nodes_with_text_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/031_parser_should_handle_normal_edges_where_you_also_have_a_node_with_metadata_26.mmd",
@@ -4915,9 +4913,7 @@
   {
     "case": "flowchart/033_parser_should_handle_double_edged_nodes_with_text_on_thick_arrows_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/034_parser_markdown_formatting_in_subgraphs_29.mmd",
@@ -4939,9 +4935,7 @@
   {
     "case": "flowchart/035_parser_should_handle_double_edged_nodes_with_text_on_dotted_arrows_30.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/036_parser_should_handle_basic_shape_data_statements_31.mmd",
@@ -6068,16 +6062,12 @@
   {
     "case": "flowchart/163_parser_should_handle_space_and_send_158.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/164_parser_should_handle_space_and_send_159.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/165_parser_should_handle_space_and_dir__td__160.mmd",
@@ -6124,93 +6114,67 @@
   {
     "case": "flowchart/173_parser_should_handle_normal_text_on_lines_168.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/174_parser_should_handle_dotted_text_on_lines__td3__169.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/175_parser_should_handle_thick_text_on_lines_170.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/176_parser_should_handle_text_without_space_171.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/177_parser_should_handle_text_with_multiple_leading_space_172.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/178_parser_should_handle_with_space_173.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/179_parser_should_handle_text_with___174.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/180_parser_should_handle_space_and_space_between_vertices_and_link_175.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/181_parser_should_handle_space_and_caps_176.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/182_parser_should_handle_space_and_dir_177.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/183_parser_should_handle_space_and_dir__td2__178.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/184_parser_should_handle_keywords_179.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/185_parser_should_handle_keywords_180.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/186_parser_should_handle_space_181.mmd",

@@ -719,7 +719,7 @@ module Sirena
             # matches a hash only when EVERY key matches, and the hash
             # holding `arrow` carries `label` and `target` too. So the
             # slice is read here, where the link is the only thing meant.
-            link_token = edge_data[:arrow][:token].to_s
+            link_token = link_token(edge_data)
             label = edge_data[:label]
             target_data = edge_data[:target]
 
@@ -738,6 +738,16 @@ module Sirena
             source_id = target_node_data[:node_id]
           end
         end
+
+        # A link written around its label, `A -- text --> B`, arrives in
+        # two halves, and their concatenation reads like the one-piece
+        # link of the same kind: `-- -->` is `---->`.
+        def self.link_token(edge_data)
+          return edge_data[:arrow][:token].to_s if edge_data[:arrow]
+
+          "#{edge_data[:open]}#{edge_data[:close]}"
+        end
+        private_class_method :link_token
 
         # A second mention of a node changes only what it actually says.
         # Treating an absent shape as `rect` and an absent label as the id
