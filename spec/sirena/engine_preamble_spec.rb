@@ -247,7 +247,7 @@ RSpec.describe Sirena::Engine do
       kanban: "kanban\n  column1[Todo]\n    task1[Task]\n",
       block: "block-beta\n  A\n",
       requirement: "requirementDiagram\n",
-      xychart: "xychart-beta\n  x-axis [1, 2]\n  line [1, 2]\n",
+      xy_chart: "xychart-beta\n  x-axis [1, 2]\n  line [1, 2]\n",
       sankey: "sankey-beta\nA,B,1\n",
       treemap: "treemap-beta\n\"A\": 1\n",
       c4: "C4Context\n  Person(a, \"A\")\n"

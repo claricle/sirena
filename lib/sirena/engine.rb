@@ -43,7 +43,7 @@ module Sirena
       radar: /\A\s*radar-beta/i,
       block: /\A\s*block-beta/i,
       requirement: /\A\s*requirementDiagram/i,
-      xychart: /\A\s*xychart-beta/i,
+      xy_chart: /\A\s*xychart-beta/i,
       architecture: /\A\s*architecture-beta/i,
       sankey: /\A\s*sankey-beta/i,
       packet: /\A\s*packet-beta/i,
@@ -76,7 +76,7 @@ module Sirena
     REFUSES_LATE_FRONTMATTER = [
       :flowchart, :sequence, :class_diagram, :state_diagram, :er_diagram,
       :user_journey, :gantt, :timeline, :quadrant, :mindmap, :kanban,
-      :block, :requirement, :xychart, :sankey, :treemap, :c4
+      :block, :requirement, :xy_chart, :sankey, :treemap, :c4
     ].freeze
     private_constant :REFUSES_LATE_FRONTMATTER
 
