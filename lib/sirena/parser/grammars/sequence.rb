@@ -91,7 +91,8 @@ module Sirena
         end
 
         rule(:title_statement) do
-          str('title') >> (colon >> space? | space.repeat(1)) >> rest_of_line
+          str('title') >> (colon >> space? | space.repeat(1)) >>
+            match['^;\n'].repeat >> statement_end
         end
 
         rule(:acc_title_statement) do
@@ -109,11 +110,22 @@ module Sirena
 
         rule(:autonumber_statement) do
           str('autonumber') >>
-            (space.repeat(1) >> (str('off') | numbering)).maybe >> line_end
+            (space.repeat(1) >> (str('off') | numbering)).maybe >> statement_end
+        end
+
+        # mermaid's NUM: digits with up to two decimals, or a leading-dot decimal.
+        rule(:number) do
+          (match['0-9'].repeat(1) >> (str('.') >> match['0-9'].repeat(1, 2)).maybe) |
+            (str('.') >> match['0-9'].repeat(1, 2))
         end
 
         rule(:numbering) do
-          match['0-9'].repeat(1) >> (space.repeat(1) >> match['0-9'].repeat(1)).maybe
+          number >> (space.repeat(1) >> number).maybe
+        end
+
+        # `;` separates statements, so it may end a line without a newline.
+        rule(:statement_end) do
+          line_end | semicolon
         end
 
         # Runs to the physical line end: testing `line_end` at every

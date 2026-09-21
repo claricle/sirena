@@ -24,6 +24,8 @@ RSpec.describe Sirena::Parser::SequenceParser do
     "autonumber with a start" => "autonumber 10",
     "autonumber with a start and step" => "autonumber 10 5",
     "autonumber off" => "autonumber off",
+    "autonumber with decimal start and step" => "autonumber 1.5 0.25",
+    "autonumber with a leading-dot step" => "autonumber 1 .5",
     "title followed by a semicolon" => "title Diagram Title;",
     "autonumber with a trailing comment" => "autonumber %% numbered"
   }.each do |name, line|
@@ -46,6 +48,23 @@ RSpec.describe Sirena::Parser::SequenceParser do
     diagram = parser.parse("sequenceDiagram\nAlice->Bob: hi\nautonumber\nBob->Alice: yo\n")
 
     expect(diagram.messages.size).to eq(2)
+  end
+
+  # mermaid's lexer ends `title` text and an `autonumber` line at `;`, which
+  # is a statement separator, so the statement after it is still parsed.
+  describe "a semicolon after title or autonumber separates statements" do
+    {
+      "title" => "title T;Alice->Bob: hi",
+      "title with a colon" => "title: T;Alice->Bob: hi",
+      "autonumber" => "autonumber;Alice->Bob: hi",
+      "autonumber with a start" => "autonumber 3;Alice->Bob: hi"
+    }.each do |name, source|
+      it "keeps the message after #{name}" do
+        diagram = parser.parse("sequenceDiagram\n#{source}\n")
+
+        expect(diagram.messages.size).to eq(1)
+      end
+    end
   end
 
   # A run of interior spaces made `rest_of_line` rescan the whole run at
