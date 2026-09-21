@@ -939,17 +939,22 @@ module Sirena
           str('-').maybe >> str('.').repeat(1) >> str('-') >> match['>xo'].maybe
         end
 
-        # The label runs to the closing link, on one line, and starts on a
-        # character that is not whitespace: mermaid refuses `A -- --> B`.
-        # `forbidden` is the doubled character of the body, which mermaid
-        # cannot lex inside the label either.
+        # The label runs to the closing link, across lines as mermaid reads
+        # it, and starts on a character that is not whitespace: mermaid
+        # refuses `A -- --> B`. `forbidden` is the doubled character of the
+        # body, which mermaid cannot lex inside the label either.
+        #
+        # A whitespace run is consumed whole and checked once for what
+        # follows it, so a long run costs one pass, not one per character.
         def inline_halves(open, close, forbidden)
-          closing = space.repeat >> link_start.maybe >> close
-          char = closing.absent? >> newline.absent? >> any
+          blank = match[" \t\r\n"]
+          closing = link_start.maybe >> close
+          char = closing.absent? >> blank.absent? >> any
           char = forbidden.absent? >> char if forbidden
-          (link_start.maybe >> open).as(:open) >> space.repeat >>
-            (space.absent? >> char >> char.repeat).as(:label) >>
-            space.repeat >> (link_start.maybe >> close).as(:close)
+          gap = blank.repeat(1) >> closing.absent?
+          (link_start.maybe >> open).as(:open) >> blank.repeat >>
+            (char >> (char | gap).repeat).as(:label) >>
+            blank.repeat >> closing.as(:close)
         end
         private :inline_halves
 
@@ -957,7 +962,7 @@ module Sirena
         # Every symbol-only link mermaid draws, probed one at a time
         # against mmdc rather than counted from the docs. The form that
         # carries its label in the middle — `A -- text --> B` — is a
-        # different shape and is still refused; see the spec that pins it.
+        # different shape, read by `inline_label_edge` above.
         #
         # `->` and `==` are deliberately absent: sirena accepted both and
         # mermaid rejects them.

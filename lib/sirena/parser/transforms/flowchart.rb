@@ -742,11 +742,31 @@ module Sirena
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece
         # link of the same kind: `-- -->` is `---->`.
+        #
+        # Mermaid reads a `<` opening the closing half as the start head
+        # of the whole link, so it moves to the front, and it refuses an
+        # `x` or `o` opening half whose closing half does not end in the
+        # same marker.
+        # @raise [Parser::ParseError] on an unmatched opening marker
         def self.link_token(edge_data)
           return edge_data[:arrow][:token].to_s if edge_data[:arrow]
 
-          "#{edge_data[:open]}#{edge_data[:close]}"
+          open = edge_data[:open].to_s
+          close = edge_data[:close].to_s
+          reject_unmatched_marker(open, close)
+          return "#{open}#{close}" unless close.start_with?('<') && open !~ /\A[ox<]/
+
+          "<#{open}#{close[1..]}"
         end
+
+        def self.reject_unmatched_marker(open, close)
+          return unless open.match?(/\A[ox]/) && close[-1] != open[0]
+
+          raise Parser::ParseError,
+                "The link #{open}#{close} opens with #{open[0]} " \
+                'and does not close with it.'
+        end
+        private_class_method :reject_unmatched_marker
         private_class_method :link_token
 
         # A second mention of a node changes only what it actually says.

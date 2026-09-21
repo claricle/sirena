@@ -37,11 +37,52 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(edge_tuples("A --x B")).to eq([["A", "B", nil, "cross"]])
     end
 
-    ["A -- a -- b --> C", "A -- --> C", "A -- text -- B", "A -- text\n--> B"]
-      .each do |source|
-      it "refuses #{source.inspect}, which mermaid cannot lex" do
+    {
+      "A -- a -- b --> C" => "a doubled hyphen in the text",
+      "A -- --> C" => "a label that is only space",
+      "A -- text -- B" => "a link that never closes",
+      "A o-- t --> B" => "an opening o that is not closed",
+      "A x-- t --> B" => "an opening x that is not closed",
+      "A x== t ==> B" => "an opening x on a thick link",
+      "A o== t ==> B" => "an opening o on a thick link",
+      "A o-- t --x B" => "an o closed by an x"
+    }.each do |source, reason|
+      it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
       end
+    end
+
+    it "keeps a marker matched at both ends" do
+      expect(edge_tuples("A x-- t --x B")).to eq([["A", "B", "t", "cross_both"]])
+    end
+
+    {
+      "A -- t <--> B" => "arrow_both",
+      "A == t <==> B" => "thick_arrow_both",
+      "A -. t <.-> B" => "dotted_arrow_both",
+      "A -- t <--x B" => "cross"
+    }.each do |source, arrow_type|
+      it "reads the start head of #{source.inspect}" do
+        expect(edge_tuples(source).first.last).to eq(arrow_type)
+      end
+    end
+
+    ["A -- t\n--> B", "A -- t\r\n--> B", "A -- t\r--> B"].each do |source|
+      it "reads #{source.inspect} as one labelled edge" do
+        expect(edge_tuples(source)).to eq([["A", "B", "t", "arrow"]])
+      end
+    end
+
+    it "keeps the lines of a label that spans them" do
+      expect(edge_tuples("A -- one\ntwo\n--> B").first[2]).to eq("one\ntwo")
+    end
+
+    it "parses a long run of spaces inside the label in linear time" do
+      source = "A -- a#{' ' * 20_000}b --> B"
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      edge_tuples(source)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+        .to be < 2
     end
   end
 
