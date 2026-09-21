@@ -702,7 +702,10 @@ module Sirena
         def self.process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
           # `e1@{ animate: true }` alone on a line addresses an edge.
-          return if edge_properties?(stmt, context)
+          if edge_properties?(stmt, context)
+            metadata_entries(stmt[:node][:metadata])
+            return
+          end
 
           sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
                                   context)

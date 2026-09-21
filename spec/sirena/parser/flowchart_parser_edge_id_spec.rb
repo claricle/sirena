@@ -72,8 +72,27 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(edge_links('A -->|"me@host"| B')).to eq(["A>B"])
     end
 
+    it "keeps an @ that closes a link label" do
+      expect(edge_tuples("A --me@--> B").first[0..2]).to eq(["A", "B", "me@"])
+    end
+
     it "refuses an id glued to the separator before it" do
       expect { parse_flowchart("A;e1@--> B") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  describe "an edge id with unusual spacing or characters" do
+    it "takes whitespace between the @ and the link" do
+      expect(edge_links("A e1@ ==> B")).to eq(%w[A>B])
+    end
+
+    it "takes a ; inside the id" do
+      expect(edge_links("A a;b@--> B")).to eq(%w[A>B])
+    end
+
+    it "still rejects malformed properties addressed to an edge" do
+      expect { parse_flowchart("A e1@--> B\ne1@{ animate: [ }") }
         .to raise_error(Sirena::Parser::ParseError)
     end
   end

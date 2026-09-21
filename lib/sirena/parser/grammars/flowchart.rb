@@ -911,16 +911,16 @@ module Sirena
         end
 
         # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
-        # can address it. The `@` must be followed by the start of a link:
-        # an `@` inside a label (`A --me@host--> B`), a quote, or a `{`
-        # is not an id. An id never starts with `;`, which ends the
-        # statement before it.
+        # can address it. The `@` must be followed by the start of a link,
+        # and the id must not itself start like one: an `@` inside a label
+        # (`A --me@--> B`), a quote, or a `{` is not an id. An id may hold
+        # a `;` but never starts with one, which ends the statement.
         #
         # Whether an id is here is read off the source first. Trying the
         # rule and failing would report its failure to the Deepest reporter
         # in `Base`, which would then point every `A B` typo at the end of
         # `B` and ask for an `@` there.
-        EDGE_ID_AHEAD = /[^\s@]+@[ox<]?(?:-|=|\.|~~~)/
+        EDGE_ID_AHEAD = /(?![ox<]?(?:-|=|\.|~~~))[^\s@]+@\s*[ox<]?(?:-|=|\.|~~~)/
         private_constant :EDGE_ID_AHEAD
 
         rule(:edge_id) do
@@ -930,9 +930,9 @@ module Sirena
         end
 
         rule(:edge_id_body) do
-          (separator.absent? >> (space | newline | str('@')).absent? >> any)
-            .repeat(1)
-            .as(:edge_id) >> str('@')
+          semicolon.absent? >>
+            ((space | newline | str('@')).absent? >> any).repeat(1)
+            .as(:edge_id) >> str('@') >> match['\s'].repeat
         end
 
         rule(:piped_edge) do
