@@ -103,7 +103,8 @@ module Sirena
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
-            ensure_entity_exists(extract_text(stmt[:class_id]))
+            entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
+            apply_generic(entity, stmt[:generic])
           end
         end
 
@@ -124,8 +125,7 @@ module Sirena
         end
 
         def process_class_declaration(stmt)
-          class_id = extract_text(stmt[:class_id])
-          class_id = qualify_name(class_id)
+          class_id = qualify_name(class_id_text(stmt[:class_id]))
 
           entity = find_or_create_entity(class_id)
 
@@ -148,11 +148,7 @@ module Sirena
           # an earlier declaration already labelled this class — otherwise
           # `class C1["Label"]` followed by `class C1~T~` produced `Label~T~`
           # where mmdc renders `Label`.
-          if stmt[:generic] && stmt[:generic][:generic_type] && !label &&
-             !@labelled_ids.include?(entity.id)
-            generic_type = extract_text(stmt[:generic][:generic_type])
-            entity.name = "#{entity.name}~#{generic_type}~"
-          end
+          apply_generic(entity, stmt[:generic]) unless label
 
           # An explicit text label replaces the display name. The id is
           # untouched, which is what keeps relationships resolving — and the
@@ -169,8 +165,7 @@ module Sirena
         end
 
         def process_standalone_stereotype(stmt)
-          class_id = extract_text(stmt[:class_id])
-          class_id = qualify_name(class_id)
+          class_id = qualify_name(class_id_text(stmt[:class_id]))
 
           entity = find_or_create_entity(class_id)
 
@@ -180,10 +175,10 @@ module Sirena
         end
 
         def process_colon_member(stmt)
-          class_id = extract_text(stmt[:class_id])
-          class_id = qualify_name(class_id)
+          class_id = qualify_name(class_id_text(stmt[:class_id]))
 
           entity = find_or_create_entity(class_id)
+          apply_generic(entity, stmt[:generic])
 
           # Parse visibility
           visibility = parse_visibility(stmt[:visibility])
@@ -250,8 +245,8 @@ module Sirena
         end
 
         def process_relationship(stmt)
-          from_id = extract_text(stmt[:from_id])
-          to_id = extract_text(stmt[:to_id])
+          from_id = class_id_text(stmt[:from_id])
+          to_id = class_id_text(stmt[:to_id])
           operator = extract_text(stmt[:operator][:arrow])
 
           # Qualify names if in namespace
@@ -259,8 +254,8 @@ module Sirena
           to_id = qualify_name(to_id)
 
           # Ensure both entities exist
-          ensure_entity_exists(from_id)
-          ensure_entity_exists(to_id)
+          apply_generic(ensure_entity_exists(from_id), stmt[:from_generic])
+          apply_generic(ensure_entity_exists(to_id), stmt[:to_generic])
 
           # Get relationship type
           relationship_type = RELATIONSHIP_TYPES[operator]
@@ -329,6 +324,24 @@ module Sirena
 
         def ensure_entity_exists(class_id)
           find_or_create_entity(class_id)
+        end
+
+        # The name of a class reference. Backticks only quote the name:
+        # `Car` and Car are one class.
+        def class_id_text(node)
+          extract_text(node).sub(/\A`(.*)`\z/m, '\1')
+        end
+
+        # Shows a generic on the display name ("Car~T~"), unless a text label
+        # already names the class: mmdc renders `class Animal~T~["A label"]`
+        # as "A label". A later generic replaces an earlier one, so
+        # `A~T~ --> B` written twice still reads "A~T~".
+        def apply_generic(entity, generic)
+          return unless generic.is_a?(Hash) && generic[:generic_type]
+          return if @labelled_ids.include?(entity.id)
+
+          type = extract_text(generic[:generic_type])
+          entity.name = "#{entity.name.sub(/~[^~]*~\z/, '')}~#{type}~"
         end
 
         def qualify_name(name)
