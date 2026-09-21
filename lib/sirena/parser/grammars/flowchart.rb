@@ -422,7 +422,7 @@ module Sirena
         end
 
         rule(:comma_gap) do
-          comma >> space? >> (comma | semicolon | line_end)
+          comma >> (comma | semicolon | newline | eof)
         end
 
         # After a `#` the declaration carries at most one `;`. mmdc

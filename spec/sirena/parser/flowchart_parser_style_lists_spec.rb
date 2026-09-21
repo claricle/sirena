@@ -34,6 +34,19 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a space in place of a comma item" do
+    [
+      "style A fill:red, ",
+      "style A fill:red, ,stroke:blue",
+      "style A fill:red, ;B",
+      "classDef x fill:red, "
+    ].each do |declaration|
+      it "takes #{declaration.inspect}, as mermaid does" do
+        expect(node_ids.call("graph TD\nA\n#{declaration}\n")).to include("A")
+      end
+    end
+  end
+
   describe "a multi-class classDef" do
     it "takes `classDef a,b props` and keeps the diagram's nodes" do
       source = "graph TD\nA\nclassDef first,second fill:#bbb,stroke:red\n"
