@@ -411,7 +411,18 @@ module Sirena
         # hashed tail fails the statement instead of falling through and
         # drawing a node mermaid refuses.
         rule(:style_property_list) do
-          hashed_property_list | hashed_head.absent? >> style_property
+          empty_comma_item.absent? >>
+            (hashed_property_list | hashed_head.absent? >> style_property)
+        end
+
+        # mermaid joins declarations with a comma and refuses an empty one:
+        # `,a:b`, `a:b,,c:d` and `a:b,`.
+        rule(:empty_comma_item) do
+          comma | (comma_gap.absent? >> declaration_char).repeat >> comma_gap
+        end
+
+        rule(:comma_gap) do
+          comma >> space? >> (comma | semicolon | line_end)
         end
 
         # After a `#` the declaration carries at most one `;`. mmdc

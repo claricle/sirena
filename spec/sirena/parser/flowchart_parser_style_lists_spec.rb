@@ -3,8 +3,8 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::FlowchartParser do
-  def node_ids(source)
-    described_class.new.parse(source).nodes.map(&:id).sort
+  let(:node_ids) do
+    ->(source) { described_class.new.parse(source).nodes.map(&:id).sort }
   end
 
   describe "a comma inside a style or classDef value" do
@@ -14,7 +14,22 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "classDef x fill:#f9f,stroke:#333,stroke-width:4px",
     ].each do |declaration|
       it "takes #{declaration.inspect}" do
-        expect(node_ids("graph TD\nA-->B\n#{declaration}\n")).to eq(%w[A B])
+        expect(node_ids.call("graph TD\nA-->B\n#{declaration}\n")).to eq(%w[A B])
+      end
+    end
+  end
+
+  describe "an empty item in a comma list" do
+    [
+      "style A fill:red,",
+      "style A fill:red,,stroke:blue",
+      "style A ,fill:red",
+      "style A fill:#f9f,",
+      "classDef x fill:red,"
+    ].each do |declaration|
+      it "refuses #{declaration.inspect}" do
+        expect { node_ids.call("graph TD\nA\n#{declaration}\n") }
+          .to raise_error(Sirena::Parser::ParseError)
       end
     end
   end
@@ -22,14 +37,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   describe "a multi-class classDef" do
     it "takes `classDef a,b props` and keeps the diagram's nodes" do
       source = "graph TD\nA\nclassDef first,second fill:#bbb,stroke:red\n"
-      expect(node_ids(source)).to eq(%w[A])
+      expect(node_ids.call(source)).to eq(%w[A])
     end
   end
 
   describe "a style statement for a node nothing else mentions" do
     it "draws that node, as corpus case 141 and 142 do" do
       source = "graph TD;style R background:#fff,border:1px solid red;"
-      expect(node_ids(source)).to eq(%w[R])
+      expect(node_ids.call(source)).to eq(%w[R])
     end
 
     it "draws an undeclared node and leaves a declared one as it was" do
