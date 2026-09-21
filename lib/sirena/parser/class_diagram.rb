@@ -35,10 +35,12 @@ module Sirena
       private
 
       # The name rules match Unicode letters, and Ruby refuses to match those
-      # against a binary-tagged string that holds non-ASCII bytes.
+      # against a binary-tagged string that holds non-ASCII bytes. A
+      # UTF-8-tagged string with invalid bytes raises ArgumentError from
+      # Parslet's StringScanner.
       def parse_grammar(source)
         parse_with_grammar(Grammars::ClassDiagram.new, source)
-      rescue Encoding::CompatibilityError => e
+      rescue EncodingError, ArgumentError => e
         raise ParseError, "Parse error: source encoding #{source.encoding} " \
                           "cannot be read as a class diagram (#{e.message})"
       end

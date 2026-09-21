@@ -85,6 +85,12 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
     expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
   end
 
+  it "reports invalid UTF-8 in a UTF-8-tagged source as a ParseError" do
+    source = ("classDiagram\nclass ".b + "\xFF\n".b).force_encoding(Encoding::UTF_8)
+
+    expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+  end
+
   it "reads a direction on the plain header" do
     expect(parser.parse("classDiagram LR\nclass A\n").direction).to eq("LR")
   end
@@ -225,6 +231,7 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "an unknown suffix" => "classDiagram-v2x\nclass A\n",
       "another version" => "classDiagram-v3\nclass A\n",
       "a suffix on the plain header" => "classDiagramX\nclass A\n",
+      "a direction glued to the plain header" => "classDiagramLR\nclass A\n",
       "a backticked class glued to the header" => "classDiagram`A`\n",
       "a backticked class after the header on its line" => "classDiagram `A`\n"
     }.each do |name, source|
