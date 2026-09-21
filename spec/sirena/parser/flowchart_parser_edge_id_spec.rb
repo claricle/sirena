@@ -50,6 +50,19 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids("A e1@--> B\ne1:::foo")).to eq(%w[A B])
     end
 
+    it "sets no node for a shaped class reference to the edge" do
+      expect(node_ids("A e1@--> B\ne1[x]:::foo")).to eq(%w[A B])
+    end
+
+    it "sets no node for an edge reference joined by & to a node" do
+      expect(node_ids("A e1@--> B\ne1@{ animate: true } & C"))
+        .to eq(%w[A B C])
+    end
+
+    it "sets no node for an edge reference later in the & group" do
+      expect(node_ids("A e1@--> B\nC & e1:::foo")).to eq(%w[A B C])
+    end
+
     it "is still a node when a plain mention repeats the id" do
       source = "A e1@--> B\ne1 --> C"
 

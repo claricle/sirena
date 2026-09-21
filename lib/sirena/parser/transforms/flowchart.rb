@@ -701,17 +701,11 @@ module Sirena
         # its absence.
         def self.process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
-          # `e1@{ animate: true }` alone on a line addresses an edge.
-          if edge_properties?(stmt, context)
-            metadata_entries(stmt[:node][:metadata])
-            return
-          end
-
+          edges = stmt[:edges]
           sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
-                                  context)
+                                  context, linkless: edges.nil?)
 
           # Process edges if present
-          edges = stmt[:edges]
           return unless edges
 
           edges = [edges] unless edges.is_a?(Array)
@@ -751,8 +745,17 @@ module Sirena
 
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
-        def self.declare_group(diagram, first, rest, parent, context)
-          [first, *rest].map do |node_hash|
+        #
+        # With no link in the statement, a member that addresses an edge id
+        # (`e1@{ ... }`, `e1:::foo`) is left out: it names no node.
+        def self.declare_group(diagram, first, rest, parent, context,
+                               linkless: false)
+          [first, *rest].filter_map do |node_hash|
+            if linkless && edge_reference?(node_hash, context)
+              metadata_entries(node_hash[:metadata])
+              next
+            end
+
             node_data = extract_node_data(node_hash)
             add_or_update_node(diagram, node_data)
             claim_member(parent, node_data[:node_id].to_s, context)
@@ -761,16 +764,13 @@ module Sirena
         end
         private_class_method :declare_group
 
-        # `e1@{ animate: true }` and `e1:::foo` set properties on the edge
-        # named `e1`, and mermaid draws no node for it.
-        def self.edge_properties?(stmt, context)
-          node = stmt[:node]
-          (node[:metadata] || (node[:inline_class] && !node[:shape])) &&
-            !stmt[:edges] && Array(stmt[:group]).empty? &&
-            context.edge_ids.include?(node[:node_id].to_s)
+        # `e1@{ animate: true }` and `e1[x]:::foo` set properties on the
+        # edge named `e1`, and mermaid draws no node for it.
+        def self.edge_reference?(node_hash, context)
+          (node_hash[:metadata] || node_hash[:inline_class]) &&
+            context.edge_ids.include?(node_hash[:node_id].to_s)
         end
-        private_class_method :edge_properties?
-
+        private_class_method :edge_reference?
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece
         # link of the same kind: `-- -->` is `---->`.
