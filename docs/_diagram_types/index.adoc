@@ -7,7 +7,7 @@ has_children: true
 
 == Diagram Types
 
-Complete reference documentation for all 19 diagram types supported by Sirena.
+Complete reference documentation for all 24 diagram types registered in Sirena.
 
 == What's in This Section
 
