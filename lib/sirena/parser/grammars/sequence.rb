@@ -33,6 +33,7 @@ module Sirena
 
         rule(:statement) do
           comment_statement |
+            metadata_statement |
             participant_declaration |
             actor_declaration |
             note_statement |
@@ -76,6 +77,47 @@ module Sirena
         rule(:comment_statement) do
           str('%') >> str('{').absent? >>
             (line_end.absent? >> any).repeat >> line_end
+        end
+
+        # `title`, `accTitle`, `accDescr` and `autonumber` are recognised so
+        # the diagram parses, and contribute no statement: like
+        # `comment_statement`, no `.as(...)`. The title, accessibility text
+        # and message numbering are not drawn. Each rule must end at
+        # `line_end`, which keeps `autonumber->>B: m` and `title->>B: m`
+        # ordinary messages.
+        rule(:metadata_statement) do
+          title_statement | acc_title_statement | acc_descr_block |
+            acc_descr_statement | autonumber_statement
+        end
+
+        rule(:title_statement) do
+          str('title') >> (colon >> space? | space.repeat(1)) >> rest_of_line
+        end
+
+        rule(:acc_title_statement) do
+          str('accTitle') >> space? >> colon >> rest_of_line
+        end
+
+        rule(:acc_descr_statement) do
+          str('accDescr') >> space? >> colon >> rest_of_line
+        end
+
+        rule(:acc_descr_block) do
+          str('accDescr') >> space? >> lbrace >>
+            (rbrace.absent? >> any).repeat >> rbrace >> line_end
+        end
+
+        rule(:autonumber_statement) do
+          str('autonumber') >>
+            (space.repeat(1) >> (str('off') | numbering)).maybe >> line_end
+        end
+
+        rule(:numbering) do
+          match['0-9'].repeat(1) >> (space.repeat(1) >> match['0-9'].repeat(1)).maybe
+        end
+
+        rule(:rest_of_line) do
+          (line_end.absent? >> any).repeat >> line_end
         end
 
         # An actor name is a bounded run of text, not a programming
