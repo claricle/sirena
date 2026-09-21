@@ -434,6 +434,47 @@ RSpec.describe 'lib/tasks/coverage.rake' do
       expect { invoke! }.to raise_error(/predates a newer edit to spec\/foo_spec\.rb.*coverage:measure-time snapshot.*run `rake coverage:measure` again/m)
       expect(main_object).not_to have_received(:sh)
     end
+
+    # No stub_sh!: this runs the real `bundle exec simplecov patch`, so the
+    # --minimum 100 argument is what decides pass or fail. The temp repo has
+    # no Gemfile of its own, so BUNDLE_GEMFILE points at this repo's -- else
+    # `bundle exec` would fail for the wrong reason and the red case would
+    # pass without proving anything.
+    describe 'through the real simplecov patch entry point' do
+      subject(:gate) do
+        init_repo!
+        commit!('lib/foo.rb', "class Foo\nend\n")
+        base = head_sha
+        commit!('lib/foo.rb', "class Foo\n  def bar\n    1\n  end\nend\n")
+
+        source_lines = File.readlines('lib/foo.rb', chomp: true)
+        FileUtils.mkdir_p('coverage')
+        File.write('coverage/coverage.json', JSON.generate(
+                                               'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => [1, 1, hits, 1, 1] } }
+                                             ))
+        File.utime(Time.now, Time.now, 'coverage/coverage.json')
+        ENV['COVERAGE_BASE'] = base
+        Rake::Task['coverage:changed_lines'].invoke
+      end
+
+      around do |example|
+        previous_gemfile = ENV.fetch('BUNDLE_GEMFILE', nil)
+        ENV['BUNDLE_GEMFILE'] = File.expand_path('../../Gemfile', __dir__)
+        example.run
+      ensure
+        ENV['BUNDLE_GEMFILE'] = previous_gemfile
+      end
+
+      let(:hits) { |example| example.metadata.fetch(:hits) }
+
+      it 'exits non-zero when a changed lib line has no coverage', hits: 0 do
+        expect { gate }.to raise_error(/Command failed with status \(1\)/)
+      end
+
+      it 'passes when every changed lib line is covered', hits: 1 do
+        expect { gate }.not_to raise_error
+      end
+    end
   end
 
   describe 'coverage:measure' do
