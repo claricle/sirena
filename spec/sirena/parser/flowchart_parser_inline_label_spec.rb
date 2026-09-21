@@ -48,7 +48,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "A o-- t --x B" => "an o closed by an x",
       "A == a=b ==> B" => "a lone = in a thick label",
       "A -. a.b .-> B" => "a dot in a dotted label",
-      "A -- \u00A0 --> B" => "a label of only no-break spaces"
+      "A -- \u00A0 --> B" => "a label of only no-break spaces",
+      "A <-- t --x B" => "a < closed by an x",
+      "A <-- t <--> B" => "a < and a second start head",
+      "A <== t === B" => "a < with no head to close it",
+      "A <-. t .- B" => "a dotted < with no head to close it",
+      'A -- x"a" --> B' => "a quote inside the text",
+      'A -- "a --> B' => "a quote never closed",
+      'A -- "" --> B' => "an empty quoted label"
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -73,6 +80,19 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     ["A -- t\n--> B", "A -- t\r\n--> B", "A -- t\r--> B"].each do |source|
       it "reads #{source.inspect} as one labelled edge" do
         expect(edge_tuples(source)).to eq([["A", "B", "t", "arrow"]])
+      end
+    end
+
+    {
+      'A -- "foo" --> B' => "foo",
+      'A -- "a--b" --> B' => "a--b",
+      'A == "a=b" ==> B' => "a=b",
+      'A -. "a.b" .-> B' => "a.b",
+      'A -- "a b" --> B' => "a b",
+      'A -- "a"b --> B' => "ab"
+    }.each do |source, label|
+      it "reads the quoted label of #{source.inspect} as #{label.inspect}" do
+        expect(edge_tuples(source).first[2]).to eq(label)
       end
     end
 

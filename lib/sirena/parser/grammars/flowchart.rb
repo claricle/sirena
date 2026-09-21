@@ -951,14 +951,19 @@ module Sirena
         def inline_halves(open, close, forbidden)
           blank = comment_line | line_space | match["\r\n"]
           closing = link_start.maybe >> close
-          char = closing.absent? >> blank.absent? >> any
+          char = closing.absent? >> blank.absent? >> str('"').absent? >> any
           char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
+          text = char >> (char | gap).repeat
           (link_start.maybe >> open).as(:open) >> blank.repeat >>
-            (char >> (char | gap).repeat).as(:label) >>
+            (quoted_label >> (char | gap).repeat | text).as(:label) >>
             blank.repeat >> closing.as(:close)
         end
         private :inline_halves
+
+        # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
+        # The transform drops the two quotes, as mermaid does.
+        rule(:quoted_label) { str('"') >> match['^"'].repeat(1) >> str('"') }
 
         # Link forms
         # Every symbol-only link mermaid draws, probed one at a time

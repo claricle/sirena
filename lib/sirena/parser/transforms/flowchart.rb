@@ -721,6 +721,7 @@ module Sirena
             # slice is read here, where the link is the only thing meant.
             link_token = link_token(edge_data)
             label = edge_data[:label]
+            label = label.to_s.delete('"') if edge_data[:open]
             target_data = edge_data[:target]
 
             next unless target_data
@@ -746,7 +747,7 @@ module Sirena
         # Mermaid reads a `<` opening the closing half as the start head
         # of the whole link, so it moves to the front, and it refuses an
         # `x` or `o` opening half whose closing half does not end in the
-        # same marker.
+        # same marker; a `<` needs a `>` to close it.
         # @raise [Parser::ParseError] on an unmatched opening marker
         def self.link_token(edge_data)
           return edge_data[:arrow][:token].to_s if edge_data[:arrow]
@@ -760,12 +761,23 @@ module Sirena
         end
 
         def self.reject_unmatched_marker(open, close)
-          return unless open.match?(/\A[ox]/) && close[-1] != open[0]
+          return if marker_closed?(open[0], close)
 
           raise Parser::ParseError,
                 "The link #{open}#{close} opens with #{open[0]} " \
                 'and does not close with it.'
         end
+
+        # `<` closes on a head, and neither it nor `x` or `o` takes a
+        # second start marker on the closing half.
+        def self.marker_closed?(marker, close)
+          case marker
+          when 'x', 'o' then close[-1] == marker
+          when '<' then close[-1] == '>' && !close.match?(/\A[ox<]/)
+          else true
+          end
+        end
+        private_class_method :marker_closed?
         private_class_method :reject_unmatched_marker
         private_class_method :link_token
 
