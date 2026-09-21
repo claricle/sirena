@@ -233,6 +233,11 @@ module Sirena
         # the end — see the `link_start` and `link_end` rules in
         # `Grammars::Flowchart`, which are the sole producers of this
         # token.
+        # A comment line inside a label, whitespace as mermaid counts it.
+        COMMENT_LINE = Regexp.new(
+          "\n[\t\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F" \
+          "\u205F\u3000\uFEFF]*%%[^\n]*"
+        )
         LINK_MARKERS = {
           '>' => 'arrow', '<' => 'arrow',
           'x' => 'cross', 'o' => 'circle'
@@ -721,7 +726,7 @@ module Sirena
             # slice is read here, where the link is the only thing meant.
             link_token = link_token(edge_data)
             label = edge_data[:label]
-            label = label.to_s.delete('"') if edge_data[:open]
+            label = inline_label(label) if edge_data[:open]
             target_data = edge_data[:target]
 
             next unless target_data
@@ -739,6 +744,17 @@ module Sirena
             source_id = target_node_data[:node_id]
           end
         end
+
+        # Mermaid deletes a whole comment line before it lexes, and the
+        # quotes of a quoted run are delimiters, not text.
+        # @raise [Parser::ParseError] on a label that nothing is left of
+        def self.inline_label(label)
+          text = label.to_s.gsub(COMMENT_LINE, '').delete('"')
+          return text unless text.empty?
+
+          raise Parser::ParseError, 'An inline link label cannot be empty.'
+        end
+        private_class_method :inline_label
 
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece
@@ -768,9 +784,13 @@ module Sirena
                 'and does not close with it.'
         end
 
-        # `<` closes on a head, and neither it nor `x` or `o` takes a
-        # second start marker on the closing half.
+        # An opening `<` closes on a head and takes no second start marker
+        # on the closing half. A thick closing half that opens with its own
+        # `<` also needs a head: mmdc refuses `A == t <==x B` and
+        # `A == t <=== B`, and draws the solid and dotted forms.
         def self.marker_closed?(marker, close)
+          return false if close.start_with?('<=') && close[-1] != '>'
+
           case marker
           when 'x', 'o' then close[-1] == marker
           when '<' then close[-1] == '>' && !close.match?(/\A[ox<]/)

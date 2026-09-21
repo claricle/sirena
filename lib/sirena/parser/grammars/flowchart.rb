@@ -963,7 +963,7 @@ module Sirena
 
         # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
         # The transform drops the two quotes, as mermaid does.
-        rule(:quoted_label) { str('"') >> match['^"'].repeat(1) >> str('"') }
+        rule(:quoted_label) { str('"') >> match['^"'].repeat >> str('"') }
 
         # Link forms
         # Every symbol-only link mermaid draws, probed one at a time

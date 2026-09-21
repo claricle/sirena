@@ -55,7 +55,10 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "A <-. t .- B" => "a dotted < with no head to close it",
       'A -- x"a" --> B' => "a quote inside the text",
       'A -- "a --> B' => "a quote never closed",
-      'A -- "" --> B' => "an empty quoted label"
+      'A -- "" --> B' => "an empty quoted label",
+      "A == t <==x B" => "a thick < closed by an x",
+      "A x== t <==x B" => "a thick x with a < start on the closing half",
+      "A == t <=== B" => "a thick < with no head"
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -69,6 +72,8 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     {
       "A -- t <--> B" => "arrow_both",
       "A == t <==> B" => "thick_arrow_both",
+      'A -- ""a --> B' => "arrow",
+      "A -. t <.- B" => "dotted_line",
       "A -. t <.-> B" => "dotted_arrow_both",
       "A -- t <--x B" => "cross"
     }.each do |source, arrow_type|
@@ -105,22 +110,36 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to eq("text")
     end
 
+    it "drops comment lines from the middle of a label" do
+      expect(edge_tuples("A -- one\n%% a \"comment\"\ntwo\n--> B").first[2])
+        .to eq("one\ntwo")
+    end
+
     it "keeps the lines of a label that spans them" do
       expect(edge_tuples("A -- one\ntwo\n--> B").first[2]).to eq("one\ntwo")
     end
 
     {
       "spaces" => "A -- a#{' ' * 20_000}b --> B",
-      "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
-      "equals of an unclosed thick label" => "A == a#{'=' * 20_000}"
+      "text of a dotted label" => "A -. #{'a' * 5_000} .-> B",
+      "text of a thick label" => "A == #{'a' * 5_000} ==> B"
     }.each do |what, source|
       it "parses a long run of #{what} in linear time" do
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        begin
-          edge_tuples(source)
-        rescue Sirena::Parser::ParseError
-          nil
-        end
+        expect(edge_tuples(source).length).to eq(1)
+        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+          .to be < 2
+      end
+    end
+
+    {
+      "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
+      "equals of an unclosed thick label" => "A == a#{'=' * 20_000}"
+    }.each do |what, source|
+      it "refuses a long run of #{what} at once" do
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        expect { edge_tuples(source) }
+          .to raise_error(Sirena::Parser::ParseError)
         expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
           .to be < 2
       end
