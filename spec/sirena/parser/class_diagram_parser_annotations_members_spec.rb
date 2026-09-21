@@ -130,6 +130,10 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
       expect(parse_class(' "quoted"').attributes.map(&:name)).to eq(['"quoted"'])
     end
 
+    it "drops a static or abstract mark from an attribute name" do
+      expect(parse_class("field$\nfield2*").attributes.map(&:name)).to eq(%w[field field2])
+    end
+
     it "drops a static or abstract mark from the return type" do
       methods = parse_class("foo() void$\nbar() int*").class_methods
 
@@ -142,7 +146,9 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
       "a brace inside the text" => "a { b",
       "a line that is one brace" => "{",
       "a line starting with a quote" => '"quoted"',
-      "an unclosed quote" => '"a'
+      "an unclosed quote" => '"a',
+      "a call with no name" => "(x) void",
+      "a stray closing paren" => "abc)"
     }.each do |name, line|
       it "rejects #{name}, as mmdc does" do
         expect { parse_class(line) }.to raise_error(Sirena::Parser::ParseError)

@@ -217,16 +217,21 @@ module Sirena
         end
 
         # Text the structured member rules did not read. mmdc calls it a
-        # method when it holds a `)`, and shows the text as written.
+        # method when it holds a `)` and refuses a `)` outside the shape
+        # `name(...) type`. The `*` and `$` marks it allows after an
+        # attribute or method have no place in the model and are dropped.
         def add_raw_member(entity, text)
           text = text.strip
           visible = text.match(/\A(?<symbol>[-+#~])\s*(?<rest>\S.*)\z/m)
           visibility = visible ? VISIBILITY_SYMBOLS.fetch(visible[:symbol]) : 'public'
           text = visible[:rest] if visible
-          if (call = text.match(RAW_METHOD))
+          call = text.match(RAW_METHOD)
+          if call && !call[:name].strip.empty?
             entity.class_methods << raw_method(call, visibility)
+          elsif text.include?(')')
+            raise Parser::ParseError, "Cannot read #{text.inspect} as a class member."
           else
-            entity.attributes << Diagram::ClassAttribute.new(name: text, visibility: visibility)
+            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ''), visibility: visibility)
           end
         end
 
