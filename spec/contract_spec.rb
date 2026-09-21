@@ -34,7 +34,7 @@ RSpec.describe Sirena::DiagramRegistry do
   end
 
   # Same shape as the `def type` check above, for the other half of this
-  # refactor: Transform::Base#call is the ONLY place the validity guard
+  # refactor: Layout::Base#call is the ONLY place the validity guard
   # runs (#to_graph is a thin delegate to it). A concrete transform
   # redefining either would silently shadow the guard and disable it for
   # that one type — the exact "decoration" failure mode R2 (RULES.md)
@@ -53,7 +53,7 @@ RSpec.describe Sirena::DiagramRegistry do
       transform_class = described_class.get(type)[:transform]
       owners = guard_methods.filter_map do |method_name|
         owner = transform_class.instance_method(method_name).owner
-        "#{method_name} owned by #{owner}" unless owner == Sirena::Transform::Base
+        "#{method_name} owned by #{owner}" unless owner == Sirena::Layout::Base
       end
       "#{type}: #{owners.join(', ')}" unless owners.empty?
     end
@@ -62,13 +62,14 @@ RSpec.describe Sirena::DiagramRegistry do
     expect(offenders).to be_empty, message
   end
 
-  it 'has deleted the Treemap = TreemapParser alias' do
-    expect(Sirena::Parser.const_defined?(:Treemap, false)).to be(false)
+  it 'has deleted the TreemapParser alias' do
+    expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
   described_class.types.each do |type|
     describe type.inspect do
       let(:handlers) { described_class.get(type) }
+      let(:camel_key) { type.to_s.split('_').map(&:capitalize).join }
       let(:fixture_path) do
         File.join(__dir__, 'fixtures', 'contract', "#{type}.mmd")
       end
@@ -83,9 +84,9 @@ RSpec.describe Sirena::DiagramRegistry do
         expect(handlers[:parser].ancestors).to include(Sirena::Parser::Base)
       end
 
-      it 'registers a transform inheriting Transform::Base' do
+      it 'registers a transform inheriting Layout::Base' do
         expect(handlers[:transform].ancestors)
-          .to include(Sirena::Transform::Base)
+          .to include(Sirena::Layout::Base)
       end
 
       it 'registers a renderer inheriting Renderer::Base' do
@@ -114,10 +115,24 @@ RSpec.describe Sirena::DiagramRegistry do
       it 'has the parser return an instance of the registered model' do
         expect(diagram).to be_a(handlers[:model])
       end
+
+      # The registered model is the type's top-level model, not a component
+      # that happens to share the name (Diagram::Block was one).
+      it 'has Diagram::<CamelKey> be the class the parser returns' do
+        expect(Sirena::Diagram.const_get(camel_key)).to be(diagram.class)
+      end
+
+      it 'names parser, layout and renderer Sirena::<Layer>::<CamelKey>' do
+        names = handlers.values_at(:parser, :transform, :renderer).map(&:name)
+
+        expect(names).to eq(
+          %W[Sirena::Parser::#{camel_key} Sirena::Layout::#{camel_key} Sirena::Renderer::#{camel_key}]
+        )
+      end
     end
   end
 
-  # Not a unit test on Transform::Base#to_graph directly — that test would
+  # Not a unit test on Layout::Base#to_graph directly — that test would
   # stop meaning anything the moment items 04/06 change what sits inside the
   # pipeline. Driving an invalid model through the real Engine#render is the
   # one form of this assertion that survives both refactors, because it only
@@ -149,7 +164,7 @@ RSpec.describe Sirena::DiagramRegistry do
         described_class.register(:kanban, **original, parser: stub_parser)
 
         expect { Sirena::Engine.new.render("kanban\n") }
-          .to raise_error(Sirena::Transform::TransformError, /Invalid diagram/)
+          .to raise_error(Sirena::Layout::LayoutError, /Invalid diagram/)
       ensure
         described_class.register(:kanban, **original)
       end
@@ -161,7 +176,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # purpose (see the comment on that method) -- do not reintroduce a "must
   # have at least one column" check there. This asserts both halves of that
   # guarantee stay true together: the model-level predicate, and the
-  # Engine-level guarantee it backs now that Transform::Base#call runs the
+  # Engine-level guarantee it backs now that Layout::Base#call runs the
   # guard for kanban too.
   describe 'a valid, empty model driven through Engine' do
     it 'renders rather than raising' do

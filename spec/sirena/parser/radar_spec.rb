@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/radar"
 
-RSpec.describe Sirena::Parser::RadarParser do
+RSpec.describe Sirena::Parser::Radar do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -16,7 +16,7 @@ RSpec.describe Sirena::Parser::RadarParser do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::RadarChart)
+        expect(diagram).to be_a(Sirena::Diagram::Radar)
         expect(diagram.axes.size).to eq(3)
         expect(diagram.axes.map(&:id)).to eq(["A", "B", "C"])
         expect(diagram.curves.size).to eq(1)

@@ -16,7 +16,7 @@ require "sirena/parser/sequence"
 # Class 2 (167 of 1,456): a message endpoint whose first character is `|`
 # is ordinary actor-name material to mermaid, kept verbatim including the
 # pipe — sirena banned it unconditionally with no arrow-collision reason.
-RSpec.describe Sirena::Parser::SequenceParser do
+RSpec.describe Sirena::Parser::Sequence do
   let(:parser) { described_class.new }
 
   describe "a bare % at a statement's start is a whole-line comment" do

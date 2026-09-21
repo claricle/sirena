@@ -15,9 +15,9 @@ module Sirena
     # and flows as curved paths with width proportional to flow values.
     #
     # @example Render a Sankey diagram
-    #   renderer = SankeyRenderer.new
+    #   renderer = Sankey.new
     #   svg = renderer.render(sankey_graph)
-    class SankeyRenderer < Base
+    class Sankey < Base
       # Sankey dimensions
       MARGIN_LEFT = 60
       MARGIN_TOP = 100

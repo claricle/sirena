@@ -12,9 +12,9 @@ module Sirena
     # cardinality notation.
     #
     # @example Render an ER diagram
-    #   renderer = ErDiagramRenderer.new
+    #   renderer = ErDiagram.new
     #   svg = renderer.render(laid_out_graph)
-    class ErDiagramRenderer < Base
+    class ErDiagram < Base
       # Font size for entity names
       ENTITY_NAME_FONT_SIZE = 16
 

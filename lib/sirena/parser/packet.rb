@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/packet"
-require_relative "transforms/packet"
+require_relative "builders/packet"
 require_relative "../diagram/packet"
 
 module Sirena
@@ -18,18 +18,18 @@ module Sirena
     # - Field labels
     #
     # @example Parse a simple packet diagram
-    #   parser = PacketParser.new
+    #   parser = Packet.new
     #   source = <<~MERMAID
     #     packet-beta
     #       title Hello world
     #       0-10: "hello"
     #   MERMAID
     #   diagram = parser.parse(source)
-    class PacketParser < Base
-      # Parses packet diagram source into a PacketDiagram model.
+    class Packet < Base
+      # Parses packet diagram source into a Packet model.
       #
       # @param source [String] the Mermaid packet diagram source
-      # @return [Diagram::PacketDiagram] the parsed packet diagram
+      # @return [Diagram::Packet] the parsed packet diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::Packet.new
@@ -42,7 +42,7 @@ module Sirena
         end
 
         # Transform parse tree to intermediate representation
-        transform = Transforms::Packet.new
+        transform = Builders::Packet.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model
@@ -52,7 +52,7 @@ module Sirena
       private
 
       def create_diagram(result)
-        diagram = Diagram::PacketDiagram.new
+        diagram = Diagram::Packet.new
 
         # Handle case where result is not a hash (empty diagram)
         return diagram unless result.is_a?(Hash)

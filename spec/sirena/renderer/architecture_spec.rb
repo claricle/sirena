@@ -5,20 +5,20 @@ require "sirena/renderer/architecture"
 require "sirena/diagram/architecture"
 require "timeout"
 
-RSpec.describe Sirena::Renderer::ArchitectureRenderer do
+RSpec.describe Sirena::Renderer::Architecture do
   let(:renderer) { described_class.new }
 
   describe "#render" do
     let(:diagram) do
-      Sirena::Diagram::ArchitectureDiagram.new(
+      Sirena::Diagram::Architecture.new(
         services: [
-          Sirena::Diagram::ArchitectureDiagram::Service.new(
+          Sirena::Diagram::Architecture::Service.new(
             id: "db",
             label: "Database",
             icon: "database",
             group_id: nil
           ),
-          Sirena::Diagram::ArchitectureDiagram::Service.new(
+          Sirena::Diagram::Architecture::Service.new(
             id: "server",
             label: "Server",
             icon: "server",
@@ -27,7 +27,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
         ],
         groups: [],
         edges: [
-          Sirena::Diagram::ArchitectureDiagram::Edge.new(
+          Sirena::Diagram::Architecture::Edge.new(
             from_id: "db",
             to_id: "server",
             from_position: "R",
@@ -108,9 +108,9 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
 
     context "with groups" do
       let(:diagram_with_groups) do
-        Sirena::Diagram::ArchitectureDiagram.new(
+        Sirena::Diagram::Architecture.new(
           services: [
-            Sirena::Diagram::ArchitectureDiagram::Service.new(
+            Sirena::Diagram::Architecture::Service.new(
               id: "db",
               label: "Database",
               icon: "database",
@@ -118,7 +118,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
             ),
           ],
           groups: [
-            Sirena::Diagram::ArchitectureDiagram::Group.new(
+            Sirena::Diagram::Architecture::Group.new(
               id: "api",
               label: "API",
               icon: "cloud",
@@ -176,7 +176,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
         layout_copy = layout.dup
         layout_copy[:edges] = [
           {
-            edge: Sirena::Diagram::ArchitectureDiagram::Edge.new(
+            edge: Sirena::Diagram::Architecture::Edge.new(
               from_id: "db",
               to_id: "server",
               from_position: "R",
@@ -203,7 +203,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
     end
 
     context "with a junction" do
-      let(:junction) { Sirena::Diagram::ArchitectureDiagram::Junction.new(id: "mid", group_id: nil) }
+      let(:junction) { Sirena::Diagram::Architecture::Junction.new(id: "mid", group_id: nil) }
 
       let(:layout_with_junction) do
         layout_copy = layout.dup
@@ -261,12 +261,12 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # detection this loops forever; bounded here with a real timeout so
       # a regression fails fast instead of hanging the suite.
       def cyclic_groups_layout
-        group_a = Sirena::Diagram::ArchitectureDiagram::Group.new(id: "a", label: "A", parent_id: "b")
-        group_b = Sirena::Diagram::ArchitectureDiagram::Group.new(id: "b", label: "B", parent_id: "a")
-        service1 = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s1", label: "S1", group_id: "a")
-        service2 = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "s2", label: "S2", group_id: "b")
-        edge = Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "s1", to_id: "s2", from_position: "R",
-                                                              to_position: "L")
+        group_a = Sirena::Diagram::Architecture::Group.new(id: "a", label: "A", parent_id: "b")
+        group_b = Sirena::Diagram::Architecture::Group.new(id: "b", label: "B", parent_id: "a")
+        service1 = Sirena::Diagram::Architecture::Service.new(id: "s1", label: "S1", group_id: "a")
+        service2 = Sirena::Diagram::Architecture::Service.new(id: "s2", label: "S2", group_id: "b")
+        edge = Sirena::Diagram::Architecture::Edge.new(from_id: "s1", to_id: "s2", from_position: "R",
+                                                       to_position: "L")
 
         {
           services: {
@@ -295,18 +295,18 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # neither endpoint's group - the shape obstacles_for's ancestor-group
       # exclusion has to get right: gA and gB are excluded (each edge
       # endpoint's own group), gMid is not. No existing spec built its
-      # obstacles through ArchitectureRenderer#obstacles_for with a THIRD,
+      # obstacles through Architecture#obstacles_for with a THIRD,
       # unrelated group actually in the way - the case-011 router spec
       # builds its obstacle list from services/junctions only, bypassing
       # obstacles_for's group handling entirely.
       def unrelated_group_layout
-        group_a = Sirena::Diagram::ArchitectureDiagram::Group.new(id: "gA", label: "GA")
-        group_b = Sirena::Diagram::ArchitectureDiagram::Group.new(id: "gB", label: "GB")
-        group_mid = Sirena::Diagram::ArchitectureDiagram::Group.new(id: "gMid", label: "GMid")
-        service_a = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "sA", label: "A", group_id: "gA")
-        service_b = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "sB", label: "B", group_id: "gB")
-        edge = Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "sA", to_id: "sB", from_position: "R",
-                                                              to_position: "L")
+        group_a = Sirena::Diagram::Architecture::Group.new(id: "gA", label: "GA")
+        group_b = Sirena::Diagram::Architecture::Group.new(id: "gB", label: "GB")
+        group_mid = Sirena::Diagram::Architecture::Group.new(id: "gMid", label: "GMid")
+        service_a = Sirena::Diagram::Architecture::Service.new(id: "sA", label: "A", group_id: "gA")
+        service_b = Sirena::Diagram::Architecture::Service.new(id: "sB", label: "B", group_id: "gB")
+        edge = Sirena::Diagram::Architecture::Edge.new(from_id: "sA", to_id: "sB", from_position: "R",
+                                                       to_position: "L")
 
         {
           services: {
@@ -361,13 +361,13 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # layer up. Two edges: one the stub breaks, one it doesn't, so a
       # single bad edge is also proven not to take the rest down with it.
       def two_edge_layout
-        service_a = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", group_id: nil)
-        service_b = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "b", label: "B", group_id: nil)
-        service_c = Sirena::Diagram::ArchitectureDiagram::Service.new(id: "c", label: "C", group_id: nil)
-        edge_ab = Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "a", to_id: "b", from_position: "R",
-                                                                 to_position: "L")
-        edge_bc = Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "b", to_id: "c", from_position: "R",
-                                                                 to_position: "L")
+        service_a = Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", group_id: nil)
+        service_b = Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", group_id: nil)
+        service_c = Sirena::Diagram::Architecture::Service.new(id: "c", label: "C", group_id: nil)
+        edge_ab = Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
+                                                          to_position: "L")
+        edge_bc = Sirena::Diagram::Architecture::Edge.new(from_id: "b", to_id: "c", from_position: "R",
+                                                          to_position: "L")
 
         {
           services: {
@@ -425,16 +425,16 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # through b's own interior - this is the second Done-criterion named
       # in the task, asserted at the layer that actually draws the path.
       let(:diagram_abc) do
-        Sirena::Diagram::ArchitectureDiagram.new(
+        Sirena::Diagram::Architecture.new(
           services: [
-            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
-            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
-            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "c", label: "C", icon: "server", group_id: nil),
+            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
+            Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
+            Sirena::Diagram::Architecture::Service.new(id: "c", label: "C", icon: "server", group_id: nil),
           ],
           groups: [],
           edges: [
-            Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "a", to_id: "b", from_position: "R",
-                                                           to_position: "T"),
+            Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
+                                                    to_position: "T"),
           ]
         )
       end
@@ -464,15 +464,15 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # actually distinguishes the canvas-sizing fix from a fixture that
       # happens to have enough padding regardless.
       def layout_ab_tight
-        diagram = Sirena::Diagram::ArchitectureDiagram.new(
+        diagram = Sirena::Diagram::Architecture.new(
           services: [
-            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
-            Sirena::Diagram::ArchitectureDiagram::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
+            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
+            Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
           ],
           groups: [],
           edges: [
-            Sirena::Diagram::ArchitectureDiagram::Edge.new(from_id: "a", to_id: "b", from_position: "R",
-                                                           to_position: "B"),
+            Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
+                                                    to_position: "B"),
           ]
         )
 
@@ -536,7 +536,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
       # group-boundary avoidance (obstacles_for's ancestor-group exclusion)
       # is covered separately, by "with an unrelated group sitting between
       # two other groups' services" above, which is the one spec that
-      # actually goes through ArchitectureRenderer#obstacles_for's group
+      # actually goes through Architecture#obstacles_for's group
       # handling; the corpus here never asserts against a group box.
       def path_points(svg_string, edge_id)
         d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
@@ -562,7 +562,7 @@ RSpec.describe Sirena::Renderer::ArchitectureRenderer do
             skip "does not parse - out of scope for this task"
           end
 
-          layout = Sirena::Transform::ArchitectureTransform.new.to_graph(diagram)
+          layout = Sirena::Layout::Architecture.new.to_graph(diagram)
           svg_string = renderer.render(layout).to_s
           nodes = layout[:services].merge(layout[:junctions])
 

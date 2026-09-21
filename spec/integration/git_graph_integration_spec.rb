@@ -2,12 +2,12 @@
 
 require "spec_helper"
 require "sirena/parser/git_graph"
-require "sirena/transform/git_graph"
+require "sirena/layout/git_graph"
 require "sirena/renderer/git_graph"
 
 RSpec.describe "Git Graph Integration" do
-  let(:parser) { Sirena::Parser::GitGraphParser.new }
-  let(:transform) { Sirena::Transform::GitGraph.new }
+  let(:parser) { Sirena::Parser::GitGraph.new }
+  let(:transform) { Sirena::Layout::GitGraph.new }
   let(:renderer) { Sirena::Renderer::GitGraph.new }
 
   describe "simple linear git graph" do

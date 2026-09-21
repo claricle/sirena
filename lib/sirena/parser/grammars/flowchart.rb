@@ -1110,7 +1110,7 @@ module Sirena
         # and it is left exactly where it was.
         #
         # The split link now parses too: `#x-->B` draws `#` and `B`
-        # joined by a plain `arrow`, same as mmdc. `Transforms::Flowchart
+        # joined by a plain `arrow`, same as mmdc. `Builders::Flowchart
         # .link_type` is what reads the marker — it honours a leading
         # `x`/`o` only when the trailing one matches it, so a lone
         # leading marker like this one falls back to the head it finds
@@ -1250,7 +1250,7 @@ module Sirena
         # An arrowhead opening with nothing after it that could continue an
         # id. The crossed and circled links this opens ARE drawn — `x--x`,
         # `x-.-x` and the rest parse into real edges, see
-        # `Transforms::Flowchart.link_type` — so this rule refuses nothing
+        # `Builders::Flowchart.link_type` — so this rule refuses nothing
         # on its own; it only decides where the id ends. `id_before_xo_link`
         # above is what actually stops the id at the restart.
         rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }

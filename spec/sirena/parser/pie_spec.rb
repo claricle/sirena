@@ -2,13 +2,13 @@
 
 require 'spec_helper'
 require 'sirena/parser/pie'
-require 'sirena/transform/pie'
+require 'sirena/layout/pie'
 require 'sirena/renderer/pie'
 
-RSpec.describe Sirena::Parser::PieParser do
+RSpec.describe Sirena::Parser::Pie do
   let(:parser) { described_class.new }
-  let(:transform) { Sirena::Transform::PieTransform.new }
-  let(:renderer) { Sirena::Renderer::PieRenderer.new }
+  let(:transform) { Sirena::Layout::Pie.new }
+  let(:renderer) { Sirena::Renderer::Pie.new }
 
   describe '#parse' do
     context 'with simple pie chart' do

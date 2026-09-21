@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Parser::ClassDiagramParser do
+RSpec.describe Sirena::Parser::ClassDiagram do
   let(:parser) { described_class.new }
 
   describe '#parse' do

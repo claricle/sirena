@@ -12,9 +12,9 @@ module Sirena
     # sequential timeline flow.
     #
     # @example Render a user journey
-    #   renderer = UserJourneyRenderer.new
+    #   renderer = UserJourney.new
     #   svg = renderer.render(laid_out_graph)
-    class UserJourneyRenderer < Base
+    class UserJourney < Base
       # Font size for title
       TITLE_FONT_SIZE = 20
 

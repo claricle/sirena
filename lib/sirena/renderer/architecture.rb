@@ -6,7 +6,7 @@ require_relative "architecture_edge_router"
 module Sirena
   module Renderer
     # Architecture diagram renderer for converting positioned layouts to SVG
-    class ArchitectureRenderer < Base
+    class Architecture < Base
       # Icon mappings for common service types
       ICON_GLYPHS = {
         "database" => "⬢",
@@ -50,7 +50,7 @@ module Sirena
       protected
 
       # One router for the whole document (same pattern as
-      # FlowchartRenderer#edge_router - memoized, holds no per-call state).
+      # Flowchart#edge_router - memoized, holds no per-call state).
       def edge_router
         @edge_router ||= ArchitectureEdgeRouter.new
       end
@@ -337,7 +337,7 @@ module Sirena
         # Draw edge label if present, at the midpoint of the FIRST segment
         # actually drawn - the overall midpoint can now sit inside whatever
         # the edge detoured around, matching
-        # FlowchartRenderer#create_edge_label's same reasoning.
+        # Flowchart#create_edge_label's same reasoning.
         if edge.label && !edge.label.empty?
           mid_x = (points[0][:x] + points[1][:x]) / 2
           mid_y = (points[0][:y] + points[1][:y]) / 2

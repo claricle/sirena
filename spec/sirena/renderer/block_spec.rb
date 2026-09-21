@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Renderer::BlockRenderer do
+RSpec.describe Sirena::Renderer::Block do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
@@ -12,14 +12,14 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
         {
           blocks: {
             'A' => {
-              block: Sirena::Diagram::Block.new.tap { |b| b.id = 'A'; b.label = 'Block A' },
+              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'A'; b.label = 'Block A' },
               x: 20,
               y: 20,
               width: 100,
               height: 60
             },
             'B' => {
-              block: Sirena::Diagram::Block.new.tap { |b| b.id = 'B'; b.label = 'Block B' },
+              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'B'; b.label = 'Block B' },
               x: 140,
               y: 20,
               width: 100,
@@ -53,14 +53,14 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
         {
           blocks: {
             'A' => {
-              block: Sirena::Diagram::Block.new.tap { |b| b.id = 'A'; b.label = 'A' },
+              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'A'; b.label = 'A' },
               x: 20,
               y: 20,
               width: 100,
               height: 60
             },
             'B' => {
-              block: Sirena::Diagram::Block.new.tap { |b| b.id = 'B'; b.label = 'B' },
+              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'B'; b.label = 'B' },
               x: 20,
               y: 100,
               width: 100,
@@ -108,7 +108,7 @@ RSpec.describe Sirena::Renderer::BlockRenderer do
         {
           blocks: {
             'A' => {
-              block: Sirena::Diagram::Block.new.tap do |b|
+              block: Sirena::Diagram::BlockNode.new.tap do |b|
                 b.id = 'A'
                 b.label = 'Circle'
                 b.shape = 'circle'

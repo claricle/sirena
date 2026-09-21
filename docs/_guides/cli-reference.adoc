@@ -176,7 +176,7 @@ kanban
 radar
 block
 requirement
-xychart
+xy_chart
 architecture
 sankey
 packet

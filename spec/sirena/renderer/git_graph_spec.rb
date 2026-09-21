@@ -2,7 +2,7 @@
 
 require "spec_helper"
 require "sirena/renderer/git_graph"
-require "sirena/transform/git_graph"
+require "sirena/layout/git_graph"
 require "sirena/diagram/git_graph"
 
 RSpec.describe Sirena::Renderer::GitGraph do

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   link_shapes = [
     ['solid with head', 'arrow', (2..4).map { |length| "#{'-' * length}>" }],
     ['solid without head', 'line', (3..5).map { |length| '-' * length }],

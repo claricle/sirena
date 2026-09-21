@@ -91,11 +91,11 @@ module ClassDiagramFuzz
     MermaidFuzz::Case.new('known-2-dash-rejected-by-sirena-only', "classDiagram\n    -\n"),
   ].freeze
 
-  # Runs Sirena's own ClassDiagramParser in-process, via
+  # Runs Sirena's own ClassDiagram in-process, via
   # MermaidFuzz.safe_parse (see its doc for why unexpected exceptions are
   # caught too, not only ParseError).
   SIRENA_VERDICT_FOR = lambda do |source|
-    MermaidFuzz.safe_parse { Sirena::Parser::ClassDiagramParser.new.parse(source).entities.map(&:id) }
+    MermaidFuzz.safe_parse { Sirena::Parser::ClassDiagram.new.parse(source).entities.map(&:id) }
   end
 
   RUNNER_KWARGS = {

@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/quadrant"
 
-RSpec.describe Sirena::Parser::QuadrantParser do
+RSpec.describe Sirena::Parser::Quadrant do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -22,7 +22,7 @@ RSpec.describe Sirena::Parser::QuadrantParser do
 
       diagram = parser.parse(source)
 
-      expect(diagram).to be_a(Sirena::Diagram::QuadrantChart)
+      expect(diagram).to be_a(Sirena::Diagram::Quadrant)
       expect(diagram.title).to eq("Product Analysis")
       expect(diagram.x_axis_left).to eq("Low Cost")
       expect(diagram.x_axis_right).to eq("High Cost")
@@ -113,7 +113,7 @@ RSpec.describe Sirena::Parser::QuadrantParser do
 
       diagram = parser.parse(source)
 
-      expect(diagram).to be_a(Sirena::Diagram::QuadrantChart)
+      expect(diagram).to be_a(Sirena::Diagram::Quadrant)
       expect(diagram.points).to be_empty
     end
 

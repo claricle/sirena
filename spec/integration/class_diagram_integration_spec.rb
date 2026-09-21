@@ -4,9 +4,9 @@ require 'spec_helper'
 
 RSpec.describe 'ClassDiagram Integration' do
   describe 'complete class diagram pipeline' do
-    let(:parser) { Sirena::Parser::ClassDiagramParser.new }
-    let(:transform) { Sirena::Transform::ClassDiagramTransform.new }
-    let(:renderer) { Sirena::Renderer::ClassDiagramRenderer.new }
+    let(:parser) { Sirena::Parser::ClassDiagram.new }
+    let(:transform) { Sirena::Layout::ClassDiagram.new }
+    let(:renderer) { Sirena::Renderer::ClassDiagram.new }
 
     it 'parses, transforms, and renders a simple class diagram' do
       source = "classDiagram\nAnimal <|-- Dog"
@@ -145,13 +145,13 @@ RSpec.describe 'ClassDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::ClassDiagramParser
+        Sirena::Parser::ClassDiagram
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Transform::ClassDiagramTransform
+        Sirena::Layout::ClassDiagram
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::ClassDiagramRenderer
+        Sirena::Renderer::ClassDiagram
       )
     end
   end

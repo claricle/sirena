@@ -14,7 +14,7 @@ module Sirena
     # Renders a Mindmap layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::Mindmap into an SVG visualization showing:
+    # Layout::Mindmap into an SVG visualization showing:
     # - Nodes with different shapes (circle, cloud, hexagon, etc.)
     # - Connections between parent and child nodes
     # - Icons and custom classes
@@ -26,7 +26,7 @@ module Sirena
     class Mindmap < Base
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::Mindmap
+      # @param layout [Hash] layout data from Layout::Mindmap
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

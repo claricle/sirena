@@ -5,7 +5,7 @@ require_relative "base"
 module Sirena
   module Diagram
     # Represents a packet diagram showing network packet structures
-    class PacketDiagram < Base
+    class Packet < Base
       attr_accessor :title, :fields
 
       def initialize

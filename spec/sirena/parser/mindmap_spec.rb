@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/mindmap"
 
-RSpec.describe Sirena::Parser::MindmapParser do
+RSpec.describe Sirena::Parser::Mindmap do
   let(:parser) { described_class.new }
 
   describe "#parse" do

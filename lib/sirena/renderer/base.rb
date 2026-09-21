@@ -16,7 +16,7 @@ module Sirena
     # specific rendering steps.
     #
     # @example Define a custom renderer
-    #   class FlowchartRenderer < Renderer::Base
+    #   class Flowchart < Renderer::Base
     #     def render(graph)
     #       svg = create_document(graph)
     #       render_nodes(graph, svg)
@@ -71,7 +71,7 @@ module Sirena
       # @param overflow [String, nil] SVG `overflow` presentation attribute
       #   for the root element, e.g. `'hidden'`. nil (the default) omits it,
       #   which keeps every renderer's output byte-for-byte what it always
-      #   was; a renderer opts in deliberately, the way `FlowchartRenderer`
+      #   was; a renderer opts in deliberately, the way `Flowchart`
       #   does for the self-loop overflow policy documented on `#render`.
       # @return [Svg::Document] new SVG document
       def create_document(graph, padding: 20, overflow: nil)

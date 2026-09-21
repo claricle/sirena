@@ -13,7 +13,7 @@ RSpec.describe 'UserJourney Integration' do
             Browse products: 5: Customer
       MERMAID
 
-      parser = Sirena::Parser::UserJourneyParser.new
+      parser = Sirena::Parser::UserJourney.new
       diagram = parser.parse(source)
 
       expect(diagram).to be_a(Sirena::Diagram::UserJourney)
@@ -34,7 +34,7 @@ RSpec.describe 'UserJourney Integration' do
             Checkout: 2: Customer, Staff
       MERMAID
 
-      parser = Sirena::Parser::UserJourneyParser.new
+      parser = Sirena::Parser::UserJourney.new
       diagram = parser.parse(source)
 
       expect(diagram.sections.length).to eq(2)
@@ -51,7 +51,7 @@ RSpec.describe 'UserJourney Integration' do
             Request support: 3: Customer, Support, Manager
       MERMAID
 
-      parser = Sirena::Parser::UserJourneyParser.new
+      parser = Sirena::Parser::UserJourney.new
       diagram = parser.parse(source)
 
       task = diagram.sections.first.tasks.first
@@ -67,7 +67,7 @@ RSpec.describe 'UserJourney Integration' do
             High: 5: User
       MERMAID
 
-      parser = Sirena::Parser::UserJourneyParser.new
+      parser = Sirena::Parser::UserJourney.new
       diagram = parser.parse(source)
 
       tasks = diagram.sections.first.tasks
@@ -91,11 +91,11 @@ RSpec.describe 'UserJourney Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser])
-        .to eq(Sirena::Parser::UserJourneyParser)
+        .to eq(Sirena::Parser::UserJourney)
       expect(handlers[:transform])
-        .to eq(Sirena::Transform::UserJourneyTransform)
+        .to eq(Sirena::Layout::UserJourney)
       expect(handlers[:renderer])
-        .to eq(Sirena::Renderer::UserJourneyRenderer)
+        .to eq(Sirena::Renderer::UserJourney)
     end
   end
 end

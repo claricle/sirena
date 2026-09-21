@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/kanban"
-require_relative "transforms/kanban"
+require_relative "builders/kanban"
 require_relative "../diagram/kanban"
 
 module Sirena
@@ -19,7 +19,7 @@ module Sirena
     # - Properties: assigned, ticket, icon, label, priority
     #
     # @example Parse a simple kanban board
-    #   parser = KanbanParser.new
+    #   parser = Kanban.new
     #   source = <<~MERMAID
     #     kanban
     #       id1[Todo]
@@ -28,7 +28,7 @@ module Sirena
     #         release[Release v1.0]
     #   MERMAID
     #   diagram = parser.parse(source)
-    class KanbanParser < Base
+    class Kanban < Base
       # Parses kanban diagram source into a Kanban model.
       #
       # @param source [String] the Mermaid kanban diagram source
@@ -45,7 +45,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Kanban.new
+        transform = Builders::Kanban.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model

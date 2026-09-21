@@ -5,7 +5,7 @@ require_relative "base"
 module Sirena
   module Diagram
     # Represents an XY chart diagram (scatter/line/bar chart)
-    class XYChart < Base
+    class XyChart < Base
       attr_accessor :title, :x_axis, :y_axis, :datasets, :options
 
       def initialize
@@ -16,9 +16,9 @@ module Sirena
 
       # Returns the diagram type identifier.
       #
-      # @return [Symbol] :xychart
+      # @return [Symbol] :xy_chart
       def diagram_type
-        :xychart
+        :xy_chart
       end
 
       # XY charts have no validation rules yet. See TODO.foundation's

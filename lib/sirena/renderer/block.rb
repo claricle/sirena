@@ -11,9 +11,9 @@ module Sirena
     # and connections.
     #
     # @example Render a block diagram
-    #   renderer = BlockRenderer.new
+    #   renderer = Block.new
     #   svg = renderer.render(layout)
-    class BlockRenderer < Base
+    class Block < Base
       # Renders a positioned layout to SVG.
       #
       # @param layout [Hash] positioned layout with block positions

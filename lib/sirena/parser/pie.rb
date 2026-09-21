@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/pie'
-require_relative 'transforms/pie'
+require_relative 'builders/pie'
 require_relative '../diagram/pie'
 
 module Sirena
@@ -20,9 +20,9 @@ module Sirena
     # - Comments
     #
     # @example Parse a simple pie chart
-    #   parser = PieParser.new
+    #   parser = Pie.new
     #   diagram = parser.parse("pie\n  \"Apples\" : 42\n  \"Oranges\" : 58")
-    class PieParser < Base
+    class Pie < Base
       # Parses pie chart diagram source into a Pie diagram model.
       #
       # @param source [String] the Mermaid pie chart diagram source
@@ -39,7 +39,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Pie.new
+        transform = Builders::Pie.new
         diagram = transform.apply(parse_tree)
 
         diagram

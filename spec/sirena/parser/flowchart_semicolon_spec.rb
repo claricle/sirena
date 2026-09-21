@@ -3,7 +3,7 @@
 require "spec_helper"
 require "timeout"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   # The corpus cannot verify most of this. A naive version of this change —
   # widening `line_end` itself — passes the whole sweep and the whole suite
   # while breaking `style`, `classDef` and `click`, because no corpus case
@@ -20,7 +20,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     true
   rescue Sirena::Error
     # Every pipeline failure Engine#render can raise -- DiagramTypeError,
-    # ParseError, TransformError, RenderError, or the residual
+    # ParseError, LayoutError, RenderError, or the residual
     # PipelineError -- is a Sirena::Error subclass. One rescue covers all
     # of them now that the taxonomy fix stopped collapsing everything
     # into PipelineError.
@@ -465,7 +465,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "carries a glyph through to the layout direction" do
       layouts = %w[< > ^].to_h do |glyph|
         diagram = described_class.new.parse("graph #{glyph}\nA-->B\n")
-        graph = Sirena::Transform::FlowchartTransform.new.to_graph(diagram)
+        graph = Sirena::Layout::Flowchart.new.to_graph(diagram)
 
         [glyph, graph[:layoutOptions]["elk.direction"]]
       end

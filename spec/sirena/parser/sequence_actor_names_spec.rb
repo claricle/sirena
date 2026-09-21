@@ -14,7 +14,7 @@ require "rexml/document"
 # of §8.5, and §8.6 are hand-written minimal documents with no corpus case
 # behind them; §8.3 and §8.6 preserve base behaviour, the first two rows
 # of §8.5 are new behaviour that raises on base.
-RSpec.describe Sirena::Parser::SequenceParser do
+RSpec.describe Sirena::Parser::Sequence do
   let(:parser) { described_class.new }
 
   def ids_for(path)

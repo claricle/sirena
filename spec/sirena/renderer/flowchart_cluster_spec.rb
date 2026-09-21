@@ -483,7 +483,7 @@ RSpec.describe Sirena::Engine do
   # which nest children of their own — were resized like clusters.
   describe "a nested child with no cluster mark" do
     let(:renderer) do
-      Sirena::Renderer::FlowchartRenderer.new(
+      Sirena::Renderer::Flowchart.new(
         theme: Sirena::Theme::Registry.get(:default)
       )
     end
@@ -651,7 +651,7 @@ RSpec.describe Sirena::Engine do
   # drive it directly with coordinates the fallback grid never makes.
   describe "an edge drawn straight onto the renderer" do
     let(:renderer) do
-      Sirena::Renderer::FlowchartRenderer.new(
+      Sirena::Renderer::Flowchart.new(
         theme: Sirena::Theme::Registry.get(:default)
       )
     end
@@ -827,7 +827,7 @@ RSpec.describe Sirena::Engine do
     # centres, and the arithmetic lands a hair under it. Without the
     # slack both ends trim to the same point and the edge vanishes.
     #
-    # Fractional sizes on purpose. `Layout::Fallback` rounds a cluster to
+    # Fractional sizes on purpose. `Layout::Grid` rounds a cluster to
     # whole units and every touching integer pair sums to exactly 1.0, so
     # this models what the layout engine will hand the renderer instead.
     it "keeps a length between two boxes that touch" do

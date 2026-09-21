@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/sequence'
-require_relative 'transforms/sequence'
+require_relative 'builders/sequence'
 require_relative '../diagram/sequence'
 
 module Sirena
@@ -22,9 +22,9 @@ module Sirena
     # - Box grouping
     #
     # @example Parse a simple sequence diagram
-    #   parser = SequenceParser.new
+    #   parser = Sequence.new
     #   diagram = parser.parse("sequenceDiagram\nAlice->>Bob: Hello")
-    class SequenceParser < Base
+    class Sequence < Base
       # Parses sequence diagram source into a Sequence diagram model.
       #
       # @param source [String] the Mermaid sequence diagram source
@@ -41,7 +41,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Sequence.new
+        transform = Builders::Sequence.new
         diagram = transform.apply(parse_tree)
 
         diagram

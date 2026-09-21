@@ -62,7 +62,7 @@ module Sirena
         # never actually takes): `g.parse("sequenceDiagram\n%c\nA->>B: m\n")`
         # comes back `[{header: ...}, {from: "A", ...}]`, two entries, not
         # three — the comment line leaves nothing behind for
-        # `Transforms::Sequence`'s `is_a?(Hash)` guards in
+        # `Builders::Sequence`'s `is_a?(Hash)` guards in
         # `apply`/`process_statements` to skip. Those guards are real and
         # matter for other rules; they simply never see this one.
         #

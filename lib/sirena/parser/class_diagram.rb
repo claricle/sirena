@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/class_diagram'
-require_relative 'transforms/class_diagram'
+require_relative 'builders/class_diagram'
 require_relative '../diagram/class_diagram'
 
 module Sirena
@@ -19,9 +19,9 @@ module Sirena
     # - Cardinality labels
     #
     # @example Parse a simple class diagram
-    #   parser = ClassDiagramParser.new
+    #   parser = ClassDiagram.new
     #   diagram = parser.parse("classDiagram\nAnimal <|-- Dog")
-    class ClassDiagramParser < Base
+    class ClassDiagram < Base
       # Parses class diagram source into a ClassDiagram model.
       #
       # @param source [String] the Mermaid class diagram source
@@ -29,7 +29,7 @@ module Sirena
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_with_grammar(Grammars::ClassDiagram.new, source)
-        Transforms::ClassDiagram.new.apply(tree)
+        Builders::ClassDiagram.new.apply(tree)
       end
 
       private
