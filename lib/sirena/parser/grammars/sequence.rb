@@ -83,8 +83,8 @@ module Sirena
         # the diagram parses, and contribute no statement: like
         # `comment_statement`, no `.as(...)`. The title, accessibility text
         # and message numbering are not drawn. Each rule must end at
-        # `line_end`, which keeps `autonumber->>B: m` and `title->>B: m`
-        # ordinary messages.
+        # `line_end` or `statement_end` (which also accepts `;`), which
+        # keeps `autonumber->>B: m` and `title->>B: m` ordinary messages.
         rule(:metadata_statement) do
           title_statement | acc_title_statement | acc_descr_block |
             acc_descr_statement | autonumber_statement
