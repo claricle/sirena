@@ -49,6 +49,10 @@ module Sirena
           # Classes given an explicit label, so a later generic on the same id
           # does not append to it.
           @labelled_ids = []
+          # The `~T~` last appended to each class's name, by id: a later
+          # generic swaps that suffix and never touches a `~B~` that is part
+          # of a backticked name.
+          @generic_suffixes = {}
           @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
@@ -103,7 +107,7 @@ module Sirena
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
-            entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
+            entity = ensure_entity_exists(qualify_name(class_id_text(stmt[:class_id])))
             apply_generic(entity, stmt[:generic])
           end
         end
@@ -340,8 +344,10 @@ module Sirena
           return unless generic.is_a?(Hash) && generic[:generic_type]
           return if @labelled_ids.include?(entity.id)
 
-          type = extract_text(generic[:generic_type])
-          entity.name = "#{entity.name.sub(/~[^~]*~\z/, '')}~#{type}~"
+          suffix = "~#{extract_text(generic[:generic_type])}~"
+          base = entity.name.delete_suffix(@generic_suffixes.fetch(entity.id, ''))
+          entity.name = base + suffix
+          @generic_suffixes[entity.id] = suffix
         end
 
         def qualify_name(name)

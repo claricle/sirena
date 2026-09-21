@@ -91,6 +91,18 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
     expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
   end
 
+  it "resolves a standalone class inside a namespace to its declaration" do
+    diagram = parser.parse("classDiagram\nnamespace N {\nclass `A B`\n`A B`\n}\n")
+
+    expect(diagram.entities.map(&:id)).to eq(["N.A B"])
+  end
+
+  it "keeps generic-looking text in a backticked name when a generic is applied" do
+    diagram = parser.parse("classDiagram\nclass `A~B~`~T~\n")
+
+    expect(diagram.entities.map { |e| [e.id, e.name] }).to eq([["A~B~", "A~B~~T~"]])
+  end
+
   it "reads a direction on the plain header" do
     expect(parser.parse("classDiagram LR\nclass A\n").direction).to eq("LR")
   end
