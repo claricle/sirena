@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+require "open3"
+require "rbconfig"
+
+# Runs scripts/corpus_sweep.rb over the pie corpus in a child process with
+# Sirena::Engine#render replaced by one fixed string, so the script's own
+# pass predicate is what is under test rather than any renderer.
+module CorpusSweepRunner
+  REPO_ROOT = File.expand_path("../..", __dir__)
+
+  STUB = <<~RUBY
+    require "sirena"
+    Sirena::Engine.class_eval { def render(_source, *) = ENV.fetch("FAKE_SVG") }
+    ARGV.replace(["pie"])
+    load "scripts/corpus_sweep.rb"
+  RUBY
+
+  def sweep_totals_for(svg)
+    out, err, status = Open3.capture3({ "FAKE_SVG" => svg }, RbConfig.ruby, "-I", "lib", "-e", STUB, chdir: REPO_ROOT)
+    raise "sweep did not run: #{err}" unless status.success?
+
+    passed, total = out.match(%r{^TOTAL: (\d+)/(\d+)}).captures.map(&:to_i)
+    { passed: passed, total: total }
+  end
+end
