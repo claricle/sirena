@@ -60,6 +60,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "A x== t <==x B" => "a thick x with a < start on the closing half",
       "A == t <=== B" => "a thick < with no head",
       "A == t x==> B" => "a thick x with no x to end it",
+      "A x-- t x--x B" => "an x opening repeated on the closing half",
+      "A o-- t o--o B" => "an o opening repeated on the closing half",
+      "A x-. t x.-x B" => "a dotted x opening repeated on the closing half",
       "A -- one\n%%{ bad }\ntwo\n--> B" => "a directive line inside a label"
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do

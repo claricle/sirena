@@ -798,7 +798,8 @@ module Sirena
         end
 
         # An opening `<` closes on a head and takes no second start marker
-        # on the closing half. A thick closing half that opens with its own
+        # on the closing half; an opening `x` or `o` takes none of its own
+        # kind again (`x-- t o--x` draws, `x-- t x--x` does not). A thick closing half that opens with its own
         # `<` also needs a head: mmdc refuses `A == t <==x B`,
         # `A == t <=== B` and `A == t x==> B`, and draws the solid and
         # dotted forms.
@@ -807,7 +808,7 @@ module Sirena
                           close[-1] != head_for(close[0])
 
           case marker
-          when 'x', 'o' then close[-1] == marker
+          when 'x', 'o' then close[-1] == marker && close[0] != marker
           when '<' then close[-1] == '>' && !close.match?(/\A[ox<]/)
           else true
           end
