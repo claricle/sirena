@@ -397,6 +397,8 @@ module Sirena
               node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
               claim_member(parents.last, stmt[:node_id].to_s, context)
+            elsif stmt[:edge_properties_id]
+              process_edge_properties(stmt, context)
             elsif stmt[:subgraph_keyword]
               process_subgraph(diagram, stmt, context, parents)
             elsif stmt[:direction_keyword]
@@ -760,6 +762,18 @@ module Sirena
           end
         end
         private_class_method :declare_group
+
+        # An id the node grammar cannot hold is a node nobody drew, so only
+        # an edge that already carries the id may be addressed with it.
+        def self.process_edge_properties(stmt, context)
+          unless context.edge_ids.include?(stmt[:edge_properties_id].to_s)
+            raise Parser::ParseError,
+                  "Unknown id #{stmt[:edge_properties_id]}."
+          end
+
+          metadata_entries(stmt[:metadata])
+        end
+        private_class_method :process_edge_properties
 
         # `e1@{ animate: true }` sets properties on the edge named `e1`,
         # and mermaid draws no node for it.

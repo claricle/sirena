@@ -160,6 +160,7 @@ module Sirena
             class_assignment_statement |
             click_statement |
             node_edge_statement |
+            edge_properties_statement |
             standalone_node
         end
 
@@ -906,8 +907,16 @@ module Sirena
         # share whatever link comes next. Mermaid takes only spaces around
         # the `&`.
         rule(:amp_group) do
-          (space.repeat >> str('&') >> space.repeat >>
+          (space.repeat >> edge_id_ahead.absent? >> str('&') >> space.repeat >>
             reserved_keyword.absent? >> node_with_shape).repeat
+        end
+
+        # `e:x@{ animate: true }`: an id outside the node charset, so the
+        # transform accepts it only when an earlier link named it.
+        rule(:edge_properties_statement) do
+          ((space | newline | str('@')).absent? >> any).repeat(1)
+            .as(:edge_properties_id) >> node_metadata.as(:metadata) >>
+            loose_statement_end
         end
 
         # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
@@ -920,12 +929,22 @@ module Sirena
         # rule and failing would report its failure to the Deepest reporter
         # in `Base`, which would then point every `A B` typo at the end of
         # `B` and ask for an `@` there.
-        EDGE_ID_AHEAD = /(?![ox<]?(?:-|=|\.|~~~))[^\s@]+@\s*[ox<]?(?:-|=|\.|~~~)/
+        EDGE_ID_AHEAD = /
+          (?![ox<]?(?:--|==|-\.|\.-|\.\.|~~~))(?!")
+          [^\s@]+@\s*[ox<]?(?:-|=|\.|~~~)
+        /x
         private_constant :EDGE_ID_AHEAD
 
         rule(:edge_id) do
           dynamic do |source, _|
             source.matches?(EDGE_ID_AHEAD) ? edge_id_body : str('')
+          end
+        end
+
+        # True where an edge id starts, so a caller can leave it alone.
+        rule(:edge_id_ahead) do
+          dynamic do |source, _|
+            source.matches?(EDGE_ID_AHEAD) ? str('') : str('').absent?
           end
         end
 

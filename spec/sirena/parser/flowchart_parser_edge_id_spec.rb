@@ -91,6 +91,30 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(edge_links("A a;b@--> B")).to eq(%w[A>B])
     end
 
+    it "takes a hyphenated id" do
+      expect(edge_links("A x-id@--> B")).to eq(%w[A>B])
+    end
+
+    it "takes an id glued to the & before it" do
+      expect(edge_links("A &x@--> B")).to eq(%w[A>B])
+    end
+
+    it "refuses an id that opens with a quote" do
+      expect { parse_flowchart('A "x@--> B') }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "takes properties for an id outside the node charset" do
+      source = "A e:x@--> B\ne:x@{ animate: true }"
+
+      expect(node_ids(source)).to eq(%w[A B])
+    end
+
+    it "refuses properties for an id no link declared" do
+      expect { parse_flowchart("A --> B\ne:x@{ animate: true }") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
     it "still rejects malformed properties addressed to an edge" do
       expect { parse_flowchart("A e1@--> B\ne1@{ animate: [ }") }
         .to raise_error(Sirena::Parser::ParseError)
