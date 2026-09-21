@@ -168,15 +168,15 @@ The Kanban implementation follows the standard 7-file architecture:
    - Parslet grammar for kanban syntax
    - Handles columns, cards, and metadata
 
-. **Transform** (`lib/sirena/parser/transforms/kanban.rb`)
+. **Builder** (`lib/sirena/parser/builders/kanban.rb`)
    - Converts parse tree to diagram model
    - Extracts and validates metadata
 
 . **Parser** (`lib/sirena/parser/kanban.rb`)
-   - Integrates grammar and transform
+   - Integrates grammar and builder
    - Creates diagram instances
 
-. **Layout Transform** (`lib/sirena/transform/kanban.rb`)
+. **Layout** (`lib/sirena/layout/kanban.rb`)
    - Calculates column positions
    - Determines card layout within columns
    - Computes dimensions based on content
@@ -200,11 +200,11 @@ Grammar (Parslet)
     ↓
 Parse Tree
     ↓
-Transform
+Builder
     ↓
 Diagram Model (Kanban, KanbanColumn, KanbanCard)
     ↓
-Layout Transform
+Layout
     ↓
 Positioned Layout
     ↓

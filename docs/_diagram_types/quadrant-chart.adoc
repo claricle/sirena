@@ -25,15 +25,15 @@ The quadrant chart implementation consists of seven main components:
   * Data points with [x, y] coordinates
   * Point styling (radius, color, stroke)
 
-. **Transform** ([`lib/sirena/parser/transforms/quadrant.rb`](lib/sirena/parser/transforms/quadrant.rb:1))
+. **Builder** ([`lib/sirena/parser/builders/quadrant.rb`](lib/sirena/parser/builders/quadrant.rb:1))
   * Converts parse tree to QuadrantChart model
   * Extracts title, axes, quadrant labels, and points
 
 . **Parser** ([`lib/sirena/parser/quadrant.rb`](lib/sirena/parser/quadrant.rb:1))
-  * Orchestrates grammar and transform
+  * Orchestrates grammar and builder
   * Provides error handling
 
-. **Layout Transform** ([`lib/sirena/transform/quadrant.rb`](lib/sirena/transform/quadrant.rb:1))
+. **Layout** ([`lib/sirena/layout/quadrant.rb`](lib/sirena/layout/quadrant.rb:1))
   * Calculates 2x2 grid layout
   * Converts normalized coordinates (0-1) to SVG coordinates
   * Positions points in 2D space
@@ -56,9 +56,9 @@ Mermaid Source
       ↓
 Grammar (Parslet) → Parse Tree
       ↓
-Transform → QuadrantChart Model
+Builder → QuadrantChart Model
       ↓
-Layout Transform → Graph Structure with SVG Coordinates
+Layout → Graph Structure with SVG Coordinates
       ↓
 Renderer → SVG Document
 ----
@@ -333,7 +333,7 @@ The Parslet grammar in [`lib/sirena/parser/grammars/quadrant.rb`](lib/sirena/par
 
 === Coordinate System
 
-The transform converts normalized coordinates (0-1) to SVG coordinates:
+The layout converts normalized coordinates (0-1) to SVG coordinates:
 
 * X-axis: `svg_x = margin + (x * chart_width)`
 * Y-axis: `svg_y = margin + ((1.0 - y) * chart_height)` (inverted for SVG)

@@ -243,9 +243,9 @@ Architecture diagrams use a 7-file Parslet architecture:
 
 . **Model** ([`lib/sirena/diagram/architecture.rb`](lib/sirena/diagram/architecture.rb)) - Lutaml::Model classes for diagram structure
 . **Grammar** ([`lib/sirena/parser/grammars/architecture.rb`](lib/sirena/parser/grammars/architecture.rb)) - Parslet grammar for syntax parsing
-. **Transform** ([`lib/sirena/parser/transforms/architecture.rb`](lib/sirena/parser/transforms/architecture.rb)) - Converts parse tree to model
+. **Builder** ([`lib/sirena/parser/builders/architecture.rb`](lib/sirena/parser/builders/architecture.rb)) - Converts parse tree to model
 . **Parser** ([`lib/sirena/parser/architecture.rb`](lib/sirena/parser/architecture.rb)) - Orchestrates parsing pipeline
-. **Layout** ([`lib/sirena/transform/architecture.rb`](lib/sirena/transform/architecture.rb)) - Positions elements spatially
+. **Layout** ([`lib/sirena/layout/architecture.rb`](lib/sirena/layout/architecture.rb)) - Positions elements spatially
 . **Renderer** ([`lib/sirena/renderer/architecture.rb`](lib/sirena/renderer/architecture.rb)) - Generates SVG output
 . **Tests** - Parser and renderer test suites
 

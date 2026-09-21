@@ -22,10 +22,10 @@ The pie chart implementation consists of:
 
 * [`Diagram::Pie`](../lib/sirena/diagram/pie.rb) - Model classes for pie charts
 * [`Parser::Grammars::Pie`](../lib/sirena/parser/grammars/pie.rb) - Parslet grammar
-* [`Parser::Transforms::Pie`](../lib/sirena/parser/transforms/pie.rb) - Parse tree transformer
-* [`Parser::PieParser`](../lib/sirena/parser/pie.rb) - Main parser
-* [`Transform::PieTransform`](../lib/sirena/transform/pie.rb) - Layout transformer
-* [`Renderer::PieRenderer`](../lib/sirena/renderer/pie.rb) - SVG renderer
+* [`Parser::Builders::Pie`](../lib/sirena/parser/builders/pie.rb) - Parse tree builder
+* [`Parser::Pie`](../lib/sirena/parser/pie.rb) - Main parser
+* [`Layout::Pie`](../lib/sirena/layout/pie.rb) - Graph layout
+* [`Renderer::Pie`](../lib/sirena/renderer/pie.rb) - SVG renderer
 
 == Syntax
 
