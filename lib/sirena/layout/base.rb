@@ -100,7 +100,8 @@ module Sirena
       #
       # @param diagram [Diagram::Base] the diagram model to convert
       # @param theme [Theme::Theme, nil] theme the renderer will use
-      # @param today [Date, nil] reference date; nil means the real date
+      # @param today [Date, nil] reference date; nil keeps the date already
+      #   set by #today= (the real date when none was set)
       # @return [Layout::Scene, Layout::Legacy]
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def call(diagram, theme: nil, today: nil)
@@ -108,7 +109,7 @@ module Sirena
 
         @theme = theme
         @today = today if today
-        return scene(diagram) if respond_to?(:scene)
+        return scene(diagram) if respond_to?(:scene, true)
 
         Legacy.new(build_graph(diagram))
       end
@@ -117,7 +118,8 @@ module Sirena
       # layout specs that inspect the Hash directly.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Hash] elkrb graph hash with nodes and edges
+      # @return [Hash, Layout::Scene] elkrb graph hash, or the Scene a
+      #   converted layout builds
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def to_graph(diagram)
         result = call(diagram)

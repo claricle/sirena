@@ -52,6 +52,25 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: Date.new(1999, 1, 1)).width).to eq(1999)
     end
 
+    it 'keeps a date pinned with today= when called with today: nil' do
+      dates = Class.new(described_class) do
+        def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
+      end.new
+
+      dates.today = Date.new(1999, 1, 1)
+
+      expect(dates.call(diagram, today: nil).width).to eq(1999)
+    end
+
+    it 'takes a private scene hook as a converted layout' do
+      hidden = Class.new(described_class) do
+        def scene(_diagram) = Sirena::Layout::Scene.new(width: 1, height: 2)
+        private :scene
+      end.new
+
+      expect(hidden.call(diagram)).to be_a(Sirena::Layout::Scene)
+    end
+
     it 'keeps theme a private reader' do
       expect { converted_layout.theme }.to raise_error(NoMethodError)
     end
@@ -75,7 +94,10 @@ RSpec.describe Sirena::Layout::Base do
 
   describe 'Engine#layout_graph' do
     it 'runs Grid on a legacy result and hands the renderer the bare graph' do
+      allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
       graph = engine.send(:layout_graph, legacy_layout.call(diagram))
+
+      expect(Sirena::Layout::Grid).to have_received(:apply).once
 
       expect(graph).to be_a(Hash)
       expect(graph[:children].first).to include(x: 50, y: 50)
@@ -86,7 +108,10 @@ RSpec.describe Sirena::Layout::Base do
         attribute :children, :hash, collection: true
       end.new(width: 1, height: 2, children: [{ x: 7, y: 9 }])
 
+      allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
+
       expect(engine.send(:layout_graph, scene)).to be(scene)
+      expect(Sirena::Layout::Grid).not_to have_received(:apply)
       expect(scene.children).to eq([{ x: 7, y: 9 }])
     end
   end
