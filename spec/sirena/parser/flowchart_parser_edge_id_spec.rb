@@ -99,24 +99,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(edge_links("A &x@--> B")).to eq(%w[A>B])
     end
 
-    it "refuses an id that opens with a quote" do
-      expect { parse_flowchart('A "x@--> B') }
+    it "refuses an id with a quote in it" do
+      expect { parse_flowchart('A x"y@--> B') }
         .to raise_error(Sirena::Parser::ParseError)
-    end
-
-    it "takes properties for an id outside the node charset" do
-      source = "A e:x@--> B\ne:x@{ animate: true }"
-
-      expect(node_ids(source)).to eq(%w[A B])
-    end
-
-    it "still checks the YAML of properties for such an id" do
-      expect { parse_flowchart("A e:x@--> B\ne:x@{ animate: [ }") }
-        .to raise_error(Sirena::Parser::ParseError)
-    end
-
-    it "draws a node for such an id no link declared" do
-      expect(node_ids("A --> B\ne:x@{ animate: true }")).to eq(%w[A B e:x])
     end
 
     it "takes a no-break space between the @ and the link" do

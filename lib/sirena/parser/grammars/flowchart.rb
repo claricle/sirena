@@ -160,7 +160,6 @@ module Sirena
             class_assignment_statement |
             click_statement |
             node_edge_statement |
-            edge_properties_statement |
             standalone_node
         end
 
@@ -911,19 +910,10 @@ module Sirena
             reserved_keyword.absent? >> node_with_shape).repeat
         end
 
-        # `e:x@{ animate: true }`: an id outside the node charset. The
-        # brackets and quotes stay out, so a node written with a shape
-        # that fails to parse is still refused.
-        rule(:edge_properties_statement) do
-          (match['\s@\[\](){}"\'|<>'].absent? >> any).repeat(1)
-            .as(:edge_properties_id) >> node_metadata.as(:metadata) >>
-            loose_statement_end
-        end
-
         # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
         # can address it. The `@` must be followed by the start of a link,
         # and the id must not itself start like one: an `@` inside a label
-        # (`A --me@--> B`) or a quote is not an id, but `A {x@--> B` has
+        # (`A --me@--> B`) or a quote in it is not an id, but `A {x@--> B` has
         # one. An id may hold a `;` but never starts with one, which ends the statement.
         #
         # Whether an id is here is read off the source first. Trying the
@@ -931,8 +921,8 @@ module Sirena
         # in `Base`, which would then point every `A B` typo at the end of
         # `B` and ask for an `@` there.
         EDGE_ID_AHEAD = /
-          (?![ox<]?(?:--|==|-\.|\.-|\.\.|~~~))(?!")
-          [^\s@]+@(?:[[:space:]]|%%[^\n]*)*[ox<]?(?:-|=|\.|~~~)
+          (?![ox<]?(?:--|==|-\.|\.-|\.\.|~~~))
+          [^\s@"]+@(?:[[:space:]]|%%[^\n]*)*[ox<]?(?:-|=|\.|~~~)
         /x
         private_constant :EDGE_ID_AHEAD
 
