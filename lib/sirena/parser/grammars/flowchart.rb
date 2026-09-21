@@ -455,7 +455,7 @@ module Sirena
         rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
 
         rule(:declaration_char) do
-          line_end.absent? >> semicolon.absent? >> comma.absent? >> any
+          line_end.absent? >> semicolon.absent? >> any
         end
 
         # Permissive: mermaid takes `style A red`, `style A fill:` and
@@ -472,9 +472,14 @@ module Sirena
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
           str('classDef').as(:classdef_keyword) >> space >>
-            identifier.as(:class_name) >>
+            class_name_list.as(:class_name) >>
             (space >> style_property_list).as(:class_props) >>
             statement_end
+        end
+
+        # `classDef a,b props` styles both classes.
+        rule(:class_name_list) do
+          identifier >> (comma >> identifier).repeat
         end
 
         # Class assignment: class nodeId className

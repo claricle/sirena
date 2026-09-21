@@ -4689,9 +4689,7 @@
   {
     "case": "flowchart/011_platform_flow_flowchart_10.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/012_platform_flow_7.mmd",
@@ -4701,9 +4699,7 @@
   {
     "case": "flowchart/012_platform_flow_flowchart_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/013_platform_flow2_flowchart_12.mmd",
@@ -4713,23 +4709,17 @@
   {
     "case": "flowchart/013_platform_flow_8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/014_platform_flow2_flowchart_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/014_platform_flow_9.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/015_platform_flow2_10.mmd",
@@ -4739,58 +4729,42 @@
   {
     "case": "flowchart/015_platform_flow2_flowchart_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/016_platform_flow2_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/016_platform_subgraph_flowchart_15.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/017_platform_flow2_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/017_platform_subgraph_flowchart_16.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/018_platform_subgraph_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/018_platform_subgraph_flowchart_17.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/019_platform_subgraph_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/019_platform_vertices_flowchart_18.mmd",
@@ -4800,9 +4774,7 @@
   {
     "case": "flowchart/020_platform_subgraph_15.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/020_platform_vertices_flowchart_19.mmd",
@@ -5960,16 +5932,12 @@
   {
     "case": "flowchart/141_parser_should_handle_styles_for_vertices_136.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/142_parser_should_handle_multiple_styles_for_a_vortex_137.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/143_parser_should_handle_multiple_styles_in_a_graph_138.mmd",
@@ -5988,9 +5956,7 @@
   {
     "case": "flowchart/145_parser_should_handle_styles_and_graph_definitions_in_a_graph_140.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/146_parser_should_keep_node_label_text__if_already_defined__when_a_style_is_applied_141.mmd",
@@ -6003,29 +5969,29 @@
     "case": "flowchart/147_parser_should_be_possible_to_declare_a_class_142.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "stage": "layout",
+    "exception_class": "Sirena::Transform::TransformError"
   },
   {
     "case": "flowchart/148_parser_should_be_possible_to_declare_multiple_classes_143.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "stage": "layout",
+    "exception_class": "Sirena::Transform::TransformError"
   },
   {
     "case": "flowchart/149_parser_should_be_possible_to_declare_a_class_with_a_dot_in_the_style_144.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "stage": "layout",
+    "exception_class": "Sirena::Transform::TransformError"
   },
   {
     "case": "flowchart/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd",
     "verdict": "valid",
     "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "stage": "layout",
+    "exception_class": "Sirena::Transform::TransformError"
   },
   {
     "case": "flowchart/151_parser_should_handle_style_definitions_with_more_then_1_digit_in_a_row_146.mmd",
