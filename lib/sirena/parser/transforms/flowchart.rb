@@ -701,6 +701,9 @@ module Sirena
         # its absence.
         def self.process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
+          # `e1@{ animate: true }` alone on a line addresses an edge.
+          return if edge_properties?(stmt, context)
+
           sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
                                   context)
 
@@ -746,9 +749,7 @@ module Sirena
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
         def self.declare_group(diagram, first, rest, parent, context)
-          [first, *rest].filter_map do |node_hash|
-            next if edge_properties?(node_hash, context)
-
+          [first, *rest].map do |node_hash|
             node_data = extract_node_data(node_hash)
             add_or_update_node(diagram, node_data)
             claim_member(parent, node_data[:node_id].to_s, context)
@@ -759,9 +760,10 @@ module Sirena
 
         # `e1@{ animate: true }` sets properties on the edge named `e1`,
         # and mermaid draws no node for it.
-        def self.edge_properties?(node_hash, context)
-          node_hash[:metadata] &&
-            context.edge_ids.include?(node_hash[:node_id].to_s)
+        def self.edge_properties?(stmt, context)
+          node = stmt[:node]
+          node[:metadata] && !stmt[:edges] && Array(stmt[:group]).empty? &&
+            context.edge_ids.include?(node[:node_id].to_s)
         end
         private_class_method :edge_properties?
 

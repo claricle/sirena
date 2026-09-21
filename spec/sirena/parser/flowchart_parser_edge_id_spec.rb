@@ -59,6 +59,37 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "an @ that is not an edge id" do
+    it "keeps an @ inside a link label" do
+      expect(edge_tuples("A --me@host--> B").first[0..2]).to eq(["A", "B", "me@host"])
+    end
+
+    it "keeps an @ inside a quoted link label" do
+      expect(edge_links('A --"me@host"--> B')).to eq(["A>B"])
+    end
+
+    it "keeps an @ inside a piped label" do
+      expect(edge_links('A -->|"me@host"| B')).to eq(["A>B"])
+    end
+
+    it "refuses an id glued to the separator before it" do
+      expect { parse_flowchart("A;e1@--> B") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
+  describe "a properties block that is an endpoint of a link" do
+    it "keeps the edge that ends at it" do
+      expect(edge_links("A e1@--> B\nC --> e1@{ shape: rect }"))
+        .to eq(%w[A>B C>e1])
+    end
+
+    it "keeps the edge that starts at a grouped one" do
+      expect(edge_links("A e1@--> B\nC & e1@{ shape: rect } --> D"))
+        .to eq(%w[A>B C>D e1>D])
+    end
+  end
+
   describe "the flowchart corpus cases behind the edge-id bucket" do
     Dir[File.join(__dir__, "../../mermaid/flowchart/*.mmd")].select do |f|
       File.basename(f).match?(
