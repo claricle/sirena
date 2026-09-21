@@ -897,9 +897,10 @@ module Sirena
         # link that cannot end where it starts opens `A -- text --x B`.
         #
         # The rule owns the gap before it, because an edge id has to start
-        # on the line the source ends on: `A` newline `e1@--> B` is refused.
+        # on the line the source ends on, after a space: `A` newline
+        # `e1@--> B` and `A[x]e1@--> B` are refused.
         rule(:edge) do
-          ((space.repeat >> edge_id_ahead >> edge_id_body) | ws?) >>
+          ((space.repeat(1) >> edge_id_ahead >> edge_id_body) | ws?) >>
             (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target) >>
@@ -929,12 +930,6 @@ module Sirena
           [^\s@"]+@(?:[[:space:]]|%%[^\n]*)*[ox<]?(?:-|=|\.|~~~)
         /x
         private_constant :EDGE_ID_AHEAD
-
-        rule(:edge_id) do
-          dynamic do |source, _|
-            source.matches?(EDGE_ID_AHEAD) ? edge_id_body : str('')
-          end
-        end
 
         # True where an edge id starts, so a caller can leave it alone.
         rule(:edge_id_ahead) do

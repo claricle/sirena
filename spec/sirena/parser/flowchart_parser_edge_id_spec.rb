@@ -130,6 +130,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(edge_links("A\n--> B")).to eq(%w[A>B])
     end
 
+    it "refuses an id written flush against a shaped source" do
+      expect { parse_flowchart("A[x]e1@--> B") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
     it "takes a no-break space between the @ and the link" do
       expect(edge_links("A e1@\u00A0--> B")).to eq(%w[A>B])
     end
