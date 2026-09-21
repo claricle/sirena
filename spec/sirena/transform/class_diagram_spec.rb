@@ -6,6 +6,11 @@ RSpec.describe Sirena::Transform::ClassDiagramTransform do
   let(:transform) { described_class.new }
 
   describe '#to_graph' do
+    let(:dangling_relationship) do
+      Sirena::Diagram::ClassRelationship.new(from_id: "Dog", to_id: "Animal",
+                                             relationship_type: "inheritance")
+    end
+
     let(:diagram) do
       Sirena::Diagram::ClassDiagram.new(direction: 'TB').tap do |d|
         d.entities << Sirena::Diagram::ClassEntity.new(
@@ -122,10 +127,10 @@ RSpec.describe Sirena::Transform::ClassDiagramTransform do
 
     it 'raises error for invalid diagram' do
       invalid_diagram = Sirena::Diagram::ClassDiagram.new
+      invalid_diagram.relationships << dangling_relationship
 
-      expect do
-        transform.to_graph(invalid_diagram)
-      end.to raise_error(Sirena::Transform::TransformError)
+      expect { transform.to_graph(invalid_diagram) }
+        .to raise_error(Sirena::Transform::TransformError)
     end
   end
 end

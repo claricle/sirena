@@ -95,8 +95,11 @@ module Sirena
           elsif stmt[:from_id] && stmt[:to_id] && stmt[:operator]
             # Relationship
             process_relationship(stmt)
-          elsif stmt[:link_keyword] || stmt[:callback_keyword]
-            # Link or callback - ignore for now
+          elsif stmt[:direction_keyword]
+            @diagram.direction = extract_text(stmt[:dir_value])
+          elsif stmt[:link_keyword] || stmt[:callback_keyword] || stmt[:ignored]
+            # Link, callback, click, styling, accessibility text and notes
+            # parse but carry nothing the model keeps (yet).
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
