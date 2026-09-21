@@ -6701,30 +6701,22 @@
   {
     "case": "gantt/023_spec_diagram-orchestration_spec_22.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "gantt/024_spec_diagram-orchestration_spec_23.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "gantt/025_spec_mermaidapi_spec_24.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "gantt/026_spec_mermaidapi_spec_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "git/001_rendering_appli_spec_git_0.mmd",
@@ -8403,9 +8395,7 @@
   {
     "case": "pie/025_parsertest_pie_test_24.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "pie/026_parsertest_pie_test_25.mmd",
