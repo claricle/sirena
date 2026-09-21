@@ -3,6 +3,8 @@
 require 'date'
 require_relative '../error'
 require_relative '../error/layout_error'
+require_relative 'scene'
+require_relative 'legacy'
 
 module Sirena
   module Layout
@@ -24,10 +26,9 @@ module Sirena
     #     end
     #   end
     #
-    # @abstract Subclass and implement #build_graph. Do not override #call
-    #   or #to_graph — #call runs the validity guard and calls #build_graph;
-    #   #to_graph delegates to #call and exists only for Engine's current
-    #   call site (engine.rb:184).
+    # @abstract Subclass and implement #scene (converted) or #build_graph
+    #   (not yet converted). Do not override #call or #to_graph — #call
+    #   runs the validity guard; #to_graph unwraps its legacy result.
     class Base
       # The date a transform treats as "today".
       #
@@ -89,38 +90,38 @@ module Sirena
         EDGE_ROUTING = 'elk.edgeRouting'
       end
 
-      # Converts a diagram model to an elkrb graph structure.
+      # Lays out a diagram: the one entry point, for every type.
       #
-      # This is the durable entry point: concrete, and it runs the validity
-      # guard exactly once, for every type, then hands off to the subclass's
-      # #build_graph. A subclass must never override #call itself — override
-      # #build_graph instead — or the guard stops running for that type.
-      #
-      # Named #call, not #to_graph, on purpose: TODO.architecture/04 and /06
-      # describe Engine moving to `handlers[:transform].new.call(...)` and
-      # retiring the `to_graph` name entirely. Putting the guard on #call
-      # means it survives that rename — #to_graph below is the only thing
-      # that goes away.
+      # Runs the validity guard exactly once, then returns a
+      # Layout::Scene when the subclass defines #scene. A subclass that
+      # still defines only #build_graph gets its Hash wrapped in
+      # Layout::Legacy, so the Engine can run Grid on it and on nothing
+      # else. Never override #call: the guard stops running for that type.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @return [Hash] elkrb graph hash with nodes and edges
+      # @param theme [Theme::Theme, nil] theme the renderer will use
+      # @param today [Date, nil] reference date; nil means the real date
+      # @return [Layout::Scene, Layout::Legacy]
       # @raise [LayoutError] if the diagram fails its own #valid? check
-      def call(diagram)
+      def call(diagram, theme: nil, today: nil)
         raise LayoutError, 'Invalid diagram' if diagram.nil? || !diagram.valid?
 
-        build_graph(diagram)
+        @theme = theme
+        @today = today if today
+        return scene(diagram) if respond_to?(:scene)
+
+        Legacy.new(build_graph(diagram))
       end
 
-      # Delegates to #call. This is the method name `Engine` calls today
-      # (engine.rb:184) — kept so that call site keeps working unchanged.
-      # The guard lives in #call, not here, so this method has nothing left
-      # to do once Engine calls #call directly.
+      # The graph a #build_graph layout builds, unwrapped. Kept for the
+      # layout specs that inspect the Hash directly.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
       # @return [Hash] elkrb graph hash with nodes and edges
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def to_graph(diagram)
-        call(diagram)
+        result = call(diagram)
+        result.is_a?(Legacy) ? result.payload : result
       end
 
       # Converts a valid diagram model to an elkrb graph structure.
@@ -138,6 +139,10 @@ module Sirena
       end
 
       protected
+
+      # The theme #call was given, or nil.
+      attr_reader :theme
+      private :theme
 
       # Measures text dimensions for node sizing.
       #
