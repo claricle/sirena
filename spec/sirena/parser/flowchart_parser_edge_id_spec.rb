@@ -110,6 +110,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids(source)).to eq(%w[A B])
     end
 
+    it "still checks the YAML of properties for such an id" do
+      expect { parse_flowchart("A e:x@--> B\ne:x@{ animate: [ }") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
     it "refuses properties for an id no link declared" do
       expect { parse_flowchart("A --> B\ne:x@{ animate: true }") }
         .to raise_error(Sirena::Parser::ParseError)
