@@ -138,10 +138,20 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       expect(diagram.entities.first.name).to eq("A~T~")
     end
 
-    it "lets a later generic replace an earlier one" do
-      diagram = parser.parse("classDiagram\nclass A~T~\nA~U~ --> B\n")
+    {
+      "a later generic on a declared class" => ["class A~T~\nA~U~ --> B\n", %w[A~T~ B]],
+      "a later generic on a related class" => ["A~T~ --> B\nA~U~ --> C\n", %w[A~T~ B C]],
+      "a generic first written on a later mention" => ["A --> B\nA~T~ --> C\n", %w[A B C]],
+      "a generic first written on a later declaration" => ["class A\nclass A~T~\n", %w[A]],
+      "a generic first written on a later colon member" => ["A --> B\nB~T~ : +x\n", %w[A B]],
+      "a label written after the generic" => ["A~T~ --> B\nclass A[\"Label\"]\n", %w[Label B]],
+      "both ends of one relationship" => ["A~T~ --> A~U~\n", %w[A~T~]]
+    }.each do |name, (body, names)|
+      it "follows mmdc, which only reads the generic that creates the class: #{name}" do
+        diagram = parser.parse("classDiagram\n#{body}")
 
-      expect(diagram.entities.first.name).to eq("A~U~")
+        expect(diagram.entities.map(&:name)).to eq(names)
+      end
     end
 
     it "keeps an explicit label over a generic on a later mention" do

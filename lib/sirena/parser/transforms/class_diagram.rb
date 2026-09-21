@@ -49,10 +49,10 @@ module Sirena
           # Classes given an explicit label, so a later generic on the same id
           # does not append to it.
           @labelled_ids = []
-          # The `~T~` last appended to each class's name, by id: a later
-          # generic swaps that suffix and never touches a `~B~` that is part
-          # of a backticked name.
-          @generic_suffixes = {}
+          # Which statement created each class: mmdc keeps only the generic
+          # written on the mention that creates it.
+          @statement_count = 0
+          @created_in = {}
           @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
@@ -84,6 +84,7 @@ module Sirena
         def process_statement(stmt)
           return unless stmt.is_a?(Hash)
 
+          @statement_count += 1
           if stmt[:namespace_keyword]
             # Namespace block
             process_namespace(stmt)
@@ -323,6 +324,7 @@ module Sirena
             e.name = class_id
           end
           @diagram.entities << entity
+          @created_in[class_id] = @statement_count
           entity
         end
 
@@ -338,16 +340,15 @@ module Sirena
 
         # Shows a generic on the display name ("Car~T~"), unless a text label
         # already names the class: mmdc renders `class Animal~T~["A label"]`
-        # as "A label". A later generic replaces an earlier one, so
-        # `A~T~ --> B` written twice still reads "A~T~".
+        # as "A label". Only the statement that creates the class counts, as
+        # in mmdc: `A --> B` then `A~T~ --> C` leaves A without a generic, and
+        # `A~T~ --> B` then `A~U~ --> C` keeps T.
         def apply_generic(entity, generic)
-          return unless generic.is_a?(Hash) && generic[:generic_type]
+          creating = @created_in.delete(entity.id) == @statement_count
+          return unless creating && generic.is_a?(Hash) && generic[:generic_type]
           return if @labelled_ids.include?(entity.id)
 
-          suffix = "~#{extract_text(generic[:generic_type])}~"
-          base = entity.name.delete_suffix(@generic_suffixes.fetch(entity.id, ''))
-          entity.name = base + suffix
-          @generic_suffixes[entity.id] = suffix
+          entity.name = "#{entity.name}~#{extract_text(generic[:generic_type])}~"
         end
 
         def qualify_name(name)
