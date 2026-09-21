@@ -64,7 +64,11 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "a doubled dot" => "class A..B",
       "a dollar sign" => "class A$",
       "an ampersand" => "class A&B",
-      "an unclosed backtick" => "class `A"
+      "an unclosed backtick" => "class `A",
+      "a non-ASCII digit" => "class \u0661",
+      "a non-ASCII digit after a letter" => "class A\u0661",
+      "a fullwidth digit" => "class \uFF11",
+      "a superscript digit" => "class \u00B2"
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }

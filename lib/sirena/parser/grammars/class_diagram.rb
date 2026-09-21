@@ -278,10 +278,11 @@ module Sirena
           (space? >> generic_params).maybe
         end
 
-        # A word character in a class name or a CSS class: letters and digits
-        # in any script, and underscore. mmdc accepts `class 1`, `class é`.
+        # A word character in a class name or a CSS class: letters in any
+        # script, ASCII digits, and underscore. mmdc accepts `class 1` and
+        # `class é` but rejects `class ١` (a non-ASCII digit).
         rule(:name_char) do
-          match['\p{L}\p{N}_']
+          match['\p{L}0-9_']
         end
 
         # Class name: words joined by a single `.` (namespace-qualified) or a
