@@ -121,6 +121,15 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to raise_error(Sirena::Parser::ParseError)
     end
 
+    it "refuses an id that starts on the line after its source" do
+      expect { parse_flowchart("A\ne1@--> B") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    it "still takes a link on the line after its source" do
+      expect(edge_links("A\n--> B")).to eq(%w[A>B])
+    end
+
     it "takes a no-break space between the @ and the link" do
       expect(edge_links("A e1@\u00A0--> B")).to eq(%w[A>B])
     end

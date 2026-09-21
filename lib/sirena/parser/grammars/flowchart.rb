@@ -650,7 +650,7 @@ module Sirena
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
             node_with_shape.as(:node) >> amp_group.as(:group) >>
-            (ws? >> edge_chain).maybe.as(:edges) >>
+            edge_chain.maybe.as(:edges) >>
             loose_statement_end
         end
 
@@ -889,14 +889,18 @@ module Sirena
 
         # Edge chain: can have multiple edges from one node
         rule(:edge_chain) do
-          edge >> (ws? >> edge).repeat
+          edge >> edge.repeat
         end
 
         # Single edge. A symbol-only link is tried first, as mermaid's
         # lexer does: `A --x B` is a link with a cross head, and only a
         # link that cannot end where it starts opens `A -- text --x B`.
+        #
+        # The rule owns the gap before it, because an edge id has to start
+        # on the line the source ends on: `A` newline `e1@--> B` is refused.
         rule(:edge) do
-          edge_id.maybe >> (piped_edge | inline_label_edge) >>
+          ((space.repeat >> edge_id_ahead >> edge_id_body) | ws?) >>
+            (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target) >>
             amp_group.as(:group)
