@@ -1,20 +1,25 @@
 name: links
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # Pull-request, merge-group and nightly runs come in through ci.yml's
+  # full lane (workflow_call).
+  workflow_call:
+  workflow_dispatch:
   schedule:
     # Run weekly on Monday at 00:00 UTC
     - cron: '0 0 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   link_checker:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
@@ -27,7 +32,7 @@ jobs:
         working-directory: docs
 
       - name: Restore lychee cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
         with:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
@@ -44,7 +49,7 @@ jobs:
         working-directory: docs
 
       - name: Link Checker
-        uses: lycheeverse/lychee-action@v1
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
         with:
           args: >-
             --verbose
@@ -58,28 +63,8 @@ jobs:
 
       - name: Upload link check results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: link-check-results
           path: link-check-results.md
           retention-days: 30
-
-      - name: Comment PR with results
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let comment = '## 🔗 Link Check Failed\n\n';
-
-            if (fs.existsSync('link-check-results.md')) {
-              const results = fs.readFileSync('link-check-results.md', 'utf8');
-              comment += '### Results\n\n' + results + '\n\n';
-            }
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
