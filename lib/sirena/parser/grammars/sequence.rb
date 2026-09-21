@@ -116,8 +116,10 @@ module Sirena
           match['0-9'].repeat(1) >> (space.repeat(1) >> match['0-9'].repeat(1)).maybe
         end
 
+        # Runs to the physical line end: testing `line_end` at every
+        # character rescans an interior whitespace run each time.
         rule(:rest_of_line) do
-          (line_end.absent? >> any).repeat >> line_end
+          match['^\n'].repeat >> line_end
         end
 
         # An actor name is a bounded run of text, not a programming
