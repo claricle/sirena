@@ -46,11 +46,16 @@ module Sirena
           # Ids already spoken for. The first box to name an id keeps it.
           attr_reader :claimed
 
+          # Ids given to edges with `A e1@--> B`. A later `e1@{ ... }`
+          # addresses the edge and is not a node.
+          attr_reader :edge_ids
+
           def initialize
             @ids = {}.compare_by_identity
             @ownership = {}
             @boxes = {}
             @claimed = {}
+            @edge_ids = Set.new
             @counter = -1
           end
 
@@ -725,6 +730,8 @@ module Sirena
             targets = declare_group(diagram, edge_data[:target],
                                     edge_data[:group], parent, context)
 
+            context.edge_ids << edge_data[:edge_id].to_s if edge_data[:edge_id]
+
             # `A & B --> C & D` links every source to every target.
             sources.product(targets).each do |source, target|
               diagram.edges << create_edge(source[:node_id], target,
@@ -739,7 +746,9 @@ module Sirena
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
         def self.declare_group(diagram, first, rest, parent, context)
-          [first, *rest].map do |node_hash|
+          [first, *rest].filter_map do |node_hash|
+            next if edge_properties?(node_hash, context)
+
             node_data = extract_node_data(node_hash)
             add_or_update_node(diagram, node_data)
             claim_member(parent, node_data[:node_id].to_s, context)
@@ -747,6 +756,14 @@ module Sirena
           end
         end
         private_class_method :declare_group
+
+        # `e1@{ animate: true }` sets properties on the edge named `e1`,
+        # and mermaid draws no node for it.
+        def self.edge_properties?(node_hash, context)
+          node_hash[:metadata] &&
+            context.edge_ids.include?(node_hash[:node_id].to_s)
+        end
+        private_class_method :edge_properties?
 
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece

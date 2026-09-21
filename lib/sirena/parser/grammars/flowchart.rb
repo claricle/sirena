@@ -896,7 +896,7 @@ module Sirena
         # lexer does: `A --x B` is a link with a cross head, and only a
         # link that cannot end where it starts opens `A -- text --x B`.
         rule(:edge) do
-          (piped_edge | inline_label_edge) >>
+          edge_id.maybe >> (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target) >>
             amp_group.as(:group)
@@ -908,6 +908,28 @@ module Sirena
         rule(:amp_group) do
           (space.repeat >> str('&') >> space.repeat >>
             reserved_keyword.absent? >> node_with_shape).repeat
+        end
+
+        # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
+        # can address it. A `{` or a quote after the `@` is a node's
+        # metadata or a string, never an id.
+        #
+        # Whether an id is here is read off the source first. Trying the
+        # rule and failing would report its failure to the Deepest reporter
+        # in `Base`, which would then point every `A B` typo at the end of
+        # `B` and ask for an `@` there.
+        EDGE_ID_AHEAD = /[^\s@]+@[^{"]/
+        private_constant :EDGE_ID_AHEAD
+
+        rule(:edge_id) do
+          dynamic do |source, _|
+            source.matches?(EDGE_ID_AHEAD) ? edge_id_body : str('')
+          end
+        end
+
+        rule(:edge_id_body) do
+          ((space | newline | str('@')).absent? >> any).repeat(1)
+            .as(:edge_id) >> str('@')
         end
 
         rule(:piped_edge) do

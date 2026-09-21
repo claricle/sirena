@@ -16,4 +16,8 @@ module FlowchartParserHelpers
   def edge_links(source)
     parse_flowchart(source).edges.map { |e| "#{e.source_id}>#{e.target_id}" }
   end
+
+  def node_ids(source)
+    parse_flowchart(source).nodes.map(&:id)
+  end
 end
