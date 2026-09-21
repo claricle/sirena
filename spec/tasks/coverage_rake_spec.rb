@@ -441,15 +441,7 @@ RSpec.describe 'lib/tasks/coverage.rake' do
     # `bundle exec` would fail for the wrong reason and the red case would
     # pass without proving anything.
     describe 'through the real simplecov patch entry point' do
-      around do |example|
-        previous_gemfile = ENV.fetch('BUNDLE_GEMFILE', nil)
-        ENV['BUNDLE_GEMFILE'] = File.expand_path('../../Gemfile', __dir__)
-        example.run
-      ensure
-        ENV['BUNDLE_GEMFILE'] = previous_gemfile
-      end
-
-      def gate_with_hits_on_changed_line!(hits)
+      subject(:gate) do
         init_repo!
         commit!('lib/foo.rb', "class Foo\nend\n")
         base = head_sha
@@ -465,12 +457,22 @@ RSpec.describe 'lib/tasks/coverage.rake' do
         Rake::Task['coverage:changed_lines'].invoke
       end
 
-      it 'exits non-zero when a changed lib line has no coverage' do
-        expect { gate_with_hits_on_changed_line!(0) }.to raise_error(/Command failed with status \(1\)/)
+      around do |example|
+        previous_gemfile = ENV.fetch('BUNDLE_GEMFILE', nil)
+        ENV['BUNDLE_GEMFILE'] = File.expand_path('../../Gemfile', __dir__)
+        example.run
+      ensure
+        ENV['BUNDLE_GEMFILE'] = previous_gemfile
       end
 
-      it 'passes when every changed lib line is covered' do
-        expect { gate_with_hits_on_changed_line!(1) }.not_to raise_error
+      let(:hits) { |example| example.metadata.fetch(:hits) }
+
+      it 'exits non-zero when a changed lib line has no coverage', hits: 0 do
+        expect { gate }.to raise_error(/Command failed with status \(1\)/)
+      end
+
+      it 'passes when every changed lib line is covered', hits: 1 do
+        expect { gate }.not_to raise_error
       end
     end
   end
