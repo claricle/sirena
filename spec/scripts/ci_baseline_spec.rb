@@ -31,19 +31,7 @@ RSpec.describe CiBaseline do
   end
 
   describe '.baseline_sha against real repositories' do
-    def sh(dir, *cmd)
-      out, err, st = Open3.capture3(*cmd, chdir: dir)
-      raise "#{cmd.join(' ')}: #{err}" unless st.success?
-
-      out.strip
-    end
-
-    def commit(dir, name)
-      File.write(File.join(dir, name), name)
-      sh(dir, 'git', 'add', name)
-      sh(dir, 'git', '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', name)
-      sh(dir, 'git', 'rev-parse', 'HEAD')
-    end
+    include GitRepoHelpers
 
     let(:tmp) { Dir.mktmpdir }
     let(:origin) { File.join(tmp, 'origin.git') }
@@ -75,20 +63,16 @@ RSpec.describe CiBaseline do
     context 'with a shallow clone of the moved base' do
       let(:clone) { File.join(tmp, 'shallow') }
 
-      def in_clone?(sha)
-        system('git', 'cat-file', '-e', "#{sha}^{commit}", chdir: clone, err: File::NULL)
-      end
-
       before do
         shas
         sh(tmp, 'git', 'clone', '-q', '--depth=1', '-b', 'main', "file://#{origin}", clone)
       end
 
       it 'fetches a push baseline that is not in the clone yet' do
-        expect(in_clone?(shas[:topic_tip])).to be(false)
+        expect(in_repo?(clone, shas[:topic_tip])).to be(false)
         decision = { mode: 'ref', ref: shas[:topic_tip], merge_base: false }
         expect(Dir.chdir(clone) { described_class.baseline_sha(decision) }).to eq(shas[:topic_tip])
-        expect(in_clone?(shas[:topic_tip])).to be(true)
+        expect(in_repo?(clone, shas[:topic_tip])).to be(true)
       end
 
       it 'raises when the baseline cannot be fetched' do

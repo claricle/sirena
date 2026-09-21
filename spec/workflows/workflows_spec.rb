@@ -13,13 +13,11 @@ RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
   let(:ci) { YAML.safe_load_file(File.join(root, '.github/workflows/ci.yml')) }
   let(:aggregators) { %w[fast-lane full-lane] }
 
-  def workflow_files = Dir[File.join(root, '.github/workflows/*.yml')]
+  let(:workflow_files) { Dir[File.join(root, '.github/workflows/*.yml')] }
+
+  include WorkflowHelpers
 
   describe WorkflowPins do
-    def workflow_with(uses)
-      { 'jobs' => { 'j' => { 'timeout-minutes' => 1, 'steps' => [{ 'uses' => uses }] } } }
-    end
-
     it 'finds no unpinned external reference and no missing timeout in the tracked workflows' do
       expect(workflow_files).not_to be_empty
       expect(workflow_files.flat_map { |f| described_class.problems(f) }).to eq([])
@@ -66,10 +64,6 @@ RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
   end
 
   describe LaneVerdict do
-    def result(name, outcome)
-      { name => { 'result' => outcome, 'outputs' => {} } }
-    end
-
     it 'is green only when every child succeeded' do
       needs = result('a', 'success').merge(result('b', 'success'))
       expect(described_class.failures(needs)).to eq([])
