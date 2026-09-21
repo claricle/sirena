@@ -167,8 +167,8 @@ svg = Sirena.render(mermaid_code, theme: 'dark')
 
 === Examples
 
-Browse link:examples/README.adoc[] for 53 example diagrams across all 24
-diagram types, each with corresponding SVG output.
+Browse link:examples/README.adoc[] for 53 example sources across all 24
+diagram types; 52 have a tracked SVG (one `.beta.mmd` source does not render yet).
 
 == Documentation
 

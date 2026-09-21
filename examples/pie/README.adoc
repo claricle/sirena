@@ -28,14 +28,14 @@ pie title Sample Distribution
 
 Demonstrates basic pie chart with labeled sections.
 
-**File**: link:01-simple-distribution.mmd[01-simple-distribution.mmd]
+**File**: link:01-simple-chart.mmd[01-simple-chart.mmd]
 
 [source,mermaid]
 ----
-include::01-simple-distribution.mmd[]
+include::01-simple-chart.mmd[]
 ----
 
-image::01-simple-distribution.svg[]
+image::01-simple-chart.svg[]
 
 === 02: Labeled Slices
 

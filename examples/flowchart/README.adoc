@@ -163,5 +163,5 @@ image::06-complex-flow.svg[]
 == Additional Resources
 
 * link:../../README.adoc[Main Documentation]
-* link:../../docs/diagrams/flowchart.adoc[Flowchart Full Reference] (if exists)
+* link:../../docs/_diagram_types/flowchart.adoc[Flowchart Full Reference]
 * https://mermaid.js.org/syntax/flowchart.html[Mermaid Flowchart Documentation]

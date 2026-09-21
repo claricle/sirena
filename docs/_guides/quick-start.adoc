@@ -67,7 +67,7 @@ sequenceDiagram
 ----
 erDiagram
     CUSTOMER ||--o{ ORDER : places
-    ORDER ||--|{ LINE-ITEM : contains
+    ORDER ||--|{ LINE_ITEM : contains
 ----
 
 == Programmatic Usage
@@ -84,11 +84,11 @@ mermaid_code = <<~MERMAID
     A --> B
 MERMAID
 
-svg = Sirena::Engine.render(mermaid_code)
+svg = Sirena.render(mermaid_code)
 File.write('output.svg', svg)
 
 # Render from a file
-svg = Sirena::Engine.render_file('diagram.mmd')
+svg = Sirena.render(File.read('diagram.mmd'))
 ----
 
 == Batch Processing
@@ -97,7 +97,7 @@ Render multiple diagrams at once:
 
 [source,shell]
 ----
-sirena batch diagrams/ -o output/
+sirena batch -i diagrams/ -o output/
 ----
 
 This renders all `.mmd` files in `diagrams/` directory to SVG files in `output/`.
@@ -106,7 +106,7 @@ This renders all `.mmd` files in `diagrams/` directory to SVG files in `output/`
 
 * link:cli-reference.html[CLI Reference] - Learn all available commands and options
 * link:../diagram_types/index.html[Diagram Types Reference] - Explore all 24 diagram types
-* link:../../examples/README.html[Examples] - Browse 37+ working examples
+* link:../../examples/README.html[Examples] - Browse the example diagrams for every type
 
 == Getting Help
 
