@@ -47,6 +47,19 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
   end
 
+  describe "a comma directly before a semicolon" do
+    ["style A fill:#f9f,;B", "classDef x fill:#f9f,;B"].each do |declaration|
+      it "takes #{declaration.inspect}, where the `;` is value text" do
+        expect(node_ids.call("graph TD\nA\n#{declaration}\n")).to include("A")
+      end
+    end
+
+    it "refuses `style A fill:red,;B`, where the `;` ends the item" do
+      expect { node_ids.call("graph TD\nA\nstyle A fill:red,;B\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+  end
+
   describe "a multi-class classDef" do
     it "takes `classDef a,b props` and keeps the diagram's nodes" do
       source = "graph TD\nA\nclassDef first,second fill:#bbb,stroke:red\n"

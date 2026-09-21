@@ -416,14 +416,24 @@ module Sirena
         end
 
         # mermaid joins declarations with a comma and refuses an empty one:
-        # `,a:b`, `a:b,,c:d` and `a:b,`.
+        # `,a:b`, `a:b,,c:d` and `a:b,`. After a `#` a `;` no longer ends
+        # the item, so `fill:#f9f,;B` is fine while `fill:red,;B` is not.
         rule(:empty_comma_item) do
-          comma | (comma_gap.absent? >> declaration_char).repeat >> comma_gap
+          comma |
+            (hash.absent? >> comma_gap.absent? >> declaration_char).repeat >>
+              (comma_gap | hash >> hashed_comma_gap_scan)
+        end
+
+        rule(:hashed_comma_gap_scan) do
+          (hashed_comma_gap.absent? >> declaration_char).repeat >>
+            hashed_comma_gap
         end
 
         rule(:comma_gap) do
-          comma >> (comma | semicolon | newline | eof)
+          hashed_comma_gap | comma >> semicolon
         end
+
+        rule(:hashed_comma_gap) { comma >> (comma | newline | eof) }
 
         # After a `#` the declaration carries at most one `;`. mmdc
         # takes `fill:#f9f;stroke:#333` and `fill:#f9f;B`, and refuses
