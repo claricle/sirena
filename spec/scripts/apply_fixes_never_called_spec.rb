@@ -78,24 +78,16 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
   end
 
   describe "the scan itself" do
-    def scan(source)
-      Dir.mktmpdir do |dir|
-        path = File.join(dir, "seeded.rb")
-        File.write(path, source)
-        apply_fixes_references([path]).size
-      end
-    end
-
     it "flags a direct call" do
-      expect(scan("validator.apply_fixes(svg)\n")).to eq(1)
+      expect(apply_fixes_reference_count("validator.apply_fixes(svg)\n")).to eq(1)
     end
 
     it "flags a dynamic send by symbol" do
-      expect(scan("validator.send(:apply_fixes, svg)\n")).to eq(1)
+      expect(apply_fixes_reference_count("validator.send(:apply_fixes, svg)\n")).to eq(1)
     end
 
     it "ignores a comment that only mentions the name" do
-      expect(scan("# never call apply_fixes here\n")).to eq(0)
+      expect(apply_fixes_reference_count("# never call apply_fixes here\n")).to eq(0)
     end
   end
 end

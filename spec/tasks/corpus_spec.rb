@@ -225,19 +225,7 @@ RSpec.describe Sirena::Corpus do
     # so it needs neither the real corpus nor the committed scoreboard.
     let(:committed) { [{ "case" => "a/1.mmd", "verdict" => "valid", "pass" => true }] }
 
-    def stub_fresh_run(passes)
-      results = passes.transform_values { |pass| { pass: pass, stage: "parse", exception_class: "X" } }
-      allow(described_class).to receive_messages(
-        load_scoreboard: committed, cases: results.keys, run_cases: results, verdicts: {}
-      )
-    end
-
-    def exit_status_of
-      yield
-      0
-    rescue SystemExit => e
-      e.status
-    end
+    include CorpusCheckStubs
 
     it "exits non-zero and names a case that passed in the scoreboard and fails now" do
       stub_fresh_run("a/1.mmd" => false)

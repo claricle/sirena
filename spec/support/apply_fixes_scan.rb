@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ripper"
+require "tmpdir"
 
 # Finds every shipped-code reference to svg_conform's `apply_fixes`, which
 # rewrites the SVG it is given and so must never run over Sirena's output.
@@ -23,6 +24,16 @@ module ApplyFixesScan
       Ripper.lex(File.read(path)).filter_map do |(line, _col), type, text|
         "#{path}:#{line}" if type != :on_comment && text.include?("apply_fixes")
       end
+    end
+  end
+
+  # Number of references in a source string, written to a file so the scan
+  # runs the same path it runs over shipped files.
+  def apply_fixes_reference_count(source)
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "seeded.rb")
+      File.write(path, source)
+      apply_fixes_references([path]).size
     end
   end
 end
