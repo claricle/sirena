@@ -46,7 +46,7 @@ RSpec.describe 'Reference SVG Fixtures' do
       # which is desirable for performance. Adjusted tolerance to accept
       # compact output while still catching major structural differences.
       length_ratio = actual_svg.length.to_f / expected_svg.length
-      expect(length_ratio).to be_between(0.02, 2.0)
+      expect(FixtureLengthBand.cover?(length_ratio)).to be(true), "length ratio #{length_ratio.round(4)} outside the fixture band"
     end
   end
 
@@ -80,6 +80,20 @@ RSpec.describe 'Reference SVG Fixtures' do
 
   describe 'Sankey diagrams' do
     include_examples 'validates against reference fixture', 'sankey'
+  end
+
+  describe 'Length band' do
+    it 'rejects output 50x smaller than the reference' do
+      expect(FixtureLengthBand.cover?(1.0 / 50)).to be(false)
+    end
+
+    it 'rejects output more than twice the reference' do
+      expect(FixtureLengthBand.cover?(2.01)).to be(false)
+    end
+
+    it 'accepts output the size of the reference' do
+      expect(FixtureLengthBand.cover?(1.0)).to be(true)
+    end
   end
 
   describe 'Fixture completeness' do
