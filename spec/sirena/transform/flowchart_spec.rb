@@ -126,6 +126,9 @@ RSpec.describe Sirena::Transform::FlowchartTransform do
 
     it 'raises error for invalid diagram' do
       invalid_diagram = Sirena::Diagram::Flowchart.new
+      invalid_diagram.edges << Sirena::Diagram::FlowchartEdge.new(
+        source_id: 'A', target_id: 'B', arrow_type: 'arrow'
+      )
 
       expect do
         transform.to_graph(invalid_diagram)

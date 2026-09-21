@@ -5916,30 +5916,22 @@
   {
     "case": "flowchart/147_parser_should_be_possible_to_declare_a_class_142.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/148_parser_should_be_possible_to_declare_multiple_classes_143.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/149_parser_should_be_possible_to_declare_a_class_with_a_dot_in_the_style_144.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/151_parser_should_handle_style_definitions_with_more_then_1_digit_in_a_row_146.mmd",
@@ -6309,9 +6301,7 @@
   {
     "case": "flowchart/218_parser_should_work_with_tooltip_id___unsafeprop__213.mmd",
     "verdict": "artifact",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "flowchart/219_parser_should_work_with_class_id___unsafeprop__214.mmd",
@@ -11227,16 +11217,12 @@
   {
     "case": "unknown/001_rendering_sankey_spec_0.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "unknown/002_rendering_sankey_spec_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "pass": true
   },
   {
     "case": "unknown/003_platform_architecture-external_2.mmd",

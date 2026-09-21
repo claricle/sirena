@@ -51,9 +51,16 @@ RSpec.describe Sirena::Engine do
     end
 
     it "raises TransformError, not PipelineError, when a diagram fails its own validity check" do
-      # mmdc renders a bare `graph` header; the flowchart transform refuses
-      # it because the model carries no nodes.
-      expect { engine.render("graph") }
+      # The parser cannot produce an edge to a node nobody declared, so the
+      # invalid model is handed to the transform through a stubbed parser.
+      dangling = Sirena::Diagram::Flowchart.new
+      dangling.edges << Sirena::Diagram::FlowchartEdge.new(
+        source_id: "A", target_id: "B", arrow_type: "arrow"
+      )
+      parser = instance_double(Sirena::Parser::FlowchartParser, parse: dangling)
+      allow(Sirena::Parser::FlowchartParser).to receive(:new).and_return(parser)
+
+      expect { engine.render("graph TD\nA-->B\n") }
         .to raise_error(Sirena::Transform::TransformError, "Invalid diagram")
     end
 

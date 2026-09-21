@@ -22,9 +22,11 @@ RSpec.describe Sirena::Diagram::Flowchart do
       expect(flowchart.valid?).to be true
     end
 
-    it 'returns false for flowchart without nodes' do
+    # mmdc draws a 16x16 empty canvas for `graph TD` and for a source that
+    # only declares classes (spec/mermaid/flowchart/147_*.mmd).
+    it 'returns true for flowchart without nodes' do
       flowchart = described_class.new(direction: 'TD')
-      expect(flowchart.valid?).to be false
+      expect(flowchart.valid?).to be true
     end
 
     it 'returns false when edge references non-existent node' do

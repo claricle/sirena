@@ -219,7 +219,8 @@ module Sirena
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         page = clear_self_loop_overflow(flatten(graph))
-        svg = create_document(page, overflow: 'hidden')
+        svg = create_document(page, overflow: 'hidden',
+                                    padding: padding_for(page))
 
         # mermaid's paint order: clusters sit behind everything, then
         # edges, then the nodes that cover where the edges end.
@@ -479,6 +480,18 @@ module Sirena
         element.stroke_width = theme_shape(:stroke_width).to_s
       end
 
+      # Padding mermaid puts around a flowchart that draws nothing, a
+      # `classDef` on its own for one: 8px a side, so the canvas is 16x16
+      # (spec/mermaid/flowchart/147_*.svg). Sirena keeps its "0 0" viewBox
+      # origin and copies the extent, as the ER renderer does.
+      EMPTY_DIAGRAM_PADDING = 8
+      DIAGRAM_PADDING = 20
+      private_constant :EMPTY_DIAGRAM_PADDING, :DIAGRAM_PADDING
+
+      def padding_for(graph)
+        drawn(graph).empty? ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
+      end
+
       # A self loop can reach past its own node on the right, and neither
       # its bends nor its label is a box this counts on its own — see
       # `self_loop_reach`. Without folding that in, a loop thrown right
@@ -486,7 +499,7 @@ module Sirena
       # alone.
       def calculate_width(graph)
         boxes = drawn(graph)
-        return 800 if boxes.empty?
+        return 0 if boxes.empty?
 
         max_x = boxes.map do |node|
           (node[:x] || 0) + (node[:width] || 100)
@@ -497,7 +510,7 @@ module Sirena
 
       def calculate_height(graph)
         boxes = drawn(graph)
-        return 600 if boxes.empty?
+        return 0 if boxes.empty?
 
         max_y = boxes.map do |node|
           (node[:y] || 0) + (node[:height] || 50)

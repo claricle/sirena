@@ -210,7 +210,6 @@ module Sirena
         # that gets drawn, because that is what an edge can reach — an
         # empty one is not carried into the layout at all.
         drawn_boxes = boxes.filter_map { |box| box.id if box.drawable? }
-        return false if drawn_nodes.empty? && drawn_boxes.empty?
 
         known = drawn_nodes.map(&:id) + drawn_boxes
         edges&.each do |edge|

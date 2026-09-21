@@ -121,17 +121,14 @@ RSpec.describe Sirena::Engine do
         end
       end
 
-      it 'names the type for a bare keyword, as the grammar does' do
-        # mmdc renders `graph` on its own. Detection wanted a character
-        # after the keyword, so this never reached the parser at all. It
-        # still fails downstream, where an empty flowchart is refused on
-        # main too, but it fails as a flowchart rather than as no type.
-        # The failure is the transform's own validity check, so it now
-        # propagates as TransformError rather than being collapsed into
-        # PipelineError (see the error-taxonomy fix in engine.rb).
-        expect { engine.render('graph') }.to raise_error(
-          Sirena::Transform::TransformError
-        )
+      it 'renders a bare keyword as the empty canvas' do
+        # Detection wanted a character after the keyword, so this never
+        # reached the parser at all. mmdc renders `graph` on its own as a
+        # 16x16 canvas: spec/mermaid/unknown/001_rendering_sankey_spec_0.svg.
+        document = REXML::Document.new(engine.render('graph'))
+
+        expect(document.root.attributes['viewBox']).to eq('0 0 16 16')
+        expect(document.root.elements.to_a).to eq([])
       end
 
       it 'still refuses a keyword glued to a word' do
