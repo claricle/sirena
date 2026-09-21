@@ -65,7 +65,7 @@ sirena version
 You should see output similar to:
 
 ----
-Sirena version 0.1.0
+sirena version 0.1.0
 ----
 
 == Next Steps

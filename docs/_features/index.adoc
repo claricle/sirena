@@ -19,7 +19,7 @@ In-depth coverage of:
 * **Parslet Parsing** - Grammar-based parsing architecture
 * **SVG Generation** - Professional-quality output
 * **Error Handling** - Clear, actionable error messages
-* **Layout Engine** - ELK-based automatic layout
+* **Layout Engine** - Built-in fallback grid layout (ELK via elkrb is planned, not yet called)
 * **Text Measurement** - Accurate text rendering
 * **Color Palettes** - Theme color system
 * **Typography** - Font and text styling
