@@ -92,7 +92,7 @@ module Sirena
 
         rule(:title_statement) do
           str('title') >> (colon >> space? | space.repeat(1)) >>
-            match['^;\n'].repeat >> statement_end
+            match['^#;\n'].repeat >> statement_end
         end
 
         rule(:acc_title_statement) do
@@ -105,7 +105,7 @@ module Sirena
 
         rule(:acc_descr_block) do
           str('accDescr') >> space? >> lbrace >>
-            (rbrace.absent? >> any).repeat >> rbrace >> line_end
+            (rbrace.absent? >> any).repeat >> rbrace >> statement_end
         end
 
         rule(:autonumber_statement) do
@@ -124,8 +124,9 @@ module Sirena
         end
 
         # `;` separates statements, so it may end a line without a newline.
+        # A `#` comment runs to the physical line end, `;` included.
         rule(:statement_end) do
-          line_end | semicolon
+          (space? >> str('#') >> match['^\n'].repeat).maybe >> (line_end | semicolon)
         end
 
         # Runs to the physical line end: testing `line_end` at every

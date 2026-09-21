@@ -57,7 +57,8 @@ RSpec.describe Sirena::Parser::SequenceParser do
       "title" => "title T;Alice->Bob: hi",
       "title with a colon" => "title: T;Alice->Bob: hi",
       "autonumber" => "autonumber;Alice->Bob: hi",
-      "autonumber with a start" => "autonumber 3;Alice->Bob: hi"
+      "autonumber with a start" => "autonumber 3;Alice->Bob: hi",
+      "accDescr block" => "accDescr {d};Alice->Bob: hi"
     }.each do |name, source|
       it "keeps the message after #{name}" do
         diagram = parser.parse("sequenceDiagram\n#{source}\n")
@@ -65,6 +66,14 @@ RSpec.describe Sirena::Parser::SequenceParser do
         expect(diagram.messages.size).to eq(1)
       end
     end
+  end
+
+  # mermaid skips `#` to the end of the physical line, so a `;` after it
+  # separates nothing.
+  it "ends title text at a hash comment that swallows a semicolon" do
+    diagram = parser.parse("sequenceDiagram\ntitle T # c;Alice->Bob: hi\n")
+
+    expect(diagram.messages).to eq([])
   end
 
   # A run of interior spaces made `rest_of_line` rescan the whole run at
