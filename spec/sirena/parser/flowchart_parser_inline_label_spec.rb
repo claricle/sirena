@@ -58,7 +58,9 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       'A -- "" --> B' => "an empty quoted label",
       "A == t <==x B" => "a thick < closed by an x",
       "A x== t <==x B" => "a thick x with a < start on the closing half",
-      "A == t <=== B" => "a thick < with no head"
+      "A == t <=== B" => "a thick < with no head",
+      "A == t x==> B" => "a thick x with no x to end it",
+      "A -- one\n%%{ bad }\ntwo\n--> B" => "a directive line inside a label"
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -72,6 +74,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     {
       "A -- t <--> B" => "arrow_both",
       "A == t <==> B" => "thick_arrow_both",
+      "A -- t x--x B" => "cross_both",
+      "A -- t o--o B" => "circle_both",
+      "A == t x==x B" => "thick_cross_both",
+      "A -. t x.-x B" => "dotted_cross_both",
+      "A -- t x--> B" => "arrow",
       'A -- ""a --> B' => "arrow",
       "A -. t <.- B" => "dotted_line",
       "A -. t <.-> B" => "dotted_arrow_both",
@@ -124,7 +131,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       "text of a dotted label" => "A -. #{'a' * 5_000} .-> B",
       "text of a thick label" => "A == #{'a' * 5_000} ==> B"
     }.each do |what, source|
-      it "parses a long run of #{what} in linear time" do
+      it "parses a long run of #{what} within a fixed bound" do
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         expect(edge_tuples(source).length).to eq(1)
         expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)

@@ -945,13 +945,17 @@ module Sirena
         # refuses `A -- --> B`. `forbidden` is the body text mermaid cannot
         # lex inside the label. Whitespace is mermaid's own set, and a whole
         # comment line inside a multiline label is deleted before it reads.
+        # `%%{` opens a directive, never a comment, and no label holds one.
         #
         # A whitespace run is consumed whole and checked once for what
         # follows it, so a long run costs one pass, not one per character.
         def inline_halves(open, close, forbidden)
-          blank = comment_line | line_space | match["\r\n"]
+          comment = newline >> line_space.repeat >> str('%%') >>
+                    str('{').absent? >> (newline.absent? >> any).repeat
+          blank = comment | line_space | match["\r\n"]
           closing = link_start.maybe >> close
-          char = closing.absent? >> blank.absent? >> str('"').absent? >> any
+          char = closing.absent? >> blank.absent? >> str('"').absent? >>
+                 str('%%{').absent? >> any
           char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
           text = char >> (char | gap).repeat

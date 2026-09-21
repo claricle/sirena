@@ -233,16 +233,18 @@ module Sirena
         # the end — see the `link_start` and `link_end` rules in
         # `Grammars::Flowchart`, which are the sole producers of this
         # token.
-        # A comment line inside a label, whitespace as mermaid counts it.
-        COMMENT_LINE = Regexp.new(
-          "\n[\t\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F" \
-          "\u205F\u3000\uFEFF]*%%[^\n]*"
-        )
         LINK_MARKERS = {
           '>' => 'arrow', '<' => 'arrow',
           'x' => 'cross', 'o' => 'circle'
         }.freeze
         private_constant :LINK_MARKERS
+
+        # A comment line inside a label, whitespace as mermaid counts it.
+        COMMENT_LINE = Regexp.new(
+          "\n[\t\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F" \
+          "\u205F\u3000\uFEFF]*%%[^\n]*"
+        )
+        private_constant :COMMENT_LINE
 
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
@@ -771,10 +773,21 @@ module Sirena
           open = edge_data[:open].to_s
           close = edge_data[:close].to_s
           reject_unmatched_marker(open, close)
-          return "#{open}#{close}" unless close.start_with?('<') && open !~ /\A[ox<]/
+          return "#{open}#{close}" unless lifts_start_head?(open, close)
 
-          "<#{open}#{close[1..]}"
+          "#{close[0]}#{open}#{close[1..]}"
         end
+
+        # The start head of the closing half, when the opening half has
+        # none, belongs to the whole link: `<` always, `x` or `o` when the
+        # other end carries the same one.
+        def self.lifts_start_head?(open, close)
+          return false if open.match?(/\A[ox<]/)
+
+          close.start_with?('<') ||
+            (close.match?(/\A[ox]/) && close[-1] == close[0])
+        end
+        private_class_method :lifts_start_head?
 
         def self.reject_unmatched_marker(open, close)
           return if marker_closed?(open[0], close)
@@ -786,10 +799,12 @@ module Sirena
 
         # An opening `<` closes on a head and takes no second start marker
         # on the closing half. A thick closing half that opens with its own
-        # `<` also needs a head: mmdc refuses `A == t <==x B` and
-        # `A == t <=== B`, and draws the solid and dotted forms.
+        # `<` also needs a head: mmdc refuses `A == t <==x B`,
+        # `A == t <=== B` and `A == t x==> B`, and draws the solid and
+        # dotted forms.
         def self.marker_closed?(marker, close)
-          return false if close.start_with?('<=') && close[-1] != '>'
+          return false if close.match?(/\A[ox<]=/) &&
+                          close[-1] != head_for(close[0])
 
           case marker
           when 'x', 'o' then close[-1] == marker
@@ -798,6 +813,11 @@ module Sirena
           end
         end
         private_class_method :marker_closed?
+
+        def self.head_for(start)
+          start == '<' ? '>' : start
+        end
+        private_class_method :head_for
         private_class_method :reject_unmatched_marker
         private_class_method :link_token
 
