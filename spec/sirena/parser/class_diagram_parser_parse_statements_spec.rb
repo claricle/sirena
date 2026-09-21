@@ -8,10 +8,6 @@ require "spec_helper"
 RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse statements" do
   let(:parser) { described_class.new }
 
-  def entity_ids(source)
-    parser.parse(source).entities.map(&:id)
-  end
-
   {
     "click href with tooltip" =>
       'click Shape href "https://www.github.com" "A tooltip"',
@@ -36,19 +32,21 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse statements" do
     it "parses #{name} without adding a class" do
       source = "classDiagram\nclass Shape\n#{statement}\n"
 
-      expect(entity_ids(source)).to eq(["Shape"])
+      expect(parser.parse(source).entities.map(&:id)).to eq(["Shape"])
     end
   end
 
   it "does not read a statement keyword as a class name" do
-    expect(entity_ids("classDiagram\nclass Shape\nstyle Shape fill:#f9f\n"))
-      .not_to include("style")
+    diagram = parser.parse("classDiagram\nclass Shape\nstyle Shape fill:#f9f\n")
+
+    expect(diagram.entities.map(&:id)).not_to include("style")
   end
 
   it "still parses classes whose name starts with a statement keyword" do
     source = "classDiagram\nnotebook --> clicker\nstyleguide\n"
 
-    expect(entity_ids(source)).to eq(%w[notebook clicker styleguide])
+    expect(parser.parse(source).entities.map(&:id))
+      .to eq(%w[notebook clicker styleguide])
   end
 
   describe "direction inside the diagram" do
