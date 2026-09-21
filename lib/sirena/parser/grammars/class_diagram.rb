@@ -161,12 +161,17 @@ module Sirena
         end
 
         # Colon member definition: ClassName : +member or ClassName : +method()
+        #
+        # Anything after the colon is a member to mmdc; text the structured
+        # rules do not read is kept whole (`Car : +ArrayList size()`), except
+        # that a second `:` or a `;` is a syntax error (`A:::s`, `A : x:y`).
         rule(:colon_member_definition) do
           class_ref >> space? >>
             colon >> space? >>
-            visibility_modifier.maybe.as(:visibility) >>
-            member_definition.as(:member) >>
-            line_end
+            (body_annotation >> line_end |
+              (visibility_modifier.maybe.as(:visibility) >>
+                member_definition.as(:member) >> line_end) |
+              colon_text.as(:raw_member) >> line_end)
         end
 
         # Link statement: link ClassName "url" "tooltip"
@@ -331,9 +336,46 @@ module Sirena
           (class_member >> ws?).repeat(1)
         end
 
+        # A body line is an annotation, a structured member, or free text.
+        # mmdc reads every line that is none of the first two as a member, so
+        # `void methods()` and `.. Getters ..` are members. It rejects only a
+        # `{` inside the text and a line that starts with a quote.
         rule(:class_member) do
-          visibility_modifier.maybe.as(:visibility) >>
-            member_definition.as(:member)
+          body_annotation |
+            (visibility_modifier.maybe.as(:visibility) >>
+              member_definition.as(:member) >> member_end) |
+            body_text.as(:raw_member)
+        end
+
+        # `<<interface>>` on its own line. mmdc takes a line that starts with
+        # `<<` and ends with `>>`, so the last `>>` closes it:
+        # `<<a>>b>>` is the annotation `a>>b`.
+        rule(:body_annotation) do
+          str('<<') >>
+            (annotation_text.as(:body_stereotype) |
+              str('').as(:body_stereotype)) >>
+            str('>>') >> member_end
+        end
+
+        rule(:annotation_text) do
+          ((str('>>') >> member_end).absent? >> body_char).repeat(1)
+        end
+
+        rule(:colon_text) do
+          (match[":;\n"].absent? >> line_end.absent? >> any).repeat(1)
+        end
+
+        rule(:body_char) do
+          match["\n{}"].absent? >> any
+        end
+
+        rule(:body_text) do
+          (str('"').absent? >> body_char) >> body_char.repeat >> member_end
+        end
+
+        # A member ends at the line break, or at the `}` that closes the body.
+        rule(:member_end) do
+          space? >> (newline | rbrace).present?
         end
 
         # Member definition (attribute or method)

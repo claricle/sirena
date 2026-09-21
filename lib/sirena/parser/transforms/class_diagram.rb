@@ -32,6 +32,9 @@ module Sirena
         # Operators where arrow points left (reverse direction)
         LEFT_POINTING = ['<|--', '<--', '<|..', '<..'].freeze
 
+        # `name(params) rest`: text with a `(` before its last `)`.
+        RAW_METHOD = /\A(?<name>[^(]*)\((?<params>.*)\)(?<rest>[^)]*)\z/
+
         # Visibility symbol mappings
         VISIBILITY_SYMBOLS = {
           '+' => 'public',
@@ -89,7 +92,7 @@ module Sirena
           elsif stmt[:stereotype] && stmt[:class_id] && !stmt[:keyword]
             # Standalone stereotype
             process_standalone_stereotype(stmt)
-          elsif stmt[:class_id] && stmt[:member]
+          elsif stmt[:class_id] && (stmt[:member] || stmt[:raw_member] || stmt[:body_stereotype])
             # Colon member definition
             process_colon_member(stmt)
           elsif stmt[:from_id] && stmt[:to_id] && stmt[:operator]
@@ -180,18 +183,7 @@ module Sirena
           entity = find_or_create_entity(class_id)
           apply_generic(entity, stmt[:generic])
 
-          # Parse visibility
-          visibility = parse_visibility(stmt[:visibility])
-
-          # Parse member
-          member_data = stmt[:member]
-          if member_data[:method_name]
-            # It's a method
-            add_method_to_entity(entity, member_data, visibility)
-          else
-            # It's an attribute
-            add_attribute_to_entity(entity, member_data, visibility)
-          end
+          add_member(entity, stmt)
         end
 
         def process_class_body(entity, body_data)
@@ -199,17 +191,54 @@ module Sirena
 
           body_data.each do |member_item|
             next unless member_item.is_a?(Hash)
-            next unless member_item[:member]
 
-            visibility = parse_visibility(member_item[:visibility])
-            member_data = member_item[:member]
-
-            if member_data[:method_name]
-              add_method_to_entity(entity, member_data, visibility)
-            else
-              add_attribute_to_entity(entity, member_data, visibility)
-            end
+            add_member(entity, member_item)
           end
+        end
+
+        # mmdc keeps the first annotation a class gets, wherever it is written.
+        def add_member(entity, item)
+          if item[:body_stereotype]
+            entity.stereotype ||= extract_text(item[:body_stereotype])
+          elsif item[:raw_member]
+            add_raw_member(entity, extract_text(item[:raw_member]))
+          else
+            add_structured_member(entity, item)
+          end
+        end
+
+        def add_structured_member(entity, item)
+          visibility = parse_visibility(item[:visibility])
+          if item[:member][:method_name]
+            add_method_to_entity(entity, item[:member], visibility)
+          else
+            add_attribute_to_entity(entity, item[:member], visibility)
+          end
+        end
+
+        # Text the structured member rules did not read. mmdc calls it a
+        # method when it holds a `)`, and shows the text as written.
+        def add_raw_member(entity, text)
+          text = text.strip
+          visible = text.match(/\A(?<symbol>[-+#~])\s*(?<rest>\S.*)\z/m)
+          visibility = visible ? VISIBILITY_SYMBOLS.fetch(visible[:symbol]) : 'public'
+          text = visible[:rest] if visible
+          if (call = text.match(RAW_METHOD))
+            entity.class_methods << raw_method(call, visibility)
+          else
+            entity.attributes << Diagram::ClassAttribute.new(name: text, visibility: visibility)
+          end
+        end
+
+        # The `*` (abstract) and `$` (static) mmdc allows after a method have
+        # no place in the model and are dropped.
+        def raw_method(call, visibility)
+          return_type = call[:rest].sub(/\A\s*[*$]?\s*/, '')
+          Diagram::ClassMethod.new(
+            name: call[:name].strip, parameters: call[:params],
+            return_type: return_type.empty? ? nil : return_type,
+            visibility: visibility
+          )
         end
 
         def add_method_to_entity(entity, method_data, visibility)
