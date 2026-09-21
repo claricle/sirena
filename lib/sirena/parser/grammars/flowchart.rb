@@ -932,7 +932,7 @@ module Sirena
         rule(:edge_id_body) do
           semicolon.absent? >>
             ((space | newline | str('@')).absent? >> any).repeat(1)
-            .as(:edge_id) >> str('@') >> match['\s'].repeat
+              .as(:edge_id) >> str('@') >> match['\s'].repeat
         end
 
         rule(:piped_edge) do
