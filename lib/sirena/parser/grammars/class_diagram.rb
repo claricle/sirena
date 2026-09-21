@@ -327,13 +327,20 @@ module Sirena
 
         # Class body: { members }
         rule(:class_body) do
-          lbrace >> ws? >>
+          lbrace >> body_gap >>
             class_members.maybe >>
             ws? >> rbrace
         end
 
         rule(:class_members) do
-          (class_member >> ws?).repeat(1)
+          (class_member >> body_gap).repeat(1)
+        end
+
+        # Blank lines and comments between members. The indentation of the
+        # next member is left unread: mmdc rejects a line that STARTS with a
+        # quote but accepts an indented one as the member ` "quoted"`.
+        rule(:body_gap) do
+          (space.repeat >> (newline | comment)).repeat
         end
 
         # A body line is an annotation, a structured member, or free text.
@@ -341,10 +348,16 @@ module Sirena
         # `void methods()` and `.. Getters ..` are members. It rejects only a
         # `{` inside the text and a line that starts with a quote.
         rule(:class_member) do
-          body_annotation |
-            (visibility_modifier.maybe.as(:visibility) >>
-              member_definition.as(:member) >> member_end) |
-            body_text.as(:raw_member)
+          (space.repeat(1) >> indented_quote_text.as(:raw_member)) |
+            (space? >>
+              (body_annotation |
+                (visibility_modifier.maybe.as(:visibility) >>
+                  member_definition.as(:member) >> member_end) |
+                body_text.as(:raw_member)))
+        end
+
+        rule(:indented_quote_text) do
+          str('"') >> body_char.repeat >> member_end
         end
 
         # `<<interface>>` on its own line. mmdc takes a line that starts with
@@ -375,7 +388,7 @@ module Sirena
 
         # A member ends at the line break, or at the `}` that closes the body.
         rule(:member_end) do
-          space? >> (newline | rbrace).present?
+          space? >> (newline | rbrace | eof).present?
         end
 
         # Member definition (attribute or method)

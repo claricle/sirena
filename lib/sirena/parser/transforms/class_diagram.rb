@@ -139,7 +139,7 @@ module Sirena
 
           # Handle stereotype
           if stmt[:stereotype] && stmt[:stereotype][:stereotype_value]
-            entity.stereotype = extract_text(stmt[:stereotype][:stereotype_value])
+            entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
           end
 
           # Handle generic parameters.
@@ -173,7 +173,7 @@ module Sirena
           entity = find_or_create_entity(class_id)
 
           if stmt[:stereotype][:stereotype_value]
-            entity.stereotype = extract_text(stmt[:stereotype][:stereotype_value])
+            entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
           end
         end
 
@@ -233,7 +233,7 @@ module Sirena
         # The `*` (abstract) and `$` (static) mmdc allows after a method have
         # no place in the model and are dropped.
         def raw_method(call, visibility)
-          return_type = call[:rest].sub(/\A\s*[*$]?\s*/, '')
+          return_type = call[:rest].sub(/\A\s*[*$]?\s*/, '').sub(/\s*[*$]\z/, '')
           Diagram::ClassMethod.new(
             name: call[:name].strip, parameters: call[:params],
             return_type: return_type.empty? ? nil : return_type,

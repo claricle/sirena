@@ -29,6 +29,18 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
         .to eq("interface")
     end
 
+    it "keeps the first annotation over a later header or standalone one" do
+      diagram = parser.parse("classDiagram\nclass A {\n<<interface>>\n}\nclass A <<abstract>>\n<<enum>> A\n")
+
+      expect(diagram.entities.first.stereotype).to eq("interface")
+    end
+
+    it "reads an annotation after a colon at the end of the source" do
+      diagram = parser.parse("classDiagram\nA : <<interface>>")
+
+      expect([diagram.entities.first.stereotype, diagram.entities.first.attributes]).to eq(["interface", []])
+    end
+
     it "keeps the annotation on the class header over one in the body" do
       diagram = parser.parse("classDiagram\nclass A <<interface>> {\n<<abstract>>\n}\n")
 
@@ -112,6 +124,16 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
       diagram = parser.parse("classDiagram\nclass A {\n+x }\nB\n")
 
       expect(diagram.entities.map(&:id)).to eq(%w[A B])
+    end
+
+    it "reads an indented quoted line as a member, as mmdc does" do
+      expect(parse_class(' "quoted"').attributes.map(&:name)).to eq(['"quoted"'])
+    end
+
+    it "drops a static or abstract mark from the return type" do
+      methods = parse_class("foo() void$\nbar() int*").class_methods
+
+      expect(methods.map(&:return_type)).to eq(%w[void int])
     end
 
     # Keep: each is a syntax error to mmdc; they guard the free-text fallback
