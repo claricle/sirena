@@ -26,9 +26,10 @@ module MermaidDiffSpecSupport
     # spawns a fresh `ruby scripts/mermaid_diff.rb` process, so every one
     # pays it. Stripped by exact text, not swallowed wholesale, so a
     # genuine stderr line from the harness itself still reaches the
-    # assertion.
-    YEPTRIS_NAMESPACE_NOTICE = /\Ayeptris: "yeptris\/psych" defines the namespace only.*\n/
-    private_constant :YEPTRIS_NAMESPACE_NOTICE
+    # assertion. yeptris 0.6.15.2 adds a second startup line on platforms
+    # without a precompiled native materializer; both are stripped.
+    YEPTRIS_NOTICE = /^yeptris: (?:"yeptris\/psych" defines the namespace only|no precompiled native materializer for Ruby \S+ on this platform).*\n/
+    private_constant :YEPTRIS_NOTICE
 
     def run_harness(source, *options, mmdc: accepting_mmdc, relative: false)
       Dir.mktmpdir do |dir|
@@ -57,7 +58,7 @@ module MermaidDiffSpecSupport
                                  else
                                    capture.call
                                  end
-        [stdout, stderr.sub(YEPTRIS_NAMESPACE_NOTICE, ''), status]
+        [stdout, stderr.gsub(YEPTRIS_NOTICE, ''), status]
       end
     end
 
