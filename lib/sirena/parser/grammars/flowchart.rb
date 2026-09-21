@@ -911,10 +911,11 @@ module Sirena
             reserved_keyword.absent? >> node_with_shape).repeat
         end
 
-        # `e:x@{ animate: true }`: an id outside the node charset, so the
-        # transform accepts it only when an earlier link named it.
+        # `e:x@{ animate: true }`: an id outside the node charset. The
+        # brackets and quotes stay out, so a node written with a shape
+        # that fails to parse is still refused.
         rule(:edge_properties_statement) do
-          ((space | newline | str('@')).absent? >> any).repeat(1)
+          (match['\s@\[\](){}"\'|<>'].absent? >> any).repeat(1)
             .as(:edge_properties_id) >> node_metadata.as(:metadata) >>
             loose_statement_end
         end
@@ -922,8 +923,8 @@ module Sirena
         # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
         # can address it. The `@` must be followed by the start of a link,
         # and the id must not itself start like one: an `@` inside a label
-        # (`A --me@--> B`), a quote, or a `{` is not an id. An id may hold
-        # a `;` but never starts with one, which ends the statement.
+        # (`A --me@--> B`) or a quote is not an id, but `A {x@--> B` has
+        # one. An id may hold a `;` but never starts with one, which ends the statement.
         #
         # Whether an id is here is read off the source first. Trying the
         # rule and failing would report its failure to the Deepest reporter
@@ -931,7 +932,7 @@ module Sirena
         # `B` and ask for an `@` there.
         EDGE_ID_AHEAD = /
           (?![ox<]?(?:--|==|-\.|\.-|\.\.|~~~))(?!")
-          [^\s@]+@\s*[ox<]?(?:-|=|\.|~~~)
+          [^\s@]+@(?:[[:space:]]|%%[^\n]*)*[ox<]?(?:-|=|\.|~~~)
         /x
         private_constant :EDGE_ID_AHEAD
 
@@ -951,7 +952,8 @@ module Sirena
         rule(:edge_id_body) do
           semicolon.absent? >>
             ((space | newline | str('@')).absent? >> any).repeat(1)
-              .as(:edge_id) >> str('@') >> match['\s'].repeat
+              .as(:edge_id) >> str('@') >>
+            (line_space | newline | comment).repeat
         end
 
         rule(:piped_edge) do

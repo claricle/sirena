@@ -115,9 +115,20 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         .to raise_error(Sirena::Parser::ParseError)
     end
 
-    it "refuses properties for an id no link declared" do
-      expect { parse_flowchart("A --> B\ne:x@{ animate: true }") }
-        .to raise_error(Sirena::Parser::ParseError)
+    it "draws a node for such an id no link declared" do
+      expect(node_ids("A --> B\ne:x@{ animate: true }")).to eq(%w[A B e:x])
+    end
+
+    it "takes a no-break space between the @ and the link" do
+      expect(edge_links("A e1@\u00A0--> B")).to eq(%w[A>B])
+    end
+
+    it "takes a comment line between the @ and the link" do
+      expect(edge_links("A e1@\n%% note\n--> B")).to eq(%w[A>B])
+    end
+
+    it "takes an id opening with a brace" do
+      expect(edge_links("A {x@--> B")).to eq(%w[A>B])
     end
 
     it "still rejects malformed properties addressed to an edge" do
