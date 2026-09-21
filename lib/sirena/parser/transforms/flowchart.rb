@@ -403,10 +403,28 @@ module Sirena
               set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword]
               declare_styled_node(diagram, stmt[:style_target])
+            elsif stmt[:link_style_keyword]
+              check_link_indices(diagram, stmt[:link_targets].to_s)
             end
-            # classDef, class and click are parsed but not modelled.
+            # classDef, class, click and linkStyle are parsed but not
+            # modelled.
           end
         end
+
+        # mmdc refuses `linkStyle 1` when only edge 0 has been drawn so
+        # far, so the count is the edges written above the statement.
+        def self.check_link_indices(diagram, targets)
+          return if targets == 'default'
+
+          last = diagram.edges.size - 1
+          targets.split(',').map(&:to_i).each do |index|
+            next if index <= last
+
+            raise Parser::ParseError,
+                  "The index #{index} for linkStyle is out of bounds."
+          end
+        end
+        private_class_method :check_link_indices
 
         # `style Q ...` names a vertex, and mermaid draws it even when no
         # other statement mentions it.

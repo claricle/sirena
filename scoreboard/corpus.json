@@ -5311,9 +5311,7 @@
   {
     "case": "flowchart/067_parser_should_handle_style_definitions_within_number_of_edges_62.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/067_parser_should_handle_styles_for_vertices_62.mmd",
@@ -5332,9 +5330,7 @@
   {
     "case": "flowchart/068_parser_should_handle_style_definitions_within_number_of_edges_63.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/068_parser_should_handle_text_without_space_63.mmd",
@@ -5962,9 +5958,7 @@
   {
     "case": "flowchart/153_parser_should_handle_style_definitions_within_number_of_edges_148.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/154_parser_should_handle_multi-numbered_style_definitions_with_more_then_1_digit_in_a_row_149.mmd",

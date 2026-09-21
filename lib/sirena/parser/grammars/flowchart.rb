@@ -158,6 +158,7 @@ module Sirena
             style_statement |
             class_def_statement |
             class_assignment_statement |
+            link_style_statement |
             click_statement |
             node_edge_statement |
             standalone_node
@@ -468,6 +469,23 @@ module Sirena
         # `stroke:blue`; a node id here takes no colon, so we refuse the
         # line rather than draw a diagram one node short.
         rule(:style_property) { declaration_char.repeat(1) }
+
+        # `linkStyle 0,1 stroke:red` styles edges by position, and
+        # `linkStyle default ...` every one. Mermaid takes the numbers with
+        # no space around a comma. The property text is read the way
+        # `style` reads it, so `interpolate basis` needs no rule of its own.
+        rule(:link_style_statement) do
+          str('linkStyle').as(:link_style_keyword) >> space >>
+            link_style_targets.as(:link_targets) >>
+            (space >> style_property_list).as(:link_props) >>
+            statement_end
+        end
+
+        rule(:link_style_targets) do
+          str('default') | (link_index >> (comma >> link_index).repeat)
+        end
+
+        rule(:link_index) { match['0-9'].repeat(1) }
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
