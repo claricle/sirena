@@ -1359,20 +1359,12 @@ RSpec.describe ExampleTasks do
       write(source_path, "gantt\n  title Broken\n")
       write(source_path.sub(/\.mmd\z/, '.yml'), "theme: #{broken_theme}\n")
 
-      # Pinned to Yeptris::ParseError, not Lutaml::Model::InvalidFormatError:
-      # lutaml-model 0.8.37 switched its default YAML backend to Yeptris,
-      # and unlike the Psych adapter it replaced, Yeptris::ParseError
-      # escapes `Theme.load` directly rather than being wrapped into
-      # lutaml-model's own exception class. Confirmed by reading the actual
-      # backtrace this raises today: Yeptris::YAML.load ->
-      # Lutaml::Yaml::Adapter::YeptrisAdapter.parse -> Theme.load, with no
-      # InvalidFormatError anywhere on it. What this example actually pins
-      # -- a theme that fails to load raises loudly out of
-      # validate_examples instead of being classified "known unrenderable"
-      # -- is unchanged; only the concrete class the current backend raises
-      # for malformed YAML changed underneath it.
+      # Either class: which one `Theme.load` raises depends on the process's
+      # lutaml-model YAML backend, and requiring `svg_conform` (as
+      # svg_conformance_spec does) switches it to :standard_yaml globally.
+      # The property is that the load error escapes validate_examples.
       expect { described_class.validate_examples(examples_dir) }
-        .to raise_error(Yeptris::ParseError)
+        .to raise_error(satisfy { |error| [Yeptris::ParseError, Lutaml::Model::InvalidFormatError].any? { |k| error.is_a?(k) } })
     end
 
     # The classification arithmetic itself, not just the reads that happen
