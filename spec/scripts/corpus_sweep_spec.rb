@@ -9,6 +9,8 @@ unless defined?(CorpusSweep)
 end
 
 RSpec.describe CorpusSweep do
+  include CorpusSweepSpecHelpers
+
   # The script's top-level defs load as private instance methods.
   subject(:sweeper) do
     Class.new do
@@ -25,17 +27,6 @@ RSpec.describe CorpusSweep do
   before { stub_const("#{described_class}::CORPUS_ROOT", root) }
 
   after { FileUtils.remove_entry(root) }
-
-  def seed(type, name, source)
-    FileUtils.mkdir_p(File.join(root, type))
-    File.write(File.join(root, type, name), source)
-  end
-
-  def engine_returning(output)
-    instance_double(Sirena::Engine, render: output).tap do |engine|
-      allow(Sirena::Engine).to receive(:new).and_return(engine)
-    end
-  end
 
   describe '#render_result' do
     it 'classifies a rendering diagram as pass' do
@@ -103,14 +94,5 @@ RSpec.describe CorpusSweep do
       expect(out).to include('TOTAL: 1/2 = 50.0%')
       expect(out.lines.grep(/\A(?:fail|timeout):/)).to be_empty
     end
-  end
-
-  def capture_stdout
-    original = $stdout
-    $stdout = StringIO.new
-    yield
-    $stdout.string
-  ensure
-    $stdout = original
   end
 end
