@@ -328,14 +328,14 @@
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/013_parser_should_parse_tags_12.mmd",
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/014_parser_should_parse_a_c4_diagram_with_one_container_correctly_13.mmd",
@@ -367,21 +367,21 @@
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/020_parser_should_parse_a_link_19.mmd",
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/021_parser_should_parse_tags_20.mmd",
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/022_parser_should_handle_a_trailing_whitespaces_after_statements_21.mmd",
@@ -423,21 +423,21 @@
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/030_parser_should_parse_a_link_29.mmd",
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/031_parser_should_parse_tags_30.mmd",
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/032_parser_should_parse_a_c4_diagram_with_one_person_ext_correctly_31.mmd",
@@ -464,21 +464,21 @@
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/037_parser_should_parse_a_link_36.mmd",
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/038_parser_should_parse_tags_37.mmd",
     "verdict": "unknown",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/039_parser_should_parse_a_c4_diagram_with_one_system_correctly_38.mmd",
@@ -505,21 +505,21 @@
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/044_parser_should_parse_a_link_43.mmd",
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/045_parser_should_parse_tags_44.mmd",
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/046_spec_diagram-orchestration_spec_45.mmd",
@@ -778,7 +778,9 @@
   {
     "case": "class/049_platform_yari_class_48.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/050_platform_yari_class_49.mmd",
@@ -5634,28 +5636,28 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "flowchart/148_parser_should_be_possible_to_declare_multiple_classes_143.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "flowchart/149_parser_should_be_possible_to_declare_a_class_with_a_dot_in_the_style_144.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "flowchart/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "flowchart/151_parser_should_handle_style_definitions_with_more_then_1_digit_in_a_row_146.mmd",
@@ -6029,7 +6031,7 @@
     "verdict": "artifact",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "flowchart/219_parser_should_work_with_class_id___unsafeprop__214.mmd",
@@ -10927,14 +10929,14 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "unknown/002_rendering_sankey_spec_1.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "unknown/003_platform_architecture-external_2.mmd",
@@ -11484,7 +11486,7 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "user_journey/003_rendering_journey_spec_user_journey_2.mmd",
@@ -11533,7 +11535,7 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "user_journey/007_parser_should_handle_multiline_section_titles_with_different_line_breaks_6.mmd",
@@ -11589,14 +11591,14 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "user_journey/015_spec_diagram-orchestration_spec_14.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "user_journey/016_spec_journeydb_spec_15.mmd",
@@ -11659,14 +11661,14 @@
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "user_journey/025_spec_mermaidapi_spec_24.mmd",
     "verdict": "valid",
     "pass": false,
     "stage": "layout",
-    "exception_class": "Sirena::Transform::TransformError"
+    "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "xychart/001_example_xychart_0.mmd",
