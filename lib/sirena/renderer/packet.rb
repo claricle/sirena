@@ -11,7 +11,7 @@ module Sirena
     # Renders a Packet Diagram layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::Packet into an SVG visualization showing:
+    # Layout::Packet into an SVG visualization showing:
     # - Packet grid with bit position markers
     # - Fields as labeled cells spanning correct bit ranges
     # - Row-based layout (typically 32 bits per row)
@@ -23,7 +23,7 @@ module Sirena
     class Packet < Base
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::Packet
+      # @param layout [Hash] layout data from Layout::Packet
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

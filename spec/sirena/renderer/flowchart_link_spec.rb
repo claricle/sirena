@@ -7,7 +7,7 @@ require "spec_helper"
 # These examples read the drawn SVG back, and several hand a graph
 # straight to the renderer, so they belong to the renderer, not to the
 # parser that happens to feed it.
-RSpec.describe Sirena::Renderer::FlowchartRenderer do
+RSpec.describe Sirena::Renderer::Flowchart do
   # One node's rect, read off the node it belongs to rather than off
   # whichever rect happens to come first in the document. A coordinate may
   # be negative — a loop thrown up or left from a node near the origin

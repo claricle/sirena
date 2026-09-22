@@ -13,7 +13,7 @@ module Sirena
     # Renders an XY Chart layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::XYChart into an SVG visualization showing:
+    # Layout::XyChart into an SVG visualization showing:
     # - X and Y axes with labels
     # - Grid lines
     # - Data points for line charts
@@ -21,9 +21,9 @@ module Sirena
     # - Legend
     #
     # @example Render an XY chart
-    #   renderer = Renderer::XYChart.new(theme: my_theme)
+    #   renderer = Renderer::XyChart.new(theme: my_theme)
     #   svg = renderer.render(layout)
-    class XYChart < Base
+    class XyChart < Base
       # Default colors for datasets (cycling)
       DEFAULT_COLORS = %w[
         #2563eb #7c3aed #db2777 #ea580c #ca8a04
@@ -38,7 +38,7 @@ module Sirena
 
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::XYChart
+      # @param layout [Hash] layout data from Layout::XyChart
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

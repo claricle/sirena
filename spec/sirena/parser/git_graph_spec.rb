@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/git_graph"
 
-RSpec.describe Sirena::Parser::GitGraphParser do
+RSpec.describe Sirena::Parser::GitGraph do
   let(:parser) { described_class.new }
 
   describe "#parse" do

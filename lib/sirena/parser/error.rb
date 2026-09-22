@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/error'
-require_relative 'transforms/error'
+require_relative 'builders/error'
 require_relative '../diagram/error'
 
 module Sirena
@@ -16,13 +16,13 @@ module Sirena
     # - Optional error message text
     #
     # @example Parse a simple error diagram
-    #   parser = ErrorParser.new
+    #   parser = Error.new
     #   diagram = parser.parse("error")
     #
     # @example Parse error diagram with message
-    #   parser = ErrorParser.new
+    #   parser = Error.new
     #   diagram = parser.parse("Error Diagrams")
-    class ErrorParser < Base
+    class Error < Base
       # Parses error diagram source into an Error diagram model.
       #
       # @param source [String] the Mermaid error diagram source
@@ -39,7 +39,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Error.new
+        transform = Builders::Error.new
         diagram = transform.apply(parse_tree)
 
         diagram

@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'sirena/parser/user_journey'
 
-RSpec.describe Sirena::Parser::UserJourneyParser do
+RSpec.describe Sirena::Parser::UserJourney do
   let(:parser) { described_class.new }
 
   describe '#parse' do

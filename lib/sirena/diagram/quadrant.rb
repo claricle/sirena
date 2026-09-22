@@ -70,7 +70,7 @@ module Sirena
     # based on two independent variables.
     #
     # @example Creating a simple quadrant chart
-    #   chart = QuadrantChart.new
+    #   chart = Quadrant.new
     #   chart.title = 'Product Analysis'
     #   chart.x_axis_left = 'Low Cost'
     #   chart.x_axis_right = 'High Cost'
@@ -78,7 +78,7 @@ module Sirena
     #   chart.y_axis_top = 'High Value'
     #   chart.quadrant_1_label = 'Invest'
     #   chart.points << QuadrantPoint.new(label: 'Product A', x: 0.3, y: 0.7)
-    class QuadrantChart < Base
+    class Quadrant < Base
       # X-axis label for the left side
       attribute :x_axis_left, :string
 

@@ -11,7 +11,7 @@ module Sirena
   # Delegates to `kramdown` (private `Parser` below), restricted to
   # `:paragraph`/`:blank_line` and `:emphasis`/`:escaped_chars` only.
   #
-  # Layer-neutral (no SVG/XML): shared by `Transform::Kanban` (sizing) and
+  # Layer-neutral (no SVG/XML): shared by `Layout::Kanban` (sizing) and
   # `Renderer::MarkdownText` (rendering), so `transform/` never has to
   # require anything under `renderer/`.
   module MarkdownText
@@ -53,7 +53,7 @@ module Sirena
     PLAIN_BLOCK_TYPES = [:p, :blank].freeze
 
     # The visible-character budget both `Renderer::Kanban#render_card_text`
-    # (via `Renderer::MarkdownText`) and `Transform::Kanban#rendered_line_count`
+    # (via `Renderer::MarkdownText`) and `Layout::Kanban#rendered_line_count`
     # truncate a card's parsed lines to (via `truncate_runs`). Shared here
     # so the two layers can never drift: sizing from the raw text's newline
     # count instead of this module's own truncated line count diverges once

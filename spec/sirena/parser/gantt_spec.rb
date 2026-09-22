@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/gantt"
 
-RSpec.describe Sirena::Parser::GanttParser do
+RSpec.describe Sirena::Parser::Gantt do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -18,7 +18,7 @@ RSpec.describe Sirena::Parser::GanttParser do
 
       diagram = parser.parse(source)
 
-      expect(diagram).to be_a(Sirena::Diagram::GanttChart)
+      expect(diagram).to be_a(Sirena::Diagram::Gantt)
       expect(diagram.title).to eq("Project Timeline")
       expect(diagram.date_format).to eq("YYYY-MM-DD")
       expect(diagram.sections.length).to eq(1)
@@ -165,10 +165,10 @@ RSpec.describe Sirena::Parser::GanttParser do
     end
 
     # An after-dependency supplies the START; a single date field left over
-    # is therefore the task's END, never its start (GanttTransform reads
+    # is therefore the task's END, never its start (Gantt reads
     # calculated_start only from the referenced task once after_task is
     # set, and end_date only from this field — see
-    # GanttTransform#resolve_task_dependency).
+    # Gantt#resolve_task_dependency).
     it "treats a lone date after an after-dependency as the end date" do
       source = <<~GANTT
         gantt

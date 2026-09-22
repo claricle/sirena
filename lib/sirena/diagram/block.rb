@@ -6,12 +6,12 @@ require_relative "base"
 module Sirena
   module Diagram
     # Represents a block in the diagram
-    class Block < Lutaml::Model::Serializable
+    class BlockNode < Lutaml::Model::Serializable
       attribute :id, :string
       attribute :label, :string
       attribute :width, :integer, default: -> { 1 }
       attribute :shape, :string, default: -> { "rect" }
-      attribute :children, Block, collection: true, default: -> { [] }
+      attribute :children, BlockNode, collection: true, default: -> { [] }
       attribute :block_type, :string # "block", "space", "arrow"
       attribute :direction, :string # for arrow blocks: "up", "down", "left", "right"
       attribute :is_compound, :boolean, default: -> { false }
@@ -60,9 +60,9 @@ module Sirena
     end
 
     # Represents a Mermaid block diagram
-    class BlockDiagram < Base
+    class Block < Base
       attribute :columns, :integer, default: -> { 1 }
-      attribute :blocks, Block, collection: true, default: -> { [] }
+      attribute :blocks, BlockNode, collection: true, default: -> { [] }
       attribute :connections, BlockConnection, collection: true, default: -> { [] }
       attribute :styles, BlockStyle, collection: true, default: -> { [] }
 

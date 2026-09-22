@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::SequenceRenderer do
+RSpec.describe Sirena::Renderer::Sequence do
   # These assertions exist because the corpus sweep cannot make them. It
   # checks that a well-formed SVG comes out, so an arrow drawn with the
   # wrong line style or a head mermaid does not draw still scores a pass.

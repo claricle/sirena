@@ -92,22 +92,22 @@ Sirena (Root Module)
     ├── Transform (Model Conversion)
     │     │
     │     ├── Base (Abstract)
-    │     ├── FlowchartTransform
-    │     ├── SequenceTransform
-    │     ├── ClassDiagramTransform
-    │     ├── StateDiagramTransform
-    │     ├── ErDiagramTransform
-    │     └── UserJourneyTransform
+    │     ├── Flowchart
+    │     ├── Sequence
+    │     ├── ClassDiagram
+    │     ├── StateDiagram
+    │     ├── ErDiagram
+    │     └── UserJourney
     │
     ├── Renderer (SVG Generation)
     │     │
     │     ├── Base (Abstract)
-    │     ├── FlowchartRenderer
-    │     ├── SequenceRenderer
-    │     ├── ClassDiagramRenderer
-    │     ├── StateDiagramRenderer
-    │     ├── ErDiagramRenderer
-    │     └── UserJourneyRenderer
+    │     ├── Flowchart
+    │     ├── Sequence
+    │     ├── ClassDiagram
+    │     ├── StateDiagram
+    │     ├── ErDiagram
+    │     └── UserJourney
     │
     ├── Svg (SVG Models)
     │     │
@@ -162,7 +162,7 @@ Every parser follows a consistent 3-layer pattern:
 │  • Maps patterns to Diagram objects        │
 │  • Returns structured Diagram models       │
 │                                             │
-│  File: lib/sirena/parser/transforms/*.rb   │
+│  File: lib/sirena/parser/builders/*.rb   │
 └────────────┬────────────────────────────────┘
              │
              ▼ Diagram models (Lutaml::Model)
@@ -210,18 +210,18 @@ class FlowchartGrammar < Parslet::Parser
   end
 end
 
-# Layer 2: Transform (lib/sirena/parser/transforms/flowchart.rb)
-class FlowchartTransform < Parslet::Transform
+# Layer 2: Transform (lib/sirena/parser/builders/flowchart.rb)
+class Flowchart < Parslet::Transform
   rule(node: simple(:id), shape: simple(:text)) do
     Diagram::Flowchart::Node.new(id: id, text: text)
   end
 end
 
 # Layer 3: Parser (lib/sirena/parser/flowchart.rb)
-class FlowchartParser
+class Flowchart
   def initialize
     @grammar = Grammars::FlowchartGrammar.new
-    @transform = Transforms::FlowchartTransform.new
+    @transform = Builders::Flowchart.new
   end
 
   def parse(input)
@@ -351,12 +351,12 @@ The renderer converts positioned graph elements into SVG graphic primitives.
 |-----------|---------------|--------------|
 | `Engine` | Orchestrate entire pipeline | Parser, Transform, Renderer |
 | `Parser::Grammars::*` | Define Parslet syntax rules | Parslet, Common |
-| `Parser::Transforms::*` | Transform parse trees | Parslet::Transform, Diagram models |
+| `Parser::Builders::*` | Transform parse trees | Parslet::Transform, Diagram models |
 | `Parser::*` | Orchestrate Grammar+Transform | Grammars, Transforms |
 | `Diagram::Base` | Abstract diagram model | Lutaml::Model |
 | `Diagram::*` | Specific diagram structures | Diagram::Base |
-| `Transform::Base` | Abstract graph converter | Elkrb |
-| `Transform::*` | Diagram-specific conversion | Transform::Base, TextMeasurement |
+| `Layout::Base` | Abstract graph converter | Elkrb |
+| `Layout::*` | Diagram-specific conversion | Layout::Base, TextMeasurement |
 | `Renderer::Base` | Abstract SVG renderer | Svg |
 | `Renderer::*` | Diagram-specific rendering | Renderer::Base, Svg |
 | `Svg::*` | SVG graphic primitives | Lutaml::Model, Moxml |
@@ -378,7 +378,7 @@ class Diagram::NewType < Diagram::Base
 end
 
 # 2. Implement transform
-class Transform::NewTypeTransform < Transform::Base
+class Layout::NewTypeTransform < Layout::Base
   def to_graph(diagram)
     # Convert diagram to Elkrb::Graph
   end
@@ -395,7 +395,7 @@ end
 DiagramRegistry.register(
   :new_type,
   parser: Parser::NewTypeGrammar,
-  transform: Transform::NewTypeTransform,
+  transform: Layout::NewTypeTransform,
   renderer: Renderer::NewTypeRenderer
 )
 ```
@@ -476,7 +476,7 @@ Error (Base Exception)
    │     ├── LexerError
    │     └── GrammarError
    │
-   ├── TransformError
+   ├── LayoutError
    │     └── LayoutError
    │
    └── RenderError
@@ -525,7 +525,7 @@ sirena/
 │       │   │   ├── er_diagram.rb
 │       │   │   ├── state_diagram.rb
 │       │   │   └── (other diagram grammars)
-│       │   ├── transforms/         # Parslet transforms (Layer 2)
+│       │   ├── builders/            # Parslet transforms (Layer 2)
 │       │   │   ├── flowchart.rb
 │       │   │   ├── class_diagram.rb
 │       │   │   ├── er_diagram.rb
@@ -652,8 +652,8 @@ hardcoding type checks.
 ```ruby
 DiagramRegistry.register(:flowchart, {
   parser: Parser::FlowchartGrammar,
-  transform: Transform::FlowchartTransform,
-  renderer: Renderer::FlowchartRenderer
+  transform: Layout::Flowchart,
+  renderer: Renderer::Flowchart
 })
 
 handler = DiagramRegistry.get(:flowchart)
@@ -666,13 +666,13 @@ Each diagram type has its own transformation and rendering strategy,
 implementing a common interface.
 
 ```ruby
-class Transform::Base
+class Layout::Base
   def to_graph(diagram)
     raise NotImplementedError
   end
 end
 
-class Transform::FlowchartTransform < Transform::Base
+class Layout::Flowchart < Layout::Base
   def to_graph(diagram)
     # Flowchart-specific conversion
   end

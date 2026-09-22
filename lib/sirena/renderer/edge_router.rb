@@ -6,7 +6,7 @@ module Sirena
     #
     # This is geometry only: it takes two laid-out boxes and gives back
     # the points the line passes through. Nothing here knows about SVG,
-    # and FlowchartRenderer turns the points into a path.
+    # and Flowchart turns the points into a path.
     #
     # The maths exists because of clusters. A node is painted OVER the
     # line, so a line drawn from centre to centre looks right without
@@ -48,8 +48,8 @@ module Sirena
       # page to grow with it.
       LOOP_REACH = 20
 
-      # The marker Transform::FlowchartTransform puts on a subgraph.
-      # Layout::Fallback#cluster? makes the same test: change one and
+      # The marker Layout::Flowchart puts on a subgraph.
+      # Layout::Grid#cluster? makes the same test: change one and
       # change the others, or the layers stop agreeing about what a box
       # is.
       #

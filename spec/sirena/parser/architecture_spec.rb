@@ -21,7 +21,7 @@ RSpec.describe Sirena::Parser::Architecture do
       it "parses successfully" do
         result = parser.parse(input)
 
-        expect(result).to be_a(Sirena::Diagram::ArchitectureDiagram)
+        expect(result).to be_a(Sirena::Diagram::Architecture)
         expect(result.services.size).to eq(2)
         expect(result.edges.size).to eq(1)
       end
@@ -235,11 +235,11 @@ RSpec.describe Sirena::Parser::Architecture do
       end
     end
 
-    describe "Sirena::Parser::Transforms::Architecture#extract_text's Array branch, called directly" do
+    describe "Sirena::Parser::Builders::Architecture#extract_text's Array branch, called directly" do
       # No grammar rule in this parser ever hands extract_text a multi-
       # element Array (see the comment above) - this calls the private
       # method directly to lock down the join behavior anyway.
-      let(:transform) { Sirena::Parser::Transforms::Architecture.new }
+      let(:transform) { Sirena::Parser::Builders::Architecture.new }
 
       it "joins a multi-element array of strings" do
         # Each element is stripped by extract_text's own recursion before

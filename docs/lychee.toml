@@ -51,4 +51,4 @@ follow_redirects = true
 max_redirects = 10
 
 # Verbosity
-verbose = true
+verbose = "info"

@@ -58,7 +58,7 @@ module Sirena
     end
 
     # Gantt chart diagram model
-    class GanttChart < Base
+    class Gantt < Base
       attribute :title, :string
       attribute :date_format, :string, default: -> { "YYYY-MM-DD" }
       attribute :axis_format, :string

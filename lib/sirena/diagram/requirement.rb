@@ -6,7 +6,7 @@ require_relative "base"
 module Sirena
   module Diagram
     # Represents a requirement in the diagram
-    class Requirement < Lutaml::Model::Serializable
+    class RequirementNode < Lutaml::Model::Serializable
       attribute :name, :string
       attribute :type, :string, default: -> { "requirement" }
       attribute :id, :string
@@ -98,8 +98,8 @@ module Sirena
     end
 
     # Represents a Mermaid requirement diagram
-    class RequirementDiagram < Base
-      attribute :requirements, Requirement, collection: true, default: -> { [] }
+    class Requirement < Base
+      attribute :requirements, RequirementNode, collection: true, default: -> { [] }
       attribute :elements, RequirementElement, collection: true, default: -> { [] }
       attribute :relationships, RequirementRelationship, collection: true, default: -> { [] }
       attribute :styles, RequirementStyle, collection: true, default: -> { [] }

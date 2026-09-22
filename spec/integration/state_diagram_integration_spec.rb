@@ -11,9 +11,9 @@ RSpec.describe 'StateDiagram Integration' do
   end
 
   describe 'complete state diagram pipeline' do
-    let(:parser) { Sirena::Parser::StateDiagramParser.new }
-    let(:transform) { Sirena::Transform::StateDiagramTransform.new }
-    let(:renderer) { Sirena::Renderer::StateDiagramRenderer.new }
+    let(:parser) { Sirena::Parser::StateDiagram.new }
+    let(:transform) { Sirena::Layout::StateDiagram.new }
+    let(:renderer) { Sirena::Renderer::StateDiagram.new }
 
     it 'parses, transforms, and renders a simple state diagram' do
       source = "stateDiagram-v2\nIdle-->Active"
@@ -167,7 +167,7 @@ RSpec.describe 'StateDiagram Integration' do
   end
 
   describe 'marker states that carry display text' do
-    let(:parser) { Sirena::Parser::StateDiagramParser.new }
+    let(:parser) { Sirena::Parser::StateDiagram.new }
 
     # An alias is stored in `descriptions`, never in the scalar `description`,
     # so it coerces either established type to a rectangle at render time.
@@ -321,13 +321,13 @@ RSpec.describe 'StateDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::StateDiagramParser
+        Sirena::Parser::StateDiagram
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Transform::StateDiagramTransform
+        Sirena::Layout::StateDiagram
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::StateDiagramRenderer
+        Sirena::Renderer::StateDiagram
       )
     end
   end

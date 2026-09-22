@@ -14,9 +14,9 @@ module Sirena
     # Renders an error message box with a warning icon and error text.
     #
     # @example Render an error diagram
-    #   renderer = ErrorRenderer.new
+    #   renderer = Error.new
     #   svg = renderer.render(error_diagram)
-    class ErrorRenderer < Base
+    class Error < Base
       # Error box dimensions
       BOX_WIDTH = 400
       BOX_HEIGHT = 120

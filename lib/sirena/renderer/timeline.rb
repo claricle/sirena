@@ -16,9 +16,9 @@ module Sirena
     # event markers, descriptions, and optional section grouping.
     #
     # @example Render a timeline
-    #   renderer = TimelineRenderer.new
+    #   renderer = Timeline.new
     #   svg = renderer.render(timeline_graph)
-    class TimelineRenderer < Base
+    class Timeline < Base
       # Timeline dimensions
       MARGIN_LEFT = 80
       MARGIN_TOP = 100

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   def node_for(source)
     described_class.new.parse(source).nodes.last
   end
@@ -306,7 +306,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       # for the bracket syntax exactly as much as for a `@{}` name. That
       # gap is the renderer's and it is the same on both paths.
       named = Sirena::Parser.const_get(:MERMAID_SHAPES).values.uniq
-      bracketed = Sirena::Parser::Transforms::Flowchart
+      bracketed = Sirena::Parser::Builders::Flowchart
         .const_get(:SHAPE_MAP).values.uniq
 
       expect(named.sort).to eq(bracketed.sort)

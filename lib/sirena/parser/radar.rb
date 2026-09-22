@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/radar"
-require_relative "transforms/radar"
+require_relative "builders/radar"
 require_relative "../diagram/radar"
 
 module Sirena
@@ -19,7 +19,7 @@ module Sirena
     # - Configuration options (ticks, legend, graticule, min/max)
     #
     # @example Parse a simple radar chart
-    #   parser = RadarParser.new
+    #   parser = Radar.new
     #   source = <<~MERMAID
     #     radar-beta
     #       title Skills Assessment
@@ -27,11 +27,11 @@ module Sirena
     #       curve mycurve{1, 2, 3}
     #   MERMAID
     #   diagram = parser.parse(source)
-    class RadarParser < Base
-      # Parses radar diagram source into a RadarChart model.
+    class Radar < Base
+      # Parses radar diagram source into a Radar model.
       #
       # @param source [String] the Mermaid radar diagram source
-      # @return [Diagram::RadarChart] the parsed radar chart
+      # @return [Diagram::Radar] the parsed radar chart
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::Radar.new
@@ -44,7 +44,7 @@ module Sirena
         end
 
         # Transform parse tree to intermediate representation
-        transform = Transforms::Radar.new
+        transform = Builders::Radar.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model
@@ -54,7 +54,7 @@ module Sirena
       private
 
       def create_diagram(result)
-        diagram = Diagram::RadarChart.new
+        diagram = Diagram::Radar.new
         diagram.title = result[:title]
         diagram.acc_title = result[:acc_title]
         diagram.acc_descr = result[:acc_descr]

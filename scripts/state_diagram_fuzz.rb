@@ -71,13 +71,13 @@ module StateDiagramFuzz
     MermaidFuzz::Case.new('known-1-dollar-state-id', "stateDiagram-v2\n    $\n"),
   ].freeze
 
-  # Runs Sirena's own StateDiagramParser in-process, via
+  # Runs Sirena's own StateDiagram in-process, via
   # MermaidFuzz.safe_parse (see its doc for why unexpected exceptions are
   # caught too, not only ParseError -- this type's own error formatter has
   # a live bug, see KNOWN_DIVERGENCES above, which is exactly the kind of
   # thing safe_parse exists to survive rather than crash the batch on).
   SIRENA_VERDICT_FOR = lambda do |source|
-    MermaidFuzz.safe_parse { Sirena::Parser::StateDiagramParser.new.parse(source).states.map(&:id) }
+    MermaidFuzz.safe_parse { Sirena::Parser::StateDiagram.new.parse(source).states.map(&:id) }
   end
 
   RUNNER_KWARGS = {

@@ -57,7 +57,7 @@ Info diagrams integrate with Sirena's theme system:
 
 === Parser
 
-The info diagram parser (`Sirena::Parser::InfoParser`) uses Parslet grammar to handle:
+The info diagram parser (`Sirena::Parser::Info`) uses Parslet grammar to handle:
 
 * Basic `info` keyword
 * Optional `showInfo` flag (inline or on separate line)
@@ -71,7 +71,7 @@ The info diagram model (`Sirena::Diagram::Info`) contains:
 
 === Renderer
 
-The info renderer (`Sirena::Renderer::InfoRenderer`) creates:
+The info renderer (`Sirena::Renderer::Info`) creates:
 
 * A rounded rectangle box (400x100 pixels)
 * Centered text displaying the info message

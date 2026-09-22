@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/flowchart'
-require_relative 'transforms/flowchart'
+require_relative 'builders/flowchart'
 require_relative '../diagram/flowchart'
 
 module Sirena
@@ -19,9 +19,9 @@ module Sirena
     # - Direction specification (TD, LR, etc.)
     #
     # @example Parse a simple flowchart
-    #   parser = FlowchartParser.new
+    #   parser = Flowchart.new
     #   diagram = parser.parse("graph TD\nA[Start]-->B[End]")
-    class FlowchartParser < Base
+    class Flowchart < Base
       # Parses flowchart source into a Flowchart diagram model.
       #
       # @param source [String] the Mermaid flowchart source
@@ -31,7 +31,7 @@ module Sirena
         # A lone CR is folded before the grammar sees it; the shared
         # helper owns the parse and the failure message.
         source = normalize_line_ends(source)
-        Transforms::Flowchart.apply(parse_tree(source))
+        Builders::Flowchart.apply(parse_tree(source))
       end
 
       private

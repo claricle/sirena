@@ -5,7 +5,7 @@ require "spec_helper"
 # Statement-level constructs that mermaid's class grammar accepts and that
 # the model does not keep: click, style, cssClass, classDef, accessibility
 # text and notes. Each one has to parse without inventing a class.
-RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse statements" do
+RSpec.describe Sirena::Parser::ClassDiagram, "#parse statements" do
   let(:parser) { described_class.new }
 
   {

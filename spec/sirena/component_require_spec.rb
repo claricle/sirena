@@ -7,7 +7,7 @@ require "spec_helper"
 # Engine#render can propagate it unwrapped. That constant used to be
 # defined only inline inside lib/sirena.rb's own require chain, so a
 # process that requires a component file directly -- "sirena/parser",
-# "sirena/transform", or "sirena/renderer" -- without first requiring the
+# "sirena/layout", or "sirena/renderer" -- without first requiring the
 # top-level "sirena" never saw Sirena::Error defined, and blew up with
 # `NameError: uninitialized constant Sirena::Error` the moment the
 # component's base.rb loaded. Nothing in this repo's own suite exercised
@@ -22,7 +22,7 @@ require "spec_helper"
 # whole gem.
 RSpec.describe Sirena do
   describe "component files, required standalone" do
-    %w[sirena/parser sirena/transform sirena/renderer sirena/engine].each do |path|
+    %w[sirena/parser sirena/layout sirena/renderer sirena/engine].each do |path|
       it "loads #{path} without first requiring the top-level sirena entry point" do
         out, status = require_standalone(path)
 

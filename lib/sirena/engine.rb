@@ -123,7 +123,7 @@ module Sirena
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
     # @raise [Parser::ParseError] if the source fails to parse
-    # @raise [Transform::TransformError] if the diagram fails its own
+    # @raise [Layout::LayoutError] if the diagram fails its own
     #   validity check
     # @raise [Renderer::RenderError] if rendering itself fails
     # @raise [PipelineError] if a stage fails with no error class of its own
@@ -173,7 +173,7 @@ module Sirena
       svg_xml
     rescue Error
       # Every layer raises its own Sirena::Error subclass (DiagramTypeError,
-      # Parser::ParseError, Transform::TransformError, Renderer::RenderError)
+      # Parser::ParseError, Layout::LayoutError, Renderer::RenderError)
       # naming the stage that failed. Wrapping one into PipelineError would
       # erase exactly the field the corpus harness records as `stage`, so
       # let it propagate unwrapped instead.
@@ -285,7 +285,7 @@ module Sirena
     def transform_diagram(diagram, transform_class, today)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
-      # Every registered transform inherits Transform::Base and so has
+      # Every registered transform inherits Layout::Base and so has
       # today=; the respond_to? guard is defensive, not load-bearing.
       transform.today = today if today && transform.respond_to?(:today=)
       graph = transform.to_graph(diagram)
@@ -295,18 +295,14 @@ module Sirena
 
     # Computes layout for graph.
     #
-    # Currently uses a simple fallback layout since elkrb may not be
-    # available. In the future, this will attempt to use elkrb for
-    # proper graph layout computation.
+    # Delegates to Layout::Grid, which is temporary; see its header.
     #
     # @param graph [Hash] graph structure
     # @return [Hash] graph with computed positions
     def layout_graph(graph)
       log 'Computing layout...'
 
-      # TODO: Attempt to use elkrb when available
-      # For now, use simple fallback positioning
-      Layout::Fallback.apply(graph)
+      Layout::Grid.apply(graph)
 
       log 'Layout complete (using fallback positioning)'
       graph

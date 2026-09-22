@@ -11,9 +11,9 @@ module Sirena
     # transition routing, and label positioning.
     #
     # @example Render a state diagram
-    #   renderer = StateDiagramRenderer.new
+    #   renderer = StateDiagram.new
     #   svg = renderer.render(laid_out_graph)
-    class StateDiagramRenderer < Base
+    class StateDiagram < Base
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with state positions

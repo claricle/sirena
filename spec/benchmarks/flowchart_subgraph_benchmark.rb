@@ -14,7 +14,7 @@ require "spec_helper"
 # Run them with `rake benchmark`, which is part of the default `rake`
 # task, so CI still guards every regression named below. `rspec` on its
 # own does not pick this file up: the name does not end in `_spec.rb`.
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   def boxes(source)
     described_class.new.parse(source).subgraphs
   end
