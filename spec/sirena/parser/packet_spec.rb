@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/packet"
 
-RSpec.describe Sirena::Parser::PacketParser do
+RSpec.describe Sirena::Parser::Packet do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -12,7 +12,7 @@ RSpec.describe Sirena::Parser::PacketParser do
         source = "packet-beta\n"
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::PacketDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Packet)
         expect(diagram.fields).to be_empty
       end
     end
@@ -106,7 +106,7 @@ RSpec.describe Sirena::Parser::PacketParser do
         source = File.read(File.join(fixtures_dir, "001_rendering_packet_spec_packet_0.mmd"))
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::PacketDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Packet)
         expect(diagram.title).to eq("Hello world")
         expect(diagram.fields.size).to eq(1)
         expect(diagram.fields.first.label).to eq("hello")
@@ -116,21 +116,21 @@ RSpec.describe Sirena::Parser::PacketParser do
         source = File.read(File.join(fixtures_dir, "002_parser_should_handle_a_packet-beta_definition_1.mmd"))
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::PacketDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Packet)
       end
 
       it "parses 003_parsertest_packet_test_2.mmd" do
         source = File.read(File.join(fixtures_dir, "003_parsertest_packet_test_2.mmd"))
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::PacketDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Packet)
       end
 
       it "parses 004_spec_mermaidapi_spec_3.mmd" do
         source = File.read(File.join(fixtures_dir, "004_spec_mermaidapi_spec_3.mmd"))
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::PacketDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Packet)
       end
     end
   end

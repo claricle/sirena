@@ -93,11 +93,11 @@ module FlowchartFuzz
     MermaidFuzz::Case.new('known-2-trailing-parens-accepted-by-sirena-only', "flowchart TD\n    +F-N()\n"),
   ].freeze
 
-  # Runs Sirena's own FlowchartParser in-process, via MermaidFuzz.safe_parse
+  # Runs Sirena's own Flowchart in-process, via MermaidFuzz.safe_parse
   # (see its doc for why unexpected exceptions are caught too, not only
   # ParseError).
   SIRENA_VERDICT_FOR = lambda do |source|
-    MermaidFuzz.safe_parse { Sirena::Parser::FlowchartParser.new.parse(source).nodes.map(&:id) }
+    MermaidFuzz.safe_parse { Sirena::Parser::Flowchart.new.parse(source).nodes.map(&:id) }
   end
 
   RUNNER_KWARGS = {

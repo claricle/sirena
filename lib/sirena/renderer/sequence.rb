@@ -11,9 +11,9 @@ module Sirena
     # messages with various arrow types, and notes.
     #
     # @example Render a sequence diagram
-    #   renderer = SequenceRenderer.new
+    #   renderer = Sequence.new
     #   svg = renderer.render(laid_out_graph)
-    class SequenceRenderer < Base
+    class Sequence < Base
       # Participant box dimensions
       PARTICIPANT_WIDTH = 120
       PARTICIPANT_HEIGHT = 40

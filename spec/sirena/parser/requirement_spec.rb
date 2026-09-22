@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Parser::RequirementParser do
+RSpec.describe Sirena::Parser::Requirement do
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -29,7 +29,7 @@ RSpec.describe Sirena::Parser::RequirementParser do
       it 'parses the diagram successfully' do
         result = parser.parse(source)
 
-        expect(result).to be_a(Sirena::Diagram::RequirementDiagram)
+        expect(result).to be_a(Sirena::Diagram::Requirement)
         expect(result.requirements.size).to eq(1)
         expect(result.elements.size).to eq(1)
         expect(result.relationships.size).to eq(1)
@@ -71,7 +71,7 @@ RSpec.describe Sirena::Parser::RequirementParser do
       it 'parses successfully' do
         result = parser.parse(source)
 
-        expect(result).to be_a(Sirena::Diagram::RequirementDiagram)
+        expect(result).to be_a(Sirena::Diagram::Requirement)
         expect(result.requirements).to be_empty
         expect(result.elements).to be_empty
         expect(result.relationships).to be_empty

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   let(:node_ids) do
     ->(source) { described_class.new.parse(source).nodes.map(&:id).sort }
   end

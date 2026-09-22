@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'sirena/renderer/user_journey'
 
-RSpec.describe Sirena::Renderer::UserJourneyRenderer do
+RSpec.describe Sirena::Renderer::UserJourney do
   let(:renderer) { described_class.new }
 
   describe '#render' do

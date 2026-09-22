@@ -11,9 +11,9 @@ module Sirena
     # relationships between them.
     #
     # @example Render a requirement diagram
-    #   renderer = RequirementRenderer.new
+    #   renderer = Requirement.new
     #   svg = renderer.render(layout)
-    class RequirementRenderer < Base
+    class Requirement < Base
       # Risk level color mapping
       RISK_COLORS = {
         'high' => '#ff6b6b',

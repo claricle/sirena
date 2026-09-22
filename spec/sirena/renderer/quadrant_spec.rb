@@ -2,10 +2,10 @@
 
 require "spec_helper"
 require "sirena/renderer/quadrant"
-require "sirena/transform/quadrant"
+require "sirena/layout/quadrant"
 require "sirena/parser/quadrant"
 
-RSpec.describe Sirena::Renderer::QuadrantRenderer do
+RSpec.describe Sirena::Renderer::Quadrant do
   let(:renderer) { described_class.new }
 
   describe "#render" do
@@ -22,10 +22,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           Product A: [0.3, 0.7]
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -46,10 +46,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           quadrant-4 Q4
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -68,10 +68,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           y-axis Low Value --> High Value
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -98,10 +98,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           quadrant-4 Maintain
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -123,10 +123,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           Point C: [0.5, 0.5]
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -150,10 +150,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           Product A: [0.5, 0.5] radius: 10, color: #ff0000
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -173,10 +173,10 @@ RSpec.describe Sirena::Renderer::QuadrantRenderer do
           Center: [0.5, 0.5]
       QUADRANT
 
-      parser = Sirena::Parser::QuadrantParser.new
+      parser = Sirena::Parser::Quadrant.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::QuadrantTransform.new
+      transform = Sirena::Layout::Quadrant.new
       graph = transform.to_graph(diagram)
 
       # Check that point coordinates are transformed

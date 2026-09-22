@@ -136,7 +136,7 @@ RSpec.describe Sirena::Engine do
   end
 
   # A flowchart nested past the parser's own stack fails one render and
-  # nothing else. `Parser::FlowchartParser#parse_tree` (flowchart.rb:58-60)
+  # nothing else. `Parser::Flowchart#parse_tree` (flowchart.rb:58-60)
   # converts that overflow into a ParseError itself, and `Engine#render`
   # unwraps every `Sirena::Error` subclass unchanged (engine.rb, `rescue
   # Error`) so the corpus harness can read `stage` off it -- so this example

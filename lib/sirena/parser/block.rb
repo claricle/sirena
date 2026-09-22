@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/block'
-require_relative 'transforms/block'
+require_relative 'builders/block'
 require_relative '../diagram/block'
 
 module Sirena
@@ -20,17 +20,17 @@ module Sirena
     # - Styling directives
     #
     # @example Parse a simple block diagram
-    #   parser = BlockParser.new
+    #   parser = Block.new
     #   diagram = parser.parse("block-beta\n  columns 2\n  A\n  B")
-    class BlockParser < Base
-      # Parses block diagram source into a BlockDiagram model.
+    class Block < Base
+      # Parses block diagram source into a Block model.
       #
       # @param source [String] the Mermaid block diagram source
-      # @return [Diagram::BlockDiagram] the parsed block diagram
+      # @return [Diagram::Block] the parsed block diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_with_grammar(Grammars::Block.new, source)
-        Transforms::Block.apply(tree)
+        Builders::Block.apply(tree)
       end
 
       private

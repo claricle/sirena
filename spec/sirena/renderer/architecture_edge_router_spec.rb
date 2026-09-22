@@ -10,7 +10,7 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
     { x: x, y: y, width: width, height: height }
   end
 
-  # Mirrors ArchitectureTransform#calculate_connection_point, so specs can
+  # Mirrors Architecture#calculate_connection_point, so specs can
   # build a genuine anchor for a declared side rather than an arbitrary
   # point that happens not to sit on the box's face.
   def face_point(box, side)
@@ -112,7 +112,7 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
                       "../../mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd", __dir__
                     ))
         )
-        graph = Sirena::Transform::ArchitectureTransform.new.to_graph(diagram)
+        graph = Sirena::Layout::Architecture.new.to_graph(diagram)
         nodes = graph[:services].merge(graph[:junctions])
         edge_entry = graph[:edges].find { |e| e[:edge].from_id == "edge" && e[:edge].to_id == "firewall" }
         from = { point: { x: edge_entry[:from_x], y: edge_entry[:from_y] }, box: nodes["edge"], side: "R" }

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   def diagram(link)
     described_class.new.parse("flowchart TD\n  A #{link} B\n")
   end

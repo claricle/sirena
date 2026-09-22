@@ -63,7 +63,7 @@ Error diagrams use fixed error colors but integrate with theme typography:
 
 === Parser
 
-The error diagram parser (`Sirena::Parser::ErrorParser`) uses Parslet grammar to handle:
+The error diagram parser (`Sirena::Parser::Error`) uses Parslet grammar to handle:
 
 * Basic `error` or `Error` keyword
 * Optional error message text after the keyword
@@ -76,7 +76,7 @@ The error diagram model (`Sirena::Diagram::Error`) contains:
 
 === Renderer
 
-The error renderer (`Sirena::Renderer::ErrorRenderer`) creates:
+The error renderer (`Sirena::Renderer::Error`) creates:
 
 * A rounded rectangle box (400x120 pixels)
 * An error icon (red circle with exclamation mark) on the left

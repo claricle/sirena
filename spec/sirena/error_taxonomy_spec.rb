@@ -19,8 +19,8 @@ RSpec.describe Sirena::Engine do
       expect(Sirena::Parser::ParseError.ancestors).to include(Sirena::Error)
     end
 
-    it "TransformError is a Sirena::Error" do
-      expect(Sirena::Transform::TransformError.ancestors).to include(Sirena::Error)
+    it "LayoutError is a Sirena::Error" do
+      expect(Sirena::Layout::LayoutError.ancestors).to include(Sirena::Error)
     end
 
     it "RenderError is a Sirena::Error" do
@@ -50,19 +50,19 @@ RSpec.describe Sirena::Engine do
         end
     end
 
-    it "raises TransformError, not PipelineError, when a diagram fails its own validity check" do
+    it "raises LayoutError, not PipelineError, when a diagram fails its own validity check" do
       # mmdc renders a bare `graph` header; the flowchart transform refuses
       # it because the model carries no nodes.
       expect { engine.render("graph") }
-        .to raise_error(Sirena::Transform::TransformError, "Invalid diagram")
+        .to raise_error(Sirena::Layout::LayoutError, "Invalid diagram")
     end
 
     it "raises RenderError, not PipelineError, when the renderer itself fails" do
       # Real input does reach the renderer stage, but nothing in lib/
       # currently raises RenderError from it -- so this is stubbed, the same
-      # way the "no layer of its own" example below stubs Layout::Fallback.
-      broken_renderer = instance_double(Sirena::Renderer::FlowchartRenderer)
-      allow(Sirena::Renderer::FlowchartRenderer).to receive(:new).and_return(broken_renderer)
+      # way the "no layer of its own" example below stubs Layout::Grid.
+      broken_renderer = instance_double(Sirena::Renderer::Flowchart)
+      allow(Sirena::Renderer::Flowchart).to receive(:new).and_return(broken_renderer)
       allow(broken_renderer).to receive(:render).and_raise(Sirena::Renderer::RenderError, "boom")
 
       expect { engine.render("graph TD\nA-->B\n") }
@@ -77,7 +77,7 @@ RSpec.describe Sirena::Engine do
 
   describe "#render wraps only a failure with no layer of its own" do
     it "wraps it in PipelineError with the class and message, and no backtrace" do
-      allow(Sirena::Layout::Fallback).to receive(:apply)
+      allow(Sirena::Layout::Grid).to receive(:apply)
         .and_raise(RuntimeError, "boom")
 
       expect { engine.render("graph TD\nA-->B\n") }.to raise_error do |error|

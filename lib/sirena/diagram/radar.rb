@@ -5,7 +5,7 @@ require_relative "base"
 module Sirena
   module Diagram
     # Represents a radar/spider chart diagram
-    class RadarChart < Base
+    class Radar < Base
       attr_accessor :title, :acc_title, :acc_descr, :axes, :curves, :options
 
       def initialize

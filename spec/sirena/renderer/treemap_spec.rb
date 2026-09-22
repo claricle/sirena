@@ -5,8 +5,8 @@ require 'sirena/renderer/treemap'
 require 'sirena/diagram/treemap'
 
 RSpec.describe Sirena::Renderer::Treemap do
-  let(:diagram) { Sirena::Diagram::TreemapDiagram.new }
-  let(:transform) { Sirena::Transform::Treemap.new }
+  let(:diagram) { Sirena::Diagram::Treemap.new }
+  let(:transform) { Sirena::Layout::Treemap.new }
   let(:renderer) { described_class.new }
 
   describe '#render' do

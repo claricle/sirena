@@ -9,7 +9,7 @@ module Sirena
     # element as either plain `content` or `<tspan>` children. The text
     # parsing itself (`parse_lines`, `truncate_runs`, `Run`) lives in the
     # layer-neutral `Sirena::MarkdownText` (required above) so
-    # `Transform::Kanban` can size a label without depending on this
+    # `Layout::Kanban` can size a label without depending on this
     # renderer-only, `Svg::Tspan`-producing half.
     module MarkdownText
       module_function

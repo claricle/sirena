@@ -3,7 +3,7 @@
 require_relative 'base'
 require_relative '../diagram/er_diagram'
 require_relative 'grammars/er_diagram'
-require_relative 'transforms/er_diagram'
+require_relative 'builders/er_diagram'
 
 module Sirena
   module Parser
@@ -16,9 +16,9 @@ module Sirena
     # - Identifying and non-identifying relationships
     #
     # @example Parse a simple ER diagram
-    #   parser = ErDiagramParser.new
+    #   parser = ErDiagram.new
     #   diagram = parser.parse("erDiagram\nCUSTOMER ||--o{ ORDER : places")
-    class ErDiagramParser < Base
+    class ErDiagram < Base
       # Parses ER diagram source into an ErDiagram model.
       #
       # @param source [String] the Mermaid ER diagram source
@@ -26,7 +26,7 @@ module Sirena
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::ErDiagram.new
-        transform = Transforms::ErDiagram.new
+        transform = Builders::ErDiagram.new
 
         tree = grammar.parse(source)
         diagram = transform.apply(tree)

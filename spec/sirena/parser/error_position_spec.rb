@@ -22,16 +22,16 @@ RSpec.describe Sirena::Parser::Base do
 
   {
     "flowchart" => [
-      Sirena::Parser::FlowchartParser, "graph TD\nA-->B\nC-->\n", 4
+      Sirena::Parser::Flowchart, "graph TD\nA-->B\nC-->\n", 4
     ],
     "block" => [
-      Sirena::Parser::BlockParser, "block-beta\n  columns 3\n  ((((\n", 3
+      Sirena::Parser::Block, "block-beta\n  columns 3\n  ((((\n", 3
     ],
     "class diagram" => [
-      Sirena::Parser::ClassDiagramParser, "classDiagram\n  class C1\n  ((((\n", 3
+      Sirena::Parser::ClassDiagram, "classDiagram\n  class C1\n  ((((\n", 3
     ],
     "requirement" => [
-      Sirena::Parser::RequirementParser, "requirementDiagram\n  !!!!\n", 2
+      Sirena::Parser::Requirement, "requirementDiagram\n  !!!!\n", 2
     ]
   }.each do |name, (klass, source, line)|
     it "reports the failing line for #{name}" do
@@ -77,7 +77,7 @@ RSpec.describe Sirena::Parser::Base do
       # This is the case that discriminates. Measuring the preceding lines
       # in characters instead of bytes, or slicing the failing line by
       # characters instead of bytes, both report column 7 here.
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA[é]\nB[é] qux\n")
 
       expect(message).to start_with("Parse error at line 3, column 6:")
@@ -87,7 +87,7 @@ RSpec.describe Sirena::Parser::Base do
       # Parslet counts bytes, so "A[é]-->" reported column 9 for a 7
       # character line. Asserted on the full message: the heading and the
       # appended parslet text used to disagree, saying column 8 and char 9.
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA[é]-->")
 
       expect(message).to eq(
@@ -102,7 +102,7 @@ RSpec.describe Sirena::Parser::Base do
     # class of failure, not a String. Interpolating it split the message
     # across lines and printed the slice's byte offset.
     it "renders the message on one line, without a byte offset" do
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA-->B\nxyzzy qux\n")
 
       expect(message).to eq(
@@ -115,12 +115,12 @@ RSpec.describe Sirena::Parser::Base do
     # The earlier fixtures produced Strings, so reverting the formatter to
     # cause.message passed every example and proved nothing.
     {
-      "block" => [Sirena::Parser::BlockParser,
+      "block" => [Sirena::Parser::Block,
                   "block-beta\nxyzzy qux\n", 'Expected "\\n", but got "q"'],
-      "class diagram" => [Sirena::Parser::ClassDiagramParser,
+      "class diagram" => [Sirena::Parser::ClassDiagram,
                           "classDiagram\nxyzzy qux\n",
                           'Expected "\\n", but got "q"'],
-      "requirement" => [Sirena::Parser::RequirementParser,
+      "requirement" => [Sirena::Parser::Requirement,
                         "requirementDiagram\nelement xyzzy qux\n",
                         'Expected "{", but got "q"'],
       "architecture" => [Sirena::Parser::Architecture,
@@ -140,7 +140,7 @@ RSpec.describe Sirena::Parser::Base do
     it "says so and still draws the caret" do
       # The failure sits one line past the source, so there is no line to
       # quote. The heading used to be emitted with nothing under it.
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA-->B\nC-->\n")
 
       expect(message).to eq(
@@ -157,9 +157,9 @@ RSpec.describe Sirena::Parser::Base do
     # making the real handler fail from the inside, not by replacing it —
     # a stubbed-out formatter never executes the line that was broken.
     [
-      Sirena::Parser::FlowchartParser,
-      Sirena::Parser::BlockParser,
-      Sirena::Parser::RequirementParser
+      Sirena::Parser::Flowchart,
+      Sirena::Parser::Block,
+      Sirena::Parser::Requirement
     ].each do |klass|
       it "reports rather than raising NameError for #{klass}" do
         parser = klass.new
@@ -183,7 +183,7 @@ RSpec.describe Sirena::Parser::Base do
 
   describe "when the failure really is at the start" do
     it "still reports line 1, column 1" do
-      message = error_from(Sirena::Parser::FlowchartParser.new, "!!!\n")
+      message = error_from(Sirena::Parser::Flowchart.new, "!!!\n")
 
       expect(position_in(message)).to eq("line 1, column 1")
     end
@@ -193,7 +193,7 @@ RSpec.describe Sirena::Parser::Base do
   # the column names once tabs are expanded.
   describe "the caret" do
     it "carries a tab through rather than counting it as one column" do
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\n\tA[ok] qux\n")
       quoted, caret = message.lines("\n")[1, 2].map { |l| l.chomp("\n") }
 
@@ -202,7 +202,7 @@ RSpec.describe Sirena::Parser::Base do
     end
 
     it "still pads with spaces when the line has none" do
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nA[ok] qux\n")
 
       expect(message.lines("\n")[2].chomp("\n")).to eq("      ^")
@@ -227,20 +227,20 @@ RSpec.describe Sirena::Parser::Base do
     let(:source) { "graph TD\nA-->B\nxyzzy qux\n" }
 
     it "reports the same message with $/ set to nil" do
-      expected = error_from(Sirena::Parser::FlowchartParser.new, source)
+      expected = error_from(Sirena::Parser::Flowchart.new, source)
 
       $INPUT_RECORD_SEPARATOR = nil
 
-      expect(error_from(Sirena::Parser::FlowchartParser.new, source))
+      expect(error_from(Sirena::Parser::Flowchart.new, source))
         .to eq(expected)
     end
 
     it "reports the same message with $, set" do
-      expected = error_from(Sirena::Parser::FlowchartParser.new, source)
+      expected = error_from(Sirena::Parser::Flowchart.new, source)
 
       $OUTPUT_FIELD_SEPARATOR = "|"
 
-      expect(error_from(Sirena::Parser::FlowchartParser.new, source))
+      expect(error_from(Sirena::Parser::Flowchart.new, source))
         .to eq(expected)
     end
 
@@ -250,7 +250,7 @@ RSpec.describe Sirena::Parser::Base do
     # and nothing drove this one with a multi-part message.
     it "reports the same fallback message with $, set" do
       messages = [nil, "|"].map do |separator|
-        parser = Sirena::Parser::FlowchartParser.new
+        parser = Sirena::Parser::Flowchart.new
         allow(parser).to receive(:failure_position).and_raise("boom")
         $OUTPUT_FIELD_SEPARATOR = separator
         error_from(parser, source)
@@ -266,7 +266,7 @@ RSpec.describe Sirena::Parser::Base do
   # would print the symbol as a string literal.
   describe "a lookahead failure" do
     it "names the atom without quoting it" do
-      message = error_from(Sirena::Parser::FlowchartParser.new,
+      message = error_from(Sirena::Parser::Flowchart.new,
                            "graph TD\nstyle A ")
 
       expect(message).to end_with("Input should not start with LINE_END")

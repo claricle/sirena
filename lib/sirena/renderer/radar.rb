@@ -12,7 +12,7 @@ module Sirena
     # Renders a Radar Chart layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::Radar into an SVG visualization showing:
+    # Layout::Radar into an SVG visualization showing:
     # - Circular or polygonal grid
     # - Radial axes from center
     # - Axis labels
@@ -31,7 +31,7 @@ module Sirena
 
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::Radar
+      # @param layout [Hash] layout data from Layout::Radar
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

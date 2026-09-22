@@ -24,10 +24,10 @@ Gemspec/RequiredRubyVersion:
 Layout/ArgumentAlignment:
   Exclude:
     - 'lib/sirena/commands/batch.rb'
-    - 'lib/sirena/parser/transforms/c4.rb'
+    - 'lib/sirena/parser/builders/c4.rb'
     - 'lib/sirena/renderer/timeline.rb'
-    - 'lib/sirena/transform/c4.rb'
-    - 'lib/sirena/transform/treemap.rb'
+    - 'lib/sirena/layout/c4.rb'
+    - 'lib/sirena/layout/treemap.rb'
     - 'spec/sirena/theme_spec.rb'
 
 # Offense count: 1
@@ -42,8 +42,8 @@ Layout/ArrayAlignment:
 # This cop supports safe autocorrection (--autocorrect).
 Layout/ElseAlignment:
   Exclude:
-    - 'lib/sirena/parser/transforms/kanban.rb'
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/kanban.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/tasks/benchmark.rake'
 
 # Offense count: 8
@@ -51,17 +51,17 @@ Layout/ElseAlignment:
 Layout/EmptyLineAfterGuardClause:
   Exclude:
     - 'lib/sirena/parser/mindmap.rb'
-    - 'lib/sirena/parser/transforms/c4.rb'
-    - 'lib/sirena/parser/transforms/er_diagram.rb'
-    - 'lib/sirena/parser/transforms/mindmap.rb'
-    - 'lib/sirena/parser/transforms/sequence.rb'
+    - 'lib/sirena/parser/builders/c4.rb'
+    - 'lib/sirena/parser/builders/er_diagram.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
+    - 'lib/sirena/parser/builders/sequence.rb'
     - 'lib/tasks/benchmark.rake'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
 Layout/EmptyLineAfterMagicComment:
   Exclude:
-    - 'lib/sirena/transform/sankey.rb'
+    - 'lib/sirena/layout/sankey.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -87,9 +87,9 @@ Layout/EmptyLinesAroundClassBody:
 # SupportedStylesAlignWith: keyword, variable, start_of_line
 Layout/EndAlignment:
   Exclude:
-    - 'lib/sirena/parser/transforms/block.rb'
-    - 'lib/sirena/parser/transforms/kanban.rb'
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/block.rb'
+    - 'lib/sirena/parser/builders/kanban.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/tasks/benchmark.rake'
 
 # Offense count: 8
@@ -97,8 +97,8 @@ Layout/EndAlignment:
 # Configuration parameters: AllowForAlignment, AllowBeforeTrailingComments, ForceEqualSignAlignment.
 Layout/ExtraSpacing:
   Exclude:
-    - 'lib/sirena/parser/transforms/mindmap.rb'
-    - 'lib/sirena/parser/transforms/treemap.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
+    - 'lib/sirena/parser/builders/treemap.rb'
     - 'lib/tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 4
@@ -131,9 +131,9 @@ Layout/HeredocIndentation:
 # Configuration parameters: Width, AllowedPatterns.
 Layout/IndentationWidth:
   Exclude:
-    - 'lib/sirena/parser/transforms/block.rb'
-    - 'lib/sirena/parser/transforms/kanban.rb'
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/block.rb'
+    - 'lib/sirena/parser/builders/kanban.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/tasks/benchmark.rake'
 
 # Offense count: 18
@@ -196,8 +196,8 @@ Layout/TrailingEmptyLines:
 # Configuration parameters: AllowInHeredoc.
 Layout/TrailingWhitespace:
   Exclude:
-    - 'lib/sirena/parser/transforms/c4.rb'
-    - 'lib/sirena/parser/transforms/xy_chart.rb'
+    - 'lib/sirena/parser/builders/c4.rb'
+    - 'lib/sirena/parser/builders/xy_chart.rb'
 
 # Offense count: 268
 # This cop supports safe autocorrection (--autocorrect).
@@ -209,10 +209,10 @@ Lint/AmbiguousOperatorPrecedence:
 # Configuration parameters: RequireParenthesesForMethodChains.
 Lint/AmbiguousRange:
   Exclude:
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/sirena/renderer/kanban.rb'
     - 'lib/sirena/renderer/treemap.rb'
-    - 'lib/sirena/transform/block.rb'
+    - 'lib/sirena/layout/block.rb'
 
 # Offense count: 21
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
@@ -249,8 +249,8 @@ Lint/UnusedBlockArgument:
   Exclude:
     - 'lib/sirena/renderer/architecture.rb'
     - 'lib/sirena/renderer/block.rb'
-    - 'lib/sirena/transform/architecture.rb'
-    - 'lib/sirena/transform/block.rb'
+    - 'lib/sirena/layout/architecture.rb'
+    - 'lib/sirena/layout/block.rb'
     - 'lib/tasks/examples.rake'
 
 # Offense count: 12
@@ -261,26 +261,26 @@ Lint/UnusedMethodArgument:
   Exclude:
     - 'lib/sirena/renderer/git_graph.rb'
     - 'lib/sirena/renderer/packet.rb'
-    - 'lib/sirena/transform/block.rb'
-    - 'lib/sirena/transform/git_graph.rb'
-    - 'lib/sirena/transform/kanban.rb'
-    - 'lib/sirena/transform/mindmap.rb'
-    - 'lib/sirena/transform/packet.rb'
-    - 'lib/sirena/transform/requirement.rb'
-    - 'lib/sirena/transform/treemap.rb'
+    - 'lib/sirena/layout/block.rb'
+    - 'lib/sirena/layout/git_graph.rb'
+    - 'lib/sirena/layout/kanban.rb'
+    - 'lib/sirena/layout/mindmap.rb'
+    - 'lib/sirena/layout/packet.rb'
+    - 'lib/sirena/layout/requirement.rb'
+    - 'lib/sirena/layout/treemap.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: ContextCreatingMethods, MethodCreatingMethods.
 Lint/UselessAccessModifier:
   Exclude:
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
 Lint/UselessAssignment:
   Exclude:
-    - 'lib/sirena/transform/xy_chart.rb'
+    - 'lib/sirena/layout/xy_chart.rb'
     - 'lib/tasks/examples.rake'
     - 'lib/tasks/generate_mermaid_fixtures.rake'
 
@@ -327,7 +327,7 @@ Naming/MethodParameterName:
 # WaywardPredicates: nonzero?
 Naming/PredicateMethod:
   Exclude:
-    - 'lib/sirena/transform/gantt.rb'
+    - 'lib/sirena/layout/gantt.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -339,10 +339,10 @@ Performance/ConstantRegexp:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Performance/MapCompact:
   Exclude:
-    - 'lib/sirena/transform/architecture.rb'
-    - 'lib/sirena/transform/block.rb'
-    - 'lib/sirena/transform/requirement.rb'
-    - 'lib/sirena/transform/timeline.rb'
+    - 'lib/sirena/layout/architecture.rb'
+    - 'lib/sirena/layout/block.rb'
+    - 'lib/sirena/layout/requirement.rb'
+    - 'lib/sirena/layout/timeline.rb'
     - 'lib/tasks/benchmark.rake'
     - 'spec/sirena/renderer/git_graph_spec.rb'
 
@@ -453,7 +453,7 @@ Style/BlockDelimiters:
 # Configuration parameters: MinBranchesCount.
 Style/CaseLikeIf:
   Exclude:
-    - 'lib/sirena/parser/transforms/requirement.rb'
+    - 'lib/sirena/parser/builders/requirement.rb'
 
 # Offense count: 6
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -474,8 +474,8 @@ Style/ClassAndModuleChildren:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/CombinableLoops:
   Exclude:
-    - 'lib/sirena/transform/architecture.rb'
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/architecture.rb'
+    - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -489,9 +489,9 @@ Style/ComparableBetween:
 # SupportedStyles: assign_to_condition, assign_inside_condition
 Style/ConditionalAssignment:
   Exclude:
-    - 'lib/sirena/parser/transforms/block.rb'
-    - 'lib/sirena/parser/transforms/git_graph.rb'
-    - 'lib/sirena/parser/transforms/requirement.rb'
+    - 'lib/sirena/parser/builders/block.rb'
+    - 'lib/sirena/parser/builders/git_graph.rb'
+    - 'lib/sirena/parser/builders/requirement.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -516,7 +516,7 @@ Style/HashEachMethods:
     - 'lib/sirena/renderer/block.rb'
     - 'lib/sirena/renderer/quadrant.rb'
     - 'lib/sirena/renderer/requirement.rb'
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -532,7 +532,7 @@ Style/HashSyntax:
 Style/IdenticalConditionalBranches:
   Exclude:
     - 'lib/sirena/renderer/git_graph.rb'
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -545,8 +545,8 @@ Style/IfInsideElse:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/MapIntoArray:
   Exclude:
-    - 'lib/sirena/transform/c4.rb'
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/c4.rb'
+    - 'lib/sirena/layout/requirement.rb'
 
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -589,8 +589,8 @@ Style/NumericPredicate:
 # Configuration parameters: Methods.
 Style/RedundantArgument:
   Exclude:
-    - 'lib/sirena/parser/transforms/kanban.rb'
-    - 'lib/sirena/parser/transforms/mindmap.rb'
+    - 'lib/sirena/parser/builders/kanban.rb'
+    - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/sirena/renderer/requirement.rb'
     - 'scripts/extract_mermaid_tests.rb'
 
@@ -613,7 +613,7 @@ Style/RedundantParentheses:
     - 'lib/sirena/parser/grammars/c4.rb'
     - 'lib/sirena/parser/grammars/kanban.rb'
     - 'lib/sirena/parser/grammars/mindmap.rb'
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/requirement.rb'
     - 'lib/tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 13
@@ -641,9 +641,9 @@ Style/RescueStandardError:
 # AllowedMethods: present?, blank?, presence, try, try!
 Style/SafeNavigation:
   Exclude:
-    - 'lib/sirena/parser/transforms/flowchart.rb'
+    - 'lib/sirena/parser/builders/flowchart.rb'
     - 'lib/sirena/renderer/pie.rb'
-    - 'lib/sirena/transform/gantt.rb'
+    - 'lib/sirena/layout/gantt.rb'
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
@@ -656,14 +656,14 @@ Style/Semicolon:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/SlicingWithRange:
   Exclude:
-    - 'lib/sirena/parser/transforms/flowchart.rb'
+    - 'lib/sirena/parser/builders/flowchart.rb'
 
 # Offense count: 3
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowModifier.
 Style/SoleNestedConditional:
   Exclude:
-    - 'lib/sirena/transform/gantt.rb'
+    - 'lib/sirena/layout/gantt.rb'
 
 # Offense count: 9
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -741,4 +741,4 @@ Style/TrailingCommaInHashLiteral:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/ZeroLengthPredicate:
   Exclude:
-    - 'lib/sirena/transform/requirement.rb'
+    - 'lib/sirena/layout/requirement.rb'

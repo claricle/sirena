@@ -143,7 +143,7 @@ module Sirena
     end
 
     # User Journey diagram parser using Parslet
-    class UserJourneyParser < Base
+    class UserJourney < Base
       def parse(source)
         grammar = UserJourneyGrammar.new
 

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Renderer::ErDiagramRenderer do
+RSpec.describe Sirena::Renderer::ErDiagram do
   let(:renderer) { described_class.new }
 
   describe '#render' do

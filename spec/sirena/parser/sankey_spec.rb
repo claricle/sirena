@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/sankey"
 
-RSpec.describe Sirena::Parser::SankeyParser do
+RSpec.describe Sirena::Parser::Sankey do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -16,7 +16,7 @@ RSpec.describe Sirena::Parser::SankeyParser do
 
       diagram = parser.parse(source)
 
-      expect(diagram).to be_a(Sirena::Diagram::SankeyDiagram)
+      expect(diagram).to be_a(Sirena::Diagram::Sankey)
       expect(diagram.flows.length).to eq(2)
       expect(diagram.flows[0].source).to eq("A")
       expect(diagram.flows[0].target).to eq("B")

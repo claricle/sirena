@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Parser::BlockParser do
+RSpec.describe Sirena::Parser::Block do
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -17,7 +17,7 @@ RSpec.describe Sirena::Parser::BlockParser do
 
       it 'parses successfully' do
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::BlockDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Block)
         expect(diagram.blocks.length).to eq(2)
         expect(diagram.blocks.first.id).to eq('A')
         expect(diagram.blocks.last.id).to eq('B')

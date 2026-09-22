@@ -91,8 +91,8 @@ RSpec.describe Sirena::Engine do
     it 'takes the year of a partial date from the pin' do
       years = [early, late].map do |pin|
         source = "gantt\n  dateFormat MM/DD\n  section S\n  T1 : 08/17, 3d\n"
-        diagram = Sirena::Parser::GanttParser.new.parse(source)
-        transform = Sirena::Transform::GanttTransform.new
+        diagram = Sirena::Parser::Gantt.new.parse(source)
+        transform = Sirena::Layout::Gantt.new
         transform.today = pin
         transform.to_graph(diagram)
         diagram.sections.first.tasks.first.calculated_start.year
@@ -156,7 +156,7 @@ RSpec.describe Sirena::Engine do
     end
 
     def parsed_gantt_date(text, pin)
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       transform.today = pin
       transform.send(:parse_date, text)
     end
@@ -207,7 +207,7 @@ RSpec.describe Sirena::Engine do
 
     # Spacers carry no id into the SVG, so this has to be read off the model.
     it 'names anonymous spaces positionally' do
-      diagram = Sirena::Parser::BlockParser.new
+      diagram = Sirena::Parser::Block.new
         .parse("block-beta\n  A\n  space\n  B\n")
       spaces = diagram.blocks.select { |b| b.block_type == 'space' }
 
@@ -218,7 +218,7 @@ RSpec.describe Sirena::Engine do
   # Structural half. Two matching random draws are only probabilistic, and a
   # clock read hides behind a pinned clock. The absence of the call holds.
   describe 'ambient state is read in exactly one injectable place' do
-    # Transform::Base#today is that place: it supplies the default when
+    # Layout::Base#today is that place: it supplies the default when
     # nothing is injected, which is why it is allowlisted rather than
     # removed. Matched as an exact line rather than whitelisting the file,
     # so a second ambient read cannot hide there.

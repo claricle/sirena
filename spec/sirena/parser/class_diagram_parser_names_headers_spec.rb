@@ -5,7 +5,7 @@ require "spec_helper"
 # How a class is named and how the diagram is headed: backticks, hyphens,
 # generics on relationship ends and members, the `:::css` shorthand and `classDiagram-v2`.
 # Every accept/reject below was checked against mmdc 11.12.0.
-RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
+RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
   let(:parser) { described_class.new }
 
   describe "class names" do

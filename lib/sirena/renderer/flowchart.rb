@@ -12,9 +12,9 @@ module Sirena
     # edge routing, and label positioning.
     #
     # @example Render a flowchart
-    #   renderer = FlowchartRenderer.new
+    #   renderer = Flowchart.new
     #   svg = renderer.render(laid_out_graph)
-    class FlowchartRenderer < Base
+    class Flowchart < Base
       # Rounded like mermaid draws a cluster, and far enough down that the
       # title clears the top edge.
       # The radius lives with the routing, because an endpoint on a
@@ -256,10 +256,10 @@ module Sirena
             next
           end
 
-          # The same test Layout::Fallback#cluster? makes. Nothing
+          # The same test Layout::Grid#cluster? makes. Nothing
           # coupled keeps them together: change one and change the other,
           # or the layout and the renderer stop agreeing about what a box
-          # is. Transform::FlowchartTransform sets the marker.
+          # is. Layout::Flowchart sets the marker.
           clusters << placed.except(:children) if cluster?(child)
           collect(child[:children], placed[:x], placed[:y], clusters, nodes)
         end

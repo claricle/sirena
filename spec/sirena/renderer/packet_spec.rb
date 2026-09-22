@@ -2,7 +2,7 @@
 
 require "spec_helper"
 require "sirena/renderer/packet"
-require "sirena/transform/packet"
+require "sirena/layout/packet"
 require "sirena/diagram/packet"
 
 RSpec.describe Sirena::Renderer::Packet do

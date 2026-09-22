@@ -5,7 +5,7 @@ require_relative 'base'
 module Sirena
   module Diagram
     # Represents a treemap diagram showing hierarchical data
-    class TreemapDiagram < Base
+    class Treemap < Base
       attr_accessor :title, :root_nodes, :class_defs
 
       def initialize

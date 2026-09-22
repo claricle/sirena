@@ -7,7 +7,7 @@ require_relative "containment"
 module Sirena
   module Diagram
     # Architecture diagram model representing system architecture visualization
-    class ArchitectureDiagram < Base
+    class Architecture < Base
       # Group (boundary) in architecture diagram
       class Group < Lutaml::Model::Serializable
         attribute :id, :string
@@ -59,7 +59,7 @@ module Sirena
       # junction, or another group's parent_id names must belong to a
       # declared group. Neither the grammar nor the parser refuses either
       # shape. Left unchecked, a parent_id cycle poisons
-      # ArchitectureTransform's bounding-box arithmetic with
+      # Architecture's bounding-box arithmetic with
       # Infinity/-Infinity that later NaNs a comparison, and an undeclared
       # group_id is silently dropped from the render along with whatever
       # was placed in it — this stops both at the door instead.
