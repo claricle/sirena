@@ -778,7 +778,9 @@
   {
     "case": "class/049_platform_yari_class_48.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/050_platform_yari_class_49.mmd",
