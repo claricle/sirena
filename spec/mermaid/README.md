@@ -24,7 +24,7 @@ directory name in all of them.
 | `type` | string | diagram type the extractor detected; the directory name |
 | `source_file` | string | upstream file the source came from. Either relative to the mermaid-js checkout (`/cypress/...`) or an absolute path on the extracting machine |
 | `line_number` | integer | zero-based newline count before the match in `source_file` (`scripts/extract_mermaid_tests.rb:116` et al.); `0` in 644 files, which is a genuine match on the source's first line, not a sentinel for "no line recorded" -- the extractor always computes this value, it never leaves it unset |
-| `metadata` | object | optional, absent in 1055 files. Empty, or `{"test_name": "..."}` in 483 files |
+| `metadata` | object | optional, absent in 1055 files; present in the other 942 -- `{}` in 459, `{"test_name": "..."}` in 483 |
 
 There is no upstream commit SHA field yet, so a case cannot be traced to
 the mermaid-js revision it came from.
