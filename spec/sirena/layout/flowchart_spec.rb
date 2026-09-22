@@ -113,7 +113,7 @@ RSpec.describe Sirena::Layout::Flowchart do
       graph = transform.to_graph(diagram)
 
       options = graph[:layoutOptions]
-      expect(options['algorithm']).to eq('layered')
+      expect(options['elk.algorithm']).to eq('layered')
       expect(options['elk.direction']).to eq('DOWN')
     end
 

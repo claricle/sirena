@@ -80,7 +80,7 @@ module Sirena
       # ELK option keys for consistent configuration
       # @see https://www.eclipse.org/elk/reference/options.html
       module ElkOptions
-        ALGORITHM = 'algorithm'
+        ALGORITHM = 'elk.algorithm'
         DIRECTION = 'elk.direction'
 
         # Spacing options
