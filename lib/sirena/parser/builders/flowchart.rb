@@ -396,12 +396,20 @@ module Sirena
               process_subgraph(diagram, stmt, context, parents)
             elsif stmt[:direction_keyword]
               set_direction(parents.last, stmt[:dir_value], context)
-            elsif stmt[:style_keyword] || stmt[:classdef_keyword] ||
-                  stmt[:class_keyword] || stmt[:click_keyword]
-              # Styling directives (acknowledge but don't fully implement)
-              # These are parsed but not processed into the model
+            elsif stmt[:style_keyword]
+              declare_styled_node(diagram, stmt[:style_target])
             end
+            # classDef, class and click are parsed but not modelled.
           end
+        end
+
+        # `style Q ...` names a vertex, and mermaid draws it even when no
+        # other statement mentions it.
+        def self.declare_styled_node(diagram, target)
+          return if diagram.find_node(target.to_s)
+
+          node_data = { node_id: target, shape_type: 'rect', label: target }
+          add_or_update_node(diagram, node_data)
         end
 
         # A subgraph cannot be its own ancestor. mmdc refuses that with

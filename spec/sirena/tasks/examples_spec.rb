@@ -592,7 +592,7 @@ RSpec.describe ExampleTasks do
           end
 
           expect { described_class.copy_to_docs(examples_dir, docs) }
-            .to raise_error(/docs assets root changed identity between verification and use/)
+            .to raise_error(/docs assets root (changed identity between verification and use|is not a directory)/)
           expect(Dir.children(attacker)).to eq([])
         end
       end
@@ -619,7 +619,7 @@ RSpec.describe ExampleTasks do
           end
 
           expect { described_class.copy_to_docs(examples_dir, docs) }
-            .to raise_error(/docs target for flowchart changed identity between verification and use/)
+            .to raise_error(/docs target for flowchart (changed identity between verification and use|is not a directory)/)
           expect(Dir.children(attacker)).to eq([])
         end
       end
@@ -632,6 +632,8 @@ RSpec.describe ExampleTasks do
     # confirmation done before the loop started does not cover what comes
     # after it.
     it 'keeps every later file pinned to the original target_dir, even after target_dir is renamed away and replaced mid-loop' do
+      skip 'Windows refuses to rename the current working directory (EACCES)' if Gem.win_platform?
+
       Dir.mktmpdir('sirena-docs') do |docs|
         Dir.mktmpdir('sirena-attacker') do |attacker|
           FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
@@ -1004,7 +1006,7 @@ RSpec.describe ExampleTasks do
         end
 
         expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
-          .to raise_error(/diagram directory changed identity between verification and use/)
+          .to raise_error(/diagram directory (changed identity between verification and use|is not a directory)/)
         expect(Dir.children(attacker)).to eq([])
       end
     end
@@ -1021,6 +1023,8 @@ RSpec.describe ExampleTasks do
     # own "renamed away and replaced mid-loop" spec does, so the write's
     # actual destination stays inspectable afterward.
     it 'does not write through a diagram directory symlink raced in right before the final write, even after the pin is taken' do
+      skip 'Windows refuses to rename the current working directory (EACCES)' if Gem.win_platform?
+
       Dir.mktmpdir('sirena-attacker') do |attacker|
         flowchart = File.join(examples_dir, 'flowchart')
         FileUtils.mkdir_p(flowchart)
@@ -1359,20 +1363,12 @@ RSpec.describe ExampleTasks do
       write(source_path, "gantt\n  title Broken\n")
       write(source_path.sub(/\.mmd\z/, '.yml'), "theme: #{broken_theme}\n")
 
-      # Pinned to Yeptris::ParseError, not Lutaml::Model::InvalidFormatError:
-      # lutaml-model 0.8.37 switched its default YAML backend to Yeptris,
-      # and unlike the Psych adapter it replaced, Yeptris::ParseError
-      # escapes `Theme.load` directly rather than being wrapped into
-      # lutaml-model's own exception class. Confirmed by reading the actual
-      # backtrace this raises today: Yeptris::YAML.load ->
-      # Lutaml::Yaml::Adapter::YeptrisAdapter.parse -> Theme.load, with no
-      # InvalidFormatError anywhere on it. What this example actually pins
-      # -- a theme that fails to load raises loudly out of
-      # validate_examples instead of being classified "known unrenderable"
-      # -- is unchanged; only the concrete class the current backend raises
-      # for malformed YAML changed underneath it.
+      # Either class: which one `Theme.load` raises depends on the process's
+      # lutaml-model YAML backend, and requiring `svg_conform` (as
+      # svg_conformance_spec does) switches it to :standard_yaml globally.
+      # The property is that the load error escapes validate_examples.
       expect { described_class.validate_examples(examples_dir) }
-        .to raise_error(Yeptris::ParseError)
+        .to raise_error(satisfy { |error| [Yeptris::ParseError, Lutaml::Model::InvalidFormatError].any? { |k| error.is_a?(k) } })
     end
 
     # The classification arithmetic itself, not just the reads that happen

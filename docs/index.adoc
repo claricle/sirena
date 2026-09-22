@@ -2,7 +2,7 @@
 layout: default
 title: Home
 nav_order: 1
-description: "Sirena: Pure Ruby Mermaid diagram renderer with 19 diagram types"
+description: "Sirena: Pure Ruby Mermaid diagram renderer with 24 diagram types"
 permalink: /
 ---
 
@@ -25,7 +25,7 @@ Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts M
 * Suitable for serverless environments
 
 === Comprehensive Diagram Support
-* 19 diagram types fully implemented
+* 24 diagram types registered (compatibility varies by type; see the compatibility page)
 * Mermaid.js syntax compatibility
 * Advanced theming system
 * Professional-quality SVG output
@@ -62,7 +62,7 @@ Step-by-step guides to help you get started and accomplish specific tasks.
 In-depth guides for advanced features and best practices.
 
 === link:{% link _diagram_types/index.adoc %}[Diagram Types]
-Complete reference for all 19 diagram types with syntax and examples.
+Complete reference for all 24 diagram types with syntax and examples.
 
 === link:{% link _features/index.adoc %}[Features]
 Detailed documentation of Sirena's unique features and capabilities.
@@ -72,7 +72,7 @@ Complete API and CLI references for quick lookup.
 
 == Supported Diagram Types
 
-Sirena supports 19 diagram types compatible with Mermaid.js syntax:
+Sirena registers 24 diagram types compatible with Mermaid.js syntax:
 
 [cols="1,3"]
 |===
@@ -140,7 +140,7 @@ See the complete link:{% link _diagram_types/index.adoc %}[Diagram Types Referen
 
 == Key Features
 
-* **Theme System**: YAML-based theming with 4 built-in themes (default, dark, light, high-contrast)
+* **Theme System**: YAML-based theming with 4 built-in themes (default, dark, light, high_contrast)
 * **Batch Processing**: Built-in batch renderer for documentation sets
 * **Rails Integration**: Native Ruby integration with Rails helpers
 * **Jekyll Support**: Static site generation compatibility

@@ -54,14 +54,10 @@ SimpleCov.configure do
   group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
   group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}
 
-  # Line floor: measured baseline on `spec:unit` (`rake coverage:measure`),
-  # margin below the peak. Order-sensitive -- rescue/call-site pairs in
-  # renderer/{base,flowchart,pie}.rb resolve differently by execution order,
-  # so re-measure across several seeds before raising this off one run. No
-  # gate record on this branch has named pie.rb's exact flipping lines yet
-  # (only base.rb/flowchart.rb are cited) -- pin those before citing this
-  # comment as proof for pie.rb specifically. See the gate record for the
-  # measurement method, the exact runs, and the version.rb/commands.rb gap
-  # `cover` added.
-  minimum_coverage line: 88.50
+  # Line floor, enforced by SimpleCov on `rake coverage:measure` (spec:unit).
+  # Coverage is order-sensitive (rescue/call-site pairs in
+  # renderer/{base,flowchart,pie}.rb resolve differently by execution order),
+  # so re-measure across several seeds before raising this off one run. A run
+  # with any failing example skips this check entirely.
+  minimum_coverage line: 92.00
 end

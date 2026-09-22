@@ -411,8 +411,31 @@ module Sirena
         # hashed tail fails the statement instead of falling through and
         # drawing a node mermaid refuses.
         rule(:style_property_list) do
-          hashed_property_list | hashed_head.absent? >> style_property
+          empty_comma_item.absent? >>
+            (hashed_property_list | hashed_head.absent? >> style_property)
         end
+
+        # mermaid joins declarations with a comma and refuses an empty one:
+        # `,a:b`, `a:b,,c:d` and `a:b,`. After a `#` a `;` no longer ends
+        # the item, so `fill:#f9f,;B` is fine while `fill:red,;B` is not.
+        rule(:empty_comma_item) do
+          comma |
+            hash.maybe >>
+            (space >> hash | hash.absent? >> comma_gap.absent? >>
+              declaration_char).repeat >>
+              (comma_gap | hash >> hashed_comma_gap_scan)
+        end
+
+        rule(:hashed_comma_gap_scan) do
+          (hashed_comma_gap.absent? >> declaration_char).repeat >>
+            hashed_comma_gap
+        end
+
+        rule(:comma_gap) do
+          hashed_comma_gap | comma >> semicolon
+        end
+
+        rule(:hashed_comma_gap) { comma >> (comma | newline | eof) }
 
         # After a `#` the declaration carries at most one `;`. mmdc
         # takes `fill:#f9f;stroke:#333` and `fill:#f9f;B`, and refuses
@@ -426,8 +449,10 @@ module Sirena
         # The `#` has to arrive before the first `;` for the swallow to
         # start: mmdc reads `style A fill:red;stroke:#333` as a style plus a
         # node, because the `;` comes first.
+        # A `#` after a space, as in `stroke: #fff`, is ordinary text.
         rule(:hashed_head) do
-          (hash.absent? >> declaration_char).repeat >> hash
+          hash.maybe >>
+            (space >> hash | hash.absent? >> declaration_char).repeat >> hash
         end
 
         # What may follow that one `;` is a style component, not a node and
@@ -455,7 +480,7 @@ module Sirena
         rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
 
         rule(:declaration_char) do
-          line_end.absent? >> semicolon.absent? >> comma.absent? >> any
+          line_end.absent? >> semicolon.absent? >> any
         end
 
         # Permissive: mermaid takes `style A red`, `style A fill:` and
@@ -472,9 +497,14 @@ module Sirena
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
           str('classDef').as(:classdef_keyword) >> space >>
-            identifier.as(:class_name) >>
+            class_name_list.as(:class_name) >>
             (space >> style_property_list).as(:class_props) >>
             statement_end
+        end
+
+        # `classDef a,b props` styles both classes.
+        rule(:class_name_list) do
+          identifier >> (comma >> identifier).repeat
         end
 
         # Class assignment: class nodeId className

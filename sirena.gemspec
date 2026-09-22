@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Sirena is a pure Ruby implementation of Mermaid ' \
                        'diagram rendering. It parses Mermaid syntax and ' \
                        'generates SVG output using Parslet grammars and ' \
-                       'ELK layout. Supports 24 diagram types: flowcharts, ' \
+                       'a built-in fallback grid layout. Supports 24 diagram types: flowcharts, ' \
                        'sequence, class, state, ER, C4, block, architecture, ' \
                        'Gantt, timeline, Git graph, mindmap, Kanban, user journey, ' \
                        'pie, quadrant, radar, XY charts, requirement, Sankey, ' \
