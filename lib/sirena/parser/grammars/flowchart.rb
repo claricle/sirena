@@ -917,20 +917,111 @@ module Sirena
           edge >> (ws? >> edge).repeat
         end
 
-        # Single edge with optional label
+        # Single edge. A symbol-only link is tried first, as mermaid's
+        # lexer does: `A --x B` is a link with a cross head, and only a
+        # link that cannot end where it starts opens `A -- text --x B`.
         rule(:edge) do
-          arrow.as(:arrow) >>
-            ws? >>
-            edge_label.maybe.as(:label) >>
+          (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target)
+        end
+
+        rule(:piped_edge) do
+          arrow.as(:arrow) >> ws? >> edge_label.maybe.as(:label)
+        end
+
+        # `A -- text --> B`: the label sits between the two halves of the
+        # link, and the transform joins the halves back into one token, so
+        # `<-- t -->` is a double arrow and `-. t .->` a dotted one.
+        rule(:inline_label_edge) do
+          inline_solid | inline_thick | inline_dotted
+        end
+
+        rule(:inline_solid) do
+          inline_halves(str('--'), solid_close, str('--'))
+        end
+
+        rule(:inline_thick) do
+          inline_halves(str('=='), thick_close, str('='))
+        end
+
+        # A thick or dotted label cannot carry even one of its own body
+        # characters, `=` or `.`: mmdc refuses `A == a=b ==> B` and
+        # `A -. a.b .-> B`. Only the solid body may hold a single hyphen.
+        rule(:inline_dotted) { inline_halves(str('-.'), dotted_close, str('.')) }
+
+        # A closing link carries at least one character more than the
+        # opening half, a head or another body character, so `--` alone
+        # never closes.
+        rule(:solid_close) do
+          str('--') >> (match['>xo'] | (str('-').repeat(1) >> match['>xo'].maybe))
+        end
+
+        rule(:thick_close) do
+          str('==') >> (match['>xo'] | (str('=').repeat(1) >> match['>xo'].maybe))
+        end
+
+        rule(:dotted_close) do
+          str('-').maybe >> str('.').repeat(1) >> str('-') >> match['>xo'].maybe
+        end
+
+        # The label runs to the closing link, across lines as mermaid reads
+        # it, and starts on a character that is not whitespace: mermaid
+        # refuses `A -- --> B`. `forbidden` is the body text mermaid cannot
+        # lex inside the label. Whitespace is mermaid's own set, and a whole
+        # comment line inside a multiline label is deleted before it reads.
+        # `%%{` opens a directive, never a comment, and no label holds one.
+        #
+        # A whitespace run is consumed whole and checked once for what
+        # follows it, so a long run costs one pass, not one per character.
+        def inline_halves(open, close, forbidden)
+          blank = inline_comment_line | line_space | match["\r\n"]
+          closing = link_start.maybe >> close
+          # Avoid caching every failed per-character lookahead when the
+          # closing delimiter is absent altogether.
+          closing_ahead = dynamic do |source|
+            if source.chars_until(forbidden.str) < source.chars_left
+              str('')
+            else
+              forbidden
+            end
+          end
+          char = closing.absent? >> blank.absent? >> str('"').absent? >>
+                 str('%%{').absent? >> any
+          char = forbidden.absent? >> char if forbidden
+          gap = blank.repeat(1) >> closing.absent?
+          text = char >> (char | gap).repeat
+          (link_start.maybe >> open).as(:open) >> blank.repeat >>
+            closing_ahead >>
+            (quoted_label >> (char | gap).repeat | text).as(:label) >>
+            blank.repeat >> closing.as(:close)
+        end
+        private :inline_halves
+
+        # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
+        # The transform drops the two quotes, as mermaid does. `%%{` still
+        # opens a directive even inside quotes, so it is refused here too.
+        # A whole comment line is skipped first, quote and all: mermaid
+        # deletes it before the quote inside it can end the label early.
+        rule(:quoted_label) do
+          str('"') >>
+            (inline_comment_line | (str('%%{').absent? >> match['^"']))
+              .repeat >> str('"')
+        end
+
+        # A comment line inside a multiline inline label: mermaid deletes
+        # it whole before reading the label. `%%{` opens a directive
+        # rather than a comment and is left alone.
+        rule(:inline_comment_line) do
+          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+            (newline.absent? >> any).repeat
         end
 
         # Link forms
         # Every symbol-only link mermaid draws, probed one at a time
         # against mmdc rather than counted from the docs. The form that
         # carries its label in the middle — `A -- text --> B` — is a
-        # different shape and is still refused; see the spec that pins it.
+        # different shape, read by `inline_label_edge` above.
         #
         # `->` and `==` are deliberately absent: sirena accepted both and
         # mermaid rejects them.
