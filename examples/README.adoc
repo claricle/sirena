@@ -94,7 +94,7 @@ Block-based layouts and connections.
 Project timeline and task scheduling.
 
 * link:gantt/01-simple-timeline.mmd[01-simple-timeline] - Project timeline
-* link:gantt/02-task-dependencies.mmd[02-task-dependencies] - Task dependencies
+* link:gantt/02-task-dependencies.mmd[02-task-dependencies] - Two-phase project schedule
 
 ==== link:timeline/[Timeline]
 Historical events and chronological visualization.
@@ -182,7 +182,7 @@ Error message visualization.
 Each example consists of:
 
 * `.mmd` file - Mermaid source code
-* `.svg` file - Rendered SVG output (generated)
+* `.svg` file - Rendered SVG output (generated); one source (`packet/01-basic-packet.beta.mmd`) has no rendered SVG yet
 * `README.adoc` - Documentation (in subdirectory)
 
 == Contributing Examples

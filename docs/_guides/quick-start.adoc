@@ -104,9 +104,9 @@ This renders all `.mmd` files in `diagrams/` directory to SVG files in `output/`
 
 == Next Steps
 
-* link:cli-reference.html[CLI Reference] - Learn all available commands and options
-* link:../diagram_types/index.html[Diagram Types Reference] - Explore all 24 diagram types
-* link:../../examples/README.html[Examples] - Browse the example diagrams for every type
+* link:../cli-reference/[CLI Reference] - Learn all available commands and options
+* link:../../diagram_types/index/[Diagram Types Reference] - Explore all 24 diagram types
+* https://github.com/claricle/sirena/tree/main/examples[Examples] - Browse the example diagrams for every type
 
 == Getting Help
 
