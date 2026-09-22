@@ -3,9 +3,11 @@
 require 'spec_helper'
 
 RSpec.describe 'Reference SVG Fixtures' do
+  include FixtureLengthBand
+
   let(:engine) { Sirena::Engine.new }
 
-  shared_examples 'validates against reference fixture' do |diagram_type|
+  shared_examples 'validates against reference fixture' do |diagram_type, baseline_ratio|
     let(:input_path) { "spec/fixtures/#{diagram_type}/input.mmd" }
     let(:expected_path) { "spec/fixtures/#{diagram_type}/expected.svg" }
     let(:input_mmd) { File.read(input_path) }
@@ -41,45 +43,73 @@ RSpec.describe 'Reference SVG Fixtures' do
       expect(actual_svg).to start_with('<svg')
       expect(expected_svg).to start_with('<svg')
 
-      # Both should have similar length (within reason)
-      # Note: Sirena generates more compact SVG (8-44% of Mermaid's size),
-      # which is desirable for performance. Adjusted tolerance to accept
-      # compact output while still catching major structural differences.
-      length_ratio = actual_svg.length.to_f / expected_svg.length
-      expect(length_ratio).to be_between(0.02, 2.0)
+      # Sirena's output is a per-type fraction of Mermaid's size. The band is
+      # centred on that type's measured ratio (see FixtureLengthBand), so a
+      # collapse to a fraction of today's output fails, not just a collapse
+      # to 2% of the reference.
+      ratio = length_ratio(actual_svg, expected_svg).round(4)
+      expect(within_length_band?(actual_svg, expected_svg, baseline_ratio))
+        .to be(true), "ratio #{ratio} is outside 2x of the #{diagram_type} baseline #{baseline_ratio}"
+    end
+
+    it 'fails the length band when the output is 50x smaller' do
+      actual_svg = engine.render(input_mmd)
+      collapsed = actual_svg[0, actual_svg.length / 50]
+
+      expect(within_length_band?(collapsed, expected_svg, baseline_ratio)).to be(false)
+    end
+
+    it 'fails the length band when the output is 3x larger' do
+      actual_svg = engine.render(input_mmd)
+
+      expect(within_length_band?(actual_svg * 3, expected_svg, baseline_ratio)).to be(false)
     end
   end
 
   describe 'Flowchart diagrams' do
-    include_examples 'validates against reference fixture', 'flowchart'
+    include_examples 'validates against reference fixture', 'flowchart', 0.28
   end
 
   describe 'Sequence diagrams' do
-    include_examples 'validates against reference fixture', 'sequence'
+    include_examples 'validates against reference fixture', 'sequence', 0.25
   end
 
   describe 'Class diagrams' do
-    include_examples 'validates against reference fixture', 'class_diagram'
+    include_examples 'validates against reference fixture', 'class_diagram', 0.26
   end
 
   describe 'State diagrams' do
-    include_examples 'validates against reference fixture', 'state_diagram'
+    include_examples 'validates against reference fixture', 'state_diagram', 0.024
   end
 
   describe 'ER diagrams' do
-    include_examples 'validates against reference fixture', 'er_diagram'
+    include_examples 'validates against reference fixture', 'er_diagram', 0.11
   end
 
   describe 'User journey diagrams' do
-    include_examples 'validates against reference fixture', 'user_journey'
+    include_examples 'validates against reference fixture', 'user_journey', 0.47
   end
 
   describe 'XY Chart diagrams' do
-    include_examples 'validates against reference fixture', 'xy_chart'
+    include_examples 'validates against reference fixture', 'xy_chart', 1.48
   end
 
   describe 'Sankey diagrams' do
-    include_examples 'validates against reference fixture', 'sankey'
+    include_examples 'validates against reference fixture', 'sankey', 1.0
+  end
+
+  describe 'Length band' do
+    it 'rejects output 50x smaller than the reference' do
+      expect(FixtureLengthBand.cover?(1.0 / 50)).to be(false)
+    end
+
+    it 'rejects output more than twice the reference' do
+      expect(FixtureLengthBand.cover?(2.01)).to be(false)
+    end
+
+    it 'accepts output the size of the reference' do
+      expect(FixtureLengthBand.cover?(1.0)).to be(true)
+    end
   end
 
   describe 'Fixture completeness' do

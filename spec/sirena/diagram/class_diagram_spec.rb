@@ -21,9 +21,9 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       expect(diagram.valid?).to be true
     end
 
-    it 'returns false for diagram without entities' do
+    it 'returns true for a diagram without entities, as mermaid renders it' do
       diagram = described_class.new(direction: 'TB')
-      expect(diagram.valid?).to be false
+      expect(diagram.valid?).to be true
     end
 
     it 'returns false when relationship references non-existent entity' do

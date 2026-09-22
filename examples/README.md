@@ -60,5 +60,5 @@ keywords:
   - keyword2
 use_cases:
   - "Use case description"
-theme: default  # default, dark, light, high-contrast
+theme: default  # default, dark, light, high_contrast
 ```

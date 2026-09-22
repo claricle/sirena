@@ -292,14 +292,12 @@ module Sirena
       # Validates the class diagram structure.
       #
       # A class diagram is valid if:
-      # - It has at least one entity
       # - All entities are valid
       # - All relationships are valid
       # - All relationship references point to existing entities
       #
       # @return [Boolean] true if class diagram is valid
       def valid?
-        return false if entities.nil? || entities.empty?
         return false unless entities.all?(&:valid?)
         return false unless relationships.nil? ||
                             relationships.all?(&:valid?)

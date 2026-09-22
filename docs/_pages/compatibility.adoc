@@ -74,9 +74,9 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 === Diagram Type Support
 
-==== Fully Compatible (100% Syntax Parity)
+==== Core Types
 
-These diagram types have complete syntax compatibility with Mermaid.js:
+These are the most fully supported diagram types. Support is partial, not complete parity with Mermaid.js; per-case pass rates are in `scoreboard/corpus.json`:
 
 * **Flowchart** (`graph`, `flowchart`) - All node shapes, edge types, and subgraphs
 * **Sequence Diagram** (`sequenceDiagram`) - All participants, messages, and control structures

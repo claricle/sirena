@@ -141,6 +141,32 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    # mmdc renders a bare `gantt` or `pie` with nothing after the keyword.
+    # Detection wanted whitespace there, so the header alone died as "no
+    # type" before the parser met it.
+    context 'with a gantt or pie header that ends the source' do
+      let(:corpus) { File.expand_path('../mermaid', __dir__) }
+
+      {
+        'gantt/023_spec_diagram-orchestration_spec_22.mmd' => 'gantt',
+        'gantt/025_spec_mermaidapi_spec_24.mmd' => 'gantt',
+        'pie/025_parsertest_pie_test_24.mmd' => 'pie'
+      }.each do |file, keyword|
+        it "renders corpus case #{file}" do
+          expect(engine.render(File.read(File.join(corpus, file))))
+            .to include('<svg')
+        end
+
+        # Keep this; it stays green on the old code by design. It becomes
+        # the only check if the boundary is ever loosened to a bare prefix.
+        it "still refuses #{keyword} glued to a word" do
+          expect { engine.render("#{keyword}chart\n") }.to raise_error(
+            Sirena::Engine::DiagramTypeError
+          )
+        end
+      end
+    end
+
     context 'with unknown diagram type' do
       let(:source) { "unknown\ntest" }
 

@@ -3,7 +3,7 @@
 
 # Site settings
 title: Sirena Documentation
-description: Pure Ruby Mermaid diagram rendering library with 19 diagram types
+description: Pure Ruby Mermaid diagram rendering library with 24 diagram types
 url: https://claricle.github.io
 baseurl: /sirena
 
