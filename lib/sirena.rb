@@ -56,15 +56,6 @@ require_relative 'sirena/engine'
 # Initialize theme registry with built-in themes
 Sirena::Theme::Registry.load_builtin_themes
 
-# Convenience method for rendering mermaid diagrams to SVG
-#
-# @param mermaid_source [String] Mermaid diagram source code
-# @param options [Hash] Rendering options
-# @return [String] SVG output
-def self.render(mermaid_source, options = {})
-  Engine.new.render(mermaid_source, options)
-end
-
 # Load and register flowchart handlers
 require_relative 'sirena/parser/flowchart'
 require_relative 'sirena/layout/flowchart'

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 require_relative 'error/diagram_type_error'
 require_relative 'error/pipeline_error'
 
@@ -53,6 +55,41 @@ module Sirena
       error: /\A\s*(error|Error)/i
     }.freeze
 
+    # The keyword a source actually needs to start with, for the "must
+    # start with one of" error message -- DIAGRAM_TYPE_PATTERNS's own keys
+    # (`:sequence`, `:class_diagram`, ...) are DiagramRegistry's internal
+    # registration names, not what a user types (`sequenceDiagram`,
+    # `classDiagram`). Keyed the same as DIAGRAM_TYPE_PATTERNS, which
+    # #registered_type_names checks every key against, so a type added to
+    # one without the other fails a spec rather than silently printing the
+    # wrong word for it.
+    DIAGRAM_TYPE_KEYWORDS = {
+      flowchart: 'graph or flowchart',
+      sequence: 'sequenceDiagram',
+      class_diagram: 'classDiagram',
+      state_diagram: 'stateDiagram or stateDiagram-v2',
+      er_diagram: 'erDiagram',
+      user_journey: 'journey',
+      gantt: 'gantt',
+      pie: 'pie',
+      timeline: 'timeline',
+      quadrant: 'quadrantChart',
+      git_graph: 'gitGraph',
+      mindmap: 'mindmap',
+      kanban: 'kanban',
+      radar: 'radar-beta',
+      block: 'block-beta',
+      requirement: 'requirementDiagram',
+      xychart: 'xychart-beta',
+      architecture: 'architecture-beta',
+      sankey: 'sankey-beta',
+      packet: 'packet-beta',
+      treemap: 'treemap or treemap-beta',
+      c4: 'C4Context, C4Container, C4Component, C4Dynamic, C4Deployment, or a C4 diagram',
+      info: 'info',
+      error: 'error'
+    }.freeze
+
     # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
     # directive header — is not universally invalid. Every type was probed
     # with both, and these eight refuse both.
@@ -89,19 +126,28 @@ module Sirena
     }.freeze
     private_constant :REFUSED_PREAMBLE
 
-    attr_reader :verbose, :theme
+    attr_reader :verbose, :theme, :logger
 
     # Creates a new Engine instance.
     #
     # @param verbose [Boolean] enable verbose output for debugging
-    # @param theme [String, Theme, Hash, nil] theme specification
+    # @param theme [String, Symbol, Theme, Hash, nil] theme specification
     # @param today [Date, nil] reference date for diagrams that need one
     #   (gantt). Pin it to make rendering reproducible; nil uses the real
     #   date.
-    def initialize(verbose: false, theme: nil, today: nil)
+    # @param logger [Logger, nil] destination for diagnostics. A host
+    #   embedding Sirena and reading stdout as pure SVG cannot tolerate log
+    #   lines landing on the same stream, so the default logs to $stderr
+    #   instead; pass one in to redirect or format diagnostics your own way.
+    def initialize(verbose: false, theme: nil, today: nil, logger: nil)
       @verbose = verbose
       @theme = load_theme(theme)
       @today = today
+      @logger = logger || Logger.new($stderr).tap do |default_logger|
+        default_logger.formatter = proc do |_severity, _time, _progname, message|
+          "[Sirena::Engine] #{message}\n"
+        end
+      end
     rescue *EXHAUSTION_ERRORS => e
       # Theme loading parses attacker-supplied YAML, and it happens HERE --
       # before `render` is ever called, so `render`'s own rescue cannot see
@@ -118,7 +164,7 @@ module Sirena
     # @param mermaid_source [String] Mermaid diagram source code
     # @param options [Hash] rendering options
     # @option options [Boolean] :verbose enable verbose output
-    # @option options [String, Theme, Hash, nil] :theme theme override
+    # @option options [String, Symbol, Theme, Hash, nil] :theme theme override
     # @option options [Date, nil] :today reference date override
     # @return [String] SVG XML string
     # @raise [DiagramTypeError] if diagram type cannot be detected
@@ -215,9 +261,20 @@ module Sirena
 
       raise DiagramTypeError,
             'Unable to detect diagram type from source. ' \
-            'Source must start with one of: graph, flowchart, ' \
-            'sequenceDiagram, classDiagram, stateDiagram, ' \
-            'erDiagram, journey, gantt, or pie'
+            "Source must start with one of: #{registered_type_names}"
+    end
+
+    # Builds the "must start with one of" list from DiagramRegistry rather
+    # than hand-writing it, so a newly registered type shows up here
+    # without anyone remembering to update this message too -- as the
+    # actual keyword the user needs to type, via DIAGRAM_TYPE_KEYWORDS,
+    # not DiagramRegistry's own internal registration name.
+    #
+    # @return [String] comma-separated, sorted list of the keywords a
+    #   source can start with
+    def registered_type_names
+      DiagramRegistry.types.sort.map { |type| DIAGRAM_TYPE_KEYWORDS.fetch(type, type.to_s) }
+        .join(', ')
     end
 
     # Whether an odd preamble item is an error belongs to the diagram
@@ -324,7 +381,7 @@ module Sirena
 
     # Loads a theme from various specifications.
     #
-    # @param theme_spec [String, Theme, Hash, nil] theme specification
+    # @param theme_spec [String, Symbol, Theme, Hash, nil] theme specification
     # @return [Theme] loaded theme
     def load_theme(theme_spec)
       return Theme::Registry.get(:default) if theme_spec.nil?
@@ -335,9 +392,14 @@ module Sirena
         if File.exist?(theme_spec)
           Theme.load(theme_spec)
         else
-          Theme::Registry.get(theme_spec.to_sym) ||
-            Theme::Registry.get(:default)
+          resolve_theme_name(theme_spec)
         end
+      when Symbol
+        # Theme::Registry is itself keyed by Symbol internally, so a Symbol
+        # here is a plausible caller mistake (e.g. `theme: :dark`), not an
+        # exotic input -- it must go through the same raise-on-unknown path
+        # as a String, not the silent-default `else` below.
+        resolve_theme_name(theme_spec.to_s)
       when Theme
         theme_spec
       when Hash
@@ -347,12 +409,34 @@ module Sirena
       end
     end
 
-    # Logs a message if verbose mode is enabled.
+    # Resolves a theme name against the registry, or raises -- an unknown
+    # name used to fall back to the default theme silently (exit 0, wrong
+    # theme drawn). A typo and an intentional `--theme default` looked
+    # identical to the caller.
+    #
+    # @param name [String] the requested theme name
+    # @return [Theme] the matching registered theme
+    # @raise [PipelineError] if no theme is registered under that name
+    def resolve_theme_name(name)
+      Theme::Registry.get(name.to_sym) || raise(
+        PipelineError,
+        "Unknown theme: #{name}. Valid themes: " \
+        "#{Theme::Registry.list.map(&:to_s).sort.join(', ')}"
+      )
+    end
+
+    # Logs a diagnostic message at debug level, gated on @verbose. This
+    # never touches the logger's own `.level` -- an injected logger may be
+    # shared with (or owned by) the host embedding Sirena, and mutating its
+    # level as a side effect of construction/render either corrupts the
+    # host's own filtering or crashes outright for a duck-typed logger that
+    # doesn't implement `level=` (only `debug`/`info`/`warn`, the documented
+    # contract). A plain guard needs neither.
     #
     # @param message [String] message to log
     # @return [void]
     def log(message)
-      puts "[Sirena::Engine] #{message}" if verbose
+      logger.debug(message) if verbose
     end
   end
 end

@@ -140,12 +140,14 @@ sirena batch -i diagrams -o output -t dark
 
 Batch status is reported in its summary. Current edge-case behavior is:
 
-* A nonexistent input path prints `No .mmd files found` and exits 0.
-* A direct `.mmd` file input currently creates the output directory, then
-  reports an `Errno::EISDIR` failure while writing to it; its summary reports
-  the failure and the command exits 0.
-* A file that fails to render does not stop later files. The summary records
-  successes and failures, and this per-file failure path exits 0.
+* A nonexistent input path finds zero files, prints `No .mmd files found`,
+  and exits 0 -- this counts as success (nothing failed), the same as an
+  input directory with no `.mmd` files in it.
+* A direct `.mmd` file input renders that one file into the output
+  directory, same as any other file the batch finds.
+* A file that fails to render does not stop later files. The summary
+  records successes and failures, and the command exits 1 if any file
+  failed, 0 if every file succeeded (including a run that found none).
 
 === types
 
@@ -212,10 +214,10 @@ The CLI does not currently read any `SIRENA_*` environment variables.
 Successful commands and root help exit 0. Errors handled by `render`, such as a
 missing input file or an unsupported format, print `Error: ...` and exit 1.
 
-`batch` records individual render failures in its summary instead of aborting.
-The missing-path, direct-file, and per-file-failure cases described above all
-currently exit 0; check the summary rather than relying on the process status
-alone for those cases.
+`batch` records individual render failures in its summary instead of aborting,
+then exits 1 if any file failed and 0 if every file succeeded -- a missing
+input path or empty input directory counts as 0 files succeeding, 0 failing,
+so it exits 0 rather than 1.
 
 == Next Steps
 

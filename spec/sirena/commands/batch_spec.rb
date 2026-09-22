@@ -11,63 +11,7 @@ require 'sirena/commands/batch'
 # someone would choose on purpose: the run died part way, and the files
 # after the bad one were never attempted.
 RSpec.describe Sirena::Commands::BatchCommand do
-  # 4000 nested subgraphs -- past the depth the flowchart parser can carry,
-  # so it fails where a well-formed neighbour does not. `parse_tree`
-  # (flowchart.rb:58-60) converts that overflow into a ParseError, so this
-  # file exercises the ORDINARY failure path; the widened rescue is driven
-  # by the exhaustion examples below, which raise a real `NoMemoryError` at
-  # `File.read`.
-  #
-  # 4000 is well past the boundary rather than close to it: measured to
-  # still overflow under a 16MB and a 32MB RUBY_THREAD_VM_STACK_SIZE, where
-  # a shallower depth parses cleanly once the stack is that generous. A
-  # depth near the boundary would make this file flake with the
-  # interpreter's stack size instead of proving the guard.
-  def bomb
-    opens = (1..4000).map { |i| "subgraph s#{i}" }.join("\n")
-    "graph TD\n#{opens}\nA\n#{"end\n" * 4000}"
-  end
-
-  # The order matters: a file AFTER the bad one is the only thing that can
-  # tell "reported and continued" from "died at the bad one".
-  def in_batch_dir
-    Dir.mktmpdir do |dir|
-      input = File.join(dir, 'in')
-      output = File.join(dir, 'out')
-      Dir.mkdir(input)
-      File.write(File.join(input, '1-ok.mmd'), "graph TD\nAlpha-->Beta\n")
-      File.write(File.join(input, '2-bomb.mmd'), bomb)
-      File.write(File.join(input, '3-ok.mmd'), "graph TD\nOmega-->Zeta\n")
-      yield input, output
-    end
-  end
-
-  # The rescue in `BatchCommand` is a SECOND widened boundary and needs the
-  # same proof as the engine's, in both directions. The exhaustion spec
-  # constrains the CONSTANT; `rescue Exception` written at THIS site passes
-  # that untouched, and then Ctrl-C, `exit` and a host's `Timeout.timeout`
-  # are all swallowed part way through a batch run. `File.read` sits inside
-  # the rescued block, which is how a real one of each is driven through it.
-  def batching(exception)
-    lambda do
-      in_batch_dir do |input, output|
-        allow(File).to receive(:read).and_call_original
-        allow(File).to receive(:read)
-          .with(File.join(input, '2-bomb.mmd')).and_raise(exception)
-
-        run_batch(input, output)
-      end
-    end
-  end
-
-  def run_batch(input, output)
-    original = $stdout
-    $stdout = StringIO.new
-    described_class.new(input: input, output: output).run
-    $stdout.string
-  ensure
-    $stdout = original
-  end
+  include BatchCommandRunner
 
   it 'renders the files after a bomb instead of dying at it' do
     in_batch_dir do |input, output|
@@ -167,5 +111,69 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # `StandardError`, which would quietly turn this into a test of nothing.
   it 'lets a class outside the exhaustion family through untouched' do
     expect(&batching(NotImplementedError)).to raise_error(NotImplementedError)
+  end
+
+  # `-i` naming a single FILE (not a directory) is documented, not
+  # incidental (cli.rb's `batch` desc, and this class's own
+  # `find_mermaid_files`, both accept either). The relative-path
+  # calculation used to assume `input_base` was always a directory: for a
+  # file it stripped the path down to '', landing `File.write` on the
+  # output directory itself and raising `Errno::EISDIR`, counted as a
+  # failure, nothing ever written.
+  it 'renders a single file passed via -i, not only a directory' do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, 'solo.mmd')
+      output = File.join(dir, 'out')
+      File.write(input, "graph TD\nAlpha-->Beta\n")
+
+      run_batch(input, output)
+
+      expect(Dir.children(output)).to eq(['solo.svg'])
+    end
+  end
+
+  # `#success?` is what `Cli#batch` checks after `#run` to decide its exit
+  # code (D1: exit 1 if any item failed). Asserted directly here rather
+  # than only through the CLI spec, since `BatchCommand` is also used
+  # directly by callers that are not the CLI.
+  it 'reports success when every item succeeds' do
+    in_batch_dir do |input, output|
+      # Route around the bomb fixture -- this example wants an all-success
+      # run, not the mixed one `in_batch_dir` builds by default.
+      FileUtils.rm(File.join(input, '2-bomb.mmd'))
+
+      expect(batch_command(input, output).success?).to be(true)
+    end
+  end
+
+  it 'reports failure when any item fails' do
+    in_batch_dir do |input, output|
+      expect(batch_command(input, output).success?).to be(false)
+    end
+  end
+
+  # `#success?`'s own docstring says a run that found no files at all
+  # counts as success -- this is documented INTENT, not a bug, so the gap
+  # this closes is coverage, not behavior. Asserted for both an empty
+  # directory and a nonexistent one, since `find_mermaid_files` returns
+  # `[]` for either (`File.directory?` is false on a path that doesn't
+  # exist, falling through to the final `else []` branch).
+  it 'reports success on an empty input directory' do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, 'empty')
+      output = File.join(dir, 'out')
+      Dir.mkdir(input)
+
+      expect(batch_command(input, output).success?).to be(true)
+    end
+  end
+
+  it 'reports success on a nonexistent input path' do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, 'does-not-exist')
+      output = File.join(dir, 'out')
+
+      expect(batch_command(input, output).success?).to be(true)
+    end
   end
 end
