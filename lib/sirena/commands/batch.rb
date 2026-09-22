@@ -49,6 +49,18 @@ module Sirena
         print_summary
       end
 
+      # Whether every item rendered without error. Checked after #run, not
+      # returned by it: #run's own contract (print the summary, survive a
+      # bad file) is unrelated to whether the caller should exit non-zero,
+      # and a boolean return on a method named `run` reads as a lie about
+      # what it does.
+      #
+      # @return [Boolean] true if nothing failed (including a run that
+      #   found no files at all)
+      def success?
+        @stats[:failed].zero?
+      end
+
       private
 
       def find_mermaid_files(path)
@@ -61,9 +73,19 @@ module Sirena
         end
       end
 
+      # `-i` names either a directory or a single file (`find_mermaid_files`
+      # accepts both, and it's documented on the CLI). The directory case
+      # strips `input_base` off the front of `file` to get a path relative
+      # to it; a single file IS `input_base`, so that same subtraction
+      # leaves '', turning `output_file` into the output directory itself.
+      def relative_path_for(file, input_base)
+        return File.basename(file) if File.file?(input_base)
+
+        file.sub(/^#{Regexp.escape(input_base)}\/?/, '')
+      end
+
       def process_file(file, input_base, output_base, current, total)
-        # Calculate relative path
-        relative = file.sub(/^#{Regexp.escape(input_base)}\/?/, '')
+        relative = relative_path_for(file, input_base)
         output_file = File.join(output_base, relative.sub(/\.mmd$/, '.svg'))
 
         print "[#{current}/#{total}] #{relative}... "

@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'timeout'
 require 'sirena/cli'
 require 'sirena/commands/render'
+require 'sirena/commands/batch'
 
 RSpec.describe Sirena::Cli do
   # `RenderCommand#run` builds the theme (a hostile `--theme` YAML file)
@@ -104,6 +105,29 @@ RSpec.describe Sirena::Cli do
       expect { described_class.start(['render', 'unused.mmd', '--verbose']) }
         .to output("Error: failed to allocate memory\n\n").to_stderr
         .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+    end
+  end
+
+  # D1: a multi-item command exits non-zero if any item failed, the same
+  # promise `render` already keeps for a single item. `BatchCommand#run`
+  # does the work; `#success?` carries the verdict the CLI acts on.
+  describe 'batch command' do
+    def batching_result(success)
+      fake_command = instance_double(Sirena::Commands::BatchCommand, run: nil, success?: success)
+      allow(Sirena::Commands::BatchCommand).to receive(:new).and_return(fake_command)
+    end
+
+    it 'exits 1 when any item failed' do
+      batching_result(false)
+
+      expect { described_class.start(['batch']) }
+        .to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+    end
+
+    it 'does not exit with an error status when every item succeeded' do
+      batching_result(true)
+
+      expect { described_class.start(['batch']) }.not_to raise_error
     end
   end
 

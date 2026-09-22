@@ -176,14 +176,157 @@ RSpec.describe Sirena::Engine do
           /Unable to detect diagram type/
         )
       end
+
+      # The message must name the keyword a user actually types
+      # (`sequenceDiagram`), not DiagramRegistry's internal registration
+      # key (`:sequence`) -- DIAGRAM_TYPE_KEYWORDS is the translation
+      # table, checked for completeness against DiagramRegistry.types by
+      # the spec below.
+      it 'names the actual keyword for every registered diagram type' do
+        expect { engine.render(source) }.to raise_error(
+          Sirena::Engine::DiagramTypeError
+        ) do |error|
+          Sirena::DiagramRegistry.types.each do |type|
+            keyword = Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
+            expect(error.message).to include(keyword)
+          end
+        end
+      end
+
+      # Every registered type has a keyword entry -- DIAGRAM_TYPE_KEYWORDS
+      # is a second list next to DIAGRAM_TYPE_PATTERNS, so nothing enforces
+      # by construction that adding a type updates both; this spec is that
+      # enforcement (falls back to the wrong internal name via #fetch's
+      # default in production code, but here the omission itself fails).
+      it 'keeps DIAGRAM_TYPE_KEYWORDS in sync with every registered type' do
+        expect(Sirena::DiagramRegistry.types.sort)
+          .to eq(Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.keys.sort)
+      end
+
+      # A list of keywords glued together with no separator would still
+      # pass the include-per-type check above (each stays a contiguous
+      # substring of the concatenation) -- assert the comma-separated
+      # format the docstring promises, so dropping the separator is caught.
+      it 'separates each keyword with a comma and a space' do
+        expect { engine.render(source) }.to raise_error(
+          Sirena::Engine::DiagramTypeError
+        ) do |error|
+          sorted_keywords = Sirena::DiagramRegistry.types.sort.map do |type|
+            Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
+          end
+          expect(error.message).to include(sorted_keywords.join(', '))
+        end
+      end
     end
 
     context 'with verbose option' do
-      it 'enables verbose output' do
-        source = "graph TD\nA-->B"
+      let(:source) { "graph TD\nA-->B" }
+
+      # Library code never writes diagnostics to stdout -- engine.rb used to
+      # `puts` its log lines, landing ahead of the SVG that the CLI later
+      # prints on the very same stream. A host embedding Sirena and reading
+      # stdout as pure SVG got log noise mixed in.
+      it 'logs to stderr, not stdout' do
         expect { engine.render(source, verbose: true) }.to output(
           /Starting render pipeline/
-        ).to_stdout
+        ).to_stderr
+      end
+
+      it 'writes nothing to stdout, even under verbose' do
+        expect { engine.render(source, verbose: true) }.not_to output.to_stdout
+      end
+    end
+
+    context 'with a logger injected' do
+      let(:source) { "graph TD\nA-->B" }
+      let(:log_output) { StringIO.new }
+      let(:logger) { Logger.new(log_output) }
+
+      it 'logs through the injected logger instead of building its own' do
+        described_class.new(logger: logger).render(source, verbose: true)
+
+        expect(log_output.string).to include('Starting render pipeline')
+      end
+
+      it 'suppresses debug logging when verbose is false' do
+        described_class.new(logger: logger).render(source, verbose: false)
+
+        expect(log_output.string).to be_empty
+      end
+
+      # apply_log_level used to mutate an injected logger's `.level=` on
+      # every construction/render -- crashing outright for a duck-typed
+      # logger that only implements the documented `debug`/`info`/`warn`
+      # contract, and corrupting a shared logger's own level as a side
+      # effect otherwise. Logging is now gated purely on @verbose, so
+      # neither construction nor render ever calls `.level=`.
+      it 'accepts a duck-typed logger with no #level= method' do
+        minimal_logger = Class.new do
+          def debug(_msg); end
+          def info(_msg); end
+          def warn(_msg); end
+        end.new
+
+        expect do
+          described_class.new(logger: minimal_logger).render(source, verbose: true)
+        end.not_to raise_error
+      end
+
+      it "does not mutate a shared logger's own level" do
+        logger.level = Logger::INFO
+
+        described_class.new(logger: logger).render(source, verbose: false)
+
+        expect(logger.level).to eq(Logger::INFO)
+      end
+    end
+
+    # engine.rb used to fall back to the default theme for any name it
+    # could not resolve, silently -- exit 0, wrong theme drawn, nothing
+    # printed. `--theme nosuchtheme` and a typo looked identical to asking
+    # for `default` on purpose.
+    context 'with an unknown theme name' do
+      let(:source) { "graph TD\nA-->B" }
+
+      it 'raises instead of silently falling back to the default theme' do
+        expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
+          Sirena::Engine::PipelineError,
+          /nosuchtheme/
+        )
+      end
+
+      it 'lists the valid theme names in the error' do
+        expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
+          Sirena::Engine::PipelineError
+        ) do |error|
+          Sirena::Theme::Registry.list.each do |name|
+            expect(error.message).to include(name.to_s)
+          end
+        end
+      end
+
+      it 'still raises when the unknown theme is given at construction time' do
+        expect { described_class.new(theme: 'nosuchtheme') }.to raise_error(
+          Sirena::Engine::PipelineError,
+          /nosuchtheme/
+        )
+      end
+
+      # Theme::Registry is keyed by Symbol internally, so `theme: :dark`
+      # is a plausible caller mistake, not an exotic one -- a Symbol used
+      # to skip the raise entirely and fall through to the untouched
+      # `else` branch, silently drawing the default theme instead.
+      it 'raises for an unknown Symbol theme, not only an unknown String' do
+        expect { engine.render(source, theme: :nosuchtheme) }.to raise_error(
+          Sirena::Engine::PipelineError,
+          /nosuchtheme/
+        )
+      end
+
+      it 'resolves a known Symbol theme instead of silently defaulting' do
+        themed_engine = described_class.new(theme: :dark)
+
+        expect(themed_engine.theme.name).to eq('dark')
       end
     end
   end

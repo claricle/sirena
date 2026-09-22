@@ -107,7 +107,9 @@ module Sirena
                   desc: 'Enable verbose output'
     def batch
       require_relative 'commands/batch'
-      Commands::BatchCommand.new(options).run
+      command = Commands::BatchCommand.new(options)
+      command.run
+      exit 1 unless command.success?
     rescue StandardError => e
       handle_error(e)
     end
