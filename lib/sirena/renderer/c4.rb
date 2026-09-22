@@ -11,9 +11,9 @@ module Sirena
     # and relationships with proper C4 visual conventions.
     #
     # @example Render a C4 diagram
-    #   renderer = C4Renderer.new
+    #   renderer = C4.new
     #   svg = renderer.render(laid_out_graph)
-    class C4Renderer < Base
+    class C4 < Base
       # C4 standard colors (from C4-PlantUML)
       C4_COLORS = {
         person: { bg: '#08427B', border: '#073B6F', text: '#FFFFFF' },

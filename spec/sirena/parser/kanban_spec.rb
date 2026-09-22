@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Parser::KanbanParser do
+RSpec.describe Sirena::Parser::Kanban do
   let(:parser) { described_class.new }
 
   describe '#parse' do

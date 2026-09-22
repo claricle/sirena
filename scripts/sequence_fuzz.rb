@@ -157,7 +157,7 @@ module SequenceFuzz
     end
   end
 
-  # Runs Sirena's own SequenceParser in-process (no subprocess) and
+  # Runs Sirena's own Sequence in-process (no subprocess) and
   # reduces the result to the same shape the mermaid side reports:
   # accepted?, and if so, the actor id list in first-appearance order.
   module SirenaSide
@@ -168,7 +168,7 @@ module SequenceFuzz
     end
 
     def verdict_for(source)
-      diagram = Sirena::Parser::SequenceParser.new.parse(source)
+      diagram = Sirena::Parser::Sequence.new.parse(source)
       { accepted: true, actors: diagram.participants.map(&:id) }
     rescue Sirena::Parser::ParseError => e
       { accepted: false, error: e.message }

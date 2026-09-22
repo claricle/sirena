@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -613,7 +613,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     # is false: an empty thread slot says nothing about a class-level
     # accessor, and a missing accessor says nothing about the slot.
     it "keeps its bookkeeping off the class and off the thread" do
-      transform = Sirena::Parser::Transforms::Flowchart
+      transform = Sirena::Parser::Builders::Flowchart
       described_class.new.parse("graph TD\nsubgraph one A\nX\nend\n")
 
       expect(transform).not_to respond_to(:state)

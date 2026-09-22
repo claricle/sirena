@@ -2,7 +2,7 @@
 
 require "spec_helper"
 require "sirena/renderer/mindmap"
-require "sirena/transform/mindmap"
+require "sirena/layout/mindmap"
 require "sirena/diagram/mindmap"
 
 RSpec.describe Sirena::Renderer::Mindmap do

@@ -12,7 +12,7 @@ module Sirena
     # Renders a Kanban board layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::Kanban into an SVG visualization showing:
+    # Layout::Kanban into an SVG visualization showing:
     # - Columns with headers
     # - Cards stacked vertically within columns
     # - Card metadata (assigned, ticket, priority, etc.)
@@ -23,7 +23,7 @@ module Sirena
     #   svg = renderer.render(layout)
     class Kanban < Base
       # Height of one extra rendered line — a card's own hard line break, or
-      # a metadata row. Mirrors Transform::Kanban::EXTRA_LINE_HEIGHT: this
+      # a metadata row. Mirrors Layout::Kanban::EXTRA_LINE_HEIGHT: this
       # renderer positions elements below a label whose height that constant
       # already accounts for, so the two must agree.
       EXTRA_LINE_HEIGHT = 18
@@ -31,7 +31,7 @@ module Sirena
 
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::Kanban
+      # @param layout [Hash] layout data from Layout::Kanban
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

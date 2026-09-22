@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram::ArchitectureDiagram do
+RSpec.describe Sirena::Diagram::Architecture do
   describe "#diagram_type" do
     it "returns :architecture" do
       expect(described_class.new.diagram_type).to eq(:architecture)

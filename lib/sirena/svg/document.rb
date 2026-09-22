@@ -66,7 +66,7 @@ module Sirena
       # @param view_box [String] ViewBox specification
       # @param overflow [String, nil] SVG `overflow` presentation attribute,
       #   e.g. `'hidden'`. Omitted from the output when nil, which is every
-      #   renderer but flowchart's today — see `FlowchartRenderer#render`.
+      #   renderer but flowchart's today — see `Flowchart#render`.
       def initialize(width: nil, height: nil, view_box: nil, overflow: nil, **args)
         super(**args)
         self.width = width

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Renderer::FlowchartRenderer do
+RSpec.describe Sirena::Renderer::Flowchart do
   let(:renderer) { described_class.new }
 
   describe '#render' do

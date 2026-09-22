@@ -45,7 +45,7 @@ RSpec.describe Sirena::Corpus do
     {
       "detect" => Sirena::Engine::DiagramTypeError,
       "parse" => Sirena::Parser::ParseError,
-      "layout" => Sirena::Transform::TransformError,
+      "layout" => Sirena::Layout::LayoutError,
       "render" => Sirena::Renderer::RenderError,
       "timeout" => Timeout::Error
     }.each do |stage, klass|
@@ -88,7 +88,7 @@ RSpec.describe Sirena::Corpus do
 
       expect(result[:pass]).to be(false)
       expect(result[:stage]).to eq("layout")
-      expect(result[:exception_class]).to eq("Sirena::Transform::TransformError")
+      expect(result[:exception_class]).to eq("Sirena::Layout::LayoutError")
     end
   end
 

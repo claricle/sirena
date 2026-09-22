@@ -9,7 +9,7 @@ require "sirena/parser/sequence"
 # `accDescr` or `autonumber` line. These statements are accepted and
 # contribute no participants, messages or notes, so the diagram drawn from
 # the lines around them is unchanged.
-RSpec.describe Sirena::Parser::SequenceParser do
+RSpec.describe Sirena::Parser::Sequence do
   let(:parser) { described_class.new }
   let(:body) { "Alice->Bob:Hello Bob\nNote right of Bob: Bob thinks\n" }
   let(:plain) { parser.parse("sequenceDiagram\n#{body}") }

@@ -12,9 +12,9 @@ module Sirena
     # styles, and cardinality labels.
     #
     # @example Render a class diagram
-    #   renderer = ClassDiagramRenderer.new
+    #   renderer = ClassDiagram.new
     #   svg = renderer.render(laid_out_graph)
-    class ClassDiagramRenderer < Base
+    class ClassDiagram < Base
       # Font size for class names
       CLASS_NAME_FONT_SIZE = 16
 

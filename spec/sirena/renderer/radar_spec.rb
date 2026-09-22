@@ -2,7 +2,7 @@
 
 require "spec_helper"
 require "sirena/renderer/radar"
-require "sirena/transform/radar"
+require "sirena/layout/radar"
 require "sirena/diagram/radar"
 
 RSpec.describe Sirena::Renderer::Radar do

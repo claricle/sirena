@@ -12,9 +12,9 @@ module Sirena
     # Renders a simple informational message box with centered text.
     #
     # @example Render an info diagram
-    #   renderer = InfoRenderer.new
+    #   renderer = Info.new
     #   svg = renderer.render(info_diagram)
-    class InfoRenderer < Base
+    class Info < Base
       # Info box dimensions
       BOX_WIDTH = 400
       BOX_HEIGHT = 100

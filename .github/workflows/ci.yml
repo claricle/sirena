@@ -1,0 +1,163 @@
+# The two required lanes. README.md in this directory says how to add a gate.
+#
+# Required checks (repository setting, not expressible in YAML): `fast-lane`
+# and `full-lane`. Their names never change.
+name: ci
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+    tags: [v*]
+  workflow_dispatch:
+  schedule:
+    # Nightly full run on main: belt and braces, not the primary gate.
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # ---- shared -----------------------------------------------------------
+  baseline:
+    # Resolves what the scoreboard guard (02b) compares against, per event.
+    name: baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.resolve.outputs.mode }}
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - id: resolve
+        run: ruby scripts/ci_baseline.rb
+        env:
+          GH_EVENT_NAME: ${{ github.event_name }}
+          GH_EVENT_PATH: ${{ github.event_path }}
+
+  # ---- fast lane: unit suite, budget < 10 min ---------------------------
+  unit:
+    # Everything generic-rake ran before: `bundle exec rake` (spec, benchmark,
+    # corpus:check) on the same Ruby x OS matrix.
+    name: unit (ruby ${{ matrix.ruby }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ruby: ['3.3', '3.4']
+        experimental: [false]
+        include:
+          - {os: ubuntu-latest, ruby: '4.0', experimental: true}
+          - {os: macos-latest, ruby: '4.0', experimental: true}
+          - {os: windows-latest, ruby: '4.0', experimental: true}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rake
+
+  pins:
+    name: pins
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: ruby scripts/check_workflow_pins.rb
+
+  # Reserved fast-lane slots, one job each, added to `needs` below:
+  #   lint (08), snippet spec (16), scoreboard guard (02b)
+
+  fast-lane:
+    name: fast-lane
+    if: ${{ always() }}
+    needs: [baseline, unit, pins]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: ruby scripts/lane_verdict.rb
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+
+  # ---- full lane: docs and links, budget < 30 min -----------------------
+  docs-build:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/build_deploy.yml
+    with:
+      skip_deploy: true
+
+  links:
+    uses: ./.github/workflows/links.yml
+
+  # Reserved full-lane slots, added to `needs` below:
+  #   corpus (02b), parity (14), conformance (04), fresh-resolution install
+  #   (01), scoreboard guard (02b)
+
+  full-lane:
+    name: full-lane
+    if: ${{ always() }}
+    needs: [baseline, docs-build, links]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: ruby scripts/lane_verdict.rb
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+
+  # ---- release cascade (not a gate) --------------------------------------
+  # generic-rake sent `tests-passed` after a green matrix and, on a v* tag,
+  # `do-release` (which release.yml listens for). Kept, without a third-party
+  # action. Item 17 owns what happens to it.
+  cascade:
+    if: ${{ github.event_name == 'push' }}
+    needs: [fast-lane]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Dispatch tests-passed
+        run: >-
+          gh api "repos/${GITHUB_REPOSITORY}/dispatches"
+          -f event_type=tests-passed
+          -f "client_payload[ref]=${GITHUB_REF}"
+          -f "client_payload[sha]=${GITHUB_SHA}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Dispatch do-release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: >-
+          gh api "repos/${GITHUB_REPOSITORY}/dispatches"
+          -f event_type=do-release
+          -f "client_payload[ref]=${GITHUB_REF}"
+          -f "client_payload[sha]=${GITHUB_SHA}"
+        env:
+          GH_TOKEN: ${{ github.token }}

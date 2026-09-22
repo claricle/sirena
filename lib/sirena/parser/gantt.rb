@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/gantt"
-require_relative "transforms/gantt"
+require_relative "builders/gantt"
 require_relative "../diagram/gantt"
 
 module Sirena
@@ -24,7 +24,7 @@ module Sirena
     # - Comments
     #
     # @example Parse a simple Gantt chart
-    #   parser = GanttParser.new
+    #   parser = Gantt.new
     #   diagram = parser.parse(<<~GANTT)
     #     gantt
     #       title Project Timeline
@@ -33,11 +33,11 @@ module Sirena
     #       Task 1 :a1, 2024-01-01, 30d
     #       Task 2 :after a1, 20d
     #   GANTT
-    class GanttParser < Base
-      # Parses Gantt chart diagram source into a GanttChart diagram model.
+    class Gantt < Base
+      # Parses Gantt chart diagram source into a Gantt diagram model.
       #
       # @param source [String] the Mermaid Gantt chart diagram source
-      # @return [Diagram::GanttChart] the parsed Gantt chart diagram
+      # @return [Diagram::Gantt] the parsed Gantt chart diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::Gantt.new
@@ -50,7 +50,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Gantt.new
+        transform = Builders::Gantt.new
         diagram = transform.apply(parse_tree)
 
         diagram

@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/architecture"
-require_relative "transforms/architecture"
+require_relative "builders/architecture"
 
 module Sirena
   module Parser
@@ -21,7 +21,7 @@ module Sirena
         stripped = input.strip
         tree = parse_with_grammar(Grammars::Architecture.new, stripped)
 
-        Transforms::Architecture.new.apply(tree)
+        Builders::Architecture.new.apply(tree)
       end
 
       private

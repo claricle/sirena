@@ -4,9 +4,9 @@ require 'spec_helper'
 
 RSpec.describe 'Flowchart Integration' do
   describe 'complete flowchart pipeline' do
-    let(:parser) { Sirena::Parser::FlowchartParser.new }
-    let(:transform) { Sirena::Transform::FlowchartTransform.new }
-    let(:renderer) { Sirena::Renderer::FlowchartRenderer.new }
+    let(:parser) { Sirena::Parser::Flowchart.new }
+    let(:transform) { Sirena::Layout::Flowchart.new }
+    let(:renderer) { Sirena::Renderer::Flowchart.new }
 
     it 'parses, transforms, and renders a simple flowchart' do
       source = "graph TD\nA[Start]-->B[End]"
@@ -71,13 +71,13 @@ RSpec.describe 'Flowchart Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::FlowchartParser
+        Sirena::Parser::Flowchart
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Transform::FlowchartTransform
+        Sirena::Layout::Flowchart
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::FlowchartRenderer
+        Sirena::Renderer::Flowchart
       )
     end
   end

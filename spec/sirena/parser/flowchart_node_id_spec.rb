@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   # Spelled out rather than read from the grammar: driving the examples off
   # the grammar's own constant means DELETING a word silently deletes its
   # test. The first example in that block pins the two lists against each
@@ -429,7 +429,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
   #
   # The first column asks the raw grammar via `subgraph_name_parses?`, while
   # the other two ask the full parser via `parses?`. The asymmetry is needed
-  # because `lib/sirena/parser/transforms/flowchart.rb` refuses every
+  # because `lib/sirena/parser/builders/flowchart.rb` refuses every
   # subgraph, leaving the grammar as the only layer that can answer the first
   # question.
   describe "the three id positions" do

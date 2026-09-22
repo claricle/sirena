@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/state_diagram'
-require_relative 'transforms/state_diagram'
+require_relative 'builders/state_diagram'
 require_relative '../diagram/state_diagram'
 
 module Sirena
@@ -17,9 +17,9 @@ module Sirena
     # - Direction statements (TB, BT, LR, RL)
     #
     # @example Parse a simple state diagram
-    #   parser = StateDiagramParser.new
+    #   parser = StateDiagram.new
     #   diagram = parser.parse("stateDiagram-v2\n[*]-->Idle\nIdle-->Active")
-    class StateDiagramParser < Base
+    class StateDiagram < Base
       # Parses state diagram source into a StateDiagram model.
       #
       # @param source [String] the Mermaid state diagram source
@@ -27,7 +27,7 @@ module Sirena
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_with_grammar(Grammars::StateDiagram.new, source)
-        Transforms::StateDiagram.new.apply(tree)
+        Builders::StateDiagram.new.apply(tree)
       end
 
       private

@@ -77,7 +77,7 @@ module Sirena
       case exception
       when Sirena::Engine::DiagramTypeError then "detect"
       when Sirena::Parser::ParseError then "parse"
-      when Sirena::Transform::TransformError then "layout"
+      when Sirena::Layout::LayoutError then "layout"
       when Sirena::Renderer::RenderError then "render"
       when Timeout::Error then "timeout"
       else "unknown"

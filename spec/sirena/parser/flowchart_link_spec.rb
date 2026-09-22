@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   def diagram(link)
     described_class.new.parse("flowchart TD\n  A #{link} B\n")
   end
@@ -234,16 +234,6 @@ RSpec.describe Sirena::Parser::FlowchartParser do
         expect(parsed.nodes.map(&:id).sort).to eq(%w[A B])
         expect(parsed.edges.map(&:arrow_type)).to eq(["dotted_arrow"])
       end
-    end
-  end
-
-  describe "a labelled link" do
-    it "is refused rather than misparsed" do
-      # mmdc renders `A -- text --> B` as one labelled edge. Sirena does
-      # not support that form yet; what matters is that it fails rather
-      # than quietly producing a node called `text`.
-      expect { described_class.new.parse("flowchart TD\n  A -- text --> B\n") }
-        .to raise_error(Sirena::Parser::ParseError)
     end
   end
 

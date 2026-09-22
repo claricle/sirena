@@ -17,9 +17,9 @@ module Sirena
     # sections, and dependency indicators.
     #
     # @example Render a Gantt chart
-    #   renderer = GanttRenderer.new
+    #   renderer = Gantt.new
     #   svg = renderer.render(gantt_graph)
-    class GanttRenderer < Base
+    class Gantt < Base
       # Gantt chart dimensions
       MARGIN_LEFT = 200
       MARGIN_TOP = 80

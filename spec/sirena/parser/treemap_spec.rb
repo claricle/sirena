@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'sirena/parser/treemap'
 
-RSpec.describe Sirena::Parser::TreemapParser do
+RSpec.describe Sirena::Parser::Treemap do
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -17,7 +17,7 @@ RSpec.describe Sirena::Parser::TreemapParser do
 
         diagram = parser.parse(source)
 
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.root_nodes.length).to eq(1)
         expect(diagram.root_nodes.first.label).to eq('Root')
         expect(diagram.root_nodes.first.children.length).to eq(1)
@@ -33,7 +33,7 @@ RSpec.describe Sirena::Parser::TreemapParser do
 
         diagram = parser.parse(source)
 
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.root_nodes.length).to eq(1)
       end
 
@@ -299,26 +299,26 @@ RSpec.describe Sirena::Parser::TreemapParser do
       it 'parses fixture 001' do
         source = File.read('spec/mermaid/treemap/001_rendering_treemap_spec_treemap_0.mmd')
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
       end
 
       it 'parses fixture 002' do
         source = File.read('spec/mermaid/treemap/002_rendering_treemap_spec_treemap_1.mmd')
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
       end
 
       it 'parses fixture 008 (example)' do
         source = File.read('spec/mermaid/treemap/008_example_treemap_7.mmd')
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.root_nodes.length).to eq(2)
       end
 
       it 'parses fixture 010 (with metadata)' do
         source = File.read('spec/mermaid/treemap/010_parsertest_treemap_test_9.mmd')
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::TreemapDiagram)
+        expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.title).to eq('My Treemap Diagram')
       end
     end

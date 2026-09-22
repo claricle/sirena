@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/sankey"
-require_relative "transforms/sankey"
+require_relative "builders/sankey"
 require_relative "../diagram/sankey"
 
 module Sirena
@@ -20,7 +20,7 @@ module Sirena
     # - Comments
     #
     # @example Parse a simple Sankey diagram
-    #   parser = SankeyParser.new
+    #   parser = Sankey.new
     #   diagram = parser.parse(<<~SANKEY)
     #     sankey-beta
     #     A,B,10
@@ -29,7 +29,7 @@ module Sirena
     #   SANKEY
     #
     # @example Parse Sankey with node labels
-    #   parser = SankeyParser.new
+    #   parser = Sankey.new
     #   diagram = parser.parse(<<~SANKEY)
     #     sankey-beta
     #     Source [Energy Source]
@@ -37,11 +37,11 @@ module Sirena
     #     Source,Process,100
     #     Process,Output,70
     #   SANKEY
-    class SankeyParser < Base
-      # Parses Sankey diagram source into a SankeyDiagram model.
+    class Sankey < Base
+      # Parses Sankey diagram source into a Sankey model.
       #
       # @param source [String] the Mermaid Sankey diagram source
-      # @return [Diagram::SankeyDiagram] the parsed Sankey diagram
+      # @return [Diagram::Sankey] the parsed Sankey diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::Sankey.new
@@ -54,7 +54,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Sankey.new
+        transform = Builders::Sankey.new
         diagram = transform.apply(parse_tree)
 
         diagram

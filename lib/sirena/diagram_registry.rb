@@ -12,16 +12,16 @@ module Sirena
   #   DiagramRegistry.register(
   #     :flowchart,
   #     parser: Parser::FlowchartGrammar,
-  #     transform: Transform::FlowchartTransform,
-  #     renderer: Renderer::FlowchartRenderer,
+  #     transform: Layout::Flowchart,
+  #     renderer: Renderer::Flowchart,
   #     model: Diagram::Flowchart
   #   )
   #
   # @example Retrieving handlers for a type
   #   handlers = DiagramRegistry.get(:flowchart)
   #   # => { parser: Parser::FlowchartGrammar,
-  #   #      transform: Transform::FlowchartTransform,
-  #   #      renderer: Renderer::FlowchartRenderer,
+  #   #      transform: Layout::Flowchart,
+  #   #      renderer: Renderer::Flowchart,
   #   #      model: Diagram::Flowchart }
   #
   # @example Listing registered types
@@ -47,8 +47,8 @@ module Sirena
       #   DiagramRegistry.register(
       #     :flowchart,
       #     parser: Parser::FlowchartGrammar,
-      #     transform: Transform::FlowchartTransform,
-      #     renderer: Renderer::FlowchartRenderer,
+      #     transform: Layout::Flowchart,
+      #     renderer: Renderer::Flowchart,
       #     model: Diagram::Flowchart
       #   )
       def register(type, parser:, transform:, renderer:, model:)

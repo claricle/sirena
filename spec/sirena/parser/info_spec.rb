@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'sirena/parser/info'
 
-RSpec.describe Sirena::Parser::InfoParser do
+RSpec.describe Sirena::Parser::Info do
   let(:parser) { described_class.new }
 
   describe '#parse' do
