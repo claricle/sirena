@@ -9001,9 +9001,7 @@
   {
     "case": "sequence/006_parser_should_show_sequence_numbers_when_autonumber_is_enabled_5.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/006_rendering_sequencediagram-v2_spec_sequence_5.mmd",
@@ -9015,9 +9013,7 @@
   {
     "case": "sequence/007_parser_should_handle_a_sequencediagram_definition_with_a_title__6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/007_parser_should_handle_comments_in_a_sequencediagram_6.mmd",
@@ -9034,9 +9030,7 @@
   {
     "case": "sequence/008_parser_should_handle_a_sequencediagram_definition_with_a_title_without_a___7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/008_parser_should_handle_same_actor_with_different_whitespace_properly_7.mmd",
@@ -9053,9 +9047,7 @@
   {
     "case": "sequence/009_parser_should_handle_a_sequencediagram_definition_with_a_accessibility_title_and_description__accdescr__8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/009_parser_should_handle_one_actor_and_a_note_to_the_left_8.mmd",
@@ -9072,9 +9064,7 @@
   {
     "case": "sequence/010_parser_should_handle_a_sequencediagram_definition_with_a_accessibility_title_and_multiline_description__accdescr__9.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/010_parser_should_handle_one_actor_and_a_note_to_the_right_9.mmd",
