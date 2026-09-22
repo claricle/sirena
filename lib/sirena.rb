@@ -280,7 +280,7 @@ require_relative 'sirena/layout/xy_chart'
 require_relative 'sirena/renderer/xy_chart'
 
 Sirena::DiagramRegistry.register(
-  :xy_chart,
+  :xychart,
   parser: Sirena::Parser::XyChart,
   transform: Sirena::Layout::XyChart,
   renderer: Sirena::Renderer::XyChart,
