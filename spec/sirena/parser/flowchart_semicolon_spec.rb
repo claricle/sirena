@@ -138,15 +138,14 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       expect(node_ids("graph TD\nA\nstyle A fill:red\nB[#x]\n")).to eq(%w[A B])
     end
 
-    # A comma splits mermaid's declaration list and we model none of that,
-    # with or without a hash. mmdc draws node A for both of these; we refuse
-    # the line, exactly as main does. Pinned so the two paths cannot drift.
+    # A comma splits mermaid's declaration list, with or without a hash.
+    # The list is not modelled, so the line is taken and the node is kept.
     [
       "style A fill:red,stroke:blue",
       "style A fill:#f9f,stroke:blue"
     ].each do |declaration|
-      it "refuses #{declaration.inspect}" do
-        expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
+      it "takes #{declaration.inspect}" do
+        expect(node_ids("graph TD\nA\n#{declaration}\n")).to eq(%w[A])
       end
     end
   end

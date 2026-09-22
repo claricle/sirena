@@ -3,6 +3,7 @@
 require "spec_helper"
 require "rake"
 require "tmpdir"
+require "fileutils"
 
 # lib/tasks/corpus.rake is loaded by the Rakefile via `Dir.glob(...).each { |r|
 # load r }`, never `require`d, so it is not on Sirena's own require path.
@@ -243,21 +244,64 @@ RSpec.describe Sirena::Corpus do
     end
   end
 
+  describe ".check!" do
+    # The abort path corpus:check gates CI on, driven with stubbed renders
+    # so it needs neither the real corpus nor the committed scoreboard.
+    let(:committed) { [{ "case" => "a/1.mmd", "verdict" => "valid", "pass" => true }] }
+
+    include CorpusCheckStubs
+
+    it "exits non-zero and names a case that passed in the scoreboard and fails now" do
+      stub_fresh_run("a/1.mmd" => false)
+
+      status = nil
+      expect { status = exit_status_of { described_class.check! } }
+        .to output(%r{REGRESSED.*\n\s+a/1\.mmd}).to_stdout
+      expect(status).to eq(1)
+    end
+
+    it "exits non-zero and names a passing case the scoreboard does not record" do
+      stub_fresh_run("a/1.mmd" => true, "a/2.mmd" => true)
+
+      status = nil
+      expect { status = exit_status_of { described_class.check! } }
+        .to output(%r{IMPROVED BUT NOT RECORDED.*\n\s+a/2\.mmd}).to_stdout
+      expect(status).to eq(1)
+    end
+
+    it "exits non-zero when the committed scoreboard is missing or empty" do
+      # A fresh run of nothing diffs clean against nothing, so only the
+      # explicit empty-file abort can make this exit non-zero.
+      allow(described_class).to receive_messages(load_scoreboard: [], cases: [], run_cases: {}, verdicts: {})
+
+      expect(exit_status_of { described_class.check! }).to eq(1)
+    end
+
+    it "returns normally when fresh results match the committed scoreboard" do
+      stub_fresh_run("a/1.mmd" => true)
+
+      expect { described_class.check! }.to output(/corpus:check: clean \(1 cases/).to_stdout
+    end
+  end
+
   describe "a seeded detection failure" do
-    it "lands in the scoreboard rows as the detect stage with its exception class" do
-      Dir.mktmpdir do |root|
-        FileUtils.mkdir_p(File.join(root, "seed"))
-        File.write(File.join(root, "seed", "001.mmd"), "this is not a diagram\n")
-        stub_const("Sirena::Corpus::CORPUS_ROOT", root)
+    let(:root) { Dir.mktmpdir }
 
-        results = described_class.run_cases(described_class.cases(nil))
-        rows = described_class.rows_for_scoreboard(results, {})
+    before do
+      FileUtils.mkdir_p(File.join(root, "seeded"))
+      File.write(File.join(root, "seeded", "1.mmd"), "notADiagramType\n  A --> B\n")
+      stub_const("Sirena::Corpus::CORPUS_ROOT", root)
+    end
 
-        expect(rows).to eq([{
-          "case" => "seed/001.mmd", "verdict" => "unknown", "pass" => false,
-          "stage" => "detect", "exception_class" => "Sirena::Engine::DiagramTypeError"
-        }])
-      end
+    after { FileUtils.remove_entry(root) }
+
+    it "lands in the scoreboard row with stage detect" do
+      rows = described_class.rows_for_scoreboard(described_class.run_cases(["seeded/1.mmd"]), {})
+
+      expect(rows).to eq([{
+        "case" => "seeded/1.mmd", "verdict" => "unknown", "pass" => false,
+        "stage" => "detect", "exception_class" => "Sirena::Engine::DiagramTypeError"
+      }])
     end
   end
 end
