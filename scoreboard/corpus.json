@@ -544,9 +544,7 @@
   {
     "case": "class/003_rendering_classdiagram-elk-v3_spec_class_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/004_rendering_classdiagram-elk-v3_spec_class_3.mmd",
@@ -576,9 +574,7 @@
   {
     "case": "class/009_rendering_classdiagram-handdrawn-v3_spec_class_8.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/010_rendering_classdiagram-handdrawn-v3_spec_class_9.mmd",
@@ -608,9 +604,7 @@
   {
     "case": "class/015_rendering_classdiagram-v2_spec_class_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/016_rendering_classdiagram-v2_spec_class_15.mmd",
@@ -640,9 +634,7 @@
   {
     "case": "class/021_rendering_classdiagram-v3_spec_class_20.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/022_rendering_classdiagram-v3_spec_class_21.mmd",
@@ -704,9 +696,7 @@
   {
     "case": "class/033_platform_yari_class_32.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/034_platform_yari_class_33.mmd",
@@ -716,9 +706,7 @@
   {
     "case": "class/035_platform_yari_class_34.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/036_platform_yari_class_35.mmd",
@@ -790,9 +778,7 @@
   {
     "case": "class/049_platform_yari_class_48.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/050_platform_yari_class_49.mmd",
@@ -874,9 +860,7 @@
   {
     "case": "class/065_parser_should_handle_parsing_of_separators_64.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/066_parser_should_parse_a_class_with_a_text_label_65.mmd",
@@ -947,16 +931,12 @@
   {
     "case": "class/076_parser_should_handle_a_mix_of_members_defined_in_and_outside_of_brackets_75.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/077_parser_should_handle_member_and_method_definitions_76.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/078_parser_should_handle_return_types_on_methods_77.mmd",
@@ -1035,16 +1015,12 @@
   {
     "case": "class/092_parser_should_handle_class_annotations_in_brackets_91.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/093_parser_should_handle_class_annotations_in_brackets_with_members_and_methods_92.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/094_parser_should_handle_simple_member_declaration_93.mmd",
@@ -1074,16 +1050,12 @@
   {
     "case": "class/099_parser_should_handle_simple_return_types_98.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/100_parser_should_handle_return_types_as_array_99.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/101_parser_should_handle_visibility_100.mmd",
@@ -1093,16 +1065,12 @@
   {
     "case": "class/102_parser_should_handle_abstract_methods_101.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/103_parser_should_handle_static_methods_102.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/104_parser_should_handle_generic_types_in_arguments_103.mmd",
@@ -1112,16 +1080,12 @@
   {
     "case": "class/105_parser_should_handle_generic_return_types_104.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/106_parser_should_handle_generic_types_in_members_in_class_with_brackets_105.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/107_parser_should_handle_an_empty_class_body_with__106.mmd",
@@ -1146,16 +1110,12 @@
   {
     "case": "class/111_parser_should_handle_generic_class_with_brackets_110.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/112_parser_should_handle_generic_class_with_brackets_and_a_literal_name_111.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/113_parser_should_handle_all_basic_relationships_112.mmd",
@@ -1246,16 +1206,12 @@
   {
     "case": "class/129_parser_should_handle_class_annotations_in_brackets_128.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/130_parser_should_handle_class_annotations_in_brackets_with_members_and_methods_129.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/131_parser_should_add_bracket_members_in_right_order_130.mmd",
@@ -1265,16 +1221,12 @@
   {
     "case": "class/132_parser_should_handle_abstract_methods_131.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/133_parser_should_handle_static_methods_132.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/134_parser_should_associate_link_and_css_appropriately_133.mmd",
@@ -1419,9 +1371,7 @@
   {
     "case": "class/160_parser_should_handle_namespace_with_generic_types_159.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/161_parser_should_handle_all_basic_relationships_160.mmd",
@@ -1451,9 +1401,7 @@
   {
     "case": "class/166_parser_should_parse_a_class_with_a_text_label_members_and_annotation_165.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/167_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_166.mmd",
@@ -1572,9 +1520,7 @@
   {
     "case": "class_diagram/008_platform_yari_7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/009_platform_yari_8.mmd",
@@ -1586,9 +1532,7 @@
   {
     "case": "class_diagram/010_platform_yari_9.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/011_platform_yari_10.mmd",
@@ -1826,9 +1770,7 @@
   {
     "case": "class_diagram/038_parser_should_handle_parsing_of_separators_37.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/039_parser_should_handle_fully_qualified_class_names_in_relationships_38.mmd",
@@ -2017,9 +1959,7 @@
   {
     "case": "class_diagram/049_parser_should_handle_a_mix_of_members_defined_in_and_outside_of_brackets_48.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/049_parser_should_parse_a_class_with_text_label_and_css_class_48.mmd",
@@ -2036,9 +1976,7 @@
   {
     "case": "class_diagram/050_parser_should_handle_member_and_method_definitions_49.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/050_parser_should_parse_two_classes_with_text_labels_and_css_classes_49.mmd",
@@ -2074,9 +2012,7 @@
   {
     "case": "class_diagram/052_parser_should_handle_namespace_with_generic_types_51.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/052_parser_should_parse_multiple_classes_with_same_text_labels_51.mmd",
@@ -2185,9 +2121,7 @@
   {
     "case": "class_diagram/058_parser_should_parse_a_class_with_a_text_label_members_and_annotation_57.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/059_parser_should_handle_function_call_58.mmd",
@@ -2299,9 +2233,7 @@
   {
     "case": "class_diagram/065_parser_should_handle_class_annotations_in_brackets_64.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/065_parser_should_handle_comments_at_the_end_no_trailing_newline_64.mmd",
@@ -2316,9 +2248,7 @@
   {
     "case": "class_diagram/066_parser_should_handle_class_annotations_in_brackets_with_members_and_methods_65.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/067_parser_should_handle_a_comment_with_mermaid_class_diagram_code_in_them_66.mmd",
@@ -2388,16 +2318,12 @@
   {
     "case": "class_diagram/072_parser_should_handle_simple_return_types_71.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/073_parser_should_handle_return_types_as_array_72.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/073_parser_should_handle_simple_member_declaration_72.mmd",
@@ -2421,9 +2347,7 @@
   {
     "case": "class_diagram/075_parser_should_handle_abstract_methods_74.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/075_parser_should_handle_direct_member_declaration_with_type_74.mmd",
@@ -2442,9 +2366,7 @@
   {
     "case": "class_diagram/076_parser_should_handle_static_methods_75.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/077_parser_should_handle_generic_types_in_arguments_76.mmd",
@@ -2461,9 +2383,7 @@
   {
     "case": "class_diagram/078_parser_should_handle_generic_return_types_77.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/078_parser_should_handle_generic_types_77.mmd",
@@ -2475,9 +2395,7 @@
   {
     "case": "class_diagram/079_parser_should_handle_generic_types_in_members_in_class_with_brackets_78.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/079_parser_should_handle_method_definition_78.mmd",
@@ -2537,9 +2455,7 @@
   {
     "case": "class_diagram/084_parser_should_handle_generic_class_with_brackets_83.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/084_parser_should_handle_static_methods_83.mmd",
@@ -2551,9 +2467,7 @@
   {
     "case": "class_diagram/085_parser_should_handle_generic_class_with_brackets_and_a_literal_name_84.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/085_parser_should_handle_generic_types_in_arguments_84.mmd",
@@ -2663,9 +2577,7 @@
   {
     "case": "class_diagram/094_parser_should_handle_namespace_with_generic_types_93.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/094_parser_should_handle_relation_definitions_aggregation_and_dotted_line_93.mmd",
@@ -2763,9 +2675,7 @@
   {
     "case": "class_diagram/102_parser_should_handle_class_annotations_in_brackets_101.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/102_parser_should_handle_dashed_relation_definition_of_different_types_and_directions_101.mmd",
@@ -2777,9 +2687,7 @@
   {
     "case": "class_diagram/103_parser_should_handle_class_annotations_in_brackets_with_members_and_methods_102.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/103_parser_should_handle_relation_definitions_aggregation_and_dotted_line_102.mmd",
@@ -2803,9 +2711,7 @@
   {
     "case": "class_diagram/105_parser_should_handle_abstract_methods_104.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/105_parser_should_handle_relation_definitions_with_no_types_104.mmd",
@@ -2824,9 +2730,7 @@
   {
     "case": "class_diagram/106_parser_should_handle_static_methods_105.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/107_parser_should_associate_link_and_css_appropriately_106.mmd",
@@ -3149,9 +3053,7 @@
   {
     "case": "class_diagram/133_parser_should_handle_namespace_with_generic_types_132.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/134_parser_should_handle_all_basic_relationships_133.mmd",
@@ -3181,9 +3083,7 @@
   {
     "case": "class_diagram/139_parser_should_parse_a_class_with_a_text_label_members_and_annotation_138.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/140_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_139.mmd",
