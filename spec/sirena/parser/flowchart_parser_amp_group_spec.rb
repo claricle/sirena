@@ -70,5 +70,22 @@ RSpec.describe Sirena::Parser::Flowchart do
         .to eq(%w[A>B A>C A>E])
       expect(diagram.nodes.map(&:id)).to eq(%w[A B C E D])
     end
+
+    # These render on this branch and raise ParseError on every one of the
+    # 14 against origin/main, so the bare matcher is a real signal here.
+    # Keep it: it is the only check that the whole bucket clears, and the
+    # two examples above carry the assertions for the shapes it covers.
+    it "finds the corpus bucket it claims to cover" do
+      expect(amp_bucket_paths(corpus_dir).size).to eq(14)
+    end
+
+    FlowchartParserHelpers
+      .amp_bucket_paths(File.join(__dir__, "../../mermaid/flowchart"))
+      .each do |path|
+      it "renders #{File.basename(path, '.mmd')}" do
+        expect { Sirena::Engine.new.render(File.read(path)) }
+          .not_to raise_error
+      end
+    end
   end
 end

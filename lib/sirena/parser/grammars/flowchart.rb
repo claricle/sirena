@@ -928,8 +928,10 @@ module Sirena
         end
 
         # `A & B`: further nodes joined to the one before, which then
-        # share whatever link comes next. Mermaid takes only spaces around
-        # the `&`, and at least one on each side.
+        # share whatever link comes next. Mermaid needs at least one space
+        # character on each side of the `&`. Which characters count is the
+        # shared `space` rule's business, and it is narrower than mermaid's
+        # `\s`: a tab passes here, an NBSP does not.
         rule(:amp_group) do
           (space.repeat(1) >> str('&') >> space.repeat(1) >>
             reserved_keyword.absent? >> node_with_shape).repeat

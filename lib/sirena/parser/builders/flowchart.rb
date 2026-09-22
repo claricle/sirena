@@ -728,6 +728,12 @@ module Sirena
             label = edge_data[:label]
             label = inline_label(label) if edge_data[:open]
 
+            # A diagnostic, not coverage: `rule(:edge)` makes the target
+            # mandatory, so no source reaches this (0 fires across 4,529
+            # edge hashes from 3,006 generated flowcharts). Keep it — it
+            # becomes the only check if a later rule makes the target
+            # optional, and the line below would otherwise pass nil into
+            # `extract_node_data`.
             next unless edge_data[:target]
 
             targets = declare_group(diagram, edge_data[:target],
