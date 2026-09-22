@@ -172,9 +172,8 @@ module Sirena
       # @param angle [Numeric] angle in degrees
       # @return [String] text anchor value
       def calculate_text_anchor(angle)
-        # Normalize angle to 0-360
+        # Normalize angle to 0-360 (Ruby's % never returns negative here)
         normalized = angle % 360
-        normalized += 360 if normalized < 0
 
         if normalized > 45 && normalized < 135
           "start"
