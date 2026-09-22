@@ -29,22 +29,36 @@ module Sirena
             direction.maybe.as(:direction)
         end
 
+        rule(:direction_value) do
+          (str("TD") | str("TB") | str("LR") | str("RL") | str("BT")).as(:dir_value)
+        end
+
         rule(:direction) do
-          (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value) >> ws?
+          direction_value >> ws?
         end
 
         rule(:statements) do
           (statement >> ws?).repeat(1)
         end
 
+        # acc* come first: `accTitle: My Title` also reads as a colon member
+        # definition on a class named accTitle.
         rule(:statement) do
-          namespace_block |
+          acc_title_statement |
+            acc_descr_statement |
+            namespace_block |
             class_declaration |
             standalone_stereotype |
             colon_member_definition |
             relationship |
             link_statement |
             callback_statement |
+            click_statement |
+            style_statement |
+            css_class_statement |
+            class_def_statement |
+            direction_statement |
+            note_statement |
             standalone_class
         end
 
@@ -154,6 +168,77 @@ module Sirena
             class_name.as(:class_id) >> space >>
             string.as(:callback_fn) >>
             (space >> string.as(:tooltip)).maybe >>
+            line_end
+        end
+
+        # Rest of the line, up to the statement terminator.
+        rule(:rest_of_line) do
+          (line_end.absent? >> any).repeat(1)
+        end
+
+        # click ClassName href "url" ["tooltip"] [target]
+        # click ClassName call fn(args) ["tooltip"]
+        #
+        # Parsed and dropped, like link and callback: the model has no
+        # interaction data and mmdc renders click targets as plain classes.
+        # The remainder is not parsed because the corpus carries forms with
+        # the URL missing (`click Class1 href`) that mmdc still renders.
+        rule(:click_statement) do
+          str("click").as(:ignored) >> space >>
+            class_name >>
+            (space >> rest_of_line).maybe >>
+            line_end
+        end
+
+        # style ClassName fill:#f9f,stroke:#333
+        rule(:style_statement) do
+          str("style").as(:ignored) >> space >>
+            class_name >> space >> rest_of_line >>
+            line_end
+        end
+
+        # cssClass "A,B" styleName
+        rule(:css_class_statement) do
+          str("cssClass").as(:ignored) >> space >>
+            rest_of_line >>
+            line_end
+        end
+
+        # classDef name key:value,key:value
+        rule(:class_def_statement) do
+          str("classDef").as(:ignored) >> space >>
+            rest_of_line >>
+            line_end
+        end
+
+        # direction TB, inside the diagram (the header takes one too)
+        rule(:direction_statement) do
+          str("direction").as(:direction_keyword) >> space >>
+            direction_value >> line_end
+        end
+
+        # accTitle: single line
+        rule(:acc_title_statement) do
+          str("accTitle").as(:ignored) >> space? >>
+            colon >> rest_of_line.maybe >> line_end
+        end
+
+        # accDescr: single line   |   accDescr { multiple lines }
+        rule(:acc_descr_statement) do
+          str("accDescr").as(:ignored) >> space? >>
+            ((colon >> rest_of_line.maybe) |
+              (lbrace >> (rbrace.absent? >> any).repeat >> rbrace)) >>
+            line_end
+        end
+
+        # note "text"   |   note for ClassName "text"
+        #
+        # The text runs to the end of the line rather than to the closing
+        # quote because the corpus has notes with quotes inside HTML.
+        rule(:note_statement) do
+          str("note").as(:ignored) >>
+            (space >> str("for") >> space >> class_name).maybe >>
+            space >> rest_of_line >>
             line_end
         end
 
