@@ -66,10 +66,23 @@ RSpec.describe Sirena::DiagramRegistry do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
+  # :xychart is the one registered symbol this split-and-capitalize formula
+  # cannot derive: it is public API (documented, printed by `sirena types`)
+  # and keeps its original spelling with no underscore, while the internal
+  # parser/layout/renderer/model classes keep the camelCase hump from their
+  # `xy_chart` file name. Every other registered type's class name already
+  # equals its derived camel_key — checked by running this against the live
+  # registry, 2026-09-22.
+  def irregular_camel_key(type)
+    { xychart: 'XyChart' }[type]
+  end
+
   described_class.types.each do |type|
     describe type.inspect do
       let(:handlers) { described_class.get(type) }
-      let(:camel_key) { type.to_s.split('_').map(&:capitalize).join }
+      let(:camel_key) do
+        irregular_camel_key(type) || type.to_s.split('_').map(&:capitalize).join
+      end
       let(:fixture_path) do
         File.join(__dir__, 'fixtures', 'contract', "#{type}.mmd")
       end
