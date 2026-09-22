@@ -16,7 +16,7 @@ task "lint:debt" do
   require "sirena/lint_debt"
   require "json"
 
-  root = File.expand_path("../..", __dir__)
+  root = File.expand_path("..", __dir__)
   debt = Sirena::LintDebt.new(root: root)
   puts JSON.pretty_generate(debt.report)
 rescue Sirena::LintDebt::ExecutionError => e
@@ -29,7 +29,7 @@ task "lint:debt:record" do
   require "sirena/lint_debt"
   require "sirena/lint_debt_scoreboard"
 
-  root = File.expand_path("../..", __dir__)
+  root = File.expand_path("..", __dir__)
   debt = Sirena::LintDebt.new(root: root)
   board = Sirena::LintDebtScoreboard.new(root: root, debt: debt)
   summary = board.record!
@@ -48,7 +48,7 @@ task "lint:debt:check" do
   require "sirena/lint_debt"
   require "sirena/lint_debt_scoreboard"
 
-  root = File.expand_path("../..", __dir__)
+  root = File.expand_path("..", __dir__)
   debt = Sirena::LintDebt.new(root: root)
   board = Sirena::LintDebtScoreboard.new(root: root, debt: debt)
   diff = board.diff

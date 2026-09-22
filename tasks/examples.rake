@@ -9,7 +9,7 @@ namespace :examples do
     require 'yaml'
     require 'fileutils'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
 
     unless Dir.exist?(examples_dir)
       puts "⚠️  Examples directory not found: #{examples_dir}"
@@ -36,7 +36,7 @@ namespace :examples do
 
   desc "Delete example SVGs whose source is gone or never renders (destructive, deliberate)"
   task :prune do
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
 
     ExampleTasks.with_examples_lock(examples_dir) do
       puts "Pruning example SVGs with no source..."
@@ -51,8 +51,8 @@ namespace :examples do
 
   desc "Copy generated examples to docs/assets/examples"
   task :copy_to_docs do
-    examples_dir = File.expand_path('../../examples', __dir__)
-    docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
+    docs_assets_dir = File.expand_path('../docs/assets/examples', __dir__)
 
     # No pre-creation of docs_assets_dir here: ExampleTasks.copy_to_docs
     # creates it itself, AFTER its own verified_root guard runs, not before.
@@ -77,8 +77,8 @@ namespace :examples do
     require 'yaml'
     require 'fileutils'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
-    docs_examples_dir = File.expand_path('../../docs/_diagram_types/examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
+    docs_examples_dir = File.expand_path('../docs/_diagram_types/examples', __dir__)
 
     FileUtils.mkdir_p(docs_examples_dir)
 
@@ -151,7 +151,7 @@ namespace :examples do
     require 'sirena'
     require 'yaml'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
     begin
       ExampleTasks.validate_examples(examples_dir)
     rescue ExampleTasks::ValidationFailed => e
@@ -176,7 +176,7 @@ namespace :examples do
       exit 1
     end
 
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
     type_dir = File.join(examples_dir, type)
 
     FileUtils.mkdir_p(type_dir)
@@ -216,7 +216,7 @@ namespace :examples do
   task :list do
     require 'yaml'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
 
     unless Dir.exist?(examples_dir)
       puts "Examples directory not found: #{examples_dir}"
@@ -267,7 +267,7 @@ namespace :examples do
   task :init do
     require 'fileutils'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
 
     # Create main examples directory
     FileUtils.mkdir_p(examples_dir)
@@ -345,7 +345,7 @@ namespace :examples do
     # Create .gitignore
     gitignore_content = <<~GITIGNORE
       # Stale generated/ directories from older checkouts. Nothing writes them
-      # now — the shipped SVGs sit beside their sources — but leaving the rule
+      # now — the generated SVGs sit beside their sources — but leaving the rule
       # keeps an old working copy quiet and stops `git add examples/` sweeping
       # stale output back in.
       */generated/
@@ -375,12 +375,12 @@ namespace :examples do
   task :clean do
     require 'fileutils'
 
-    examples_dir = File.expand_path('../../examples', __dir__)
-    docs_assets_dir = File.expand_path('../../docs/assets/examples', __dir__)
-    docs_examples_dir = File.expand_path('../../docs/_diagram_types/examples', __dir__)
+    examples_dir = File.expand_path('../examples', __dir__)
+    docs_assets_dir = File.expand_path('../docs/assets/examples', __dir__)
+    docs_examples_dir = File.expand_path('../docs/_diagram_types/examples', __dir__)
 
     # Clean the stale generated/ directories older checkouts left behind.
-    # The shipped SVGs sit beside their sources now and are not touched.
+    # The tracked SVGs sit beside their sources now and are not touched.
     Dir.glob(File.join(examples_dir, '*/generated')).each do |dir|
       FileUtils.rm_rf(dir)
       puts "✓ Removed #{dir}"

@@ -2,7 +2,7 @@
 
 # ENV-gated: `rake coverage:measure` sets COVERAGE=true and runs only
 # `spec:unit` (:corpus-tagged fixture sweeps excluded via
-# lib/tasks/coverage.rake's `--tag ~corpus`); plain `bundle exec rspec` runs
+# tasks/coverage.rake's `--tag ~corpus`); plain `bundle exec rspec` runs
 # everything, uninstrumented. `filter_run_excluding corpus:` below only
 # closes the bare-invocation gap -- a CLI `--tag corpus` (e.g. `rake
 # spec:corpus_runner`) wins over it outright (see the gate record for the

@@ -11,10 +11,11 @@ require 'yaml'
 # range from the reference date, so an unpinned run produces different output
 # every day from identical source, which makes any diff meaningless.
 #
-# The SVGs sit next to their .mmd sources and are tracked, because the gemspec
-# ships whatever `git ls-files` returns and they go out to every user. So this
-# task DOES dirty git, on purpose: regenerating is how a shipped example stays
-# honest about what Sirena renders today.
+# The SVGs sit next to their .mmd sources and are tracked in git; they no
+# longer ship inside the gem since D6 narrowed the gemspec's files allowlist
+# to lib+exe, but they still feed the docs site once TODO.foundation/15 wires
+# it up. So this task DOES dirty git, on purpose: regenerating is how a
+# tracked example stays honest about what Sirena renders today.
 EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 # The only example sources legitimately unrenderable today.
@@ -36,7 +37,7 @@ module ExampleTasks
 
   # The gem's own checkout root. Every real examples_dir/docs_assets_dir this
   # task is ever given lives under it -- both are built via
-  # File.expand_path('../../X', __dir__) in the rake tasks below -- so nothing
+  # File.expand_path('../X', __dir__) in the rake tasks below -- so nothing
   # above this line is this task's business to judge for a symlinked ancestor.
   # `verified_root` walks ancestors only within this boundary, not all the way
   # to filesystem `/`: an unbounded walk falsely flags an ordinary OS symlink
@@ -44,7 +45,7 @@ module ExampleTasks
   # examples_dir/docs_assets_dir actually is -- through `/var -> private/var`)
   # as a violation. Confirmed by execution: `File.symlink?('/var')` and
   # `File.symlink?('/tmp')` are both true on this machine.
-  GEM_ROOT = File.expand_path('../..', __dir__)
+  GEM_ROOT = File.expand_path('..', __dir__)
 
   # The one place an example's theme is decided. Both :generate and :validate
   # read it here so they cannot drift into rendering the same source two ways.
@@ -486,7 +487,7 @@ module ExampleTasks
     path
   end
 
-  # The two depths the gemspec packages and the conformance gate pairs: an
+  # The two depths tracked under examples/ that the conformance gate pairs: an
   # SVG directly under examples/ and one beside its source in a diagram
   # directory. A sweep one level deep missed the first kind, which is how the
   # two this branch removed were found; `**` went too far the other way and
@@ -528,9 +529,9 @@ module ExampleTasks
     !File.exist?(path) || File.lstat(path).file?
   end
 
-  # An SVG whose source is gone still ships: git tracks it and the gemspec
-  # packages it, and the generate loop walks sources, so nothing ever visits
-  # it. It has to go — but nothing here can tell a stale generated SVG from
+  # An SVG whose source is gone still lingers: git tracks it, and the
+  # generate loop walks sources, so nothing ever visits it. It has to go —
+  # but nothing here can tell a stale generated SVG from
   # one a human wrote, because Sirena stamps no provenance into its output.
   #
   # So generation REPORTS them and `rake examples:prune` deletes them. A
@@ -548,7 +549,7 @@ module ExampleTasks
     orphans = orphan_svgs(examples_dir)
     return if orphans.empty?
 
-    puts "\n\u26a0\ufe0f  #{orphans.size} SVG(s) have no source and are still packaged:"
+    puts "\n\u26a0\ufe0f  #{orphans.size} SVG(s) have no source and are still tracked:"
     orphans.each { |svg| puts "    #{svg.sub("#{examples_dir}/", '')}" }
     puts "   Run 'rake examples:prune' to delete them."
   end
@@ -606,8 +607,8 @@ module ExampleTasks
   # rake task below may decide an exit status.
   class ValidationFailed < StandardError; end
 
-  # A source that stops rendering must not keep shipping its old SVG looking
-  # still valid. But :generate runs concurrently with nothing standing guard,
+  # A source that stops rendering must not leave its old SVG looking still
+  # valid. But :generate runs concurrently with nothing standing guard,
   # so deleting HERE is exactly the write this run cannot prove is safe: three
   # rounds of guards (a SystemCallError re-raise, an mtime check, moving
   # metadata reads outside the rescue) each closed one race and opened
@@ -629,7 +630,7 @@ module ExampleTasks
     stale = failed_renders.map(&:last).select { |svg_file| File.exist?(svg_file) }
     return if stale.empty?
 
-    puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still packaged:"
+    puts "\n⚠️  #{stale.size} SVG(s) no longer render and are still tracked:"
     stale.each { |svg_file| puts "    #{svg_file.delete_prefix("#{examples_dir}/")}" }
     puts "   Run 'rake examples:prune' to delete them."
   end

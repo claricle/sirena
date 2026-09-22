@@ -19,8 +19,8 @@ require 'English'
 # The rake file is loaded rather than reimplemented, so the helpers under test
 # are the ones the task runs. Loading it defines tasks into the default Rake
 # application; none is invoked here.
-TASKS_RAKE_FILE = File.expand_path('../../../lib/tasks/examples.rake', __dir__)
-EXAMPLE_TASKS_FILE = File.expand_path('../../../lib/tasks/example_tasks.rb', __dir__)
+TASKS_RAKE_FILE = File.expand_path('../../../tasks/examples.rake', __dir__)
+EXAMPLE_TASKS_FILE = File.expand_path('../../../tasks/example_tasks.rb', __dir__)
 load TASKS_RAKE_FILE unless defined?(ExampleTasks)
 
 RSpec.describe ExampleTasks do
@@ -369,7 +369,7 @@ RSpec.describe ExampleTasks do
     # leaf-only check let this straight through; reproduced before the
     # ancestor walk existed: `docs/assets` symlinked outside the repo
     # received every copy. The walk is bounded to GEM_ROOT (see its comment
-    # in lib/tasks/examples.rake), so this stubs GEM_ROOT to the test's own
+    # in tasks/examples.rake), so this stubs GEM_ROOT to the test's own
     # tmpdir -- the same boundary a real call site gets from its own
     # checkout root, without reaching into the real gem checkout.
     it 'refuses a docs root reached through a symlinked ancestor, not just a link itself' do

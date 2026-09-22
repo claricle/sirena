@@ -9,21 +9,20 @@ require 'yaml'
 
 # The gate: output must stay svg_conform-conformant, not just "renders
 # something". Three populations checked differently because they fail
-# differently -- examples/ SVGs as shipped FILES (gemspec-packaged, so a
-# stale one ships to every user), reference fixtures as the per-type
-# shape, and the 1,997-source mermaid corpus as the wide net (floor-
-# guarded, not counted -- see CONFORMANCE_RENDERABLE_FILE below).
+# differently -- examples/ SVGs as on-disk FILES globbed off disk (intended
+# to feed the docs site once TODO.foundation/15 wires that build up; no
+# workflow ships them to a reader today), reference fixtures as the per-type
+# shape, and the 1,997-source mermaid corpus as the wide net (floor-guarded,
+# not counted -- see CONFORMANCE_RENDERABLE_FILE below).
 CONFORMANCE_ROOT = File.expand_path('..', __dir__)
 
-# Asked of the gemspec rather than globbed, because the gemspec is what
-# decides. It packages what `git ls-files` returns minus its own exclusions,
-# so an untracked SVG in the working copy is not something the gem ships and
-# validating it would report on a file no user receives.
-CONFORMANCE_SHIPPED_SVGS =
-  Gem::Specification.load(File.join(CONFORMANCE_ROOT, 'sirena.gemspec'))
-    .files.grep(%r{\Aexamples/.*\.svg\z})
-    .map { |f| File.join(CONFORMANCE_ROOT, f) }
-    .freeze
+# Globbed directly, not asked of the gemspec: since D6 (sirena.gemspec's
+# `files` became a lib+exe allowlist), examples/ no longer ships inside the
+# gem, but the on-disk SVGs are still meant to feed the docs site build
+# (per TODO.foundation/15, not yet wired) and still need a conformance guard.
+CONFORMANCE_EXAMPLE_SVGS =
+  (Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*.svg')) +
+   Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*', '*.svg'))).freeze
 CONFORMANCE_FIXTURE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'fixtures', '*', 'input.mmd')).freeze
 CONFORMANCE_CORPUS_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', '*', '*.mmd')).freeze
 CONFORMANCE_EXAMPLE_SOURCES = Dir.glob(File.join(CONFORMANCE_ROOT, 'examples', '*', '*.mmd')).freeze
@@ -42,9 +41,10 @@ CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'co
 # Same population `scripts/corpus_sweep.rb` counts by the same criterion.
 CONFORMANCE_RENDERED_FLOOR = 898
 
-# The example sources Sirena cannot parse yet, so they ship no SVG. Named
-# rather than counted: a NEW source falling out of the shipped set is a
-# regression, and a glob over whatever happens to exist cannot see one.
+# The example sources Sirena cannot parse yet, so they have no checked-in
+# SVG. Named rather than counted: a NEW source falling out of the checked-in
+# set is a regression, and a glob over whatever happens to exist cannot see
+# one.
 CONFORMANCE_UNRENDERABLE_EXAMPLES = [
   'packet/01-basic-packet.beta.mmd'
 ].freeze
@@ -124,17 +124,18 @@ RSpec.describe Sirena::Svg do
     nil
   end
 
-  describe 'conformance of the SVGs the gem ships' do
-    it 'ships some' do
-      expect(CONFORMANCE_SHIPPED_SVGS).not_to be_empty
+  describe 'conformance of the checked-in example SVGs' do
+    it 'has some' do
+      expect(CONFORMANCE_EXAMPLE_SVGS).not_to be_empty
     end
 
-    CONFORMANCE_SHIPPED_SVGS.each do |svg_path|
+    CONFORMANCE_EXAMPLE_SVGS.each do |svg_path|
       it "#{svg_path.sub("#{CONFORMANCE_ROOT}/", '')} is conformant" do
         content = File.read(svg_path)
 
         # A zero-byte file passed every check this repo had: nothing to parse
-        # is nothing to reject, and the gemspec ships it anyway.
+        # is nothing to reject, and the docs site is meant to read it once
+        # TODO.foundation/15 wires that build up.
         expect(content).not_to be_empty
 
         malformed = parse_error(content)
@@ -213,9 +214,9 @@ RSpec.describe Sirena::Svg do
 
   # The gate above judges the SVGs that happen to be on disk, which is not
   # the same question. Presence proves nothing about whether the renderer
-  # still works, or whether what ships is what the renderer produces today.
-  # Both are rendered here rather than looked for.
-  describe 'the examples the gem ships' do
+  # still works, or whether what is checked in is what the renderer produces
+  # today. Both are rendered here rather than looked for.
+  describe 'the checked-in examples' do
     # The same inputs examples.rake uses. The date is pinned there because
     # gantt and timeline place bars relative to today, so an unpinned render
     # differs from identical source every day.
@@ -249,7 +250,7 @@ RSpec.describe Sirena::Svg do
     # Duplicated render inputs must drift loudly here instead of blaming every
     # checked-in SVG as stale.
     it 'uses the generation task rendering defaults' do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'example_tasks.rb'))
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'tasks', 'example_tasks.rb'))
 
       expect(task_source).to include(
         "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
@@ -262,7 +263,7 @@ RSpec.describe Sirena::Svg do
     end
 
     it 'uses the conformance gate named unrenderable examples' do
-      task_source = File.read(File.join(CONFORMANCE_ROOT, 'lib', 'tasks', 'example_tasks.rb'))
+      task_source = File.read(File.join(CONFORMANCE_ROOT, 'tasks', 'example_tasks.rb'))
       sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  '#{source}'" }.join(",\n")
 
       expect(task_source).to include(
@@ -270,16 +271,16 @@ RSpec.describe Sirena::Svg do
       )
     end
 
-    # Both directions. Asking only "does each source ship an SVG" leaves the
+    # Both directions. Asking only "does each source have an SVG" leaves the
     # other half unasked: delete or rename a source and its old SVG stays
-    # tracked, stays packaged, and stays conformant, so every assertion here
-    # goes on passing while the gem ships a picture of nothing. The generate
-    # task cannot catch it either — it walks sources, so a file with no
-    # source is never visited.
-    it 'packages an SVG for every source and none without one' do
-      packaged = CONFORMANCE_SHIPPED_SVGS.map { |svg| relative(svg) }
+    # tracked and stays conformant, so every assertion here goes on passing
+    # while the repo carries a picture of nothing. The generate task cannot
+    # catch it either — it walks sources, so a file with no source is never
+    # visited.
+    it 'has an SVG for every source and none without one' do
+      checked_in = CONFORMANCE_EXAMPLE_SVGS.map { |svg| relative(svg) }
 
-      expect(packaged).to match_array(expected_svgs)
+      expect(checked_in).to match_array(expected_svgs)
     end
 
     it 'renders every source except the ones named as unsupported' do
@@ -299,7 +300,7 @@ RSpec.describe Sirena::Svg do
         .to match_array(CONFORMANCE_UNRENDERABLE_EXAMPLES)
     end
 
-    it 'ships exactly what the renderer produces today' do
+    it 'has checked in exactly what the renderer produces today' do
       compared = 0
       stale = CONFORMANCE_EXAMPLE_SOURCES.filter_map do |mmd|
         rendered = begin
@@ -310,7 +311,7 @@ RSpec.describe Sirena::Svg do
 
         compared += 1
         svg_path = mmd.sub(/\.mmd\z/, '.svg')
-        next relative(svg_path) unless CONFORMANCE_SHIPPED_SVGS.include?(svg_path)
+        next relative(svg_path) unless CONFORMANCE_EXAMPLE_SVGS.include?(svg_path)
 
         relative(svg_path) unless File.read(svg_path) == rendered
       end

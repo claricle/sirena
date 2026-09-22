@@ -44,7 +44,7 @@ Layout/ElseAlignment:
   Exclude:
     - 'lib/sirena/parser/builders/kanban.rb'
     - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
@@ -55,7 +55,7 @@ Layout/EmptyLineAfterGuardClause:
     - 'lib/sirena/parser/builders/er_diagram.rb'
     - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/sirena/parser/builders/sequence.rb'
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
@@ -90,7 +90,7 @@ Layout/EndAlignment:
     - 'lib/sirena/parser/builders/block.rb'
     - 'lib/sirena/parser/builders/kanban.rb'
     - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 8
 # This cop supports safe autocorrection (--autocorrect).
@@ -99,7 +99,7 @@ Layout/ExtraSpacing:
   Exclude:
     - 'lib/sirena/parser/builders/mindmap.rb'
     - 'lib/sirena/parser/builders/treemap.rb'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
@@ -124,7 +124,7 @@ Layout/HashAlignment:
 # This cop supports safe autocorrection (--autocorrect).
 Layout/HeredocIndentation:
   Exclude:
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 11
 # This cop supports safe autocorrection (--autocorrect).
@@ -134,7 +134,7 @@ Layout/IndentationWidth:
     - 'lib/sirena/parser/builders/block.rb'
     - 'lib/sirena/parser/builders/kanban.rb'
     - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 18
 # This cop supports safe autocorrection (--autocorrect).
@@ -159,7 +159,7 @@ Layout/MultilineMethodCallIndentation:
     - 'lib/sirena/diagram/class_diagram.rb'
     - 'lib/sirena/renderer/er_diagram.rb'
     - 'lib/sirena/renderer/gantt.rb'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 90
 # This cop supports safe autocorrection (--autocorrect).
@@ -228,7 +228,7 @@ Lint/DuplicateMethods:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Lint/RedundantDirGlobSort:
   Exclude:
-    - 'lib/tasks/examples.rake'
+    - 'tasks/examples.rake'
     - 'old-docs/testing/create_placeholder_svgs.rb'
     - 'old-docs/testing/generate_remaining_svgs.rb'
     - 'old-docs/testing/generate_svgs.rb'
@@ -251,7 +251,7 @@ Lint/UnusedBlockArgument:
     - 'lib/sirena/renderer/block.rb'
     - 'lib/sirena/layout/architecture.rb'
     - 'lib/sirena/layout/block.rb'
-    - 'lib/tasks/examples.rake'
+    - 'tasks/examples.rake'
 
 # Offense count: 12
 # This cop supports safe autocorrection (--autocorrect).
@@ -281,8 +281,8 @@ Lint/UselessAccessModifier:
 Lint/UselessAssignment:
   Exclude:
     - 'lib/sirena/layout/xy_chart.rb'
-    - 'lib/tasks/examples.rake'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/examples.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 331
 # Configuration parameters: AllowedMethods, AllowedPatterns, CountRepeatedAttributes, Max.
@@ -343,7 +343,7 @@ Performance/MapCompact:
     - 'lib/sirena/layout/block.rb'
     - 'lib/sirena/layout/requirement.rb'
     - 'lib/sirena/layout/timeline.rb'
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
     - 'spec/sirena/renderer/git_graph_spec.rb'
 
 # Offense count: 2
@@ -446,7 +446,7 @@ RSpec/SpecFilePathFormat:
 # AllowedMethods: lambda, proc, it
 Style/BlockDelimiters:
   Exclude:
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -525,7 +525,7 @@ Style/HashEachMethods:
 # SupportedShorthandSyntax: always, never, either, consistent, either_consistent
 Style/HashSyntax:
   Exclude:
-    - 'lib/tasks/examples.rake'
+    - 'tasks/examples.rake'
 
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -539,7 +539,7 @@ Style/IdenticalConditionalBranches:
 # Configuration parameters: AllowIfModifier.
 Style/IfInsideElse:
   Exclude:
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -552,7 +552,7 @@ Style/MapIntoArray:
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/MapToHash:
   Exclude:
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
@@ -575,7 +575,7 @@ Style/MutableConstant:
 Style/NegatedIfElseCondition:
   Exclude:
     - 'lib/sirena/renderer/git_graph.rb'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 39
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -614,7 +614,7 @@ Style/RedundantParentheses:
     - 'lib/sirena/parser/grammars/kanban.rb'
     - 'lib/sirena/parser/grammars/mindmap.rb'
     - 'lib/sirena/layout/requirement.rb'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 13
 # This cop supports safe autocorrection (--autocorrect).
@@ -630,8 +630,8 @@ Style/RedundantRegexpArgument:
 Style/RescueStandardError:
   Exclude:
     - 'lib/sirena/commands/batch.rb'
-    - 'lib/tasks/examples.rake'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/examples.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
     - 'old-docs/testing/debug_full_load.rb'
     - 'old-docs/testing/generate_remaining_svgs.rb'
 
@@ -675,9 +675,9 @@ Style/StringConcatenation:
     - 'lib/sirena/parser/block.rb'
     - 'lib/sirena/parser/flowchart.rb'
     - 'lib/sirena/parser/requirement.rb'
-    - 'lib/tasks/benchmark.rake'
-    - 'lib/tasks/examples.rake'
-    - 'lib/tasks/generate_mermaid_fixtures.rake'
+    - 'tasks/benchmark.rake'
+    - 'tasks/examples.rake'
+    - 'tasks/generate_mermaid_fixtures.rake'
     - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 3763
@@ -693,7 +693,7 @@ Style/StringLiterals:
 # SupportedStyles: single_quotes, double_quotes
 Style/StringLiteralsInInterpolation:
   Exclude:
-    - 'lib/tasks/benchmark.rake'
+    - 'tasks/benchmark.rake'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).

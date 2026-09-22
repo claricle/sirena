@@ -7,7 +7,7 @@ rows:
   count: 1
 - file: lib/sirena/svg/element.rb
   count: 1
-- file: lib/tasks/examples.rake
+- file: tasks/examples.rake
   count: 1
 - file: spec/sirena/svg/escaping_boundary_spec.rb
   count: 3

@@ -86,7 +86,7 @@ so it embeds cleanly wherever an app already handles SVG, including Metanorma do
 
 === Build Tool Integration
 
-* **Rake Tasks** - `lib/tasks/*.rake` covers example generation and corpus checks during development
+* **Rake Tasks** - `tasks/*.rake` covers example generation and corpus checks during development
 * **CI/CD** - Runs anywhere a Ruby CI job can (GitHub Actions and others)
 
 == Performance Features

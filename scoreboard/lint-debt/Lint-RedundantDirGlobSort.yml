@@ -1,5 +1,5 @@
 ---
 cop: Lint/RedundantDirGlobSort
 rows:
-- file: lib/tasks/examples.rake
+- file: tasks/examples.rake
   count: 3

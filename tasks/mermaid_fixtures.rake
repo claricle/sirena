@@ -3,8 +3,8 @@ namespace :fixtures do
   task :generate_from_mermaidjs do
     require "fileutils"
 
-    examples_dir = File.expand_path("../../examples", __dir__)
-    fixtures_dir = File.expand_path("../../spec/fixtures", __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
+    fixtures_dir = File.expand_path("../spec/fixtures", __dir__)
 
     diagram_mappings = {
       "flowchart_example.mmd" => "flowchart",

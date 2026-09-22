@@ -12,13 +12,14 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
     expect(apply_fixes_references(shipped_files(repo_root))).to be_empty
   end
 
+  # scripts/, the Rakefile and the gemspec are dev-only: D6 (sirena.gemspec's
+  # `files` became a lib+exe allowlist) means none of them ship, so they are
+  # not in the population this scan reads and have no row here. D8 moved
+  # every .rake file out of lib/ entirely (lib/tasks -> tasks/), so no
+  # shipped lib .rake file exists any more either -- no row for it.
   {
     "lib ruby" => %r{/lib/.*\.rb\z},
-    "lib rake task" => %r{/lib/.*\.rake\z},
-    "exe" => %r{/exe/[^/]+\z},
-    "scripts" => %r{/scripts/.*\.rb\z},
-    "Rakefile" => %r{/Rakefile\z},
-    "gemspec" => %r{/[^/]+\.gemspec\z}
+    "exe" => %r{/exe/[^/]+\z}
   }.each do |label, pattern|
     it "scans at least one shipped #{label} file" do
       expect(shipped_files(repo_root).grep(pattern)).not_to be_empty
