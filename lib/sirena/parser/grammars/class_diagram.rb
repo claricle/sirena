@@ -166,12 +166,17 @@ module Sirena
         end
 
         # Colon member definition: ClassName : +member or ClassName : +method()
+        #
+        # Anything after the colon is a member to mmdc; text the structured
+        # rules do not read is kept whole (`Car : +ArrayList size()`), except
+        # that a second `:` or a `;` is a syntax error (`A:::s`, `A : x:y`).
         rule(:colon_member_definition) do
           class_ref >> space? >>
             colon >> space? >>
-            visibility_modifier.maybe.as(:visibility) >>
-            member_definition.as(:member) >>
-            line_end
+            (colon_body_annotation >> line_end |
+              (visibility_modifier.maybe.as(:visibility) >>
+                member_definition.as(:member) >> line_end) |
+              colon_text.as(:raw_member) >> line_end)
         end
 
         # Link statement: link ClassName "url" "tooltip"
@@ -331,18 +336,89 @@ module Sirena
 
         # Class body: { members }
         rule(:class_body) do
-          lbrace >> ws? >>
+          lbrace >> body_gap >>
             class_members.maybe >>
             ws? >> rbrace
         end
 
         rule(:class_members) do
-          (class_member >> ws?).repeat(1)
+          (class_member >> body_gap).repeat(1)
         end
 
+        # Blank lines and comments between members. The indentation of the
+        # next member is left unread: mmdc rejects a line that STARTS with a
+        # quote but accepts an indented one as the member ` "quoted"`.
+        rule(:body_gap) do
+          (space.repeat >> (newline | comment)).repeat
+        end
+
+        # A body line is an annotation, a structured member, or free text.
+        # mmdc reads every line that is none of the first two as a member, so
+        # `void methods()` and `.. Getters ..` are members. It rejects only a
+        # `{` inside the text and a line that starts with a quote.
         rule(:class_member) do
-          visibility_modifier.maybe.as(:visibility) >>
-            member_definition.as(:member)
+          (space.repeat(1) >> indented_quote_text.as(:raw_member)) |
+            (space? >>
+              (body_annotation |
+                (visibility_modifier.maybe.as(:visibility) >>
+                  member_definition.as(:member) >> member_end) |
+                body_text.as(:raw_member)))
+        end
+
+        rule(:indented_quote_text) do
+          str('"') >> body_char.repeat >> member_end
+        end
+
+        # `<<interface>>` on its own line. mmdc takes a line that starts with
+        # `<<` and ends with `>>`, so the last `>>` closes it:
+        # `<<a>>b>>` is the annotation `a>>b`.
+        rule(:body_annotation) do
+          str('<<') >>
+            (annotation_text.as(:body_stereotype) |
+              str('').as(:body_stereotype)) >>
+            str('>>') >> member_end
+        end
+
+        rule(:annotation_text) do
+          ((str('>>') >> member_end).absent? >> body_char).repeat(1)
+        end
+
+        # Same shape as body_annotation, for the colon-member form
+        # (`ClassName : <<interface>>`). A `:` or `;` inside still ends the
+        # member early there, the same ban colon_text enforces: mmdc rejects
+        # `A : <<a;b>>` and `A : <<a:b>>`.
+        rule(:colon_body_annotation) do
+          str('<<') >>
+            (colon_annotation_text.as(:body_stereotype) |
+              str('').as(:body_stereotype)) >>
+            str('>>') >> member_end
+        end
+
+        rule(:colon_annotation_text) do
+          ((str('>>') >> member_end).absent? >> match[':;'].absent? >> body_char).repeat(1)
+        end
+
+        rule(:colon_text) do
+          (match[":;\n"].absent? >> line_end.absent? >> any).repeat(1)
+        end
+
+        # A `%%` starts a trailing comment mmdc strips, same as line_end does
+        # outside the body; free-text member capture must stop there instead
+        # of swallowing the comment as member text.
+        rule(:body_char) do
+          (str('%%') | match["\n{}"]).absent? >> any
+        end
+
+        rule(:body_text) do
+          (str('"').absent? >> body_char) >> body_char.repeat >> member_end
+        end
+
+        # A member ends at the line break, the `}` that closes the body, or
+        # a trailing `%%` comment — a pure lookahead, same as before: the
+        # comment itself is left for body_gap to consume between members, so
+        # it never ends up inside a member capture that wraps this rule.
+        rule(:member_end) do
+          space? >> (comment | newline | rbrace | eof).present?
         end
 
         # Member definition (attribute or method)
@@ -389,7 +465,7 @@ module Sirena
 
         # Visibility modifiers
         rule(:visibility_modifier) do
-          (plus | minus | hash | tilde).as(:vis_symbol)
+          (plus | minus | hash_char | tilde).as(:vis_symbol)
         end
 
         # Relationship: A relationship_operator B

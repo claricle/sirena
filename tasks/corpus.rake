@@ -232,6 +232,12 @@ module Sirena
       end
 
       fresh_rows = rows_for_scoreboard(run_cases(cases(nil)), verdicts)
+      fail_on_drift!(committed, fresh_rows)
+    end
+
+    # The guard itself, separate from the render so a spec can seed both
+    # rows and watch the exit status. Aborts (non-zero) on either drift.
+    def fail_on_drift!(committed, fresh_rows)
       diff = diff_scoreboards(committed, fresh_rows)
 
       clean = true

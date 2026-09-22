@@ -239,6 +239,13 @@ module Sirena
         }.freeze
         private_constant :LINK_MARKERS
 
+        # A comment line inside a label, whitespace as mermaid counts it.
+        COMMENT_LINE = Regexp.new(
+          "\n[\t\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F" \
+          "\u205F\u3000\uFEFF]*%%[^\n]*"
+        )
+        private_constant :COMMENT_LINE
+
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
         # Measured against mmdc 11.12.0: `<` RL, `>` LR, `^` BT, `v` and
@@ -719,8 +726,9 @@ module Sirena
             # matches a hash only when EVERY key matches, and the hash
             # holding `arrow` carries `label` and `target` too. So the
             # slice is read here, where the link is the only thing meant.
-            link_token = edge_data[:arrow][:token].to_s
+            link_token = link_token(edge_data)
             label = edge_data[:label]
+            label = inline_label(label) if edge_data[:open]
             target_data = edge_data[:target]
 
             next unless target_data
@@ -738,6 +746,88 @@ module Sirena
             source_id = target_node_data[:node_id]
           end
         end
+
+        # Mermaid deletes a whole comment line before it lexes, and the
+        # quotes of a quoted run are delimiters, not text.
+        # @raise [Parser::ParseError] on a label that nothing is left of
+        def self.inline_label(label)
+          text = label.to_s.gsub(COMMENT_LINE, '').delete('"')
+          return text unless text.empty?
+
+          raise Parser::ParseError, 'An inline link label cannot be empty.'
+        end
+        private_class_method :inline_label
+
+        # A link written around its label, `A -- text --> B`, arrives in
+        # two halves, and their concatenation reads like the one-piece
+        # link of the same kind: `-- -->` is `---->`.
+        #
+        # Mermaid reads a `<` opening the closing half as the start head
+        # of the whole link, so it moves to the front, and it refuses an
+        # `x` or `o` opening half whose closing half does not end in the
+        # same marker; a `<` needs a `>` to close it. An `x` or `o` at the
+        # very start of the closing half of a link that already opens with
+        # `<` draws nothing of its own: `A <-- t x--> B` and
+        # `A <-- t o--> B` render as a plain double arrow, measured against
+        # mermaid 11.12.0's own parser.
+        # @raise [Parser::ParseError] on an unmatched opening marker
+        def self.link_token(edge_data)
+          return edge_data[:arrow][:token].to_s if edge_data[:arrow]
+
+          open = edge_data[:open].to_s
+          close = edge_data[:close].to_s
+          reject_unmatched_marker(open, close)
+          close = close[1..] if open.start_with?('<') && close.match?(/\A[ox]/)
+          return "#{open}#{close}" unless lifts_start_head?(open, close)
+
+          "#{close[0]}#{open}#{close[1..]}"
+        end
+
+        # The start head of the closing half, when the opening half has
+        # none, belongs to the whole link: `<` always, `x` or `o` when the
+        # other end carries the same one.
+        def self.lifts_start_head?(open, close)
+          return false if open.match?(/\A[ox<]/)
+
+          close.start_with?('<') ||
+            (close.match?(/\A[ox]/) && close[-1] == close[0])
+        end
+        private_class_method :lifts_start_head?
+
+        def self.reject_unmatched_marker(open, close)
+          return if marker_closed?(open[0], close)
+
+          raise Parser::ParseError,
+                "The link #{open}#{close} opens with #{open[0]} " \
+                'and does not close with it.'
+        end
+
+        # An opening `<` closes on a head and takes no second `<` start
+        # marker on the closing half, but an `x` or `o` there draws
+        # nothing and is dropped by `link_token` above; an opening `x` or
+        # `o` takes none of its own kind again (`x-- t o--x` draws,
+        # `x-- t x--x` does not). A thick closing half that opens with its
+        # own `<` also needs a head: mmdc refuses `A == t <==x B`,
+        # `A == t <=== B` and `A == t x==> B`, and draws the solid and
+        # dotted forms.
+        def self.marker_closed?(marker, close)
+          return false if close.match?(/\A[ox<]=/) &&
+                          close[-1] != head_for(close[0])
+
+          case marker
+          when 'x', 'o' then close[-1] == marker && close[0] != marker
+          when '<' then close[-1] == '>' && !close.start_with?('<')
+          else true
+          end
+        end
+        private_class_method :marker_closed?
+
+        def self.head_for(start)
+          start == '<' ? '>' : start
+        end
+        private_class_method :head_for
+        private_class_method :reject_unmatched_marker
+        private_class_method :link_token
 
         # A second mention of a node changes only what it actually says.
         # Treating an absent shape as `rect` and an absent label as the id

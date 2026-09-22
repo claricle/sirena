@@ -63,7 +63,7 @@ module Sirena
         rule(:minus) { str('-') }
         rule(:asterisk) { str('*') }
         rule(:tilde) { str('~') }
-        rule(:hash) { str('#') }
+        rule(:hash_char) { str('#') }
 
         # Line terminators
         rule(:line_end) do

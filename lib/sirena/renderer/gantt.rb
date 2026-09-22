@@ -328,12 +328,7 @@ module Sirena
       def format_date(date, format)
         return date.strftime("%m-%d") unless format
 
-        # Simple format conversion (extend as needed)
-        format_str = format.gsub("%d", "%d")
-                           .gsub("%m", "%m")
-                           .gsub("%Y", "%Y")
-
-        date.strftime(format_str)
+        date.strftime(format)
       rescue StandardError
         date.strftime("%m-%d")
       end
