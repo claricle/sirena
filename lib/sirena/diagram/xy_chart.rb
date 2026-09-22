@@ -16,9 +16,9 @@ module Sirena
 
       # Returns the diagram type identifier.
       #
-      # @return [Symbol] :xy_chart
+      # @return [Symbol] :xychart
       def diagram_type
-        :xy_chart
+        :xychart
       end
 
       # XY charts have no validation rules yet. See TODO.foundation's
