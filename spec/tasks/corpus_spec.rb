@@ -5,11 +5,11 @@ require "rake"
 require "tmpdir"
 require "fileutils"
 
-# lib/tasks/corpus.rake is loaded by the Rakefile via `Dir.glob(...).each { |r|
+# tasks/corpus.rake is loaded by the Rakefile via `Dir.glob(...).each { |r|
 # load r }`, never `require`d, so it is not on Sirena's own require path.
 # `require "rake"` alone puts `task`/`namespace` on the top-level object,
 # which is all the DSL calls at the tail of the file need.
-load File.expand_path("../../lib/tasks/corpus.rake", __dir__)
+load File.expand_path("../../tasks/corpus.rake", __dir__)
 
 RSpec.describe Sirena::Corpus do
   describe ".types" do

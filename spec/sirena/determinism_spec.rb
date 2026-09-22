@@ -169,7 +169,7 @@ RSpec.describe Sirena::Engine do
     # rescued outcome strings, so a type that raises the same way both times
     # counts as passing without ever asserting the render is right. Runs in
     # `spec:corpus`, isolated from the coverage-collecting `spec:unit` run:
-    # see .simplecov and lib/tasks/coverage.rake.
+    # see .simplecov and tasks/coverage.rake.
     it 'never changes whether a diagram type renders at all', :corpus do
       differing = Dir.children(corpus).sort.filter_map do |type|
         file = Dir.glob(File.join(corpus, type, '*.mmd')).min
@@ -243,12 +243,10 @@ RSpec.describe Sirena::Engine do
       # lib/sirena.rb itself sits outside lib/sirena/, so the old glob
       # never scanned the file that registers every diagram type.
       #
-      # lib/tasks/ is excluded: it is maintainer CLI tooling loaded only by
-      # the Rakefile, never required onto a render path (see this repo's
-      # CLAUDE.md) -- its SecureRandom use is a unique temp filename for an
-      # atomic write, not anything that reaches rendered output.
+      # Maintainer CLI tooling (tasks/) now lives outside lib/ entirely, so
+      # this glob no longer needs to exclude it: nothing under lib/ is
+      # Rakefile-only tooling loaded off a render path.
       offenders = Dir.glob(File.expand_path('../../lib/**/*.rb', __dir__))
-        .reject { |file| file.include?('/lib/tasks/') }
         .flat_map { |file| ambient_reads_in(file) }
 
       expect(offenders).to be_empty,

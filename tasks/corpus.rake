@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# A task file and its helper module, not library code: lib/tasks/*.rake is
-# loaded only by the Rakefile's `Dir.glob('lib/tasks/**/*.rake').each { |r|
+# A task file and its helper module, not library code: tasks/*.rake is
+# loaded only by the Rakefile's `Dir.glob('tasks/**/*.rake').each { |r|
 # load r }`, never by lib/sirena.rb's require chain, so Sirena::Corpus's
 # module-level `abort` in #check! can only ever run inside a rake process
 # (a real script entry point) -- confirmed by grepping both files for any
@@ -26,9 +26,9 @@ require "timeout"
 # TODO.foundation/02b at item 08 step 3a.
 module Sirena
   module Corpus
-    CORPUS_ROOT = File.expand_path("../../spec/mermaid", __dir__)
+    CORPUS_ROOT = File.expand_path("../spec/mermaid", __dir__)
     VERDICTS_PATH = File.join(CORPUS_ROOT, "corpus-verdicts.yml")
-    SCOREBOARD_PATH = File.expand_path("../../scoreboard/corpus.json", __dir__)
+    SCOREBOARD_PATH = File.expand_path("../scoreboard/corpus.json", __dir__)
 
     # A hung case is a failure, not a hang. Matches scripts/corpus_sweep.rb's
     # own budget.

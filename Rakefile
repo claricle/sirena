@@ -15,7 +15,7 @@ RSpec::Core::RakeTask.new(:benchmark) do |task|
 end
 
 # Load custom rake tasks
-Dir.glob('lib/tasks/**/*.rake').each { |r| load r }
+Dir.glob('tasks/**/*.rake').each { |r| load r }
 
 # TODO.architecture/01-safety-net.md, Part B step 5: the corpus ratchet has
 # to run wherever `rake` does, or a refactor can drop 200 cases and nothing

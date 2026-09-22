@@ -185,9 +185,9 @@ rows:
   count: 2
 - file: lib/sirena/transform/user_journey.rb
   count: 2
-- file: lib/tasks/benchmark.rake
+- file: tasks/benchmark.rake
   count: 4
-- file: lib/tasks/generate_mermaid_fixtures.rake
+- file: tasks/generate_mermaid_fixtures.rake
   count: 2
 - file: scripts/corpus_sweep.rb
   count: 5

@@ -26,19 +26,18 @@ Gem::Specification.new do |spec|
   spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      f.match(%r{^(test|spec|features)/})
-    end
+    (Dir['{lib,exe}/**/*'] + Dir['README.adoc'] + Dir['LICENSE*'] + Dir['CHANGELOG*'])
+      .select { |f| File.file?(f) }
   end
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency "elkrb"
+  # Not yet called (TODO.foundation/14 tracks wiring it into Engine#layout_graph).
+  spec.add_dependency 'elkrb', '~> 1.0'
   spec.add_dependency 'kramdown', '~> 2.5'
   # Exact pin, not ~>: 0.8.32 broke collection-attribute scalar assignment.
   spec.add_dependency 'lutaml-model', '= 0.8.31'
-  spec.add_dependency 'moxml'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'
 end

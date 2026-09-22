@@ -4,7 +4,7 @@
 # from here (calling `.start` here is deprecated in the installed SimpleCov
 # 1.2.0).
 #
-# Corpus results are never in a REPORT THAT SHIPS: lib/tasks/coverage.rake's
+# Corpus results are never in a REPORT THAT SHIPS: tasks/coverage.rake's
 # `--tag ~corpus` and spec/spec_helper.rb's `filter_run_excluding corpus:`
 # exclude every :corpus-tagged example whenever COVERAGE=true; if either is
 # bypassed, spec/spec_helper.rb's `after(:suite)` backstop fails the run
@@ -27,13 +27,13 @@ SimpleCov.configure do
   # Visible in the report (Line floor comment below) but carries no minimum
   # yet -- staged separately (TODO.foundation/03-coverage-gate.md, "Bars").
 
-  formats :html, :json # coverage/coverage.json feeds `simplecov patch` (lib/tasks/coverage.rake: coverage:changed_lines)
+  formats :html, :json # coverage/coverage.json feeds `simplecov patch` (tasks/coverage.rake: coverage:changed_lines)
 
   # `cover` below expands to include every lib/ file on disk matching
   # `lib/**/*.rb`, even one `spec:unit` never requires -- it enters the
   # report at 0%, not "no coverable lines" (which would count as a pass for
   # both this floor and coverage:changed_lines). The same glob is also a
-  # restriction: `lib/tasks/*.rake` and `lib/sirena/theme/builtin/*.yml`
+  # restriction: `tasks/*.rake` and `lib/sirena/theme/builtin/*.yml`
   # never appear in the report, loaded or not -- `cover` matches by
   # extension (`SimpleCov::UnloadedFileInjector.discover` /
   # `SimpleCov::Result#apply_cover_filters!`, gem source), not by whether

@@ -23,5 +23,5 @@ rows:
   count: 1
 - file: lib/sirena/theme.rb
   count: 1
-- file: lib/tasks/benchmark.rake
+- file: tasks/benchmark.rake
   count: 1

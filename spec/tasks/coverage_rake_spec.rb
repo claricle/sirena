@@ -7,7 +7,7 @@ require 'fileutils'
 require 'json'
 require 'open3'
 
-# lib/tasks/coverage.rake is loaded only by the Rakefile (`Dir.glob('lib/tasks/**/*.rake')`),
+# tasks/coverage.rake is loaded only by the Rakefile (`Dir.glob('tasks/**/*.rake')`),
 # never required by the app itself, so nothing in spec/sirena/** exercises it -- mutation-check.sh
 # and line-deletion-check.sh both confirmed 0% protection for this file before this spec existed.
 # Each example gets its OWN Rake::Application: a Rake::Task only ever runs once per
@@ -18,11 +18,11 @@ require 'open3'
 # this spec run. Each example also gets its own throwaway git repo, so
 # `coverage:changed_lines`'s `git diff --merge-base` / `git ls-files` calls have something real
 # to run against without touching this repo's own history or coverage/ directory.
-RSpec.describe 'lib/tasks/coverage.rake' do
+RSpec.describe 'tasks/coverage.rake' do
   around do |example|
     original_application = Rake.application
     Rake.application = Rake::Application.new
-    load File.expand_path('../../lib/tasks/coverage.rake', __dir__)
+    load File.expand_path('../../tasks/coverage.rake', __dir__)
 
     Dir.mktmpdir('coverage-rake-spec') do |dir|
       Dir.chdir(dir) { example.run }
