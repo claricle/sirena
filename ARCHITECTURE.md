@@ -10,9 +10,11 @@ components.
 ## Core Principles
 
 1. **Model-Driven Design**: Every registered diagram model inherits
-   `Diagram::Base`, which is a `Lutaml::Model::Serializable`. Some value
-   classes nested inside them are plain Ruby — `RadarAxis`, `TreemapNode`
-   and `PacketField`
+   `Diagram::Base`, which is a `Lutaml::Model::Serializable`. Six value
+   classes nested under `Sirena::Diagram` are plain Ruby: `PacketField`,
+   `RadarAxis`, `RadarCurve`, `TreemapNode`, `XYAxis` and `XYDataset`. To
+   re-derive that list, select the `Sirena::Diagram` constants that are
+   classes and do not descend from `Lutaml::Model::Serializable`
 2. **MECE Separation**: Each component has mutually exclusive, collectively
    exhaustive responsibilities
 3. **Register-Based**: Diagram types and renderers registered dynamically
