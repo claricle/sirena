@@ -220,6 +220,51 @@ RSpec.describe Sirena::Corpus do
     end
   end
 
+  describe ".fail_on_drift!" do
+    # "c" stays passing in both committed and fresh in every example below --
+    # it never regresses and is always already recorded, so it must never
+    # appear in either printed block. Asserting exact stdout (not a loose
+    # substring) is what proves that: a `fail_on_drift!` that printed every
+    # committed case instead of just the drifted ones would still satisfy a
+    # regex like /REGRESSED.*\n  a\n/, but not an exact match against a
+    # block containing only "a".
+    let(:committed) do
+      [
+        { "case" => "a", "pass" => true },
+        { "case" => "b", "pass" => false },
+        { "case" => "c", "pass" => true }
+      ]
+    end
+
+    it "exits non-zero and names only the case that regressed" do
+      fresh = [
+        { "case" => "a", "pass" => false },
+        { "case" => "b", "pass" => false },
+        { "case" => "c", "pass" => true }
+      ]
+
+      expect { described_class.fail_on_drift!(committed, fresh) }
+        .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        .and output("REGRESSED (passed in the committed scoreboard, fails now):\n  a\n").to_stdout
+    end
+
+    it "exits non-zero and names only the case that improved without being recorded" do
+      fresh = [
+        { "case" => "a", "pass" => true },
+        { "case" => "b", "pass" => true },
+        { "case" => "c", "pass" => true }
+      ]
+
+      expect { described_class.fail_on_drift!(committed, fresh) }
+        .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        .and output("IMPROVED BUT NOT RECORDED (run `rake corpus` and commit scoreboard/corpus.json):\n  b\n").to_stdout
+    end
+
+    it "returns without exiting when the fresh run matches" do
+      expect { described_class.fail_on_drift!(committed, committed) }.to output(/corpus:check: clean/).to_stdout
+    end
+  end
+
   describe ".check!" do
     # The abort path corpus:check gates CI on, driven with stubbed renders
     # so it needs neither the real corpus nor the committed scoreboard.
