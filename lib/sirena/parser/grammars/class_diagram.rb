@@ -389,7 +389,7 @@ module Sirena
 
         # Visibility modifiers
         rule(:visibility_modifier) do
-          (plus | minus | hash | tilde).as(:vis_symbol)
+          (plus | minus | hash_char | tilde).as(:vis_symbol)
         end
 
         # Relationship: A relationship_operator B

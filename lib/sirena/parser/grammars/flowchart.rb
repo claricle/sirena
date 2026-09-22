@@ -420,10 +420,10 @@ module Sirena
         # the item, so `fill:#f9f,;B` is fine while `fill:red,;B` is not.
         rule(:empty_comma_item) do
           comma |
-            hash.maybe >>
-            (space >> hash | hash.absent? >> comma_gap.absent? >>
+            hash_char.maybe >>
+            (space >> hash_char | hash_char.absent? >> comma_gap.absent? >>
               declaration_char).repeat >>
-              (comma_gap | hash >> hashed_comma_gap_scan)
+              (comma_gap | hash_char >> hashed_comma_gap_scan)
         end
 
         rule(:hashed_comma_gap_scan) do
@@ -451,8 +451,8 @@ module Sirena
         # node, because the `;` comes first.
         # A `#` after a space, as in `stroke: #fff`, is ordinary text.
         rule(:hashed_head) do
-          hash.maybe >>
-            (space >> hash | hash.absent? >> declaration_char).repeat >> hash
+          hash_char.maybe >>
+            (space >> hash_char | hash_char.absent? >> declaration_char).repeat >> hash_char
         end
 
         # What may follow that one `;` is a style component, not a node and
