@@ -25,13 +25,16 @@ module Sirena
         end
 
         # `classDiagram-v2` is the same language; mmdc takes no direction on
-        # its header line (`classDiagram-v2 LR` is rejected).
+        # its header line (`classDiagram-v2 LR` is rejected). Neither header
+        # line takes a trailing `%%` comment either — mmdc rejects
+        # `classDiagram %%x` and `classDiagram-v2 %%x` just as it rejects a
+        # direction there.
         rule(:header) do
           (str('classDiagram-v2').as(:header) >>
-            space? >> (newline | comment | eof).present? >> ws?) |
+            space? >> (newline | eof).present? >> ws?) |
             (str('classDiagram').as(:header) >> header_end >>
               space? >> direction_value.maybe.as(:direction) >> space? >>
-              (newline | comment | eof).present? >> ws?)
+              (newline | eof).present? >> ws?)
         end
 
         # `classDiagramX` is not a header, and the line ends after the header:

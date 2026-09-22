@@ -262,7 +262,9 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse names and headers" do
       "a suffix on the plain header" => "classDiagramX\nclass A\n",
       "a direction glued to the plain header" => "classDiagramLR\nclass A\n",
       "a backticked class glued to the header" => "classDiagram`A`\n",
-      "a backticked class after the header on its line" => "classDiagram `A`\n"
+      "a backticked class after the header on its line" => "classDiagram `A`\n",
+      "a comment on the v2 header line" => "classDiagram-v2 %%x\nclass A\n",
+      "a comment on the plain header line" => "classDiagram %%x\nclass A\n"
     }.each do |name, source|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse(source) }
