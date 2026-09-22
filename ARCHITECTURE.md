@@ -9,9 +9,10 @@ components.
 
 ## Core Principles
 
-1. **Model-Driven Design**: Most diagram models are `Lutaml::Model` classes;
-   `radar`, `xy_chart`, `packet`, `info`, `treemap`, `error` and
-   `containment` are plain Ruby
+1. **Model-Driven Design**: Every registered diagram model inherits
+   `Diagram::Base`, which is a `Lutaml::Model::Serializable`. Some value
+   classes nested inside them are plain Ruby — `RadarAxis`, `TreemapNode`
+   and `PacketField`
 2. **MECE Separation**: Each component has mutually exclusive, collectively
    exhaustive responsibilities
 3. **Register-Based**: Diagram types and renderers registered dynamically
@@ -124,7 +125,7 @@ define the grammar and transform inline in the parser file):
              │
              ▼ Intermediate tree (Hash/Array)
 ┌─────────────────────────────────────────────┐
-│  Layer 2: Builder (Parslet::Transform)     │
+│  Layer 2: Builder (10 of 23 Parslet)       │
 │  ──────────────────────────────────────     │
 │  • Converts intermediate tree to models    │
 │  • Maps patterns to Diagram objects        │
@@ -133,7 +134,7 @@ define the grammar and transform inline in the parser file):
 │  File: lib/sirena/parser/builders/*.rb     │
 └────────────┬────────────────────────────────┘
              │
-             ▼ Diagram models (Lutaml::Model, most types)
+             ▼ Diagram models (Lutaml::Model::Serializable)
 ┌─────────────────────────────────────────────┐
 │  Layer 3: Parser (Orchestrator)            │
 │  ────────────────────────────────────       │
@@ -274,7 +275,7 @@ Renderer.render
       │
       ▼
   SVG Model
-(mostly plain Ruby)
+ (Lutaml::Model)
       │
       ▼
 SVG.to_xml
