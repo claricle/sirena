@@ -192,7 +192,7 @@ module Sirena
       # theme has no typography or no font_size_normal. NOT used for edge
       # labels -- see #edge_label_font_size.
       def layout_font_size
-        valid_font_size(theme.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+        valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
       end
 
       # The size edge-label measure_text calls size against, mirroring the
@@ -202,8 +202,8 @@ module Sirena
       # Keeping the two in step means the layout reserves room for the font
       # the renderer draws with, not a different one.
       def edge_label_font_size
-        valid_font_size(theme.typography&.font_size_small) ||
-          valid_font_size(theme.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+        valid_font_size(theme&.typography&.font_size_small) ||
+          valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
       end
 
       # A theme-supplied font size flows unchecked into TextMeasurement's

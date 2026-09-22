@@ -264,5 +264,26 @@ RSpec.describe Sirena::Layout::Flowchart do
         end.not_to raise_error
       end
     end
+
+    # Layout::Base#theme falls back to Theme::Registry.get(:default), and
+    # Theme::Registry.clear (public, "useful for testing") empties that
+    # registry, so the fallback itself can resolve to nil -- a transform
+    # built directly with no theme injected sees exactly this. The renderer
+    # already tolerates a nil theme via safe navigation
+    # (renderer/base.rb#theme_typography); layout_font_size and
+    # edge_label_font_size must match that, not dereference theme directly.
+    context 'with no theme registered at all' do
+      it 'still measures node text instead of raising' do
+        Sirena::Theme::Registry.clear
+        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+        end
+
+        expect { transform.to_graph(diagram)[:children].first[:width] }
+          .not_to raise_error
+      ensure
+        Sirena::Theme::Registry.load_builtin_themes
+      end
+    end
   end
 end
