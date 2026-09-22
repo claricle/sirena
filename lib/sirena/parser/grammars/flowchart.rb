@@ -966,8 +966,11 @@ module Sirena
         private :inline_halves
 
         # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
-        # The transform drops the two quotes, as mermaid does.
-        rule(:quoted_label) { str('"') >> match['^"'].repeat >> str('"') }
+        # The transform drops the two quotes, as mermaid does. `%%{` still
+        # opens a directive even inside quotes, so it is refused here too.
+        rule(:quoted_label) do
+          str('"') >> (str('%%{').absent? >> match['^"']).repeat >> str('"')
+        end
 
         # Link forms
         # Every symbol-only link mermaid draws, probed one at a time
