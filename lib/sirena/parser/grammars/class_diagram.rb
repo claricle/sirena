@@ -168,7 +168,7 @@ module Sirena
         rule(:colon_member_definition) do
           class_ref >> space? >>
             colon >> space? >>
-            (body_annotation >> line_end |
+            (colon_body_annotation >> line_end |
               (visibility_modifier.maybe.as(:visibility) >>
                 member_definition.as(:member) >> line_end) |
               colon_text.as(:raw_member) >> line_end)
@@ -372,6 +372,21 @@ module Sirena
 
         rule(:annotation_text) do
           ((str('>>') >> member_end).absent? >> body_char).repeat(1)
+        end
+
+        # Same shape as body_annotation, for the colon-member form
+        # (`ClassName : <<interface>>`). A `:` or `;` inside still ends the
+        # member early there, the same ban colon_text enforces: mmdc rejects
+        # `A : <<a;b>>` and `A : <<a:b>>`.
+        rule(:colon_body_annotation) do
+          str('<<') >>
+            (colon_annotation_text.as(:body_stereotype) |
+              str('').as(:body_stereotype)) >>
+            str('>>') >> member_end
+        end
+
+        rule(:colon_annotation_text) do
+          ((str('>>') >> member_end).absent? >> match[':;'].absent? >> body_char).repeat(1)
         end
 
         rule(:colon_text) do

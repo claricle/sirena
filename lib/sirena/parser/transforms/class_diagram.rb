@@ -32,8 +32,10 @@ module Sirena
         # Operators where arrow points left (reverse direction)
         LEFT_POINTING = ['<|--', '<--', '<|..', '<..'].freeze
 
-        # `name(params) rest`: text with a `(` before its last `)`.
-        RAW_METHOD = /\A(?<name>[^(]*)\((?<params>.*)\)(?<rest>[^)]*)\z/
+        # `name(params) rest`: mmdc reads the LAST `(...)` in the text as the
+        # parameter list, so `foo()bar()` is method `foo()bar`, not `foo`
+        # with a stray `)bar(` as its params.
+        RAW_METHOD = /\A(?<name>.*)\((?<params>[^)]*)\)(?<rest>.*)\z/
 
         # Visibility symbol mappings
         VISIBILITY_SYMBOLS = {
@@ -236,9 +238,12 @@ module Sirena
         end
 
         # The `*` (abstract) and `$` (static) mmdc allows after a method have
-        # no place in the model and are dropped.
+        # no place in the model and are dropped. The mark only reads as a
+        # classifier when it touches the closing `)` directly; a space
+        # before it (`foo() $bar`) means `$bar` is the return type text, not
+        # a marked-then-typed method.
         def raw_method(call, visibility)
-          return_type = call[:rest].sub(/\A\s*[*$]?\s*/, '').sub(/\s*[*$]\z/, '')
+          return_type = call[:rest].sub(/\A[*$]?\s*/, '').sub(/\s*[*$]\z/, '')
           Diagram::ClassMethod.new(
             name: call[:name].strip, parameters: call[:params],
             return_type: return_type.empty? ? nil : return_type,

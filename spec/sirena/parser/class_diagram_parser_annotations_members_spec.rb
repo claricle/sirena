@@ -179,11 +179,35 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
       "a second colon" => "A : x: y: z",
       "a shorthand-looking colon" => "A:::s",
       "a colon then a shorthand" => "A : ::s",
-      "a semicolon inside" => "A : a ; b"
+      "a semicolon inside" => "A : a ; b",
+      "a semicolon inside an annotation" => "A : <<a;b>>",
+      "a colon inside an annotation" => "A : <<a:b>>"
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }.to raise_error(Sirena::Parser::ParseError)
       end
+    end
+  end
+
+  describe "a method name that holds its own parentheses" do
+    it "splits at the LAST paren pair, not the first" do
+      method = parse_class("+foo()bar()").class_methods.first
+
+      expect([method.name, method.parameters]).to eq(["foo()bar", ""])
+    end
+  end
+
+  describe "a mark that does not touch the closing paren" do
+    it "keeps a $ that is separated from the paren by a space, as return type text" do
+      method = parse_class("foo() $bar").class_methods.first
+
+      expect(method.return_type).to eq("$bar")
+    end
+
+    it "still drops a $ that touches the paren directly" do
+      method = parse_class("foo()$ bar").class_methods.first
+
+      expect(method.return_type).to eq("bar")
     end
   end
 
