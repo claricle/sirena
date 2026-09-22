@@ -920,11 +920,36 @@ RSpec.describe Sirena::Source do
 
       it "refuses nested mappings on a small stack rather than crashing" do
         # Every Fiber example used the sequence shape, which fits inside
-        # the depth bound. Mappings do not: 213 levels exhausted a Fiber
-        # 43 short of the bound, and SystemStackError is not a
-        # StandardError, so it went straight past the engine's rescue.
-        expect(in_a_fiber(deep_map(213))).to eq(:refused)
+        # the depth bound. Mappings do not: they overflow a Fiber below the
+        # bound, and SystemStackError is not a StandardError, so it went
+        # straight past the engine's rescue. How deep a default Fiber gets
+        # depends on the platform, so the default stack may walk 213 levels
+        # (a title) or refuse them, never crash.
+        expect(in_a_fiber(deep_map(213))).to eq(:refused).or eq("T")
         expect(in_a_fiber(deep_map(255))).to eq(:refused)
+      end
+
+      it "refuses a mapping that overflows the stack below the depth bound" do
+        # The overflow is forced, not hoped for: a child Ruby with a 32 KB
+        # Fiber VM stack (RUBY_FIBER_VM_STACK_SIZE, read at startup) cannot
+        # hold 200 mapping levels on any platform, and 200 is under
+        # MAX_NESTING, so only the SystemStackError rescue can refuse it.
+        levels = 200
+        script = <<~RUBY
+          require "sirena"
+          verdict = Fiber.new do
+            Sirena::Source.title(#{deep_map(levels).inspect})
+          rescue Sirena::Source::MalformedFrontmatter
+            :refused
+          end.resume
+          print verdict
+        RUBY
+        env = { "RUBY_FIBER_VM_STACK_SIZE" => "32768" }
+        output = IO.popen(env, [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__), "-e", script],
+                          err: [:child, :out], &:read)
+
+        expect(levels).to be < Sirena::Source::Frontmatter::MAX_NESTING
+        expect(output.lines.last).to eq("refused")
       end
 
       it "still walks mappings a person would write, on a small stack" do
