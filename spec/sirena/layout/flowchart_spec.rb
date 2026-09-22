@@ -157,5 +157,112 @@ RSpec.describe Sirena::Layout::Flowchart do
         expect(node_width(:high_contrast)).to be > node_width(:default)
       end
     end
+
+    # An edge label draws at font_size_small when the theme sets one
+    # (renderer/flowchart.rb#edge_label_font_size), not font_size_normal --
+    # so the layout must reserve room against the same font, or an edge
+    # label's box is sized for text the renderer never draws.
+    context 'with an edge label and a theme whose small and normal sizes differ' do
+      let(:diagram) do
+        Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'B', label: 'B')
+          d.edges << Sirena::Diagram::FlowchartEdge.new(
+            source_id: 'A', target_id: 'B', arrow_type: 'arrow',
+            label: 'edge label text'
+          )
+        end
+      end
+
+      def edge_label_width(typography)
+        themed_transform = described_class.new
+        themed_transform.theme = Sirena::Theme.new(typography: typography)
+        graph = themed_transform.to_graph(diagram)
+        graph[:edges].first[:labels].first[:width]
+      end
+
+      it 'sizes the edge label at font_size_small, not font_size_normal' do
+        small_typography = Sirena::Theme::Typography.new(
+          font_size_small: 12.0, font_size_normal: 30.0
+        )
+        normal_typography = Sirena::Theme::Typography.new(
+          font_size_small: 12.0, font_size_normal: 12.0
+        )
+
+        expect(edge_label_width(small_typography))
+          .to eq(edge_label_width(normal_typography))
+      end
+    end
+
+    # apply_theme_to_text leaves the SVG element's font_size unset (falling
+    # through to Svg::Text::DEFAULT_FONT_SIZE = 16.0) whenever the theme has
+    # no typography or no font_size_normal -- so the layout's own fallback
+    # has to match 16.0, not a different value, or this exact gap D10 fixes
+    # for the has-typography case reopens for the no-typography one.
+    context 'with a theme that has no typography at all' do
+      it 'measures node text at the SVG render-side default of 16.0' do
+        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+        end
+
+        no_typography = described_class.new
+        no_typography.theme = Sirena::Theme.new
+        explicit_sixteen = described_class.new
+        explicit_sixteen.theme = Sirena::Theme.new(
+          typography: Sirena::Theme::Typography.new(font_size_normal: 16.0)
+        )
+
+        expect(described_class::DEFAULT_FONT_SIZE).to eq(16.0)
+        expect(no_typography.to_graph(diagram)[:children].first[:width])
+          .to eq(explicit_sixteen.to_graph(diagram)[:children].first[:width])
+      end
+    end
+
+    # A theme-supplied font size reaches TextMeasurement's box-size
+    # arithmetic directly -- an unvalidated non-finite value raises deep in
+    # Grid's `.to_i` sizing (FloatDomainError on NaN/Infinity), and a
+    # negative one silently produces a smaller-than-fallback label_width
+    # (padding alone can mask it in the padded node :width, so this checks
+    # the unpadded label measurement directly).
+    context 'with a theme carrying an invalid font_size_normal' do
+      def label_width_for(font_size_normal)
+        themed_transform = described_class.new
+        themed_transform.theme = Sirena::Theme.new(
+          typography: Sirena::Theme::Typography.new(
+            font_size_normal: font_size_normal
+          )
+        )
+        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+        end
+        themed_transform.to_graph(diagram)[:children].first[:labels].first[:width]
+      end
+
+      it 'falls back to DEFAULT_FONT_SIZE for a negative value' do
+        default_label_width = label_width_for(nil)
+
+        expect(label_width_for(-50.0)).to eq(default_label_width)
+      end
+
+      it 'does not reach a fuller render for a NaN value' do
+        source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
+
+        expect do
+          Sirena::Engine.new(
+            theme: { typography: { font_size_normal: Float::NAN } }
+          ).render(source)
+        end.not_to raise_error
+      end
+
+      it 'does not reach a fuller render for an Infinity value' do
+        source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
+
+        expect do
+          Sirena::Engine.new(
+            theme: { typography: { font_size_normal: Float::INFINITY } }
+          ).render(source)
+        end.not_to raise_error
+      end
+    end
   end
 end
