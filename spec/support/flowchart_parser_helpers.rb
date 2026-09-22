@@ -5,7 +5,7 @@
 # lines before the statement under test.
 module FlowchartParserHelpers
   def parse_flowchart(source, header: "flowchart TD\n")
-    Sirena::Parser::FlowchartParser.new.parse("#{header}#{source}\n")
+    Sirena::Parser::Flowchart.new.parse("#{header}#{source}\n")
   end
 
   def edge_tuples(source)

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   include FlowchartParserHelpers
 
   describe "a label written inside the link" do
