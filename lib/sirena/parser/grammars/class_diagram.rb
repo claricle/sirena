@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'common'
+require_relative 'mermaid_unicode_text'
 
 module Sirena
   module Parser
@@ -24,16 +25,20 @@ module Sirena
         end
 
         # `classDiagram-v2` is the same language; mmdc takes no direction on
-        # its header line (`classDiagram-v2 LR` is rejected).
+        # its header line (`classDiagram-v2 LR` is rejected). Neither header
+        # line takes a trailing `%%` comment either — mmdc rejects
+        # `classDiagram %%x` and `classDiagram-v2 %%x` just as it rejects a
+        # direction there.
         rule(:header) do
           (str('classDiagram-v2').as(:header) >>
-            space? >> (newline | comment | eof).present? >> ws?) |
+            space? >> (newline | eof).present? >> ws?) |
             (str('classDiagram').as(:header) >> header_end >>
-              ws? >>
-              direction.maybe.as(:direction))
+              space? >> direction_value.maybe.as(:direction) >> space? >>
+              (newline | eof).present? >> ws?)
         end
 
-        # `classDiagramX` is not a header.
+        # `classDiagramX` is not a header, and the line ends after the header:
+        # `classDiagram `A`` is rejected by mmdc.
         rule(:header_end) do
           (name_char | str('-')).absent?
         end
@@ -268,8 +273,9 @@ module Sirena
           class_ref >> line_end
         end
 
-        # A class name with the generic mmdc lets follow it anywhere a class
-        # is mentioned: `Class1~T~ <|-- Class02`, `Car~T~ : +wheels`.
+        # A class name with the generic mmdc lets follow it on a standalone
+        # class, a colon member and a relationship end: `Class1~T~ <|-- Class02`,
+        # `Car~T~ : +wheels`.
         rule(:class_ref) do
           class_name.as(:class_id) >> generic_suffix.as(:generic)
         end
@@ -281,10 +287,13 @@ module Sirena
           (space? >> generic_params).maybe
         end
 
-        # A word character in a class name or a CSS class: letters and digits
-        # in any script, and underscore. mmdc accepts `class 1`, `class é`.
+        # A word character in a class name or a CSS class: ASCII letters and
+        # digits, underscore, and the letters in mermaid's own table
+        # (`MERMAID_UNICODE_TEXT`). mmdc accepts `class 1` and `class é`, and
+        # rejects `class ١` (a non-ASCII digit) and `class 𐐀` (an astral
+        # letter, absent from the table).
         rule(:name_char) do
-          match['\p{L}\p{N}_']
+          match["A-Za-z0-9_#{MERMAID_UNICODE_TEXT}"]
         end
 
         # Class name: words joined by a single `.` (namespace-qualified) or a
@@ -300,7 +309,7 @@ module Sirena
         end
 
         rule(:backtick_name) do
-          str('`') >> (str('`').absent? >> newline.absent? >> any).repeat(1) >> str('`')
+          str('`') >> (str('`').absent? >> any).repeat(1) >> str('`')
         end
 
         rule(:plain_class_name) do

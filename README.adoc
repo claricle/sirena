@@ -129,7 +129,7 @@ Render all Mermaid files in a directory:
 
 [source,shell]
 ----
-sirena batch input_dir/ -o output_dir/
+sirena batch -i input_dir/ -o output_dir/
 ----
 
 List all supported diagram types:
@@ -154,21 +154,21 @@ mermaid_code = <<~MERMAID
     B --> C[End]
 MERMAID
 
-svg = Sirena::Engine.render(mermaid_code)
+svg = Sirena.render(mermaid_code)
 File.write('output.svg', svg)
 
 # Render from a file
-svg = Sirena::Engine.render_file('diagram.mmd')
+svg = Sirena.render(File.read('diagram.mmd'))
 File.write('output.svg', svg)
 
-# Specify diagram type explicitly
-svg = Sirena::Engine.render(mermaid_code, type: :flowchart)
+# Pick a built-in theme
+svg = Sirena.render(mermaid_code, theme: 'dark')
 ----
 
 === Examples
 
-Browse link:examples/README.adoc[] for 37 working examples across all 24
-diagram types, each with corresponding SVG output.
+Browse link:examples/README.adoc[] for 53 example sources across all 24
+diagram types; 52 have a tracked SVG (one `.beta.mmd` source does not render yet).
 
 == Documentation
 
@@ -209,8 +209,8 @@ that provides superior error messages, composability, and maintainability
 compared to traditional lexer-based approaches. The 3-layer Parslet architecture
 (Grammar → Transform → Parser) achieved ~80% code reduction during migration.
 
-The implementation uses the ELK layout engine via the elkrb gem for
-professional-quality graph layout and positioning. Sirena is a pure Ruby
+Layout currently uses a built-in fallback grid (`Sirena::Layout::Fallback`); the
+elkrb gem is a declared dependency but is not called yet. Sirena is a pure Ruby
 implementation with no JavaScript dependencies, generating standards-compliant
 SVG 1.2 output suitable for direct integration with Metanorma documentation
 frameworks.

@@ -52,26 +52,27 @@ cleanup actually buys, before you reach for it:
   `requirement` — and they raise `NoMethodError`, not
   `NotImplementedError`.
 - `NotImplementedError` inherits `ScriptError`, not `StandardError`. So
-  even when one does fire, `engine.rb:119`'s `rescue StandardError` does
+  even when one does fire, `engine.rb:197`'s `rescue StandardError` does
   not catch it: it escapes `PipelineError` entirely and reaches the
   caller raw. Whatever the corpus harness records for that case, it will
   not be a pipeline failure.
 
-That is the crash, and it is worse than "9 types raise at runtime": the
+That is the crash, and it is worse than "10 types have no working `valid?`"
+(the 2026-08-25 baseline above; all 24 now answer a boolean): the
 fix has to cover both failure modes and both transform hierarchies.
 
 `Parser::Base` is bypassed too, and treemap is not the only one:
 
 - `TreemapParser` does not inherit `Parser::Base`, builds its model
   inline (`build_diagram` / `build_hierarchy`), and exports an alias
-  `Treemap = TreemapParser` (`parser/treemap.rb:96`).
+  `Treemap = TreemapParser` (since removed; `grep -rn 'Treemap = ' lib/` is empty).
 - **Six more parsers build the model inline the same way**, through a
   private `create_diagram`: `git_graph`, `kanban`, `mindmap`, `packet`,
   `radar`, `xy_chart`. They have a builder file under
   `parser/transforms/` and then do the work themselves anyway.
 - `user_journey` has **no builder file at all** — there is no
   `parser/transforms/user_journey.rb`. It builds inline and raises its
-  own semantic error at `parser/user_journey.rb:116`.
+  own semantic error at `parser/user_journey.rb:224`.
 
 So "every other type does it in `Parser::Transforms::*`" is true of 16
 of 24, not 23.
@@ -80,7 +81,7 @@ of 24, not 23.
 
 1. Add a required `model:` row to `DiagramRegistry.register`. Today it
    takes `parser:`, `transform:` and `renderer:` only
-   (`diagram_registry.rb:47`), so the registry cannot name the model
+   (`diagram_registry.rb:54`), so the registry cannot name the model
    whose contract is being checked. Fill it in on all 24 rows in
    `lib/sirena.rb`.
 
@@ -105,7 +106,7 @@ of 24, not 23.
    - the parser returns an instance of the registered `model:`
 
    Add a set-parity assertion in the same file: `DiagramRegistry.types`
-   must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:32`).
+   must equal `Engine::DIAGRAM_TYPE_PATTERNS.keys` (`engine.rb:29`).
    `types` is `@handlers.keys` — only the rows that exist. Without
    parity a type missing from the registry is invisible, and the spec
    goes green over the ones it can see.
@@ -115,10 +116,10 @@ of 24, not 23.
 
    The last assertion needs input, so add one canonical fixture per type
    under `spec/fixtures/contract/<type>.mmd` — the smallest source that
-   parses. `engine.rb:106` hands the parser's return value straight to
+   parses. `engine.rb:274` hands the parser's return value straight to
    the transform without checking its class, so nothing catches a parser
    that builds the wrong model.
-3. Run it. It will fail for about ten types. **That failure list is the
+3. Run it. On the 2026-08-25 baseline it failed for ten types. **That failure list is the
    work** — do not write it out by hand first.
 4. Fix the models, never the spec:
    - rename `type` -> `diagram_type` (5 types)
@@ -194,8 +195,9 @@ of 24, not 23.
 
 ### Why
 
-`scripts/corpus_sweep.rb` exists but is manual-only, so the 55.6%
-evidence-valid pass rate (574/1032, swept 2026-08-27) is unprotected: a
+`scripts/corpus_sweep.rb` exists but is manual-only, so the evidence-valid
+pass rate (55.6%, 574/1032 when swept 2026-08-27; 74.9%, 773/1032 in the
+committed `scoreboard/corpus.json` at bbd6c62e) is unprotected: a
 refactor can drop 200 cases and nothing notices.
 
 ### Steps
@@ -203,7 +205,7 @@ refactor can drop 200 cases and nothing notices.
 0. **Fix the error taxonomy first — the harness is useless without it.**
    `Engine#render` currently collapses every non-detection failure into
    one `PipelineError`, with the backtrace concatenated into the message
-   string (`engine.rb:119-121`). Recording a `stage` on top of that would
+   string (`engine.rb:197-201`). Recording a `stage` on top of that would
    record `PipelineError` for everything except detection, and
    `TODO.foundation/05` derives its whole work list from that field.
 
@@ -278,29 +280,48 @@ first block.
 
 ## Done when
 
-- [ ] A — `bundle exec rspec spec/contract_spec.rb` passes for all 24 types
-- [ ] A — `contract_spec.rb` calls `model.valid?` and asserts
+Status: 15 of 17 true at ba8e1917 on 2026-09-21 (2 unticked: CI, survives 04 and 06); each line below names its proof.
+
+- [x] A — `bundle exec rspec spec/contract_spec.rb` passes for all 24 types
+      Proof: `bundle exec rspec spec/contract_spec.rb` -> 198 examples, 0 failures.
+- [x] A — `contract_spec.rb` calls `model.valid?` and asserts
       `[true, false].include?(model.valid?)` — not merely that it does not raise.
       `def valid?; :maybe; end` must fail this spec; a `respond_to?` check does not
-- [ ] A — every `DiagramRegistry.register` row carries a `model:`
-- [ ] A — `DiagramRegistry.types` and `Engine::DIAGRAM_TYPE_PATTERNS.keys` are the same set
-- [ ] A — deleting one registry row turns `contract_spec.rb` red
+      Proof: mutation: `Pie#valid?` body replaced by `:maybe` -> 1 failure, `:pie answers valid? with an actual boolean`.
+- [x] A — every `DiagramRegistry.register` row carries a `model:`
+      Proof: `register` requires the `model:` keyword (`diagram_registry.rb:54`), so a row without one raises ArgumentError at load; `bundle exec rspec spec/contract_spec.rb` -> 198 examples, 0 failures.
+- [x] A — `DiagramRegistry.types` and `Engine::DIAGRAM_TYPE_PATTERNS.keys` are the same set
+      Proof: `contract_spec.rb` 'registers exactly the types Engine can detect' is green.
+- [x] A — deleting one registry row turns `contract_spec.rb` red
+      Proof: mutation: deleted the `:pie` register block -> that same example fails.
 - [ ] A — the guard runs ONCE for every type, and survives items 04 and 06.
       `Transform::Base` alone does not satisfy this: item 04 sends converted
       layouts straight to `scene(diagram)` and item 06 deletes `to_graph`, so a
       guard living only in `to_graph` disappears with it. Put it on the durable
       entry point (`Base#call`), or preserve an explicit Engine-side check
       through 04 and 06
-- [ ] A — an INVALID model driven through `Engine` raises, asserted by a spec —
+      Proof: `Transform::Base#call` holds the guard, `to_graph` delegates to it; `instance_method(:call).owner` is `Base` for all 24; 'has no registered transform overriding the guarded entry point' is green. Engine still calls `to_graph` (engine.rb:291); surviving items 04 and 06 is not testable yet.
+- [x] A — an INVALID model driven through `Engine` raises, asserted by a spec —
       not a unit test on the transform. That is the only form that keeps
       holding after 04 and 06 move the pipeline
-- [ ] A — `grep -rn "def type$" lib/sirena/diagram/` returns nothing
-- [ ] A — all 24 transforms inherit `Transform::Base`
-- [ ] A — no `Treemap = TreemapParser` alias remains
-- [ ] B — a failing parse raises `ParseError` out of `Engine#render`, not `PipelineError`; no backtrace appears inside any message string
-- [ ] B — `rake corpus` writes `scoreboard/corpus.json`; it is committed
-- [ ] B — the reported rate is over evidence-valid cases, and says so
-- [ ] B — `rake corpus:check` fails on a deliberately broken renderer
-- [ ] B — `rake corpus:check` fails on an unrecorded improvement
-- [ ] B — `rake 'corpus[pie]'` prints only pie results
+      Proof: `contract_spec.rb` 'an invalid model driven through Engine' raises `TransformError` /Invalid diagram/ (green).
+- [x] A — `grep -rn "def type$" lib/sirena/diagram/` returns nothing
+      Proof: `grep -rn "def type$" lib/sirena/diagram/` -> no output.
+- [x] A — all 24 transforms inherit `Transform::Base`
+      Proof: registered transforms: 24 of 24 are `< Sirena::Transform::Base`.
+- [x] A — no `Treemap = TreemapParser` alias remains
+      Proof: `grep -rn 'Treemap = ' lib/` -> no output; `Parser.const_defined?(:Treemap, false)` is false.
+- [x] B — a failing parse raises `ParseError` out of `Engine#render`, not `PipelineError`; no backtrace appears inside any message string
+      Proof: `Engine.new.render("flowchart TD\n  A -->")` raises `Sirena::Parser::ParseError` (a `Sirena::Error`), message has no `.rb:` frames.
+- [x] B — `rake corpus` writes `scoreboard/corpus.json`; it is committed
+      Proof: file exists, 1997 rows, last changed in bbd6c62e; `bundle exec rake corpus:check` -> `corpus:check: clean (1997 cases' pass/fail match the committed scoreboard)` at ba8e1917 + this commit.
+- [x] B — the reported rate is over evidence-valid cases, and says so
+      Proof: `rake 'corpus[pie]'` prints `against evidence-valid cases only: 39/40`; committed board is 773/1032 valid (74.9%).
+- [x] B — `rake corpus:check` fails on a deliberately broken renderer
+      Proof: mutation: `PieRenderer#render` raises -> `corpus:check: FAILED`, REGRESSED pie/001 and pie/002.
+- [x] B — `rake corpus:check` fails on an unrecorded improvement
+      Proof: mutation: one passing scoreboard row edited to fail -> `corpus:check: FAILED`, IMPROVED BUT NOT RECORDED.
+- [x] B — `rake 'corpus[pie]'` prints only pie results
+      Proof: `bundle exec rake 'corpus[pie]'` -> `corpus[pie]: 48/49`, only pie cases listed.
 - [ ] B — CI runs `corpus:check`
+      Proof: INFERRED, not shown: `Rakefile:24` is `task default: [:spec, :benchmark, 'corpus:check']`; `.github/workflows/rake.yml` only calls `metanorma/ci` `generic-rake.yml@main`, which is not in this repo, so CI running the default task is unconfirmed.

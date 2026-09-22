@@ -54,6 +54,10 @@ module Sirena
           # Classes given an explicit label, so a later generic on the same id
           # does not append to it.
           @labelled_ids = []
+          # Which statement created each class: mmdc keeps only the generic
+          # written on the mention that creates it.
+          @statement_count = 0
+          @created_in = {}
           @current_namespace = nil
 
           # Tree is an array: [header, direction, ...statements]
@@ -85,6 +89,7 @@ module Sirena
         def process_statement(stmt)
           return unless stmt.is_a?(Hash)
 
+          @statement_count += 1
           if stmt[:namespace_keyword]
             # Namespace block
             process_namespace(stmt)
@@ -108,7 +113,7 @@ module Sirena
             nil
           elsif stmt[:class_id] && !stmt[:keyword]
             # Standalone class
-            entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
+            entity = ensure_entity_exists(qualify_name(class_id_text(stmt[:class_id])))
             apply_generic(entity, stmt[:generic])
           end
         end
@@ -358,6 +363,7 @@ module Sirena
             e.name = class_id
           end
           @diagram.entities << entity
+          @created_in[class_id] = @statement_count
           entity
         end
 
@@ -373,14 +379,15 @@ module Sirena
 
         # Shows a generic on the display name ("Car~T~"), unless a text label
         # already names the class: mmdc renders `class Animal~T~["A label"]`
-        # as "A label". A later generic replaces an earlier one, so
-        # `A~T~ --> B` written twice still reads "A~T~".
+        # as "A label". Only the statement that creates the class counts, as
+        # in mmdc: `A --> B` then `A~T~ --> C` leaves A without a generic, and
+        # `A~T~ --> B` then `A~U~ --> C` keeps T.
         def apply_generic(entity, generic)
-          return unless generic.is_a?(Hash) && generic[:generic_type]
+          creating = @created_in.delete(entity.id) == @statement_count
+          return unless creating && generic.is_a?(Hash) && generic[:generic_type]
           return if @labelled_ids.include?(entity.id)
 
-          type = extract_text(generic[:generic_type])
-          entity.name = "#{entity.name.sub(/~[^~]*~\z/, '')}~#{type}~"
+          entity.name = "#{entity.name}~#{extract_text(generic[:generic_type])}~"
         end
 
         def qualify_name(name)

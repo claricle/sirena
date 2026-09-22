@@ -270,7 +270,7 @@ NOTE: Benchmarks measured on a standard development machine. Actual performance 
 
 ==== From Mermaid.js to Sirena
 
-**Syntax Compatibility:** 95%+ compatible
+**Syntax Compatibility:** partial; see the compatibility page and `scoreboard/corpus.json`
 
 **Migration Steps:**
 
