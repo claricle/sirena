@@ -273,14 +273,22 @@ RSpec.describe Sirena::Layout::Flowchart do
     # (renderer/base.rb#theme_typography); layout_font_size and
     # edge_label_font_size must match that, not dereference theme directly.
     context 'with no theme registered at all' do
-      it 'still measures node text instead of raising' do
+      it 'still measures node and edge-label text instead of raising' do
         Sirena::Theme::Registry.clear
         diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
           d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'B', label: 'B')
+          d.edges << Sirena::Diagram::FlowchartEdge.new(
+            source_id: 'A', target_id: 'B', arrow_type: 'arrow',
+            label: 'edge label text'
+          )
         end
 
-        expect { transform.to_graph(diagram)[:children].first[:width] }
-          .not_to raise_error
+        expect do
+          graph = transform.to_graph(diagram)
+          graph[:children].first[:width]
+          graph[:edges].first[:labels].first[:width]
+        end.not_to raise_error
       ensure
         Sirena::Theme::Registry.load_builtin_themes
       end
