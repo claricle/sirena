@@ -11,76 +11,7 @@ require 'sirena/commands/batch'
 # someone would choose on purpose: the run died part way, and the files
 # after the bad one were never attempted.
 RSpec.describe Sirena::Commands::BatchCommand do
-  # 4000 nested subgraphs -- past the depth the flowchart parser can carry,
-  # so it fails where a well-formed neighbour does not. `parse_tree`
-  # (flowchart.rb:58-60) converts that overflow into a ParseError, so this
-  # file exercises the ORDINARY failure path; the widened rescue is driven
-  # by the exhaustion examples below, which raise a real `NoMemoryError` at
-  # `File.read`.
-  #
-  # 4000 is well past the boundary rather than close to it: measured to
-  # still overflow under a 16MB and a 32MB RUBY_THREAD_VM_STACK_SIZE, where
-  # a shallower depth parses cleanly once the stack is that generous. A
-  # depth near the boundary would make this file flake with the
-  # interpreter's stack size instead of proving the guard.
-  def bomb
-    opens = (1..4000).map { |i| "subgraph s#{i}" }.join("\n")
-    "graph TD\n#{opens}\nA\n#{"end\n" * 4000}"
-  end
-
-  # The order matters: a file AFTER the bad one is the only thing that can
-  # tell "reported and continued" from "died at the bad one".
-  def in_batch_dir
-    Dir.mktmpdir do |dir|
-      input = File.join(dir, 'in')
-      output = File.join(dir, 'out')
-      Dir.mkdir(input)
-      File.write(File.join(input, '1-ok.mmd'), "graph TD\nAlpha-->Beta\n")
-      File.write(File.join(input, '2-bomb.mmd'), bomb)
-      File.write(File.join(input, '3-ok.mmd'), "graph TD\nOmega-->Zeta\n")
-      yield input, output
-    end
-  end
-
-  # The rescue in `BatchCommand` is a SECOND widened boundary and needs the
-  # same proof as the engine's, in both directions. The exhaustion spec
-  # constrains the CONSTANT; `rescue Exception` written at THIS site passes
-  # that untouched, and then Ctrl-C, `exit` and a host's `Timeout.timeout`
-  # are all swallowed part way through a batch run. `File.read` sits inside
-  # the rescued block, which is how a real one of each is driven through it.
-  def batching(exception)
-    lambda do
-      in_batch_dir do |input, output|
-        allow(File).to receive(:read).and_call_original
-        allow(File).to receive(:read)
-          .with(File.join(input, '2-bomb.mmd')).and_raise(exception)
-
-        run_batch(input, output)
-      end
-    end
-  end
-
-  def run_batch(input, output)
-    original = $stdout
-    $stdout = StringIO.new
-    described_class.new(input: input, output: output).run
-    $stdout.string
-  ensure
-    $stdout = original
-  end
-
-  # Same silencing as `run_batch`, but hands back `#success?` after
-  # running -- for the D1 exit-code contract, which is about what the
-  # caller checks, not what was printed.
-  def run_batch_success(input, output)
-    original = $stdout
-    $stdout = StringIO.new
-    command = described_class.new(input: input, output: output)
-    command.run
-    command.success?
-  ensure
-    $stdout = original
-  end
+  include BatchCommandRunner
 
   it 'renders the files after a bomb instead of dying at it' do
     in_batch_dir do |input, output|
@@ -211,13 +142,13 @@ RSpec.describe Sirena::Commands::BatchCommand do
       # run, not the mixed one `in_batch_dir` builds by default.
       FileUtils.rm(File.join(input, '2-bomb.mmd'))
 
-      expect(run_batch_success(input, output)).to be(true)
+      expect(batch_command(input, output).success?).to be(true)
     end
   end
 
   it 'reports failure when any item fails' do
     in_batch_dir do |input, output|
-      expect(run_batch_success(input, output)).to be(false)
+      expect(batch_command(input, output).success?).to be(false)
     end
   end
 
@@ -233,7 +164,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
       output = File.join(dir, 'out')
       Dir.mkdir(input)
 
-      expect(run_batch_success(input, output)).to be(true)
+      expect(batch_command(input, output).success?).to be(true)
     end
   end
 
@@ -242,7 +173,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
       input = File.join(dir, 'does-not-exist')
       output = File.join(dir, 'out')
 
-      expect(run_batch_success(input, output)).to be(true)
+      expect(batch_command(input, output).success?).to be(true)
     end
   end
 end
