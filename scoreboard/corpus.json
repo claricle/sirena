@@ -4624,9 +4624,7 @@
   {
     "case": "flowchart/037_parser_should_handle_basic_shape_data_statements_with__32.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/037_parser_should_handle_comments_at_the_end_32.mmd",
@@ -4650,9 +4648,7 @@
   {
     "case": "flowchart/039_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_1_34.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/039_parser_should_handle_comments_at_the_end_many_trailing_newlines_34.mmd",
@@ -4664,9 +4660,7 @@
   {
     "case": "flowchart/040_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_2_35.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/040_parser_should_handle_no_trailing_newlines_35.mmd",
@@ -4678,9 +4672,7 @@
   {
     "case": "flowchart/041_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_3_36.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/041_parser_should_handle_many_trailing_newlines_36.mmd",
@@ -4699,9 +4691,7 @@
   {
     "case": "flowchart/042_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_4_37.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/043_parser_should_handle_a_comment_with_mermaid_flowchart_code_in_them_38.mmd",
@@ -4713,9 +4703,7 @@
   {
     "case": "flowchart/043_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_5_trailing_space_38.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/044_parser_should_no_matter_of_there_are_no_leading_spaces_39.mmd",
@@ -4888,9 +4876,7 @@
   {
     "case": "flowchart/059_parser_should_be_possible_to_use_syntax_to_add_labels_on_multi_nodes_54.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/059_parser_should_handle_normal_labelled_edges_with_length___length__54.mmd",
@@ -4902,9 +4888,7 @@
   {
     "case": "flowchart/060_parser_should_be_possible_to_use_syntax_to_add_labels_on_multi_nodes_with_edge_link_55.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/060_parser_should_handle_normal_edges_with_arrows_with_length___length__55.mmd",
@@ -5307,9 +5291,7 @@
   {
     "case": "flowchart/092_parser_should_handle_basic_shape_data_statements_with___87.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/093_parser_should_handle_shape_data_statements_with_edges_88.mmd",
@@ -5319,37 +5301,27 @@
   {
     "case": "flowchart/094_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_1_89.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/095_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_2_90.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/096_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_3_91.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/097_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_4_92.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/098_parser_should_handle_basic_shape_data_statements_with_amp_and_edges_5__trailing_space_93.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/099_parser_should_no_matter_of_there_are_no_leading_spaces_94.mmd",
