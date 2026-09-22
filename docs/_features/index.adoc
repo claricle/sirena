@@ -86,7 +86,7 @@ so it embeds cleanly wherever an app already handles SVG, including Metanorma do
 
 === Build Tool Integration
 
-* **Rake Tasks** - `lib/tasks/*.rake` covers example generation, corpus checks, and benchmarking during development
+* **Rake Tasks** - `lib/tasks/*.rake` covers example generation and corpus checks during development
 * **CI/CD** - Runs anywhere a Ruby CI job can (GitHub Actions and others)
 
 == Performance Features
@@ -105,9 +105,9 @@ No caching layer or plugin system exists yet.
 * **Native Ruby** - First-class Ruby integration
 
 No committed, reproducible benchmark exists yet to back a speed or memory multiplier
-against mermaid-cli, so none is claimed here.
-
-See link:../../pages/compatibility/[Compatibility Comparison] for details.
+against mermaid-cli, so none is claimed here (the Compatibility Comparison page
+still carries unverified multipliers of its own -- not linked from here for that
+reason).
 
 == Extensibility
 
