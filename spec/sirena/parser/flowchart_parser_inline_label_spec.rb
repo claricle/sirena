@@ -153,6 +153,7 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     end
 
     {
+      "characters of an unclosed solid label" => "A -- #{'a' * 49_000}",
       "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
       "equals of an unclosed thick label" => "A == a#{'=' * 20_000}"
     }.each do |what, source|

@@ -952,12 +952,22 @@ module Sirena
         def inline_halves(open, close, forbidden)
           blank = inline_comment_line | line_space | match["\r\n"]
           closing = link_start.maybe >> close
+          # Avoid caching every failed per-character lookahead when the
+          # closing delimiter is absent altogether.
+          closing_ahead = dynamic do |source|
+            if source.chars_until(forbidden.str) < source.chars_left
+              str('')
+            else
+              forbidden
+            end
+          end
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
                  str('%%{').absent? >> any
           char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
           text = char >> (char | gap).repeat
           (link_start.maybe >> open).as(:open) >> blank.repeat >>
+            closing_ahead >>
             (quoted_label >> (char | gap).repeat | text).as(:label) >>
             blank.repeat >> closing.as(:close)
         end
