@@ -46,16 +46,29 @@ RSpec.describe Sirena::Parser::Flowchart do
   end
 
   describe "the flowchart corpus cases behind the & bucket" do
-    Dir[File.join(__dir__, "../../mermaid/flowchart/*.mmd")].select do |f|
-      File.basename(f).match?(
-        /\A\d+_parser_should_(handle_basic_shape_data_statements_with_|
-                              be_possible_to_use_syntax_to_add_labels_on_multi)/x
-      )
-    end.each do |path|
-      it "renders #{File.basename(path, '.mmd')}" do
-        expect { Sirena::Engine.new.render(File.read(path)) }
-          .not_to raise_error
-      end
+    let(:corpus_dir) { File.join(__dir__, "../../mermaid/flowchart") }
+
+    it "gives every member of a three-node group its own label" do
+      source = File.read(File.join(corpus_dir,
+                                   "059_parser_should_be_possible_to_use_" \
+                                   "syntax_to_add_labels_on_multi_nodes_54.mmd"))
+      nodes = parse_flowchart(source, header: "").nodes
+
+      expect(nodes.map { |n| [n.id, n.label] })
+        .to eq([["n2", '"label for n2"'], ["n4", "label for n4"],
+                ["n5", "label for n5"]])
+    end
+
+    it "links one source to every member of a three-node target group" do
+      source = File.read(File.join(corpus_dir,
+                                   "060_parser_should_be_possible_to_use_" \
+                                   "syntax_to_add_labels_on_multi_nodes_" \
+                                   "with_edge_link_55.mmd"))
+      diagram = parse_flowchart(source, header: "")
+
+      expect(diagram.edges.map { |e| "#{e.source_id}>#{e.target_id}" })
+        .to eq(%w[A>B A>C A>E])
+      expect(diagram.nodes.map(&:id)).to eq(%w[A B C E D])
     end
   end
 end
