@@ -86,7 +86,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
       'A -- ""a --> B' => "arrow",
       "A -. t <.- B" => "dotted_line",
       "A -. t <.-> B" => "dotted_arrow_both",
-      "A -- t <--x B" => "cross"
+      "A -- t <--x B" => "cross",
+      "A <-- t x--> B" => "arrow_both",
+      "A <-- t o--> B" => "arrow_both",
+      "A <-. t x.-> B" => "dotted_arrow_both",
+      "A <-. t o.-> B" => "dotted_arrow_both"
     }.each do |source, arrow_type|
       it "reads the start head of #{source.inspect}" do
         expect(edge_tuples(source).first.last).to eq(arrow_type)
@@ -124,6 +128,11 @@ RSpec.describe Sirena::Parser::FlowchartParser do
     it "drops comment lines from the middle of a label" do
       expect(edge_tuples("A -- one\n%% a \"comment\"\ntwo\n--> B").first[2])
         .to eq("one\ntwo")
+    end
+
+    it "drops a comment line, quote and all, from inside a quoted label" do
+      expect(edge_tuples(%(A -- "one\n%% a " comment\ntwo" --> B))
+        .first[2]).to eq("one\ntwo")
     end
 
     it "keeps the lines of a label that spans them" do

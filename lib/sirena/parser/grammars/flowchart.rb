@@ -950,9 +950,7 @@ module Sirena
         # A whitespace run is consumed whole and checked once for what
         # follows it, so a long run costs one pass, not one per character.
         def inline_halves(open, close, forbidden)
-          comment = newline >> line_space.repeat >> str('%%') >>
-                    str('{').absent? >> (newline.absent? >> any).repeat
-          blank = comment | line_space | match["\r\n"]
+          blank = inline_comment_line | line_space | match["\r\n"]
           closing = link_start.maybe >> close
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
                  str('%%{').absent? >> any
@@ -968,8 +966,20 @@ module Sirena
         # A quoted run is text whole, whatever it holds: `A -- "a--b" --> B`.
         # The transform drops the two quotes, as mermaid does. `%%{` still
         # opens a directive even inside quotes, so it is refused here too.
+        # A whole comment line is skipped first, quote and all: mermaid
+        # deletes it before the quote inside it can end the label early.
         rule(:quoted_label) do
-          str('"') >> (str('%%{').absent? >> match['^"']).repeat >> str('"')
+          str('"') >>
+            (inline_comment_line | (str('%%{').absent? >> match['^"']))
+              .repeat >> str('"')
+        end
+
+        # A comment line inside a multiline inline label: mermaid deletes
+        # it whole before reading the label. `%%{` opens a directive
+        # rather than a comment and is left alone.
+        rule(:inline_comment_line) do
+          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+            (newline.absent? >> any).repeat
         end
 
         # Link forms

@@ -765,7 +765,11 @@ module Sirena
         # Mermaid reads a `<` opening the closing half as the start head
         # of the whole link, so it moves to the front, and it refuses an
         # `x` or `o` opening half whose closing half does not end in the
-        # same marker; a `<` needs a `>` to close it.
+        # same marker; a `<` needs a `>` to close it. An `x` or `o` at the
+        # very start of the closing half of a link that already opens with
+        # `<` draws nothing of its own: `A <-- t x--> B` and
+        # `A <-- t o--> B` render as a plain double arrow, measured against
+        # mermaid 11.12.0's own parser.
         # @raise [Parser::ParseError] on an unmatched opening marker
         def self.link_token(edge_data)
           return edge_data[:arrow][:token].to_s if edge_data[:arrow]
@@ -773,6 +777,7 @@ module Sirena
           open = edge_data[:open].to_s
           close = edge_data[:close].to_s
           reject_unmatched_marker(open, close)
+          close = close[1..] if open.start_with?('<') && close.match?(/\A[ox]/)
           return "#{open}#{close}" unless lifts_start_head?(open, close)
 
           "#{close[0]}#{open}#{close[1..]}"
@@ -797,10 +802,12 @@ module Sirena
                 'and does not close with it.'
         end
 
-        # An opening `<` closes on a head and takes no second start marker
-        # on the closing half; an opening `x` or `o` takes none of its own
-        # kind again (`x-- t o--x` draws, `x-- t x--x` does not). A thick closing half that opens with its own
-        # `<` also needs a head: mmdc refuses `A == t <==x B`,
+        # An opening `<` closes on a head and takes no second `<` start
+        # marker on the closing half, but an `x` or `o` there draws
+        # nothing and is dropped by `link_token` above; an opening `x` or
+        # `o` takes none of its own kind again (`x-- t o--x` draws,
+        # `x-- t x--x` does not). A thick closing half that opens with its
+        # own `<` also needs a head: mmdc refuses `A == t <==x B`,
         # `A == t <=== B` and `A == t x==> B`, and draws the solid and
         # dotted forms.
         def self.marker_closed?(marker, close)
@@ -809,7 +816,7 @@ module Sirena
 
           case marker
           when 'x', 'o' then close[-1] == marker && close[0] != marker
-          when '<' then close[-1] == '>' && !close.match?(/\A[ox<]/)
+          when '<' then close[-1] == '>' && !close.start_with?('<')
           else true
           end
         end
