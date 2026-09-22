@@ -44,6 +44,20 @@ module Sirena
         @today ||= Date.today
       end
 
+      # The theme a transform measures text against.
+      #
+      # Layout math sizes a box from measured text, and that measurement
+      # must track the font the renderer actually draws with (D10) or a
+      # non-default theme's font size never reaches node sizing. Same
+      # pattern as #today: set only when Engine injects one, falling back
+      # here so a transform built directly (as specs do) still measures
+      # against a real theme instead of nil.
+      attr_writer :theme
+
+      def theme
+        @theme ||= Theme::Registry.get(:default)
+      end
+
       # ELK layout algorithms supported (matching mermaid-js)
       # @see https://www.eclipse.org/elk/reference/algorithms.html
       ALGORITHM_LAYERED = 'layered'

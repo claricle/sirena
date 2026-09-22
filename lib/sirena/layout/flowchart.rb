@@ -15,7 +15,11 @@ module Sirena
     #   transform = Flowchart.new
     #   graph = transform.to_graph(flowchart_diagram)
     class Flowchart < Base
-      # Default font size for text measurement
+      # Fallback font size for text measurement, used only when the
+      # injected theme has no typography or no font_size_normal set. When
+      # a theme is present (the normal case), #layout_font_size measures
+      # against its font_size_normal instead -- the same value the
+      # renderer draws node and cluster-title text with (D10).
       DEFAULT_FONT_SIZE = 14
 
       # Converts a flowchart diagram to a graph structure.
@@ -89,7 +93,7 @@ module Sirena
       end
 
       def transform_subgraph(box)
-        label = measure_text(box.title, font_size: DEFAULT_FONT_SIZE)
+        label = measure_text(box.title, font_size: layout_font_size)
 
         {
           id: box.id,
@@ -143,7 +147,7 @@ module Sirena
       def edge_labels(edge)
         return [] if edge.label.nil? || edge.label.empty?
 
-        label_dims = measure_text(edge.label, font_size: DEFAULT_FONT_SIZE)
+        label_dims = measure_text(edge.label, font_size: layout_font_size)
 
         [
           {
@@ -157,7 +161,7 @@ module Sirena
       def calculate_dimensions(node)
         label_dims = measure_text(
           node.label,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: layout_font_size
         )
 
         node_dims = calculate_node_dimensions(
@@ -172,6 +176,16 @@ module Sirena
           label_width: label_dims[:width],
           label_height: label_dims[:height]
         }
+      end
+
+      # The size every measure_text call in this transform sizes against:
+      # the injected theme's font_size_normal, the same value
+      # apply_theme_to_text sets on node and cluster-title text at render
+      # time (renderer/base.rb, renderer/flowchart.rb#create_node_label,
+      # #cluster_title). Falls back to DEFAULT_FONT_SIZE only when the
+      # theme has no typography or no font_size_normal.
+      def layout_font_size
+        theme.typography&.font_size_normal || DEFAULT_FONT_SIZE
       end
 
       def shape_to_type(shape)

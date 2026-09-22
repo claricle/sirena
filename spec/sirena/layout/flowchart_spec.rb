@@ -131,5 +131,31 @@ RSpec.describe Sirena::Layout::Flowchart do
         transform.to_graph(invalid_diagram)
       end.to raise_error(Sirena::Layout::LayoutError)
     end
+
+    # D10: text measurement must track the theme the renderer actually
+    # draws with, not a hardcoded constant -- otherwise a theme with a
+    # larger font_size_normal (high_contrast: 16.0 vs default: 14.0) draws
+    # text wider than the box sirena measured for it.
+    context 'with a theme injected for sizing' do
+      let(:diagram) do
+        Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(
+            id: 'A',
+            label: 'Start',
+            shape: 'rect'
+          )
+        end
+      end
+
+      def node_width(theme_name)
+        themed_transform = described_class.new
+        themed_transform.theme = Sirena::Theme::Registry.get(theme_name)
+        themed_transform.to_graph(diagram)[:children].first[:width]
+      end
+
+      it 'measures a wider node under a theme with a larger font_size_normal' do
+        expect(node_width(:high_contrast)).to be > node_width(:default)
+      end
+    end
   end
 end

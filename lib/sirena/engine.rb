@@ -162,7 +162,7 @@ module Sirena
       # Execute pipeline
       diagram = parse_diagram(preamble[:body], handlers[:parser])
       apply_frontmatter_title(diagram, frontmatter_title)
-      graph = transform_diagram(diagram, handlers[:transform], today)
+      graph = transform_diagram(diagram, handlers[:transform], today, theme)
       laid_out_graph = layout_graph(graph)
       svg_document = render_svg(laid_out_graph, handlers[:renderer], theme)
 
@@ -281,13 +281,16 @@ module Sirena
     # @param diagram [Diagram::Base] diagram model
     # @param transform_class [Class] transform class
     # @param today [Date, nil] reference date, or nil for the real date
+    # @param theme [Theme] theme to size text against (D10)
     # @return [Hash] graph structure
-    def transform_diagram(diagram, transform_class, today)
+    def transform_diagram(diagram, transform_class, today, theme)
       log 'Transforming diagram to graph...'
       transform = transform_class.new
       # Every registered transform inherits Layout::Base and so has
-      # today=; the respond_to? guard is defensive, not load-bearing.
+      # today= and theme=; the respond_to? guards are defensive, not
+      # load-bearing.
       transform.today = today if today && transform.respond_to?(:today=)
+      transform.theme = theme if transform.respond_to?(:theme=)
       graph = transform.to_graph(diagram)
       log 'Transform complete'
       graph
