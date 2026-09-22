@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'common'
+require_relative 'mermaid_unicode_text'
 
 module Sirena
   module Parser
@@ -23,28 +24,55 @@ module Sirena
             ws?
         end
 
+        # `classDiagram-v2` is the same language; mmdc takes no direction on
+        # its header line (`classDiagram-v2 LR` is rejected). Neither header
+        # line takes a trailing `%%` comment either — mmdc rejects
+        # `classDiagram %%x` and `classDiagram-v2 %%x` just as it rejects a
+        # direction there.
         rule(:header) do
-          str('classDiagram').as(:header) >>
-            ws? >>
-            direction.maybe.as(:direction)
+          (str('classDiagram-v2').as(:header) >>
+            space? >> (newline | eof).present? >> ws?) |
+            (str('classDiagram').as(:header) >> header_end >>
+              space? >> direction_value.maybe.as(:direction) >> space? >>
+              (newline | eof).present? >> ws?)
+        end
+
+        # `classDiagramX` is not a header, and the line ends after the header:
+        # `classDiagram `A`` is rejected by mmdc.
+        rule(:header_end) do
+          (name_char | str('-')).absent?
+        end
+
+        rule(:direction_value) do
+          (str("TD") | str("TB") | str("LR") | str("RL") | str("BT")).as(:dir_value)
         end
 
         rule(:direction) do
-          (str('TD') | str('TB') | str('LR') | str('RL') | str('BT')).as(:dir_value) >> ws?
+          direction_value >> ws?
         end
 
         rule(:statements) do
           (statement >> ws?).repeat(1)
         end
 
+        # acc* come first: `accTitle: My Title` also reads as a colon member
+        # definition on a class named accTitle.
         rule(:statement) do
-          namespace_block |
+          acc_title_statement |
+            acc_descr_statement |
+            namespace_block |
             class_declaration |
             standalone_stereotype |
             colon_member_definition |
             relationship |
             link_statement |
             callback_statement |
+            click_statement |
+            style_statement |
+            css_class_statement |
+            class_def_statement |
+            direction_statement |
+            note_statement |
             standalone_class
         end
 
@@ -86,9 +114,16 @@ module Sirena
             class_name.as(:class_id) >> space? >>
             generic_params.maybe.as(:generic) >> space? >>
             text_label.maybe.as(:text_label) >> space? >>
-            stereotype.maybe.as(:stereotype) >> space? >>
+            (css_shorthand | stereotype.maybe.as(:stereotype)) >> space? >>
             class_body.maybe.as(:body) >>
             line_end
+        end
+
+        # `class C1:::pink`. mmdc rejects it together with a stereotype, in
+        # either order, and rejects a label after it, so it is an alternative
+        # to the stereotype slot rather than a slot of its own.
+        rule(:css_shorthand) do
+          str(':::') >> space? >> name_char.repeat(1).as(:css_class)
         end
 
         # `class C1["Label"]` only, matching mmdc 11.12.0 exactly.
@@ -132,7 +167,7 @@ module Sirena
 
         # Colon member definition: ClassName : +member or ClassName : +method()
         rule(:colon_member_definition) do
-          class_name.as(:class_id) >> space? >>
+          class_ref >> space? >>
             colon >> space? >>
             visibility_modifier.maybe.as(:visibility) >>
             member_definition.as(:member) >>
@@ -157,14 +192,127 @@ module Sirena
             line_end
         end
 
-        # Standalone class (just an identifier)
-        rule(:standalone_class) do
-          class_name.as(:class_id) >> line_end
+        # Rest of the line, up to the statement terminator.
+        rule(:rest_of_line) do
+          (line_end.absent? >> any).repeat(1)
         end
 
-        # Class name (identifier or dotted identifier)
+        # click ClassName href "url" ["tooltip"] [target]
+        # click ClassName call fn(args) ["tooltip"]
+        #
+        # Parsed and dropped, like link and callback: the model has no
+        # interaction data and mmdc renders click targets as plain classes.
+        # The remainder is not parsed because the corpus carries forms with
+        # the URL missing (`click Class1 href`) that mmdc still renders.
+        rule(:click_statement) do
+          str("click").as(:ignored) >> space >>
+            class_name >>
+            (space >> rest_of_line).maybe >>
+            line_end
+        end
+
+        # style ClassName fill:#f9f,stroke:#333
+        rule(:style_statement) do
+          str("style").as(:ignored) >> space >>
+            class_name >> space >> rest_of_line >>
+            line_end
+        end
+
+        # cssClass "A,B" styleName
+        rule(:css_class_statement) do
+          str("cssClass").as(:ignored) >> space >>
+            rest_of_line >>
+            line_end
+        end
+
+        # classDef name key:value,key:value
+        rule(:class_def_statement) do
+          str("classDef").as(:ignored) >> space >>
+            rest_of_line >>
+            line_end
+        end
+
+        # direction TB, inside the diagram (the header takes one too)
+        rule(:direction_statement) do
+          str("direction").as(:direction_keyword) >> space >>
+            direction_value >> line_end
+        end
+
+        # accTitle: single line
+        rule(:acc_title_statement) do
+          str("accTitle").as(:ignored) >> space? >>
+            colon >> rest_of_line.maybe >> line_end
+        end
+
+        # accDescr: single line   |   accDescr { multiple lines }
+        rule(:acc_descr_statement) do
+          str("accDescr").as(:ignored) >> space? >>
+            ((colon >> rest_of_line.maybe) |
+              (lbrace >> (rbrace.absent? >> any).repeat >> rbrace)) >>
+            line_end
+        end
+
+        # note "text"   |   note for ClassName "text"
+        #
+        # The text runs to the end of the line rather than to the closing
+        # quote because the corpus has notes with quotes inside HTML.
+        rule(:note_statement) do
+          str("note").as(:ignored) >>
+            (space >> str("for") >> space >> class_name).maybe >>
+            space >> rest_of_line >>
+            line_end
+        end
+
+        # Standalone class (just an identifier)
+        rule(:standalone_class) do
+          class_ref >> line_end
+        end
+
+        # A class name with the generic mmdc lets follow it on a standalone
+        # class, a colon member and a relationship end: `Class1~T~ <|-- Class02`,
+        # `Car~T~ : +wheels`.
+        rule(:class_ref) do
+          class_name.as(:class_id) >> generic_suffix.as(:generic)
+        end
+
+        rule(:from_generic) { generic_suffix.as(:from_generic) }
+        rule(:to_generic) { generic_suffix.as(:to_generic) }
+
+        rule(:generic_suffix) do
+          (space? >> generic_params).maybe
+        end
+
+        # A word character in a class name or a CSS class: ASCII letters and
+        # digits, underscore, and the letters in mermaid's own table
+        # (`MERMAID_UNICODE_TEXT`). mmdc accepts `class 1` and `class é`, and
+        # rejects `class ١` (a non-ASCII digit) and `class 𐐀` (an astral
+        # letter, absent from the table).
+        rule(:name_char) do
+          match["A-Za-z0-9_#{MERMAID_UNICODE_TEXT}"]
+        end
+
+        # Class name: words joined by a single `.` (namespace-qualified) or a
+        # single interior `-` (`Ca-r`), or backtick-quoted (`` `A B` ``).
+        # A `-` that is not followed by a word character is the start of an
+        # operator (`A-->B`), so it ends the name. mmdc rejects `A.`, `.A`
+        # and `A..B` as names.
+        #
+        # The backticks stay in the parse tree; the transform strips them so
+        # `Car` and `` `Car` `` are one class.
         rule(:class_name) do
-          match['a-zA-Z_'] >> match['a-zA-Z0-9_.'].repeat
+          backtick_name | plain_class_name
+        end
+
+        rule(:backtick_name) do
+          str('`') >> (str('`').absent? >> any).repeat(1) >> str('`')
+        end
+
+        rule(:plain_class_name) do
+          hyphenated_word >> (str('.') >> hyphenated_word).repeat
+        end
+
+        rule(:hyphenated_word) do
+          name_char.repeat(1) >> (str('-') >> name_char.repeat(1)).repeat
         end
 
         # Stereotype: <<interface>>, <<abstract>>, etc.
@@ -246,12 +394,12 @@ module Sirena
 
         # Relationship: A relationship_operator B
         rule(:relationship) do
-          class_name.as(:from_id) >> space? >>
+          class_name.as(:from_id) >> from_generic >> space? >>
             source_cardinality.maybe.as(:source_card) >> space? >>
             relationship_operator.as(:operator) >> space? >>
             pipe_label.maybe.as(:pipe_label) >> space? >>
             target_cardinality.maybe.as(:target_card) >> space? >>
-            class_name.as(:to_id) >>
+            class_name.as(:to_id) >> to_generic >>
             colon_label.maybe.as(:colon_label) >>
             line_end
         end

@@ -223,5 +223,7 @@ def report_by_verdict(sweep_results)
               valid[0], valid[1], 100.0 * valid[0] / valid[1])
 end
 
+return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
+
 list_failing = !ARGV.delete('--failing').nil?
 report(sweep(corpus_types(ARGV)), list_failing: list_failing)

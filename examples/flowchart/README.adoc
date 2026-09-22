@@ -63,7 +63,8 @@ image::01-basic-flow.svg[]
 
 === 02: Node Shapes
 
-Showcases all available node shapes in Sirena flowcharts.
+Showcases four node shapes (rectangle, rounded, rhombus, circle); see the Syntax
+Overview above for the full set Sirena supports.
 
 **File**: link:02-node-shapes.mmd[02-node-shapes.mmd]
 
@@ -76,7 +77,7 @@ image::02-node-shapes.svg[]
 
 === 03: Edge Types
 
-Demonstrates different edge/connection styles including arrows, lines, dotted, thick, and labeled edges.
+Demonstrates solid, dotted, and labeled arrow edges (not plain lines or thick edges).
 
 **File**: link:03-edge-types.mmd[03-edge-types.mmd]
 
@@ -89,7 +90,8 @@ image::03-edge-types.svg[]
 
 === 04: Subgraphs
 
-Shows how to group related nodes using subgraphs to represent system boundaries or logical groupings.
+Shows a service dependency chain (web/mobile clients through an API server to a
+database); it does not yet use Mermaid's `subgraph` grouping syntax.
 
 **File**: link:04-subgraphs.mmd[04-subgraphs.mmd]
 
@@ -102,7 +104,8 @@ image::04-subgraphs.svg[]
 
 === 05: Styling
 
-Illustrates custom styling with classDef and linkStyle for colored nodes and edges.
+Shows a simple linear node chain; it does not yet demonstrate `classDef` or
+`linkStyle` custom styling.
 
 **File**: link:05-styling.mmd[05-styling.mmd]  
 
@@ -135,16 +138,16 @@ image::06-complex-flow.svg[]
 | Basic node and edge creation
 | 01
 
-| All node shapes
+| Basic node shapes
 | 02
 
-| All edge types and labels
+| Solid, dotted, and labeled edges
 | 03
 
-| Subgraphs/grouping
+| Service dependency chain
 | 04
 
-| Custom styling (classDef, linkStyle)
+| Linear node chain
 | 05
 
 | Complex multi-path workflows
@@ -163,5 +166,5 @@ image::06-complex-flow.svg[]
 == Additional Resources
 
 * link:../../README.adoc[Main Documentation]
-* link:../../docs/diagrams/flowchart.adoc[Flowchart Full Reference] (if exists)
+* link:../../docs/_diagram_types/flowchart.adoc[Flowchart Full Reference]
 * https://mermaid.js.org/syntax/flowchart.html[Mermaid Flowchart Documentation]
