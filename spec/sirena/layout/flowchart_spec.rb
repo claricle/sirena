@@ -244,6 +244,12 @@ RSpec.describe Sirena::Layout::Flowchart do
         expect(label_width_for(-50.0)).to eq(default_label_width)
       end
 
+      it 'falls back to DEFAULT_FONT_SIZE for a zero value' do
+        default_label_width = label_width_for(nil)
+
+        expect(label_width_for(0)).to eq(default_label_width)
+      end
+
       it 'does not reach a fuller render for a NaN value' do
         source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
 
