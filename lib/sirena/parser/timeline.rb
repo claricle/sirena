@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/timeline"
-require_relative "transforms/timeline"
+require_relative "builders/timeline"
 require_relative "../diagram/timeline"
 
 module Sirena
@@ -22,7 +22,7 @@ module Sirena
     # - Comments
     #
     # @example Parse a simple timeline
-    #   parser = TimelineParser.new
+    #   parser = Timeline.new
     #   diagram = parser.parse(<<~TIMELINE)
     #     timeline
     #       title History of Social Media
@@ -30,7 +30,7 @@ module Sirena
     #       2004 : Facebook : Google
     #       2005 : YouTube
     #   TIMELINE
-    class TimelineParser < Base
+    class Timeline < Base
       # Parses timeline diagram source into a Timeline diagram model.
       #
       # @param source [String] the Mermaid timeline diagram source
@@ -47,7 +47,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Timeline.new
+        transform = Builders::Timeline.new
         diagram = transform.apply(parse_tree)
 
         diagram

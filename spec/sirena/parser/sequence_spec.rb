@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/sequence"
 
-RSpec.describe Sirena::Parser::SequenceParser do
+RSpec.describe Sirena::Parser::Sequence do
   let(:parser) { described_class.new }
 
   def message_for(arrow, suffix = "")

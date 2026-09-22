@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/git_graph"
-require_relative "transforms/git_graph"
+require_relative "builders/git_graph"
 require_relative "../diagram/git_graph"
 
 module Sirena
@@ -21,7 +21,7 @@ module Sirena
     # - Commit types (NORMAL, REVERSE, HIGHLIGHT)
     #
     # @example Parse a simple git graph
-    #   parser = GitGraphParser.new
+    #   parser = GitGraph.new
     #   source = <<~MERMAID
     #     gitGraph
     #       commit id: "Initial"
@@ -32,7 +32,7 @@ module Sirena
     #       merge develop
     #   MERMAID
     #   diagram = parser.parse(source)
-    class GitGraphParser < Base
+    class GitGraph < Base
       # Parses git graph diagram source into a GitGraph model.
       #
       # @param source [String] the Mermaid git graph diagram source
@@ -49,7 +49,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::GitGraph.new
+        transform = Builders::GitGraph.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model

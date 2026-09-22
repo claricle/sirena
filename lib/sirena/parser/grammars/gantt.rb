@@ -166,7 +166,7 @@ module Sirena
         # after tags are stripped (id, start, end/duration, in that order),
         # and by SHAPE otherwise — fields are not freely interchangeable
         # (mmdc rejects "3d, 2024-01-10" with "Invalid date:3d"). See
-        # Transforms::Gantt#process_task_details for the actual rule.
+        # Builders::Gantt#process_task_details for the actual rule.
         rule(:task_details) do
           (task_field.as(:field) >>
             (space? >> comma >> space? >> task_field.as(:field)).repeat).as(:parts)

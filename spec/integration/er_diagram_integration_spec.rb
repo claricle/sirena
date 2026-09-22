@@ -5,9 +5,9 @@ require 'rexml/document'
 
 RSpec.describe 'ErDiagram Integration' do
   describe 'complete ER diagram pipeline' do
-    let(:parser) { Sirena::Parser::ErDiagramParser.new }
-    let(:transform) { Sirena::Transform::ErDiagramTransform.new }
-    let(:renderer) { Sirena::Renderer::ErDiagramRenderer.new }
+    let(:parser) { Sirena::Parser::ErDiagram.new }
+    let(:transform) { Sirena::Layout::ErDiagram.new }
+    let(:renderer) { Sirena::Renderer::ErDiagram.new }
 
     it 'parses, transforms, and renders a simple ER diagram' do
       source = "erDiagram\nCUSTOMER ||--o{ ORDER"
@@ -267,13 +267,13 @@ RSpec.describe 'ErDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::ErDiagramParser
+        Sirena::Parser::ErDiagram
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Transform::ErDiagramTransform
+        Sirena::Layout::ErDiagram
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::ErDiagramRenderer
+        Sirena::Renderer::ErDiagram
       )
     end
   end

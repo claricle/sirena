@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/c4'
-require_relative 'transforms/c4'
+require_relative 'builders/c4'
 require_relative '../diagram/c4'
 
 module Sirena
@@ -24,9 +24,9 @@ module Sirena
     # - Layout configuration
     #
     # @example Parse a simple C4 Context diagram
-    #   parser = C4Parser.new
+    #   parser = C4.new
     #   diagram = parser.parse("C4Context\ntitle My System\nPerson(user, \"User\")")
-    class C4Parser < Base
+    class C4 < Base
       # Parses C4 diagram source into a C4 diagram model.
       #
       # @param source [String] the Mermaid C4 diagram source
@@ -43,7 +43,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::C4.new
+        transform = Builders::C4.new
         diagram = transform.apply(parse_tree)
 
         diagram

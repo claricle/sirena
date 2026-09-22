@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'sirena/parser/error'
 
-RSpec.describe Sirena::Parser::ErrorParser do
+RSpec.describe Sirena::Parser::Error do
   let(:parser) { described_class.new }
 
   describe '#parse' do

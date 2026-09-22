@@ -181,7 +181,7 @@ module Sirena
 
       # Style classes declared by `classDef`, as name => style text.
       #
-      # Not a lutaml attribute, matching TreemapDiagram — the only other
+      # Not a lutaml attribute, matching Treemap — the only other
       # model here carrying classDef. Consequence, recorded because it is
       # real: value equality on this model ignores class_defs.
       #

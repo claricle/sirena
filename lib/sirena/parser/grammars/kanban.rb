@@ -96,7 +96,7 @@ module Sirena
 
         # Round shape with no id: (text). Mermaid auto-assigns an id here;
         # BoardBuilder does too, deterministically - see
-        # Transforms::Kanban::BoardBuilder#resolve_id.
+        # Builders::Kanban::BoardBuilder#resolve_id.
         rule(:unlabelled_shaped_item) do
           lparen >>
             round_text >>

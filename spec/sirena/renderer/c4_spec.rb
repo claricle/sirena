@@ -4,7 +4,7 @@ require "spec_helper"
 require "sirena/renderer/c4"
 require "sirena/diagram/c4"
 
-RSpec.describe Sirena::Renderer::C4Renderer do
+RSpec.describe Sirena::Renderer::C4 do
   let(:renderer) { described_class.new }
 
   describe "#render" do

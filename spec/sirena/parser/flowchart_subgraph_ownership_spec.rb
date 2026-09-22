@@ -19,7 +19,7 @@ require "spec_helper"
 # The gap these do NOT pin: a box left holding nothing is drawn by mmdc
 # as a plain node, and Sirena draws nothing. That predates this rule and
 # is tracked separately.
-RSpec.describe Sirena::Parser::FlowchartParser do
+RSpec.describe Sirena::Parser::Flowchart do
   # First box wins the id, the way the transform registers them. A
   # redeclaration pushes a second, empty box carrying the same id, so
   # keying last-wins would hand back the one that holds nothing.

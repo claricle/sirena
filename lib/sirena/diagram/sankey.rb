@@ -85,14 +85,14 @@ module Sirena
     # visualizing energy flows, material flows, cost distributions, etc.
     #
     # @example Creating a Sankey diagram
-    #   sankey = SankeyDiagram.new
+    #   sankey = Sankey.new
     #   sankey.title = 'Energy Flow'
     #
     #   flow1 = SankeyFlow.new('Source', 'Process', 100)
     #   flow2 = SankeyFlow.new('Process', 'Output', 70)
     #   flow3 = SankeyFlow.new('Process', 'Waste', 30)
     #   sankey.flows << flow1 << flow2 << flow3
-    class SankeyDiagram < Base
+    class Sankey < Base
       # Collection of explicitly defined nodes (optional)
       attribute :nodes, SankeyNode, collection: true,
                 default: -> { [] }

@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/quadrant'
-require_relative 'transforms/quadrant'
+require_relative 'builders/quadrant'
 require_relative '../diagram/quadrant'
 
 module Sirena
@@ -21,7 +21,7 @@ module Sirena
     # - Comments
     #
     # @example Parse a simple quadrant chart
-    #   parser = QuadrantParser.new
+    #   parser = Quadrant.new
     #   source = <<~MERMAID
     #     quadrantChart
     #       title Product Analysis
@@ -30,11 +30,11 @@ module Sirena
     #       Product A: [0.3, 0.7]
     #   MERMAID
     #   diagram = parser.parse(source)
-    class QuadrantParser < Base
-      # Parses quadrant chart diagram source into a QuadrantChart model.
+    class Quadrant < Base
+      # Parses quadrant chart diagram source into a Quadrant model.
       #
       # @param source [String] the Mermaid quadrant chart diagram source
-      # @return [Diagram::QuadrantChart] the parsed quadrant chart diagram
+      # @return [Diagram::Quadrant] the parsed quadrant chart diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         grammar = Grammars::Quadrant.new
@@ -47,7 +47,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Quadrant.new
+        transform = Builders::Quadrant.new
         diagram = transform.apply(parse_tree)
 
         diagram

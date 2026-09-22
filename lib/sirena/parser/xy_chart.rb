@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/xy_chart"
-require_relative "transforms/xy_chart"
+require_relative "builders/xy_chart"
 require_relative "../diagram/xy_chart"
 
 module Sirena
@@ -19,7 +19,7 @@ module Sirena
     # - Multiple datasets (line, bar, or named)
     #
     # @example Parse a simple XY chart
-    #   parser = XYChartParser.new
+    #   parser = XyChart.new
     #   source = <<~MERMAID
     #     xychart-beta
     #       title "Sales Revenue"
@@ -28,14 +28,14 @@ module Sirena
     #       line [5, 10, 15]
     #   MERMAID
     #   diagram = parser.parse(source)
-    class XYChartParser < Base
-      # Parses XY chart diagram source into an XYChart model.
+    class XyChart < Base
+      # Parses XY chart diagram source into an XyChart model.
       #
       # @param source [String] the Mermaid XY chart diagram source
-      # @return [Diagram::XYChart] the parsed XY chart
+      # @return [Diagram::XyChart] the parsed XY chart
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        grammar = Grammars::XYChart.new
+        grammar = Grammars::XyChart.new
 
         begin
           parse_tree = grammar.parse(source)
@@ -45,7 +45,7 @@ module Sirena
         end
 
         # Transform parse tree to intermediate representation
-        transform = Transforms::XYChart.new
+        transform = Builders::XyChart.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model
@@ -55,7 +55,7 @@ module Sirena
       private
 
       def create_diagram(result)
-        diagram = Diagram::XYChart.new
+        diagram = Diagram::XyChart.new
         diagram.title = result[:title]
 
         # Create X-axis

@@ -4,9 +4,9 @@ require 'spec_helper'
 
 RSpec.describe 'Requirement Integration' do
   describe 'complete requirement pipeline' do
-    let(:parser) { Sirena::Parser::RequirementParser.new }
-    let(:transform) { Sirena::Transform::RequirementTransform.new }
-    let(:renderer) { Sirena::Renderer::RequirementRenderer.new }
+    let(:parser) { Sirena::Parser::Requirement.new }
+    let(:transform) { Sirena::Layout::Requirement.new }
+    let(:renderer) { Sirena::Renderer::Requirement.new }
 
     it 'parses, transforms, and renders a simple requirement diagram' do
       source = <<~MERMAID
@@ -28,7 +28,7 @@ RSpec.describe 'Requirement Integration' do
 
       # Parse
       diagram = parser.parse(source)
-      expect(diagram).to be_a(Sirena::Diagram::RequirementDiagram)
+      expect(diagram).to be_a(Sirena::Diagram::Requirement)
       expect(diagram.requirements.length).to eq(1)
       expect(diagram.elements.length).to eq(1)
       expect(diagram.relationships.length).to eq(1)
@@ -194,12 +194,12 @@ RSpec.describe 'Requirement Integration' do
       handlers = Sirena::DiagramRegistry.get(:requirement)
 
       expect(handlers).not_to be_nil
-      expect(handlers[:parser]).to eq(Sirena::Parser::RequirementParser)
+      expect(handlers[:parser]).to eq(Sirena::Parser::Requirement)
       expect(handlers[:transform]).to eq(
-        Sirena::Transform::RequirementTransform
+        Sirena::Layout::Requirement
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::RequirementRenderer
+        Sirena::Renderer::Requirement
       )
     end
   end

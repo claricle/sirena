@@ -2,7 +2,7 @@
 
 require_relative 'base'
 require_relative 'grammars/requirement'
-require_relative 'transforms/requirement'
+require_relative 'builders/requirement'
 require_relative '../diagram/requirement'
 
 module Sirena
@@ -18,17 +18,17 @@ module Sirena
     # - Class definitions and assignments
     #
     # @example Parse a simple requirement diagram
-    #   parser = RequirementParser.new
+    #   parser = Requirement.new
     #   diagram = parser.parse("requirementDiagram\n  requirement test_req { id: 1 }")
-    class RequirementParser < Base
-      # Parses requirement diagram source into a RequirementDiagram model.
+    class Requirement < Base
+      # Parses requirement diagram source into a Requirement model.
       #
       # @param source [String] the Mermaid requirement diagram source
-      # @return [Diagram::RequirementDiagram] the parsed requirement diagram
+      # @return [Diagram::Requirement] the parsed requirement diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_with_grammar(Grammars::Requirement.new, source)
-        Transforms::Requirement.apply(tree)
+        Builders::Requirement.apply(tree)
       end
 
       private

@@ -2,10 +2,10 @@
 
 require "spec_helper"
 require "sirena/renderer/xy_chart"
-require "sirena/transform/xy_chart"
+require "sirena/layout/xy_chart"
 require "sirena/diagram/xy_chart"
 
-RSpec.describe Sirena::Renderer::XYChart do
+RSpec.describe Sirena::Renderer::XyChart do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 

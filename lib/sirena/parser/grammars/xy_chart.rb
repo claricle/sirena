@@ -7,7 +7,7 @@ module Sirena
   module Parser
     module Grammars
       # Grammar for parsing Mermaid xychart-beta syntax
-      class XYChart < Common
+      class XyChart < Common
 
         rule(:diagram_type) { str("xychart-beta") >> space? }
 

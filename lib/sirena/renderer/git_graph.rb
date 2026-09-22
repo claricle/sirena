@@ -12,7 +12,7 @@ module Sirena
     # Renders a Git Graph layout to SVG.
     #
     # The renderer converts the positioned layout structure from
-    # Transform::GitGraph into an SVG visualization showing:
+    # Layout::GitGraph into an SVG visualization showing:
     # - Commit circles at calculated positions
     # - Branch lines connecting parent-child commits
     # - Merge arrows for merge commits
@@ -25,7 +25,7 @@ module Sirena
     class GitGraph < Base
       # Renders the layout structure to SVG.
       #
-      # @param layout [Hash] layout data from Transform::GitGraph
+      # @param layout [Hash] layout data from Layout::GitGraph
       # @return [Svg::Document] rendered SVG document
       def render(layout)
         svg = create_document_from_layout(layout)

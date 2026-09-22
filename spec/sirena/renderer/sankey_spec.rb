@@ -2,13 +2,13 @@
 
 require "spec_helper"
 require "sirena/renderer/sankey"
-require "sirena/transform/sankey"
+require "sirena/layout/sankey"
 require "sirena/parser/sankey"
 
-RSpec.describe Sirena::Renderer::SankeyRenderer do
+RSpec.describe Sirena::Renderer::Sankey do
   let(:renderer) { described_class.new }
-  let(:parser) { Sirena::Parser::SankeyParser.new }
-  let(:transform) { Sirena::Transform::SankeyTransform.new }
+  let(:parser) { Sirena::Parser::Sankey.new }
+  let(:transform) { Sirena::Layout::Sankey.new }
 
   describe "#render" do
     it "renders a simple sankey diagram" do

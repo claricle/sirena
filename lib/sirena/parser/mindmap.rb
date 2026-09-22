@@ -2,7 +2,7 @@
 
 require_relative "base"
 require_relative "grammars/mindmap"
-require_relative "transforms/mindmap"
+require_relative "builders/mindmap"
 require_relative "../diagram/mindmap"
 
 module Sirena
@@ -19,7 +19,7 @@ module Sirena
     # - Classes (:::className)
     #
     # @example Parse a simple mindmap
-    #   parser = MindmapParser.new
+    #   parser = Mindmap.new
     #   source = <<~MERMAID
     #     mindmap
     #       root((Central Idea))
@@ -28,7 +28,7 @@ module Sirena
     #         Branch 2
     #   MERMAID
     #   diagram = parser.parse(source)
-    class MindmapParser < Base
+    class Mindmap < Base
       # Parses mindmap diagram source into a Mindmap model.
       #
       # @param source [String] the Mermaid mindmap diagram source
@@ -45,7 +45,7 @@ module Sirena
         end
 
         # Transform parse tree to diagram model
-        transform = Transforms::Mindmap.new
+        transform = Builders::Mindmap.new
         result = transform.apply(parse_tree)
 
         # Create the diagram model

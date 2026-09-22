@@ -15,9 +15,9 @@ module Sirena
     # colors from theme, labels, and optional data values.
     #
     # @example Render a pie chart
-    #   renderer = PieRenderer.new
+    #   renderer = Pie.new
     #   svg = renderer.render(pie_diagram)
-    class PieRenderer < Base
+    class Pie < Base
       # Pie chart dimensions
       PIE_RADIUS = 150
       PIE_CENTER_X = 250

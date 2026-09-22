@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/xy_chart"
 
-RSpec.describe Sirena::Parser::XYChartParser do
+RSpec.describe Sirena::Parser::XyChart do
   let(:parser) { described_class.new }
 
   describe "#parse" do
@@ -14,7 +14,7 @@ RSpec.describe Sirena::Parser::XYChartParser do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::XYChart)
+        expect(diagram).to be_a(Sirena::Diagram::XyChart)
       end
 
       it "parses chart with title and axes" do

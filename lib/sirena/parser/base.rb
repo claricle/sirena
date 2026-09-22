@@ -13,11 +13,11 @@ module Sirena
     # into a typed diagram model using Parslet grammars.
     #
     # @example Define a custom parser
-    #   class FlowchartParser < Parser::Base
+    #   class Flowchart < Parser::Base
     #     def parse(source)
     #       grammar = Grammars::Flowchart.new
     #       tree = grammar.parse(source)
-    #       transform = Transforms::Flowchart.new
+    #       transform = Builders::Flowchart.new
     #       transform.apply(tree)
     #     end
     #   end

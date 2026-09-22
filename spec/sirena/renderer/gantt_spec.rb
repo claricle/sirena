@@ -3,10 +3,10 @@
 require "spec_helper"
 require "timeout"
 require "sirena/renderer/gantt"
-require "sirena/transform/gantt"
+require "sirena/layout/gantt"
 require "sirena/parser/gantt"
 
-RSpec.describe Sirena::Renderer::GanttRenderer do
+RSpec.describe Sirena::Renderer::Gantt do
   let(:renderer) { described_class.new }
 
   describe "#render" do
@@ -19,10 +19,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Task 1 :a1, 2024-01-01, 30d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -41,10 +41,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Task 2 :2024-01-11, 15d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -63,10 +63,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Critical task :crit, 2024-01-09, 2d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -84,10 +84,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Completed task            :done,    des1, 2014-01-06,2014-01-08
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -116,10 +116,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Far task : f1, 9999-10-01, 30d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       xml = nil
@@ -144,10 +144,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           Task 1 :2024-01-01, 10d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       svg = renderer.render(graph)
@@ -173,10 +173,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           U : u, after t, 20240105
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       xml = renderer.render(graph).to_xml
@@ -204,10 +204,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           T : t, after a c, 2d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       xml = renderer.render(graph).to_xml
@@ -236,10 +236,10 @@ RSpec.describe Sirena::Renderer::GanttRenderer do
           T : crit, active, 3d
       GANTT
 
-      parser = Sirena::Parser::GanttParser.new
+      parser = Sirena::Parser::Gantt.new
       diagram = parser.parse(source)
 
-      transform = Sirena::Transform::GanttTransform.new
+      transform = Sirena::Layout::Gantt.new
       graph = transform.to_graph(diagram)
 
       xml = renderer.render(graph).to_xml

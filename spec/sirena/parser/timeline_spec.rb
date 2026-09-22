@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena/parser/timeline"
 
-RSpec.describe Sirena::Parser::TimelineParser do
+RSpec.describe Sirena::Parser::Timeline do
   let(:parser) { described_class.new }
 
   describe "#parse" do

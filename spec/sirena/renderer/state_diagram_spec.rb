@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Renderer::StateDiagramRenderer do
+RSpec.describe Sirena::Renderer::StateDiagram do
   let(:renderer) { described_class.new }
 
   describe '#render' do
@@ -143,14 +143,14 @@ RSpec.describe Sirena::Renderer::StateDiagramRenderer do
     end
 
     it 'keeps accumulated state text inside its rectangle' do
-      diagram = Sirena::Parser::StateDiagramParser.new.parse(<<~MERMAID)
+      diagram = Sirena::Parser::StateDiagram.new.parse(<<~MERMAID)
         stateDiagram-v2
         state "ALIAS_ONE" as A
         A : DESC_ONE
         state "ALIAS_TWO" as A
         A : DESC_TWO
       MERMAID
-      rendered_graph = Sirena::Transform::StateDiagramTransform.new
+      rendered_graph = Sirena::Layout::StateDiagram.new
         .to_graph(diagram)
       svg = renderer.render(rendered_graph)
       state_group = svg.children.find { |child| child.id == 'state-A' }

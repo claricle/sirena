@@ -1,0 +1,335 @@
+# frozen_string_literal: true
+
+require_relative '../../diagram/state_diagram'
+
+module Sirena
+  module Parser
+    module Builders
+      # Transform for converting Parslet parse tree to State diagram model.
+      #
+      # Converts the parse tree output from Grammars::StateDiagram into a
+      # fully-formed Diagram::StateDiagram object with states and transitions.
+      class StateDiagram
+        # Special state markers
+        START_END_MARKER = '[*]'
+
+        # Transform parse tree into State diagram.
+        #
+        # @param tree [Array, Hash] Parslet parse tree
+        # @return [Diagram::StateDiagram] the State diagram model
+        def apply(tree)
+          @diagram = Diagram::StateDiagram.new
+          @state_counter = 0
+
+          # A diagram with statements is an array containing the header and
+          # statements in source order; a header-only diagram is the header hash.
+          if tree.is_a?(Array)
+            tree.each do |item|
+              process_item(item) if item.is_a?(Hash)
+            end
+          elsif tree.is_a?(Hash)
+            process_item(tree)
+          end
+
+          @diagram
+        end
+
+        private
+
+        def process_item(item)
+          return unless item.is_a?(Hash)
+
+          # Process a top-level direction statement
+          if item[:direction] && item[:direction][:dir_value]
+            @diagram.direction = extract_text(item[:direction][:dir_value])
+          end
+
+          # Process statements
+          process_statement(item) unless item[:header] || item[:direction]
+        end
+
+        def process_statement(stmt)
+          return unless stmt.is_a?(Hash)
+
+          if stmt[:keyword] == 'state' && stmt[:state_id]
+            # State declaration
+            process_state_declaration(stmt)
+          elsif stmt[:from] && stmt[:to]
+            # Transition
+            process_transition(stmt)
+          elsif stmt[:note_keyword] || stmt[:style_keyword]
+            # Notes and styling directives are parsed and dropped, and that
+            # is a GAP, not parity. Measured against mmdc 11.12.0: a note
+            # renders its own node and its text -- `note right of A / hello`
+            # produces a 10,403-byte SVG containing "hello", against 7,992
+            # bytes without it. The diagram model carries neither, so nothing
+            # downstream could draw them yet.
+            nil
+          elsif stmt[:state_id] && !stmt[:keyword]
+            # Standalone state, with or without a description
+            process_standalone_state(stmt)
+          elsif stmt[:concurrent_sep]
+            # Concurrent separator - handled in composite context
+            nil
+          end
+          # A `direction` statement reaches here only from inside a
+          # composite, and falls through on purpose: the model has no
+          # composite container to hang it on, and mermaid scopes it to the
+          # composite rather than to the diagram.
+        end
+
+        def process_state_declaration(stmt)
+          state_id = extract_text(stmt[:state_id])
+          label = state_label(stmt)
+          description = description_of(stmt)
+
+          if stmt[:marker]
+            # Special state marker (choice, fork, join). No label: mmdc
+            # 11.12.0 has no shape for `state "X" as Y <<choice>>` either.
+            add_special_state(state_id, extract_text(stmt[:marker][:marker_type]))
+          elsif stmt[:composite]
+            # Composite state with nested statements
+            state = process_composite_state(state_id, label, stmt[:composite])
+            append_display_text(state, label)
+          else
+            state = add_or_update_state(state_id, label)
+            append_display_text(state, label)
+            if description
+              state.description = description
+              append_display_text(state, description)
+            end
+          end
+        end
+
+        # nil rather than "" when there is no description: every non-nil
+        # value is recorded as display text.
+        def description_of(stmt)
+          extract_text(stmt[:description]) if stmt[:description]
+        end
+
+        def process_standalone_state(stmt)
+          state_id = extract_text(stmt[:state_id])
+          state = ensure_state_exists(state_id)
+          return unless stmt[:description]
+
+          description = extract_text(stmt[:description])
+          state.description = description
+          append_display_text(state, description)
+        end
+
+        # `state "Idle mode" as Idle` labels the state Idle "Idle mode";
+        # without the alias the id is its own label.
+        def state_label(stmt)
+          return unless stmt[:state_label]
+
+          label = extract_text(stmt[:state_label]).strip
+          return if label.empty?
+
+          label
+        end
+
+        def append_display_text(state, text)
+          state.descriptions << text if text && !text.empty?
+        end
+
+        def process_transition(stmt)
+          # Get source state (if [*], it's a start state)
+          from_id = extract_state_id(stmt[:from], is_source: true)
+
+          # Get target state (if [*], it's an end state)
+          to_id = extract_state_id(stmt[:to], is_source: false)
+
+          # Parse label for trigger and guard
+          trigger, guard = parse_transition_label(stmt[:label])
+
+          # Create transition
+          create_transition(from_id, to_id, trigger, guard)
+
+          # Handle chained transitions
+          if stmt[:chain] && !stmt[:chain].empty?
+            chain_transitions = Array(stmt[:chain])
+            current_from = to_id
+
+            chain_transitions.each do |chain_item|
+              next unless chain_item[:chain_to]
+
+              chain_to = extract_state_id(chain_item[:chain_to], is_source: false)
+              create_transition(current_from, chain_to, nil, nil)
+              current_from = chain_to
+            end
+          end
+        end
+
+        def process_composite_state(parent_id, label, composite_data)
+          # Create parent state
+          parent_state = add_or_update_state(parent_id, label)
+
+          # Process nested statements
+          if composite_data.is_a?(Hash) || composite_data.is_a?(Array)
+            statements = Array(composite_data)
+            statements.each do |stmt|
+              next unless stmt.is_a?(Hash)
+
+              process_statement(stmt)
+            end
+          end
+
+          parent_state
+        end
+
+        def extract_state_id(state_data, is_source: nil)
+          # Convert to string for comparison
+          state_str = extract_text(state_data)
+
+          # Check if this is a start/end marker
+          if state_str == START_END_MARKER || state_str.strip == START_END_MARKER
+            # If it's a source of transition, it's a start state
+            # If it's a target of transition, it's an end state
+            if is_source
+              ensure_start_state
+            else
+              ensure_end_state
+            end
+          else
+            state_str
+          end
+        end
+
+        def ensure_start_or_end_state
+          # Check if we already have a start state, if not create one
+          # Otherwise create an end state
+          start_state = @diagram.start_state
+          if start_state
+            ensure_end_state
+          else
+            ensure_start_state
+          end
+        end
+
+        def ensure_start_state
+          start_state = @diagram.start_state
+          return start_state.id if start_state
+
+          start_id = generate_state_id('start')
+          state = Diagram::StateNode.new.tap do |s|
+            s.id = start_id
+            s.label = START_END_MARKER
+            s.state_type = 'start'
+          end
+          @diagram.states << state
+          start_id
+        end
+
+        def ensure_end_state
+          end_state = @diagram.end_states.first
+          return end_state.id if end_state
+
+          end_id = generate_state_id('end')
+          state = Diagram::StateNode.new.tap do |s|
+            s.id = end_id
+            s.label = START_END_MARKER
+            s.state_type = 'end'
+          end
+          @diagram.states << state
+          end_id
+        end
+
+        def ensure_state_exists(state_id)
+          existing = @diagram.find_state(state_id)
+          return existing if existing
+
+          state = Diagram::StateNode.new.tap do |s|
+            s.id = state_id
+            s.label = state_id
+            s.state_type = 'normal'
+          end
+          @diagram.states << state
+          state
+        end
+
+        def add_special_state(state_id, state_type)
+          existing = @diagram.find_state(state_id)
+          return existing if existing
+
+          state = ensure_state_exists(state_id)
+          state.label = nil
+          state.state_type = state_type
+          state
+        end
+
+        def add_or_update_state(state_id, label = nil)
+          existing = @diagram.find_state(state_id)
+          if existing
+            existing.label = label if label && !label.empty?
+            existing
+          else
+            state = Diagram::StateNode.new.tap do |s|
+              s.id = state_id
+              s.label = label || state_id
+              s.state_type = 'normal'
+            end
+            @diagram.states << state
+            state
+          end
+        end
+
+        def create_transition(from_id, to_id, trigger = nil, guard = nil)
+          # Ensure both states exist
+          ensure_state_exists(from_id) unless from_id.start_with?('start_', 'end_')
+          ensure_state_exists(to_id) unless to_id.start_with?('start_', 'end_')
+
+          transition = Diagram::StateTransition.new.tap do |t|
+            t.from_id = from_id
+            t.to_id = to_id
+            t.trigger = trigger
+            t.guard_condition = guard
+          end
+          @diagram.transitions << transition
+        end
+
+        def parse_transition_label(label_data)
+          return [nil, nil] unless label_data
+
+          label_text = extract_text(label_data[:label_text] || label_data).strip
+          return [nil, nil] if label_text.empty?
+
+          # Parse trigger and guard from label
+          # Format: "trigger [guard]" or just "trigger"
+          if label_text =~ /^(.+?)\s*\[(.+?)\]\s*$/
+            trigger = Regexp.last_match(1).strip
+            guard = Regexp.last_match(2).strip
+            [trigger, guard]
+          else
+            [label_text, nil]
+          end
+        end
+
+        def generate_state_id(prefix)
+          @state_counter += 1
+          "#{prefix}_#{@state_counter}"
+        end
+
+        def extract_text(value)
+          case value
+          when Hash
+            if value[:string]
+              value[:string].to_s
+            elsif value[:marker_type]
+              value[:marker_type].to_s
+            elsif value[:dir_value]
+              value[:dir_value].to_s
+            elsif value[:label_text]
+              value[:label_text].to_s
+            else
+              value.values.first.to_s
+            end
+          when String
+            value
+          else
+            value.to_s
+          end
+        end
+      end
+    end
+  end
+end

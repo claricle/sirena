@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Sirena::Renderer::RequirementRenderer do
+RSpec.describe Sirena::Renderer::Requirement do
   let(:renderer) { described_class.new }
 
   describe '#render' do

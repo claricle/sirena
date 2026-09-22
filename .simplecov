@@ -49,7 +49,7 @@ SimpleCov.configure do
   # bucket.
   group "Parser", %r{\Alib/sirena/parser(\.rb\z|/)}
   group "Diagram", %r{\Alib/sirena/diagram(\.rb\z|/)}
-  group "Transform", %r{\Alib/sirena/transform(\.rb\z|/)}
+  group "Layout", %r{\Alib/sirena/layout(\.rb\z|/)}
   group "Renderer", %r{\Alib/sirena/renderer(\.rb\z|/)}
   group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
   group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}

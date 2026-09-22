@@ -12,13 +12,13 @@ module Sirena
   module Renderer
     # Quadrant chart renderer for converting quadrant diagrams to SVG.
     #
-    # Converts a QuadrantChart diagram model into SVG with a 2x2 grid,
+    # Converts a Quadrant diagram model into SVG with a 2x2 grid,
     # axis labels, quadrant labels, and data points.
     #
     # @example Render a quadrant chart
-    #   renderer = QuadrantRenderer.new
+    #   renderer = Quadrant.new
     #   svg = renderer.render(quadrant_graph)
-    class QuadrantRenderer < Base
+    class Quadrant < Base
       # Quadrant colors (can be overridden by theme)
       QUADRANT_COLORS = {
         1 => '#e3f2fd', # Light blue
