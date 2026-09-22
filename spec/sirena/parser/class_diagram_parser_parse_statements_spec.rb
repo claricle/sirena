@@ -71,12 +71,12 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse statements" do
   it "renders a diagram holding only accessibility text" do
     source = "classDiagram\naccTitle: My Title\naccDescr {\n  text\n}\n"
 
-    expect(Sirena.render(source)).to start_with("<svg").or start_with("<?xml")
+    expect(Sirena.render(source)).not_to include('id="class-')
   end
 
   it "renders a diagram with accessibility text and a class" do
     source = "classDiagram\naccTitle: My Title\naccDescr: text\nclass A\n"
 
-    expect(Sirena.render(source)).to start_with("<svg").or start_with("<?xml")
+    expect(Sirena.render(source)).to include('id="class-A"')
   end
 end
