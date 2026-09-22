@@ -28,16 +28,19 @@ Process flows, workflows, and decision trees.
 * link:flowchart/04-subgraphs.mmd[04-subgraphs] - Grouped nodes
 * link:flowchart/05-styling.mmd[05-styling] - Node hierarchy
 * link:flowchart/06-complex-flow.mmd[06-complex-flow] - Multi-path workflow
+* link:flowchart/00-original.mmd[00-original] - Original
 
 ==== link:git_graph/[Git Graph]
 Version control branching and merging visualization.
 
 * link:git_graph/01-linear-history.mmd[01-linear-history] - Linear commit history
+* link:git_graph/02-branching.mmd[02-branching] - Branching
 
 ==== link:mindmap/[Mindmap]
 Hierarchical concept mapping and brainstorming.
 
 * link:mindmap/01-simple-tree.mmd[01-simple-tree] - Basic mind map
+* link:mindmap/02-knowledge-map.mmd[02-knowledge-map] - Knowledge map
 
 === UML Diagrams
 
@@ -45,21 +48,25 @@ Hierarchical concept mapping and brainstorming.
 Object interaction and message passing over time.
 
 * link:sequence/01-basic-sequence.mmd[01-basic-sequence] - Basic interactions
+* link:sequence/02-activations.mmd[02-activations] - Activations
 
 ==== link:class_diagram/[Class Diagram]
 Object-oriented class structure and relationships.
 
 * link:class_diagram/01-basic-classes.mmd[01-basic-classes] - Basic classes
+* link:class_diagram/02-relationships.mmd[02-relationships] - Relationships
 
 ==== link:state_diagram/[State Diagram]
 State machine and lifecycle visualization.
 
 * link:state_diagram/01-simple-states.mmd[01-simple-states] - Basic states
+* link:state_diagram/02-composite.mmd[02-composite] - Composite
 
 ==== link:er_diagram/[ER Diagram]
 Entity-relationship database modeling.
 
 * link:er_diagram/01-basic-entities.mmd[01-basic-entities] - Basic entities
+* link:er_diagram/02-cardinality.mmd[02-cardinality] - Cardinality
 
 === Architecture & System Design
 
@@ -67,16 +74,19 @@ Entity-relationship database modeling.
 Software architecture at different abstraction levels.
 
 * link:c4/01-context-diagram.mmd[01-context-diagram] - System context
+* link:c4/02-container-diagram.mmd[02-container-diagram] - Container diagram
 
 ==== link:architecture/[Architecture Diagram]
 Service-based architecture visualization.
 
 * link:architecture/01-basic-services.mmd[01-basic-services] - Basic services
+* link:architecture/02-service-groups.mmd[02-service-groups] - Service groups
 
 ==== link:block/[Block Diagram]
 Block-based layouts and connections.
 
 * link:block/01-basic-blocks.mmd[01-basic-blocks] - Basic blocks
+* link:block/02-block-shapes.mmd[02-block-shapes] - Block shapes
 
 === Project Management
 
@@ -84,26 +94,31 @@ Block-based layouts and connections.
 Project timeline and task scheduling.
 
 * link:gantt/01-simple-timeline.mmd[01-simple-timeline] - Project timeline
+* link:gantt/02-task-dependencies.mmd[02-task-dependencies] - Two-phase project schedule
 
 ==== link:timeline/[Timeline]
 Historical events and chronological visualization.
 
 * link:timeline/01-simple-timeline.mmd[01-simple-timeline] - Event timeline
+* link:timeline/02-periods.mmd[02-periods] - Periods
 
 ==== link:kanban/[Kanban Board]
 Task workflow and status tracking.
 
 * link:kanban/01-simple-board.mmd[01-simple-board] - Basic board
+* link:kanban/02-workflow.mmd[02-workflow] - Workflow
 
 ==== link:requirement/[Requirement Diagram]
 System requirements and traceability.
 
 * link:requirement/01-basic-requirements.mmd[01-basic-requirements] - Basic requirements
+* link:requirement/02-risk-levels.mmd[02-risk-levels] - Risk levels
 
 ==== link:user_journey/[User Journey]
 User experience mapping and satisfaction tracking.
 
 * link:user_journey/01-simple-journey.mmd[01-simple-journey] - Basic journey
+* link:user_journey/02-multi-actor.mmd[02-multi-actor] - Multi actor
 
 === Data Visualization
 
@@ -111,21 +126,25 @@ User experience mapping and satisfaction tracking.
 Proportional data visualization.
 
 * link:pie/01-simple-chart.mmd[01-simple-chart] - Basic pie chart
+* link:pie/02-labeled-slices.mmd[02-labeled-slices] - Labeled slices
 
 ==== link:xychart/[XY Chart]
 Line and bar charts with axes.
 
 * link:xychart/01-line-chart.mmd[01-line-chart] - Line chart
+* link:xychart/02-bar-chart.mmd[02-bar-chart] - Bar chart
 
 ==== link:quadrant/[Quadrant Chart]
 2x2 matrix positioning and analysis.
 
 * link:quadrant/01-basic-quadrant.mmd[01-basic-quadrant] - Basic quadrant
+* link:quadrant/02-positioned-items.mmd[02-positioned-items] - Positioned items
 
 ==== link:radar/[Radar Chart]
 Multi-dimensional data comparison.
 
 * link:radar/01-simple-radar.mmd[01-simple-radar] - Skill assessment
+* link:radar/02-multiple-curves.mmd[02-multiple-curves] - Multiple curves
 
 ==== link:treemap/[Treemap]
 Hierarchical data with size-based visualization.
@@ -136,6 +155,7 @@ Hierarchical data with size-based visualization.
 Flow quantities between nodes.
 
 * link:sankey/01-simple-flow.mmd[01-simple-flow] - Basic flow
+* link:sankey/02-multi-stage.mmd[02-multi-stage] - Multi stage
 
 === Network & Technical
 
@@ -149,7 +169,6 @@ Network protocol packet structure.
 ==== link:info/[Info Display]
 Informational messages and notices.
 
-* link:info/01-basic-info.mmd[01-basic-info] - Basic info
 * link:info/02-showinfo.mmd[02-showinfo] - Show info display
 
 ==== link:error/[Error Display]
@@ -163,7 +182,7 @@ Error message visualization.
 Each example consists of:
 
 * `.mmd` file - Mermaid source code
-* `.svg` file - Rendered SVG output (generated)
+* `.svg` file - Rendered SVG output (generated); one source (`packet/01-basic-packet.beta.mmd`) has no rendered SVG yet
 * `README.adoc` - Documentation (in subdirectory)
 
 == Contributing Examples
