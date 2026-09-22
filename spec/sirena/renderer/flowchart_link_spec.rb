@@ -814,18 +814,24 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     # Every built-in theme sets both sizes, and they differ. The small one
-    # is what the label is drawn at, so the normal one must not size the
-    # room. The normal size alone does not move the layout.
-    it "sizes a loop label's room at the small size when both are set" do
-      source = "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
-               "s -->|a much longer label| s\n"
-      view_box = lambda do |typography|
-        Sirena::Engine.new(theme: { typography: typography })
-          .render(source)[/viewBox="([^"]*)"/, 1]
-      end
+    # is what the label is DRAWN at (`edge_label_font_size`), and
+    # `loop_label_extent` sizes the loop's room off that identical method
+    # (see its own comment: "Keep the two in step"), so asserting the
+    # drawn size covers the room too. font_size_normal legitimately sizes
+    # node and cluster boxes now (D10), so it moves the PAGE as well —
+    # that is a separate, correct claim, not this one. Comparing whole
+    # viewBoxes used to conflate the two: it went red when D10 started
+    # measuring node text against font_size_normal, not because the label
+    # stopped following font_size_small. Reading the label's own
+    # `font-size` attribute keeps the two claims apart.
+    it "draws a loop label at the small size when both are set" do
+      xml = Sirena.render(
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
+        theme: { typography: { font_size_small: 12.0, font_size_normal: 20.0 } }
+      )
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
-      expect(view_box.call({ font_size_small: 12.0, font_size_normal: 20.0 }))
-        .to eq(view_box.call({ font_size_small: 12.0 }))
+      expect(group[/<text[^>]*font-size="([^"]*)"/, 1].to_f).to eq(12.0)
     end
 
     # `calculate_width` used to total only node and cluster boxes, never
