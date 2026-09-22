@@ -4,7 +4,7 @@ require "spec_helper"
 
 # Annotations and free-text members inside a class body, and after a colon.
 # Every accept and reject below was checked against mmdc 11.12.0.
-RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and members" do
+RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
   include ClassBodyParsing
 
   let(:parser) { described_class.new }
