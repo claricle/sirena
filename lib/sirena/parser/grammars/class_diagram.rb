@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'common'
+require_relative 'mermaid_unicode_text'
 
 module Sirena
   module Parser
@@ -23,10 +24,23 @@ module Sirena
             ws?
         end
 
+        # `classDiagram-v2` is the same language; mmdc takes no direction on
+        # its header line (`classDiagram-v2 LR` is rejected). Neither header
+        # line takes a trailing `%%` comment either — mmdc rejects
+        # `classDiagram %%x` and `classDiagram-v2 %%x` just as it rejects a
+        # direction there.
         rule(:header) do
-          str('classDiagram').as(:header) >>
-            ws? >>
-            direction.maybe.as(:direction)
+          (str('classDiagram-v2').as(:header) >>
+            space? >> (newline | eof).present? >> ws?) |
+            (str('classDiagram').as(:header) >> header_end >>
+              space? >> direction_value.maybe.as(:direction) >> space? >>
+              (newline | eof).present? >> ws?)
+        end
+
+        # `classDiagramX` is not a header, and the line ends after the header:
+        # `classDiagram `A`` is rejected by mmdc.
+        rule(:header_end) do
+          (name_char | str('-')).absent?
         end
 
         rule(:direction_value) do
@@ -100,9 +114,16 @@ module Sirena
             class_name.as(:class_id) >> space? >>
             generic_params.maybe.as(:generic) >> space? >>
             text_label.maybe.as(:text_label) >> space? >>
-            stereotype.maybe.as(:stereotype) >> space? >>
+            (css_shorthand | stereotype.maybe.as(:stereotype)) >> space? >>
             class_body.maybe.as(:body) >>
             line_end
+        end
+
+        # `class C1:::pink`. mmdc rejects it together with a stereotype, in
+        # either order, and rejects a label after it, so it is an alternative
+        # to the stereotype slot rather than a slot of its own.
+        rule(:css_shorthand) do
+          str(':::') >> space? >> name_char.repeat(1).as(:css_class)
         end
 
         # `class C1["Label"]` only, matching mmdc 11.12.0 exactly.
@@ -146,7 +167,7 @@ module Sirena
 
         # Colon member definition: ClassName : +member or ClassName : +method()
         rule(:colon_member_definition) do
-          class_name.as(:class_id) >> space? >>
+          class_ref >> space? >>
             colon >> space? >>
             visibility_modifier.maybe.as(:visibility) >>
             member_definition.as(:member) >>
@@ -244,12 +265,54 @@ module Sirena
 
         # Standalone class (just an identifier)
         rule(:standalone_class) do
-          class_name.as(:class_id) >> line_end
+          class_ref >> line_end
         end
 
-        # Class name (identifier or dotted identifier)
+        # A class name with the generic mmdc lets follow it on a standalone
+        # class, a colon member and a relationship end: `Class1~T~ <|-- Class02`,
+        # `Car~T~ : +wheels`.
+        rule(:class_ref) do
+          class_name.as(:class_id) >> generic_suffix.as(:generic)
+        end
+
+        rule(:from_generic) { generic_suffix.as(:from_generic) }
+        rule(:to_generic) { generic_suffix.as(:to_generic) }
+
+        rule(:generic_suffix) do
+          (space? >> generic_params).maybe
+        end
+
+        # A word character in a class name or a CSS class: ASCII letters and
+        # digits, underscore, and the letters in mermaid's own table
+        # (`MERMAID_UNICODE_TEXT`). mmdc accepts `class 1` and `class é`, and
+        # rejects `class ١` (a non-ASCII digit) and `class 𐐀` (an astral
+        # letter, absent from the table).
+        rule(:name_char) do
+          match["A-Za-z0-9_#{MERMAID_UNICODE_TEXT}"]
+        end
+
+        # Class name: words joined by a single `.` (namespace-qualified) or a
+        # single interior `-` (`Ca-r`), or backtick-quoted (`` `A B` ``).
+        # A `-` that is not followed by a word character is the start of an
+        # operator (`A-->B`), so it ends the name. mmdc rejects `A.`, `.A`
+        # and `A..B` as names.
+        #
+        # The backticks stay in the parse tree; the transform strips them so
+        # `Car` and `` `Car` `` are one class.
         rule(:class_name) do
-          match['a-zA-Z_'] >> match['a-zA-Z0-9_.'].repeat
+          backtick_name | plain_class_name
+        end
+
+        rule(:backtick_name) do
+          str('`') >> (str('`').absent? >> any).repeat(1) >> str('`')
+        end
+
+        rule(:plain_class_name) do
+          hyphenated_word >> (str('.') >> hyphenated_word).repeat
+        end
+
+        rule(:hyphenated_word) do
+          name_char.repeat(1) >> (str('-') >> name_char.repeat(1)).repeat
         end
 
         # Stereotype: <<interface>>, <<abstract>>, etc.
@@ -331,12 +394,12 @@ module Sirena
 
         # Relationship: A relationship_operator B
         rule(:relationship) do
-          class_name.as(:from_id) >> space? >>
+          class_name.as(:from_id) >> from_generic >> space? >>
             source_cardinality.maybe.as(:source_card) >> space? >>
             relationship_operator.as(:operator) >> space? >>
             pipe_label.maybe.as(:pipe_label) >> space? >>
             target_cardinality.maybe.as(:target_card) >> space? >>
-            class_name.as(:to_id) >>
+            class_name.as(:to_id) >> to_generic >>
             colon_label.maybe.as(:colon_label) >>
             line_end
         end
