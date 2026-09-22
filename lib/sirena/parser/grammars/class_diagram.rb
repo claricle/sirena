@@ -393,17 +393,23 @@ module Sirena
           (match[":;\n"].absent? >> line_end.absent? >> any).repeat(1)
         end
 
+        # A `%%` starts a trailing comment mmdc strips, same as line_end does
+        # outside the body; free-text member capture must stop there instead
+        # of swallowing the comment as member text.
         rule(:body_char) do
-          match["\n{}"].absent? >> any
+          (str('%%') | match["\n{}"]).absent? >> any
         end
 
         rule(:body_text) do
           (str('"').absent? >> body_char) >> body_char.repeat >> member_end
         end
 
-        # A member ends at the line break, or at the `}` that closes the body.
+        # A member ends at the line break, the `}` that closes the body, or
+        # a trailing `%%` comment — a pure lookahead, same as before: the
+        # comment itself is left for body_gap to consume between members, so
+        # it never ends up inside a member capture that wraps this rule.
         rule(:member_end) do
-          space? >> (newline | rbrace | eof).present?
+          space? >> (comment | newline | rbrace | eof).present?
         end
 
         # Member definition (attribute or method)

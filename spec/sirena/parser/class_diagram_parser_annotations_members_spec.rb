@@ -156,6 +156,30 @@ RSpec.describe Sirena::Parser::ClassDiagramParser, "#parse annotations and membe
     end
   end
 
+  describe "a trailing %% comment on a member" do
+    it "strips a comment after a method call, keeping return_type nil" do
+      method = parse_class("+foo() %% comment").class_methods.first
+
+      expect([method.name, method.return_type]).to eq(["foo", nil])
+    end
+
+    it "strips a comment after a typed attribute, keeping the name and type" do
+      attribute = parse_class("+int age %% comment").attributes.first
+
+      expect([attribute.name, attribute.type]).to eq(%w[age int])
+    end
+
+    it "strips a comment after an annotation, keeping the stereotype" do
+      expect(parse_class("<<interface>> %% comment").stereotype).to eq("interface")
+    end
+
+    it "strips a comment after a static-mark attribute, dropping the mark and the comment" do
+      attribute = parse_class("field$ %% comment").attributes.first
+
+      expect([attribute.name, attribute.type]).to eq(["field", nil])
+    end
+  end
+
   describe "a free-text member after a colon" do
     {
       "a return type after" => ["Object : getObject() Object", "getObject", "", "Object"],
