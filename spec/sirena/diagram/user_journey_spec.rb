@@ -128,8 +128,28 @@ RSpec.describe Sirena::Diagram::UserJourney do
       expect(diagram.valid?).to be true
     end
 
-    it 'returns false for journey without sections' do
+    it 'returns true for journey without sections' do
+      # mmdc renders a bare `journey` (with or without a title) as an
+      # empty diagram; corpus cases 014/015/024/025 are exactly this.
       diagram = described_class.new
+
+      expect(diagram.valid?).to be true
+    end
+
+    it 'returns true for journey with a title and no sections' do
+      # Corpus cases 003/007: `journey` + `title ...` with no sections.
+      diagram = described_class.new
+      diagram.title = 'Adding journey diagram functionality to mermaid'
+
+      expect(diagram.valid?).to be true
+    end
+
+    it 'returns false when sections is explicitly nil' do
+      # An empty array is a valid bare journey; nil is not the same thing.
+      # Layout dereferences sections directly and raises NoMethodError on
+      # nil, so nil must stay rejected here rather than treated as empty.
+      diagram = described_class.new
+      diagram.sections = nil
 
       expect(diagram.valid?).to be false
     end

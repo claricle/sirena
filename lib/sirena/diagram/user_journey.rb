@@ -102,17 +102,16 @@ module Sirena
 
       # Validates the user journey structure.
       #
-      # A user journey is valid if:
-      # - It has at least one section
-      # - All sections are valid
-      # - All tasks within sections are valid
+      # A user journey with no sections is still valid: mmdc renders a bare
+      # `journey` (with or without a title, oracle cases 003/007/014/015/
+      # 024/025) as an empty diagram rather than rejecting it, so an EMPTY
+      # sections array is fine. A nil sections is rejected: layout dereferences
+      # sections directly (lib/sirena/layout/user_journey.rb) and would raise
+      # NoMethodError on nil rather than rendering an empty diagram.
       #
       # @return [Boolean] true if user journey is valid
       def valid?
-        return false if sections.nil? || sections.empty?
-        return false unless sections.all?(&:valid?)
-
-        true
+        sections.is_a?(Array) && sections.all?(&:valid?)
       end
 
       # Returns all tasks across all sections.
