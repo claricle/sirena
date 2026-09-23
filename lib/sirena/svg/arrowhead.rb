@@ -97,8 +97,9 @@ module Sirena
 
       # Unlike marker orient="auto", which points along the path, Sirena
       # deliberately reverses a start head to form a bidirectional arrow. No
-      # renderer sets marker_start, so this deviation is reached only through
-      # from_xml.
+      # renderer sets marker_start, so this deviation is reached only by a
+      # caller assigning `path.marker_start=` directly -- Path.from_xml no
+      # longer exists to reach it either.
       def reversed(anchor)
         anchor && PathGeometry::Anchor.new(anchor.x, anchor.y,
                                            -anchor.dx, -anchor.dy)
