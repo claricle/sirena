@@ -423,10 +423,73 @@ module Sirena
               set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword]
               declare_styled_node(diagram, stmt[:style_target], context)
+            elsif stmt[:link_style_keyword]
+              check_link_indices(diagram, stmt[:link_targets].to_s)
+              check_link_words(stmt)
             end
-            # classDef, class and click are parsed but not modelled.
+            # classDef, class, click and linkStyle are parsed but not
+            # modelled.
           end
         end
+
+        # mmdc refuses `linkStyle 1` when only edge 0 has been drawn so
+        # far, so the count is the edges written above the statement.
+        def self.check_link_indices(diagram, targets)
+          return if targets == 'default'
+
+          last = diagram.edges.size - 1
+          targets.split(',').each do |token|
+            index = token.to_i
+            # `00` and `01` name no edge: mermaid looks the text up as a key.
+            next if index.to_s == token && index <= last
+
+            raise Parser::ParseError,
+                  "The index #{token} for linkStyle is out of bounds."
+          end
+        end
+        private_class_method :check_link_indices
+
+        # mermaid lexes these two as keywords even inside the style text,
+        # so `stroke:default`, `stroke:1default` and a bare `interpolate`
+        # are refused while `stroke:defaults` and `stroke:x-default` are
+        # plain text.
+        LINK_STYLE_KEYWORD = /(?:\A|(?<=[,:;]|#{JS_SPACE}))(?:#|[0-9]+)?(interpolate|default)(?![A-Za-z0-9_])/
+
+        # mermaid rewrites `#name;` as an entity before it parses, except
+        # the last `;` of a lowercase `style ...:#...;` run, then the last
+        # `;` of a `classDef ...:#...;` run applied the same way right
+        # after. `linkStyle` is neither lowercase nor `classDef`, so
+        # `linkStyle 0 stroke:#f00;` holds an entity no style can take.
+        STYLE_RUN = /style.*:(?:(?!#{JS_SPACE}).)*#.*;/
+        CLASS_DEF_RUN = /classDef.*:(?:(?!#{JS_SPACE}).)*#.*;/
+        ENTITY = /#\w+;/
+
+        private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN, :ENTITY
+
+        def self.check_link_words(stmt)
+          [stmt[:link_curve], stmt[:link_props]].each do |text|
+            word = text.to_s[LINK_STYLE_KEYWORD, 1] or next
+            raise Parser::ParseError,
+                  "linkStyle cannot use `#{word}` here: " \
+                  'write `interpolate <curve>` first, then the styles.'
+          end
+          # mermaid runs the strip over the whole source line, so a curve
+          # name and the styles after it share one entity check even
+          # though the grammar splits them into two fields. The `;` that
+          # ends the statement is part of an entity too.
+          text = [stmt[:link_curve], stmt[:link_props]].compact.join(' ')
+          check_link_entities("#{text}#{stmt[:link_end]}")
+        end
+        private_class_method :check_link_words
+
+        def self.check_link_entities(text)
+          entity = text.sub(STYLE_RUN, &:chop).sub(CLASS_DEF_RUN, &:chop)[ENTITY] or return
+
+          raise Parser::ParseError,
+                "linkStyle reads `#{entity}` as an HTML entity; " \
+                'drop the `;` after the colour.'
+        end
+        private_class_method :check_link_entities
 
         # `style Q ...` names a vertex, and mermaid draws it even when no
         # other statement mentions it, unless an earlier edge carries that
