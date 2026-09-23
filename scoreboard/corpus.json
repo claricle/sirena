@@ -751,9 +751,7 @@
   {
     "case": "class/044_platform_yari_class_43.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/045_platform_yari_class_44.mmd",
@@ -1147,9 +1145,7 @@
   {
     "case": "class/118_parser_should_handle_relation_definition_of_different_types_and_directions_117.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/119_parser_should_handle_cardinality_and_labels_118.mmd",
@@ -1164,16 +1160,12 @@
   {
     "case": "class/121_parser_should_handle_relation_definitions_aggregation_and_dotted_line_120.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/122_parser_should_handle_relation_definitions_composition_on_both_sides_121.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/123_parser_should_handle_relation_definitions_with_no_types_122.mmd",
@@ -1583,9 +1575,7 @@
   {
     "case": "class_diagram/019_platform_yari_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/020_platform_yari_19.mmd",
@@ -2548,9 +2538,7 @@
   {
     "case": "class_diagram/091_parser_should_handle_relation_definition_of_different_types_and_directions_90.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/092_parser_should_handle_cardinality_and_labels_91.mmd",
@@ -2584,9 +2572,7 @@
   {
     "case": "class_diagram/094_parser_should_handle_relation_definitions_aggregation_and_dotted_line_93.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/095_parser_should_handle_all_basic_relationships_94.mmd",
@@ -2598,9 +2584,7 @@
   {
     "case": "class_diagram/095_parser_should_handle_relation_definitions_composition_on_both_sides_94.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/096_parser_should_handle_backticked_class_name_95.mmd",

@@ -32,6 +32,45 @@ module Sirena
         # Operators where arrow points left (reverse direction)
         LEFT_POINTING = ['<|--', '<--', '<|..', '<..'].freeze
 
+        # `id1` keeps its parsed position for both ends here (mmdc never
+        # swaps for these forms, unlike LEFT_POINTING's single-sided ones),
+        # so `start_marker`/`end_marker` land on from_id/to_id as parsed.
+        # `nil` means no marker is drawn at that end.
+        #
+        # `o..` carries a marker on one side only and has no structural
+        # two-way counterpart, so it stays a literal lookup. Every genuine
+        # two-way combination (both ends carrying a marker, e.g. `<--*`,
+        # `o--|>`, `<|--|>`) is decomposed structurally by
+        # #mixed_markers_for instead -- add a new combination there, not
+        # as a hardcoded entry here.
+        MIXED_MARKER_ENDPOINTS = {
+          'o..' => { start_marker: 'aggregation', end_marker: nil, dashed: true }
+        }.freeze
+
+        # Marker glyph -> the marker type it draws, verified against
+        # mermaid-cli 11.12.0's bundled classDiagram.jison parser
+        # (`getArrowMarker(type)` per glyph): `<`/`>` decompose to
+        # DEPENDENCY, so `<--*`'s `<` is a dependency marker, not absent.
+        MARKER_TYPES = {
+          '<|' => 'inheritance',
+          '|>' => 'inheritance',
+          '*' => 'composition',
+          'o' => 'aggregation',
+          '<' => 'dependency',
+          '>' => 'dependency'
+        }.freeze
+
+        # Matches a two-way operator into its left marker, link style, and
+        # right marker -- the same [Relation Type][Link][Relation Type]
+        # structure Parser::Grammars::ClassDiagram::MIXED_OPERATOR_STRINGS
+        # generates from. Longest markers first so `<|`/`|>` win over the
+        # `<`/`>` they would otherwise be read as a prefix of.
+        MIXED_OPERATOR_PATTERN = /
+          \A(?<left>#{Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })})
+          (?<link>--|\.\.)
+          (?<right>#{Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })})\z
+        /x
+
         # `name(params) rest`: mmdc reads the LAST `(...)` in the text as the
         # parameter list, so `foo()bar()` is method `foo()bar`, not `foo`
         # with a stray `)bar(` as its params.
@@ -342,6 +381,8 @@ module Sirena
             actual_target_card = target_card
           end
 
+          mixed_markers = mixed_markers_for(operator)
+
           relationship = Diagram::ClassRelationship.new.tap do |rel|
             rel.from_id = actual_from
             rel.to_id = actual_to
@@ -349,9 +390,31 @@ module Sirena
             rel.label = label
             rel.source_cardinality = actual_source_card
             rel.target_cardinality = actual_target_card
+            if mixed_markers
+              rel.start_marker = mixed_markers[:start_marker]
+              rel.end_marker = mixed_markers[:end_marker]
+              rel.dashed = mixed_markers[:dashed]
+            end
           end
 
           @diagram.relationships << relationship
+        end
+
+        # Looks up an `o..`-style single-marker operator by literal string,
+        # or decomposes a genuine two-way operator (a marker on both ends)
+        # structurally via MARKER_TYPES. `nil` for every single-sided
+        # operator, which keeps its existing RELATIONSHIP_TYPES rendering.
+        def mixed_markers_for(operator)
+          return MIXED_MARKER_ENDPOINTS[operator] if MIXED_MARKER_ENDPOINTS.key?(operator)
+
+          match = MIXED_OPERATOR_PATTERN.match(operator)
+          return nil unless match
+
+          {
+            start_marker: MARKER_TYPES.fetch(match[:left]),
+            end_marker: MARKER_TYPES.fetch(match[:right]),
+            dashed: match[:link] == '..'
+          }
         end
 
         def find_or_create_entity(class_id)

@@ -179,6 +179,21 @@ module Sirena
       # Optional cardinality for target end (e.g., '1', '0..1', '1..*')
       attribute :target_cardinality, :string
 
+      # Marker drawn at the from_id end, independent of relationship_type.
+      # Only set for mixed-marker operators (e.g. `o--|>`) where each end
+      # carries its own marker; nil for the single-type operators, which
+      # render entirely from relationship_type. One of 'inheritance',
+      # 'composition', 'aggregation', 'dependency', or nil (no marker).
+      attribute :start_marker, :string
+
+      # Marker drawn at the to_id end. Same rules as start_marker.
+      attribute :end_marker, :string
+
+      # Line style override for mixed-marker operators (nil elsewhere):
+      # true renders a dashed line, matching the operator's own line type
+      # rather than relationship_type's usual dash rule.
+      attribute :dashed, :boolean
+
       # Initialize with default relationship type
       def initialize(*args)
         super
