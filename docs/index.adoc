@@ -16,13 +16,14 @@ Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts M
 * No Node.js dependencies
 * No Puppeteer/Chrome requirements
 * Simpler deployment in Ruby environments
-* Native integration with Rails, Jekyll, and Ruby applications
+* Callable directly from Rails, Jekyll, and any Ruby application (no
+  dedicated integration layer built yet)
 
-=== Better Performance
-* Faster startup (no browser launch)
-* Lower memory footprint
-* Better for batch processing
+=== No Browser Dependency
+* No headless browser launch required
 * Suitable for serverless environments
+* No committed, reproducible benchmark yet backs a specific speed or memory
+  claim (see the comparison page)
 
 === Comprehensive Diagram Support
 * 24 diagram types registered (compatibility varies by type; see the compatibility page)
@@ -142,8 +143,8 @@ See the complete link:{% link _diagram_types/index.adoc %}[Diagram Types Referen
 
 * **Theme System**: YAML-based theming with 4 built-in themes (default, dark, light, high_contrast)
 * **Batch Processing**: Built-in batch renderer for documentation sets
-* **Rails Integration**: Native Ruby integration with Rails helpers
-* **Jekyll Support**: Static site generation compatibility
+* **Ruby Integration**: Call `Sirena.render` directly from Rails, Jekyll, or
+  any Ruby application; no dedicated Rails helpers or Jekyll plugin exist yet
 * **Parslet Parsing**: Robust grammar-based parsing with clear error messages
 * **SVG Output**: Professional-quality scalable vector graphics
 
