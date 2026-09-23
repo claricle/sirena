@@ -54,7 +54,7 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |**File Size**
 |~2MB (mermaid.min.js)
 |Ruby gem
-|
+|Not benchmarked
 
 |**Startup Time**
 |~2s (browser launch)
@@ -86,7 +86,7 @@ rather than asserted without evidence.
 * **C4** (all 5 subtypes) - 11/11 (100%)
 * **Class Diagram** (`classDiagram`) - 155/162 (95.7%)
 * **ER Diagram** (`erDiagram`) - 5/5 (100%)
-* **Flowchart** (`graph`, `flowchart`) - 190/218 (87.2%)
+* **Flowchart** (`graph`, `flowchart`) - 204/218 (93.6%)
 * **Gantt Chart** (`gantt`) - 18/21 (85.7%)
 * **Git Graph** (`gitGraph`) - 6/6 (100%)
 * **Info Diagram** (`info`) - 11/11 (100%)
@@ -106,7 +106,7 @@ rather than asserted without evidence.
 * **Error Diagram** (`error`) - Mermaid-defined (the diagram Mermaid.js
   itself renders when its own parsing fails); 4 cases in
   `spec/mermaid/error/`, extracted from mermaid-js's own
-  `rendering/errorDiagram.spec.js` and `diagram-orchestration.spec.js` test
+  `rendering/errorDiagram.spec.js` and `diagram-orchestration.spec.ts` test
   files, all with oracle verdict `unknown` (not confirmed by mmdc), so no
   pass rate is reported here
 * **Sankey** (`sankey-beta`) - registered, not covered by a per-type row above; see `scoreboard/corpus.json` directly
@@ -182,7 +182,7 @@ graph TD
 === Performance Comparison
 
 No committed, reproducible benchmark run exists yet. The `benchmark:compare`
-and `benchmark:quick` rake tasks in `lib/tasks/benchmark.rake` are meant to
+and `benchmark:quick` rake tasks in `tasks/benchmark.rake` are meant to
 produce one but do not currently run (neither the task nor the `Rakefile`
 requires `sirena` before calling `Sirena.render`). Until that is fixed and a
 run recorded, no specific timing, memory, or "Nx faster" figures are
@@ -208,7 +208,7 @@ structural difference, not a measured one.
 
 **Ruby Ecosystem**
 
-* Rake task automation ships today (`lib/tasks/*.rake`)
+* Rake task automation ships today (`tasks/*.rake`)
 * Rails helpers/views and Jekyll-specific integration are not built; using
   Sirena from a Rails or Jekyll app today means calling `Sirena.render`
   yourself, the same as from any other Ruby code

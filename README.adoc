@@ -369,7 +369,7 @@ See link:ARCHITECTURE.md[] for detailed architecture documentation.
 
 Sirena's test suite exercises the extracted mermaid-js corpus (`spec/mermaid/`)
 across all registered diagram types. The `mermaid:validate` rake task
-(`lib/tasks/generate_mermaid_fixtures.rake`) checks only that
+(`tasks/generate_mermaid_fixtures.rake`) checks only that
 `Sirena.render` runs without raising on each corpus source; it does not
 compare output against mermaid-cli reference SVGs. Comparison against
 mermaid-cli-generated reference output is a separate, optional task

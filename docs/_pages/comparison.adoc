@@ -235,7 +235,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 
 No committed, reproducible benchmark run exists for Sirena. The
 `benchmark:compare` and `benchmark:quick` rake tasks in
-`lib/tasks/benchmark.rake` are meant to produce one but do not currently run
+`tasks/benchmark.rake` are meant to produce one but do not currently run
 (neither the task nor the `Rakefile` requires `sirena` before calling
 `Sirena.render`). Until that is fixed and a run recorded, this page does not
 publish specific timing, memory, or output-size figures for Sirena, and
