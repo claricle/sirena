@@ -4,6 +4,7 @@ require "spec_helper"
 require "sirena/renderer/architecture"
 require "sirena/diagram/architecture"
 require "timeout"
+require "yaml"
 
 RSpec.describe Sirena::Renderer::Architecture do
   let(:renderer) { described_class.new }
@@ -554,14 +555,40 @@ RSpec.describe Sirena::Renderer::Architecture do
         end
       end
 
-      Dir.glob(File.expand_path("../../mermaid/architecture/*.mmd", __dir__)).each do |path|
-        it "#{File.basename(path)}: no edge crosses a non-endpoint service or junction" do
-          diagram = begin
-            Sirena::Parser::Architecture.new.parse(File.read(path))
-          rescue StandardError
-            skip "does not parse - out of scope for this task"
-          end
+      # spec/mermaid/corpus-verdicts.yml is the committed mmdc oracle: it
+      # says which corpus cases are genuine mermaid (verdict "valid") vs
+      # rejected by mmdc itself (verdict "invalid"). A case sirena cannot
+      # parse is only "out of scope" when the oracle agrees it isn't real
+      # input; otherwise a skip would hide a parser gap forever.
+      def self.architecture_verdicts
+        YAML.load_file("spec/mermaid/corpus-verdicts.yml")
+          .to_h { |row| [row["case"], row["verdict"]] }
+      end
 
+      all_cases = Dir.glob(File.expand_path("../../mermaid/architecture/*.mmd", __dir__))
+      verdicts = architecture_verdicts
+      unparseable_cases, checkable_cases = all_cases.partition do |path|
+        Sirena::Parser::Architecture.new.parse(File.read(path))
+        false
+      rescue Sirena::Parser::ParseError
+        true
+      end
+
+      # Every case sirena's grammar cannot parse must be oracle-invalid --
+      # a case mmdc accepts but sirena rejects is a real parser gap, not
+      # something this spec is allowed to wave through.
+      unparseable_cases.each do |path|
+        verdict = verdicts.fetch("architecture/#{File.basename(path)}")
+        unless verdict == "invalid"
+          raise "#{path} does not parse but the oracle says '#{verdict}', not 'invalid' " \
+                "-- this is a real parser gap, not out of scope"
+        end
+      end
+      invalid_cases = unparseable_cases
+
+      checkable_cases.each do |path|
+        it "#{File.basename(path)}: no edge crosses a non-endpoint service or junction" do
+          diagram = Sirena::Parser::Architecture.new.parse(File.read(path))
           layout = Sirena::Layout::Architecture.new.to_graph(diagram)
           svg_string = renderer.render(layout).to_s
           nodes = layout[:services].merge(layout[:junctions])
@@ -578,6 +605,13 @@ RSpec.describe Sirena::Renderer::Architecture do
               expect(crosses).to be(false), "#{edge_id} crosses #{id} in #{File.basename(path)}"
             end
           end
+        end
+      end
+
+      invalid_cases.each do |path|
+        it "#{File.basename(path)}: refuses cleanly (mmdc-oracle-invalid)" do
+          expect { Sirena::Parser::Architecture.new.parse(File.read(path)) }
+            .to raise_error(Sirena::Parser::ParseError)
         end
       end
     end
