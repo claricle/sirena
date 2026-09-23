@@ -15,8 +15,18 @@ module Sirena
     #   transform = Flowchart.new
     #   graph = transform.to_graph(flowchart_diagram)
     class Flowchart < Base
-      # Default font size for text measurement
-      DEFAULT_FONT_SIZE = 14
+      # Fallback font size for text measurement, used only when the
+      # injected theme has no typography or no font_size_normal set. When
+      # a theme is present (the normal case), #layout_font_size measures
+      # against its font_size_normal instead -- the same value the
+      # renderer draws node and cluster-title text with (D10). Matches
+      # Svg::Text::DEFAULT_FONT_SIZE / renderer/flowchart.rb's
+      # SVG_DEFAULT_FONT_SIZE, the value the SVG itself falls back to when
+      # apply_theme_to_text leaves font_size unset for the same reason --
+      # a mismatched fallback would re-open the box/drawn-text gap D10
+      # exists to close, just for the no-typography case instead of the
+      # has-typography one.
+      DEFAULT_FONT_SIZE = 16.0
 
       # Converts a flowchart diagram to a graph structure.
       #
@@ -89,7 +99,7 @@ module Sirena
       end
 
       def transform_subgraph(box)
-        label = measure_text(box.title, font_size: DEFAULT_FONT_SIZE)
+        label = measure_text(box.title, font_size: layout_font_size)
 
         {
           id: box.id,
@@ -143,7 +153,7 @@ module Sirena
       def edge_labels(edge)
         return [] if edge.label.nil? || edge.label.empty?
 
-        label_dims = measure_text(edge.label, font_size: DEFAULT_FONT_SIZE)
+        label_dims = measure_text(edge.label, font_size: edge_label_font_size)
 
         [
           {
@@ -157,7 +167,7 @@ module Sirena
       def calculate_dimensions(node)
         label_dims = measure_text(
           node.label,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: layout_font_size
         )
 
         node_dims = calculate_node_dimensions(
@@ -172,6 +182,39 @@ module Sirena
           label_width: label_dims[:width],
           label_height: label_dims[:height]
         }
+      end
+
+      # The size node and cluster-title measure_text calls size against:
+      # the injected theme's font_size_normal, the same value
+      # apply_theme_to_text sets on node and cluster-title text at render
+      # time (renderer/base.rb, renderer/flowchart.rb#create_node_label,
+      # #cluster_title). Falls back to DEFAULT_FONT_SIZE only when the
+      # theme has no typography or no font_size_normal. NOT used for edge
+      # labels -- see #edge_label_font_size.
+      def layout_font_size
+        valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+      end
+
+      # The size edge-label measure_text calls size against, mirroring the
+      # renderer's own preference order for the text it actually draws
+      # (renderer/flowchart.rb#edge_label_font_size: font_size_small first,
+      # since edge labels draw at the small size when the theme sets one).
+      # Keeping the two in step means the layout reserves room for the font
+      # the renderer draws with, not a different one.
+      def edge_label_font_size
+        valid_font_size(theme&.typography&.font_size_small) ||
+          valid_font_size(theme&.typography&.font_size_normal) || DEFAULT_FONT_SIZE
+      end
+
+      # A theme-supplied font size flows unchecked into TextMeasurement's
+      # box-size arithmetic (char_count * font_size * ratio). A non-finite
+      # value (NaN, Infinity) raises deep inside Float comparison, and a
+      # non-positive one produces an invalid negative SVG width -- both
+      # unvalidated anywhere else on this path (Typography's font_size_*
+      # attributes carry no range check). Falls through to DEFAULT_FONT_SIZE
+      # the same way a missing value does.
+      def valid_font_size(value)
+        value if value.is_a?(Numeric) && value.finite? && value.positive?
       end
 
       def shape_to_type(shape)

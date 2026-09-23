@@ -103,6 +103,43 @@ RSpec.describe Sirena::Parser::Gantt do
       expect(diagram.excludes).to include("weekends")
     end
 
+    it "parses the weekend directive" do
+      source = <<~GANTT
+        gantt
+          excludes weekends
+          weekend friday
+          section Tasks
+          Task 1 :2024-01-01, 10d
+      GANTT
+
+      diagram = parser.parse(source)
+
+      expect(diagram.weekend).to eq("friday")
+    end
+
+    it "parses the inclusiveEndDates directive" do
+      source = <<~GANTT
+        gantt
+        dateFormat yyyy-mm-dd
+        inclusiveEndDates
+      GANTT
+
+      diagram = parser.parse(source)
+
+      expect(diagram.inclusive_end_dates).to be(true)
+    end
+
+    it "defaults inclusiveEndDates to false when absent" do
+      source = <<~GANTT
+        gantt
+        dateFormat yyyy-mm-dd
+      GANTT
+
+      diagram = parser.parse(source)
+
+      expect(diagram.inclusive_end_dates).to be(false)
+    end
+
     # Task detail fields (tags, id, dates, duration, after/until) are a
     # comma-separated list. Tags are stripped by keyword; what is left is
     # classified by POSITION — the id is always first when exactly three

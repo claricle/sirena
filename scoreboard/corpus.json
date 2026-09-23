@@ -751,9 +751,7 @@
   {
     "case": "class/044_platform_yari_class_43.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/045_platform_yari_class_44.mmd",
@@ -1147,9 +1145,7 @@
   {
     "case": "class/118_parser_should_handle_relation_definition_of_different_types_and_directions_117.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/119_parser_should_handle_cardinality_and_labels_118.mmd",
@@ -1164,16 +1160,12 @@
   {
     "case": "class/121_parser_should_handle_relation_definitions_aggregation_and_dotted_line_120.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/122_parser_should_handle_relation_definitions_composition_on_both_sides_121.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/123_parser_should_handle_relation_definitions_with_no_types_122.mmd",
@@ -1583,9 +1575,7 @@
   {
     "case": "class_diagram/019_platform_yari_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/020_platform_yari_19.mmd",
@@ -2548,9 +2538,7 @@
   {
     "case": "class_diagram/091_parser_should_handle_relation_definition_of_different_types_and_directions_90.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/092_parser_should_handle_cardinality_and_labels_91.mmd",
@@ -2584,9 +2572,7 @@
   {
     "case": "class_diagram/094_parser_should_handle_relation_definitions_aggregation_and_dotted_line_93.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/095_parser_should_handle_all_basic_relationships_94.mmd",
@@ -2598,9 +2584,7 @@
   {
     "case": "class_diagram/095_parser_should_handle_relation_definitions_composition_on_both_sides_94.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/096_parser_should_handle_backticked_class_name_95.mmd",
@@ -6156,16 +6140,12 @@
   {
     "case": "gantt/002_rendering_gantt_spec_gantt_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/003_rendering_gantt_spec_gantt_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/004_rendering_gantt_spec_gantt_3.mmd",
@@ -6207,9 +6187,7 @@
   {
     "case": "gantt/011_parser_should_handle_a_inclusive_end_date_definition_10.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/012_parser_should_handle_a_title_definition_11.mmd",
@@ -11456,9 +11434,7 @@
   {
     "case": "user_journey/003_parser_should_handle_a_title_definition_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/003_rendering_journey_spec_user_journey_2.mmd",
@@ -11505,9 +11481,7 @@
   {
     "case": "user_journey/007_parser_should_handle_a_title_definition_6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/007_parser_should_handle_multiline_section_titles_with_different_line_breaks_6.mmd",
@@ -11561,16 +11535,12 @@
   {
     "case": "user_journey/014_spec_diagram-orchestration_spec_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/015_spec_diagram-orchestration_spec_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/016_spec_journeydb_spec_15.mmd",
@@ -11631,16 +11601,12 @@
   {
     "case": "user_journey/024_spec_mermaidapi_spec_23.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/025_spec_mermaidapi_spec_24.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "xychart/001_example_xychart_0.mmd",

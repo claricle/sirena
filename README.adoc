@@ -25,8 +25,12 @@ refer to mermaids.
 == Implementation notes
 
 The library follows strict object-oriented principles with a model-driven
-architecture, using `Lutaml::Model` for all data structures and providing clean
-separation between parsing, transformation, layout, and rendering phases.
+architecture. Most diagram models use `Lutaml::Model`, but not all data
+structures do: `Sirena::Diagram::TreemapNode` and `Sirena::Diagram::RadarAxis`
+are plain Ruby classes, and the transform/layout pipeline between parsing and
+rendering passes plain hashes rather than typed models. The pipeline keeps a
+clean separation between parsing, transformation, layout, and rendering
+phases.
 
 
 == Features
@@ -36,14 +40,21 @@ separation between parsing, transformation, layout, and rendering phases.
 Mermaid defines a set of diagram type languages for composing different diagram
 types.
 
-Sirena currently supports all diagram type languages defined in Mermaid.
+Sirena registers 24 diagram types. 23 are Mermaid input languages; the 24th is
+`error`, the fallback Mermaid.js renders when its own parsing fails. Mermaid's
+ZenUML is not registered. Per-type compatibility with real Mermaid.js input
+varies (see below).
 
 // === PlantUML diagram types
 
 === Mermaid diagram types
 
-Sirena supports all 24 Mermaid diagram types with complete parser, transform,
-and renderer implementations:
+Sirena registers 24 Mermaid diagram types end-to-end (parser, transform, and
+renderer). Registration is not the same as full compatibility: measured
+per-type pass rates against the mermaid-js corpus range from 66.7% to 100%
+and are documented on the
+https://claricle.github.io/sirena/pages/compatibility/[compatibility page]
+and in `scoreboard/corpus.json`.
 
 * **Flowchart** - Directional graphs with various node shapes and edge types
 * **Sequence diagram** - Message flows between participants over time
@@ -82,7 +93,12 @@ See link:examples/README.adoc[] for working examples of all diagram types.
 * **Batch processing** - Process multiple diagrams at once
 * **CLI tool** - Command-line interface for standalone usage
 * **Programmatic API** - Ruby library for custom workflows
-* **Metanorma integration** - Direct embedding in documentation
+* **Metanorma-oriented SVG** - Self-contained SVG for embedding in Metanorma
+  documents; flowchart, sequence, class, pie and Gantt renders pass
+  `svg_conform`'s `:metanorma` conformance check with zero errors (checked
+  directly against `SvgConform.validate`; `spec/svg_conformance_spec.rb`
+  runs this on every suite run against shipped examples, reference
+  fixtures, and the mermaid corpus)
 
 == Installation
 
@@ -207,9 +223,12 @@ well-defined interfaces.
 **All parsers use Parslet**, a powerful PEG (Parsing Expression Grammar) library
 that provides superior error messages, composability, and maintainability
 compared to traditional lexer-based approaches. The 3-layer Parslet architecture
-(Grammar → Transform → Parser) achieved ~80% code reduction during migration.
+(Grammar → Transform → Parser) is not universal: 10 of the 23 builders subclass
+`Parslet::Transform`, the rest are plain classes, and User Journey builds its
+model directly in the parser.
 
-Layout currently uses a built-in fallback grid (`Sirena::Layout::Fallback`); the
+Layout currently uses a built-in fallback grid (`Layout::Grid`, see the TODO in
+`Engine#layout_graph`); the
 elkrb gem is a declared dependency but is not called yet. Sirena is a pure Ruby
 implementation with no JavaScript dependencies, generating standards-compliant
 SVG 1.2 output suitable for direct integration with Metanorma documentation
@@ -318,8 +337,9 @@ Sirena (Root Module)
 
 === Parslet-based parser architecture
 
-All 24 implemented diagram types use Parslet exclusively for parsing, following
-a consistent 3-layer pattern:
+All 24 implemented diagram types use Parslet for grammar parsing, but only 10 of
+the 23 builders subclass `Parslet::Transform`. Where the 3-layer pattern is
+followed it looks like this:
 
 . **Layer 1: Grammar** (Parslet::Parser) - Defines syntax rules using Parslet
   DSL, parses text into intermediate tree structures
@@ -327,13 +347,19 @@ a consistent 3-layer pattern:
   typed Diagram models using pattern matching
 . **Layer 3: Parser** - Orchestrates Grammar and Transform, provides public API
 
+Several types deviate: `lib/sirena/parser/builders/architecture.rb` and
+`lib/sirena/parser/builders/class_diagram.rb` (among other builders under
+`lib/sirena/parser/builders/`) are plain Ruby classes rather than
+`Parslet::Transform` subclasses, and `Sirena::Parser::UserJourney#parse`
+builds its diagram model directly from the parse tree without a separate
+Transform layer.
+
 This architecture provides:
 
 * **Superior error messages** with detailed context and line numbers
 * **Composability** through shared grammar rules across diagram types
 * **Maintainability** via declarative, self-documenting syntax rules
 * **Type safety** through strongly-typed Lutaml::Model objects
-* **Code reduction** of ~80% compared to previous lexer-based approach
 
 See link:ARCHITECTURE.md[] for detailed architecture documentation.
 
@@ -341,17 +367,23 @@ See link:ARCHITECTURE.md[] for detailed architecture documentation.
 
 === General
 
-Sirena implements comprehensive test coverage against the official mermaid-js
-test suite to ensure compatibility and correctness. The test suite validates
-all diagram types and syntax variations against reference outputs generated
-using mermaid-cli.
+Sirena's test suite exercises the extracted mermaid-js corpus (`spec/mermaid/`)
+across all registered diagram types. The `mermaid:validate` rake task
+(`tasks/generate_mermaid_fixtures.rake`) checks only that
+`Sirena.render` runs without raising on each corpus source; it does not
+compare output against mermaid-cli reference SVGs. Comparison against
+mermaid-cli-generated reference output is a separate, optional task
+(`rake mermaid:compare`, not run in CI or the default suite) — see
+"Mermaid-js compatibility validation" below.
 
 === Mermaid-js compatibility validation
 
 Sirena's test suite includes test cases that covers all diagram types to ensure
 comprehensive compatibility and correctness.
 
-The test suite generates 302 SVG reference fixtures using mermaid-cli v11.12.0.
+`spec/fixtures_mermaid/` contains 847 unique mmdc-generated reference SVGs
+(each duplicated into a `correct/` subdirectory, so a naive file count reads
+~1,694); no automated spec currently compares rendered output against them.
 
 // === PlantUML compatibility validation
 

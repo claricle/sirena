@@ -49,6 +49,87 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       expect(rel.relationship_type).to eq('association')
     end
 
+    it 'parses a mixed aggregation/inheritance relationship (corpus 044/019)' do
+      source = "classDiagram\nAnimal o--|> Zebra"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.from_id).to eq('Animal')
+      expect(rel.to_id).to eq('Zebra')
+      expect(rel.start_marker).to eq('aggregation')
+      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.dashed).to be false
+    end
+
+    it 'parses a mixed dependency/composition relationship (corpus 118/091)' do
+      source = "classDiagram\nClass19 <--* Class20"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.from_id).to eq('Class19')
+      expect(rel.to_id).to eq('Class20')
+      expect(rel.start_marker).to eq('dependency')
+      expect(rel.end_marker).to eq('composition')
+      expect(rel.dashed).to be false
+    end
+
+    it 'parses a dashed aggregation relationship (corpus 121/094)' do
+      source = "classDiagram\nClass1 o.. Class02"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.start_marker).to eq('aggregation')
+      expect(rel.end_marker).to be_nil
+      expect(rel.dashed).to be true
+    end
+
+    it 'parses a double-sided composition relationship (corpus 122/095)' do
+      source = "classDiagram\nClass1 *--* Class02"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.start_marker).to eq('composition')
+      expect(rel.end_marker).to eq('composition')
+      expect(rel.dashed).to be false
+    end
+
+    # H2: mermaid defines two-way relations structurally as
+    # [Relation Type][Link][Relation Type]
+    # (https://mermaid.js.org/syntax/classDiagram#two-way-relations), not
+    # as a fixed list. mermaid's own documented example, plus two
+    # combinations the branch's earlier 4-entry hardcoded table never had.
+    it 'parses mermaid\'s own two-way relation example (Animal <|--|> Zebra)' do
+      source = "classDiagram\nAnimal <|--|> Zebra"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.from_id).to eq('Animal')
+      expect(rel.to_id).to eq('Zebra')
+      expect(rel.start_marker).to eq('inheritance')
+      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.dashed).to be false
+    end
+
+    it 'parses a two-way aggregation/dependency relationship absent from the old table' do
+      source = "classDiagram\nAnimal o--< Zebra"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.start_marker).to eq('aggregation')
+      expect(rel.end_marker).to eq('dependency')
+      expect(rel.dashed).to be false
+    end
+
+    it 'parses a dashed two-way composition/inheritance relationship absent from the old table' do
+      source = "classDiagram\nAnimal *..|> Zebra"
+      diagram = parser.parse(source)
+
+      rel = diagram.relationships.first
+      expect(rel.start_marker).to eq('composition')
+      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.dashed).to be true
+    end
+
     it 'parses class with stereotype' do
       source = <<~MERMAID
         classDiagram

@@ -120,7 +120,11 @@ RSpec.describe Sirena::Layout::UserJourney do
     end
 
     it 'raises error for invalid diagram' do
+      # An empty journey (no sections) is valid on its own -- mmdc renders
+      # it -- so invalidity here must come from a section that fails its
+      # own #valid? check.
       diagram = Sirena::Diagram::UserJourney.new
+      diagram.sections << Sirena::Diagram::JourneySection.new
 
       expect { transform.to_graph(diagram) }.to raise_error(
         Sirena::Layout::LayoutError

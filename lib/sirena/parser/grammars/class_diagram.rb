@@ -13,6 +13,26 @@ module Sirena
       # aggregation, association, dependency, realization), stereotypes,
       # generic types, namespaces, and cardinality labels.
       class ClassDiagram < Common
+        # A two-way relation's per-end marker glyph, per mermaid's own
+        # structural grammar [Relation Type][Link][Relation Type]
+        # (https://mermaid.js.org/syntax/classDiagram#two-way-relations).
+        # `<|`/`|>` must sort before `<`/`>` below (MIXED_OPERATOR_STRINGS)
+        # so the two-char glyph wins over its one-char prefix.
+        TWO_WAY_MARKERS = ['<|', '|>', '*', 'o', '<', '>'].freeze
+
+        # The two link styles a two-way relation can use.
+        TWO_WAY_LINKS = ['--', '..'].freeze
+
+        # Every [marker][link][marker] combination mermaid's structural
+        # grammar allows, longest-string-first so `<|--|>` is matched whole
+        # rather than as the shorter `<--|>`-shaped prefix a 1-char marker
+        # alternative could otherwise claim.
+        MIXED_OPERATOR_STRINGS = TWO_WAY_MARKERS
+          .product(TWO_WAY_LINKS, TWO_WAY_MARKERS)
+          .map { |left, link, right| "#{left}#{link}#{right}" }
+          .sort_by { |operator| -operator.length }
+          .freeze
+
         root(:diagram)
 
         # Main diagram structure
@@ -489,14 +509,32 @@ module Sirena
           string
         end
 
-        # Relationship operators (8 types)
+        # Relationship operators (8 types, plus mixed-marker combos where the
+        # two ends carry different structural markers, e.g. `o--|>`)
         rule(:relationship_operator) do
-          inheritance_operator |
+          mixed_operator |
+            inheritance_operator |
             composition_operator |
             aggregation_operator |
             realization_operator |
             dependency_operator |
             association_operator
+        end
+
+        # mermaid allows independent markers on each end of a relation
+        # (e.g. aggregation `o` on one side, extension `|>` on the other),
+        # structurally [Relation Type][Link][Relation Type] -- mermaid's own
+        # documented example is `Animal <|--|> Zebra`. Generated from
+        # MIXED_OPERATOR_STRINGS instead of one literal per combination, so
+        # a not-yet-seen pairing parses without a new hardcoded string.
+        # `o..` (a marker on one side only, no counterpart) is not a
+        # two-way relation and is kept as its own literal.
+        # These must be tried before the single-sided operators below,
+        # which would otherwise match a short prefix and strand the
+        # remaining marker character.
+        rule(:mixed_operator) do
+          (MIXED_OPERATOR_STRINGS.map { |operator| str(operator) }.reduce(:|) |
+            str('o..')).as(:arrow)
         end
 
         rule(:inheritance_operator) do

@@ -23,13 +23,13 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 |**Diagram Types**
 |20+
-|19
-|All major types supported
+|24
+|24 types registered; compatibility varies by type, see `scoreboard/corpus.json`
 
 |**Rendering**
 |Browser-based
 |Pure Ruby
-|No browser process required
+|No browser or Node.js dependency
 
 |**Themes**
 |CSS-based
@@ -51,6 +51,21 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |Ruby only
 |Simpler deployment
 
+|**File Size**
+|~2MB (mermaid.min.js)
+|Ruby gem
+|Not benchmarked
+
+|**Startup Time**
+|~2s (browser launch)
+|Not benchmarked
+|No committed reproducible measurement exists; see Performance Comparison below
+
+|**Memory Usage**
+|~200MB (Chrome)
+|Not benchmarked
+|No committed reproducible measurement exists; see Performance Comparison below
+
 |**Interactive Features**
 |Supported
 |Not supported
@@ -59,52 +74,59 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 === Diagram Type Support
 
-==== Core Types
+Pass rates below are measured per type against the valid-verdict corpus cases
+in `scoreboard/corpus.json` (`bundle exec ruby scripts/corpus_sweep.rb` then
+`scripts/corpus_verdicts.rb`, 2026-09-22). None of the 24 registered types has
+complete parity with Mermaid.js; "All features"-style claims for any
+individual type are not supported by this measurement and have been removed
+rather than asserted without evidence.
 
-These are the most fully supported diagram types. Support is partial, not complete parity with Mermaid.js; per-case pass rates are in `scoreboard/corpus.json`:
+* **Architecture** (`architecture-beta`) - 19/19 (100%)
+* **Block** (`block-beta`) - 6/6 (100%)
+* **C4** (all 5 subtypes) - 11/11 (100%)
+* **Class Diagram** (`classDiagram`) - 155/162 (95.7%)
+* **ER Diagram** (`erDiagram`) - 5/5 (100%)
+* **Flowchart** (`graph`, `flowchart`) - 204/218 (93.6%)
+* **Gantt Chart** (`gantt`) - 18/21 (85.7%)
+* **Git Graph** (`gitGraph`) - 6/6 (100%)
+* **Info Diagram** (`info`) - 11/11 (100%)
+* **Kanban** (`kanban`) - 29/39 (74.4%)
+* **Mindmap** (`mindmap`) - 43/45 (95.6%)
+* **Packet Diagram** (`packet`) - 4/4 (100%)
+* **Pie Chart** (`pie`) - 40/40 (100%)
+* **Quadrant Chart** (`quadrantChart`) - 9/9 (100%)
+* **Radar Chart** (`radar`) - 14/14 (100%)
+* **Requirement Diagram** (`requirementDiagram`) - 23/24 (95.8%)
+* **Sequence Diagram** (`sequenceDiagram`) - 99/107 (92.5%)
+* **State Diagram** (`stateDiagram-v2`) - 30/30 (100%)
+* **Timeline** (`timeline`) - 16/16 (100%)
+* **Treemap** (`treemap`) - 9/9 (100%)
+* **User Journey** (`journey`) - 18/27 (66.7%)
+* **XY Chart** (`xychart-beta`) - 1/1 (100%)
+* **Error Diagram** (`error`) - Mermaid-defined (the diagram Mermaid.js
+  itself renders when its own parsing fails); 4 cases in
+  `spec/mermaid/error/`, extracted from mermaid-js's own
+  `rendering/errorDiagram.spec.js` and `diagram-orchestration.spec.ts` test
+  files, all with oracle verdict `unknown` (not confirmed by mmdc), so no
+  pass rate is reported here
+* **Sankey** (`sankey-beta`) - registered, not covered by a per-type row above; see `scoreboard/corpus.json` directly
 
-* **Flowchart** (`graph`, `flowchart`) - All node shapes, edge types, and subgraphs
-* **Sequence Diagram** (`sequenceDiagram`) - All participants, messages, and control structures
-* **Class Diagram** (`classDiagram`) - Classes, relationships, and annotations
-* **State Diagram** (`stateDiagram-v2`) - States, transitions, and nested states
-* **ER Diagram** (`erDiagram`) - Entities, attributes, and relationships
-* **User Journey** (`journey`) - Tasks, scores, and sections
-* **Git Graph** (`gitGraph`) - Commits, branches, merges, and tags
-* **Pie Chart** (`pie`) - Data and labels
-
-==== Feature Complete
-
-These types are fully implemented with minor differences:
-
-* **Gantt Chart** (`gantt`) - All features except click events
-* **Quadrant Chart** (`quadrantChart`) - All features
-* **Requirement Diagram** (`requirementDiagram`) - All features
-* **C4 Diagram** (all 5 types) - Context, Container, Component, Dynamic, Deployment; see link:../../diagram_types/c4-diagram/[C4 Diagram] for known limitations (variable syntax, sprites/links/tags, fallback-grid layout)
-* **Mindmap** (`mindmap`) - All node types and levels
-* **Timeline** (`timeline`) - All period types
-* **Sankey** (`sankey-beta`) - All flow types
-* **XY Chart** (`xychart-beta`) - All chart types
-* **Block Diagram** (`block-beta`) - All block types
-* **Architecture** (`architecture-beta`) - All component types
-* **Kanban** (`kanban`) - All column types
-
-==== Additional Sirena Types
-
-* **Radar Chart** (`radar`) - Not in standard Mermaid.js
-* **Treemap** (`treemap`) - Not in standard Mermaid.js
-* **Packet Diagram** (`packet`) - Network packet visualization
-* **Info Diagram** (`info`) - Information display
-* **Error Diagram** (`error`) - Error state visualization
+These counts are hand-transcribed from a single measurement run and will go
+stale as the corpus burndown continues; regenerating this table from the
+scoreboard on every build is tracked in `TODO.foundation/11-docs-truth-pass.md`
+step 2 and is not yet done.
 
 ==== Not Supported
 
-* **ZenUML** - No specification available in Mermaid.js. Use `sequenceDiagram` instead.
+* **ZenUML** - Not implemented. Mermaid publishes a syntax reference at
+  https://mermaid.js.org/syntax/zenuml; use `sequenceDiagram` instead.
 
 === Syntax Compatibility
 
-==== Identical Syntax
+==== Shared Syntax
 
-The following syntax is 100% identical between Mermaid.js and Sirena:
+The following syntax elements exist in both Mermaid.js and Sirena; exact
+parity has not been verified element-by-element and is not claimed:
 
 * Diagram type declarations
 * Node definitions
@@ -157,6 +179,16 @@ graph TD
 
 **Sirena:** Use theme system for styling
 
+=== Performance Comparison
+
+No committed, reproducible benchmark run exists yet. The `benchmark:compare`
+and `benchmark:quick` rake tasks in `tasks/benchmark.rake` are meant to
+produce one but do not currently run (neither the task nor the `Rakefile`
+requires `sirena` before calling `Sirena.render`). Until that is fixed and a
+run recorded, no specific timing, memory, or "Nx faster" figures are
+published here. Sirena has no browser or Node.js dependency, which is a
+structural difference, not a measured one.
+
 === Migration Benefits
 
 ==== Why Migrate to Sirena?
@@ -170,16 +202,16 @@ graph TD
 
 **No Browser Dependency**
 
-* No headless browser process to launch per diagram
-* Simpler CI/CD environments (no Chrome/Puppeteer to install)
-* Easier to run in serverless/container environments with tight image sizes
+* No headless browser or Node.js runtime to run
+* No recorded benchmark yet backs a specific speed or memory figure (see
+  Performance Comparison above)
 
-**Native Ruby Integration**
+**Ruby Ecosystem**
 
-* Rails helpers and views
-* Jekyll static sites
-* Rake task automation
-* Ruby gem ecosystem
+* Rake task automation ships today (`tasks/*.rake`)
+* Rails helpers/views and Jekyll-specific integration are not built; using
+  Sirena from a Rails or Jekyll app today means calling `Sirena.render`
+  yourself, the same as from any other Ruby code
 
 **Enhanced Tooling**
 
@@ -201,7 +233,7 @@ graph TD
 ==== Use Sirena When:
 
 * Server-side rendering is required
-* Building Ruby applications (Rails, Jekyll)
+* Building Ruby applications that can call `Sirena.render` directly
 * Batch processing many diagrams
 * CI/CD diagram generation
 * Simpler deployment is priority

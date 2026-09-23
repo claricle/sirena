@@ -88,7 +88,7 @@ namespace :examples do
       diagram_type = File.basename(dir)
       next if diagram_type == '.git' || diagram_type.start_with?('.')
 
-      mmd_files = Dir.glob(File.join(dir, '*.mmd')).sort
+      mmd_files = Dir.glob(File.join(dir, '*.mmd'))
       next if mmd_files.empty?
 
       # Generate AsciiDoc include file
