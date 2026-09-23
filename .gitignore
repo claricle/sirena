@@ -42,9 +42,6 @@ vendor/bundle/
 # for a library or gem, you might want to ignore these files since the code is
 # intended to run in multiple environments; otherwise, check them in:
 Gemfile.lock
-# The docs Jekyll site is deployed, not a library consumed by others --
-# pin its dependency set like an app would.
-!/docs/Gemfile.lock
 .ruby-version
 .ruby-gemset
 
