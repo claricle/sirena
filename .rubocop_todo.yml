@@ -224,15 +224,6 @@ Lint/DuplicateMethods:
   Exclude:
     - 'lib/sirena/diagram/xy_chart.rb'
 
-# Offense count: 6
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Lint/RedundantDirGlobSort:
-  Exclude:
-    - 'tasks/examples.rake'
-    - 'old-docs/testing/create_placeholder_svgs.rb'
-    - 'old-docs/testing/generate_remaining_svgs.rb'
-    - 'old-docs/testing/generate_svgs.rb'
-
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle.
