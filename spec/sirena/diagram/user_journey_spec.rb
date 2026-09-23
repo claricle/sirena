@@ -148,6 +148,12 @@ RSpec.describe Sirena::Diagram::UserJourney do
       # An empty array is a valid bare journey; nil is not the same thing.
       # Layout dereferences sections directly and raises NoMethodError on
       # nil, so nil must stay rejected here rather than treated as empty.
+      #
+      # Diagnostic, not a fix-proving spec: origin/main's old `valid?` also
+      # rejects nil sections (its own `sections.nil?` guard), so this example
+      # passes unchanged against the pre-fix code too. Keep it anyway -- it
+      # becomes the only check catching a regression if `valid?` is ever
+      # rewritten to treat nil the same as empty.
       diagram = described_class.new
       diagram.sections = nil
 
