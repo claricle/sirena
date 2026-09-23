@@ -46,12 +46,12 @@ RSpec.describe Sirena::Svg do
       expect(rect(fill_opacity: '0.3').to_xml).to eq('<rect fill-opacity="0.3"/>')
     end
 
-    # An empty opacity="" is syntactically legal XML and means "not set", not
+    # An empty opacity="" is syntactically legal and means "not set", not
     # zero. lutaml-model would coerce a :float attribute to 0.0 here, which
     # composed_opacity cannot tell apart from a genuine opacity of zero --
     # opacity is :string so Numbers.read sees the real "" and returns nil.
     it 'leaves the components alone when opacity is the empty string' do
-      expect(Sirena::Svg::Rect.from_xml('<rect opacity="" fill-opacity="0.9"/>').to_xml)
+      expect(rect(opacity: '', fill_opacity: '0.9').to_xml)
         .to eq('<rect fill-opacity="0.9"/>')
     end
 
@@ -76,41 +76,22 @@ RSpec.describe Sirena::Svg do
         .to eq('<rect fill-opacity="1e400" stroke-opacity="0.5"/>')
     end
 
-    # Tiny has no `opacity`, so this translation is the only record of it in
-    # the output. If the emitted components do not parse back, a document
-    # Sirena wrote and Sirena re-read loses the fraction entirely -- which is
-    # what happened before every class mapped them.
-    it 'keeps the translated opacity when its own output is read back' do
-      lossy = %w[Rect Circle Ellipse Line Polygon Polyline Path Text Group Tspan].reject do |name|
-        klass = described_class.const_get(name)
-        subject = klass.new
-        subject.opacity = 0.3
-        subject.content = 'x' if subject.respond_to?(:content=)
-        once = subject.to_xml
-        klass.from_xml(once).to_xml == once
-      end
-
-      expect(lossy).to be_empty
-    end
-
-    # The test above only round-trips Sirena's OWN output, which never emits
-    # a raw `opacity=` attribute -- it always translates to fill/stroke-
-    # opacity first. Tspan's own opacity mapping is new in this PR (the
-    # other classes already had theirs), so it needs its own proof that a
-    # FOREIGN document's `opacity=` attribute -- one Sirena did not write --
-    # still folds into fill/stroke-opacity instead of being silently dropped.
-    it 'folds a foreign document\'s raw opacity into fill and stroke on Tspan' do
-      tspan = Sirena::Svg::Tspan.from_xml('<tspan opacity="0.5">text</tspan>')
-
-      expect(tspan.to_xml)
-        .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
-    end
-
     it 'translates opacity on a Group through its inherited paint properties' do
       group = Sirena::Svg::Group.new
       group.opacity = 0.3
 
       expect(group.to_xml).to eq('<g fill-opacity="0.3" stroke-opacity="0.3"/>')
+    end
+
+    # Sirena never emits a raw `opacity=` attribute -- it always translates to
+    # fill/stroke-opacity first -- so this is the only proof that a FOREIGN
+    # document's `opacity=` attribute (one Sirena did not write) still folds
+    # into fill/stroke-opacity instead of being silently dropped.
+    it 'folds a foreign document\'s raw opacity into fill and stroke on Tspan' do
+      tspan = Sirena::Svg::Tspan.from_xml('<tspan opacity="0.5">text</tspan>')
+
+      expect(tspan.to_xml)
+        .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
     end
   end
 

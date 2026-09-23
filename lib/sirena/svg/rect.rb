@@ -24,29 +24,11 @@ module Sirena
       # `fill-opacity="0.5" fill-opacity="0.5"` — the last 5 malformed cases
       # in the corpus.
       #
-      # The attribute declaration and its lutaml mapping below stay, so
-      # fill-opacity itself parses and re-emits exactly once.
+      # The attribute declaration above stays so `fill_opacity=` is still a
+      # settable Ruby accessor -- from_xml no longer works on Rect at all
+      # (Lutaml::Model::TypeOnlyMappingError, no `root` declared). It still
+      # re-emits through Element exactly once, whichever way it was set.
       writes_attributes :x, :y, :width, :height, :rx, :ry, :stroke_dasharray
-
-      xml do
-        root 'rect'
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'x', to: :x
-        map_attribute 'y', to: :y
-        map_attribute 'width', to: :width
-        map_attribute 'height', to: :height
-        map_attribute 'rx', to: :rx
-        map_attribute 'ry', to: :ry
-        map_attribute 'fill', to: :fill
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        map_attribute 'stroke-dasharray', to: :stroke_dasharray
-        map_attribute 'transform', to: :transform
-        map_attribute 'opacity', to: :opacity
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-      end
     end
   end
 end
