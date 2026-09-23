@@ -422,10 +422,11 @@ module Sirena
       end
 
       # Draws `marker` at `point`, oriented along the connecting line away
-      # from `away_from`: a triangle tip lands at `point`, a diamond or dart
-      # centers on `point` with its outer tip toward `away_from` -- the same
-      # placement `render_relationship_marker` already uses for the
-      # single-type relationships, just addressable per end.
+      # from `away_from`. A triangle tip lands exactly at `point`; a diamond
+      # straddles `point` (half on each side) with its outer tip toward
+      # `away_from`; a dart sits entirely on the `away_from` side of `point`
+      # (DART_NEAR/DART_FAR, both positive offsets) so it never digs back
+      # into the node at `point` -- see render_dart_marker.
       def render_marker_at(point, away_from, marker, group)
         case marker
         when 'inheritance'

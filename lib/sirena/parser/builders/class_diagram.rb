@@ -60,15 +60,18 @@ module Sirena
           '>' => 'dependency'
         }.freeze
 
+        # Longest markers first so `<|`/`|>` win over the `<`/`>` they
+        # would otherwise be read as a prefix of.
+        SORTED_MARKER_GLYPHS = Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })
+
         # Matches a two-way operator into its left marker, link style, and
         # right marker -- the same [Relation Type][Link][Relation Type]
         # structure Parser::Grammars::ClassDiagram::MIXED_OPERATOR_STRINGS
-        # generates from. Longest markers first so `<|`/`|>` win over the
-        # `<`/`>` they would otherwise be read as a prefix of.
+        # generates from.
         MIXED_OPERATOR_PATTERN = /
-          \A(?<left>#{Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })})
+          \A(?<left>#{SORTED_MARKER_GLYPHS})
           (?<link>--|\.\.)
-          (?<right>#{Regexp.union(MARKER_TYPES.keys.sort_by { |m| -m.length })})\z
+          (?<right>#{SORTED_MARKER_GLYPHS})\z
         /x
 
         # `name(params) rest`: mmdc reads the LAST `(...)` in the text as the
