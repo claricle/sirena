@@ -79,7 +79,7 @@ These types are fully implemented with minor differences:
 * **Gantt Chart** (`gantt`) - All features except click events
 * **Quadrant Chart** (`quadrantChart`) - All features
 * **Requirement Diagram** (`requirementDiagram`) - All features
-* **C4 Diagram** (all 5 types) - Context, Container, Component, Dynamic, Deployment; see link:{% link _diagram_types/c4-diagram.adoc %}[C4 Diagram] for known limitations (variable syntax, sprites/links/tags, fallback-grid layout)
+* **C4 Diagram** (all 5 types) - Context, Container, Component, Dynamic, Deployment; see link:../../diagram_types/c4-diagram/[C4 Diagram] for known limitations (variable syntax, sprites/links/tags, fallback-grid layout)
 * **Mindmap** (`mindmap`) - All node types and levels
 * **Timeline** (`timeline`) - All period types
 * **Sankey** (`sankey-beta`) - All flow types
