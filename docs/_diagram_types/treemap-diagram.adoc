@@ -458,5 +458,5 @@ treemap
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
+* link:../index/[Diagram types overview]
 * link:https://mermaid.js.org/syntax/treemap.html[Official Mermaid treemap documentation]

@@ -525,4 +525,4 @@ radar-beta
 == Related documentation
 
 * link:https://mermaid.js.org/syntax/radar.html[Official Mermaid radar documentation]
-* <<index.adoc#,Diagram types overview>>
+* link:../index/[Diagram types overview]

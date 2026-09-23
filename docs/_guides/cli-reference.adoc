@@ -221,6 +221,6 @@ so it exits 0 rather than 1.
 
 == Next Steps
 
-* link:../diagram_types/index.html[Diagram Types Reference] - Syntax for all 24 types
-* link:quick-start.html[Quick Start Guide] - Get started quickly
-* link:../../examples/README.html[Examples] - Browse working examples
+* link:../../diagram_types/index/[Diagram Types Reference] - Syntax for all 24 types
+* link:../quick-start/[Quick Start Guide] - Get started quickly
+* https://github.com/claricle/sirena/tree/main/examples[Examples] - Browse working examples

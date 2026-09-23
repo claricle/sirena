@@ -597,6 +597,6 @@ journey
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
-* <<sequence-diagram.adoc#,Sequence diagrams>>
+* link:../index/[Diagram types overview]
+* link:../sequence-diagram/[Sequence diagrams]
 * link:https://mermaid.js.org/syntax/userJourney.html[Official Mermaid user journey documentation]

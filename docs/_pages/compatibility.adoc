@@ -9,7 +9,7 @@ nav_order: 4
 
 === Purpose
 
-This page focuses specifically on **Mermaid.js syntax compatibility** - what works, what differs, and how to migrate. For a broader comparison with other diagram tools (PlantUML, Graphviz), see link:comparison/[Tool Comparison].
+This page focuses specifically on **Mermaid.js syntax compatibility** - what works, what differs, and how to migrate. For a broader comparison with other diagram tools (PlantUML, Graphviz), see link:../comparison/[Tool Comparison].
 
 === Overview
 
@@ -29,7 +29,7 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |**Rendering**
 |Browser-based
 |Pure Ruby
-|Sirena is faster for server use
+|No browser process required
 
 |**Themes**
 |CSS-based
@@ -50,21 +50,6 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |Node + Puppeteer
 |Ruby only
 |Simpler deployment
-
-|**File Size**
-|~2MB (mermaid.min.js)
-|Ruby gem
-|Smaller footprint
-
-|**Startup Time**
-|~2s (browser launch)
-|<100ms
-|Much faster
-
-|**Memory Usage**
-|~200MB (Chrome)
-|~50MB
-|Lower resource usage
 
 |**Interactive Features**
 |Supported
@@ -94,7 +79,7 @@ These types are fully implemented with minor differences:
 * **Gantt Chart** (`gantt`) - All features except click events
 * **Quadrant Chart** (`quadrantChart`) - All features
 * **Requirement Diagram** (`requirementDiagram`) - All features
-* **C4 Diagram** (all 5 types) - Context, Container, Component, Dynamic, Deployment
+* **C4 Diagram** (all 5 types) - Context, Container, Component, Dynamic, Deployment; see link:{% link _diagram_types/c4-diagram.adoc %}[C4 Diagram] for known limitations (variable syntax, sprites/links/tags, fallback-grid layout)
 * **Mindmap** (`mindmap`) - All node types and levels
 * **Timeline** (`timeline`) - All period types
 * **Sankey** (`sankey-beta`) - All flow types
@@ -172,35 +157,6 @@ graph TD
 
 **Sirena:** Use theme system for styling
 
-=== Performance Comparison
-
-Benchmarks for rendering 100 diagrams:
-
-[cols="2,2,2,2"]
-|===
-|Metric |Mermaid.js |Sirena |Improvement
-
-|Total Time
-|~240s
-|~15s
-|**16x faster**
-
-|Memory Peak
-|~1.2GB
-|~150MB
-|**8x less**
-
-|Startup
-|~2s per diagram
-|~50ms per diagram
-|**40x faster**
-
-|Dependencies
-|Node, Puppeteer, Chrome
-|Ruby only
-|Simpler
-|===
-
 === Migration Benefits
 
 ==== Why Migrate to Sirena?
@@ -212,12 +168,11 @@ Benchmarks for rendering 100 diagrams:
 * Single Ruby gem installation
 * Smaller Docker images
 
-**Better Performance**
+**No Browser Dependency**
 
-* 16x faster batch processing
-* 8x lower memory usage
-* Faster CI/CD builds
-* Better for serverless
+* No headless browser process to launch per diagram
+* Simpler CI/CD environments (no Chrome/Puppeteer to install)
+* Easier to run in serverless/container environments with tight image sizes
 
 **Native Ruby Integration**
 
@@ -254,7 +209,7 @@ Benchmarks for rendering 100 diagrams:
 
 === Migration Path
 
-See link:{% link _guides/migration-from-mermaid.adoc %}[Migration Guide] for:
+See *Migration Guide* (planned) for:
 
 * Step-by-step migration instructions
 * Syntax conversion examples
@@ -288,13 +243,13 @@ Sirena aims to maintain syntax parity with Mermaid.js. New Mermaid.js features w
 === Getting Help
 
 * **Issues**: https://github.com/claricle/sirena/issues[Report compatibility issues]
-* **Migration**: link:{% link _guides/migration-from-mermaid.adoc %}[Migration Guide]
+* **Migration**: *Migration Guide* (planned)
 * **Examples**: https://github.com/claricle/sirena/tree/main/examples[Example Diagrams]
 
 === Related Documentation
 
-* link:comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
-* link:{% link _guides/migration-from-mermaid.adoc %}[Migration from Mermaid.js] - Step-by-step migration guide
-* link:{% link _diagram_types/index.adoc %}[Diagram Types Reference] - Syntax for all diagram types
-* link:{% link _features/theme-system.adoc %}[Theme System] - YAML-based theming
-* link:{% link _guides/performance-optimization.adoc %}[Performance Optimization] - Optimization techniques
+* link:../comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
+* *Migration from Mermaid.js* (planned) - Step-by-step migration guide
+* link:../../diagram_types/index/[Diagram Types Reference] - Syntax for all diagram types
+* *Theme System* (planned) - YAML-based theming
+* *Performance Optimization* (planned) - Optimization techniques

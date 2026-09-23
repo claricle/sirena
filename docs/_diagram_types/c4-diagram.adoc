@@ -484,7 +484,7 @@ C4 diagrams are implemented using the standard 7-file Parslet architecture:
 4. [`Parser::C4`](lib/sirena/parser/c4.rb:29) - Main parser class
 5. [`Layout::C4`](lib/sirena/layout/c4.rb:17) - Diagram to graph layout
 6. [`Renderer::C4`](lib/sirena/renderer/c4.rb:16) - SVG renderer
-7. Layout - Automatic hierarchical layout via ELK
+7. Layout - Fallback grid positioning (`lib/sirena/engine.rb:302-307`); `elkrb` is a declared dependency but is not called
 
 === Rendering Pipeline
 
@@ -495,17 +495,12 @@ The C4 rendering pipeline:
 3. **Layout** - Calculate positions for elements and boundaries
 4. **Render** - Generate SVG with C4 styling
 
-=== Performance
-
-* Parsing: O(n) where n is source length
-* Layout: O(n log n) for hierarchical layout
-* Rendering: O(e + r) where e=elements, r=relationships
-
 === Limitations
 
 * Variable syntax (`${macroName}`) has limited support
-* Some test-specific constructs may not parse
-* Current coverage: 88.1% of test fixtures (37/42)
+* Some test-specific constructs may not parse (sprites, links, tags)
+* Layout is a fallback grid, not the hierarchical ELK layout this page previously described
+* Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 11/11 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing c4`, BY VERDICT section). The same run reports 22 `artifact`-verdict cases (14 passing) and 14 `unknown`-verdict cases (3 passing), per `spec/mermaid/corpus-verdicts.yml`.
 
 == Troubleshooting
 
@@ -552,8 +547,8 @@ For issues not covered here:
 
 == See Also
 
-* link:../README.adoc[Main Documentation]
-* link:flowchart.adoc[Flowchart Diagrams]
-* link:sequence.adoc[Sequence Diagrams]
+* https://github.com/claricle/sirena/blob/main/README.adoc[Main Documentation]
+* link:../flowchart/[Flowchart Diagrams]
+* link:../sequence-diagram/[Sequence Diagrams]
 * https://c4model.com/[C4 Model Official Site]
 * https://github.com/plantuml-stdlib/C4-PlantUML[C4-PlantUML Reference]
