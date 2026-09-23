@@ -96,7 +96,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
-      entity_names = texts.map(&:content)
+      entity_names = texts.map { |t| svg_text_content(t) }
       expect(entity_names).to include('CUSTOMER')
       expect(entity_names).to include('ORDER')
     end
@@ -110,7 +110,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      attr_texts = texts.map(&:content).grep(/PK|FK/)
+      attr_texts = texts.map { |t| svg_text_content(t) }.grep(/PK|FK/)
       expect(attr_texts).not_to be_empty
       expect(attr_texts.any? { |t| t.include?('PK') }).to be true
     end
@@ -175,7 +175,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
       texts = rel_groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      label_texts = texts.map(&:content)
+      label_texts = texts.map { |t| svg_text_content(t) }
       expect(label_texts).to include('places')
     end
 

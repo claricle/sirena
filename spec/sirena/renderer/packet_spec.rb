@@ -55,7 +55,7 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes title" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        title_texts = texts.select { |t| t.content == "Hello world" }
+        title_texts = texts.select { |t| svg_text_content(t) == "Hello world" }
         expect(title_texts.length).to eq(1)
       end
 
@@ -68,7 +68,7 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes field labels" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        field_texts = texts.select { |t| t.content == "hello" }
+        field_texts = texts.select { |t| svg_text_content(t) == "hello" }
         expect(field_texts.length).to eq(1)
       end
 
@@ -144,9 +144,9 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes all field labels" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        expect(texts.any? { |t| t.content == "Source Port" }).to be true
-        expect(texts.any? { |t| t.content == "Destination Port" }).to be true
-        expect(texts.any? { |t| t.content == "Sequence Number" }).to be true
+        expect(texts.any? { |t| svg_text_content(t) == "Source Port" }).to be true
+        expect(texts.any? { |t| svg_text_content(t) == "Destination Port" }).to be true
+        expect(texts.any? { |t| svg_text_content(t) == "Sequence Number" }).to be true
       end
     end
 
@@ -203,7 +203,7 @@ RSpec.describe Sirena::Renderer::Packet do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
         # Should have bit markers for bits 0-63 (2 rows of 32 bits)
-        bit_markers = texts.select { |t| t.content.match?(/^\d+$/) }
+        bit_markers = texts.select { |t| svg_text_content(t).match?(/^\d+$/) }
         expect(bit_markers.length).to eq(64)
       end
     end
@@ -306,7 +306,7 @@ RSpec.describe Sirena::Renderer::Packet do
       it "includes labels for all segments" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        long_field_texts = texts.select { |t| t.content == "Long Field" }
+        long_field_texts = texts.select { |t| svg_text_content(t) == "Long Field" }
         expect(long_field_texts.length).to eq(2)
       end
     end

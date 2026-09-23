@@ -68,7 +68,7 @@ RSpec.describe Sirena::Renderer::XyChart do
       it "includes title" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        title_text = texts.find { |t| t.content == "Sales Revenue" }
+        title_text = texts.find { |t| svg_text_content(t) == "Sales Revenue" }
         expect(title_text).not_to be_nil
       end
 
@@ -209,7 +209,7 @@ RSpec.describe Sirena::Renderer::XyChart do
       it "includes legend" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        legend_texts = texts.select { |t| t.content == "Series A" || t.content == "Series B" }
+        legend_texts = texts.select { |t| svg_text_content(t) == "Series A" || svg_text_content(t) == "Series B" }
         expect(legend_texts.length).to eq(2)
       end
     end
