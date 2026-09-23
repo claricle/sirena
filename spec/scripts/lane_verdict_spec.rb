@@ -4,6 +4,15 @@ require 'json'
 require 'open3'
 require_relative '../../scripts/lane_verdict'
 
+# Runs scripts/lane_verdict.rb as CI does, with +needs+ as its NEEDS_JSON.
+module LaneVerdictCli
+  SCRIPT = File.expand_path('../../scripts/lane_verdict.rb', __dir__)
+
+  def run(needs)
+    Open3.capture3({ 'NEEDS_JSON' => needs.to_json }, RbConfig.ruby, SCRIPT)
+  end
+end
+
 RSpec.describe LaneVerdict do
   describe '.failures' do
     {
@@ -35,12 +44,7 @@ RSpec.describe LaneVerdict do
   end
 
   describe 'as a CLI (NEEDS_JSON -> exit code)' do
-    def run(needs)
-      Open3.capture3(
-        { 'NEEDS_JSON' => needs.to_json },
-        RbConfig.ruby, File.expand_path('../../scripts/lane_verdict.rb', __dir__)
-      )
-    end
+    include LaneVerdictCli
 
     it 'exits 0 and prints green when every child succeeded' do
       stdout, _stderr, status = run('unit' => { 'result' => 'success' })
