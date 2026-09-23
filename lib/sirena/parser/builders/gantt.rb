@@ -55,6 +55,8 @@ module Sirena
           process_axis_format(diagram, item) if item.key?(:axis_format)
           process_tick_interval(diagram, item) if item.key?(:tick_interval)
           process_excludes(diagram, item) if item.key?(:excludes)
+          process_weekend(diagram, item) if item.key?(:weekend)
+          process_inclusive_end_dates(diagram, item) if item.key?(:inclusive_end_dates)
           process_today_marker(diagram, item) if item.key?(:today_marker)
           process_acc_title(diagram, item) if item.key?(:acc_title)
           process_acc_descr(diagram, item) if item.key?(:acc_descr)
@@ -92,6 +94,14 @@ module Sirena
         def process_excludes(diagram, item)
           excludes_text = extract_text(item[:excludes])
           diagram.excludes << excludes_text unless excludes_text.empty?
+        end
+
+        def process_weekend(diagram, item)
+          diagram.weekend = extract_text(item[:weekend])
+        end
+
+        def process_inclusive_end_dates(diagram, _item)
+          diagram.inclusive_end_dates = true
         end
 
         def process_today_marker(diagram, item)

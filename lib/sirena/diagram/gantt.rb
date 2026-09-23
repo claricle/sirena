@@ -64,6 +64,8 @@ module Sirena
       attribute :axis_format, :string
       attribute :tick_interval, :string
       attribute :excludes, :string, collection: true
+      attribute :weekend, :string
+      attribute :inclusive_end_dates, :boolean, default: -> { false }
       attribute :today_marker, :string
       attribute :sections, GanttSection, collection: true
 
