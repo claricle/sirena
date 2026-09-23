@@ -92,7 +92,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
-      class_names = texts.map(&:content)
+      class_names = texts.map { |t| svg_text_content(t) }
       expect(class_names).to include('Animal')
     end
 
@@ -103,7 +103,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      attr_texts = texts.map(&:content).grep(/age/)
+      attr_texts = texts.map { |t| svg_text_content(t) }.grep(/age/)
       expect(attr_texts).not_to be_empty
       expect(attr_texts.first).to include('#')
     end
@@ -115,7 +115,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      method_texts = texts.map(&:content).grep(/breathe|bark/)
+      method_texts = texts.map { |t| svg_text_content(t) }.grep(/breathe|bark/)
       expect(method_texts).not_to be_empty
       expect(method_texts.first).to include('+')
     end
@@ -148,7 +148,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      stereotype_texts = texts.map(&:content).grep(/<<.*>>/)
+      stereotype_texts = texts.map { |t| svg_text_content(t) }.grep(/<<.*>>/)
       expect(stereotype_texts).not_to be_empty
       expect(stereotype_texts.first).to include('interface')
     end
