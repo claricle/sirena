@@ -11434,9 +11434,7 @@
   {
     "case": "user_journey/004_rendering_journey_spec_user_journey_3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd",
@@ -11471,9 +11469,7 @@
   {
     "case": "user_journey/008_parser_should_handle_a_task_definition_7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/008_parser_should_handle_an_accessibility_description_accdescr__7.mmd",
@@ -11503,9 +11499,7 @@
   {
     "case": "user_journey/012_parser_should_handle_a_task_definition_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/013_parser_should_handle_a_title_definition_12.mmd",

@@ -115,16 +115,22 @@ module Sirena
       rule(:task_text) { (str(':').absent? >> nl.absent? >> any).repeat(1) }
       rule(:actor_text) { (match('[,\n]').absent? >> any).repeat(1) }
 
+      # The actor group (second colon plus the actor list) is optional --
+      # mermaid accepts a task with only a score (`C task: 5`) -- and, once
+      # the colon is present, the actor list itself may be empty
+      # (`E task: 5:`). A space is allowed between the score and that
+      # second colon, mirroring the SP? mermaid's own lexer permits there.
       rule(:task_line) do
         sp? >>
           task_text.as(:task) >> str(':') >> sp? >>
-          match('[0-9]').repeat(1).as(:score) >> str(':') >> sp? >>
-          actor_list.as(:actors) >> sp? >> (nl | any.absent?)
+          match('[0-9]').repeat(1).as(:score) >>
+          (sp? >> str(':') >> sp? >> actor_list.as(:actors)).maybe >>
+          sp? >> (nl | any.absent?)
       end
 
       rule(:actor_list) do
-        actor_text.as(:actor) >>
-          (sp? >> str(',') >> sp? >> actor_text.as(:actor)).repeat
+        (actor_text.as(:actor) >>
+          (sp? >> str(',') >> sp? >> actor_text.as(:actor)).repeat).maybe
       end
 
       rule(:line) do
