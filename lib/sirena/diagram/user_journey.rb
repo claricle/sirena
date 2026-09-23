@@ -19,14 +19,17 @@ module Sirena
       # Collection of actor names involved in this task
       attribute :actors, :string, collection: true, default: -> { [] }
 
-      # Validates the task has required fields.
+      # Validates the task has required fields. A task with no actors is
+      # still valid: mmdc renders `task: 5` (no actor colon at all) and
+      # `task: 5:` (an empty actor list) the same as a task with actors,
+      # so `actors` being empty must not fail validation.
       #
       # @return [Boolean] true if task is valid
       def valid?
         !name.nil? && !name.empty? &&
           !score.nil? &&
           score >= 1 && score <= 5 &&
-          !actors.nil? && !actors.empty?
+          !actors.nil?
       end
 
       # Returns the color for this task based on score.

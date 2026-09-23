@@ -115,6 +115,30 @@ RSpec.describe Sirena::Parser::UserJourney do
       )
     end
 
+    # Corpus cases 008/012 (parser_should_handle_a_task_definition) and 004
+    # (rendering_journey.spec_user_journey_3): the actor group (`: actors`)
+    # is optional, an empty actor list after a trailing colon is allowed,
+    # and a space is permitted between the score and the second colon.
+    describe 'a task line with no actors' do
+      cases = {
+        'no second colon at all' => ['Task: 5', 5, []],
+        'a trailing colon with no actors' => ['Task: 5:', 5, []],
+        'a space before the second colon' => ['Task : 5 : Alice', 5, ['Alice']]
+      }
+
+      cases.each do |label, (task_line, expected_score, expected_actors)|
+        it "parses #{label}" do
+          source = "journey\nsection S\n#{task_line}\n"
+
+          diagram = parser.parse(source)
+          task = diagram.sections.first.tasks.first
+
+          expect(task.score).to eq(expected_score)
+          expect(task.actors).to eq(expected_actors)
+        end
+      end
+    end
+
     it 'raises ParseError for score out of range' do
       source = <<~MERMAID
         journey

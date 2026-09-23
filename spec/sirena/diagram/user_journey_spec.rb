@@ -43,13 +43,16 @@ RSpec.describe Sirena::Diagram::JourneyTask do
       expect(task.valid?).to be false
     end
 
-    it 'returns false for task without actors' do
+    it 'returns true for task with an empty actor list' do
+      # mmdc renders `Task: 5` and `Task: 5:` (corpus cases 004/008/012)
+      # the same as a task with actors; `actors` defaults to `[]`.
       task = described_class.new.tap do |t|
         t.name = 'Browse products'
         t.score = 5
       end
 
-      expect(task.valid?).to be false
+      expect(task.actors).to eq([])
+      expect(task.valid?).to be true
     end
   end
 
