@@ -36,7 +36,10 @@ jobs:
         with:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
-          restore-keys: cache-lychee-
+          # No restore-keys: lychee 0.15.0 checks its cache before remapping
+          # and caches self-link results under the original HTTP URI, so a
+          # cache carried over from an older commit could hide a page that
+          # is missing from the site built at this SHA.
 
       - name: Check if site was built
         run: |
@@ -56,6 +59,10 @@ jobs:
             --no-progress
             --config docs/lychee.toml
             --base docs/_site
+            --remap 'https://claricle.github.io/sirena/ file://${{ github.workspace }}/docs/_site/'
+            --remap 'https://www.claricle.org/sirena/ file://${{ github.workspace }}/docs/_site/'
+            --include '^file://${{ github.workspace }}/docs/_site/diagram_types/'
+            --include '^file://${{ github.workspace }}/docs/_site/_diagram_types/'
             'docs/_site/**/*.html'
           fail: true
           output: link-check-results.md

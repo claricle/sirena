@@ -17,6 +17,15 @@ exclude = [
     '^#',
 ]
 
+# Jekyll generates canonical/sitemap URLs from site.url, pointing back at
+# this site's own production domains. A page this run just built (e.g. a
+# brand-new diagram type) always 404s there pre-deploy. links.yml remaps
+# those self-references to the local build (using the runner's actual
+# workspace path, not hardcoded here) and adds matching --include entries
+# for the resulting file:// URLs, since lychee applies remap before
+# filtering and this file's blanket file:// exclude would otherwise drop
+# them silently instead of checking them.
+
 # Include patterns
 include = [
     # Check all HTTP/HTTPS links
