@@ -814,18 +814,43 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     # Every built-in theme sets both sizes, and they differ. The small one
-    # is what the label is drawn at, so the normal one must not size the
-    # room. The normal size alone does not move the layout.
-    it "sizes a loop label's room at the small size when both are set" do
+    # is what the label is DRAWN at (`edge_label_font_size`), and
+    # `loop_label_extent` sizes the loop's room off that identical method
+    # (see its own comment: "Keep the two in step"), so asserting the
+    # drawn size covers the room too. font_size_normal legitimately sizes
+    # node and cluster boxes now (D10), so it moves the PAGE as well —
+    # that is a separate, correct claim, not this one. Comparing whole
+    # viewBoxes used to conflate the two: it went red when D10 started
+    # measuring node text against font_size_normal, not because the label
+    # stopped following font_size_small. Reading the label's own
+    # `font-size` attribute keeps the two claims apart.
+    it "draws a loop label at the small size when both are set" do
+      xml = Sirena.render(
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
+        theme: { typography: { font_size_small: 12.0, font_size_normal: 20.0 } }
+      )
+      group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
+
+      expect(group[/<text[^>]*font-size="([^"]*)"/, 1].to_f).to eq(12.0)
+    end
+
+    # The drawn-size claim above doesn't by itself prove the loop's ROOM
+    # tracks that same size -- font_size_normal is held fixed here across
+    # both renders (so D10's separate, correct node/cluster-width claim
+    # can't move the page), leaving font_size_small as the only thing that
+    # differs. If the room stopped following the drawn font, this pair
+    # would render identical pages despite the label itself being narrower.
+    it "sizes a loop label's room at the small size, not the normal size" do
       source = "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\n" \
                "s -->|a much longer label| s\n"
-      view_box = lambda do |typography|
-        Sirena::Engine.new(theme: { typography: typography })
-          .render(source)[/viewBox="([^"]*)"/, 1]
+      view_box = lambda do |font_size_small|
+        Sirena::Engine.new(
+          theme: { typography: { font_size_small: font_size_small,
+                                 font_size_normal: 20.0 } }
+        ).render(source)[/viewBox="([^"]*)"/, 1]
       end
 
-      expect(view_box.call({ font_size_small: 12.0, font_size_normal: 20.0 }))
-        .to eq(view_box.call({ font_size_small: 12.0 }))
+      expect(view_box.call(12.0)).not_to eq(view_box.call(20.0))
     end
 
     # `calculate_width` used to total only node and cluster boxes, never

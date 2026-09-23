@@ -100,7 +100,7 @@ RSpec.describe Sirena::Layout::ErDiagram do
       graph = transform.to_graph(diagram)
 
       options = graph[:layoutOptions]
-      expect(options['algorithm']).to eq('layered')
+      expect(options['elk.algorithm']).to eq('layered')
       expect(options['elk.direction']).to eq('RIGHT')
     end
 

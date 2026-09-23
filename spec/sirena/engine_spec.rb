@@ -21,6 +21,24 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    # D10: the layout stage sizes node boxes for the font the renderer
+    # actually draws with. high_contrast's font_size_normal (16.0) is
+    # larger than default's (14.0) -- rendering under it must widen the
+    # node box, not leave it sized for the hardcoded constant.
+    context 'with a theme whose font_size_normal differs from the default' do
+      let(:source) { "graph TD\nA[Start]" }
+
+      def rendered_node_width(theme_name)
+        document = REXML::Document.new(engine.render(source, theme: theme_name))
+        REXML::XPath.first(document, '//rect').attributes['width'].to_f
+      end
+
+      it 'widens the node box to match the theme font size' do
+        expect(rendered_node_width('high_contrast'))
+          .to be > rendered_node_width('default')
+      end
+    end
+
     context 'with sequence diagram' do
       let(:source) { "sequenceDiagram\nAlice->>Bob: Hello" }
 
