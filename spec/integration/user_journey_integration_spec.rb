@@ -80,6 +80,26 @@ RSpec.describe 'UserJourney Integration' do
     end
   end
 
+  describe 'journeys with no sections' do
+    # Corpus burndown TODO.foundation/07d: mmdc renders a bare `journey`
+    # (with or without a title) rather than rejecting it, so the full
+    # pipeline must render one too instead of raising LayoutError.
+    {
+      '003/007: journey with a title, no sections' => <<~MERMAID,
+        journey
+        title Adding journey diagram functionality to mermaid
+      MERMAID
+      '014/015/024/025: journey with nothing else' => "journey\n"
+    }.each do |description, source|
+      it "renders #{description}" do
+        svg = Sirena::Engine.new.render(source)
+
+        expect(svg).to include('<svg')
+        expect(svg).to include('</svg>')
+      end
+    end
+  end
+
   describe 'DiagramRegistry integration' do
     it 'has user_journey registered' do
       expect(Sirena::DiagramRegistry.registered?(:user_journey))

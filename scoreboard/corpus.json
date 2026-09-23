@@ -11440,9 +11440,7 @@
   {
     "case": "user_journey/003_parser_should_handle_a_title_definition_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/003_rendering_journey_spec_user_journey_2.mmd",
@@ -11489,9 +11487,7 @@
   {
     "case": "user_journey/007_parser_should_handle_a_title_definition_6.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/007_parser_should_handle_multiline_section_titles_with_different_line_breaks_6.mmd",
@@ -11545,16 +11541,12 @@
   {
     "case": "user_journey/014_spec_diagram-orchestration_spec_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/015_spec_diagram-orchestration_spec_14.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/016_spec_journeydb_spec_15.mmd",
@@ -11615,16 +11607,12 @@
   {
     "case": "user_journey/024_spec_mermaidapi_spec_23.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "user_journey/025_spec_mermaidapi_spec_24.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "layout",
-    "exception_class": "Sirena::Layout::LayoutError"
+    "pass": true
   },
   {
     "case": "xychart/001_example_xychart_0.mmd",
