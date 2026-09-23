@@ -17,6 +17,10 @@ module FlowchartParserHelpers
     parse_flowchart(source).edges.map { |e| "#{e.source_id}>#{e.target_id}" }
   end
 
+  def node_ids(source)
+    parse_flowchart(source).nodes.map(&:id)
+  end
+
   # The corpus cases that exercise `&` grouping. Callable from a describe
   # body as well as from an example, so the spec can both generate one
   # example per case and assert the bucket is not empty.

@@ -191,13 +191,10 @@ module Sirena
         @anchors = {}
       end
 
-      # mermaid reads `doc.shape` off whatever `yaml.load` returns, so a
-      # document that came back null throws there.
+      # nil for a document that came back null: a node refuses it, an
+      # edge's block ignores it, so the caller decides.
       def value
-        composed = compose(root)
-        raise ParseError, 'Empty metadata.' if composed.nil?
-
-        composed
+        compose(root)
       end
 
       private

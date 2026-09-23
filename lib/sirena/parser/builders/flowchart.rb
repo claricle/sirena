@@ -46,11 +46,16 @@ module Sirena
           # Ids already spoken for. The first box to name an id keeps it.
           attr_reader :claimed
 
+          # Ids given to edges with `A e1@--> B`. A later `e1@{ ... }`
+          # addresses the edge and is not a node.
+          attr_reader :edge_ids
+
           def initialize
             @ids = {}.compare_by_identity
             @ownership = {}
             @boxes = {}
             @claimed = {}
+            @edge_ids = Set.new
             @counter = -1
           end
 
@@ -92,6 +97,18 @@ module Sirena
         #
         # @raise [Parser::ParseError] on YAML mermaid would also refuse
         def self.metadata_entries(metadata)
+          document = metadata_document(metadata)
+          # mermaid reads `doc.shape` off whatever `yaml.load` returns, so a
+          # node's document that came back null throws there.
+          raise Parser::ParseError, 'Empty metadata.' if document.nil?
+
+          entries(document)
+        end
+
+        # The parsed YAML of a metadata block, before any node rule reads
+        # it. An edge's block stops here: `label` and `shape` mean nothing
+        # to an edge, so mermaid never checks them there.
+        def self.metadata_document(metadata)
           body = line_feeds(metadata_body(metadata))
           body = strip_metadata_comments(body)
           body = break_quoted_newlines(body)
@@ -103,8 +120,9 @@ module Sirena
           # is an unknown key there and the node keeps its default, so
           # inserting one made sirena honour something mermaid ignores.
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
-          entries(MetadataYaml.value(document))
+          MetadataYaml.value(document)
         end
+        private_class_method :metadata_document
 
         # Mermaid turns every carriage return into a line feed before it
         # lexes anything, so a Windows line ending inside the block is an
@@ -404,16 +422,18 @@ module Sirena
             elsif stmt[:direction_keyword]
               set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword]
-              declare_styled_node(diagram, stmt[:style_target])
+              declare_styled_node(diagram, stmt[:style_target], context)
             end
             # classDef, class and click are parsed but not modelled.
           end
         end
 
         # `style Q ...` names a vertex, and mermaid draws it even when no
-        # other statement mentions it.
-        def self.declare_styled_node(diagram, target)
+        # other statement mentions it, unless an earlier edge carries that
+        # id: then mermaid drops the line and draws no vertex.
+        def self.declare_styled_node(diagram, target, context)
           return if diagram.find_node(target.to_s)
+          return if context.edge_ids.include?(target.to_s)
 
           node_data = { node_id: target, shape_type: 'rect', label: target }
           add_or_update_node(diagram, node_data)
@@ -703,11 +723,11 @@ module Sirena
         # its absence.
         def self.process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
+          edges = stmt[:edges]
           sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
-                                  context)
+                                  context, linkless: edges.nil?)
 
           # Process edges if present
-          edges = stmt[:edges]
           return unless edges
 
           edges = [edges] unless edges.is_a?(Array)
@@ -739,6 +759,8 @@ module Sirena
             targets = declare_group(diagram, edge_data[:target],
                                     edge_data[:group], parent, context)
 
+            context.edge_ids << edge_data[:edge_id].to_s if edge_data[:edge_id]
+
             # `A & B --> C & D` links every source to every target.
             sources.product(targets).each do |source, target|
               diagram.edges << create_edge(source[:node_id], target,
@@ -762,8 +784,26 @@ module Sirena
         private_class_method :inline_label
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
-        def self.declare_group(diagram, first, rest, parent, context)
-          [first, *rest].map do |node_hash|
+        #
+        # A member that addresses an edge id (`e1@{ ... }`, `e1:::foo`) names
+        # no node and changes no node that shares the id, except for its
+        # class. Such a shared node still belongs to an enclosing subgraph
+        # that names it. In a link, the id is still returned as its endpoint.
+        def self.declare_group(diagram, first, rest, parent, context,
+                               linkless: false)
+          [first, *rest].filter_map do |node_hash|
+            if edge_reference?(node_hash, context)
+              # Validates the YAML (raises on malformed input) and
+              # discards the parsed value — nothing downstream has a
+              # field to receive it yet (see `edge_reference?` below).
+              metadata_document(node_hash[:metadata])
+              shared = class_shared_node(diagram, node_hash)
+              claim_member(parent, shared.id, context) if shared
+              next({ node_id: node_hash[:node_id] }) unless linkless
+
+              next
+            end
+
             node_data = extract_node_data(node_hash)
             add_or_update_node(diagram, node_data)
             claim_member(parent, node_data[:node_id].to_s, context)
@@ -772,6 +812,24 @@ module Sirena
         end
         private_class_method :declare_group
 
+        # Any mention of a known edge id — bare (`e1`), shaped (`e1[x]`),
+        # carrying `@{...}`/`:::foo`, or used as a link endpoint — addresses
+        # the edge named `e1`, even when a node is also called `e1`: mermaid
+        # checks the edges first and stops there, so its shape, label and
+        # metadata reach no node.
+        def self.edge_reference?(node_hash, context)
+          context.edge_ids.include?(node_hash[:node_id].to_s)
+        end
+        private_class_method :edge_reference?
+
+        # Mermaid gives a `:::foo` class to every node, edge and subgraph
+        # with that id, so a node sharing an edge's id still takes it.
+        def self.class_shared_node(diagram, node_hash)
+          node = diagram.find_node(node_hash[:node_id].to_s)
+          node.classes = node_hash[:inline_class].to_s if node && node_hash[:inline_class]
+          node
+        end
+        private_class_method :class_shared_node
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece
         # link of the same kind: `-- -->` is `---->`.

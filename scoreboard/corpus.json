@@ -4559,9 +4559,7 @@
   {
     "case": "flowchart/031_parser_should_handle_normal_edges_where_you_also_have_a_node_with_metadata_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/032_parser_should_handle_double_edged_nodes_and_edges_on_thick_arrows_27.mmd",
@@ -4921,9 +4919,7 @@
   {
     "case": "flowchart/062_parser_should_handle_unique_edge_creation_with_using_and__57.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/063_parser_should_handle_normal_labelled_edges_with_double_arrows_with_length___length__58.mmd",
@@ -4935,16 +4931,12 @@
   {
     "case": "flowchart/063_parser_should_handle_redefine_same_edge_ids_again_58.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/064_parser_should_handle_overriding_edge_animate_again_59.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/064_parser_should_handle_thick_edges_with_length___length__59.mmd",
@@ -5437,23 +5429,17 @@
   {
     "case": "flowchart/116_parser_should_handle_unique_edge_creation_with_using___and___111.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/117_parser_should_handle_redefine_same_edge_ids_again_112.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/118_parser_should_handle_overriding_edge_animate_again_113.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "flowchart/119_parser_should_handle_a_single_node_114.mmd",
