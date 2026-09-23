@@ -6140,16 +6140,12 @@
   {
     "case": "gantt/002_rendering_gantt_spec_gantt_1.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/003_rendering_gantt_spec_gantt_2.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/004_rendering_gantt_spec_gantt_3.mmd",
@@ -6191,9 +6187,7 @@
   {
     "case": "gantt/011_parser_should_handle_a_inclusive_end_date_definition_10.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "gantt/012_parser_should_handle_a_title_definition_11.mmd",

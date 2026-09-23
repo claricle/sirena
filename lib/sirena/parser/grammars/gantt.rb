@@ -47,6 +47,8 @@ module Sirena
             axis_format_declaration |
             tick_interval_declaration |
             excludes_declaration |
+            weekend_declaration |
+            inclusive_end_dates_declaration |
             today_marker_declaration |
             section_declaration |
             click_declaration |
@@ -87,6 +89,19 @@ module Sirena
           str("excludes") >> space.repeat(1) >>
             (line_end.absent? >> any).repeat(1).as(:excludes) >>
             line_end
+        end
+
+        # Weekend day (which day of the week rendering treats as the
+        # weekend start, e.g. "weekend friday")
+        rule(:weekend_declaration) do
+          str("weekend") >> space.repeat(1) >>
+            (line_end.absent? >> any).repeat(1).as(:weekend) >>
+            line_end
+        end
+
+        # Inclusive end dates: a bare flag, no argument
+        rule(:inclusive_end_dates_declaration) do
+          str("inclusiveEndDates").as(:inclusive_end_dates) >> line_end
         end
 
         # Today marker
