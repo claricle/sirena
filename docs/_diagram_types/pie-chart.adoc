@@ -310,7 +310,7 @@ pie title Department Budget Allocation
 
 The pie chart implementation includes:
 
-* 49 Mermaid test fixtures (100% passing)
+* Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 40/40 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing pie`, BY VERDICT section). The remaining 9 corpus cases are outside the oracle-valid set: 1 `artifact`, 6 `invalid`, 2 `unknown`, per `spec/mermaid/corpus-verdicts.yml`.
 * 13 RSpec tests covering all features
 * Parser, transform, and renderer tests
 * Edge case handling (empty diagrams, negative values, etc.)
@@ -330,6 +330,6 @@ bundle exec rspec spec/sirena/parser/pie_spec.rb
 
 == See Also
 
-* link:index.adoc[Documentation Index]
-* link:../lib/sirena/diagram/pie.rb[Pie Diagram Model]
-* link:../lib/sirena/renderer/pie.rb[Pie Renderer]
+* link:../index/[Documentation Index]
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/pie.rb[Pie Diagram Model]
+* https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/pie.rb[Pie Renderer]

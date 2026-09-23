@@ -714,6 +714,6 @@ POST {
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
-* <<class-diagram.adoc#,Class diagrams>>
+* link:../index/[Diagram types overview]
+* link:../class-diagram/[Class diagrams]
 * link:https://mermaid.js.org/syntax/entityRelationshipDiagram.html[Official Mermaid ER diagram documentation]

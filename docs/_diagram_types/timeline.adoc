@@ -333,8 +333,8 @@ The following features are not yet supported:
 
 The timeline implementation includes comprehensive test coverage:
 
-* **16/17 Mermaid fixtures passing** (94.1% success rate)
-* The single failing fixture contains invalid syntax ("Timeline diagram" instead of "timeline")
+* **16/16 = 100.0% of oracle-valid mermaid-js corpus cases passing** (`bundle exec ruby scripts/corpus_sweep.rb --failing timeline`, valid-cases line)
+* The 17th corpus fixture contains invalid syntax ("Timeline diagram" instead of "timeline") and is excluded from the oracle-valid denominator
 * Full support for sections, events, tasks, and styling
 * HTML tags in descriptions handled correctly
 * Special characters (semicolons, hashtags) supported
@@ -348,5 +348,5 @@ bundle exec rspec spec/sirena/parser/timeline_spec.rb
 
 == Related documentation
 
-* link:flowchart.adoc[Flowchart diagrams]
+* link:../flowchart/[Flowchart diagrams]
 * link:https://mermaid.js.org/syntax/timeline.html[Official Mermaid timeline documentation]

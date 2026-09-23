@@ -35,22 +35,22 @@ Each guide provides:
 
 === For Mermaid.js Users
 
-* link:{% link _guides/migration-from-mermaid.adoc %}[Migration from Mermaid.js] - Complete migration guide with syntax comparison
+* *Migration from Mermaid.js* (planned) - Complete migration guide with syntax comparison
 
 === For Production Use
 
-* link:{% link _guides/performance-optimization.adoc %}[Performance Optimization] - Techniques for faster rendering
-* link:{% link _guides/caching-strategies.adoc %}[Caching Strategies] - Improve performance with caching
-* link:{% link _guides/ci-cd-integration.adoc %}[CI/CD Integration] - Using Sirena in automated workflows
+* *Performance Optimization* (planned) - Techniques for faster rendering
+* *Caching Strategies* (planned) - Improve performance with caching
+* *CI/CD Integration* (planned) - Using Sirena in automated workflows
 
 === For Advanced Customization
 
-* link:{% link _guides/custom-themes.adoc %}[Creating Custom Themes] - Building themes from scratch
-* link:{% link _guides/svg-customization.adoc %}[SVG Customization] - Advanced SVG manipulation
-* link:{% link _guides/extending-parsers.adoc %}[Extending Parsers] - Adding custom syntax
+* *Creating Custom Themes* (planned) - Building themes from scratch
+* *SVG Customization* (planned) - Advanced SVG manipulation
+* *Extending Parsers* (planned) - Adding custom syntax
 
 == Related Documentation
 
-* link:{% link _tutorials/index.adoc %}[Tutorials] - For step-by-step learning
-* link:{% link _features/index.adoc %}[Features] - For feature documentation
-* link:{% link _references/index.adoc %}[References] - For API and CLI reference
+* link:../../tutorials/index/[Tutorials] - For step-by-step learning
+* link:../../features/index/[Features] - For feature documentation
+* link:../../references/index/[References] - For API and CLI reference

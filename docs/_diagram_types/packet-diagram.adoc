@@ -374,5 +374,5 @@ packet-beta
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
+* link:../index/[Diagram types overview]
 * link:https://mermaid.js.org/syntax/packet.html[Official Mermaid packet documentation]

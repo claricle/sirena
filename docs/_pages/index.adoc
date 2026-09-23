@@ -28,12 +28,12 @@ Browse the topics in the sidebar or use the search function to find specific inf
 
 If you're new to Sirena, we recommend starting with:
 
-. link:{% link _tutorials/getting-started.adoc %}[Getting Started Tutorial]
-. link:{% link _pages/architecture.adoc %}[Architecture Overview]
-. link:{% link _diagram_types/index.adoc %}[Diagram Types Reference]
+. link:../../guides/quick-start/[Getting Started Tutorial]
+. *Architecture Overview* (planned)
+. link:../../diagram_types/index/[Diagram Types Reference]
 
 == Need Help?
 
-* See link:{% link _tutorials/index.adoc %}[Tutorials] for step-by-step guides
-* Check link:{% link _references/index.adoc %}[References] for API documentation
+* See link:../../tutorials/index/[Tutorials] for step-by-step guides
+* Check link:../../references/index/[References] for API documentation
 * Visit our https://github.com/claricle/sirena/issues[GitHub Issues] for support

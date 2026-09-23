@@ -11,7 +11,7 @@ This guide will help you create your first diagram with Sirena in 5 minutes.
 
 == Prerequisites
 
-Ensure Sirena is installed. If not, see the link:installation.html[Installation Guide].
+Ensure Sirena is installed. If not, see the link:../installation/[Installation Guide].
 
 == Your First Diagram
 

@@ -382,8 +382,7 @@ bundle exec rspec spec/sirena/parser/quadrant_spec.rb
 
 === Test Coverage
 
-* ✅ All 10 Mermaid fixtures parse successfully
-* ✅ All 10 fixtures render to valid SVG
+* ✅ Coverage against the oracle-valid mermaid-js corpus cases: `--> against valid cases only: 9/9 = 100.0%` (`bundle exec ruby scripts/corpus_sweep.rb --failing quadrant`, BY VERDICT section). The remaining corpus case has an `unknown` verdict in `spec/mermaid/corpus-verdicts.yml`.
 * ✅ Point coordinates validated (0-1 range)
 * ✅ Quadrant assignment correct for all points
 * ✅ Styling parameters extracted properly
