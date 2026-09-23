@@ -34,6 +34,19 @@ module Sirena
       ARROW_SIZE = 10
       DIAMOND_SIZE = 12
 
+      # Dependency marker (dart) dimensions, matching mermaid's own
+      # `M 5,7 L9,13 L1,7 L9,1 Z`: a CONCAVE dart, not a convex kite --
+      # (1,7) is the tip, (9,13)/(9,1) are the back corners, and (5,7) is
+      # a reflex notch midway between the tip and the back edge. Building
+      # this as a convex 4-point shape collapses the notch onto the back
+      # edge and silently degenerates to a triangle -- keep the notch
+      # derived as the midpoint of tip and back (see render_dart_marker),
+      # never a separate offset. DART_NEAR/DART_FAR set the tip-close/
+      # back-far asymmetry; DART_WIDTH is the half-width of the back edge.
+      DART_NEAR = 3
+      DART_FAR = 14
+      DART_WIDTH = 5
+
       # Renders a laid-out graph to SVG.
       #
       # @param graph [Hash] laid-out graph with node positions
@@ -307,11 +320,18 @@ module Sirena
         source_point = calculate_connection_point(source, target)
         target_point = calculate_connection_point(target, source)
 
-        # Render the line
-        render_relationship_line(source_point, target_point, rel_type, group)
+        if metadata[:start_marker] || metadata[:end_marker]
+          # Mixed-marker operator (e.g. `o--|>`): each end carries its own
+          # marker independently, so relationship_type alone can't drive
+          # rendering here.
+          render_mixed_marker_relationship(source_point, target_point, metadata, group)
+        else
+          # Render the line
+          render_relationship_line(source_point, target_point, rel_type, group)
 
-        # Render arrow/marker at target
-        render_relationship_marker(source_point, target_point, rel_type, group)
+          # Render arrow/marker at target
+          render_relationship_marker(source_point, target_point, rel_type, group)
+        end
 
         # Render labels if present
         render_relationship_labels(edge, source_point, target_point, group)
@@ -385,6 +405,46 @@ module Sirena
         end
       end
 
+      def render_mixed_marker_relationship(source_point, target_point, metadata, group)
+        line = Svg::Line.new.tap do |l|
+          l.x1 = source_point[:x]
+          l.y1 = source_point[:y]
+          l.x2 = target_point[:x]
+          l.y2 = target_point[:y]
+          l.stroke = '#000000'
+          l.stroke_width = '2'
+          l.stroke_dasharray = '5,5' if metadata[:dashed]
+        end
+        group.children << line
+
+        render_marker_at(source_point, target_point, metadata[:start_marker], group)
+        render_marker_at(target_point, source_point, metadata[:end_marker], group)
+      end
+
+      # Draws `marker` at `point`, oriented along the connecting line away
+      # from `away_from`. A triangle tip lands exactly at `point`; a diamond
+      # straddles `point` (half on each side) with its outer tip toward
+      # `away_from`; a dart sits entirely on the `away_from` side of `point`
+      # (DART_NEAR/DART_FAR, both positive offsets) so it never digs back
+      # into the node at `point` -- see render_dart_marker.
+      def render_marker_at(point, away_from, marker, group)
+        case marker
+        when 'inheritance'
+          # mermaid's classDiagram CSS renders extension/inheritance markers
+          # with `fill: transparent !important` -- a hollow triangle, not the
+          # filled one the single-type inheritance path draws.
+          render_triangle_marker(away_from, point, false, group)
+        when 'dependency'
+          # mermaid renders the dependency marker filled (`fill: lineColor`)
+          # as a concave dart -- see DART_NEAR/DART_FAR/DART_WIDTH above.
+          render_dart_marker(point, away_from, group)
+        when 'composition'
+          render_diamond_marker(point, away_from, true, group)
+        when 'aggregation'
+          render_diamond_marker(point, away_from, false, group)
+        end
+      end
+
       def render_triangle_marker(from, to, filled, group)
         dx = to[:x] - from[:x]
         dy = to[:y] - from[:y]
@@ -405,6 +465,41 @@ module Sirena
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
           p.fill = filled ? '#000000' : '#ffffff'
+          p.stroke = '#000000'
+          p.stroke_width = '2'
+        end
+        group.children << polygon
+      end
+
+      # A filled dart anchored at `from`, sitting entirely on the `to` side
+      # of `from` -- same convention render_triangle_marker already uses --
+      # so the whole shape stays outside the node at `from` instead of
+      # digging back into it: a short tip touches near `from`, a wider back
+      # edge sits further out toward `to`, and the notch is the reflex
+      # vertex on the tip-to-back axis, midway between them -- see
+      # DART_NEAR/DART_FAR/DART_WIDTH.
+      def render_dart_marker(from, to, group)
+        dx = to[:x] - from[:x]
+        dy = to[:y] - from[:y]
+        angle = Math.atan2(dy, dx)
+
+        tip_x = from[:x] + DART_NEAR * Math.cos(angle)
+        tip_y = from[:y] + DART_NEAR * Math.sin(angle)
+        back_x = from[:x] + DART_FAR * Math.cos(angle)
+        back_y = from[:y] + DART_FAR * Math.sin(angle)
+        notch_x = (tip_x + back_x) / 2
+        notch_y = (tip_y + back_y) / 2
+        side1_x = back_x + DART_WIDTH * Math.cos(angle + Math::PI / 2)
+        side1_y = back_y + DART_WIDTH * Math.sin(angle + Math::PI / 2)
+        side2_x = back_x + DART_WIDTH * Math.cos(angle - Math::PI / 2)
+        side2_y = back_y + DART_WIDTH * Math.sin(angle - Math::PI / 2)
+
+        points = "#{tip_x},#{tip_y} #{side1_x},#{side1_y} " \
+                 "#{notch_x},#{notch_y} #{side2_x},#{side2_y}"
+
+        polygon = Svg::Polygon.new.tap do |p|
+          p.points = points
+          p.fill = '#000000'
           p.stroke = '#000000'
           p.stroke_width = '2'
         end

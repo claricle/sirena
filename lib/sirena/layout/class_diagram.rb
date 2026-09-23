@@ -78,7 +78,10 @@ module Sirena
             metadata: {
               relationship_type: rel.relationship_type,
               source_cardinality: rel.source_cardinality,
-              target_cardinality: rel.target_cardinality
+              target_cardinality: rel.target_cardinality,
+              start_marker: rel.start_marker,
+              end_marker: rel.end_marker,
+              dashed: rel.dashed
             }
           }
         end
