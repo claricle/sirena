@@ -257,7 +257,7 @@ or Graphviz.
 . Test batch rendering against your own workload (no published benchmark
   substitutes for this)
 
-See our comprehensive link:../guides/migration-from-mermaid/[Migration from Mermaid.js Guide].
+See our comprehensive *Migration from Mermaid.js Guide* (planned).
 
 ==== From PlantUML to Sirena
 
@@ -393,10 +393,10 @@ Different tools for different diagram types:
 
 === Related Documentation
 
-* link:compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility
-* link:../guides/migration-from-mermaid/[Migration from Mermaid.js] - Step-by-step migration guide
-* link:../features/theme-system/[Theme System] - Sirena's YAML-based themes
-* link:../guides/performance-optimization/[Performance Optimization] - Getting the most from Sirena
+* link:../compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility
+* *Migration from Mermaid.js* (planned) - Step-by-step migration guide
+* *Theme System* (planned) - Sirena's YAML-based themes
+* *Performance Optimization* (planned) - Getting the most from Sirena
 
 === External Resources
 

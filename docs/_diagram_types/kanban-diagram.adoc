@@ -295,7 +295,7 @@ kanban
 
 == See Also
 
-* link:../README.adoc[Sirena Documentation]
-* link:user-journey-diagram.adoc[User Journey Diagrams]
-* link:gantt-diagram.adoc[Gantt Charts]
-* link:timeline-diagram.adoc[Timeline Diagrams]
+* https://github.com/claricle/sirena/blob/main/README.adoc[Sirena Documentation]
+* link:../user-journey/[User Journey Diagrams]
+* link:../gantt-chart/[Gantt Charts]
+* link:../timeline/[Timeline Diagrams]

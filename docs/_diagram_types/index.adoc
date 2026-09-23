@@ -61,79 +61,79 @@ Each diagram type page includes:
 |===
 |Diagram Type |Primary Use Case |Keyword
 
-|link:{% link _diagram_types/flowchart.adoc %}[Flowchart]
+|link:../../diagram_types/flowchart/[Flowchart]
 |Process flows and decision trees
 |`graph`, `flowchart`
 
-|link:{% link _diagram_types/sequence-diagram.adoc %}[Sequence]
+|link:../../diagram_types/sequence-diagram/[Sequence]
 |Message interactions over time
 |`sequenceDiagram`
 
-|link:{% link _diagram_types/class-diagram.adoc %}[Class]
+|link:../../diagram_types/class-diagram/[Class]
 |Object-oriented design
 |`classDiagram`
 
-|link:{% link _diagram_types/state-diagram.adoc %}[State]
+|link:../../diagram_types/state-diagram/[State]
 |State machines
 |`stateDiagram-v2`
 
-|link:{% link _diagram_types/er-diagram.adoc %}[ER Diagram]
+|link:../../diagram_types/er-diagram/[ER Diagram]
 |Database design
 |`erDiagram`
 
-|link:{% link _diagram_types/user-journey.adoc %}[User Journey]
+|link:../../diagram_types/user-journey/[User Journey]
 |User experience flows
 |`journey`
 
-|link:{% link _diagram_types/git-graph.adoc %}[Git Graph]
+|link:../../diagram_types/git-graph/[Git Graph]
 |Repository history
 |`gitGraph`
 
-|link:{% link _diagram_types/pie-chart.adoc %}[Pie Chart]
+|link:../../diagram_types/pie-chart/[Pie Chart]
 |Proportional data
 |`pie`
 
-|link:{% link _diagram_types/gantt-chart.adoc %}[Gantt]
+|link:../../diagram_types/gantt-chart/[Gantt]
 |Project timelines
 |`gantt`
 
-|link:{% link _diagram_types/quadrant-chart.adoc %}[Quadrant]
+|link:../../diagram_types/quadrant-chart/[Quadrant]
 |Priority matrices
 |`quadrantChart`
 
-|link:{% link _diagram_types/requirement-diagram.adoc %}[Requirement]
+|link:../../diagram_types/requirement-diagram/[Requirement]
 |Requirements traceability
 |`requirementDiagram`
 
-|link:{% link _diagram_types/c4-diagram.adoc %}[C4]
+|link:../../diagram_types/c4-diagram/[C4]
 |Software architecture
 |`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`
 
-|link:{% link _diagram_types/mindmap.adoc %}[Mindmap]
+|link:../../diagram_types/mindmap/[Mindmap]
 |Hierarchical ideas
 |`mindmap`
 
-|link:{% link _diagram_types/timeline.adoc %}[Timeline]
+|link:../../diagram_types/timeline/[Timeline]
 |Historical events
 |`timeline`
 
-|link:{% link _diagram_types/sankey-diagram.adoc %}[Sankey]
+|link:../../diagram_types/sankey-diagram/[Sankey]
 |Flow quantities
 |`sankey-beta`
 
-|link:{% link _diagram_types/xy-chart.adoc %}[XY Chart]
+|link:../../diagram_types/xy-chart/[XY Chart]
 |Data plotting
 |`xychart-beta`
 
-|link:{% link _diagram_types/block-diagram.adoc %}[Block]
+|link:../../diagram_types/block-diagram/[Block]
 |Component relationships
 |`block-beta`
 
-|link:{% link _diagram_types/architecture-diagram.adoc %}[Architecture]
+|link:../../diagram_types/architecture-diagram/[Architecture]
 |System architecture
 |`architecture-beta`
 
-|link:{% link _diagram_types/kanban-diagram.adoc %}[Kanban]
+|link:../../diagram_types/kanban-diagram/[Kanban]
 |Workflow boards
 |`kanban`
 |===
@@ -177,7 +177,7 @@ Each diagram type page includes:
 
 == Mermaid.js Compatibility
 
-All diagram types maintain syntax compatibility with Mermaid.js. See link:{% link _pages/compatibility.adoc %}[Compatibility Guide] for detailed comparison.
+All diagram types maintain syntax compatibility with Mermaid.js. See link:../../pages/compatibility/[Compatibility Guide] for detailed comparison.
 
 == Examples
 
@@ -187,6 +187,6 @@ Find complete examples in the GitHub repository:
 
 == Need Help?
 
-* Check link:{% link _tutorials/creating-first-diagram.adoc %}[Creating Your First Diagram] tutorial
-* See link:{% link _guides/best-practices.adoc %}[Best Practices] guide
+* Check *Creating Your First Diagram* (planned) tutorial
+* See *Best Practices* (planned) guide
 * Visit https://github.com/claricle/sirena/issues[GitHub Issues] for support

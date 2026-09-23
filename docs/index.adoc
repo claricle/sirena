@@ -49,26 +49,26 @@ MERMAID
 puts svg
 ----
 
-See link:{% link _tutorials/getting-started.adoc %}[Getting Started Tutorial] for complete installation and usage instructions.
+See link:guides/quick-start/[Getting Started Tutorial] for complete installation and usage instructions.
 
 == Documentation Structure
 
-=== link:{% link _pages/index.adoc %}[Core Topics]
+=== link:pages/index/[Core Topics]
 Essential concepts and architecture you need to understand Sirena.
 
-=== link:{% link _tutorials/index.adoc %}[Tutorials]
+=== link:tutorials/index/[Tutorials]
 Step-by-step guides to help you get started and accomplish specific tasks.
 
-=== link:{% link _guides/index.adoc %}[Guides]
+=== link:guides/index/[Guides]
 In-depth guides for advanced features and best practices.
 
-=== link:{% link _diagram_types/index.adoc %}[Diagram Types]
+=== link:diagram_types/index/[Diagram Types]
 Complete reference for all 24 diagram types with syntax and examples.
 
-=== link:{% link _features/index.adoc %}[Features]
+=== link:features/index/[Features]
 Detailed documentation of Sirena's unique features and capabilities.
 
-=== link:{% link _references/index.adoc %}[References]
+=== link:references/index/[References]
 Complete API and CLI references for quick lookup.
 
 == Supported Diagram Types
@@ -79,65 +79,65 @@ Sirena registers 24 diagram types compatible with Mermaid.js syntax:
 |===
 |Type |Use Case
 
-|link:{% link _diagram_types/flowchart.adoc %}[Flowchart]
+|link:diagram_types/flowchart/[Flowchart]
 |Process flows and directed graphs
 
-|link:{% link _diagram_types/sequence-diagram.adoc %}[Sequence]
+|link:diagram_types/sequence-diagram/[Sequence]
 |Message interactions over time
 
-|link:{% link _diagram_types/class-diagram.adoc %}[Class]
+|link:diagram_types/class-diagram/[Class]
 |Object-oriented class structures
 
-|link:{% link _diagram_types/state-diagram.adoc %}[State]
+|link:diagram_types/state-diagram/[State]
 |State machines and transitions
 
-|link:{% link _diagram_types/er-diagram.adoc %}[ER Diagram]
+|link:diagram_types/er-diagram/[ER Diagram]
 |Database entity relationships
 
-|link:{% link _diagram_types/user-journey.adoc %}[User Journey]
+|link:diagram_types/user-journey/[User Journey]
 |User experience mapping
 
-|link:{% link _diagram_types/git-graph.adoc %}[Git Graph]
+|link:diagram_types/git-graph/[Git Graph]
 |Repository history visualization
 
-|link:{% link _diagram_types/pie-chart.adoc %}[Pie Chart]
+|link:diagram_types/pie-chart/[Pie Chart]
 |Proportional data visualization
 
-|link:{% link _diagram_types/gantt-chart.adoc %}[Gantt Chart]
+|link:diagram_types/gantt-chart/[Gantt Chart]
 |Project timeline planning
 
-|link:{% link _diagram_types/quadrant-chart.adoc %}[Quadrant]
+|link:diagram_types/quadrant-chart/[Quadrant]
 |Priority/complexity matrices
 
-|link:{% link _diagram_types/requirement-diagram.adoc %}[Requirement]
+|link:diagram_types/requirement-diagram/[Requirement]
 |Requirements traceability
 
-|link:{% link _diagram_types/c4-diagram.adoc %}[C4]
+|link:diagram_types/c4-diagram/[C4]
 |Software architecture (Context, Container, Component, Code)
 
-|link:{% link _diagram_types/mindmap.adoc %}[Mindmap]
+|link:diagram_types/mindmap/[Mindmap]
 |Hierarchical idea organization
 
-|link:{% link _diagram_types/timeline.adoc %}[Timeline]
+|link:diagram_types/timeline/[Timeline]
 |Historical event visualization
 
-|link:{% link _diagram_types/sankey-diagram.adoc %}[Sankey]
+|link:diagram_types/sankey-diagram/[Sankey]
 |Flow quantity visualization
 
-|link:{% link _diagram_types/xy-chart.adoc %}[XY Chart]
+|link:diagram_types/xy-chart/[XY Chart]
 |Data point plotting
 
-|link:{% link _diagram_types/block-diagram.adoc %}[Block]
+|link:diagram_types/block-diagram/[Block]
 |Component relationships
 
-|link:{% link _diagram_types/architecture-diagram.adoc %}[Architecture]
+|link:diagram_types/architecture-diagram/[Architecture]
 |System architecture views
 
-|link:{% link _diagram_types/kanban-diagram.adoc %}[Kanban]
+|link:diagram_types/kanban-diagram/[Kanban]
 |Workflow board visualization
 |===
 
-See the complete link:{% link _diagram_types/index.adoc %}[Diagram Types Reference] for detailed syntax and examples.
+See the complete link:diagram_types/index/[Diagram Types Reference] for detailed syntax and examples.
 
 == Key Features
 
@@ -152,15 +152,15 @@ See the complete link:{% link _diagram_types/index.adoc %}[Diagram Types Referen
 
 Sirena maintains syntax compatibility with Mermaid.js while providing a pure Ruby implementation optimized for server-side rendering.
 
-* link:{% link _pages/compatibility.adoc %}[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
-* link:{% link _pages/comparison.adoc %}[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
+* link:pages/compatibility/[Mermaid.js Compatibility] - Detailed syntax compatibility matrix
+* link:pages/comparison/[Tool Comparison] - Compare Sirena with Mermaid.js, PlantUML, and Graphviz
 
 == Getting Help
 
 * **Report Issues**: https://github.com/claricle/sirena/issues[GitHub Issues]
 * **Source Code**: https://github.com/claricle/sirena[GitHub Repository]
 * **RubyGems**: https://rubygems.org/gems/sirena[Sirena Gem]
-* **Migration Guide**: link:{% link _guides/migration-from-mermaid.adoc %}[Migrating from Mermaid.js]
+* **Migration Guide**: *Migrating from Mermaid.js* (planned)
 
 == License
 

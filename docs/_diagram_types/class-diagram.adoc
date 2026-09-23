@@ -811,6 +811,6 @@ Choose the correct relationship type for the situation:
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
-* <<er-diagram.adoc#,Entity relationship diagrams>>
+* link:../index/[Diagram types overview]
+* link:../er-diagram/[Entity relationship diagrams]
 * link:https://mermaid.js.org/syntax/classDiagram.html[Official Mermaid class diagram documentation]
