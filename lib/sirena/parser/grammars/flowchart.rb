@@ -203,11 +203,15 @@ module Sirena
         #
         # Ruby's `[[:space:]]` is not the same set in either direction. It
         # misses U+FEFF, which mmdc treats as a space, and it adds U+0085,
-        # which mmdc does not. So the set is spelled out here.
-        rule(:line_space) do
-          match['\t\v\f \u00A0\u1680' \
-            '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF']
-        end
+        # which mmdc does not. So the set is spelled out here, once, and
+        # reused everywhere a raw `Regexp` needs the same characters (see
+        # `EDGE_ID_END_AHEAD` below) so a future correction to this
+        # hand-tuned set cannot drift between the two.
+        LINE_SPACE_CHARS = '\t\v\f\x20\u00A0\u1680' \
+          '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
+        private_constant :LINE_SPACE_CHARS
+
+        rule(:line_space) { match[LINE_SPACE_CHARS] }
 
         # Mermaid deletes whole comment LINES before it parses anything,
         # so a `}` inside one does not close a block: `accDescr {` /
@@ -675,7 +679,7 @@ module Sirena
         rule(:node_edge_statement) do
           reserved_keyword.absent? >>
             node_with_shape.as(:node) >> amp_group.as(:group) >>
-            (ws? >> edge_chain).maybe.as(:edges) >>
+            edge_chain.maybe.as(:edges) >>
             loose_statement_end
         end
 
@@ -743,8 +747,13 @@ module Sirena
         # multiline one is block YAML, so commas are required on one line
         # and rejected across several — a grammar rule cannot express that
         # without reimplementing YAML badly.
+        #
+        # A metadata block cannot be the final source before an edge id:
+        # mermaid leaves the following `e1@` out of its LINK_ID state and
+        # refuses the statement, though an ordinary link may still follow.
         rule(:node_metadata) do
-          str('@{') >> metadata_body.as(:body) >> str('}')
+          str('@{') >> metadata_body.as(:body) >> str('}') >>
+            (line_space.repeat(1) >> edge_id_ahead).absent?
         end
 
         # An unmatched `"` is not body text. mermaid's lexer stays in its
@@ -914,14 +923,20 @@ module Sirena
 
         # Edge chain: can have multiple edges from one node
         rule(:edge_chain) do
-          edge >> (ws? >> edge).repeat
+          edge >> edge.repeat
         end
 
         # Single edge. A symbol-only link is tried first, as mermaid's
         # lexer does: `A --x B` is a link with a cross head, and only a
         # link that cannot end where it starts opens `A -- text --x B`.
+        #
+        # The rule owns the gap before it, because an edge id has to start
+        # on the line the source ends on, after a space: `A` newline
+        # `e1@--> B` and `A[x]e1@--> B` are refused.
         rule(:edge) do
-          (piped_edge | inline_label_edge) >>
+          ((line_space.repeat(1) >> edge_id_preempted.absent? >>
+            edge_id_ahead >> edge_id_body) | ws?) >>
+            (piped_edge | inline_label_edge) >>
             ws? >>
             reserved_keyword.absent? >> node_with_shape.as(:target) >>
             amp_group.as(:group)
@@ -933,8 +948,104 @@ module Sirena
         # shared `space` rule's business, and it is narrower than mermaid's
         # `\s`: a tab passes here, an NBSP does not.
         rule(:amp_group) do
-          (space.repeat(1) >> str('&') >> space.repeat(1) >>
+          (space.repeat(1) >> edge_id_ahead.absent? >> str('&') >> space.repeat(1) >>
             reserved_keyword.absent? >> node_with_shape).repeat
+        end
+
+        # `A e1@--> B` names the edge, so a later `e1@{ animate: true }`
+        # can address it. The `@` must be followed by the start of a link,
+        # and the id must not itself start like one: `A --me@--> B` or a
+        # quoted `@` is not an id, but `A {x@--> B` has one, and an id may
+        # start with `;`. Trying a rule and failing would send every `A B`
+        # typo to the Deepest reporter in `Base`, so the source is read first.
+        #
+        # Keep every repeat possessive, each branch on its own character
+        # class: two branches that can match the same text make a failed
+        # match exponential in the blank lines after the `@`.
+        EDGE_ID_END_AHEAD = /
+          @
+          [#{LINE_SPACE_CHARS}]*+
+          (?:
+            \r?\n
+            (?:
+              [#{LINE_SPACE_CHARS}] |
+              \r?\n |
+              %%[^\r\n]*+
+            )*+
+          )?+
+          [ox<]?(?:-|=|\.|~~~)
+        /x
+        private_constant :EDGE_ID_END_AHEAD
+
+        EDGE_ID_AHEAD = /
+          (?!@\{)
+          (?![ox<]?(?:--|==|-\.|\.+-|~~~))
+          [^#{LINE_SPACE_CHARS}\r\n"]+#{EDGE_ID_END_AHEAD}
+        /x
+        private_constant :EDGE_ID_AHEAD
+
+        # An edge id can contain `@`. When one of those internal characters
+        # happens to precede something link-like, the id runs on to the last
+        # `@` that can delimit it. The match ends right before that `@`, or
+        # is empty when the `@` here is the last one.
+        EDGE_ID_LAST_END = /
+          (?:@[^#{LINE_SPACE_CHARS}\r\n"]+)?
+          (?=#{EDGE_ID_END_AHEAD})
+        /x
+        private_constant :EDGE_ID_LAST_END
+
+        # These lexer tokens precede LINK_ID in mermaid, so a matching opener
+        # wins before the otherwise broad `[^\s"]+@` rule can name an edge.
+        # `click`, `href` and `call` are intentionally absent: their tokens
+        # require whitespace after the word, and `@` does not provide it.
+        rule(:edge_id_preempted) do
+          reserved_word |
+            (str('default') >> word_boundary) |
+            (str('accTitle') >> str(':')) |
+            (str('accDescr') >> (str(':') | str('{')))
+        end
+
+        # True where an edge id starts, so a caller can leave it alone.
+        #
+        # These are the only raw-`Regexp` lookaheads in the parser tree;
+        # everywhere else builds lookahead from Parslet atoms with
+        # `.absent?`/`.present?`. Do not copy this as the house style. It is
+        # here because deciding whether an `@` ends an edge id needs an
+        # unbounded forward scan past comment and blank lines to the link
+        # opener, which a combinator cannot express without trying the rule
+        # and failing — the Deepest-reporter problem described above.
+        rule(:edge_id_ahead) do
+          dynamic do |source, _|
+            source.matches?(EDGE_ID_AHEAD) ? str('') : str('').absent?
+          end
+        end
+
+        rule(:edge_id_end_ahead) do
+          dynamic do |source, _|
+            edge_id_end?(source) ? str('') : str('').absent?
+          end
+        end
+
+        # Every `@` between an id's first delimiter-like `@` and its last one
+        # shares that last one, so it is found once and remembered. Asking
+        # afresh at each `@` rescans the rest of the id every time.
+        def edge_id_end?(source)
+          pos = source.bytepos
+          cached, first, last = @edge_id_end
+          return pos == last if cached.equal?(source) && pos.between?(first, last)
+          return false unless source.matches?(EDGE_ID_END_AHEAD)
+
+          last = pos + source.matches?(EDGE_ID_LAST_END)
+          @edge_id_end = [source, pos, last]
+          pos == last
+        end
+        private :edge_id_end?
+
+        rule(:edge_id_body) do
+          ((edge_id_end_ahead | line_space | newline).absent? >> any)
+            .repeat(1).as(:edge_id) >> str('@') >>
+            line_space.repeat >>
+            (newline >> (line_space | newline | comment).repeat).repeat
         end
 
         rule(:piped_edge) do
