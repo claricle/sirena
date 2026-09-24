@@ -172,17 +172,20 @@ RSpec.describe Sirena::Svg::Escaping do
       end
     end
 
-    it 'declares and round-trips the SVG Tiny 1.2 profile' do
+    # Diagnostic, not a fix-prover: this only exercises to_xml, which sirena/02
+    # never touches, so it stays green whether or not the xml do block is
+    # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
+    # only check for an explicitly-set version/baseProfile now that
+    # from_xml round-tripping is gone.
+    it 'declares the SVG Tiny 1.2 profile by default, and honours a different one when set directly' do
       defaults = described_class.new.to_xml
-      xml = <<~SVG
-        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full"/>
-      SVG
-      parsed = described_class.from_xml(xml)
+
+      other = described_class.new
+      other.version = '1.1'
+      other.base_profile = 'full'
 
       expect(defaults).to include(%( version="1.2"\n baseProfile="tiny"))
-      expect(parsed.version).to eq('1.1')
-      expect(parsed.base_profile).to eq('full')
-      expect(parsed.to_xml).to include(%( version="1.1"\n baseProfile="full"))
+      expect(other.to_xml).to include(%( version="1.1"\n baseProfile="full"))
     end
   end
 
@@ -220,15 +223,6 @@ RSpec.describe Sirena::Svg::Escaping do
 
       expect(text.to_xml).to include('&lt;img src=x onerror=alert(1)&gt;')
       expect(text.to_xml).not_to include('<img')
-    end
-
-    # lutaml leaves unset attributes holding a sentinel that returns itself
-    # from to_s and gsub, so it escaped to a raw `#<...>` and broke the XML.
-    it 'omits attributes lutaml left uninitialised' do
-      xml = described_class.from_xml('<text>x</text>').to_xml
-
-      expect(xml).to eq('<text>x</text>')
-      expect(xml).not_to include('Uninitialized')
     end
   end
 

@@ -5,24 +5,13 @@ require_relative 'element'
 
 module Sirena
   module Svg
-    # SVG namespace, declared as a class because lutaml-model 0.8 rejects
-    # string URIs. The prefix belongs here too — passing it positionally to
-    # namespace() is deprecated and ignored.
-    class SvgNamespace < Lutaml::Xml::Namespace
-      uri 'http://www.w3.org/2000/svg'
-      prefix_default 'svg'
-      # Without this, lutaml's inherited serializer stamps xmlns="" on
-      # mapped children, putting them outside the SVG namespace.
-      element_form_default :qualified
-    end
-
     # SVG Document root element
     #
     # Represents the top-level <svg> element with namespace declarations,
     # viewBox, and dimension attributes. Contains all other SVG elements
     # as children.
     class Document < Lutaml::Model::Serializable
-      SVG_NAMESPACE = SvgNamespace.uri
+      SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
       XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/'
       SVG_VERSION = '1.2'
       SVG_BASE_PROFILE = 'tiny'
@@ -35,29 +24,6 @@ module Sirena
       attribute :xmlns, :string
       attribute :overflow, :string
       attribute :children, Element, collection: true
-
-      xml do
-        root 'svg', mixed: true
-        namespace SvgNamespace
-
-        map_attribute 'width', to: :width
-        map_attribute 'height', to: :height
-        map_attribute 'viewBox', to: :view_box
-        map_attribute 'version', to: :version
-        map_attribute 'baseProfile', to: :base_profile
-        map_attribute 'xmlns', to: :xmlns
-        map_attribute 'overflow', to: :overflow
-
-        map_element 'g', to: :children
-        map_element 'rect', to: :children
-        map_element 'circle', to: :children
-        map_element 'ellipse', to: :children
-        map_element 'line', to: :children
-        map_element 'path', to: :children
-        map_element 'polygon', to: :children
-        map_element 'polyline', to: :children
-        map_element 'text', to: :children
-      end
 
       # Initialize document with calculated viewBox if not provided
       #
