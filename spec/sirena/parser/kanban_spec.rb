@@ -985,5 +985,67 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(classed.classes).to eq(['café-class'])
       end
     end
+
+    # GreedyRun#try's `loop do ... break if remaining.zero? ... end` is the
+    # only thing that stops the loop once the source has no characters left.
+    # An unterminated `::icon(...)` body (no closing `)` before EOF) consumes
+    # every remaining character into one chunk, matches all of it (nothing in
+    # `[^)]` excludes end-of-input), and loops back with `chars_left == 0` -
+    # without the guard, `source.consume(0)` returns an empty chunk forever
+    # and the loop never terminates. A bounded-time assertion is used, not a
+    # structural one, for the same reason as the long-body context above: the
+    # property under test is that parsing actually returns (raises
+    # Sirena::ParseError for the missing `)`), not which atom class runs.
+    context 'with an unterminated icon, class or bracket body' do
+      it 'raises ParseError instead of hanging on an unterminated icon body' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[Task]\n  ::icon(unterminated") }
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'raises ParseError instead of hanging on an unterminated bracket label' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[unterminated") }
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # Unlike icon and bracket bodies, a class body has no closing delimiter
+      # at all - `:::classes` runs to end of line or EOF - so this shape
+      # does not fail to parse; it exercises the same EOF-terminated loop
+      # without hanging, which is the property this context is about.
+      it 'returns promptly (no closing delimiter to miss) for a class body running to EOF' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[Task]\n  :::unterminated") }
+        end.not_to raise_error
+      end
+    end
+
+    # GreedyRun#try's `total.empty?` check (kanban.rb:61) is what turns a
+    # zero-length match into a clean ParseError rather than succeeding with
+    # an empty slice. `::icon()` reaches it directly: the body between `(`
+    # and `)` is empty, so `[^)]` matches nothing and `total` is `''`.
+    context 'with an empty icon body' do
+      it 'raises ParseError for `::icon()` rather than an empty icon' do
+        expect do
+          parser.parse("kanban\n  id1[Task]\n  ::icon()\n")
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # `GreedyRun#to_s_inner` (kanban.rb:67) feeds `Atoms::Base#to_s`, which
+    # Parslet calls to describe an unlabelled atom (e.g. inside
+    # `Alternative#error_msg`'s "Expected one of [...]" listing, built from
+    # `alternatives.inspect` -> each atom's `#inspect` -> `#to_s` ->
+    # `#to_s_inner`). Exercised here directly on the same `GreedyRun`
+    # instance the grammar builds (`GreedyRun.new('[^)]')`, matching
+    # `icon_modifier`'s own construction), rather than fishing the exact
+    # instance back out of a failed parse tree.
+    context 'with GreedyRun#to_s_inner called directly' do
+      it 'describes the atom by its anchored regexp, matching icon_modifier\'s construction' do
+        atom = Sirena::Parser::Grammars::GreedyRun.new('[^)]')
+
+        expect(atom.to_s_inner(0)).to eq(Regexp.new('\A(?:[^)])*', Regexp::MULTILINE).inspect)
+      end
+    end
   end
 end
