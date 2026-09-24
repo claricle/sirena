@@ -69,7 +69,11 @@ module Sirena
       def build_column(column_data)
         column = Diagram::KanbanColumn.new(
           id: column_data[:id],
-          title: column_data[:title]
+          title: column_data[:title],
+          icon: column_data[:icon],
+          # No `|| []` fallback here: BoardBuilder#normalize_classes already
+          # guarantees an Array, so `column_data[:classes]` is never nil.
+          classes: column_data[:classes]
         )
 
         # Add cards to column
@@ -89,7 +93,10 @@ module Sirena
           ticket: card_data[:ticket],
           icon: card_data[:icon],
           label: card_data[:label],
-          priority: card_data[:priority]
+          priority: card_data[:priority],
+          # No `|| []` fallback here either: BoardBuilder#add_card always
+          # merges a normalize_classes result, so this is never nil either.
+          classes: card_data[:classes]
         )
       end
     end

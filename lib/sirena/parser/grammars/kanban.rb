@@ -5,6 +5,69 @@ require_relative "common"
 module Sirena
   module Parser
     module Grammars
+      # Matches a run of characters excluded by `char_class` (e.g. `'[^)]'`)
+      # in ONE native regex scan, avoiding Parslet's default
+      # `match(char_class).repeat(1)` (applies its atom once per character -
+      # DoS shape on a long `::icon(...)`/`:::...` body).
+      #
+      # Consumes CHARACTER-count chunks and matches each with Ruby's own
+      # (character-correct) `Regexp`, never `Parslet::Source#matches?`
+      # (returns the match length in BYTES; `Source#consume(n)` takes a
+      # CHARACTER count - mixing the two over-consumes on a multibyte body,
+      # e.g. `root[café]`).
+      class GreedyRun < Parslet::Atoms::Base
+        # `Parslet::Source#consume(n)` builds a `/(.|$){n}/` regexp to pull
+        # n characters at once, and Ruby's regexp engine refuses a repeat
+        # count above 100_000 (`RegexpError: too big number for repeat
+        # range`). A run longer than this chunk size is consumed in several
+        # calls instead of one, well under that ceiling, so an attacker
+        # cannot turn a still-huge (but realistic) body into a crash.
+        CONSUME_CHUNK = 50_000
+
+        def initialize(char_class)
+          super()
+          @char_class = char_class
+          @anchored = Regexp.new("\\A(?:#{char_class})*", Regexp::MULTILINE)
+        end
+
+        # Consumes chunk by chunk (character counts, never byte counts) and
+        # joins the parts ONCE at the end. A prior version rebuilt the
+        # accumulated `Parslet::Slice` on every chunk via `Slice#+`, which
+        # concatenates strings (`str + other.to_s`) - a full copy of
+        # everything consumed so far, on every chunk. That made an
+        # attacker-sized body (many chunks) quadratic again, just with a
+        # divisor of CONSUME_CHUNK instead of 1.
+        def try(source, context, _consume_all)
+          parts = []
+          start_slice = nil
+
+          loop do
+            remaining = source.chars_left
+            break if remaining.zero?
+
+            chunk = source.consume([remaining, CONSUME_CHUNK].min)
+            start_slice ||= chunk
+            chunk_str = chunk.to_s
+            matched = @anchored.match(chunk_str)[0]
+            parts << matched
+
+            if matched.bytesize < chunk_str.bytesize
+              source.bytepos -= chunk_str.bytesize - matched.bytesize
+              break
+            end
+          end
+
+          total = parts.join
+          return context.err(self, source, 'Expected at least one matching character') if total.empty?
+
+          succ(Parslet::Slice.new(start_slice.position, total, start_slice.line_cache))
+        end
+
+        def to_s_inner(_prec)
+          @anchored.inspect
+        end
+      end
+
       # Parslet grammar for Kanban diagrams
       class Kanban < Common
         rule(:diagram) do
@@ -19,7 +82,7 @@ module Sirena
         end
 
         rule(:content_line) do
-          empty_line | item_line
+          empty_line | modifier_line | item_line
         end
 
         rule(:empty_line) do
@@ -30,6 +93,32 @@ module Sirena
           str(' ').repeat.as(:indent) >>
             item >>
             (newline | eof)
+        end
+
+        # A standalone `::icon(...)` or `:::classes` line applies to the
+        # PREVIOUS item rather than declaring one of its own - mermaid's
+        # kanban shorthand for attaching an icon or classes without going
+        # through `@{ ... }` metadata. Mirrors mindmap.rb's
+        # `node_with_icon` / `node_with_class`, the existing precedent for
+        # this exact shorthand in this grammar family; `Builders::Kanban`
+        # applies it to the last item the same way mindmap's `TreeBuilder`
+        # applies it to the last node.
+        rule(:modifier_line) do
+          space?.as(:indent) >>
+            (icon_modifier | class_modifier) >>
+            space? >>
+            (newline | eof)
+        end
+
+        rule(:icon_modifier) do
+          str("::") >> match['iI'] >> match['cC'] >> match['oO'] >> match['nN'] >> str("(") >>
+            GreedyRun.new('[^)]').as(:icon) >>
+            str(")")
+        end
+
+        rule(:class_modifier) do
+          str(":::") >>
+            GreedyRun.new('[^\r\n]').as(:classes)
         end
 
         # An item can be either a column or a card. The label is optional:
@@ -76,7 +165,7 @@ module Sirena
         rule(:labelled_item) do
           identifier.as(:id) >>
             lbracket >>
-            match('[^\]]').repeat(1).as(:text) >>
+            GreedyRun.new('[^\]]').as(:text) >>
             rbracket
         end
 
@@ -130,8 +219,8 @@ module Sirena
         # below, rather than half-supporting a shape nothing here
         # understands.
         rule(:round_text) do
-          (str('"') >> markdown_string_body.absent? >> match('[^"]').repeat(1).as(:text) >> str('"')) |
-            (str('"').absent? >> match('[^()\]}]').repeat(1).as(:text))
+          (str('"') >> markdown_string_body.absent? >> GreedyRun.new('[^"]').as(:text) >> str('"')) |
+            (str('"').absent? >> GreedyRun.new('[^()\]}]').as(:text))
         end
 
         rule(:markdown_string_body) do
