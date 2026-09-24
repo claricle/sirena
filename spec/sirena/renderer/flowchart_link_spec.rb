@@ -7,7 +7,12 @@ require "spec_helper"
 # These examples read the drawn SVG back, and several hand a graph
 # straight to the renderer, so they belong to the renderer, not to the
 # parser that happens to feed it.
-RSpec.describe Sirena::Renderer::Flowchart do
+#
+# All single-user (this file only). `edge_group`/`edge_path` need example
+# state (`expect`), so the whole set lives in one `include`d module rather
+# than split module_function/included — nothing here is called at
+# describe-body level to generate examples, only from inside `it` blocks.
+module FlowchartLinkSpecHelpers
   # One node's rect, read off the node it belongs to rather than off
   # whichever rect happens to come first in the document. A coordinate may
   # be negative — a loop thrown up or left from a node near the origin
@@ -38,27 +43,76 @@ RSpec.describe Sirena::Renderer::Flowchart do
       .split.map { |corner| corner.split(",").map(&:to_f) }
   end
 
+  # Every "does not include" below would pass on an empty string, so
+  # the group and its path are asserted present here rather than in one
+  # example that only covers `---`.
+  def edge_group(link, **)
+    xml = Sirena.render("flowchart TD\n  A #{link} B\n", **)
+    group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+    expect(group).to start_with("<g id=\"edge-")
+    group
+  end
+
+  def edge_path(link)
+    path = edge_group(link)[/<path\b[^>]*>/]
+    expect(path).to start_with("<path")
+    path
+  end
+
+  def node_top(xml, id = "A")
+    node_rect(xml, id)[1]
+  end
+
+  def node_bottom(xml, id = "A")
+    _x, y, _width, height = node_rect(xml, id)
+    y + height
+  end
+
+  # A coordinate can be negative, and a regex that cannot match one
+  # drops the point silently rather than failing.
+  def path_points(xml)
+    group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+    group[/<path[^>]*d="([^"]*)"/, 1].scan(/(-?[\d.]+) (-?[\d.]+)/)
+      .map { |x, y| [x.to_f, y.to_f] }
+  end
+
+  def head_points(xml)
+    group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
+    group[/<polygon[^>]*points="([^"]*)"/, 1]
+      .split.map { |pair| pair.split(",").map(&:to_f) }
+  end
+
+  def tip_of(xml, edge)
+    xml[%r{<g id="edge-#{edge}".*?</g>}m][/<polygon[^>]*points="([^"]*)"/, 1]
+      .split.first.split(",").map(&:to_f)
+  end
+
+  # How far the tip is from the nearest edge of the drawn outline.
+  def gap_to(point, corners)
+    edges = corners.each_cons(2).to_a << [corners.last, corners.first]
+    edges.map { |a, b| distance_to_segment(point, a, b) }.min
+  end
+
+  def distance_to_segment(point, corner_a, corner_b)
+    px, py = point
+    ax, ay = corner_a
+    dx = corner_b[0] - ax
+    dy = corner_b[1] - ay
+    along = ((((px - ax) * dx) + ((py - ay) * dy)) /
+             ((dx * dx) + (dy * dy))).clamp(0.0, 1.0)
+
+    Math.hypot(px - (ax + (along * dx)), py - (ay + (along * dy)))
+  end
+end
+
+RSpec.describe Sirena::Renderer::Flowchart do
+  include FlowchartLinkSpecHelpers
+
   # The parser knowing a link's type is worth nothing if the renderer
   # draws them all the same. It did: every type reached one solid stroke
   # and a `url(#arrowhead)` that this document never defines, so `---`,
   # `--x`, `--o`, `o--o`, `===` and `-.-` rasterised identically.
   describe "what the renderer draws" do
-    # Every "does not include" below would pass on an empty string, so
-    # the group and its path are asserted present here rather than in one
-    # example that only covers `---`.
-    def edge_group(link, **options)
-      xml = Sirena.render("flowchart TD\n  A #{link} B\n", **options)
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
-      expect(group).to start_with("<g id=\"edge-")
-      group
-    end
-
-    def edge_path(link)
-      path = edge_group(link)[/<path\b[^>]*>/]
-      expect(path).to start_with("<path")
-      path
-    end
-
     it "draws nothing for an invisible link" do
       expect(edge_path("~~~")).to include('stroke="none"')
       expect(edge_group("~~~"))
@@ -644,29 +698,6 @@ RSpec.describe Sirena::Renderer::Flowchart do
   # deliberately not restated here so the two cannot drift apart. The head
   # sits where the loop meets the node again.
   describe "a link from a node to itself" do
-    def node_top(xml, id = "A")
-      node_rect(xml, id)[1]
-    end
-
-    def node_bottom(xml, id = "A")
-      _x, y, _width, height = node_rect(xml, id)
-      y + height
-    end
-
-    # A coordinate can be negative, and a regex that cannot match one
-    # drops the point silently rather than failing.
-    def path_points(xml)
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
-      group[/<path[^>]*d="([^"]*)"/, 1].scan(/(-?[\d.]+) (-?[\d.]+)/)
-        .map { |x, y| [x.to_f, y.to_f] }
-    end
-
-    def head_points(xml)
-      group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
-      group[/<polygon[^>]*points="([^"]*)"/, 1]
-        .split.map { |pair| pair.split(",").map(&:to_f) }
-    end
-
     it "loops past the node instead of drawing a line of no length" do
       xml = Sirena.render("flowchart TD\n  A --> A\n")
 
@@ -1094,28 +1125,6 @@ RSpec.describe Sirena::Renderer::Flowchart do
   # from the corners a box keeps, so a head arriving diagonally stopped
   # outside the shape it was pointing at. mmdc lands it on the outline.
   describe "the head on a node that is not a box" do
-    def tip_of(xml, edge)
-      xml[%r{<g id="edge-#{edge}".*?</g>}m][/<polygon[^>]*points="([^"]*)"/, 1]
-        .split.first.split(",").map(&:to_f)
-    end
-
-    # How far the tip is from the nearest edge of the drawn outline.
-    def gap_to(point, corners)
-      edges = corners.each_cons(2).to_a << [corners.last, corners.first]
-      edges.map { |a, b| distance_to_segment(point, a, b) }.min
-    end
-
-    def distance_to_segment(point, corner_a, corner_b)
-      px, py = point
-      ax, ay = corner_a
-      dx = corner_b[0] - ax
-      dy = corner_b[1] - ay
-      along = ((((px - ax) * dx) + ((py - ay) * dy)) /
-               ((dx * dx) + (dy * dy))).clamp(0.0, 1.0)
-
-      Math.hypot(px - (ax + (along * dx)), py - (ay + (along * dy)))
-    end
-
     # The box answer puts this tip 7.6 out past the diamond's sloped edge.
     it "lands on a diamond's sloped edge" do
       xml = Sirena.render("flowchart TD\n  A{x} --> A\n")

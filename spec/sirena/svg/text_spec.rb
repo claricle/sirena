@@ -94,10 +94,9 @@ RSpec.describe Sirena::Svg::Text do
 
   # `content` must stay readable through `Array(content)` regardless of
   # lutaml-model version -- see `Svg::Text#simple_body` (lib/sirena/svg/text.rb)
-  # and `svg_text_content` in spec/support for why. Mutation-check: drop
-  # `collection: true` from `attribute :content`; watched red via the
-  # `to_xml` specs above, which need `mixed: true`'s collection requirement
-  # to pass.
+  # for why. Mutation-check: drop `collection: true` from `attribute :content`;
+  # watched red via the `to_xml` specs above, which need `mixed: true`'s
+  # collection requirement to pass.
   describe '#content' do
     it 'reads back a scalar assignment as something Array() flattens to that scalar, on any lutaml-model 0.8.x' do
       text = described_class.new

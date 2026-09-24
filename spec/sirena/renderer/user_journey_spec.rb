@@ -88,7 +88,8 @@ RSpec.describe Sirena::Renderer::UserJourney do
 
       texts = svg.children.grep(Sirena::Svg::Text)
 
-      title_text = texts.find { |t| svg_text_content(t) == 'My Journey' }
+      # `content` is `collection: true`, so read it through Array(...).
+      title_text = texts.find { |t| Array(t.content).join == 'My Journey' }
       expect(title_text).not_to be_nil
     end
 
@@ -97,7 +98,7 @@ RSpec.describe Sirena::Renderer::UserJourney do
 
       texts = svg.children.grep(Sirena::Svg::Text)
 
-      section_text = texts.find { |t| svg_text_content(t) == 'Shopping' }
+      section_text = texts.find { |t| Array(t.content).join == 'Shopping' }
       expect(section_text).not_to be_nil
     end
 
