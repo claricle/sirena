@@ -24,6 +24,6 @@ flowchart TD
 ----
 
 .Rendered Output
-image::../../assets/examples/flowchart/01-basic-flow.svg[Basic Flowchart,600]
+image::../../../assets/examples/flowchart/01-basic-flow.svg[Basic Flowchart,600]
 
 '''
