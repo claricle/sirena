@@ -9,14 +9,24 @@ require 'spec_helper'
 #
 # At the boundary, on bare elements: a renderer inherits this by
 # construction, and a new one gets it without opting in.
-RSpec.describe Sirena::Svg do
-  describe 'opacity, which Tiny splits into fill and stroke' do
-    def rect(**attributes)
-      Sirena::Svg::Rect.new.tap do |r|
-        attributes.each { |name, value| r.public_send("#{name}=", value) }
-      end
+module SvgTinyPropertiesSpecHelpers
+  def rect(**attributes)
+    Sirena::Svg::Rect.new.tap do |r|
+      attributes.each { |name, value| r.public_send("#{name}=", value) }
     end
+  end
 
+  def text(**attributes)
+    Sirena::Svg::Text.new.tap do |t|
+      attributes.each { |name, value| t.public_send("#{name}=", value) }
+    end
+  end
+end
+
+RSpec.describe Sirena::Svg do
+  include SvgTinyPropertiesSpecHelpers
+
+  describe 'opacity, which Tiny splits into fill and stroke' do
     it 'paints both components at the whole-element fraction' do
       expect(rect(opacity: 0.3).to_xml)
         .to eq('<rect fill-opacity="0.3" stroke-opacity="0.3"/>')
@@ -92,12 +102,6 @@ RSpec.describe Sirena::Svg do
 
       expect(tspan.to_xml)
         .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
-    end
-  end
-
-  def text(**attributes)
-    Sirena::Svg::Text.new.tap do |t|
-      attributes.each { |name, value| t.public_send("#{name}=", value) }
     end
   end
 

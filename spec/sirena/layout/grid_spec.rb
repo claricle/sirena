@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Layout::Grid do
+module LayoutGridSpecHelpers
   def apply(graph)
     described_class.apply(graph)
   end
@@ -15,6 +15,10 @@ RSpec.describe Sirena::Layout::Grid do
     { id: id, width: 0, height: 0, children: children,
       labels: [label], metadata: { cluster: true } }
   end
+end
+
+RSpec.describe Sirena::Layout::Grid do
+  include LayoutGridSpecHelpers
 
   describe "a plain graph" do
     it "lays three nodes across and wraps the fourth" do
