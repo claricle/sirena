@@ -10916,9 +10916,7 @@
   {
     "case": "unknown/012_platform_flow-elk_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/013_platform_gitgraph_12.mmd",

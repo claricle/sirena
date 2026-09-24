@@ -139,6 +139,34 @@ RSpec.describe Sirena::Engine do
         end
       end
 
+      it 'detects flowchart-elk as a flowchart (unknown/012)' do
+        # mmdc renders flowchart-elk exactly like flowchart, only hinting
+        # at the elk layout engine. Sirena has no elk layout yet, so it
+        # renders like any other flowchart. Detection used to require the
+        # keyword be followed by whitespace/glyph/eof, so the `-elk`
+        # suffix fell through to DiagramTypeError before the parser saw it.
+        source = "flowchart-elk\nA --- B\n"
+
+        expect(engine.render(source)).to include('<svg')
+      end
+
+      it 'raises DiagramTypeError for every header only the -elk suffix would license' do
+        # mmdc recognises exactly one flowchart suffix, spelled exactly
+        # `-elk` (its own detector is `/^\s*flowchart-elk/`, no `i` flag).
+        # A detector that widened any of these three axes -- attaching the
+        # suffix to `graph`, accepting an arbitrary word after `flowchart-`,
+        # or matching the suffix case-insensitively -- would route the
+        # source to the flowchart parser and raise ParseError there instead
+        # of DiagramTypeError at detection, the wrong failure for an
+        # unsupported header.
+        %w[graph-elk flowchart-bogus flowchart-ELK FLOWCHART-elk].each do |keyword|
+          source = "#{keyword}\nA --- B\n"
+
+          expect { engine.render(source) }
+            .to raise_error(Sirena::Engine::DiagramTypeError)
+        end
+      end
+
       it 'names the type for a bare keyword, as the grammar does' do
         # mmdc renders `graph` on its own. Detection wanted a character
         # after the keyword, so this never reached the parser at all. It
