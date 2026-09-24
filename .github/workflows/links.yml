@@ -66,7 +66,7 @@ jobs:
             --verbose
             --no-progress
             --config docs/lychee.toml
-            --base docs/_site
+            --root-dir docs/_site
             --remap 'https://claricle.github.io/sirena/ file://${{ github.workspace }}/docs/_site/'
             --remap 'https://www.claricle.org/sirena/ file://${{ github.workspace }}/docs/_site/'
             --include '^file://${{ github.workspace }}/docs/_site/diagram_types/'

@@ -31,6 +31,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
+      - name: Setup Ruby (repo root, for example assets)
+        uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
         with:
@@ -38,6 +44,9 @@ jobs:
           bundler-cache: true
           cache-version: 0
           working-directory: docs
+
+      - name: Generate example SVGs into docs/assets
+        run: bundle exec rake examples:copy_to_docs
 
       - name: Setup Pages
         id: pages
