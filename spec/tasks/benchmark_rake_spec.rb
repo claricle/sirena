@@ -138,6 +138,16 @@ RSpec.describe "tasks/benchmark.rake" do
   end
 
   describe "mmdc failure handling" do
+    # with_fake_executable writes a #!/bin/sh script and relies on PATH-based
+    # lookup to shadow a real executable -- Windows has neither shebang
+    # execution nor bare-name PATH resolution the same way, so a fake "ruby"
+    # or "mmdc" placed at the front of PATH does not shadow the real one; it
+    # instead breaks Ruby's OWN subsequent subprocess calls (observed on CI:
+    # "The system cannot find the path specified" repeated for unrelated
+    # system() calls after the fake executable is installed). Same convention
+    # as spec/scripts/hardened_mmdc_spec.rb and spec/scripts/mermaid_diff_spec.rb.
+    before { skip("the harness is POSIX-only") if Gem.win_platform? }
+
     around do |example|
       original_application = Rake.application
       Rake.application = Rake::Application.new
