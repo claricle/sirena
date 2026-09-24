@@ -943,7 +943,7 @@ RSpec.describe Sirena::Parser::Kanban do
     # used the same `match(char_class).repeat(1)` shape, which Parslet
     # applies once PER CHARACTER - a real DoS shape on untrusted input (an
     # icon body of 50_000 chars took ~18.7s on the unfixed grammar; see the
-    # GreedyRun atom in lib/sirena/parser/grammars/kanban.rb). A bounded-time
+    # GreedyRun atom in lib/sirena/parser/atoms/greedy_run.rb). A bounded-time
     # assertion is used here, not a structural one, because the property
     # under test IS wall-clock behaviour - a structural check (e.g. asserting
     # which atom class the grammar uses) would pass on a differently-broken
@@ -1024,7 +1024,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    # GreedyRun#try's `total.empty?` check (kanban.rb:61) is what turns a
+    # GreedyRun#try's `total.empty?` check (atoms/greedy_run.rb:59) is what turns a
     # zero-length match into a clean ParseError rather than succeeding with
     # an empty slice. `::icon()` reaches it directly: the body between `(`
     # and `)` is empty, so `[^)]` matches nothing and `total` is `''`.
@@ -1036,7 +1036,7 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    # `GreedyRun#to_s_inner` (kanban.rb:67) feeds `Atoms::Base#to_s`, which
+    # `GreedyRun#to_s_inner` (atoms/greedy_run.rb:64) feeds `Atoms::Base#to_s`, which
     # Parslet calls to describe an unlabelled atom (e.g. inside
     # `Alternative#error_msg`'s "Expected one of [...]" listing, built from
     # `alternatives.inspect` -> each atom's `#inspect` -> `#to_s` ->
@@ -1046,7 +1046,7 @@ RSpec.describe Sirena::Parser::Kanban do
     # instance back out of a failed parse tree.
     context 'with GreedyRun#to_s_inner called directly' do
       it "describes the atom by its anchored regexp, matching icon_modifier's construction" do
-        atom = Sirena::Parser::Grammars::GreedyRun.new('[^)]')
+        atom = Sirena::Parser::Atoms::GreedyRun.new('[^)]')
 
         # Asserted as a literal string, not `Regexp.new(...).inspect`, so the
         # spec does not re-derive its own expectation using the same
