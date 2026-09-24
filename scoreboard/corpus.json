@@ -7386,30 +7386,22 @@
   {
     "case": "kanban/024_parser_knbn-13_should_be_possible_to_set_an_icon_for_the_node_23.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/025_parser_knbn-14_should_be_possible_to_set_classes_for_the_node_24.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/026_parser_knbn-15_should_be_possible_to_set_both_classes_and_icon_for_the_node_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/027_parser_knbn-16_should_be_possible_to_set_both_classes_and_icon_for_the_node_26.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/028_parser_knbn-17_should_be_possible_to_use_node_syntax_in_the_descriptions_27.mmd",
@@ -7428,9 +7420,7 @@
   {
     "case": "kanban/030_parser_knbn-19_should_be_possible_to_have_a_child_after_a_class_assignment_29.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/031_parser_knbn-20_should_be_possible_to_have_meaningless_empty_rows_in_a_kanban_abc124_30.mmd",
