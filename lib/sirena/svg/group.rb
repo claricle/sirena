@@ -13,32 +13,6 @@ module Sirena
     class Group < Element
       attribute :children, Element, collection: true
 
-      xml do
-        root 'g'
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'transform', to: :transform
-        map_attribute 'fill', to: :fill
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        # A parsed Group opacity becomes separate fill and stroke opacities on
-        # output, which is not equivalent to compositing one group surface.
-        # Sirena accepts the deviation because no renderer sets opacity on a Group.
-        map_attribute 'opacity', to: :opacity
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-
-        map_element 'g', to: :children
-        map_element 'rect', to: :children
-        map_element 'circle', to: :children
-        map_element 'ellipse', to: :children
-        map_element 'line', to: :children
-        map_element 'path', to: :children
-        map_element 'polygon', to: :children
-        map_element 'polyline', to: :children
-        map_element 'text', to: :children
-      end
-
       def initialize(**args)
         super(**args)
         self.children ||= []

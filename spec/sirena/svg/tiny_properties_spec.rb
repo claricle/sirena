@@ -93,12 +93,20 @@ RSpec.describe Sirena::Svg do
       expect(group.to_xml).to eq('<g fill-opacity="0.3" stroke-opacity="0.3"/>')
     end
 
-    # Sirena never emits a raw `opacity=` attribute -- it always translates to
-    # fill/stroke-opacity first -- so this is the only proof that a FOREIGN
-    # document's `opacity=` attribute (one Sirena did not write) still folds
-    # into fill/stroke-opacity instead of being silently dropped.
-    it 'folds a foreign document\'s raw opacity into fill and stroke on Tspan' do
-      tspan = Sirena::Svg::Tspan.from_xml('<tspan opacity="0.5">text</tspan>')
+    # Tspan inherits opacity-folding from Element, the same way every other
+    # class does -- proven by building one directly, the way a renderer
+    # would, rather than round-tripping through XML (sirena/02 removed the
+    # from_xml path).
+    #
+    # Diagnostic, not a fix-prover: this only exercises to_xml, which sirena/02
+    # never touches, so it stays green whether or not the xml do block is
+    # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
+    # only check for Tspan opacity-folding since no other spec sets opacity
+    # on a bare Tspan and reads to_xml back.
+    it 'folds opacity into fill and stroke on Tspan' do
+      tspan = Sirena::Svg::Tspan.new
+      tspan.opacity = '0.5'
+      tspan.content = 'text'
 
       expect(tspan.to_xml)
         .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
