@@ -81,15 +81,16 @@ module Sirena
           end
 
           def finalize
-            # Adjust all levels to be relative to minimum indentation
+            # Nothing to link if no real node was ever added.
             return if @min_indent.nil?
 
-            @all_nodes.each do |node|
-              indent_size = node.delete(:_indent_size)
-              node[:level] = calculate_relative_level(indent_size, @min_indent)
-            end
-
-            # Rebuild hierarchy with corrected levels
+            # Rebuild hierarchy directly from each node's raw indentation,
+            # not a level number banded to a fixed 2- or 4-space step. The
+            # banded approach broke whenever one level's indent jumped by an
+            # amount the fixed band didn't expect (e.g. a first indent step
+            # of 4 columns from a zero-indent root): it produced a level
+            # with no entry below it in the stack, so the child was computed
+            # but never linked as anyone's child.
             rebuild_hierarchy
           end
 
@@ -97,29 +98,40 @@ module Sirena
 
           def rebuild_hierarchy
             @root = nil
-            @level_stack = []
+            # Stack of [indent_size, node] for the current ancestor chain:
+            # each new node pops every entry whose indent is >= its own
+            # (those are siblings or deeper nodes it isn't nested under),
+            # then attaches under whatever remains on top.
+            indent_stack = []
 
             @all_nodes.each do |node|
-              level = node[:level]
+              indent_size = node.delete(:_indent_size) || 0
 
               # Clear old parent/children relationships
               node[:children] = []
               node.delete(:parent)
 
-              if level == 0
-                @root = node
-                @level_stack = [node]
-              else
-                # Find parent at previous level
-                parent = @level_stack[level - 1]
-                if parent
-                  parent[:children] << node
-                  node[:parent] = parent
-                end
+              indent_stack.pop while indent_stack.any? && indent_stack.last[0] >= indent_size
 
-                # Update stack
-                @level_stack = @level_stack[0..level - 1] + [node]
+              if indent_stack.empty?
+                # A second node with nothing above it in the stack is a
+                # second root -- Mermaid rejects this ("Multiple roots are
+                # illegal"). Without this guard it silently replaced @root
+                # via ||= below and the first root's whole subtree, still
+                # linked as node[:children] on the dropped node, vanished
+                # from the diagram with no error.
+                raise Sirena::Parser::ParseError, 'Multiple roots are illegal' if @root
+
+                node[:level] = 0
+                @root = node
+              else
+                parent = indent_stack.last[1]
+                node[:level] = parent[:level] + 1
+                parent[:children] << node
+                node[:parent] = parent
               end
+
+              indent_stack << [indent_size, node]
             end
           end
 
@@ -134,18 +146,6 @@ module Sirena
                         end
 
             indent_str.length
-          end
-
-          def calculate_relative_level(indent_size, min_indent)
-            relative_indent = indent_size - min_indent
-            return 0 if relative_indent <= 0
-
-            # Try 2-space indentation first
-            level = relative_indent / 2
-            # If not evenly divisible, try 4-space
-            level = relative_indent / 4 if relative_indent % 2 != 0
-
-            level
           end
 
           private

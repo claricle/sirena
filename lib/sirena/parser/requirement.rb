@@ -27,11 +27,18 @@ module Sirena
       # @return [Diagram::Requirement] the parsed requirement diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        tree = parse_with_grammar(Grammars::Requirement.new, source)
+        tree = parse_tree(source)
         Builders::Requirement.apply(tree)
       end
 
       private
+
+      def parse_tree(source)
+        parse_with_grammar(Grammars::Requirement.new, source)
+      rescue EncodingError, ArgumentError => e
+        raise ParseError, "Parse error: source encoding #{source.encoding} " \
+                          "cannot be read as a requirement diagram (#{e.message})"
+      end
 
       # Formats a Parslet parse error with context.
       #

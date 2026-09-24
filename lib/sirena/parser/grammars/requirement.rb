@@ -30,12 +30,80 @@ module Sirena
         end
 
         rule(:statement) do
-          requirement_statement |
+          acc_title_declaration |
+            acc_descr_declaration |
+            requirement_statement |
             element_statement |
             relationship_statement |
             style_statement |
             class_definition_statement |
             class_assignment_statement
+        end
+
+        # JS's `\s` (what mermaid's own accTitle/accDescr lexer tokens use)
+        # is wider than ASCII space/tab/newline. Ruby's `[[:space:]]` is not
+        # the same set: it misses U+FEFF and adds U+0085, so spell out the JS
+        # characters here.
+        # `whitespace?` from Common (`lib/sirena/parser/grammars/common.rb`)
+        # is ASCII-only and out of scope to widen here (common.rb is shared
+        # by every diagram type); this local override shadows it for the
+        # three accTitle/accDescr rules below only.
+        ACC_WHITESPACE_CHARS = '\t\v\f\r\n\x20\u00A0\u1680' \
+          '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
+        private_constant :ACC_WHITESPACE_CHARS
+
+        rule(:whitespace?) { match[ACC_WHITESPACE_CHARS].repeat }
+
+        # Accessibility title. Mermaid's lexer token is a SINGLE regex,
+        # `accTitle\s*":"\s*` -- \s matches a newline (so the colon and the
+        # value after it may start on the line after the keyword) but NOT a
+        # `%%` comment, which isn't part of `\s` and has no rule of its own
+        # inside this token. `whitespace?` (whitespace only, no comment)
+        # mirrors that; the full comment-aware `ws?` would wrongly accept
+        # `accTitle%% c\n: T`, which this token can't match at all upstream.
+        #
+        # `.repeat(1)`, not `.repeat`: mermaid's lexer token requires the
+        # value to be non-empty (verified against mermaid 11.12.0 --
+        # `"accTitle:\n"` with nothing after is a parse error there, not an
+        # empty title; `\s*` only skips leading blank lines before a
+        # mandatory value). `.repeat` (0+) would accept and silently emit
+        # `''`, matching nothing mermaid can actually produce.
+        rule(:acc_title_declaration) do
+          str('accTitle') >> whitespace? >> colon >> whitespace? >>
+            (newline.absent? >> any).repeat(1).as(:acc_title) >>
+            (newline | eof)
+        end
+
+        # Accessibility description (single or multi-line)
+        rule(:acc_descr_declaration) do
+          acc_descr_single_line | acc_descr_multi_line
+        end
+
+        # `.repeat(1)` for the same reason as acc_title_declaration above:
+        # mermaid errors on `"accDescr:\n"` with nothing after rather than
+        # producing an empty description (verified against 11.12.0). The
+        # brace form below (`accDescr {}`) is a different lexer token and
+        # DOES allow an empty value there -- confirmed separately -- so it
+        # keeps `.repeat` (0+).
+        rule(:acc_descr_single_line) do
+          str('accDescr') >> whitespace? >> colon >> whitespace? >>
+            (newline.absent? >> any).repeat(1).as(:acc_descr) >>
+            (newline | eof)
+        end
+
+        # Mermaid's multiline lexer token is likewise the single regex
+        # `accDescr\s*"{"\s*` (whitespace only, no comment), so the opening
+        # brace may also start on a later line than the keyword. Its body
+        # state (`[^\}]*`) is popped by `}` alone -- the grammar never
+        # requires a NEWLINE after that closing brace, so a statement may
+        # follow immediately on the same line (`accDescr {x}accTitle: y`
+        # parses both directives upstream). No `line_end` after `rbrace`
+        # here: the enclosing `statements` rule's own `ws?` absorbs
+        # whatever separates this from the next statement, including none.
+        rule(:acc_descr_multi_line) do
+          str('accDescr') >> whitespace? >> lbrace >> whitespace? >>
+            (rbrace.absent? >> any).repeat.as(:acc_descr) >>
+            rbrace
         end
 
         # Requirement: requirement [type] name { properties }

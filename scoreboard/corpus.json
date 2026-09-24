@@ -7563,7 +7563,9 @@
   {
     "case": "mindmap/014_rendering_mindmap_spec_mindmap_13.mmd",
     "verdict": "valid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/015_rendering_mindmap_spec_mindmap_14.mmd",
@@ -7588,9 +7590,7 @@
   {
     "case": "mindmap/019_rendering_mindmap_spec_mindmap_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "mindmap/020_rendering_mindmap_spec_mindmap_19.mmd",
@@ -7652,12 +7652,16 @@
   {
     "case": "mindmap/031_parser_5_multiple_roots_are_illegal_30.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/032_parser_mmp-6_real_root_in_wrong_place_31.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/033_parser_mmp-7_should_handle_an_id_and_type_for_a_node_definition_32.mmd",
@@ -7767,9 +7771,7 @@
   {
     "case": "mindmap/054_spec_diagram-orchestration_spec_53.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "mindmap/055_spec_diagram-orchestration_spec_54.mmd",
@@ -8375,9 +8377,7 @@
   {
     "case": "requirement/004_parser_will_use_a_accessibility_title_and_description_accdescr__3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "requirement/005_parser_will_use_a_accessibility_title_and_multiline_description_accdescr__4.mmd",
