@@ -12,6 +12,9 @@ module Sirena
       # styling directives, and class definitions from Parslet parse trees
       # into Requirement objects.
       class Requirement < Parslet::Transform
+        JS_WHITESPACE_AT_EDGE = /\A[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+|[\t\v\f\r\n\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]+\z/
+        private_constant :JS_WHITESPACE_AT_EDGE
+
         # Requirement type mapping (for shorthand to full type)
         REQUIREMENT_TYPE_MAP = {
           'functionalRequirement' => 'functionalRequirement',
@@ -65,8 +68,25 @@ module Sirena
               # Class assignment
               assignment = create_class_assignment(stmt)
               diagram.add_class_assignment(assignment)
+            elsif stmt[:acc_title]
+              diagram.acc_title = acc_value(stmt[:acc_title])
+            elsif stmt[:acc_descr]
+              diagram.acc_description = acc_value(stmt[:acc_descr])
             end
           end
+        end
+
+        # A zero-length accDescr capture (e.g. "accDescr {}", the only
+        # acc_title/acc_descr grammar rule that can legally capture nothing
+        # -- see acc_descr_multi_line in grammars/requirement.rb) comes back
+        # from Parslet as an empty Array, not an empty String -- `[].to_s`
+        # is the literal text "[]", not "". Route every acc_title/acc_descr
+        # value through this so an empty directive value becomes "",
+        # matching Mermaid.
+        def self.acc_value(captured)
+          return '' if captured.is_a?(Array) && captured.empty?
+
+          captured.to_s.gsub(JS_WHITESPACE_AT_EDGE, '')
         end
 
         def self.create_requirement(stmt)
