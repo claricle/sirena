@@ -4,8 +4,8 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `baseline` | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `baseline` | < 30 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins` | < 10 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml) | < 30 min |
 
 Reserved, not yet wired: lint (08), snippet spec (16), corpus (02b),
 parity (14), conformance (04), fresh-resolution install (01). The
@@ -41,19 +41,8 @@ Worked example, a conformance job for the full lane:
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
         with: { ruby-version: '3.3', bundler-cache: true }
       - run: bundle exec rspec spec/svg_conformance_spec.rb
-  # ...and in full-lane:  needs: [baseline, docs-build, links, conformance]
+  # ...and in full-lane:  needs: [docs-build, links, conformance]
 ```
-
-## Baseline for the scoreboard guard
-
-`scripts/ci_baseline.rb` (job `baseline`) outputs `mode` and `sha`:
-
-| Event | Baseline |
-|---|---|
-| pull_request, including fork PRs | merge-base of the PR's base sha and HEAD |
-| merge_group | merge-base of the queue's `base_sha` and HEAD |
-| push | `github.event.before` (new branch: consistency-only) |
-| workflow_dispatch, schedule (nightly) | none: consistency-only |
 
 ## External pins
 
@@ -72,7 +61,7 @@ Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
 metanorma tool installers, private fonts. Its `tests-passed` and
 `do-release` repository dispatches moved to the `cascade` job, and now fire
 only on push events (generic-rake also fired on pull requests). `cascade`
-needs only `fast-lane` (baseline, the `unit` matrix, pins), matching the old
+needs only `fast-lane` (the `unit` matrix, pins), matching the old
 gate on the test matrix; `links` and the rest of `full-lane` do not gate it,
 so an external-link outage cannot suppress a release. The Ruby/OS matrix is
 hard-coded in `unit`; it was previously fetched from metanorma's
