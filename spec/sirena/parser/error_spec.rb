@@ -34,8 +34,11 @@ RSpec.describe Sirena::Parser::Error do
     end
   end
 
-  # Sweeps the whole fixture directory and only asserts `not_to raise_error`.
-  describe 'fixture files' do
+  # :corpus - sweeps the whole fixture directory and only asserts
+  # `not_to raise_error`. Runs in `spec:corpus`, isolated from the
+  # coverage-collecting `spec:unit` run: see .simplecov and
+  # tasks/coverage.rake.
+  describe 'fixture files', :corpus do
     Dir.glob('spec/mermaid/error/*.mmd').each do |fixture_file|
       it "parses #{File.basename(fixture_file)}" do
         source = File.read(fixture_file)
