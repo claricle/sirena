@@ -146,7 +146,7 @@ RSpec.describe Sirena::Parser::UserJourney do
 
       cases.each do |filename, expected_title|
         it "parses #{filename}" do
-          source = File.read("spec/mermaid/user_journey/#{filename}")
+          source = File.read(File.expand_path("../../mermaid/user_journey/#{filename}", __dir__))
 
           diagram = parser.parse(source)
 

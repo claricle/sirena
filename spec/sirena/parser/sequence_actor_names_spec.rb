@@ -14,17 +14,21 @@ require "rexml/document"
 # of §8.5, and §8.6 are hand-written minimal documents with no corpus case
 # behind them; §8.3 and §8.6 preserve base behaviour, the first two rows
 # of §8.5 are new behaviour that raises on base.
-RSpec.describe Sirena::Parser::Sequence do
-  let(:parser) { described_class.new }
-
+module SequenceActorNamesHelpers
   def ids_for(path)
     parser.parse(File.read(path)).participants.map(&:id)
   end
+end
+
+RSpec.describe Sirena::Parser::Sequence do
+  include SequenceActorNamesHelpers
+
+  let(:parser) { described_class.new }
 
   describe "the actor-name token — four sub-shapes" do
     it "keeps a dash inside an actor name distinct from the arrow" do
       ids = ids_for(
-        "spec/mermaid/sequence/012_parser_should_handle_dashes_in_actor_names_11.mmd"
+        File.expand_path("../../mermaid/sequence/012_parser_should_handle_dashes_in_actor_names_11.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[Alice-in-Wonderland Bob])
@@ -32,7 +36,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "keeps an = inside a participant name distinct from an assignment" do
       ids = ids_for(
-        "spec/mermaid/sequence/014_parser_should_handle_equals_in_participant_names_13.mmd"
+        File.expand_path("../../mermaid/sequence/014_parser_should_handle_equals_in_participant_names_13.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[Alice=Wonderland Bob])
@@ -40,7 +44,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "accepts a leading-digit actor name" do
       ids = ids_for(
-        "spec/mermaid/sequence/031_parser_should_handle_notes_and_messages_without_wrap_specified_30.mmd"
+        File.expand_path("../../mermaid/sequence/031_parser_should_handle_notes_and_messages_without_wrap_specified_30.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[1 2 3 4])
@@ -58,7 +62,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # (`Alice ()->>() Bob`).
     it "discards () as a central-connection decoration, not actor-name material" do
       ids = ids_for(
-        "spec/mermaid/sequence/010_rendering_sequencediagram-v2_spec_sequence_9.mmd"
+        File.expand_path("../../mermaid/sequence/010_rendering_sequencediagram-v2_spec_sequence_9.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -74,7 +78,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # source returns exactly the three declared actors.
     it "does not turn a central-connection decoration into an implicit actor" do
       ids = ids_for(
-        "spec/mermaid/sequence/014_rendering_sequencediagram-v2_spec_sequence_13.mmd"
+        File.expand_path("../../mermaid/sequence/014_rendering_sequencediagram-v2_spec_sequence_13.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -164,7 +168,7 @@ RSpec.describe Sirena::Parser::Sequence do
     it "does not let the alias keyword eat the label" do
       diagram = parser.parse(
         File.read(
-          "spec/mermaid/sequence/030_parser_should_handle_different_line_breaks_29.mmd"
+          File.expand_path("../../mermaid/sequence/030_parser_should_handle_different_line_breaks_29.mmd", __dir__)
         )
       )
 
@@ -202,7 +206,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # entries, none of the decorated duplicates.
     it "parses and discards @{...} shape metadata" do
       ids = ids_for(
-        "spec/mermaid/sequence/017_rendering_sequencediagram-v2_spec_sequence_16.mmd"
+        File.expand_path("../../mermaid/sequence/017_rendering_sequencediagram-v2_spec_sequence_16.mmd", __dir__)
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie David Eve])
@@ -268,7 +272,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # root element's name is the property actually being claimed.
     bucket_cases.each do |case_name|
       it "parses #{case_name} and renders well-formed SVG" do
-        source = File.read("spec/mermaid/sequence/#{case_name}.mmd")
+        source = File.read(File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__))
 
         svg = Sirena::Engine.new.render(source)
 
@@ -281,7 +285,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # name (see the plan's declared residual on this case).
     it "parses the unspecced bonus case 020 and renders well-formed SVG" do
       source = File.read(
-        "spec/mermaid/sequence/020_rendering_sequencediagram_spec_sequence_19.mmd"
+        File.expand_path("../../mermaid/sequence/020_rendering_sequencediagram_spec_sequence_19.mmd", __dir__)
       )
 
       svg = Sirena::Engine.new.render(source)
@@ -379,7 +383,7 @@ RSpec.describe Sirena::Parser::Sequence do
     it "renders an empty trailing message as an empty string, not the literal []" do
       diagram = parser.parse(
         File.read(
-          "spec/mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd"
+          File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__)
         )
       )
 
@@ -392,7 +396,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "does not leak the literal [] into the rendered SVG" do
       source = File.read(
-        "spec/mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd"
+        File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__)
       )
 
       svg = Sirena::Engine.new.render(source)

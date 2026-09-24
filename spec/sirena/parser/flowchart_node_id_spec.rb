@@ -2,23 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
-  # Spelled out rather than read from the grammar: driving the examples off
-  # the grammar's own constant means DELETING a word silently deletes its
-  # test. The first example in that block pins the two lists against each
-  # other, so adding or removing a reserved word fails loudly.
-  #
-  # A group method rather than a constant: a constant assigned inside a
-  # block lands on Object however it is written here, so it would leak to
-  # every other spec file. This is reachable both at group level, where the
-  # examples are generated, and from inside one.
-  def self.expected_reserved_words
-    %w[
-      swimlane-beta interpolate flowchart linkStyle subgraph classDef
-      _parent _blank _self graph style class _top end
-    ].freeze
-  end
-
+module FlowchartNodeIdSpecHelpers
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -62,6 +46,44 @@ RSpec.describe Sirena::Parser::Flowchart do
   rescue Parslet::ParseFailed
     false
   end
+
+  # Wraps a bare id into the source `subgraph_name_parses?` wants, so the
+  # table below can list ids instead of repeating the diagram each time.
+  def names_a_subgraph?(id)
+    subgraph_name_parses?(
+      "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n"
+    )
+  end
+
+  def click_parses?(line)
+    parses?("graph TD\nA-->B\n#{line}\n")
+  end
+
+  def bare_subgraph_parses?(name)
+    subgraph_name_parses?("graph TD\nsubgraph #{name}\nX-->Y\nend\n")
+  end
+
+  module_function
+
+  # Spelled out rather than read from the grammar: driving the examples off
+  # the grammar's own constant means DELETING a word silently deletes its
+  # test. The first example in that block pins the two lists against each
+  # other, so adding or removing a reserved word fails loudly.
+  #
+  # A group method rather than a constant: a constant assigned inside a
+  # block lands on Object however it is written here, so it would leak to
+  # every other spec file. This is reachable both at group level, where the
+  # examples are generated, and from inside one.
+  def expected_reserved_words
+    %w[
+      swimlane-beta interpolate flowchart linkStyle subgraph classDef
+      _parent _blank _self graph style class _top end
+    ].freeze
+  end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartNodeIdSpecHelpers
 
   describe "node ids mermaid accepts" do
     # Sirena required a programming identifier — a letter or underscore,
@@ -383,7 +405,7 @@ RSpec.describe Sirena::Parser::Flowchart do
   # a reserved word and takes all four for the rest, so the split is the word,
   # not the shape.
   describe "words mermaid lexes as keywords" do
-    expected_reserved_words.each do |word|
+    FlowchartNodeIdSpecHelpers.expected_reserved_words.each do |word|
       it "refuses #{word} as a node id" do
         expect { described_class.new.parse("graph TD\n#{word}-->Z\n") }
           .to raise_error(Sirena::Parser::ParseError)
@@ -1154,14 +1176,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   # all three directive words. `end` is a plain name there however the id
   # starts; `click` is NOT, though it took a link-bearing body to see it.
   describe "where mermaid looks again in a subgraph name" do
-    # Wraps a bare id into the source `subgraph_name_parses?` wants, so the
-    # table below can list ids instead of repeating the diagram each time.
-    def names_a_subgraph?(id)
-      subgraph_name_parses?(
-        "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n"
-      )
-    end
-
     {
       "1default" => false, "##default" => false, "Zédefault" => false,
       "#href" => false, "é_self" => false, "1interpolate" => false,
@@ -1249,10 +1263,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   # mermaid is in its click state there and takes characters no node id may
   # hold, so reusing the node guards refused targets mmdc draws.
   describe "a click target" do
-    def click_parses?(line)
-      parses?("graph TD\nA-->B\n#{line}\n")
-    end
-
     ["A--B", "A.-B", "-->", "A[B]", "A|B", "A:B", "A\"B", "A;", "A~B",
      "A@B", "A{B}", "A=B", "A,B", "A<B>"].each do |target|
       it "takes #{target} as a target" do
@@ -1394,10 +1404,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   # instead of opening it. It is the same hunt the trailing words run, and
   # it restarts in the same places.
   describe "a subgraph name that hunts up an end" do
-    def bare_subgraph_parses?(name)
-      subgraph_name_parses?("graph TD\nsubgraph #{name}\nX-->Y\nend\n")
-    end
-
     # Bare names whose hunt lands on `end`. Trailing whitespace does not
     # save them, in any mixture: mermaid's own token is `end\b\s*`, so
     # the run goes with the word.

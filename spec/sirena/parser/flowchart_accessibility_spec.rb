@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
+module FlowchartAccessibilitySpecHelpers
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -15,6 +15,10 @@ RSpec.describe Sirena::Parser::Flowchart do
       .find { |node| node.key?(:acc_text) }&.fetch(:acc_text)
       &.to_s
   end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartAccessibilitySpecHelpers
 
   describe "accessibility statements" do
     # mermaid puts these in the SVG's aria attributes. They are ordinary

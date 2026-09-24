@@ -2,7 +2,18 @@
 
 require 'spec_helper'
 
+module KanbanSpecHelpers
+  # mermaid gates each field on JS truthiness after js-yaml resolves the
+  # scalar, so these are never set and the field falls back. Every value
+  # below was driven through mmdc 11.12.0, not recalled.
+  def title_for(value)
+    parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
+  end
+end
+
 RSpec.describe Sirena::Parser::Kanban do
+  include KanbanSpecHelpers
+
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -642,13 +653,6 @@ RSpec.describe Sirena::Parser::Kanban do
     end
 
     context 'with a metadata value mermaid resolves as falsy' do
-      # mermaid gates each field on JS truthiness after js-yaml resolves the
-      # scalar, so these are never set and the field falls back. Every value
-      # below was driven through mmdc 11.12.0, not recalled.
-      def title_for(value)
-        parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
-      end
-
       it 'falls back for every spelling of zero' do
         # The signed forms carry the leading-sign branch of each radix
         # pattern, and `0e-0` the exponent's - the only sign the float
