@@ -11,6 +11,25 @@ require "fileutils"
 # which is all the DSL calls at the tail of the file need.
 load File.expand_path("../../tasks/corpus.rake", __dir__)
 
+# Drives Sirena::Corpus.check! without the real corpus or committed
+# scoreboard. Include in a spec that defines `committed`.
+module CorpusCheckStubs
+  def stub_fresh_run(passes)
+    results = passes.transform_values { |pass| { pass: pass, stage: "parse", exception_class: "X" } }
+    allow(described_class).to receive_messages(
+      load_scoreboard: committed, cases: results.keys, run_cases: results, verdicts: {}
+    )
+  end
+
+  # check! aborts with SystemExit; returns its status, or 0 if it returns.
+  def exit_status_of
+    yield
+    0
+  rescue SystemExit => e
+    e.status
+  end
+end
+
 RSpec.describe Sirena::Corpus do
   describe ".types" do
     it "lists the real corpus type directories" do

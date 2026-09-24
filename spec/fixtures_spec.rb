@@ -8,8 +8,8 @@ RSpec.describe 'Reference SVG Fixtures' do
   let(:engine) { Sirena::Engine.new }
 
   shared_examples 'validates against reference fixture' do |diagram_type, baseline_ratio|
-    let(:input_path) { "spec/fixtures/#{diagram_type}/input.mmd" }
-    let(:expected_path) { "spec/fixtures/#{diagram_type}/expected.svg" }
+    let(:input_path) { File.expand_path("fixtures/#{diagram_type}/input.mmd", __dir__) }
+    let(:expected_path) { File.expand_path("fixtures/#{diagram_type}/expected.svg", __dir__) }
     let(:input_mmd) { File.read(input_path) }
     let(:expected_svg) { File.read(expected_path) }
 
@@ -126,8 +126,8 @@ RSpec.describe 'Reference SVG Fixtures' do
       ]
 
       expected_types.each do |type|
-        input = "spec/fixtures/#{type}/input.mmd"
-        expected = "spec/fixtures/#{type}/expected.svg"
+        input = File.expand_path("fixtures/#{type}/input.mmd", __dir__)
+        expected = File.expand_path("fixtures/#{type}/expected.svg", __dir__)
 
         expect(File).to exist(input),
                         "Missing input fixture for #{type}"

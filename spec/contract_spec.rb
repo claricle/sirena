@@ -2,11 +2,26 @@
 
 require 'spec_helper'
 
+# :xychart is the one registered symbol this split-and-capitalize formula
+# cannot derive: it is public API (documented, printed by `sirena types`)
+# and keeps its original spelling with no underscore, while the internal
+# parser/layout/renderer/model classes keep the camelCase hump from their
+# `xy_chart` file name. Every other registered type's class name already
+# equals its derived camel_key — checked by running this against the live
+# registry, 2026-09-22.
+module ContractSpecHelpers
+  def irregular_camel_key(type)
+    { xychart: 'XyChart' }[type]
+  end
+end
+
 # The contract every registered diagram type must honor, checked against
 # DiagramRegistry — the single source of which class serves a type — so the
 # invariant grows with the registry instead of with a hand-kept list living
 # apart from it. See TODO.architecture/01-safety-net.md Part A.
 RSpec.describe Sirena::DiagramRegistry do
+  include ContractSpecHelpers
+
   # Registry/pattern set parity. Without this, a type missing from the
   # registry is invisible to every assertion below (they all iterate
   # DiagramRegistry.types), while Engine can still detect and reject it with
@@ -64,17 +79,6 @@ RSpec.describe Sirena::DiagramRegistry do
 
   it 'has deleted the TreemapParser alias' do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
-  end
-
-  # :xychart is the one registered symbol this split-and-capitalize formula
-  # cannot derive: it is public API (documented, printed by `sirena types`)
-  # and keeps its original spelling with no underscore, while the internal
-  # parser/layout/renderer/model classes keep the camelCase hump from their
-  # `xy_chart` file name. Every other registered type's class name already
-  # equals its derived camel_key — checked by running this against the live
-  # registry, 2026-09-22.
-  def irregular_camel_key(type)
-    { xychart: 'XyChart' }[type]
   end
 
   described_class.types.each do |type|

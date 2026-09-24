@@ -15,11 +15,10 @@ require_relative '../../scripts/verify_docs_site'
 DOCS_SITE_VERIFIER_DEFAULT_THEME = 'just-the-docs'
 DOCS_SITE_VERIFIER_DEFAULT_BASEURL = '/sirena'
 
-RSpec.describe Sirena::DocsSiteVerifier do
-  # -- fixture builders -------------------------------------------------
-  # `def`s, not `let`s: every one takes arguments (rspec.rubystyle.guide has
-  # no rule against this; `let` has no arity, see dev.md's RSpec `let` note).
-
+# -- fixture builders -------------------------------------------------
+# `def`s, not `let`s: every one takes arguments (rspec.rubystyle.guide has
+# no rule against this; `let` has no arity, see dev.md's RSpec `let` note).
+module DocsSiteVerifierSpecHelpers
   def write_config(docs_dir, overrides = {})
     config = {
       'theme' => DOCS_SITE_VERIFIER_DEFAULT_THEME,
@@ -95,6 +94,22 @@ RSpec.describe Sirena::DocsSiteVerifier do
   def verifier_for(docs_dir, site_dir, baseurl: nil)
     described_class.new(docs_dir: docs_dir, site_dir: site_dir, baseurl: baseurl)
   end
+
+  def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
+    stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
+    <<~HTML
+      <html><head>#{stylesheet_tag}</head>
+      <body>
+        <div class="main-content-wrap">
+          #{body_html}
+        </div>
+      </body></html>
+    HTML
+  end
+end
+
+RSpec.describe Sirena::DocsSiteVerifier do
+  include DocsSiteVerifierSpecHelpers
 
   # ----------------------------------------------------------------------
   # Example 1 — green control. Also, per the plan, the dangling
@@ -1339,17 +1354,5 @@ RSpec.describe Sirena::DocsSiteVerifier do
       expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
-  end
-
-  def page_html_with_body(body_html, theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL)
-    stylesheet_tag = %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">)
-    <<~HTML
-      <html><head>#{stylesheet_tag}</head>
-      <body>
-        <div class="main-content-wrap">
-          #{body_html}
-        </div>
-      </body></html>
-    HTML
   end
 end

@@ -55,7 +55,7 @@ CONFORMANCE_CASE_TIMEOUT = 10
 CONFORMANCE_EXAMPLE_TODAY = Date.new(2026, 1, 1)
 CONFORMANCE_EXAMPLE_THEME = 'default'
 
-RSpec.describe Sirena::Svg do
+module SvgConformanceSpecHelpers
   def validate(svg)
     SvgConform.validate(svg, profile: Sirena::Svg::CONFORMANCE_PROFILE)
   end
@@ -123,6 +123,38 @@ RSpec.describe Sirena::Svg do
   rescue StandardError
     nil
   end
+end
+
+# Helpers for the nested 'the checked-in examples' describe block below.
+module SvgConformanceCheckedInExampleHelpers
+  # The same inputs examples.rake uses. The date is pinned there because
+  # gantt and timeline place bars relative to today, so an unpinned render
+  # differs from identical source every day.
+  def render_example(mmd_path)
+    metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
+    metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
+    # Same cap as render_or_skip, and for the same reason: a pathological
+    # source must fail this example, not hang the whole suite.
+    Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
+      # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
+      Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
+                                         today: CONFORMANCE_EXAMPLE_TODAY)
+    end
+  end
+
+  def relative(path)
+    path.sub("#{CONFORMANCE_ROOT}/examples/", '')
+  end
+
+  # Every source that is not named unrenderable owes exactly one SVG.
+  def expected_svgs
+    (CONFORMANCE_EXAMPLE_SOURCES.map { |mmd| relative(mmd) } -
+      CONFORMANCE_UNRENDERABLE_EXAMPLES).map { |mmd| mmd.sub(/\.mmd\z/, '.svg') }
+  end
+end
+
+RSpec.describe Sirena::Svg do
+  include SvgConformanceSpecHelpers
 
   describe 'conformance of the checked-in example SVGs' do
     it 'has some' do
@@ -217,30 +249,7 @@ RSpec.describe Sirena::Svg do
   # still works, or whether what is checked in is what the renderer produces
   # today. Both are rendered here rather than looked for.
   describe 'the checked-in examples' do
-    # The same inputs examples.rake uses. The date is pinned there because
-    # gantt and timeline place bars relative to today, so an unpinned render
-    # differs from identical source every day.
-    def render_example(mmd_path)
-      metadata_path = mmd_path.sub(/\.mmd\z/, '.yml')
-      metadata = File.exist?(metadata_path) ? YAML.load_file(metadata_path) : {}
-      # Same cap as render_or_skip, and for the same reason: a pathological
-      # source must fail this example, not hang the whole suite.
-      Timeout.timeout(CONFORMANCE_CASE_TIMEOUT) do
-        # Unlike the corpus's Engine call, this mirrors examples.rake's theme/today arguments.
-        Sirena.render(File.read(mmd_path), theme: metadata['theme'] || CONFORMANCE_EXAMPLE_THEME,
-                                           today: CONFORMANCE_EXAMPLE_TODAY)
-      end
-    end
-
-    def relative(path)
-      path.sub("#{CONFORMANCE_ROOT}/examples/", '')
-    end
-
-    # Every source that is not named unrenderable owes exactly one SVG.
-    def expected_svgs
-      (CONFORMANCE_EXAMPLE_SOURCES.map { |mmd| relative(mmd) } -
-        CONFORMANCE_UNRENDERABLE_EXAMPLES).map { |mmd| mmd.sub(/\.mmd\z/, '.svg') }
-    end
+    include SvgConformanceCheckedInExampleHelpers
 
     it 'has example sources to render' do
       # 53 is today's .mmd count under examples/; this guard catches sources vanishing.
