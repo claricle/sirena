@@ -4,11 +4,33 @@ require 'spec_helper'
 require 'rexml/document'
 require 'yaml'
 
-RSpec.describe 'StateDiagram Integration' do
+module StateDiagramIntegrationSpecHelpers
   def rendered_state(source, state_id)
     document = REXML::Document.new(Sirena::Engine.new.render(source))
     REXML::XPath.first(document, "//*[@id='state-#{state_id}']")
   end
+end
+
+# The oracle-valid case list for 'the oracle-valid corpus' describe block
+# below, generated at describe-body level to build one example per case.
+module StateDiagramOracleCases
+  module_function
+
+  def oracle_valid_cases
+    mermaid_dir = File.expand_path('../mermaid', __dir__)
+    verdicts = YAML.load_file(File.join(mermaid_dir, 'corpus-verdicts.yml'))
+      .to_h { |row| [row['case'], row['verdict']] }
+
+    %w[state state_diagram].flat_map do |type|
+      Dir.glob(File.join(mermaid_dir, type, '*.mmd')).select do |path|
+        verdicts[path.delete_prefix("#{mermaid_dir}/")] == 'valid'
+      end
+    end.sort
+  end
+end
+
+RSpec.describe 'StateDiagram Integration' do
+  include StateDiagramIntegrationSpecHelpers
 
   describe 'complete state diagram pipeline' do
     let(:parser) { Sirena::Parser::StateDiagram.new }
@@ -336,17 +358,6 @@ RSpec.describe 'StateDiagram Integration' do
   # 11.12.0 renders has to survive the whole Engine path and come back as
   # SVG a parser accepts.
   describe 'the oracle-valid corpus' do
-    def self.oracle_valid_cases
-      verdicts = YAML.load_file('spec/mermaid/corpus-verdicts.yml')
-        .to_h { |row| [row['case'], row['verdict']] }
-
-      %w[state state_diagram].flat_map do |type|
-        Dir.glob("spec/mermaid/#{type}/*.mmd").select do |path|
-          verdicts[path.delete_prefix('spec/mermaid/')] == 'valid'
-        end
-      end.sort
-    end
-
     # A count tripwire, not a behaviour spec: it catches changes to the total
     # number of oracle-valid cases represented by the generated list below.
     # A COUNT-ONLY TRIPWIRE, and deliberately weak: its job is to fail if the
@@ -355,11 +366,11 @@ RSpec.describe 'StateDiagram Integration' do
     # rather than fixed, because per-case identity belongs to the scoreboard
     # (TODO.foundation item 02), not here.
     it 'still finds the 52 cases the examples below were generated from' do
-      expect(self.class.oracle_valid_cases.length).to eq(52)
+      expect(StateDiagramOracleCases.oracle_valid_cases.length).to eq(52)
     end
 
-    oracle_valid_cases.each do |path|
-      it "renders #{path.delete_prefix('spec/mermaid/')}" do
+    StateDiagramOracleCases.oracle_valid_cases.each do |path|
+      it "renders #{path.delete_prefix("#{File.expand_path('../mermaid', __dir__)}/")}" do
         svg = Sirena::Engine.new.render(File.read(path))
 
         expect(svg).to start_with('<svg')

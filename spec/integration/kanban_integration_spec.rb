@@ -9,9 +9,7 @@ require 'rexml/document'
 # instead, which is the only place the whole pipeline is exercised for kanban.
 # (The siblings predate the RSpec/DescribeClass cop and are grandfathered in
 # .rubocop_todo.yml; new files are not, so this one names the class it drives.)
-RSpec.describe Sirena::Engine do
-  let(:xml) { described_class.new.render(source) }
-
+module KanbanIntegrationSpecHelpers
   # Parsing here means a malformed render fails on the assertion below,
   # rather than in a separate example nothing can redden on its own.
   #
@@ -20,6 +18,12 @@ RSpec.describe Sirena::Engine do
   def rendered_text(document)
     REXML::Document.new(document).get_elements('//text').map { |e| e.text.to_s }
   end
+end
+
+RSpec.describe Sirena::Engine do
+  include KanbanIntegrationSpecHelpers
+
+  let(:xml) { described_class.new.render(source) }
 
   context 'with bare nodes (corpus 016)' do
     let(:source) { "kanban\n    root\n      child1\n      child2\n" }
