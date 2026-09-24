@@ -3,7 +3,23 @@
 require 'spec_helper'
 require 'rexml/document'
 
+# `rendered_node_width` and `detect` both need the `engine`/`source` lets
+# (or `engine` directly), so both stay included instance methods.
+module EngineSpecHelpers
+  def rendered_node_width(theme_name)
+    document = REXML::Document.new(engine.render(source, theme: theme_name))
+    REXML::XPath.first(document, '//rect').attributes['width'].to_f
+  end
+
+  def detect(source)
+    preamble = Sirena::Source.split(source)
+    engine.send(:detect_diagram_type, preamble[:body])
+  end
+end
+
 RSpec.describe Sirena::Engine do
+  include EngineSpecHelpers
+
   describe '#render' do
     let(:engine) { described_class.new }
 
@@ -27,11 +43,6 @@ RSpec.describe Sirena::Engine do
     # node box, not leave it sized for the hardcoded constant.
     context 'with a theme whose font_size_normal differs from the default' do
       let(:source) { "graph TD\nA[Start]" }
-
-      def rendered_node_width(theme_name)
-        document = REXML::Document.new(engine.render(source, theme: theme_name))
-        REXML::XPath.first(document, '//rect').attributes['width'].to_f
-      end
 
       it 'widens the node box to match the theme font size' do
         expect(rendered_node_width('high_contrast'))
@@ -377,11 +388,6 @@ RSpec.describe Sirena::Engine do
   # StandardError rescue. Flagged separately; out of scope for this pass.
   describe 'diagram type detection past a leading directive or comment' do
     let(:engine) { described_class.new }
-
-    def detect(source)
-      preamble = Sirena::Source.split(source)
-      engine.send(:detect_diagram_type, preamble[:body])
-    end
 
     [
       ['a single leading directive',

@@ -1,9 +1,99 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'stringio'
 require 'timeout'
 require 'tmpdir'
 require 'sirena/commands/batch'
+
+# `bomb`, `batching`, `run_batch` are ordinary domain words: `include` this
+# per example group, never register it globally. It stays `include`d (not
+# `module_function`) because most methods use RSpec mocking (`allow`); only
+# `exhaustion_message_for` is pure and marked `module_function` in place.
+# `run_batch` returns what BatchCommand printed; `batch_command` returns the
+# command itself (`#success?`).
+module BatchCommandRunner
+  # 4000 nested subgraphs -- past the depth the flowchart parser can carry,
+  # so it fails where a well-formed neighbour does not. `parse_tree`
+  # (flowchart.rb:58-60) converts that overflow into a ParseError, so this
+  # is the ORDINARY failure path; the exhaustion examples raise a real
+  # `NoMemoryError` at `File.read` instead.
+  #
+  # 4000 is well past the boundary rather than close to it: measured to
+  # still overflow under a 16MB and a 32MB RUBY_THREAD_VM_STACK_SIZE, where
+  # a shallower depth parses cleanly once the stack is that generous. A
+  # depth near the boundary would make these specs flake with the
+  # interpreter's stack size instead of proving the guard.
+  def bomb
+    opens = (1..4000).map { |i| "subgraph s#{i}" }.join("\n")
+    "graph TD\n#{opens}\nA\n#{"end\n" * 4000}"
+  end
+
+  # The order matters: a file AFTER the bad one is the only thing that can
+  # tell "reported and continued" from "died at the bad one".
+  def in_batch_dir
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "in")
+      output = File.join(dir, "out")
+      Dir.mkdir(input)
+      File.write(File.join(input, "1-ok.mmd"), "graph TD\nAlpha-->Beta\n")
+      File.write(File.join(input, "2-bomb.mmd"), bomb)
+      File.write(File.join(input, "3-ok.mmd"), "graph TD\nOmega-->Zeta\n")
+      yield input, output
+    end
+  end
+
+  # The rescue in `BatchCommand` is a SECOND widened boundary and needs the
+  # same proof as the engine's, in both directions. The exhaustion spec
+  # constrains the CONSTANT; `rescue Exception` written at THIS site passes
+  # that untouched, and then Ctrl-C, `exit` and a host's `Timeout.timeout`
+  # are all swallowed part way through a batch run. `File.read` sits inside
+  # the rescued block, which is how a real one of each is driven through it.
+  # Hands back a lambda so the example decides whether the exception should
+  # propagate or be swallowed.
+  def batching(exception)
+    lambda do
+      in_batch_dir do |input, output|
+        allow(File).to receive(:read).and_call_original
+        allow(File).to receive(:read)
+          .with(File.join(input, "2-bomb.mmd")).and_raise(exception)
+
+        run_batch(input, output)
+      end
+    end
+  end
+
+  # @return [Array(Sirena::Commands::BatchCommand, String)] the command
+  #   after #run, and everything the run printed to stdout
+  def batch_capture(input, output)
+    captured = StringIO.new
+    original = $stdout
+    $stdout = captured
+    command = Sirena::Commands::BatchCommand.new(input: input, output: output)
+    command.run
+    [command, captured.string]
+  ensure
+    $stdout = original
+  end
+
+  # @return [Sirena::Commands::BatchCommand] the command, after #run
+  def batch_command(input, output)
+    batch_capture(input, output).first
+  end
+
+  # @return [String] everything the run printed to stdout
+  def run_batch(input, output)
+    batch_capture(input, output).last
+  end
+
+  # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
+  # raises for the same two classes -- not load-bearing to the assertion
+  # below, only to reading the report as a person would.
+  def exhaustion_message_for(exhaustion_class)
+    exhaustion_class == SystemStackError ? 'stack level too deep' : 'failed to allocate memory'
+  end
+  module_function :exhaustion_message_for
+end
 
 # Batch's documented promise is that one bad file is reported and the run
 # carries on. An exhaustion fault is not a `StandardError`, so before this
@@ -37,13 +127,6 @@ RSpec.describe Sirena::Commands::BatchCommand do
 
       expect(report).to include('2-bomb.mmd: Diagram nests too deeply to parse.')
     end
-  end
-
-  # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
-  # raises for the same two classes -- not load-bearing to the assertion
-  # below, only to reading the report as a person would.
-  def exhaustion_message_for(exhaustion_class)
-    exhaustion_class == SystemStackError ? 'stack level too deep' : 'failed to allocate memory'
   end
 
   # Exhaustion can arrive from OUTSIDE the engine's boundary: reading the

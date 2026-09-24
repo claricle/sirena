@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "open3"
+
+# Pure (shells out, no example state needed), so it is a module function;
+# included below so call sites stay bare method calls.
+module ComponentRequireHelper
+  # Shells out to a real subprocess so a component file's `require` can be
+  # checked in isolation -- $LOADED_FEATURES would make a second in-process
+  # `require "sirena/parser"` a silent no-op once spec_helper has already
+  # loaded the whole gem.
+  def require_standalone(path)
+    Open3.capture2e("ruby", "-Ilib", "-e", "require #{path.inspect}")
+  end
+  module_function :require_standalone
+end
 
 # TODO.architecture/01-safety-net.md, Part B step 0. Each pipeline layer's
 # own Error class inherits Sirena::Error so
@@ -21,6 +35,8 @@ require "spec_helper"
 # this same process a silent no-op once spec_helper has already loaded the
 # whole gem.
 RSpec.describe Sirena do
+  include ComponentRequireHelper
+
   describe "component files, required standalone" do
     %w[sirena/parser sirena/layout sirena/renderer sirena/engine].each do |path|
       it "loads #{path} without first requiring the top-level sirena entry point" do

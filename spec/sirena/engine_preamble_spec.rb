@@ -2,15 +2,26 @@
 
 require "spec_helper"
 
+# `slices` is pure, so it is a module function; `titles_in` needs the
+# `engine` let and stays an included instance method.
+module EnginePreambleSpecHelpers
+  def slices
+    %(  "Dogs" : 50\n  "Cats" : 30\n)
+  end
+  module_function :slices
+
+  def titles_in(source)
+    engine.render(source).scan(%r{<text[^>]*>([^<]*)</text>}).flatten
+  end
+end
+
 RSpec.describe Sirena::Engine do
+  include EnginePreambleSpecHelpers
+
   # Every example here goes through Engine#render on purpose. The split
   # happens inside render, so a spec written against a parser directly would
   # pass without exercising any of this.
   let(:engine) { described_class.new }
-
-  def slices
-    %(  "Dogs" : 50\n  "Cats" : 30\n)
-  end
 
   describe "#render with a preamble" do
     it "detects the type behind a frontmatter block" do
@@ -52,10 +63,6 @@ RSpec.describe Sirena::Engine do
     # Pie draws its title into the SVG, so precedence is observable in the
     # output rather than through a stub. The corpus sweep cannot see any of
     # this — it only checks the SVG is well formed.
-    def titles_in(source)
-      engine.render(source).scan(%r{<text[^>]*>([^<]*)</text>}).flatten
-    end
-
     it "sets the title from frontmatter" do
       titles = titles_in("---\ntitle: From Front\n---\npie\n#{slices}")
 

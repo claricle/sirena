@@ -13,19 +13,25 @@ require 'timeout'
 # get wrong: widening a boundary until it swallows Ruby's own control flow
 # breaks `exit`, Ctrl-C and a host's `Timeout.timeout`, which is a worse
 # failure than the one being repaired.
+# `rendering` uses `allow`, an RSpec mocking method only available on an
+# example instance, so it is included rather than made a module function.
+module ExhaustionErrorsSpecHelpers
+  def rendering(exception)
+    engine = Sirena::Engine.new
+    allow(engine).to receive(:detect_diagram_type).and_raise(exception)
+    -> { engine.render("graph TD\nA-->B\n") }
+  end
+end
+
 RSpec.describe Sirena::Engine do
+  include ExhaustionErrorsSpecHelpers
+
   # A class outside StandardError that is NOT exhaustion, standing in for
   # anything a future dependency might raise. `NotImplementedError` is used
   # rather than a `Class.new(Exception)` because `Lint/InheritException`
   # rewrites the latter to `StandardError`, which would quietly turn every
   # example below into a test of nothing.
   let(:foreign) { NotImplementedError }
-
-  def rendering(exception)
-    engine = Sirena::Engine.new
-    allow(engine).to receive(:detect_diagram_type).and_raise(exception)
-    -> { engine.render("graph TD\nA-->B\n") }
-  end
 
   describe 'Sirena::EXHAUSTION_ERRORS' do
     # Ask the loaded hierarchy what exists rather than listing the routes we
