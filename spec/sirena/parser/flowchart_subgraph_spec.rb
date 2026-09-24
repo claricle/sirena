@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
+module FlowchartSubgraphSpecHelpers
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -17,6 +17,18 @@ RSpec.describe Sirena::Parser::Flowchart do
   rescue Sirena::Parser::ParseError
     false
   end
+
+  def only(source)
+    boxes(source).first
+  end
+
+  def ids_by_title(source)
+    boxes(source).to_h { |box| [box.title, box.id] }
+  end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartSubgraphSpecHelpers
 
   describe "a subgraph" do
     # `end` is a valid node id, so an unguarded statement list consumed the
@@ -461,10 +473,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   end
 
   describe "the subgraph model" do
-    def only(source)
-      boxes(source).first
-    end
-
     # Every title case below was read off mmdc 11.12.0.
     it "falls back to the id when nothing is written" do
       expect(only("graph TD\nsubgraph s\nA\nend\n").title).to eq("s")
@@ -644,10 +652,6 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
       expect(parser.parse("graph TD\nsubgraph two B\nZ\nend\n")
                    .subgraphs.map(&:id)).to eq(%w[subGraph0])
-    end
-
-    def ids_by_title(source)
-      boxes(source).to_h { |box| [box.title, box.id] }
     end
 
     # A free title makes mermaid generate the id, and it numbers the

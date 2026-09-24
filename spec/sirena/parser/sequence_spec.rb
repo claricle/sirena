@@ -3,9 +3,7 @@
 require "spec_helper"
 require "sirena/parser/sequence"
 
-RSpec.describe Sirena::Parser::Sequence do
-  let(:parser) { described_class.new }
-
+module SequenceSpecHelpers
   def message_for(arrow, suffix = "")
     source = if suffix == "-"
                "sequenceDiagram\n    A->>+B: open\n    " \
@@ -24,11 +22,13 @@ RSpec.describe Sirena::Parser::Sequence do
     arrow.end_with?("-") ? " " : ""
   end
 
+  module_function
+
   # The whole vocabulary, read off mmdc 11.12.0's own SVG: the line class
   # (messageLine0 solid / messageLine1 dotted), the marker id, and whether
   # it lands on marker-start or marker-end. Reversing a half or stick arrow
   # keeps the head and moves it to the source end.
-  def self.arrows
+  def arrows
     {
       "->" => %w[solid none target],
       "-->" => %w[dotted none target],
@@ -60,9 +60,15 @@ RSpec.describe Sirena::Parser::Sequence do
       "<<-->>" => %w[dotted filled both]
     }.freeze
   end
+end
+
+RSpec.describe Sirena::Parser::Sequence do
+  include SequenceSpecHelpers
+
+  let(:parser) { described_class.new }
 
   describe "#parse arrow set" do
-    arrows.each do |arrow, (line_style, head_style, head_side)|
+    SequenceSpecHelpers.arrows.each do |arrow, (line_style, head_style, head_side)|
       it "parses #{arrow} as #{line_style}/#{head_style} on the #{head_side}" do
         message = message_for(arrow)
 
@@ -81,13 +87,13 @@ RSpec.describe Sirena::Parser::Sequence do
     end
 
     it "puts a head on both ends only for the << >> arrows" do
-      both = self.class.arrows.keys.select { |a| message_for(a).bidirectional? }
+      both = SequenceSpecHelpers.arrows.keys.select { |a| message_for(a).bidirectional? }
 
       expect(both).to eq(["<<->>", "<<-->>"])
     end
 
     it "puts a head on the source end only for the reversed spellings" do
-      source_end = self.class.arrows.keys.select do |a|
+      source_end = SequenceSpecHelpers.arrows.keys.select do |a|
         message_for(a).head_side == "source"
       end
 
@@ -112,7 +118,7 @@ RSpec.describe Sirena::Parser::Sequence do
   end
 
   describe "#parse activation suffixes" do
-    arrows.each_key do |arrow|
+    SequenceSpecHelpers.arrows.each_key do |arrow|
       it "accepts #{arrow} with an activation suffix" do
         expect(message_for(arrow, "+").head_style)
           .to eq(message_for(arrow).head_style)
