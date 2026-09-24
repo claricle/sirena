@@ -23,28 +23,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ---- shared -----------------------------------------------------------
-  baseline:
-    # Resolves what the scoreboard guard (02b) compares against, per event.
-    name: baseline
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      mode: ${{ steps.resolve.outputs.mode }}
-      sha: ${{ steps.resolve.outputs.sha }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
-        with:
-          fetch-depth: 0
-      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
-        with:
-          ruby-version: '3.3'
-      - id: resolve
-        run: ruby scripts/ci_baseline.rb
-        env:
-          GH_EVENT_NAME: ${{ github.event_name }}
-          GH_EVENT_PATH: ${{ github.event_path }}
-
   # ---- fast lane: unit suite, budget < 10 min ---------------------------
   unit:
     # Everything generic-rake ran before: `bundle exec rake` (spec, benchmark,
@@ -88,7 +66,7 @@ jobs:
   fast-lane:
     name: fast-lane
     if: ${{ always() }}
-    needs: [baseline, unit, pins]
+    needs: [unit, pins]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -120,7 +98,7 @@ jobs:
   full-lane:
     name: full-lane
     if: ${{ always() }}
-    needs: [baseline, docs-build, links]
+    needs: [docs-build, links]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

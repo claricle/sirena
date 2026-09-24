@@ -115,9 +115,7 @@ RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
       expect(gates - needed).to eq([])
     end
 
-    it 'puts the baseline in both lanes and keeps the docs jobs out of the fast lane' do
-      expect(jobs['fast-lane']['needs']).to include('baseline')
-      expect(jobs['full-lane']['needs']).to include('baseline')
+    it 'keeps the docs jobs out of the fast lane' do
       expect(jobs['fast-lane']['needs']).not_to include('docs-build', 'links')
     end
 

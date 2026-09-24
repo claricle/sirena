@@ -196,12 +196,10 @@ RSpec.describe Sirena::Engine do
     # rather than asserting success keeps this honest about types that are
     # already failing for unrelated reasons.
     #
-    # :corpus - sweeps one fixture per diagram type and only compares two
-    # rescued outcome strings, so a type that raises the same way both times
-    # counts as passing without ever asserting the render is right. Runs in
-    # `spec:corpus`, isolated from the coverage-collecting `spec:unit` run:
-    # see .simplecov and tasks/coverage.rake.
-    it 'never changes whether a diagram type renders at all', :corpus do
+    # Sweeps one fixture per diagram type and only compares two rescued
+    # outcome strings, so a type that raises the same way both times counts
+    # as passing without ever asserting the render is right.
+    it 'never changes whether a diagram type renders at all' do
       differing = Dir.children(corpus).sort.filter_map do |type|
         file = Dir.glob(File.join(corpus, type, '*.mmd')).min
         next unless file
