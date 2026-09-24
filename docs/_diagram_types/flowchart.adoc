@@ -483,6 +483,6 @@ Choose the layout direction that best fits your content:
 
 === Related documentation
 
-* <<index.adoc#,Diagram types overview>>
-* <<sequence-diagram.adoc#,Sequence diagrams>>
+* link:../index/[Diagram types overview]
+* link:../sequence-diagram/[Sequence diagrams]
 * link:https://mermaid.js.org/syntax/flowchart.html[Official Mermaid flowchart documentation]

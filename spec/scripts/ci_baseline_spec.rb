@@ -33,6 +33,20 @@ RSpec.describe CiBaseline do
   describe '.baseline_sha against real repositories' do
     include GitRepoHelpers
 
+    # `CiBaseline.baseline_sha` shells out to `git fetch` itself
+    # (scripts/ci_baseline.rb), so it never passes through `sh` and never sees
+    # GitRepoHelpers::NO_AUTO_MAINTENANCE. That fetch spawns the detached
+    # `git maintenance run` described on the constant, inside the tmpdir the
+    # `after` hook below is about to delete. Production code must not carry a
+    # test-only setting, so the suppression goes in the environment here instead.
+    around do |example|
+      restore = GitRepoHelpers::NO_AUTO_MAINTENANCE.keys.to_h { |k| [k, ENV.fetch(k, nil)] }
+      ENV.update(GitRepoHelpers::NO_AUTO_MAINTENANCE)
+      example.run
+    ensure
+      restore.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
+    end
+
     let(:tmp) { Dir.mktmpdir }
     let(:origin) { File.join(tmp, 'origin.git') }
     let(:shas) do
@@ -73,6 +87,27 @@ RSpec.describe CiBaseline do
         decision = { mode: 'ref', ref: shas[:topic_tip], merge_base: false }
         expect(Dir.chdir(clone) { described_class.baseline_sha(decision) }).to eq(shas[:topic_tip])
         expect(in_repo?(clone, shas[:topic_tip])).to be(true)
+      end
+
+      # Guards the `around` hook above. `git fetch` is the one git write in this
+      # file that CiBaseline issues itself, so this is the only place the
+      # suppression can be seen working. GIT_TRACE goes to a file because
+      # CiBaseline captures and discards the fetch's stderr.
+      it 'does not let its own fetch spawn the detached maintenance run' do
+        trace = File.join(tmp, 'trace.log')
+        decision = { mode: 'ref', ref: shas[:topic_tip], merge_base: false }
+        restore = ENV.fetch('GIT_TRACE', nil)
+        begin
+          ENV['GIT_TRACE'] = trace
+          Dir.chdir(clone) { described_class.baseline_sha(decision) }
+        ensure
+          # Put back whatever was there, which for the usual empty case means
+          # deleting. A raise here would otherwise leave GIT_TRACE set for every
+          # later example in the process, and running the suite under someone's
+          # own GIT_TRACE would silently unset it.
+          restore.nil? ? ENV.delete('GIT_TRACE') : ENV['GIT_TRACE'] = restore
+        end
+        expect(File.read(trace)).not_to include('maintenance run')
       end
 
       it 'raises when the baseline cannot be fetched' do

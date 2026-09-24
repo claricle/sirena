@@ -9,14 +9,24 @@ require 'spec_helper'
 #
 # At the boundary, on bare elements: a renderer inherits this by
 # construction, and a new one gets it without opting in.
-RSpec.describe Sirena::Svg do
-  describe 'opacity, which Tiny splits into fill and stroke' do
-    def rect(**attributes)
-      Sirena::Svg::Rect.new.tap do |r|
-        attributes.each { |name, value| r.public_send("#{name}=", value) }
-      end
+module SvgTinyPropertiesSpecHelpers
+  def rect(**attributes)
+    Sirena::Svg::Rect.new.tap do |r|
+      attributes.each { |name, value| r.public_send("#{name}=", value) }
     end
+  end
 
+  def text(**attributes)
+    Sirena::Svg::Text.new.tap do |t|
+      attributes.each { |name, value| t.public_send("#{name}=", value) }
+    end
+  end
+end
+
+RSpec.describe Sirena::Svg do
+  include SvgTinyPropertiesSpecHelpers
+
+  describe 'opacity, which Tiny splits into fill and stroke' do
     it 'paints both components at the whole-element fraction' do
       expect(rect(opacity: 0.3).to_xml)
         .to eq('<rect fill-opacity="0.3" stroke-opacity="0.3"/>')
@@ -46,12 +56,12 @@ RSpec.describe Sirena::Svg do
       expect(rect(fill_opacity: '0.3').to_xml).to eq('<rect fill-opacity="0.3"/>')
     end
 
-    # An empty opacity="" is syntactically legal XML and means "not set", not
+    # An empty opacity="" is syntactically legal and means "not set", not
     # zero. lutaml-model would coerce a :float attribute to 0.0 here, which
     # composed_opacity cannot tell apart from a genuine opacity of zero --
     # opacity is :string so Numbers.read sees the real "" and returns nil.
     it 'leaves the components alone when opacity is the empty string' do
-      expect(Sirena::Svg::Rect.from_xml('<rect opacity="" fill-opacity="0.9"/>').to_xml)
+      expect(rect(opacity: '', fill_opacity: '0.9').to_xml)
         .to eq('<rect fill-opacity="0.9"/>')
     end
 
@@ -76,47 +86,30 @@ RSpec.describe Sirena::Svg do
         .to eq('<rect fill-opacity="1e400" stroke-opacity="0.5"/>')
     end
 
-    # Tiny has no `opacity`, so this translation is the only record of it in
-    # the output. If the emitted components do not parse back, a document
-    # Sirena wrote and Sirena re-read loses the fraction entirely -- which is
-    # what happened before every class mapped them.
-    it 'keeps the translated opacity when its own output is read back' do
-      lossy = %w[Rect Circle Ellipse Line Polygon Polyline Path Text Group Tspan].reject do |name|
-        klass = described_class.const_get(name)
-        subject = klass.new
-        subject.opacity = 0.3
-        subject.content = 'x' if subject.respond_to?(:content=)
-        once = subject.to_xml
-        klass.from_xml(once).to_xml == once
-      end
-
-      expect(lossy).to be_empty
-    end
-
-    # The test above only round-trips Sirena's OWN output, which never emits
-    # a raw `opacity=` attribute -- it always translates to fill/stroke-
-    # opacity first. Tspan's own opacity mapping is new in this PR (the
-    # other classes already had theirs), so it needs its own proof that a
-    # FOREIGN document's `opacity=` attribute -- one Sirena did not write --
-    # still folds into fill/stroke-opacity instead of being silently dropped.
-    it 'folds a foreign document\'s raw opacity into fill and stroke on Tspan' do
-      tspan = Sirena::Svg::Tspan.from_xml('<tspan opacity="0.5">text</tspan>')
-
-      expect(tspan.to_xml)
-        .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
-    end
-
     it 'translates opacity on a Group through its inherited paint properties' do
       group = Sirena::Svg::Group.new
       group.opacity = 0.3
 
       expect(group.to_xml).to eq('<g fill-opacity="0.3" stroke-opacity="0.3"/>')
     end
-  end
 
-  def text(**attributes)
-    Sirena::Svg::Text.new.tap do |t|
-      attributes.each { |name, value| t.public_send("#{name}=", value) }
+    # Tspan inherits opacity-folding from Element, the same way every other
+    # class does -- proven by building one directly, the way a renderer
+    # would, rather than round-tripping through XML (sirena/02 removed the
+    # from_xml path).
+    #
+    # Diagnostic, not a fix-prover: this only exercises to_xml, which sirena/02
+    # never touches, so it stays green whether or not the xml do block is
+    # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
+    # only check for Tspan opacity-folding since no other spec sets opacity
+    # on a bare Tspan and reads to_xml back.
+    it 'folds opacity into fill and stroke on Tspan' do
+      tspan = Sirena::Svg::Tspan.new
+      tspan.opacity = '0.5'
+      tspan.content = 'text'
+
+      expect(tspan.to_xml)
+        .to eq('<tspan fill-opacity="0.5" stroke-opacity="0.5">text</tspan>')
     end
   end
 

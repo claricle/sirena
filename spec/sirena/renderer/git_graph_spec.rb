@@ -158,7 +158,8 @@ RSpec.describe Sirena::Renderer::GitGraph do
       it "renders branch labels for all branches" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        text_contents = texts.map(&:content).compact
+        # `content` is `collection: true`, so read it through Array(...).
+        text_contents = texts.map { |t| Array(t.content).join }
         expect(text_contents).to include("main")
         expect(text_contents).to include("develop")
       end
@@ -257,7 +258,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
       it "renders tag labels" do
         svg = renderer.render(layout)
         texts = svg.children.grep(Sirena::Svg::Text)
-        text_contents = texts.map(&:content).compact
+        text_contents = texts.map { |t| Array(t.content).join }
         expect(text_contents).to include("v1.0.0")
       end
     end

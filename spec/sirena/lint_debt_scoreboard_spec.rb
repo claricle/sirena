@@ -7,17 +7,22 @@ require_relative "../support/lint_debt_fixture"
 require "fileutils"
 require "yaml"
 
-RSpec.describe Sirena::LintDebtScoreboard do
-  include LintDebtFixture
-
-  after { FileUtils.rm_rf(root) }
-
+# `board` needs `described_class` and `root` (from LintDebtFixture), so it
+# is included rather than made a module function.
+module LintDebtScoreboardSpecHelpers
   # A fresh instance every call, never memoised -- each example measures
   # the tree more than once (baseline, then again after a mutation), and
   # Sirena::LintDebt caches its own measurement for its own lifetime.
   def board
     described_class.new(root: root, debt: Sirena::LintDebt.new(root: root))
   end
+end
+
+RSpec.describe Sirena::LintDebtScoreboard do
+  include LintDebtFixture
+  include LintDebtScoreboardSpecHelpers
+
+  after { FileUtils.rm_rf(root) }
 
   describe "#record!" do
     context "when recording for the first time" do

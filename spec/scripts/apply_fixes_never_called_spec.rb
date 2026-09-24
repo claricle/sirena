@@ -2,6 +2,42 @@
 
 require "spec_helper"
 require "tmpdir"
+require "ripper"
+
+# Finds every shipped-code reference to svg_conform's `apply_fixes`, which
+# rewrites the SVG it is given and so must never run over Sirena's output.
+# Reads tokens rather than text, so a comment that mentions the name is not
+# a hit but a call, a `send(:apply_fixes)` symbol or a string is.
+#
+# This finds the literal name only. svg_conform also reaches it without the
+# name (`fix: true`, `Fixer`), which the removed-capability spec covers.
+module ApplyFixesScan
+  SHIPPED_CODE = %r{\A(?:exe/|Rakefile\z|.*\.(?:rb|rake|gemspec)\z)}
+
+  # The gemspec decides what ships; code is the subset a token scan can read.
+  def shipped_files(root)
+    gemspec = Gem::Specification.load(File.join(root, "sirena.gemspec"))
+    gemspec.files.grep(SHIPPED_CODE).map { |f| File.join(root, f) }.select { |f| File.file?(f) }.sort
+  end
+
+  def apply_fixes_references(paths)
+    paths.flat_map do |path|
+      Ripper.lex(File.read(path)).filter_map do |(line, _col), type, text|
+        "#{path}:#{line}" if type != :on_comment && text.include?("apply_fixes")
+      end
+    end
+  end
+
+  # Number of references in a source string, written to a file so the scan
+  # runs the same path it runs over shipped files.
+  def apply_fixes_reference_count(source)
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "seeded.rb")
+      File.write(path, source)
+      apply_fixes_references([path]).size
+    end
+  end
+end
 
 RSpec.describe "svg_conform apply_fixes", type: :task do
   include ApplyFixesScan
@@ -34,7 +70,7 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
     let(:profile) { Sirena::Svg::CONFORMANCE_PROFILE }
     let(:conformant_svgs) do
       %w[flowchart sequence class_diagram state_diagram er_diagram user_journey xy_chart sankey].map do |type|
-        Sirena::Engine.new.render(File.read(File.join(repo_root, "spec/fixtures", type, "input.mmd")))
+        Sirena::Engine.new.render(File.read(File.join(repo_root, "spec", "fixtures", type, "input.mmd")))
       end
     end
 

@@ -14,7 +14,8 @@ module Sirena
     #
     # An unrecognised byte is skipped and following numbers are read as
     # more arguments for the command in force -- deliberate leniency,
-    # reachable only via from_xml on a foreign document.
+    # reachable only by a caller assigning a hand-built `d` string
+    # directly (Path.from_xml no longer exists as a way in).
     class PathGeometry
       # One anchor: a point on the path and the unit direction of travel
       # through it.

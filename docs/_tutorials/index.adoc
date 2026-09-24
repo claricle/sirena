@@ -34,24 +34,24 @@ Each tutorial includes:
 
 For beginners:
 
-. link:{% link _tutorials/getting-started.adoc %}[Getting Started]
-. link:{% link _tutorials/cli-usage.adoc %}[CLI Usage]
-. link:{% link _tutorials/creating-first-diagram.adoc %}[Creating Your First Diagram]
+. link:../../guides/quick-start/[Getting Started]
+. *CLI Usage* (planned)
+. *Creating Your First Diagram* (planned)
 
 For application integration:
 
-. link:{% link _tutorials/rails-integration.adoc %}[Rails Integration]
-. link:{% link _tutorials/jekyll-integration.adoc %}[Jekyll Integration]
+. *Rails Integration* (planned)
+. *Jekyll Integration* (planned)
 
 For advanced usage:
 
-. link:{% link _tutorials/batch-processing.adoc %}[Batch Processing]
-. link:{% link _tutorials/theme-customization.adoc %}[Theme Customization]
+. *Batch Processing* (planned)
+. *Theme Customization* (planned)
 
 == Next Steps
 
 After completing tutorials:
 
-* Explore link:{% link _guides/index.adoc %}[Guides] for in-depth topics
-* Reference link:{% link _diagram_types/index.adoc %}[Diagram Types] for syntax
-* Check link:{% link _references/index.adoc %}[API Reference] for programmatic use
+* Explore link:../../guides/index/[Guides] for in-depth topics
+* Reference link:../../diagram_types/index/[Diagram Types] for syntax
+* Check link:../../references/index/[API Reference] for programmatic use

@@ -23,7 +23,15 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
           working-directory: docs
+
+      - name: Generate example SVGs into docs/assets
+        run: bundle exec rake examples:copy_to_docs
 
       - name: Build site
         env:
@@ -36,7 +44,10 @@ jobs:
         with:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
-          restore-keys: cache-lychee-
+          # No restore-keys: lychee 0.15.0 checks its cache before remapping
+          # and caches self-link results under the original HTTP URI, so a
+          # cache carried over from an older commit could hide a page that
+          # is missing from the site built at this SHA.
 
       - name: Check if site was built
         run: |
@@ -56,6 +67,10 @@ jobs:
             --no-progress
             --config docs/lychee.toml
             --base docs/_site
+            --remap 'https://claricle.github.io/sirena/ file://${{ github.workspace }}/docs/_site/'
+            --remap 'https://www.claricle.org/sirena/ file://${{ github.workspace }}/docs/_site/'
+            --include '^file://${{ github.workspace }}/docs/_site/diagram_types/'
+            --include '^file://${{ github.workspace }}/docs/_site/assets/'
             'docs/_site/**/*.html'
           fail: true
           output: link-check-results.md

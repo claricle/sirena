@@ -2,6 +2,20 @@
 
 require "spec_helper"
 
+module ArchitectureDiagramValiditySpecHelpers
+  def group(id, parent_id: nil)
+    described_class::Group.new(id: id, label: id, icon: "cloud", parent_id: parent_id)
+  end
+
+  def service(id, group_id: nil)
+    described_class::Service.new(id: id, label: id, icon: "server", group_id: group_id)
+  end
+
+  def junction(id, group_id: nil)
+    described_class::Junction.new(id: id, group_id: group_id)
+  end
+end
+
 RSpec.describe Sirena::Diagram::Architecture do
   describe "#diagram_type" do
     it "returns :architecture" do
@@ -10,17 +24,7 @@ RSpec.describe Sirena::Diagram::Architecture do
   end
 
   describe "#valid?" do
-    def group(id, parent_id: nil)
-      described_class::Group.new(id: id, label: id, icon: "cloud", parent_id: parent_id)
-    end
-
-    def service(id, group_id: nil)
-      described_class::Service.new(id: id, label: id, icon: "server", group_id: group_id)
-    end
-
-    def junction(id, group_id: nil)
-      described_class::Junction.new(id: id, group_id: group_id)
-    end
+    include ArchitectureDiagramValiditySpecHelpers
 
     it "returns true for a diagram with no groups, services, or junctions" do
       expect(described_class.new.valid?).to be true

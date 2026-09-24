@@ -3,9 +3,9 @@
 require "English"
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Base do
-  # The positioning helpers live here; the examples drive them through the
-  # five parsers that report a position.
+# The positioning helpers live here; the examples drive them through the
+# five parsers that report a position.
+module ErrorPositionHelpers
   # Every one of these reported "line 1, column 1" before, whatever the
   # input, because `Parslet::Source#line_and_column` was called with no
   # argument and read a bytepos parslet had already rewound to 0.
@@ -19,6 +19,10 @@ RSpec.describe Sirena::Parser::Base do
   rescue Sirena::Parser::ParseError => e
     e.message
   end
+end
+
+RSpec.describe Sirena::Parser::Base do
+  include ErrorPositionHelpers
 
   {
     "flowchart" => [

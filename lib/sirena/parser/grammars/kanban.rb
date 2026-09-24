@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "common"
+require_relative "../atoms/greedy_run"
 
 module Sirena
   module Parser
@@ -19,7 +20,7 @@ module Sirena
         end
 
         rule(:content_line) do
-          empty_line | item_line
+          empty_line | modifier_line | item_line
         end
 
         rule(:empty_line) do
@@ -30,6 +31,32 @@ module Sirena
           str(' ').repeat.as(:indent) >>
             item >>
             (newline | eof)
+        end
+
+        # A standalone `::icon(...)` or `:::classes` line applies to the
+        # PREVIOUS item rather than declaring one of its own - mermaid's
+        # kanban shorthand for attaching an icon or classes without going
+        # through `@{ ... }` metadata. Mirrors mindmap.rb's
+        # `node_with_icon` / `node_with_class`, the existing precedent for
+        # this exact shorthand in this grammar family; `Builders::Kanban`
+        # applies it to the last item the same way mindmap's `TreeBuilder`
+        # applies it to the last node.
+        rule(:modifier_line) do
+          space?.as(:indent) >>
+            (icon_modifier | class_modifier) >>
+            space? >>
+            (newline | eof)
+        end
+
+        rule(:icon_modifier) do
+          str("::") >> match['iI'] >> match['cC'] >> match['oO'] >> match['nN'] >> str("(") >>
+            Atoms::GreedyRun.new('[^)]').as(:icon) >>
+            str(")")
+        end
+
+        rule(:class_modifier) do
+          str(":::") >>
+            Atoms::GreedyRun.new('[^\r\n]').as(:classes)
         end
 
         # An item can be either a column or a card. The label is optional:
@@ -76,7 +103,7 @@ module Sirena
         rule(:labelled_item) do
           identifier.as(:id) >>
             lbracket >>
-            match('[^\]]').repeat(1).as(:text) >>
+            Atoms::GreedyRun.new('[^\]]').as(:text) >>
             rbracket
         end
 
@@ -130,8 +157,8 @@ module Sirena
         # below, rather than half-supporting a shape nothing here
         # understands.
         rule(:round_text) do
-          (str('"') >> markdown_string_body.absent? >> match('[^"]').repeat(1).as(:text) >> str('"')) |
-            (str('"').absent? >> match('[^()\]}]').repeat(1).as(:text))
+          (str('"') >> markdown_string_body.absent? >> Atoms::GreedyRun.new('[^"]').as(:text) >> str('"')) |
+            (str('"').absent? >> Atoms::GreedyRun.new('[^()\]}]').as(:text))
         end
 
         rule(:markdown_string_body) do

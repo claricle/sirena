@@ -230,7 +230,7 @@ RSpec.describe Sirena::Parser::C4 do
     end
 
     it "parses complex diagram from fixture" do
-      source = File.read("spec/mermaid/c4/007_example_c4_6.mmd")
+      source = File.read(File.expand_path("../../mermaid/c4/007_example_c4_6.mmd", __dir__))
 
       diagram = parser.parse(source)
 

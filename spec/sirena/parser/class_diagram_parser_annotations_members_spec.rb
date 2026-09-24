@@ -2,6 +2,13 @@
 
 require "spec_helper"
 
+# Parses a class body and returns the first entity.
+module ClassBodyParsing
+  def parse_class(body)
+    described_class.new.parse("classDiagram\nclass A {\n#{body}\n}\n").entities.first
+  end
+end
+
 # Annotations and free-text members inside a class body, and after a colon.
 # Every accept and reject below was checked against mmdc 11.12.0.
 RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do

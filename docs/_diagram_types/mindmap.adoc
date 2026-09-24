@@ -598,6 +598,6 @@ mindmap
 
 == Related documentation
 
-* <<index.adoc#,Diagram types overview>>
-* <<flowchart.adoc#,Flowchart diagrams>>
+* link:../index/[Diagram types overview]
+* link:../flowchart/[Flowchart diagrams]
 * link:https://mermaid.js.org/syntax/mindmap.html[Official Mermaid mindmap documentation]

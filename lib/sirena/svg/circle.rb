@@ -14,22 +14,6 @@ module Sirena
       attribute :r, :float
 
       writes_attributes :cx, :cy, :r
-
-      xml do
-        root 'circle'
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'cx', to: :cx
-        map_attribute 'cy', to: :cy
-        map_attribute 'r', to: :r
-        map_attribute 'fill', to: :fill
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        map_attribute 'transform', to: :transform
-        map_attribute 'opacity', to: :opacity
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-      end
     end
   end
 end

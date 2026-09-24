@@ -31,9 +31,16 @@ RSpec.describe 'tasks/coverage.rake' do
     Rake.application = original_application
   end
 
+  include GitRepoHelpers
+
+  # Goes through GitRepoHelpers#sh rather than running its own git, so the
+  # NO_AUTO_MAINTENANCE suppression that stops the detached `git maintenance
+  # run` racing this example's `Dir.mktmpdir` teardown has ONE call site -- the
+  # one spec/git_repo_helpers_spec.rb asserts. A second copy here would be a
+  # second thing to forget. The `around` hook above has already chdir'd into
+  # the throwaway repo, so Dir.pwd is it.
   def run_git!(*args)
-    _out, err, status = Open3.capture3('git', *args)
-    raise "git #{args.join(' ')} failed: #{err}" unless status.success?
+    sh(Dir.pwd, 'git', *args)
   end
 
   def init_repo!

@@ -71,7 +71,7 @@ module Sirena
         # does not. A lookahead cannot tell them apart: by the time the
         # header ends, the direction has already been consumed.
         rule(:header) do
-          (str('flowchart') | str('graph')).as(:header) >>
+          (str('flowchart-elk') | str('flowchart') | str('graph')).as(:header) >>
             (directed_header | undirected_header)
         end
 
@@ -158,6 +158,7 @@ module Sirena
             style_statement |
             class_def_statement |
             class_assignment_statement |
+            link_style_statement |
             click_statement |
             node_edge_statement |
             standalone_node
@@ -497,6 +498,33 @@ module Sirena
         # `stroke:blue`; a node id here takes no colon, so we refuse the
         # line rather than draw a diagram one node short.
         rule(:style_property) { declaration_char.repeat(1) }
+
+        # `linkStyle 0,1 stroke:red` styles edges by position, and
+        # `linkStyle default ...` every one. Mermaid takes the numbers with
+        # no space around a comma, and refuses `linkStyle 0 ,1 ...`.
+        rule(:link_style_statement) do
+          str('linkStyle').as(:link_style_keyword) >> line_space >>
+            link_style_targets.as(:link_targets) >> line_space >>
+            link_style_props >> statement_end.as(:link_end)
+        end
+
+        # `interpolate basis` goes first, with one space before the curve
+        # name: mermaid refuses `interpolate  basis` and
+        # `stroke:red interpolate basis`. The builder refuses the word
+        # `interpolate` or `default` anywhere else.
+        rule(:link_style_props) do
+          (str('interpolate') >> line_space >>
+            match["^#{LINE_SPACE_CHARS}\n;"].repeat(1).as(:link_curve) >>
+            (line_space.repeat(1) >> style_property_list.as(:link_props))
+              .maybe) |
+            style_property_list.as(:link_props)
+        end
+
+        rule(:link_style_targets) do
+          str('default') | (link_index >> (comma >> link_index).repeat)
+        end
+
+        rule(:link_index) { match['0-9'].repeat(1) }
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do

@@ -70,8 +70,7 @@ RSpec.describe Sirena::Parser::Packet do
         expect(diagram.fields[2].bit_end).to eq(31)
       end
 
-      # Skip empty label test - edge case not critical for packet diagrams
-      xit "parses fields with empty labels" do
+      it "parses fields with empty labels" do
         source = <<~MERMAID
           packet-beta
             0-7: ""

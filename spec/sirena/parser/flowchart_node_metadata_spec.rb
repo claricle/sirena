@@ -2,10 +2,37 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
+module FlowchartNodeMetadataSpecHelpers
   def node_for(source)
     described_class.new.parse(source).nodes.last
   end
+
+  # Nothing regenerates it in CI, so a name silently changing sides would
+  # go unnoticed. Every candidate lands in exactly one of three places:
+  # drawn, drawn by mermaid but not by sirena, or unknown to mermaid.
+  # A size check alone passes when a name is swapped for a bogus one, so
+  # the three sets are asserted to partition the candidate file.
+  def rejected_names
+    %w[
+      disk-storage lined-proc multi-doc multi-process multi-rect
+      rect_left_inv_arrow sub-proc subroutine-shape
+    ]
+  end
+
+  # The tables are private, so the spec reaches them the way the gem does
+  # rather than the constants being public for the test's sake.
+  def drawn = Sirena::Parser.const_get(:MERMAID_SHAPES).keys
+
+  def undrawable = Sirena::Parser.const_get(:UNDRAWABLE_SHAPES)
+
+  def candidates
+    File.read("scripts/probes/shape_names.txt").split(/\s+/)
+      .reject(&:empty?).uniq
+  end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartNodeMetadataSpecHelpers
 
   describe "@{ } node metadata" do
     it "sets the shape" do
@@ -265,29 +292,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   end
 
   describe "the generated shape table" do
-    # Nothing regenerates it in CI, so a name silently changing sides would
-    # go unnoticed. Every candidate lands in exactly one of three places:
-    # drawn, drawn by mermaid but not by sirena, or unknown to mermaid.
-    # A size check alone passes when a name is swapped for a bogus one, so
-    # the three sets are asserted to partition the candidate file.
-    def rejected_names
-      %w[
-        disk-storage lined-proc multi-doc multi-process multi-rect
-        rect_left_inv_arrow sub-proc subroutine-shape
-      ]
-    end
-
-    # The tables are private, so the spec reaches them the way the gem does
-    # rather than the constants being public for the test's sake.
-    def drawn = Sirena::Parser.const_get(:MERMAID_SHAPES).keys
-
-    def undrawable = Sirena::Parser.const_get(:UNDRAWABLE_SHAPES)
-
-    def candidates
-      File.read("scripts/probes/shape_names.txt").split(/\s+/)
-        .reject(&:empty?).uniq
-    end
-
     it "puts every candidate in exactly one of the three sets" do
       expect((drawn + undrawable + rejected_names).sort).to eq(candidates.sort)
     end

@@ -22,28 +22,10 @@ module Sirena
 
       writes_attributes :x, :dy, :font_weight, :font_style
 
-      xml do
-        root 'tspan', mixed: true
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'x', to: :x
-        map_attribute 'dy', to: :dy
-        map_attribute 'font-weight', to: :font_weight
-        map_attribute 'font-style', to: :font_style
-        map_attribute 'fill', to: :fill
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-        map_attribute 'opacity', to: :opacity
-
-        map_content to: :content
-      end
-
       protected
 
-      # `content` is a collection because lutaml-model 0.8 requires that
-      # under `mixed: true`, so join rather than interpolate.
+      # `content` is declared `collection: true`, so join rather than
+      # interpolate.
       #
       # @return [String] XML string
       def element_markup

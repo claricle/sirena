@@ -156,7 +156,7 @@ RSpec.describe Sirena::Parser::Quadrant do
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
   describe "fixture files", :corpus do
-    Dir.glob("spec/mermaid/quadrant/*.mmd").each do |fixture_file|
+    Dir.glob(File.expand_path("../../mermaid/quadrant/*.mmd", __dir__)).each do |fixture_file|
       it "parses #{File.basename(fixture_file)}" do
         source = File.read(fixture_file)
 

@@ -22,6 +22,9 @@ module Sirena
           end
 
           def add_line(line_data)
+            return apply_modifier(:icon, line_data[:icon].to_s) if line_data[:icon]
+            return apply_modifier(:classes, line_data[:classes].to_s.strip.split(/\s+/)) if line_data[:classes]
+
             indent_size = get_indent_size(line_data[:indent])
 
             # Track minimum indentation
@@ -93,11 +96,36 @@ module Sirena
             column = {
               id: item[:id],
               title: column_title(item),
+              icon: item[:metadata][:icon],
+              classes: normalize_classes(item[:metadata][:classes]),
               cards: []
             }
 
             @columns << column
             @current_column = column
+          end
+
+          # `::icon(...)`/`:::` lines modify whichever item was added last;
+          # raise rather than silently drop when there is none, matching
+          # mmdc 11.12.0 (which rejects that shape). Both keys are
+          # last-write-wins, matching mermaid's `decorateNode`, which
+          # plainly assigns `node.cssClasses = ...` rather than merging.
+          def apply_modifier(key, value)
+            raise Parser::ParseError, "#{key == :icon ? '::icon' : ':::'} with no preceding item." unless @items.last
+
+            @items.last[:metadata][key] = value
+          end
+
+          # `classes` arrives here as an Array from a `:::a b` directive line
+          # (parse_metadata drops a `classes:` key from `@{ ... }` metadata
+          # entirely - mermaid does not read one). `else` also covers a
+          # nil/absent value, normalized to an empty Array. The single point
+          # both add_column and add_card read from.
+          def normalize_classes(value)
+            case value
+            when Array then value
+            else value.to_s.strip.split(/\s+/)
+            end
           end
 
           # The card's own `id` and `text` beat a metadata entry of the same
@@ -116,7 +144,8 @@ module Sirena
 
             @current_column[:cards] << item[:metadata].merge(
               id: item[:id],
-              text: item[:text]
+              text: item[:text],
+              classes: normalize_classes(item[:metadata][:classes])
             )
           end
 
@@ -161,6 +190,15 @@ module Sirena
                 result[:label] = value
               when "priority"
                 result[:priority] = value
+              when "classes"
+                # Mermaid's `addNode` reads shape/label/icon/assigned/ticket/
+                # priority out of `@{ ... }` metadata and nothing else -
+                # `classes` is not a recognized key there (verified against
+                # the installed @mermaid-js/mermaid-cli 11.12.0
+                # kanban-definition bundle). Only a `:::` directive
+                # (apply_modifier) may set classes; a `@{ classes: ... }`
+                # entry is dropped, matching mermaid.
+                next
               else
                 # Store unknown keys as-is
                 result[key.to_sym] = value

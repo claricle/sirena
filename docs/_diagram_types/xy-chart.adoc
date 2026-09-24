@@ -1,0 +1,126 @@
+= XY Chart Diagrams
+:toc:
+:toclevels: 3
+
+== General
+
+XY charts display data using x and y coordinates, supporting line and bar
+series for trend and comparison visualization.
+
+The xy-chart implementation in Sirena follows the established Parslet
+architecture, with support for:
+
+* A titled chart (`title "..."`)
+* A categorical or numeric x-axis
+* A y-axis with an optional label and an explicit numeric range
+* One or more `line` and `bar` datasets
+* Named datasets (`dataset "Name" [...]`)
+
+== Architecture
+
+The xy-chart implementation consists of:
+
+* `lib/sirena/diagram/xy_chart.rb` - `Diagram::XyChart` and `Diagram::XYAxis` model classes
+* `lib/sirena/parser/grammars/xy_chart.rb` - Parslet grammar
+* `lib/sirena/parser/builders/xy_chart.rb` - `Parser::Builders::XyChart`, the parse tree transformer
+* `lib/sirena/parser/xy_chart.rb` - Main parser
+* `lib/sirena/layout/xy_chart.rb` - `Layout::XyChart`, the layout transformer
+* `lib/sirena/renderer/xy_chart.rb` - SVG renderer
+
+== Syntax
+
+=== Basic xy chart
+
+The `xychart-beta` keyword starts the diagram:
+
+[source,mermaid]
+----
+xychart-beta
+    title "Chart Title"
+    x-axis [Q1, Q2, Q3, Q4]
+    y-axis "Revenue" 0 --> 100
+    line [20, 40, 60, 80]
+    bar [15, 35, 55, 75]
+----
+
+=== X-axis
+
+The x-axis takes a bracketed list of categorical or numeric values, with an
+optional label:
+
+[source,mermaid]
+----
+xychart-beta
+    x-axis [jan, feb, mar]
+----
+
+[source,mermaid]
+----
+xychart-beta
+    x-axis "Quarter" [1, 2, 3, 4]
+----
+
+=== Y-axis
+
+The y-axis takes an optional label and an explicit numeric range, separated
+by `-->`:
+
+[source,mermaid]
+----
+xychart-beta
+    y-axis "Revenue" 0 --> 100
+----
+
+=== Datasets
+
+`line` and `bar` each take a bracketed list of numeric values (integer or
+decimal):
+
+[source,mermaid]
+----
+xychart-beta
+    x-axis [Q1, Q2, Q3, Q4]
+    line [20, 40, 60, 80]
+    bar [15, 35, 55, 75]
+----
+
+A dataset can also be given a name:
+
+[source,mermaid]
+----
+xychart-beta
+    x-axis [Q1, Q2, Q3, Q4]
+    dataset "Revenue" [20, 40, 60, 80]
+----
+
+== Examples
+
+=== Line chart
+
+[source,mermaid]
+----
+xychart-beta
+    title "Monthly Sales Performance"
+    x-axis [Jan, Feb, Mar, Apr, May, Jun]
+    y-axis "Sales ($1000)" 0 --> 100
+    line [45, 52, 68, 75, 82, 90]
+----
+
+=== Bar chart
+
+[source,mermaid]
+----
+xychart-beta
+    title "Quarterly Revenue Comparison"
+    x-axis [Q1, Q2, Q3, Q4]
+    y-axis "Revenue (Million USD)" 0 --> 100
+    bar [65, 75, 85, 95]
+    bar [55, 70, 80, 90]
+    bar [45, 60, 75, 85]
+----
+
+== See Also
+
+* link:../index/[Documentation Index]
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/xy_chart.rb[XY Chart Diagram Model]
+* https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/xy_chart.rb[XY Chart Renderer]

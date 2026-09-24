@@ -3,7 +3,23 @@
 require 'spec_helper'
 require 'rexml/document'
 
+# `rendered_node_width` and `detect` both need the `engine`/`source` lets
+# (or `engine` directly), so both stay included instance methods.
+module EngineSpecHelpers
+  def rendered_node_width(theme_name)
+    document = REXML::Document.new(engine.render(source, theme: theme_name))
+    REXML::XPath.first(document, '//rect').attributes['width'].to_f
+  end
+
+  def detect(source)
+    preamble = Sirena::Source.split(source)
+    engine.send(:detect_diagram_type, preamble[:body])
+  end
+end
+
 RSpec.describe Sirena::Engine do
+  include EngineSpecHelpers
+
   describe '#render' do
     let(:engine) { described_class.new }
 
@@ -27,11 +43,6 @@ RSpec.describe Sirena::Engine do
     # node box, not leave it sized for the hardcoded constant.
     context 'with a theme whose font_size_normal differs from the default' do
       let(:source) { "graph TD\nA[Start]" }
-
-      def rendered_node_width(theme_name)
-        document = REXML::Document.new(engine.render(source, theme: theme_name))
-        REXML::XPath.first(document, '//rect').attributes['width'].to_f
-      end
 
       it 'widens the node box to match the theme font size' do
         expect(rendered_node_width('high_contrast'))
@@ -136,6 +147,34 @@ RSpec.describe Sirena::Engine do
         it "renders flowchart#{glyph}" do
           expect(engine.render("flowchart#{glyph}\nA --- B\n"))
             .to include('<svg')
+        end
+      end
+
+      it 'detects flowchart-elk as a flowchart (unknown/012)' do
+        # mmdc renders flowchart-elk exactly like flowchart, only hinting
+        # at the elk layout engine. Sirena has no elk layout yet, so it
+        # renders like any other flowchart. Detection used to require the
+        # keyword be followed by whitespace/glyph/eof, so the `-elk`
+        # suffix fell through to DiagramTypeError before the parser saw it.
+        source = "flowchart-elk\nA --- B\n"
+
+        expect(engine.render(source)).to include('<svg')
+      end
+
+      it 'raises DiagramTypeError for every header only the -elk suffix would license' do
+        # mmdc recognises exactly one flowchart suffix, spelled exactly
+        # `-elk` (its own detector is `/^\s*flowchart-elk/`, no `i` flag).
+        # A detector that widened any of these three axes -- attaching the
+        # suffix to `graph`, accepting an arbitrary word after `flowchart-`,
+        # or matching the suffix case-insensitively -- would route the
+        # source to the flowchart parser and raise ParseError there instead
+        # of DiagramTypeError at detection, the wrong failure for an
+        # unsupported header.
+        %w[graph-elk flowchart-bogus flowchart-ELK FLOWCHART-elk].each do |keyword|
+          source = "#{keyword}\nA --- B\n"
+
+          expect { engine.render(source) }
+            .to raise_error(Sirena::Engine::DiagramTypeError)
         end
       end
 
@@ -377,11 +416,6 @@ RSpec.describe Sirena::Engine do
   # StandardError rescue. Flagged separately; out of scope for this pass.
   describe 'diagram type detection past a leading directive or comment' do
     let(:engine) { described_class.new }
-
-    def detect(source)
-      preamble = Sirena::Source.split(source)
-      engine.send(:detect_diagram_type, preamble[:body])
-    end
 
     [
       ['a single leading directive',

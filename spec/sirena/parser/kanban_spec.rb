@@ -1,8 +1,20 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'timeout'
+
+module KanbanSpecHelpers
+  # mermaid gates each field on JS truthiness after js-yaml resolves the
+  # scalar, so these are never set and the field falls back. Every value
+  # below was driven through mmdc 11.12.0, not recalled.
+  def title_for(value)
+    parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
+  end
+end
 
 RSpec.describe Sirena::Parser::Kanban do
+  include KanbanSpecHelpers
+
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -231,15 +243,11 @@ RSpec.describe Sirena::Parser::Kanban do
       # Two directions on purpose: the accept half dies if the bare
       # alternative is removed, the refuse half dies if it is widened past an
       # identifier. Round shapes are covered below (corpus 017, 022, 023,
-      # 031); directives (::icon, :::class) belong to a later bucket and
-      # must keep failing rather than being swallowed as literal labels.
+      # 031); `::icon`/`:::class` directive lines are covered in the
+      # 'with an icon/class directive line' context below, now that they
+      # are parsed rather than refused.
       it 'accepts a bare identifier' do
         expect(parser.parse("kanban\n  root\n").columns.map(&:id)).to eq(['root'])
-      end
-
-      it 'still refuses a class directive' do
-        expect { parser.parse("kanban\n  root\n  :::hot\n") }
-          .to raise_error(Sirena::Parser::ParseError)
       end
 
       it 'still refuses trailing free text after a bare id' do
@@ -559,6 +567,134 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
+    context 'with an icon/class directive line (corpus 024-027, 030)' do
+      # `::icon(...)` and `:::classes` on their own line apply to the item
+      # declared just above them - mermaid's shorthand for the same fields
+      # `@{ icon: ... }` sets through metadata (classes has no `@{ }` key at
+      # all; this directive is its only spelling). Mirrors mindmap.rb's
+      # `node_with_icon` / `node_with_class`, already parsed the same way
+      # there.
+      it 'sets the icon on the item above it (corpus 024)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-house)\n")
+        expect(diagram.columns.first.icon).to eq('fa-house')
+      end
+
+      it 'sets classes on the item above it (corpus 025)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n")
+        expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
+      end
+
+      it 'splits classes on whitespace regardless of $; (Ruby global field separator)' do
+        old_fs = $;
+        $; = ','
+        diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n")
+        expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
+      ensure
+        $; = old_fs
+      end
+
+      it 'accepts a class line followed by an icon line (corpus 026)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    :::m-4 p-8\n    ::icon(fa-rocket)\n")
+        column = diagram.columns.first
+        expect(column.classes).to eq(%w[m-4 p-8])
+        expect(column.icon).to eq('fa-rocket')
+      end
+
+      it 'accepts an icon line followed by a class line (corpus 027)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-flag)\n    :::m-4 p-8\n")
+        column = diagram.columns.first
+        expect(column.icon).to eq('fa-flag')
+        expect(column.classes).to eq(%w[m-4 p-8])
+      end
+
+      it 'applies a class line to a card, and a later card stays unaffected (corpus 030)' do
+        source = "kanban\n  root(Root)\n    Child(Child)\n    :::hot\n      a(a)\n      b[New Stuff]\n"
+        diagram = parser.parse(source)
+        cards = diagram.columns.first.cards.to_h { |c| [c.id, c] }
+
+        expect(cards.fetch('Child').classes).to eq(['hot'])
+        expect(cards.fetch('a').classes).to eq([])
+        expect(cards.fetch('b').classes).to eq([])
+      end
+
+      it 'strips leading/trailing space around the class list rather than splitting an empty entry' do
+        diagram = parser.parse("kanban\n    root[The root]\n    :::  m-4  p-8  \n")
+        expect(diagram.columns.first.classes).to eq(%w[m-4 p-8])
+      end
+
+      # `:::` is last-write-wins, the same as `::icon`: mermaid's own
+      # `decorateNode` plainly assigns `node.cssClasses = ...` on each
+      # directive rather than merging with whatever classes the node
+      # already carried (verified against the installed
+      # @mermaid-js/mermaid-cli 11.12.0 kanban-definition bundle).
+      {
+        'a second `:::` line replaces the first' =>
+          ["kanban\n    root[The root]\n    :::first\n    :::second\n", %w[second]],
+        'a `@{ classes: }` entry is ignored, the `:::` line wins' =>
+          ["kanban\n    root[The root]@{ classes: 'existing' }\n    :::added\n", %w[added]],
+        'a repeated identical class line has no visible effect' =>
+          ["kanban\n    root[The root]\n    :::hot\n    :::hot\n", %w[hot]]
+      }.each do |description, (source, expected)|
+        it description do
+          diagram = parser.parse(source)
+          expect(diagram.columns.first.classes).to eq(expected)
+        end
+      end
+
+      # mmdc 11.12.0 rejects an `::icon(...)`/`:::...` line with no item
+      # above it to modify - it is not a valid empty diagram, so sirena
+      # raises rather than silently dropping the directive.
+      it 'raises on an icon directive with no preceding item' do
+        expect { parser.parse("kanban\n  ::icon(fa-orphan)\n") }
+          .to raise_error(Sirena::Parser::ParseError, /::icon/)
+      end
+
+      it 'raises on a class directive with no preceding item' do
+        expect { parser.parse("kanban\n  :::hot\n") }
+          .to raise_error(Sirena::Parser::ParseError, /:::/)
+      end
+
+      # mmdc 11.12.0 accepts a tab before the directive and trailing
+      # horizontal whitespace after the closing `)` - both are ordinary
+      # whitespace to its lexer. modifier_line used to require only spaces
+      # before the directive and allowed nothing at all after it, so both
+      # raised Sirena::Parser::ParseError.
+      it 'accepts a tab before the directive (mmdc 11.12.0)' do
+        diagram = parser.parse("kanban\n    root[The root]\n\t::icon(fa-tab)\n")
+        expect(diagram.columns.first.icon).to eq('fa-tab')
+      end
+
+      it 'accepts trailing horizontal whitespace after the directive (mmdc 11.12.0)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    ::icon(fa-trail)   \n")
+        expect(diagram.columns.first.icon).to eq('fa-trail')
+      end
+
+      # mmdc's lexer matches the `icon` keyword case-insensitively, the same
+      # way kanban_keyword already does for the `kanban` header.
+      it 'accepts the icon directive spelled in a different case (mmdc 11.12.0)' do
+        diagram = parser.parse("kanban\n    root[The root]\n    ::ICON(fa-case)\n")
+        expect(diagram.columns.first.icon).to eq('fa-case')
+      end
+    end
+
+    context 'with a classes: entry in @{ } metadata' do
+      # Mermaid's `addNode` reads shape/label/icon/assigned/ticket/priority
+      # out of `@{ ... }` YAML and nothing else - `classes` is not a
+      # recognized key there (verified against the installed
+      # @mermaid-js/mermaid-cli 11.12.0 kanban-definition bundle). Only a
+      # `:::` directive line may set classes; a `@{ classes: ... }` entry is
+      # silently dropped, matching mermaid.
+      it 'ignores a classes: metadata value on a column' do
+        diagram = parser.parse("kanban\n  root@{ classes: hot }\n")
+        expect(diagram.columns.first.classes).to eq([])
+      end
+
+      it 'ignores a classes: metadata value on a card' do
+        diagram = parser.parse("kanban\n  col[Todo]\n    card@{ classes: 'hot cold' }\n")
+        expect(diagram.columns.first.cards.first.classes).to eq([])
+      end
+    end
+
     context 'with metadata keys that collide with a card field' do
       # Mermaid ignores `id:`/`text:` as metadata; they are the card's own
       # fields. No corpus case uses them. The collision was already reachable
@@ -642,13 +778,6 @@ RSpec.describe Sirena::Parser::Kanban do
     end
 
     context 'with a metadata value mermaid resolves as falsy' do
-      # mermaid gates each field on JS truthiness after js-yaml resolves the
-      # scalar, so these are never set and the field falls back. Every value
-      # below was driven through mmdc 11.12.0, not recalled.
-      def title_for(value)
-        parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
-      end
-
       it 'falls back for every spelling of zero' do
         # The signed forms carry the leading-sign branch of each radix
         # pattern, and `0e-0` the exponent's - the only sign the float
@@ -807,6 +936,122 @@ RSpec.describe Sirena::Parser::Kanban do
           expect(kept.metadata).to eq(assigned: 'knsv', ticket: 'MC-1',
                                       icon: 'star', priority: 'High', label: 'Fix')
         end
+      end
+    end
+
+    # `::icon(...)`, `:::...`, a bracket label and a round-shape body all
+    # used the same `match(char_class).repeat(1)` shape, which Parslet
+    # applies once PER CHARACTER - a real DoS shape on untrusted input (an
+    # icon body of 50_000 chars took ~18.7s on the unfixed grammar; see the
+    # GreedyRun atom in lib/sirena/parser/atoms/greedy_run.rb). A bounded-time
+    # assertion is used here, not a structural one, because the property
+    # under test IS wall-clock behaviour - a structural check (e.g. asserting
+    # which atom class the grammar uses) would pass on a differently-broken
+    # rewrite that still walked the input character by character. The 5s
+    # bound is generous: fixed, this parses in well under 1s even on a
+    # loaded shared machine; unfixed, 50_000 chars alone measured ~18.7s.
+    context 'with a long modifier or label body' do
+      it 'stays well under a generous bound for a 100_000-char run' do
+        long = 'x' * 100_000
+
+        aggregate_failures do
+          expect do
+            Timeout.timeout(5) { parser.parse("kanban\n  id1[Task]\n  ::icon(#{long})\n") }
+          end.not_to raise_error
+
+          expect do
+            Timeout.timeout(5) { parser.parse("kanban\n  id1[Task]\n  :::#{long}\n") }
+          end.not_to raise_error
+
+          expect do
+            Timeout.timeout(5) { parser.parse("kanban\n  id1[#{long}]\n") }
+          end.not_to raise_error
+        end
+      end
+    end
+
+    # GreedyRun originally measured the run's length with
+    # `Parslet::Source#matches?`, which reports BYTES (it delegates to
+    # `StringScanner#match?`), then fed that byte count into
+    # `Source#consume(n)`, which takes a CHARACTER count. On any multibyte
+    # body the two units disagree, so the atom over-consumed past the real
+    # closing delimiter and the parse failed outright - not a symptom, a
+    # straight parse failure on legitimate Unicode input.
+    context 'with a multibyte label, icon or class body' do
+      it 'parses a label, icon and class body containing multibyte characters' do
+        label = parser.parse("kanban\n  id1[Todo]\n    root[café]\n").columns.first.cards.first
+        expect(label.text).to eq('café')
+
+        icon = parser.parse("kanban\n  id1[Todo]\n    root[Task]\n    ::icon(fa-café)\n").columns.first.cards.first
+        expect(icon.icon).to eq('fa-café')
+
+        classed = parser.parse("kanban\n  id1[Todo]\n    root[Task]\n    :::café-class\n").columns.first.cards.first
+        expect(classed.classes).to eq(['café-class'])
+      end
+    end
+
+    # GreedyRun#try's `loop do ... break if remaining.zero? ... end` is the
+    # only thing that stops the loop once the source has no characters left.
+    # An unterminated `::icon(...)` body (no closing `)` before EOF) consumes
+    # every remaining character into one chunk, matches all of it (nothing in
+    # `[^)]` excludes end-of-input), and loops back with `chars_left == 0` -
+    # without the guard, `source.consume(0)` returns an empty chunk forever
+    # and the loop never terminates. A bounded-time assertion is used, not a
+    # structural one, for the same reason as the long-body context above: the
+    # property under test is that parsing actually returns (raises
+    # Sirena::ParseError for the missing `)`), not which atom class runs.
+    context 'with an unterminated icon, class or bracket body' do
+      it 'raises ParseError instead of hanging on an unterminated icon body' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[Task]\n  ::icon(unterminated") }
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it 'raises ParseError instead of hanging on an unterminated bracket label' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[unterminated") }
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      # Unlike icon and bracket bodies, a class body has no closing delimiter
+      # at all - `:::classes` runs to end of line or EOF - so this shape
+      # does not fail to parse; it exercises the same EOF-terminated loop
+      # without hanging, which is the property this context is about.
+      it 'returns promptly (no closing delimiter to miss) for a class body running to EOF' do
+        expect do
+          Timeout.timeout(2) { parser.parse("kanban\n  id1[Task]\n  :::unterminated") }
+        end.not_to raise_error
+      end
+    end
+
+    # GreedyRun#try's `total.empty?` check (atoms/greedy_run.rb:59) is what turns a
+    # zero-length match into a clean ParseError rather than succeeding with
+    # an empty slice. `::icon()` reaches it directly: the body between `(`
+    # and `)` is empty, so `[^)]` matches nothing and `total` is `''`.
+    context 'with an empty icon body' do
+      it 'raises ParseError for `::icon()` rather than an empty icon' do
+        expect do
+          parser.parse("kanban\n  id1[Task]\n  ::icon()\n")
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    # `GreedyRun#to_s_inner` (atoms/greedy_run.rb:64) feeds `Atoms::Base#to_s`, which
+    # Parslet calls to describe an unlabelled atom (e.g. inside
+    # `Alternative#error_msg`'s "Expected one of [...]" listing, built from
+    # `alternatives.inspect` -> each atom's `#inspect` -> `#to_s` ->
+    # `#to_s_inner`). Exercised here directly on the same `GreedyRun`
+    # instance the grammar builds (`GreedyRun.new('[^)]')`, matching
+    # `icon_modifier`'s own construction), rather than fishing the exact
+    # instance back out of a failed parse tree.
+    context 'with GreedyRun#to_s_inner called directly' do
+      it "describes the atom by its anchored regexp, matching icon_modifier's construction" do
+        atom = Sirena::Parser::Atoms::GreedyRun.new('[^)]')
+
+        # Asserted as a literal string, not `Regexp.new(...).inspect`, so the
+        # spec does not re-derive its own expectation using the same
+        # construction the production code under test uses.
+        expect(atom.to_s_inner(0)).to eq('/\A(?:[^)])*/m')
       end
     end
   end

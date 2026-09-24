@@ -23,6 +23,15 @@ module Sirena
       attribute :label, :string
       attribute :priority, :string
 
+      # Classes assigned via the `:::className` directive line - mermaid's
+      # `@{ classes: ... }` key is not a recognized metadata field (verified
+      # against the installed @mermaid-js/mermaid-cli 11.12.0
+      # kanban-definition bundle) and is ignored. Not rendered - the
+      # renderer has no classDef-driven styling for kanban, matching
+      # Diagram::MindmapNode#classes, which is carried the same way to its
+      # own renderer and stops there too.
+      attribute :classes, :string, collection: true, default: -> { [] }
+
       # Validates the card has required fields.
       #
       # @return [Boolean] true if card is valid
@@ -60,6 +69,17 @@ module Sirena
 
       # Column title/name
       attribute :title, :string
+
+      # Icon, set by an `@{ icon: ... }` entry on the column's own item line
+      # or by a standalone `::icon(name)` line right after it. Not rendered
+      # - column headers have no metadata row today; see KanbanCard#classes
+      # for the same "modeled, not drawn" precedent.
+      attribute :icon, :string
+
+      # Classes, set by a standalone `:::className` line right after the
+      # column's own item line. Mermaid ignores an `@{ classes: ... }` entry
+      # on the item line itself; see KanbanCard#classes. Not rendered.
+      attribute :classes, :string, collection: true, default: -> { [] }
 
       # Collection of cards in this column
       attribute :cards, KanbanCard, collection: true, default: -> { [] }

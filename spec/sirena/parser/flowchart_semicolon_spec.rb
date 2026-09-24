@@ -3,14 +3,7 @@
 require "spec_helper"
 require "timeout"
 
-RSpec.describe Sirena::Parser::Flowchart do
-  # The corpus cannot verify most of this. A naive version of this change —
-  # widening `line_end` itself — passes the whole sweep and the whole suite
-  # while breaking `style`, `classDef` and `click`, because no corpus case
-  # puts a `;` inside a style property list. Every guard below is written by
-  # hand against mmdc 11.12.0 for that reason.
-  let(:engine) { Sirena::Engine.new }
-
+module FlowchartSemicolonSpecHelpers
   def node_ids(source)
     described_class.new.parse(source).nodes.map(&:id).sort
   end
@@ -26,6 +19,32 @@ RSpec.describe Sirena::Parser::Flowchart do
     # into PipelineError.
     false
   end
+
+  def capture(source, key)
+    tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
+    found = nil
+    walk = lambda do |node|
+      case node
+      when Array then node.each { |child| walk.call(child) }
+      when Hash
+        found ||= node[key].to_s if node.key?(key)
+        node.each_value { |child| walk.call(child) }
+      end
+    end
+    walk.call(tree)
+    found
+  end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartSemicolonSpecHelpers
+
+  # The corpus cannot verify most of this. A naive version of this change —
+  # widening `line_end` itself — passes the whole sweep and the whole suite
+  # while breaking `style`, `classDef` and `click`, because no corpus case
+  # puts a `;` inside a style property list. Every guard below is written by
+  # hand against mmdc 11.12.0 for that reason.
+  let(:engine) { Sirena::Engine.new }
 
   describe "accepting `;` as a separator" do
     {
@@ -747,21 +766,6 @@ RSpec.describe Sirena::Parser::Flowchart do
   # Nothing downstream reads either value today, so the change is invisible
   # in the SVG. Pinned here because "invisible" is exactly how it would rot.
   describe "a %% inside a declaration the scanners read" do
-    def capture(source, key)
-      tree = Sirena::Parser::Grammars::Flowchart.new.parse(source)
-      found = nil
-      walk = lambda do |node|
-        case node
-        when Array then node.each { |child| walk.call(child) }
-        when Hash
-          found ||= node[key].to_s if node.key?(key)
-          node.each_value { |child| walk.call(child) }
-        end
-      end
-      walk.call(tree)
-      found
-    end
-
     it "keeps a spaced %% in a style property list" do
       source = "graph TD\nA-->B\nstyle A fill:red %% c\n"
 

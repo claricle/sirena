@@ -16,16 +16,53 @@ require 'date'
 # Neither is caught by rendering twice in one process with a pinned clock —
 # that passes with both bugs still present. So this file checks a
 # behavioural property AND the absence of the calls.
-RSpec.describe Sirena::Engine do
-  let(:corpus) { File.expand_path('../mermaid', __dir__) }
-
-  def render(source, **options)
-    described_class.new(**options).render(source)
+# `render` and `corpus_source` need `described_class`/`corpus` (a `let`), so
+# the whole module is included rather than split -- `outcome` calls `render`
+# and needs the same instance context, and `parsed_gantt_date` is grouped
+# with it here rather than pulled into a second, `module_function` module for
+# one pure method.
+module DeterminismSpecHelpers
+  def render(source, **)
+    described_class.new(**).render(source)
   end
 
   def corpus_source(type, file)
     File.read(File.join(corpus, type, file))
   end
+
+  def parsed_gantt_date(text, pin)
+    transform = Sirena::Layout::Gantt.new
+    transform.today = pin
+    transform.send(:parse_date, text)
+  end
+
+  def outcome(source, **)
+    render(source, **)
+    :rendered
+  rescue StandardError => e
+    # Parse errors embed an inspected Parslet::Position, whose object
+    # address differs every call and would make any two runs look different.
+    "#{e.class}: #{e.message.lines.first.to_s.strip.gsub(/0x[0-9a-f]+/, '0xX')}"
+  end
+
+  def ambient_reads_in(file)
+    relative = file.sub("#{Dir.pwd}/", '')
+
+    File.readlines(file).each_with_index.filter_map do |line, index|
+      # Exact match, not include?. A substring test skipped the whole line,
+      # so a second ambient read sharing that line went unreported.
+      next if line.strip == sanctioned
+      next unless line.match?(ambient)
+
+      "#{relative}:#{index + 1}: #{line.strip}"
+    end
+  end
+end
+
+RSpec.describe Sirena::Engine do
+  include DeterminismSpecHelpers
+
+  let(:corpus) { File.expand_path('../mermaid', __dir__) }
 
   describe 'the same source renders identically' do
     # One case per shape of the problem: block exercised the rand path,
@@ -155,12 +192,6 @@ RSpec.describe Sirena::Engine do
       expect(parsed_gantt_date('nonsense', early)).to eq(early)
     end
 
-    def parsed_gantt_date(text, pin)
-      transform = Sirena::Layout::Gantt.new
-      transform.today = pin
-      transform.send(:parse_date, text)
-    end
-
     # Pinning must never be the reason a render breaks. Comparing outcomes
     # rather than asserting success keeps this honest about types that are
     # already failing for unrelated reasons.
@@ -182,15 +213,6 @@ RSpec.describe Sirena::Engine do
       end
 
       expect(differing).to be_empty, "pinning altered:\n#{differing.join("\n")}"
-    end
-
-    def outcome(source, **options)
-      render(source, **options)
-      :rendered
-    rescue StandardError => e
-      # Parse errors embed an inspected Parslet::Position, whose object
-      # address differs every call and would make any two runs look different.
-      "#{e.class}: #{e.message.lines.first.to_s.strip.gsub(/0x[0-9a-f]+/, '0xX')}"
     end
   end
 
@@ -251,19 +273,6 @@ RSpec.describe Sirena::Engine do
 
       expect(offenders).to be_empty,
                            "ambient state on a render path:\n#{offenders.join("\n")}"
-    end
-
-    def ambient_reads_in(file)
-      relative = file.sub("#{Dir.pwd}/", '')
-
-      File.readlines(file).each_with_index.filter_map do |line, index|
-        # Exact match, not include?. A substring test skipped the whole line,
-        # so a second ambient read sharing that line went unreported.
-        next if line.strip == sanctioned
-        next unless line.match?(ambient)
-
-        "#{relative}:#{index + 1}: #{line.strip}"
-      end
     end
   end
 end

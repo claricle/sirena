@@ -2,7 +2,15 @@
 
 require 'spec_helper'
 
+module StateDiagramSpecHelpers
+  def corpus(name)
+    parser.parse(File.read(File.expand_path("../../mermaid/#{name}", __dir__)))
+  end
+end
+
 RSpec.describe Sirena::Parser::StateDiagram do
+  include StateDiagramSpecHelpers
+
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -168,10 +176,6 @@ RSpec.describe Sirena::Parser::StateDiagram do
   # One example per corpus case the statement form was added for. Every
   # claim about mermaid below was measured against mmdc 11.12.0.
   describe 'mermaid corpus statement forms' do
-    def corpus(name)
-      parser.parse(File.read("spec/mermaid/#{name}"))
-    end
-
     describe 'state "Label" as Id' do
       it 'names and labels a state (state_diagram/019)' do
         diagram = corpus(

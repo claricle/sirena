@@ -32,7 +32,7 @@ Each reference page provides:
 
 == Command-Line Interface
 
-=== link:{% link _references/cli-reference.adoc %}[CLI Reference]
+=== link:../../guides/cli-reference/[CLI Reference]
 
 Complete documentation of all `sirena` commands:
 
@@ -43,7 +43,7 @@ Complete documentation of all `sirena` commands:
 
 == Programmatic API
 
-=== link:{% link _references/api-reference.adoc %}[API Reference]
+=== *API Reference* (planned)
 
 Ruby API documentation:
 
@@ -55,7 +55,7 @@ Ruby API documentation:
 
 == Configuration
 
-=== link:{% link _references/theme-reference.adoc %}[Theme Reference]
+=== *Theme Reference* (planned)
 
 Complete theme configuration schema:
 
@@ -67,7 +67,7 @@ Complete theme configuration schema:
 
 == Error Handling
 
-=== link:{% link _references/error-codes.adoc %}[Error Codes]
+=== *Error Codes* (planned)
 
 All error codes with:
 
@@ -79,7 +79,7 @@ All error codes with:
 
 == Compatibility
 
-=== link:{% link _references/mermaid-compatibility.adoc %}[Mermaid Compatibility]
+=== *Mermaid Compatibility* (planned)
 
 Feature-by-feature comparison:
 
@@ -92,12 +92,12 @@ Feature-by-feature comparison:
 
 Downloadable quick references:
 
-* link:{% link _references/cli-quick-reference.adoc %}[CLI Quick Reference]
-* link:{% link _references/api-quick-reference.adoc %}[API Quick Reference]
-* link:{% link _references/syntax-quick-reference.adoc %}[Syntax Quick Reference]
+* *CLI Quick Reference* (planned)
+* *API Quick Reference* (planned)
+* *Syntax Quick Reference* (planned)
 
 == Related Documentation
 
-* link:{% link _tutorials/index.adoc %}[Tutorials] - Learn step-by-step
-* link:{% link _guides/index.adoc %}[Guides] - In-depth topics
-* link:{% link _diagram_types/index.adoc %}[Diagram Types] - Syntax for each type
+* link:../../tutorials/index/[Tutorials] - Learn step-by-step
+* link:../../guides/index/[Guides] - In-depth topics
+* link:../../diagram_types/index/[Diagram Types] - Syntax for each type

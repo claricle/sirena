@@ -105,6 +105,8 @@ module Sirena
       attribute :styles, RequirementStyle, collection: true, default: -> { [] }
       attribute :classes, RequirementClass, collection: true, default: -> { [] }
       attribute :class_assignments, RequirementClassAssignment, collection: true, default: -> { [] }
+      attribute :acc_title, :string
+      attribute :acc_description, :string
 
       def add_requirement(requirement)
         requirements << requirement

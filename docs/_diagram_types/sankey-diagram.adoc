@@ -352,6 +352,6 @@ Checkout,Abandon,50
 
 == Related documentation
 
-* link:flowchart.adoc[Flowchart diagrams]
-* link:timeline.adoc[Timeline diagrams]
+* link:../flowchart/[Flowchart diagrams]
+* link:../timeline/[Timeline diagrams]
 * link:https://mermaid.js.org/syntax/sankey.html[Official Mermaid Sankey documentation]

@@ -32,17 +32,22 @@ RSpec.describe Sirena::Svg::Numbers do
     # to_s with itself, so a plain to_f would have turned it into 0.0 and
     # every unset attribute would have been emitted as zero.
     #
-    # Parsed in, not built: `Rect.new.style` is plain nil, so writing it that
-    # way asks the same question as the nil case above and never reaches the
-    # sentinel at all. `style` because only an attribute the class does NOT
-    # map is left holding the sentinel, and every mapped one is set to nil
-    # by the parse.
-    it 'has nothing to read in an attribute lutaml never set' do
-      unset = Sirena::Svg::Text.from_xml('<text>x</text>').style
+    # No Sirena::Svg class has a from_xml path left to reach this sentinel
+    # through parsing (sirena/02 removed the last one, Rect's, in #118) --
+    # every remaining `xml do` mapping in the gem is gone. The sentinel
+    # itself is still what a real parse would hand a caller, so it is built
+    # directly rather than dropping the coverage.
+    #
+    # Diagnostic, not a fix-prover: this never calls into any of the four
+    # lib files sirena/02 changes, so it stays green whether or not their
+    # `xml do` deletion is reverted (mutation-check.sh confirmed this). Keep
+    # it; it is the only remaining check for Numbers.read's sentinel
+    # behaviour now that no Svg class can hand it one via from_xml.
+    it 'has nothing to read in the sentinel lutaml leaves on a declared but unmapped attribute' do
+      unset = Lutaml::Model::UninitializedClass.instance
 
       # Lutaml::Model::UninitializedClass is an internal name; the non-String
       # to_s result is the boundary Sirena relies on and survives a rename.
-      expect(unset).not_to be_nil
       expect(unset.to_s).not_to be_a(String)
       expect(described_class.read(unset)).to be_nil
     end

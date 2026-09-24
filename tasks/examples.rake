@@ -133,7 +133,7 @@ namespace :examples do
         content << "----"
         content << ""
         content << ".Rendered Output"
-        content << "image::../../assets/examples/#{diagram_type}/#{basename}.svg[#{title},600]"
+        content << "image::../../../assets/examples/#{diagram_type}/#{basename}.svg[#{title},600]"
         content << ""
         content << "'''"
         content << ""
