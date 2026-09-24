@@ -186,7 +186,6 @@ module Sirena
       #
       # A flowchart is valid if:
       # - No box is its own ancestor
-      # - It has at least one node or one subgraph worth drawing
       # - All nodes are valid
       # - All edges are valid
       # - All subgraphs are valid
@@ -194,8 +193,19 @@ module Sirena
       # - `parent_id` and `child_ids` tell the same story
       # - Every edge end names a node, or a subgraph that gets drawn
       #
+      # A diagram with an empty `nodes` collection and no subgraphs is
+      # valid: mmdc renders a bare `graph` (no direction, no body) as an
+      # empty canvas, so refusing it here would reject a real diagram, not
+      # a malformed one. A `nil` `nodes` collection is a different thing
+      # -- nothing the parser produces sets it that way -- and must stay
+      # invalid, or the layout's `diagram.nodes.map` raises
+      # `NoMethodError` instead of the `LayoutError` this gate exists to
+      # produce.
+      #
       # @return [Boolean] true if flowchart is valid
       def valid?
+        return false if nodes.nil?
+
         drawn_nodes = nodes || []
         boxes = subgraphs || []
         return false if parent_cycle?(boxes)
@@ -210,7 +220,6 @@ module Sirena
         # that gets drawn, because that is what an edge can reach — an
         # empty one is not carried into the layout at all.
         drawn_boxes = boxes.filter_map { |box| box.id if box.drawable? }
-        return false if drawn_nodes.empty? && drawn_boxes.empty?
 
         known = drawn_nodes.map(&:id) + drawn_boxes
         edges&.each do |edge|

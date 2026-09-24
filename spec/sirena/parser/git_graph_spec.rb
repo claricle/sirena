@@ -78,6 +78,49 @@ RSpec.describe Sirena::Parser::GitGraph do
         expect(diagram.commits.last.branch_name).to eq("develop")
       end
 
+      # mermaid accepts real git branch names, not just identifiers.
+      # Corpus case unknown/013_platform_gitgraph_12.mmd checks out
+      # "release/1.0.0".
+      it "parses a branch name with a slash and dots" do
+        source = <<~MERMAID
+          gitGraph
+            commit
+            branch release/1.0.0
+            checkout release/1.0.0
+            commit
+        MERMAID
+
+        diagram = parser.parse(source)
+        expect(diagram.branches.map(&:name)).to include("release/1.0.0")
+        expect(diagram.commits.last.branch_name).to eq("release/1.0.0")
+      end
+
+      # mermaid's own `REFERENCE` token (`/\w([-.\/\w]*[-\w])?/`) requires
+      # a word character first and a word character or hyphen last --
+      # `.` and `/` are only legal in the middle. A Codex review found an
+      # earlier version of `branch_name` accepted all four leading/trailing
+      # forms mermaid rejects.
+      it "rejects a branch name starting or ending with a dot or slash" do
+        grammar = Sirena::Parser::Grammars::GitGraph.new
+
+        %w[.foo /foo foo. foo/].each do |name|
+          expect { grammar.branch_name.parse(name) }
+            .to raise_error(Parslet::ParseFailed), "expected #{name.inspect} to be rejected"
+        end
+      end
+
+      # `Source#consume(n)`'s own `/(.|$){n}/m` raises `RegexpError: too
+      # big number for repeat range` above a fixed ceiling -- a Codex
+      # review found `ReferencePattern` passed the WHOLE match length to
+      # one `#consume` call, so a branch name past that ceiling crashed
+      # instead of parsing.
+      it "parses a branch name longer than Source#consume's single-call ceiling" do
+        grammar = Sirena::Parser::Grammars::GitGraph.new
+        name = "a#{'b' * 119_999}"
+
+        expect(grammar.branch_name.parse(name).to_s).to eq(name)
+      end
+
       it "parses branch with order" do
         source = <<~MERMAID
           gitGraph

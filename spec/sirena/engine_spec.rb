@@ -47,6 +47,29 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    # mmdc renders a bare `graph` as an empty canvas rather than refusing
+    # it. Corpus case unknown/001_rendering_sankey_spec_0.mmd.
+    context 'with a flowchart that has no nodes' do
+      let(:source) { 'graph' }
+
+      it 'renders an empty canvas instead of refusing the diagram' do
+        result = engine.render(source)
+        expect(result).to include('<svg')
+      end
+    end
+
+    # `flowchart-elk` only selects mmdc's ELK renderer; the body is
+    # ordinary flowchart syntax. Corpus case
+    # unknown/012_platform_flow-elk_11.mmd.
+    context 'with the flowchart-elk keyword' do
+      let(:source) { "flowchart-elk\na[hello] --> b[world]\n" }
+
+      it 'renders it like a plain flowchart' do
+        result = engine.render(source)
+        expect(result).to include('<svg')
+      end
+    end
+
     context 'with class diagram' do
       let(:source) { "classDiagram\nClass01 <|-- Class02" }
 
@@ -140,16 +163,13 @@ RSpec.describe Sirena::Engine do
       end
 
       it 'names the type for a bare keyword, as the grammar does' do
-        # mmdc renders `graph` on its own. Detection wanted a character
-        # after the keyword, so this never reached the parser at all. It
-        # still fails downstream, where an empty flowchart is refused on
-        # main too, but it fails as a flowchart rather than as no type.
-        # The failure is the transform's own validity check, so it now
-        # propagates as LayoutError rather than being collapsed into
-        # PipelineError (see the error-taxonomy fix in engine.rb).
-        expect { engine.render('graph') }.to raise_error(
-          Sirena::Layout::LayoutError
-        )
+        # mmdc renders `graph` on its own, as an empty canvas. Detection
+        # wanted a character after the keyword, so this never reached the
+        # parser at all; it now reaches the parser, the transform's own
+        # validity check accepts an empty diagram (unknown/
+        # 001_rendering_sankey_spec_0.mmd is exactly this source), and
+        # the render completes.
+        expect(engine.render('graph')).to include('<svg')
       end
 
       it 'still refuses a keyword glued to a word' do
@@ -440,6 +460,11 @@ RSpec.describe Sirena::Engine do
        :sequence],
       ['a bare comment line with nothing after it',
        "%%\nflowchart TD\nA-->B\n",
+       :flowchart],
+      # mmdc's ELK-layout flowchart keyword — corpus case
+      # unknown/012_platform_flow-elk_11.mmd.
+      ['the flowchart-elk keyword',
+       "flowchart-elk\na[hello] --> b[world]\n",
        :flowchart]
     ].each do |name, source, expected|
       it "names #{expected} past #{name}" do
