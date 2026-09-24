@@ -23,16 +23,13 @@ TASKS_RAKE_FILE = File.expand_path('../../../tasks/examples.rake', __dir__)
 EXAMPLE_TASKS_FILE = File.expand_path('../../../tasks/example_tasks.rb', __dir__)
 load TASKS_RAKE_FILE unless defined?(ExampleTasks)
 
-RSpec.describe ExampleTasks do
-  around do |example|
-    Dir.mktmpdir('sirena-examples') do |dir|
-      @examples_dir = dir
-      example.run
-    end
-  end
-
-  attr_reader :examples_dir
-
+# `capture` and `module_body` are pure and marked `module_function` in
+# place; the rest use `examples_dir` (an `attr_reader` backed by the
+# `around` hook) or RSpec mocking (`allow`), so they stay included
+# instance methods. `silently` calls `capture` and needs no example state
+# itself, but is grouped here rather than split into a second module for
+# one method.
+module ExampleTasksSpecHelpers
   def silently
     result = nil
     capture { result = yield }
@@ -47,6 +44,7 @@ RSpec.describe ExampleTasks do
   ensure
     $stdout = original
   end
+  module_function :capture
 
   # Fails the temporary write half-done while still running write_svg's own
   # block, so the bookkeeping inside it (which decides whether the temporary
@@ -74,6 +72,38 @@ RSpec.describe ExampleTasks do
     File.write(path, content)
     path
   end
+
+  # generate and prune both take this, so they cannot interleave at all --
+  # the re-decide above covers a source restored by hand, which no lock of
+  # ours can serialise.
+  def try_lock
+    path = described_class.examples_lock_path(examples_dir)
+    File.open(path, File::RDWR | File::CREAT) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
+  end
+
+  def handle(failures)
+    described_class.handle_failed_svgs(failures, examples_dir)
+  end
+
+  def module_body(source)
+    first = source.index { |line| line.start_with?('module ExampleTasks') }
+    last = (first...source.size).find { |i| source[i].rstrip == 'end' }
+    (first..last)
+  end
+  module_function :module_body
+end
+
+RSpec.describe ExampleTasks do
+  include ExampleTasksSpecHelpers
+
+  around do |example|
+    Dir.mktmpdir('sirena-examples') do |dir|
+      @examples_dir = dir
+      example.run
+    end
+  end
+
+  attr_reader :examples_dir
 
   describe '.prune_orphan_svgs' do
     it 'keeps an SVG whose source is still there' do
@@ -168,14 +198,6 @@ RSpec.describe ExampleTasks do
   end
 
   describe '.with_examples_lock' do
-    # generate and prune both take this, so they cannot interleave at all --
-    # the re-decide above covers a source restored by hand, which no lock of
-    # ours can serialise.
-    def try_lock
-      path = described_class.examples_lock_path(examples_dir)
-      File.open(path, File::RDWR | File::CREAT) { |h| h.flock(File::LOCK_EX | File::LOCK_NB) }
-    end
-
     it 'refuses a second holder while the first holds it' do
       held = nil
       described_class.with_examples_lock(examples_dir) { held = try_lock }
@@ -670,10 +692,6 @@ RSpec.describe ExampleTasks do
   # `.prune_known_unrenderable_svgs`'s job, exercised in its own describe
   # block below.
   describe '.handle_failed_svgs' do
-    def handle(failures)
-      described_class.handle_failed_svgs(failures, examples_dir)
-    end
-
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
     # Derived, not typed out: naming the source by position and its SVG by
     # hand let a reorder of the constant pair the two up wrongly.
@@ -1486,12 +1504,6 @@ RSpec.describe ExampleTasks do
         .flat_map { |klass, methods| methods.grep(/delete|unlink|remove|\Arm/).map { |m| "#{klass}.#{m}" } }
 
       Regexp.union(qualified_names.map { |name| /#{Regexp.escape(name)}\b/ })
-    end
-
-    def module_body(source)
-      first = source.index { |line| line.start_with?('module ExampleTasks') }
-      last = (first...source.size).find { |i| source[i].rstrip == 'end' }
-      (first..last)
     end
 
     it 'confines every deletion call to the methods allowed to delete' do
