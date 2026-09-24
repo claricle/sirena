@@ -36,10 +36,8 @@ Gem::Specification.new do |spec|
   # Not yet called (TODO.foundation/14 tracks wiring it into Engine#layout_graph).
   spec.add_dependency 'elkrb', '~> 1.0'
   spec.add_dependency 'kramdown', '~> 2.5'
-  # 0.8.32 changed how a `collection: true` attribute reads back after a
-  # scalar assignment (String -> one-element Array); confirmed a read-back
-  # change only, not a rendering difference (every renderer already reads
-  # it through Array(...), same as parsed mixed content does). sirena/01#5.
+  # From 0.8.32, a `collection: true` attribute reads back as an Array even
+  # after a scalar assignment; read it through Array(...), never raw.
   spec.add_dependency 'lutaml-model', '~> 0.8.0'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'
