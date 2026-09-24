@@ -131,8 +131,19 @@ RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
       end
     end
 
-    it 'does not wire lint into a lane yet (item 08 fills the slot)' do
-      expect(jobs.keys).not_to include('lint', 'corpus', 'parity', 'conformance', 'fresh-resolution')
+    it 'wires lint into the fast lane, with no other gate slot filled yet' do
+      expect(jobs.keys).to include('lint')
+      expect(jobs.keys).not_to include('corpus', 'parity', 'conformance', 'fresh-resolution')
+    end
+
+    it 'runs rubocop as the lint job, hung off fast-lane' do
+      lint = jobs.fetch('lint')
+      expect(lint['steps'].filter_map { |s| s['run'] }).to include('bundle exec rubocop')
+      expect(jobs.fetch('fast-lane')['needs']).to include('lint')
+    end
+
+    it 'has no standalone lint workflow file any more' do
+      expect(workflow_files.map { |f| File.basename(f) }).not_to include('lint.yml')
     end
   end
 end

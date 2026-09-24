@@ -4,23 +4,24 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins` | < 10 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop`) | < 10 min |
 | Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml) | < 30 min |
 
-Reserved, not yet wired: lint (08), snippet spec (16), corpus (02b),
-parity (14), conformance (04), fresh-resolution install (01). The
-scoreboard guard (02b) goes in BOTH lanes. `lint.yml` still runs as its own
-workflow until 19b folds it into a lane.
+Reserved, not yet wired: snippet spec (16), corpus (02b), parity (14),
+conformance (04), fresh-resolution install (01). The scoreboard guard (02b)
+goes in BOTH lanes. `lint` (19b) is folded into the fast lane as an ordinary
+job hanging off `fast-lane`; there is no standalone `lint.yml` workflow, and
+no separate `lint / rubocop` required check.
 
 Budgets are targets. No cold or warm timing has been measured (19b).
 
 ## Branch protection (owner applies; a repository setting, not YAML)
 
-Owner action after merge (no branch protection exists today): mark `fast-lane`,
-`full-lane` and `lint / rubocop` as required checks. Also require
-ONE of: "Require branches to be up to date before merging" (strict), or a
-merge queue (the lanes already run on `merge_group`). Record which, and the
-date, here once applied: NOT YET APPLIED.
+Owner action after merge (no branch protection exists today): mark `fast-lane`
+and `full-lane` as required checks. Also require ONE of: "Require branches to
+be up to date before merging" (strict), or a merge queue (the lanes already
+run on `merge_group`). Record which, and the date, here once applied:
+NOT YET APPLIED.
 
 ## Adding a gate to a lane
 
@@ -61,7 +62,7 @@ Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
 metanorma tool installers, private fonts. Its `tests-passed` and
 `do-release` repository dispatches moved to the `cascade` job, and now fire
 only on push events (generic-rake also fired on pull requests). `cascade`
-needs only `fast-lane` (the `unit` matrix, pins), matching the old
+needs only `fast-lane` (the `unit` matrix, pins, lint), matching the old
 gate on the test matrix; `links` and the rest of `full-lane` do not gate it,
 so an external-link outage cannot suppress a release. The Ruby/OS matrix is
 hard-coded in `unit`; it was previously fetched from metanorma's
