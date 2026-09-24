@@ -152,12 +152,6 @@ defaults:
 include:
   - "*.adoc"
   - "*/*.adoc"
-  - "_pages"
-  - "_tutorials"
-  - "_guides"
-  - "_references"
-  - "_features"
-  - "_diagram_types"
 
 # Exclude build and config files
 exclude:
