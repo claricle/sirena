@@ -2,7 +2,37 @@
 
 require 'spec_helper'
 
+module LayoutFlowchartSpecHelpers
+  def node_width(theme_name)
+    themed_transform = described_class.new
+    themed_transform.theme = Sirena::Theme::Registry.get(theme_name)
+    themed_transform.to_graph(diagram)[:children].first[:width]
+  end
+
+  def edge_label_width(typography)
+    themed_transform = described_class.new
+    themed_transform.theme = Sirena::Theme.new(typography: typography)
+    graph = themed_transform.to_graph(diagram)
+    graph[:edges].first[:labels].first[:width]
+  end
+
+  def label_width_for(font_size_normal)
+    themed_transform = described_class.new
+    themed_transform.theme = Sirena::Theme.new(
+      typography: Sirena::Theme::Typography.new(
+        font_size_normal: font_size_normal
+      )
+    )
+    diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+      d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+    end
+    themed_transform.to_graph(diagram)[:children].first[:labels].first[:width]
+  end
+end
+
 RSpec.describe Sirena::Layout::Flowchart do
+  include LayoutFlowchartSpecHelpers
+
   let(:transform) { described_class.new }
 
   describe '#to_graph' do
@@ -147,12 +177,6 @@ RSpec.describe Sirena::Layout::Flowchart do
         end
       end
 
-      def node_width(theme_name)
-        themed_transform = described_class.new
-        themed_transform.theme = Sirena::Theme::Registry.get(theme_name)
-        themed_transform.to_graph(diagram)[:children].first[:width]
-      end
-
       it 'measures a wider node under a theme with a larger font_size_normal' do
         expect(node_width(:high_contrast)).to be > node_width(:default)
       end
@@ -172,13 +196,6 @@ RSpec.describe Sirena::Layout::Flowchart do
             label: 'edge label text'
           )
         end
-      end
-
-      def edge_label_width(typography)
-        themed_transform = described_class.new
-        themed_transform.theme = Sirena::Theme.new(typography: typography)
-        graph = themed_transform.to_graph(diagram)
-        graph[:edges].first[:labels].first[:width]
       end
 
       it 'sizes the edge label at font_size_small, not font_size_normal' do
@@ -225,19 +242,6 @@ RSpec.describe Sirena::Layout::Flowchart do
     # (padding alone can mask it in the padded node :width, so this checks
     # the unpadded label measurement directly).
     context 'with a theme carrying an invalid font_size_normal' do
-      def label_width_for(font_size_normal)
-        themed_transform = described_class.new
-        themed_transform.theme = Sirena::Theme.new(
-          typography: Sirena::Theme::Typography.new(
-            font_size_normal: font_size_normal
-          )
-        )
-        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
-        end
-        themed_transform.to_graph(diagram)[:children].first[:labels].first[:width]
-      end
-
       it 'falls back to DEFAULT_FONT_SIZE for a negative value' do
         default_label_width = label_width_for(nil)
 

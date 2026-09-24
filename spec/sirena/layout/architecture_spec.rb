@@ -2,6 +2,23 @@
 
 require "spec_helper"
 
+module LayoutArchitectureSpecHelpers
+  module_function
+
+  def rectangles_overlap?(a, b)
+    a[:x] < b[:x] + b[:width] && b[:x] < a[:x] + a[:width] &&
+      a[:y] < b[:y] + b[:height] && b[:y] < a[:y] + a[:height]
+  end
+
+  def group_double(id)
+    Sirena::Diagram::Architecture::Group.new(id: id, label: id, icon: "cloud")
+  end
+
+  def junction_double(id)
+    Sirena::Diagram::Architecture::Junction.new(id: id, group_id: nil)
+  end
+end
+
 RSpec.describe Sirena::Layout::Architecture do
   let(:transform) { described_class.new }
 
@@ -85,17 +102,12 @@ RSpec.describe Sirena::Layout::Architecture do
         )
       end
 
-      def rectangles_overlap?(a, b)
-        a[:x] < b[:x] + b[:width] && b[:x] < a[:x] + a[:width] &&
-          a[:y] < b[:y] + b[:height] && b[:y] < a[:y] + a[:height]
-      end
-
       it "does not place the junction on top of the service" do
         graph = transform.to_graph(diagram)
         service = graph[:services]["a"]
         junction = graph[:junctions]["j"]
 
-        expect(rectangles_overlap?(service, junction)).to be(false)
+        expect(LayoutArchitectureSpecHelpers.rectangles_overlap?(service, junction)).to be(false)
       end
     end
 
@@ -121,17 +133,12 @@ RSpec.describe Sirena::Layout::Architecture do
         )
       end
 
-      def rectangles_overlap?(a, b)
-        a[:x] < b[:x] + b[:width] && b[:x] < a[:x] + a[:width] &&
-          a[:y] < b[:y] + b[:height] && b[:y] < a[:y] + a[:height]
-      end
-
       it "does not place the junction on a service positioned under a different group" do
         graph = transform.to_graph(diagram)
         service = graph[:services]["a"]
         junction = graph[:junctions]["j"]
 
-        expect(rectangles_overlap?(service, junction)).to be(false)
+        expect(LayoutArchitectureSpecHelpers.rectangles_overlap?(service, junction)).to be(false)
       end
     end
 
@@ -387,21 +394,19 @@ RSpec.describe Sirena::Layout::Architecture do
     let(:transform) { described_class.new }
     let(:root_group) { :root }
 
-    def group_double(id)
-      Sirena::Diagram::Architecture::Group.new(id: id, label: id, icon: "cloud")
-    end
-
-    def junction_double(id)
-      Sirena::Diagram::Architecture::Junction.new(id: id, group_id: nil)
-    end
-
     context "when a group has zero junctions but does have services" do
       # Mirrors the `next if junctions.empty?` guard at position_junctions.
       # Without it, a junction-less group would still fall into the
       # group_services.any? branch and shift the cursor for every group
       # that follows, using a row computed for junctions that don't exist.
-      let(:diagram) { Sirena::Diagram::Architecture.new(services: [], groups: [group_double("g1")], junctions: [], edges: []) }
-      let(:hierarchy) { { junctions_by_group: { root: [], "g1" => [junction_double("j1")] } } }
+      let(:diagram) do
+        Sirena::Diagram::Architecture.new(
+          services: [], groups: [LayoutArchitectureSpecHelpers.group_double("g1")], junctions: [], edges: []
+        )
+      end
+      let(:hierarchy) do
+        { junctions_by_group: { root: [], "g1" => [LayoutArchitectureSpecHelpers.junction_double("j1")] } }
+      end
       let(:service_positions) do
         { "svcA" => { x: 0, y: 0, width: 20, height: 0, group_id: root_group } }
       end
@@ -425,7 +430,7 @@ RSpec.describe Sirena::Layout::Architecture do
       let(:diagram) do
         Sirena::Diagram::Architecture.new(
           services: [],
-          groups: [group_double("g1"), group_double("g2"), group_double("g3")],
+          groups: %w[g1 g2 g3].map { |id| LayoutArchitectureSpecHelpers.group_double(id) },
           junctions: [],
           edges: []
         )
@@ -434,9 +439,9 @@ RSpec.describe Sirena::Layout::Architecture do
         {
           junctions_by_group: {
             root: [],
-            "g1" => [junction_double("j1"), junction_double("j1b")],
-            "g2" => [junction_double("j2")],
-            "g3" => [junction_double("j3")],
+            "g1" => %w[j1 j1b].map { |id| LayoutArchitectureSpecHelpers.junction_double(id) },
+            "g2" => [LayoutArchitectureSpecHelpers.junction_double("j2")],
+            "g3" => [LayoutArchitectureSpecHelpers.junction_double("j3")],
           },
         }
       end

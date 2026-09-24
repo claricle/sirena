@@ -6,7 +6,7 @@ require 'spec_helper'
 # that ask for a head set `marker-end="url(#arrowhead)"` and no document ever
 # defined `#arrowhead`, so the head simply did not render. SVG Tiny 1.2 has no way to reference a
 # marker at all, so the head is drawn as its own shape.
-RSpec.describe Sirena::Svg::Arrowhead do
+module SvgArrowheadSpecHelpers
   # A stroke by default, because an unstroked path paints no line and so
   # gets no head — the cases below are about geometry, not about that.
   def path(**attributes)
@@ -19,6 +19,10 @@ RSpec.describe Sirena::Svg::Arrowhead do
   def points_of(polygon)
     polygon.points.split.map { |pair| pair.split(',').map(&:to_f) }
   end
+end
+
+RSpec.describe Sirena::Svg::Arrowhead do
+  include SvgArrowheadSpecHelpers
 
   describe '.for' do
     it 'draws nothing when the path asked for no marker' do
