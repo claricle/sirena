@@ -5,6 +5,45 @@ require_relative "common"
 module Sirena
   module Parser
     module Grammars
+      # Matches mermaid's own git `REFERENCE` token in ONE `Source#consume`
+      # call: a word char first, a word char or hyphen last, so `.foo`,
+      # `/foo`, `foo.`, `foo/` are all rejected. Do not replace this with
+      # `match('[...]').repeat`: it cannot express that boundary (Parslet's
+      # `repeat` does not backtrack a character count against a following
+      # atom). See the gate record for the earlier attempt that broke on
+      # exactly this, and `RunPattern` (`grammars/er_diagram.rb`) for why
+      # the char count comes from `StringScanner#matched`, not `Source#matches?`.
+      class ReferencePattern < Parslet::Atoms::Base
+        REFERENCE_RE = /\w([-.\/\w]*[-\w])?/
+        private_constant :REFERENCE_RE
+
+        # Below this, `Source#consume(n)`'s own `/(.|$){n}/m` still
+        # compiles; above it Ruby's regex engine raises `RegexpError: too
+        # big number for repeat range`, so a match longer than this needs
+        # more than one `#consume` call (see `RunPattern`,
+        # `grammars/er_diagram.rb`, for the same ceiling).
+        MAX_CHUNK = 50_000
+        private_constant :MAX_CHUNK
+
+        def try(source, context, _consume_all)
+          scanner = source.instance_variable_get(:@str)
+          return context.err(self, source, "Failed to match #{REFERENCE_RE.inspect}") unless scanner.match?(REFERENCE_RE)
+
+          char_length = scanner.matched.length
+          start_position = source.pos
+          buffer = +''
+          remaining = char_length
+          while remaining.positive?
+            chunk_size = [remaining, MAX_CHUNK].min
+            buffer << source.consume(chunk_size).to_s
+            remaining -= chunk_size
+          end
+
+          succ(Parslet::Slice.new(start_position, buffer, source.instance_variable_get(:@line_cache)))
+        end
+      end
+      private_constant :ReferencePattern
+
       # Parslet grammar for Git Graph diagrams
       class GitGraph < Common
 
@@ -79,9 +118,11 @@ module Sirena
             line_end
         end
 
-        rule(:branch_name) do
-          match('[a-zA-Z0-9_-]').repeat(1)
-        end
+        # mermaid accepts git's own branch-name characters, not just an
+        # identifier — `release/1.0.0` is a real branch name a source can
+        # check out. See `ReferencePattern` above for the boundary rule
+        # and why it needs a custom atom.
+        rule(:branch_name) { ReferencePattern.new }
 
         rule(:branch_options) do
           space >> (branch_option >> space?).repeat(1)

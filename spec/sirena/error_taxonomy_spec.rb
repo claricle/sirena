@@ -51,9 +51,15 @@ RSpec.describe Sirena::Engine do
     end
 
     it "raises LayoutError, not PipelineError, when a diagram fails its own validity check" do
-      # mmdc renders a bare `graph` header; the flowchart transform refuses
-      # it because the model carries no nodes.
-      expect { engine.render("graph") }
+      # An empty flowchart (a bare `graph` header) is itself valid -- mmdc
+      # renders it -- so the validity guard is exercised here with a
+      # stubbed diagram instead, the same way the RenderError example
+      # below stubs a layer nothing in lib/ currently reaches for real.
+      invalid_diagram = instance_double(Sirena::Diagram::Flowchart, valid?: false, title: nil)
+      broken_parser = instance_double(Sirena::Parser::Flowchart, parse: invalid_diagram)
+      allow(Sirena::Parser::Flowchart).to receive(:new).and_return(broken_parser)
+
+      expect { engine.render("graph TD\nA-->B\n") }
         .to raise_error(Sirena::Layout::LayoutError, "Invalid diagram")
     end
 

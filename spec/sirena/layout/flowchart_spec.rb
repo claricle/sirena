@@ -154,8 +154,15 @@ RSpec.describe Sirena::Layout::Flowchart do
       expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
     end
 
+    # An empty diagram (no nodes) is itself valid -- mmdc renders a bare
+    # `graph` header as an empty canvas -- so invalidity here comes from
+    # an edge naming a node the diagram never declared.
     it 'raises error for invalid diagram' do
       invalid_diagram = Sirena::Diagram::Flowchart.new
+      invalid_diagram.edges << Sirena::Diagram::FlowchartEdge.new(
+        source_id: 'A',
+        target_id: 'B'
+      )
 
       expect do
         transform.to_graph(invalid_diagram)

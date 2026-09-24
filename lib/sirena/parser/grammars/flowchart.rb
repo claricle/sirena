@@ -70,8 +70,19 @@ module Sirena
         # when a direction came first — `graph TD;A` renders and `graph;A`
         # does not. A lookahead cannot tell them apart: by the time the
         # header ends, the direction has already been consumed.
+        # `flowchart-elk` only selects mmdc's ELK renderer -- the diagram
+        # body is ordinary flowchart syntax, and sirena has no ELK layout
+        # of its own yet (see the layout TODO in engine.rb), so it falls
+        # back to the same grid every other flowchart uses. `-elk` is
+        # matched here, in the grammar, rather than rewritten out of the
+        # source before parsing: a source rewrite shifts every column
+        # after the keyword, so a parse error on a `flowchart-elk`
+        # diagram would quote the wrong text and point at the wrong
+        # column. `flowchart-elk` must be tried before the plain
+        # `flowchart` alternative, or the bare keyword would match first
+        # and leave `-elk` to fail against the direction.
         rule(:header) do
-          (str('flowchart') | str('graph')).as(:header) >>
+          (str('flowchart-elk') | str('flowchart') | str('graph')).as(:header) >>
             (directed_header | undirected_header)
         end
 

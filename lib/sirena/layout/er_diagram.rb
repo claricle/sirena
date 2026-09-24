@@ -169,6 +169,11 @@ module Sirena
         parts << attribute.attribute_type if attribute.attribute_type &&
                                              !attribute.attribute_type.empty?
 
+        # Add the trailing quoted comment if present, so the box is sized
+        # wide enough for it -- otherwise the renderer would draw text past
+        # the entity box computed here.
+        parts << attribute.note if attribute.note && !attribute.note.empty?
+
         parts.join(' ')
       end
 
@@ -176,7 +181,8 @@ module Sirena
         {
           name: attribute.name,
           attribute_type: attribute.attribute_type,
-          key_type: attribute.key_type
+          key_type: attribute.key_type,
+          note: attribute.note
         }
       end
 

@@ -20,7 +20,10 @@ module Sirena
           '{o' => 'zero_or_more',
           '{|' => 'one_or_more',
           '}{' => 'one_or_more',
-          '{}' => 'one_or_more'
+          '{}' => 'one_or_more',
+          'o|' => 'zero_or_one',
+          '|o' => 'zero_or_one',
+          '}|' => 'one_or_more'
         }.freeze
 
         # Transform parse tree into ER diagram.
@@ -90,8 +93,9 @@ module Sirena
 
               attribute = Diagram::ErAttribute.new.tap do |attr|
                 attr.name = attr_data[:name].to_s
-                attr.attribute_type = extract_text(attr_data[:type]) if attr_data[:type]
+                attr.attribute_type = extract_attribute_type(attr_data[:type]) if attr_data[:type]
                 attr.key_type = extract_key_type(attr_data[:key]) if attr_data[:key]
+                attr.note = extract_text(attr_data[:note]) if attr_data[:note]
               end
 
               entity.attributes << attribute
@@ -174,11 +178,90 @@ module Sirena
           slice.to_s.split(',').map(&:strip)
         end
 
+        # `tilde_type` in the grammar captures the FULL match -- optional
+        # non-whitespace prefix/suffix plus both tildes -- so mermaid's
+        # `foo~bar baz~qux` keeps its inner tilde untouched. Mermaid does
+        # NOT strip the tildes on display: it renders `~T~` as `<T>` (see
+        # `spec/mermaid/unknown/079_platform_yari2_78.svg`, which shows
+        # `&lt;timestamp with time zone&gt;`). `parse_generic_types` below
+        # ports mermaid's own function of the same name
+        # (`packages/mermaid/src/diagrams/common/common.ts`), which is
+        # what the renderer actually calls on an attribute's type text.
+        def extract_attribute_type(value)
+          parse_generic_types(extract_text(value))
+        end
+
+        # Pairs tildes from the outside in and turns each pair into a
+        # `<`/`>`, e.g. `~T~` -> `<T>`, `~Map~K, V~~` -> `<Map<K, V>>`.
+        # A leading tilde with no partner (an odd count that starts with
+        # `~`) carries no display meaning and passes through unchanged --
+        # `~test` stays `~test`, only `~test~T~` becomes `~test<T>`.
+        def parse_generic_types(input)
+          sets = input.split(/(,)/)
+          output = []
+          index = 0
+          while index < sets.length
+            this_set = sets[index]
+            if this_set == ',' && index.positive? && index + 1 < sets.length &&
+               should_combine_tilde_sets?(sets[index - 1], sets[index + 1])
+              this_set = "#{sets[index - 1]},#{sets[index + 1]}"
+              index += 1
+              output.pop
+            end
+            output << process_tilde_set(this_set)
+            index += 1
+          end
+          output.join
+        end
+
+        # A comma inside a generic's tildes (`Map~K, V~`) splits the input
+        # into three parts by the split above; rejoin them when both the
+        # part before and the part after the comma carry exactly one
+        # tilde each, meaning they are the two halves of one pair mermaid
+        # split apart, not two independent tilde types.
+        def should_combine_tilde_sets?(previous_set, next_set)
+          previous_set.count('~') == 1 && next_set.count('~') == 1
+        end
+
+        def process_tilde_set(input)
+          # Fast path: the vast majority of attribute types carry no tilde at
+          # all, so skip the char-array allocation below for them -- the
+          # loop already produces this same result for 0 or 1 tildes.
+          return input if input.count('~') <= 1
+
+          has_starting_tilde = input.count('~').odd? && input.start_with?('~')
+          input = input[1..] if has_starting_tilde
+
+          chars = input.chars
+          # One pass to collect every tilde's index, instead of the
+          # `index`/`rindex` pair rescanning the WHOLE array after every
+          # replacement (O(n) per pair, O(n^2) total on an n-tilde input).
+          # Pairing outside-in from a fixed index list gives the same
+          # result in one scan: pair 0 is (first, last), pair 1 is
+          # (second, second-to-last), and so on.
+          tilde_indices = chars.each_index.select { |i| chars[i] == '~' }
+          tilde_indices.length.fdiv(2).floor.times do |pair|
+            first = tilde_indices[pair]
+            last = tilde_indices[-(pair + 1)]
+            break if first == last
+
+            chars[first] = '<'
+            chars[last] = '>'
+          end
+
+          chars.unshift('~') if has_starting_tilde
+          chars.join
+        end
+
         def extract_text(value)
           case value
           when Hash
-            if value[:string]
-              value[:string].to_s
+            if value.key?(:string)
+              # A zero-length `.repeat.as(:string)` capture (the empty
+              # `~~` type, or an empty `""` note) comes back from Parslet
+              # as `[]`, not an empty Parslet::Slice -- `[].to_s` would
+              # otherwise ship the literal text "[]" into the model.
+              value[:string].is_a?(Array) ? '' : value[:string].to_s
             elsif value[:key_type]
               value[:key_type].to_s
             else

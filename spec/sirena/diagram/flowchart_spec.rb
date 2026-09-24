@@ -22,8 +22,23 @@ RSpec.describe Sirena::Diagram::Flowchart do
       expect(flowchart.valid?).to be true
     end
 
-    it 'returns false for flowchart without nodes' do
+    # mmdc renders a bare `graph` (no direction, no body) as an empty
+    # canvas rather than refusing it — corpus case
+    # unknown/001_rendering_sankey_spec_0.mmd is exactly this source.
+    it 'returns true for flowchart without nodes' do
       flowchart = described_class.new(direction: 'TD')
+      expect(flowchart.valid?).to be true
+    end
+
+    # A `nil` `nodes` collection is never what the parser produces --
+    # only a hand-built model reaches this state. It must stay invalid,
+    # or the layout's `diagram.nodes.map` raises `NoMethodError` instead
+    # of the `LayoutError` this gate exists to produce. Codex round-2
+    # finding 2 (ffaabf5d).
+    it 'returns false when nodes is nil' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.nodes = nil
+
       expect(flowchart.valid?).to be false
     end
 

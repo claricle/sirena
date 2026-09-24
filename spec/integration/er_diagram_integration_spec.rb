@@ -257,6 +257,38 @@ RSpec.describe 'ErDiagram Integration' do
     end
   end
 
+  describe 'attribute note end to end' do
+    let(:engine) { Sirena::Engine.new }
+
+    # The High this branch fixes: the grammar already consumed the
+    # trailing quoted comment, but nothing downstream carried it, so
+    # mermaid-valid source like `int rental_id PK "NN"` silently lost the
+    # comment on the way to SVG. Asserts on the rendered text itself, not
+    # on an intermediate node surviving one layer.
+    it 'carries a real corpus attribute note through to the rendered SVG' do
+      source = File.read('spec/mermaid/unknown/079_platform_yari2_78.mmd')
+
+      svg = engine.render(source)
+
+      expect(svg).to include('NN')
+    end
+
+    it 'renders the note for a minimal source' do
+      source = <<~MERMAID
+        erDiagram
+        RENTAL {
+          int rental_id PK "NN"
+        }
+      MERMAID
+
+      svg = engine.render(source)
+      doc = REXML::Document.new(svg)
+      texts = doc.get_elements("//*[@id='entity-RENTAL']//text").map(&:text)
+
+      expect(texts).to include(a_string_matching(/\bNN\b/))
+    end
+  end
+
   describe 'DiagramRegistry integration' do
     it 'has er_diagram registered' do
       expect(Sirena::DiagramRegistry.registered?(:er_diagram)).to be true
