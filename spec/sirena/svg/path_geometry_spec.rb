@@ -5,7 +5,7 @@ require 'spec_helper'
 # Only the two ends matter, and only because an arrowhead has to sit on one
 # of them pointing the right way. The cases here are the ones that decide
 # where it lands: which point is last, and which point sets the heading.
-RSpec.describe Sirena::Svg::PathGeometry do
+module SvgPathGeometrySpecHelpers
   def terminus(data)
     described_class.new(data).terminus
   end
@@ -13,6 +13,10 @@ RSpec.describe Sirena::Svg::PathGeometry do
   def origin(data)
     described_class.new(data).origin
   end
+end
+
+RSpec.describe Sirena::Svg::PathGeometry do
+  include SvgPathGeometrySpecHelpers
 
   describe '#terminus' do
     it 'ends where the last line ends, heading along it' do

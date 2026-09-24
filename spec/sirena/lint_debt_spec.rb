@@ -6,8 +6,70 @@ require_relative "../support/lint_debt_fixture"
 require "fileutils"
 require "yaml"
 
+# `write_array_intersect_offence`, `write_exceptions`, `write_long_method_offence`
+# and `signed_entry` all call `write` or reference `grammar_file`, both from
+# example state (LintDebtFixture/`let`), so they stay included. The other
+# two -- `with_target_ruby_version_override` and `signature_message` -- are
+# pure and marked `module_function` in place, so callers stay bare method
+# calls either way.
+module LintDebtSpecHelpers
+  # A file the fixture's default `TargetRubyVersion` (3.2) flags via
+  # `Style/ArrayIntersect` (its minimum is 3.1) but an ambient `2.7`
+  # override would silently suppress.
+  def write_array_intersect_offence
+    write(
+      "array_intersect.rb",
+      "# frozen_string_literal: true\n\n" \
+      "a = [1]\n" \
+      "b = [1, 2]\n" \
+      "(a & b).any? ? a : b\n",
+    )
+  end
+
+  def with_target_ruby_version_override(value)
+    original = ENV.fetch("RUBOCOP_TARGET_RUBY_VERSION", nil)
+    ENV["RUBOCOP_TARGET_RUBY_VERSION"] = value
+    yield
+  ensure
+    ENV["RUBOCOP_TARGET_RUBY_VERSION"] = original
+  end
+  module_function :with_target_ruby_version_override
+
+  def write_exceptions(entries)
+    write(
+      "scoreboard/lint-exceptions.yml", { "exceptions" => entries }.to_yaml
+    )
+  end
+
+  def write_long_method_offence(file)
+    body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
+    write(
+      file,
+      "# frozen_string_literal: true\n\n" \
+      "module Fixture\n  " \
+      "def self.long_method\n#{body}  end\nend\n",
+    )
+  end
+
+  def signed_entry
+    { "cop" => "Metrics/MethodLength", "file" => grammar_file,
+      "approved_by" => "r", "approved_on" => "2026-09-10" }
+  end
+
+  # A `def`, not a `let`: it takes an argument, and `let` has no arity.
+  # The message must be right for THIS field, not merely mention it --
+  # `/approved_on is/` passed while the text told the reader to add a
+  # name when what they needed was a date.
+  def signature_message(field)
+    tail = field == "approved_by" ? "name who signed" : "carry the date"
+    Regexp.new("#{field} is required and must #{tail}")
+  end
+  module_function :signature_message
+end
+
 RSpec.describe Sirena::LintDebt do
   include LintDebtFixture
+  include LintDebtSpecHelpers
 
   after { FileUtils.rm_rf(root) }
 
@@ -125,27 +187,6 @@ RSpec.describe Sirena::LintDebt do
       ENV["RUBOCOP_OPTS"] = original
     end
 
-    # A file the fixture's default `TargetRubyVersion` (3.2) flags via
-    # `Style/ArrayIntersect` (its minimum is 3.1) but an ambient `2.7`
-    # override would silently suppress.
-    def write_array_intersect_offence
-      write(
-        "array_intersect.rb",
-        "# frozen_string_literal: true\n\n" \
-        "a = [1]\n" \
-        "b = [1, 2]\n" \
-        "(a & b).any? ? a : b\n",
-      )
-    end
-
-    def with_target_ruby_version_override(value)
-      original = ENV.fetch("RUBOCOP_TARGET_RUBY_VERSION", nil)
-      ENV["RUBOCOP_TARGET_RUBY_VERSION"] = value
-      yield
-    ensure
-      ENV["RUBOCOP_TARGET_RUBY_VERSION"] = original
-    end
-
     # `RUBOCOP_TARGET_RUBY_VERSION` is read BEFORE the `TargetRubyVersion`
     # this class synthesises (rubocop's own `TargetRuby::SOURCES` puts the
     # env var ahead of the config), so an ambient shell value can quietly
@@ -180,22 +221,6 @@ RSpec.describe Sirena::LintDebt do
   end
 
   describe "the signed exception allowlist" do
-    def write_exceptions(entries)
-      write(
-        "scoreboard/lint-exceptions.yml", { "exceptions" => entries }.to_yaml
-      )
-    end
-
-    def write_long_method_offence(file)
-      body = Array.new(12) { |i| "    x#{i} = #{i}\n" }.join
-      write(
-        file,
-        "# frozen_string_literal: true\n\n" \
-        "module Fixture\n  " \
-        "def self.long_method\n#{body}  end\nend\n",
-      )
-    end
-
     let(:grammar_file) { "lib/sirena/parser/grammars/flowchart.rb" }
 
     # The allowlist file states every entry carries four fields; the code
@@ -204,20 +229,6 @@ RSpec.describe Sirena::LintDebt do
     # asserting "some field is required" passes while the other goes
     # unchecked.
     let(:err_class) { Sirena::LintDebt::ExecutionError }
-
-    def signed_entry
-      { "cop" => "Metrics/MethodLength", "file" => grammar_file,
-        "approved_by" => "r", "approved_on" => "2026-09-10" }
-    end
-
-    # A `def`, not a `let`: it takes an argument, and `let` has no arity.
-    # The message must be right for THIS field, not merely mention it --
-    # `/approved_on is/` passed while the text told the reader to add a
-    # name when what they needed was a date.
-    def signature_message(field)
-      tail = field == "approved_by" ? "name who signed" : "carry the date"
-      Regexp.new("#{field} is required and must #{tail}")
-    end
 
     %w[approved_by approved_on].each do |field|
       it "refuses an exception missing #{field}" do

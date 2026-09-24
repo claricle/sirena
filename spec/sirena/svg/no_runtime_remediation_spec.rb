@@ -22,24 +22,28 @@ REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.{rb,ra
 REMEDIATION = /apply_fixes|SvgConform|svg_conform|RemediationEngine|RemediationRunner/
 REMEDIATION_COMMENT_TOKENS = [:on_comment, :on_embdoc, :on_embdoc_beg, :on_embdoc_end].freeze
 
+module SvgNoRuntimeRemediationSpecHelpers
+  # Lexed rather than grepped. Half the files under lib/ explain in a comment
+  # why svg_conform rejects a property, and a line-wise grep reads its own
+  # documentation as a violation.
+  def code_tokens(path)
+    Ripper.lex(File.read(path)).reject do |(_position, type, _token)|
+      REMEDIATION_COMMENT_TOKENS.include?(type)
+    end
+  end
+
+  def offences
+    REMEDIATION_LIB_FILES.flat_map do |path|
+      code_tokens(path).filter_map do |(position, _type, token)|
+        "#{path.sub("#{REMEDIATION_LIB_ROOT}/", '')}:#{position.first}: #{token}" if token.match?(REMEDIATION)
+      end
+    end
+  end
+end
+
 RSpec.describe Sirena::Svg do
   describe 'runtime remediation' do
-    # Lexed rather than grepped. Half the files under lib/ explain in a comment
-    # why svg_conform rejects a property, and a line-wise grep reads its own
-    # documentation as a violation.
-    def code_tokens(path)
-      Ripper.lex(File.read(path)).reject do |(_position, type, _token)|
-        REMEDIATION_COMMENT_TOKENS.include?(type)
-      end
-    end
-
-    def offences
-      REMEDIATION_LIB_FILES.flat_map do |path|
-        code_tokens(path).filter_map do |(position, _type, token)|
-          "#{path.sub("#{REMEDIATION_LIB_ROOT}/", '')}:#{position.first}: #{token}" if token.match?(REMEDIATION)
-        end
-      end
-    end
+    include SvgNoRuntimeRemediationSpecHelpers
 
     # A bare count is not a population guard here: enough files live outside
     # lib/sirena/svg that the broad glob could lose the one directory where a

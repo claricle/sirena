@@ -7,6 +7,17 @@ require 'rbconfig'
 require_relative '../../scripts/check_workflow_pins'
 require_relative '../../scripts/lane_verdict'
 
+# Builders for the workflow-shaped hashes the CI workflow specs feed to scripts/.
+module WorkflowHelpers
+  def workflow_with(uses)
+    { "jobs" => { "j" => { "timeout-minutes" => 1, "steps" => [{ "uses" => uses }] } } }
+  end
+
+  def result(name, outcome)
+    { name => { "result" => outcome, "outputs" => {} } }
+  end
+end
+
 # The subject is a set of YAML files, not a class.
 RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
   let(:root) { File.expand_path('../..', __dir__) }

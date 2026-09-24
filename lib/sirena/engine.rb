@@ -28,8 +28,18 @@ module Sirena
     # draws `graph>`, `graph<` and `graph^`, and the grammar takes them.
     # Detection used to demand whitespace, so those headers died here
     # with DiagramTypeError before the parser saw the line.
+    #
+    # The `-elk` suffix is deliberately excluded from the outer `/i`: mmdc's
+    # own detector (`/^\s*flowchart-elk/`, no `i` flag) only recognises the
+    # lowercase spelling, while its bare `flowchart`/`graph` detector is
+    # also case-sensitive but Sirena already treats those case-insensitively
+    # (pre-existing, unrelated to this suffix). Matching the outer `/i` to
+    # `-elk` too let `flowchart-ELK` reach detection as a flowchart, then
+    # fail in the grammar (which only defines lowercase `flowchart-elk`)
+    # with ParseError instead of the DiagramTypeError an unsupported header
+    # should raise.
     DIAGRAM_TYPE_PATTERNS = {
-      flowchart: /\A\s*(graph|flowchart)([\s<>^]|\z)/i,
+      flowchart: /\A\s*(?:flowchart-elk|(?i:graph|flowchart))([\s<>^]|\z)/,
       sequence: /\A\s*sequenceDiagram/i,
       class_diagram: /\A\s*classDiagram/i,
       state_diagram: /\A\s*stateDiagram(-v2)?/i,
@@ -64,7 +74,7 @@ module Sirena
     # one without the other fails a spec rather than silently printing the
     # wrong word for it.
     DIAGRAM_TYPE_KEYWORDS = {
-      flowchart: 'graph or flowchart',
+      flowchart: 'graph, flowchart, or flowchart-elk',
       sequence: 'sequenceDiagram',
       class_diagram: 'classDiagram',
       state_diagram: 'stateDiagram or stateDiagram-v2',

@@ -19,7 +19,7 @@ require "spec_helper"
 # The gap these do NOT pin: a box left holding nothing is drawn by mmdc
 # as a plain node, and Sirena draws nothing. That predates this rule and
 # is tracked separately.
-RSpec.describe Sirena::Parser::Flowchart do
+module FlowchartSubgraphOwnershipHelpers
   # First box wins the id, the way the transform registers them. A
   # redeclaration pushes a second, empty box carrying the same id, so
   # keying last-wins would hand back the one that holds nothing.
@@ -27,6 +27,10 @@ RSpec.describe Sirena::Parser::Flowchart do
     all = described_class.new.parse(source).subgraphs
     all.each_with_object({}) { |box, held| held[box.id] ||= box }
   end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include FlowchartSubgraphOwnershipHelpers
 
   describe "two boxes naming the same subgraph" do
     # The bug this rule was written for. `c` names `b` first, so `b` is

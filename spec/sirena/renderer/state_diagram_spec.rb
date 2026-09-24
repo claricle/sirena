@@ -139,7 +139,8 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
-      expect(texts.map(&:content)).to include('Idle')
+      # `content` is `collection: true`, so read it through Array(...).
+      expect(texts.map { |t| Array(t.content).join }).to include('Idle')
     end
 
     it 'keeps accumulated state text inside its rectangle' do
@@ -159,7 +160,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       labels = rendered_graph[:children].first[:labels]
 
       expect(texts.length).to eq(labels.length)
-      expect(texts.map(&:content)).to eq(labels.map { |label| label[:text] })
+      expect(texts.map { |t| Array(t.content).join }).to eq(labels.map { |label| label[:text] })
 
       text_bounds = texts.zip(labels).map do |text, label|
         [text.y - (label[:height] / 2), text.y + (label[:height] / 2)]
@@ -184,7 +185,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       groups = svg.children.grep(Sirena::Svg::Group)
 
       texts = groups.flat_map(&:children).select do |c|
-        c.is_a?(Sirena::Svg::Text) && c.content == 'start'
+        c.is_a?(Sirena::Svg::Text) && Array(c.content).join == 'start'
       end
 
       expect(texts).not_to be_empty

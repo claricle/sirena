@@ -71,7 +71,7 @@ module Sirena
         # does not. A lookahead cannot tell them apart: by the time the
         # header ends, the direction has already been consumed.
         rule(:header) do
-          (str('flowchart') | str('graph')).as(:header) >>
+          (str('flowchart-elk') | str('flowchart') | str('graph')).as(:header) >>
             (directed_header | undirected_header)
         end
 

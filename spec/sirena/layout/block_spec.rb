@@ -11,7 +11,7 @@ RSpec.describe Sirena::Layout::Block do
       # spec/mermaid/block/002_rendering_block_spec_block_1.mmd: columns 2,
       # and every block after "fit" is wider than 2 columns, so each one
       # skips a row before it lands (see the comment in calculate_y_position).
-      let(:source) { File.read("spec/mermaid/block/002_rendering_block_spec_block_1.mmd") }
+      let(:source) { File.read(File.expand_path("../../mermaid/block/002_rendering_block_spec_block_1.mmd", __dir__)) }
 
       it "treats a skipped row as contributing zero height rather than nil" do
         diagram = parser.parse(source)
@@ -27,7 +27,9 @@ RSpec.describe Sirena::Layout::Block do
     context "with a single column and widening spans" do
       # spec/mermaid/block/013: columns 1, and every block's span except A
       # exceeds it, so every row from B onward is skipped before landing.
-      let(:source) { File.read("spec/mermaid/block/013_parser_a_node_with_a_square_shape_and_a_label_12.mmd") }
+      let(:source) do
+        File.read(File.expand_path("../../mermaid/block/013_parser_a_node_with_a_square_shape_and_a_label_12.mmd", __dir__))
+      end
 
       it "positions the last block without raising on the skipped rows" do
         diagram = parser.parse(source)

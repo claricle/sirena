@@ -35,8 +35,9 @@ ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style]
 }.freeze
 
-# Five renderers set marker-end, marker-start arrives only through from_xml,
-# and renderers set dominant-baseline. None reaches the output — the SVG layer
+# Four renderers set marker-end, marker-start is set directly (Path.from_xml
+# no longer exists), and renderers set dominant-baseline. None reaches the
+# output — the SVG layer
 # translates each into something SVG Tiny 1.2 has. They are not in the matrix
 # above because there is no attribute left to escape; the cases further down
 # assert they are gone.

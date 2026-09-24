@@ -6,7 +6,31 @@ require 'sirena/cli'
 require 'sirena/commands/render'
 require 'sirena/commands/batch'
 
+# `rendering` needs `described_class`, so it is included; `capture_stdout`
+# is pure and needs no example state, so it is a module function.
+module CliSpecHelpers
+  def rendering(exception)
+    fake_command = instance_double(Sirena::Commands::RenderCommand)
+    allow(fake_command).to receive(:run).and_raise(exception)
+    allow(Sirena::Commands::RenderCommand).to receive(:new)
+      .and_return(fake_command)
+    -> { described_class.start(['render', 'unused.mmd']) }
+  end
+
+  def capture_stdout(&block)
+    original_stdout = $stdout
+    $stdout = StringIO.new
+    block.call
+    $stdout.string
+  ensure
+    $stdout = original_stdout
+  end
+  module_function :capture_stdout
+end
+
 RSpec.describe Sirena::Cli do
+  include CliSpecHelpers
+
   # `RenderCommand#run` builds the theme (a hostile `--theme` YAML file)
   # and reads the input file BEFORE `Engine#render` -- and therefore
   # before the engine's own widened rescue -- ever runs, so this CLI
@@ -14,14 +38,6 @@ RSpec.describe Sirena::Cli do
   # command's: it survives EXHAUSTION_ERRORS and it does not swallow
   # Ruby's own control flow.
   describe 'render command' do
-    def rendering(exception)
-      fake_command = instance_double(Sirena::Commands::RenderCommand)
-      allow(fake_command).to receive(:run).and_raise(exception)
-      allow(Sirena::Commands::RenderCommand).to receive(:new)
-        .and_return(fake_command)
-      -> { described_class.start(['render', 'unused.mmd']) }
-    end
-
     it 'converts a stack overflow into a clean exit instead of a raw crash' do
       overflow = SystemStackError.new('stack level too deep')
 
@@ -174,14 +190,5 @@ RSpec.describe Sirena::Cli do
         /Commands:/
       ).to_stdout
     end
-  end
-
-  def capture_stdout(&block)
-    original_stdout = $stdout
-    $stdout = StringIO.new
-    block.call
-    $stdout.string
-  ensure
-    $stdout = original_stdout
   end
 end

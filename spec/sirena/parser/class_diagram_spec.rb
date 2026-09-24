@@ -2,7 +2,15 @@
 
 require 'spec_helper'
 
+module ClassDiagramTextLabelHelpers
+  def entities(source)
+    parser.parse(source).entities.map { |e| [e.id, e.name] }
+  end
+end
+
 RSpec.describe Sirena::Parser::ClassDiagram do
+  include ClassDiagramTextLabelHelpers
+
   let(:parser) { described_class.new }
 
   describe '#parse' do
@@ -269,10 +277,6 @@ RSpec.describe Sirena::Parser::ClassDiagram do
     # Clause order matters and ours was inverted. Each of these is checked
     # against mmdc 11.12.0 rather than against what looks reasonable.
     describe 'class text labels' do
-      def entities(source)
-        parser.parse(source).entities.map { |e| [e.id, e.name] }
-      end
-
       it 'uses the label for display and keeps the id' do
         expect(entities(%(classDiagram\n class C1["Class One"]\n)))
           .to eq([['C1', 'Class One']])

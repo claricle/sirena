@@ -15,20 +15,6 @@ module Sirena
       # with no points, and renderer/xy_chart.rb:337 draws line series with it.
       writes_attributes :points
 
-      xml do
-        root 'polyline'
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'points', to: :points
-        map_attribute 'fill', to: :fill
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        map_attribute 'transform', to: :transform
-        map_attribute 'opacity', to: :opacity
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-      end
-
       # Helper to build points string from coordinates array
       #
       # @param coords [Array<Array>] Array of [x, y] coordinates

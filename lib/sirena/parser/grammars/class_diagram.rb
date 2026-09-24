@@ -136,7 +136,7 @@ module Sirena
             text_label.maybe.as(:text_label) >> space? >>
             (css_shorthand | stereotype.maybe.as(:stereotype)) >> space? >>
             class_body.maybe.as(:body) >>
-            line_end
+            class_declaration_end
         end
 
         # `class C1:::pink`. mmdc rejects it together with a stereotype, in
@@ -576,6 +576,20 @@ module Sirena
         # Line terminators for class diagrams
         rule(:line_end) do
           semicolon.maybe >> space? >> (comment.maybe >> newline | eof)
+        end
+
+        # `line_end`, but also accepts a following `}` with no newline before
+        # it, optionally separated by spaces. Used only after a full class
+        # declaration, so it cannot cut a free-text scan short the way
+        # widening the shared `line_end` did (that broke `note "...
+        # ${keyword}. It truly is."`, whose text legitimately contains a
+        # `}`): mmdc accepts a bodyless OR bodied class statement immediately
+        # closing its enclosing `namespace Name { ... }` block with no
+        # newline (`namespace N { class C1 }` and
+        # `namespace N { class C2 {} }`), with any amount of space before the
+        # closing brace either way.
+        rule(:class_declaration_end) do
+          line_end | (space? >> rbrace.present?)
         end
       end
     end

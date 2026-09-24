@@ -36,8 +36,9 @@ Gem::Specification.new do |spec|
   # Not yet called (TODO.foundation/14 tracks wiring it into Engine#layout_graph).
   spec.add_dependency 'elkrb', '~> 1.0'
   spec.add_dependency 'kramdown', '~> 2.5'
-  # Exact pin, not ~>: 0.8.32 broke collection-attribute scalar assignment.
-  spec.add_dependency 'lutaml-model', '= 0.8.31'
+  # From 0.8.32, a `collection: true` attribute reads back as an Array even
+  # after a scalar assignment; read it through Array(...), never raw.
+  spec.add_dependency 'lutaml-model', '~> 0.8.0'
   spec.add_dependency 'plurimath-parslet', '~> 3.0'
   spec.add_dependency 'thor'
 end

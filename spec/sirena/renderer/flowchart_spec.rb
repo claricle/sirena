@@ -87,7 +87,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
       expect(texts).not_to be_empty
-      expect(texts.first.content).to eq('Start')
+      # `content` is `collection: true`, so read it through Array(...).
+      expect(Array(texts.first.content).join).to eq('Start')
     end
 
     it 'renders edges as paths' do

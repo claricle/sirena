@@ -287,7 +287,7 @@ RSpec.describe Sirena::Parser::Architecture do
 
     context "with corpus fixtures" do
       it "parses fixture 011 (a group full of junctions)" do
-        source = File.read("spec/mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd")
+        source = File.read(File.expand_path("../../mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd", __dir__))
 
         result = parser.parse(source)
 
@@ -296,7 +296,7 @@ RSpec.describe Sirena::Parser::Architecture do
       end
 
       it "parses fixture 017 (a bare service)" do
-        source = File.read("spec/mermaid/architecture/017_parser_should_handle_a_simple_radar_definition_16.mmd")
+        source = File.read(File.expand_path("../../mermaid/architecture/017_parser_should_handle_a_simple_radar_definition_16.mmd", __dir__))
 
         result = parser.parse(source)
 
@@ -304,7 +304,7 @@ RSpec.describe Sirena::Parser::Architecture do
       end
 
       it "parses fixture 021 (multiline accDescr)" do
-        source = File.read("spec/mermaid/architecture/021_parser_should_handle_multiline_accessibility_description_20.mmd")
+        source = File.read(File.expand_path("../../mermaid/architecture/021_parser_should_handle_multiline_accessibility_description_20.mmd", __dir__))
 
         result = parser.parse(source)
 
@@ -312,7 +312,7 @@ RSpec.describe Sirena::Parser::Architecture do
       end
 
       it "parses fixture 028 (title, accTitle and multiline accDescr together)" do
-        source = File.read("spec/mermaid/architecture/028_parsertest_architecture_test_27.mmd")
+        source = File.read(File.expand_path("../../mermaid/architecture/028_parsertest_architecture_test_27.mmd", __dir__))
 
         result = parser.parse(source)
 
@@ -322,7 +322,7 @@ RSpec.describe Sirena::Parser::Architecture do
       end
 
       it "parses fixture 029 (a bare service inside a group)" do
-        source = File.read("spec/mermaid/architecture/029_spec_xss_spec_28.mmd")
+        source = File.read(File.expand_path("../../mermaid/architecture/029_spec_xss_spec_28.mmd", __dir__))
 
         result = parser.parse(source)
 

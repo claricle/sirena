@@ -1358,9 +1358,7 @@
   {
     "case": "class/159_parser_should_handle_a_comment_inside_brackets_158.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/160_parser_should_handle_namespace_with_generic_types_159.mmd",
@@ -1705,9 +1703,7 @@
   {
     "case": "class_diagram/035_parser_should_handle_a_comment_inside_brackets_34.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/035_parser_should_handle_backticked_class_names_34.mmd",
@@ -1980,9 +1976,7 @@
   {
     "case": "class_diagram/051_parser_should_handle_a_comment_inside_brackets_50.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/051_parser_should_handle_return_types_on_methods_50.mmd",
@@ -3025,9 +3019,7 @@
   {
     "case": "class_diagram/132_parser_should_handle_a_comment_inside_brackets_131.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/132_parser_should_handle_backtick-quoted_namespace_names_131.mmd",
@@ -7561,7 +7553,9 @@
   {
     "case": "mindmap/014_rendering_mindmap_spec_mindmap_13.mmd",
     "verdict": "valid",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/015_rendering_mindmap_spec_mindmap_14.mmd",
@@ -7586,9 +7580,7 @@
   {
     "case": "mindmap/019_rendering_mindmap_spec_mindmap_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "mindmap/020_rendering_mindmap_spec_mindmap_19.mmd",
@@ -7650,12 +7642,16 @@
   {
     "case": "mindmap/031_parser_5_multiple_roots_are_illegal_30.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/032_parser_mmp-6_real_root_in_wrong_place_31.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/033_parser_mmp-7_should_handle_an_id_and_type_for_a_node_definition_32.mmd",
@@ -7765,9 +7761,7 @@
   {
     "case": "mindmap/054_spec_diagram-orchestration_spec_53.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "mindmap/055_spec_diagram-orchestration_spec_54.mmd",
@@ -8373,9 +8367,7 @@
   {
     "case": "requirement/004_parser_will_use_a_accessibility_title_and_description_accdescr__3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "requirement/005_parser_will_use_a_accessibility_title_and_multiline_description_accdescr__4.mmd",
@@ -10906,9 +10898,7 @@
   {
     "case": "unknown/012_platform_flow-elk_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "detect",
-    "exception_class": "Sirena::Engine::DiagramTypeError"
+    "pass": true
   },
   {
     "case": "unknown/013_platform_gitgraph_12.mmd",
@@ -11424,9 +11414,7 @@
   {
     "case": "user_journey/004_rendering_journey_spec_user_journey_3.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd",
@@ -11461,9 +11449,7 @@
   {
     "case": "user_journey/008_parser_should_handle_a_task_definition_7.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/008_parser_should_handle_an_accessibility_description_accdescr__7.mmd",
@@ -11493,9 +11479,7 @@
   {
     "case": "user_journey/012_parser_should_handle_a_task_definition_11.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "user_journey/013_parser_should_handle_a_title_definition_12.mmd",

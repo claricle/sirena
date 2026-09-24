@@ -3,6 +3,43 @@
 require "spec_helper"
 require "timeout"
 
+# `deep_nest`, `deep_map` and `alias_chain` are pure and marked
+# `module_function` in place; `in_a_fiber` needs `described_class` and stays
+# an included instance method.
+module SourceSpecHelpers
+  # Recursing to Ruby's own limit raised SystemStackError, which is
+  # not a StandardError: it escaped the engine's rescue and crashed
+  # the caller. The stack this runs on belongs to that caller, and a
+  # Fiber's is the smallest one going, so the examples below run
+  # there — a bound that only holds on the main thread is not a bound.
+  def deep_nest(levels)
+    "title: #{'[' * levels}x#{']' * levels}"
+  end
+  module_function :deep_nest
+
+  # A level of mapping costs more frames than a level of sequence, so
+  # `deep_nest` alone tested the shape that could not reach the stack.
+  def deep_map(levels)
+    "title: T\nx: #{'{x: ' * levels}x#{'}' * levels}"
+  end
+  module_function :deep_map
+
+  def alias_chain(links)
+    lines = ["k0: &a0 [x]"]
+    (1..links).each { |i| lines << "k#{i}: &a#{i} [*a#{i - 1}]" }
+    (lines << "title: *a#{links}").join("\n")
+  end
+  module_function :alias_chain
+
+  def in_a_fiber(yaml)
+    Fiber.new do
+      described_class.title(yaml)
+    rescue Sirena::Source::MalformedFrontmatter
+      :refused
+    end.resume
+  end
+end
+
 RSpec.describe Sirena::Source do
   describe ".split" do
     it "separates a frontmatter block from the body" do
@@ -861,34 +898,7 @@ RSpec.describe Sirena::Source do
     end
 
     describe "a block nested too deeply to walk" do
-      # Recursing to Ruby's own limit raised SystemStackError, which is
-      # not a StandardError: it escaped the engine's rescue and crashed
-      # the caller. The stack this runs on belongs to that caller, and a
-      # Fiber's is the smallest one going, so the examples below run
-      # there — a bound that only holds on the main thread is not a bound.
-      def deep_nest(levels)
-        "title: #{'[' * levels}x#{']' * levels}"
-      end
-
-      # A level of mapping costs more frames than a level of sequence, so
-      # `deep_nest` alone tested the shape that could not reach the stack.
-      def deep_map(levels)
-        "title: T\nx: #{'{x: ' * levels}x#{'}' * levels}"
-      end
-
-      def alias_chain(links)
-        lines = ["k0: &a0 [x]"]
-        (1..links).each { |i| lines << "k#{i}: &a#{i} [*a#{i - 1}]" }
-        (lines << "title: *a#{links}").join("\n")
-      end
-
-      def in_a_fiber(yaml)
-        Fiber.new do
-          described_class.title(yaml)
-        rescue Sirena::Source::MalformedFrontmatter
-          :refused
-        end.resume
-      end
+      include SourceSpecHelpers
 
       it "draws two hundred levels" do
         expect(described_class.title(deep_nest(200))).to eq("x")

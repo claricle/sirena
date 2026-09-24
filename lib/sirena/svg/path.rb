@@ -18,31 +18,10 @@ module Sirena
       attribute :marker_end, :string
       attribute :marker_start, :string
 
-      # Five renderers set `marker-end`; `marker-start` arrives only through
-      # `from_xml`. Neither is emitted — Svg::Arrowhead draws them instead.
-      # See that class for why.
-      # They stay in the xml block below, which is what `from_xml` reads: a
-      # parsed marker request is honoured the same way a set one is.
+      # Four renderers set `marker-end`; `marker-start` is settable directly
+      # too. Neither is emitted — Svg::Arrowhead draws them instead. See
+      # that class for why.
       writes_attributes :d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin
-
-      xml do
-        root 'path'
-        map_attribute 'id', to: :id
-        map_attribute 'class', to: :class_name
-        map_attribute 'd', to: :d
-        map_attribute 'fill', to: :fill
-        map_attribute 'stroke', to: :stroke
-        map_attribute 'stroke-width', to: :stroke_width
-        map_attribute 'stroke-dasharray', to: :stroke_dasharray
-        map_attribute 'stroke-linecap', to: :stroke_linecap
-        map_attribute 'stroke-linejoin', to: :stroke_linejoin
-        map_attribute 'marker-end', to: :marker_end
-        map_attribute 'marker-start', to: :marker_start
-        map_attribute 'transform', to: :transform
-        map_attribute 'opacity', to: :opacity
-        map_attribute 'fill-opacity', to: :fill_opacity
-        map_attribute 'stroke-opacity', to: :stroke_opacity
-      end
 
       # Helper to build path data from move and line commands
       #
