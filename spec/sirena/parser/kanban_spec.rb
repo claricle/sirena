@@ -1045,10 +1045,13 @@ RSpec.describe Sirena::Parser::Kanban do
     # `icon_modifier`'s own construction), rather than fishing the exact
     # instance back out of a failed parse tree.
     context 'with GreedyRun#to_s_inner called directly' do
-      it 'describes the atom by its anchored regexp, matching icon_modifier\'s construction' do
+      it "describes the atom by its anchored regexp, matching icon_modifier's construction" do
         atom = Sirena::Parser::Grammars::GreedyRun.new('[^)]')
 
-        expect(atom.to_s_inner(0)).to eq(Regexp.new('\A(?:[^)])*', Regexp::MULTILINE).inspect)
+        # Asserted as a literal string, not `Regexp.new(...).inspect`, so the
+        # spec does not re-derive its own expectation using the same
+        # construction the production code under test uses.
+        expect(atom.to_s_inner(0)).to eq('/\A(?:[^)])*/m')
       end
     end
   end
