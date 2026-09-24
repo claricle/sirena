@@ -121,6 +121,6 @@ xychart-beta
 
 == See Also
 
-* link:../../diagram_types/index/[Documentation Index]
+* link:../index/[Documentation Index]
 * https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/xy_chart.rb[XY Chart Diagram Model]
 * https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/xy_chart.rb[XY Chart Renderer]
