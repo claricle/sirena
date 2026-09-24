@@ -2,10 +2,13 @@
 
 require "spec_helper"
 
-# The whole pipeline, because a cluster is only right if the model, the
-# layout and the renderer agree on where it sits. Every expectation was
-# read off mmdc 11.12.0.
-RSpec.describe Sirena::Engine do
+# Pure geometry/XML helpers plus two that need example state (`render`
+# reads `described_class`, `expect_exterior_route` uses `expect`/
+# `aggregate_failures`): all single-user (this file only), so they live in
+# one module at the file top and are `include`d into the describe rather
+# than split module_function/included -- nothing here is called at
+# describe-body level to generate examples, only from inside `it` blocks.
+module FlowchartClusterSpecHelpers
   def render(source)
     described_class.new.render(source)
   end
@@ -275,6 +278,113 @@ RSpec.describe Sirena::Engine do
     xml[/<g id="cluster-#{id}">.*?<text[^>]*>(.*?)<\/text>/m, 1]
   end
 
+  # Clusters made the grid size-aware, and a cell that shrank to fit would
+  # have moved every diagram in the project. Used by "a diagram with no
+  # subgraph" only.
+  def spots(xml)
+    xml.scan(/<g id="node-([^"]+)">\s*<rect[^>]*>/).flatten.map do |id|
+      rect = xml[/<g id="node-#{id}">\s*<rect[^>]*>/]
+      [id, attr(rect, "x"), attr(rect, "y")]
+    end
+  end
+
+  # Used by "an edge that names a subgraph" only.
+  def node_ids(xml)
+    xml.scan(/<g id="node-([^"]+)">/).flatten
+  end
+
+  # The following are used by "an edge drawn straight onto the renderer"
+  # only.
+  def leaf(id, spot)
+    { id: id, labels: [{ text: id }], metadata: { shape: "rect" } }
+      .merge(spot)
+  end
+
+  def cluster(id, spot)
+    { id: id, children: [], labels: [{ text: id, width: 4, height: 4 }],
+      metadata: { cluster: true } }.merge(spot)
+  end
+
+  def path_of(graph, edge_id)
+    xml = renderer.render(graph).to_xml
+    xml[/<g id="edge-#{edge_id}">\s*<path[^>]*\bd="([^"]*)"/, 1]
+  end
+
+  def graph_between(source, target, edge = {})
+    { id: "g", children: [source, target],
+      edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }.merge(edge)] }
+  end
+
+  def cluster_pair(source_at, target_at)
+    [cluster("s", x: source_at[0], y: source_at[1],
+                  width: 100.0, height: 100.0),
+     cluster("t", x: target_at[0], y: target_at[1],
+                  width: 100.0, height: 100.0)]
+  end
+
+  def cross_cluster_pair(reverse: false, offset: 0.0)
+    horizontal = { x: 0.0, y: 25.0, width: 100.0, height: 50.0 }
+    vertical = { x: 25.0 + offset, y: 0.0, width: 50.0, height: 100.0 }
+    source, target = reverse ? [vertical, horizontal] : [horizontal, vertical]
+
+    [cluster("s", source), cluster("t", target)]
+  end
+
+  def asymmetric_cluster_pair(rotated: false, reverse: false)
+    boxes = if rotated
+              [{ x: 0.0, y: 40.0, width: 40.0, height: 40.0 },
+               { x: 20.0, y: 0.0, width: 40.0, height: 160.0 }]
+            else
+              [{ x: 80.0, y: 0.0, width: 40.0, height: 40.0 },
+               { x: 0.0, y: 20.0, width: 160.0, height: 40.0 }]
+            end
+    source, target = reverse ? boxes.reverse : boxes
+    [cluster("s", source), cluster("t", target)]
+  end
+
+  # A node can sit inside the cluster its own edge names — mermaid
+  # draws that from a bare node under a subgraph header. The head used
+  # to read its approach off the OTHER end's raw centre, which ignores
+  # that A sits inside s: the path left through the cluster's TOP face
+  # (the only way out `EdgeRouter` found), while the head — aimed at
+  # A's centre, which sits BELOW the cluster's own centre — landed on
+  # the BOTTOM face instead. The two must agree on which face, because
+  # they are the same drawn line.
+  def contained_node_and_cluster
+    [leaf("a", x: 70.0, y: 104.0, width: 37.0, height: 34.0),
+     cluster("s", x: 50.0, y: 50.0, width: 77.0, height: 108.0)]
+  end
+
+  def edge_geometry(xml, edge_id)
+    group = xml[%r{<g id="edge-#{edge_id}">.*?</g>}m]
+    path_end = path_points(group[/<path[^>]*\bd="([^"]*)"/, 1]).last
+    head_tip = group[/<polygon[^>]*\bpoints="([^"]*)"/, 1]
+      .split.first.split(",").map(&:to_f)
+    [path_end, head_tip]
+  end
+
+  # The shoelace formula. Three DISTINCT points can still be
+  # collinear — a head with two coincident vertices and one apart from
+  # them has two unique points, which `.uniq.size > 1` cannot tell
+  # from a real triangle. Area is what actually says the head has a
+  # visible shape.
+  def triangle_area(a, b, c)
+    ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs / 2.0
+  end
+
+  # Used by "an edge from a box to itself" only.
+  def loop_points(xml)
+    d = xml[/<g id="edge-[^"]*">\s*<path[^>]*\bd="([^"]*)"/, 1]
+    d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a
+  end
+end
+
+# The whole pipeline, because a cluster is only right if the model, the
+# layout and the renderer agree on where it sits. Every expectation was
+# read off mmdc 11.12.0.
+RSpec.describe Sirena::Engine do
+  include FlowchartClusterSpecHelpers
+
   describe "a subgraph" do
     it "draws a cluster" do
       xml = render("flowchart TD\nsubgraph s [Title]\nA --- B\nend\n")
@@ -463,13 +573,6 @@ RSpec.describe Sirena::Engine do
   # have moved every diagram in the project. The floor is what keeps them
   # still, so these are the coordinates from before that change.
   describe "a diagram with no subgraph" do
-    def spots(xml)
-      xml.scan(/<g id="node-([^"]+)">\s*<rect[^>]*>/).flatten.map do |id|
-        rect = xml[/<g id="node-#{id}">\s*<rect[^>]*>/]
-        [id, attr(rect, "x"), attr(rect, "y")]
-      end
-    end
-
     it "keeps the grid pitch it has always had" do
       found = spots(render("flowchart TD\nA\nB\nC\nD\n"))
 
@@ -521,10 +624,6 @@ RSpec.describe Sirena::Engine do
     let(:source) do
       "flowchart TD\nsubgraph one [O]\nA\nend\n" \
         "subgraph two [T]\nB\nend\none --> two\n"
-    end
-
-    def node_ids(xml)
-      xml.scan(/<g id="node-([^"]+)">/).flatten
     end
 
     it "draws both boxes and no node for their ids" do
@@ -656,53 +755,6 @@ RSpec.describe Sirena::Engine do
       )
     end
 
-    def leaf(id, spot)
-      { id: id, labels: [{ text: id }], metadata: { shape: "rect" } }
-        .merge(spot)
-    end
-
-    def cluster(id, spot)
-      { id: id, children: [], labels: [{ text: id, width: 4, height: 4 }],
-        metadata: { cluster: true } }.merge(spot)
-    end
-
-    def path_of(graph, edge_id)
-      xml = renderer.render(graph).to_xml
-      xml[/<g id="edge-#{edge_id}">\s*<path[^>]*\bd="([^"]*)"/, 1]
-    end
-
-    def graph_between(source, target, edge = {})
-      { id: "g", children: [source, target],
-        edges: [{ id: "s_to_t", sources: %w[s], targets: %w[t] }.merge(edge)] }
-    end
-
-    def cluster_pair(source_at, target_at)
-      [cluster("s", x: source_at[0], y: source_at[1],
-                    width: 100.0, height: 100.0),
-       cluster("t", x: target_at[0], y: target_at[1],
-                    width: 100.0, height: 100.0)]
-    end
-
-    def cross_cluster_pair(reverse: false, offset: 0.0)
-      horizontal = { x: 0.0, y: 25.0, width: 100.0, height: 50.0 }
-      vertical = { x: 25.0 + offset, y: 0.0, width: 50.0, height: 100.0 }
-      source, target = reverse ? [vertical, horizontal] : [horizontal, vertical]
-
-      [cluster("s", source), cluster("t", target)]
-    end
-
-    def asymmetric_cluster_pair(rotated: false, reverse: false)
-      boxes = if rotated
-                [{ x: 0.0, y: 40.0, width: 40.0, height: 40.0 },
-                 { x: 20.0, y: 0.0, width: 40.0, height: 160.0 }]
-              else
-                [{ x: 80.0, y: 0.0, width: 40.0, height: 40.0 },
-                 { x: 0.0, y: 20.0, width: 160.0, height: 40.0 }]
-              end
-      source, target = reverse ? boxes.reverse : boxes
-      [cluster("s", source), cluster("t", target)]
-    end
-
     # A plain node-to-node run is clipped to the outline each end draws,
     # not left at the raw centres — mirroring the arrowhead, which reads
     # the same geometry so the line stops exactly where its head sits.
@@ -726,27 +778,6 @@ RSpec.describe Sirena::Engine do
     # A's centre, which sits BELOW the cluster's own centre — landed on
     # the BOTTOM face instead. The two must agree on which face, because
     # they are the same drawn line.
-    def contained_node_and_cluster
-      [leaf("a", x: 70.0, y: 104.0, width: 37.0, height: 34.0),
-       cluster("s", x: 50.0, y: 50.0, width: 77.0, height: 108.0)]
-    end
-
-    def edge_geometry(xml, edge_id)
-      group = xml[%r{<g id="edge-#{edge_id}">.*?</g>}m]
-      path_end = path_points(group[/<path[^>]*\bd="([^"]*)"/, 1]).last
-      head_tip = group[/<polygon[^>]*\bpoints="([^"]*)"/, 1]
-        .split.first.split(",").map(&:to_f)
-      [path_end, head_tip]
-    end
-
-    # The shoelace formula. Three DISTINCT points can still be
-    # collinear — a head with two coincident vertices and one apart from
-    # them has two unique points, which `.uniq.size > 1` cannot tell
-    # from a real triangle. Area is what actually says the head has a
-    # visible shape.
-    def triangle_area(a, b, c)
-      ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs / 2.0
-    end
 
     it "keeps the arrowhead on the same face the path leaves through" do
       leaf_node, cluster_node = contained_node_and_cluster
@@ -972,11 +1003,6 @@ RSpec.describe Sirena::Engine do
   # nothing. mmdc draws a visible loop for a box of either kind.
   describe "an edge from a box to itself" do
     let(:source) { "flowchart TD\nsubgraph s\nA\nend\ns --> s\n" }
-
-    def loop_points(xml)
-      d = xml[/<g id="edge-[^"]*">\s*<path[^>]*\bd="([^"]*)"/, 1]
-      d.scan(/-?\d+(?:\.\d+)?/).map(&:to_f).each_slice(2).to_a
-    end
 
     # The defect was a path of ZERO length. The loop closes on itself by
     # design, so length is what to assert, not distinct ends.

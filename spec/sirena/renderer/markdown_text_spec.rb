@@ -14,8 +14,9 @@ RSpec.describe Sirena::Renderer::MarkdownText do
       one_blank = described_class.build_markdown_tspans(Sirena::MarkdownText.parse_lines("Title\n\nSubtitle"), x: 5)
       two_blank = described_class.build_markdown_tspans(Sirena::MarkdownText.parse_lines("A\n\n\nB"), x: 5)
 
-      expect(one_blank.map { |t| [svg_text_content(t), t.dy] }).to eq([['Title', nil], ['Subtitle', '1.2em']])
-      expect(two_blank.map { |t| [svg_text_content(t), t.dy] }).to eq([['A', nil], ['B', '1.2em']])
+      # `content` is `collection: true`, so read it through Array(...).
+      expect(one_blank.map { |t| [Array(t.content).join, t.dy] }).to eq([['Title', nil], ['Subtitle', '1.2em']])
+      expect(two_blank.map { |t| [Array(t.content).join, t.dy] }).to eq([['A', nil], ['B', '1.2em']])
     end
   end
 end

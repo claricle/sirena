@@ -19,6 +19,171 @@ module ArchitectureCorpusVerdicts
   end
 end
 
+# Pure layout/geometry fixtures and assertions, single-user (this file
+# only): module_function so they can be called at describe-body level to
+# generate examples.
+module ArchitectureSpecHelpers
+  module_function
+
+  # group a(cloud)[A] in b / group b(cloud)[B] in a - grammar-valid
+  # (nothing upstream validates that Group#parent_id chains
+  # terminate), and ancestor_group_ids walks that chain. Without cycle
+  # detection this loops forever; bounded here with a real timeout so
+  # a regression fails fast instead of hanging the suite.
+  def cyclic_groups_layout
+    group_a = Sirena::Diagram::Architecture::Group.new(id: "a", label: "A", parent_id: "b")
+    group_b = Sirena::Diagram::Architecture::Group.new(id: "b", label: "B", parent_id: "a")
+    service1 = Sirena::Diagram::Architecture::Service.new(id: "s1", label: "S1", group_id: "a")
+    service2 = Sirena::Diagram::Architecture::Service.new(id: "s2", label: "S2", group_id: "b")
+    edge = Sirena::Diagram::Architecture::Edge.new(from_id: "s1", to_id: "s2", from_position: "R",
+                                                   to_position: "L")
+
+    {
+      services: {
+        "s1" => { service: service1, x: 40, y: 40, width: 120, height: 80, group_id: "a" },
+        "s2" => { service: service2, x: 200, y: 40, width: 120, height: 80, group_id: "b" },
+      },
+      groups: {
+        "a" => { group: group_a, x: 10, y: 10, width: 300, height: 150 },
+        "b" => { group: group_b, x: 10, y: 10, width: 300, height: 150 },
+      },
+      edges: [
+        { edge: edge, from_x: 160, from_y: 80, to_x: 200, to_y: 80, from_side: "R", to_side: "L" },
+      ],
+      width: 400,
+      height: 200,
+    }
+  end
+
+  # sA in gA, sB in gB, gMid sits directly between them and belongs to
+  # neither endpoint's group - the shape obstacles_for's ancestor-group
+  # exclusion has to get right: gA and gB are excluded (each edge
+  # endpoint's own group), gMid is not. No existing spec built its
+  # obstacles through Architecture#obstacles_for with a THIRD,
+  # unrelated group actually in the way - the case-011 router spec
+  # builds its obstacle list from services/junctions only, bypassing
+  # obstacles_for's group handling entirely.
+  def unrelated_group_layout
+    group_a = Sirena::Diagram::Architecture::Group.new(id: "gA", label: "GA")
+    group_b = Sirena::Diagram::Architecture::Group.new(id: "gB", label: "GB")
+    group_mid = Sirena::Diagram::Architecture::Group.new(id: "gMid", label: "GMid")
+    service_a = Sirena::Diagram::Architecture::Service.new(id: "sA", label: "A", group_id: "gA")
+    service_b = Sirena::Diagram::Architecture::Service.new(id: "sB", label: "B", group_id: "gB")
+    edge = Sirena::Diagram::Architecture::Edge.new(from_id: "sA", to_id: "sB", from_position: "R",
+                                                   to_position: "L")
+
+    {
+      services: {
+        "sA" => { service: service_a, x: 40, y: 40, width: 60, height: 60, group_id: "gA" },
+        "sB" => { service: service_b, x: 400, y: 40, width: 60, height: 60, group_id: "gB" },
+      },
+      groups: {
+        "gA" => { group: group_a, x: 20, y: 20, width: 100, height: 100 },
+        "gB" => { group: group_b, x: 380, y: 20, width: 100, height: 100 },
+        "gMid" => { group: group_mid, x: 150, y: 20, width: 150, height: 100 },
+      },
+      edges: [
+        { edge: edge, from_x: 100, from_y: 70, to_x: 400, to_y: 70, from_side: "R", to_side: "L" },
+      ],
+      width: 550,
+      height: 200,
+    }
+  end
+
+  # The path's `d` lives on the <path> inside the <g id="edge-..."> the
+  # edge is grouped under - not on the group tag itself.
+  def path_points(svg_string, edge_id)
+    d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
+    raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
+
+    d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
+  end
+
+  def segment_crosses?(box, p1, p2)
+    (0..200).any? do |i|
+      t = i / 200.0
+      x = p1[:x] + ((p2[:x] - p1[:x]) * t)
+      y = p1[:y] + ((p2[:y] - p1[:y]) * t)
+      x > box[:x] && x < box[:x] + box[:width] && y > box[:y] && y < box[:y] + box[:height]
+    end
+  end
+
+  # Tests the ISOLATION guarantee itself, not one specific bug that
+  # happens to make the router raise - a stub proves route_edges
+  # degrades gracefully regardless of why a future raise happens,
+  # matching the router's own never-raise-from-#route philosophy one
+  # layer up. Two edges: one the stub breaks, one it doesn't, so a
+  # single bad edge is also proven not to take the rest down with it.
+  def two_edge_layout
+    service_a = Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", group_id: nil)
+    service_b = Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", group_id: nil)
+    service_c = Sirena::Diagram::Architecture::Service.new(id: "c", label: "C", group_id: nil)
+    edge_ab = Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
+                                                      to_position: "L")
+    edge_bc = Sirena::Diagram::Architecture::Edge.new(from_id: "b", to_id: "c", from_position: "R",
+                                                      to_position: "L")
+
+    {
+      services: {
+        "a" => { service: service_a, x: 40, y: 40, width: 120, height: 80, group_id: :root },
+        "b" => { service: service_b, x: 200, y: 40, width: 120, height: 80, group_id: :root },
+        "c" => { service: service_c, x: 360, y: 40, width: 120, height: 80, group_id: :root },
+      },
+      groups: {},
+      edges: [
+        { edge: edge_ab, from_x: 160, from_y: 80, to_x: 200, to_y: 80, from_side: "R", to_side: "L" },
+        { edge: edge_bc, from_x: 320, from_y: 80, to_x: 360, to_y: 80, from_side: "R", to_side: "L" },
+      ],
+      width: 520,
+      height: 200,
+    }
+  end
+
+  # a:R -- B:b needs the router's widened-margin retreat (arriving at a
+  # bottom face means approaching from BELOW everything else, and
+  # nothing in this two-box diagram sits lower than the boxes'
+  # own bottom edge) - with width/height set exactly to the boxes'
+  # own extent (no slack at all), the routed point at y=140 genuinely
+  # exceeds a layout sized only from node positions. This is what
+  # actually distinguishes the canvas-sizing fix from a fixture that
+  # happens to have enough padding regardless.
+  def layout_ab_tight
+    diagram = Sirena::Diagram::Architecture.new(
+      services: [
+        Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
+        Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
+      ],
+      groups: [],
+      edges: [
+        Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
+                                                to_position: "B"),
+      ]
+    )
+
+    {
+      services: {
+        "a" => { service: diagram.services[0], x: 40, y: 40, width: 120, height: 80, group_id: :root },
+        "b" => { service: diagram.services[1], x: 200, y: 40, width: 120, height: 80, group_id: :root },
+      },
+      groups: {},
+      edges: [
+        { edge: diagram.edges[0], from_x: 160, from_y: 80, to_x: 260, to_y: 120, from_side: "R", to_side: "B" },
+      ],
+      width: 320,
+      height: 120,
+    }
+  end
+
+  def segment_crosses_rectangle?(p1, p2, rect)
+    (0..200).any? do |i|
+      t = i / 200.0
+      x = p1[:x] + ((p2[:x] - p1[:x]) * t)
+      y = p1[:y] + ((p2[:y] - p1[:y]) * t)
+      x > rect[:x] && x < rect[:x] + rect[:width] && y > rect[:y] && y < rect[:y] + rect[:height]
+    end
+  end
+end
+
 RSpec.describe Sirena::Renderer::Architecture do
   let(:renderer) { described_class.new }
 
@@ -274,33 +439,10 @@ RSpec.describe Sirena::Renderer::Architecture do
       # terminate), and ancestor_group_ids walks that chain. Without cycle
       # detection this loops forever; bounded here with a real timeout so
       # a regression fails fast instead of hanging the suite.
-      def cyclic_groups_layout
-        group_a = Sirena::Diagram::Architecture::Group.new(id: "a", label: "A", parent_id: "b")
-        group_b = Sirena::Diagram::Architecture::Group.new(id: "b", label: "B", parent_id: "a")
-        service1 = Sirena::Diagram::Architecture::Service.new(id: "s1", label: "S1", group_id: "a")
-        service2 = Sirena::Diagram::Architecture::Service.new(id: "s2", label: "S2", group_id: "b")
-        edge = Sirena::Diagram::Architecture::Edge.new(from_id: "s1", to_id: "s2", from_position: "R",
-                                                       to_position: "L")
-
-        {
-          services: {
-            "s1" => { service: service1, x: 40, y: 40, width: 120, height: 80, group_id: "a" },
-            "s2" => { service: service2, x: 200, y: 40, width: 120, height: 80, group_id: "b" },
-          },
-          groups: {
-            "a" => { group: group_a, x: 10, y: 10, width: 300, height: 150 },
-            "b" => { group: group_b, x: 10, y: 10, width: 300, height: 150 },
-          },
-          edges: [
-            { edge: edge, from_x: 160, from_y: 80, to_x: 200, to_y: 80, from_side: "R", to_side: "L" },
-          ],
-          width: 400,
-          height: 200,
-        }
-      end
-
       it "does not loop forever walking ancestor groups" do
-        expect { Timeout.timeout(2) { renderer.render(cyclic_groups_layout) } }.not_to raise_error
+        expect do
+          Timeout.timeout(2) { renderer.render(ArchitectureSpecHelpers.cyclic_groups_layout) }
+        end.not_to raise_error
       end
     end
 
@@ -313,56 +455,13 @@ RSpec.describe Sirena::Renderer::Architecture do
       # unrelated group actually in the way - the case-011 router spec
       # builds its obstacle list from services/junctions only, bypassing
       # obstacles_for's group handling entirely.
-      def unrelated_group_layout
-        group_a = Sirena::Diagram::Architecture::Group.new(id: "gA", label: "GA")
-        group_b = Sirena::Diagram::Architecture::Group.new(id: "gB", label: "GB")
-        group_mid = Sirena::Diagram::Architecture::Group.new(id: "gMid", label: "GMid")
-        service_a = Sirena::Diagram::Architecture::Service.new(id: "sA", label: "A", group_id: "gA")
-        service_b = Sirena::Diagram::Architecture::Service.new(id: "sB", label: "B", group_id: "gB")
-        edge = Sirena::Diagram::Architecture::Edge.new(from_id: "sA", to_id: "sB", from_position: "R",
-                                                       to_position: "L")
-
-        {
-          services: {
-            "sA" => { service: service_a, x: 40, y: 40, width: 60, height: 60, group_id: "gA" },
-            "sB" => { service: service_b, x: 400, y: 40, width: 60, height: 60, group_id: "gB" },
-          },
-          groups: {
-            "gA" => { group: group_a, x: 20, y: 20, width: 100, height: 100 },
-            "gB" => { group: group_b, x: 380, y: 20, width: 100, height: 100 },
-            "gMid" => { group: group_mid, x: 150, y: 20, width: 150, height: 100 },
-          },
-          edges: [
-            { edge: edge, from_x: 100, from_y: 70, to_x: 400, to_y: 70, from_side: "R", to_side: "L" },
-          ],
-          width: 550,
-          height: 200,
-        }
-      end
-
-      def path_points(svg_string, edge_id)
-        d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
-        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
-
-        d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
-      end
-
-      def segment_crosses?(box, p1, p2)
-        (0..200).any? do |i|
-          t = i / 200.0
-          x = p1[:x] + ((p2[:x] - p1[:x]) * t)
-          y = p1[:y] + ((p2[:y] - p1[:y]) * t)
-          x > box[:x] && x < box[:x] + box[:width] && y > box[:y] && y < box[:y] + box[:height]
-        end
-      end
-
       it "routes around the unrelated group's boundary" do
-        layout = unrelated_group_layout
+        layout = ArchitectureSpecHelpers.unrelated_group_layout
         svg_string = renderer.render(layout).to_s
-        points = path_points(svg_string, "edge-sA-sB")
+        points = ArchitectureSpecHelpers.path_points(svg_string, "edge-sA-sB")
         g_mid = layout[:groups]["gMid"]
 
-        crosses = points.each_cons(2).any? { |p1, p2| segment_crosses?(g_mid, p1, p2) }
+        crosses = points.each_cons(2).any? { |p1, p2| ArchitectureSpecHelpers.segment_crosses?(g_mid, p1, p2) }
         expect(crosses).to be(false)
       end
     end
@@ -374,37 +473,12 @@ RSpec.describe Sirena::Renderer::Architecture do
       # matching the router's own never-raise-from-#route philosophy one
       # layer up. Two edges: one the stub breaks, one it doesn't, so a
       # single bad edge is also proven not to take the rest down with it.
-      def two_edge_layout
-        service_a = Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", group_id: nil)
-        service_b = Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", group_id: nil)
-        service_c = Sirena::Diagram::Architecture::Service.new(id: "c", label: "C", group_id: nil)
-        edge_ab = Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
-                                                          to_position: "L")
-        edge_bc = Sirena::Diagram::Architecture::Edge.new(from_id: "b", to_id: "c", from_position: "R",
-                                                          to_position: "L")
-
-        {
-          services: {
-            "a" => { service: service_a, x: 40, y: 40, width: 120, height: 80, group_id: :root },
-            "b" => { service: service_b, x: 200, y: 40, width: 120, height: 80, group_id: :root },
-            "c" => { service: service_c, x: 360, y: 40, width: 120, height: 80, group_id: :root },
-          },
-          groups: {},
-          edges: [
-            { edge: edge_ab, from_x: 160, from_y: 80, to_x: 200, to_y: 80, from_side: "R", to_side: "L" },
-            { edge: edge_bc, from_x: 320, from_y: 80, to_x: 360, to_y: 80, from_side: "R", to_side: "L" },
-          ],
-          width: 520,
-          height: 200,
-        }
-      end
-
       it "does not fail the whole render" do
         broken_router = instance_double(Sirena::Renderer::ArchitectureEdgeRouter)
         allow(broken_router).to receive(:route).and_raise("boom")
         allow(renderer).to receive(:edge_router).and_return(broken_router)
 
-        expect { renderer.render(two_edge_layout) }.not_to raise_error
+        expect { renderer.render(ArchitectureSpecHelpers.two_edge_layout) }.not_to raise_error
       end
 
       it "falls back to the straight line only for the edge that raised" do
@@ -416,7 +490,7 @@ RSpec.describe Sirena::Renderer::Architecture do
         end
         allow(renderer).to receive(:edge_router).and_return(broken_router)
 
-        svg_string = renderer.render(two_edge_layout).to_s
+        svg_string = renderer.render(ArchitectureSpecHelpers.two_edge_layout).to_s
 
         expect(svg_string).to include('id="edge-a-b"')
         expect(svg_string).to include('id="edge-b-c"')
@@ -429,7 +503,7 @@ RSpec.describe Sirena::Renderer::Architecture do
         # obstacles itself, inside the rescued scope.
         allow(renderer).to receive(:obstacles_for).and_raise("boom")
 
-        expect { renderer.render(two_edge_layout) }.not_to raise_error
+        expect { renderer.render(ArchitectureSpecHelpers.two_edge_layout) }.not_to raise_error
       end
     end
 
@@ -477,63 +551,18 @@ RSpec.describe Sirena::Renderer::Architecture do
       # exceeds a layout sized only from node positions. This is what
       # actually distinguishes the canvas-sizing fix from a fixture that
       # happens to have enough padding regardless.
-      def layout_ab_tight
-        diagram = Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server", group_id: nil),
-            Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", icon: "server", group_id: nil),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
-                                                    to_position: "B"),
-          ]
-        )
-
-        {
-          services: {
-            "a" => { service: diagram.services[0], x: 40, y: 40, width: 120, height: 80, group_id: :root },
-            "b" => { service: diagram.services[1], x: 200, y: 40, width: 120, height: 80, group_id: :root },
-          },
-          groups: {},
-          edges: [
-            { edge: diagram.edges[0], from_x: 160, from_y: 80, to_x: 260, to_y: 120, from_side: "R", to_side: "B" },
-          ],
-          width: 320,
-          height: 120,
-        }
-      end
-
-      # The path's `d` lives on the <path> inside the <g id="edge-..."> the
-      # edge is grouped under - not on the group tag itself.
-      def path_points(svg_string, edge_id)
-        d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
-        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
-
-        d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
-      end
-
-      def segment_crosses_rectangle?(p1, p2, rect)
-        (0..200).any? do |i|
-          t = i / 200.0
-          x = p1[:x] + ((p2[:x] - p1[:x]) * t)
-          y = p1[:y] + ((p2[:y] - p1[:y]) * t)
-          x > rect[:x] && x < rect[:x] + rect[:width] && y > rect[:y] && y < rect[:y] + rect[:height]
-        end
-      end
-
       it "draws around b instead of through it" do
         svg = renderer.render(layout_abc)
-        points = path_points(svg.to_s, "edge-a-b")
+        points = ArchitectureSpecHelpers.path_points(svg.to_s, "edge-a-b")
         b = layout_abc[:services]["b"]
 
-        crosses = points.each_cons(2).any? { |p1, p2| segment_crosses_rectangle?(p1, p2, b) }
+        crosses = points.each_cons(2).any? { |p1, p2| ArchitectureSpecHelpers.segment_crosses_rectangle?(p1, p2, b) }
         expect(crosses).to be(false)
       end
 
       it "keeps every routed point within the document's own bounds" do
-        svg = renderer.render(layout_ab_tight)
-        points = path_points(svg.to_s, "edge-a-b")
+        svg = renderer.render(ArchitectureSpecHelpers.layout_ab_tight)
+        points = ArchitectureSpecHelpers.path_points(svg.to_s, "edge-a-b")
 
         points.each do |point|
           expect(point[:x]).to be_between(0, svg.width)
@@ -552,21 +581,6 @@ RSpec.describe Sirena::Renderer::Architecture do
       # two other groups' services" above, which is the one spec that
       # actually goes through Architecture#obstacles_for's group
       # handling; the corpus here never asserts against a group box.
-      def path_points(svg_string, edge_id)
-        d_attribute = svg_string[/<g id="#{Regexp.escape(edge_id)}"[^>]*>.*?<path[^>]*\bd="([^"]*)"/m, 1]
-        raise "no <path> found for edge #{edge_id}" if d_attribute.nil?
-
-        d_attribute.scan(/-?\d+(?:\.\d+)?/).each_slice(2).map { |x, y| { x: x.to_f, y: y.to_f } }
-      end
-
-      def segment_crosses?(box, p1, p2)
-        (0..200).any? do |i|
-          t = i / 200.0
-          x = p1[:x] + ((p2[:x] - p1[:x]) * t)
-          y = p1[:y] + ((p2[:y] - p1[:y]) * t)
-          x > box[:x] && x < box[:x] + box[:width] && y > box[:y] && y < box[:y] + box[:height]
-        end
-      end
 
       # A case sirena cannot parse is only "out of scope" when the oracle
       # (ArchitectureCorpusVerdicts, top of file) agrees it isn't real
@@ -601,12 +615,12 @@ RSpec.describe Sirena::Renderer::Architecture do
           layout[:edges].each do |edge_info|
             edge = edge_info[:edge]
             edge_id = "edge-#{edge.from_id}-#{edge.to_id}"
-            points = path_points(svg_string, edge_id)
+            points = ArchitectureSpecHelpers.path_points(svg_string, edge_id)
 
             nodes.each do |id, box|
               next if id == edge.from_id || id == edge.to_id
 
-              crosses = points.each_cons(2).any? { |p1, p2| segment_crosses?(box, p1, p2) }
+              crosses = points.each_cons(2).any? { |p1, p2| ArchitectureSpecHelpers.segment_crosses?(box, p1, p2) }
               expect(crosses).to be(false), "#{edge_id} crosses #{id} in #{File.basename(path)}"
             end
           end
