@@ -1358,9 +1358,7 @@
   {
     "case": "class/159_parser_should_handle_a_comment_inside_brackets_158.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class/160_parser_should_handle_namespace_with_generic_types_159.mmd",
@@ -1705,9 +1703,7 @@
   {
     "case": "class_diagram/035_parser_should_handle_a_comment_inside_brackets_34.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/035_parser_should_handle_backticked_class_names_34.mmd",
@@ -1980,9 +1976,7 @@
   {
     "case": "class_diagram/051_parser_should_handle_a_comment_inside_brackets_50.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/051_parser_should_handle_return_types_on_methods_50.mmd",
@@ -3025,9 +3019,7 @@
   {
     "case": "class_diagram/132_parser_should_handle_a_comment_inside_brackets_131.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "class_diagram/132_parser_should_handle_backtick-quoted_namespace_names_131.mmd",
