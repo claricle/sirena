@@ -6,6 +6,19 @@ require "sirena/diagram/architecture"
 require "timeout"
 require "yaml"
 
+# spec/mermaid/corpus-verdicts.yml is the committed mmdc oracle: it says
+# which corpus cases are genuine mermaid (verdict "valid") vs rejected by
+# mmdc itself (verdict "invalid"). Path is __dir__-relative so the load
+# works regardless of the process's working directory.
+module ArchitectureCorpusVerdicts
+  module_function
+
+  def all
+    @all ||= YAML.load_file(File.expand_path("../../mermaid/corpus-verdicts.yml", __dir__))
+      .to_h { |row| [row["case"], row["verdict"]] }
+  end
+end
+
 RSpec.describe Sirena::Renderer::Architecture do
   let(:renderer) { described_class.new }
 
@@ -555,18 +568,11 @@ RSpec.describe Sirena::Renderer::Architecture do
         end
       end
 
-      # spec/mermaid/corpus-verdicts.yml is the committed mmdc oracle: it
-      # says which corpus cases are genuine mermaid (verdict "valid") vs
-      # rejected by mmdc itself (verdict "invalid"). A case sirena cannot
-      # parse is only "out of scope" when the oracle agrees it isn't real
+      # A case sirena cannot parse is only "out of scope" when the oracle
+      # (ArchitectureCorpusVerdicts, top of file) agrees it isn't real
       # input; otherwise a skip would hide a parser gap forever.
-      def self.architecture_verdicts
-        YAML.load_file("spec/mermaid/corpus-verdicts.yml")
-          .to_h { |row| [row["case"], row["verdict"]] }
-      end
-
       all_cases = Dir.glob(File.expand_path("../../mermaid/architecture/*.mmd", __dir__))
-      verdicts = architecture_verdicts
+      verdicts = ArchitectureCorpusVerdicts.all
       unparseable_cases, checkable_cases = all_cases.partition do |path|
         Sirena::Parser::Architecture.new.parse(File.read(path))
         false
@@ -584,7 +590,6 @@ RSpec.describe Sirena::Renderer::Architecture do
                 "-- this is a real parser gap, not out of scope"
         end
       end
-      invalid_cases = unparseable_cases
 
       checkable_cases.each do |path|
         it "#{File.basename(path)}: no edge crosses a non-endpoint service or junction" do
@@ -608,7 +613,7 @@ RSpec.describe Sirena::Renderer::Architecture do
         end
       end
 
-      invalid_cases.each do |path|
+      unparseable_cases.each do |path|
         it "#{File.basename(path)}: refuses cleanly (mmdc-oracle-invalid)" do
           expect { Sirena::Parser::Architecture.new.parse(File.read(path)) }
             .to raise_error(Sirena::Parser::ParseError)
