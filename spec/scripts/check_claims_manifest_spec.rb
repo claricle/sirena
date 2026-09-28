@@ -10,18 +10,20 @@ require "tmpdir"
 # `git grep` invocation against tracked/untracked/excluded content, not a
 # mock of it.
 module ClaimsManifestFixture
+  include GitRepoHelpers
+
   def git_repo(files)
     Dir.mktmpdir do |dir|
-      Open3.capture3("git", "-C", dir, "init", "-q")
-      Open3.capture3("git", "-C", dir, "config", "user.email", "t@example.com")
-      Open3.capture3("git", "-C", dir, "config", "user.name", "t")
+      sh(dir, "git", "-C", dir, "init", "-q")
+      sh(dir, "git", "-C", dir, "config", "user.email", "t@example.com")
+      sh(dir, "git", "-C", dir, "config", "user.name", "t")
       files.each do |path, content|
         full = File.join(dir, path)
         FileUtils.mkdir_p(File.dirname(full))
         File.write(full, content)
       end
-      Open3.capture3("git", "-C", dir, "add", "-A")
-      Open3.capture3("git", "-C", dir, "commit", "-q", "-m", "seed")
+      sh(dir, "git", "-C", dir, "add", "-A")
+      sh(dir, "git", "-C", dir, "commit", "-q", "-m", "seed") unless files.empty?
       yield dir
     end
   end
@@ -34,8 +36,8 @@ module ClaimsManifestFixture
     path = File.join(root, "docs/claims-manifest.yml")
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, rows.to_yaml)
-    Open3.capture3("git", "-C", root, "add", "-A")
-    Open3.capture3("git", "-C", root, "commit", "-q", "-m", "manifest")
+    sh(root, "git", "-C", root, "add", "-A")
+    sh(root, "git", "-C", root, "commit", "-q", "-m", "manifest")
   end
 
   def install_script(root)
