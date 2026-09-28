@@ -94,6 +94,15 @@ module Sirena
             rebuild_hierarchy
           end
 
+          # A `%%` comment line embedded inside a multi-line round-shape
+          # node's own content (e.g. "root(\n  one\n  %% hidden\n  two\n)").
+          # Mermaid strips every such line, terminator included, before its
+          # node lexer ever runs -- Source::COMMENT does the same thing for
+          # the diagram's preamble, but is `\A`-anchored (only matches at a
+          # scan position) so it cannot `gsub` a mid-string line; this is
+          # the same shape, `^`-anchored, for that purpose.
+          ROUND_COMMENT_LINE = /^[ \t]*%%(?!\{)[^\r\n]*\r?\n?/
+
           private
 
           def rebuild_hierarchy
@@ -148,8 +157,6 @@ module Sirena
             indent_str.length
           end
 
-          private
-
           def calculate_level(indent_data)
             # Handle empty array or nil
             return 0 if indent_data.nil?
@@ -175,8 +182,22 @@ module Sirena
           end
 
           def extract_content(node_data)
-            return node_data[:content].to_s if node_data[:content]
-            ""
+            return "" unless node_data[:content]
+
+            content = node_data[:content].to_s
+            content = strip_round_extras(content) if node_data[:shape_round] && !node_data[:round_quoted]
+            content
+          end
+
+          def strip_round_extras(content)
+            # Drop embedded comment-only lines first (matching mermaid's own
+            # pre-lexer pass), then the one leading newline that a
+            # multi-line node's own opening "(\n" legitimately introduces --
+            # mermaid's rendered output drops exactly that line break and
+            # nothing else. `\r?` handles a caller that passes CRLF source
+            # straight to this parser without going through
+            # `Source.normalize` (Engine's real render path always does).
+            content.gsub(ROUND_COMMENT_LINE, "").sub(/\A\r?\n/, "")
           end
 
           def extract_shape(node_data)
@@ -208,7 +229,7 @@ module Sirena
             next unless node_data[:content] || node_data[:icon] || node_data[:classes] ||
                        node_data[:shape_circle] || node_data[:shape_bang] ||
                        node_data[:shape_cloud] || node_data[:shape_hexagon] ||
-                       node_data[:shape_square]
+                       node_data[:shape_square] || node_data[:shape_round]
 
             builder.add_node(node_data)
           end

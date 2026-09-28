@@ -155,6 +155,108 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.shape).to eq("square")
         expect(diagram.root.content).to eq("The root")
       end
+
+      it "parses a round node (corpus 029, no id prefix)" do
+        source = <<~MERMAID
+          mindmap
+              (root)
+        MERMAID
+
+        diagram = parser.parse(source)
+        # Round is mermaid's own default shape spelled out explicitly, so it
+        # maps to "default" (the renderer's rounded-rectangle node), not a
+        # distinct "round" value -- there is no separate round case in
+        # extract_shape/render_node.
+        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.content).to eq("root")
+      end
+
+      it "parses a round node with an id prefix" do
+        source = <<~MERMAID
+          mindmap
+              root(The root)
+        MERMAID
+
+        diagram = parser.parse(source)
+        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.content).to eq("The root")
+      end
+
+      it "strips exactly one leading newline from multi-line round content (corpus 014)" do
+        source = "mindmap\n    root(\n      The root\n    )"
+
+        diagram = parser.parse(source)
+        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.content).to eq("      The root\n    ")
+      end
+
+      it "tolerates a trailing %% comment after a round node's close paren (corpus 049)" do
+        source = "mindmap\n  root(Root)\n    a(a) %% This is a comment\n    b[New Stuff]\n"
+
+        diagram = parser.parse(source)
+        a = diagram.root.children.first
+        expect(a.content).to eq("a")
+        expect(a.shape).to eq("default")
+        expect(diagram.root.children.last.content).to eq("New Stuff")
+      end
+
+      it "strips the quotes from a quoted round node's content" do
+        source = 'mindmap
+  root("abc")'
+
+        diagram = parser.parse(source)
+        expect(diagram.root.content).to eq("abc")
+      end
+
+      it "lets a literal close-paren through inside quoted round content" do
+        source = 'mindmap
+  root("a)b")'
+
+        diagram = parser.parse(source)
+        expect(diagram.root.content).to eq("a)b")
+      end
+
+      it "preserves comment syntax inside quoted round content" do
+        source = 'mindmap
+  root("%% keep this")'
+
+        diagram = parser.parse(source)
+        expect(diagram.root.content).to eq("%% keep this")
+      end
+
+      it "preserves a leading newline inside quoted round content" do
+        source = "mindmap\n  root(\"\nfoo\")"
+
+        diagram = parser.parse(source)
+        expect(diagram.root.content).to eq("\nfoo")
+      end
+
+      it "strips an embedded %% comment-only line from multi-line round content" do
+        source = "mindmap\n  root(\n    one\n    %% hidden\n    two\n  )"
+
+        diagram = parser.parse(source)
+        # The comment line, terminator included, is fully gone -- only the
+        # leading "(\n" newline (already covered above) and the two real
+        # content lines remain.
+        expect(diagram.root.content).to eq("    one\n    two\n  ")
+      end
+
+      it "ignores close-parens inside round-node comment lines" do
+        source = "mindmap\n  root(\n    one\n    %% hidden )\n    two\n  )"
+
+        diagram = parser.parse(source)
+        expect(diagram.root.content).to eq("    one\n    two\n  ")
+      end
+
+      it "strips a CRLF-terminated leading newline from multi-line round content" do
+        source = "mindmap\r\n  root(\r\n    The root\r\n  )"
+
+        diagram = parser.parse(source)
+        # A caller that hands CRLF source straight to this parser (bypassing
+        # Source#normalize, which always runs on the real render path) must
+        # not see a stray leading "\r" survive in the content.
+        expect(diagram.root.content).to eq("    The root\r\n  ")
+      end
     end
 
     context "with icons" do

@@ -44,9 +44,20 @@ module Sirena
           space? >> newline
         end
 
+        # A shaped node's own rule stops at its shape's closing delimiter, so
+        # a same-line trailing "%%" comment -- valid anywhere in mermaid's
+        # lexer -- is tolerated here, once, for every SHAPED node type,
+        # rather than inside each shape rule. node_plain has no closing
+        # delimiter: its content rule (`match('[^\r\n:]').repeat(1)`, below)
+        # already greedily swallows a trailing "%%..." into :content before
+        # this `comment.maybe` ever runs, so a plain node's trailing comment
+        # is NOT stripped. Pre-existing, not introduced by this change;
+        # left as-is here, out of scope for this fix.
         rule(:node_with_content) do
           match[' \t'].repeat.as(:indent) >>
             node >>
+            space? >>
+            comment.maybe >>
             (newline | eof)
         end
 
@@ -70,10 +81,13 @@ module Sirena
             match('[^\r\n]').repeat(1).as(:classes)
         end
 
-        # Node with shape (optional identifier prefix)
+        # Node with shape (optional identifier prefix). round_shape must be
+        # tried last: circle_shape's "((" is a strict prefix of a lone "(",
+        # so round_shape would otherwise swallow the first paren of a circle
+        # node and leave its own close paren unconsumed.
         rule(:node_with_shape) do
           match['a-zA-Z0-9_'].repeat >>
-            (circle_shape | bang_shape | cloud_shape | hexagon_shape | square_shape)
+            (circle_shape | bang_shape | cloud_shape | hexagon_shape | square_shape | round_shape)
         end
 
         # ((text)) - circle
@@ -119,6 +133,40 @@ module Sirena
             ) >>
             str("]") >>
             str("").as(:shape_square)
+        end
+
+        # (text) - round (rounded rectangle, mermaid's default shape spelled
+        # out explicitly). Content may span multiple physical lines: unlike
+        # node_with_content's own line-at-a-time repeat, nothing inside this
+        # rule stops at a newline, only the closing ")" does -- matching
+        # mermaid's own NODE-state lexer, whose catch-all token for this
+        # shape does not stop at line breaks either. Quoted content (e.g.
+        # `root("a)b")`) mirrors square_shape's own quoted branch: mermaid's
+        # lexer has a dedicated quoted-content state that strips the quotes
+        # and lets a literal ")" through, which the unquoted `[^)]` branch
+        # cannot represent.
+        rule(:round_comment_line) do
+          newline >>
+            match[' \t'].repeat >>
+            str("%%") >>
+            str("{").absent? >>
+            match('[^\r\n]').repeat >>
+            newline.maybe
+        end
+
+        rule(:round_unquoted_content) do
+          (round_comment_line | match('[^)]')).repeat(1).as(:content)
+        end
+
+        rule(:round_shape) do
+          str("(") >>
+            (
+              (str('"') >> match('[^"]').repeat(1).as(:content) >> str('"') >>
+                str("").as(:round_quoted)) |
+              round_unquoted_content
+            ) >>
+            str(")") >>
+            str("").as(:shape_round)
         end
 
         # Plain text node
