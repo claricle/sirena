@@ -1,0 +1,132 @@
+# Claims manifest: one row per decided docs claim.
+#
+# TODO.foundation/11-docs-truth-pass.md (Done when, lines 88-100): a checker
+# over this file fails if any row marked `removed` still appears in tracked
+# source (excluding _site/, docs/plans/, TODO.foundation/, and this file --
+# see scripts/check_claims_manifest.rb).
+#
+# Keys per row:
+#   claim       - the exact string being tracked (a `removed` row's claim is
+#                 the precise substring the checker greps for)
+#   file        - where the claim used to live (comma-separated if it
+#                 appeared verbatim in more than one file)
+#   disposition - one of: verified, corrected, removed
+#   evidence    - a shell command that proves the disposition
+#   pr          - the PR number that decided it
+#
+# Seeded from claims corrected by merged PR #106 (95b5ba2b) and the
+# benchmark question closed by #131.
+
+- claim: "Sirena currently supports all diagram type languages defined in Mermaid."
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Sirena currently supports all diagram type languages defined in Mermaid.\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "supports all 24 Mermaid diagram types with complete parser, transform,"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"supports all 24 Mermaid diagram types with complete parser, transform,\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "achieved ~80% code reduction during migration"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"achieved ~80% code reduction during migration\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Code reduction** of ~80% compared to previous lexer-based approach"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Code reduction** of ~80% compared to previous lexer-based approach\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Sirena implements comprehensive test coverage against the official mermaid-js"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Sirena implements comprehensive test coverage against the official mermaid-js\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "The test suite generates 302 SVG reference fixtures using mermaid-cli v11.12.0."
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"The test suite generates 302 SVG reference fixtures using mermaid-cli v11.12.0.\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "16x faster batch processing than Mermaid.js with browser"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"16x faster batch processing than Mermaid.js with browser\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "8x lower memory usage than Mermaid.js"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"8x lower memory usage than Mermaid.js\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "|**16x faster**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"|**16x faster**\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "|**40x faster**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"|**40x faster**\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "|**8x less**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"|**8x less**\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "|Rails (native), Jekyll (native), Sinatra, Padrino"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"|Rails (native), Jekyll (native), Sinatra, Padrino\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Native integration with Rails, Jekyll, and Ruby applications"
+  file: "docs/_pages/comparison.adoc, docs/index.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Native integration with Rails, Jekyll, and Ruby applications\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Rails Integration**: Native Ruby integration with Rails helpers"
+  file: "docs/index.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Rails Integration**: Native Ruby integration with Rails helpers\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Jekyll Support**: Static site generation compatibility"
+  file: "docs/index.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"Jekyll Support**: Static site generation compatibility\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "|19+"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "git grep -F -I -q -e \"|19+\" -- . ':(exclude)docs/plans' ':(exclude)TODO.foundation' ':(exclude)_site' ':(exclude)docs/claims-manifest.yml'"
+  pr: 106
+
+- claim: "Sirena registers 24 diagram types (was \"19+\"/\"19\" in comparison.adoc and compatibility.adoc)"
+  file: "docs/_pages/comparison.adoc, docs/_pages/compatibility.adoc"
+  disposition: "corrected"
+  evidence: "bundle exec ruby -Ilib -e \"require 'sirena'; puts Sirena::DiagramRegistry.types.size\""
+  pr: 106
+
+- claim: "Metanorma integration is self-contained SVG verified against svg_conform's :metanorma check (was \"Direct embedding in documentation\")"
+  file: "README.adoc"
+  disposition: "corrected"
+  evidence: "bundle exec rspec spec/svg_conformance_spec.rb"
+  pr: 106
+
+- claim: "benchmark:quick/benchmark:compare rake tasks run to completion and a reproducible run is recorded"
+  file: "tasks/benchmark.rake, docs/PERFORMANCE_BENCHMARK.adoc"
+  disposition: "verified"
+  evidence: "bundle exec rspec spec/tasks/benchmark_rake_spec.rb"
+  pr: 131

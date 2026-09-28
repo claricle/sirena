@@ -21,4 +21,10 @@ Dir.glob('tasks/**/*.rake').each { |r| load r }
 # to run wherever `rake` does, or a refactor can drop 200 cases and nothing
 # notices. Measured: the whole corpus (1997 cases) renders in ~4s, so this
 # adds negligible time to the default task.
-task default: [:spec, :benchmark, 'corpus:check']
+#
+# claims_manifest:check was otherwise never invoked by anything (CI's own
+# `ruby scripts/check_claims_manifest.rb` step calls the script directly,
+# bypassing this task entirely) -- wired in here so a plain local `rake`
+# catches a stale claims-manifest row the same way it catches a corpus
+# regression, instead of only in CI.
+task default: [:spec, :benchmark, 'corpus:check', 'claims_manifest:check']

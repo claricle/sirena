@@ -60,6 +60,17 @@ jobs:
           ruby-version: '3.3'
       - run: ruby scripts/check_workflow_pins.rb
 
+  claims-manifest:
+    name: claims-manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: ruby scripts/check_claims_manifest.rb
+
   lint:
     # Its own job, not a step inside the unit matrix. Lint answers in under a
     # minute and should not wait on the full Ruby/OS matrix.
@@ -82,7 +93,7 @@ jobs:
   fast-lane:
     name: fast-lane
     if: ${{ always() }}
-    needs: [unit, pins, lint]
+    needs: [unit, pins, lint, claims-manifest]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
