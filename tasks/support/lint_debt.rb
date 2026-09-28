@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require "rubocop"
-require "bundler"
+# rubocop and bundler are dev-only tooling, not gemspec runtime dependencies
+# (this class is only ever required from tasks/lint.rake and its own specs).
+# Loading them lazily, at first use, keeps this file loadable standalone for
+# anyone who does not have rubocop/bundler installed alongside the gem.
 require "date"
 require "yaml"
 require "json"
@@ -71,6 +73,8 @@ module Sirena
     Row = Data.define(:cop, :file, :count)
 
     def initialize(root:)
+      require "rubocop"
+      require "bundler"
       @root = File.realpath(root)
       refuse_ambient_options!
     end

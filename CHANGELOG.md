@@ -21,6 +21,20 @@ number makes is in [VERSIONING.md](VERSIONING.md).
 
 ## [Unreleased]
 
+### Changed
+
+- Seven diagram model classes were renamed in #62:
+
+  | Old name | New name |
+  | --- | --- |
+  | `Diagram::GanttChart` | `Diagram::Gantt` |
+  | `Diagram::QuadrantChart` | `Diagram::Quadrant` |
+  | `Diagram::RadarChart` | `Diagram::Radar` |
+  | `Diagram::ArchitectureDiagram` | `Diagram::Architecture` |
+  | `Diagram::SankeyDiagram` | `Diagram::Sankey` |
+  | `Diagram::PacketDiagram` | `Diagram::Packet` |
+  | `Diagram::TreemapDiagram` | `Diagram::Treemap` |
+
 ## [0.1.0]
 
 Initial tagged version (`v0.1.0`), released before this changelog existed.

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "parslet"
+
 module Sirena
   module Parser
     module Atoms

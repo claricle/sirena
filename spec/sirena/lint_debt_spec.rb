@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sirena/lint_debt"
+require_relative "../../tasks/support/lint_debt"
 require_relative "../support/lint_debt_fixture"
 require "fileutils"
 require "yaml"
