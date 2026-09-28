@@ -62,7 +62,7 @@ Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
 metanorma tool installers, private fonts. Its `tests-passed` and
 `do-release` repository dispatches moved to the `cascade` job, and now fire
 only on push events (generic-rake also fired on pull requests). `cascade`
-needs only `fast-lane` (the `unit` matrix, pins, lint), matching the old
+needs only `fast-lane` (the `unit` matrix, pins, claims-manifest, lint), matching the old
 gate on the test matrix; `links` and the rest of `full-lane` do not gate it,
 so an external-link outage cannot suppress a release. The Ruby/OS matrix is
 hard-coded in `unit`; it was previously fetched from metanorma's

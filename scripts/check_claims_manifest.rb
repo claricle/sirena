@@ -20,7 +20,11 @@ module Sirena
 
     MANIFEST_RELPATH = "docs/claims-manifest.yml"
     DISPOSITIONS = %w[verified corrected removed].freeze
-    REQUIRED_KEYS = %w[claim file disposition evidence].freeze
+    REQUIRED_KEYS = %w[claim file disposition evidence pr].freeze
+    # pr is required (see docs/claims-manifest.yml's key doc) but is an Integer in
+    # every existing row, not a String -- the string-shape check below only covers
+    # STRING_KEYS; pr gets its own Integer check.
+    STRING_KEYS = %w[claim file disposition evidence].freeze
     # docs/plans and TODO.foundation quote the very strings being removed as evidence
     # of what was wrong; _site is the built docs output; the manifest states them too;
     # this checker's own spec builds fixture claims that can read like real ones (a
@@ -52,11 +56,15 @@ module Sirena
       missing = REQUIRED_KEYS - row.keys
       raise ArgumentError, "#{manifest_path}: row #{index} missing #{missing.join(', ')}" unless missing.empty?
 
-      non_strings = REQUIRED_KEYS.reject { |key| row[key].is_a?(String) }
+      non_strings = STRING_KEYS.reject { |key| row[key].is_a?(String) }
       unless non_strings.empty?
         raise ArgumentError,
               "#{manifest_path}: row #{index} #{non_strings.join(', ')} must be string, " \
               "got #{non_strings.map { |key| row[key].class }.join(', ')}"
+      end
+      unless row["pr"].is_a?(Integer)
+        raise ArgumentError,
+              "#{manifest_path}: row #{index} pr must be an Integer, got #{row['pr'].class}"
       end
       unless DISPOSITIONS.include?(row["disposition"])
         raise ArgumentError,

@@ -105,6 +105,24 @@ RSpec.describe Sirena::ClaimsManifestCheck do
       end
     end
 
+    it "rejects a row missing pr" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "manifest.yml")
+        bad = removed_row.except("pr")
+        File.write(path, manifest_yaml([bad]))
+        expect { described_class.rows(path) }.to raise_error(ArgumentError, /missing pr/)
+      end
+    end
+
+    it "rejects a row whose pr is not an Integer" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "manifest.yml")
+        bad = removed_row.merge("pr" => "106")
+        File.write(path, manifest_yaml([bad]))
+        expect { described_class.rows(path) }.to raise_error(ArgumentError, /pr must be an Integer/)
+      end
+    end
+
     it "rejects a claim containing a newline" do
       # git grep -F -e treats an embedded newline as a break between separate
       # OR'd patterns rather than a literal character in one pattern, so an
