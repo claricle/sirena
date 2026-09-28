@@ -47,19 +47,13 @@ module Sirena
           '<<-->>' => %w[dotted filled both]
         }.freeze
 
-        def initialize
-          @message_index = 0
-          @activations = {}
-        end
-
         # Transform parse tree into Sequence diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
         # @return [Diagram::Sequence] the sequence diagram model
         def apply(tree)
           diagram = Diagram::Sequence.new
-          @message_index = 0
-          @activations = {}
+          reset_state
 
           # Tree is an array: [header, ...statements]
           if tree.is_a?(Array)
@@ -76,6 +70,17 @@ module Sirena
 
         private
 
+        # Called at the start of `apply`, so a builder is reusable across
+        # multiple `parse` calls without carrying state from the last one —
+        # a single place to add a new per-parse ivar.
+        def reset_state
+          @message_index = 0
+          @activations = {}
+          @pending_created = nil
+          @pending_destroyed = nil
+          @known_actor_ids = Set.new
+        end
+
         def process_statements(diagram, statements)
           Array(statements).each do |stmt|
             process_statement(diagram, stmt) if stmt.is_a?(Hash)
@@ -85,10 +90,22 @@ module Sirena
         def process_statement(diagram, stmt)
           return unless stmt.is_a?(Hash)
 
+          # `create` applies on top of the `participant`/`actor` branch
+          # below, not instead of it (`create_statement` delegates to the
+          # same declaration rules, so both keys are set on one `stmt`) —
+          # checked here, before the dispatch below adds the participant,
+          # because the duplicate-id check needs the id to still be
+          # absent from `@known_actor_ids`.
+          register_created(actor_id(stmt[:id])) if stmt[:create]
+
           if stmt[:participant]
             add_participant(diagram, stmt, 'participant')
           elsif stmt[:actor]
             add_participant(diagram, stmt, 'actor')
+          elsif stmt[:destroy]
+            register_destroyed(actor_id(stmt[:destroy]))
+          elsif stmt[:links]
+            ensure_participant(diagram, actor_id(stmt[:links]))
           elsif stmt[:from] && stmt[:to] && stmt[:arrow]
             add_message(diagram, stmt)
           elsif stmt[:position] && stmt[:note_text]
@@ -116,6 +133,7 @@ module Sirena
 
         def add_participant(diagram, stmt, actor_type)
           id = actor_id(stmt[:id])
+          @known_actor_ids << id
           label = if stmt[:label]
                     extract_text(stmt[:label])
                   else
@@ -139,6 +157,8 @@ module Sirena
         end
 
         def add_message(diagram, stmt)
+          check_lifecycle!(stmt)
+
           from_id = actor_id(stmt[:from])
           to_id = actor_id(stmt[:to])
           message_text = stmt[:text] ? extract_text(stmt[:text]) : ''
@@ -165,6 +185,56 @@ module Sirena
 
           diagram.messages << message
           @message_index += 1
+        end
+
+        # mermaid rejects a `create` whose id already belongs to an actor,
+        # whether that actor arrived by declaration, a message, a note or
+        # a `links` line — `@known_actor_ids` tracks exactly that set.
+        # `diagram.participants` is NOT the same set: `track_activation`
+        # also adds to it (for rendering an activated lifeline), but an
+        # `activate`/`deactivate` reference introduces no actor on
+        # mermaid's side, so it must not trip this check.
+        def register_created(id)
+          if @known_actor_ids.include?(id)
+            raise Parser::ParseError,
+                  'It is not possible to have actors with the same id, ' \
+                  "even if one is destroyed before the next is created (#{id})."
+          end
+
+          @pending_created = id
+        end
+
+        def register_destroyed(id)
+          @pending_destroyed = id
+        end
+
+        # Ports mermaid's own `apply()` create/destroy check verbatim: a
+        # single pending slot per kind, checked and cleared on the very
+        # NEXT message — nothing else (a note, an activation, a nested
+        # block boundary) consumes or clears it. `create` takes priority
+        # over a still-pending `destroy`, matching mermaid's own
+        # `if (lastCreated) {...} else if (lastDestroyed) {...}`.
+        def check_lifecycle!(stmt)
+          to_id = actor_id(stmt[:to])
+          from_id = actor_id(stmt[:from])
+
+          if @pending_created
+            unless to_id == @pending_created
+              raise Parser::ParseError,
+                    "The created participant #{@pending_created} does not " \
+                    'have an associated creating message after its ' \
+                    'declaration. Please check the sequence diagram.'
+            end
+            @pending_created = nil
+          elsif @pending_destroyed
+            unless to_id == @pending_destroyed || from_id == @pending_destroyed
+              raise Parser::ParseError,
+                    "The destroyed participant #{@pending_destroyed} does " \
+                    'not have an associated destroying message after its ' \
+                    'declaration. Please check the sequence diagram.'
+            end
+            @pending_destroyed = nil
+          end
         end
 
         def arrow_base(arrow)
@@ -226,7 +296,7 @@ module Sirena
         end
 
         def track_activation(diagram, participant_id, activate)
-          ensure_participant(diagram, participant_id)
+          ensure_participant(diagram, participant_id, track: false)
 
           @activations[participant_id] ||= []
 
@@ -349,7 +419,16 @@ module Sirena
         # unstripped id creates a phantom duplicate participant.
         def actor_id(slice) = slice.to_s.strip
 
-        def ensure_participant(diagram, participant_id)
+        # `track:` is false only from `track_activation`: an `activate`/
+        # `deactivate` reference introduces a participant for RENDERING
+        # (mermaid draws the lifeline either way), but not for mermaid's
+        # own actor bookkeeping — its `activeStart` record adds no actor,
+        # so `register_created`'s duplicate-id check must not see one
+        # either (measured against mermaid 11.16.1: `activate C\ncreate
+        # participant C\nA->>C: m` is accepted there).
+        def ensure_participant(diagram, participant_id, track: true)
+          @known_actor_ids << participant_id if track
+
           return if diagram.find_participant(participant_id)
 
           participant = Diagram::SequenceParticipant.new.tap do |p|

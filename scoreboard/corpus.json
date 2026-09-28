@@ -8749,9 +8749,7 @@
   {
     "case": "sequence/019_rendering_sequencediagram_spec_sequence_18.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/020_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_directive__19.mmd",
@@ -8838,9 +8836,7 @@
   {
     "case": "sequence/026_parser_should_handle_semicolons_25.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/026_spec_diagram-orchestration_spec_25.mmd",
@@ -8865,9 +8861,7 @@
   {
     "case": "sequence/028_spec_diagram_spec_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/029_parser_should_handle_several_leading_spaces_in_lines_in_a_sequencediagram_28.mmd",
@@ -8992,9 +8986,7 @@
   {
     "case": "sequence/041_parser_should_handle_critical_statements_with_options_40.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/042_parser_should_handle_break_statements_41.mmd",
@@ -9058,30 +9050,22 @@
   {
     "case": "sequence/053_parser_should_handle_no-label_alt_52.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/054_parser_should_handle_no-label_par_53.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/055_parser_should_handle_links_54.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/056_parser_should_handle_box_55.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "sequence/057_parser__it_should_handle_one_actor__when_textplacement_is___textplacement__56.mmd",
