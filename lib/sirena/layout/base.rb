@@ -168,11 +168,16 @@ module Sirena
       # true)` or `owner <= Base` -- both misclassify a legacy
       # (#build_graph-only) layout as converted (Kernel monkeypatch /
       # mixin-provided #scene respectively).
+      #
+      # A legacy (#build_graph-only) layout has no #scene at all, so
+      # `method(:scene)` itself raises NameError -- an empty rescue lets
+      # that fall through to nil, which #call's `if converted?` guard
+      # treats the same as false.
       def converted?
         ancestry = self.class.ancestors
         ancestry[0..ancestry.index(Base)].include?(method(:scene).owner)
       rescue NameError
-        false
+        # returns nil, the guard at #call treats it same as false
       end
 
       protected
