@@ -97,11 +97,20 @@ module Sirena
           # A `%%` comment line embedded inside a multi-line round-shape
           # node's own content (e.g. "root(\n  one\n  %% hidden\n  two\n)").
           # Mermaid strips every such line, terminator included, before its
-          # node lexer ever runs -- Source::COMMENT does the same thing for
-          # the diagram's preamble, but is `\A`-anchored (only matches at a
-          # scan position) so it cannot `gsub` a mid-string line; this is
-          # the same shape, `^`-anchored, for that purpose.
-          ROUND_COMMENT_LINE = /^[ \t]*%%(?!\{)[^\r\n]*\r?\n?/
+          # node lexer ever runs, but only when the `%%` starts a REAL
+          # source line -- one already preceded by a newline -- and only
+          # when at least one character follows it; `root(%% keep this)`
+          # is one physical line (the `%%` sits after "root(", not at a
+          # line start) so mermaid renders it literally, and a bare "%%"
+          # with nothing after it is not a comment either. `^` matched at
+          # the start of the extracted content string too, which isn't a
+          # real line start unless something upstream already consumed a
+          # newline to get there; `(?<=\n)` requires an actual newline
+          # immediately before, without consuming it, so the string's own
+          # start is never mistaken for one. Mirrors
+          # Builders::Flowchart.strip_metadata_comments (flowchart.rb),
+          # the same rule for a node's `@{...}` metadata block.
+          ROUND_COMMENT_LINE = /(?<=\n)[ \t]*%%(?!\{)[^\r\n]+\r?\n?/
 
           private
 
@@ -185,8 +194,23 @@ module Sirena
             return "" unless node_data[:content]
 
             content = node_data[:content].to_s
-            content = strip_round_extras(content) if node_data[:shape_round] && !node_data[:round_quoted]
+            if node_data[:shape_round]
+              # Mermaid's comment strip is a textual pre-pass that runs
+              # before quote lexing, so it removes a real comment LINE
+              # (one already starting at a source line boundary) whether
+              # or not that line sits inside quotes -- quoting a node's
+              # content does not protect a line from it. What quoting
+              # does change is the leading-newline normalisation below:
+              # that is specific to an unquoted round shape's own
+              # opening "(\n" convention and does not apply to a quoted
+              # string's own leading newline.
+              content = node_data[:round_quoted] ? strip_round_comments(content) : strip_round_extras(content)
+            end
             content
+          end
+
+          def strip_round_comments(content)
+            content.gsub(ROUND_COMMENT_LINE, "")
           end
 
           def strip_round_extras(content)
@@ -197,7 +221,7 @@ module Sirena
             # nothing else. `\r?` handles a caller that passes CRLF source
             # straight to this parser without going through
             # `Source.normalize` (Engine's real render path always does).
-            content.gsub(ROUND_COMMENT_LINE, "").sub(/\A\r?\n/, "")
+            strip_round_comments(content).sub(/\A\r?\n/, "")
           end
 
           def extract_shape(node_data)
