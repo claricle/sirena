@@ -125,7 +125,7 @@ module Sirena
         today_before_call = @today
         raise LayoutError, 'Invalid diagram' if diagram.nil? || !diagram.valid?
 
-        @theme = theme
+        @theme = theme if theme
         @today = today if today
         return scene(diagram) if converted?
 
@@ -177,8 +177,10 @@ module Sirena
 
       protected
 
-      # The theme #call was given, or nil.
-      attr_reader :theme
+      # #theme (writer + defaulting reader defined above, for D10 text
+      # sizing) is also the theme #call injected. Private from here down
+      # so a converted layout's own #scene can read it without exposing
+      # it on the public interface.
       private :theme
 
       # Measures text dimensions for node sizing.
