@@ -185,8 +185,14 @@ module Sirena
       # Validates the flowchart structure.
       #
       # A flowchart is valid if:
+      # - `nodes` is set (mermaid draws a source with none at all, but an
+      #   explicit `nil` here is a caller bug, not a real diagram)
       # - No box is its own ancestor
-      # - It has at least one node or one subgraph worth drawing
+      # - A flowchart with no nodes is valid only if it also declares no
+      #   subgraph: mermaid draws a bare `graph TD` as an empty canvas, but
+      #   draws a declared-and-empty subgraph (`subgraph s\nend`) as a
+      #   fallback node this model has no way to represent, so that shape
+      #   is refused instead of silently dropped
       # - All nodes are valid
       # - All edges are valid
       # - All subgraphs are valid
@@ -196,7 +202,9 @@ module Sirena
       #
       # @return [Boolean] true if flowchart is valid
       def valid?
-        drawn_nodes = nodes || []
+        return false if nodes.nil?
+
+        drawn_nodes = nodes
         boxes = subgraphs || []
         return false if parent_cycle?(boxes)
         return false unless drawn_nodes.all?(&:valid?)
@@ -210,7 +218,7 @@ module Sirena
         # that gets drawn, because that is what an edge can reach — an
         # empty one is not carried into the layout at all.
         drawn_boxes = boxes.filter_map { |box| box.id if box.drawable? }
-        return false if drawn_nodes.empty? && drawn_boxes.empty?
+        return false if boxes.any? && drawn_nodes.empty? && drawn_boxes.empty?
 
         known = drawn_nodes.map(&:id) + drawn_boxes
         edges&.each do |edge|

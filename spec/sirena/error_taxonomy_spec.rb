@@ -51,9 +51,11 @@ RSpec.describe Sirena::Engine do
     end
 
     it "raises LayoutError, not PipelineError, when a diagram fails its own validity check" do
-      # mmdc renders a bare `graph` header; the flowchart transform refuses
-      # it because the model carries no nodes.
-      expect { engine.render("graph") }
+      # A bare `graph` header is a valid empty flowchart (mmdc renders it
+      # as a blank canvas). A subgraph declared with no members is not:
+      # mmdc draws that as a fallback node this model can't represent, so
+      # the flowchart transform still refuses it.
+      expect { engine.render("flowchart TD\nsubgraph s\nend\n") }
         .to raise_error(Sirena::Layout::LayoutError, "Invalid diagram")
     end
 
