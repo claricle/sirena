@@ -78,12 +78,14 @@ RSpec.describe Sirena::ClaimsManifestCheck do
       end
     end
 
-    it "rejects a row missing a required key" do
-      Dir.mktmpdir do |dir|
-        path = File.join(dir, "manifest.yml")
-        bad = removed_row.except("evidence")
-        File.write(path, manifest_yaml([bad]))
-        expect { described_class.rows(path) }.to raise_error(ArgumentError, /missing evidence/)
+    Sirena::ClaimsManifestCheck::REQUIRED_KEYS.each do |key|
+      it "rejects a row missing the required key #{key.inspect}" do
+        Dir.mktmpdir do |dir|
+          path = File.join(dir, "manifest.yml")
+          bad = removed_row.except(key)
+          File.write(path, manifest_yaml([bad]))
+          expect { described_class.rows(path) }.to raise_error(ArgumentError, /missing #{key}/)
+        end
       end
     end
 
@@ -102,15 +104,6 @@ RSpec.describe Sirena::ClaimsManifestCheck do
         bad = removed_row.merge("claim" => 12_345)
         File.write(path, manifest_yaml([bad]))
         expect { described_class.rows(path) }.to raise_error(ArgumentError, /claim must be string/)
-      end
-    end
-
-    it "rejects a row missing pr" do
-      Dir.mktmpdir do |dir|
-        path = File.join(dir, "manifest.yml")
-        bad = removed_row.except("pr")
-        File.write(path, manifest_yaml([bad]))
-        expect { described_class.rows(path) }.to raise_error(ArgumentError, /missing pr/)
       end
     end
 
@@ -234,31 +227,52 @@ RSpec.describe Sirena::ClaimsManifestCheck do
     # for its constants/helpers would risk killing the RSpec process. Only
     # the `if __FILE__ == $PROGRAM_NAME` guard and tasks/claims_manifest.rake
     # may translate the boolean into an actual exit.
-    it "returns true and prints 'clean', without raising SystemExit, when nothing is wrong" do
+    #
+    # `expect { ... }.to output(...).to_stdout`/`.to_stderr` does NOT prove
+    # this on its own: `exit`/`abort` raise SystemExit, which unwinds straight
+    # through that matcher and out of RSpec's own example runner, killing the
+    # process before the assertion below it is ever checked -- reproduced by
+    # mutating report! to call `exit(0)` on the clean path and watching the
+    # suite silently stop after this example (0 failures) instead of failing
+    # it. Stubbing exit/abort as no-ops and asserting `not_to have_received`
+    # intercepts the call itself before it can actually exit.
+    it "returns true and prints 'clean', without calling exit or abort, when nothing is wrong" do
       git_repo("README.adoc" => "clean\n") do |root|
         write_manifest(root, [removed_row])
+        allow(described_class).to receive(:exit)
+        allow(described_class).to receive(:abort)
         result = nil
         expect { result = described_class.report!(root: root) }.to output(/claims manifest: clean/).to_stdout
+        expect(described_class).not_to have_received(:exit)
+        expect(described_class).not_to have_received(:abort)
         expect(result).to be(true)
       end
     end
 
-    it "returns false, without raising SystemExit, when a removed claim survives" do
+    it "returns false, without calling exit or abort, when a removed claim survives" do
       git_repo("README.adoc" => "we are 16x faster batch processing today\n") do |root|
         write_manifest(root, [removed_row])
+        allow(described_class).to receive(:exit)
+        allow(described_class).to receive(:abort)
         result = nil
         expect { result = described_class.report!(root: root) }
           .to output(/16x faster batch processing/).to_stderr
+        expect(described_class).not_to have_received(:exit)
+        expect(described_class).not_to have_received(:abort)
         expect(result).to be(false)
       end
     end
 
-    it "returns false, without raising SystemExit, when the manifest itself is malformed" do
+    it "returns false, without calling exit or abort, when the manifest itself is malformed" do
       Dir.mktmpdir do |dir|
         FileUtils.mkdir_p(File.join(dir, "docs"))
         File.write(File.join(dir, "docs/claims-manifest.yml"), { "claim" => "x" }.to_yaml)
+        allow(described_class).to receive(:exit)
+        allow(described_class).to receive(:abort)
         result = nil
         expect { result = described_class.report!(root: dir) }.to output(/list of rows/).to_stderr
+        expect(described_class).not_to have_received(:exit)
+        expect(described_class).not_to have_received(:abort)
         expect(result).to be(false)
       end
     end
