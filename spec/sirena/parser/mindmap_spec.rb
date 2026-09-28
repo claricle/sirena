@@ -248,6 +248,39 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("    one\n    two\n  ")
       end
 
+      it "keeps a %% literally when it doesn't start a real source line" do
+        source = "mindmap\n  root(%% keep this)"
+
+        diagram = parser.parse(source)
+        # "%%" here sits right after "root(" on the SAME physical line as
+        # the node itself, not at the start of a line the way a real
+        # embedded comment is -- mermaid only strips a %% comment line that
+        # already begins right after a newline, so this one renders
+        # literally.
+        expect(diagram.root.content).to eq("%% keep this")
+      end
+
+      it "does not treat a bare %% line with nothing after it as a comment" do
+        source = "mindmap\n  root(\n    one\n    %%\n    two\n  )"
+
+        diagram = parser.parse(source)
+        # A comment line needs at least one character after "%%"; a bare
+        # "%%" alone is left in place.
+        expect(diagram.root.content).to eq("    one\n    %%\n    two\n  ")
+      end
+
+      it "strips an embedded %% comment-only line from quoted multi-line round content" do
+        source = "mindmap\n  root(\"\n    %% keep this\n    foo\")"
+
+        diagram = parser.parse(source)
+        # Mermaid's comment strip is a textual pre-pass that runs before
+        # quote lexing, so a real embedded comment LINE is stripped even
+        # inside a quoted round node's content -- only a %% that shares a
+        # physical line with other quoted text (see "preserves comment
+        # syntax inside quoted round content" above) survives.
+        expect(diagram.root.content).to eq("\n    foo")
+      end
+
       it "strips a CRLF-terminated leading newline from multi-line round content" do
         source = "mindmap\r\n  root(\r\n    The root\r\n  )"
 
