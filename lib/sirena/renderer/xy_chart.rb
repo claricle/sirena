@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "base"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/line"

@@ -2,8 +2,16 @@
 
 require "lutaml/model"
 
+# Forward-declares Sirena::Theme so this file loads standalone (it defines
+# Sirena::Theme::* compact-style). Matches the same forward declaration in
+# theme.rb, which is why theme.rb can safely require this file back.
+module Sirena
+  class Theme < Lutaml::Model::Serializable
+  end
+end
+
 # Represents the color palette for diagram theming
-class Sirena::Theme::ColorPalette < Lutaml::Model::Serializable
+class Sirena::Theme::ColorPalette < Lutaml::Model::Serializable # rubocop:disable Style/OneClassPerFile -- matches theme.rb's own forward declaration
   attribute :background, :string
   attribute :surface, :string
   attribute :surface_variant, :string

@@ -1,7 +1,7 @@
 # 09 — Cop inventory
 
 Card step 1's measured inventory. Produced by `Sirena::LintDebt`
-(`lib/sirena/lint_debt.rb`), which re-runs rubocop against a config it
+(`tasks/support/lint_debt.rb`), which re-runs rubocop against a config it
 synthesises itself rather than one loaded from `.rubocop.yml` — so a
 local `Exclude`, a deleted plugin, or a todo file renamed and
 re-inherited under a new name cannot hide a suppressed offence from

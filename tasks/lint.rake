@@ -13,7 +13,7 @@
 
 desc "Print sirena's suppressed rubocop debt as JSON"
 task "lint:debt" do
-  require "sirena/lint_debt"
+  require_relative "support/lint_debt"
   require "json"
 
   root = File.expand_path("..", __dir__)
@@ -26,7 +26,7 @@ end
 
 desc "Write the current debt rows into scoreboard/lint-debt/"
 task "lint:debt:record" do
-  require "sirena/lint_debt"
+  require_relative "support/lint_debt"
   require "sirena/lint_debt_scoreboard"
 
   root = File.expand_path("..", __dir__)
@@ -45,7 +45,7 @@ end
 
 desc "Compare current debt rows to the checked-in scoreboard"
 task "lint:debt:check" do
-  require "sirena/lint_debt"
+  require_relative "support/lint_debt"
   require "sirena/lint_debt_scoreboard"
 
   root = File.expand_path("..", __dir__)
