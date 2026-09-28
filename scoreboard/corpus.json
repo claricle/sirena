@@ -7553,9 +7553,7 @@
   {
     "case": "mindmap/014_rendering_mindmap_spec_mindmap_13.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "mindmap/015_rendering_mindmap_spec_mindmap_14.mmd",
