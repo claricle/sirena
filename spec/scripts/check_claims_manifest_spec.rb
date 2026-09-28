@@ -228,14 +228,10 @@ RSpec.describe Sirena::ClaimsManifestCheck do
     # the `if __FILE__ == $PROGRAM_NAME` guard and tasks/claims_manifest.rake
     # may translate the boolean into an actual exit.
     #
-    # `expect { ... }.to output(...).to_stdout`/`.to_stderr` does NOT prove
-    # this on its own: `exit`/`abort` raise SystemExit, which unwinds straight
-    # through that matcher and out of RSpec's own example runner, killing the
-    # process before the assertion below it is ever checked -- reproduced by
-    # mutating report! to call `exit(0)` on the clean path and watching the
-    # suite silently stop after this example (0 failures) instead of failing
-    # it. Stubbing exit/abort as no-ops and asserting `not_to have_received`
-    # intercepts the call itself before it can actually exit.
+    # `output(...).to_stdout`/`.to_stderr` alone does not prove exit/abort was
+    # never called: SystemExit unwinds straight through that matcher and out
+    # of RSpec's own runner. Stub exit/abort as no-ops and assert
+    # `not_to have_received` instead, so the call is caught before it exits.
     it "returns true and prints 'clean', without calling exit or abort, when nothing is wrong" do
       git_repo("README.adoc" => "clean\n") do |root|
         write_manifest(root, [removed_row])
