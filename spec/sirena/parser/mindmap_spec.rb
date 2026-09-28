@@ -281,6 +281,31 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("\n    foo")
       end
 
+      it "strips a quoted %% comment line even when it contains a literal quote" do
+        source = "mindmap\n  root(\"\n    %% hidden \"\n    foo\")"
+
+        diagram = parser.parse(source)
+        # Mermaid strips the whole comment line in a textual pre-pass BEFORE
+        # it ever looks for the closing quote, so a stray `"` inside the
+        # comment does not end the quoted string early -- matching only
+        # `[^"]` per character let it do exactly that, and the whole
+        # round_shape alternative fell back to plain-text nodes instead of
+        # one node holding "foo".
+        expect(diagram.root.content).to eq("\n    foo")
+      end
+
+      it "recognizes a non-breaking space as comment indentation" do
+        source = "mindmap\n  root(\n %% hidden )\n    foo\n  )"
+
+        diagram = parser.parse(source)
+        # Mermaid's comment-strip regex uses JavaScript's `\s`, which
+        # matches a no-break space; `[ \t]` alone did not, so the comment
+        # line (including its misleading close-paren) was left in place and
+        # the extra ")" it contains broke the node open, raising "Multiple
+        # roots are illegal".
+        expect(diagram.root.content).to eq("    foo\n  ")
+      end
+
       it "strips a CRLF-terminated leading newline from multi-line round content" do
         source = "mindmap\r\n  root(\r\n    The root\r\n  )"
 

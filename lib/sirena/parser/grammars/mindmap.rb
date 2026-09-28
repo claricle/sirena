@@ -145,9 +145,16 @@ module Sirena
         # lexer has a dedicated quoted-content state that strips the quotes
         # and lets a literal ")" through, which the unquoted `[^)]` branch
         # cannot represent.
+        # Mermaid's own comment-strip regex runs `\s` from JavaScript, which
+        # is far wider than ASCII space/tab -- it also matches a no-break
+        # space and the other Unicode space separators below. Mirrors
+        # Builders::Flowchart::JS_SPACE (flowchart.rb), the same character
+        # set for the identical "indentation before %%" problem.
+        COMMENT_INDENT = '\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
+
         rule(:round_comment_line) do
           newline >>
-            match[' \t'].repeat >>
+            match[COMMENT_INDENT].repeat >>
             str("%%") >>
             str("{").absent? >>
             match('[^\r\n]').repeat >>
@@ -158,10 +165,22 @@ module Sirena
           (round_comment_line | match('[^)]')).repeat(1).as(:content)
         end
 
+        # A %% comment line embedded inside quoted round content is matched
+        # the SAME way as the unquoted case above, before the closing quote
+        # is ever searched for. Mermaid strips comment lines in a textual
+        # pre-pass that runs before quote lexing, so a literal `"` sitting
+        # inside what will become a stripped comment line does not end the
+        # quoted string in real mermaid -- matching only `[^"]` per
+        # character let such a `"` end the match early, breaking the whole
+        # round_shape alternative and falling back to plain-text nodes.
+        rule(:round_quoted_content) do
+          (round_comment_line | match('[^"]')).repeat(1).as(:content)
+        end
+
         rule(:round_shape) do
           str("(") >>
             (
-              (str('"') >> match('[^"]').repeat(1).as(:content) >> str('"') >>
+              (str('"') >> round_quoted_content >> str('"') >>
                 str("").as(:round_quoted)) |
               round_unquoted_content
             ) >>
