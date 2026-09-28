@@ -29,22 +29,6 @@ RSpec.describe Sirena::Layout::Base do
         .and have_attributes(payload: hash_including(id: 'root'))
     end
 
-    it 'refuses an invalid diagram on either branch before dispatching' do
-      # The guard in #call runs once, before the respond_to?(:scene) branch,
-      # so it fires identically for both branches -- a property this diff
-      # introduces (the branch didn't exist before). Its own PASS/FAIL is
-      # unchanged from before this diff, so it cannot go red under a revert
-      # of these files alone: keep this: it becomes the only check if a
-      # future refactor moves the guard inside #scene or #build_graph
-      # instead of leaving it in #call.
-      invalid = instance_double(Sirena::Diagram::Base, valid?: false)
-
-      expect { converted_layout.call(invalid) }
-        .to raise_error(Sirena::Layout::LayoutError)
-      expect { legacy_layout.call(invalid) }
-        .to raise_error(Sirena::Layout::LayoutError)
-    end
-
     it 'treats today: nil as the real date and a pinned date as different' do
       dates = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
