@@ -22,8 +22,39 @@ RSpec.describe Sirena::Diagram::Flowchart do
       expect(flowchart.valid?).to be true
     end
 
-    it 'returns false for flowchart without nodes' do
+    # Deliberate: mermaid accepts a bare `graph TD` and renders an empty
+    # canvas, so a flowchart with no nodes and no declared subgraph is
+    # valid here too.
+    it 'returns true for flowchart without nodes' do
       flowchart = described_class.new(direction: 'TD')
+      expect(flowchart.valid?).to be true
+    end
+
+    # Passes before and after this change (the old, unconditional empty
+    # guard already refused this shape) -- keep it: it is the only check
+    # that a future edit to `&& boxes.any?` does not also let a declared,
+    # undrawable subgraph through as a blank canvas.
+    it 'returns false for a flowchart with a subgraph that draws nothing' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(id: 's')
+
+      expect(flowchart.valid?).to be false
+    end
+
+    # Passes before and after this change (`nodes || []` already turned
+    # nil into empty) -- keep it: it is the only check that a future edit
+    # to the `nodes.nil?` guard does not silently accept a nil-nodes
+    # flowchart again.
+    it 'returns false when nodes is explicitly nil' do
+      flowchart = described_class.new(direction: 'TD', nodes: nil)
+      expect(flowchart.valid?).to be false
+    end
+
+    it 'returns false when nodes is nil even with a drawable subgraph tree' do
+      outer = Sirena::Diagram::FlowchartSubgraph.new(id: 'a', child_ids: ['b'])
+      inner = Sirena::Diagram::FlowchartSubgraph.new(id: 'b', parent_id: 'a')
+      flowchart = described_class.new(direction: 'TD', nodes: nil, subgraphs: [outer, inner])
+
       expect(flowchart.valid?).to be false
     end
 

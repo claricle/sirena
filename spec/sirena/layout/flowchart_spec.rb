@@ -155,7 +155,9 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
 
     it 'raises error for invalid diagram' do
-      invalid_diagram = Sirena::Diagram::Flowchart.new
+      # A default Flowchart.new (0 nodes, 0 subgraphs) is a valid empty
+      # diagram now -- nodes: nil is the shape #valid? still refuses.
+      invalid_diagram = Sirena::Diagram::Flowchart.new(nodes: nil)
 
       expect do
         transform.to_graph(invalid_diagram)

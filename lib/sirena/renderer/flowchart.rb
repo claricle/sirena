@@ -486,7 +486,7 @@ module Sirena
       # alone.
       def calculate_width(graph)
         boxes = drawn(graph)
-        return 800 if boxes.empty?
+        return 0 if boxes.empty?
 
         max_x = boxes.map do |node|
           (node[:x] || 0) + (node[:width] || 100)
@@ -497,7 +497,7 @@ module Sirena
 
       def calculate_height(graph)
         boxes = drawn(graph)
-        return 600 if boxes.empty?
+        return 0 if boxes.empty?
 
         max_y = boxes.map do |node|
           (node[:y] || 0) + (node[:height] || 50)

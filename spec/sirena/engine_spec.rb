@@ -179,16 +179,13 @@ RSpec.describe Sirena::Engine do
       end
 
       it 'names the type for a bare keyword, as the grammar does' do
-        # mmdc renders `graph` on its own. Detection wanted a character
-        # after the keyword, so this never reached the parser at all. It
-        # still fails downstream, where an empty flowchart is refused on
-        # main too, but it fails as a flowchart rather than as no type.
-        # The failure is the transform's own validity check, so it now
-        # propagates as LayoutError rather than being collapsed into
-        # PipelineError (see the error-taxonomy fix in engine.rb).
-        expect { engine.render('graph') }.to raise_error(
-          Sirena::Layout::LayoutError
-        )
+        # mmdc renders `graph` on its own as an empty canvas, which the
+        # flowchart model now accepts too -- proven here by rendering
+        # cleanly, unlike the DiagramTypeError cases just above, whose
+        # keyword the flowchart detector never recognises at all.
+        document = REXML::Document.new(engine.render('graph'))
+
+        expect(document.root.name).to eq('svg')
       end
 
       it 'still refuses a keyword glued to a word' do

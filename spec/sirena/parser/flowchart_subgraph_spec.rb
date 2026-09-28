@@ -726,10 +726,10 @@ RSpec.describe Sirena::Parser::Flowchart do
   end
 
   describe "an empty subgraph" do
-    it "parses, though a node-less diagram is refused downstream" do
-      # The parser is happy; `Engine#render` rejects a flowchart with no
-      # nodes, which it also does for a bare `graph TD` on main. That is a
-      # separate gap and not this change's business.
+    it "parses, though rendering it is refused downstream" do
+      # The parser is happy, but `Engine#render` still raises a LayoutError
+      # for an empty subgraph, even though a bare `graph TD` now renders.
+      # That is a separate gap.
       expect(parses?("graph TD\nsubgraph s\nend\n")).to be(true)
     end
 

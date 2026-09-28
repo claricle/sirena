@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'rexml/document'
 
 RSpec.describe 'Flowchart Integration' do
   describe 'complete flowchart pipeline' do
@@ -79,6 +80,63 @@ RSpec.describe 'Flowchart Integration' do
       expect(handlers[:renderer]).to eq(
         Sirena::Renderer::Flowchart
       )
+    end
+  end
+
+  describe 'an empty flowchart' do
+    corpus_dir = File.expand_path('../mermaid/flowchart', __dir__)
+
+    empty_sources = {
+      '147 (declare a class)' =>
+        File.read("#{corpus_dir}/147_parser_should_be_possible_to_declare_a_class_142.mmd"),
+      '148 (declare multiple classes)' =>
+        File.read("#{corpus_dir}/148_parser_should_be_possible_to_declare_multiple_classes_143.mmd"),
+      '149 (declare a class with a dot in the style)' =>
+        File.read("#{corpus_dir}/149_parser_should_be_possible_to_declare_a_class_with_a_dot_in_the_style_144.mmd"),
+      '150 (declare a class with a space in the style)' =>
+        File.read("#{corpus_dir}/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd"),
+      'a bare header' => "graph TD\n",
+      'a header with only a comment' => "flowchart LR\n%% just a comment\n",
+      'class without a matching classDef' => "graph TD\nclass A foo\n"
+    }.freeze
+
+    # `create_document`'s own padding (`Renderer::Base#create_document`, 20
+    # per side) is the only contributor once `calculate_width`/
+    # `calculate_height` return 0 for a graph with nothing drawn -- see
+    # `Renderer::Flowchart`.
+    empty_canvas_attributes = { 'width' => '40.0', 'height' => '40.0', 'viewBox' => '0 0 40 40' }.freeze
+
+    empty_sources.each do |description, source|
+      context "with #{description}" do
+        let(:svg) { Sirena::Engine.new.render(source) }
+        let(:root) { REXML::Document.new(svg).root }
+
+        # One example per property, not one big example: each gets its
+        # own failure rather than the first assertion hiding the rest.
+        empty_canvas_attributes.each do |attribute, expected|
+          it "sets the #{attribute} attribute to #{expected.inspect}" do
+            expect(root.attributes[attribute]).to eq(expected)
+          end
+        end
+
+        it 'is a well-formed svg document' do
+          expect(root.name).to eq('svg')
+        end
+
+        it 'draws no child elements' do
+          expect(root.elements.to_a).to be_empty
+        end
+      end
+    end
+
+    # Passes before and after this change -- keep it: it is the only
+    # end-to-end check that a declared-but-empty subgraph still raises
+    # LayoutError instead of silently rendering mermaid's fallback node,
+    # which this model has no way to draw.
+    it 'still refuses a subgraph declared with no members' do
+      source = "flowchart TD\nsubgraph s\nend\n"
+
+      expect { Sirena::Engine.new.render(source) }.to raise_error(Sirena::Layout::LayoutError)
     end
   end
 end
