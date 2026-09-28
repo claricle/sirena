@@ -113,19 +113,25 @@ module Sirena
       # else. Never override #call: the guard stops running for that type.
       #
       # @param diagram [Diagram::Base] the diagram model to convert
-      # @param theme [Theme::Theme, nil] theme the renderer will use
-      # @param today [Date, nil] reference date; nil keeps the date already
-      #   set by #today= (the real date when none was set)
+      # @param theme [Sirena::Theme, nil] theme the renderer will use
+      # @param today [Date, nil] reference date for THIS call only; nil
+      #   keeps the date already set by #today= (the real date when none
+      #   was set). Passing today: here never outlives this call -- reuse
+      #   the instance for a second #call and it reverts to whatever
+      #   #today= pinned, or the real date if nothing did.
       # @return [Layout::Scene, Layout::Legacy]
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def call(diagram, theme: nil, today: nil)
+        today_before_call = @today
         raise LayoutError, 'Invalid diagram' if diagram.nil? || !diagram.valid?
 
         @theme = theme
         @today = today if today
-        return scene(diagram) if respond_to?(:scene, true)
+        return scene(diagram) if converted?
 
         Legacy.new(build_graph(diagram))
+      ensure
+        @today = today_before_call if today
       end
 
       # The graph a #build_graph layout builds, unwrapped. Kept for the
@@ -152,6 +158,21 @@ module Sirena
       def build_graph(diagram)
         raise NotImplementedError,
               "#{self.class} must implement #build_graph(diagram)"
+      end
+
+      private
+
+      # True only when #scene is defined between this layout's own class
+      # and Layout::Base (inclusive), not merely inherited from
+      # Object/Kernel/BasicObject. Do not simplify to `respond_to?(:scene,
+      # true)` or `owner <= Base` -- both misclassify a legacy
+      # (#build_graph-only) layout as converted (Kernel monkeypatch /
+      # mixin-provided #scene respectively).
+      def converted?
+        ancestry = self.class.ancestors
+        ancestry[0..ancestry.index(Base)].include?(method(:scene).owner)
+      rescue NameError
+        false
       end
 
       protected

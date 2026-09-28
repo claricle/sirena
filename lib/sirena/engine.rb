@@ -377,7 +377,8 @@ module Sirena
 
     # Renders graph to SVG document.
     #
-    # @param graph [Hash] laid-out graph
+    # @param graph [Layout::Scene, Hash] laid-out graph, as #layout_graph
+    #   returns it -- a Scene for a converted layout, a Hash otherwise
     # @param renderer_class [Class] renderer class
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document
