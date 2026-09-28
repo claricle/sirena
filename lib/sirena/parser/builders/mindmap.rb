@@ -109,8 +109,14 @@ module Sirena
           # immediately before, without consuming it, so the string's own
           # start is never mistaken for one. Mirrors
           # Builders::Flowchart.strip_metadata_comments (flowchart.rb),
-          # the same rule for a node's `@{...}` metadata block.
-          ROUND_COMMENT_LINE = /(?<=\n)[ \t]*%%(?!\{)[^\r\n]+\r?\n?/
+          # the same rule for a node's `@{...}` metadata block -- including
+          # its indentation class: mermaid's own comment-strip regex uses
+          # JavaScript's `\s`, wider than ASCII space/tab (e.g. it matches a
+          # no-break space), so `[ \t]` alone left a comment unrecognised
+          # when it was indented with one.
+          ROUND_COMMENT_INDENT = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
+                                 '\u2028\u2029\u202f\u205f\u3000\ufeff]'
+          ROUND_COMMENT_LINE = /(?<=\n)#{ROUND_COMMENT_INDENT}*%%(?!\{)[^\r\n]+\r?\n?/o
 
           private
 
