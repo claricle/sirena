@@ -1,17 +1,10 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
-
-# Forward-declares Sirena::Theme so this file loads standalone (it defines
-# Sirena::Theme::* compact-style). Matches the same forward declaration in
-# theme.rb, which is why theme.rb can safely require this file back.
-module Sirena
-  class Theme < Lutaml::Model::Serializable
-  end
-end
+require_relative "base"
 
 # Represents shape styling settings for diagram theming
-class Sirena::Theme::ShapeStyles < Lutaml::Model::Serializable # rubocop:disable Style/OneClassPerFile -- matches theme.rb's own forward declaration
+class Sirena::Theme::ShapeStyles < Lutaml::Model::Serializable
   attribute :stroke_width, :float
   attribute :stroke_width_thick, :float
   attribute :stroke_width_thin, :float
