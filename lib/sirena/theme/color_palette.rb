@@ -4,7 +4,7 @@ require "lutaml/model"
 require_relative "base"
 
 # Represents the color palette for diagram theming
-class Sirena::Theme::ColorPalette < Lutaml::Model::Serializable
+class Sirena::Theme::ColorPalette < Sirena::Theme::Base
   attribute :background, :string
   attribute :surface, :string
   attribute :surface_variant, :string

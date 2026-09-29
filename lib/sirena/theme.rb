@@ -1,22 +1,25 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
-require_relative "theme/base"
 
-# Now load sub-models after Theme class is defined
-require_relative "theme/color_palette"
-require_relative "theme/typography"
-require_relative "theme/shape_styles"
-require_relative "theme/spacing_config"
-require_relative "theme/effect_styles"
-
-# theme/base.rb's forward declaration is load-bearing: it defines `Theme`
-# before the sub-models above are required, since every sub-model is written
-# compact-style (`class Sirena::Theme::Typography`) and needs `Sirena::Theme`
-# to already exist. This file reopens `Theme` (rather than defining it once)
-# to add its real attributes.
 module Sirena
-  class Theme
+  # Theme's real attributes are defined once, here. The requires below sit
+  # inside this class body rather than above it: Ruby binds the `Theme`
+  # constant before running the body, so by the time they execute,
+  # Sirena::Theme already exists for theme/base.rb and the five sub-model
+  # files (each written compact-style, e.g. `class
+  # Sirena::Theme::Typography`) to be defined under. theme/base.rb also
+  # reopens Theme (restating its superclass, adding no attributes) so a
+  # sub-model file required standalone still finds Theme correctly typed --
+  # see the comment there.
+  class Theme < Lutaml::Model::Serializable
+    require_relative "theme/base"
+    require_relative "theme/color_palette"
+    require_relative "theme/typography"
+    require_relative "theme/shape_styles"
+    require_relative "theme/spacing_config"
+    require_relative "theme/effect_styles"
+
     attribute :name, :string
     attribute :description, :string
     attribute :colors, ColorPalette

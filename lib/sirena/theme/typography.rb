@@ -4,7 +4,7 @@ require "lutaml/model"
 require_relative "base"
 
 # Represents typography settings for diagram theming
-class Sirena::Theme::Typography < Lutaml::Model::Serializable
+class Sirena::Theme::Typography < Sirena::Theme::Base
   attribute :font_family, :string
   attribute :font_family_monospace, :string
   attribute :font_size_small, :float
