@@ -1,10 +1,30 @@
 # frozen_string_literal: true
 
 require 'parslet'
+require_relative '../atoms/greedy_run'
+require_relative '../atoms/trimmed_run'
+require_relative '../atoms/delimited_run'
 
 module Sirena
   module Parser
     module Grammars
+      # Defined directly in this module, not in a class body, so any
+      # grammar class LEXICALLY NESTED inside `Grammars` resolves the
+      # bare constant `GreedyRun` here regardless of that class's own
+      # ancestry or which sibling grammar file loads first -- Ruby
+      # constant lookup checks the enclosing lexical scopes
+      # (`Module.nesting`) before it ever checks superclasses.
+      GreedyRun = Sirena::Parser::Atoms::GreedyRun
+      private_constant :GreedyRun
+
+      # Same reasoning as `GreedyRun` above.
+      TrimmedRun = Sirena::Parser::Atoms::TrimmedRun
+      private_constant :TrimmedRun
+
+      # Same reasoning as `GreedyRun` above.
+      DelimitedRun = Sirena::Parser::Atoms::DelimitedRun
+      private_constant :DelimitedRun
+
       # Common grammar rules for Mermaid diagrams.
       #
       # Provides shared parsing patterns used across all diagram types,
