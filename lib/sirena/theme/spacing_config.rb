@@ -4,7 +4,7 @@ require "lutaml/model"
 require_relative "base"
 
 # Represents spacing configuration for diagram theming
-class Sirena::Theme::SpacingConfig < Lutaml::Model::Serializable
+class Sirena::Theme::SpacingConfig < Sirena::Theme::Base
   attribute :node_padding_x, :float
   attribute :node_padding_y, :float
   attribute :node_margin, :float
