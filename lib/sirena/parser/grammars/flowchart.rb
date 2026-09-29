@@ -403,7 +403,7 @@ module Sirena
           str('style').as(:style_keyword) >> space >>
             reserved_keyword.absent? >> node_id.as(:style_target) >>
             (space >> style_property_list).as(:style_props) >>
-            statement_end
+            statement_end.as(:style_end)
         end
 
         # What a `;` does inside a declaration turns on the value, not on
@@ -531,7 +531,7 @@ module Sirena
           str('classDef').as(:classdef_keyword) >> space >>
             class_name_list.as(:class_name) >>
             (space >> style_property_list).as(:class_props) >>
-            statement_end
+            statement_end.as(:class_end)
         end
 
         # `classDef a,b props` styles both classes.

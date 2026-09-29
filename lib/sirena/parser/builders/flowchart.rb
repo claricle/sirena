@@ -5,6 +5,7 @@ require_relative '../base'
 require_relative '../../diagram/flowchart'
 require_relative '../metadata_yaml'
 require_relative '../mermaid_shapes'
+require_relative '../flowchart_style_text'
 require_relative '../../diagram/containment'
 
 module Sirena
@@ -156,14 +157,9 @@ module Sirena
           body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, '<br/>') }
         end
 
-        # mermaid's lexer runs `/\n\s*/g` over the text between the quotes,
-        # and that `\s` is JavaScript's. Ruby's is the five ASCII ones, so
-        # a no-break space after the newline stayed in the label and mmdc
-        # dropped it. The set below is JavaScript's exactly: it takes the
-        # line and paragraph separators and the byte-order mark, and it
-        # leaves the next-line character and the zero-width space alone.
-        JS_SPACE = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
-                   '\u2028\u2029\u202f\u205f\u3000\ufeff]'
+        # JavaScript's `\s` (Ruby's is only the five ASCII ones); see
+        # `FlowchartStyleText::JS_SPACE` for what the set contains and why.
+        JS_SPACE = FlowchartStyleText::JS_SPACE
 
         QUOTED_BREAK = /\n#{JS_SPACE}*/
 
@@ -422,13 +418,15 @@ module Sirena
             elsif stmt[:direction_keyword]
               set_direction(parents.last, stmt[:dir_value], context)
             elsif stmt[:style_keyword]
+              check_style_text('style', "#{stmt[:style_props]}#{stmt[:style_end]}")
               declare_styled_node(diagram, stmt[:style_target], context)
+            elsif stmt[:classdef_keyword]
+              check_style_text('classDef', "#{stmt[:class_props]}#{stmt[:class_end]}")
             elsif stmt[:link_style_keyword]
               check_link_indices(diagram, stmt[:link_targets].to_s)
               check_link_words(stmt)
             end
-            # classDef, class, click and linkStyle are parsed but not
-            # modelled.
+            # class and click are parsed but not modelled; classDef is checked above, its class definitions are not.
           end
         end
 
@@ -455,16 +453,7 @@ module Sirena
         # plain text.
         LINK_STYLE_KEYWORD = /(?:\A|(?<=[,:;]|#{JS_SPACE}))(?:#|[0-9]+)?(interpolate|default)(?![A-Za-z0-9_])/
 
-        # mermaid rewrites `#name;` as an entity before it parses, except
-        # the last `;` of a lowercase `style ...:#...;` run, then the last
-        # `;` of a `classDef ...:#...;` run applied the same way right
-        # after. `linkStyle` is neither lowercase nor `classDef`, so
-        # `linkStyle 0 stroke:#f00;` holds an entity no style can take.
-        STYLE_RUN = /style.*:(?:(?!#{JS_SPACE}).)*#.*;/
-        CLASS_DEF_RUN = /classDef.*:(?:(?!#{JS_SPACE}).)*#.*;/
-        ENTITY = /#\w+;/
-
-        private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN, :ENTITY
+        private_constant :LINK_STYLE_KEYWORD
 
         def self.check_link_words(stmt)
           [stmt[:link_curve], stmt[:link_props]].each do |text|
@@ -479,17 +468,27 @@ module Sirena
           # ends the statement is part of an entity too.
           text = [stmt[:link_curve], stmt[:link_props]].compact.join(' ')
           check_link_entities("#{text}#{stmt[:link_end]}")
+          check_style_text('linkStyle', stmt[:link_props].to_s, curve: stmt[:link_curve])
         end
         private_class_method :check_link_words
 
         def self.check_link_entities(text)
-          entity = text.sub(STYLE_RUN, &:chop).sub(CLASS_DEF_RUN, &:chop)[ENTITY] or return
+          entity = FlowchartStyleText.entity(text) or return
 
           raise Parser::ParseError,
                 "linkStyle reads `#{entity}` as an HTML entity; " \
                 'drop the `;` after the colour.'
         end
         private_class_method :check_link_entities
+
+        def self.check_style_text(keyword, props, curve: nil)
+          matched, token = FlowchartStyleText.refusal(keyword, props, curve: curve)
+          return unless token
+
+          reason = FlowchartStyleText.unlexable?(token) ? "mermaid's lexer cannot read it" : "mermaid reads it as #{token}"
+          raise Parser::ParseError, "#{keyword} cannot use `#{matched.strip}` in its styles: #{reason}."
+        end
+        private_class_method :check_style_text
 
         # `style Q ...` names a vertex, and mermaid draws it even when no
         # other statement mentions it, unless an earlier edge carries that
