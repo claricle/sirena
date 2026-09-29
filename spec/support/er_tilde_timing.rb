@@ -15,12 +15,12 @@ module ErTildeTiming
   MAX_LINEAR_SCALING_RATIO = 30
 
   # A single small-input parse can be a few CPU milliseconds -- on
-  # windows-latest CI, Process.clock_gettime(:CLOCK_PROCESS_CPUTIME_ID)
-  # comes from GetProcessTimes, which only advances on a ~15.6ms scheduler
-  # tick, so one call often reads exactly 0.0 and turns the scaling ratio
-  # into Infinity or NaN. Repeating the parse until the ACCUMULATED time
-  # clears this floor, then averaging, keeps every sample a real
-  # multi-tick measurement regardless of how fast a single call is.
+  # windows-latest CI, Process.times comes from GetProcessTimes, which
+  # only advances on a ~15.6ms scheduler tick, so one call often reads
+  # exactly 0.0 and turns the scaling ratio into Infinity or NaN.
+  # Repeating the parse until the ACCUMULATED time clears this floor,
+  # then averaging, keeps every sample a real multi-tick measurement
+  # regardless of how fast a single call is.
   MIN_SAMPLE_SECONDS = 0.05
 
   # A pathological per-call timer (stuck at exactly 0.0 forever) would
@@ -144,10 +144,13 @@ module ErTildeTiming
 
   private
 
+  # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
+  # for clock_gettime and raises Errno::EINVAL.
   def cpu_time
-    start = Process.clock_gettime(:CLOCK_PROCESS_CPUTIME_ID)
+    start = Process.times
     yield
-    Process.clock_gettime(:CLOCK_PROCESS_CPUTIME_ID) - start
+    finish = Process.times
+    (finish.utime + finish.stime) - (start.utime + start.stime)
   end
 
   # Repeats `block` (a `time_*` method above: it both asserts correctness
