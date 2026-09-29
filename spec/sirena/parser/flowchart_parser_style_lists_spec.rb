@@ -98,6 +98,30 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
   end
 
+  describe "a long run of spaces inside a declaration value" do
+    {
+      "style" => "style A fill:red#{' ' * 4_000}-a",
+      "classDef" => "classDef x fill:red#{' ' * 4_000}-a",
+      "linkStyle" => "linkStyle 0 stroke:red#{' ' * 4_000}-a"
+    }.each do |what, declaration|
+      it "parses a #{what} value's space run within a fixed bound" do
+        source = "graph TD\nA-->B\n#{declaration}\n"
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        expect { node_ids.call(source) }.not_to raise_error
+        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+          .to be < 2
+      end
+    end
+
+    it "still swallows the `;` after a space run then an ordinary run before `#`" do
+      source = "graph TD\nA\nstyle A fill:#{' ' * 4_000}#{'x' * 4_000}#f9f;B\n"
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      expect(node_ids.call(source)).to eq(%w[A])
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
+        .to be < 2
+    end
+  end
+
   describe "the flowchart corpus cases behind the comma bucket" do
     Dir[File.join(__dir__, "../../mermaid/flowchart/*.mmd")].select do |f|
       File.basename(f).match?(/\A(01[1-9]|020|141|142|145)_/)

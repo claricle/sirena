@@ -81,9 +81,9 @@ module Sirena
       # `"LINE_END"` where parslet writes `LINE_END`.
       #
       # A lookahead failure is the third case, and it is reachable: for
-      # "graph TD\nstyle A " parslet builds an Entity part and the message
-      # reads `Input should not start with LINE_END`. Quoting it would have
-      # printed the symbol as a string literal.
+      # "graph TD\nstyle A fill:#f9f,,g" parslet builds an Entity part and
+      # the message reads `Input should not start with HASHED_COMMA_GAP`.
+      # Quoting it would have printed the symbol as a string literal.
       #
       # @param part [String, Parslet::Slice, Object] one piece of a message
       # @return [String] the piece as parslet would render it

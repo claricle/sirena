@@ -426,14 +426,12 @@ module Sirena
         rule(:empty_comma_item) do
           comma |
             hash_char.maybe >>
-            (space >> hash_char | hash_char.absent? >> comma_gap.absent? >>
-              declaration_char).repeat >>
-              (comma_gap | hash_char >> hashed_comma_gap_scan)
+            hash_terminated_run(comma_gap).repeat >>
+            (comma_gap | hash_char >> hashed_comma_gap_scan)
         end
 
         rule(:hashed_comma_gap_scan) do
-          (hashed_comma_gap.absent? >> declaration_char).repeat >>
-            hashed_comma_gap
+          declaration_run(hashed_comma_gap).repeat >> hashed_comma_gap
         end
 
         rule(:comma_gap) do
@@ -447,7 +445,7 @@ module Sirena
         # `fill:#f9f;B;C` and `fill:#f9f;;B`, so the tail has to end at the
         # line rather than hand a second `;` back as a separator.
         rule(:hashed_property_list) do
-          hashed_head >> declaration_char.repeat >>
+          hashed_head >> declaration_run.repeat >>
             (semicolon >> space? >> hashed_tail | semicolon.absent?)
         end
 
@@ -456,8 +454,7 @@ module Sirena
         # node, because the `;` comes first.
         # A `#` after a space, as in `stroke: #fff`, is ordinary text.
         rule(:hashed_head) do
-          hash_char.maybe >>
-            (space >> hash_char | hash_char.absent? >> declaration_char).repeat >> hash_char
+          hash_char.maybe >> hash_terminated_run.repeat >> hash_char
         end
 
         # What may follow that one `;` is a style component, not a node and
@@ -465,7 +462,7 @@ module Sirena
         # `line_end` ends and nowhere else: a `%%` here is ordinary
         # declaration text.
         rule(:hashed_tail) do
-          (structural_token.absent? >> declaration_char).repeat >>
+          declaration_run(structural_token).repeat >>
             space? >> (newline | eof).present?
         end
 
@@ -484,9 +481,34 @@ module Sirena
         # character is fine in both places.
         rule(:structural_char) { match['\\[\\]{}()<>|~@=^'] }
 
-        rule(:declaration_char) do
-          line_end.absent? >> semicolon.absent? >> any
+        # A run of declaration text, or of interior spaces, matched whole
+        # rather than one character at a time: checking `line_end` (hence
+        # the unbounded `space?` inside it) at every character re-scans to
+        # the end of a space run from every offset inside it — quadratic in
+        # the run's length. A space run costs one pass here instead, kept
+        # or dropped exactly as `line_end.absent?` did: followed by more
+        # content it is ordinary text, running straight to `;`/newline/eof
+        # it is not. `extra_guards` exclude characters a caller treats as
+        # its own boundary, on top of `;` and a line's end.
+        def declaration_run(*extra_guards)
+          ordinary_char = (extra_guards + [semicolon, newline, space])
+            .map(&:absent?).reduce(:>>) >> any
+          ordinary_char.repeat(1) | (space.repeat(1) >> (newline | eof).absent?)
         end
+        private :declaration_run
+
+        # Same shape as `declaration_run`, but a run also stops at a bare
+        # `#`: a space immediately before one, as in `stroke: #fff`, is
+        # ordinary text, so both are swallowed together — otherwise the `#`
+        # would be mistaken for the marker `hashed_head`/`empty_comma_item`
+        # scan for.
+        def hash_terminated_run(*extra_guards)
+          ordinary_char = (extra_guards + [hash_char, semicolon, newline, space])
+            .map(&:absent?).reduce(:>>) >> any
+          ordinary_char.repeat(1) |
+            (space.repeat(1) >> (hash_char | (newline | eof).absent?))
+        end
+        private :hash_terminated_run
 
         # Permissive: mermaid takes `style A red`, `style A fill:` and
         # `style A fill :red`, so `name:value` is not required. One
@@ -497,7 +519,7 @@ module Sirena
         # `style A fill:red;stroke:blue` as a style plus a node called
         # `stroke:blue`; a node id here takes no colon, so we refuse the
         # line rather than draw a diagram one node short.
-        rule(:style_property) { declaration_char.repeat(1) }
+        rule(:style_property) { declaration_run.repeat(1) }
 
         # `linkStyle 0,1 stroke:red` styles edges by position, and
         # `linkStyle default ...` every one. Mermaid takes the numbers with
