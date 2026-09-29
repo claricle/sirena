@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "cpu_timing"
+
 # Times an er_diagram tilde-type or note parse for a given input size,
 # asserting the parsed result is correct so a broken/empty parse can't pass
 # on speed alone. Returns the MINIMUM elapsed time over several attempts,
@@ -8,28 +10,16 @@
 # grammar or false-greening a reverted one. See the gate record for the
 # measurements that picked these.
 module ErTildeTiming
+  include CpuTiming
+
   # How much slower a 16x-larger run is allowed to parse. Sits with
   # headroom above the O(n) grammar's measured ratio and well below the
   # O(n^2) grammar's -- see the gate record for the raw numbers this was
   # picked from.
   MAX_LINEAR_SCALING_RATIO = 30
 
-  # A single small-input parse can be a few CPU milliseconds -- on
-  # windows-latest CI, Process.times comes from GetProcessTimes, which
-  # only advances on a ~15.6ms scheduler tick, so one call often reads
-  # exactly 0.0 and turns the scaling ratio into Infinity or NaN.
-  # Repeating the parse until the ACCUMULATED time clears this floor,
-  # then averaging, keeps every sample a real multi-tick measurement
-  # regardless of how fast a single call is.
-  MIN_SAMPLE_SECONDS = 0.05
-
-  # A pathological per-call timer (stuck at exactly 0.0 forever) would
-  # otherwise loop without bound; this caps it into a clear failure
-  # instead of a hung suite.
-  MAX_SAMPLE_ITERATIONS = 20_000
-
   def min_tilde_parse_time(char_count, attempts: 3, position: :prefix)
-    Array.new(attempts) { average_call_time { time_tilde_parse(char_count, position: position) } }.min
+    min_call_time(attempts: attempts) { time_tilde_parse(char_count, position: position) }
   end
 
   # Ratio of parse time at `large` chars over parse time at `small`
@@ -78,7 +68,7 @@ module ErTildeTiming
   end
 
   def min_tilde_pair_parse_time(pair_count, attempts: 3)
-    Array.new(attempts) { average_call_time { time_tilde_pair_parse(pair_count) } }.min
+    min_call_time(attempts: attempts) { time_tilde_pair_parse(pair_count) }
   end
 
   def time_tilde_pair_parse(pair_count)
@@ -111,7 +101,7 @@ module ErTildeTiming
   end
 
   def min_note_parse_time(char_count, attempts: 3)
-    Array.new(attempts) { average_call_time { time_note_parse(char_count) } }.min
+    min_call_time(attempts: attempts) { time_note_parse(char_count) }
   end
 
   def time_note_parse(char_count)
@@ -126,13 +116,6 @@ module ErTildeTiming
     elapsed
   end
 
-  # Minimum CPU time over `attempts` calls of an arbitrary block (not
-  # tied to a specific `time_*` shape above) -- used for scaling specs
-  # that time a whole `parser.parse` call directly.
-  def min_call_time(attempts: 3, &block)
-    Array.new(attempts) { average_call_time(&block) }.min
-  end
-
   # A full ER diagram with `count` attributes, each with its own short
   # tilde-quoted type -- stresses `tilde_prefix`/`tilde_suffix` called
   # once PER ATTRIBUTE, the shape a fixed-size chunk regresses on (many
@@ -140,34 +123,5 @@ module ErTildeTiming
   def many_tilde_attributes(count)
     attrs = Array.new(count) { |i| "    ~t#{i}~ attr#{i}" }.join("\n")
     "erDiagram\n  ENTITY {\n#{attrs}\n  }\n"
-  end
-
-  private
-
-  # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
-  # for clock_gettime and raises Errno::EINVAL.
-  def cpu_time
-    start = Process.times
-    yield
-    finish = Process.times
-    (finish.utime + finish.stime) - (start.utime + start.stime)
-  end
-
-  # Repeats `block` (a `time_*` method above: it both asserts correctness
-  # and returns one call's elapsed CPU time) until the SUM clears
-  # MIN_SAMPLE_SECONDS, then returns the average -- see the constant's
-  # comment for why a single call's reading can't be trusted directly.
-  def average_call_time
-    total = 0.0
-    calls = 0
-    while total < MIN_SAMPLE_SECONDS
-      total += yield
-      calls += 1
-      if calls >= MAX_SAMPLE_ITERATIONS
-        raise "timing sample never reached the #{MIN_SAMPLE_SECONDS}s floor " \
-              "after #{MAX_SAMPLE_ITERATIONS} calls"
-      end
-    end
-    total / calls
   end
 end

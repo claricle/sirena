@@ -34,7 +34,7 @@ module Sirena
           super()
           @char_class = char_class
           @min = min
-          @anchored = Regexp.new("\\A(?:#{char_class})*", Regexp::MULTILINE)
+          @anchored = self.class.anchored(char_class)
         end
 
         def try(source, context, _consume_all)
@@ -46,6 +46,12 @@ module Sirena
           end
 
           succ(Parslet::Slice.new(start_slice.position, matched, start_slice.line_cache))
+        end
+
+        # The `\A(?:class)*` regexp that `scan` expects, for a Parslet-style
+        # character class string such as `'[^~\n]'`.
+        def self.anchored(char_class)
+          Regexp.new("\\A(?:#{char_class})*", Regexp::MULTILINE)
         end
 
         # Scans `anchored` (an `\A(?:...)* ` regex) against `source` from

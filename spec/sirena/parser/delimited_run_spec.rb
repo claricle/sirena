@@ -8,34 +8,11 @@ module DelimitedRunSpecHelpers
   def build_input(segment_count)
     "~#{Array.new(segment_count) { |i| "s#{i}" }.join('~')}~"
   end
-
-  def min_call_time(attempts: 3, &block)
-    Array.new(attempts) { average_call_time { cpu_time(&block) } }.min
-  end
-
-  def average_call_time
-    total = 0.0
-    calls = 0
-    while total < 0.05
-      total += yield
-      calls += 1
-      break if calls >= 2_000
-    end
-    total / calls
-  end
-
-  # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
-  # for clock_gettime and raises Errno::EINVAL.
-  def cpu_time
-    start = Process.times
-    yield
-    finish = Process.times
-    (finish.utime + finish.stime) - (start.utime + start.stime)
-  end
 end
 
 RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
   include DelimitedRunSpecHelpers
+  include CpuTiming
 
   let(:atom) { described_class.new('~', '[^~\n]') }
 
@@ -98,11 +75,11 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
     # produced -- measured at 1.8-8.9s per call before this fix, versus
     # under 0.05s after. An absolute bound would be too tight on a loaded
     # CI box; the scaling RATIO between a small and 8x-larger segment
-    # count survives that (see spec/support/er_tilde_timing.rb's own
-    # comment for the same reasoning applied to a sibling grammar rule).
+    # count survives that (see spec/support/cpu_timing.rb's header
+    # comment).
     it 'scales linearly with the number of segments, not their square' do
-      small_time = min_call_time { atom.parse(build_input(500), prefix: true) }
-      large_time = min_call_time { atom.parse(build_input(4_000), prefix: true) }
+      small_time = min_call_time { cpu_time { atom.parse(build_input(500), prefix: true) } }
+      large_time = min_call_time { cpu_time { atom.parse(build_input(4_000), prefix: true) } }
 
       expect(large_time / small_time).to be < 30
     end
