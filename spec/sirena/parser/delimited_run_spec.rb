@@ -24,10 +24,13 @@ module DelimitedRunSpecHelpers
     total / calls
   end
 
+  # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
+  # for clock_gettime and raises Errno::EINVAL.
   def cpu_time
-    start = Process.clock_gettime(:CLOCK_PROCESS_CPUTIME_ID)
+    start = Process.times
     yield
-    Process.clock_gettime(:CLOCK_PROCESS_CPUTIME_ID) - start
+    finish = Process.times
+    (finish.utime + finish.stime) - (start.utime + start.stime)
   end
 end
 
