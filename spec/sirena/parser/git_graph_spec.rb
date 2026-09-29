@@ -5,30 +5,6 @@ require "open3"
 require "sirena/parser/git_graph"
 
 module GitGraphScalingHelpers
-  def min_call_time(attempts: 3, &block)
-    Array.new(attempts) { average_call_time(&block) }.min
-  end
-
-  def average_call_time
-    total = 0.0
-    calls = 0
-    while total < 0.05
-      total += yield
-      calls += 1
-      break if calls >= 20_000
-    end
-    total / calls
-  end
-
-  # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
-  # for clock_gettime and raises Errno::EINVAL.
-  def cpu_time
-    start = Process.times
-    yield
-    finish = Process.times
-    (finish.utime + finish.stime) - (start.utime + start.stime)
-  end
-
   # A full gitGraph diagram with `count` sequential branches, each with
   # its own short name -- stresses `TrimmedRun`/`GreedyRun` called once
   # PER BRANCH, the shape a fixed-size chunk regresses on (many short
@@ -41,6 +17,7 @@ end
 
 RSpec.describe Sirena::Parser::GitGraph do
   include GitGraphScalingHelpers
+  include CpuTiming
 
   let(:parser) { described_class.new }
 
@@ -227,7 +204,7 @@ RSpec.describe Sirena::Parser::GitGraph do
       # still paid a ~50_000-char consume + rewind per statement --
       # linear in the chunk size per branch, not in the name's own
       # length. Scaling ratio, not an absolute bound, for the same
-      # reason as spec/support/er_tilde_timing.rb.
+      # reason as spec/support/cpu_timing.rb.
       it "parses many branches with short names at a linear rate, not one per fixed chunk" do
         small_time = min_call_time { cpu_time { parser.parse(many_branches_source(500)) } }
         large_time = min_call_time { cpu_time { parser.parse(many_branches_source(4_000)) } }

@@ -19,7 +19,7 @@ module Sirena
           raise ArgumentError, "delimiter must be one character, got #{delimiter.inspect}" if delimiter.length != 1
 
           @delimiter = delimiter
-          @segment_re = Regexp.new("\\A(?:#{segment_class})*", Regexp::MULTILINE)
+          @segment_re = GreedyRun.anchored(segment_class)
         end
 
         def try(source, context, _consume_all)
