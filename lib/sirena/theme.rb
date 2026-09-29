@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
-
-module Sirena
-  # Represents a complete visual theme for diagram rendering
-  class Theme < Lutaml::Model::Serializable
-  end
-end
+require_relative "theme/base"
 
 # Now load sub-models after Theme class is defined
 require_relative "theme/color_palette"
@@ -15,11 +10,12 @@ require_relative "theme/shape_styles"
 require_relative "theme/spacing_config"
 require_relative "theme/effect_styles"
 
-# The forward declaration above is load-bearing, so this file opens `Sirena`
-# twice on purpose. Every sub-model is written compact-style
-# (`class Sirena::Theme::Typography`), so `Sirena::Theme` has to exist before
-# those files are required.
-module Sirena # rubocop:disable Style/OneClassPerFile
+# theme/base.rb's forward declaration is load-bearing: it defines `Theme`
+# before the sub-models above are required, since every sub-model is written
+# compact-style (`class Sirena::Theme::Typography`) and needs `Sirena::Theme`
+# to already exist. This file reopens `Theme` (rather than defining it once)
+# to add its real attributes.
+module Sirena
   class Theme
     attribute :name, :string
     attribute :description, :string
