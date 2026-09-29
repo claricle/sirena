@@ -86,6 +86,35 @@ module Sirena
         end
       end
 
+      # Creates an SVG document sized from `layout[:width]`/`layout[:height]`.
+      # Keep it single-argument (released arity); for padding, override it
+      # and call {#build_document_from_layout} instead of `super`.
+      #
+      # @param layout [Hash] laid-out diagram data with :width and :height
+      # @return [Svg::Document] new SVG document
+      def create_document_from_layout(layout)
+        build_document_from_layout(layout, padding: 0)
+      end
+
+      # Padded form of {#create_document_from_layout}, for subclass overrides.
+      #
+      # @param layout [Hash] laid-out diagram data with :width and :height
+      # @param padding [Numeric] added to each side of width/height; also
+      #   sets @offset_x/@offset_y to this value when positive
+      # @return [Svg::Document] new SVG document
+      def build_document_from_layout(layout, padding:)
+        Svg::Document.new.tap do |doc|
+          doc.width = layout[:width] + (padding * 2)
+          doc.height = layout[:height] + (padding * 2)
+          doc.view_box = "0 0 #{doc.width} #{doc.height}"
+
+          if padding.positive?
+            @offset_x = padding
+            @offset_y = padding
+          end
+        end
+      end
+
       # Calculates the total width needed for the diagram.
       #
       # Subclasses should override this to compute width from graph.

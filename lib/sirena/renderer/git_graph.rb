@@ -41,22 +41,14 @@ module Sirena
 
       protected
 
-      # Creates an SVG document with dimensions from layout.
+      # Creates an SVG document with 40px of padding on every side, so an
+      # external override of this method (a protected extension point since
+      # the 0.1.0 release) keeps working with one argument.
       #
       # @param layout [Hash] layout data
       # @return [Svg::Document] new SVG document
       def create_document_from_layout(layout)
-        padding = 40
-
-        Svg::Document.new.tap do |doc|
-          doc.width = layout[:width] + (padding * 2)
-          doc.height = layout[:height] + (padding * 2)
-          doc.view_box = "0 0 #{doc.width} #{doc.height}"
-
-          # Add a group with padding offset
-          @offset_x = padding
-          @offset_y = padding
-        end
+        build_document_from_layout(layout, padding: 40)
       end
 
       # Renders all connections between commits.
