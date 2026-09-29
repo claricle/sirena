@@ -54,18 +54,6 @@ module Sirena
 
       protected
 
-      # Creates an SVG document with dimensions from layout.
-      #
-      # @param layout [Hash] layout data
-      # @return [Svg::Document] new SVG document
-      def create_document_from_layout(layout)
-        Svg::Document.new.tap do |doc|
-          doc.width = layout[:width]
-          doc.height = layout[:height]
-          doc.view_box = "0 0 #{doc.width} #{doc.height}"
-        end
-      end
-
       # Determines if legend should be shown.
       #
       # @param layout [Hash] layout data
