@@ -41,29 +41,7 @@ module Sirena
       # @param source [String] the source that failed to parse
       # @return [String] formatted error message
       def format_parse_error(cause, source)
-        lines = source.lines("\n")
-        line_num, col_num = failure_position(cause, source)
-
-        context = []
-        context << "Parse error at line #{line_num}, column #{col_num}:"
-
-        # A failure at EOF sits one line past the source, so there is no line
-        # to quote. Say so and still draw the caret rather than emitting a
-        # heading with nothing under it.
-        context << if line_num.positive? && line_num <= lines.length
-                     lines[line_num - 1].chomp("\n")
-                   else
-                     '(end of input)'
-                   end
-        context << caret_for(lines[line_num - 1], col_num)
-
-        # Not cause.to_s: it appends parslet's own byte-counted position,
-        # which contradicts the character column in the heading above on any
-        # line holding a multibyte character.
-        context << failure_message(cause)
-        context.join("\n")
-      rescue StandardError
-        fallback_message(cause)
+        format_parse_error_guarded(cause, source)
       end
     end
   end

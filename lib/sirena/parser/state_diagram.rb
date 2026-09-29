@@ -32,32 +32,8 @@ module Sirena
 
       private
 
-      # Formats a Parslet parse error with context.
-      #
-      # No rescue around this, unlike flowchart's copy. `Cause#pos` is a
-      # `Parslet::Position` at every one of parslet 3.0.0's construction
-      # sites, which is what `failure_position` reads; the shape the old
-      # hand-rolled formatter here assumed — the Fixnum the gem's own
-      # docstring still promises — does not occur, and every failure this
-      # grammar can produce was run through this method to confirm it.
-      #
-      # @param cause [Parslet::Cause] the deepest failure
-      # @param source [String] the source that failed to parse
-      # @return [String] formatted error message
       def format_parse_error(cause, source)
-        lines = source.lines("\n")
-        line_num, col_num = failure_position(cause, source)
-
-        context = if line_num <= lines.length
-                    lines[line_num - 1].chomp("\n")
-                  else
-                    '(end of input)'
-                  end
-
-        "Parse error at line #{line_num}, column #{col_num}:\n" \
-          "#{context}\n" \
-          "#{caret_for(lines[line_num - 1], col_num)}\n" \
-          "#{failure_message(cause)}"
+        format_parse_error_unguarded(cause, source)
       end
     end
   end
