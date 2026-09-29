@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
-require_relative "base"
 
 # Represents effect styles for diagram theming
-class Sirena::Theme::EffectStyles < Sirena::Theme::Base
+class Sirena::Theme::EffectStyles < Lutaml::Model::Serializable
   attribute :shadow_enabled, :boolean
   attribute :shadow_color, :string
   attribute :shadow_blur, :float

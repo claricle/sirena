@@ -6,14 +6,11 @@ module Sirena
   # Theme's real attributes are defined once, here. The requires below sit
   # inside this class body rather than above it: Ruby binds the `Theme`
   # constant before running the body, so by the time they execute,
-  # Sirena::Theme already exists for theme/base.rb and the five sub-model
-  # files (each written compact-style, e.g. `class
-  # Sirena::Theme::Typography`) to be defined under. theme/base.rb also
-  # reopens Theme (restating its superclass, adding no attributes) so a
-  # sub-model file required standalone still finds Theme correctly typed --
-  # see the comment there.
+  # Sirena::Theme already exists for the five sub-model files (each written
+  # compact-style, e.g. `class Sirena::Theme::Typography`) to be defined
+  # under. A sub-model file required standalone (bypassing this file) would
+  # raise NameError on Sirena::Theme, not resolve to a wrong superclass.
   class Theme < Lutaml::Model::Serializable
-    require_relative "theme/base"
     require_relative "theme/color_palette"
     require_relative "theme/typography"
     require_relative "theme/shape_styles"
