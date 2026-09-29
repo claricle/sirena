@@ -132,6 +132,58 @@ module Sirena
       def caret_for(line, column)
         "#{line.to_s[0, column - 1].to_s.gsub(/[^\t]/, ' ')}^"
       end
+
+      # Used by block, flowchart and requirement: also checks `line_num`
+      # is positive, and falls back to the non-contextual message if
+      # formatting itself raises. #format_parse_error_unguarded (used by
+      # class_diagram and state_diagram) has neither — keep them separate;
+      # merging would change those two's behaviour. architecture keeps its
+      # own separate implementation; do not fold it in, its message shape
+      # differs (two lines of context, no rescue).
+      #
+      # @param cause [Parslet::Cause] the failure to describe
+      # @param source [String] the source that was parsed
+      # @return [String] the positioned, multi-line error message
+      def format_parse_error_guarded(cause, source)
+        lines = source.lines("\n")
+        line_num, col_num = failure_position(cause, source)
+
+        context = []
+        context << "Parse error at line #{line_num}, column #{col_num}:"
+        context << if line_num.positive? && line_num <= lines.length
+                     lines[line_num - 1].chomp("\n")
+                   else
+                     '(end of input)'
+                   end
+        context << caret_for(lines[line_num - 1], col_num)
+        context << failure_message(cause)
+        context.join("\n")
+      rescue StandardError
+        fallback_message(cause)
+      end
+
+      # The shape class_diagram and state_diagram use: no positivity check,
+      # no rescue fallback. See #format_parse_error_guarded for why this
+      # stays a second, distinct method rather than being unified with it.
+      #
+      # @param cause [Parslet::Cause] the failure to describe
+      # @param source [String] the source that was parsed
+      # @return [String] the positioned, multi-line error message
+      def format_parse_error_unguarded(cause, source)
+        lines = source.lines("\n")
+        line_num, col_num = failure_position(cause, source)
+
+        context = if line_num <= lines.length
+                    lines[line_num - 1].chomp("\n")
+                  else
+                    '(end of input)'
+                  end
+
+        "Parse error at line #{line_num}, column #{col_num}:\n" \
+          "#{context}\n" \
+          "#{caret_for(lines[line_num - 1], col_num)}\n" \
+          "#{failure_message(cause)}"
+      end
     end
   end
 end
