@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 require "lutaml/model"
-require_relative "base"
 
 # Represents shape styling settings for diagram theming
-class Sirena::Theme::ShapeStyles < Sirena::Theme::Base
+class Sirena::Theme::ShapeStyles < Lutaml::Model::Serializable
   attribute :stroke_width, :float
   attribute :stroke_width_thick, :float
   attribute :stroke_width_thin, :float
