@@ -19,6 +19,15 @@ module Sirena
       # Key type: 'PK' (primary key), 'FK' (foreign key), or nil
       attribute :key_type, :string
 
+      # Optional quoted comment trailing the attribute, e.g. `"NN"` in
+      # `int rental_id PK "NN"`. Mermaid renders this as the attribute's
+      # comment column; without carrying it here the grammar consumes the
+      # text and the renderer never emits it -- silent data loss on valid
+      # input. Verified against spec/mermaid/unknown/079_platform_yari2_78:
+      # mmdc's own SVG puts the comment text in a
+      # `class="label attribute-comment"` node.
+      attribute :note, :string
+
       # Validates the attribute has required fields.
       #
       # @return [Boolean] true if attribute is valid

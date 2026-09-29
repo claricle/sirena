@@ -79,9 +79,14 @@ module Sirena
             line_end
         end
 
-        rule(:branch_name) do
-          match('[a-zA-Z0-9_-]').repeat(1)
-        end
+        # mermaid accepts git's own branch-name characters, not just an
+        # identifier — `release/1.0.0` is a real branch name a source can
+        # check out. A word char first, a word char or hyphen last, so
+        # `.foo`, `/foo`, `foo.`, `foo/` are all rejected; do not replace
+        # this with `match('[...]').repeat`, which cannot express that
+        # boundary. Use `TrimmedRun`, not a plain `GreedyRun`, for the
+        # tail: see `atoms/trimmed_run.rb`.
+        rule(:branch_name) { match['\w'] >> TrimmedRun.new('[-.\/\w]', '[.\/]') }
 
         rule(:branch_options) do
           space >> (branch_option >> space?).repeat(1)

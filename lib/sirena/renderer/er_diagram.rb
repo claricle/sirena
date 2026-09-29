@@ -199,6 +199,12 @@ module Sirena
         parts << attribute[:attribute_type] if attribute[:attribute_type] &&
                                                !attribute[:attribute_type]
                                                .empty?
+        # mmdc renders the trailing quoted comment (e.g. `"NN"`) in its own
+        # attribute-comment column, after type -- verified against
+        # spec/mermaid/unknown/079_platform_yari2_78.svg. Sirena draws one
+        # joined line rather than mermaid's separate columns, so it is
+        # appended last on that line instead of losing it.
+        parts << attribute[:note] if attribute[:note] && !attribute[:note].empty?
 
         attr_text = parts.join(' ')
 

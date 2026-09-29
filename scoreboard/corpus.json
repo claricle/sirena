@@ -6758,23 +6758,17 @@
   {
     "case": "git/096_parser_should_allow_-_characters_in_branch_names_95.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/097_parser_should_allow_branch_names_starting_with_numbers_96.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/098_parser_should_allow_branch_names_starting_with_unusual_prefixes_97.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/099_parser_should_handle_new_branch_checkout_98.mmd",
@@ -6933,9 +6927,7 @@
   {
     "case": "git/129_parser_should_log_a_warning_when_two_commits_have_the_same_id_128.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/130_parsertest_gitgraph_test_129.mmd",
@@ -10871,9 +10863,7 @@
   {
     "case": "unknown/013_platform_gitgraph_12.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/014_platform_gitgraph2_13.mmd",
@@ -11301,9 +11291,7 @@
   {
     "case": "unknown/079_platform_yari2_78.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/080_parser_should_handle_nested_namespaces_and_relationships_79.mmd",

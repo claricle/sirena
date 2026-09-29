@@ -18,9 +18,20 @@ module ErDiagramSpecHelpers
     svg.children.find { |c| c.id == "entity-#{entity_id}" }
       .children.grep(Sirena::Svg::Rect).first
   end
+
+  # `#content` is a `collection: true` attribute (see `Svg::Text#simple_body`);
+  # which lutaml-model version is loaded determines whether a scalar
+  # assignment reads back as a scalar or a one-element Array. Always read it
+  # through this helper, the same way production code does
+  # (`Array(content).join`), never raw `#content`.
+  def svg_text_content(element)
+    Array(element.content).join
+  end
 end
 
 RSpec.describe Sirena::Renderer::ErDiagram do
+  include ErDiagramSpecHelpers
+
   let(:renderer) { described_class.new }
 
   describe '#render' do
@@ -132,6 +143,56 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       attr_texts = texts.map { |t| Array(t.content).join }.grep(/PK|FK/)
       expect(attr_texts).not_to be_empty
       expect(attr_texts.any? { |t| t.include?('PK') }).to be true
+    end
+
+    # Asserts the note TEXT reaches the SVG, not merely that a note node
+    # survived the parser -- the layout and renderer layers each have a
+    # place to silently drop it before it becomes visible.
+    it 'renders the attribute note text' do
+      graph[:children].first[:metadata][:attributes].first[:note] = 'NN'
+
+      svg = renderer.render(graph)
+
+      groups = svg.children.select do |c|
+        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
+      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
+
+      expect(texts.map { |t| svg_text_content(t) }).to include(a_string_matching(/\bNN\b/))
+    end
+
+    # Keep this: it is the only check that the `attribute[:note] &&` half of
+    # the guard on er_diagram.rb's attr line still holds, since
+    # mutation-check.sh's whole-file-revert cannot score it (a reverted file
+    # has no note handling, so an absent note renders the same either way).
+    it 'omits the note segment when no note is present' do
+      svg = renderer.render(graph)
+
+      groups = svg.children.select do |c|
+        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
+      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
+      attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?('id') }
+
+      expect(attr_line).to eq('PK id int')
+    end
+
+    # Keep this: it is the only check that the `!attribute[:note].empty?`
+    # half of the same guard still holds, since mutation-check.sh's revert
+    # cannot score it either (absent vs. empty note renders identically
+    # whether or not the note feature exists at all).
+    it 'omits the note segment when the note is an empty string' do
+      graph[:children].first[:metadata][:attributes].first[:note] = ''
+
+      svg = renderer.render(graph)
+
+      groups = svg.children.select do |c|
+        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?('entity-')
+      end
+      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
+      attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?('id') }
+
+      expect(attr_line).to eq('PK id int')
     end
 
     it 'renders entity separators' do

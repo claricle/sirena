@@ -72,6 +72,32 @@ RSpec.describe Sirena::Layout::ErDiagram do
       expect(attributes.first[:key_type]).to eq('PK')
     end
 
+    # The renderer only sees what this layer hands it -- a note dropped
+    # here never reaches the SVG even though the parser and model both
+    # carry it.
+    it 'includes the attribute note in the metadata' do
+      diagram.entities.first.attributes.first.note = 'NN'
+
+      graph = transform.to_graph(diagram)
+
+      customer = graph[:children].find { |n| n[:id] == 'CUSTOMER' }
+      attributes = customer[:metadata][:attributes]
+
+      expect(attributes.first[:note]).to eq('NN')
+    end
+
+    it 'widens the entity box to fit a long attribute note' do
+      graph = transform.to_graph(diagram)
+      narrow_width = graph[:children].find { |n| n[:id] == 'CUSTOMER' }[:width]
+
+      diagram.entities.first.attributes.first.note =
+        'a much longer note than the name alone'
+      wider_graph = transform.to_graph(diagram)
+      wide_width = wider_graph[:children].find { |n| n[:id] == 'CUSTOMER' }[:width]
+
+      expect(wide_width).to be > narrow_width
+    end
+
     it 'creates relationships with metadata' do
       graph = transform.to_graph(diagram)
 

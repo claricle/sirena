@@ -471,6 +471,11 @@ RSpec.describe Sirena::Engine do
        :sequence],
       ['a bare comment line with nothing after it',
        "%%\nflowchart TD\nA-->B\n",
+       :flowchart],
+      # mmdc's ELK-layout flowchart keyword — corpus case
+      # unknown/012_platform_flow-elk_11.mmd.
+      ['the flowchart-elk keyword',
+       "flowchart-elk\na[hello] --> b[world]\n",
        :flowchart]
     ].each do |name, source, expected|
       it "names #{expected} past #{name}" do
