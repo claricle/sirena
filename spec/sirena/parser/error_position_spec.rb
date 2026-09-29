@@ -271,10 +271,10 @@ RSpec.describe Sirena::Parser::Base do
   describe "a lookahead failure" do
     it "names the atom without quoting it" do
       message = error_from(Sirena::Parser::Flowchart.new,
-                           "graph TD\nstyle A ")
+                           "graph TD\nstyle A fill:#f9f,,g")
 
-      expect(message).to end_with("Input should not start with LINE_END")
-      expect(position_in(message)).to eq("line 2, column 9")
+      expect(message).to end_with("Input should not start with HASHED_COMMA_GAP")
+      expect(position_in(message)).to eq("line 2, column 18")
     end
   end
 end
