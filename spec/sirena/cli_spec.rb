@@ -161,7 +161,7 @@ RSpec.describe Sirena::Cli do
   describe 'version command' do
     it 'displays version information' do
       expect { described_class.start(['version']) }.to output(
-        /sirena version #{Sirena::VERSION}/
+        /sirena version #{Sirena::VERSION}/o
       ).to_stdout
     end
   end

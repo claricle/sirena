@@ -14,7 +14,7 @@ module Sirena
       attribute :children, Element, collection: true
 
       def initialize(**args)
-        super(**args)
+        super
         self.children ||= []
       end
 
