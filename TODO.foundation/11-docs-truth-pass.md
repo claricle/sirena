@@ -55,7 +55,7 @@ substantiates the published figures, and the harness is broken."
      `docs/claims-manifest.yml` (tracked, machine-readable, one row per
      decided claim). Tracked is the whole point: a fresh pipeline
      worktree checks out tracked files, so a committed manifest needs no
-     bootstrap copying and cannot go stale relative to the branch. It is
+     bootstrap copying and travels with the branch. It is
      NOT part of item 13's bootstrap payload.
 2. **Numbers are generated** (this step waits for item 02's
    scoreboard): compatibility tables and pass rates render from the
@@ -90,15 +90,6 @@ substantiates the published figures, and the harness is broken."
   verified / corrected / removed disposition. **This is the criterion**;
   "no surviving false claim" is not one, because grep cannot classify
   semantic falsity.
-- The mechanical half is a checker over `docs/claims-manifest.yml`: for
-  every row marked *removed*, its exact claim string must no longer
-  appear in any tracked source. Scope it to the surfaces in step 1 and
-  exclude the control artifacts, or the check can never pass: the
-  manifest itself stores one row per claim, and `TODO.foundation/`
-  quotes the very strings being removed ("100% Syntax Parity", "16x
-  faster") as evidence of what was wrong. Excluded: `_site/`,
-  `docs/plans/`, `TODO.foundation/`, and the manifest. That is then a
-  predicate a CI job can run.
 - Generated tables live AND gated for freshness; snippet spec in CI;
   docs build green; the committed manifest exists and items 14/15
   consume it.
