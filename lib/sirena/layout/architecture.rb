@@ -97,7 +97,7 @@ module Sirena
           next if services.empty?
 
           # Position services in this group
-          services.each_with_index do |service, index|
+          services.each do |service|
             dims = calculate_service_dimensions(service)
 
             positions[service.id] = {

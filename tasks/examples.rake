@@ -164,7 +164,7 @@ namespace :examples do
   task :build => [:generate, :generate_docs, :copy_to_docs]
 
   desc "Create example template for a diagram type"
-  task :create, [:type, :name] do |t, args|
+  task :create, [:type, :name] do |_t, args|
     require 'fileutils'
 
     type = args[:type]

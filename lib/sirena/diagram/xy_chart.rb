@@ -66,7 +66,8 @@ module Sirena
 
     # Represents a dataset in an XY chart
     class XYDataset
-      attr_accessor :id, :label, :chart_type, :values, :color
+      attr_accessor :id, :label, :chart_type, :color
+      attr_reader :values
 
       def initialize(id, label = nil, chart_type = :line)
         @id = id

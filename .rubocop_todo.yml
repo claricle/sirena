@@ -204,45 +204,10 @@ Layout/TrailingWhitespace:
 Lint/AmbiguousOperatorPrecedence:
   Enabled: false
 
-# Offense count: 5
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: RequireParenthesesForMethodChains.
-Lint/AmbiguousRange:
-  Exclude:
-    - 'lib/sirena/parser/builders/mindmap.rb'
-    - 'lib/sirena/renderer/kanban.rb'
-    - 'lib/sirena/renderer/treemap.rb'
-    - 'lib/sirena/layout/block.rb'
-
 # Offense count: 21
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
 Lint/DuplicateBranch:
   Enabled: false
-
-# Offense count: 1
-Lint/DuplicateMethods:
-  Exclude:
-    - 'lib/sirena/diagram/xy_chart.rb'
-
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: strict, consistent
-Lint/SymbolConversion:
-  Exclude:
-    - 'lib/sirena/renderer/pie.rb'
-    - 'lib/sirena/renderer/quadrant.rb'
-
-# Offense count: 6
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: IgnoreEmptyBlocks, AllowUnusedKeywordArguments.
-Lint/UnusedBlockArgument:
-  Exclude:
-    - 'lib/sirena/renderer/architecture.rb'
-    - 'lib/sirena/renderer/block.rb'
-    - 'lib/sirena/layout/architecture.rb'
-    - 'lib/sirena/layout/block.rb'
-    - 'tasks/examples.rake'
 
 # Offense count: 12
 # This cop supports safe autocorrection (--autocorrect).
@@ -259,13 +224,6 @@ Lint/UnusedMethodArgument:
     - 'lib/sirena/layout/packet.rb'
     - 'lib/sirena/layout/requirement.rb'
     - 'lib/sirena/layout/treemap.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: ContextCreatingMethods, MethodCreatingMethods.
-Lint/UselessAccessModifier:
-  Exclude:
-    - 'lib/sirena/parser/builders/mindmap.rb'
 
 # Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).

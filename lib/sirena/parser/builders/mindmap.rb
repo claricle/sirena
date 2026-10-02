@@ -76,7 +76,7 @@ module Sirena
               end
 
               # Update stack
-              @level_stack = @level_stack[0..level - 1] + [node]
+              @level_stack = @level_stack[0..(level - 1)] + [node]
             end
           end
 

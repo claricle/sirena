@@ -211,7 +211,7 @@ module Sirena
         # Use theme colors if available, otherwise use default palette
         if theme && theme.colors
           # Try to get pie-specific colors from theme
-          color_key = "pie_slice_#{index}".to_sym
+          color_key = :"pie_slice_#{index}"
           theme_color(color_key) || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
         else
           DEFAULT_COLORS[index % DEFAULT_COLORS.length]
