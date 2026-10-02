@@ -36,21 +36,35 @@ RSpec.describe Sirena::Parser::Atoms::TrimmedRun do
       expect(atom.parse('').to_s).to eq('')
     end
 
-    # Crosses the 50_000-char chunk ceiling the underlying `GreedyRun`
-    # uses, confirming `TrimmedRun`'s own trimming stays correct on
-    # either side of a chunk split, not just within a single chunk.
-    it 'stays correct when the run crosses the internal chunk boundary' do
-      long_run = "#{'a' * 49_999}.#{'b' * 10}"
-      tree = atom.parse(long_run)
+    # The underlying `GreedyRun` reads in chunks of 64, 128, 256, ...
+    # characters, so its chunk edges fall at the cumulative sums 64, 192,
+    # 448, ... A dot at run index `edge - 1` is the last character of a
+    # chunk; at `edge` it is the first of the next. `TrimmedRun`'s own trim
+    # step must stay correct on either side of each edge. These are the
+    # first three edges; git_graph_spec.rb walks every edge through the
+    # switch to 50_000-character chunks.
+    [64, 192, 448].each do |edge|
+      context "with the #{edge}-character chunk edge" do
+        [edge - 1, edge].each do |dot_index|
+          it "keeps a dot at index #{dot_index} that is followed by more of the run" do
+            run = "#{'a' * dot_index}.#{'b' * 10}"
 
-      expect(tree.to_s).to eq(long_run)
-    end
+            expect(atom.parse(run).to_s).to eq(run)
+          end
 
-    it 'trims correctly when the trailing dot sits right at the chunk boundary' do
-      long_run = "#{'a' * 50_000}."
-      tree = (atom.as(:name) >> Parslet.str('.')).parse(long_run)
+          it "trims a trailing dot at index #{dot_index}, leaving it for the next atom" do
+            tree = (atom.as(:name) >> Parslet.str('.')).parse("#{'a' * dot_index}.")
 
-      expect(tree[:name].to_s).to eq('a' * 50_000)
+            expect(tree[:name].to_s).to eq('a' * dot_index)
+          end
+        end
+
+        it 'trims trailing dots that straddle the edge' do
+          tree = (atom.as(:name) >> Parslet.str('..')).parse("#{'a' * (edge - 1)}..")
+
+          expect(tree[:name].to_s).to eq('a' * (edge - 1))
+        end
+      end
     end
   end
 

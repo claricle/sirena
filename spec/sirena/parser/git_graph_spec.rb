@@ -15,8 +15,18 @@ module GitGraphScalingHelpers
   end
 end
 
+module GitGraphChunkEdgeHelpers
+  # `GreedyRun` reads a run in chunks of 64, 128, 256, ... characters,
+  # capped at 50_000: a chunk edge falls at each cumulative run length
+  # below. After 65_472 every chunk is 50_000, so the next edge is 115_472.
+  def chunk_edges
+    [64, 192, 448, 960, 1_984, 4_032, 8_128, 16_320, 32_704, 65_472, 115_472]
+  end
+end
+
 RSpec.describe Sirena::Parser::GitGraph do
   include GitGraphScalingHelpers
+  include GitGraphChunkEdgeHelpers
   include CpuTiming
 
   let(:parser) { described_class.new }
@@ -132,35 +142,43 @@ RSpec.describe Sirena::Parser::GitGraph do
         end
       end
 
-      # A CHUNK-BOUNDARY regression: `branch_name`'s greedy tail run is
-      # matched internally in bounded chunks (`TrimmedRun`, see the
-      # grammar comment) -- a naive per-chunk anchored regex is only
-      # exact for a pure character-class run, not this pattern's
-      # trailing-anchor requirement (must end in `-`/word, not `.`/`/`),
-      # so a name straddling the chunk boundary used to truncate at the
-      # boundary instead of continuing into the next chunk. Compared
-      # against the SAME regex mermaid's own REFERENCE token uses, run on
-      # the whole string at once, not hand-derived.
-      it "matches a branch name whose greedy tail run crosses the internal chunk boundary" do
+      # A CHUNK-EDGE regression: `branch_name`'s greedy tail run is matched
+      # internally in bounded chunks (`TrimmedRun`, see the grammar
+      # comment). A naive per-chunk anchored regex is only exact for a pure
+      # character-class run, not this pattern's trailing-anchor requirement
+      # (must end in `-`/word, not `.`/`/`), so a name straddling a chunk
+      # edge used to truncate there instead of continuing into the next
+      # chunk. The run-length probe starts at 64 characters and doubles, so
+      # the edges are the cumulative sums (see `chunk_edges`), not round
+      # numbers. Every shape is checked one character before, on, and one
+      # character after each edge, against the SAME regex mermaid's own
+      # REFERENCE token uses on the whole string at once, not hand-derived.
+      it "matches the whole-input reference regex at every chunk edge" do
         grammar = Sirena::Parser::Grammars::GitGraph.new
         whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
 
-        [
-          "#{'a' * 49_999}.#{'b' * 10}",
-          "#{'a' * 50_000}.b"
-        ].each do |name|
-          expected = whole_input_regex.match(name)[0]
-          expect(grammar.branch_name.parse(name, prefix: true).to_s).to eq(expected)
+        mismatches = chunk_edges.product([-1, 0, 1]).flat_map do |edge, offset|
+          run_length = edge + offset
+          {
+            "word run" => "a#{'b' * run_length}",
+            "trailing dot" => "a#{'b' * (run_length - 1)}.",
+            "dot then word" => "a#{'b' * (run_length - 1)}.c"
+          }.filter_map do |shape, name|
+            got = grammar.branch_name.parse(name, prefix: true).to_s
+            "#{shape} with run length #{run_length}" if got != whole_input_regex.match(name)[0]
+          end
         end
+
+        expect(mismatches).to eq([])
       end
 
       # `branch_name` is `match['\w'] >> TrimmedRun.new(...)` -- the
       # leading `match['\w']` consumes ONE character before `TrimmedRun`'s
       # own run starts, so the run itself starts at position 1, not 0.
-      # `50_000` (not `49_999`) `a`s here puts the `.` as the LAST
-      # character of the run's first internal chunk.
-      it "parses a full branch statement whose name crosses the internal chunk boundary" do
-        name = "#{'a' * 50_000}.bbbbbbbbbb"
+      # 64 `a`s here put the `.` as the LAST character of the run's first
+      # chunk.
+      it "parses a full branch statement whose name crosses a chunk edge" do
+        name = "#{'a' * 64}.bbbbbbbbbb"
         source = <<~MERMAID
           gitGraph
             branch #{name}
@@ -171,24 +189,22 @@ RSpec.describe Sirena::Parser::GitGraph do
       end
 
       # Differential check against the SAME whole-input regex used above,
-      # across random tail content and lengths clustered around the
-      # internal chunk boundary (plus a spread of other sizes) -- proves
-      # the chunk-boundary fix generalises past the two hand-picked
-      # counterexamples the regression report named.
-      it "matches the whole-input reference regex across random inputs near the chunk boundary" do
+      # across random tail content (dots and slashes included) at lengths
+      # clustered around every chunk edge, plus a spread of other sizes.
+      # Noise (a space) only ever trails the run, never interrupts it: an
+      # early interruption would end the run before it reached the edge
+      # under test.
+      it "matches the whole-input reference regex across random inputs near the chunk edges" do
         grammar = Sirena::Parser::Grammars::GitGraph.new
         whole_input_regex = Regexp.new('\A(?:\w([-.\/\w]*[-\w])?)', Regexp::MULTILINE)
         broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
-        noise_pool = [" ", "!"]
         rng = Random.new(20_260_929)
-        lengths = Array.new(40) { rng.rand(1..20) } +
-                  Array.new(40) { rng.rand(49_990..50_010) } +
-                  Array.new(20) { rng.rand(1..150_000) } +
-                  [64, 128, 256, 512, 1_024, 2_048, 4_096, 8_192, 16_384, 32_768, 50_000]
+        lengths = chunk_edges.flat_map { |edge| ((edge - 2)..(edge + 2)).to_a } +
+                  Array.new(20) { rng.rand(1..150_000) }
 
         mismatches = lengths.filter_map do |length|
-          tail = Array.new(length) { rng.rand(20) < 19 ? broad_pool.sample(random: rng) : noise_pool.sample(random: rng) }.join
-          input = "a#{tail}"
+          tail = Array.new(length) { broad_pool.sample(random: rng) }.join
+          input = "a#{tail}#{' !' if rng.rand(2) == 1}"
           expected = whole_input_regex.match(input)[0]
           got = grammar.branch_name.parse(input, prefix: true).to_s
           { length: length, expected: expected.length, got: got.length } if got != expected

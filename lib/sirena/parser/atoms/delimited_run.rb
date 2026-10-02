@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative 'greedy_run'
+require "parslet"
+require_relative "greedy_run"
 
 module Sirena
   module Parser
@@ -11,8 +11,10 @@ module Sirena
       # `~T~` core, `~(?:[^~<terminator>]*~)+`. JS's `.*` is greedy, so
       # this matches through to the LAST delimiter reachable, not the
       # first. Accumulate segments with `<<`, never `.repeat`/`Slice#+`
-      # (O(n^2)); call `GreedyRun.scan` per segment, not a fresh
-      # `GreedyRun`, so the doubling probe carries over between segments.
+      # (O(n^2)); call `GreedyRun.scan` per segment. Every call restarts
+      # its doubling probe at the small initial size, so a short segment
+      # costs about its own length -- that reset is what keeps the whole
+      # match linear.
       class DelimitedRun < Parslet::Atoms::Base
         def initialize(delimiter, segment_class)
           super()

@@ -52,30 +52,29 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
       expect(atom.parse('~foo~ rest', prefix: true).to_s).to eq('~foo~')
     end
 
-    # Crosses the 50_000-char chunk boundary `match_segment`'s adaptive
-    # probe grows through -- a single segment longer than any probe size.
+    # A single segment longer than the largest probe chunk (50_000), so
+    # `GreedyRun.scan` needs several doubling rounds to read it.
     it 'matches a single segment longer than the chunk ceiling' do
       long_run = 'a' * 120_000
       expect(atom.parse("~#{long_run}~").to_s).to eq("~#{long_run}~")
     end
 
-    # Many short segments, crossing the boundary in TOTAL length: the bug
-    # this atom exists to fix (a naive per-segment `GreedyRun` call pays
-    # up to 50_000 chars of consume+rewind PER segment).
-    it 'matches many short segments whose combined length crosses the chunk ceiling' do
+    # Many short segments, each closed by its own delimiter: every segment
+    # is a fresh `GreedyRun.scan`, so the source position must carry
+    # correctly from one segment to the next.
+    it 'matches many short segments, each closed by its own delimiter' do
       segments = Array.new(6_000) { |i| "s#{i}" }
       input = "~#{segments.join('~')}~"
 
       expect(atom.parse(input, prefix: true).to_s).to eq(input)
     end
 
-    # Guards the O(n) fix: many short segments must parse in roughly
-    # linear time, not the quadratic time a per-segment `GreedyRun` call
-    # (chunk size bound to the WHOLE remaining source, not the segment)
-    # produced -- measured at 1.8-8.9s per call before this fix, versus
-    # under 0.05s after. An absolute bound would be too tight on a loaded
-    # CI box; the scaling RATIO between a small and 8x-larger segment
-    # count survives that (see spec/support/cpu_timing.rb's header
+    # Guards linear time: every segment's scan must start from the small
+    # initial probe. A scan sized to the WHOLE remaining source instead
+    # would cost O(remaining) per segment, so total time grows with the
+    # square of the segment count. An absolute bound would be too tight on
+    # a loaded CI box; the scaling RATIO between a small and 8x-larger
+    # segment count survives that (see spec/support/cpu_timing.rb's header
     # comment).
     it 'scales linearly with the number of segments, not their square' do
       small_time = min_call_time { cpu_time { atom.parse(build_input(500), prefix: true) } }
