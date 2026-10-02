@@ -137,7 +137,7 @@ module Sirena
         max_chars = (max_width / 7).to_i
         return label if label.length <= max_chars
 
-        "#{label[0...max_chars - 3]}..."
+        "#{label[0...(max_chars - 3)]}..."
       end
 
       def format_value(value)

@@ -87,7 +87,7 @@ module Sirena
           }
 
           # Update column widths
-          (current_col...current_col + block_width).each do |col|
+          (current_col...(current_col + block_width)).each do |col|
             col_widths[col] = [col_widths[col], dims[:width]].max if col < columns
           end
 
@@ -115,7 +115,7 @@ module Sirena
         positioned = {}
         child_y = parent_y + DEFAULT_COMPOUND_PADDING
 
-        parent_block.children.each_with_index do |child, index|
+        parent_block.children.each do |child|
           child_dims = calculate_block_dimensions(child)
 
           positioned[child.id] = {

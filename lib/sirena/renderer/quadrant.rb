@@ -268,7 +268,7 @@ module Sirena
 
       def get_quadrant_color(quadrant_number)
         # Try to get from theme first
-        color_key = "quadrant_#{quadrant_number}".to_sym
+        color_key = :"quadrant_#{quadrant_number}"
         theme_color(color_key) || QUADRANT_COLORS[quadrant_number]
       end
 

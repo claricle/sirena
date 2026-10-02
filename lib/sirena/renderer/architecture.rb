@@ -153,7 +153,7 @@ module Sirena
 
       def render_groups(layout, svg)
         # Render groups in order (parent groups before children)
-        layout[:groups].each do |group_id, group_info|
+        layout[:groups].each do |_group_id, group_info|
           render_group(group_info, svg)
         end
       end
@@ -218,7 +218,7 @@ module Sirena
       end
 
       def render_services(layout, svg)
-        layout[:services].each do |service_id, service_info|
+        layout[:services].each do |_service_id, service_info|
           render_service(service_info, svg)
         end
       end
@@ -282,7 +282,7 @@ module Sirena
       end
 
       def render_junctions(layout, svg)
-        layout[:junctions].each do |junction_id, junction_info|
+        layout[:junctions].each do |_junction_id, junction_info|
           render_junction(junction_info, svg)
         end
       end
