@@ -2,7 +2,18 @@
 
 require 'spec_helper'
 
+module BlockSpecHelpers
+  def build_block(id, label)
+    Sirena::Diagram::BlockNode.new.tap do |block|
+      block.id = id
+      block.label = label
+    end
+  end
+end
+
 RSpec.describe Sirena::Renderer::Block do
+  include BlockSpecHelpers
+
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
@@ -12,14 +23,14 @@ RSpec.describe Sirena::Renderer::Block do
         {
           blocks: {
             'A' => {
-              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'A'; b.label = 'Block A' },
+              block: build_block('A', 'Block A'),
               x: 20,
               y: 20,
               width: 100,
               height: 60
             },
             'B' => {
-              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'B'; b.label = 'Block B' },
+              block: build_block('B', 'Block B'),
               x: 140,
               y: 20,
               width: 100,
@@ -53,14 +64,14 @@ RSpec.describe Sirena::Renderer::Block do
         {
           blocks: {
             'A' => {
-              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'A'; b.label = 'A' },
+              block: build_block('A', 'A'),
               x: 20,
               y: 20,
               width: 100,
               height: 60
             },
             'B' => {
-              block: Sirena::Diagram::BlockNode.new.tap { |b| b.id = 'B'; b.label = 'B' },
+              block: build_block('B', 'B'),
               x: 20,
               y: 100,
               width: 100,

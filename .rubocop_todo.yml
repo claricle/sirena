@@ -59,12 +59,6 @@ Layout/EmptyLineAfterGuardClause:
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLineAfterMagicComment:
-  Exclude:
-    - 'lib/sirena/layout/sankey.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
 Layout/EmptyLines:
   Exclude:
     - 'lib/sirena.rb'
@@ -320,12 +314,6 @@ Naming/PredicateMethod:
   Exclude:
     - 'lib/sirena/layout/gantt.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Performance/ConstantRegexp:
-  Exclude:
-    - 'spec/sirena/cli_spec.rb'
-
 # Offense count: 8
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Performance/MapCompact:
@@ -412,11 +400,6 @@ RSpec/MultipleDescribes:
 RSpec/MultipleExpectations:
   Max: 20
 
-# Offense count: 1
-RSpec/PendingWithoutReason:
-  Exclude:
-    - 'spec/sirena/parser/packet_spec.rb'
-
 # Offense count: 2
 RSpec/RepeatedExample:
   Exclude:
@@ -427,17 +410,6 @@ RSpec/RepeatedExample:
 # SupportedInflectors: default, active_support
 RSpec/SpecFilePathFormat:
   Enabled: false
-
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, ProceduralMethods, FunctionalMethods, AllowedMethods, AllowedPatterns, AllowBracesOnProceduralOneLiners, BracesRequiredMethods.
-# SupportedStyles: line_count_based, semantic, braces_for_chaining, always_braces
-# ProceduralMethods: benchmark, bm, bmbm, create, each_with_object, measure, new, realtime, tap, with_object
-# FunctionalMethods: let, let!, subject, watch
-# AllowedMethods: lambda, proc, it
-Style/BlockDelimiters:
-  Exclude:
-    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -636,13 +608,6 @@ Style/SafeNavigation:
     - 'lib/sirena/renderer/pie.rb'
     - 'lib/sirena/layout/gantt.rb'
 
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowAsExpressionSeparator.
-Style/Semicolon:
-  Exclude:
-    - 'spec/sirena/renderer/block_spec.rb'
-
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/SlicingWithRange:
@@ -685,12 +650,6 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Exclude:
     - 'tasks/benchmark.rake'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/SuperArguments:
-  Exclude:
-    - 'lib/sirena/svg/group.rb'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).

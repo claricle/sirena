@@ -212,17 +212,13 @@ class MermaidFixtureGenerator
       # Save detailed logs
       if stats[:correct_unexpected_fail] > 0
         fail_log = File.join(output_dir, '_unexpected_failures.log')
-        File.write(fail_log, unexpected_failures.map { |f|
-          "#{f[:file]}: #{f[:error]}"
-        }.join("\n"))
+        File.write(fail_log, unexpected_failures.map { |f| "#{f[:file]}: #{f[:error]}" }.join("\n"))
         puts "\n📝 Failure log: #{fail_log}"
       end
 
       if stats[:error_unexpected_success] > 0
         success_log = File.join(output_dir, '_unexpected_successes.log')
-        File.write(success_log, unexpected_successes.map { |f|
-          "#{f[:file]}: #{f[:note]}"
-        }.join("\n"))
+        File.write(success_log, unexpected_successes.map { |f| "#{f[:file]}: #{f[:note]}" }.join("\n"))
         puts "📝 Success log: #{success_log}"
       end
     end
