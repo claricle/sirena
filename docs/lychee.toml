@@ -4,8 +4,11 @@ cache = true
 # Maximum number of concurrent link checks
 max_concurrency = 16
 
-# Accept status codes
-accept = [200, 204, 301, 302, 307, 308, 403, 429]
+# Accept status codes. GitHub answers bursts of blob/main links with 429 or
+# 503 for files that exist. lychee 0.15.0 does not retry HTTP status errors
+# (max_retries below retries only transport failures), so accepting 503 is the
+# only lever, and accept is global rather than per-host. 404 and 500 still fail.
+accept = [200, 204, 301, 302, 307, 308, 403, 429, 503]
 
 # Exclude patterns
 exclude = [
