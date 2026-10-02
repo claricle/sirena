@@ -892,9 +892,14 @@ module Sirena
         end
 
         # Rounded: (label)
+        # A double-quoted run is label text whole, so `("a (1)")` ends at
+        # the last paren and not the one inside the quotes.
+        # A quote that never closes is refused, not read as plain text,
+        # except on a comment line, which mermaid deletes before it looks.
         rule(:shape_rounded) do
           lparen.as(:open) >>
-            (rparen.absent? >> any).repeat.as(:label) >>
+            (quoted_label | inline_comment_line |
+              ((rparen | str('"')).absent? >> any)).repeat.as(:label) >>
             rparen.as(:close)
         end
 
