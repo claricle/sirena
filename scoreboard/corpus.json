@@ -10880,23 +10880,17 @@
   {
     "case": "unknown/016_platform_knsv_15.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/017_platform_knsv_16.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/018_platform_knsv_17.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/019_platform_knsv3_18.mmd",
