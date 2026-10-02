@@ -2,12 +2,16 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Flowchart do
-  let(:engine) { Sirena::Engine.new }
-
+module QuotedParenLabelHelpers
   def svg_text(source)
     engine.render(source).scan(%r{<text[^>]*>(.*?)</text>}m).flatten.join(" | ")
   end
+end
+
+RSpec.describe Sirena::Parser::Flowchart do
+  include QuotedParenLabelHelpers
+
+  let(:engine) { Sirena::Engine.new }
 
   describe "a paren inside a quoted round-node label" do
     [
@@ -49,6 +53,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       text = svg_text("flowchart LR\nb(\"a\n%% it\"s )\nc\") --> d")
 
       expect(text).to include("a").and include("c")
+      expect(text).not_to include('%% it"s )')
     end
 
     it "leaves the other round labels of the diagram alone" do
