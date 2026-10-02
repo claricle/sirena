@@ -1009,6 +1009,7 @@ module Sirena
           # `A[ ]` is an EMPTY label, not an absent one: mmdc draws a node
           # with nothing in it, and treating it as absent named the node
           # after itself and kept an older label on a re-mention.
+          label = label.to_s.gsub(COMMENT_LINE, '') if delims == '()'
           [SHAPE_MAP[delims] || 'rect', label.nil? ? nil : label.to_s.strip]
         end
       end
