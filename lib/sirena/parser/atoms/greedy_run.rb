@@ -5,7 +5,7 @@ require "parslet"
 module Sirena
   module Parser
     module Atoms
-      # Matches a run of `char_class` (e.g. `'[^)]'`) in bounded native
+      # Matches a run of `char_class` (e.g. `[^\]]`) in bounded native
       # regex scans, avoiding Parslet's default `match(char_class).repeat`
       # (applies its atom once per character -- DoS shape on a long run).
       #
@@ -13,7 +13,7 @@ module Sirena
       # (character-correct) `Regexp`, never `Parslet::Source#matches?`
       # (returns the match length in BYTES; `Source#consume(n)` takes a
       # CHARACTER count - mixing the two over-consumes on a multibyte body,
-      # e.g. `root[café]`).
+      # e.g. the text of kanban's `root[café]`).
       class GreedyRun < Parslet::Atoms::Base
         # First chunk size tried; doubles each round up to CHUNK. A short
         # run (the common case) then costs about its own length instead of
@@ -42,14 +42,14 @@ module Sirena
           matched = self.class.scan(source, @anchored)
 
           if @min.positive? && matched.empty?
-            return context.err(self, source, 'Expected at least one matching character')
+            return context.err(self, source, "Expected at least one matching character")
           end
 
           succ(Parslet::Slice.new(start_slice.position, matched, start_slice.line_cache))
         end
 
         # The `\A(?:class)*` regexp that `scan` expects, for a Parslet-style
-        # character class string such as `'[^~\n]'`.
+        # character class string such as `[^~\n]`.
         def self.anchored(char_class)
           Regexp.new("\\A(?:#{char_class})*", Regexp::MULTILINE)
         end
@@ -60,7 +60,7 @@ module Sirena
         # again). Shared with `DelimitedRun`, which calls this once per
         # delimited segment with its own segment regex.
         def self.scan(source, anchored)
-          buffer = +''
+          buffer = +""
           probe = INITIAL_PROBE
 
           loop do

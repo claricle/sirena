@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'greedy_run'
+require_relative "greedy_run"
 
 module Sirena
   module Parser
