@@ -39,15 +39,23 @@ module Sirena
     module_function
 
     def cases
-      Dir.glob(File.join(CORPUS_ROOT, "*", "*.mmd")).map { |path| path.delete_prefix("#{CORPUS_ROOT}/") }
+      Dir.glob(File.join(CORPUS_ROOT, "*", "*.mmd")).map do |path|
+        path.delete_prefix("#{CORPUS_ROOT}/")
+      end
     end
 
-    # svg_conform does not reject malformed XML and accepts a bare `<rect/>`, so a document
-    # that is not well-formed XML with an <svg> root is rejected here first.
+    # svg_conform does not reject malformed XML and accepts a bare `<rect/>`,
+    # so a document that is not well-formed XML with an <svg> root is
+    # rejected here first.
     def status_for(svg)
       return NONCONFORMANT unless svg_document?(svg)
 
-      SvgConform.validate(svg, profile: Svg::CONFORMANCE_PROFILE).valid? ? CONFORMANT : NONCONFORMANT
+      if SvgConform.validate(svg,
+                             profile: Svg::CONFORMANCE_PROFILE).valid?
+        CONFORMANT
+      else
+        NONCONFORMANT
+      end
     end
 
     def svg_document?(svg)
@@ -59,7 +67,9 @@ module Sirena
     # The SVG a case renders to, or nil when rendering raises or times out.
     def render(relative_path)
       source = File.read(File.join(CORPUS_ROOT, relative_path))
-      Timeout.timeout(CASE_TIMEOUT) { Engine.new.render(source, today: TODAY) }
+      Timeout.timeout(CASE_TIMEOUT) do
+        Engine.new.render(source, today: TODAY)
+      end
     rescue StandardError
       nil
     end
@@ -86,21 +96,44 @@ module Sirena
     # and a repeated case would let the later row hide the earlier one.
     def load_scoreboard
       rows = parse_scoreboard
-      raise RegressionError, "#{SCOREBOARD_PATH} is not a list of rows" unless rows.is_a?(Array) && rows.all?(Hash)
-
-      malformed = rows.reject { |row| row["case"].is_a?(String) && STATUSES.include?(row["status"]) }
-      raise RegressionError, "#{SCOREBOARD_PATH} has malformed rows: #{malformed.map(&:inspect).join(', ')}" if malformed.any?
-
-      duplicated = rows.map { |row| row["case"] }.tally.select { |_, count| count > 1 }.keys
-      raise RegressionError, "#{SCOREBOARD_PATH} has more than one row for: #{duplicated.sort.join(', ')}" if duplicated.any?
-
+      reject_unreadable(rows)
+      reject_malformed(rows)
+      reject_duplicated(rows)
       rows
+    end
+
+    def reject_unreadable(rows)
+      return if rows.is_a?(Array) && rows.all?(Hash)
+
+      raise RegressionError, "#{SCOREBOARD_PATH} is not a list of rows"
+    end
+
+    def reject_malformed(rows)
+      malformed = rows.reject do |row|
+        row["case"].is_a?(String) && STATUSES.include?(row["status"])
+      end
+      return if malformed.empty?
+
+      raise RegressionError,
+            "#{SCOREBOARD_PATH} has malformed rows: " \
+            "#{malformed.map(&:inspect).join(', ')}"
+    end
+
+    def reject_duplicated(rows)
+      names = rows.map { |row| row["case"] }
+      duplicated = names.tally.select { |_, count| count > 1 }.keys
+      return if duplicated.empty?
+
+      raise RegressionError,
+            "#{SCOREBOARD_PATH} has more than one row for: " \
+            "#{duplicated.sort.join(', ')}"
     end
 
     def parse_scoreboard
       JSON.parse(File.read(SCOREBOARD_PATH))
     rescue JSON::ParserError => e
-      raise RegressionError, "#{SCOREBOARD_PATH} is not valid JSON: #{e.message}"
+      raise RegressionError,
+            "#{SCOREBOARD_PATH} is not valid JSON: #{e.message}"
     end
 
     # A case regresses when it was recorded conformant and is not now,
@@ -111,7 +144,9 @@ module Sirena
     def diff(committed_rows, fresh_rows)
       before = status_by_case(committed_rows)
       after = status_by_case(fresh_rows)
-      changed = (before.keys | after.keys).reject { |name| before[name] == after[name] }
+      changed = (before.keys | after.keys).reject do |name|
+        before[name] == after[name]
+      end
       regressed = changed.select { |name| before[name] == CONFORMANT }
 
       { regressed: regressed.sort, stale: (changed - regressed).sort }
@@ -122,25 +157,35 @@ module Sirena
     end
 
     def conformant_cases(rows)
-      rows.select { |row| row["status"] == CONFORMANT }.map { |row| row["case"] }
+      rows.select do |row|
+        row["status"] == CONFORMANT
+      end.map { |row| row["case"] }
     end
 
     def summary(rows)
       conformant = conformant_cases(rows).size
       rate = rows.empty? ? 0.0 : 100.0 * conformant / rows.size
-      format("conformance: %d/%d rendered cases conformant (%.1f%%)", conformant, rows.size, rate)
+      percent = format("%.1f", rate)
+      "conformance: #{conformant}/#{rows.size} rendered cases " \
+        "conformant (#{percent}%)"
     end
 
     def record!
       fresh = rows
-      raise RegressionError, "no corpus case rendered; keeping #{SCOREBOARD_PATH}" if fresh.empty?
+      if fresh.empty?
+        raise RegressionError,
+              "no corpus case rendered; keeping #{SCOREBOARD_PATH}"
+      end
 
       write_scoreboard(fresh)
       "#{summary(fresh)}\nwrote #{SCOREBOARD_PATH}"
     end
 
     def check!(fresh = nil)
-      raise RegressionError, "#{SCOREBOARD_PATH} is missing; run `rake conformance` first." unless File.exist?(SCOREBOARD_PATH)
+      unless File.exist?(SCOREBOARD_PATH)
+        raise RegressionError,
+              "#{SCOREBOARD_PATH} is missing; run `rake conformance` first."
+      end
 
       committed = load_scoreboard
       fresh ||= rows
@@ -150,14 +195,18 @@ module Sirena
       "conformance:check: clean (#{summary(fresh)})"
     end
 
+    STALE_HEADING = "STALE (differs from the committed scoreboard; run " \
+                    "`rake conformance` and commit " \
+                    "scoreboard/conformance.json):"
+    REGRESSED_HEADING =
+      "REGRESSED (conformant in the committed scoreboard, not now):"
+
     def drift_message(drift)
-      [
-        ["REGRESSED (conformant in the committed scoreboard, not now):", drift[:regressed]],
-        ["STALE (differs from the committed scoreboard; run `rake conformance` and commit " \
-         "scoreboard/conformance.json):", drift[:stale]]
-      ].reject { |_, names| names.empty? }
-        .flat_map { |heading, names| [heading, *names.map { |name| "  #{name}" }] }
-        .join("\n")
+      sections = [[REGRESSED_HEADING, drift[:regressed]],
+                  [STALE_HEADING, drift[:stale]]]
+      sections.reject { |_, names| names.empty? }.flat_map do |heading, names|
+        [heading, *names.map { |name| "  #{name}" }]
+      end.join("\n")
     end
   end
 end
