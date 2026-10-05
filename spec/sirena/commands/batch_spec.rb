@@ -17,7 +17,7 @@ module BatchCommandRunner
   # so it fails where a well-formed neighbour does not. `parse_tree`
   # (flowchart.rb:58-60) converts that overflow into a ParseError, so this
   # is the ORDINARY failure path; the exhaustion examples raise a real
-  # `NoMemoryError` at `File.read` instead.
+  # `NoMemoryError` at `File.binread` instead.
   #
   # 4000 is well past the boundary rather than close to it: measured to
   # still overflow under a 16MB and a 32MB RUBY_THREAD_VM_STACK_SIZE, where
@@ -47,15 +47,15 @@ module BatchCommandRunner
   # same proof as the engine's, in both directions. The exhaustion spec
   # constrains the CONSTANT; `rescue Exception` written at THIS site passes
   # that untouched, and then Ctrl-C, `exit` and a host's `Timeout.timeout`
-  # are all swallowed part way through a batch run. `File.read` sits inside
+  # are all swallowed part way through a batch run. `File.binread` sits inside
   # the rescued block, which is how a real one of each is driven through it.
   # Hands back a lambda so the example decides whether the exception should
   # propagate or be swallowed.
   def batching(exception)
     lambda do
       in_batch_dir do |input, output|
-        allow(File).to receive(:read).and_call_original
-        allow(File).to receive(:read)
+        allow(File).to receive(:binread).and_call_original
+        allow(File).to receive(:binread)
           .with(File.join(input, "2-bomb.mmd")).and_raise(exception)
 
         run_batch(input, output)
@@ -141,7 +141,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # Both members of EXHAUSTION_ERRORS, not just NoMemoryError: pinning only
   # one leaves a rescue narrowed to that single class -- `rescue
   # NoMemoryError, StandardError` -- passing every example here, with a
-  # constructed SystemStackError from this same File.read boundary
+  # constructed SystemStackError from this same File.binread boundary
   # escaping uncaught. The engine spec already drives each member through
   # its own boundary as two separate examples; this loop does the
   # equivalent for the batch boundary, over the constant itself rather
@@ -152,8 +152,8 @@ RSpec.describe Sirena::Commands::BatchCommand do
       in_batch_dir do |input, output|
         bomb_path = File.join(input, '2-bomb.mmd')
         message = exhaustion_message_for(exhaustion_class)
-        allow(File).to receive(:read).and_call_original
-        allow(File).to receive(:read)
+        allow(File).to receive(:binread).and_call_original
+        allow(File).to receive(:binread)
           .with(bomb_path).and_raise(exhaustion_class.new(message))
 
         report = run_batch(input, output)
@@ -220,16 +220,19 @@ RSpec.describe Sirena::Commands::BatchCommand do
 
   # mmdc reads its input as UTF-8 whatever the locale; `File.read` tags a
   # file with the locale's encoding, which `Source` would then transcode.
-  %w[ISO-8859-1 EUC-JP Shift_JIS].each do |locale|
+  %w[ISO-8859-1 EUC-JP Shift_JIS ISO-8859-1:UTF-8].each do |locale|
     context "with #{locale} as the locale" do
       let(:dir) { Dir.mktmpdir }
       let(:output) { File.join(dir, "out") }
+      # With a default internal encoding the write transcodes UTF-8 to the
+      # external one, as `ruby -E` does for any file it writes.
+      let(:external) { locale[/\A[^:]+(?=:)/] || "UTF-8" }
       let(:svg) do
         input = File.join(dir, "cafe.mmd")
         File.binwrite(input, "pie title caf\u00e9\n  \"Dogs\" : 3\n")
         batch_capture(input, output, locale: locale)
         File.binread(File.join(output, "cafe.svg"))
-          .force_encoding(Encoding::UTF_8)
+          .force_encoding(external).encode(Encoding::UTF_8)
       end
 
       after { FileUtils.remove_entry(dir) }
