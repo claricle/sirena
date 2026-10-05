@@ -6415,100 +6415,72 @@
   {
     "case": "git/037_rendering_gitgraph_spec_git_36.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/038_rendering_gitgraph_spec_git_37.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/039_rendering_gitgraph_spec_git_38.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/040_rendering_gitgraph_spec_git_39.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/041_rendering_gitgraph_spec_git_40.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/042_rendering_gitgraph_spec_git_41.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/043_rendering_gitgraph_spec_git_42.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/044_rendering_gitgraph_spec_git_43.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/045_rendering_gitgraph_spec_git_44.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/046_rendering_gitgraph_spec_git_45.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/047_rendering_gitgraph_spec_git_46.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/048_rendering_gitgraph_spec_git_47.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/049_rendering_gitgraph_spec_git_48.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/050_rendering_gitgraph_spec_git_49.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/051_rendering_gitgraph_spec_git_50.mmd",
@@ -6518,9 +6490,7 @@
   {
     "case": "git/052_rendering_gitgraph_spec_git_51.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/053_rendering_gitgraph_spec_git_52.mmd",
@@ -6607,9 +6577,7 @@
   {
     "case": "git/069_parser_should_handle_set_direction_bottom_to_top_68.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/070_parser_should_checkout_a_branch_69.mmd",
@@ -6686,9 +6654,7 @@
   {
     "case": "git/084_parser_should_handle_a_gitgraph_commit_with_custom_commit_msg_only_83.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/085_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_tag_only_84.mmd",
@@ -6713,30 +6679,22 @@
   {
     "case": "git/089_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_tag_and_msg_88.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/090_parser_should_handle_a_gitgraph_commit_with_custom_type_tag_msg_commit_id__89.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/091_parser_should_handle_a_gitgraph_commit_with_custom_tag_msg_commit_id_type__90.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/092_parser_should_handle_a_gitgraph_commit_with_custom_msg_commit_id_type_tag_91.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/093_parser_should_handle_3_straight_commits_92.mmd",
@@ -6751,9 +6709,7 @@
   {
     "case": "git/095_parser_should_allow_quoted_branch_names_94.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/096_parser_should_allow_-_characters_in_branch_names_95.mmd",
@@ -6913,16 +6869,12 @@
   {
     "case": "git/127_parser_should_handle_a_title_and_a_description_accdescr__126.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/128_parser_should_handle_a_title_and_a_multiline_description_accdescr__127.mmd",
     "verdict": "unknown",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "git/129_parser_should_log_a_warning_when_two_commits_have_the_same_id_128.mmd",

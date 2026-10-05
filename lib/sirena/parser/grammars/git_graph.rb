@@ -18,8 +18,12 @@ module Sirena
 
         rule(:header) do
           str("gitGraph") >>
-            (str(" TB:") | str(" LR:") | str("TB:") | str("LR:") | str(":")).maybe >>
+            ((space? >> direction >> space? >> str(":")) | str(":")).maybe >>
             ws?
+        end
+
+        rule(:direction) do
+          (str("TB") | str("LR") | str("BT")).as(:direction)
         end
 
         rule(:statements) do
@@ -28,11 +32,35 @@ module Sirena
 
         rule(:statement) do
           commit_stmt |
-          branch_stmt |
-          checkout_stmt |
-          switch_stmt |
-          merge_stmt |
-          cherry_pick_stmt
+            branch_stmt |
+            checkout_stmt |
+            switch_stmt |
+            merge_stmt |
+            cherry_pick_stmt |
+            acc_title_stmt |
+            acc_descr_stmt
+        end
+
+        rule(:acc_title_stmt) do
+          str("accTitle") >> space? >> colon >> space? >>
+            (line_end.absent? >> any).repeat.as(:acc_title) >>
+            line_end
+        end
+
+        rule(:acc_descr_stmt) do
+          acc_descr_single_line | acc_descr_multi_line
+        end
+
+        rule(:acc_descr_single_line) do
+          str("accDescr") >> space? >> colon >> space? >>
+            (line_end.absent? >> any).repeat.as(:acc_descr) >>
+            line_end
+        end
+
+        rule(:acc_descr_multi_line) do
+          str("accDescr") >> whitespace? >> lbrace >> ws? >>
+            (rbrace.absent? >> any).repeat.as(:acc_descr) >>
+            rbrace >> line_end
         end
 
         rule(:commit_stmt) do
@@ -43,12 +71,20 @@ module Sirena
             line_end
         end
 
+        # A quoted message may follow `commit` directly: `commit"msg"`.
         rule(:commit_options) do
-          space >> (commit_option >> space?).repeat(1)
+          (space.repeat(1) | (str('"') | str("'")).present?) >>
+            (commit_option >> space?).repeat(1)
         end
 
         rule(:commit_option) do
-          commit_id | commit_type | commit_tag
+          commit_id | commit_type | commit_tag | commit_message
+        end
+
+        # `commit "msg"` and `commit msg: "msg"` both set the message.
+        rule(:commit_message) do
+          (str("msg:") >> space? >> quoted_text(:message)) |
+            quoted_text(:message)
         end
 
         rule(:commit_id) do
@@ -72,8 +108,8 @@ module Sirena
 
         rule(:branch_stmt) do
           (
-            str("branch") >> space >>
-            branch_name.as(:name) >>
+            str("branch") >>
+            branch_ref(:name) >>
             branch_options.maybe.as(:options)
           ).as(:branch) >>
             line_end
@@ -88,6 +124,31 @@ module Sirena
         # tail: see `atoms/trimmed_run.rb`.
         rule(:branch_name) { match['\w'] >> TrimmedRun.new('[-.\/\w]', '[.\/]') }
 
+        # The branch operand of a statement, with the whitespace after its
+        # keyword. A quoted name allows spaces and any other character but the
+        # closing quote, and may follow the keyword directly (`branch"a b"`);
+        # a bare name needs at least one space. Not a `rule`: the capture name
+        # differs per statement.
+        def branch_ref(key)
+          (space? >> quoted_text(key)) |
+            (space.repeat(1) >> branch_name.as(key))
+        end
+
+        # A backslash escapes the character after it, except a line break, so
+        # `"a\\"` is a complete string; State.unquote resolves the escapes
+        # afterwards. An unescaped line break is part of the string.
+        def quoted_text(key)
+          quoted_by('"', key) | quoted_by("'", key)
+        end
+
+        def quoted_by(quote, key)
+          body = quoted_escape | match("[^#{quote}\\\\]")
+
+          str(quote) >> body.repeat.as(key) >> str(quote)
+        end
+
+        rule(:quoted_escape) { str("\\") >> match('[^\n\r\u2028\u2029]') }
+
         rule(:branch_options) do
           space >> (branch_option >> space?).repeat(1)
         end
@@ -98,24 +159,24 @@ module Sirena
 
         rule(:checkout_stmt) do
           (
-            str("checkout") >> space >>
-            branch_name.as(:branch)
+            str("checkout") >>
+            branch_ref(:branch)
           ).as(:checkout) >>
             line_end
         end
 
         rule(:switch_stmt) do
           (
-            str("switch") >> space >>
-            branch_name.as(:branch)
+            str("switch") >>
+            branch_ref(:branch)
           ).as(:switch) >>
             line_end
         end
 
         rule(:merge_stmt) do
-          str("merge") >> space >>
+          str("merge") >>
             (
-              branch_name.as(:branch) >>
+              branch_ref(:branch) >>
               merge_options.maybe.as(:options)
             ).as(:merge) >>
             line_end
@@ -127,7 +188,7 @@ module Sirena
 
         rule(:merge_option) do
           commit_id | commit_type | commit_tag |
-          (str("random:") >> quoted_string)
+            (str("random:") >> quoted_string)
         end
 
         rule(:cherry_pick_stmt) do
@@ -162,7 +223,7 @@ module Sirena
 
         rule(:quoted_string) do
           str('"') >> match('[^"]').repeat(0) >> str('"') |
-          str("'") >> match("[^']").repeat(0) >> str("'")
+            str("'") >> match("[^']").repeat(0) >> str("'")
         end
 
         root(:diagram)

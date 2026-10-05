@@ -24,17 +24,20 @@ module Sirena
     #   renderer = Renderer::GitGraph.new(theme: my_theme)
     #   svg = renderer.render(layout)
     class GitGraph < Base
+      # How much of a label's width lies left of its x, per text-anchor.
+      ANCHOR_SHARE = { "start" => 0.0, "middle" => 0.5, "end" => 1.0 }.freeze
+      private_constant :ANCHOR_SHARE
+
       # Renders the layout structure to SVG.
       #
       # @param layout [Hash] layout data from Layout::GitGraph
       # @return [Svg::Document] rendered SVG document
       def render(layout)
+        @orientation = layout[:orientation]
         svg = create_document_from_layout(layout)
-
-        # Render in order: connections, then commits, then labels
-        render_connections(layout, svg)
-        render_commits(layout, svg)
-        render_labels(layout, svg)
+        inherited = svg.children.size
+        draw(layout, svg)
+        fit_labels(layout, svg, inherited)
 
         svg
       end
@@ -50,6 +53,77 @@ module Sirena
       def create_document_from_layout(layout)
         build_document_from_layout(layout, padding: 40)
       end
+
+      # Renders in order: connections, then commits, then labels.
+      def draw(layout, svg)
+        render_connections(layout, svg)
+        render_commits(layout, svg)
+        render_labels(layout, svg)
+      end
+
+      # Widens the box for labels that pass the 40px padding. A label past
+      # the left edge also shifts the drawing right, which redraws once, so
+      # the render_* hooks (an overridden render_labels too) run twice.
+      #
+      # @param layout [Hash] layout data
+      # @param svg [Svg::Document] rendered document, widened in place
+      # @param inherited [Integer] children present before drawing started;
+      #   a redraw keeps them where they are, so they are not measured
+      # @return [void]
+      def fit_labels(layout, svg, inherited)
+        spill_left, spill_right = label_spill(svg, inherited)
+        return if spill_left.zero? && spill_right.zero?
+
+        svg.width += spill_left + spill_right
+        svg.view_box = widened_view_box(svg) if svg.view_box
+        return unless spill_left.positive?
+
+        redraw_shifted(layout, svg, spill_left, inherited)
+      end
+
+      # How far the drawn labels pass the left and the right edge.
+      #
+      # @return [Array<Numeric>] left spill, right spill; both 0 when fitting
+      def label_spill(svg, inherited)
+        labels = svg.children.drop(inherited).grep(Svg::Text)
+        return [0, 0] if labels.empty?
+
+        lefts, rights = labels.map { |text| label_span(text) }.transpose
+        [[-lefts.min, 0].max, [rights.max - svg.width, 0].max]
+      end
+
+      # Keeps the origin a subclass's document hook chose and replaces the
+      # extent.
+      def widened_view_box(svg)
+        origin = svg.view_box.split.first(2).join(" ")
+        "#{origin} #{svg.width} #{svg.height}"
+      end
+
+      def redraw_shifted(layout, svg, shift, inherited)
+        @offset_x += shift
+        svg.children.slice!(inherited..)
+        draw(layout, svg)
+      end
+
+      # Horizontal extent of a text label, from its anchor and a width
+      # hint that errs wide (see WIDE_CHAR_WIDTH_RATIO): the average
+      # TextMeasurement uses clips ordinary ASCII labels at their real width.
+      #
+      # @param text [Svg::Text] label
+      # @return [Array<Float>] left and right edge
+      def label_span(text)
+        width = label_width(text)
+        share = ANCHOR_SHARE.fetch(text.text_anchor, 0.0)
+        left = text.x.to_f - (width * share)
+        [left, left + width]
+      end
+
+      def label_width(text)
+        shown = Svg::Escaping.strip_forbidden(Array(text.content).join)
+        shown.length * text.font_size.to_f * WIDE_CHAR_WIDTH_RATIO
+      end
+      private :draw, :fit_labels, :label_spill, :widened_view_box,
+              :redraw_shifted, :label_span, :label_width
 
       # Renders all connections between commits.
       #
@@ -121,7 +195,8 @@ module Sirena
 
         # Create curved path for merge
         if from_y != to_y
-          # Different lanes - use bezier curve
+          # Different Y - use bezier curve (a straight line when both X match,
+          # as for commits in one TB/BT lane)
           control_x1 = from_x + (to_x - from_x) * 0.5
           control_y1 = from_y
           control_x2 = from_x + (to_x - from_x) * 0.5
@@ -132,7 +207,7 @@ module Sirena
                       "#{control_x2} #{control_y2}, " \
                       "#{to_x} #{to_y}"
         else
-          # Same lane - straight line
+          # Same Y - straight line
           path_data = "M #{from_x} #{from_y} L #{to_x} #{to_y}"
         end
 
@@ -145,6 +220,12 @@ module Sirena
         end
 
         svg.add_element(path)
+      end
+
+      # The time axis runs top-to-bottom or bottom-to-top, so lanes are
+      # columns and labels sit beside the commit rather than below it.
+      def vertical?
+        %w[TB BT].include?(@orientation)
       end
 
       # Renders a cherry-pick connection with dotted line.
@@ -268,12 +349,12 @@ module Sirena
         x = commit[:x] + @offset_x
         y = commit[:y] + @offset_y
 
-        # Render commit ID below the circle if present
+        # Render commit ID beside the circle (below it for LR) if present
         if commit[:id] && !commit[:id].start_with?("commit_")
           render_commit_id_label(commit[:id], x, y, svg)
         end
 
-        # Render tag above the circle if present
+        # Render tag opposite the ID (above the circle for LR) if present
         render_tag_label(commit[:tag], x, y, svg) if commit[:tag]
       end
 
@@ -286,9 +367,8 @@ module Sirena
       # @return [void]
       def render_commit_id_label(id, x, y, svg)
         text = Svg::Text.new.tap do |t|
-          t.x = x
-          t.y = y + 20
-          t.text_anchor = "middle"
+          t.x, t.y, t.text_anchor =
+            vertical? ? [x + 14, y + 4, "start"] : [x, y + 20, "middle"]
           t.fill = theme_color(:label_text) || "#000000"
           t.font_size = (theme_typography(:font_size_small) || 10).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
@@ -307,9 +387,8 @@ module Sirena
       # @return [void]
       def render_tag_label(tag, x, y, svg)
         text = Svg::Text.new.tap do |t|
-          t.x = x
-          t.y = y - 15
-          t.text_anchor = "middle"
+          t.x, t.y, t.text_anchor =
+            vertical? ? [x - 14, y + 4, "end"] : [x, y - 15, "middle"]
           t.fill = theme_color(:accent) || "#7c3aed"
           t.font_size = (theme_typography(:font_size_small) || 10).to_s
           t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
@@ -318,6 +397,15 @@ module Sirena
         end
 
         svg.add_element(text)
+      end
+
+      # Branch names sit past the last commit, in the direction time runs.
+      def branch_label_position(x_pos, y_pos)
+        case @orientation
+        when "TB" then [x_pos, y_pos + 24, "middle"]
+        when "BT" then [x_pos, y_pos - 16, "middle"]
+        else [x_pos + 15, y_pos + 4, "start"]
+        end
       end
 
       # Renders branch name labels.
@@ -336,16 +424,14 @@ module Sirena
 
         # Render label for each branch at its last commit
         branch_last_commits.each do |branch_name, commit|
-          x = commit[:x] + @offset_x + 15
+          x = commit[:x] + @offset_x
           y = commit[:y] + @offset_y
 
           branch_meta = layout[:branches].find { |b| b[:name] == branch_name }
           color = branch_meta&.dig(:color) || theme_color(:primary) || "#2563eb"
 
           text = Svg::Text.new.tap do |t|
-            t.x = x
-            t.y = y + 4
-            t.text_anchor = "start"
+            t.x, t.y, t.text_anchor = branch_label_position(x, y)
             t.fill = color
             t.font_size = (theme_typography(:font_size_small) || 10).to_s
             t.font_family = theme_typography(:font_family) || "Arial, sans-serif"

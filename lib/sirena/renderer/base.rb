@@ -37,6 +37,14 @@ module Sirena
     #
     # @abstract Subclass and implement rendering methods
     class Base
+      # Em-per-character width HINT for room around a text label; it is NOT a
+      # bound. At font-size 12 in Chrome, ASCII tops out at 0.89, CJK at 1.02,
+      # emoji at 1.42, and one codepoint (U+FDFD) renders at 6.49, so 1.5
+      # clears everything but that. Keep it above 1.0 so CJK fits; raise it
+      # only after re-measuring a real script.
+      WIDE_CHAR_WIDTH_RATIO = 1.5
+      private_constant :WIDE_CHAR_WIDTH_RATIO
+
       attr_accessor :theme
 
       # Creates a new renderer instance.

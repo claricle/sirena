@@ -50,21 +50,26 @@ module Sirena
 
         # Transform parse tree to diagram model
         transform = Builders::GitGraph.new
-        result = transform.apply(parse_tree)
+        result = transform.apply(parse_tree.slice(:statements))
 
         # Create the diagram model
-        create_diagram(result)
+        create_diagram(result, parse_tree.fetch(:direction, "LR").to_s)
       end
 
       private
 
-      def create_diagram(result)
-        diagram = Diagram::GitGraph.new
+      def create_diagram(result, orientation)
+        diagram = Diagram::GitGraph.new(
+          orientation: orientation,
+          acc_title: result[:acc_title],
+          acc_description: result[:acc_description],
+        )
 
         # Add commits
         result[:commits].each do |commit_data|
           commit = Diagram::GitGraph::Commit.new(
             id: commit_data[:id],
+            message: commit_data[:message],
             type: commit_data[:type],
             tag: commit_data[:tag],
             branch_name: commit_data[:branch_name],
