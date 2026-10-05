@@ -71,10 +71,12 @@ module Sirena
       # @return [void]
       def write_output(svg)
         if options[:output]
-          File.write(options[:output], svg)
+          File.binwrite(options[:output], svg)
           puts "SVG written to #{options[:output]}" if options[:verbose]
         else
-          puts svg
+          # UTF-8 to UTF-8 so the stream does not transcode to the locale's
+          # encoding, or raise on a character it lacks.
+          $stdout.set_encoding(Encoding::UTF_8, Encoding::UTF_8).write(svg, "\n")
         end
       rescue Errno::EACCES
         raise ArgumentError,

@@ -218,27 +218,26 @@ RSpec.describe Sirena::Commands::BatchCommand do
     end
   end
 
-  # mmdc reads its input as UTF-8 whatever the locale; `File.read` tags a
-  # file with the locale's encoding, which `Source` would then transcode.
-  %w[ISO-8859-1 EUC-JP Shift_JIS ISO-8859-1:UTF-8].each do |locale|
+  # mmdc reads and writes UTF-8 whatever the locale; `File.read` tags a file
+  # with the locale's encoding, which `Source` would then transcode, and a
+  # text-mode write transcodes the SVG back out (or raises on a character
+  # the locale lacks).
+  %w[ISO-8859-1 EUC-JP Shift_JIS ISO-8859-1:UTF-8 EUC-JP:UTF-8].each do |locale|
     context "with #{locale} as the locale" do
       let(:dir) { Dir.mktmpdir }
       let(:output) { File.join(dir, "out") }
-      # With a default internal encoding the write transcodes UTF-8 to the
-      # external one, as `ruby -E` does for any file it writes.
-      let(:external) { locale[/\A[^:]+(?=:)/] || "UTF-8" }
+      let(:text) { "\u65E5\u672C caf\u00e9" }
       let(:svg) do
         input = File.join(dir, "cafe.mmd")
-        File.binwrite(input, "pie title caf\u00e9\n  \"Dogs\" : 3\n")
+        File.binwrite(input, "pie title #{text}\n  \"Dogs\" : 3\n")
         batch_capture(input, output, locale: locale)
-        File.binread(File.join(output, "cafe.svg"))
-          .force_encoding(external).encode(Encoding::UTF_8)
+        File.binread(File.join(output, "cafe.svg")).force_encoding(Encoding::UTF_8)
       end
 
       after { FileUtils.remove_entry(dir) }
 
-      it "reads a UTF-8 file as UTF-8" do
-        expect(svg).to include(">caf\u00e9<")
+      it "reads a UTF-8 file as UTF-8 and writes the SVG as UTF-8 bytes" do
+        expect(svg).to be_valid_encoding.and include(">#{text}<")
       end
     end
   end
