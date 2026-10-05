@@ -318,20 +318,39 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # point just outside each range, and next to each lone escape, must
     # not -- so widening the class turns this red as surely as dropping
     # an escape does.
-    [:tilde_prefix, :tilde_suffix].each do |rule_name|
-      it "#{rule_name} ends its run at every JS `\\s` character and at none of the adjacent code points" do
-        rule = Sirena::Parser::Grammars::ErDiagram.new.public_send(rule_name)
-        run_before = ->(char) { rule.parse("foo#{char}bar", prefix: true).to_s }
-        whitespace = ["\t", "\v", "\f", ' ', "\u00A0", "\u1680", *(0x2000..0x200A).map { |code| [code].pack('U') },
-                      "\u2028", "\u2029", "\u202F", "\u205F", "\u3000", "\uFEFF", "\n", "\r"]
-        not_whitespace = ["\b", "\u000E", "\u001F", '!', "\u0085", "\u009F", "\u00A1", "\u167F", "\u1681",
-                          "\u180E", "\u1FFF", "\u200B", "\u2027", "\u202A", "\u202E", "\u2030", "\u205E", "\u2060", "\u2FFF",
-                          "\u3001", "\uFEFE", "\uFF00"]
+    %w[tilde_prefix tilde_suffix].each do |rule_name|
+      context "with #{rule_name}" do
+        let(:run_before) do
+          rule = Sirena::Parser::Grammars::ErDiagram.new.public_send(rule_name)
+          ->(char) { rule.parse("foo#{char}bar", prefix: true).to_s }
+        end
+        let(:whitespace) do
+          ["\t", "\v", "\f", " ", "\u00A0", "\u1680",
+           *(0x2000..0x200A).map { |code| [code].pack("U") },
+           "\u2028", "\u2029", "\u202F", "\u205F", "\u3000",
+           "\uFEFF", "\n", "\r"]
+        end
+        let(:not_whitespace) do
+          ["\b", "\u000E", "\u001F", "!", "\u0085", "\u009F",
+           "\u00A1", "\u167F", "\u1681", "\u180E", "\u1FFF",
+           "\u200B", "\u2027", "\u202A", "\u202E", "\u2030",
+           "\u205E", "\u2060", "\u2FFF", "\u3001", "\uFEFE",
+           "\uFF00"]
+        end
 
-        ran_through = whitespace.reject { |char| run_before.call(char) == 'foo' }
-        stopped_early = not_whitespace.reject { |char| run_before.call(char) == "foo#{char}bar" }
+        it "ends its run at every JS `\\s` character" do
+          stuck = whitespace.reject { |char| run_before.call(char) == "foo" }
 
-        expect([ran_through.map(&:dump), stopped_early.map(&:dump)]).to eq([[], []])
+          expect(stuck.map(&:dump)).to eq([])
+        end
+
+        it "does not end its run at any adjacent code point" do
+          early = not_whitespace.reject do |char|
+            run_before.call(char) == "foo#{char}bar"
+          end
+
+          expect(early.map(&:dump)).to eq([])
+        end
       end
     end
 

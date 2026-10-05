@@ -162,7 +162,7 @@ RSpec.describe Sirena::Parser::GitGraph do
           {
             "word run" => "a#{'b' * run_length}",
             "trailing dot" => "a#{'b' * (run_length - 1)}.",
-            "dot then word" => "a#{'b' * (run_length - 1)}.c"
+            "dot then word" => "a#{'b' * (run_length - 1)}.c",
           }.filter_map do |shape, name|
             got = grammar.branch_name.parse(name, prefix: true).to_s
             "#{shape} with run length #{run_length}" if got != whole_input_regex.match(name)[0]

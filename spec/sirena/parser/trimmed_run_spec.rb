@@ -46,23 +46,25 @@ RSpec.describe Sirena::Parser::Atoms::TrimmedRun do
     [64, 192, 448].each do |edge|
       context "with the #{edge}-character chunk edge" do
         [edge - 1, edge].each do |dot_index|
-          it "keeps a dot at index #{dot_index} that is followed by more of the run" do
+          it "keeps a dot at index #{dot_index} followed by more run" do
             run = "#{'a' * dot_index}.#{'b' * 10}"
 
             expect(atom.parse(run).to_s).to eq(run)
           end
 
-          it "trims a trailing dot at index #{dot_index}, leaving it for the next atom" do
-            tree = (atom.as(:name) >> Parslet.str('.')).parse("#{'a' * dot_index}.")
+          it "trims a trailing dot at index #{dot_index}" do
+            named = atom.as(:name) >> Parslet.str(".")
+            tree = named.parse("#{'a' * dot_index}.")
 
-            expect(tree[:name].to_s).to eq('a' * dot_index)
+            expect(tree[:name].to_s).to eq("a" * dot_index)
           end
         end
 
-        it 'trims trailing dots that straddle the edge' do
-          tree = (atom.as(:name) >> Parslet.str('..')).parse("#{'a' * (edge - 1)}..")
+        it "trims trailing dots that straddle the edge" do
+          named = atom.as(:name) >> Parslet.str("..")
+          tree = named.parse("#{'a' * (edge - 1)}..")
 
-          expect(tree[:name].to_s).to eq('a' * (edge - 1))
+          expect(tree[:name].to_s).to eq("a" * (edge - 1))
         end
       end
     end

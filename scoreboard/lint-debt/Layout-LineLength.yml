@@ -310,7 +310,7 @@ rows:
 - file: spec/sirena/parser/class_diagram_spec.rb
   count: 2
 - file: spec/sirena/parser/delimited_run_spec.rb
-  count: 5
+  count: 4
 - file: spec/sirena/parser/er_diagram_spec.rb
   count: 18
 - file: spec/sirena/parser/error_position_spec.rb
@@ -336,7 +336,7 @@ rows:
 - file: spec/sirena/parser/gantt_spec.rb
   count: 4
 - file: spec/sirena/parser/git_graph_spec.rb
-  count: 15
+  count: 12
 - file: spec/sirena/parser/greedy_run_spec.rb
   count: 3
 - file: spec/sirena/parser/kanban_spec.rb
@@ -363,8 +363,6 @@ rows:
   count: 1
 - file: spec/sirena/parser/treemap_spec.rb
   count: 4
-- file: spec/sirena/parser/trimmed_run_spec.rb
-  count: 1
 - file: spec/sirena/parser/user_journey_spec.rb
   count: 30
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
