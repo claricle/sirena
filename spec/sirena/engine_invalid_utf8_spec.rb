@@ -118,16 +118,12 @@ RSpec.describe Sirena::Engine do
             outcome(with_slot(source, "\uFFFD" * replacements))
           end
 
-          it "is not valid UTF-8 to begin with" do
+          # The first two expectations are what make the third a comparison of
+          # two renders rather than of two refusals; they pass without the
+          # fix, so they stay in this example rather than standing alone.
+          it "renders the same as the decoded source", :aggregate_failures do
             expect(invalid).not_to be_valid_encoding
-          end
-
-          # Without this, the next example would compare two refusals.
-          it "renders the decoded source, #{replacements} U+FFFD" do
             expect(decoded.first).to eq(:svg)
-          end
-
-          it "renders the same as that decoded source" do
             expect(outcome(invalid)).to eq(decoded)
           end
         end
