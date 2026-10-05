@@ -12,6 +12,21 @@ module DefaultExternalEncoding
     silently { Encoding.default_external = original }
   end
 
+  # Runs a block with `$stdin` reading `text` from a pipe. The pipe's read end
+  # takes the default external encoding in force when it is made, so call this
+  # inside `with_default_external` to get a locale-tagged `$stdin`.
+  def with_stdin(text)
+    original = $stdin
+    reader, writer = IO.pipe
+    writer.write(text)
+    writer.close
+    $stdin = reader
+    yield
+  ensure
+    $stdin = original
+    reader&.close
+  end
+
   # `Encoding.default_external=` warns under `-w`, which the suite runs with.
   def silently
     verbose = $VERBOSE
