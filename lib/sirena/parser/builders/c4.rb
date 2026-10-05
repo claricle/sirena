@@ -50,7 +50,7 @@ module Sirena
           i = 0
           while i < tree.length
             item = tree[i]
-            
+
             # Check if this is an element/boundary statement starter
             if item.is_a?(Hash) && (item[:element_type] || item[:boundary_type])
               # Don't merge if this has a body (it's a complete boundary statement)
@@ -59,7 +59,7 @@ module Sirena
                 i += 1
                 next
               end
-              
+
               # Look ahead and merge all related hashes
               j = i + 1
               while j < tree.length && tree[j].is_a?(Hash)
@@ -178,7 +178,7 @@ module Sirena
 
             # Normalize body to array of items
             body_array = stmt[:body].is_a?(Array) ? stmt[:body] : [stmt[:body]]
-            
+
             # Extract items from the body structure
             body_items = body_array.flat_map do |item|
               if item.is_a?(Hash) && item[:item]
