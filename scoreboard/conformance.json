@@ -2784,7 +2784,67 @@
     "status": "conformant"
   },
   {
+    "case": "git/037_rendering_gitgraph_spec_git_36.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/038_rendering_gitgraph_spec_git_37.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/039_rendering_gitgraph_spec_git_38.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/040_rendering_gitgraph_spec_git_39.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/041_rendering_gitgraph_spec_git_40.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/042_rendering_gitgraph_spec_git_41.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/043_rendering_gitgraph_spec_git_42.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/044_rendering_gitgraph_spec_git_43.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/045_rendering_gitgraph_spec_git_44.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/046_rendering_gitgraph_spec_git_45.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/047_rendering_gitgraph_spec_git_46.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/048_rendering_gitgraph_spec_git_47.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/049_rendering_gitgraph_spec_git_48.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/050_rendering_gitgraph_spec_git_49.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "git/051_rendering_gitgraph_spec_git_50.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/052_rendering_gitgraph_spec_git_51.mmd",
     "status": "conformant"
   },
   {
@@ -2848,6 +2908,10 @@
     "status": "conformant"
   },
   {
+    "case": "git/069_parser_should_handle_set_direction_bottom_to_top_68.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "git/070_parser_should_checkout_a_branch_69.mmd",
     "status": "conformant"
   },
@@ -2900,6 +2964,10 @@
     "status": "conformant"
   },
   {
+    "case": "git/084_parser_should_handle_a_gitgraph_commit_with_custom_commit_msg_only_83.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "git/085_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_tag_only_84.mmd",
     "status": "conformant"
   },
@@ -2916,11 +2984,31 @@
     "status": "conformant"
   },
   {
+    "case": "git/089_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_tag_and_msg_88.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/090_parser_should_handle_a_gitgraph_commit_with_custom_type_tag_msg_commit_id__89.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/091_parser_should_handle_a_gitgraph_commit_with_custom_tag_msg_commit_id_type__90.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/092_parser_should_handle_a_gitgraph_commit_with_custom_msg_commit_id_type_tag_91.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "git/093_parser_should_handle_3_straight_commits_92.mmd",
     "status": "conformant"
   },
   {
     "case": "git/094_parser_should_handle_new_branch_creation_93.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/095_parser_should_allow_quoted_branch_names_94.mmd",
     "status": "conformant"
   },
   {
@@ -3045,6 +3133,14 @@
   },
   {
     "case": "git/126_parser_should_throw_error_when_trying_to_merge_branch_which_has_no_commits_125.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/127_parser_should_handle_a_title_and_a_description_accdescr__126.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "git/128_parser_should_handle_a_title_and_a_multiline_description_accdescr__127.mmd",
     "status": "conformant"
   },
   {
