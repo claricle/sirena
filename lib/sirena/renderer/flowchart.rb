@@ -107,59 +107,6 @@ module Sirena
       SVG_DEFAULT_FONT_SIZE = 16.0
       private_constant :SVG_DEFAULT_FONT_SIZE
 
-      # `TextMeasurement`'s average ratio is deliberately an average — the
-      # right choice for sizing a box AROUND text, the wrong one for
-      # reducing how often a self loop's label runs past the room this
-      # sizes for it.
-      #
-      # This is NOT a bound, and a first version of this constant that
-      # tried to be one (`1.0`, set from ASCII alone) was refuted by
-      # measuring real scripts rather than raising the number until
-      # nothing failed. `overflow: 'hidden'` on the document is SVG's
-      # SPECIFIED way to clip a viewport's content to its own bounds —
-      # see `#render` for what that specification is measured to buy
-      # here, which is less than it sounds. This constant only decides
-      # how RARELY an underestimate reaches that edge at all.
-      #
-      # Measured with Chrome against Sirena's own rendered `<text>`
-      # (Arial, Helvetica, sans-serif at font-size 12 — the theme's
-      # `font_size_small`), em-per-character:
-      #
-      #   ASCII widest (ten repeats each, ' @' the max)         0.889
-      #   CJK Han / Hiragana / Fullwidth Latin                  1.00–1.02
-      #   Emoji, incl. a 7-codepoint ZWJ family (one glyph)     1.25–1.42
-      #   Devanagari (plain and a 3-codepoint conjunct)         0.75–0.81
-      #   Arabic (a plain letter)                               0.71
-      #   A combining sequence (e + acute, 2 codepoints)        0.56
-      #   Arabic ligature U+FDFD (Bismillah, ONE codepoint)     6.49
-      #
-      # The last row is why this can never be a bound. East Asian Width
-      # classifies U+FDFD as `N` (Neutral) — NOT the same class as `A`
-      # or `@`, which are both `Na` (Narrow): a table keyed on that
-      # property could in principle score them apart. What it proves is
-      # narrower and still fatal to any character-count approach: one
-      # 6.49em character disproves every SMALLER constant, and Unicode
-      # properties alone do not supply reliable advances for an
-      # unspecified font — EAW describes how much horizontal space a
-      # character is conventionally given in East Asian typesetting, not
-      # what any particular font's ligature or shaping table does with
-      # it. This does not prove no scalar exists for a FIXED font
-      # configuration (Arial, Helvetica, sans-serif, as the theme names
-      # it); it proves that deriving one from codepoint properties
-      # rather than measuring the font is not reliable. Short of a real
-      # font metrics table (the dependency `TextMeasurement`'s own docs
-      # say this gem avoids), no per-codepoint number bounds what a
-      # font's ligature substitution can do with a single input
-      # character.
-      #
-      # 1.5 clears every row above except the ligature — CJK and emoji
-      # included, both of which `1.0` (this constant's first value)
-      # UNDERSHOT despite being set with headroom over ASCII, which is
-      # the tell that ASCII-only measurement was never going to
-      # generalise.
-      WIDE_CHAR_WIDTH_RATIO = 1.5
-      private_constant :WIDE_CHAR_WIDTH_RATIO
-
       # A self loop is a two-corner polyline. It goes out past the node
       # edge by SELF_LOOP_DEPTH of the node's shorter side, capped at
       # SELF_LOOP_MAX_DEPTH, and spreads SELF_LOOP_HALF_SPAN either side

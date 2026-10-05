@@ -29,7 +29,10 @@ module Sirena
         attribute :created_at_commit, :string
       end
 
+      # "LR" (default), "TB" or "BT": the direction time runs in.
       attribute :orientation, :string, default: -> { "LR" }
+      attribute :acc_title, :string
+      attribute :acc_description, :string
       attribute :commits, Commit, collection: true, default: -> { [] }
       attribute :branches, Branch, collection: true, default: -> { [] }
 

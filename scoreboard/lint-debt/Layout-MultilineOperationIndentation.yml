@@ -33,8 +33,6 @@ rows:
   count: 2
 - file: lib/sirena/parser/grammars/flowchart.rb
   count: 3
-- file: lib/sirena/parser/grammars/git_graph.rb
-  count: 7
 - file: lib/sirena/parser/grammars/mindmap.rb
   count: 3
 - file: lib/sirena/parser/grammars/timeline.rb

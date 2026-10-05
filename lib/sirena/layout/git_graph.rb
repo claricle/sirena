@@ -7,12 +7,14 @@ module Sirena
     # Transforms a GitGraph diagram into a positioned layout structure.
     #
     # Unlike other transformers that use ELK layout, GitGraph uses a custom
-    # layout algorithm that assigns commits to horizontal lanes (Y positions)
-    # and sequential X positions based on commit order.
+    # layout algorithm that assigns commits to lanes and sequential
+    # positions along the time axis based on commit order. The time axis
+    # runs left to right for `LR`, top to bottom for `TB` and bottom to top
+    # for `BT`; lanes are rows for `LR` and columns otherwise.
     #
     # The layout algorithm handles:
-    # - Branch lane assignment (main branch at top)
-    # - Commit positioning (chronological X coordinates)
+    # - Branch lane assignment (main branch in the first lane)
+    # - Commit positioning (chronological, along the time axis)
     # - Parent-child relationships for drawing connections
     # - Merge point tracking for drawing merge arrows
     # - Cherry-pick visualization
@@ -21,10 +23,10 @@ module Sirena
     #   transform = Layout::GitGraph.new
     #   layout = transform.to_graph(diagram)
     class GitGraph < Base
-      # Spacing between commits horizontally
+      # Spacing between commits along the time axis
       COMMIT_SPACING = 80
 
-      # Spacing between branch lanes vertically
+      # Spacing between branch lanes
       LANE_SPACING = 60
 
       # Radius of commit circles
@@ -41,6 +43,8 @@ module Sirena
       # @param diagram [Diagram::GitGraph] the git graph diagram
       # @return [Hash] layout data with commits, branches, and connections
       def build_graph(diagram)
+        orientation = diagram.orientation
+
         # Build commit lookup and parent tracking
         commits_by_id = build_commit_lookup(diagram.commits)
         branch_info = build_branch_info(diagram)
@@ -53,6 +57,7 @@ module Sirena
           diagram.commits,
           commits_by_id,
           lane_assignments,
+          orientation,
         )
 
         # Build connections between commits
@@ -68,12 +73,16 @@ module Sirena
           positioned_commits,
         )
 
+        width, height = extents(positioned_commits, lane_assignments,
+                                orientation)
+
         {
           commits: positioned_commits,
           branches: branches,
           connections: connections,
-          width: calculate_width(positioned_commits),
-          height: calculate_height(lane_assignments),
+          orientation: orientation,
+          width: width,
+          height: height,
         }
       end
 
@@ -119,9 +128,9 @@ module Sirena
         info
       end
 
-      # Assigns lanes (Y positions) to branches.
+      # Assigns lanes (rows for LR, columns for TB/BT) to branches.
       #
-      # Main branch gets lane 0, child branches get lanes below parent.
+      # Main branch gets lane 0, child branches get the following lanes.
       #
       # @param diagram [Diagram::GitGraph] diagram
       # @param branch_info [Hash] branch information
@@ -153,18 +162,20 @@ module Sirena
       # @param commits [Array<Diagram::GitGraph::Commit>] commits
       # @param commits_by_id [Hash] commit lookup
       # @param lane_assignments [Hash] branch to lane mapping
+      # @param orientation [String] "LR", "TB" or "BT"
       # @return [Array<Hash>] positioned commits
-      def position_commits(commits, commits_by_id, lane_assignments)
+      def position_commits(commits, commits_by_id, lane_assignments,
+                           orientation)
         positioned = []
 
         commits.each_with_index do |commit, idx|
-          # X position is based on commit order
-          x = idx * COMMIT_SPACING + COMMIT_SPACING
-
-          # Y position is based on branch lane
           branch = commit.branch_name || "main"
           lane = lane_assignments[branch] || 0
-          y = lane * LANE_SPACING + LANE_SPACING
+          x, y = coordinates(
+            time_position(idx, commits.size, orientation),
+            (lane * LANE_SPACING) + LANE_SPACING,
+            orientation,
+          )
 
           commit_id = commit.id || "commit_#{idx}"
 
@@ -187,6 +198,29 @@ module Sirena
         end
 
         positioned
+      end
+
+      # Width and height: the time axis is horizontal for `LR` only.
+      def extents(positioned_commits, lane_assignments, orientation)
+        time_span = calculate_time_span(positioned_commits.size)
+        lane_span = calculate_lane_span(lane_assignments)
+        vertical?(orientation) ? [lane_span, time_span] : [time_span, lane_span]
+      end
+
+      def vertical?(orientation)
+        %w[TB BT].include?(orientation)
+      end
+
+      # Distance along the time axis from the start edge of the diagram.
+      # `BT` counts down from the last commit, so the first commit is
+      # the lowest one.
+      def time_position(idx, count, orientation)
+        step = orientation == "BT" ? count - idx : idx + 1
+        step * COMMIT_SPACING
+      end
+
+      def coordinates(time, lane, orientation)
+        vertical?(orientation) ? [lane, time] : [time, lane]
       end
 
       # Builds connections between commits.
@@ -259,22 +293,21 @@ module Sirena
         metadata
       end
 
-      # Calculates total width needed for the layout.
+      # Calculates the extent along the time axis.
       #
-      # @param positioned_commits [Array<Hash>] positioned commits
-      # @return [Numeric] total width in pixels
-      def calculate_width(positioned_commits)
-        return COMMIT_SPACING * 2 if positioned_commits.empty?
+      # @param commit_count [Integer] number of commits
+      # @return [Numeric] extent in pixels
+      def calculate_time_span(commit_count)
+        return COMMIT_SPACING * 2 if commit_count.zero?
 
-        max_x = positioned_commits.map { |c| c[:x] }.max
-        max_x + COMMIT_SPACING
+        (commit_count + 1) * COMMIT_SPACING
       end
 
-      # Calculates total height needed for the layout.
+      # Calculates the extent across the lanes.
       #
       # @param lane_assignments [Hash] lane assignments
-      # @return [Numeric] total height in pixels
-      def calculate_height(lane_assignments)
+      # @return [Numeric] extent in pixels
+      def calculate_lane_span(lane_assignments)
         return LANE_SPACING * 2 if lane_assignments.empty?
 
         max_lane = lane_assignments.values.max
