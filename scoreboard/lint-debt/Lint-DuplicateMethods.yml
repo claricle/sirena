@@ -1,5 +1,0 @@
----
-cop: Lint/DuplicateMethods
-rows:
-- file: lib/sirena/diagram/xy_chart.rb
-  count: 1

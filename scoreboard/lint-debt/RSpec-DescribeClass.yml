@@ -17,3 +17,15 @@ rows:
   count: 1
 - file: spec/integration/user_journey_integration_spec.rb
   count: 1
+- file: spec/sirena/svg/no_xml_mapping_spec.rb
+  count: 1
+- file: spec/sirena/svg/registry_spec.rb
+  count: 1
+- file: spec/spec_helper_corpus_guard_spec.rb
+  count: 1
+- file: spec/tasks/benchmark_rake_spec.rb
+  count: 1
+- file: spec/tasks/coverage_rake_spec.rb
+  count: 1
+- file: spec/workflows/workflows_spec.rb
+  count: 1

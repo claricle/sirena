@@ -1,33 +1,47 @@
 ---
 cop: Metrics/BlockLength
 rows:
-- file: lib/sirena/parser/transforms/block.rb
-  count: 2
-- file: lib/sirena/parser/transforms/git_graph.rb
-  count: 2
-- file: lib/sirena/parser/transforms/radar.rb
+- file: ".simplecov"
   count: 1
-- file: lib/sirena/parser/transforms/requirement.rb
+- file: lib/sirena/layout/architecture.rb
+  count: 1
+- file: lib/sirena/layout/block.rb
+  count: 1
+- file: lib/sirena/layout/c4.rb
+  count: 1
+- file: lib/sirena/layout/mindmap.rb
+  count: 1
+- file: lib/sirena/layout/requirement.rb
+  count: 2
+- file: lib/sirena/markdown_text/emphasis_simulator.rb
+  count: 1
+- file: lib/sirena/parser/builders/block.rb
+  count: 2
+- file: lib/sirena/parser/builders/flowchart.rb
+  count: 1
+- file: lib/sirena/parser/builders/git_graph.rb
+  count: 2
+- file: lib/sirena/parser/builders/kanban.rb
+  count: 1
+- file: lib/sirena/parser/builders/radar.rb
+  count: 1
+- file: lib/sirena/parser/builders/requirement.rb
   count: 3
-- file: lib/sirena/parser/transforms/xy_chart.rb
+- file: lib/sirena/parser/builders/xy_chart.rb
   count: 1
 - file: lib/sirena/parser/user_journey.rb
   count: 1
-- file: lib/sirena/transform/architecture.rb
-  count: 2
-- file: lib/sirena/transform/block.rb
+- file: scripts/extract_mermaid_tests.rb
+  count: 4
+- file: tasks/benchmark.rake
   count: 1
-- file: lib/sirena/transform/c4.rb
-  count: 1
-- file: lib/sirena/transform/mindmap.rb
-  count: 1
-- file: lib/sirena/transform/requirement.rb
-  count: 2
+- file: tasks/coverage.rake
+  count: 4
+- file: tasks/example_tasks.rb
+  count: 3
 - file: tasks/examples.rake
-  count: 10
+  count: 7
 - file: tasks/generate_mermaid_fixtures.rake
   count: 2
 - file: tasks/mermaid_fixtures.rake
   count: 2
-- file: scripts/extract_mermaid_tests.rb
-  count: 4

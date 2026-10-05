@@ -1,9 +1,9 @@
 ---
 cop: Layout/ElseAlignment
 rows:
-- file: lib/sirena/parser/transforms/kanban.rb
+- file: lib/sirena/parser/builders/kanban.rb
   count: 2
-- file: lib/sirena/parser/transforms/mindmap.rb
+- file: lib/sirena/parser/builders/mindmap.rb
   count: 2
 - file: tasks/benchmark.rake
-  count: 1
+  count: 3

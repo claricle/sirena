@@ -1,9 +1,7 @@
 ---
 cop: Lint/UselessAssignment
 rows:
-- file: lib/sirena/transform/xy_chart.rb
-  count: 1
-- file: tasks/examples.rake
+- file: lib/sirena/layout/xy_chart.rb
   count: 1
 - file: tasks/generate_mermaid_fixtures.rake
   count: 2

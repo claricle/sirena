@@ -1,7 +1,7 @@
 ---
 cop: Style/MapIntoArray
 rows:
-- file: lib/sirena/transform/c4.rb
+- file: lib/sirena/layout/c4.rb
   count: 2
-- file: lib/sirena/transform/requirement.rb
+- file: lib/sirena/layout/requirement.rb
   count: 1

@@ -1,5 +1,5 @@
 ---
 cop: Naming/PredicateMethod
 rows:
-- file: lib/sirena/transform/gantt.rb
-  count: 1
+- file: lib/sirena/layout/gantt.rb
+  count: 2
