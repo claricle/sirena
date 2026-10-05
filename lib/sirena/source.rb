@@ -109,10 +109,43 @@ module Sirena
 
       private
 
-      # Mermaid treats a lone \r as a line ending too, and leaving them in
-      # leaks carriage returns into labels and geometry downstream.
+      # Decodes to valid UTF-8 first, since every pattern below and in the
+      # parsers raises on invalid bytes. Mermaid treats a lone \r as a line
+      # ending too, and leaving them in leaks carriage returns into labels
+      # and geometry downstream.
       def normalize(source)
-        source.gsub(/\r\n?/, "\n")
+        decode(source).gsub(/\r\n?/, "\n")
+      end
+
+      # mmdc reads its input as UTF-8 and draws U+FFFD for every invalid
+      # run, so that is what every type gets: one valid UTF-8 string, before
+      # any regexp or grammar sees it. `String#scrub` makes the same runs
+      # as node's decoder.
+      #
+      # A string tagged BINARY or US-ASCII carries no encoding of its own
+      # (`File.binread`, `$stdin.read` under `LANG=C`), so its bytes are read
+      # as UTF-8, as mmdc reads a file. A string tagged with a real encoding
+      # is transcoded instead; an encoding Ruby has no converter for (EUC-TW,
+      # for one) falls back to the byte reading.
+      def decode(source)
+        case source.encoding
+        when Encoding::UTF_8
+          source.scrub
+        when Encoding::BINARY, Encoding::US_ASCII
+          source.dup.force_encoding(Encoding::UTF_8).scrub
+        else
+          transcode(source)
+        end
+      end
+
+      # CESU-8 and the three UTF8-* carrier encodings come out of `encode`
+      # tagged UTF-8 with their bytes unchecked, so the result is retagged
+      # through its bytes to make `scrub` look at them.
+      def transcode(source)
+        source.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+          .b.force_encoding(Encoding::UTF_8).scrub
+      rescue Encoding::ConverterNotFoundError
+        source.b.force_encoding(Encoding::UTF_8).scrub
       end
 
       def take_frontmatter(scanner)

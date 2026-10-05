@@ -7,6 +7,8 @@ require 'stringio'
 require 'sirena/commands/render'
 
 RSpec.describe Sirena::Commands::RenderCommand do
+  include DefaultExternalEncoding
+
   let(:options) { { format: 'svg' } }
   let(:dir) { Dir.mktmpdir('sirena-render') }
   let(:input_path) do
@@ -61,6 +63,43 @@ RSpec.describe Sirena::Commands::RenderCommand do
 
       expect { run_command.call(input_path, options) }
         .to raise_error(ArgumentError, "Permission denied: #{input_path}")
+    end
+  end
+
+  # mmdc reads its input as UTF-8 whatever the locale. Under a non-UTF-8
+  # locale `File.read` and `$stdin.read` tag a UTF-8 file with the locale's
+  # encoding, and `Source` would then transcode it from that encoding and
+  # draw mojibake.
+  describe 'input under a non-UTF-8 locale' do
+    let(:cafe_path) do
+      File.join(dir, 'cafe.mmd').tap do |path|
+        File.binwrite(path, "pie title caf\u00e9\n  \"Dogs\" : 3\n")
+      end
+    end
+
+    # The matcher's capture buffer is made before the locale changes, so it
+    # stays UTF-8 and the regexp can be matched against it.
+    [Encoding::ISO_8859_1, Encoding::EUC_JP, Encoding::Shift_JIS].each do |locale|
+      it "reads a file as UTF-8 under #{locale}" do
+        expect do
+          with_default_external(locale) { run_command.call(cafe_path, options) }
+        end.to output(/>caf\u00e9</).to_stdout
+      end
+
+      it "reads stdin as UTF-8 under #{locale}" do
+        original = $stdin
+        expect do
+          with_default_external(locale) do
+            reader, writer = IO.pipe
+            writer.write(File.binread(cafe_path))
+            writer.close
+            $stdin = reader
+            run_command.call('-', options)
+          end
+        end.to output(/>caf\u00e9</).to_stdout
+      ensure
+        $stdin = original
+      end
     end
   end
 

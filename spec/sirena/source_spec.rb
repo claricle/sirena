@@ -31,6 +31,13 @@ module SourceSpecHelpers
   end
   module_function :alias_chain
 
+  # `template` with every `§` replaced by `bytes`, tagged UTF-8 whether or
+  # not the result is valid.
+  def with_bytes(template, bytes)
+    template.b.gsub("§".b, bytes.b).force_encoding(Encoding::UTF_8)
+  end
+  module_function :with_bytes
+
   def in_a_fiber(yaml)
     Fiber.new do
       described_class.title(yaml)
@@ -523,6 +530,128 @@ RSpec.describe Sirena::Source do
 
         expect(result[:frontmatter]).to be_nil
         expect(result[:body]).to eq(source)
+      end
+    end
+
+    context "with bytes that are not valid UTF-8" do
+      # mmdc decodes its input as UTF-8 and draws U+FFFD for every invalid
+      # run, wherever it sits; `Engine` relies on the split to do the same
+      # before anything is matched against the text.
+      {
+        "the body" => "flowchart LR\n  A[§]-->B\n",
+        "a frontmatter title" => "---\ntitle: a§\n---\nflowchart LR\n",
+        "a directive" => %(%%{init: {"theme":"§"}}%%\nflowchart LR\n),
+        "a comment" => "%% §\nflowchart LR\n",
+        "an indented frontmatter fence" => "  ---\n  title: a§\n  ---\n  flowchart LR\n"
+      }.each do |where, template|
+        it "replaces them with U+FFFD in #{where}" do
+          source = SourceSpecHelpers.with_bytes(template, "\xFF")
+
+          expect(source).not_to be_valid_encoding
+          expect(described_class.split(source))
+            .to eq(described_class.split(template.gsub("§", "\uFFFD")))
+        end
+      end
+
+      it "returns only valid UTF-8 text" do
+        source = SourceSpecHelpers.with_bytes("---\ntitle: a§\n---\n%% §\nflowchart LR\n  A[§]\n", "\xFF")
+
+        result = described_class.split(source)
+
+        expect(result[:frontmatter]).to be_valid_encoding
+        expect(result[:frontmatter].encoding).to eq(Encoding::UTF_8)
+        expect(result[:body]).to be_valid_encoding
+        expect(result[:body].encoding).to eq(Encoding::UTF_8)
+      end
+
+      it "does not alter the caller's string" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\xFF")
+        before = source.dup
+
+        described_class.split(source)
+
+        expect(source).to eq(before)
+      end
+
+      it "splits a frozen string" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\xFF").freeze
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[\uFFFD]\n")
+      end
+
+      it "still normalises the line endings around them" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\r\n  A[§]\r-->B\r\n", "\xFF")
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[\uFFFD]\n-->B\n")
+      end
+
+      it "replaces only the invalid run and leaves the valid text around it" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[é✓§]-->B\n", "\xFF")
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[é✓\uFFFD]-->B\n")
+      end
+
+      # A string with no encoding of its own is read the way mmdc reads a
+      # file: as UTF-8.
+      {
+        "BINARY" => Encoding::BINARY,
+        "US-ASCII" => Encoding::US_ASCII
+      }.each do |name, encoding|
+        it "reads a #{name} string as UTF-8, replacing what is invalid" do
+          source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[é§]\n", "\xFF").force_encoding(encoding)
+
+          result = described_class.split(source)
+
+          expect(result[:body]).to eq("flowchart LR\n  A[é\uFFFD]\n")
+          expect(result[:body].encoding).to eq(Encoding::UTF_8)
+        end
+
+        it "splits a frozen #{name} string without altering it" do
+          source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[é§]\n", "\xFF").force_encoding(encoding).freeze
+
+          expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[é\uFFFD]\n")
+          expect(source.encoding).to eq(encoding)
+        end
+      end
+
+      it "transcodes a string tagged with a real encoding" do
+        source = "flowchart LR\n  A[é]\n".encode(Encoding::ISO_8859_1)
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[é]\n")
+      end
+
+      it "replaces what a real encoding cannot represent" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\x81").force_encoding(Encoding::Windows_1252)
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[\uFFFD]\n")
+      end
+
+      it "replaces a byte sequence that is invalid in its own encoding" do
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\xA4").force_encoding(Encoding::EUC_JP)
+
+        expect(source).not_to be_valid_encoding
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[\uFFFD]\n")
+      end
+
+      # `encode` leaves these four tagged UTF-8 without checking the bytes
+      # it wrote, so a valid-looking result can still hold an invalid run.
+      %w[CESU-8 UTF8-DoCoMo UTF8-KDDI UTF8-SoftBank].each do |name|
+        it "returns valid UTF-8 from a #{name} string holding an invalid run" do
+          source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\xEF\xC2\x80").force_encoding(name)
+
+          body = described_class.split(source)[:body]
+
+          expect(body.b.force_encoding(Encoding::UTF_8)).to be_valid_encoding
+          expect(body.encoding).to eq(Encoding::UTF_8)
+        end
+      end
+
+      it "reads a string whose encoding Ruby cannot convert as UTF-8, without altering it" do
+        # EUC-TW has no converter, so `encode` raises ConverterNotFoundError.
+        source = SourceSpecHelpers.with_bytes("flowchart LR\n  A[§]\n", "\xFF").force_encoding(Encoding::EUC_TW).freeze
+
+        expect(described_class.split(source)[:body]).to eq("flowchart LR\n  A[\uFFFD]\n")
+        expect(source.encoding).to eq(Encoding::EUC_TW)
       end
     end
   end
