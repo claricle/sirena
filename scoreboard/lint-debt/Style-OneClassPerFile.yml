@@ -1,9 +1,7 @@
 ---
 cop: Style/OneClassPerFile
 rows:
-- file: lib/sirena/theme.rb
+- file: scripts/extract_mermaid_tests.rb
   count: 1
 - file: tasks/generate_mermaid_fixtures.rake
   count: 2
-- file: scripts/extract_mermaid_tests.rb
-  count: 1

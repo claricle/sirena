@@ -2,4 +2,4 @@
 cop: Style/StringLiteralsInInterpolation
 rows:
 - file: tasks/benchmark.rake
-  count: 1
+  count: 3

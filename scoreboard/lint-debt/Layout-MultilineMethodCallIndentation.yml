@@ -5,7 +5,5 @@ rows:
   count: 4
 - file: lib/sirena/renderer/er_diagram.rb
   count: 1
-- file: lib/sirena/renderer/gantt.rb
-  count: 2
 - file: tasks/generate_mermaid_fixtures.rake
   count: 2

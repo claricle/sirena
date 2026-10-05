@@ -1,5 +1,0 @@
----
-cop: RSpec/PendingWithoutReason
-rows:
-- file: spec/sirena/parser/packet_spec.rb
-  count: 1

@@ -4,7 +4,7 @@
 
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
-| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop`) | < 10 min |
+| Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
 | Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml) | < 30 min |
 
 Reserved, not yet wired: snippet spec (16), corpus (02b), parity (14),

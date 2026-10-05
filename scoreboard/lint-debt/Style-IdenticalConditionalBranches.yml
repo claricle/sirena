@@ -1,7 +1,7 @@
 ---
 cop: Style/IdenticalConditionalBranches
 rows:
-- file: lib/sirena/renderer/git_graph.rb
+- file: lib/sirena/layout/requirement.rb
   count: 2
-- file: lib/sirena/transform/requirement.rb
+- file: lib/sirena/renderer/git_graph.rb
   count: 2
