@@ -47,17 +47,17 @@ module Sirena
 
       # Reads input from file or stdin.
       #
-      # Both reads tag their result with the locale's encoding, so the bytes
-      # are retagged as UTF-8, which is how mmdc reads its input. Without
-      # that a UTF-8 file under `LC_ALL=en_US.ISO8859-1` is decoded as Latin-1
-      # and drawn as mojibake.
+      # Text-mode reads tag their result with the locale's encoding and, under
+      # `ruby -E ext:int`, transcode it first. The bytes are read raw instead
+      # and `Source` reads them as UTF-8, as mmdc does; otherwise a UTF-8 file
+      # under `LC_ALL=en_US.ISO8859-1` is drawn as mojibake.
       #
       # @return [String] Mermaid source code
       def read_input
         if file == '-' || file.nil?
-          $stdin.read.force_encoding(Encoding::UTF_8)
+          $stdin.binmode.read
         else
-          File.read(file).force_encoding(Encoding::UTF_8)
+          File.binread(file)
         end
       rescue Errno::ENOENT
         raise ArgumentError, "File not found: #{file}"

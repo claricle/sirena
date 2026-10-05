@@ -91,9 +91,9 @@ module Sirena
         print "[#{current}/#{total}] #{relative}... "
 
         begin
-          # Retagged as UTF-8 as `RenderCommand#read_input` does: the read
-          # tags with the locale's encoding.
-          source = File.read(file).force_encoding(Encoding::UTF_8)
+          # Raw bytes, as `RenderCommand#read_input` reads them: a text-mode
+          # read would apply the locale's encodings before `Source` sees it.
+          source = File.binread(file)
           svg = Sirena.render(source,
                              theme: options[:theme],
                              verbose: options[:verbose])
@@ -104,7 +104,7 @@ module Sirena
           @stats[:success] += 1
           puts "✅"
         rescue *Sirena::EXHAUSTION_ERRORS, StandardError => e
-          # Batch promises to survive a bad file and report it. `File.read`
+          # Batch promises to survive a bad file and report it. `File.binread`
           # runs inside this block too, so exhaustion can arrive from
           # outside the engine's own boundary and has to be named here as
           # well as there.

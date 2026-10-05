@@ -59,7 +59,7 @@ RSpec.describe Sirena::Commands::RenderCommand do
 
     it 'reports an unreadable file by name' do
       input_path
-      allow(File).to receive(:read).and_raise(Errno::EACCES)
+      allow(File).to receive(:binread).and_raise(Errno::EACCES)
 
       expect { run_command.call(input_path, options) }
         .to raise_error(ArgumentError, "Permission denied: #{input_path}")
@@ -75,7 +75,7 @@ RSpec.describe Sirena::Commands::RenderCommand do
 
     # The matcher's capture buffer is made before the locale changes, so it
     # stays UTF-8 and the regexp can be matched against it.
-    %w[ISO-8859-1 EUC-JP Shift_JIS].each do |locale|
+    %w[ISO-8859-1 EUC-JP Shift_JIS ISO-8859-1:UTF-8].each do |locale|
       context "with #{locale} as the locale" do
         it "reads a file as UTF-8" do
           path = File.join(dir, "cafe.mmd")
