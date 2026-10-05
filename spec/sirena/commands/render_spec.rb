@@ -100,6 +100,46 @@ RSpec.describe Sirena::Commands::RenderCommand do
   describe 'output' do
     let(:output_path) { File.join(dir, 'out.svg') }
 
+    # The SVG declares and is UTF-8. A text-mode write transcodes it to the
+    # locale's encoding (`ruby -E`), or raises on a character it lacks.
+    describe "under a non-UTF-8 locale" do
+      let(:path) { File.join(dir, "ja.mmd") }
+      let(:text) { "\u65E5\u672C caf\u00e9" }
+
+      before { File.binwrite(path, "pie title #{text}\n  \"Dogs\" : 3\n") }
+
+      %w[ISO-8859-1:UTF-8 EUC-JP:UTF-8 ISO-8859-1].each do |locale|
+        context "with #{locale} as the locale" do
+          it "writes the file as UTF-8 bytes" do
+            with_default_external(locale) do
+              run_command.call(path, options.merge(output: output_path))
+            end
+
+            bytes = File.binread(output_path).force_encoding(Encoding::UTF_8)
+            expect(bytes).to be_valid_encoding.and include(">#{text}<")
+          end
+
+          it "prints stdout as UTF-8 bytes" do
+            captured = File.join(dir, "stdout.svg")
+            original = $stdout
+            begin
+              with_default_external(locale) do
+                File.open(captured, "w") do |io|
+                  $stdout = io
+                  run_command.call(path, options)
+                end
+              end
+            ensure
+              $stdout = original
+            end
+
+            bytes = File.binread(captured).force_encoding(Encoding::UTF_8)
+            expect(bytes).to be_valid_encoding.and include(">#{text}<")
+          end
+        end
+      end
+    end
+
     it 'writes the SVG to the requested path and keeps stdout empty' do
       expect { run_command.call(input_path, options.merge(output: output_path)) }
         .not_to output.to_stdout
@@ -122,7 +162,7 @@ RSpec.describe Sirena::Commands::RenderCommand do
 
     it 'reports an unwritable output path by name' do
       input_path
-      allow(File).to receive(:write).and_raise(Errno::EACCES)
+      allow(File).to receive(:binwrite).and_raise(Errno::EACCES)
 
       expect { run_command.call(input_path, options.merge(output: output_path)) }
         .to raise_error(
