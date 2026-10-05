@@ -74,13 +74,18 @@ module Sirena
           File.binwrite(options[:output], svg)
           puts "SVG written to #{options[:output]}" if options[:verbose]
         else
-          # UTF-8 to UTF-8 so the stream does not transcode to the locale's
-          # encoding, or raise on a character it lacks.
-          $stdout.set_encoding(Encoding::UTF_8, Encoding::UTF_8).write(svg, "\n")
+          print_svg(svg)
         end
       rescue Errno::EACCES
         raise ArgumentError,
               "Permission denied writing to: #{options[:output]}"
+      end
+
+      # UTF-8 to UTF-8, so the stream does not transcode to the locale's
+      # encoding, or raise on a character it lacks.
+      def print_svg(svg)
+        $stdout.set_encoding(Encoding::UTF_8, Encoding::UTF_8)
+        $stdout.write(svg, "\n")
       end
     end
   end
