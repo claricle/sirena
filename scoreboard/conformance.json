@@ -3352,11 +3352,27 @@
     "status": "conformant"
   },
   {
+    "case": "kanban/028_parser_knbn-17_should_be_possible_to_use_node_syntax_in_the_descriptions_27.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "kanban/029_parser_knbn-18_should_be_possible_to_use_node_syntax_in_the_descriptions_in_children_28.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "kanban/030_parser_knbn-19_should_be_possible_to_have_a_child_after_a_class_assignment_29.mmd",
     "status": "conformant"
   },
   {
     "case": "kanban/031_parser_knbn-20_should_be_possible_to_have_meaningless_empty_rows_in_a_kanban_abc124_30.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "kanban/032_parser_knbn-21_should_be_possible_to_have_comments_in_a_kanban_31.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "kanban/033_parser_knbn-22_should_be_possible_to_have_comments_at_the_end_of_a_line_32.mmd",
     "status": "conformant"
   },
   {
@@ -3373,6 +3389,10 @@
   },
   {
     "case": "kanban/037_parser_knbn-33_should_be_possible_to_set_the_icon_36.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "kanban/038_parser_knbn-34_should_be_possible_to_set_the_metadata_using_multiple_lines_37.mmd",
     "status": "conformant"
   },
   {

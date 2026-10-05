@@ -7342,16 +7342,12 @@
   {
     "case": "kanban/028_parser_knbn-17_should_be_possible_to_use_node_syntax_in_the_descriptions_27.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/029_parser_knbn-18_should_be_possible_to_use_node_syntax_in_the_descriptions_in_children_28.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/030_parser_knbn-19_should_be_possible_to_have_a_child_after_a_class_assignment_29.mmd",
@@ -7366,16 +7362,12 @@
   {
     "case": "kanban/032_parser_knbn-21_should_be_possible_to_have_comments_in_a_kanban_31.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/033_parser_knbn-22_should_be_possible_to_have_comments_at_the_end_of_a_line_32.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/034_parser_knbn-23_rows_with_only_spaces_should_not_interfere_33.mmd",
@@ -7400,9 +7392,7 @@
   {
     "case": "kanban/038_parser_knbn-34_should_be_possible_to_set_the_metadata_using_multiple_lines_37.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/039_parser_knbn-35_should_be_possible_to_set_the_metadata_using_one_line_38.mmd",

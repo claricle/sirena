@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "parslet"
+require "psych"
 
 require_relative "../metadata_yaml"
 
@@ -125,8 +126,8 @@ module Sirena
           end
 
           # `classes` arrives here as an Array from a `:::a b` directive line
-          # (parse_metadata drops a `classes:` key from `@{ ... }` metadata
-          # entirely - mermaid does not read one). `else` also covers a
+          # (parse_metadata drops a scalar `classes:` key from `@{ ... }`
+          # metadata entirely - mermaid does not read one). `else` also covers a
           # nil/absent value, normalized to an empty Array. The single point
           # both add_column and add_card read from.
           def normalize_classes(value)
@@ -162,28 +163,16 @@ module Sirena
             item[:metadata][:label] || item[:text]
           end
 
+          # `Kanban.metadata_fields` does the real work - a real YAML engine
+          # for structure and resolution, raw source text recovered for an
+          # unquoted scalar - so this is left only to route each resolved
+          # key to the card/column field mermaid's `addNode` reads it into.
           def parse_metadata(metadata_data)
             return {} if metadata_data.nil?
 
             result = {}
 
-            # metadata_data could be a single entry or an array
-            entries = if metadata_data.is_a?(Array)
-                       metadata_data
-                     else
-                       [metadata_data]
-                     end
-
-            entries.each do |entry|
-              next unless entry.is_a?(Hash)
-              next unless entry[:key] && entry[:value]
-
-              value = extract_value(entry[:value])
-              next if dropped_by_mermaid?(value, unquoted: entry[:value].key?(:unquoted))
-
-              key = entry[:key].to_s
-
-              # Map to known metadata fields
+            Kanban.metadata_fields(metadata_data).each do |key, value|
               case key
               when "assigned"
                 result[:assigned] = value
@@ -201,7 +190,7 @@ module Sirena
                 # `classes` is not a recognized key there (verified against
                 # the installed @mermaid-js/mermaid-cli 11.12.0
                 # kanban-definition bundle). Only a `:::` directive
-                # (apply_modifier) may set classes; a `@{ classes: ... }`
+                # (apply_modifier) may set classes; a scalar `@{ classes: ... }`
                 # entry is dropped, matching mermaid.
                 next
               else
@@ -211,59 +200,6 @@ module Sirena
             end
 
             result
-          end
-
-          # Always a Hash of `{string: ...}` or `{unquoted: ...}`: every branch
-          # of `metadata_value` captures with `.as(:string)` or `.as(:unquoted)`,
-          # and the caller has already skipped a nil value. So no guard here.
-          #
-          # An empty quoted string captures as `{string: []}`, because the
-          # shared grammar takes the body with `.repeat`, and `[].to_s` is the
-          # literal "[]". Parslet::Slice answers false to `to_ary`, so
-          # `Array()` wraps a slice rather than splitting it; `join` then
-          # handles both shapes.
-          def extract_value(value_data)
-            Array(value_data[:string] || value_data[:unquoted]).join
-          end
-
-          # Mermaid gates every field on JS truthiness - the kanban renderer
-          # reads `if (doc?.label)`, and icon, assigned, ticket and priority
-          # the same way - AFTER js-yaml resolves the scalar. A value
-          # resolving to false, null or zero is therefore never set and the
-          # field falls back. Dropping the entry mirrors that: with no entry
-          # there is no metadata row and no height reserved for one.
-          #
-          # An empty value is dropped. Only a QUOTED one can be empty -
-          # `unquoted_value` captures with `repeat(1)` - so that rule and the
-          # unquoted resolution below never both apply. Past it, a non-empty
-          # quoted string is always truthy, so `'0'` and `"false"` override.
-          #
-          # Only the falsy half of resolution is mirrored. A truthy scalar is
-          # still rendered as its raw text where mermaid renders the resolved
-          # value - `1e0` draws `1`, `0x10` draws `16`. That divergence is
-          # pre-existing and belongs to the card-conformance bucket.
-          #
-          # The resolution itself is MetadataYaml's, the same table the
-          # flowchart body is read with. `no`, `off`, `True` and `0_1` stay
-          # truthy there, and `false`, `null`, `~`, `.nan` and every zero
-          # resolve falsy, which is what mermaid's js-yaml 4.1.1 does.
-          def dropped_by_mermaid?(text, unquoted:)
-            return true if text.empty?
-            return false unless unquoted
-
-            falsy_to_js?(MetadataYaml.plain_scalar(text))
-          end
-
-          # JavaScript's own falsy set, over the values js-yaml can hand
-          # back for a plain scalar: false, null, any zero and NaN. An empty
-          # string is already gone above, and a non-empty one is truthy.
-          def falsy_to_js?(value)
-            case value
-            when nil, false then true
-            when Float then value.zero? || value.nan?
-            when Numeric then value.zero?
-            else false
-            end
           end
 
           def get_indent_size(indent_data)
@@ -279,6 +215,190 @@ module Sirena
             indent_str.length
           end
         end
+
+        # The `@{ ... }` body, resolved by a real YAML engine
+        # (`MetadataYaml`) the way mermaid's js-yaml does: flow vs block is
+        # decided by whether the body contains a newline anywhere. Do not
+        # re-add hand-written grammar rules for YAML legality - duplicate
+        # keys and tab indentation are refused by the engine.
+        #
+        # @raise [Parser::ParseError] on YAML mermaid would also refuse
+        def self.metadata_fields(metadata_data)
+          document = metadata_document(metadata_data)
+          resolved = MetadataYaml.value(document)
+          raise Parser::ParseError, "Empty metadata." if resolved.nil?
+          return {} unless resolved.is_a?(Hash)
+
+          stored_fields(resolved, raw_scalar_source(document))
+        end
+
+        # Mermaid's own wrapping: a single-line body becomes a flow
+        # mapping between braces, a multiline one is used as written -
+        # see Builders::Flowchart#metadata_document, the same rule.
+        def self.metadata_document(metadata_data)
+          text = metadata_body_text(metadata_data)
+          body = break_quoted_newlines(strip_metadata_comments(text))
+          body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
+        end
+        private_class_method :metadata_document
+
+        def self.stored_fields(resolved, raw_text_by_key)
+          resolved.filter_map do |key, value|
+            reject_collection(key, value)
+            next if dropped_by_mermaid?(value)
+
+            validate_shape(value) if key == "shape"
+
+            [key, stored_text(value, raw_text_by_key[key])]
+          end.to_h
+        end
+        private_class_method :stored_fields
+
+        # Card metadata holds plain scalars only. Mermaid would stringify a
+        # nested list or map into text (`a,b`, `[object Object]`) that no
+        # card field could sensibly display, so it is refused outright,
+        # whatever key carries it.
+        def self.reject_collection(key, value)
+          return unless value.is_a?(Array) || value.is_a?(Hash)
+
+          raise Parser::ParseError,
+                "Metadata value for '#{key}' must be a plain scalar, not a list or map."
+        end
+        private_class_method :reject_collection
+
+        def self.validate_shape(value)
+          unless value.is_a?(String)
+            raise Parser::ParseError,
+                  "Unusable shape in metadata."
+          end
+          return if value == value.downcase && !value.include?("_")
+
+          raise Parser::ParseError,
+                "No such shape: #{value}. Shape names should be lowercase."
+        end
+        private_class_method :validate_shape
+
+        # An empty repeat captures as [], not as an empty slice.
+        def self.metadata_body_text(metadata_data)
+          value = metadata_data[:body]
+          value.is_a?(Array) ? "" : value.to_s
+        end
+        private_class_method :metadata_body_text
+
+        # Mermaid strips comments before lexing, so metadata never sees
+        # them - `%%{` is a directive rather than a comment and stays.
+        # Uses JavaScript's whitespace set, matching Mermaid's comment pass.
+        def self.strip_metadata_comments(body)
+          body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, "")
+        end
+        private_class_method :strip_metadata_comments
+
+        # The kanban lexer rewrites line breaks inside double-quoted
+        # metadata before handing the body to js-yaml.
+        def self.break_quoted_newlines(body)
+          body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, "<br/>") }
+        end
+        private_class_method :break_quoted_newlines
+
+        JS_SPACE = '[\t\n\v\f\r \u00a0\u1680\u2000-\u200a' \
+                   '\u2028\u2029\u202f\u205f\u3000\ufeff]'
+        QUOTED_BREAK = /\n#{JS_SPACE}*/
+
+        private_constant :JS_SPACE, :QUOTED_BREAK
+
+        # `null`, `false`, `0` and `""` are all falsy to mermaid, which
+        # skips the key rather than failing on it - the same table
+        # Builders::Flowchart#truthy? applies to its own resolved values.
+        def self.dropped_by_mermaid?(value)
+          case value
+          when nil, false, 0, "" then true
+          else value.is_a?(Float) && value.nan?
+          end
+        end
+        private_class_method :dropped_by_mermaid?
+
+        # A truthy UNQUOTED scalar is stored as its raw source text, not
+        # the YAML-resolved type - `0x_1` stays "0x_1", not the resolved
+        # 1. That divergence is pre-existing (see the card-conformance
+        # bucket, and the spec table pinning it) and is kept deliberately,
+        # not reintroduced by accident: switching to resolved values would
+        # flip every one of those specs. A QUOTED scalar has no such
+        # divergence - js-yaml only ever reads it as the string it
+        # resolves to - so the resolved string is used as-is.
+        def self.stored_text(resolved, raw_text)
+          return raw_text if raw_text
+
+          js_text(resolved)
+        end
+        private_class_method :stored_text
+
+        # JavaScript's String() result for the scalar kinds MetadataYaml can
+        # compose; collections never get this far (see `reject_collection`).
+        def self.js_text(value)
+          case value
+          when Numeric then Sirena::JsNumber.stringify(value)
+          else value.to_s
+          end
+        end
+        private_class_method :js_text
+
+        # A line with a non-ASCII character is held as an Array of characters:
+        # slicing a UTF-8 String by character index rescans it every time,
+        # which is quadratic over one long flow-mapping line.
+        #
+        # Walks the SAME document a second time with plain Psych, purely
+        # to recover each top-level key's raw source text.
+        # `MetadataYaml.value` above already validated the structure - no
+        # duplicate key survives to here - so this walk can trust it and
+        # stay simple: it never re-checks legality, only reads positions.
+        def self.raw_scalar_source(document)
+          root = Psych.parse_stream(document).children.first.children.first
+          return {} unless root.is_a?(Psych::Nodes::Mapping)
+
+          raw_texts_by_key(root, document.split("\n", -1).map do |line|
+            line.ascii_only? ? line : line.chars
+          end)
+        rescue Psych::Exception
+          # MetadataYaml has already accepted the same source after
+          # normalizing js-yaml-compatible directives. Raw text is optional.
+          {}
+        end
+        private_class_method :raw_scalar_source
+
+        def self.raw_texts_by_key(root, lines)
+          root.children.each_slice(2).filter_map do |key_node, value_node|
+            next unless key_node.is_a?(Psych::Nodes::Scalar)
+
+            text = plain_scalar_text(value_node, lines)
+            [key_node.value, text] if text
+          end.to_h
+        end
+        private_class_method :raw_texts_by_key
+
+        # Only a single-line PLAIN scalar's raw text is worth recovering: a
+        # quoted value has no raw-text divergence (see `stored_text`), and
+        # a folded plain scalar falls back to the resolved value instead.
+        #
+        # Skip an anchored scalar (`&name value`) too: Psych's own
+        # Scalar#start_column begins at the `&`, not at the value, so a
+        # naive slice would recover "&name value" instead of "value" - fall
+        # back to the resolved value there as well.
+        def self.plain_scalar_text(node, lines)
+          return nil unless plain_single_line?(node)
+
+          columns = node.start_column...node.end_column
+          piece = lines[node.start_line]&.[](columns)
+          piece.is_a?(Array) ? piece.join : piece
+        end
+        private_class_method :plain_scalar_text
+
+        def self.plain_single_line?(node)
+          node.is_a?(Psych::Nodes::Scalar) &&
+            node.style == Psych::Nodes::Scalar::PLAIN &&
+            node.start_line == node.end_line &&
+            !node.anchor && !node.tag
+        end
+        private_class_method :plain_single_line?
 
         # Transform the lines array into columns and cards
         rule(lines: subtree(:lines)) do

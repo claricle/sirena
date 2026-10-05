@@ -136,7 +136,7 @@ rows:
 - file: spec/sirena/parser/info_spec.rb
   count: 2
 - file: spec/sirena/parser/kanban_spec.rb
-  count: 27
+  count: 26
 - file: spec/sirena/parser/mindmap_spec.rb
   count: 21
 - file: spec/sirena/parser/packet_spec.rb

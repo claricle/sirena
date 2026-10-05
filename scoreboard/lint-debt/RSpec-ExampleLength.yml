@@ -122,7 +122,7 @@ rows:
 - file: spec/sirena/parser/greedy_run_spec.rb
   count: 1
 - file: spec/sirena/parser/kanban_spec.rb
-  count: 12
+  count: 9
 - file: spec/sirena/parser/mindmap_spec.rb
   count: 19
 - file: spec/sirena/parser/packet_spec.rb
