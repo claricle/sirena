@@ -91,7 +91,9 @@ module Sirena
         print "[#{current}/#{total}] #{relative}... "
 
         begin
-          source = File.read(file)
+          # Retagged as UTF-8 as `RenderCommand#read_input` does: the read
+          # tags with the locale's encoding.
+          source = File.read(file).force_encoding(Encoding::UTF_8)
           svg = Sirena.render(source,
                              theme: options[:theme],
                              verbose: options[:verbose])
