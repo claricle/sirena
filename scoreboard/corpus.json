@@ -7348,7 +7348,9 @@
   {
     "case": "kanban/020_parser_knbn-6_real_root_in_wrong_place_19.mmd",
     "verdict": "unknown",
-    "pass": true
+    "pass": false,
+    "stage": "parse",
+    "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "kanban/021_parser_knbn-7_should_handle_an_id_and_type_for_a_node_definition_20.mmd",

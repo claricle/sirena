@@ -66,7 +66,7 @@ rows:
 - file: lib/sirena/parser/builders/info.rb
   count: 3
 - file: lib/sirena/parser/builders/kanban.rb
-  count: 7
+  count: 5
 - file: lib/sirena/parser/builders/mindmap.rb
   count: 6
 - file: lib/sirena/parser/builders/quadrant.rb
@@ -340,7 +340,7 @@ rows:
 - file: spec/sirena/parser/greedy_run_spec.rb
   count: 3
 - file: spec/sirena/parser/kanban_spec.rb
-  count: 53
+  count: 52
 - file: spec/sirena/parser/mindmap_spec.rb
   count: 12
 - file: spec/sirena/parser/packet_spec.rb

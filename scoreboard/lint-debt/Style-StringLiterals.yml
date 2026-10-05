@@ -420,7 +420,7 @@ rows:
 - file: spec/sirena/parser/info_spec.rb
   count: 11
 - file: spec/sirena/parser/kanban_spec.rb
-  count: 256
+  count: 253
 - file: spec/sirena/parser/pie_spec.rb
   count: 35
 - file: spec/sirena/parser/requirement_spec.rb
