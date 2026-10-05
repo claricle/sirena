@@ -5,14 +5,16 @@
 # scoreboard/conformance.json; `rake conformance:check` re-runs it and fails
 # when a case that was conformant is not now, or when the file is stale.
 
-desc "Validate the spec/mermaid corpus output; writes scoreboard/conformance.json"
+desc "Validate the spec/mermaid corpus output; " \
+     "writes scoreboard/conformance.json"
 task :conformance do
   require_relative "support/conformance"
   puts Sirena::Conformance.record!
 end
 
 namespace :conformance do
-  desc "Fail if a conformant corpus case regressed, or scoreboard/conformance.json is stale"
+  desc "Fail if a conformant corpus case regressed, or " \
+       "scoreboard/conformance.json is stale"
   task :check do
     require_relative "support/conformance"
     puts Sirena::Conformance.check!
