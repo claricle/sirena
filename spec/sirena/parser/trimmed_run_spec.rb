@@ -46,7 +46,7 @@ RSpec.describe Sirena::Parser::Atoms::TrimmedRun do
     [64, 192, 448].each do |edge|
       context "with the #{edge}-character chunk edge" do
         [edge - 1, edge].each do |dot_index|
-          it "keeps a dot at index #{dot_index} followed by more run" do
+          it "keeps an internal dot at index #{dot_index}" do
             run = "#{'a' * dot_index}.#{'b' * 10}"
 
             expect(atom.parse(run).to_s).to eq(run)
