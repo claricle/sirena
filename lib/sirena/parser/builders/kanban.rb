@@ -16,7 +16,6 @@ module Sirena
           def initialize
             @columns = []
             @current_column = nil
-            @min_indent = nil
             @items = []
             @anonymous_index = 0
           end
@@ -26,9 +25,6 @@ module Sirena
             return apply_modifier(:classes, line_data[:classes].to_s.strip.split(/\s+/)) if line_data[:classes]
 
             indent_size = get_indent_size(line_data[:indent])
-
-            # Track minimum indentation
-            @min_indent = indent_size if @min_indent.nil? || indent_size < @min_indent
 
             id = resolve_id(line_data[:id])
 
@@ -56,14 +52,26 @@ module Sirena
           def finalize
             return if @items.empty?
 
-            # Determine column vs card by indentation
-            # Items at minimum indent are columns, items with more indent are cards
+            # The first item's indent is the column level, as in mermaid's
+            # getSection. An item at that indent is a column; any other
+            # indent is a card of the latest column, including one LESS
+            # indented than the first. Mermaid rejects a less-indented item
+            # only once another item follows it.
+            column_indent = @items.first[:indent]
+            shallower = nil
+
             @items.each do |item|
-              if item[:indent] == @min_indent
-                # This is a column
+              if shallower
+                raise Parser::ParseError,
+                      "Items without section detected, " \
+                      "found section (\"#{column_title(shallower)}\")."
+              end
+
+              shallower = item if item[:indent] < column_indent
+
+              if item[:indent] == column_indent
                 add_column(item)
               else
-                # This is a card, add to current column
                 add_card(item)
               end
             end
@@ -139,9 +147,6 @@ module Sirena
           # divergence is pre-existing; correcting it belongs to the
           # card-conformance bucket.
           def add_card(item)
-            # Cards must belong to a column
-            return unless @current_column
-
             @current_column[:cards] << item[:metadata].merge(
               id: item[:id],
               text: item[:text],

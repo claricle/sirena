@@ -40,7 +40,11 @@ CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'co
 # emptied or truncated list would make the subset check pass against nothing.
 # Same population `scripts/corpus_sweep.rb` counts by the same criterion.
 #
-# Dropped from 898 to 895, for two different reasons.
+# Dropped from 898 to 894, for three reasons.
+#
+# kanban/020 ("real root in wrong place") used to "render" by dropping its
+# first two items. Real mermaid rejects it ("Items without section
+# detected"), so Sirena raising ParseError now is a correctness win.
 #
 # mindmap/031 ("multiple roots are illegal") and mindmap/032 ("real root in
 # wrong place") used to "render" by silently dropping the true root and its
@@ -61,7 +65,7 @@ CONFORMANCE_RENDERABLE_FILE = File.join(CONFORMANCE_ROOT, 'spec', 'mermaid', 'co
 # either (main silently mis-split it into a 2-node tree that happened to
 # still look SVG-shaped). Backlogged, not fixed here -- fixing it means
 # multi-line node grammar support, out of scope for this bucket.
-CONFORMANCE_RENDERED_FLOOR = 895
+CONFORMANCE_RENDERED_FLOOR = 894
 
 # The example sources Sirena cannot parse yet, so they have no checked-in
 # SVG. Named rather than counted: a NEW source falling out of the checked-in

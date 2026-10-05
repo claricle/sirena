@@ -282,8 +282,8 @@ RSpec.describe Sirena::Parser::Kanban do
 
     context 'with an id and a round shape on a child (corpus 022, 023)' do
       # 022 indents the root; 023 does not. Indentation of the root line
-      # never decides which items become columns - only the MINIMUM
-      # indentation among all items does - so both parse identically.
+      # never decides which items become columns - only the FIRST
+      # item's indent does - so both parse identically.
       {
         '022' => "kanban\n    root\n      theId(child1)\n",
         '023' => "kanban\nroot\n      theId(child1)\n",
@@ -459,7 +459,7 @@ RSpec.describe Sirena::Parser::Kanban do
 
       it 'flattens every deeper level into the column card list' do
         # Mermaid does not distinguish deeper levels here, and neither does
-        # the builder: anything past the minimum indent is a card.
+        # the builder: anything not at the first item's indent is a card.
         diagram = parser.parse(source)
         expect(diagram.columns.map(&:id)).to eq(['root'])
         expect(diagram.columns.first.cards.map(&:id)).to eq(%w[child1 leaf1 child2])
@@ -506,22 +506,62 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    context 'with a real root in the wrong place (corpus 020)' do
-      # KNOWN GAP, pinned deliberately. mmdc 11.12.0 REJECTS this input with
-      # "Items without section detected, found section (\"fakeRoot\")".
-      # Sirena accepts it and drops the two nodes that precede the first
-      # column, because the builder picks a global minimum indent and only
-      # classifies during finalize. Refusing it needs indentation-validity
-      # checking, a different construct from an optional label, so it is
-      # deferred to a later bucket. This example exists so the
-      # over-acceptance cannot drift unnoticed, and it should go red when
-      # that bucket lands.
-      let(:source) { "kanban\n          root\n        fakeRoot\n    realRootWrongPlace\n" }
+    # Mermaid's column level is the FIRST item's indent (kanbanDb getSection),
+    # not the shallowest. Every row below was driven through mmdc 11.12.0.
+    # A rejected row is rejected only once an item follows the shallower one.
+    context "with the first item deeper than a later item" do
+      [
+        ["kanban\n    root[Root]\n  a[A]\n", [["Root", %w[A]]]],
+        ["kanban\n  root[Root]\na[A]\n", [["Root", %w[A]]]],
+        ["kanban\n  c1[C1]\n    k1[K1]\n experiment[E]\n",
+         [["C1", %w[K1 E]]]],
+        ["kanban\n  c1[C1]\n    k1[K1]\n  c2[C2]\n    k2[K2]\n experiment[E]\n",
+         [["C1", %w[K1]], ["C2", %w[K2 E]]]],
+      ].each do |source, expected|
+        it "reads #{source.inspect} as #{expected.inspect}" do
+          columns = parser.parse(source).columns
 
-      it 'over-accepts, keeping only the shallowest node' do
-        diagram = parser.parse(source)
-        expect(diagram.columns.map(&:id)).to eq(['realRootWrongPlace'])
-        expect(diagram.columns.first.cards).to be_empty
+          expect(columns.map { |c| [c.title, c.cards.map(&:text)] })
+            .to eq(expected)
+        end
+      end
+
+      [
+        "kanban\n    root[Root]\n  a[A]\n    b[B]\n",
+        "kanban\n  c1[C1]\n    k1[K1]\nx[X]\n    k2[K2]\n",
+        "kanban\n    c1[C1]\n  m[M]\n      k[K]\n",
+        "kanban\n          root\n        fakeRoot\n    realRootWrongPlace\n",
+      ].each do |source|
+        it "rejects #{source.inspect}" do
+          expect { parser.parse(source) }
+            .to raise_error(Sirena::Parser::ParseError,
+                            /Items without section detected/)
+        end
+      end
+
+      it "names the shallower item, as mermaid does (corpus 020)" do
+        source = ["kanban", "          root", "        fakeRoot",
+                  "    realRootWrongPlace", ""].join("\n")
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /found section \("fakeRoot"\)/)
+      end
+
+      it "names the shallower item by its label, not its id" do
+        source = "kanban\n    root[Root]\n  a[A]\n    b[B]\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /found section \("A"\)/)
+      end
+
+      it "names the shallower item by its label: override" do
+        source = "kanban\n    root[Root]\n  a[A]@{ label: Renamed }\n    b[B]\n"
+
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError,
+                          /found section \("Renamed"\)/)
       end
     end
 
