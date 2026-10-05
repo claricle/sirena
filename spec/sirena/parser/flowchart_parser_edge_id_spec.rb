@@ -338,7 +338,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       File.basename(f).match?(
         /\A\d+_parser_should_handle_(unique_edge_creation_with_using|
             redefine_same_edge_ids_again|overriding_edge_animate_again|
-            normal_edges_where_you_also_have_a_node_with_metadata_26)/x
+            normal_edges_where_you_also_have_a_node_with_metadata_26)/x,
       )
     end.each do |path|
       it "renders #{File.basename(path, '.mmd')}" do

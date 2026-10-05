@@ -24,8 +24,8 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 0,
               start_col: 0,
-              end_col: 10
-            }
+              end_col: 10,
+            },
           ],
           row_count: 1,
           bits_per_row: 32,
@@ -37,7 +37,7 @@ RSpec.describe Sirena::Renderer::Packet do
           title_margin: 20,
           width: 1040,
           height: 210,
-          title: "Hello world"
+          title: "Hello world",
         }
       end
 
@@ -95,7 +95,7 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 0,
               start_col: 0,
-              end_col: 7
+              end_col: 7,
             },
             {
               label: "Destination Port",
@@ -107,7 +107,7 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 0,
               start_col: 8,
-              end_col: 15
+              end_col: 15,
             },
             {
               label: "Sequence Number",
@@ -119,8 +119,8 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 0,
               start_col: 16,
-              end_col: 31
-            }
+              end_col: 31,
+            },
           ],
           row_count: 1,
           bits_per_row: 32,
@@ -132,7 +132,7 @@ RSpec.describe Sirena::Renderer::Packet do
           title_margin: 0,
           width: 1040,
           height: 150,
-          title: nil
+          title: nil,
         }
       end
 
@@ -165,7 +165,7 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 0,
               start_col: 0,
-              end_col: 31
+              end_col: 31,
             },
             {
               label: "Field 2",
@@ -177,8 +177,8 @@ RSpec.describe Sirena::Renderer::Packet do
               height: 40,
               row: 1,
               start_col: 0,
-              end_col: 31
-            }
+              end_col: 31,
+            },
           ],
           row_count: 2,
           bits_per_row: 32,
@@ -190,7 +190,7 @@ RSpec.describe Sirena::Renderer::Packet do
           title_margin: 0,
           width: 1040,
           height: 190,
-          title: nil
+          title: nil,
         }
       end
 
@@ -223,7 +223,7 @@ RSpec.describe Sirena::Renderer::Packet do
           title_margin: 0,
           width: 80,
           height: 80,
-          title: nil
+          title: nil,
         }
       end
 
@@ -253,7 +253,7 @@ RSpec.describe Sirena::Renderer::Packet do
               start_col: 0,
               end_col: 15,
               is_continuation: false,
-              is_final: true
+              is_final: true,
             },
             {
               label: "Long Field",
@@ -267,7 +267,7 @@ RSpec.describe Sirena::Renderer::Packet do
               start_col: 16,
               end_col: 31,
               is_continuation: false,
-              is_final: false
+              is_final: false,
             },
             {
               label: "Long Field",
@@ -281,8 +281,8 @@ RSpec.describe Sirena::Renderer::Packet do
               start_col: 0,
               end_col: 15,
               is_continuation: true,
-              is_final: true
-            }
+              is_final: true,
+            },
           ],
           row_count: 2,
           bits_per_row: 32,
@@ -294,7 +294,7 @@ RSpec.describe Sirena::Renderer::Packet do
           title_margin: 0,
           width: 1040,
           height: 190,
-          title: nil
+          title: nil,
         }
       end
 

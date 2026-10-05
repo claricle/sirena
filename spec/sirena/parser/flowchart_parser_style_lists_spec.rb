@@ -25,7 +25,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "style A fill:red,,stroke:blue",
       "style A ,fill:red",
       "style A fill:#f9f,",
-      "classDef x fill:red,"
+      "classDef x fill:red,",
     ].each do |declaration|
       it "refuses #{declaration.inspect}" do
         expect { node_ids.call("graph TD\nA\n#{declaration}\n") }
@@ -39,7 +39,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "style A fill:red, ",
       "style A fill:red, ,stroke:blue",
       "style A fill:red, ;B",
-      "classDef x fill:red, "
+      "classDef x fill:red, ",
     ].each do |declaration|
       it "takes #{declaration.inspect}, as mermaid does" do
         expect(node_ids.call("graph TD\nA\n#{declaration}\n")).to include("A")
@@ -64,7 +64,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     [
       "style A fill:red,stroke: #fff,color:blue;B",
       "classDef x fill:red,stroke: #fff,color:blue;B",
-      "style A #x a:b;B"
+      "style A #x a:b;B",
     ].each do |declaration|
       it "does not swallow the node after #{declaration.inspect}" do
         source = "graph TD\nA\n#{declaration}\n"
@@ -102,7 +102,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "style" => "style A fill:red#{' ' * 4_000}-a",
       "classDef" => "classDef x fill:red#{' ' * 4_000}-a",
-      "linkStyle" => "linkStyle 0 stroke:red#{' ' * 4_000}-a"
+      "linkStyle" => "linkStyle 0 stroke:red#{' ' * 4_000}-a",
     }.each do |what, declaration|
       it "parses a #{what} value's space run within a fixed bound" do
         source = "graph TD\nA-->B\n#{declaration}\n"

@@ -28,7 +28,7 @@ RSpec.describe Sirena::Parser::Sequence do
   describe "the actor-name token — four sub-shapes" do
     it "keeps a dash inside an actor name distinct from the arrow" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/012_parser_should_handle_dashes_in_actor_names_11.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/012_parser_should_handle_dashes_in_actor_names_11.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[Alice-in-Wonderland Bob])
@@ -36,7 +36,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "keeps an = inside a participant name distinct from an assignment" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/014_parser_should_handle_equals_in_participant_names_13.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/014_parser_should_handle_equals_in_participant_names_13.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[Alice=Wonderland Bob])
@@ -44,7 +44,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "accepts a leading-digit actor name" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/031_parser_should_handle_notes_and_messages_without_wrap_specified_30.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/031_parser_should_handle_notes_and_messages_without_wrap_specified_30.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[1 2 3 4])
@@ -62,7 +62,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # (`Alice ()->>() Bob`).
     it "discards () as a central-connection decoration, not actor-name material" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/010_rendering_sequencediagram-v2_spec_sequence_9.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/010_rendering_sequencediagram-v2_spec_sequence_9.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -78,7 +78,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # source returns exactly the three declared actors.
     it "does not turn a central-connection decoration into an implicit actor" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/014_rendering_sequencediagram-v2_spec_sequence_13.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/014_rendering_sequencediagram-v2_spec_sequence_13.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie])
@@ -168,14 +168,14 @@ RSpec.describe Sirena::Parser::Sequence do
     it "does not let the alias keyword eat the label" do
       diagram = parser.parse(
         File.read(
-          File.expand_path("../../mermaid/sequence/030_parser_should_handle_different_line_breaks_29.mmd", __dir__)
-        )
+          File.expand_path("../../mermaid/sequence/030_parser_should_handle_different_line_breaks_29.mmd", __dir__),
+        ),
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[1 2 3 4])
       expect(diagram.participants.map(&:label)).to eq(
         ["multiline<br>text", "multiline<br/>text", "multiline<br />text",
-         "multiline<br \\t/>text"]
+         "multiline<br \\t/>text"],
       )
     end
   end
@@ -206,7 +206,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # entries, none of the decorated duplicates.
     it "parses and discards @{...} shape metadata" do
       ids = ids_for(
-        File.expand_path("../../mermaid/sequence/017_rendering_sequencediagram-v2_spec_sequence_16.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/017_rendering_sequencediagram-v2_spec_sequence_16.mmd", __dir__),
       )
 
       expect(ids).to eq(%w[Alice Bob Charlie David Eve])
@@ -285,7 +285,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # name (see the plan's declared residual on this case).
     it "parses the unspecced bonus case 020 and renders well-formed SVG" do
       source = File.read(
-        File.expand_path("../../mermaid/sequence/020_rendering_sequencediagram_spec_sequence_19.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/020_rendering_sequencediagram_spec_sequence_19.mmd", __dir__),
       )
 
       svg = Sirena::Engine.new.render(source)
@@ -340,7 +340,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # every one of these in a message).
     it "declarations accept what messages must reject" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A+B\nparticipant /B\nparticipant A-\n"
+        "sequenceDiagram\nparticipant A+B\nparticipant /B\nparticipant A-\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A+B", "/B", "A-"])
@@ -383,8 +383,8 @@ RSpec.describe Sirena::Parser::Sequence do
     it "renders an empty trailing message as an empty string, not the literal []" do
       diagram = parser.parse(
         File.read(
-          File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__)
-        )
+          File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__),
+        ),
       )
 
       # `first`, not `last` — case 070 has two messages and the empty one
@@ -396,7 +396,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "does not leak the literal [] into the rendered SVG" do
       source = File.read(
-        File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__)
+        File.expand_path("../../mermaid/sequence/070_parser_should_parse_a_message_with_a_trailing_colon_but_no_content_69.mmd", __dir__),
       )
 
       svg = Sirena::Engine.new.render(source)
@@ -425,7 +425,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # returns exactly ["A- ()", "B"].
     it "fuses a dash-then-space-then-() into the actor identity, matching mmdc" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A- ()\nA- ()->>B: m\n"
+        "sequenceDiagram\nparticipant A- ()\nA- ()->>B: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A- ()", "B"])
@@ -460,7 +460,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # `db.getActors()` on this source returns exactly ["A B as C", "D"].
     it "does not split a multiword declaration at ' as ', matching mmdc" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A B as C\nA B as C->>D: m\n"
+        "sequenceDiagram\nparticipant A B as C\nA B as C->>D: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A B as C", "D"])
@@ -470,7 +470,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "still splits a whitespace-free declaration id at ' as '" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A as C\nA->>D: m\n"
+        "sequenceDiagram\nparticipant A as C\nA->>D: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[A D])
@@ -508,7 +508,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "still parses @{...} shape metadata right after a declaration id" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A@{\"type\":\"boundary\"}\nA->>B: m\n"
+        "sequenceDiagram\nparticipant A@{\"type\":\"boundary\"}\nA->>B: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[A B])
@@ -537,7 +537,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # ban; the activation record itself is the property being claimed.
     it "still activates through a dash-fused () identity, matching mmdc" do
       diagram = parser.parse(
-        "sequenceDiagram\nA-()->>+B: m\ndeactivate B\n"
+        "sequenceDiagram\nA-()->>+B: m\ndeactivate B\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A-()", "B"])
@@ -569,7 +569,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # `db.getActors()` on this source returns exactly ["A-()()", "B"].
     it "fuses every consecutive () pair after one dash, not just the first" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A-()()\nA-()()->>B: m\n"
+        "sequenceDiagram\nparticipant A-()()\nA-()()->>B: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A-()()", "B"])
@@ -617,7 +617,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # `db.getActors()` on this source returns exactly ["A-()()foo()", "B"].
     it "fuses () pairs across intervening plain text into one identity, matching mmdc" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A-()()foo()\nA-()()foo()->>B: m\n"
+        "sequenceDiagram\nparticipant A-()()foo()\nA-()()foo()->>B: m\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(["A-()()foo()", "B"])

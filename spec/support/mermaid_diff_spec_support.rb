@@ -49,7 +49,7 @@ module MermaidDiffSpecSupport
         capture = proc do
           Open3.capture3(
             { 'PATH' => "#{bin}:#{ENV.fetch('PATH')}" },
-            *command
+            *command,
           )
         end
 

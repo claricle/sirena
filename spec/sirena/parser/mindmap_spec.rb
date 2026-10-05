@@ -452,7 +452,7 @@ RSpec.describe Sirena::Parser::Mindmap do
       it "discards a comment trailing the header and reads root from the next line" do
         [
           "mindmap %% comment\n  root",
-          "mindmap\t%% comment\n  root"
+          "mindmap\t%% comment\n  root",
         ].each do |source|
           diagram = parser.parse(source)
           expect(diagram.root.content).to eq("root")

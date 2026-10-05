@@ -51,7 +51,7 @@ module FlowchartNodeIdSpecHelpers
   # table below can list ids instead of repeating the diagram each time.
   def names_a_subgraph?(id)
     subgraph_name_parses?(
-      "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n"
+      "graph TD\nsubgraph #{id} [T]\nX --> Y\nend\n",
     )
   end
 
@@ -96,7 +96,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a hyphen inside" => "a-b",
       "a dot inside" => "a.b",
       "a decimal" => "1.5",
-      "a slash inside" => "a/b"
+      "a slash inside" => "a/b",
     }.each do |label, id|
       it "accepts #{label}" do
         expect(node_ids("flowchart TD\n  #{id} --> B\n")).to eq([id, "B"].sort)
@@ -135,7 +135,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "plain arrow" => "A-->B",
       "open link" => "A---B",
       "dotted arrow" => "A-.->B",
-      "thick arrow" => "A==>B"
+      "thick arrow" => "A==>B",
     }.each do |label, statement|
       it "splits a #{label} into two nodes" do
         expect(node_ids("graph TD\n#{statement}\n")).to eq(%w[A B])
@@ -220,7 +220,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "1==>b" => %w[1 b],
       "A==>B" => %w[A B],
-      "A===>B" => %w[A B]
+      "A===>B" => %w[A B],
     }.each do |statement, ids|
       it "accepts #{statement}" do
         expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
@@ -376,7 +376,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A&x-->B" => ["A&x", "B"],
       "A*x-->B" => ["A*x", "B"],
       "A1x-->B" => ["A1x", "B"],
-      "Zéax-->B" => ["B", "Zéax"]
+      "Zéax-->B" => ["B", "Zéax"],
     }.each do |statement, ids|
       it "keeps the whole id in #{statement}" do
         expect(node_ids("graph TD\n#{statement}\n")).to eq(ids)
@@ -468,10 +468,10 @@ RSpec.describe Sirena::Parser::Flowchart do
       it "reads #{word} as #{expected} across subgraph, click and node" do
         accepted = [
           subgraph_name_parses?(
-            "graph TD\nsubgraph #{word} [Title]\nX --> Y\nend\n"
+            "graph TD\nsubgraph #{word} [Title]\nX --> Y\nend\n",
           ),
           parses?("graph TD\nA-->B\nclick #{word} \"https://example.com\"\n"),
-          parses?("graph TD\n#{word}-->Z\n")
+          parses?("graph TD\n#{word}-->Z\n"),
         ]
 
         expect(accepted.map { |value| value ? "A" : "R" }.join).to eq(expected)
@@ -577,7 +577,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       ["a hash", "A#B"],
       ["a star", "A*B"],
       ["a question mark", "A?B"],
-      ["a backslash", "A\\B"]
+      ["a backslash", "A\\B"],
     ].freeze
 
     # These get a subgraph-name example too, because a subgraph name is
@@ -594,7 +594,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       ["a backtick", "A`B"],
       # Two Mongolian letters mermaid takes and Ruby's \p{L} does not.
       ["a Mongolian A", "A\u1885B"],
-      ["a Mongolian I", "A\u1886B"]
+      ["a Mongolian I", "A\u1886B"],
     ].freeze
 
     (ascii_chars + subgraph_covered_chars).each do |label, id|
@@ -663,7 +663,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a DEL" => "\u007F",
       "a C1 control" => "\u0085",
       "a letter added in Unicode 8" => "\u08B3",
-      "a letter added in Unicode 9" => "\u1C80"
+      "a letter added in Unicode 9" => "\u1C80",
     }.each do |label, char|
       it "refuses #{label} in a node id" do
         expect(parses?("graph TD\nA#{char}B --- Z\n")).to be(false)

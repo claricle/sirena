@@ -56,7 +56,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "subgraph endpoint" => %w[endpoint endpoint],
       "subgraph ending [T]" => %w[ending T],
-      "subgraph end_x" => %w[end_x end_x]
+      "subgraph end_x" => %w[end_x end_x],
     }.each do |header, (id, title)|
       it "reads `#{header}` as a box, not a terminator" do
         box = boxes("graph TD\n#{header}\nX\nend\n").first
@@ -101,7 +101,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a semicolon" => "graph TD\nsubgraph s\nA\nend;\n",
       "trailing spaces" => "graph TD\nsubgraph s\nA\nend  \n",
       "tabs around the semicolon" => "graph TD\nsubgraph s\nA\nend\t;\t\r\n",
-      "CRLF" => "graph TD\r\nsubgraph s\r\nA\r\nend\r\n"
+      "CRLF" => "graph TD\r\nsubgraph s\r\nA\r\nend\r\n",
     }.each do |label, source|
       it "closes on #{label}" do
         expect(parses?(source)).to be(true)
@@ -153,7 +153,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "parentheses" => "graph TD\nsubgraph s Title (More)\nA\nend\n",
       "angle brackets" => "graph TD\nsubgraph s Title <More>\nA\nend\n",
       "braces" => "graph TD\nsubgraph s Title {More}\nA\nend\n",
-      "an empty bracket title" => "graph TD\nsubgraph s []\nA\nend\n"
+      "an empty bracket title" => "graph TD\nsubgraph s []\nA\nend\n",
     }.each do |label, source|
       it "refuses #{label}" do
         expect(parses?(source)).to be(false)
@@ -410,7 +410,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a comment on the closing line" =>
         "graph TD\nsubgraph s\nA\nend %% note\n",
       "a comment after the closing semicolon" =>
-        "graph TD\nsubgraph s\nA\nend; %% note\n"
+        "graph TD\nsubgraph s\nA\nend; %% note\n",
     }.each do |label, source|
       it "rejects #{label}" do
         expect(parses?(source)).to be(false)
@@ -429,7 +429,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "an edge target" => "graph TD\nA-->end\n",
       "an edge source" => "graph TD\nend-->A\n",
       "a style target" => "graph TD\nA-->B\nstyle end fill:#f9f\n",
-      "a class target" => "graph TD\nA-->B\nclass end foo\n"
+      "a class target" => "graph TD\nA-->B\nclass end foo\n",
     }.each do |label, source|
       it "rejects #{label}" do
         expect(parses?(source)).to be(false)
@@ -454,7 +454,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a style target" => "graph TD\nA-->B\nstyle A fill:#f9f\n",
       "a class target" => "graph TD\nA-->B\nclass A foo\n",
       "a click target" => "graph TD\nA-->B\nclick A \"http://example.com\"\n",
-      "an edge target" => "graph TD\nA-->B\n"
+      "an edge target" => "graph TD\nA-->B\n",
     }.each do |label, source|
       it "still takes an ordinary name as #{label}" do
         expect(parses?(source)).to be(true)

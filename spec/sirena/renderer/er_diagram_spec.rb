@@ -50,9 +50,9 @@ RSpec.describe Sirena::Renderer::ErDiagram do
               name: 'CUSTOMER',
               attributes: [
                 { name: 'id', attribute_type: 'int', key_type: 'PK' },
-                { name: 'name', attribute_type: 'string', key_type: nil }
-              ]
-            }
+                { name: 'name', attribute_type: 'string', key_type: nil },
+              ],
+            },
           },
           {
             id: 'ORDER',
@@ -64,10 +64,10 @@ RSpec.describe Sirena::Renderer::ErDiagram do
             metadata: {
               name: 'ORDER',
               attributes: [
-                { name: 'order_id', attribute_type: 'int', key_type: 'PK' }
-              ]
-            }
-          }
+                { name: 'order_id', attribute_type: 'int', key_type: 'PK' },
+              ],
+            },
+          },
         ],
         edges: [
           {
@@ -78,10 +78,10 @@ RSpec.describe Sirena::Renderer::ErDiagram do
             metadata: {
               relationship_type: 'non-identifying',
               cardinality_from: 'one',
-              cardinality_to: 'zero_or_more'
-            }
-          }
-        ]
+              cardinality_to: 'zero_or_more',
+            },
+          },
+        ],
       }
     end
 
@@ -325,7 +325,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a']),
                      ErDiagramSpecHelpers.entity_node('OTHER')],
           edges: [],
-          class_defs: { 'a' => 'fill:#f96' }
+          class_defs: { 'a' => 'fill:#f96' },
         }
         svg = renderer.render(classed_graph)
 
@@ -341,7 +341,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: %w[a b])],
           edges: [],
-          class_defs: { 'a' => 'fill:#111,stroke:#0a0', 'b' => 'fill:#222' }
+          class_defs: { 'a' => 'fill:#111,stroke:#0a0', 'b' => 'fill:#222' },
         }
         svg = renderer.render(classed_graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, 'CAR')
@@ -355,10 +355,10 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [
             ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }]),
-            ErDiagramSpecHelpers.entity_node('OTHER', attributes: [{ name: 'x' }])
+            ErDiagramSpecHelpers.entity_node('OTHER', attributes: [{ name: 'x' }]),
           ],
           edges: [],
-          class_defs: { 'a' => 'color:blue' }
+          class_defs: { 'a' => 'color:blue' },
         }
         svg = renderer.render(classed_graph)
 
@@ -380,7 +380,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: %w[ghost known])],
           edges: [],
-          class_defs: { 'known' => 'fill:#0f0' }
+          class_defs: { 'known' => 'fill:#0f0' },
         }
         svg = renderer.render(classed_graph)
 
@@ -392,7 +392,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'stroke:#333,stroke-width:4px' }
+          class_defs: { 'a' => 'stroke:#333,stroke-width:4px' },
         }
         svg = renderer.render(classed_graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, 'CAR')
@@ -406,7 +406,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => ' fill : #f96' }
+          class_defs: { 'a' => ' fill : #f96' },
         }
         svg = renderer.render(classed_graph)
 
@@ -418,7 +418,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill: #f96' }
+          class_defs: { 'a' => 'fill: #f96' },
         }
         svg = renderer.render(classed_graph)
 
@@ -439,13 +439,13 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'foo' }
+          class_defs: { 'a' => 'foo' },
         }
         multi_value_graph = {
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'font-family:Arial,sans-serif' }
+          class_defs: { 'a' => 'font-family:Arial,sans-serif' },
         }
 
         expect { renderer.render(no_colon_graph) }.not_to raise_error
@@ -466,7 +466,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:#f96:extra' }
+          class_defs: { 'a' => 'fill:#f96:extra' },
         }
         svg = renderer.render(classed_graph)
 
@@ -480,7 +480,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR')],
           edges: [],
-          class_defs: { 'default' => 'fill:red' }
+          class_defs: { 'default' => 'fill:red' },
         }
         svg = renderer.render(default_graph)
 
@@ -492,7 +492,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'default' => 'fill:red,stroke:green', 'a' => 'fill:blue' }
+          class_defs: { 'default' => 'fill:red,stroke:green', 'a' => 'fill:blue' },
         }
         svg = renderer.render(graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, 'CAR')
@@ -509,7 +509,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: %w[a b a])],
           edges: [],
-          class_defs: { 'a' => 'fill:red', 'b' => 'fill:blue' }
+          class_defs: { 'a' => 'fill:red', 'b' => 'fill:blue' },
         }
         svg = renderer.render(graph)
 
@@ -526,7 +526,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'FILL:red' }
+          class_defs: { 'a' => 'FILL:red' },
         }
         svg = renderer.render(graph)
 
@@ -538,7 +538,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: %w[a b])],
           edges: [],
-          class_defs: { 'a' => 'fill:green', 'b' => 'FILL:red' }
+          class_defs: { 'a' => 'fill:green', 'b' => 'FILL:red' },
         }
         svg = renderer.render(graph)
 
@@ -557,7 +557,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' }
+          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' },
         }
         svg = renderer.render(graph)
 
@@ -577,7 +577,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])],
           edges: [],
-          class_defs: { 'a' => 'fill:currentColor,COLOR:red' }
+          class_defs: { 'a' => 'fill:currentColor,COLOR:red' },
         }
         svg = renderer.render(graph)
 
@@ -598,10 +598,10 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         graph = {
           id: 'er_diagram',
           children: [
-            ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])
+            ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }]),
           ],
           edges: [],
-          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' }
+          class_defs: { 'a' => 'fill:red,FILL:blue,fill:green' },
         }
         svg = renderer.render(graph)
 
@@ -624,7 +624,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'stroke:currentcolor,stroke:red' }
+          class_defs: { 'a' => 'stroke:currentcolor,stroke:red' },
         }
         svg = renderer.render(graph)
 
@@ -647,7 +647,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:currentcolor,fill:blue' }
+          class_defs: { 'a' => 'fill:currentcolor,fill:blue' },
         }
         svg = renderer.render(graph)
 
@@ -660,7 +660,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
             id: 'er_diagram',
             children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
             edges: [],
-            class_defs: { 'a' => "#{key}:currentcolor,#{key}:blue" }
+            class_defs: { 'a' => "#{key}:currentcolor,#{key}:blue" },
           }
           svg = renderer.render(graph)
 
@@ -678,11 +678,11 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         graph = {
           id: 'er_diagram',
           children: [
-            ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }])
+            ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'], attributes: [{ name: 'make' }]),
           ],
           edges: [],
           class_defs: { 'a' => 'stroke:red,STROKE:blue,stroke:green,' \
-                                'stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px' }
+                                'stroke-width:2px,STROKE-WIDTH:8px,stroke-width:4px' },
         }
         svg = renderer.render(graph)
         rect = ErDiagramSpecHelpers.rect_for(svg, 'CAR')
@@ -701,7 +701,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:currentColor,COLOR:red' }
+          class_defs: { 'a' => 'fill:currentColor,COLOR:red' },
         }
         svg = renderer.render(graph)
 
@@ -718,7 +718,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:red,fill:' }
+          class_defs: { 'a' => 'fill:red,fill:' },
         }
         svg = renderer.render(graph)
 
@@ -734,7 +734,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
           id: 'er_diagram',
           children: [ErDiagramSpecHelpers.entity_node('CAR', classes: ['a'])],
           edges: [],
-          class_defs: { 'a' => 'fill:red,FILL:bogus' }
+          class_defs: { 'a' => 'fill:red,FILL:bogus' },
         }
         svg = renderer.render(graph)
 

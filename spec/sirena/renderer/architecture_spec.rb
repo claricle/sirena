@@ -157,7 +157,7 @@ module ArchitectureSpecHelpers
       edges: [
         Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
                                                 to_position: "B"),
-      ]
+      ],
     )
 
     {
@@ -195,13 +195,13 @@ RSpec.describe Sirena::Renderer::Architecture do
             id: "db",
             label: "Database",
             icon: "database",
-            group_id: nil
+            group_id: nil,
           ),
           Sirena::Diagram::Architecture::Service.new(
             id: "server",
             label: "Server",
             icon: "server",
-            group_id: nil
+            group_id: nil,
           ),
         ],
         groups: [],
@@ -211,9 +211,9 @@ RSpec.describe Sirena::Renderer::Architecture do
             to_id: "server",
             from_position: "R",
             to_position: "L",
-            label: nil
+            label: nil,
           ),
-        ]
+        ],
       )
     end
 
@@ -293,7 +293,7 @@ RSpec.describe Sirena::Renderer::Architecture do
               id: "db",
               label: "Database",
               icon: "database",
-              group_id: "api"
+              group_id: "api",
             ),
           ],
           groups: [
@@ -301,10 +301,10 @@ RSpec.describe Sirena::Renderer::Architecture do
               id: "api",
               label: "API",
               icon: "cloud",
-              parent_id: nil
+              parent_id: nil,
             ),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -360,7 +360,7 @@ RSpec.describe Sirena::Renderer::Architecture do
               to_id: "server",
               from_position: "R",
               to_position: "L",
-              label: "HTTP"
+              label: "HTTP",
             ),
             from_x: 160,
             from_y: 80,
@@ -523,7 +523,7 @@ RSpec.describe Sirena::Renderer::Architecture do
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "R",
                                                     to_position: "T"),
-          ]
+          ],
         )
       end
 

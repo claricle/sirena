@@ -37,7 +37,7 @@ module SequenceSpecHelpers
   # the same lifeline.
   def self_group(arrow)
     xml = Sirena.render(
-      "sequenceDiagram\n    participant A\n    A#{arrow}A: self\n"
+      "sequenceDiagram\n    participant A\n    A#{arrow}A: self\n",
     )
     xml[%r{<g id="message-0".*?</g>}m]
   end
@@ -126,7 +126,7 @@ RSpec.describe Sirena::Renderer::Sequence do
     # as polygons made `-//` and `-|/` the same picture.
     {
       "-//" => 'x1="220.0" y1="120.0" x2="212.0" y2="124.0"',
-      "-\\\\" => 'x1="220.0" y1="120.0" x2="212.0" y2="116.0"'
+      "-\\\\" => 'x1="220.0" y1="120.0" x2="212.0" y2="116.0"',
     }.each do |arrow, stroke|
       it "draws one unfilled stroke on #{arrow}" do
         group = SequenceSpecHelpers.message_group(arrow)

@@ -51,7 +51,7 @@ RSpec.describe MermaidDiff do
         [:rejects, :accepts],
         [:accepts, :rejects],
         [:accepts, :error],
-        [:rejects, :error]
+        [:rejects, :error],
       ]
 
       actual = states.map do |sirena, mermaid|
@@ -66,8 +66,8 @@ RSpec.describe MermaidDiff do
           [:gap, false],
           [:over_acceptance, false],
           [:infrastructure, false],
-          [:infrastructure, false]
-        ]
+          [:infrastructure, false],
+        ],
       )
     end
   end
@@ -188,7 +188,7 @@ RSpec.describe MermaidDiff do
       # otherwise a probe failure report gets the canary's own success noise
       # appended to the text a developer reads to triage the gap.
       expect([result.verdict, result.diagnostic]).to eq(
-        [:error, 'browser launch failed once']
+        [:error, 'browser launch failed once'],
       )
     end
   end
@@ -229,7 +229,7 @@ RSpec.describe MermaidDiff do
       mixed_out, mixed_err, mixed_status = run_harness(mixed)
       over_out, over_err, over_status = run_harness(
         "flowchart LR\n  A[reject-by-fake]\n",
-        mmdc: selective_mmdc
+        mmdc: selective_mmdc,
       )
       failed_out, failed_err, failed_status = run_harness(trivial_source, mmdc: unavailable_mmdc)
 
@@ -244,7 +244,7 @@ RSpec.describe MermaidDiff do
         over_err,
         failed_status.exitstatus,
         failed_out,
-        failed_err
+        failed_err,
       ]
       expected = [
         0,
@@ -260,7 +260,7 @@ RSpec.describe MermaidDiff do
         1,
         "MMDC FAILED      flowchart LR |   A --> B\n\n" \
           "1 probes: 0 agree, 0 gaps, 0 over-accepted, 1 mmdc failures\n",
-        "  mmdc: browser launch failed\n"
+        "  mmdc: browser launch failed\n",
       ]
 
       expect(actual).to eq(expected)
@@ -275,7 +275,7 @@ RSpec.describe MermaidDiff do
         1,
         "GAP              not a diagram\n\n" \
           "2 probes: 0 agree, 1 gaps, 1 over-accepted, 0 mmdc failures\n",
-        ''
+        '',
       ]
 
       expect([status.exitstatus, stdout, stderr]).to eq(expected)
@@ -285,7 +285,7 @@ RSpec.describe MermaidDiff do
       stdout, stderr, status = run_harness(trivial_source, relative: true)
 
       expect([status.exitstatus, stdout, stderr]).to eq(
-        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", '']
+        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", ''],
       )
     end
   end
@@ -450,7 +450,7 @@ RSpec.describe MermaidDiff do
         entries = {
           'accept.mmd' => intentional_error_svg,
           'reject.mmd' => syntax_error_svg,
-          'error.mmd' => '<svg/>'
+          'error.mmd' => '<svg/>',
         }.map do |name, contents|
           path = File.join(dir, name)
           File.write(path, contents)
@@ -469,7 +469,7 @@ RSpec.describe MermaidDiff do
         expected = [
           ['valid', 'local mmdc renders it (sidecar rejection was stale)'],
           ['invalid', 'local mmdc rejects it too'],
-          ['invalid', 'local mmdc could not be run']
+          ['invalid', 'local mmdc could not be run'],
         ]
 
         expect(rows.map { |row| [row['verdict'], row['evidence']] }).to eq(expected)
@@ -490,7 +490,7 @@ RSpec.describe MermaidDiff do
         RbConfig.ruby,
         File.expand_path('../../scripts/corpus_verdicts.rb', __dir__),
         '--verify',
-        'gitgraph'
+        'gitgraph',
       )
 
       expect(stdout).to eq('')
@@ -507,7 +507,7 @@ RSpec.describe MermaidDiff do
         MermaidDiff::Verdict.new("gap\n", :rejects, :accepts),
         MermaidDiff::Verdict.new("over\n", :accepts, :rejects),
         MermaidDiff::Verdict.new("accept unavailable\n", :accepts, :error),
-        MermaidDiff::Verdict.new("reject unavailable\n", :rejects, :error)
+        MermaidDiff::Verdict.new("reject unavailable\n", :rejects, :error),
       ]
     end
 

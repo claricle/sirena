@@ -47,7 +47,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'scales with the stroke width of the line it ends' do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 20 0', marker_end: 'url(#arrowhead)', stroke_width: '2')
+        path(d: 'M 0 0 L 20 0', marker_end: 'url(#arrowhead)', stroke_width: '2'),
       ).first
 
       # All three corners: asserting one back corner left the other free to
@@ -57,7 +57,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'takes the colour of the line, because it is part of it' do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke: '#ff0000')
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke: '#ff0000'),
       ).first
 
       expect(polygon.fill).to eq('#ff0000')
@@ -80,7 +80,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'paints the head at the stroke opacity of the line it ends' do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke_opacity: '0.5')
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke_opacity: '0.5'),
       ).first
 
       expect(polygon.to_xml)
@@ -90,7 +90,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'carries the whole-element opacity of the path it ends' do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', opacity: 0.4)
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', opacity: 0.4),
       ).first
 
       expect(polygon.to_xml)
@@ -102,7 +102,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # the line it belongs to lands somewhere else.
     it 'carries the transform of the path it ends' do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', transform: 'translate(5,5)')
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', transform: 'translate(5,5)'),
       ).first
 
       expect(polygon.transform).to eq('translate(5,5)')
@@ -111,7 +111,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     it 'omits empty opacity and transform attributes from the polygon' do
       polygon = described_class.for(
         path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
-             stroke_opacity: '', transform: '')
+             stroke_opacity: '', transform: ''),
       ).first
 
       expect(polygon.to_xml)
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'draws both when the path asked for both' do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', marker_start: 'url(#arrowhead)')
+        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', marker_start: 'url(#arrowhead)'),
       )
 
       # Both heads, each pointing its own way, in the documented order. A
@@ -165,7 +165,8 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'draws nothing when a terminal arc follows a line' do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0 A 5 5 0 0 1 20 10', marker_end: 'url(#arrowhead)')
+        path(d: 'M 0 0 L 10 0 A 5 5 0 0 1 20 10',
+             marker_end: 'url(#arrowhead)'),
       )
 
       expect(arrows).to be_empty
@@ -173,7 +174,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'draws nothing when a compact terminal arc follows a line' do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0 a5 5 0 011 20 10', marker_end: 'url(#arrowhead)')
+        path(d: 'M 0 0 L 10 0 a5 5 0 011 20 10', marker_end: 'url(#arrowhead)'),
       )
 
       expect(arrows).to be_empty
@@ -183,7 +184,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # place and can carry the head.
     it 'still ends where a segment after an arc ends' do
       polygon = described_class.for(
-        path(d: 'M 0 0 A 5 5 0 0 1 10 0 L 20 0', marker_end: 'url(#arrowhead)')
+        path(d: 'M 0 0 A 5 5 0 0 1 10 0 L 20 0', marker_end: 'url(#arrowhead)'),
       ).first
 
       expect(points_of(polygon).first).to eq([20.0, 0.0])
@@ -198,7 +199,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     it 'draws nothing when a non-finite endpoint follows a finite heading' do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 5 0 L 1e400 0', marker_end: 'url(#arrowhead)')
+        path(d: 'M 0 0 L 5 0 L 1e400 0', marker_end: 'url(#arrowhead)'),
       )
 
       expect(arrows).to be_empty
@@ -232,7 +233,7 @@ RSpec.describe Sirena::Svg::Arrowhead do
     it 'draws nothing when scaling a finite stroke width overflows' do
       arrows = described_class.for(
         path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
-             stroke: '#000', stroke_width: '1e308')
+             stroke: '#000', stroke_width: '1e308'),
       )
 
       expect(arrows).to be_empty

@@ -17,7 +17,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
             width: 120,
             height: 60,
             labels: [{ text: 'Idle', width: 40, height: 14 }],
-            metadata: { state_type: 'normal' }
+            metadata: { state_type: 'normal' },
           },
           {
             id: 'active',
@@ -26,8 +26,8 @@ RSpec.describe Sirena::Renderer::StateDiagram do
             width: 120,
             height: 60,
             labels: [{ text: 'Active', width: 50, height: 14 }],
-            metadata: { state_type: 'normal' }
-          }
+            metadata: { state_type: 'normal' },
+          },
         ],
         edges: [
           {
@@ -35,9 +35,9 @@ RSpec.describe Sirena::Renderer::StateDiagram do
             sources: ['idle'],
             targets: ['active'],
             labels: [{ text: 'start', width: 40, height: 14 }],
-            metadata: { trigger: 'start' }
-          }
-        ]
+            metadata: { trigger: 'start' },
+          },
+        ],
       }
     end
 
@@ -94,7 +94,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
         child.children.each do |gc|
           if gc.is_a?(Sirena::Svg::Group)
             all_circles.concat(
-              gc.children.grep(Sirena::Svg::Circle)
+              gc.children.grep(Sirena::Svg::Circle),
             )
           elsif gc.is_a?(Sirena::Svg::Circle)
             all_circles << gc

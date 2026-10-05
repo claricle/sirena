@@ -16,7 +16,7 @@ module Sirena
         rule(keyword: simple(:_kw), statements: subtree(:stmts)) do
           {
             type: :treemap,
-            statements: Array(stmts).compact
+            statements: Array(stmts).compact,
           }
         end
 
@@ -37,12 +37,12 @@ module Sirena
         # Class definition
         rule(class_def: {
           class_name: simple(:name),
-          class_styles: simple(:styles)
+          class_styles: simple(:styles),
         }) do
           {
             type: :class_def,
             name: name.to_s,
-            styles: styles.to_s
+            styles: styles.to_s,
           }
         end
 
@@ -67,7 +67,7 @@ module Sirena
           result = {
             type: :node,
             indent: indent_len,
-            label: label_str
+            label: label_str,
           }
 
           result[:value] = n[:value] if n.key?(:value)

@@ -72,7 +72,7 @@ module Sirena
             is_merge: commit_data[:is_merge],
             merge_branch: commit_data[:merge_branch],
             is_cherry_pick: commit_data[:is_cherry_pick],
-            cherry_pick_parent: commit_data[:cherry_pick_parent]
+            cherry_pick_parent: commit_data[:cherry_pick_parent],
           )
           diagram.commits << commit
         end
@@ -83,7 +83,7 @@ module Sirena
             name: branch_data[:name],
             order: branch_data[:order],
             parent_branch: branch_data[:parent_branch],
-            created_at_commit: branch_data[:created_at_commit]
+            created_at_commit: branch_data[:created_at_commit],
           )
           diagram.branches << branch
         end

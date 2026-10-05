@@ -68,7 +68,7 @@ CONFORMANCE_RENDERED_FLOOR = 895
 # set is a regression, and a glob over whatever happens to exist cannot see
 # one.
 CONFORMANCE_UNRENDERABLE_EXAMPLES = [
-  'packet/01-basic-packet.beta.mmd'
+  'packet/01-basic-packet.beta.mmd',
 ].freeze
 
 # Same guard corpus_sweep.rb uses. A case that hangs is a corpus problem, not
@@ -285,7 +285,7 @@ RSpec.describe Sirena::Svg do
 
       expect(task_source).to include(
         "EXAMPLE_TODAY = Date.new(#{CONFORMANCE_EXAMPLE_TODAY.year}, " \
-        "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})"
+        "#{CONFORMANCE_EXAMPLE_TODAY.month}, #{CONFORMANCE_EXAMPLE_TODAY.day})",
       )
       # The expression, not the whole assignment: pinning the statement made the
       # task keep a redundant local just to satisfy this line.
@@ -295,10 +295,10 @@ RSpec.describe Sirena::Svg do
 
     it 'uses the conformance gate named unrenderable examples' do
       task_source = File.read(File.join(CONFORMANCE_ROOT, 'tasks', 'example_tasks.rb'))
-      sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  '#{source}'" }.join(",\n")
+      sources = CONFORMANCE_UNRENDERABLE_EXAMPLES.map { |source| "  '#{source}'," }.join("\n")
 
       expect(task_source).to include(
-        "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze"
+        "EXPECTED_UNRENDERABLE_SOURCES = [\n#{sources}\n].freeze",
       )
     end
 

@@ -70,7 +70,7 @@ RSpec.describe Sirena::Engine do
     {
       'block' => '001_rendering_block_spec_block_0.mmd',
       'gantt' => '001_rendering_gantt_spec_gantt_0.mmd',
-      'flowchart' => '001_config_0.mmd'
+      'flowchart' => '001_config_0.mmd',
     }.each do |type, file|
       it "is stable across runs for #{type}" do
         source = corpus_source(type, file)

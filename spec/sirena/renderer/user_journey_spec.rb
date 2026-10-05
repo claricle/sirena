@@ -22,15 +22,15 @@ RSpec.describe Sirena::Renderer::UserJourney do
               score: 5,
               score_color: :green,
               actors: ['Customer'],
-              section_name: 'Shopping'
-            }
-          }
+              section_name: 'Shopping',
+            },
+          },
         ],
         edges: [],
         metadata: {
           title: 'My Journey',
-          sections: ['Shopping']
-        }
+          sections: ['Shopping'],
+        },
       }
     end
 
@@ -115,16 +115,16 @@ RSpec.describe Sirena::Renderer::UserJourney do
           score: 4,
           score_color: :green,
           actors: ['Customer'],
-          section_name: 'Shopping'
-        }
+          section_name: 'Shopping',
+        },
       }
       graph_with_edges[:edges] = [
         {
           id: 'flow_0',
           sources: ['task_0'],
           targets: ['task_1'],
-          metadata: { type: 'sequence' }
-        }
+          metadata: { type: 'sequence' },
+        },
       ]
 
       svg = renderer.render(graph_with_edges)

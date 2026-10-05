@@ -211,7 +211,7 @@ RSpec.describe Sirena::Diagram::UserJourney do
       expect(diagram.all_actors).to contain_exactly(
         'Actor 1',
         'Actor 2',
-        'Actor 3'
+        'Actor 3',
       )
     end
   end

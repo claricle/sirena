@@ -102,13 +102,13 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
               name: 'Animal',
               stereotype: nil,
               attributes: [
-                { name: 'age', type: 'int', visibility: 'protected' }
+                { name: 'age', type: 'int', visibility: 'protected' },
               ],
               methods: [
                 { name: 'breathe', parameters: nil, return_type: nil,
-                  visibility: 'public' }
-              ]
-            }
+                  visibility: 'public' },
+              ],
+            },
           },
           {
             id: 'Dog',
@@ -123,19 +123,19 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
               attributes: [],
               methods: [
                 { name: 'bark', parameters: nil, return_type: nil,
-                  visibility: 'public' }
-              ]
-            }
-          }
+                  visibility: 'public' },
+              ],
+            },
+          },
         ],
         edges: [
           {
             id: 'Dog_to_Animal',
             sources: ['Dog'],
             targets: ['Animal'],
-            metadata: { relationship_type: 'inheritance' }
-          }
-        ]
+            metadata: { relationship_type: 'inheritance' },
+          },
+        ],
       }
     end
 
@@ -334,7 +334,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
       [
         ['Animal <|--|> Zebra', 'Animal_to_Zebra'],
         ['Animal o--< Zebra', 'Animal_to_Zebra'],
-        ['Animal *..|> Zebra', 'Animal_to_Zebra']
+        ['Animal *..|> Zebra', 'Animal_to_Zebra'],
       ].each do |source, edge_id|
         doc = ClassDiagramSpecHelpers.rendered_document(source)
         group = ClassDiagramSpecHelpers.relationship_group(doc, edge_id)

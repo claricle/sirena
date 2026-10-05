@@ -15,7 +15,7 @@ RSpec.describe Sirena::Svg::Escaping do
     {
       '&' => '&amp;',
       '<' => '&lt;',
-      '>' => '&gt;'
+      '>' => '&gt;',
     }.each do |raw, escaped|
       it "escapes #{raw.inspect} in text content" do
         expect(described_class.escape_text("a#{raw}b")).to eq("a#{escaped}b")
@@ -37,7 +37,7 @@ RSpec.describe Sirena::Svg::Escaping do
       '<' => '&lt;',
       '>' => '&gt;',
       '"' => '&quot;',
-      "'" => '&apos;'
+      "'" => '&apos;',
     }.each do |raw, escaped|
       it "escapes #{raw.inspect} in an attribute value" do
         expect(described_class.escape_attribute("a#{raw}b"))

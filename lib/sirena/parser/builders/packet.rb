@@ -17,13 +17,13 @@ module Sirena
         rule(
           bit_start: simple(:bit_start),
           bit_end: simple(:bit_end),
-          label: subtree(:label)
+          label: subtree(:label),
         ) do
           {
             type: :field,
             bit_start: bit_start.to_s.to_i,
             bit_end: bit_end.to_s.to_i,
-            label: label.is_a?(Array) ? "" : label.to_s
+            label: label.is_a?(Array) ? "" : label.to_s,
           }
         end
 
@@ -36,7 +36,7 @@ module Sirena
         rule(statements: subtree(:statements)) do
           result = {
             title: nil,
-            fields: []
+            fields: [],
           }
 
           # Handle nil or empty statements
@@ -60,7 +60,7 @@ module Sirena
         rule(statements: nil) do
           {
             title: nil,
-            fields: []
+            fields: [],
           }
         end
       end

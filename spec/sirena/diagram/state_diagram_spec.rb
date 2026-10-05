@@ -16,7 +16,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
 
       expect(diagram.valid?).to be true
@@ -42,11 +42,11 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
 
       expect(diagram.valid?).to be false
@@ -59,7 +59,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       Sirena::Diagram::StateNode.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
     end
 
@@ -79,7 +79,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
     let(:transition) do
       Sirena::Diagram::StateTransition.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
     end
 
@@ -99,7 +99,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
     let(:transition) do
       Sirena::Diagram::StateTransition.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
     end
 
@@ -120,7 +120,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       Sirena::Diagram::StateNode.new(
         id: 'start_1',
         label: '[*]',
-        state_type: 'start'
+        state_type: 'start',
       )
     end
 
@@ -137,7 +137,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       Sirena::Diagram::StateNode.new(
         id: 'end_1',
         label: '[*]',
-        state_type: 'end'
+        state_type: 'end',
       )
     end
 
@@ -154,12 +154,12 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       Sirena::Diagram::StateNode.new(
         id: 'composite',
         label: 'Composite',
-        state_type: 'normal'
+        state_type: 'normal',
       ).tap do |s|
         s.children << Sirena::Diagram::StateNode.new(
           id: 'child',
           label: 'Child',
-          state_type: 'normal'
+          state_type: 'normal',
         )
       end
     end
@@ -177,7 +177,7 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       Sirena::Diagram::StateNode.new(
         id: 'choice1',
         label: 'choice1',
-        state_type: 'choice'
+        state_type: 'choice',
       )
     end
 
@@ -195,7 +195,7 @@ RSpec.describe Sirena::Diagram::StateNode do
       node = described_class.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
 
       expect(node.valid?).to be true
@@ -217,7 +217,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns true for start state' do
       node = described_class.new(
         id: 'start',
-        state_type: 'start'
+        state_type: 'start',
       )
       expect(node.start_state?).to be true
     end
@@ -225,7 +225,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns false for non-start state' do
       node = described_class.new(
         id: 'idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       expect(node.start_state?).to be false
     end
@@ -235,7 +235,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns true for end state' do
       node = described_class.new(
         id: 'end',
-        state_type: 'end'
+        state_type: 'end',
       )
       expect(node.end_state?).to be true
     end
@@ -243,7 +243,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns false for non-end state' do
       node = described_class.new(
         id: 'idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       expect(node.end_state?).to be false
     end
@@ -253,7 +253,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns true for choice state' do
       node = described_class.new(
         id: 'choice1',
-        state_type: 'choice'
+        state_type: 'choice',
       )
       expect(node.choice_state?).to be true
     end
@@ -263,11 +263,11 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns true when state has children' do
       node = described_class.new(
         id: 'composite',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       node.children << described_class.new(
         id: 'child',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       expect(node.composite_state?).to be true
     end
@@ -275,7 +275,7 @@ RSpec.describe Sirena::Diagram::StateNode do
     it 'returns false when state has no children' do
       node = described_class.new(
         id: 'simple',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       expect(node.composite_state?).to be false
     end
@@ -287,7 +287,7 @@ RSpec.describe Sirena::Diagram::StateTransition do
     it 'returns true for valid transition' do
       transition = described_class.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
 
       expect(transition.valid?).to be true
@@ -309,7 +309,7 @@ RSpec.describe Sirena::Diagram::StateTransition do
       transition = described_class.new(
         from_id: 'idle',
         to_id: 'active',
-        trigger: 'start'
+        trigger: 'start',
       )
 
       expect(transition.label).to eq('start')
@@ -320,7 +320,7 @@ RSpec.describe Sirena::Diagram::StateTransition do
         from_id: 'idle',
         to_id: 'active',
         trigger: 'start',
-        guard_condition: 'ready'
+        guard_condition: 'ready',
       )
 
       expect(transition.label).to eq('start [ready]')
@@ -329,7 +329,7 @@ RSpec.describe Sirena::Diagram::StateTransition do
     it 'returns empty string when neither trigger nor guard' do
       transition = described_class.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
 
       expect(transition.label).to eq('')

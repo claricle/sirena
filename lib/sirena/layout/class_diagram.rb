@@ -40,7 +40,7 @@ module Sirena
           id: diagram.id || 'class_diagram',
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
-          layoutOptions: layout_options(diagram)
+          layoutOptions: layout_options(diagram),
         }
       end
 
@@ -59,8 +59,8 @@ module Sirena
               name: entity.name,
               stereotype: entity.stereotype,
               attributes: entity.attributes.map { |a| attribute_to_hash(a) },
-              methods: entity.class_methods.map { |m| method_to_hash(m) }
-            }
+              methods: entity.class_methods.map { |m| method_to_hash(m) },
+            },
           }
         end
       end
@@ -81,8 +81,8 @@ module Sirena
               target_cardinality: rel.target_cardinality,
               start_marker: rel.start_marker,
               end_marker: rel.end_marker,
-              dashed: rel.dashed
-            }
+              dashed: rel.dashed,
+            },
           }
         end
       end
@@ -99,7 +99,7 @@ module Sirena
                     end
         name_width = measure_text(
           name_text,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: DEFAULT_FONT_SIZE,
         )[:width]
         max_width = [max_width, name_width].max
 
@@ -108,7 +108,7 @@ module Sirena
           attr_text = format_attribute(attr)
           attr_width = measure_text(
             attr_text,
-            font_size: DEFAULT_FONT_SIZE
+            font_size: DEFAULT_FONT_SIZE,
           )[:width]
           max_width = [max_width, attr_width].max
         end
@@ -118,7 +118,7 @@ module Sirena
           method_text = format_method(method)
           method_width = measure_text(
             method_text,
-            font_size: DEFAULT_FONT_SIZE
+            font_size: DEFAULT_FONT_SIZE,
           )[:width]
           max_width = [max_width, method_width].max
         end
@@ -149,7 +149,7 @@ module Sirena
         compartment_count = [
           1, # name always present
           entity.attributes.empty? ? 0 : 1,
-          entity.class_methods.empty? ? 0 : 1
+          entity.class_methods.empty? ? 0 : 1,
         ].sum
         separator_height = (compartment_count - 1) * 2 # 2px per separator
 
@@ -158,7 +158,7 @@ module Sirena
 
         {
           width: total_width,
-          height: total_height
+          height: total_height,
         }
       end
 
@@ -176,7 +176,7 @@ module Sirena
         labels << {
           text: name_text,
           width: name_dims[:width],
-          height: name_dims[:height]
+          height: name_dims[:height],
         }
 
         labels
@@ -189,12 +189,12 @@ module Sirena
         if relationship.label && !relationship.label.empty?
           label_dims = measure_text(
             relationship.label,
-            font_size: DEFAULT_FONT_SIZE
+            font_size: DEFAULT_FONT_SIZE,
           )
           labels << {
             text: relationship.label,
             width: label_dims[:width],
-            height: label_dims[:height]
+            height: label_dims[:height],
           }
         end
 
@@ -203,13 +203,13 @@ module Sirena
            !relationship.source_cardinality.empty?
           card_dims = measure_text(
             relationship.source_cardinality,
-            font_size: DEFAULT_FONT_SIZE - 2
+            font_size: DEFAULT_FONT_SIZE - 2,
           )
           labels << {
             text: relationship.source_cardinality,
             width: card_dims[:width],
             height: card_dims[:height],
-            position: 'source'
+            position: 'source',
           }
         end
 
@@ -217,13 +217,13 @@ module Sirena
            !relationship.target_cardinality.empty?
           card_dims = measure_text(
             relationship.target_cardinality,
-            font_size: DEFAULT_FONT_SIZE - 2
+            font_size: DEFAULT_FONT_SIZE - 2,
           )
           labels << {
             text: relationship.target_cardinality,
             width: card_dims[:width],
             height: card_dims[:height],
-            position: 'target'
+            position: 'target',
           }
         end
 
@@ -246,7 +246,7 @@ module Sirena
         {
           name: attribute.name,
           type: attribute.type,
-          visibility: attribute.visibility
+          visibility: attribute.visibility,
         }
       end
 
@@ -255,7 +255,7 @@ module Sirena
           name: method.name,
           parameters: method.parameters,
           return_type: method.return_type,
-          visibility: method.visibility
+          visibility: method.visibility,
         }
       end
 
@@ -273,7 +273,7 @@ module Sirena
           # NETWORK_SIMPLEX for better UML layout with inheritance
           ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
           ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN'
+          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
         )
       end
 

@@ -82,7 +82,7 @@ module ArchitectureEdgeRouterSpecHelpers
     diagram = Sirena::Parser::Architecture.new.parse(
       File.read(File.expand_path(
                   "../../mermaid/architecture/011_rendering_architecture_spec_architecture_10.mmd", __dir__
-                ))
+                )),
     )
     graph = Sirena::Layout::Architecture.new.to_graph(diagram)
     nodes = graph[:services].merge(graph[:junctions])

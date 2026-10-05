@@ -49,8 +49,8 @@ module Sirena
             flow_count: diagram.flows.length,
             total_flow: diagram.total_flow,
             max_flow: diagram.max_flow,
-            layer_count: @node_layers.values.max.to_i + 1
-          }
+            layer_count: @node_layers.values.max.to_i + 1,
+          },
         }
       end
 
@@ -86,7 +86,7 @@ module Sirena
             target_layer = current_layer + 1
             @node_layers[target_id] = [
               @node_layers[target_id] || 0,
-              target_layer
+              target_layer,
             ].max
 
             unless queue.include?(target_id)
@@ -128,7 +128,7 @@ module Sirena
               x: x,
               y: y,
               width: calculate_node_width(node_id),
-              height: NODE_HEIGHT
+              height: NODE_HEIGHT,
             }
 
             y_offset += NODE_HEIGHT + NODE_SPACING
@@ -163,7 +163,7 @@ module Sirena
             width: position[:width],
             height: position[:height],
             inflow: @diagram.total_inflow(node.id),
-            outflow: @diagram.total_outflow(node.id)
+            outflow: @diagram.total_outflow(node.id),
           }
         end
       end
@@ -187,7 +187,7 @@ module Sirena
             source_y: source_pos ? source_pos[:y] + (source_pos[:height] / 2.0) : 0,
             target_x: target_pos ? target_pos[:x] : LAYER_SPACING,
             target_y: target_pos ? target_pos[:y] + (target_pos[:height] / 2.0) : 0,
-            self_loop: flow.self_loop?
+            self_loop: flow.self_loop?,
           }
         end
       end

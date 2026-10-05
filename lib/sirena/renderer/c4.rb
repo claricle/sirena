@@ -22,7 +22,7 @@ module Sirena
         system_ext: { bg: '#8F8F8F', border: '#6B6B6B', text: '#FFFFFF' },
         container: { bg: '#438DD5', border: '#2E6295', text: '#FFFFFF' },
         component: { bg: '#85BBF0', border: '#5D8FB9', text: '#000000' },
-        boundary: { bg: '#FFFFFF', border: '#9BA7B4', text: '#000000' }
+        boundary: { bg: '#FFFFFF', border: '#9BA7B4', text: '#000000' },
       }.freeze
 
       # Element dimensions
@@ -379,7 +379,7 @@ module Sirena
             x: node[:x],
             y: node[:y],
             width: node[:width],
-            height: node[:height]
+            height: node[:height],
           }
         end
 
@@ -446,13 +446,13 @@ module Sirena
                    [
                      "#{x2},#{y2}",
                      "#{x2 - ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
-                     "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}"
+                     "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
                    ].join(' ')
                  else
                    [
                      "#{x2},#{y2}",
                      "#{x2 + ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
-                     "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}"
+                     "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
                    ].join(' ')
                  end
 

@@ -129,7 +129,7 @@ class MermaidFixtureGenerator
       correct_success: 0,
       correct_unexpected_fail: 0,
       error_expected_fail: 0,
-      error_unexpected_success: 0
+      error_unexpected_success: 0,
     }
     unexpected_failures = []
     unexpected_successes = []
@@ -357,7 +357,7 @@ class MermaidTestValidator
     {
       total: mmd_files.length,
       passing: passing,
-      failing: failing
+      failing: failing,
     }
   end
 end

@@ -105,7 +105,7 @@ RSpec.describe 'StateDiagram Integration' do
         ["stateDiagram-v2\nstate C <<choice>>\n" \
          "C : FIRST\nC : SECOND\n", 'choice'],
         ["stateDiagram-v2\nC : FIRST\nstate C <<choice>>\n" \
-         "C : SECOND\n", 'normal']
+         "C : SECOND\n", 'normal'],
       ]
 
       cases.each do |source, expected_type|
@@ -158,7 +158,7 @@ RSpec.describe 'StateDiagram Integration' do
         .to raise_error(Sirena::Parser::ParseError, /Parse error/)
 
       document = REXML::Document.new(
-        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n")
+        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n"),
       )
       expect(REXML::XPath.match(document, '//text').map(&:text)).to eq(%w[A B])
     end
@@ -182,7 +182,7 @@ RSpec.describe 'StateDiagram Integration' do
       end
 
       document = REXML::Document.new(
-        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n")
+        engine.render("stateDiagram-v2\ndirection LR\nA --> B\n"),
       )
       expect(REXML::XPath.match(document, '//text').map(&:text)).to eq(%w[A B])
     end
@@ -233,7 +233,7 @@ RSpec.describe 'StateDiagram Integration' do
         ["stateDiagram-v2\nC --> A\nstate C <<choice>>\n", [1, 0]],
         ["stateDiagram-v2\nstate C <<choice>>\nC --> A\n", [0, 1]],
         ["stateDiagram-v2\nstate C <<fork>>\nstate C <<choice>>\n", [1, 0]],
-        ["stateDiagram-v2\nstate C <<choice>>\nstate C <<fork>>\n", [0, 1]]
+        ["stateDiagram-v2\nstate C <<choice>>\nstate C <<fork>>\n", [0, 1]],
       ]
 
       cases.each do |source, expected_shapes|
@@ -249,7 +249,7 @@ RSpec.describe 'StateDiagram Integration' do
 
         shapes = [
           REXML::XPath.match(groups.first, 'rect').length,
-          REXML::XPath.match(groups.first, 'polygon').length
+          REXML::XPath.match(groups.first, 'polygon').length,
         ]
 
         expect(shapes).to eq(expected_shapes), source
@@ -277,13 +277,13 @@ RSpec.describe 'StateDiagram Integration' do
     it 'trims alias labels and ignores a whitespace-only alias' do
       labelled = rendered_state(
         "stateDiagram-v2\nstate \"  Label  \" as C\n",
-        'C'
+        'C',
       )
       expect(REXML::XPath.match(labelled, 'text').map(&:text)).to eq(['Label'])
 
       choice = rendered_state(
         "stateDiagram-v2\nstate C <<choice>>\nstate \"   \" as C\n",
-        'C'
+        'C',
       )
       expect(REXML::XPath.match(choice, 'rect')).to be_empty
       expect(REXML::XPath.match(choice, 'polygon').length).to eq(1)
@@ -307,7 +307,7 @@ RSpec.describe 'StateDiagram Integration' do
       cases = [
         ["stateDiagram-v2\nA :   ", ['A']],
         ["stateDiagram-v2\nA : %% comment\n", ['%% comment']],
-        ["stateDiagram-v2\nA : Text %% comment\n", ['Text %% comment']]
+        ["stateDiagram-v2\nA : Text %% comment\n", ['Text %% comment']],
       ]
 
       cases.each do |source, expected_text|
@@ -334,7 +334,7 @@ RSpec.describe 'StateDiagram Integration' do
   describe 'DiagramRegistry integration' do
     it 'has state_diagram registered' do
       expect(
-        Sirena::DiagramRegistry.registered?(:state_diagram)
+        Sirena::DiagramRegistry.registered?(:state_diagram),
       ).to be true
     end
 
@@ -343,13 +343,13 @@ RSpec.describe 'StateDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::StateDiagram
+        Sirena::Parser::StateDiagram,
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Layout::StateDiagram
+        Sirena::Layout::StateDiagram,
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::StateDiagram
+        Sirena::Renderer::StateDiagram,
       )
     end
   end

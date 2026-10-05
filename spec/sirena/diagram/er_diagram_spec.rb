@@ -15,7 +15,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       diagram = described_class.new
       diagram.entities << Sirena::Diagram::ErEntity.new(
         id: 'CUSTOMER',
-        name: 'CUSTOMER'
+        name: 'CUSTOMER',
       )
 
       expect(diagram.valid?).to be true
@@ -43,17 +43,17 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       diagram = described_class.new
       diagram.entities << Sirena::Diagram::ErEntity.new(
         id: 'CUSTOMER',
-        name: 'CUSTOMER'
+        name: 'CUSTOMER',
       )
       diagram.entities << Sirena::Diagram::ErEntity.new(
         id: 'ORDER',
-        name: 'ORDER'
+        name: 'ORDER',
       )
       diagram.relationships << Sirena::Diagram::ErRelationship.new(
         from_id: 'CUSTOMER',
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
 
       expect(diagram.valid?).to be false
@@ -64,7 +64,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       diagram = described_class.new(relationships: [nil])
       diagram.entities << Sirena::Diagram::ErEntity.new(
         id: 'CUSTOMER',
-        name: 'CUSTOMER'
+        name: 'CUSTOMER',
       )
 
       expect(diagram.valid?).to be false
@@ -83,7 +83,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
 
       expect(diagram.valid?).to be false
@@ -93,14 +93,14 @@ RSpec.describe Sirena::Diagram::ErDiagram do
       diagram = described_class.new
       diagram.entities << Sirena::Diagram::ErEntity.new(
         id: 'CUSTOMER',
-        name: 'CUSTOMER'
+        name: 'CUSTOMER',
       )
       diagram.relationships << Sirena::Diagram::ErRelationship.new(
         from_id: 'CUSTOMER',
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
 
       expect(diagram.valid?).to be false
@@ -112,7 +112,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     let(:entity) do
       Sirena::Diagram::ErEntity.new(
         id: 'CUSTOMER',
-        name: 'CUSTOMER'
+        name: 'CUSTOMER',
       )
     end
 
@@ -135,7 +135,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
     end
 
@@ -187,19 +187,19 @@ RSpec.describe Sirena::Diagram::ErDiagram do
         to_id: 'ORDER',
         relationship_type: 'identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       diagram.relationships << Sirena::Diagram::ErRelationship.new(
         from_id: 'ORDER',
         to_id: 'PRODUCT',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'one_or_more'
+        cardinality_to: 'one_or_more',
       )
 
       expect(diagram.identifying_relationships.length).to eq(1)
       expect(diagram.identifying_relationships.first.relationship_type).to eq(
-        'identifying'
+        'identifying',
       )
     end
   end
@@ -226,7 +226,7 @@ RSpec.describe Sirena::Diagram::ErEntity do
       entity = described_class.new(
         id: 'CUSTOMER',
         name: 'CUSTOMER',
-        attributes: nil
+        attributes: nil,
       )
 
       expect(entity.valid?).to be false
@@ -236,7 +236,7 @@ RSpec.describe Sirena::Diagram::ErEntity do
       entity = described_class.new(
         id: 'CUSTOMER',
         name: 'CUSTOMER',
-        attributes: [nil]
+        attributes: [nil],
       )
 
       expect(entity.valid?).to be false
@@ -261,7 +261,7 @@ RSpec.describe Sirena::Diagram::ErAttribute do
     it 'returns true when key_type is PK' do
       attribute = described_class.new(
         name: 'id',
-        key_type: 'PK'
+        key_type: 'PK',
       )
       expect(attribute.primary_key?).to be true
     end
@@ -276,7 +276,7 @@ RSpec.describe Sirena::Diagram::ErAttribute do
     it 'returns true when key_type is FK' do
       attribute = described_class.new(
         name: 'customer_id',
-        key_type: 'FK'
+        key_type: 'FK',
       )
       expect(attribute.foreign_key?).to be true
     end
@@ -296,7 +296,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.valid?).to be true
     end
@@ -306,7 +306,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.valid?).to be false
     end
@@ -316,7 +316,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         from_id: 'CUSTOMER',
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.valid?).to be false
     end
@@ -329,7 +329,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         to_id: 'ORDER',
         relationship_type: 'identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.identifying?).to be true
     end
@@ -340,7 +340,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.identifying?).to be false
     end
@@ -353,7 +353,7 @@ RSpec.describe Sirena::Diagram::ErRelationship do
         to_id: 'ORDER',
         relationship_type: 'non-identifying',
         cardinality_from: 'one',
-        cardinality_to: 'zero_or_more'
+        cardinality_to: 'zero_or_more',
       )
       expect(relationship.non_identifying?).to be true
     end

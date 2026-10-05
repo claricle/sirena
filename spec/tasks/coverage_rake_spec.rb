@@ -173,8 +173,8 @@ RSpec.describe 'tasks/coverage.rake' do
       FileUtils.mkdir_p('coverage')
       report = {
         'coverage' => {
-          'lib/foo.rb' => { 'source' => ['class Foo', 'end'], 'lines' => [1, nil] }
-        }
+          'lib/foo.rb' => { 'source' => ['class Foo', 'end'], 'lines' => [1, nil] },
+        },
       }
       File.write('coverage/coverage.json', JSON.generate(report))
       long_ago = Time.now - 3600
@@ -258,8 +258,8 @@ RSpec.describe 'tasks/coverage.rake' do
       FileUtils.mkdir_p('coverage')
       report = {
         'coverage' => {
-          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
-        }
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) },
+        },
       }
       File.write('coverage/coverage.json', JSON.generate(report))
       long_ago = Time.now - 3600
@@ -288,8 +288,8 @@ RSpec.describe 'tasks/coverage.rake' do
       # against old_base, because the guard has no freshness dimension.
       report = {
         'coverage' => {
-          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
-        }
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) },
+        },
       }
       File.write('coverage/coverage.json', JSON.generate(report))
       ENV['COVERAGE_BASE'] = old_base
@@ -319,9 +319,9 @@ RSpec.describe 'tasks/coverage.rake' do
             'source' => source_lines,
             'lines' => Array.new(source_lines.size, 1),
             'branches' => {},
-            'methods' => {}
-          }
-        }
+            'methods' => {},
+          },
+        },
       }
       File.write('coverage/coverage.json', JSON.generate(report))
       long_ago = Time.now - 3600
@@ -362,8 +362,8 @@ RSpec.describe 'tasks/coverage.rake' do
       FileUtils.mkdir_p('coverage')
       report = {
         'coverage' => {
-          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) }
-        }
+          'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) },
+        },
       }
       File.write('coverage/coverage.json', JSON.generate(report))
       long_ago = Time.now - 3600
@@ -417,7 +417,7 @@ RSpec.describe 'tasks/coverage.rake' do
       source_lines = File.readlines('lib/foo.rb', chomp: true)
       FileUtils.mkdir_p('coverage')
       File.write('coverage/coverage.json', JSON.generate(
-                                             'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) } }
+                                             'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => Array.new(source_lines.size, 1) } },
                                            ))
 
       # Run the REAL coverage:measure task (spec:unit itself stubbed to a
@@ -457,7 +457,7 @@ RSpec.describe 'tasks/coverage.rake' do
         source_lines = File.readlines('lib/foo.rb', chomp: true)
         FileUtils.mkdir_p('coverage')
         File.write('coverage/coverage.json', JSON.generate(
-                                               'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => [1, 1, hits, 1, 1] } }
+                                               'coverage' => { 'lib/foo.rb' => { 'source' => source_lines, 'lines' => [1, 1, hits, 1, 1] } },
                                              ))
         File.utime(Time.now, Time.now, 'coverage/coverage.json')
         ENV['COVERAGE_BASE'] = base

@@ -20,7 +20,7 @@ EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 # The only example sources legitimately unrenderable today.
 EXPECTED_UNRENDERABLE_SOURCES = [
-  'packet/01-basic-packet.beta.mmd'
+  'packet/01-basic-packet.beta.mmd',
 ].freeze
 
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.

@@ -9,9 +9,9 @@ RSpec.describe Sirena::Svg::Path, '.build_path_data' do
     'curve' => [{ type: :curve, cx: 5, cy: 6, x: 7, y: 8 }, 'Q 5 6 7 8'],
     'bezier' => [
       { type: :bezier, c1x: 1, c1y: 2, c2x: 3, c2y: 4, x: 5, y: 6 },
-      'C 1 2 3 4 5 6'
+      'C 1 2 3 4 5 6',
     ],
-    'close' => [{ type: :close }, 'Z']
+    'close' => [{ type: :close }, 'Z'],
   }.each do |name, (command, expected)|
     it "renders a #{name} command as #{expected.inspect}" do
       expect(described_class.build_path_data([command])).to eq(expected)
@@ -23,7 +23,7 @@ RSpec.describe Sirena::Svg::Path, '.build_path_data' do
       { type: :move, x: 0, y: 0 },
       { type: :bezier, c1x: 1, c1y: 1, c2x: 2, c2y: 2, x: 3, y: 3 },
       { type: :line, x: 4, y: 4 },
-      { type: :close }
+      { type: :close },
     ]
 
     expect(described_class.build_path_data(commands))

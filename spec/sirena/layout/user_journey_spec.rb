@@ -127,7 +127,7 @@ RSpec.describe Sirena::Layout::UserJourney do
       diagram.sections << Sirena::Diagram::JourneySection.new
 
       expect { transform.to_graph(diagram) }.to raise_error(
-        Sirena::Layout::LayoutError
+        Sirena::Layout::LayoutError,
       )
     end
   end

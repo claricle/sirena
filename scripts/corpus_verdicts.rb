@@ -71,8 +71,8 @@ HTML_ENTITY = /&(?:lt|gt);/
 
 # Structural truncation: the extractor cut the source mid-construct.
 TRUNCATIONS = [
-  /\[\s*\z/,          # class C1[
-  /:\s*\z/            # CAR ||--o{ DRIVER :
+  /\[\s*\z/, # class C1[
+  /:\s*\z/, # CAR ||--o{ DRIVER :
 ].freeze
 
 # The extractor indented frontmatter bodies, so the closing `---` no longer
@@ -172,7 +172,7 @@ def cases(types)
         path: path,
         base: path.delete_suffix('.mmd'),
         source: source,
-        digest: Digest::SHA256.hexdigest(source)
+        digest: Digest::SHA256.hexdigest(source),
       }
     end
   end
@@ -198,7 +198,7 @@ def rejected?(entry)
 
   [
     "#{entry[:base]}.svg",
-    File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg")
+    File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg"),
   ].any? { |path| error_graphic?(path) }
 end
 
@@ -316,7 +316,7 @@ rows = entries.map do |entry|
   {
     'case' => entry[:path].sub("#{CORPUS_ROOT}/", ''),
     'verdict' => verdict,
-    'evidence' => evidence
+    'evidence' => evidence,
   }
 end
 

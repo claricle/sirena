@@ -27,7 +27,7 @@ RSpec.describe Sirena::MarkdownText do
       expect(described_class.parse_lines(bad)).to eq([[
                                                        described_class::Run.new(text: 'hello ', bold: false, italic: false),
                                                        described_class::Run.new(text: 'world', bold: false, italic: true),
-                                                       described_class::Run.new(text: " caf#{expected_tail}", bold: false, italic: false)
+                                                       described_class::Run.new(text: " caf#{expected_tail}", bold: false, italic: false),
                                                      ]])
     end
 
@@ -63,7 +63,7 @@ RSpec.describe Sirena::MarkdownText do
       expect(lines).to eq([[
                             described_class::Run.new(text: 'bold ', bold: true, italic: false),
                             described_class::Run.new(text: 'and italic', bold: true, italic: true),
-                            described_class::Run.new(text: ' end', bold: true, italic: false)
+                            described_class::Run.new(text: ' end', bold: true, italic: false),
                           ]])
     end
 
@@ -77,7 +77,7 @@ RSpec.describe Sirena::MarkdownText do
       expect(lines).to eq([[
                             described_class::Run.new(text: 'italic ', bold: false, italic: true),
                             described_class::Run.new(text: 'bold', bold: true, italic: true),
-                            described_class::Run.new(text: ' end', bold: false, italic: true)
+                            described_class::Run.new(text: ' end', bold: false, italic: true),
                           ]])
     end
 
@@ -106,7 +106,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'a', bold: true, italic: false)],
-                            [described_class::Run.new(text: 'b', bold: true, italic: false)]
+                            [described_class::Run.new(text: 'b', bold: true, italic: false)],
                           ])
     end
 
@@ -191,7 +191,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'a*', bold: false, italic: false)],
-                            [described_class::Run.new(text: "\tb", bold: false, italic: false)]
+                            [described_class::Run.new(text: "\tb", bold: false, italic: false)],
                           ])
     end
 
@@ -223,7 +223,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'a*', bold: false, italic: false)],
-                            [described_class::Run.new(text: '    b', bold: false, italic: false)]
+                            [described_class::Run.new(text: '    b', bold: false, italic: false)],
                           ])
     end
 
@@ -237,7 +237,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'Line one*', bold: false, italic: false)],
-                            [described_class::Run.new(text: 'Line two', bold: false, italic: false)]
+                            [described_class::Run.new(text: 'Line two', bold: false, italic: false)],
                           ])
     end
 
@@ -251,7 +251,7 @@ RSpec.describe Sirena::MarkdownText do
       expect(lines).to eq([[
                             described_class::Run.new(text: 'a', bold: true, italic: false),
                             described_class::Run.new(text: ' plain ', bold: false, italic: false),
-                            described_class::Run.new(text: 'b', bold: true, italic: false)
+                            described_class::Run.new(text: 'b', bold: true, italic: false),
                           ]])
     end
 
@@ -276,7 +276,7 @@ RSpec.describe Sirena::MarkdownText do
       expect(lines).to eq([[
                             described_class::Run.new(text: 'a', bold: true, italic: false),
                             described_class::Run.new(text: ' *b* ', bold: false, italic: false),
-                            described_class::Run.new(text: 'c', bold: true, italic: false)
+                            described_class::Run.new(text: 'c', bold: true, italic: false),
                           ]])
     end
 
@@ -316,7 +316,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: first_line, bold: false, italic: false)],
-                            [described_class::Run.new(text: 'second', bold: false, italic: false)]
+                            [described_class::Run.new(text: 'second', bold: false, italic: false)],
                           ])
     end
 
@@ -334,8 +334,8 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([[
                             described_class::Run.new(
-                              text: '*' * (described_class::MAX_EMPHASIS_MARKERS + 1), bold: false, italic: false
-                            )
+                              text: '*' * (described_class::MAX_EMPHASIS_MARKERS + 1), bold: false, italic: false,
+                            ),
                           ]])
     end
 
@@ -356,7 +356,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: first_line, bold: false, italic: false)],
-                            [described_class::Run.new(text: 'second', bold: false, italic: false)]
+                            [described_class::Run.new(text: 'second', bold: false, italic: false)],
                           ])
     end
 
@@ -402,7 +402,7 @@ RSpec.describe Sirena::MarkdownText do
                             described_class::Run.new(
                               text: ' deployment plan asap and get back to the team before the end of ' \
                                     'the day tomorrow', bold: false, italic: false
-                            )
+                            ),
                           ]])
     end
 
@@ -472,7 +472,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([[
                             described_class::Run.new(text: 'x', bold: true, italic: false),
-                            described_class::Run.new(text: padding, bold: false, italic: false)
+                            described_class::Run.new(text: padding, bold: false, italic: false),
                           ]])
     end
 
@@ -554,7 +554,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([[
                             described_class::Run.new(text: 'a*', bold: false, italic: false),
-                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                            described_class::Run.new(text: 'b', bold: false, italic: true),
                           ]])
     end
 
@@ -579,7 +579,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([
                             [described_class::Run.new(text: 'A', bold: true, italic: false)],
-                            [described_class::Run.new(text: 'B', bold: false, italic: false)]
+                            [described_class::Run.new(text: 'B', bold: false, italic: false)],
                           ])
     end
 
@@ -629,7 +629,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([[
                             described_class::Run.new(text: 'a', bold: false, italic: true),
-                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                            described_class::Run.new(text: 'b', bold: false, italic: true),
                           ]])
     end
 
@@ -638,7 +638,7 @@ RSpec.describe Sirena::MarkdownText do
 
       expect(lines).to eq([[
                             described_class::Run.new(text: 'a', bold: false, italic: true),
-                            described_class::Run.new(text: 'b', bold: false, italic: true)
+                            described_class::Run.new(text: 'b', bold: false, italic: true),
                           ]])
     end
 

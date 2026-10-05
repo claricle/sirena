@@ -24,7 +24,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "indented" => ["  <<interface>>  ", "interface"],
       "with a space in it" => ["<<a b>>", "a b"],
       "empty" => ["<<>>", ""],
-      "closed by the last >>" => ["<<a>>b>>", "a>>b"]
+      "closed by the last >>" => ["<<a>>b>>", "a>>b"],
     }.each do |name, (body, stereotype)|
       it "reads #{name} as the stereotype #{stereotype.inspect}" do
         expect(parse_class(body).stereotype).to eq(stereotype)
@@ -88,7 +88,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "a generic parameter" => ["setWheels(List~Wheel~ wheels)", "setWheels", "List~Wheel~ wheels", nil],
       "an abstract mark" => ["someMethod()*", "someMethod", "", nil],
       "a static mark" => ["someMethod()$", "someMethod", "", nil],
-      "a return type after a mark" => ["getPoints()* List~int~", "getPoints", "", "List~int~"]
+      "a return type after a mark" => ["getPoints()* List~int~", "getPoints", "", "List~int~"],
     }.each do |name, (line, method_name, parameters, return_type)|
       it "reads #{name} as a method" do
         method = parse_class(line).class_methods.first
@@ -104,7 +104,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "a bare rule" => ["==", "=="],
       "a spaced visibility" => ["-            attribute : type", "attribute : type"],
       "a lone visibility symbol" => ["-", "-"],
-      "text with a quote inside" => ['a "b" c', 'a "b" c']
+      "text with a quote inside" => ['a "b" c', 'a "b" c'],
     }.each do |name, (line, attribute_name)|
       it "reads #{name} as an attribute named #{attribute_name.inspect}" do
         expect(parse_class(line).attributes.map(&:name)).to eq([attribute_name])
@@ -155,7 +155,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "a line starting with a quote" => '"quoted"',
       "an unclosed quote" => '"a',
       "a call with no name" => "(x) void",
-      "a stray closing paren" => "abc)"
+      "a stray closing paren" => "abc)",
     }.each do |name, line|
       it "rejects #{name}, as mmdc does" do
         expect { parse_class(line) }.to raise_error(Sirena::Parser::ParseError)
@@ -194,7 +194,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "a type before the name" => ["Car : +ArrayList size()", "ArrayList size", "", nil],
       "an abstract mark" => ["Class1 : someMethod()*", "someMethod", "", nil],
       "a static mark" => ["Class1 : someMethod()$", "someMethod", "", nil],
-      "a generic return type" => ["Car : +getWheels() List~Wheel~", "getWheels", "", "List~Wheel~"]
+      "a generic return type" => ["Car : +getWheels() List~Wheel~", "getWheels", "", "List~Wheel~"],
     }.each do |name, (statement, method_name, parameters, return_type)|
       it "reads #{name} as a method" do
         method = parser.parse("classDiagram\n#{statement}\n").entities.first.class_methods.first
@@ -212,7 +212,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse annotations and members" do
       "a colon then a shorthand" => "A : ::s",
       "a semicolon inside" => "A : a ; b",
       "a semicolon inside an annotation" => "A : <<a;b>>",
-      "a colon inside an annotation" => "A : <<a:b>>"
+      "a colon inside an annotation" => "A : <<a:b>>",
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }.to raise_error(Sirena::Parser::ParseError)

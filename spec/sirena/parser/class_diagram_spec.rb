@@ -349,7 +349,7 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       it 'accepts a label alongside a stereotype' do
         [
           'class C1["L"] <<interface>>',
-          'class Animal~T~["L"] <<svc>>'
+          'class Animal~T~["L"] <<svc>>',
         ].each do |form|
           expect { parser.parse("classDiagram\n    #{form}\n") }
             .not_to raise_error, form
@@ -374,7 +374,7 @@ RSpec.describe Sirena::Parser::ClassDiagram do
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError
+        Sirena::Parser::ParseError,
       )
     end
   end

@@ -39,7 +39,7 @@ module Sirena
         "#A5A5A5", # Gray
         "#FFC000", # Yellow
         "#5B9BD5", # Light Blue
-        "#70AD47"  # Green
+        "#70AD47", # Green
       ].freeze
 
       # Renders a timeline diagram to SVG.

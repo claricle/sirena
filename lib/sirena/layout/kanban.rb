@@ -57,7 +57,7 @@ module Sirena
           columns: positioned_columns,
           cards: positioned_cards,
           width: bounds[:width],
-          height: bounds[:height]
+          height: bounds[:height],
         }
       end
 
@@ -68,7 +68,7 @@ module Sirena
           columns: [],
           cards: [],
           width: 0,
-          height: 0
+          height: 0,
         }
       end
 
@@ -92,7 +92,7 @@ module Sirena
             height: calculate_column_height(column, header_height),
             header_height: header_height,
             card_count: column.cards.size,
-            original: column
+            original: column,
           }
 
           current_x += COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING
@@ -126,7 +126,7 @@ module Sirena
               height: card_height,
               metadata: card.metadata,
               has_metadata: card.has_metadata?,
-              original: card
+              original: card,
             }
 
             current_y += card_height + CARD_VERTICAL_SPACING
@@ -201,7 +201,7 @@ module Sirena
       def rendered_line_count(text)
         lines = Sirena::MarkdownText.truncate_runs(
           Sirena::MarkdownText.parse_lines(text),
-          Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
+          Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET,
         )
         [lines.length, 1].max
       end
@@ -219,7 +219,7 @@ module Sirena
 
         {
           width: max_x,
-          height: max_y
+          height: max_y,
         }
       end
     end

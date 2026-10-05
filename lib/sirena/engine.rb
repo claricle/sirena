@@ -62,7 +62,7 @@ module Sirena
       treemap: /\A\s*treemap(-beta)?/i,
       c4: /\A\s*(C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|C4\s+diagram)/i,
       info: /\A\s*info/i,
-      error: /\A\s*(error|Error)/i
+      error: /\A\s*(error|Error)/i,
     }.freeze
 
     # The keyword a source actually needs to start with, for the "must
@@ -97,7 +97,7 @@ module Sirena
       treemap: 'treemap or treemap-beta',
       c4: 'C4Context, C4Container, C4Component, C4Dynamic, C4Deployment, or a C4 diagram',
       info: 'info',
-      error: 'error'
+      error: 'error',
     }.freeze
 
     # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
@@ -132,7 +132,10 @@ module Sirena
     REFUSED_PREAMBLE = {
       comment: ['an empty comment', REFUSES_BARE_COMMENT],
       directive: ['a directive with no header', REFUSES_HEADERLESS_DIRECTIVE],
-      frontmatter: ['frontmatter behind another item', REFUSES_LATE_FRONTMATTER]
+      frontmatter: [
+        'frontmatter behind another item',
+        REFUSES_LATE_FRONTMATTER,
+      ],
     }.freeze
     private_constant :REFUSED_PREAMBLE
 
@@ -432,7 +435,7 @@ module Sirena
       Theme::Registry.get(name.to_sym) || raise(
         PipelineError,
         "Unknown theme: #{name}. Valid themes: " \
-        "#{Theme::Registry.list.map(&:to_s).sort.join(', ')}"
+        "#{Theme::Registry.list.map(&:to_s).sort.join(', ')}",
       )
     end
 

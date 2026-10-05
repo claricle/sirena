@@ -289,8 +289,8 @@ RSpec.describe Sirena::Parser::Radar do
         source = File.read(
           File.expand_path(
             "../../mermaid/radar/003_rendering_radar_spec_radar_2.mmd",
-            __dir__
-          )
+            __dir__,
+          ),
         )
 
         diagram = parser.parse(source)

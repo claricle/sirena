@@ -26,18 +26,18 @@ RSpec.describe Sirena::Renderer::XyChart do
             positions: [
               { label: "jan", position: 106.67, index: 0 },
               { label: "feb", position: 320.0, index: 1 },
-              { label: "mar", position: 533.33, index: 2 }
+              { label: "mar", position: 533.33, index: 2 },
             ],
             min: 0,
             max: 2,
-            width: 640
+            width: 640,
           },
           y_axis: {
             label: "Revenue ($)",
             min: 0,
             max: 100,
             height: 340,
-            scale: 3.4
+            scale: 3.4,
           },
           datasets: [
             {
@@ -47,10 +47,10 @@ RSpec.describe Sirena::Renderer::XyChart do
               points: [
                 { x: 106.67, y: 306.0, value: 10.0, index: 0 },
                 { x: 320.0, y: 272.0, value: 20.0, index: 1 },
-                { x: 533.33, y: 238.0, value: 30.0, index: 2 }
-              ]
-            }
-          ]
+                { x: 533.33, y: 238.0, value: 30.0, index: 2 },
+              ],
+            },
+          ],
         }
       end
 
@@ -108,18 +108,18 @@ RSpec.describe Sirena::Renderer::XyChart do
             type: :categorical,
             positions: [
               { label: "A", position: 106.67, index: 0 },
-              { label: "B", position: 320.0, index: 1 }
+              { label: "B", position: 320.0, index: 1 },
             ],
             min: 0,
             max: 1,
-            width: 640
+            width: 640,
           },
           y_axis: {
             label: nil,
             min: 0,
             max: 100,
             height: 340,
-            scale: 3.4
+            scale: 3.4,
           },
           datasets: [
             {
@@ -128,10 +128,10 @@ RSpec.describe Sirena::Renderer::XyChart do
               chart_type: :bar,
               points: [
                 { x: 106.67, y: 272.0, value: 20.0, index: 0 },
-                { x: 320.0, y: 238.0, value: 30.0, index: 1 }
-              ]
-            }
-          ]
+                { x: 320.0, y: 238.0, value: 30.0, index: 1 },
+              ],
+            },
+          ],
         }
       end
 
@@ -158,18 +158,18 @@ RSpec.describe Sirena::Renderer::XyChart do
             type: :categorical,
             positions: [
               { label: "Q1", position: 160.0, index: 0 },
-              { label: "Q2", position: 480.0, index: 1 }
+              { label: "Q2", position: 480.0, index: 1 },
             ],
             min: 0,
             max: 1,
-            width: 640
+            width: 640,
           },
           y_axis: {
             label: nil,
             min: 0,
             max: 100,
             height: 340,
-            scale: 3.4
+            scale: 3.4,
           },
           datasets: [
             {
@@ -178,8 +178,8 @@ RSpec.describe Sirena::Renderer::XyChart do
               chart_type: :line,
               points: [
                 { x: 160.0, y: 272.0, value: 20.0, index: 0 },
-                { x: 480.0, y: 238.0, value: 30.0, index: 1 }
-              ]
+                { x: 480.0, y: 238.0, value: 30.0, index: 1 },
+              ],
             },
             {
               id: "dataset_1",
@@ -187,10 +187,10 @@ RSpec.describe Sirena::Renderer::XyChart do
               chart_type: :line,
               points: [
                 { x: 160.0, y: 306.0, value: 10.0, index: 0 },
-                { x: 480.0, y: 204.0, value: 40.0, index: 1 }
-              ]
-            }
-          ]
+                { x: 480.0, y: 204.0, value: 40.0, index: 1 },
+              ],
+            },
+          ],
         }
       end
 

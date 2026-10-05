@@ -72,13 +72,13 @@ RSpec.describe 'Flowchart Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::Flowchart
+        Sirena::Parser::Flowchart,
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Layout::Flowchart
+        Sirena::Layout::Flowchart,
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::Flowchart
+        Sirena::Renderer::Flowchart,
       )
     end
   end
@@ -97,7 +97,7 @@ RSpec.describe 'Flowchart Integration' do
         File.read("#{corpus_dir}/150_parser_should_be_possible_to_declare_a_class_with_a_space_in_the_style_145.mmd"),
       'a bare header' => "graph TD\n",
       'a header with only a comment' => "flowchart LR\n%% just a comment\n",
-      'class without a matching classDef' => "graph TD\nclass A foo\n"
+      'class without a matching classDef' => "graph TD\nclass A foo\n",
     }.freeze
 
     # `create_document`'s own padding (`Renderer::Base#create_document`, 20

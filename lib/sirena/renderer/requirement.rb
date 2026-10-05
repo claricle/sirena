@@ -18,7 +18,7 @@ module Sirena
       RISK_COLORS = {
         'high' => '#ff6b6b',
         'medium' => '#ffd93d',
-        'low' => '#6bcf7f'
+        'low' => '#6bcf7f',
       }.freeze
 
       # Requirement type labels
@@ -28,7 +28,7 @@ module Sirena
         'interfaceRequirement' => 'Interface Req',
         'performanceRequirement' => 'Performance Req',
         'physicalRequirement' => 'Physical Req',
-        'designConstraint' => 'Design Constraint'
+        'designConstraint' => 'Design Constraint',
       }.freeze
 
       # Renders a positioned layout to SVG.
@@ -246,7 +246,7 @@ module Sirena
           "#{cx + w/2},#{cy - h}",
           "#{cx + w},#{cy}",
           "#{cx + w/2},#{cy + h}",
-          "#{cx - w/2},#{cy + h}"
+          "#{cx - w/2},#{cy + h}",
         ].join(' ')
 
         Svg::Polygon.new.tap do |polygon|

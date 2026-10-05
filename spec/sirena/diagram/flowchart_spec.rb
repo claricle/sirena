@@ -16,7 +16,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(
         id: 'A',
         label: 'Start',
-        shape: 'rect'
+        shape: 'rect',
       )
 
       expect(flowchart.valid?).to be true
@@ -63,12 +63,12 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(
         id: 'A',
         label: 'Start',
-        shape: 'rect'
+        shape: 'rect',
       )
       flowchart.edges << Sirena::Diagram::FlowchartEdge.new(
         source_id: 'A',
         target_id: 'B',
-        arrow_type: 'arrow'
+        arrow_type: 'arrow',
       )
 
       expect(flowchart.valid?).to be false
@@ -93,7 +93,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 's', node_ids: %w[A]
+        id: 's', node_ids: %w[A],
       )
       flowchart.edges << Sirena::Diagram::FlowchartEdge.new(source_id: 's',
                                                             target_id: 'A')
@@ -115,7 +115,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 's', parent_id: 's', node_ids: %w[A]
+        id: 's', parent_id: 's', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be false
@@ -128,10 +128,10 @@ RSpec.describe Sirena::Diagram::Flowchart do
                                                               label: id)
       end
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'x', parent_id: 'y', node_ids: %w[A]
+        id: 'x', parent_id: 'y', node_ids: %w[A],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'y', parent_id: 'x', node_ids: %w[B]
+        id: 'y', parent_id: 'x', node_ids: %w[B],
       )
 
       expect(flowchart.valid?).to be false
@@ -145,7 +145,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
                                                             label: 'A')
       %w[p q r].zip(%w[q r p]).each do |id, parent|
         flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-          id: id, parent_id: parent, node_ids: %w[A]
+          id: id, parent_id: parent, node_ids: %w[A],
         )
       end
 
@@ -160,13 +160,13 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'outer', child_ids: %w[middle]
+        id: 'outer', child_ids: %w[middle],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'middle', parent_id: 'outer', child_ids: %w[inner]
+        id: 'middle', parent_id: 'outer', child_ids: %w[inner],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'inner', parent_id: 'middle', node_ids: %w[A]
+        id: 'inner', parent_id: 'middle', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be true
@@ -180,7 +180,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 's', parent_id: 'absent', node_ids: %w[A]
+        id: 's', parent_id: 'absent', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be true
@@ -192,10 +192,10 @@ RSpec.describe Sirena::Diagram::Flowchart do
     it 'takes a diagram that is only boxes' do
       flowchart = described_class.new(direction: 'TD')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'one', child_ids: %w[e1]
+        id: 'one', child_ids: %w[e1],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'e1', parent_id: 'one'
+        id: 'e1', parent_id: 'one',
       )
 
       expect(flowchart.valid?).to be true
@@ -208,7 +208,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: '', node_ids: %w[A]
+        id: '', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be false
@@ -221,7 +221,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 's', node_ids: %w[A gone]
+        id: 's', node_ids: %w[A gone],
       )
 
       expect(flowchart.valid?).to be false
@@ -232,7 +232,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
     it 'takes a box whose member names another box' do
       flowchart = described_class.new(direction: 'TD')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'one', node_ids: %w[e1]
+        id: 'one', node_ids: %w[e1],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(id: 'e1')
 
@@ -247,10 +247,10 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'outer', node_ids: %w[A]
+        id: 'outer', node_ids: %w[A],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'inner', parent_id: 'outer', node_ids: %w[A]
+        id: 'inner', parent_id: 'outer', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be false
@@ -261,10 +261,10 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'outer', child_ids: %w[inner]
+        id: 'outer', child_ids: %w[inner],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'inner', node_ids: %w[A]
+        id: 'inner', node_ids: %w[A],
       )
 
       expect(flowchart.valid?).to be false
@@ -275,7 +275,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'outer', node_ids: %w[A], child_ids: %w[gone]
+        id: 'outer', node_ids: %w[A], child_ids: %w[gone],
       )
 
       expect(flowchart.valid?).to be false
@@ -288,10 +288,10 @@ RSpec.describe Sirena::Diagram::Flowchart do
       flowchart.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A',
                                                             label: 'A')
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'b', parent_id: 'a', node_ids: %w[A]
+        id: 'b', parent_id: 'a', node_ids: %w[A],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(
-        id: 'a', child_ids: %w[b]
+        id: 'a', child_ids: %w[b],
       )
       flowchart.subgraphs << Sirena::Diagram::FlowchartSubgraph.new(id: 'b')
 
@@ -305,7 +305,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       Sirena::Diagram::FlowchartNode.new(
         id: 'A',
         label: 'Test',
-        shape: 'rect'
+        shape: 'rect',
       )
     end
 
@@ -326,7 +326,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       Sirena::Diagram::FlowchartEdge.new(
         source_id: 'A',
         target_id: 'B',
-        arrow_type: 'arrow'
+        arrow_type: 'arrow',
       )
     end
 
@@ -347,7 +347,7 @@ RSpec.describe Sirena::Diagram::Flowchart do
       Sirena::Diagram::FlowchartEdge.new(
         source_id: 'A',
         target_id: 'B',
-        arrow_type: 'arrow'
+        arrow_type: 'arrow',
       )
     end
 

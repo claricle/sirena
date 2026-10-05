@@ -111,7 +111,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       source = 'invalid'
 
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError
+        Sirena::Parser::ParseError,
       )
     end
 
@@ -123,7 +123,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       cases = {
         'no second colon at all' => ['Task: 5', 5, []],
         'a trailing colon with no actors' => ['Task: 5:', 5, []],
-        'a space before the second colon' => ['Task : 5 : Alice', 5, ['Alice']]
+        'a space before the second colon' => ['Task : 5 : Alice', 5, ['Alice']],
       }
 
       cases.each do |label, (task_line, expected_score, expected_actors)|
@@ -148,7 +148,7 @@ RSpec.describe Sirena::Parser::UserJourney do
 
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError,
-        /Score must be between 1 and 5/
+        /Score must be between 1 and 5/,
       )
     end
 
@@ -165,7 +165,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         '004_parser_should_handle_an_accessibility_description_accdescr__3.mmd' =>
           'Adding journey diagram functionality to mermaid',
         '005_parser_should_handle_an_accessibility_multiline_description_accdescr__4.mmd' =>
-          'Adding journey diagram functionality to mermaid'
+          'Adding journey diagram functionality to mermaid',
       }
 
       cases.each do |filename, expected_title|
@@ -201,7 +201,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         'a braced accDescr block' => "accDescr {\n  a multi line\n  description\n}",
         'a braced accDescr block on one line' => 'accDescr {Desc}',
         'a braced accDescr block with no gap' => 'accDescr{Desc}',
-        'an accTitle with no gap' => 'accTitle:Tight'
+        'an accTitle with no gap' => 'accTitle:Tight',
       }.each do |label, directive|
         it "discards #{label} and leaves the rest of the diagram alone" do
           source = "journey\ntitle Real title\nsection Order from website\n  " \
@@ -437,7 +437,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       {
         'a comment whose text merely starts with a brace' => '%% {x}',
         'a closed init directive' => '%%{init: {"theme":"dark"}}%%',
-        'plain text' => 'plain text'
+        'plain text' => 'plain text',
       }.each do |label, directive|
         it "keeps the tasks outside a block holding #{label}" do
           source = "journey\nsection S\nBefore: 5: You\naccDescr {desc\n" \
@@ -458,7 +458,8 @@ RSpec.describe Sirena::Parser::UserJourney do
       # Same verdict, different mechanism.
       {
         'a bare braced directive' => '%%{x}',
-        'an init directive with no closing tail' => '%%{init: {"theme":"dark"}}'
+        'an init directive with no closing tail' =>
+          '%%{init: {"theme":"dark"}}',
       }.each do |label, directive|
         it "refuses a block holding #{label}" do
           source = "journey\nsection S\nBefore: 5: You\naccDescr {desc\n" \

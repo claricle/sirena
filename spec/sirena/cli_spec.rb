@@ -137,8 +137,8 @@ RSpec.describe Sirena::Cli do
         instance_double(
           Sirena::Commands::BatchCommand,
           run: nil,
-          success?: every_item_succeeded
-        )
+          success?: every_item_succeeded,
+        ),
       )
     end
 
@@ -161,7 +161,7 @@ RSpec.describe Sirena::Cli do
   describe 'version command' do
     it 'displays version information' do
       expect { described_class.start(['version']) }.to output(
-        /sirena version #{Sirena::VERSION}/o
+        /sirena version #{Sirena::VERSION}/o,
       ).to_stdout
     end
   end
@@ -169,7 +169,7 @@ RSpec.describe Sirena::Cli do
   describe 'types command' do
     it 'lists supported diagram types' do
       expect { described_class.start(['types']) }.to output(
-        /Supported diagram types:/
+        /Supported diagram types:/,
       ).to_stdout
     end
 
@@ -187,7 +187,7 @@ RSpec.describe Sirena::Cli do
   describe 'help command' do
     it 'displays help information' do
       expect { described_class.start(['help']) }.to output(
-        /Commands:/
+        /Commands:/,
       ).to_stdout
     end
   end

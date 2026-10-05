@@ -93,7 +93,7 @@ RSpec.describe Sirena::Layout::Kanban do
 
       expect(diagram.valid?).to be(true)
       expect(transform.build_graph(diagram)).to eq(
-        columns: [], cards: [], width: 0, height: 0
+        columns: [], cards: [], width: 0, height: 0,
       )
     end
 
@@ -101,7 +101,7 @@ RSpec.describe Sirena::Layout::Kanban do
       diagram = Sirena::Diagram::Kanban.new
 
       expect(transform.build_graph(diagram)).to eq(
-        columns: [], cards: [], width: 0, height: 0
+        columns: [], cards: [], width: 0, height: 0,
       )
     end
   end

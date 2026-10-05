@@ -40,7 +40,7 @@ module Sirena
         'hanging' => 0.8,
         'text-before-edge' => 0.8,
         'text-after-edge' => -0.2,
-        'ideographic' => -0.2
+        'ideographic' => -0.2,
       }.freeze
 
       # The CSS initial font-size, used when a Text carries a baseline
@@ -62,7 +62,7 @@ module Sirena
         ['font-family', :font_family],
         ['font-size', :font_size],
         ['font-weight', :font_weight],
-        ['font-style', :font_style]
+        ['font-style', :font_style],
       ].map(&:freeze).freeze
       private_constant :ATTRIBUTE_PAIRS
 

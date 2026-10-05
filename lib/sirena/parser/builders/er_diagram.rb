@@ -23,7 +23,7 @@ module Sirena
           '{}' => 'one_or_more',
           'o|' => 'zero_or_one',
           '|o' => 'zero_or_one',
-          '}|' => 'one_or_more'
+          '}|' => 'one_or_more',
         }.freeze
 
         # Transform parse tree into ER diagram.

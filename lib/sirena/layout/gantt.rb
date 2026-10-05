@@ -40,8 +40,8 @@ module Sirena
           timeline: timeline,
           metadata: {
             section_count: diagram.sections.length,
-            task_count: total_task_count(diagram)
-          }
+            task_count: total_task_count(diagram),
+          },
         }
       end
 
@@ -242,7 +242,7 @@ module Sirena
         {
           start_date: min_date,
           end_date: max_date,
-          total_days: (max_date - min_date).to_i
+          total_days: (max_date - min_date).to_i,
         }
       end
 
@@ -251,7 +251,7 @@ module Sirena
           {
             id: "section_#{section_index}",
             name: section.name,
-            tasks: transform_tasks(section, timeline, section_index)
+            tasks: transform_tasks(section, timeline, section_index),
           }
         end
       end
@@ -271,7 +271,7 @@ module Sirena
             start_x: calculate_x_position(task.calculated_start, timeline),
             width: calculate_width(task.calculated_start, task.calculated_end, timeline),
             click_href: task.click_href,
-            click_callback: task.click_callback
+            click_callback: task.click_callback,
           }
         end
       end

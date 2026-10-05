@@ -56,7 +56,7 @@ module Sirena
         'null' => [NilClass],
         'bool' => [TrueClass, FalseClass],
         'int' => [Integer],
-        'float' => [Numeric]
+        'float' => [Numeric],
       }.freeze
 
       # What a mapping stringifies to in JS, whatever it holds. Two

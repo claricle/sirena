@@ -216,7 +216,7 @@ module Sirena
                            **options)
         base_options = {
           ElkOptions::ALGORITHM => algorithm,
-          ElkOptions::DIRECTION => direction
+          ElkOptions::DIRECTION => direction,
         }
 
         # Add algorithm-specific defaults
@@ -249,7 +249,7 @@ module Sirena
           ElkOptions::NODE_PLACEMENT => 'SIMPLE',
 
           # Consider model order for consistent positioning
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES'
+          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
         }
       end
 
@@ -263,7 +263,7 @@ module Sirena
         {
           ElkOptions::NODE_NODE_SPACING => DEFAULT_NODE_SPACING * 1.5,
           ElkOptions::EDGE_NODE_SPACING => DEFAULT_EDGE_SPACING,
-          ElkOptions::EDGE_EDGE_SPACING => DEFAULT_EDGE_SPACING
+          ElkOptions::EDGE_EDGE_SPACING => DEFAULT_EDGE_SPACING,
         }
       end
 
@@ -294,7 +294,7 @@ module Sirena
         padding = node_padding(node_type)
         {
           width: content_width + padding[:left] + padding[:right],
-          height: content_height + padding[:top] + padding[:bottom]
+          height: content_height + padding[:top] + padding[:bottom],
         }
       end
     end

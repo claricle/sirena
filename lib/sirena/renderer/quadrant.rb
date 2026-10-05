@@ -24,7 +24,7 @@ module Sirena
         1 => '#e3f2fd', # Light blue
         2 => '#fff3e0', # Light orange
         3 => '#f3e5f5', # Light purple
-        4 => '#e8f5e9'  # Light green
+        4 => '#e8f5e9', # Light green
       }.freeze
 
       # Renders a quadrant chart diagram to SVG.
@@ -144,7 +144,7 @@ module Sirena
           dims[:chart_x] - 10,
           dims[:chart_y] + dims[:chart_height] + 30,
           'end',
-          svg
+          svg,
         )
 
         # X-axis right label
@@ -153,7 +153,7 @@ module Sirena
           dims[:chart_x] + dims[:chart_width] + 10,
           dims[:chart_y] + dims[:chart_height] + 30,
           'start',
-          svg
+          svg,
         )
 
         # Y-axis bottom label
@@ -162,7 +162,7 @@ module Sirena
           dims[:chart_x] - 30,
           dims[:chart_y] + dims[:chart_height] + 10,
           'middle',
-          svg
+          svg,
         )
 
         # Y-axis top label
@@ -171,7 +171,7 @@ module Sirena
           dims[:chart_x] - 30,
           dims[:chart_y] - 10,
           'middle',
-          svg
+          svg,
         )
       end
 

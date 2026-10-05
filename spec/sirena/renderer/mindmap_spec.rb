@@ -24,7 +24,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 0,
               shape: "default",
               icon: nil,
-              classes: []
+              classes: [],
             },
             {
               id: "node-1",
@@ -37,7 +37,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               shape: "default",
               icon: nil,
               classes: [],
-              parent_id: "node-0"
+              parent_id: "node-0",
             },
             {
               id: "node-2",
@@ -50,20 +50,20 @@ RSpec.describe Sirena::Renderer::Mindmap do
               shape: "default",
               icon: nil,
               classes: [],
-              parent_id: "node-0"
-            }
+              parent_id: "node-0",
+            },
           ],
           connections: [
             {
               from: "node-0",
               to: "node-1",
-              type: :parent_child
+              type: :parent_child,
             },
             {
               from: "node-0",
               to: "node-2",
-              type: :parent_child
-            }
+              type: :parent_child,
+            },
           ],
           width: 400,
           height: 200,
@@ -75,8 +75,8 @@ RSpec.describe Sirena::Renderer::Mindmap do
             width: 100,
             height: 40,
             level: 0,
-            shape: "default"
-          }
+            shape: "default",
+          },
         }
       end
 
@@ -128,7 +128,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 0,
               shape: "circle",
               icon: nil,
-              classes: []
+              classes: [],
             },
             {
               id: "node-1",
@@ -140,7 +140,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 1,
               shape: "square",
               icon: nil,
-              classes: []
+              classes: [],
             },
             {
               id: "node-2",
@@ -152,13 +152,13 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 1,
               shape: "hexagon",
               icon: nil,
-              classes: []
-            }
+              classes: [],
+            },
           ],
           connections: [],
           width: 400,
           height: 200,
-          root: nil
+          root: nil,
         }
       end
 
@@ -195,7 +195,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 0,
               shape: "cloud",
               icon: nil,
-              classes: []
+              classes: [],
             },
             {
               id: "node-1",
@@ -207,13 +207,13 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 1,
               shape: "bang",
               icon: nil,
-              classes: []
-            }
+              classes: [],
+            },
           ],
           connections: [],
           width: 300,
           height: 220,
-          root: nil
+          root: nil,
         }
       end
 
@@ -244,7 +244,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               level: 0,
               shape: "circle",
               icon: nil,
-              classes: []
+              classes: [],
             },
             {
               id: "node-1",
@@ -257,7 +257,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               shape: "default",
               icon: nil,
               classes: [],
-              parent_id: "node-0"
+              parent_id: "node-0",
             },
             {
               id: "node-2",
@@ -270,7 +270,7 @@ RSpec.describe Sirena::Renderer::Mindmap do
               shape: "default",
               icon: nil,
               classes: [],
-              parent_id: "node-0"
+              parent_id: "node-0",
             },
             {
               id: "node-3",
@@ -283,17 +283,17 @@ RSpec.describe Sirena::Renderer::Mindmap do
               shape: "square",
               icon: nil,
               classes: [],
-              parent_id: "node-1"
-            }
+              parent_id: "node-1",
+            },
           ],
           connections: [
             { from: "node-0", to: "node-1", type: :parent_child },
             { from: "node-0", to: "node-2", type: :parent_child },
-            { from: "node-1", to: "node-3", type: :parent_child }
+            { from: "node-1", to: "node-3", type: :parent_child },
           ],
           width: 500,
           height: 320,
-          root: nil
+          root: nil,
         }
       end
 

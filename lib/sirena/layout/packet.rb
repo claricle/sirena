@@ -64,7 +64,7 @@ module Sirena
           title_margin: diagram.title ? TITLE_MARGIN : 0,
           width: width,
           height: height,
-          title: diagram.title
+          title: diagram.title,
         }
       end
 
@@ -86,7 +86,7 @@ module Sirena
           title_margin: 0,
           width: PADDING * 2,
           height: PADDING * 2,
-          title: nil
+          title: nil,
         }
       end
 
@@ -136,7 +136,7 @@ module Sirena
           height: height,
           row: row,
           start_col: start_col,
-          end_col: end_col
+          end_col: end_col,
         }
       end
 
@@ -174,7 +174,7 @@ module Sirena
             start_col: start_col,
             end_col: end_col,
             is_continuation: current_bit > field.bit_start,
-            is_final: segment_end_bit == field.bit_end
+            is_final: segment_end_bit == field.bit_end,
           }
 
           current_bit = segment_end_bit + 1

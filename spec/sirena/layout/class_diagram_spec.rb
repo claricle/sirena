@@ -15,31 +15,31 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       Sirena::Diagram::ClassDiagram.new(direction: 'TB').tap do |d|
         d.entities << Sirena::Diagram::ClassEntity.new(
           id: 'Animal',
-          name: 'Animal'
+          name: 'Animal',
         ).tap do |entity|
           entity.attributes << Sirena::Diagram::ClassAttribute.new(
             name: 'age',
             type: 'int',
-            visibility: 'protected'
+            visibility: 'protected',
           )
           entity.class_methods << Sirena::Diagram::ClassMethod.new(
             name: 'breathe',
-            visibility: 'public'
+            visibility: 'public',
           )
         end
         d.entities << Sirena::Diagram::ClassEntity.new(
           id: 'Dog',
-          name: 'Dog'
+          name: 'Dog',
         ).tap do |entity|
           entity.class_methods << Sirena::Diagram::ClassMethod.new(
             name: 'bark',
-            visibility: 'public'
+            visibility: 'public',
           )
         end
         d.relationships << Sirena::Diagram::ClassRelationship.new(
           from_id: 'Dog',
           to_id: 'Animal',
-          relationship_type: 'inheritance'
+          relationship_type: 'inheritance',
         )
       end
     end

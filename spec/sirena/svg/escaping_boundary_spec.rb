@@ -32,7 +32,7 @@ ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Polyline => [:points],
   Sirena::Svg::Ellipse => [],
   Sirena::Svg::Rect => [:stroke_dasharray],
-  Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style]
+  Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style],
 }.freeze
 
 # Four renderers set marker-end, marker-start is set directly (Path.from_xml
@@ -48,25 +48,25 @@ TRANSLATED_AWAY = {
       'url(#arrowhead)',
       [
         '<path stroke="#000000" d="M 0 0 L 10 0"/>',
-        '<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>'
-      ]
+        '<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>',
+      ],
     ],
     marker_start: [
       'marker-start',
       'url(#arrowhead)',
       [
         '<path stroke="#000000" d="M 0 0 L 10 0"/>',
-        '<polygon fill="#000000" points="0.0,0.0 4.0,-2.0 4.0,2.0"/>'
-      ]
-    ]
+        '<polygon fill="#000000" points="0.0,0.0 4.0,-2.0 4.0,2.0"/>',
+      ],
+    ],
   },
   Sirena::Svg::Text => {
     dominant_baseline: [
       'dominant-baseline',
       'middle',
-      ['<text y="13.5" font-size="10"></text>']
-    ]
-  }
+      ['<text y="13.5" font-size="10"></text>'],
+    ],
+  },
 }.freeze
 
 # What each class needs set before its translation can be seen: a Path draws
@@ -82,7 +82,7 @@ TRANSLATED_AWAY_SETUP = {
   Sirena::Svg::Text => lambda { |text|
     text.y = 10.0
     text.font_size = '10'
-  }
+  },
 }.freeze
 
 # Inherited from Element, so every subclass carries them.

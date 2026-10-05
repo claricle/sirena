@@ -58,7 +58,7 @@ module SequenceSpecHelpers
       "\\\\-" => %w[solid stick_top source],
       "\\\\--" => %w[dotted stick_top source],
       "<<->>" => %w[solid filled both],
-      "<<-->>" => %w[dotted filled both]
+      "<<-->>" => %w[dotted filled both],
     }.freeze
   end
 end
@@ -74,7 +74,7 @@ RSpec.describe Sirena::Parser::Sequence do
         message = message_for(arrow)
 
         expect(
-          [message.line_style, message.head_style, message.head_side]
+          [message.line_style, message.head_style, message.head_side],
         ).to eq([line_style, head_style, head_side])
       end
 
@@ -239,7 +239,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # character, so pairing those tests nothing.
     {
       "->" => "->>",
-      "-->" => "-->>"
+      "-->" => "-->>",
     }.each do |shorter, longer|
       it "reads #{longer} whole rather than #{shorter} plus a stray >" do
         expect(message_for(longer).head_style).to eq("filled")
@@ -254,7 +254,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "//-" => "//--",
       "\\\\-" => "\\\\--",
       "/|-" => "/|--",
-      "\\|-" => "\\|--"
+      "\\|-" => "\\|--",
     }.each do |shorter, longer|
       it "reads #{longer} whole rather than #{shorter} plus a stray -" do
         expect(message_for(longer).line_style).to eq("dotted")
@@ -305,7 +305,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "splits a note's text at an inline semicolon" do
       diagram = parser.parse(
-        "sequenceDiagram\nnote right of A: thinking;A->>B: hi\n"
+        "sequenceDiagram\nnote right of A: thinking;A->>B: hi\n",
       )
 
       expect(diagram.notes.last.text).to eq("thinking")
@@ -315,7 +315,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = File.read(
         File.expand_path(
           "../../mermaid/sequence/026_parser_should_handle_semicolons_25.mmd", __dir__
-        )
+        ),
       )
 
       diagram = parser.parse(source)
@@ -551,7 +551,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "keeps a note_statement's own text and the message that follows a semicolon" do
       diagram = parser.parse(
-        "sequenceDiagram\nparticipant A\nparticipant B\nNote over A: n;A->>B: m\n"
+        "sequenceDiagram\nparticipant A\nparticipant B\nNote over A: n;A->>B: m\n",
       )
 
       expect(diagram.notes.map(&:text)).to eq(["n"])
@@ -812,7 +812,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "a create actor followed by its message on the same line" =>
         ["sequenceDiagram\ncreate actor B;A->>B: m\n", %w[B A], 1],
       "a destroy followed by its message on the same line" =>
-        ["sequenceDiagram\ndestroy B;B->>A: m\n", %w[B A], 1]
+        ["sequenceDiagram\ndestroy B;B->>A: m\n", %w[B A], 1],
     }
 
     inline_semicolon.each do |description, (source, expected_ids, expected_count)|
@@ -993,7 +993,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "no space before the colon" =>
         ["sequenceDiagram\nlinks 8:{}\n", ["8"]],
       "a space inside the name, not before the colon" =>
-        ["sequenceDiagram\nlinks Alice Smith: {}\n", ["Alice Smith"]]
+        ["sequenceDiagram\nlinks Alice Smith: {}\n", ["Alice Smith"]],
     }
     # `links` isn't a keyword on origin/main at all, so every row below
     # already raises a generic "failed to parse" `Sirena::Parser::ParseError`
@@ -1023,7 +1023,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "a space before the colon" =>
         "sequenceDiagram\nlinks 8 : {}\n",
       "a leading dash on the target" =>
-        "sequenceDiagram\nlinks -A: {}\n"
+        "sequenceDiagram\nlinks -A: {}\n",
     }
 
     accepted.each do |description, (source, expected_ids)|
@@ -1044,7 +1044,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = File.read(
         File.expand_path(
           "../../mermaid/sequence/056_parser_should_handle_box_55.mmd", __dir__
-        )
+        ),
       )
 
       diagram = parser.parse(source)
@@ -1112,7 +1112,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "an id introduced by a note" =>
         "sequenceDiagram\nNote over C: x\ncreate participant C\nX->>C: m\n",
       "an id introduced by a links line" =>
-        "sequenceDiagram\nlinks C: {}\ncreate participant C\nX->>C: m\n"
+        "sequenceDiagram\nlinks C: {}\ncreate participant C\nX->>C: m\n",
     }
 
     already_known.each do |description, source|
@@ -1213,7 +1213,7 @@ RSpec.describe Sirena::Parser::Sequence do
     target_cases.each do |case_name|
       it "parses #{case_name} and renders well-formed SVG" do
         source = File.read(
-          File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__)
+          File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__),
         )
 
         svg = Sirena::Engine.new.render(source)
@@ -1226,7 +1226,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = File.read(
         File.expand_path(
           "../../mermaid/sequence/019_rendering_sequencediagram_spec_sequence_18.mmd", __dir__
-        )
+        ),
       )
 
       diagram = parser.parse(source)
@@ -1240,7 +1240,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = File.read(
         File.expand_path(
           "../../mermaid/sequence/018_rendering_sequencediagram_spec_sequence_17.mmd", __dir__
-        )
+        ),
       )
 
       expect { parser.parse(source) }
@@ -1266,7 +1266,7 @@ RSpec.describe Sirena::Parser::Sequence do
     regression_cases.each do |case_name|
       it "still parses and renders #{case_name} without raising" do
         source = File.read(
-          File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__)
+          File.expand_path("../../mermaid/sequence/#{case_name}.mmd", __dir__),
         )
 
         svg = Sirena::Engine.new.render(source)

@@ -39,7 +39,7 @@ DIAGRAM_TYPES = {
   treemap: /^treemap/i,
   user_journey: /^journey/i,
   xychart: /^xychart-beta/i,
-  zenuml: /^zenuml/i
+  zenuml: /^zenuml/i,
 }.freeze
 
 # Test case structure
@@ -113,7 +113,7 @@ class MermaidTestExtractor
         type: type,
         source: diagram_src,
         file: file,
-        line: content[0...match_pos].count("\n")
+        line: content[0...match_pos].count("\n"),
       )
       @file_stats[file] += 1
     end
@@ -142,7 +142,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -159,7 +159,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -190,7 +190,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -208,7 +208,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -239,7 +239,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -256,7 +256,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -291,7 +291,7 @@ class MermaidTestExtractor
             source: diagram_src.strip,
             file: file,
             line: content[0...match_pos].count("\n"),
-            metadata: { test_name: test_name }
+            metadata: { test_name: test_name },
           )
           file_count += 1
         end
@@ -312,7 +312,7 @@ class MermaidTestExtractor
           source: diagram_src.strip,
           file: file,
           line: content[0...match_pos].count("\n"),
-          metadata: { test_name: test_name }
+          metadata: { test_name: test_name },
         )
         file_count += 1
       end
@@ -344,7 +344,7 @@ class MermaidTestExtractor
           type: type,
           source: diagram_src,
           file: file,
-          line: content[0...match_pos].count("\n")
+          line: content[0...match_pos].count("\n"),
         )
         file_count += 1
       end
@@ -361,7 +361,7 @@ class MermaidTestExtractor
     # Check for any missed spec files
     additional_patterns = [
       "#{MERMAID_JS_ROOT}/cypress/integration/**/*.spec.{js,ts}",
-      "#{MERMAID_JS_ROOT}/packages/mermaid/src/**/*.spec.{ts,js}"
+      "#{MERMAID_JS_ROOT}/packages/mermaid/src/**/*.spec.{ts,js}",
     ]
 
     additional_patterns.each do |pattern|
@@ -384,7 +384,7 @@ class MermaidTestExtractor
             type: type,
             source: diagram_src,
             file: file,
-            line: content[0...match_pos].count("\n")
+            line: content[0...match_pos].count("\n"),
           )
           file_count += 1
         end
@@ -428,7 +428,7 @@ class MermaidTestExtractor
       source: source,
       file: file,
       line: line,
-      metadata: metadata
+      metadata: metadata,
     )
     @stats[type] += 1
   end
@@ -457,7 +457,7 @@ class MermaidTestExtractor
           type: test_case.diagram_type,
           source_file: test_case.source_file.sub(MERMAID_JS_ROOT, ''),
           line_number: test_case.line_number,
-          metadata: test_case.metadata
+          metadata: test_case.metadata,
         }))
       end
 

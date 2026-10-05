@@ -39,7 +39,7 @@ module Sirena
       SCORE_COLORS = {
         red: '#ff6b6b',
         yellow: '#feca57',
-        green: '#48dbfb'
+        green: '#48dbfb',
       }.freeze
 
       # Renders a laid-out graph to SVG.

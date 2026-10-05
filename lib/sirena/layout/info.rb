@@ -27,8 +27,8 @@ module Sirena
           title: diagram.title,
           show_info: diagram.show_info || false,
           metadata: {
-            diagram_type: :info
-          }
+            diagram_type: :info,
+          },
         }
       end
     end

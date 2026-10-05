@@ -38,7 +38,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # a reviewer would run by hand, kept here so it cannot silently reappear.
   it 'has no diagram model still spelling the contract method `type`' do
     diagram_files = Dir.glob(
-      File.join(__dir__, '..', 'lib', 'sirena', 'diagram', '**', '*.rb')
+      File.join(__dir__, '..', 'lib', 'sirena', 'diagram', '**', '*.rb'),
     )
     offenders = diagram_files.select do |path|
       File.readlines(path).any? { |line| line.match?(/^\s*def type$/) }
@@ -143,7 +143,7 @@ RSpec.describe Sirena::DiagramRegistry do
         names = handlers.values_at(:parser, :transform, :renderer).map(&:name)
 
         expect(names).to eq(
-          %W[Sirena::Parser::#{camel_key} Sirena::Layout::#{camel_key} Sirena::Renderer::#{camel_key}]
+          %W[Sirena::Parser::#{camel_key} Sirena::Layout::#{camel_key} Sirena::Renderer::#{camel_key}],
         )
       end
     end

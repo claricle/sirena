@@ -50,7 +50,7 @@ module Sirena
           connections: connections,
           width: bounds[:width],
           height: bounds[:height],
-          root: positioned_nodes.first
+          root: positioned_nodes.first,
         }
       end
 
@@ -62,7 +62,7 @@ module Sirena
           connections: [],
           width: 0,
           height: 0,
-          root: nil
+          root: nil,
         }
       end
 
@@ -93,7 +93,7 @@ module Sirena
           shape: root.shape,
           icon: root.icon,
           classes: root.classes,
-          original: root
+          original: root,
         }
 
         # Position children recursively
@@ -102,7 +102,7 @@ module Sirena
             root,
             root_x,
             ROOT_PADDING + root_height + LEVEL_VERTICAL_SPACING,
-            nodes
+            nodes,
           )
         end
 
@@ -147,7 +147,7 @@ module Sirena
             icon: child.icon,
             classes: child.classes,
             parent_id: parent.id,
-            original: child
+            original: child,
           }
 
           # Recursively position grandchildren
@@ -156,7 +156,7 @@ module Sirena
               child,
               node_x,
               y + child_height + LEVEL_VERTICAL_SPACING,
-              nodes
+              nodes,
             )
           end
 
@@ -223,7 +223,7 @@ module Sirena
           connections << {
             from: node.id,
             to: child.id,
-            type: :parent_child
+            type: :parent_child,
           }
 
           # Recursively build connections for children
@@ -245,7 +245,7 @@ module Sirena
 
         {
           width: max_x + ROOT_PADDING,
-          height: max_y + ROOT_PADDING
+          height: max_y + ROOT_PADDING,
         }
       end
     end

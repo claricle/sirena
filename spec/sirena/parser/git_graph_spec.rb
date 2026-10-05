@@ -69,7 +69,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         diagram = parser.parse(source)
         expect(diagram.commits.size).to eq(3)
         expect(diagram.commits.map(&:type)).to eq(
-          ["NORMAL", "REVERSE", "HIGHLIGHT"]
+          ["NORMAL", "REVERSE", "HIGHLIGHT"],
         )
       end
 

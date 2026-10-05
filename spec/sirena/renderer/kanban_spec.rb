@@ -18,8 +18,8 @@ module KanbanSpecHelpers
           width: 200,
           height: 150,
           header_height: header_height,
-          card_count: 1
-        }
+          card_count: 1,
+        },
       ],
       cards: [
         {
@@ -31,11 +31,11 @@ module KanbanSpecHelpers
           width: 180,
           height: 80,
           metadata: {},
-          has_metadata: false
-        }
+          has_metadata: false,
+        },
       ],
       width: 200,
-      height: 150
+      height: 150,
     }
   end
 end
@@ -57,8 +57,8 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 200,
               height: 150,
               header_height: 50,
-              card_count: 1
-            }
+              card_count: 1,
+            },
           ],
           cards: [
             {
@@ -70,11 +70,11 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 180,
               height: 80,
               metadata: {},
-              has_metadata: false
-            }
+              has_metadata: false,
+            },
           ],
           width: 200,
-          height: 150
+          height: 150,
         }
       end
 
@@ -109,7 +109,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 200,
               height: 150,
               header_height: 50,
-              card_count: 1
+              card_count: 1,
             },
             {
               id: 'done',
@@ -119,8 +119,8 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 200,
               height: 150,
               header_height: 50,
-              card_count: 1
-            }
+              card_count: 1,
+            },
           ],
           cards: [
             {
@@ -132,7 +132,7 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 180,
               height: 80,
               metadata: {},
-              has_metadata: false
+              has_metadata: false,
             },
             {
               id: 'release',
@@ -143,11 +143,11 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 180,
               height: 80,
               metadata: {},
-              has_metadata: false
-            }
+              has_metadata: false,
+            },
           ],
           width: 460,
-          height: 150
+          height: 150,
         }
       end
 
@@ -178,8 +178,8 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 200,
               height: 180,
               header_height: 50,
-              card_count: 1
-            }
+              card_count: 1,
+            },
           ],
           cards: [
             {
@@ -192,13 +192,13 @@ RSpec.describe Sirena::Renderer::Kanban do
               height: 110,
               metadata: {
                 priority: 'High',
-                ticket: 'MC-1001'
+                ticket: 'MC-1001',
               },
-              has_metadata: true
-            }
+              has_metadata: true,
+            },
           ],
           width: 200,
-          height: 180
+          height: 180,
         }
       end
 
@@ -218,7 +218,7 @@ RSpec.describe Sirena::Renderer::Kanban do
           columns: [],
           cards: [],
           width: 0,
-          height: 0
+          height: 0,
         }
       end
 
@@ -424,7 +424,7 @@ RSpec.describe Sirena::Renderer::Kanban do
       it "starts card metadata below a multi-line label's actual rendered height" do
         layout = {
           columns: [
-            { id: 'todo', title: 'Todo', x: 0, y: 0, width: 200, height: 200, header_height: 50, card_count: 1 }
+            { id: 'todo', title: 'Todo', x: 0, y: 0, width: 200, height: 200, header_height: 50, card_count: 1 },
           ],
           cards: [
             {
@@ -436,11 +436,11 @@ RSpec.describe Sirena::Renderer::Kanban do
               width: 180,
               height: 134,
               metadata: { assigned: 'Alice' },
-              has_metadata: true
-            }
+              has_metadata: true,
+            },
           ],
           width: 200,
-          height: 200
+          height: 200,
         }
 
         xml = renderer.render(layout).to_xml

@@ -48,7 +48,7 @@ module Sirena
           ticket: ticket,
           icon: icon,
           label: label,
-          priority: priority
+          priority: priority,
         }.compact
       end
 

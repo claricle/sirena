@@ -38,7 +38,7 @@ RSpec.describe HardenedMmdc do
     {
       'is not on PATH at all' => nil,
       'never answers' => "#!/bin/sh\nexec /bin/sleep 30 2>/dev/null\n",
-      'prints bytes that are not UTF-8' => "#!/bin/sh\nprintf '\\377\\376 1 0\\n'\n"
+      'prints bytes that are not UTF-8' => "#!/bin/sh\nprintf '\\377\\376 1 0\\n'\n",
     }.each do |trouble, script|
       it "kills the group anyway when ps #{trouble}" do
         stub_const('HardenedMmdc::PS_TIMEOUT', 0.3)

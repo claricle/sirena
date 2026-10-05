@@ -18,14 +18,14 @@ RSpec.describe Sirena::Renderer::Requirement do
                 text: 'the test text.',
                 risk: 'high',
                 verifymethod: 'test',
-                classes: []
+                classes: [],
               ),
               x: 100,
               y: 100,
               width: 180,
               height: 140,
-              level: 1
-            }
+              level: 1,
+            },
           },
           elements: {
             'test_entity' => {
@@ -33,14 +33,14 @@ RSpec.describe Sirena::Renderer::Requirement do
                 name: 'test_entity',
                 type: 'simulation',
                 docref: nil,
-                classes: []
+                classes: [],
               ),
               x: 100,
               y: 300,
               width: 150,
               height: 80,
-              level: 0
-            }
+              level: 0,
+            },
           },
           relationships: [
             {
@@ -51,11 +51,11 @@ RSpec.describe Sirena::Renderer::Requirement do
               from_x: 175,
               from_y: 380,
               to_x: 190,
-              to_y: 240
-            }
+              to_y: 240,
+            },
           ],
           width: 500,
-          height: 500
+          height: 500,
         }
       end
 
@@ -108,7 +108,7 @@ RSpec.describe Sirena::Renderer::Requirement do
           elements: {},
           relationships: [],
           width: 400,
-          height: 300
+          height: 300,
         }
       end
 
@@ -133,13 +133,13 @@ RSpec.describe Sirena::Renderer::Requirement do
                 text: 'First requirement',
                 risk: 'low',
                 verifymethod: 'test',
-                classes: []
+                classes: [],
               ),
               x: 50,
               y: 50,
               width: 180,
               height: 140,
-              level: 0
+              level: 0,
             },
             'req2' => {
               requirement: double(
@@ -149,19 +149,19 @@ RSpec.describe Sirena::Renderer::Requirement do
                 text: 'Second requirement',
                 risk: 'medium',
                 verifymethod: 'analysis',
-                classes: []
+                classes: [],
               ),
               x: 250,
               y: 50,
               width: 180,
               height: 140,
-              level: 0
-            }
+              level: 0,
+            },
           },
           elements: {},
           relationships: [],
           width: 500,
-          height: 300
+          height: 300,
         }
       end
 

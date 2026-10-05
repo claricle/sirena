@@ -99,7 +99,7 @@ module Sirena
         # Console-only detail (never written to the committed scoreboard):
         # the first line, so a stray backtrace in a message can't leak into
         # a one-line failure report.
-        message: e.message.to_s.each_line.first.to_s.chomp
+        message: e.message.to_s.each_line.first.to_s.chomp,
       }
     end
 
@@ -115,7 +115,7 @@ module Sirena
         row = {
           "case" => path,
           "verdict" => verdict_by_case.fetch(path, "unknown"),
-          "pass" => result[:pass]
+          "pass" => result[:pass],
         }
         unless result[:pass]
           row["stage"] = result[:stage]

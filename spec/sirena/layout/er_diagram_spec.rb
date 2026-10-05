@@ -10,21 +10,21 @@ RSpec.describe Sirena::Layout::ErDiagram do
       Sirena::Diagram::ErDiagram.new.tap do |d|
         d.entities << Sirena::Diagram::ErEntity.new(
           id: 'CUSTOMER',
-          name: 'CUSTOMER'
+          name: 'CUSTOMER',
         ).tap do |entity|
           entity.attributes << Sirena::Diagram::ErAttribute.new(
             name: 'id',
             attribute_type: 'int',
-            key_type: 'PK'
+            key_type: 'PK',
           )
           entity.attributes << Sirena::Diagram::ErAttribute.new(
             name: 'name',
-            attribute_type: 'string'
+            attribute_type: 'string',
           )
         end
         d.entities << Sirena::Diagram::ErEntity.new(
           id: 'ORDER',
-          name: 'ORDER'
+          name: 'ORDER',
         )
         d.relationships << Sirena::Diagram::ErRelationship.new(
           from_id: 'CUSTOMER',
@@ -32,7 +32,7 @@ RSpec.describe Sirena::Layout::ErDiagram do
           relationship_type: 'non-identifying',
           cardinality_from: 'one',
           cardinality_to: 'zero_or_more',
-          label: 'places'
+          label: 'places',
         )
       end
     end
@@ -162,7 +162,7 @@ RSpec.describe Sirena::Layout::ErDiagram do
       graph = transform.to_graph(diagram)
 
       expect(graph[:class_defs]).to eq(
-        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue'
+        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue',
       )
     end
   end

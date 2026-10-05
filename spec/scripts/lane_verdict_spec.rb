@@ -18,24 +18,24 @@ RSpec.describe LaneVerdict do
     {
       'all children succeeded' => [
         { 'unit' => { 'result' => 'success' }, 'lint' => { 'result' => 'success' } },
-        []
+        [],
       ],
       'a failed child' => [
         { 'unit' => { 'result' => 'success' }, 'lint' => { 'result' => 'failure' } },
-        ['lint: "failure"']
+        ['lint: "failure"'],
       ],
       'a skipped child (dependency of a failed job)' => [
         { 'unit' => { 'result' => 'failure' }, 'docs' => { 'result' => 'skipped' } },
-        ['unit: "failure"', 'docs: "skipped"']
+        ['unit: "failure"', 'docs: "skipped"'],
       ],
       'a cancelled child' => [
         { 'unit' => { 'result' => 'success' }, 'lint' => { 'result' => 'cancelled' } },
-        ['lint: "cancelled"']
+        ['lint: "cancelled"'],
       ],
       'no child jobs wired yet' => [
         {},
-        ['no child jobs to judge']
-      ]
+        ['no child jobs to judge'],
+      ],
     }.each do |label, (needs, expected)|
       it "flags #{label}" do
         expect(described_class.failures(needs)).to eq(expected)

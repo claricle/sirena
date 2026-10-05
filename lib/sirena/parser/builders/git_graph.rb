@@ -31,7 +31,7 @@ module Sirena
               is_merge: options[:is_merge] || false,
               merge_branch: options[:merge_branch],
               is_cherry_pick: options[:is_cherry_pick] || false,
-              cherry_pick_parent: options[:cherry_pick_parent]
+              cherry_pick_parent: options[:cherry_pick_parent],
             }
 
             @commits << commit
@@ -44,7 +44,7 @@ module Sirena
             @branches[name] = {
               order: order,
               parent_branch: @current_branch,
-              created_at: @commits.last&.fetch(:id)
+              created_at: @commits.last&.fetch(:id),
             }
           end
 
@@ -56,14 +56,14 @@ module Sirena
             add_commit(
               options.merge(
                 is_merge: true,
-                merge_branch: branch_name
-              )
+                merge_branch: branch_name,
+              ),
             )
           end
 
           def cherry_pick(options = {})
             add_commit(
-              options.merge(is_cherry_pick: true)
+              options.merge(is_cherry_pick: true),
             )
           end
 
@@ -149,9 +149,9 @@ module Sirena
                 name: name,
                 order: info[:order],
                 parent_branch: info[:parent_branch],
-                created_at_commit: info[:created_at]
+                created_at_commit: info[:created_at],
               }
-            end
+            end,
           }
         end
       end

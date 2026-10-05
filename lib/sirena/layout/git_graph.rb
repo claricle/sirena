@@ -52,20 +52,20 @@ module Sirena
         positioned_commits = position_commits(
           diagram.commits,
           commits_by_id,
-          lane_assignments
+          lane_assignments,
         )
 
         # Build connections between commits
         connections = build_connections(
           positioned_commits,
-          commits_by_id
+          commits_by_id,
         )
 
         # Build branch metadata
         branches = build_branch_metadata(
           diagram.branches,
           lane_assignments,
-          positioned_commits
+          positioned_commits,
         )
 
         {
@@ -73,7 +73,7 @@ module Sirena
           branches: branches,
           connections: connections,
           width: calculate_width(positioned_commits),
-          height: calculate_height(lane_assignments)
+          height: calculate_height(lane_assignments),
         }
       end
 
@@ -104,7 +104,7 @@ module Sirena
         info["main"] = {
           parent: nil,
           order: 0,
-          created_at: nil
+          created_at: nil,
         }
 
         # Add other branches
@@ -112,7 +112,7 @@ module Sirena
           info[branch.name] = {
             parent: branch.parent_branch || "main",
             order: branch.order || info.size,
-            created_at: branch.created_at_commit
+            created_at: branch.created_at_commit,
           }
         end
 
@@ -182,7 +182,7 @@ module Sirena
             is_cherry_pick: commit.is_cherry_pick || false,
             cherry_pick_parent: commit.cherry_pick_parent,
             # Store original commit for reference
-            original: commit
+            original: commit,
           }
         end
 
@@ -223,7 +223,7 @@ module Sirena
               to_y: commit[:y],
               from_branch: parent[:branch],
               to_branch: commit[:branch],
-              type: connection_type
+              type: connection_type,
             }
           end
         end
@@ -244,7 +244,7 @@ module Sirena
         metadata << {
           name: "main",
           lane: lane_assignments["main"] || 0,
-          color: DEFAULT_COLORS[0]
+          color: DEFAULT_COLORS[0],
         }
 
         # Add other branches with cycling colors
@@ -252,7 +252,7 @@ module Sirena
           metadata << {
             name: branch.name,
             lane: lane_assignments[branch.name] || (idx + 1),
-            color: DEFAULT_COLORS[(idx + 1) % DEFAULT_COLORS.length]
+            color: DEFAULT_COLORS[(idx + 1) % DEFAULT_COLORS.length],
           }
         end
 

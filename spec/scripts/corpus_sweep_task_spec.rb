@@ -55,7 +55,7 @@ RSpec.describe "scripts/corpus_sweep.rb", type: :task do
     "an entity-like text inside a comment" => "<svg><!-- &nbsp; --></svg>",
     "an entity-like text inside CDATA" => "<svg><![CDATA[&nbsp;]]></svg>",
     "an entity-like text inside a processing instruction" => "<svg><?x &nbsp; ?></svg>",
-    "a numeric character reference" => "<svg><text>&#169;</text></svg>"
+    "a numeric character reference" => "<svg><text>&#169;</text></svg>",
   }.each do |label, svg|
     it "counts #{label} as a pass for every case" do
       totals = sweep_totals_for(svg)
@@ -71,7 +71,7 @@ RSpec.describe "scripts/corpus_sweep.rb", type: :task do
     "an svg that does not open the document" => "<!-- x --><svg></svg>",
     "an svg root that is not closed at the end" => "<svg></svg><!-- x -->",
     "an entity after a CDATA section that holds a comment opener" => "<svg><![CDATA[<!--]]>&nbsp;<!-- --></svg>",
-    "an entity after a processing instruction that holds a comment opener" => "<svg><?x <!-- ?>&nbsp;<?y --> ?></svg>"
+    "an entity after a processing instruction that holds a comment opener" => "<svg><?x <!-- ?>&nbsp;<?y --> ?></svg>",
   }.each do |label, svg|
     it "counts #{label} as a failure for every case" do
       expect(sweep_totals_for(svg)[:passed]).to eq(0)

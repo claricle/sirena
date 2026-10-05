@@ -12,7 +12,7 @@ namespace :fixtures do
       "class_diagram_example.mmd" => "class_diagram",
       "state_diagram_example.mmd" => "state_diagram",
       "er_diagram_example.mmd" => "er_diagram",
-      "user_journey_example.mmd" => "user_journey"
+      "user_journey_example.mmd" => "user_journey",
     }
 
     puts "Generating reference SVGs using mermaid-js CLI..."

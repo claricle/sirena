@@ -27,8 +27,8 @@ module Sirena
           title: diagram.title,
           message: diagram.message,
           metadata: {
-            diagram_type: :error
-          }
+            diagram_type: :error,
+          },
         }
       end
     end

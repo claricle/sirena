@@ -40,7 +40,7 @@ module Sirena
           elements: nodes_layout[:elements],
           relationships: relationships_layout,
           width: nodes_layout[:width],
-          height: nodes_layout[:height]
+          height: nodes_layout[:height],
         }
       end
 
@@ -75,7 +75,7 @@ module Sirena
                 y: current_y,
                 width: dims[:width],
                 height: dims[:height],
-                level: level_idx
+                level: level_idx,
               }
 
               current_x += dims[:width] + DEFAULT_SPACING_X
@@ -90,7 +90,7 @@ module Sirena
                 y: current_y,
                 width: dims[:width],
                 height: dims[:height],
-                level: level_idx
+                level: level_idx,
               }
 
               current_x += dims[:width] + DEFAULT_SPACING_X
@@ -106,7 +106,7 @@ module Sirena
           requirements: positioned_requirements,
           elements: positioned_elements,
           width: max_width + DEFAULT_PADDING,
-          height: current_y + DEFAULT_PADDING
+          height: current_y + DEFAULT_PADDING,
         }
       end
 
@@ -185,14 +185,14 @@ module Sirena
 
         {
           width: width,
-          height: [height, DEFAULT_REQ_HEIGHT].max
+          height: [height, DEFAULT_REQ_HEIGHT].max,
         }
       end
 
       def calculate_element_dimensions(element)
         {
           width: DEFAULT_ELEM_WIDTH,
-          height: DEFAULT_ELEM_HEIGHT
+          height: DEFAULT_ELEM_HEIGHT,
         }
       end
 
@@ -221,7 +221,7 @@ module Sirena
             from_x: source_x,
             from_y: source_y,
             to_x: target_x,
-            to_y: target_y
+            to_y: target_y,
           }
         end.compact
       end

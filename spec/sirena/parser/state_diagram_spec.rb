@@ -88,7 +88,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       diagram = parser.parse(source)
 
       expect(diagram.states.map { |state| [state.id, state.state_type] }).to eq(
-        [['"X" as Y', 'choice'], ['Y', 'normal'], ['A', 'normal']]
+        [['"X" as Y', 'choice'], ['Y', 'normal'], ['A', 'normal']],
       )
       transitions = diagram.transitions.map do |transition|
         [transition.from_id, transition.to_id]
@@ -98,7 +98,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
     it 'keeps marker-like text inside a marker state id' do
       diagram = parser.parse(
-        %(stateDiagram-v2\nstate "A <<choice>> B" <<fork>>\n)
+        %(stateDiagram-v2\nstate "A <<choice>> B" <<fork>>\n),
       )
 
       expect(diagram.states.map { |state| [state.id, state.state_type] })
@@ -168,7 +168,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError
+        Sirena::Parser::ParseError,
       )
     end
   end
@@ -180,7 +180,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'names and labels a state (state_diagram/019)' do
         diagram = corpus(
           'state_diagram/019_parser_should_handle_state_definitions_' \
-          'with_separation_of_id_18.mmd'
+          'with_separation_of_id_18.mmd',
         )
 
         expect(diagram.find_state('NotShooting').label)
@@ -193,7 +193,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'labels a composite carrying a note (state_diagram/052)' do
         diagram = corpus(
           'state_diagram/052_parser_should_handle_notes_for_composite_' \
-          'nested_states_51.mmd'
+          'nested_states_51.mmd',
         )
 
         expect(diagram.find_state('NotShooting').label)
@@ -214,7 +214,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
         # passes on origin/main, where the alias form does not parse at all.
         expect(
           parser.parse(%(stateDiagram-v2\nstate "Idle mode" as Idle\n))
-            .find_state('Idle').label
+            .find_state('Idle').label,
         ).to eq('Idle mode')
       end
 
@@ -224,7 +224,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to raise_error(Sirena::Parser::ParseError)
         expect(
           parser.parse(%(stateDiagram-v2\nstate "L" as N\n))
-            .find_state('N').label
+            .find_state('N').label,
         ).to eq('L')
       end
 
@@ -233,7 +233,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
           .to raise_error(Sirena::Parser::ParseError)
         expect(
           parser.parse(%(stateDiagram-v2\nstate "x" as N\n))
-            .find_state('N').label
+            .find_state('N').label,
         ).to eq('x')
       end
 
@@ -257,7 +257,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       it 'keeps a quoted alias id distinct from its unquoted spelling' do
         diagram = parser.parse(
-          %(stateDiagram-v2\nstate "L" as "X"\nX --> A\n)
+          %(stateDiagram-v2\nstate "L" as "X"\nX --> A\n),
         )
 
         expect(diagram.states.map(&:id)).to eq(['"X"', 'X', 'A'])
@@ -288,7 +288,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
         end.to raise_error(Sirena::Parser::ParseError)
 
         marker_diagram = parser.parse(
-          "stateDiagram-v2\nstate  A <<choice>>\n"
+          "stateDiagram-v2\nstate  A <<choice>>\n",
         )
         expect(marker_diagram.states.map { |state| [state.id, state.state_type] })
           .to eq([['A', 'choice']])
@@ -298,7 +298,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     describe 'id : description' do
       it 'describes a state, spaces around the colon (state_diagram/002)' do
         diagram = corpus(
-          'state_diagram/002_parser_space_before_and_after_the_colon_1.mmd'
+          'state_diagram/002_parser_space_before_and_after_the_colon_1.mmd',
         )
 
         expect(diagram.find_state('namedState1').description)
@@ -325,7 +325,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       it 'describes a state, no spaces (state_diagram/003)' do
         diagram = corpus(
-          'state_diagram/003_parser_no_spaces_before_and_after_the_colon_2.mmd'
+          'state_diagram/003_parser_no_spaces_before_and_after_the_colon_2.mmd',
         )
 
         expect(diagram.find_state('namedState1').description)
@@ -337,7 +337,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'reads a note block to its end note (state_diagram/026)' do
         diagram = corpus(
           'state_diagram/026_parser_should_handle_multiline_notes_with_' \
-          'different_line_breaks_25.mmd'
+          'different_line_breaks_25.mmd',
         )
 
         expect(diagram.states.map(&:id)).to eq(['State1'])
@@ -349,7 +349,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       # mutation-check reports it STAYED GREEN for exactly that reason.
       it 'reads a single-line note' do
         diagram = parser.parse(
-          "stateDiagram-v2\nState1\nnote right of State1 : hello\n"
+          "stateDiagram-v2\nState1\nnote right of State1 : hello\n",
         )
 
         expect(diagram.states.map(&:id)).to eq(['State1'])
@@ -370,7 +370,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       # Only a whole line closes the block. mmdc keeps this one as text.
       it 'keeps an end note prefix inside a body line as note text' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nnote right of A\nend noteB\nend note\n"
+          "stateDiagram-v2\nA\nnote right of A\nend noteB\nend note\n",
         )
 
         expect(diagram.states.map(&:id)).to eq(['A'])
@@ -388,7 +388,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       # mmdc keeps a body line that ends in `;` or holds a `%%` comment.
       it 'keeps a semicolon and a comment marker inside a note body' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nnote right of A\nfoo;\n%% x\nend note\n"
+          "stateDiagram-v2\nA\nnote right of A\nfoo;\n%% x\nend note\n",
         )
 
         expect(diagram.states.map(&:id)).to eq(['A'])
@@ -396,7 +396,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
 
       it 'accepts a note block with an empty body' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nnote right of A\nend note\n"
+          "stateDiagram-v2\nA\nnote right of A\nend note\n",
         )
 
         expect(diagram.states.map(&:id)).to eq(['A'])
@@ -407,7 +407,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
         expect { parser.parse("stateDiagram-v2\nA\nnote 'f' as N1\n") }
           .to raise_error(Sirena::Parser::ParseError)
         expect(
-          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length
+          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length,
         ).to eq(1)
       end
 
@@ -415,14 +415,14 @@ RSpec.describe Sirena::Parser::StateDiagram do
         expect { parser.parse(%(stateDiagram-v2\nA\nnote "" as N1\n)) }
           .to raise_error(Sirena::Parser::ParseError)
         expect(
-          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length
+          parser.parse(%(stateDiagram-v2\nA\nnote "f" as N1\n)).states.length,
         ).to eq(1)
       end
 
       # mmdc parses a floating note and draws nothing for it.
       it 'drops a floating note (state_diagram/027)' do
         diagram = corpus(
-          'state_diagram/027_parser_should_handle_floating_notes_26.mmd'
+          'state_diagram/027_parser_should_handle_floating_notes_26.mmd',
         )
 
         expect(diagram.states.map(&:id)).to eq(['foo'])
@@ -434,7 +434,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'drops a style over several targets (state_diagram/006)' do
         diagram = corpus(
           'state_diagram/006_parser_can_define_multiple_attributes_' \
-          'separated_by_commas_5.mmd'
+          'separated_by_commas_5.mmd',
         )
 
         expect(diagram.states.map(&:id)).to eq(%w[id1 id2])
@@ -450,7 +450,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       # A `;` splits nothing here: mmdc draws the same picture either way.
       it 'keeps a semicolon inside the property list' do
         diagram = parser.parse(
-          "stateDiagram-v2\nA\nB\nstyle A fill:red;stroke:blue\n"
+          "stateDiagram-v2\nA\nB\nstyle A fill:red;stroke:blue\n",
         )
 
         expect(diagram.states.map(&:id)).to eq(%w[A B])
@@ -486,7 +486,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
     describe 'state ids' do
       it 'takes a digits-only id (state/001)' do
         diagram = corpus(
-          'state/001_rendering_statediagram-v2_spec_state_0.mmd'
+          'state/001_rendering_statediagram-v2_spec_state_0.mmd',
         )
 
         expect(diagram.states.map(&:id)).to eq(%w[s2 s3 s4 55])
@@ -497,7 +497,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'refuses a bare note as a state (state_diagram/031)' do
         expect do
           corpus(
-            'state_diagram/031_parser_should_handle_floating_notes_30.mmd'
+            'state_diagram/031_parser_should_handle_floating_notes_30.mmd',
           )
         end.to raise_error(Sirena::Parser::ParseError)
       end
@@ -531,7 +531,7 @@ RSpec.describe Sirena::Parser::StateDiagram do
       it 'takes reserved names once a state statement claims the line' do
         diagram = parser.parse(
           "stateDiagram-v2\nstate note\nstate style\nstate state\n" \
-          "notes\nstyles\n"
+          "notes\nstyles\n",
         )
 
         expect(diagram.states.map(&:id))

@@ -598,7 +598,7 @@ module Sirena
           "#{cx},#{y}",
           "#{x + width},#{cy}",
           "#{cx},#{y + height}",
-          "#{x},#{cy}"
+          "#{x},#{cy}",
         ].join(' ')
 
         Svg::Polygon.new.tap do |polygon|
@@ -617,7 +617,7 @@ module Sirena
           "#{x + width},#{cy}",
           "#{x + width - w4},#{y + height}",
           "#{x + w4},#{y + height}",
-          "#{x},#{cy}"
+          "#{x},#{cy}",
         ].join(' ')
 
         Svg::Polygon.new.tap do |polygon|
@@ -1115,7 +1115,7 @@ module Sirena
             [back_x - (along_y * ARROW_HALF_WIDTH),
              back_y + (along_x * ARROW_HALF_WIDTH)],
             [back_x + (along_y * ARROW_HALF_WIDTH),
-             back_y - (along_x * ARROW_HALF_WIDTH)]
+             back_y - (along_x * ARROW_HALF_WIDTH)],
           ].map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(' ')
           # An unpainted polygon is not an invisible one: SVG fills it
           # black. A theme with no edge colour drew black heads floating

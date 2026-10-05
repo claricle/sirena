@@ -180,31 +180,31 @@ module Sirena
                    [
                      "#{cx},#{y}",
                      "#{x + width},#{y + height}",
-                     "#{x},#{y + height}"
+                     "#{x},#{y + height}",
                    ]
                  when 'down'
                    [
                      "#{x},#{y}",
                      "#{x + width},#{y}",
-                     "#{cx},#{y + height}"
+                     "#{cx},#{y + height}",
                    ]
                  when 'left'
                    [
                      "#{x},#{cy}",
                      "#{x + width},#{y}",
-                     "#{x + width},#{y + height}"
+                     "#{x + width},#{y + height}",
                    ]
                  when 'right'
                    [
                      "#{x},#{y}",
                      "#{x + width},#{cy}",
-                     "#{x},#{y + height}"
+                     "#{x},#{y + height}",
                    ]
                  else
                    [
                      "#{x},#{y}",
                      "#{x + width},#{cy}",
-                     "#{x},#{y + height}"
+                     "#{x},#{y + height}",
                    ]
                  end
 

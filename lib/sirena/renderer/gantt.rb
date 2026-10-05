@@ -47,7 +47,7 @@ module Sirena
         done: "#5CB85C",      # Green
         active: "#5BC0DE",    # Blue
         critical: "#D9534F", # Red
-        default: "#428BCA"   # Default blue
+        default: "#428BCA", # Default blue
       }.freeze
 
       # Renders a Gantt chart diagram to SVG.
@@ -296,7 +296,7 @@ module Sirena
           [x, center_y],               # Left
           [x + size, center_y - size], # Top
           [x + size * 2, center_y],    # Right
-          [x + size, center_y + size]  # Bottom
+          [x + size, center_y + size], # Bottom
         ]
 
         diamond = Svg::Polygon.new.tap do |p|

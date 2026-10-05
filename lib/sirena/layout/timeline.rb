@@ -36,8 +36,8 @@ module Sirena
           metadata: {
             section_count: diagram.sections.length,
             total_events: all_events.length,
-            has_sections: diagram.has_sections?
-          }
+            has_sections: diagram.has_sections?,
+          },
         }
       end
 
@@ -71,7 +71,7 @@ module Sirena
         {
           min: min_time - padding,
           max: max_time + padding,
-          span: (max_time - min_time) + (2 * padding)
+          span: (max_time - min_time) + (2 * padding),
         }
       end
 
@@ -79,7 +79,7 @@ module Sirena
         {
           min: 2000,
           max: 2024,
-          span: 24
+          span: 24,
         }
       end
 
@@ -101,7 +101,7 @@ module Sirena
             events: transform_events(section.events, timeline_range),
             tasks: section.tasks,
             has_events: section.has_events?,
-            has_tasks: section.has_tasks?
+            has_tasks: section.has_tasks?,
           }
         end
       end
@@ -114,7 +114,7 @@ module Sirena
             descriptions: event.descriptions,
             primary_description: event.primary_description,
             multiple_descriptions: event.multiple_descriptions?,
-            x_position: calculate_x_position(event.time, timeline_range)
+            x_position: calculate_x_position(event.time, timeline_range),
           }
         end
       end

@@ -39,7 +39,7 @@ RSpec.describe Sirena::Layout::Architecture do
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "left", to_id: "mid", from_position: "R", to_position: "L"),
             Sirena::Diagram::Architecture::Edge.new(from_id: "mid", to_id: "right", from_position: "R", to_position: "L"),
-          ]
+          ],
         )
       end
 
@@ -69,7 +69,7 @@ RSpec.describe Sirena::Layout::Architecture do
           services: [],
           junctions: [Sirena::Diagram::Architecture::Junction.new(id: "mid", group_id: nil)],
           groups: [],
-          edges: []
+          edges: [],
         )
       end
 
@@ -98,7 +98,7 @@ RSpec.describe Sirena::Layout::Architecture do
           groups: [],
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "j", from_position: "R", to_position: "L"),
-          ]
+          ],
         )
       end
 
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Layout::Architecture do
           groups: [
             Sirena::Diagram::Architecture::Group.new(id: "g", label: "G", icon: "cloud"),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -161,7 +161,7 @@ RSpec.describe Sirena::Layout::Architecture do
           groups: [],
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "s1", to_id: "j1", from_position: "R", to_position: "L"),
-          ]
+          ],
         )
       end
 
@@ -192,7 +192,7 @@ RSpec.describe Sirena::Layout::Architecture do
           groups: [],
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "j", to_id: "a", from_position: "R", to_position: "L"),
-          ]
+          ],
         )
       end
 
@@ -227,7 +227,7 @@ RSpec.describe Sirena::Layout::Architecture do
           edges: [
             Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "RT",
                                                     to_position: "L"),
-          ]
+          ],
         )
       end
 
@@ -251,7 +251,7 @@ RSpec.describe Sirena::Layout::Architecture do
           groups: [
             Sirena::Diagram::Architecture::Group.new(id: "g", label: "G", icon: "cloud"),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -292,7 +292,7 @@ RSpec.describe Sirena::Layout::Architecture do
             Sirena::Diagram::Architecture::Group.new(id: "outer", label: "Outer", icon: "cloud"),
             Sirena::Diagram::Architecture::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "outer"),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -333,7 +333,7 @@ RSpec.describe Sirena::Layout::Architecture do
             Sirena::Diagram::Architecture::Group.new(id: "mid", label: "Mid", icon: "cloud", parent_id: "outer"),
             Sirena::Diagram::Architecture::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "mid"),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -376,7 +376,7 @@ RSpec.describe Sirena::Layout::Architecture do
             Sirena::Diagram::Architecture::Group.new(id: "a", label: "A", icon: "cloud", parent_id: "b"),
             Sirena::Diagram::Architecture::Group.new(id: "b", label: "B", icon: "cloud", parent_id: "a"),
           ],
-          edges: []
+          edges: [],
         )
       end
 
@@ -401,7 +401,7 @@ RSpec.describe Sirena::Layout::Architecture do
       # that follows, using a row computed for junctions that don't exist.
       let(:diagram) do
         Sirena::Diagram::Architecture.new(
-          services: [], groups: [LayoutArchitectureSpecHelpers.group_double("g1")], junctions: [], edges: []
+          services: [], groups: [LayoutArchitectureSpecHelpers.group_double("g1")], junctions: [], edges: [],
         )
       end
       let(:hierarchy) do
@@ -432,7 +432,7 @@ RSpec.describe Sirena::Layout::Architecture do
           services: [],
           groups: %w[g1 g2 g3].map { |id| LayoutArchitectureSpecHelpers.group_double(id) },
           junctions: [],
-          edges: []
+          edges: [],
         )
       end
       let(:hierarchy) do

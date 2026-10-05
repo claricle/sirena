@@ -27,20 +27,20 @@ RSpec.describe Sirena::Renderer::Block do
               x: 20,
               y: 20,
               width: 100,
-              height: 60
+              height: 60,
             },
             'B' => {
               block: build_block('B', 'Block B'),
               x: 140,
               y: 20,
               width: 100,
-              height: 60
-            }
+              height: 60,
+            },
           },
           connections: [],
           columns: 2,
           width: 260,
-          height: 100
+          height: 100,
         }
       end
 
@@ -68,15 +68,15 @@ RSpec.describe Sirena::Renderer::Block do
               x: 20,
               y: 20,
               width: 100,
-              height: 60
+              height: 60,
             },
             'B' => {
               block: build_block('B', 'B'),
               x: 20,
               y: 100,
               width: 100,
-              height: 60
-            }
+              height: 60,
+            },
           },
           connections: [
             {
@@ -86,12 +86,12 @@ RSpec.describe Sirena::Renderer::Block do
               from_y: 80,
               to_x: 70,
               to_y: 100,
-              connection_type: 'arrow'
-            }
+              connection_type: 'arrow',
+            },
           ],
           columns: 1,
           width: 140,
-          height: 180
+          height: 180,
         }
       end
 
@@ -127,13 +127,13 @@ RSpec.describe Sirena::Renderer::Block do
               x: 20,
               y: 20,
               width: 80,
-              height: 80
-            }
+              height: 80,
+            },
           },
           connections: [],
           columns: 1,
           width: 120,
-          height: 120
+          height: 120,
         }
       end
 

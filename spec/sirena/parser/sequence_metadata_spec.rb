@@ -27,7 +27,7 @@ RSpec.describe Sirena::Parser::Sequence do
     "autonumber with decimal start and step" => "autonumber 1.5 0.25",
     "autonumber with a leading-dot step" => "autonumber 1 .5",
     "title followed by a semicolon" => "title Diagram Title;",
-    "autonumber with a trailing comment" => "autonumber %% numbered"
+    "autonumber with a trailing comment" => "autonumber %% numbered",
   }.each do |name, line|
     it "accepts #{name} without changing the diagram around it" do
       diagram = parser.parse("sequenceDiagram\n#{line}\n#{body}")
@@ -58,7 +58,7 @@ RSpec.describe Sirena::Parser::Sequence do
       "title with a colon" => "title: T;Alice->Bob: hi",
       "autonumber" => "autonumber;Alice->Bob: hi",
       "autonumber with a start" => "autonumber 3;Alice->Bob: hi",
-      "accDescr block" => "accDescr {d};Alice->Bob: hi"
+      "accDescr block" => "accDescr {d};Alice->Bob: hi",
     }.each do |name, source|
       it "keeps the message after #{name}" do
         diagram = parser.parse("sequenceDiagram\n#{source}\n")
@@ -83,7 +83,7 @@ RSpec.describe Sirena::Parser::Sequence do
     {
       "title" => "title x",
       "accTitle" => "accTitle: x",
-      "accDescr" => "accDescr: x"
+      "accDescr" => "accDescr: x",
     }.each do |name, prefix|
       it "parses a #{name} line in linear time" do
         source = "sequenceDiagram\n#{prefix}#{' ' * 2560}y\nAlice->Bob: hi\n"
