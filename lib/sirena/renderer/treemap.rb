@@ -13,7 +13,7 @@ module Sirena
       def render(layout)
         doc = Svg::Document.new(
           width: layout[:width],
-          height: layout[:height]
+          height: layout[:height],
         )
 
         # Add title if present

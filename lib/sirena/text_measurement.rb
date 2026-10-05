@@ -43,7 +43,7 @@ module Sirena
 
       {
         width: width || calculated_width,
-        height: height || calculated_height
+        height: height || calculated_height,
       }
     end
 

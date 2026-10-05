@@ -45,41 +45,41 @@ module Sirena
             chart_width: chart_width,
             chart_height: chart_height,
             chart_x: margin,
-            chart_y: margin
+            chart_y: margin,
           },
           axes: {
             x_left: diagram.x_axis_left || '',
             x_right: diagram.x_axis_right || '',
             y_bottom: diagram.y_axis_bottom || '',
-            y_top: diagram.y_axis_top || ''
+            y_top: diagram.y_axis_top || '',
           },
           quadrants: {
             q1: {
               label: diagram.quadrant_1_label,
               number: 1,
               bounds: calculate_quadrant_bounds(1, margin, chart_width,
-                                                chart_height)
+                                                chart_height),
             },
             q2: {
               label: diagram.quadrant_2_label,
               number: 2,
               bounds: calculate_quadrant_bounds(2, margin, chart_width,
-                                                chart_height)
+                                                chart_height),
             },
             q3: {
               label: diagram.quadrant_3_label,
               number: 3,
               bounds: calculate_quadrant_bounds(3, margin, chart_width,
-                                                chart_height)
+                                                chart_height),
             },
             q4: {
               label: diagram.quadrant_4_label,
               number: 4,
               bounds: calculate_quadrant_bounds(4, margin, chart_width,
-                                                chart_height)
-            }
+                                                chart_height),
+            },
           },
-          points: transform_points(diagram, margin, chart_width, chart_height)
+          points: transform_points(diagram, margin, chart_width, chart_height),
         }
       end
 
@@ -103,28 +103,28 @@ module Sirena
             x: margin + half_width,
             y: margin,
             width: half_width,
-            height: half_height
+            height: half_height,
           }
         when 2 # Top-left
           {
             x: margin,
             y: margin,
             width: half_width,
-            height: half_height
+            height: half_height,
           }
         when 3 # Bottom-left
           {
             x: margin,
             y: margin + half_height,
             width: half_width,
-            height: half_height
+            height: half_height,
           }
         when 4 # Bottom-right
           {
             x: margin + half_width,
             y: margin + half_height,
             width: half_width,
-            height: half_height
+            height: half_height,
           }
         end
       end
@@ -155,7 +155,7 @@ module Sirena
             color: point.color,
             stroke_color: point.stroke_color,
             stroke_width: point.stroke_width || 2,
-            index: index
+            index: index,
           }
         end
       end

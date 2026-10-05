@@ -24,7 +24,7 @@ module Sirena
         source = read_input
         engine = Engine.new(
           verbose: options[:verbose],
-          theme: options[:theme]
+          theme: options[:theme],
         )
         svg = engine.render(source)
 

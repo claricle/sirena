@@ -81,7 +81,7 @@ module Sirena
           level: node_data[:level],
           shape: node_data[:shape] || "default",
           icon: node_data[:icon],
-          classes: node_data[:classes] || []
+          classes: node_data[:classes] || [],
         )
 
         node.parent = parent if parent

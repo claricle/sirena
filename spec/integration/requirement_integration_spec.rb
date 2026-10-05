@@ -196,10 +196,10 @@ RSpec.describe 'Requirement Integration' do
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(Sirena::Parser::Requirement)
       expect(handlers[:transform]).to eq(
-        Sirena::Layout::Requirement
+        Sirena::Layout::Requirement,
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::Requirement
+        Sirena::Renderer::Requirement,
       )
     end
   end

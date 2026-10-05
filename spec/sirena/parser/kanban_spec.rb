@@ -218,7 +218,7 @@ RSpec.describe Sirena::Parser::Kanban do
         '035' => 'assigned: knsv',
         '036/037' => 'icon: star',
         '039' => 'icon: star, assigned: knsv',
-        '041' => 'ticket: MC-1234'
+        '041' => 'ticket: MC-1234',
       }.each do |corpus_id, payload|
         it "titles the column by its id (corpus #{corpus_id})" do
           diagram = parser.parse("kanban\n        root@{ #{payload} }\n")
@@ -286,7 +286,7 @@ RSpec.describe Sirena::Parser::Kanban do
       # indentation among all items does - so both parse identically.
       {
         '022' => "kanban\n    root\n      theId(child1)\n",
-        '023' => "kanban\nroot\n      theId(child1)\n"
+        '023' => "kanban\nroot\n      theId(child1)\n",
       }.each do |corpus_id, source|
         it "accepts the shaped child (corpus #{corpus_id})" do
           diagram = parser.parse(source)
@@ -633,7 +633,7 @@ RSpec.describe Sirena::Parser::Kanban do
         'a `@{ classes: }` entry is ignored, the `:::` line wins' =>
           ["kanban\n    root[The root]@{ classes: 'existing' }\n    :::added\n", %w[added]],
         'a repeated identical class line has no visible effect' =>
-          ["kanban\n    root[The root]\n    :::hot\n    :::hot\n", %w[hot]]
+          ["kanban\n    root[The root]\n    :::hot\n    :::hot\n", %w[hot]],
       }.each do |description, (source, expected)|
         it description do
           diagram = parser.parse(source)
@@ -760,7 +760,7 @@ RSpec.describe Sirena::Parser::Kanban do
         # class, so it continues the word rather than ending it. mermaid's
         # own `\b` agrees - it accepts `kanban_x` and rejects `kanban-x`.
         diagram = parser.parse(
-          "kanban\n  root[Root]\n  kanbanBoard\n  mykanban\n  kanban_x\n"
+          "kanban\n  root[Root]\n  kanbanBoard\n  mykanban\n  kanban_x\n",
         )
         expect(diagram.columns.map(&:title))
           .to eq(%w[Root kanbanBoard mykanban kanban_x])

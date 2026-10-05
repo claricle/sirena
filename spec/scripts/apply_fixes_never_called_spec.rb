@@ -55,7 +55,7 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
   # shipped lib .rake file exists any more either -- no row for it.
   {
     "lib ruby" => %r{/lib/.*\.rb\z},
-    "exe" => %r{/exe/[^/]+\z}
+    "exe" => %r{/exe/[^/]+\z},
   }.each do |label, pattern|
     it "scans at least one shipped #{label} file" do
       expect(shipped_files(repo_root).grep(pattern)).not_to be_empty

@@ -108,7 +108,7 @@ module Sirena
             end_angle,
             color,
             svg,
-            index
+            index,
           )
 
           start_angle = end_angle
@@ -149,7 +149,7 @@ module Sirena
           "M #{PIE_CENTER_X} #{PIE_CENTER_Y}",
           "L #{start_x} #{start_y}",
           "A #{PIE_RADIUS} #{PIE_RADIUS} 0 #{large_arc} 1 #{end_x} #{end_y}",
-          'Z'
+          'Z',
         ].join(' ')
       end
 
@@ -173,7 +173,7 @@ module Sirena
             label_x,
             label_y,
             svg,
-            graph[:show_data]
+            graph[:show_data],
           )
 
           start_angle += angle

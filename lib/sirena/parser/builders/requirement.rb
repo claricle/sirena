@@ -22,7 +22,7 @@ module Sirena
           'performanceRequirement' => 'performanceRequirement',
           'physicalRequirement' => 'physicalRequirement',
           'designConstraint' => 'designConstraint',
-          'requirement' => 'requirement'
+          'requirement' => 'requirement',
         }.freeze
 
         # Process parsed diagram

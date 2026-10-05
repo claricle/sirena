@@ -186,7 +186,7 @@ RSpec.describe "tasks/benchmark.rake" do
         single_diagram: { flowchart: { sirena_time: 0.01, mermaid_time: nil } },
         batch_rendering: { diagram_count: 50, sirena_total: 0.5, sirena_per_diagram: 0.01 },
         memory_usage: {},
-        startup_time: { sirena: 0.5, mermaid: nil }
+        startup_time: { sirena: 0.5, mermaid: nil },
       }
 
       report = nil

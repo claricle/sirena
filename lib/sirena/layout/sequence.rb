@@ -43,8 +43,8 @@ module Sirena
           metadata: {
             participants: diagram.participants.map(&:id),
             message_count: diagram.messages.length,
-            notes: diagram.notes
-          }
+            notes: diagram.notes,
+          },
         }
       end
 
@@ -62,14 +62,14 @@ module Sirena
                 width: measure_text(participant.label,
                                     font_size: DEFAULT_FONT_SIZE)[:width],
                 height: measure_text(participant.label,
-                                     font_size: DEFAULT_FONT_SIZE)[:height]
-              }
+                                     font_size: DEFAULT_FONT_SIZE)[:height],
+              },
             ],
             metadata: {
               actor_type: participant.actor_type,
               index: index,
-              lifeline_length: calculate_lifeline_length(diagram)
-            }
+              lifeline_length: calculate_lifeline_length(diagram),
+            },
           }
         end
       end
@@ -88,8 +88,8 @@ module Sirena
               head_style: message.head_style,
               head_side: message.head_side,
               message_index: index,
-              message_text: message.message_text
-            }
+              message_text: message.message_text,
+            },
           }
         end
       end
@@ -99,15 +99,15 @@ module Sirena
 
         label_dims = measure_text(
           message.message_text,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: DEFAULT_FONT_SIZE,
         )
 
         [
           {
             text: message.message_text,
             width: label_dims[:width],
-            height: label_dims[:height]
-          }
+            height: label_dims[:height],
+          },
         ]
       end
 
@@ -134,7 +134,7 @@ module Sirena
           ElkOptions::EDGE_EDGE_SPACING => 15,
           # SIMPLE node placement maintains participant order
           ElkOptions::NODE_PLACEMENT => 'SIMPLE',
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES'
+          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
         )
       end
     end

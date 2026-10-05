@@ -53,7 +53,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "with leading whitespace" => "graph TD\nA-->B ;C\n",
       "repeated" => "graph TD\nA-->B;;;C\n",
       "on the header and repeated" => "graph TD;;A-->B;;;C-->D;;\n",
-      "trailing before EOF" => "graph TD\nA-->B;\n"
+      "trailing before EOF" => "graph TD\nA-->B;\n",
     }.each do |label, source|
       it "accepts a separator #{label}" do
         expect(renders?(source)).to be(true)
@@ -73,7 +73,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click with a semicolon in the URL" =>
         %(graph TD\nA\nclick A "https://example.com/a;b"\n),
       "click mixing bare tokens and quoted strings" =>
-        %(graph TD\nA\nclick A href "https://example.com/a;b" "tip;here" _blank\n)
+        %(graph TD\nA\nclick A href "https://example.com/a;b" "tip;here" _blank\n),
     }.each do |label, source|
       it "still renders #{label}" do
         expect(renders?(source)).to be(true)
@@ -89,7 +89,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "style" => "graph TD\nA\nstyle A fill:red;B\n",
       "classDef" => "graph TD\nA\nclassDef x fill:red;B\n",
-      "click" => %(graph TD\nA\nclick A "http://x";B\n)
+      "click" => %(graph TD\nA\nclick A "http://x";B\n),
     }.each do |label, source|
       it "keeps a node after a #{label} statement" do
         expect(node_ids(source)).to eq(%w[A B])
@@ -117,7 +117,7 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "a hash in a declaration value" do
     {
       "style" => "graph TD\nA\nstyle A fill:#f9f;B\n",
-      "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n"
+      "classDef" => "graph TD\nA\nclassDef x fill:#f9f;B\n",
     }.each do |label, source|
       it "swallows what follows the separator on a #{label}" do
         expect(node_ids(source)).to eq(%w[A])
@@ -133,7 +133,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "in a node label" => ["graph TD\nA\nstyle A fill:red;B[#x]\n", %w[A B]],
       "in an edge label" =>
-        ["graph TD\nA\nstyle A fill:red;B-->|#x|C\n", %w[A B C]]
+        ["graph TD\nA\nstyle A fill:red;B-->|#x|C\n", %w[A B C]],
     }.each do |label, (source, ids)|
       it "does not reach back for a hash #{label}" do
         expect(node_ids(source)).to eq(ids)
@@ -161,7 +161,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     # The list is not modelled, so the line is taken and the node is kept.
     [
       "style A fill:red,stroke:blue",
-      "style A fill:#f9f,stroke:blue"
+      "style A fill:#f9f,stroke:blue",
     ].each do |declaration|
       it "takes #{declaration.inspect}" do
         expect(node_ids("graph TD\nA\n#{declaration}\n")).to eq(%w[A])
@@ -189,7 +189,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "style A fill :red",
       "style A fill:",
       "style A red",
-      "classDef x red"
+      "classDef x red",
     ].each do |declaration|
       it "still accepts #{declaration.inspect}" do
         expect(renders?("graph TD\nA\n#{declaration}\n")).to be(true)
@@ -270,7 +270,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "opening a line after the header" => "graph TD;\n;A-->B\n",
       "alone on a line" => "graph TD\nA\n;\nB\n",
-      "trailing after a statement" => "graph TD\nA\n;\n"
+      "trailing after a statement" => "graph TD\nA\n;\n",
     }.each do |label, source|
       it "accepts one #{label}" do
         expect(renders?(source)).to be(true)
@@ -353,7 +353,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "before a newline" => ["graph TD;click;\nB\n", %w[B click]],
       "at end of input" => ["graph TD;click;\n", %w[click]],
-      "before another node" => ["graph TD;click;B\n", %w[B click]]
+      "before another node" => ["graph TD;click;B\n", %w[B click]],
     }.each do |label, (source, ids)|
       it "is an ordinary node #{label}" do
         expect(node_ids(source)).to eq(ids)
@@ -421,7 +421,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "a separator touching the direction" => "graph TD;A\n",
       "a newline after the direction" => "graph TD\nA\n",
-      "the keyword alone" => "graph\nA\n"
+      "the keyword alone" => "graph\nA\n",
     }.each do |label, source|
       it "takes #{label}" do
         expect { described_class.new.parse(source) }.not_to raise_error
@@ -433,7 +433,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a separator with no direction" => "graph ;A\n",
       "a word that is not a direction" => "graph X;A\n",
       "a direction with a letter stuck to it" => "graph TDx\nA-->B\n",
-      "a direction with a digit stuck to it" => "graph TD2\nA-->B\n"
+      "a direction with a digit stuck to it" => "graph TD2\nA-->B\n",
     }.each do |label, source|
       it "refuses #{label}" do
         expect { described_class.new.parse(source) }
@@ -466,7 +466,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "v" => "TB",
       "<" => "RL",
       ">" => "LR",
-      "^" => "BT"
+      "^" => "BT",
     }.each do |token, direction|
       it "takes #{token} without making it a node" do
         expect(node_ids("graph #{token}\nA-->B\n")).to eq(%w[A B])
@@ -518,7 +518,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "two spaces after call" => "graph TD\nA\nclick A call  cb()\n",
       "a namespaced name" => "graph TD\nA\nclick A call ns.cb()\n",
-      "a semicolon in the name" => "graph TD\nA\nclick A call cb;B()\n"
+      "a semicolon in the name" => "graph TD\nA\nclick A call cb;B()\n",
     }.each do |label, source|
       it "takes #{label}" do
         expect { described_class.new.parse(source) }.not_to raise_error
@@ -546,7 +546,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a comment before the parens" =>
         "graph TD\nA\nclick A call cb\n%% c\n()\n",
       "a trailing comment before the parens" =>
-        "graph TD\nA\nclick A call cb %% c\n()\n"
+        "graph TD\nA\nclick A call cb %% c\n()\n",
     }.each do |label, source|
       it "reaches across #{label}" do
         expect(node_ids(source)).to eq(%w[A])
@@ -569,7 +569,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click A call cb",
       "click A call cb(",
       "click A call",
-      "click A call cb() _blank"
+      "click A call cb() _blank",
     ].each do |statement|
       it "refuses #{statement.inspect}" do
         expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
@@ -711,7 +711,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     # label containing one looked like another property and got swallowed.
     {
       "style" => "graph TD\nA\nstyle A fill:red;B(foo:bar)\n",
-      "classDef" => "graph TD\nA\nclassDef x f:r;B(foo:bar)\n"
+      "classDef" => "graph TD\nA\nclassDef x f:r;B(foo:bar)\n",
     }.each do |label, source|
       it "keeps a node with a colon in its label after #{label}" do
         expect(node_ids(source)).to eq(%w[A B])
@@ -738,7 +738,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "graph TD;%% c;D",
       "graph TD\nA;;%% c;D",
       "graph TD\nA ;%% c;D",
-      "graph TD\nA;%% c;D"
+      "graph TD\nA;%% c;D",
     ].each do |source|
       it "rejects #{source.lines.last.chomp.inspect}" do
         expect(renders?("#{source}\n")).to be(false)
@@ -782,7 +782,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     # a diagram. If that stops being true, this is the example that says so.
     {
       "a style property list" => ["style A fill:red %% c", "style A fill:red"],
-      "a click callback" => ["click A cb%%c", "click A cb"]
+      "a click callback" => ["click A cb%%c", "click A cb"],
     }.each do |label, (with_comment, without)|
       it "draws #{label} the same either way" do
         widened = engine.render("graph TD\nA-->B\n#{with_comment}\n").to_s
@@ -813,7 +813,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "graph TD\n1-->2 %% c",
       "graph TD\nA[T] %% c",
       "graph TD\nA-->B\nclass A foo %% c",
-      "graph TD\nA-->B\nclick A \"u\" %% c"
+      "graph TD\nA-->B\nclick A \"u\" %% c",
     ].each do |source|
       it "refuses #{source.lines.last.chomp.inspect}, as mmdc does" do
         expect(renders?("#{source}\n")).to be(false)
@@ -834,7 +834,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "on the line after a statement" => "graph TD\nA\n%% c\n",
       "indented on its own line" => "graph TD\nA\n  %% c\n",
       "after a statement and a separator" => "graph TD\nA;\n%% c\n",
-      "before every statement" => "graph TD\n%% c\nA\n"
+      "before every statement" => "graph TD\n%% c\nA\n",
     }.each do |label, source|
       it "still takes a comment #{label}" do
         expect(renders?(source)).to be(true)
@@ -887,7 +887,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "style A fill:#f9f;B=C",
       "style A fill:#f9f;B^C",
       "style A fill:#f9f;B-->C",
-      "classDef x fill:#f9f;B;C"
+      "classDef x fill:#f9f;B;C",
     ].each do |declaration|
       it "refuses #{declaration.inspect}" do
         expect(renders?("graph TD\nA\n#{declaration}\n")).to be(false)
@@ -905,7 +905,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       %(style A fill:#f9f;B"C),
       "style A fill:#f9f;stroke-width:2px",
       "style A fill:#f9f;stroke:#333",
-      "classDef x fill:#f9f;stroke:#333"
+      "classDef x fill:#f9f;stroke:#333",
     ].each do |declaration|
       it "takes #{declaration.inspect}" do
         expect(node_ids("graph TD\nA\n#{declaration}\n")).to eq(%w[A])
@@ -932,7 +932,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click A cb:::x",
       "click A cb--",
       "click A cb-.",
-      "click A cb:::"
+      "click A cb:::",
     ].each do |statement|
       it "refuses #{statement.inspect}" do
         expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
@@ -949,7 +949,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click A cb-x",
       "click A cb.x",
       "click A cb:x",
-      "click A cb::x"
+      "click A cb::x",
     ].each do |statement|
       it "takes #{statement.inspect}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
@@ -1019,7 +1019,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click A cb{x",
       "click A cb|x",
       "click A cb}x",
-      "click A cb~x"
+      "click A cb~x",
     ].each do |statement|
       it "refuses #{statement.inspect}" do
         expect(renders?("graph TD\nA\n#{statement}\n")).to be(false)
@@ -1065,7 +1065,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "click A cb.x",
       "click A cb/x",
       "click A cb:x",
-      "click A cb?x"
+      "click A cb?x",
     ].each do |statement|
       it "takes #{statement.inspect}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A])
@@ -1085,7 +1085,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     [
       %(click A cb),
       %(click A "u"),
-      %(click A href "u")
+      %(click A href "u"),
     ].each do |action|
       it "refuses a tooltip on the line after #{action.inspect}" do
         expect(renders?(%(graph TD\nA\n#{action}\n"tip"\n))).to be(false)
@@ -1097,7 +1097,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a bare callback" => "click A cb;B",
       "a quote inside a bare callback" => %(click A cb"x;B),
       "a quoted url" => %(click A "u";B),
-      "a link target" => %(click A "u" _blank;B)
+      "a link target" => %(click A "u" _blank;B),
     }.each do |label, statement|
       it "keeps a node after #{label}" do
         expect(node_ids("graph TD\nA\n#{statement}\n")).to eq(%w[A B])
@@ -1117,7 +1117,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "carrying a shape" => %(graph TD\n"A"[x]\n),
       "as a style target" => %(graph TD\nA\nstyle "A" fill:red\n),
       "as a class target" => %(graph TD\nA\nclass "A" foo\n),
-      "as a click target" => %(graph TD\nA\nclick "A" "u"\n)
+      "as a click target" => %(graph TD\nA\nclick "A" "u"\n),
     }.each do |label, source|
       it "is refused #{label}" do
         expect(renders?(source)).to be(false)

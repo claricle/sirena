@@ -28,7 +28,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "linkStyle 0 xclassDef:x:#f00;",
       # mermaid strips over the whole line, so a `classDef` split across
       # the curve name and the styles after it is exempt too.
-      "linkStyle 0 interpolate xclassDef y:#f00;"
+      "linkStyle 0 interpolate xclassDef y:#f00;",
     ].each do |statement|
       it "takes #{statement.inspect} and keeps the edge" do
         expect(parse_flowchart(statement, header: header).edges.size).to eq(1)

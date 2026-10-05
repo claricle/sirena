@@ -9,7 +9,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     ['thick with head', 'thick_arrow', (2..4).map { |length| "#{'=' * length}>" }],
     ['thick without head', 'thick_line', (3..5).map { |length| '=' * length }],
     ['dotted with head', 'dotted_arrow', (1..3).map { |length| "-#{'.' * length}->" }],
-    ['dotted without head', 'dotted_line', (1..3).map { |length| "-#{'.' * length}-" }]
+    ['dotted without head', 'dotted_line', (1..3).map { |length| "-#{'.' * length}-" }],
   ]
 
   link_shapes.each do |shape, expected_type, links|

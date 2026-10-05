@@ -544,7 +544,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
 
       [
         "~#{'a' * 60_000}~",
-        "~#{Array.new(4_000) { 'a' * 12 }.join('~')}~"
+        "~#{Array.new(4_000) { 'a' * 12 }.join('~')}~",
       ].each do |input|
         expected = whole_input_regex.match(input)[0]
         expect(grammar.tilde_marked_run.parse(input, prefix: true).to_s).to eq(expected)
@@ -691,7 +691,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError
+        Sirena::Parser::ParseError,
       )
     end
   end
@@ -719,7 +719,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
       diagram = parser.parse(source)
 
       expect(diagram.class_defs).to eq(
-        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue'
+        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue',
       )
     end
 
@@ -824,14 +824,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
         'CAR:::a,',
         'CAR:::1bad',
         'classDef x',
-        'CAR:::--'
+        'CAR:::--',
       ]
 
       fragments.each do |fragment|
         source = "erDiagram\n#{fragment}"
 
         expect { parser.parse(source) }.to raise_error(
-          Sirena::Parser::ParseError
+          Sirena::Parser::ParseError,
         )
       end
     end

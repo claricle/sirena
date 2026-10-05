@@ -28,7 +28,7 @@ module Sirena
           {
             type: :x_axis,
             label: label.to_s,
-            values: Array(values)
+            values: Array(values),
           }
         end
 
@@ -36,7 +36,7 @@ module Sirena
           {
             type: :x_axis,
             label: nil,
-            values: Array(values)
+            values: Array(values),
           }
         end
 
@@ -46,7 +46,7 @@ module Sirena
             type: :y_axis,
             label: label.to_s,
             min: min.to_s.to_f,
-            max: max.to_s.to_f
+            max: max.to_s.to_f,
           }
         end
 
@@ -55,7 +55,7 @@ module Sirena
             type: :y_axis,
             label: nil,
             min: min.to_s.to_f,
-            max: max.to_s.to_f
+            max: max.to_s.to_f,
           }
         end
 
@@ -65,7 +65,7 @@ module Sirena
             type: :dataset,
             chart_type: :line,
             label: "Line",
-            values: Array(values)
+            values: Array(values),
           }
         end
 
@@ -75,7 +75,7 @@ module Sirena
             type: :dataset,
             chart_type: :bar,
             label: "Bar",
-            values: Array(values)
+            values: Array(values),
           }
         end
 
@@ -85,7 +85,7 @@ module Sirena
             type: :dataset,
             chart_type: :line,
             label: label.to_s,
-            values: Array(values)
+            values: Array(values),
           }
         end
 
@@ -95,7 +95,7 @@ module Sirena
             title: nil,
             x_axis: nil,
             y_axis: nil,
-            datasets: []
+            datasets: [],
           }
 
           Array(statements).each do |stmt|
@@ -107,19 +107,19 @@ module Sirena
             when :x_axis
               result[:x_axis] = {
                 label: stmt[:label],
-                values: stmt[:values]
+                values: stmt[:values],
               }
             when :y_axis
               result[:y_axis] = {
                 label: stmt[:label],
                 min: stmt[:min],
-                max: stmt[:max]
+                max: stmt[:max],
               }
             when :dataset
               result[:datasets] << {
                 chart_type: stmt[:chart_type],
                 label: stmt[:label],
-                values: stmt[:values]
+                values: stmt[:values],
               }
             end
           end

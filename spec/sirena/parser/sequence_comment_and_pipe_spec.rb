@@ -28,7 +28,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "does not swallow the message that follows the comment line" do
       diagram = parser.parse(
-        "sequenceDiagram\n    %just a comment\n    Alice->>Bob: hi\n"
+        "sequenceDiagram\n    %just a comment\n    Alice->>Bob: hi\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[Alice Bob])
@@ -36,7 +36,7 @@ RSpec.describe Sirena::Parser::Sequence do
 
     it "does not swallow the comment that follows a message line" do
       diagram = parser.parse(
-        "sequenceDiagram\n    Alice->>Bob: hi\n    %trailing comment\n"
+        "sequenceDiagram\n    Alice->>Bob: hi\n    %trailing comment\n",
       )
 
       expect(diagram.participants.map(&:id)).to eq(%w[Alice Bob])

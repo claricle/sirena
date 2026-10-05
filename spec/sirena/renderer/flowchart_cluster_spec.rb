@@ -587,7 +587,7 @@ RSpec.describe Sirena::Engine do
   describe "a nested child with no cluster mark" do
     let(:renderer) do
       Sirena::Renderer::Flowchart.new(
-        theme: Sirena::Theme::Registry.get(:default)
+        theme: Sirena::Theme::Registry.get(:default),
       )
     end
 
@@ -751,7 +751,7 @@ RSpec.describe Sirena::Engine do
   describe "an edge drawn straight onto the renderer" do
     let(:renderer) do
       Sirena::Renderer::Flowchart.new(
-        theme: Sirena::Theme::Registry.get(:default)
+        theme: Sirena::Theme::Registry.get(:default),
       )
     end
 
@@ -932,7 +932,7 @@ RSpec.describe Sirena::Engine do
         "vertical centre inside" => [[0.0, 0.0], [0.0, 40.0]],
         "vertical centre inside reversed" => [[0.0, 40.0], [0.0, 0.0]],
         "diagonal centre inside" => [[0.0, 0.0], [40.0, 40.0]],
-        "diagonal centre inside reversed" => [[40.0, 40.0], [0.0, 0.0]]
+        "diagonal centre inside reversed" => [[40.0, 40.0], [0.0, 0.0]],
       }
       cases = placements.transform_values do |source_at, target_at|
         cluster_pair(source_at, target_at)
@@ -945,12 +945,12 @@ RSpec.describe Sirena::Engine do
         "asymmetric" => asymmetric_cluster_pair,
         "asymmetric reversed" => asymmetric_cluster_pair(reverse: true),
         "asymmetric rotated" => asymmetric_cluster_pair(rotated: true),
-        "asymmetric rotated reversed" => asymmetric_cluster_pair(rotated: true, reverse: true)
+        "asymmetric rotated reversed" => asymmetric_cluster_pair(rotated: true, reverse: true),
       )
       edge = {
         labels: [{ text: "outside", width: 40.0, height: 10.0 }],
         sections: [{ bendPoints: [{ x: 60.0, y: 60.0 },
-                                  { x: 90.0, y: 60.0 }] }]
+                                  { x: 90.0, y: 60.0 }] }],
       }
 
       cases.each do |name, (source, target)|
@@ -1117,7 +1117,7 @@ RSpec.describe Sirena::Engine do
       "a stadium" => "A([A]) --> A",
       "a circle" => "A((A)) --> A",
       "a rhombus" => "A{A} --> A",
-      "a hexagon" => "A{{A}} --> A"
+      "a hexagon" => "A{{A}} --> A",
     }.each do |shape, body|
       it "anchors the loop for #{shape} on its drawn outline" do
         xml = render("flowchart TD\n#{body}\n")

@@ -243,7 +243,7 @@ module Sirena
           '[//]' => 'parallelogram',
           '[\\\\]' => 'parallelogram_alt',
           '[/\\]' => 'trapezoid',
-          '[\\/]' => 'trapezoid_alt'
+          '[\\/]' => 'trapezoid_alt',
         }.freeze
 
         # Which marker each character draws. One table serves both ends
@@ -260,7 +260,7 @@ module Sirena
         # A comment line inside a label, whitespace as mermaid counts it.
         COMMENT_LINE = Regexp.new(
           "\n[\t\v\f \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F" \
-          "\u205F\u3000\uFEFF]*%%[^\n]*"
+          "\u205F\u3000\uFEFF]*%%[^\n]*",
         )
         private_constant :COMMENT_LINE
 
@@ -274,7 +274,7 @@ module Sirena
           '>' => 'LR',
           '^' => 'BT',
           'v' => 'TB',
-          'BR' => 'TB'
+          'BR' => 'TB',
         }.freeze
 
         # Mermaid honours a leading marker only when the trailing one
@@ -315,13 +315,13 @@ module Sirena
           shape: {
             open: simple(:o),
             label: simple(:l),
-            close: simple(:c)
-          }
+            close: simple(:c),
+          },
         ) do
           delims = "#{o}#{c}"
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
-            label: l.to_s.strip
+            label: l.to_s.strip,
           }
         end
 
@@ -330,13 +330,13 @@ module Sirena
           shape: {
             open: simple(:o),
             label: sequence(:_),
-            close: simple(:c)
-          }
+            close: simple(:c),
+          },
         ) do
           delims = "#{o}#{c}"
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
-            label: ''
+            label: '',
           }
         end
 
@@ -994,7 +994,7 @@ module Sirena
             node_id: node_id,
             shape_type: metadata_shape(entries['shape']) || shape_type,
             label: entries['label'] || label,
-            classes: node_hash[:inline_class]&.to_s
+            classes: node_hash[:inline_class]&.to_s,
           }
         end
 

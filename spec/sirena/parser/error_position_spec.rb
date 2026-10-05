@@ -36,7 +36,7 @@ RSpec.describe Sirena::Parser::Base do
     ],
     "requirement" => [
       Sirena::Parser::Requirement, "requirementDiagram\n  !!!!\n", 2
-    ]
+    ],
   }.each do |name, (klass, source, line)|
     it "reports the failing line for #{name}" do
       message = error_from(klass.new, source)
@@ -96,7 +96,7 @@ RSpec.describe Sirena::Parser::Base do
 
       expect(message).to eq(
         "Parse error at line 2, column 8:\nA[é]-->\n       ^\n" \
-        "Premature end of input"
+        "Premature end of input",
       )
     end
   end
@@ -111,7 +111,7 @@ RSpec.describe Sirena::Parser::Base do
 
       expect(message).to eq(
         "Parse error at line 3, column 7:\nxyzzy qux\n      ^\n" \
-        'Expected ";", but got "q"'
+        'Expected ";", but got "q"',
       )
     end
 
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Parser::Base do
                         'Expected "{", but got "q"'],
       "architecture" => [Sirena::Parser::Architecture,
                          "architecture-beta\ngroup a x\n",
-                         'Expected "\\n", but got "x"']
+                         'Expected "\\n", but got "x"'],
     }.each do |name, (klass, source, expected)|
       it "renders #{name}'s array message as parslet would" do
         message = error_from(klass.new, source)
@@ -149,7 +149,7 @@ RSpec.describe Sirena::Parser::Base do
 
       expect(message).to eq(
         "Parse error at line 4, column 1:\n(end of input)\n^\n" \
-        "Premature end of input"
+        "Premature end of input",
       )
     end
   end
@@ -163,7 +163,7 @@ RSpec.describe Sirena::Parser::Base do
     [
       Sirena::Parser::Flowchart,
       Sirena::Parser::Block,
-      Sirena::Parser::Requirement
+      Sirena::Parser::Requirement,
     ].each do |klass|
       it "reports rather than raising NameError for #{klass}" do
         parser = klass.new
@@ -174,7 +174,7 @@ RSpec.describe Sirena::Parser::Base do
         expect { parser.parse("!!!\n") }
           .to raise_error(
             Sirena::Parser::ParseError,
-            "Parse error: Premature end of input at line 1 char 1."
+            "Parse error: Premature end of input at line 1 char 1.",
           )
 
         # Asserted after the fact: a future edit that stops calling

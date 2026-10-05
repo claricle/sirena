@@ -64,7 +64,7 @@ module Sirena
           field = Diagram::PacketField.new(
             field_data[:bit_start],
             field_data[:bit_end],
-            field_data[:label]
+            field_data[:label],
           )
           diagram.add_field(field)
         end

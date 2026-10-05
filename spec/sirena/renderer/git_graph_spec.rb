@@ -26,7 +26,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
+              cherry_pick_parent: nil,
             },
             {
               id: "commit2",
@@ -40,11 +40,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
-            }
+              cherry_pick_parent: nil,
+            },
           ],
           branches: [
-            { name: "main", lane: 0, color: "#2563eb" }
+            { name: "main", lane: 0, color: "#2563eb" },
           ],
           connections: [
             {
@@ -56,11 +56,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               to_y: 60,
               from_branch: "main",
               to_branch: "main",
-              type: :normal
-            }
+              type: :normal,
+            },
           ],
           width: 240,
-          height: 120
+          height: 120,
         }
       end
 
@@ -110,7 +110,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
+              cherry_pick_parent: nil,
             },
             {
               id: "c2",
@@ -124,12 +124,12 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
-            }
+              cherry_pick_parent: nil,
+            },
           ],
           branches: [
             { name: "main", lane: 0, color: "#2563eb" },
-            { name: "develop", lane: 1, color: "#7c3aed" }
+            { name: "develop", lane: 1, color: "#7c3aed" },
           ],
           connections: [
             {
@@ -141,11 +141,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               to_y: 120,
               from_branch: "main",
               to_branch: "develop",
-              type: :normal
-            }
+              type: :normal,
+            },
           ],
           width: 240,
-          height: 180
+          height: 180,
         }
       end
 
@@ -181,7 +181,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
+              cherry_pick_parent: nil,
             },
             {
               id: "c2",
@@ -195,11 +195,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: true,
               merge_branch: "develop",
               is_cherry_pick: false,
-              cherry_pick_parent: nil
-            }
+              cherry_pick_parent: nil,
+            },
           ],
           branches: [
-            { name: "main", lane: 0, color: "#2563eb" }
+            { name: "main", lane: 0, color: "#2563eb" },
           ],
           connections: [
             {
@@ -211,11 +211,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               to_y: 60,
               from_branch: "main",
               to_branch: "main",
-              type: :merge
-            }
+              type: :merge,
+            },
           ],
           width: 240,
-          height: 120
+          height: 120,
         }
       end
 
@@ -243,15 +243,15 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
-            }
+              cherry_pick_parent: nil,
+            },
           ],
           branches: [
-            { name: "main", lane: 0, color: "#2563eb" }
+            { name: "main", lane: 0, color: "#2563eb" },
           ],
           connections: [],
           width: 160,
-          height: 120
+          height: 120,
         }
       end
 
@@ -279,7 +279,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
+              cherry_pick_parent: nil,
             },
             {
               id: "c2",
@@ -293,15 +293,15 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
-            }
+              cherry_pick_parent: nil,
+            },
           ],
           branches: [
-            { name: "main", lane: 0, color: "#2563eb" }
+            { name: "main", lane: 0, color: "#2563eb" },
           ],
           connections: [],
           width: 240,
-          height: 120
+          height: 120,
         }
       end
 
@@ -331,7 +331,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: false,
-              cherry_pick_parent: nil
+              cherry_pick_parent: nil,
             },
             {
               id: "c2",
@@ -345,12 +345,12 @@ RSpec.describe Sirena::Renderer::GitGraph do
               is_merge: false,
               merge_branch: nil,
               is_cherry_pick: true,
-              cherry_pick_parent: "c1"
-            }
+              cherry_pick_parent: "c1",
+            },
           ],
           branches: [
             { name: "main", lane: 0, color: "#2563eb" },
-            { name: "develop", lane: 1, color: "#7c3aed" }
+            { name: "develop", lane: 1, color: "#7c3aed" },
           ],
           connections: [
             {
@@ -362,11 +362,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
               to_y: 120,
               from_branch: "main",
               to_branch: "develop",
-              type: :cherry_pick
-            }
+              type: :cherry_pick,
+            },
           ],
           width: 240,
-          height: 180
+          height: 180,
         }
       end
 

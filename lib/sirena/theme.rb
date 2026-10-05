@@ -50,7 +50,7 @@ module Sirena
         typography: merge_attribute(typography, other_theme.typography),
         shapes: merge_attribute(shapes, other_theme.shapes),
         spacing: merge_attribute(spacing, other_theme.spacing),
-        effects: merge_attribute(effects, other_theme.effects)
+        effects: merge_attribute(effects, other_theme.effects),
       )
       merged
     end

@@ -23,7 +23,7 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -200,
               label_x: 0,
               label_y: -230,
-              index: 0
+              index: 0,
             },
             {
               id: "B",
@@ -34,7 +34,7 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -100,
               label_x: 199.2,
               label_y: -115,
-              index: 1
+              index: 1,
             },
             {
               id: "C",
@@ -45,8 +45,8 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -100,
               label_x: -199.2,
               label_y: -115,
-              index: 2
-            }
+              index: 2,
+            },
           ],
           curves: [
             {
@@ -55,16 +55,16 @@ RSpec.describe Sirena::Renderer::Radar do
               points: [
                 { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
                 { axis_id: "B", value: 70, normalized: 0.7, x: 121.24, y: -70, angle: Math::PI / 6 },
-                { axis_id: "C", value: 90, normalized: 0.9, x: -155.88, y: -90, angle: 5 * Math::PI / 6 }
-              ]
-            }
+                { axis_id: "C", value: 90, normalized: 0.9, x: -155.88, y: -90, angle: 5 * Math::PI / 6 },
+              ],
+            },
           ],
           grid_circles: [
             { radius: 40, value: 20, fraction: 0.2 },
             { radius: 80, value: 40, fraction: 0.4 },
             { radius: 120, value: 60, fraction: 0.6 },
             { radius: 160, value: 80, fraction: 0.8 },
-            { radius: 200, value: 100, fraction: 1.0 }
+            { radius: 200, value: 100, fraction: 1.0 },
           ],
           center_x: 280,
           center_y: 280,
@@ -72,7 +72,7 @@ RSpec.describe Sirena::Renderer::Radar do
           width: 560,
           height: 560,
           min_value: 0,
-          max_value: 100
+          max_value: 100,
         }
       end
 
@@ -127,7 +127,7 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -200,
               label_x: 0,
               label_y: -230,
-              index: 0
+              index: 0,
             },
             {
               id: "B",
@@ -138,8 +138,8 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -100,
               label_x: 199.2,
               label_y: -115,
-              index: 1
-            }
+              index: 1,
+            },
           ],
           curves: [
             {
@@ -147,24 +147,24 @@ RSpec.describe Sirena::Renderer::Radar do
               label: "Team A",
               points: [
                 { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
-                { axis_id: "B", value: 70, normalized: 0.7, x: 121.24, y: -70, angle: Math::PI / 6 }
-              ]
+                { axis_id: "B", value: 70, normalized: 0.7, x: 121.24, y: -70, angle: Math::PI / 6 },
+              ],
             },
             {
               id: "team2",
               label: "Team B",
               points: [
                 { axis_id: "A", value: 60, normalized: 0.6, x: 0, y: -120, angle: -Math::PI / 2 },
-                { axis_id: "B", value: 90, normalized: 0.9, x: 155.88, y: -90, angle: Math::PI / 6 }
-              ]
-            }
+                { axis_id: "B", value: 90, normalized: 0.9, x: 155.88, y: -90, angle: Math::PI / 6 },
+              ],
+            },
           ],
           grid_circles: [
             { radius: 40, value: 20, fraction: 0.2 },
             { radius: 80, value: 40, fraction: 0.4 },
             { radius: 120, value: 60, fraction: 0.6 },
             { radius: 160, value: 80, fraction: 0.8 },
-            { radius: 200, value: 100, fraction: 1.0 }
+            { radius: 200, value: 100, fraction: 1.0 },
           ],
           center_x: 280,
           center_y: 280,
@@ -172,7 +172,7 @@ RSpec.describe Sirena::Renderer::Radar do
           width: 560,
           height: 560,
           min_value: 0,
-          max_value: 100
+          max_value: 100,
         }
       end
 
@@ -211,7 +211,7 @@ RSpec.describe Sirena::Renderer::Radar do
           width: 160,
           height: 160,
           min_value: 0,
-          max_value: 0
+          max_value: 0,
         }
       end
 
@@ -238,20 +238,20 @@ RSpec.describe Sirena::Renderer::Radar do
               end_y: -200,
               label_x: 0,
               label_y: -230,
-              index: 0
-            }
+              index: 0,
+            },
           ],
           curves: [
             {
               id: "curve1",
               label: "Dataset 1",
               points: [
-                { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 }
-              ]
-            }
+                { axis_id: "A", value: 80, normalized: 0.8, x: 0, y: -160, angle: -Math::PI / 2 },
+              ],
+            },
           ],
           grid_circles: [
-            { radius: 200, value: 100, fraction: 1.0 }
+            { radius: 200, value: 100, fraction: 1.0 },
           ],
           center_x: 280,
           center_y: 280,
@@ -260,7 +260,7 @@ RSpec.describe Sirena::Renderer::Radar do
           height: 560,
           min_value: 0,
           max_value: 100,
-          options: { show_legend: false }
+          options: { show_legend: false },
         }
       end
 

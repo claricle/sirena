@@ -42,7 +42,7 @@ RSpec.describe 'CI workflows' do # rubocop:disable RSpec/DescribeClass
       'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' => false,
       'actions/checkout@11D5960A326750D5838078E36CF38B85AF677262' => true,
       './.github/workflows/links.yml' => false,
-      'metanorma/ci/.github/workflows/x.yml@main' => true
+      'metanorma/ci/.github/workflows/x.yml@main' => true,
     }.each do |ref, rejected|
       it "#{rejected ? 'rejects' : 'accepts'} #{ref}" do
         expect(described_class.unpinned(workflow_with(ref))).to eq(rejected ? [ref] : [])

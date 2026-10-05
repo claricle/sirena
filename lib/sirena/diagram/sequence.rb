@@ -210,7 +210,7 @@ module Sirena
         # Validate activation references
         activations&.each do |activation|
           return false unless participant_ids.include?(
-            activation.participant_id
+            activation.participant_id,
           )
         end
 

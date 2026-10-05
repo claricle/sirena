@@ -172,7 +172,7 @@ module Sirena
           "#{cx},#{y}",
           "#{x + width},#{cy}",
           "#{cx},#{y + height}",
-          "#{x},#{cy}"
+          "#{x},#{cy}",
         ].join(' ')
 
         Svg::Polygon.new.tap do |polygon|

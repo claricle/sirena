@@ -53,7 +53,7 @@ module Sirena
         [svg_name(:fill_opacity), :painted_fill_opacity],
         [svg_name(:stroke), :stroke],
         [svg_name(:stroke_width), :stroke_width],
-        [svg_name(:stroke_opacity), :painted_stroke_opacity]
+        [svg_name(:stroke_opacity), :painted_stroke_opacity],
       ].map(&:freeze).freeze
       private_constant :BASE_PAIRS
 

@@ -58,7 +58,7 @@ module Sirena
               icon: nil,
               classes: [],
               children: [],
-              _indent_size: indent_size  # Store for later adjustment
+              _indent_size: indent_size,  # Store for later adjustment
             }
 
             @all_nodes << node
@@ -269,7 +269,7 @@ module Sirena
 
           {
             root: builder.root,
-            nodes: builder.all_nodes
+            nodes: builder.all_nodes,
           }
         end
       end

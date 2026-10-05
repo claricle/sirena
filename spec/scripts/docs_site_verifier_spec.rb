@@ -132,7 +132,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.rm_rf(File.join(site_dir, 'diagram_types'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html'
+        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html',
       )
     end
   end
@@ -144,7 +144,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.rm_rf(File.join(site_dir, '_diagram_types'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html'
+        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html',
       )
     end
   end
@@ -173,7 +173,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
         'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
           'diagram_types/examples/flowchart-examples/index.html',
         'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
-          '_diagram_types/examples/flowchart-examples/index.html'
+          '_diagram_types/examples/flowchart-examples/index.html',
       )
     end
   end
@@ -190,7 +190,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'manifest: _diagram_types/index.adoc missing at diagram_types/index/index.html',
-        'manifest: _diagram_types/index.adoc missing at _diagram_types/index.html'
+        'manifest: _diagram_types/index.adoc missing at _diagram_types/index.html',
       )
     end
   end
@@ -210,7 +210,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'manifest: _diagram_types/examples/index.adoc missing at diagram_types/examples/index/index.html',
-        'manifest: _diagram_types/examples/index.adoc missing at _diagram_types/examples/index.html'
+        'manifest: _diagram_types/examples/index.adoc missing at _diagram_types/examples/index.html',
       )
     end
   end
@@ -223,7 +223,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(layout_marker: 'main-content-wrapX'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"'
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
       )
     end
   end
@@ -241,7 +241,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_asset(site_dir, "assets/js/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}.js")
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        "layout: diagram_types/mindmap/index.html links no stylesheet naming theme #{DOCS_SITE_VERIFIER_DEFAULT_THEME.inspect}"
+        "layout: diagram_types/mindmap/index.html links no stylesheet naming theme #{DOCS_SITE_VERIFIER_DEFAULT_THEME.inspect}",
       )
     end
   end
@@ -254,7 +254,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "pico"',
-        'layout: _diagram_types/mindmap/index.html links no stylesheet naming theme "pico"'
+        'layout: _diagram_types/mindmap/index.html links no stylesheet naming theme "pico"',
       )
     end
   end
@@ -267,7 +267,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'pages/comparison/index.html', page_html(stylesheet: false))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'layout: pages/comparison/index.html links no stylesheet naming theme "just-the-docs"'
+        'layout: pages/comparison/index.html links no stylesheet naming theme "just-the-docs"',
       )
     end
   end
@@ -288,7 +288,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.mkdir_p(File.join(site_dir, 'diagram_types/mindmap/index.html'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html'
+        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html',
       )
     end
   end
@@ -300,7 +300,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.mkdir_p(File.join(site_dir, '_diagram_types/mindmap/index.html'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html'
+        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html',
       )
     end
   end
@@ -346,7 +346,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'pages/comparison/index.html', page_html(layout_marker: 'main-content-wrapX'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'layout: pages/comparison/index.html missing layout marker "main-content-wrap"'
+        'layout: pages/comparison/index.html missing layout marker "main-content-wrap"',
       )
     end
   end
@@ -358,7 +358,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -407,7 +407,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'table'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -428,7 +428,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'content: diagram_types/image-only/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/image-only/index.html has no recognized Asciidoctor block marker'
+        'content: _diagram_types/image-only/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -526,7 +526,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
         'content: diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
         'content: _diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
         'content: diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap'
+        'content: _diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap',
       )
     end
   end
@@ -562,7 +562,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -591,7 +591,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/only-here.js (referenced by pages/zzz-last/index.html) " \
-          'does not resolve to /assets/js/only-here.js'
+          'does not resolve to /assets/js/only-here.js',
       )
     end
   end
@@ -616,7 +616,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       # 'pages/...' under Dir.glob's default sorted order.
       expect(failures.first).to eq(
         "asset: #{missing_script} (referenced by _diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/js/shared-missing.js'
+          'does not resolve to /assets/js/shared-missing.js',
       )
     end
   end
@@ -647,7 +647,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css (referenced by diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/css/missing.css'
+          'does not resolve to /assets/css/missing.css',
       )
     end
   end
@@ -664,7 +664,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js (referenced by diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/js/missing.js'
+          'does not resolve to /assets/js/missing.js',
       )
     end
   end
@@ -745,7 +745,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.rm(File.join(site_dir, 'assets/js/search-data.json'))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'asset: search index "assets/js/search-data.json" missing'
+        'asset: search index "assets/js/search-data.json" missing',
       )
 
       docs_dir2, site_dir2 = build_valid_site(File.join(tmp, 'no-search'), config_overrides: { 'search_enabled' => false })
@@ -763,7 +763,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       )
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: collections.diagram_types.permalink is "/:path/", expected "/:collection/:path/"'
+        'config: collections.diagram_types.permalink is "/:path/", expected "/:collection/:path/"',
       )
     end
   end
@@ -774,7 +774,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => '' })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: theme is absent or empty'
+        'config: theme is absent or empty',
       )
     end
   end
@@ -788,7 +788,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => nil })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: theme is absent or empty'
+        'config: theme is absent or empty',
       )
     end
   end
@@ -814,7 +814,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"'
+        'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
       )
     end
   end
@@ -831,7 +831,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"'
+        'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
       )
     end
   end
@@ -852,7 +852,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
         'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
         'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
         'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
       )
     end
   end
@@ -869,7 +869,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
       )
     end
   end
@@ -886,7 +886,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # green against the reverted file, which is how it was caught.
   {
     'an attribute value' => '<div data-x="</template>"></div>',
-    'a script string' => '<script>var s = "</template>";</script>'
+    'a script string' => '<script>var s = "</template>";</script>',
   }.each do |placement, trap|
     it "does not read template content as live when #{placement} holds a closing tag" do
       Dir.mktmpdir do |tmp|
@@ -901,7 +901,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
           'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
           'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
           'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-          'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+          'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
         )
       end
     end
@@ -923,7 +923,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
         'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
         'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
         'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap'
+        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
       )
     end
   end
@@ -942,7 +942,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         'asset: /assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
-          'does not begin with baseurl "/sirena"'
+          'does not begin with baseurl "/sirena"',
       )
     end
   end
@@ -960,7 +960,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         'asset: /sirenax/assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
-          'does not begin with baseurl "/sirena"'
+          'does not begin with baseurl "/sirena"',
       )
     end
   end
@@ -1024,7 +1024,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -1042,7 +1042,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        "asset: #{missing} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/js/missing.js"
+        "asset: #{missing} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/js/missing.js",
       )
     end
   end
@@ -1061,7 +1061,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/css/phantom.css"
+        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /assets/css/phantom.css",
       )
     end
   end
@@ -1080,7 +1080,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /../outside.css"
+        "asset: #{href} (referenced by _diagram_types/mindmap/index.html) does not resolve to /../outside.css",
       )
     end
   end
@@ -1140,7 +1140,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -1170,7 +1170,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end
@@ -1189,7 +1189,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       FileUtils.mkdir_p(search_index)
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'asset: search index "assets/js/search-data.json" missing'
+        'asset: search index "assets/js/search-data.json" missing',
       )
     end
   end
@@ -1243,7 +1243,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
       # would contradict the fix this spec exists to pin.
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'content: diagram_types/mindmap/index.html renders no text in main',
-        'content: _diagram_types/mindmap/index.html renders no text in main'
+        'content: _diagram_types/mindmap/index.html renders no text in main',
       )
     end
   end
@@ -1268,7 +1268,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        'config: collections.diagram_types.permalink is nil, expected "/:collection/:path/"'
+        'config: collections.diagram_types.permalink is nil, expected "/:collection/:path/"',
       )
     end
   end
@@ -1291,7 +1291,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body(
-        %(<script>const marker = "<!--";</script><div class="paragraph"><p>hi</p></div><!-- trailing comment -->)
+        %(<script>const marker = "<!--";</script><div class="paragraph"><p>hi</p></div><!-- trailing comment -->),
       )
       write_page(site_dir, 'diagram_types/mindmap/index.html', html)
       write_page(site_dir, '_diagram_types/mindmap/index.html', html)
@@ -1317,7 +1317,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker'
+        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
       )
     end
   end

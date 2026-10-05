@@ -15,7 +15,7 @@ RSpec.describe 'SVG classes with no lutaml xml mapping' do # rubocop:disable RSp
     [Sirena::Svg::Text, '<text/>'],
     [Sirena::Svg::Tspan, '<tspan/>'],
     [Sirena::Svg::Group, '<g/>'],
-    [Sirena::Svg::Document, '<svg/>']
+    [Sirena::Svg::Document, '<svg/>'],
   ].each do |klass, xml|
     it "refuses .from_xml on #{klass.name.split('::').last}, having no xml mapping left to parse with" do
       expect { klass.from_xml(xml) }.to raise_error(Lutaml::Model::TypeOnlyMappingError)

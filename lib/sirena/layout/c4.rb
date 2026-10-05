@@ -52,8 +52,8 @@ module Sirena
             level: diagram.level,
             title: diagram.title,
             element_count: diagram.elements.length,
-            relationship_count: diagram.relationships.length
-          }
+            relationship_count: diagram.relationships.length,
+          },
         }
       end
 
@@ -105,8 +105,8 @@ module Sirena
               width: measure_text(boundary.label,
                                   font_size: DEFAULT_FONT_SIZE + 2)[:width],
               height: measure_text(boundary.label,
-                                   font_size: DEFAULT_FONT_SIZE + 2)[:height]
-            }
+                                   font_size: DEFAULT_FONT_SIZE + 2)[:height],
+            },
           ],
           children: children,
           layoutOptions: boundary_layout_options,
@@ -114,8 +114,8 @@ module Sirena
             boundary_type: boundary.boundary_type,
             type_param: boundary.type_param,
             link: boundary.link,
-            tags: boundary.tags
-          }
+            tags: boundary.tags,
+          },
         }
       end
 
@@ -130,7 +130,7 @@ module Sirena
         labels << {
           text: element.label,
           width: label_dims[:width],
-          height: label_dims[:height]
+          height: label_dims[:height],
         }
 
         # Description (if present)
@@ -140,7 +140,7 @@ module Sirena
           labels << {
             text: element.description,
             width: desc_dims[:width],
-            height: desc_dims[:height]
+            height: desc_dims[:height],
           }
         end
 
@@ -151,7 +151,7 @@ module Sirena
           labels << {
             text: "[#{element.technology}]",
             width: tech_dims[:width],
-            height: tech_dims[:height]
+            height: tech_dims[:height],
           }
         end
 
@@ -170,8 +170,8 @@ module Sirena
             person: element.person?,
             system: element.system?,
             container: element.container?,
-            component: element.component?
-          }
+            component: element.component?,
+          },
         }
       end
 
@@ -186,7 +186,7 @@ module Sirena
             labels << {
               text: rel.label,
               width: label_dims[:width],
-              height: label_dims[:height]
+              height: label_dims[:height],
             }
           end
 
@@ -196,7 +196,7 @@ module Sirena
             labels << {
               text: "[#{rel.technology}]",
               width: tech_dims[:width],
-              height: tech_dims[:height]
+              height: tech_dims[:height],
             }
           end
 
@@ -207,8 +207,8 @@ module Sirena
             labels: labels,
             metadata: {
               rel_type: rel.rel_type,
-              bidirectional: rel.bidirectional?
-            }
+              bidirectional: rel.bidirectional?,
+            },
           }
         end
       end
@@ -266,7 +266,7 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 25,
           ElkOptions::EDGE_EDGE_SPACING => 20,
           ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
-          ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX'
+          ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
         )
       end
 
@@ -277,7 +277,7 @@ module Sirena
           'elk.box.packingMode' => 'GROUP_MIXED',
           'elk.padding' => "[top=#{BOUNDARY_PADDING},left=#{BOUNDARY_PADDING}," \
                           "bottom=#{BOUNDARY_PADDING},right=#{BOUNDARY_PADDING}]",
-          'elk.spacing.nodeNode' => ELEMENT_SPACING.to_s
+          'elk.spacing.nodeNode' => ELEMENT_SPACING.to_s,
         }
       end
     end

@@ -37,7 +37,7 @@ module Sirena
           id: diagram.id || 'flowchart',
           children: transform_children(diagram),
           edges: transform_edges(diagram),
-          layoutOptions: layout_options(diagram)
+          layoutOptions: layout_options(diagram),
         }
       end
 
@@ -107,9 +107,9 @@ module Sirena
           height: 0,
           children: [],
           labels: [
-            { text: box.title, width: label[:width], height: label[:height] }
+            { text: box.title, width: label[:width], height: label[:height] },
           ],
-          metadata: { cluster: true }
+          metadata: { cluster: true },
         }
       end
 
@@ -124,13 +124,13 @@ module Sirena
             {
               text: node.label,
               width: dims[:label_width],
-              height: dims[:label_height]
-            }
+              height: dims[:label_height],
+            },
           ],
           metadata: {
             shape: node.shape,
-            classes: node.classes
-          }
+            classes: node.classes,
+          },
         }
       end
 
@@ -144,8 +144,8 @@ module Sirena
             targets: [edge.target_id],
             labels: edge_labels(edge),
             metadata: {
-              arrow_type: edge.arrow_type
-            }
+              arrow_type: edge.arrow_type,
+            },
           }
         end
       end
@@ -159,28 +159,28 @@ module Sirena
           {
             text: edge.label,
             width: label_dims[:width],
-            height: label_dims[:height]
-          }
+            height: label_dims[:height],
+          },
         ]
       end
 
       def calculate_dimensions(node)
         label_dims = measure_text(
           node.label,
-          font_size: layout_font_size
+          font_size: layout_font_size,
         )
 
         node_dims = calculate_node_dimensions(
           label_dims[:width],
           label_dims[:height],
-          shape_to_type(node.shape)
+          shape_to_type(node.shape),
         )
 
         {
           width: node_dims[:width],
           height: node_dims[:height],
           label_width: label_dims[:width],
-          label_height: label_dims[:height]
+          label_height: label_dims[:height],
         }
       end
 
@@ -246,7 +246,7 @@ module Sirena
           ElkOptions::EDGE_EDGE_SPACING => 20,
           # SIMPLE node placement for predictable, straightforward layouts
           # This is ideal for flowcharts where clarity is paramount
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE'
+          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
         )
       end
 

@@ -46,8 +46,8 @@ module Sirena
           layoutOptions: layout_options,
           metadata: {
             title: diagram.title,
-            sections: diagram.sections.map(&:name)
-          }
+            sections: diagram.sections.map(&:name),
+          },
         }
       end
 
@@ -72,8 +72,8 @@ module Sirena
                 score_color: task.score_color,
                 actors: task.actors,
                 section_name: section.name,
-                section_index: section_idx
-              }
+                section_index: section_idx,
+              },
             }
 
             task_id += 1
@@ -97,8 +97,8 @@ module Sirena
             sources: ["task_#{task_id}"],
             targets: ["task_#{task_id + 1}"],
             metadata: {
-              type: 'sequence'
-            }
+              type: 'sequence',
+            },
           }
 
           task_id += 1
@@ -114,7 +114,7 @@ module Sirena
         # Check task name width
         name_width = measure_text(
           task.name,
-          font_size: DEFAULT_FONT_SIZE + 2
+          font_size: DEFAULT_FONT_SIZE + 2,
         )[:width]
         max_width = [max_width, name_width].max
 
@@ -122,7 +122,7 @@ module Sirena
         actors_text = task.actors.join(', ')
         actors_width = measure_text(
           actors_text,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: DEFAULT_FONT_SIZE,
         )[:width]
         max_width = [max_width, actors_width].max
 
@@ -131,7 +131,7 @@ module Sirena
 
         {
           width: total_width,
-          height: TASK_HEIGHT
+          height: TASK_HEIGHT,
         }
       end
 
@@ -141,42 +141,42 @@ module Sirena
         # Task name label
         name_dims = measure_text(
           task.name,
-          font_size: DEFAULT_FONT_SIZE + 2
+          font_size: DEFAULT_FONT_SIZE + 2,
         )
 
         labels << {
           text: task.name,
           width: name_dims[:width],
           height: name_dims[:height],
-          position: :top
+          position: :top,
         }
 
         # Score label
         score_text = task.score.to_s
         score_dims = measure_text(
           score_text,
-          font_size: DEFAULT_FONT_SIZE + 4
+          font_size: DEFAULT_FONT_SIZE + 4,
         )
 
         labels << {
           text: score_text,
           width: score_dims[:width],
           height: score_dims[:height],
-          position: :center
+          position: :center,
         }
 
         # Actors label
         actors_text = task.actors.join(', ')
         actors_dims = measure_text(
           actors_text,
-          font_size: DEFAULT_FONT_SIZE - 2
+          font_size: DEFAULT_FONT_SIZE - 2,
         )
 
         labels << {
           text: actors_text,
           width: actors_dims[:width],
           height: actors_dims[:height],
-          position: :bottom
+          position: :bottom,
         }
 
         labels
@@ -196,7 +196,7 @@ module Sirena
           # SIMPLE node placement for chronological task ordering
           ElkOptions::NODE_PLACEMENT => 'SIMPLE',
           ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN'
+          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
         )
       end
     end

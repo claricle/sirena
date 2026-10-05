@@ -34,7 +34,7 @@ module Sirena
         "#5B9BD5", # Light Blue
         "#70AD47", # Green
         "#C00000", # Red
-        "#7030A0"  # Purple
+        "#7030A0", # Purple
       ].freeze
 
       # Renders a Sankey diagram to SVG.
@@ -211,7 +211,7 @@ module Sirena
           "C #{cp1_x} #{top_y1}, #{cp2_x} #{top_y2}, #{x2} #{top_y2}",
           "L #{x2} #{bottom_y2}",
           "C #{cp2_x} #{bottom_y2}, #{cp1_x} #{bottom_y1}, #{x1} #{bottom_y1}",
-          "Z"
+          "Z",
         ]
 
         path_commands.join(" ")

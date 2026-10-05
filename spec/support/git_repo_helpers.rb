@@ -13,7 +13,7 @@ module GitRepoHelpers
   NO_AUTO_MAINTENANCE = {
     "GIT_CONFIG_COUNT" => "1",
     "GIT_CONFIG_KEY_0" => "maintenance.auto",
-    "GIT_CONFIG_VALUE_0" => "false"
+    "GIT_CONFIG_VALUE_0" => "false",
   }.freeze
 
   def sh(dir, *cmd)

@@ -112,7 +112,7 @@ RSpec.describe Sirena::Parser::Flowchart do
           "subgraph a\nsubgraph b\nZ\nend\nend\n",
         "nested, top" =>
           "flowchart TD\nsubgraph a\nsubgraph b\nX\nend\nend\n" \
-          "subgraph b\nY\nend\n"
+          "subgraph b\nY\nend\n",
       }.each do |order, source|
         held = boxes(source)
 

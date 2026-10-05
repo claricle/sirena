@@ -14,13 +14,13 @@ module Sirena
         # Shape delimiter to type mapping
         SHAPE_MAP = {
           '[]' => 'rect',
-          '(())' => 'circle'
+          '(())' => 'circle',
         }.freeze
 
         # Arrow type mapping
         ARROW_MAP = {
           '-->' => 'arrow',
-          '---' => 'line'
+          '---' => 'line',
         }.freeze
 
         # Block ID
@@ -38,13 +38,13 @@ module Sirena
           block_shape: {
             open: simple(:o),
             label: simple(:l),
-            close: simple(:c)
-          }
+            close: simple(:c),
+          },
         ) do
           delims = "#{o}#{c}"
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
-            label: l.to_s.strip
+            label: l.to_s.strip,
           }
         end
 
@@ -53,13 +53,13 @@ module Sirena
           block_shape: {
             open: simple(:o),
             label: sequence(:_),
-            close: simple(:c)
-          }
+            close: simple(:c),
+          },
         ) do
           delims = "#{o}#{c}"
           {
             shape_type: SHAPE_MAP[delims] || 'rect',
-            label: ''
+            label: '',
           }
         end
 

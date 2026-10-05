@@ -26,17 +26,17 @@ RSpec.describe Sirena::Renderer::C4 do
               person: true,
               system: false,
               container: false,
-              component: false
-            }
-          }
+              component: false,
+            },
+          },
         ],
         edges: [],
         metadata: {
           level: "Context",
           title: "System Context",
           element_count: 1,
-          relationship_count: 0
-        }
+          relationship_count: 0,
+        },
       }
 
       svg = renderer.render(graph)
@@ -58,7 +58,7 @@ RSpec.describe Sirena::Renderer::C4 do
             height: 180,
             labels: [
               { text: "User", width: 30, height: 14 },
-              { text: "A system user", width: 80, height: 12 }
+              { text: "A system user", width: 80, height: 12 },
             ],
             metadata: {
               element_type: "Person",
@@ -67,12 +67,12 @@ RSpec.describe Sirena::Renderer::C4 do
               person: true,
               system: false,
               container: false,
-              component: false
-            }
-          }
+              component: false,
+            },
+          },
         ],
         edges: [],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -102,12 +102,12 @@ RSpec.describe Sirena::Renderer::C4 do
               person: true,
               system: false,
               container: false,
-              component: false
-            }
-          }
+              component: false,
+            },
+          },
         ],
         edges: [],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Renderer::C4 do
             height: 120,
             labels: [
               { text: "Banking System", width: 100, height: 14 },
-              { text: "Main banking app", width: 100, height: 12 }
+              { text: "Main banking app", width: 100, height: 12 },
             ],
             metadata: {
               element_type: "System",
@@ -138,12 +138,12 @@ RSpec.describe Sirena::Renderer::C4 do
               person: false,
               system: true,
               container: false,
-              component: false
-            }
-          }
+              component: false,
+            },
+          },
         ],
         edges: [],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -164,7 +164,7 @@ RSpec.describe Sirena::Renderer::C4 do
             width: 140,
             height: 180,
             labels: [{ text: "User", width: 30, height: 14 }],
-            metadata: { element_type: "Person", person: true }
+            metadata: { element_type: "Person", person: true },
           },
           {
             id: "system",
@@ -173,8 +173,8 @@ RSpec.describe Sirena::Renderer::C4 do
             width: 160,
             height: 120,
             labels: [{ text: "System", width: 50, height: 14 }],
-            metadata: { element_type: "System", system: true }
-          }
+            metadata: { element_type: "System", system: true },
+          },
         ],
         edges: [
           {
@@ -182,10 +182,10 @@ RSpec.describe Sirena::Renderer::C4 do
             sources: ["user"],
             targets: ["system"],
             labels: [{ text: "Uses", width: 30, height: 12 }],
-            metadata: { rel_type: "Rel", bidirectional: false }
-          }
+            metadata: { rel_type: "Rel", bidirectional: false },
+          },
         ],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -206,7 +206,7 @@ RSpec.describe Sirena::Renderer::C4 do
             width: 160,
             height: 120,
             labels: [{ text: "System 1", width: 60, height: 14 }],
-            metadata: { element_type: "System", system: true }
+            metadata: { element_type: "System", system: true },
           },
           {
             id: "sys2",
@@ -215,8 +215,8 @@ RSpec.describe Sirena::Renderer::C4 do
             width: 160,
             height: 120,
             labels: [{ text: "System 2", width: 60, height: 14 }],
-            metadata: { element_type: "System", system: true }
-          }
+            metadata: { element_type: "System", system: true },
+          },
         ],
         edges: [
           {
@@ -225,12 +225,12 @@ RSpec.describe Sirena::Renderer::C4 do
             targets: ["sys2"],
             labels: [
               { text: "Syncs", width: 40, height: 12 },
-              { text: "[HTTPS]", width: 50, height: 10 }
+              { text: "[HTTPS]", width: 50, height: 10 },
             ],
-            metadata: { rel_type: "BiRel", bidirectional: true }
-          }
+            metadata: { rel_type: "BiRel", bidirectional: true },
+          },
         ],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -255,7 +255,7 @@ RSpec.describe Sirena::Renderer::C4 do
               boundary_type: "Enterprise_Boundary",
               type_param: nil,
               link: nil,
-              tags: nil
+              tags: nil,
             },
             children: [
               {
@@ -265,13 +265,13 @@ RSpec.describe Sirena::Renderer::C4 do
                 width: 160,
                 height: 120,
                 labels: [{ text: "Internal System", width: 100, height: 14 }],
-                metadata: { element_type: "System", system: true }
-              }
-            ]
-          }
+                metadata: { element_type: "System", system: true },
+              },
+            ],
+          },
         ],
         edges: [],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)
@@ -294,11 +294,11 @@ RSpec.describe Sirena::Renderer::C4 do
             width: 200,
             height: 150,
             labels: [],
-            metadata: { element_type: "System", system: true }
-          }
+            metadata: { element_type: "System", system: true },
+          },
         ],
         edges: [],
-        metadata: { level: "Context" }
+        metadata: { level: "Context" },
       }
 
       svg = renderer.render(graph)

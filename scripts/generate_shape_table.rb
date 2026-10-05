@@ -55,7 +55,7 @@ CLASSIC = {
   'parallelogram' => %(D[/"#{LABEL}"/]),
   'parallelogram_alt' => %(D[\\"#{LABEL}"\\]),
   'trapezoid' => %(D[/"#{LABEL}"\\]),
-  'trapezoid_alt' => %(D[\\"#{LABEL}"/])
+  'trapezoid_alt' => %(D[\\"#{LABEL}"/]),
 }.freeze
 
 # What mermaid draws for one diagram line, as a fingerprint of the node's

@@ -73,7 +73,7 @@ module Sirena
           dataset = Diagram::XYDataset.new(
             "dataset_#{idx}",
             dataset_data[:label],
-            dataset_data[:chart_type]
+            dataset_data[:chart_type],
           )
           dataset.values = dataset_data[:values]
           diagram.add_dataset(dataset)

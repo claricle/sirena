@@ -42,7 +42,7 @@ module Sirena
           height: height,
           title: diagram.title,
           cells: cells,
-          class_defs: diagram.class_defs
+          class_defs: diagram.class_defs,
         }
       end
 
@@ -65,7 +65,7 @@ module Sirena
           height: height,
           css_class: node.css_class,
           depth: node.depth,
-          children: []
+          children: [],
         }
 
         # If this node has children, layout them recursively
@@ -113,7 +113,7 @@ module Sirena
           height: 400,
           title: diagram.title,
           cells: [],
-          class_defs: diagram.class_defs
+          class_defs: diagram.class_defs,
         }
       end
     end

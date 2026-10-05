@@ -89,7 +89,7 @@ RSpec.describe 'UserJourney Integration' do
         journey
         title Adding journey diagram functionality to mermaid
       MERMAID
-      '014/015/024/025: journey with nothing else' => "journey\n"
+      '014/015/024/025: journey with nothing else' => "journey\n",
     }.each do |description, source|
       it "renders #{description}" do
         svg = Sirena::Engine.new.render(source)

@@ -64,7 +64,7 @@ module Sirena
         result[:axes].each do |axis_data|
           axis = Diagram::RadarAxis.new(
             axis_data[:id],
-            axis_data[:label]
+            axis_data[:label],
           )
           diagram.axes << axis
         end
@@ -73,7 +73,7 @@ module Sirena
         result[:curves].each do |curve_data|
           curve = Diagram::RadarCurve.new(
             curve_data[:id],
-            curve_data[:label]
+            curve_data[:label],
           )
 
           # Add values - handle both positional and named formats

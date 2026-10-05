@@ -45,7 +45,7 @@ module Sirena
           x_axis_layout,
           y_axis_layout,
           plot_width,
-          plot_height
+          plot_height,
         )
 
         {
@@ -58,7 +58,7 @@ module Sirena
           x_axis: x_axis_layout,
           y_axis: y_axis_layout,
           datasets: datasets_layout,
-          title: diagram.title
+          title: diagram.title,
         }
       end
 
@@ -96,7 +96,7 @@ module Sirena
           {
             label: label,
             position: idx * spacing + spacing / 2,
-            index: idx
+            index: idx,
           }
         end
 
@@ -106,7 +106,7 @@ module Sirena
           positions: positions,
           min: 0,
           max: num_categories - 1,
-          width: width
+          width: width,
         }
       end
 
@@ -124,7 +124,7 @@ module Sirena
           min: min,
           max: max,
           width: width,
-          scale: width / (max - min).to_f
+          scale: width / (max - min).to_f,
         }
       end
 
@@ -139,7 +139,7 @@ module Sirena
           min: 0,
           max: 10,
           width: width,
-          scale: width / 10.0
+          scale: width / 10.0,
         }
       end
 
@@ -159,7 +159,7 @@ module Sirena
           min: min,
           max: max,
           height: height,
-          scale: height / (max - min).to_f
+          scale: height / (max - min).to_f,
         }
       end
 
@@ -173,7 +173,7 @@ module Sirena
           min: 0,
           max: 100,
           height: height,
-          scale: height / 100.0
+          scale: height / 100.0,
         }
       end
 
@@ -192,14 +192,14 @@ module Sirena
             x_axis,
             y_axis,
             width,
-            height
+            height,
           )
 
           {
             id: dataset.id,
             label: dataset.label,
             chart_type: dataset.chart_type,
-            points: points
+            points: points,
           }
         end
       end
@@ -221,7 +221,7 @@ module Sirena
             x: x,
             y: y,
             value: y_value,
-            index: idx
+            index: idx,
           }
         end
       end

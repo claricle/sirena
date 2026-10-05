@@ -57,7 +57,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "no space before the closing brace" => "D@{ shape: rounded}",
       "space after the value" => "D@{ shape: rounded }",
       "generous spacing" => "D@{       shape: rounded         }",
-      "space before the colon" => "D@{ shape : rounded }"
+      "space before the colon" => "D@{ shape : rounded }",
     }.each do |label, statement|
       it "accepts #{label}" do
         expect(node_for("graph TD\n#{statement}\n").shape).to eq("rounded")
@@ -378,7 +378,7 @@ RSpec.describe Sirena::Parser::Flowchart do
         "an object tag" => "graph TD\nA@{\n  shape: rounded\n  " \
                            "label: !ruby/object:Gem::Requirement\n    " \
                            "requirements:\n    - x\n}\n",
-        "a symbol tag" => "graph TD\nA@{ label: !ruby/symbol boom }\n"
+        "a symbol tag" => "graph TD\nA@{ label: !ruby/symbol boom }\n",
       }.each do |label, source|
         it "refuses #{label}" do
           expect { node_for(source) }
@@ -439,7 +439,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     describe "the value schema" do
       {
         "a date" => ["graph TD\nA@{ label: 2024-01-01 }\n", "2024-01-01"],
-        "a quoted zero" => ["graph TD\nA@{ label: \"0\" }\n", "0"]
+        "a quoted zero" => ["graph TD\nA@{ label: \"0\" }\n", "0"],
       }.each do |label, (source, expected)|
         it "reads #{label} as a string" do
           expect(node_for(source).label).to eq(expected)
@@ -586,7 +586,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "a sequence shape" => "A@{ shape: [rounded, rect] }",
       "a nested sequence label" => "A@{ label: [[x, y], z] }",
-      "an empty sequence label" => "A@{ label: [] }"
+      "an empty sequence label" => "A@{ label: [] }",
     }.each do |label, statement|
       it "refuses #{label}, as mermaid does" do
         expect { node_for("graph TD\n#{statement}\n") }

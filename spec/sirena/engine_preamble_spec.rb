@@ -32,7 +32,7 @@ RSpec.describe Sirena::Engine do
 
     it "detects the type behind a %%{init}%% directive" do
       xml = engine.render(
-        %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n)
+        %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n),
       )
 
       expect(xml).to include("<svg")
@@ -205,7 +205,7 @@ RSpec.describe Sirena::Engine do
     let(:empty_preamble_forms) do
       {
         "%%\n" => "an empty comment",
-        "%%{}%%\n" => "a directive with no header"
+        "%%{}%%\n" => "a directive with no header",
       }
     end
 
@@ -217,14 +217,14 @@ RSpec.describe Sirena::Engine do
       timeline: "timeline\n  2024 : Event\n",
       block: "block-beta\n  A\n",
       sankey: "sankey-beta\nA,B,1\n",
-      requirement: "requirementDiagram\n"
+      requirement: "requirementDiagram\n",
     }.each do |type, body|
       it "refuses both empty preamble forms for #{type}" do
         empty_preamble_forms.each do |preamble, reason|
           expect { engine.render("#{preamble}#{body}") }
             .to raise_error(
               described_class::PipelineError,
-              /\AA #{type} diagram does not accept #{reason}\./
+              /\AA #{type} diagram does not accept #{reason}\./,
             )
         end
       end
@@ -236,7 +236,7 @@ RSpec.describe Sirena::Engine do
       expect { engine.render(source) }
         .to raise_error(
           described_class::PipelineError,
-          /\AA state_diagram diagram does not accept a directive with no header\./
+          /\AA state_diagram diagram does not accept a directive with no header\./,
         )
     end
 
@@ -257,7 +257,7 @@ RSpec.describe Sirena::Engine do
       xychart: "xychart-beta\n  x-axis [1, 2]\n  line [1, 2]\n",
       sankey: "sankey-beta\nA,B,1\n",
       treemap: "treemap-beta\n\"A\": 1\n",
-      c4: "C4Context\n  Person(a, \"A\")\n"
+      c4: "C4Context\n  Person(a, \"A\")\n",
     }.each do |type, body|
       it "refuses late frontmatter for #{type}" do
         source = "%% note\n---\ntitle: T\n---\n#{body}"
@@ -265,7 +265,7 @@ RSpec.describe Sirena::Engine do
         expect { engine.render(source) }
           .to raise_error(
             described_class::PipelineError,
-            /\AA #{type} diagram does not accept frontmatter behind another item\./
+            /\AA #{type} diagram does not accept frontmatter behind another item\./,
           )
       end
     end

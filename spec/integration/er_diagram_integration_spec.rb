@@ -307,13 +307,13 @@ RSpec.describe 'ErDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::ErDiagram
+        Sirena::Parser::ErDiagram,
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Layout::ErDiagram
+        Sirena::Layout::ErDiagram,
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::ErDiagram
+        Sirena::Renderer::ErDiagram,
       )
     end
   end

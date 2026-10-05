@@ -16,7 +16,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A== text ==>B" => "thick_arrow",
       "A== text === B" => "thick_line",
       "A-. text .->B" => "dotted_arrow",
-      "A-. text .- B" => "dotted_line"
+      "A-. text .- B" => "dotted_line",
     }.each do |source, arrow_type|
       it "reads #{source.inspect} as one #{arrow_type} edge" do
         expect(edge_tuples(source)).to eq([["A", "B", "text", arrow_type]])
@@ -64,7 +64,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A o-- t o--o B" => "an o opening repeated on the closing half",
       "A x-. t x.-x B" => "a dotted x opening repeated on the closing half",
       "A -- one\n%%{ bad }\ntwo\n--> B" => "a directive line inside a label",
-      "A -- \"one\n%%{ bad }\ntwo\" --> B" => "a directive inside a quoted label"
+      "A -- \"one\n%%{ bad }\ntwo\" --> B" => "a directive inside a quoted label",
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -90,7 +90,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A <-- t x--> B" => "arrow_both",
       "A <-- t o--> B" => "arrow_both",
       "A <-. t x.-> B" => "dotted_arrow_both",
-      "A <-. t o.-> B" => "dotted_arrow_both"
+      "A <-. t o.-> B" => "dotted_arrow_both",
     }.each do |source, arrow_type|
       it "reads the start head of #{source.inspect}" do
         expect(edge_tuples(source).first.last).to eq(arrow_type)
@@ -109,7 +109,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       'A == "a=b" ==> B' => "a=b",
       'A -. "a.b" .-> B' => "a.b",
       'A -- "a b" --> B' => "a b",
-      'A -- "a"b --> B' => "ab"
+      'A -- "a"b --> B' => "ab",
     }.each do |source, label|
       it "reads the quoted label of #{source.inspect} as #{label.inspect}" do
         expect(edge_tuples(source).first[2]).to eq(label)
@@ -142,7 +142,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "spaces" => "A -- a#{' ' * 20_000}b --> B",
       "text of a dotted label" => "A -. #{'a' * 5_000} .-> B",
-      "text of a thick label" => "A == #{'a' * 5_000} ==> B"
+      "text of a thick label" => "A == #{'a' * 5_000} ==> B",
     }.each do |what, source|
       it "parses a long run of #{what} within a fixed bound" do
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -155,7 +155,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "characters of an unclosed solid label" => "A -- #{'a' * 49_000}",
       "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
-      "equals of an unclosed thick label" => "A == a#{'=' * 20_000}"
+      "equals of an unclosed thick label" => "A == a#{'=' * 20_000}",
     }.each do |what, source|
       it "refuses a long run of #{what} at once" do
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -170,7 +170,9 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "the flowchart corpus cases behind the inline-label bucket" do
     Dir[File.join(__dir__, "../../mermaid/flowchart/*.mmd")].select do |f|
       File.basename(f).match?(
-        /\A((031|033|035)_parser_should_handle_double|163|164|17[3-9]|18[0-5])_/
+        /\A(
+          (031|033|035)_parser_should_handle_double|163|164|17[3-9]|18[0-5]
+        )_/x,
       )
     end.each do |path|
       it "renders #{File.basename(path, '.mmd')}" do

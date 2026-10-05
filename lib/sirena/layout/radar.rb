@@ -48,7 +48,7 @@ module Sirena
           diagram.curves,
           positioned_axes,
           min_value,
-          max_value
+          max_value,
         )
 
         # Calculate grid circles for reference
@@ -64,7 +64,7 @@ module Sirena
           width: (DEFAULT_RADIUS + PADDING) * 2,
           height: (DEFAULT_RADIUS + PADDING) * 2,
           min_value: min_value,
-          max_value: max_value
+          max_value: max_value,
         }
       end
 
@@ -84,7 +84,7 @@ module Sirena
           width: PADDING * 2,
           height: PADDING * 2,
           min_value: 0,
-          max_value: 0
+          max_value: 0,
         }
       end
 
@@ -137,7 +137,7 @@ module Sirena
             end_y: end_y,
             label_x: label_x,
             label_y: label_y,
-            index: idx
+            index: idx,
           }
         end
 
@@ -176,14 +176,14 @@ module Sirena
               normalized: normalized,
               x: x,
               y: y,
-              angle: axis[:angle_radians]
+              angle: axis[:angle_radians],
             }
           end
 
           positioned << {
             id: curve.id,
             label: curve.label,
-            points: points
+            points: points,
           }
         end
 
@@ -218,7 +218,7 @@ module Sirena
           circles << {
             radius: radius,
             value: value,
-            fraction: fraction
+            fraction: fraction,
           }
         end
 

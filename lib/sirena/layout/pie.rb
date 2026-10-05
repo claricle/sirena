@@ -33,8 +33,8 @@ module Sirena
           slices: transform_slices(diagram),
           metadata: {
             total_value: diagram.total_value,
-            slice_count: (diagram.slices || []).length
-          }
+            slice_count: (diagram.slices || []).length,
+          },
         }
       end
 
@@ -50,7 +50,7 @@ module Sirena
             value: slice.value,
             percentage: slice.percentage(diagram.total_value),
             angle: diagram.slice_angle(slice),
-            index: index
+            index: index,
           }
         end
       end

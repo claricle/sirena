@@ -135,7 +135,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "spaces" => "   ",
       "a tab" => "\t",
       "a no-break space" => "\u00A0",
-      "a form feed" => "\f"
+      "a form feed" => "\f",
     }.each do |label, indent|
       it "is still a comment after #{label}" do
         source = "graph TD\nA --- B\naccDescr {\ntext\n#{indent}%% } C --- D\n"
@@ -199,7 +199,7 @@ RSpec.describe Sirena::Parser::Flowchart do
       "a narrow no-break space" => "\u202F",
       "a medium mathematical space" => "\u205F",
       "an ideographic space" => "\u3000",
-      "a zero-width no-break space" => "\uFEFF"
+      "a zero-width no-break space" => "\uFEFF",
     }.each do |label, gap|
       it "still finds the colon after #{label}" do
         source = "graph TD\nA --- B\naccTitle#{gap}: Hi\nC --- D\n"
@@ -298,7 +298,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     {
       "an empty title" => "graph TD\nA-->B\naccTitle:\n",
       "an empty description" => "graph TD\nA-->B\naccDescr:\n",
-      "an unterminated block" => "graph TD\nA-->B\naccDescr {Unterminated\n"
+      "an unterminated block" => "graph TD\nA-->B\naccDescr {Unterminated\n",
     }.each do |label, source|
       it "keeps the diagram for #{label}" do
         expect(node_ids(source)).to eq(%w[A B])

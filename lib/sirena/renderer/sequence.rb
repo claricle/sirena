@@ -43,7 +43,7 @@ module Sirena
 
         # Calculate positions
         participant_positions = calculate_participant_positions(
-          graph[:children]
+          graph[:children],
         )
 
         # Render lifelines first (under everything)
@@ -102,7 +102,7 @@ module Sirena
           positions[participant[:id]] = {
             x: x,
             y: y,
-            center_x: x + PARTICIPANT_WIDTH / 2
+            center_x: x + PARTICIPANT_WIDTH / 2,
           }
         end
         positions
@@ -260,7 +260,7 @@ module Sirena
         style = {
           line: metadata[:line_style] || 'solid',
           head: metadata[:head_style] || 'filled',
-          side: metadata[:head_side] || 'target'
+          side: metadata[:head_side] || 'target',
         }
         message_text = metadata[:message_text]
 
@@ -290,7 +290,7 @@ module Sirena
           target_pos[:center_x],
           message_y,
           style,
-          group
+          group,
         )
 
         # Render message label if present
@@ -300,7 +300,7 @@ module Sirena
             target_pos[:center_x],
             message_y,
             message_text,
-            group
+            group,
           )
         end
 
@@ -350,7 +350,7 @@ module Sirena
       HEAD_ENDS = {
         'target' => [:target].freeze,
         'source' => [:source].freeze,
-        'both' => [:source, :target].freeze
+        'both' => [:source, :target].freeze,
       }.freeze
 
       def head_ends(style)
@@ -441,13 +441,13 @@ module Sirena
                    [
                      "#{x2},#{y2}",
                      "#{x2 - ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
-                     "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}"
+                     "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
                    ].join(' ')
                  else
                    [
                      "#{x2},#{y2}",
                      "#{x2 + ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
-                     "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}"
+                     "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
                    ].join(' ')
                  end
 
@@ -471,7 +471,7 @@ module Sirena
           p.points = [
             "#{tip_x},#{tip_y}",
             "#{back},#{tip_y + (side * ARROW_SIZE / 2)}",
-            "#{back},#{tip_y}"
+            "#{back},#{tip_y}",
           ].join(' ')
           p.fill = '#000000'
           p.stroke = '#000000'
@@ -492,7 +492,7 @@ module Sirena
             "#{tip_x},#{tip_y}",
             "#{back},#{tip_y - ARROW_SIZE / 2}",
             "#{notch},#{tip_y}",
-            "#{back},#{tip_y + ARROW_SIZE / 2}"
+            "#{back},#{tip_y + ARROW_SIZE / 2}",
           ].join(' ')
           p.fill = '#000000'
           p.stroke = '#000000'

@@ -49,7 +49,7 @@ module Sirena
               id: id,
               text: line_data[:text]&.to_s || id,
               indent: indent_size,
-              metadata: parse_metadata(line_data[:metadata])
+              metadata: parse_metadata(line_data[:metadata]),
             }
           end
 
@@ -98,7 +98,7 @@ module Sirena
               title: column_title(item),
               icon: item[:metadata][:icon],
               classes: normalize_classes(item[:metadata][:classes]),
-              cards: []
+              cards: [],
             }
 
             @columns << column
@@ -145,7 +145,7 @@ module Sirena
             @current_column[:cards] << item[:metadata].merge(
               id: item[:id],
               text: item[:text],
-              classes: normalize_classes(item[:metadata][:classes])
+              classes: normalize_classes(item[:metadata][:classes]),
             )
           end
 
@@ -294,7 +294,7 @@ module Sirena
           builder.finalize
 
           {
-            columns: builder.columns
+            columns: builder.columns,
           }
         end
       end

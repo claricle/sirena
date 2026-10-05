@@ -22,12 +22,12 @@ module Sirena
       TEXT = {
         '&' => '&amp;',
         '<' => '&lt;',
-        '>' => '&gt;'
+        '>' => '&gt;',
       }.freeze
 
       ATTRIBUTE = TEXT.merge(
         '"' => '&quot;',
-        "'" => '&apos;'
+        "'" => '&apos;',
       ).freeze
 
       # Derived from the maps, never written out again. A hand-kept pattern

@@ -44,7 +44,7 @@ module Sirena
           '\\\\-' => %w[solid stick_top source],
           '\\\\--' => %w[dotted stick_top source],
           '<<->>' => %w[solid filled both],
-          '<<-->>' => %w[dotted filled both]
+          '<<-->>' => %w[dotted filled both],
         }.freeze
 
         # Transform parse tree into Sequence diagram.

@@ -15,7 +15,7 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       diagram = described_class.new(direction: 'TB')
       diagram.entities << Sirena::Diagram::ClassEntity.new(
         id: 'Animal',
-        name: 'Animal'
+        name: 'Animal',
       )
 
       expect(diagram.valid?).to be true
@@ -30,12 +30,12 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       diagram = described_class.new(direction: 'TB')
       diagram.entities << Sirena::Diagram::ClassEntity.new(
         id: 'Dog',
-        name: 'Dog'
+        name: 'Dog',
       )
       diagram.relationships << Sirena::Diagram::ClassRelationship.new(
         from_id: 'Dog',
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
 
       expect(diagram.valid?).to be false
@@ -47,7 +47,7 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
     let(:entity) do
       Sirena::Diagram::ClassEntity.new(
         id: 'Animal',
-        name: 'Animal'
+        name: 'Animal',
       )
     end
 
@@ -68,7 +68,7 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       Sirena::Diagram::ClassRelationship.new(
         from_id: 'Dog',
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
     end
 
@@ -90,17 +90,17 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       diagram.relationships << Sirena::Diagram::ClassRelationship.new(
         from_id: 'Dog',
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
       diagram.relationships << Sirena::Diagram::ClassRelationship.new(
         from_id: 'Car',
         to_id: 'Engine',
-        relationship_type: 'composition'
+        relationship_type: 'composition',
       )
 
       expect(diagram.inheritance_relationships.length).to eq(1)
       expect(diagram.inheritance_relationships.first.relationship_type).to eq(
-        'inheritance'
+        'inheritance',
       )
     end
   end
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Diagram::ClassEntity do
       entity = described_class.new(
         id: 'Drawable',
         name: 'Drawable',
-        stereotype: 'interface'
+        stereotype: 'interface',
       )
       expect(entity.interface?).to be true
     end
@@ -145,7 +145,7 @@ RSpec.describe Sirena::Diagram::ClassEntity do
       entity = described_class.new(
         id: 'Animal',
         name: 'Animal',
-        stereotype: 'abstract'
+        stereotype: 'abstract',
       )
       expect(entity.abstract?).to be true
     end
@@ -221,7 +221,7 @@ RSpec.describe Sirena::Diagram::ClassMethod do
       method = described_class.new(
         name: 'add',
         parameters: 'a: int, b: int',
-        return_type: 'int'
+        return_type: 'int',
       )
       expect(method.signature).to eq('add(a: int, b: int) int')
     end
@@ -234,7 +234,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
       relationship = described_class.new(
         from_id: 'Dog',
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
       expect(relationship.valid?).to be true
     end
@@ -242,7 +242,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
     it 'returns false without from_id' do
       relationship = described_class.new(
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
       expect(relationship.valid?).to be false
     end
@@ -250,7 +250,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
     it 'returns false without to_id' do
       relationship = described_class.new(
         from_id: 'Dog',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
       expect(relationship.valid?).to be false
     end
@@ -261,7 +261,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
       relationship = described_class.new(
         from_id: 'Dog',
         to_id: 'Animal',
-        relationship_type: 'inheritance'
+        relationship_type: 'inheritance',
       )
       expect(relationship.inheritance?).to be true
     end
@@ -270,7 +270,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
       relationship = described_class.new(
         from_id: 'Car',
         to_id: 'Engine',
-        relationship_type: 'composition'
+        relationship_type: 'composition',
       )
       expect(relationship.inheritance?).to be false
     end
@@ -281,7 +281,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
       relationship = described_class.new(
         from_id: 'Car',
         to_id: 'Engine',
-        relationship_type: 'composition'
+        relationship_type: 'composition',
       )
       expect(relationship.composition?).to be true
     end
@@ -292,7 +292,7 @@ RSpec.describe Sirena::Diagram::ClassRelationship do
       relationship = described_class.new(
         from_id: 'Team',
         to_id: 'Player',
-        relationship_type: 'aggregation'
+        relationship_type: 'aggregation',
       )
       expect(relationship.aggregation?).to be true
     end

@@ -11,17 +11,17 @@ RSpec.describe Sirena::Layout::StateDiagram do
         d.states << Sirena::Diagram::StateNode.new(
           id: 'idle',
           label: 'Idle',
-          state_type: 'normal'
+          state_type: 'normal',
         )
         d.states << Sirena::Diagram::StateNode.new(
           id: 'active',
           label: 'Active',
-          state_type: 'normal'
+          state_type: 'normal',
         )
         d.transitions << Sirena::Diagram::StateTransition.new(
           from_id: 'idle',
           to_id: 'active',
-          trigger: 'start'
+          trigger: 'start',
         )
       end
     end
@@ -67,16 +67,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'start_1',
         label: '[*]',
-        state_type: 'start'
+        state_type: 'start',
       )
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
         from_id: 'start_1',
-        to_id: 'idle'
+        to_id: 'idle',
       )
 
       graph = transform.to_graph(diagram)
@@ -92,16 +92,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'choice1',
         label: 'choice1',
-        state_type: 'choice'
+        state_type: 'choice',
       )
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'idle',
         label: 'Idle',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
         from_id: 'choice1',
-        to_id: 'idle'
+        to_id: 'idle',
       )
 
       graph = transform.to_graph(diagram)
@@ -133,10 +133,10 @@ RSpec.describe Sirena::Layout::StateDiagram do
     it 'raises error when a transition names a state that does not exist' do
       invalid_diagram = Sirena::Diagram::StateDiagram.new
       invalid_diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'idle', label: 'Idle', state_type: 'normal'
+        id: 'idle', label: 'Idle', state_type: 'normal',
       )
       invalid_diagram.transitions << Sirena::Diagram::StateTransition.new(
-        from_id: 'idle', to_id: 'nowhere'
+        from_id: 'idle', to_id: 'nowhere',
       )
 
       expect do
@@ -160,16 +160,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
         id: 'idle',
         label: 'Idle',
         state_type: 'normal',
-        description: 'System is idle'
+        description: 'System is idle',
       )
       diagram.states << Sirena::Diagram::StateNode.new(
         id: 'active',
         label: 'Active',
-        state_type: 'normal'
+        state_type: 'normal',
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
         from_id: 'idle',
-        to_id: 'active'
+        to_id: 'active',
       )
 
       graph = transform.to_graph(diagram)
@@ -182,7 +182,7 @@ RSpec.describe Sirena::Layout::StateDiagram do
 
     it 'uses a bare description as the only display text' do
       diagram = Sirena::Parser::StateDiagram.new.parse(
-        "stateDiagram-v2\nA : ONLY_TEXT\n"
+        "stateDiagram-v2\nA : ONLY_TEXT\n",
       )
 
       graph = transform.to_graph(diagram)
@@ -204,7 +204,7 @@ RSpec.describe Sirena::Layout::StateDiagram do
       labels = graph[:children].first[:labels].map { |label| label[:text] }
 
       expect(labels).to eq(
-        %w[ALIAS_ONE DESC_ONE ALIAS_TWO DESC_TWO]
+        %w[ALIAS_ONE DESC_ONE ALIAS_TWO DESC_TWO],
       )
     end
 
@@ -215,10 +215,10 @@ RSpec.describe Sirena::Layout::StateDiagram do
     # only a directly built model can hold that combination.
     it 'keeps a marker type when only a scalar label is set' do
       labelled = Sirena::Diagram::StateNode.new(
-        id: 'C', label: 'C', state_type: 'choice'
+        id: 'C', label: 'C', state_type: 'choice',
       )
       described = Sirena::Diagram::StateNode.new(
-        id: 'D', state_type: 'choice', descriptions: ['text']
+        id: 'D', state_type: 'choice', descriptions: ['text'],
       )
 
       expect(transform.send(:state_shape_type, labelled)).to eq('choice')

@@ -32,7 +32,7 @@ module Sirena
             type: :curve,
             id: id.to_s,
             label: label.to_s,
-            values: vals
+            values: vals,
           }
         end
 
@@ -41,7 +41,7 @@ module Sirena
             type: :curve,
             id: id.to_s,
             label: id.to_s,
-            values: vals
+            values: vals,
           }
         end
 
@@ -68,7 +68,7 @@ module Sirena
           # the renderer then fails on a Symbol index.
           {
             type: :axes,
-            axes: axes.is_a?(Array) ? axes : [axes]
+            axes: axes.is_a?(Array) ? axes : [axes],
           }
         end
 
@@ -101,7 +101,7 @@ module Sirena
             acc_descr: nil,
             axes: [],
             curves: [],
-            options: {}
+            options: {},
           }
 
           Array(statements).each do |stmt|

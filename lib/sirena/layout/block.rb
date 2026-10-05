@@ -34,7 +34,7 @@ module Sirena
           connections: connections_layout,
           columns: diagram.columns,
           width: calculate_total_width(blocks_layout, diagram.columns),
-          height: calculate_total_height(blocks_layout)
+          height: calculate_total_height(blocks_layout),
         }
       end
 
@@ -83,7 +83,7 @@ module Sirena
             height: dims[:height],
             row: current_row,
             col: current_col,
-            col_span: block_width
+            col_span: block_width,
           }
 
           # Update column widths
@@ -124,7 +124,7 @@ module Sirena
             y: child_y,
             width: child_dims[:width],
             height: child_dims[:height],
-            parent_id: parent_block.id
+            parent_id: parent_block.id,
           }
 
           child_y += child_dims[:height] + DEFAULT_SPACING
@@ -137,7 +137,7 @@ module Sirena
         if block.arrow?
           return {
             width: DEFAULT_BLOCK_WIDTH / 2,
-            height: DEFAULT_BLOCK_HEIGHT / 2
+            height: DEFAULT_BLOCK_HEIGHT / 2,
           }
         end
 
@@ -159,7 +159,7 @@ module Sirena
 
         {
           width: width,
-          height: height
+          height: height,
         }
       end
 
@@ -193,7 +193,7 @@ module Sirena
             from_y: from_block[:y] + from_block[:height],
             to_x: to_block[:x] + to_block[:width] / 2,
             to_y: to_block[:y],
-            connection_type: conn.connection_type
+            connection_type: conn.connection_type,
           }
         end.compact
       end

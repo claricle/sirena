@@ -41,7 +41,7 @@ module Sirena
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
           class_defs: diagram.class_defs,
-          layoutOptions: layout_options
+          layoutOptions: layout_options,
         }
       end
 
@@ -59,8 +59,8 @@ module Sirena
             metadata: {
               name: entity.name,
               classes: entity.classes,
-              attributes: entity.attributes.map { |a| attribute_to_hash(a) }
-            }
+              attributes: entity.attributes.map { |a| attribute_to_hash(a) },
+            },
           }
         end
       end
@@ -78,8 +78,8 @@ module Sirena
             metadata: {
               relationship_type: rel.relationship_type,
               cardinality_from: rel.cardinality_from,
-              cardinality_to: rel.cardinality_to
-            }
+              cardinality_to: rel.cardinality_to,
+            },
           }
         end
       end
@@ -91,7 +91,7 @@ module Sirena
         # Check entity name width
         name_width = measure_text(
           entity.name,
-          font_size: DEFAULT_FONT_SIZE + 2
+          font_size: DEFAULT_FONT_SIZE + 2,
         )[:width]
         max_width = [max_width, name_width].max
 
@@ -100,7 +100,7 @@ module Sirena
           attr_text = format_attribute(attr)
           attr_width = measure_text(
             attr_text,
-            font_size: DEFAULT_FONT_SIZE
+            font_size: DEFAULT_FONT_SIZE,
           )[:width]
           max_width = [max_width, attr_width].max
         end
@@ -114,7 +114,7 @@ module Sirena
 
         {
           width: total_width,
-          height: total_height
+          height: total_height,
         }
       end
 
@@ -124,13 +124,13 @@ module Sirena
         # Main label with entity name
         name_dims = measure_text(
           entity.name,
-          font_size: DEFAULT_FONT_SIZE + 2
+          font_size: DEFAULT_FONT_SIZE + 2,
         )
 
         labels << {
           text: entity.name,
           width: name_dims[:width],
-          height: name_dims[:height]
+          height: name_dims[:height],
         }
 
         labels
@@ -143,12 +143,12 @@ module Sirena
         if relationship.label && !relationship.label.empty?
           label_dims = measure_text(
             relationship.label,
-            font_size: DEFAULT_FONT_SIZE
+            font_size: DEFAULT_FONT_SIZE,
           )
           labels << {
             text: relationship.label,
             width: label_dims[:width],
-            height: label_dims[:height]
+            height: label_dims[:height],
           }
         end
 
@@ -182,7 +182,7 @@ module Sirena
           name: attribute.name,
           attribute_type: attribute.attribute_type,
           key_type: attribute.key_type,
-          note: attribute.note
+          note: attribute.note,
         }
       end
 
@@ -201,7 +201,7 @@ module Sirena
           # NETWORK_SIMPLEX for better entity relationship layout
           ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
           ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN'
+          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
         )
       end
     end

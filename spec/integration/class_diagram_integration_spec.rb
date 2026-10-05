@@ -145,13 +145,13 @@ RSpec.describe 'ClassDiagram Integration' do
 
       expect(handlers).not_to be_nil
       expect(handlers[:parser]).to eq(
-        Sirena::Parser::ClassDiagram
+        Sirena::Parser::ClassDiagram,
       )
       expect(handlers[:transform]).to eq(
-        Sirena::Layout::ClassDiagram
+        Sirena::Layout::ClassDiagram,
       )
       expect(handlers[:renderer]).to eq(
-        Sirena::Renderer::ClassDiagram
+        Sirena::Renderer::ClassDiagram,
       )
     end
   end

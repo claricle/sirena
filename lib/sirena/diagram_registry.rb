@@ -56,7 +56,7 @@ module Sirena
           parser: parser,
           transform: transform,
           renderer: renderer,
-          model: model
+          model: model,
         }
       end
 

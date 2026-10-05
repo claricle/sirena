@@ -79,7 +79,7 @@ class PerformanceBenchmarker
           Implementation : after Design, 60d
           Testing : after Implementation, 30d
     MERMAID
-    pie: <<~MERMAID
+    pie: <<~MERMAID,
       pie title Sales Distribution
           "Product A" : 45
           "Product B" : 30
@@ -99,7 +99,7 @@ class PerformanceBenchmarker
       single_diagram: benchmark_single_renders,
       batch_rendering: benchmark_batch_renders,
       memory_usage: benchmark_memory_usage,
-      startup_time: benchmark_startup_time
+      startup_time: benchmark_startup_time,
     }
 
     results
@@ -115,7 +115,7 @@ class PerformanceBenchmarker
 
     {
       single: benchmark_single_renders,
-      startup: benchmark_startup_time
+      startup: benchmark_startup_time,
     }
   end
 
@@ -181,7 +181,7 @@ class PerformanceBenchmarker
       sirena_version: Sirena::VERSION,
       mermaid_cli_version: mermaid_cli_version,
       cpu_info: `sysctl -n machdep.cpu.brand_string 2>/dev/null || lscpu 2>/dev/null | grep 'Model name' || echo 'Unknown'`.strip,
-      timestamp: Time.now.iso8601
+      timestamp: Time.now.iso8601,
     }
   end
 
@@ -219,7 +219,7 @@ class PerformanceBenchmarker
 
       results[type] = {
         sirena_time: sirena_avg,
-        mermaid_time: mermaid_avg
+        mermaid_time: mermaid_avg,
       }
     end
 
@@ -262,7 +262,7 @@ class PerformanceBenchmarker
     result = {
       diagram_count: 50,
       sirena_total: sirena_time,
-      sirena_per_diagram: sirena_time / 50
+      sirena_per_diagram: sirena_time / 50,
     }
     # See benchmark_single_renders: a failed mmdc invocation still exits `system`
     # near-instantly, so never publish its timing as a real batch speedup.
@@ -270,7 +270,7 @@ class PerformanceBenchmarker
 
     result.merge(
       mermaid_total: mermaid_time,
-      mermaid_per_diagram: mermaid_time / 50
+      mermaid_per_diagram: mermaid_time / 50,
     )
   end
 
@@ -282,7 +282,7 @@ class PerformanceBenchmarker
     # task. Report that plainly instead of the fabricated figures this
     # used to hardcode (TODO.foundation/11: "unattributable benchmarks").
     {
-      note: "Memory usage was not measured in this run"
+      note: "Memory usage was not measured in this run",
     }
   end
 
@@ -323,7 +323,7 @@ class PerformanceBenchmarker
 
     {
       sirena: sirena_startup / 10,
-      mermaid: mermaid_startup ? mermaid_startup / 10 : nil
+      mermaid: mermaid_startup ? mermaid_startup / 10 : nil,
     }
   end
 
@@ -334,7 +334,7 @@ class PerformanceBenchmarker
           10.times { Sirena.render(source) }
         end
         [type, { sirena_time: time / 10, mermaid_time: nil }]
-      end.to_h
+      end.to_h,
     }
   end
 

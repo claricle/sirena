@@ -17,7 +17,7 @@ module CorpusCheckStubs
   def stub_fresh_run(passes)
     results = passes.transform_values { |pass| { pass: pass, stage: "parse", exception_class: "X" } }
     allow(described_class).to receive_messages(
-      load_scoreboard: committed, cases: results.keys, run_cases: results, verdicts: {}
+      load_scoreboard: committed, cases: results.keys, run_cases: results, verdicts: {},
     )
   end
 
@@ -66,7 +66,7 @@ RSpec.describe Sirena::Corpus do
       "parse" => Sirena::Parser::ParseError,
       "layout" => Sirena::Layout::LayoutError,
       "render" => Sirena::Renderer::RenderError,
-      "timeout" => Timeout::Error
+      "timeout" => Timeout::Error,
     }.each do |stage, klass|
       it "classifies #{klass} as #{stage.inspect}" do
         expect(described_class.stage_for(klass.new)).to eq(stage)
@@ -123,7 +123,7 @@ RSpec.describe Sirena::Corpus do
     it "carries stage and exception_class on a failing case" do
       rows = described_class.rows_for_scoreboard(
         { "a/1.mmd" => { pass: false, stage: "parse", exception_class: "X", message: "boom" } },
-        { "a/1.mmd" => "valid" }
+        { "a/1.mmd" => "valid" },
       )
 
       expect(rows).to eq([{
@@ -153,7 +153,7 @@ RSpec.describe Sirena::Corpus do
         { "verdict" => "valid", "pass" => true },
         { "verdict" => "valid", "pass" => false },
         { "verdict" => "invalid", "pass" => false },
-        { "verdict" => "artifact", "pass" => true }
+        { "verdict" => "artifact", "pass" => true },
       ]
 
       expect(described_class.rate_over_valid(rows)).to eq([1, 2])
@@ -251,7 +251,7 @@ RSpec.describe Sirena::Corpus do
       [
         { "case" => "a", "pass" => true },
         { "case" => "b", "pass" => false },
-        { "case" => "c", "pass" => true }
+        { "case" => "c", "pass" => true },
       ]
     end
 
@@ -259,7 +259,7 @@ RSpec.describe Sirena::Corpus do
       fresh = [
         { "case" => "a", "pass" => false },
         { "case" => "b", "pass" => false },
-        { "case" => "c", "pass" => true }
+        { "case" => "c", "pass" => true },
       ]
 
       expect { described_class.fail_on_drift!(committed, fresh) }
@@ -271,7 +271,7 @@ RSpec.describe Sirena::Corpus do
       fresh = [
         { "case" => "a", "pass" => true },
         { "case" => "b", "pass" => true },
-        { "case" => "c", "pass" => true }
+        { "case" => "c", "pass" => true },
       ]
 
       expect { described_class.fail_on_drift!(committed, fresh) }

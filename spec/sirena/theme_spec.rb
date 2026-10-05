@@ -68,11 +68,11 @@ RSpec.describe Sirena::Theme do
         name: 'base',
         colors: Sirena::Theme::ColorPalette.new(
           node_fill: '#ffffff',
-          node_stroke: '#000000'
+          node_stroke: '#000000',
         ),
         typography: Sirena::Theme::Typography.new(
-          font_size_normal: 14.0
-        )
+          font_size_normal: 14.0,
+        ),
       )
     end
 
@@ -80,8 +80,8 @@ RSpec.describe Sirena::Theme do
       described_class.new(
         name: 'override',
         colors: Sirena::Theme::ColorPalette.new(
-          node_fill: '#ff0000'
-        )
+          node_fill: '#ff0000',
+        ),
       )
     end
 

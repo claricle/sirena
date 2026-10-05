@@ -116,7 +116,7 @@ RSpec.describe Sirena::Engine do
       # would silently define zero examples and still pass, so guard it.
       it 'finds treemap corpus cases to render' do
         expect(
-          Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__))
+          Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__)),
         ).not_to be_empty
       end
 
@@ -190,7 +190,7 @@ RSpec.describe Sirena::Engine do
 
       it 'still refuses a keyword glued to a word' do
         expect { engine.render("graphTD\nA --- B\n") }.to raise_error(
-          Sirena::Engine::DiagramTypeError
+          Sirena::Engine::DiagramTypeError,
         )
       end
     end
@@ -204,7 +204,7 @@ RSpec.describe Sirena::Engine do
       {
         'gantt/023_spec_diagram-orchestration_spec_22.mmd' => 'gantt',
         'gantt/025_spec_mermaidapi_spec_24.mmd' => 'gantt',
-        'pie/025_parsertest_pie_test_24.mmd' => 'pie'
+        'pie/025_parsertest_pie_test_24.mmd' => 'pie',
       }.each do |file, keyword|
         it "renders corpus case #{file}" do
           expect(engine.render(File.read(File.join(corpus, file))))
@@ -215,7 +215,7 @@ RSpec.describe Sirena::Engine do
         # the only check if the boundary is ever loosened to a bare prefix.
         it "still refuses #{keyword} glued to a word" do
           expect { engine.render("#{keyword}chart\n") }.to raise_error(
-            Sirena::Engine::DiagramTypeError
+            Sirena::Engine::DiagramTypeError,
           )
         end
       end
@@ -227,7 +227,7 @@ RSpec.describe Sirena::Engine do
       it 'raises DiagramTypeError' do
         expect { engine.render(source) }.to raise_error(
           Sirena::Engine::DiagramTypeError,
-          /Unable to detect diagram type/
+          /Unable to detect diagram type/,
         )
       end
 
@@ -238,7 +238,7 @@ RSpec.describe Sirena::Engine do
       # the spec below.
       it 'names the actual keyword for every registered diagram type' do
         expect { engine.render(source) }.to raise_error(
-          Sirena::Engine::DiagramTypeError
+          Sirena::Engine::DiagramTypeError,
         ) do |error|
           Sirena::DiagramRegistry.types.each do |type|
             keyword = Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
@@ -263,7 +263,7 @@ RSpec.describe Sirena::Engine do
       # format the docstring promises, so dropping the separator is caught.
       it 'separates each keyword with a comma and a space' do
         expect { engine.render(source) }.to raise_error(
-          Sirena::Engine::DiagramTypeError
+          Sirena::Engine::DiagramTypeError,
         ) do |error|
           sorted_keywords = Sirena::DiagramRegistry.types.sort.map do |type|
             Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
@@ -282,7 +282,7 @@ RSpec.describe Sirena::Engine do
       # stdout as pure SVG got log noise mixed in.
       it 'logs to stderr, not stdout' do
         expect { engine.render(source, verbose: true) }.to output(
-          /Starting render pipeline/
+          /Starting render pipeline/,
         ).to_stderr
       end
 
@@ -345,13 +345,13 @@ RSpec.describe Sirena::Engine do
       it 'raises instead of silently falling back to the default theme' do
         expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
           Sirena::Engine::PipelineError,
-          /nosuchtheme/
+          /nosuchtheme/,
         )
       end
 
       it 'lists the valid theme names in the error' do
         expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
-          Sirena::Engine::PipelineError
+          Sirena::Engine::PipelineError,
         ) do |error|
           Sirena::Theme::Registry.list.each do |name|
             expect(error.message).to include(name.to_s)
@@ -362,7 +362,7 @@ RSpec.describe Sirena::Engine do
       it 'still raises when the unknown theme is given at construction time' do
         expect { described_class.new(theme: 'nosuchtheme') }.to raise_error(
           Sirena::Engine::PipelineError,
-          /nosuchtheme/
+          /nosuchtheme/,
         )
       end
 
@@ -373,7 +373,7 @@ RSpec.describe Sirena::Engine do
       it 'raises for an unknown Symbol theme, not only an unknown String' do
         expect { engine.render(source, theme: :nosuchtheme) }.to raise_error(
           Sirena::Engine::PipelineError,
-          /nosuchtheme/
+          /nosuchtheme/,
         )
       end
 
@@ -476,7 +476,7 @@ RSpec.describe Sirena::Engine do
       # unknown/012_platform_flow-elk_11.mmd.
       ['the flowchart-elk keyword',
        "flowchart-elk\na[hello] --> b[world]\n",
-       :flowchart]
+       :flowchart],
     ].each do |name, source, expected|
       it "names #{expected} past #{name}" do
         expect(detect(source)).to eq(expected)
@@ -491,11 +491,11 @@ RSpec.describe Sirena::Engine do
       ['a comment splitting a keyword in half',
        "sequence%% x\nDiagram\nAlice->>Bob: hi\n"],
       ['a comment splitting the flowchart keyword in half',
-       "flow%% c\nchart TD\nA-->B\n"]
+       "flow%% c\nchart TD\nA-->B\n"],
     ].each do |name, source|
       it "still refuses #{name}" do
         expect { detect(source) }.to raise_error(
-          described_class::DiagramTypeError
+          described_class::DiagramTypeError,
         )
       end
     end
@@ -507,7 +507,7 @@ RSpec.describe Sirena::Engine do
       # grammar's own comment rule to skip it, and there is no rendering
       # gap left to pin for this shape.
       svg = engine.render(
-        "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n"
+        "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n",
       )
 
       expect(svg).to include('Alice').and include('Bob')

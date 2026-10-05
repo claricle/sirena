@@ -50,7 +50,7 @@ RSpec.describe Sirena::Renderer::Base do
       theme_typography: :font_family,
       theme_shape: :stroke_width,
       theme_spacing: :rank_spacing,
-      theme_effect: :shadow_blur
+      theme_effect: :shadow_blur,
     }.each do |accessor, property|
       it "#{accessor} is nil for an unknown property, no theme, or a theme without the section" do
         expect(renderer.public_send(accessor, :no_such_property)).to be_nil
@@ -67,7 +67,7 @@ RSpec.describe Sirena::Renderer::Base do
 
       expect([element.fill, element.stroke, element.stroke_width]).to eq(
         [dark.colors.node_fill, dark.colors.node_stroke,
-         dark.shapes.stroke_width.to_s]
+         dark.shapes.stroke_width.to_s],
       )
     end
 
@@ -76,7 +76,7 @@ RSpec.describe Sirena::Renderer::Base do
       renderer.apply_theme_to_edge(element)
 
       expect([element.stroke, element.stroke_width, element.fill]).to eq(
-        [dark.colors.edge_stroke, dark.shapes.stroke_width.to_s, nil]
+        [dark.colors.edge_stroke, dark.shapes.stroke_width.to_s, nil],
       )
     end
 
@@ -86,7 +86,7 @@ RSpec.describe Sirena::Renderer::Base do
 
       expect([element.fill, element.font_family, element.font_size]).to eq(
         [dark.colors.label_text, dark.typography.font_family,
-         dark.typography.font_size_normal.to_s]
+         dark.typography.font_size_normal.to_s],
       )
     end
 
@@ -110,7 +110,7 @@ RSpec.describe Sirena::Renderer::Base do
 
       expect(css).to eq(
         "fill:#{dark.colors.node_fill};stroke:#{dark.colors.node_stroke};" \
-        "stroke-width:#{dark.shapes.stroke_width}"
+        "stroke-width:#{dark.shapes.stroke_width}",
       )
     end
 
@@ -119,7 +119,7 @@ RSpec.describe Sirena::Renderer::Base do
 
       expect(css).to eq(
         "fill:none;stroke:#{dark.colors.edge_stroke};" \
-        "stroke-width:#{dark.shapes.stroke_width}"
+        "stroke-width:#{dark.shapes.stroke_width}",
       )
     end
 
@@ -129,7 +129,7 @@ RSpec.describe Sirena::Renderer::Base do
       expect(css).to eq(
         "fill:#{dark.colors.label_text};" \
         "font-family:#{dark.typography.font_family};" \
-        "font-size:#{dark.typography.font_size_normal};text-anchor:middle"
+        "font-size:#{dark.typography.font_size_normal};text-anchor:middle",
       )
     end
 
@@ -140,7 +140,7 @@ RSpec.describe Sirena::Renderer::Base do
         .to eq('fill:none;stroke:#000000;stroke-width:2.0')
       expect(themeless.default_style(:text).to_css).to eq(
         'fill:#000000;font-family:Arial, sans-serif;font-size:14.0;' \
-        'text-anchor:middle'
+        'text-anchor:middle',
       )
     end
 

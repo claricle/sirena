@@ -16,7 +16,7 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "a paren inside a quoted round-node label" do
     [
       ["a plain quoted label", 'b("a (1)") --> c'],
-      ["a markdown-string label", 'b("`a (1)`") --> c']
+      ["a markdown-string label", 'b("`a (1)`") --> c'],
     ].each do |name, line|
       it "draws #{name} whole and keeps the target node" do
         text = svg_text("flowchart LR\n#{line}")

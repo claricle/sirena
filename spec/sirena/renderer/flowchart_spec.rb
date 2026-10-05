@@ -17,7 +17,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
             width: 100,
             height: 50,
             labels: [{ text: 'Start', width: 50, height: 14 }],
-            metadata: { shape: 'rect' }
+            metadata: { shape: 'rect' },
           },
           {
             id: 'B',
@@ -26,17 +26,17 @@ RSpec.describe Sirena::Renderer::Flowchart do
             width: 100,
             height: 50,
             labels: [{ text: 'End', width: 35, height: 14 }],
-            metadata: { shape: 'rect' }
-          }
+            metadata: { shape: 'rect' },
+          },
         ],
         edges: [
           {
             id: 'A_to_B',
             sources: ['A'],
             targets: ['B'],
-            metadata: { arrow_type: 'arrow' }
-          }
-        ]
+            metadata: { arrow_type: 'arrow' },
+          },
+        ],
       }
     end
 

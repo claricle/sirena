@@ -20,8 +20,8 @@ module LayoutFlowchartSpecHelpers
     themed_transform = described_class.new
     themed_transform.theme = Sirena::Theme.new(
       typography: Sirena::Theme::Typography.new(
-        font_size_normal: font_size_normal
-      )
+        font_size_normal: font_size_normal,
+      ),
     )
     diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
       d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
@@ -41,17 +41,17 @@ RSpec.describe Sirena::Layout::Flowchart do
         d.nodes << Sirena::Diagram::FlowchartNode.new(
           id: 'A',
           label: 'Start',
-          shape: 'rect'
+          shape: 'rect',
         )
         d.nodes << Sirena::Diagram::FlowchartNode.new(
           id: 'B',
           label: 'End',
-          shape: 'rect'
+          shape: 'rect',
         )
         d.edges << Sirena::Diagram::FlowchartEdge.new(
           source_id: 'A',
           target_id: 'B',
-          arrow_type: 'arrow'
+          arrow_type: 'arrow',
         )
       end
     end
@@ -101,15 +101,15 @@ RSpec.describe Sirena::Layout::Flowchart do
         Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'First'),
         Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'Second'),
         Sirena::Diagram::FlowchartNode.new(id: 'one', label: 'One'),
-        Sirena::Diagram::FlowchartNode.new(id: 'two', label: 'Two')
+        Sirena::Diagram::FlowchartNode.new(id: 'two', label: 'Two'),
       )
       model.subgraphs.push(
         Sirena::Diagram::FlowchartSubgraph.new(
-          id: 'group', declared_title: 'First group', node_ids: %w[one]
+          id: 'group', declared_title: 'First group', node_ids: %w[one],
         ),
         Sirena::Diagram::FlowchartSubgraph.new(
-          id: 'group', declared_title: 'Second group', node_ids: %w[two]
-        )
+          id: 'group', declared_title: 'Second group', node_ids: %w[two],
+        ),
       )
 
       expect(model).to be_valid
@@ -174,7 +174,7 @@ RSpec.describe Sirena::Layout::Flowchart do
           d.nodes << Sirena::Diagram::FlowchartNode.new(
             id: 'A',
             label: 'Start',
-            shape: 'rect'
+            shape: 'rect',
           )
         end
       end
@@ -202,10 +202,10 @@ RSpec.describe Sirena::Layout::Flowchart do
 
       it 'sizes the edge label at font_size_small, not font_size_normal' do
         small_typography = Sirena::Theme::Typography.new(
-          font_size_small: 12.0, font_size_normal: 30.0
+          font_size_small: 12.0, font_size_normal: 30.0,
         )
         normal_typography = Sirena::Theme::Typography.new(
-          font_size_small: 12.0, font_size_normal: 12.0
+          font_size_small: 12.0, font_size_normal: 12.0,
         )
 
         expect(edge_label_width(small_typography))
@@ -228,7 +228,7 @@ RSpec.describe Sirena::Layout::Flowchart do
         no_typography.theme = Sirena::Theme.new
         explicit_sixteen = described_class.new
         explicit_sixteen.theme = Sirena::Theme.new(
-          typography: Sirena::Theme::Typography.new(font_size_normal: 16.0)
+          typography: Sirena::Theme::Typography.new(font_size_normal: 16.0),
         )
 
         expect(described_class::DEFAULT_FONT_SIZE).to eq(16.0)
@@ -261,7 +261,7 @@ RSpec.describe Sirena::Layout::Flowchart do
 
         expect do
           Sirena::Engine.new(
-            theme: { typography: { font_size_normal: Float::NAN } }
+            theme: { typography: { font_size_normal: Float::NAN } },
           ).render(source)
         end.not_to raise_error
       end
@@ -271,7 +271,7 @@ RSpec.describe Sirena::Layout::Flowchart do
 
         expect do
           Sirena::Engine.new(
-            theme: { typography: { font_size_normal: Float::INFINITY } }
+            theme: { typography: { font_size_normal: Float::INFINITY } },
           ).render(source)
         end.not_to raise_error
       end

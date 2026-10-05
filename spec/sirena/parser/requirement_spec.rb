@@ -306,7 +306,7 @@ RSpec.describe Sirena::Parser::Requirement do
         'a narrow no-break space' => "\u202F",
         'a medium mathematical space' => "\u205F",
         'an ideographic space' => "\u3000",
-        'a zero-width no-break space' => "\uFEFF"
+        'a zero-width no-break space' => "\uFEFF",
       }.each do |label, gap|
         it "accepts #{label} in each accessibility opener" do
           source = "requirementDiagram\n" \
@@ -332,7 +332,7 @@ RSpec.describe Sirena::Parser::Requirement do
         [
           ["accTitle: Title\uFEFF", :acc_title, 'Title'],
           ["accDescr: Description\uFEFF", :acc_description, 'Description'],
-          ["accDescr {Block\uFEFF}", :acc_description, 'Block']
+          ["accDescr {Block\uFEFF}", :acc_description, 'Block'],
         ].each do |directive, attribute, expected|
           result = parser.parse("requirementDiagram\n#{directive}\n")
 

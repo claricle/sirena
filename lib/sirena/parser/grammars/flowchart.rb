@@ -1327,7 +1327,7 @@ module Sirena
         # still draws: with a title behind it no `end` ends the line.
         rule(:bare_subgraph_end) do
           token_at_lexer_restart(
-            subgraph_end_word >> line_space.repeat >> (newline | eof)
+            subgraph_end_word >> line_space.repeat >> (newline | eof),
           )
         end
 

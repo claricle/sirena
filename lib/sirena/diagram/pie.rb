@@ -95,7 +95,7 @@ module Sirena
         slices.map do |slice|
           {
             slice: slice,
-            percentage: slice.percentage(total)
+            percentage: slice.percentage(total),
           }
         end
       end

@@ -652,7 +652,7 @@ module Sirena
           source_point,
           target_point,
           rel_type,
-          group
+          group,
         )
 
         # Render cardinality markers
@@ -665,7 +665,7 @@ module Sirena
             target_point,
             card_from,
             :source,
-            group
+            group,
           )
         end
         if card_to
@@ -674,7 +674,7 @@ module Sirena
             source_point,
             card_to,
             :target,
-            group
+            group,
           )
         end
 

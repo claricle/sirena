@@ -44,7 +44,7 @@ RSpec.describe Sirena::Source do
   describe ".split" do
     it "separates a frontmatter block from the body" do
       result = described_class.split(
-        "---\ntitle: My Chart\n---\nflowchart LR\n  A-->B\n"
+        "---\ntitle: My Chart\n---\nflowchart LR\n  A-->B\n",
       )
 
       expect(result[:frontmatter]).to eq("title: My Chart\n")
@@ -53,7 +53,7 @@ RSpec.describe Sirena::Source do
 
     it "separates a %%{init}%% directive from the body" do
       result = described_class.split(
-        %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n)
+        %(%%{init: {"theme":"base"}}%%\nsequenceDiagram\n  A->>B: m\n),
       )
 
       expect(result[:directives])
@@ -123,7 +123,7 @@ RSpec.describe Sirena::Source do
         # into labels and geometry downstream — they broke every passing
         # user_journey case when a source used CRLF.
         result = described_class.split(
-          "---\r\ntitle: T\r\n---\r\nflowchart LR\r\n  A-->B\r\n"
+          "---\r\ntitle: T\r\n---\r\nflowchart LR\r\n  A-->B\r\n",
         )
 
         expect(result[:body]).to eq("flowchart LR\n  A-->B\n")
@@ -137,7 +137,7 @@ RSpec.describe Sirena::Source do
 
       it "splits a directive" do
         result = described_class.split(
-          "%%{init: {}}%%\r\nflowchart LR\r\n  A-->B\r\n"
+          "%%{init: {}}%%\r\nflowchart LR\r\n  A-->B\r\n",
         )
 
         expect(result[:directives]).to eq(["%%{init: {}}%%"])
@@ -153,7 +153,7 @@ RSpec.describe Sirena::Source do
         "a bare marker" => "%%",
         "an empty directive" => "%%{}%%",
         "a whitespace directive" => "%%{  }%%",
-        "a directive with no header" => "%%{!}%%"
+        "a directive with no header" => "%%{!}%%",
       }.each do |label, preamble|
         it "refuses #{label} before a flowchart" do
           source = "#{preamble}\nflowchart LR\n  A-->B\n"
@@ -226,7 +226,7 @@ RSpec.describe Sirena::Source do
         "between two comments" => "%% one\n\n%% two\nflowchart LR\n  A-->B\n",
         "before the body" => "%% one\n\n\nflowchart LR\n  A-->B\n",
         "after frontmatter" =>
-          "---\ntitle: T\n---\n\n\nflowchart LR\n  A-->B\n"
+          "---\ntitle: T\n---\n\n\nflowchart LR\n  A-->B\n",
       }.each do |label, source|
         it "consumes a blank line #{label}" do
           expect(described_class.split(source)[:body])
@@ -369,7 +369,7 @@ RSpec.describe Sirena::Source do
         # mmdc takes this. The 44 damaged corpus cases are the MISMATCHED
         # shape, not this one — checked: 44 unequal, 1 equal.
         result = described_class.split(
-          "  ---\n  title: T\n  ---\n  flowchart LR\n  A --> B\n"
+          "  ---\n  title: T\n  ---\n  flowchart LR\n  A --> B\n",
         )
 
         expect(result[:frontmatter]).to eq("title: T\n")
@@ -419,7 +419,7 @@ RSpec.describe Sirena::Source do
         "a comment" => "%% a\n",
         "a blank line" => "\n",
         "a directive" => "%%{init: {}}%%\n",
-        "a byte order mark" => "\uFEFF"
+        "a byte order mark" => "\uFEFF",
       }.each do |label, before|
         it "strips it, reads no title and marks it behind #{label}" do
           source = "#{before}---\ntitle: T\n---\nflowchart LR\n  A-->B\n"
@@ -475,7 +475,7 @@ RSpec.describe Sirena::Source do
         "a bare comment" => "%%\n",
         "a headerless directive" => "%%{}%%\n",
         "a comment then a bare one" => "%% a\n%%\n",
-        "a bare comment then a comment" => "%%\n%% a\n"
+        "a bare comment then a comment" => "%%\n%% a\n",
       }.each do |label, before|
         it "leaves the fence in the body behind #{label}" do
           source = %(#{before}---\ntitle: T\n---\npie\n  "A" : 10\n)
@@ -638,7 +638,7 @@ RSpec.describe Sirena::Source do
         # ...and the same for the other quoting styles, so the rows pin
         # the claim the comment actually makes rather than one style of it.
         %(title: !!bool 'false') => nil,
-        "title: !!bool |-\n  false" => nil
+        "title: !!bool |-\n  false" => nil,
       }.each do |yaml, drawn|
         it "resolves #{yaml.inspect} to #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)
@@ -682,7 +682,7 @@ RSpec.describe Sirena::Source do
         "x: !!float nope\ntitle: T",
         "x: !custom v\ntitle: T",
         "x:\n  y: !!int nope\ntitle: T",
-        "x: [!!int nope]\ntitle: T"
+        "x: [!!int nope]\ntitle: T",
       ].each do |yaml|
         it "refuses #{yaml.inspect} even though the title is fine" do
           expect { described_class.title(yaml) }
@@ -732,7 +732,7 @@ RSpec.describe Sirena::Source do
         "title: [0, false, null]" => "0,false,",
         "title: [[a, b], c]" => "a,b,c",
         "title: [a, [b, [c]]]" => "a,b,c",
-        "title: [{a: 1}]" => "[object Object]"
+        "title: [{a: 1}]" => "[object Object]",
       }.each do |yaml, drawn|
         it "joins #{yaml.inspect} into #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)
@@ -760,7 +760,7 @@ RSpec.describe Sirena::Source do
         "? {a: 1}\n: c\n? {b: 2}\n: d\ntitle: T",
         %(1: a\n"1": b\ntitle: T),
         %(true: a\n"true": b\ntitle: T),
-        %(~: a\n"null": b\ntitle: T)
+        %(~: a\n"null": b\ntitle: T),
       ].each do |yaml|
         it "refuses #{yaml.inspect}" do
           expect { described_class.title(yaml) }
@@ -809,7 +809,7 @@ RSpec.describe Sirena::Source do
         "title: 1.5e-7" => "1.5e-7",
         "title: 9007199254740993" => "9007199254740992",
         "title: 18446744073709551615" => "18446744073709552000",
-        "title: 123456789012345678901234" => "1.2345678901234569e+23"
+        "title: 123456789012345678901234" => "1.2345678901234569e+23",
       }.each do |yaml, drawn|
         it "prints #{yaml.inspect} as #{drawn.inspect}" do
           expect(described_class.title(yaml)).to eq(drawn)

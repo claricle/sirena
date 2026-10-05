@@ -240,7 +240,7 @@ module Sirena
           [x + width / 2, y + height / 2],
           [x + width / 2 - offset, y + height],
           [x - width / 2 + offset, y + height],
-          [x - width / 2, y + height / 2]
+          [x - width / 2, y + height / 2],
         ]
 
         points_str = points.map { |p| p.join(",") }.join(" ")
@@ -356,7 +356,7 @@ module Sirena
           theme_color(:accent) || "#db2777",
           "#ea580c",
           "#16a34a",
-          "#0891b2"
+          "#0891b2",
         ]
 
         colors[level % colors.length]

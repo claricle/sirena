@@ -34,7 +34,7 @@ RSpec.describe Sirena::ChangelogCheck do
       ["patch", "0.1.9"] => "0.1.10",
       ["minor", "0.1.9"] => "0.2.0",
       ["major", "0.1.9"] => "1.0.0",
-      ["0.4.2", "0.1.9"] => "0.4.2"
+      ["0.4.2", "0.1.9"] => "0.4.2",
     }.each do |(input, current), expected|
       it "maps #{input} from #{current} to #{expected}" do
         expect(described_class.target_version(input, current)).to eq(expected)

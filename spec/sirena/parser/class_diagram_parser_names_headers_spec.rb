@@ -20,7 +20,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "a letter that is not Unicode L" => ["class ᢅ", "ᢅ"],
       "a dotted name" => ["class A.B.C", "A.B.C"],
       "a backticked standalone class" => ["`Car`", "Car"],
-      "a hyphenated standalone class" => ["Ca-r", "Ca-r"]
+      "a hyphenated standalone class" => ["Ca-r", "Ca-r"],
     }.each do |name, (statement, id)|
       it "reads #{name} as the id #{id.inspect}" do
         diagram = parser.parse("classDiagram\n#{statement}\n")
@@ -71,7 +71,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "a fullwidth digit" => "class １",
       "a superscript digit" => "class ²",
       "an astral letter" => "class \u{10400}",
-      "a letter newer than mermaid's table" => "class ՠ"
+      "a letter newer than mermaid's table" => "class ՠ",
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }
@@ -152,7 +152,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "a generic first written on a later declaration" => ["class A\nclass A~T~\n", %w[A]],
       "a generic first written on a later colon member" => ["A --> B\nB~T~ : +x\n", %w[A B]],
       "a label written after the generic" => ["A~T~ --> B\nclass A[\"Label\"]\n", %w[Label B]],
-      "both ends of one relationship" => ["A~T~ --> A~U~\n", %w[A~T~]]
+      "both ends of one relationship" => ["A~T~ --> A~U~\n", %w[A~T~]],
     }.each do |name, (body, names)|
       it "follows mmdc, which only reads the generic that creates the class: #{name}" do
         diagram = parser.parse("classDiagram\n#{body}")
@@ -184,7 +184,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "with a label and a body" => "class C1[\"L\"]:::s {\n+x\n}",
       "on a backticked name" => "class `A`:::s",
       "starting with a digit" => "class A:::1s",
-      "starting with an underscore" => "class A:::_s"
+      "starting with an underscore" => "class A:::_s",
     }.each do |name, statement|
       it "parses it #{name} as one class" do
         diagram = parser.parse("classDiagram\n#{statement}\n")
@@ -223,7 +223,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "a hyphen in the name" => "class A:::s-t",
       "a dot in the name" => "class A:::s.t",
       "a quoted name" => 'class A:::"s"',
-      "the shorthand on a bare class" => "A:::s"
+      "the shorthand on a bare class" => "A:::s",
     }.each do |name, statement|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse("classDiagram\n#{statement}\n") }
@@ -264,7 +264,7 @@ RSpec.describe Sirena::Parser::ClassDiagram, "#parse names and headers" do
       "a backticked class glued to the header" => "classDiagram`A`\n",
       "a backticked class after the header on its line" => "classDiagram `A`\n",
       "a comment on the v2 header line" => "classDiagram-v2 %%x\nclass A\n",
-      "a comment on the plain header line" => "classDiagram %%x\nclass A\n"
+      "a comment on the plain header line" => "classDiagram %%x\nclass A\n",
     }.each do |name, source|
       it "rejects #{name}, as mmdc does" do
         expect { parser.parse(source) }

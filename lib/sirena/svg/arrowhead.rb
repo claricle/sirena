@@ -116,7 +116,7 @@ module Sirena
 
         Polygon.new.tap do |polygon|
           polygon.points = Polygon.build_points(
-            coordinates.map { |x, y| [Numbers.write(x), Numbers.write(y)] }
+            coordinates.map { |x, y| [Numbers.write(x), Numbers.write(y)] },
           )
           polygon.fill = path.stroke
           # The head is painted where the line's stroke would have been, so

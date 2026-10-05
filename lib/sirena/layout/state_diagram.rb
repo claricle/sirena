@@ -27,7 +27,7 @@ module Sirena
           id: diagram.id || 'state_diagram',
           children: transform_states(diagram),
           edges: transform_transitions(diagram),
-          layoutOptions: layout_options(diagram)
+          layoutOptions: layout_options(diagram),
         }
       end
 
@@ -45,8 +45,8 @@ module Sirena
             metadata: {
               state_type: state.state_type,
               shape_type: state_shape_type(state),
-              description: state.description
-            }
+              description: state.description,
+            },
           }
         end
       end
@@ -62,8 +62,8 @@ module Sirena
             labels: transition_labels(transition),
             metadata: {
               trigger: transition.trigger,
-              guard_condition: transition.guard_condition
-            }
+              guard_condition: transition.guard_condition,
+            },
           }
         end
       end
@@ -72,12 +72,12 @@ module Sirena
         state_texts(state).each_with_index.map do |text, index|
           text_dims = measure_text(
             text,
-            font_size: index.zero? ? DEFAULT_FONT_SIZE : DEFAULT_FONT_SIZE - 2
+            font_size: index.zero? ? DEFAULT_FONT_SIZE : DEFAULT_FONT_SIZE - 2,
           )
           {
             text: text,
             width: text_dims[:width],
-            height: text_dims[:height]
+            height: text_dims[:height],
           }
         end
       end
@@ -92,8 +92,8 @@ module Sirena
           {
             text: label,
             width: label_dims[:width],
-            height: label_dims[:height]
-          }
+            height: label_dims[:height],
+          },
         ]
       end
 
@@ -102,7 +102,7 @@ module Sirena
         label_text = texts.first || state.id
         label_dims = measure_text(
           label_text,
-          font_size: DEFAULT_FONT_SIZE
+          font_size: DEFAULT_FONT_SIZE,
         )
 
         # Adjust dimensions based on state type
@@ -116,7 +116,7 @@ module Sirena
                      else
                        calculate_normal_state_dimensions(
                          label_dims,
-                         texts.drop(1)
+                         texts.drop(1),
                        )
                      end
 
@@ -124,7 +124,7 @@ module Sirena
           width: state_dims[:width],
           height: state_dims[:height],
           label_width: label_dims[:width],
-          label_height: label_dims[:height]
+          label_height: label_dims[:height],
         }
       end
 
@@ -168,7 +168,7 @@ module Sirena
         # Start and end states are small circles
         {
           width: 30,
-          height: 30
+          height: 30,
         }
       end
 
@@ -177,7 +177,7 @@ module Sirena
         size = [label_dims[:width], label_dims[:height]].max + 40
         {
           width: size,
-          height: size
+          height: size,
         }
       end
 
@@ -185,7 +185,7 @@ module Sirena
         # Fork and join are represented as thick bars
         {
           width: 100,
-          height: 10
+          height: 10,
         }
       end
 
@@ -197,7 +197,7 @@ module Sirena
         descriptions.each do |description|
           desc_dims = measure_text(
             description,
-            font_size: DEFAULT_FONT_SIZE - 2
+            font_size: DEFAULT_FONT_SIZE - 2,
           )
           height += desc_dims[:height] + 10
           width = [width, desc_dims[:width] + 40].max
@@ -209,7 +209,7 @@ module Sirena
 
         {
           width: width,
-          height: height
+          height: height,
         }
       end
 
@@ -225,7 +225,7 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 40,
           ElkOptions::EDGE_EDGE_SPACING => 30,
           # SIMPLE node placement for predictable state flow
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE'
+          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
         )
       end
 

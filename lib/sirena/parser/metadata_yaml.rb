@@ -94,7 +94,7 @@ module Sirena
       # so `NULL` is null and mermaid keeps the old label where a JSON
       # reading would have set the string "NULL".
       JSON_WORDS = BOOL_WORDS.merge(
-        NULL_WORDS.to_h { |word| [word, nil] }
+        NULL_WORDS.to_h { |word| [word, nil] },
       ).freeze
 
       # Numbers carry a sign, group digits with `_`, and come in base 2, 8

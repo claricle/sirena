@@ -57,7 +57,7 @@ RSpec.describe Sirena::Diagram::Architecture do
           group("b", parent_id: "a"),
           group("c", parent_id: "b"),
         ],
-        services: [service("s1", group_id: "a")]
+        services: [service("s1", group_id: "a")],
       )
 
       expect(diagram.valid?).to be false

@@ -84,7 +84,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     it 'raises ParseError for invalid syntax' do
       source = 'invalid syntax'
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError
+        Sirena::Parser::ParseError,
       )
     end
   end

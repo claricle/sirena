@@ -126,7 +126,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "clips a visible path to the node outline at each end" do
       xml = Sirena.render(
         "flowchart LR\n  A --x B\n",
-        theme: { colors: { node_fill: "none", edge_stroke: "#000000" } }
+        theme: { colors: { node_fill: "none", edge_stroke: "#000000" } },
       )
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m]
       points = group[/<path[^>]*d="([^"]*)"/, 1]
@@ -163,7 +163,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     {
       "---" => ["2.0", nil],
       "===" => ["3.0", nil],
-      "-.-" => ["2.0", "2,2"]
+      "-.-" => ["2.0", "2,2"],
     }.each do |link, (weight, dashes)|
       it "draws #{link} with the right weight and pattern" do
         path = edge_path(link)
@@ -214,7 +214,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       "x--x" => [0, 4, 0],
       "<-->" => [2, 0, 0],
       "-.-o" => [0, 0, 1],
-      "==x" => [0, 2, 0]
+      "==x" => [0, 2, 0],
     }.each do |link, (polygons, lines, circles)|
       it "draws #{link} with its own head" do
         group = edge_group(link)
@@ -306,12 +306,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 300, y: 300, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "cross" } }]
+                  metadata: { arrow_type: "cross" } }],
       }
       xml = described_class.new.render(graph).to_xml
       arms = xml.scan(
         /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*
-         x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x
+         x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x,
       ).map { |a| a.map(&:to_f) }
 
       # A diagonal edge turns both arms square to the screen; a cross drawn
@@ -347,7 +347,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                      { id: "B", x: 20, y: 200, width: 0, height: 0,
                        metadata: { shape: shape } }],
           edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                    metadata: { arrow_type: "arrow" } }]
+                    metadata: { arrow_type: "arrow" } }],
         }
         xml = described_class.new.render(graph).to_xml
 
@@ -367,7 +367,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                      { id: "B", x: 0, y: 0, width: 0, height: 20,
                        metadata: { shape: shape } }],
           edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                    metadata: { arrow_type: "arrow" } }]
+                    metadata: { arrow_type: "arrow" } }],
         }
         xml = described_class.new.render(graph).to_xml
         group = xml[%r{<g id="edge-A_to_B".*?</g>}m]
@@ -391,7 +391,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
 
@@ -412,7 +412,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                    { id: "B", x: 200, y: -40, width: 30, height: 100,
                      metadata: { shape: "stadium" } }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
       tip_x, tip_y = xml[/<polygon[^>]*points="(-?[\d.]+),(-?[\d.]+)/]
@@ -430,7 +430,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 200, height: 200 }],
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
                   metadata: { arrow_type: "arrow" } }],
-        layoutOptions: { "elk.direction" => "DOWN" }
+        layoutOptions: { "elk.direction" => "DOWN" },
       }
       xml = described_class.new.render(graph).to_xml
       corners = xml[/<path[^>]*d="([^"]*)"/, 1]
@@ -447,7 +447,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "circle" } }]
+                  metadata: { arrow_type: "circle" } }],
       }
       xml = described_class.new.render(graph).to_xml
 
@@ -464,7 +464,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 0, y: 0, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "cross" } }]
+                  metadata: { arrow_type: "cross" } }],
       }
       xml = described_class.new.render(graph).to_xml
       arms = xml[%r{<g id="edge-A_to_B".*?</g>}m]
@@ -491,7 +491,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 30, y: 70, width: 0, height: 0 }],
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
                   labels: [{ text: "x" }],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
       text = xml[%r{<g id="edge-A_to_A".*?</g>}m][/<text\b[^>]*>/].to_s
@@ -527,7 +527,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "draws the head in the edge colour, not the node's" do
       xml = Sirena.render(
         "flowchart TD\n  A --> B\n",
-        theme: { colors: { node_stroke: "#ff0000", edge_stroke: "#0000ff" } }
+        theme: { colors: { node_stroke: "#ff0000", edge_stroke: "#0000ff" } },
       )
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
@@ -570,13 +570,13 @@ RSpec.describe Sirena::Renderer::Flowchart do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 41, height: 21,
                      labels: [{ text: "A" }] }],
-        edges: []
+        edges: [],
       }
       xml = described_class.new.render(graph).to_xml
       group = xml[%r{<g id="node-A".*?</g>}m]
       x, y, width, height = group.match(
         /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*
-         width="([\d.]+)"[^>]*height="([\d.]+)"/x
+         width="([\d.]+)"[^>]*height="([\d.]+)"/x,
       ).captures.map(&:to_f)
 
       # The written `y` is the geometric centre PLUS the 0.35em `middle`
@@ -616,7 +616,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                    { id: "B", x: 200, y: 200, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   sections: [{ bendPoints: [{ x: 220, y: 0 }] }],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
       group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
@@ -638,7 +638,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 },
                    { id: "B", x: 200, y: 0, width: 40, height: 20 }],
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
       group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
@@ -661,7 +661,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
 
       expect(tips).to contain_exactly(
         be_within(0.5).of(node_span(xml, "A").last),
-        be_within(0.5).of(node_span(xml, "B").first)
+        be_within(0.5).of(node_span(xml, "B").first),
       )
     end
 
@@ -769,7 +769,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
                   sections: [{ bendPoints: [{ x: 80, y: 30 },
                                             { x: 80, y: -10 }] }],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
 
@@ -786,7 +786,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "keeps a loop label's own text clear of the page edge, not just its anchor" do
       { "BT" => :y, "RL" => :x }.each do |direction, axis|
         xml = Sirena.render(
-          "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n"
+          "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
         )
         # The cluster title and the node label both set `dominant-baseline`;
         # the edge label is the one text element that does not, which is
@@ -817,7 +817,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # reverting the bound back to an average reddens it.
     it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
       xml = Sirena.render(
-        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n"
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
         .find { |t| !t.include?("dominant-baseline") }
@@ -858,7 +858,9 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "draws a loop label at the small size when both are set" do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
-        theme: { typography: { font_size_small: 12.0, font_size_normal: 20.0 } }
+        theme: {
+          typography: { font_size_small: 12.0, font_size_normal: 20.0 },
+        },
       )
       group = xml[%r{<g id="edge-[^"]*".*?</g>}m].to_s
 
@@ -877,7 +879,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       view_box = lambda do |font_size_small|
         Sirena::Engine.new(
           theme: { typography: { font_size_small: font_size_small,
-                                 font_size_normal: 20.0 } }
+                                 font_size_normal: 20.0 } },
         ).render(source)[/viewBox="([^"]*)"/, 1]
       end
 
@@ -897,7 +899,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # code that clipped it.
     it "grows the page for a self loop's label reaching past the last box" do
       xml = Sirena.render(
-        "flowchart LR\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{'i' * 30}| s\n"
+        "flowchart LR\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{'i' * 30}| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
         .find { |t| !t.include?("dominant-baseline") }
@@ -925,7 +927,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # table.
     it "shifts a self loop far enough to clear an ordinary CJK label, not just ASCII" do
       xml = Sirena.render(
-        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{"\u{4E2D}" * 80}| s\n"
+        "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{"\u{4E2D}" * 80}| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
         .find { |t| !t.include?("dominant-baseline") }
@@ -956,7 +958,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # A long label widens the layout box without widening the drawn circle.
     it "starts a wide circle loop's depth at its drawn edge" do
       xml = Sirena.render(
-        "flowchart LR\n  A((a fairly long circle label)) --> A\n"
+        "flowchart LR\n  A((a fairly long circle label)) --> A\n",
       )
       circle = xml[%r{<g id="node-A".*?</g>}m][/<circle\b[^>]*>/]
       cx = circle[/\scx="(-?[\d.]+)"/, 1].to_f
@@ -1001,7 +1003,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # 50, which is the only place the ratio is the answer.
     it "spans 0.175 of the width where neither limit binds" do
       xml = Sirena.render(
-        "flowchart TD\n  A --> A[a label of some length here]\n"
+        "flowchart TD\n  A --> A[a label of some length here]\n",
       )
       centre_x, = node_centre(xml)
       width = node_rect(xml, "A")[2]
@@ -1017,7 +1019,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # Sirena pins it at 50.
     it "keeps a wide node's loop 50 either side of centre" do
       xml = Sirena.render(
-        "flowchart TD\n  A --> A[a very long label indeed goes here now]\n"
+        "flowchart TD\n  A --> A[a very long label indeed goes here now]\n",
       )
       centre_x, = node_centre(xml)
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }
@@ -1054,7 +1056,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       graph = {
         children: [{ id: "A", x: 0, y: 0, width: 40, height: 20 }],
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
-                  metadata: { arrow_type: "arrow" } }]
+                  metadata: { arrow_type: "arrow" } }],
       }
       xml = described_class.new.render(graph).to_xml
 
@@ -1136,7 +1138,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # answer puts this tip 4.0 out past the hexagon's sloped face.
     it "lands on a hexagon's sloped face" do
       xml = Sirena.render(
-        "flowchart TD\n  A --> B\n  B --> C\n  C --> D{{x}}\n"
+        "flowchart TD\n  A --> B\n  B --> C\n  C --> D{{x}}\n",
       )
 
       expect(gap_to(tip_of(xml, "C_to_D"), outline(xml, "D"))).to be_within(0.05).of(0)
@@ -1161,10 +1163,10 @@ RSpec.describe Sirena::Renderer::Flowchart do
       .each do |label, shape|
       it "lands on a #{shape} stadium's outline" do
         xml = Sirena.render(
-          "flowchart TD\n  A --> B\n  B --> C\n  C --> D([#{label}])\n"
+          "flowchart TD\n  A --> B\n  B --> C\n  C --> D([#{label}])\n",
         )
         rect = xml[%r{<g id="node-D".*?</g>}m].match(
-          /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/
+          /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/,
         )
         x, y, width, height = rect.captures.map(&:to_f)
         half_w = width / 2
@@ -1192,7 +1194,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render("flowchart TD\n  A(((x))) --> A\n")
       group = xml[%r{<g id="node-A".*?</g>}m]
       cx, cy, r = group.match(
-        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/
+        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/,
       ).captures.map(&:to_f)
       tip_x, tip_y = tip_of(xml, "A_to_A")
 
@@ -1202,7 +1204,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "lands on a rounded box's curved end" do
       xml = Sirena.render("flowchart TD\n  A --> B\n  B --> C\n  C --> D(x)\n")
       rect = xml[%r{<g id="node-D".*?</g>}m].match(
-        /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/
+        /<rect[^>]*x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/,
       )
       x, y, width, height = rect.captures.map(&:to_f)
       half_w = width / 2
@@ -1224,7 +1226,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       xml = Sirena.render("flowchart TD\n  A((x)) --> A\n")
       group = xml[%r{<g id="node-A".*?</g>}m]
       cx, cy, r = group.match(
-        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/
+        /<circle[^>]*cx="([-\d.]+)"[^>]*cy="([-\d.]+)"[^>]*r="([\d.]+)"/,
       ).captures.map(&:to_f)
       tip = tip_of(xml, "A_to_A")
 

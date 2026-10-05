@@ -71,7 +71,7 @@ module Sirena
           ['version', version],
           ['baseProfile', base_profile],
           ['xmlns', xmlns],
-          ['overflow', overflow]
+          ['overflow', overflow],
         ].each do |name, value|
           parts << Escaping.attribute(name, value) unless value.nil?
         end

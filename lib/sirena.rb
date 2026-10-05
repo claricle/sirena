@@ -66,7 +66,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Flowchart,
   transform: Sirena::Layout::Flowchart,
   renderer: Sirena::Renderer::Flowchart,
-  model: Sirena::Diagram::Flowchart
+  model: Sirena::Diagram::Flowchart,
 )
 
 # Load and register sequence diagram handlers
@@ -79,7 +79,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Sequence,
   transform: Sirena::Layout::Sequence,
   renderer: Sirena::Renderer::Sequence,
-  model: Sirena::Diagram::Sequence
+  model: Sirena::Diagram::Sequence,
 )
 
 # Load and register class diagram handlers
@@ -92,7 +92,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::ClassDiagram,
   transform: Sirena::Layout::ClassDiagram,
   renderer: Sirena::Renderer::ClassDiagram,
-  model: Sirena::Diagram::ClassDiagram
+  model: Sirena::Diagram::ClassDiagram,
 )
 
 # Load and register state diagram handlers
@@ -105,7 +105,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::StateDiagram,
   transform: Sirena::Layout::StateDiagram,
   renderer: Sirena::Renderer::StateDiagram,
-  model: Sirena::Diagram::StateDiagram
+  model: Sirena::Diagram::StateDiagram,
 )
 
 # Load and register ER diagram handlers
@@ -118,7 +118,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::ErDiagram,
   transform: Sirena::Layout::ErDiagram,
   renderer: Sirena::Renderer::ErDiagram,
-  model: Sirena::Diagram::ErDiagram
+  model: Sirena::Diagram::ErDiagram,
 )
 
 # Load and register user journey diagram handlers
@@ -131,7 +131,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::UserJourney,
   transform: Sirena::Layout::UserJourney,
   renderer: Sirena::Renderer::UserJourney,
-  model: Sirena::Diagram::UserJourney
+  model: Sirena::Diagram::UserJourney,
 )
 
 # Load and register pie chart diagram handlers
@@ -144,7 +144,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Pie,
   transform: Sirena::Layout::Pie,
   renderer: Sirena::Renderer::Pie,
-  model: Sirena::Diagram::Pie
+  model: Sirena::Diagram::Pie,
 )
 
 # Load and register Gantt chart diagram handlers
@@ -157,7 +157,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Gantt,
   transform: Sirena::Layout::Gantt,
   renderer: Sirena::Renderer::Gantt,
-  model: Sirena::Diagram::Gantt
+  model: Sirena::Diagram::Gantt,
 )
 
 # Load and register Timeline diagram handlers
@@ -170,7 +170,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Timeline,
   transform: Sirena::Layout::Timeline,
   renderer: Sirena::Renderer::Timeline,
-  model: Sirena::Diagram::Timeline
+  model: Sirena::Diagram::Timeline,
 )
 
 # Load and register Quadrant chart diagram handlers
@@ -183,7 +183,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Quadrant,
   transform: Sirena::Layout::Quadrant,
   renderer: Sirena::Renderer::Quadrant,
-  model: Sirena::Diagram::Quadrant
+  model: Sirena::Diagram::Quadrant,
 )
 
 # Load and register Git Graph diagram handlers
@@ -196,7 +196,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::GitGraph,
   transform: Sirena::Layout::GitGraph,
   renderer: Sirena::Renderer::GitGraph,
-  model: Sirena::Diagram::GitGraph
+  model: Sirena::Diagram::GitGraph,
 )
 
 # Load and register Mindmap diagram handlers
@@ -209,7 +209,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Mindmap,
   transform: Sirena::Layout::Mindmap,
   renderer: Sirena::Renderer::Mindmap,
-  model: Sirena::Diagram::Mindmap
+  model: Sirena::Diagram::Mindmap,
 )
 
 # Load and register Kanban diagram handlers
@@ -222,7 +222,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Kanban,
   transform: Sirena::Layout::Kanban,
   renderer: Sirena::Renderer::Kanban,
-  model: Sirena::Diagram::Kanban
+  model: Sirena::Diagram::Kanban,
 )
 
 # Load and register Radar chart diagram handlers
@@ -235,7 +235,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Radar,
   transform: Sirena::Layout::Radar,
   renderer: Sirena::Renderer::Radar,
-  model: Sirena::Diagram::Radar
+  model: Sirena::Diagram::Radar,
 )
 
 # Load and register Block diagram handlers
@@ -248,7 +248,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Block,
   transform: Sirena::Layout::Block,
   renderer: Sirena::Renderer::Block,
-  model: Sirena::Diagram::Block
+  model: Sirena::Diagram::Block,
 )
 
 
@@ -262,7 +262,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Requirement,
   transform: Sirena::Layout::Requirement,
   renderer: Sirena::Renderer::Requirement,
-  model: Sirena::Diagram::Requirement
+  model: Sirena::Diagram::Requirement,
 )
 
 # Load and register XY Chart diagram handlers
@@ -275,7 +275,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::XyChart,
   transform: Sirena::Layout::XyChart,
   renderer: Sirena::Renderer::XyChart,
-  model: Sirena::Diagram::XyChart
+  model: Sirena::Diagram::XyChart,
 )
 
 # Load and register Architecture diagram handlers
@@ -288,7 +288,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Architecture,
   transform: Sirena::Layout::Architecture,
   renderer: Sirena::Renderer::Architecture,
-  model: Sirena::Diagram::Architecture
+  model: Sirena::Diagram::Architecture,
 )
 
 # Load and register Sankey diagram handlers
@@ -301,7 +301,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Sankey,
   transform: Sirena::Layout::Sankey,
   renderer: Sirena::Renderer::Sankey,
-  model: Sirena::Diagram::Sankey
+  model: Sirena::Diagram::Sankey,
 )
 # Load and register Packet diagram handlers
 require_relative 'sirena/parser/packet'
@@ -313,7 +313,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Packet,
   transform: Sirena::Layout::Packet,
   renderer: Sirena::Renderer::Packet,
-  model: Sirena::Diagram::Packet
+  model: Sirena::Diagram::Packet,
 )
 
 # Load and register Treemap diagram handlers
@@ -326,7 +326,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Treemap,
   transform: Sirena::Layout::Treemap,
   renderer: Sirena::Renderer::Treemap,
-  model: Sirena::Diagram::Treemap
+  model: Sirena::Diagram::Treemap,
 )
 
 # Load and register C4 diagram handlers
@@ -339,7 +339,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::C4,
   transform: Sirena::Layout::C4,
   renderer: Sirena::Renderer::C4,
-  model: Sirena::Diagram::C4
+  model: Sirena::Diagram::C4,
 )
 
 # Load and register Info diagram handlers
@@ -352,7 +352,7 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Info,
   transform: Sirena::Layout::Info,
   renderer: Sirena::Renderer::Info,
-  model: Sirena::Diagram::Info
+  model: Sirena::Diagram::Info,
 )
 
 # Load and register Error diagram handlers
@@ -365,5 +365,5 @@ Sirena::DiagramRegistry.register(
   parser: Sirena::Parser::Error,
   transform: Sirena::Layout::Error,
   renderer: Sirena::Renderer::Error,
-  model: Sirena::Diagram::Error
+  model: Sirena::Diagram::Error,
 )

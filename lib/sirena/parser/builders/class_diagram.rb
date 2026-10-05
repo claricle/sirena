@@ -26,7 +26,7 @@ module Sirena
           '<|..' => 'realization',
           '..>' => 'dependency',
           '<..' => 'dependency',
-          '..' => 'association'
+          '..' => 'association',
         }.freeze
 
         # Operators where arrow points left (reverse direction)
@@ -44,7 +44,7 @@ module Sirena
         # #mixed_markers_for instead -- add a new combination there, not
         # as a hardcoded entry here.
         MIXED_MARKER_ENDPOINTS = {
-          'o..' => { start_marker: 'aggregation', end_marker: nil, dashed: true }
+          'o..' => { start_marker: 'aggregation', end_marker: nil, dashed: true },
         }.freeze
 
         # Marker glyph -> the marker type it draws, verified against
@@ -57,7 +57,7 @@ module Sirena
           '*' => 'composition',
           'o' => 'aggregation',
           '<' => 'dependency',
-          '>' => 'dependency'
+          '>' => 'dependency',
         }.freeze
 
         # Longest markers first so `<|`/`|>` win over the `<`/`>` they
@@ -84,7 +84,7 @@ module Sirena
           '+' => 'public',
           '-' => 'private',
           '#' => 'protected',
-          '~' => 'package'
+          '~' => 'package',
         }.freeze
 
         # Transform parse tree into Class diagram.
@@ -416,7 +416,7 @@ module Sirena
           {
             start_marker: MARKER_TYPES.fetch(match[:left]),
             end_marker: MARKER_TYPES.fetch(match[:right]),
-            dashed: match[:link] == '..'
+            dashed: match[:link] == '..',
           }
         end
 
