@@ -70,35 +70,29 @@ RSpec.describe Sirena::Commands::RenderCommand do
   # locale `File.read` and `$stdin.read` tag a UTF-8 file with the locale's
   # encoding, and `Source` would then transcode it from that encoding and
   # draw mojibake.
-  describe 'input under a non-UTF-8 locale' do
-    let(:cafe_path) do
-      File.join(dir, 'cafe.mmd').tap do |path|
-        File.binwrite(path, "pie title caf\u00e9\n  \"Dogs\" : 3\n")
-      end
-    end
+  describe "input under a non-UTF-8 locale" do
+    let(:cafe) { "pie title caf\u00e9\n  \"Dogs\" : 3\n" }
 
     # The matcher's capture buffer is made before the locale changes, so it
     # stays UTF-8 and the regexp can be matched against it.
-    [Encoding::ISO_8859_1, Encoding::EUC_JP, Encoding::Shift_JIS].each do |locale|
-      it "reads a file as UTF-8 under #{locale}" do
-        expect do
-          with_default_external(locale) { run_command.call(cafe_path, options) }
-        end.to output(/>caf\u00e9</).to_stdout
-      end
+    %w[ISO-8859-1 EUC-JP Shift_JIS].each do |locale|
+      context "with #{locale} as the locale" do
+        it "reads a file as UTF-8" do
+          path = File.join(dir, "cafe.mmd")
+          File.binwrite(path, cafe)
 
-      it "reads stdin as UTF-8 under #{locale}" do
-        original = $stdin
-        expect do
-          with_default_external(locale) do
-            reader, writer = IO.pipe
-            writer.write(File.binread(cafe_path))
-            writer.close
-            $stdin = reader
-            run_command.call('-', options)
-          end
-        end.to output(/>caf\u00e9</).to_stdout
-      ensure
-        $stdin = original
+          expect do
+            with_default_external(locale) { run_command.call(path, options) }
+          end.to output(/>caf\u00e9</).to_stdout
+        end
+
+        it "reads stdin as UTF-8" do
+          expect do
+            with_default_external(locale) do
+              with_stdin(cafe) { run_command.call("-", options) }
+            end
+          end.to output(/>caf\u00e9</).to_stdout
+        end
       end
     end
   end

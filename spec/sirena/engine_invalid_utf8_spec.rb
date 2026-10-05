@@ -6,35 +6,48 @@ require "spec_helper"
 # spec swaps it for bytes that are not valid UTF-8 and holds the engine to the
 # one thing mmdc does with them: node decodes the file as UTF-8, every invalid
 # run becomes U+FFFD, and the diagram is drawn from the decoded text.
-module EngineInvalidUtf8SpecHelpers
+module InvalidUtf8Helpers
   # One minimal, valid source per registered type. `§` marks the slot the
   # invalid bytes go into; where a type's grammar refuses a non-ASCII word
   # (sankey) the slot is a `%%` comment, so the render still succeeds.
+  def self.lines(*rows)
+    "#{rows.join("\n")}\n"
+  end
+
   SOURCES = {
-    flowchart: "flowchart LR\n  A[§]-->B\n",
-    sequence: "sequenceDiagram\n  Alice->>Bob: §\n",
-    class_diagram: "classDiagram\n  class Animal {\n    +String name§\n  }\n",
-    state_diagram: "stateDiagram-v2\n  [*] --> Still\n  Still --> Moving: §\n",
-    er_diagram: "erDiagram\n  CUSTOMER ||--o{ ORDER : \"§\"\n",
-    user_journey: "journey\n  title §\n  section Work\n    Task: 5: Me\n",
-    pie: "pie title §\n  \"Dogs\" : 5\n  \"Cats\" : 3\n",
-    gantt: "gantt\n  title §\n  dateFormat YYYY-MM-DD\n  section S\n  Task :a1, 2024-01-01, 3d\n",
-    timeline: "timeline\n  title §\n  2002 : LinkedIn\n",
-    quadrant: "quadrantChart\n  title §\n  x-axis Low --> High\n  y-axis Low --> High\n  A: [0.3, 0.6]\n",
-    git_graph: "gitGraph\n  commit id: \"a§\"\n  commit\n",
-    mindmap: "mindmap\n  root((§))\n    child\n",
-    kanban: "kanban\n  todo[§]\n    t1[Task]\n",
-    radar: "radar-beta\n  title §\n  axis a, b, c\n  curve k{1, 2, 3}\n",
-    block: "block-beta\n  columns 2\n  a[\"§\"]\n  b\n",
-    requirement: "requirementDiagram\n  requirement r {\n    id: 1\n    text: §\n    risk: high\n    verifymethod: test\n  }\n",
-    xychart: "xychart-beta\n  title \"§\"\n  x-axis [a, b]\n  bar [1, 2]\n",
-    architecture: "architecture-beta\n  service db(database)[§]\n",
-    sankey: "sankey-beta\n%% §\nA,B,10\n",
-    packet: "packet-beta\n  0-15: \"§\"\n",
-    treemap: "treemap-beta\n  \"§\"\n    \"Leaf\": 10\n",
-    c4: "C4Context\n  title §\n  Person(a, \"Alice\")\n",
-    info: "%% §\ninfo\n",
-    error: "%% §\nerror\n"
+    flowchart: lines("flowchart LR", "  A[§]-->B"),
+    sequence: lines("sequenceDiagram", "  Alice->>Bob: §"),
+    class_diagram: lines("classDiagram", "  class Animal {",
+                         "    +String name§", "  }"),
+    state_diagram: lines("stateDiagram-v2", "  [*] --> Still",
+                         "  Still --> Moving: §"),
+    er_diagram: lines("erDiagram", '  CUSTOMER ||--o{ ORDER : "§"'),
+    user_journey: lines("journey", "  title §", "  section Work",
+                        "    Task: 5: Me"),
+    pie: lines("pie title §", '  "Dogs" : 5', '  "Cats" : 3'),
+    gantt: lines("gantt", "  title §", "  dateFormat YYYY-MM-DD",
+                 "  section S", "  Task :a1, 2024-01-01, 3d"),
+    timeline: lines("timeline", "  title §", "  2002 : LinkedIn"),
+    quadrant: lines("quadrantChart", "  title §", "  x-axis Low --> High",
+                    "  y-axis Low --> High", "  A: [0.3, 0.6]"),
+    git_graph: lines("gitGraph", '  commit id: "a§"', "  commit"),
+    mindmap: lines("mindmap", "  root((§))", "    child"),
+    kanban: lines("kanban", "  todo[§]", "    t1[Task]"),
+    radar: lines("radar-beta", "  title §", "  axis a, b, c",
+                 "  curve k{1, 2, 3}"),
+    block: lines("block-beta", "  columns 2", '  a["§"]', "  b"),
+    requirement: lines("requirementDiagram", "  requirement r {",
+                       "    id: 1", "    text: §", "    risk: high",
+                       "    verifymethod: test", "  }"),
+    xychart: lines("xychart-beta", '  title "§"', "  x-axis [a, b]",
+                   "  bar [1, 2]"),
+    architecture: lines("architecture-beta", "  service db(database)[§]"),
+    sankey: lines("sankey-beta", "%% §", "A,B,10"),
+    packet: lines("packet-beta", '  0-15: "§"'),
+    treemap: lines("treemap-beta", '  "§"', '    "Leaf": 10'),
+    c4: lines("C4Context", "  title §", '  Person(a, "Alice")'),
+    info: lines("%% §", "info"),
+    error: lines("%% §", "error"),
   }.freeze
 
   # Invalid byte runs and how many U+FFFD node's decoder (and so mmdc)
@@ -46,7 +59,7 @@ module EngineInvalidUtf8SpecHelpers
     "a truncated three-byte sequence" => ["\xE2\x82", 1],
     "an overlong two-byte sequence" => ["\xC0\xAF", 2],
     "an encoded surrogate" => ["\xED\xA0\x80", 3],
-    "a code point past U+10FFFF" => ["\xF4\x90\x80\x80", 4]
+    "a code point past U+10FFFF" => ["\xF4\x90\x80\x80", 4],
   }.freeze
 
   def with_slot(source, filler)
@@ -60,51 +73,63 @@ module EngineInvalidUtf8SpecHelpers
     [e.class, e.message]
   end
   module_function :outcome
+
+  def svg_kinds(slot)
+    Sirena::DiagramRegistry.types.to_h do |type|
+      [type, outcome(with_slot(SOURCES.fetch(type), slot)).first]
+    end
+  end
+  module_function :svg_kinds
 end
 
 RSpec.describe Sirena::Engine do
-  it "renders a source with invalid bytes for every registered diagram type" do
-    # A type registered without a row in SOURCES raises KeyError here, so a new
-    # type cannot slip past this file's claim.
-    rendered = Sirena::DiagramRegistry.types.to_h do |type|
-      [type, EngineInvalidUtf8SpecHelpers.outcome(
-        EngineInvalidUtf8SpecHelpers.with_slot(EngineInvalidUtf8SpecHelpers::SOURCES.fetch(type), "\xFF")
-      ).first]
-    end
+  include InvalidUtf8Helpers
 
-    expect(rendered).to eq(Sirena::DiagramRegistry.types.to_h { |type| [type, :svg] })
+  it "renders a source with invalid bytes for every registered type" do
+    # A type registered without a row in SOURCES raises KeyError here, so a
+    # new type cannot slip past this file's claim.
+    expected = Sirena::DiagramRegistry.types.to_h { |type| [type, :svg] }
+
+    expect(svg_kinds("\xFF")).to eq(expected)
   end
 
-  EngineInvalidUtf8SpecHelpers::SOURCES.each do |type, source|
+  InvalidUtf8Helpers::SOURCES.each do |type, source|
     describe "#render of #{type} with invalid UTF-8 bytes" do
       it "reads a BINARY string as UTF-8, the way mmdc reads a file" do
-        binary = EngineInvalidUtf8SpecHelpers.with_slot(source, "\xFF").force_encoding(Encoding::BINARY)
-        decoded = EngineInvalidUtf8SpecHelpers.with_slot(source, "\uFFFD")
+        binary = with_slot(source, "\xFF")
+          .force_encoding(Encoding::BINARY)
+        decoded = with_slot(source, "\uFFFD")
 
-        expect(EngineInvalidUtf8SpecHelpers.outcome(binary))
-          .to eq(EngineInvalidUtf8SpecHelpers.outcome(decoded))
+        expect(outcome(binary)).to eq(outcome(decoded))
       end
 
-      it "reads a US-ASCII string holding valid UTF-8, as `File.read` returns under LANG=C" do
-        ascii = EngineInvalidUtf8SpecHelpers.with_slot(source, "é").force_encoding(Encoding::US_ASCII)
-        utf8 = EngineInvalidUtf8SpecHelpers.with_slot(source, "é")
+      it "reads US-ASCII holding valid UTF-8, as `File.read` does in LANG=C" do
+        ascii = with_slot(source, "é")
+          .force_encoding(Encoding::US_ASCII)
+        utf8 = with_slot(source, "é")
 
-        expect(EngineInvalidUtf8SpecHelpers.outcome(ascii))
-          .to eq(EngineInvalidUtf8SpecHelpers.outcome(utf8))
+        expect(outcome(ascii)).to eq(outcome(utf8))
       end
 
-      EngineInvalidUtf8SpecHelpers::BYTE_RUNS.each do |name, (bytes, replacements)|
-        it "renders #{name} as #{replacements} U+FFFD, the way mmdc decodes it" do
-          invalid = EngineInvalidUtf8SpecHelpers.with_slot(source, bytes)
-          decoded = EngineInvalidUtf8SpecHelpers.outcome(
-            EngineInvalidUtf8SpecHelpers.with_slot(source, "\uFFFD" * replacements)
-          )
+      InvalidUtf8Helpers::BYTE_RUNS.each do |name, (bytes, replacements)|
+        context "with #{name}" do
+          let(:invalid) { with_slot(source, bytes) }
+          let(:decoded) do
+            outcome(with_slot(source, "\uFFFD" * replacements))
+          end
 
-          expect(invalid).not_to be_valid_encoding
-          # The first expectation is what makes the second a comparison of two
-          # renders rather than of two refusals.
-          expect(decoded.first).to eq(:svg)
-          expect(EngineInvalidUtf8SpecHelpers.outcome(invalid)).to eq(decoded)
+          it "is not valid UTF-8 to begin with" do
+            expect(invalid).not_to be_valid_encoding
+          end
+
+          # Without this, the next example would compare two refusals.
+          it "renders the decoded source, #{replacements} U+FFFD" do
+            expect(decoded.first).to eq(:svg)
+          end
+
+          it "renders the same as that decoded source" do
+            expect(outcome(invalid)).to eq(decoded)
+          end
         end
       end
     end
@@ -114,10 +139,10 @@ RSpec.describe Sirena::Engine do
   # wrote, and the first regexp the engine ran on the result raised.
   %w[CESU-8 UTF8-DoCoMo UTF8-KDDI UTF8-SoftBank].each do |name|
     it "renders a #{name} string holding an invalid run" do
-      source = EngineInvalidUtf8SpecHelpers.with_slot("flowchart LR\n  A-->B\n%% §\n", "\xEF\xC2\x80")
+      source = with_slot("flowchart LR\n  A-->B\n%% §\n", "\xEF\xC2\x80")
         .force_encoding(name)
 
-      expect(EngineInvalidUtf8SpecHelpers.outcome(source).first).to eq(:svg)
+      expect(outcome(source).first).to eq(:svg)
     end
   end
 end

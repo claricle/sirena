@@ -64,13 +64,15 @@ module BatchCommandRunner
   end
 
   # @return [Array(Sirena::Commands::BatchCommand, String)] the command
-  #   after #run, and everything the run printed to stdout
-  def batch_capture(input, output)
+  #   after #run, and everything the run printed to stdout. `locale` is
+  #   the default external encoding for the run; the capture buffer is made
+  #   before it changes, so the report's non-ASCII marks can still be written.
+  def batch_capture(input, output, locale: Encoding.default_external)
     captured = StringIO.new
     original = $stdout
     $stdout = captured
     command = Sirena::Commands::BatchCommand.new(input: input, output: output)
-    command.run
+    with_default_external(locale) { command.run }
     [command, captured.string]
   ensure
     $stdout = original
@@ -218,22 +220,21 @@ RSpec.describe Sirena::Commands::BatchCommand do
 
   # mmdc reads its input as UTF-8 whatever the locale; `File.read` tags a
   # file with the locale's encoding, which `Source` would then transcode.
-  [Encoding::ISO_8859_1, Encoding::EUC_JP, Encoding::Shift_JIS].each do |locale|
-    it "reads a UTF-8 file as UTF-8 under #{locale}" do
-      Dir.mktmpdir do |dir|
-        input = File.join(dir, 'cafe.mmd')
-        output = File.join(dir, 'out')
+  %w[ISO-8859-1 EUC-JP Shift_JIS].each do |locale|
+    context "with #{locale} as the locale" do
+      let(:dir) { Dir.mktmpdir }
+      let(:output) { File.join(dir, "out") }
+      let(:svg) do
+        input = File.join(dir, "cafe.mmd")
         File.binwrite(input, "pie title caf\u00e9\n  \"Dogs\" : 3\n")
+        batch_capture(input, output, locale: locale)
+        File.binread(File.join(output, "cafe.svg"))
+          .force_encoding(Encoding::UTF_8)
+      end
 
-        # The matcher's capture buffer is made before the locale changes, so
-        # the report's own non-ASCII marks can still be written to it.
-        expect do
-          with_default_external(locale) do
-            described_class.new(input: input, output: output).run
-          end
-        end.to output(/Success: 1/).to_stdout
+      after { FileUtils.remove_entry(dir) }
 
-        svg = File.binread(File.join(output, 'cafe.svg')).force_encoding(Encoding::UTF_8)
+      it "reads a UTF-8 file as UTF-8" do
         expect(svg).to include(">caf\u00e9<")
       end
     end
