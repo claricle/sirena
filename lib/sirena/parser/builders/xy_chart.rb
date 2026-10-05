@@ -11,7 +11,7 @@ module Sirena
         rule(title: { string: simple(:title) }) do
           { type: :title, title: title.to_s }
         end
-        
+
         # Transform values - keep as-is for now, will determine numeric vs categorical later
         rule(value: simple(:v)) do
           # Try to convert to number if it looks numeric, otherwise keep as string

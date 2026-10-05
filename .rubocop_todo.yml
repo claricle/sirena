@@ -178,21 +178,6 @@ Layout/SpaceAroundOperators:
     - 'lib/sirena/renderer/requirement.rb'
     - 'scripts/extract_mermaid_tests.rb'
 
-# Offense count: 176
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: final_newline, final_blank_line
-Layout/TrailingEmptyLines:
-  Enabled: false
-
-# Offense count: 4
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowInHeredoc.
-Layout/TrailingWhitespace:
-  Exclude:
-    - 'lib/sirena/parser/builders/c4.rb'
-    - 'lib/sirena/parser/builders/xy_chart.rb'
-
 # Offense count: 268
 # This cop supports safe autocorrection (--autocorrect).
 Lint/AmbiguousOperatorPrecedence:
