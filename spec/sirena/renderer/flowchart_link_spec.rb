@@ -683,7 +683,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       midpoint = (node_centre(xml, "A").first + node_centre(xml, "B").first) / 2
 
       expect(group[/<text[^>]*y="([-\d.]+)"/, 1].to_f).to eq(line - 5)
-      expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f).to eq(midpoint)
+      expect(group[/<text[^>]*x="([-\d.]+)"/, 1].to_f)
+        .to be_within(0.05).of(midpoint)
     end
   end
 
@@ -810,17 +811,16 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # pins a real number instead: Chrome's `getBBox()` on Sirena's own
     # rendered `<text fill="#000000" ... font-size="12.0">|WWWWWWWW|`
     # (ten characters, the label's own pipe delimiters included) reads
-    # 96.84375 wide, not the 60 `TextMeasurement`'s 0.5-per-character
-    # average predicts. A shift sized off that average left the label's
-    # real left edge at x=-18.421875 while its anchor sat safely at
-    # x=30 — this asserts against the pinned real half-width instead, so
-    # reverting the bound back to an average reddens it.
+    # 96.84375 wide, not the 60 a 0.5-per-character average predicts. A
+    # shift sized off that average left the label's real left edge at
+    # x=-18.421875 while its anchor sat safely at x=30 — this asserts
+    # against the pinned real half-width instead.
     it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| !t.include?("dominant-baseline") }
+        .find { |t| t.include?(">|WWWWWWWW|<") }
       anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
       real_half_width = 96.84375 / 2.0
 
@@ -911,7 +911,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     # The two specs above were measured only against ASCII, and the
-    # constant they defend (`WIDE_CHAR_WIDTH_RATIO`, then `1.0`) was
+    # width they defend (a per-character ratio, then `1.0`) was
     # never checked against a non-Latin script before shipping. It
     # failed on one: 80 repeats of a Han character — an ordinary, common
     # CJK label, not an adversarial one — plus the label's own pipe
@@ -937,8 +937,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
       expect(anchor_x - real_half_width).to be >= 0
     end
 
-    # No character-count ratio bounds every script — see
-    # `WIDE_CHAR_WIDTH_RATIO`'s own comment for the measured proof (a
+    # No character-count ratio bounds every script — see the OUTLIERS
+    # comment in `TextMeasurement` for the measured proof (a
     # single Arabic ligature codepoint renders at 6.49em, in the same
     # Unicode East-Asian-Width class as an ordinary Latin letter, so no
     # class-derived table catches it either). `overflow="hidden"` is
@@ -1015,11 +1015,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
         .to all(be_within(0.05).of(width * 0.175))
     end
 
-    # 296 wide here, so the ratio alone would reach 51.8 either side.
+    # 405.9 wide here, so the ratio alone would reach 71 either side.
     # Sirena pins it at 50.
     it "keeps a wide node's loop 50 either side of centre" do
       xml = Sirena.render(
-        "flowchart TD\n  A --> A[a very long label indeed goes here now]\n",
+        "flowchart TD\n  A --> A[a very long label indeed goes here now and " \
+        "then some more]\n",
       )
       centre_x, = node_centre(xml)
       corners = path_points(xml).select { |_cx, y| y > node_bottom(xml) }

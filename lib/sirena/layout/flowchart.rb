@@ -207,7 +207,7 @@ module Sirena
       end
 
       # A theme-supplied font size flows unchecked into TextMeasurement's
-      # box-size arithmetic (char_count * font_size * ratio). A non-finite
+      # box-size arithmetic (summed glyph advances times it). A non-finite
       # value (NaN, Infinity) raises deep inside Float comparison, and a
       # non-positive one produces an invalid negative SVG width -- both
       # unvalidated anywhere else on this path (Typography's font_size_*

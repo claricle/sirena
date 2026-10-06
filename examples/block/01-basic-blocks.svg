@@ -1,45 +1,45 @@
 <svg
- width="452.0"
+ width="468.478"
  height="180.0"
- viewBox="0 0 452.0 180"
+ viewBox="0 0 468.478 180"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="connection-Frontend-Backend">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 82.0 80 L 222.5 20"/>
-  <polygon fill="#000000" points="222.5,20.0 216.7137,26.8205 213.5718,19.4633"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 82.413 80 L 225.293 20"/>
+  <polygon fill="#000000" points="225.293,20.0 219.4657,26.7855 216.3682,19.4094"/>
 </g>
 <g id="connection-Backend-Database">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 222.5 80 L 351.0 20"/>
-  <polygon fill="#000000" points="351.0,20.0 345.4436,27.009 342.0589,19.7603"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 355.76 20"/>
+  <polygon fill="#000000" points="355.76,20.0 350.163,26.9767 346.8205,19.7084"/>
 </g>
 <g id="connection-Backend-Cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 222.5 80 L 222.5 100"/>
-  <polygon fill="#000000" points="222.5,100.0 218.5,92.0 226.5,92.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 224.894 100"/>
+  <polygon fill="#000000" points="224.894,100.0 221.0544,91.9218 229.0528,92.0814"/>
 </g>
 <g id="connection-Backend-Queue">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 222.5 80 L 366.5 100"/>
-  <polygon fill="#000000" points="366.5,100.0 358.0258,102.8614 359.1263,94.9375"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 225.293 80 L 377.119 100"/>
+  <polygon fill="#000000" points="377.119,100.0 368.6651,102.9209 369.7099,94.9894"/>
 </g>
 <g id="block-Frontend">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="20.0" width="124.0" height="60.0"/>
-  <text fill="#000000" x="82.0" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Frontend App</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="20.0" width="124.826" height="60.0"/>
+  <text fill="#000000" x="82.413" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Frontend App</text>
 </g>
 <g id="block-Backend">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="164.0" y="20.0" width="117.0" height="60.0"/>
-  <text fill="#000000" x="222.5" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Backend API</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="164.826" y="20.0" width="120.934" height="60.0"/>
+  <text fill="#000000" x="225.293" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Backend API</text>
 </g>
 <g id="block-Database">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="301.0" y="20.0" width="100.0" height="60.0"/>
-  <text fill="#000000" x="351.0" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="305.76" y="20.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="355.76" y="54.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
 </g>
 <g id="block-Cache">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="164.0" y="100.0" width="117.0" height="60.0"/>
-  <text fill="#000000" x="222.5" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Redis Cache</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="164.826" y="100.0" width="120.136" height="60.0"/>
+  <text fill="#000000" x="224.894" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Redis Cache</text>
 </g>
 <g id="block-Queue">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="301.0" y="100.0" width="131.0" height="60.0"/>
-  <text fill="#000000" x="366.5" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Message Queue</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="305.76" y="100.0" width="142.71800000000002" height="60.0"/>
+  <text fill="#000000" x="377.119" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Message Queue</text>
 </g>
 </svg>

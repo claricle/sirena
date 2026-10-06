@@ -306,4 +306,22 @@ RSpec.describe Sirena::Layout::Flowchart do
       end
     end
   end
+
+  # The renderer draws a node label as ONE <text>, and SVG collapses the
+  # newline in it to a space, so the box must fit the whole string. 301.78
+  # is Chrome's getComputedTextLength for this label at 14px Arial.
+  describe "a node label containing a newline" do
+    let(:source) do
+      "flowchart LR\n  " \
+        "C[\"plain one\nplain two is much longer than the first\"]\n"
+    end
+    let(:label) do
+      model = Sirena::Parser::Flowchart.new.parse(source)
+      transform.to_graph(model)[:children].first[:labels].first
+    end
+
+    it "is sized for the whole string drawn on one line" do
+      expect(label[:width]).to be_within(0.1).of(301.78)
+    end
+  end
 end

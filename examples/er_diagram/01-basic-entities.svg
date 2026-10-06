@@ -1,86 +1,86 @@
 <svg
- width="800.0"
+ width="809.6"
  height="470.0"
- viewBox="0 0 800 470"
+ viewBox="0 0 809.6 470"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="rel-USER_to_POST">
-  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="300.0" y2="170.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="217.54213590888125" y1="146.5543042429833" x2="222.45786409111875" y2="133.4456957570167"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.44569575701667" cy="167.54213590888125" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="299.6105594984034" y2="158.52610421165636"/>
-  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="300.0" y2="170.0"/>
-  <line stroke="#333333" stroke-width="2" x1="285.9550623364643" y1="164.7331483761741" x2="292.1621065009821" y2="178.3886455381132"/>
-  <text fill="#000000" x="260.0" y="150.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+  <line stroke="#333333" stroke-width="2" x1="238.0" y1="151.0936270653029" x2="300.0" y2="158.41070023603461" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="237.1795725700169" y1="158.04538215535976" x2="238.8204274299831" y2="144.14187197524606"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.04824490994315" cy="157.5902728060515" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="285.10338194987816" y1="156.65264145749939" x2="296.88001687389203" y2="147.36227710153912"/>
+  <line stroke="#333333" stroke-width="2" x1="285.10338194987816" y1="156.65264145749939" x2="300.0" y2="158.41070023603461"/>
+  <line stroke="#333333" stroke-width="2" x1="285.10338194987816" y1="156.65264145749939" x2="294.3937463058384" y2="168.42927638151323"/>
+  <text fill="#000000" x="269.0" y="149.75216365066876" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
 </g>
 <g id="rel-USER_to_COMMENT">
-  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="150.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="219.78797611351462" y1="146.99678825401767" x2="220.21202388648538" y2="133.00321174598233"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.0032117459823" cy="149.78797611351462" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.9298822032113" y2="139.2651926153136"/>
-  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="550.0" y2="150.0"/>
-  <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.2873527978941" y2="160.4686629907805"/>
-  <text fill="#000000" x="385.0" y="140.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+  <line stroke="#333333" stroke-width="2" x1="238.0" y1="141.8959257765228" x2="550.0" y2="148.1887858007261" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="237.85884274678176" y1="148.89450239108265" x2="238.14115725321824" y2="134.89734916196295"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.0014233854401" cy="148.04762854750786" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0030501116574" y1="147.88630597240132" x2="545.8213806125999" y2="137.49574654702008"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0030501116574" y1="147.88630597240132" x2="550.0" y2="148.1887858007261"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0030501116574" y1="147.88630597240132" x2="545.3936095370386" y2="158.70463647334373"/>
+  <text fill="#000000" x="394.0" y="140.04235578862443" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
 </g>
 <g id="rel-POST_to_COMMENT">
-  <line stroke="#333333" stroke-width="2" x1="470.0" y1="85.0" x2="550.0" y2="235.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="463.8235294117647" y1="88.29411764705883" x2="476.1764705882353" y2="81.70588235294117"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="546.7058823529412" cy="228.8235294117647" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="557.2912846770212" y2="226.13213011909338"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="550.0" y2="234.99999999999997"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="221.76470588235293" x2="538.5737522338478" y2="236.1148140887858"/>
-  <text fill="#000000" x="510.0" y="155.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">has</text>
+  <line stroke="#333333" stroke-width="2" x1="496.4" y1="161.8708609271523" x2="550.0" y2="157.4337748344371" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="496.97749485743117" y1="168.8469988049211" x2="495.8225051425688" y2="154.89472304938351"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.0238621222312" cy="158.01126969186828" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0511331190669" y1="158.67126381464678" x2="544.7465414120798" y2="147.22578182253406"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0511331190669" y1="158.67126381464678" x2="550.0" y2="157.4337748344371"/>
+  <line stroke="#333333" stroke-width="2" x1="535.0511331190669" y1="158.67126381464678" x2="546.4966151111796" y2="168.3666721076597"/>
+  <text fill="#000000" x="523.2" y="154.6523178807947" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">has</text>
 </g>
 <g id="rel-POST_to_CATEGORY">
-  <line stroke="#333333" stroke-width="2" x1="300.0" y1="255.0" x2="220.0" y2="225.0" stroke-dasharray="5,5"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.44569575701667" cy="252.54213590888125" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="302.4578640911187" y1="248.4456957570167" x2="297.5421359088813" y2="261.55430424298333"/>
-  <line stroke="#333333" stroke-width="2" x1="217.54213590888125" y1="231.5543042429833" x2="222.45786409111875" y2="218.4456957570167"/>
-  <text fill="#000000" x="260.0" y="235.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">belongs_to</text>
+  <line stroke="#333333" stroke-width="2" x1="300.0" y1="222.23404255319147" x2="220.0" y2="264.7872340425532" stroke-dasharray="5,5"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="293.81989327560507" cy="225.52133336403986" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="296.7127091891516" y1="216.0539358287965" x2="303.2872908108484" y2="228.41414927758643"/>
+  <line stroke="#333333" stroke-width="2" x1="223.2872908108484" y1="270.96734076694815" x2="216.7127091891516" y2="258.6071273181583"/>
+  <text fill="#000000" x="260.0" y="238.51063829787233" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">belongs_to</text>
 </g>
 <g id="rel-POST_to_TAG">
-  <line stroke="#333333" stroke-width="2" x1="385.0" y1="290.0" x2="385.0" y2="250.0" stroke-dasharray="5,5"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="385.0" cy="283.0" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="392.0" y1="290.0" x2="378.0" y2="290.0"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="385.0" cy="257.0" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="374.39339828220176" y2="254.3933982822018"/>
-  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="385.0" y2="250.0"/>
-  <line stroke="#333333" stroke-width="2" x1="385.0" y1="265.0" x2="395.6066017177982" y2="254.3933982822018"/>
-  <text fill="#000000" x="385.0" y="265.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">tagged_with</text>
+  <line stroke="#333333" stroke-width="2" x1="386.0153846153846" y1="290.0" x2="390.0769230769231" y2="250.0" stroke-dasharray="5,5"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="386.72251790081725" cy="283.03580855255734" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="392.9795760628273" y1="290.70713328543263" x2="379.05119316794196" y2="289.29286671456737"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="389.36978979149046" cy="256.96419144744266" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="388.5616374652817" y1="264.9232673873771" x2="379.08076262963334" y2="253.2994550888767"/>
+  <line stroke="#333333" stroke-width="2" x1="388.5616374652817" y1="264.9232673873771" x2="390.0769230769231" y2="250.00000000000003"/>
+  <line stroke="#333333" stroke-width="2" x1="388.5616374652817" y1="264.9232673873771" x2="400.1854497637821" y2="255.44239255172874"/>
+  <text fill="#000000" x="388.04615384615386" y="265.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">tagged_with</text>
 </g>
 <g id="rel-USER_to_LIKE">
-  <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="320.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="216.648035085236" y1="146.14526901040068" x2="223.351964914764" y2="133.85473098959932"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.8547309895993" cy="316.64803508523596" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="551.2220489298533" y2="308.5847231799181"/>
-  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="550.0" y2="320.0"/>
-  <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="541.0640612661574" y2="327.20770056336045"/>
-  <text fill="#000000" x="385.0" y="225.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">gives</text>
+  <line stroke="#333333" stroke-width="2" x1="238.0" y1="174.12666397741026" x2="550.0" y2="287.3981444130698" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="235.6112086710849" y1="180.7064569822775" x2="240.3887913289151" y2="167.54687097254302"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="543.4202069951327" cy="285.0093530841547" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="535.9004435609987" y1="282.2793058511089" x2="549.4899009897007" y2="275.92897934033044"/>
+  <line stroke="#333333" stroke-width="2" x1="535.9004435609987" y1="282.2793058511089" x2="550.0" y2="287.3981444130698"/>
+  <line stroke="#333333" stroke-width="2" x1="535.9004435609987" y1="282.2793058511089" x2="542.2507700717772" y2="295.86876327981093"/>
+  <text fill="#000000" x="394.0" y="225.76240419524004" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">gives</text>
 </g>
 <g id="rel-POST_to_LIKE">
-  <line stroke="#333333" stroke-width="2" x1="470.0" y1="170.0" x2="550.0" y2="320.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="463.8235294117647" y1="173.2941176470588" x2="476.1764705882353" y2="166.7058823529412"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="546.7058823529412" cy="313.8235294117647" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="557.2912846770212" y2="311.13213011909335"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="550.0" y2="320.0"/>
-  <line stroke="#333333" stroke-width="2" x1="542.9411764705883" y1="306.7647058823529" x2="538.5737522338478" y2="321.1148140887858"/>
-  <text fill="#000000" x="510.0" y="240.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+  <line stroke="#333333" stroke-width="2" x1="496.4" y1="230.96854304635764" x2="550.0" y2="264.24668874172187" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="492.70772471004136" y1="236.91556778005102" x2="500.0922752899586" y2="225.02151831266426"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="544.0529752663066" cy="260.55441345176325" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="537.256375570657" y1="256.33467026323905" x2="551.8621207405484" y2="252.91820893136455"/>
+  <line stroke="#333333" stroke-width="2" x1="537.256375570657" y1="256.33467026323905" x2="550.0" y2="264.24668874172187"/>
+  <line stroke="#333333" stroke-width="2" x1="537.256375570657" y1="256.33467026323905" x2="540.6728369025316" y2="270.94041543313045"/>
+  <text fill="#000000" x="523.2" y="242.60761589403975" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
 </g>
 <g id="rel-COMMENT_to_LIKE">
-  <line stroke="#333333" stroke-width="2" x1="635.0" y1="250.0" x2="635.0" y2="250.0" stroke-dasharray="5,5"/>
-  <line stroke="#333333" stroke-width="2" x1="635.0" y1="257.0" x2="635.0" y2="243.0"/>
-  <circle fill="none" stroke="#333333" stroke-width="2" cx="642.0" cy="250.0" r="5.0"/>
-  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="260.6066017177982"/>
-  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="635.0" y2="250.0"/>
-  <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="239.3933982822018"/>
-  <text fill="#000000" x="635.0" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+  <line stroke="#333333" stroke-width="2" x1="639.8" y1="250.0" x2="639.8" y2="250.0" stroke-dasharray="5,5"/>
+  <line stroke="#333333" stroke-width="2" x1="639.8" y1="257.0" x2="639.8" y2="243.0"/>
+  <circle fill="none" stroke="#333333" stroke-width="2" cx="646.8" cy="250.0" r="5.0"/>
+  <line stroke="#333333" stroke-width="2" x1="654.8" y1="250.0" x2="644.1933982822018" y2="260.6066017177982"/>
+  <line stroke="#333333" stroke-width="2" x1="654.8" y1="250.0" x2="639.8" y2="250.0"/>
+  <line stroke="#333333" stroke-width="2" x1="654.8" y1="250.0" x2="644.1933982822018" y2="239.3933982822018"/>
+  <text fill="#000000" x="639.8" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
 </g>
 <g id="entity-USER">
-  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="180.0"/>
-  <text fill="#000000" x="135.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">USER</text>
-  <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="220.0" y2="94.0"/>
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="188.0" height="180.0"/>
+  <text fill="#000000" x="144.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">USER</text>
+  <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="238.0" y2="94.0"/>
   <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
   <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">UK username string</text>
   <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK email string</text>
@@ -90,9 +90,9 @@
   <text fill="#000000" x="60.0" y="224.0" font-family="monospace" font-size="12">is_active boolean</text>
 </g>
 <g id="entity-POST">
-  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="170.0" height="240.0"/>
-  <text fill="#000000" x="385.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">POST</text>
-  <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="470.0" y2="94.0"/>
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="196.4" height="240.0"/>
+  <text fill="#000000" x="398.2" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">POST</text>
+  <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="496.4" y2="94.0"/>
   <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
   <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK user_id int</text>
   <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">FK category_id int</text>
@@ -105,9 +105,9 @@
   <text fill="#000000" x="310.0" y="278.0" font-family="monospace" font-size="12">view_count int</text>
 </g>
 <g id="entity-COMMENT">
-  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="170.0" height="200.0"/>
-  <text fill="#000000" x="635.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">COMMENT</text>
-  <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="720.0" y2="94.0"/>
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="179.6" height="200.0"/>
+  <text fill="#000000" x="639.8" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">COMMENT</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="729.6" y2="94.0"/>
   <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
   <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK post_id int</text>
   <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK user_id int</text>
@@ -135,9 +135,9 @@
   <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">UK slug string</text>
 </g>
 <g id="entity-LIKE">
-  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="170.0" height="140.0"/>
-  <text fill="#000000" x="635.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">LIKE</text>
-  <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="720.0" y2="294.0"/>
+  <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="179.6" height="140.0"/>
+  <text fill="#000000" x="639.8" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">LIKE</text>
+  <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="729.6" y2="294.0"/>
   <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
   <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">FK user_id int</text>
   <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">FK post_id int</text>

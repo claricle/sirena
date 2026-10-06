@@ -1,60 +1,60 @@
 <svg
- width="751.0"
+ width="750.258"
  height="564.0"
- viewBox="0 0 751.0 564.0"
+ viewBox="0 0 750.258 564.0"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
  overflow="hidden"
 >
 <g id="edge-A_to_B">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 115.0 67.0 L 300.0 67.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 109.6 67.0 L 300.0 67.0"/>
   <polygon fill="#000000" stroke="#000000" points="300.0,67.0 292.0,63.0 292.0,71.0"/>
 </g>
 <g id="edge-B_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 407.0 67.0 L 550.0 67.0" stroke-dasharray="2,2"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 401.6 67.0 L 550.0 67.0" stroke-dasharray="2,2"/>
   <polygon fill="#000000" stroke="#000000" points="550.0,67.0 542.0,63.0 542.0,71.0"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 561.8 84.0 L 101.0 257.4"/>
-  <polygon fill="#000000" stroke="#000000" points="101.0,257.4 109.9,258.3 107.1,250.8"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 560.9 84.0 L 104.9 256.6"/>
+  <polygon fill="#000000" stroke="#000000" points="104.9,256.6 113.8,257.5 111.0,250.0"/>
 </g>
 <g id="edge-E_to_F">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 365.0 267.0 L 550.0 267.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 364.2 267.0 L 550.0 267.0"/>
   <polygon fill="#000000" stroke="#000000" points="550.0,267.0 542.0,263.0 542.0,271.0"/>
-  <text fill="#000000" x="457.5" y="262.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
+  <text fill="#000000" x="457.1" y="262.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
 </g>
 <g id="edge-F_to_G">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 566.2 284.0 L 129.0 451.8"/>
-  <polygon fill="#000000" stroke="#000000" points="129.0,451.8 137.9,452.7 135.0,445.2"/>
-  <text fill="#000000" x="347.6" y="362.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 565.9 284.0 L 129.0 451.8"/>
+  <polygon fill="#000000" stroke="#000000" points="129.0,451.8 137.9,452.7 135.1,445.2"/>
+  <text fill="#000000" x="347.45" y="362.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
 </g>
 <g id="node-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="65.0" height="34.0"/>
-  <text fill="#000000" x="82.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Start</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="59.568" height="34.0"/>
+  <text fill="#000000" x="79.78399999999999" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Start</text>
 </g>
 <g id="node-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="107.0" height="34.0"/>
-  <text fill="#000000" x="353.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Solid Arrow</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="101.568" height="34.0"/>
+  <text fill="#000000" x="350.784" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Solid Arrow</text>
 </g>
 <g id="node-C">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="114.0" height="34.0"/>
-  <text fill="#000000" x="607.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Dotted Arrow</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="111.69" height="34.0"/>
+  <text fill="#000000" x="605.845" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Dotted Arrow</text>
 </g>
 <g id="node-D">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="51.0" height="34.0"/>
-  <text fill="#000000" x="75.5" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">End</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="54.906" height="34.0"/>
+  <text fill="#000000" x="77.453" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">End</text>
 </g>
 <g id="node-E">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="250.0" width="65.0" height="34.0"/>
-  <text fill="#000000" x="332.5" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Label</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="250.0" width="64.244" height="34.0"/>
+  <text fill="#000000" x="332.122" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Label</text>
 </g>
 <g id="node-F">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="250.0" width="121.0" height="34.0"/>
-  <text fill="#000000" x="610.5" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Labeled Arrow</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="250.0" width="120.258" height="34.0"/>
+  <text fill="#000000" x="610.129" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Labeled Arrow</text>
 </g>
 <g id="node-G">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="450.0" width="79.0" height="34.0"/>
-  <text fill="#000000" x="89.5" y="471.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Another</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="450.0" width="79.02799999999999" height="34.0"/>
+  <text fill="#000000" x="89.514" y="471.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Another</text>
 </g>
 </svg>

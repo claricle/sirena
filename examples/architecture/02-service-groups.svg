@@ -1,15 +1,15 @@
 <svg
- width="554.0"
+ width="550.0"
  height="350.0"
- viewBox="0 0 554.0 350"
+ viewBox="0 0 550 350"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
 <g id="group-api">
-  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="10.0" width="504.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
+  <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="10.0" width="500.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
   <text fill="#333" x="20.0" y="30.0" font-size="14" font-weight="bold">API Services</text>
-  <text fill="#666" x="484.0" y="35.0" font-size="20">☁</text>
+  <text fill="#666" x="480.0" y="35.0" font-size="20">☁</text>
 </g>
 <g id="group-storage">
   <rect fill="#f0f0f0" fill-opacity="0.3" stroke="#999" stroke-width="2" x="10.0" y="170.0" width="340.0" height="140.0" rx="8.0" ry="8.0" stroke-dasharray="5,5"/>
@@ -21,16 +21,16 @@
   <polygon fill="#000000" points="200.0,80.0 192.0,84.0 192.0,76.0"/>
 </g>
 <g id="edge-webapp-data">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100 120 L 100 170 L 364.0 170 L 364.0 20 L 424.0 20 L 424.0 40"/>
-  <polygon fill="#000000" points="424.0,40.0 420.0,32.0 428.0,32.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 100 120 L 100 170 L 360 170 L 360 20 L 420 20 L 420 40"/>
+  <polygon fill="#000000" points="420.0,40.0 416.0,32.0 424.0,32.0"/>
 </g>
 <g id="edge-data-db">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 424.0 120 L 100 200"/>
-  <polygon fill="#000000" points="100.0,200.0 106.8079,194.1989 108.7256,201.9657"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 420 120 L 100 200"/>
+  <polygon fill="#000000" points="100.0,200.0 106.791,194.1791 108.7313,201.9403"/>
 </g>
 <g id="edge-auth-cache">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 262.0 120 L 260 200"/>
-  <polygon fill="#000000" points="260.0,200.0 256.2012,191.9025 264.1987,192.1025"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 260 120 L 260 200"/>
+  <polygon fill="#000000" points="260.0,200.0 256.0,192.0 264.0,192.0"/>
 </g>
 <g id="service-webapp">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
@@ -38,14 +38,14 @@
   <text fill="#000000" x="100.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Web Server</text>
 </g>
 <g id="service-auth">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="124.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="262.0" y="74.4" text-anchor="middle" font-size="24">▦</text>
-  <text fill="#000000" x="262.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Auth Service</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="200.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="260.0" y="74.4" text-anchor="middle" font-size="24">▦</text>
+  <text fill="#000000" x="260.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Auth Service</text>
 </g>
 <g id="service-data">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="364.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#666" x="424.0" y="74.4" text-anchor="middle" font-size="24">⬢</text>
-  <text fill="#000000" x="424.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Data API</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="360.0" y="40.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#666" x="420.0" y="74.4" text-anchor="middle" font-size="24">⬢</text>
+  <text fill="#000000" x="420.0" y="97.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Data API</text>
 </g>
 <g id="service-db">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="40.0" y="200.0" width="120.0" height="80.0" rx="5.0" ry="5.0"/>

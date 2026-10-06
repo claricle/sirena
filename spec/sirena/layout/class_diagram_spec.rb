@@ -2,7 +2,15 @@
 
 require "spec_helper"
 
+module ClassDiagramLayoutSpecHelpers
+  def measured(text, size)
+    Sirena::TextMeasurement.measure(text, font_size: size)[:width]
+  end
+end
+
 RSpec.describe Sirena::Layout::ClassDiagram do
+  include ClassDiagramLayoutSpecHelpers
+
   let(:transform) { described_class.new }
 
   describe "#to_graph" do
@@ -131,6 +139,70 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
       expect { transform.to_graph(invalid_diagram) }
         .to raise_error(Sirena::Layout::LayoutError)
+    end
+  end
+
+  # Narrow glyphs: the monospace width (0.6 em each) and the proportional
+  # width (about 0.22 em each) differ by a factor of nearly three, so a
+  # box sized with the wrong family cannot pass.
+  describe "member width" do
+    let(:name) { "i" * 40 }
+    let(:entity) { Sirena::Diagram::ClassEntity.new(id: "N", name: "N") }
+    let(:narrow_diagram) do
+      Sirena::Diagram::ClassDiagram.new(direction: "TB").tap do |d|
+        d.entities << entity
+      end
+    end
+    let(:drawn_width) do
+      Sirena::TextMeasurement.measure(
+        "+ #{name}", font_size: 14, monospace: true
+      )[:width] + 20
+    end
+
+    it "sizes an attribute compartment in the monospace width drawn" do
+      entity.attributes << Sirena::Diagram::ClassAttribute.new(
+        name: name, visibility: "public",
+      )
+
+      node = transform.to_graph(narrow_diagram)[:children].first
+      expect(node[:width]).to be_within(0.01).of(drawn_width)
+    end
+
+    it "sizes a method compartment in the monospace width drawn" do
+      entity.class_methods << Sirena::Diagram::ClassMethod.new(
+        name: name, visibility: "public",
+      )
+
+      node = transform.to_graph(narrow_diagram)[:children].first
+      expect(node[:width]).to be_within(0.01).of(drawn_width)
+    end
+  end
+
+  # The renderer draws the name at 16 and the stereotype at 11, each as its
+  # own line, so the box fits the wider of the two measured at those sizes.
+  describe "name width" do
+    let(:entity) do
+      Sirena::Diagram::ClassEntity.new(
+        id: "N", name: "InternationalOrderProcessor",
+      )
+    end
+    let(:name_diagram) do
+      Sirena::Diagram::ClassDiagram.new(direction: "TB").tap do |d|
+        d.entities << entity
+      end
+    end
+    let(:node) { transform.to_graph(name_diagram)[:children].first }
+
+    it "sizes the box for the name at the size it is drawn" do
+      expect(node[:width]).to be_within(0.01).of(measured(entity.name, 16) + 20)
+    end
+
+    it "measures a stereotype on its own line at its own size" do
+      entity.name = "N"
+      entity.stereotype = "InternationalOrderProcessor"
+      stereotype = "<<#{entity.stereotype}>>"
+
+      expect(node[:width]).to be_within(0.01).of(measured(stereotype, 11) + 20)
     end
   end
 end

@@ -148,6 +148,27 @@ RSpec.describe Sirena::Layout::ErDiagram do
       expect(graph[:edges]).to eq([])
     end
 
+    # Narrow glyphs: the monospace width (0.6 em each) and the proportional
+    # width (about 0.22 em each) differ by a factor of nearly three, so a
+    # box sized with the wrong family cannot pass.
+    describe "attribute width" do
+      let(:name) { "i" * 40 }
+      let(:narrow_diagram) do
+        entity = Sirena::Diagram::ErEntity.new(id: "NARROW", name: "N")
+        entity.attributes << Sirena::Diagram::ErAttribute.new(name: name)
+        Sirena::Diagram::ErDiagram.new.tap { |d| d.entities << entity }
+      end
+
+      it "sizes the box in the monospace width the renderer draws" do
+        node = transform.to_graph(narrow_diagram)[:children].first
+        drawn = Sirena::TextMeasurement.measure(
+          name, font_size: 14, monospace: true
+        )[:width] + 20
+
+        expect(node[:width]).to be_within(0.01).of(drawn)
+      end
+    end
+
     it "puts assigned classes on the node metadata (B1)" do
       diagram.entities.first.classes << "someclass"
       graph = transform.to_graph(diagram)

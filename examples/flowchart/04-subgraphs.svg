@@ -1,14 +1,14 @@
 <svg
- width="730.0"
+ width="727.69"
  height="364.0"
- viewBox="0 0 730.0 364.0"
+ viewBox="0 0 727.69 364.0"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
  overflow="hidden"
 >
 <g id="edge-A_to_C">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 129.0 67.0 L 550.0 67.0"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 137.6 67.0 L 550.0 67.0"/>
   <polygon fill="#000000" stroke="#000000" points="550.0,67.0 542.0,63.0 542.0,71.0"/>
 </g>
 <g id="edge-B_to_C">
@@ -16,23 +16,23 @@
   <polygon fill="#000000" stroke="#000000" points="550.0,67.0 542.0,63.0 542.0,71.0"/>
 </g>
 <g id="edge-C_to_D">
-  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 556.9 84.0 L 136.0 250.0"/>
-  <polygon fill="#000000" stroke="#000000" points="136.0,250.0 144.9,250.8 142.0,243.4"/>
+  <path fill="none" stroke="#000000" stroke-width="2.0" d="M 556.0 84.0 L 137.8 250.0"/>
+  <polygon fill="#000000" stroke="#000000" points="137.8,250.0 146.7,250.8 143.7,243.3"/>
 </g>
 <g id="node-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="79.0" height="34.0"/>
-  <text fill="#000000" x="89.5" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Web App</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="87.582" height="34.0"/>
+  <text fill="#000000" x="93.791" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Web App</text>
 </g>
 <g id="node-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="100.0" height="34.0"/>
-  <text fill="#000000" x="350.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Mobile App</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="300.0" y="50.0" width="100.028" height="34.0"/>
+  <text fill="#000000" x="350.014" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Mobile App</text>
 </g>
 <g id="node-C">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="100.0" height="34.0"/>
-  <text fill="#000000" x="600.0" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">API Server</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="550.0" y="50.0" width="97.69" height="34.0"/>
+  <text fill="#000000" x="598.845" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">API Server</text>
 </g>
 <g id="node-D">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="86.0" height="34.0"/>
-  <text fill="#000000" x="93.0" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="250.0" width="89.92" height="34.0"/>
+  <text fill="#000000" x="94.96000000000001" y="271.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Database</text>
 </g>
 </svg>

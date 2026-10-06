@@ -1,7 +1,7 @@
 <svg
- width="393.0"
+ width="393.042"
  height="400.0"
- viewBox="0 0 393.0 400"
+ viewBox="0 0 393.042 400"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
@@ -19,30 +19,30 @@
   <text fill="#000000" x="235.0" y="39.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">"Arrow"</text>
 </g>
 <g id="block-A">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="100.0" width="103.0" height="60.0"/>
-  <text fill="#000000" x="71.5" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rectangle</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="100.0" width="103.02799999999999" height="60.0"/>
+  <text fill="#000000" x="71.514" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rectangle</text>
 </g>
 <g id="block-B">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="143.0" y="100.0" width="220.0" height="60.0"/>
-  <text fill="#000000" x="253.0" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Wide Block</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="143.028" y="100.0" width="220.028" height="60.0"/>
+  <text fill="#000000" x="253.04199999999997" y="134.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Wide Block</text>
 </g>
 <g id="block-C">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="20.0" y="180.0" width="100.0" height="60.0"/>
   <text fill="#000000" x="70.0" y="214.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Another</text>
 </g>
 <g id="block-compound">
-  <rect fill="none" stroke="#666" stroke-width="2" x="143.0" y="180.0" width="100.0" height="200.0" stroke-dasharray="5,5"/>
+  <rect fill="none" stroke="#666" stroke-width="2" x="143.028" y="180.0" width="105.366" height="200.0" stroke-dasharray="5,5"/>
   <g id="block-D">
-    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="200.0" width="100.0" height="60.0"/>
-    <text fill="#000000" x="213.0" y="234.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
+    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.028" y="200.0" width="100.0" height="60.0"/>
+    <text fill="#000000" x="213.028" y="234.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">D</text>
   </g>
   <g id="block-E">
-    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.0" y="280.0" width="100.0" height="60.0"/>
-    <text fill="#000000" x="213.0" y="314.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">E</text>
+    <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="163.028" y="280.0" width="100.0" height="60.0"/>
+    <text fill="#000000" x="213.028" y="314.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">E</text>
   </g>
 </g>
 <g id="block-F">
-  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="273.0" y="180.0" width="100.0" height="60.0"/>
-  <text fill="#000000" x="323.0" y="214.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">F</text>
+  <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="273.042" y="180.0" width="100.0" height="60.0"/>
+  <text fill="#000000" x="323.042" y="214.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">F</text>
 </g>
 </svg>

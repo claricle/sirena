@@ -100,8 +100,8 @@ Sirena (Root Module)
     │
     └── TextMeasurement (Dimension Calculation)
           │
-          ├── TextMeasurement.measure(text, font_size:, width: nil, height: nil)
-          └── character-based approximations
+          ├── TextMeasurement.measure(text, font_size:, width: nil, height: nil, monospace: false)
+          └── per-glyph advances (generated Arial table)
 ```
 
 ## Parslet-Based Parser Architecture
@@ -397,18 +397,27 @@ SVG::Document
 
 ## Text Measurement Strategy
 
-Text dimensions are calculated using character-based approximations:
+Text width is the sum of per-glyph advances, in pure Ruby. The advances for
+the default theme's stack ("Arial, Helvetica, sans-serif") are a generated
+table (`lib/sirena/text_measurement/arial_advances.rb`), so no font file is
+read at runtime:
 
 ```ruby
 TextMeasurement.measure("Hello", font_size: 14)
-# => { width: 35.0, height: 14.0 }
+# => { width: 31.892, height: 14.0 }
 
 # Algorithm:
-# - Average character width: font_size * 0.5
+# - Width: the whole string as one line (SVG collapses a newline in one
+#   <text> to a space), each character at its table advance
+#   (zero for combining marks, 1.5 em for emoji, 1.0 em for the rest)
+# - Class and ER members measure at 0.6 em (monospace)
 # - Height: font_size * 1.0
-# - Width: char_count * avg_char_width
 # - Users can override with explicit dimensions
 ```
+
+The class comment on `TextMeasurement` lists which glyphs the width bounds and
+which it only estimates. Regenerate the table with
+`scripts/generate_text_advances.rb`.
 
 This provides reasonable estimates for layout without requiring font metrics
 libraries. Layouts use these dimensions for node sizing.

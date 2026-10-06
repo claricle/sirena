@@ -194,12 +194,15 @@ module Sirena
       # @param font_size [Numeric] the font size in points
       # @param width [Numeric, nil] optional width override
       # @param height [Numeric, nil] optional height override
+      # @param monospace [Boolean] the text is drawn in a monospace family
       # @return [Hash] hash with :width and :height keys
-      def measure_text(text, font_size:, width: nil, height: nil)
+      def measure_text(text, font_size:, width: nil, height: nil,
+                       monospace: false)
         TextMeasurement.measure(text,
                                 font_size: font_size,
                                 width: width,
-                                height: height)
+                                height: height,
+                                monospace: monospace)
       end
 
       # Creates ELK layout options with proper configuration.

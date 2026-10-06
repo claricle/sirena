@@ -101,6 +101,7 @@ module Sirena
           attr_width = measure_text(
             attr_text,
             font_size: DEFAULT_FONT_SIZE,
+            monospace: true,
           )[:width]
           max_width = [max_width, attr_width].max
         end

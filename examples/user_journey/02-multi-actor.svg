@@ -53,10 +53,10 @@
   <text fill="#333333" x="120.0" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Customer</text>
 </g>
 <g id="task-task_7">
-  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="300.0" y="450.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
-  <text fill="#000000" x="370.0" y="474.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Process Payment</text>
-  <text fill="#000000" x="370.0" y="502.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
-  <text fill="#333333" x="370.0" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Payment Gateway</text>
+  <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="300.0" y="450.0" width="145.376" height="80.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="372.688" y="474.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Process Payment</text>
+  <text fill="#000000" x="372.688" y="502.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">5</text>
+  <text fill="#333333" x="372.688" y="523.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">Payment Gateway</text>
 </g>
 <g id="task-task_8">
   <rect fill="#48dbfb" stroke="#333333" stroke-width="2" x="550.0" y="450.0" width="140.0" height="80.0" rx="5.0" ry="5.0"/>
@@ -112,7 +112,7 @@
   <path fill="none" stroke="#666666" stroke-width="2" d="M 300,490 L 291.33974596215563,495.0 M 300,490 L 291.33974596215563,485.0"/>
 </g>
 <g id="arrow-flow_7">
-  <line stroke="#666666" stroke-width="2" x1="440.0" y1="490.0" x2="550.0" y2="490.0"/>
+  <line stroke="#666666" stroke-width="2" x1="445.376" y1="490.0" x2="550.0" y2="490.0"/>
   <path fill="none" stroke="#666666" stroke-width="2" d="M 550,490 L 541.3397459621556,495.0 M 550,490 L 541.3397459621556,485.0"/>
 </g>
 <g id="arrow-flow_8">

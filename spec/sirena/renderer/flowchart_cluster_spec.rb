@@ -704,7 +704,7 @@ RSpec.describe Sirena::Engine do
       expect(label_y + 5).to be_within(0.01).of((sy + ty) / 2)
     end
 
-    # Two decimals at most. The trimming arithmetic lands on seventeen
+    # Three decimals at most. The trimming arithmetic lands on seventeen
     # digits behind the point, and this output goes into a document.
     it "does not write full float precision into the path" do
       # A crossing that does NOT land on a whole number. Two boxes side
@@ -714,10 +714,10 @@ RSpec.describe Sirena::Engine do
       path = xml[/<g id="edge-one_to_Z">\s*<path[^>]*\bd="([^"]*)"/, 1]
 
       # The whole path. Counting decimal places only proves the number is
-      # no longer than two, which rounding to one or to nothing also
+      # no longer than three, which rounding to two or fewer also
       # satisfies. The start is where the ray between the two boxes' exact
-      # centres leaves `one` (386.5, 104.0 to 68.5, 67.0, crossing x = 300).
-      expect(path).to eq("M 300.0 93.94 L 68.5 67.0")
+      # centres leaves `one` (376.0, 104.0 to 69.277, 67.0, crossing x = 300).
+      expect(path).to eq("M 300.0 94.83 L 69.277 67.0")
     end
 
     it "joins a box to a plain node" do
