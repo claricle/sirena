@@ -10,6 +10,151 @@ module KanbanSpecHelpers
   def title_for(value)
     parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
   end
+
+  def boards_of(source)
+    parser.parse(source).columns.map do |column|
+      [column.id, column.cards.map(&:id)]
+    end
+  end
+
+  # Time to parse the family at four times `size`, over the time at `size`.
+  # Each is the fastest of three runs after a warm-up, and the divisor is
+  # never below 50ms (see the "with an input that grows" context).
+  def growth_ratio(size, build)
+    parser.parse(build.call(size / 10))
+    small = fastest_parse(build.call(size))
+    large = fastest_parse(build.call(size * 4))
+    large / [small, 0.02].max
+  end
+
+  def fastest_parse(source)
+    Array.new(3) do
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      parser.parse(source)
+      Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    end.min
+  end
+
+  # One failure per character, named, so a single run lists every one.
+  def expect_boards(chars, source_for, cards)
+    aggregate_failures do
+      chars.each do |name, char|
+        expect(boards_of(source_for.call(char)))
+          .to eq([["root", cards]]), "with #{name}"
+      end
+    end
+  end
+
+  def expect_refused(chars, source_for)
+    aggregate_failures do
+      chars.each do |name, char|
+        expect { parser.parse(source_for.call(char)) }
+          .to raise_error(Sirena::Parser::ParseError), "with #{name}"
+      end
+    end
+  end
+end
+
+# Each cell was driven through mmdc 11.12.0 (mermaid 11.12.0, headless
+# Chrome); a placement lists the characters mermaid refuses there.
+module KanbanLineEndCases
+  WHITESPACE = {
+    "space" => " ",
+    "tab" => "\t",
+    "vertical tab" => "\v",
+    "form feed" => "\f",
+    "no-break space" => "\u00a0",
+    "ogham space" => "\u1680",
+    "en quad" => "\u2000",
+    "hair space" => "\u200a",
+    "line separator" => "\u2028",
+    "paragraph separator" => "\u2029",
+    "narrow no-break space" => "\u202f",
+    "medium math space" => "\u205f",
+    "ideographic space" => "\u3000",
+    "byte order mark" => "\ufeff",
+    "carriage return" => "\r",
+  }.freeze
+
+  # Not JavaScript whitespace: mermaid refuses each of these wherever
+  # whitespace may end an item line (measured against mmdc 11.12.0).
+  NOT_WHITESPACE = {
+    "zero-width space" => "\u200b",
+    "next line" => "\u0085",
+    "mongolian vowel separator" => "\u180e",
+  }.freeze
+
+  # Placements where one of those characters is ordinary text and mermaid
+  # accepts it (a class name, a comment body), or where Sirena still refuses
+  # what mermaid accepts (`::icon()` followed by one).
+  TEXT_PLACEMENTS = ["after a class modifier", "after an empty class modifier",
+                     "before a comment on a class modifier",
+                     "before a comment on an empty class modifier",
+                     "after a trailing comment",
+                     "after an empty icon modifier"].freeze
+
+  SEPARATORS = ["line separator", "paragraph separator"].freeze
+  BLANKS_AFTER = ["", "\n", "\n\n", " \n%% c\n", "%% y", "%% y\n",
+                  " %% y\n%% z\n"].freeze
+  EVERY_SPACE = (WHITESPACE.keys - SEPARATORS - ["carriage return"]).freeze
+
+  # placement => [source with <c> for the character, cards, characters
+  # refused]
+  PLACEMENTS = {
+    "after a closed label" => ["kanban\n  root[Root]<c>\n    a[A]\n", %w[a],
+                               []],
+    "after a closed label at the end of the input" => [
+      "kanban\n  root[Root]<c>", [], []
+    ],
+    "after item metadata" => [
+      "kanban\n  root[Root]@{ ticket: T }<c>\n    a[A]\n", %w[a], []
+    ],
+    "after a bare id with metadata" => [
+      "kanban\n  root@{ ticket: T }<c>\n    a[A]\n", %w[a], []
+    ],
+    "after an icon modifier" => [
+      "kanban\n  root[Root]\n    ::icon(x)<c>\n    a[A]\n", %w[a], []
+    ],
+    "after a class modifier" => [
+      "kanban\n  root[Root]\n    :::hot<c>\n    a[A]\n", %w[a], []
+    ],
+    "before a comment on a labelled item" => [
+      "kanban\n  root[Root]<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "before a comment on a round item" => [
+      "kanban\n  root(Root)<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "before a comment after metadata" => [
+      "kanban\n  root[Root]@{ ticket: T }<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "before a comment after a bare id with metadata" => [
+      "kanban\n  root@{ ticket: T }<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "before a comment on an icon modifier" => [
+      "kanban\n  root[Root]\n    ::icon(x)<c>%% x\n    a[A]\n",
+      %w[a], SEPARATORS
+    ],
+    "before a comment on a class modifier" => [
+      "kanban\n  root[Root]\n    :::hot<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "after an empty icon modifier" => [
+      "kanban\n  root[Root]\n    ::icon()<c>\n    a[A]\n", %w[a], []
+    ],
+    "before a comment on an empty icon modifier" => [
+      "kanban\n  root[Root]\n    ::icon()<c>%% x\n    a[A]\n", %w[a], SEPARATORS
+    ],
+    "after an empty class modifier" => [
+      "kanban\n  root[Root]\n    a[A]\n    :::<c>\n", %w[a], SEPARATORS
+    ],
+    "before a comment on an empty class modifier" => [
+      "kanban\n  root[Root]\n    a[A]\n    :::<c>%% x\n", %w[a], SEPARATORS
+    ],
+    "before a comment on its own line" => [
+      "kanban\n  root[Root]\n<c>%% x\n    a[A]\n", %w[a], []
+    ],
+    "after a trailing comment" => ["kanban\n  root[Root]%% x<c>\n    a[A]\n",
+                                   %w[a], SEPARATORS],
+  }.freeze
 end
 
 RSpec.describe Sirena::Parser::Kanban do
@@ -405,6 +550,73 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
+    context "with a markdown-string body on a bracket-labelled item" do
+      # mmdc 11.12.0 draws `root["`Hi **urgent**`"]` as
+      # `Hi <strong>urgent</strong>`; Sirena has no markdown renderer, so it
+      # refuses the form as it does for a round shape.
+      ['root["`Hi **urgent**`"]', 'root["`Hello`"]', 'root["``"]',
+       "root[\"`Hi`\"]@{ icon: star }"].each do |line|
+        it "refuses #{line.inspect}" do
+          expect { parser.parse("kanban\n  #{line}\n") }.to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      # mmdc 11.12.0 drops an empty quoted fragment beside quoted or
+      # unquoted text. A quote pair after unquoted text remains literal:
+      # the unquoted lexer rule consumes the whole run before the empty
+      # fragment rule can see it.
+      {
+        'root[""a]' => "a",
+        'root["``"a]' => "a",
+        'root[""""a]' => "a",
+        'root[""a""]' => 'a""',
+        'root["a"""]' => "a",
+        'root["a""``"]' => "a",
+        'root["""a"""]' => "a",
+      }.each do |line, title|
+        it "reads #{line.inspect} as #{title.inspect}" do
+          source = "kanban\n  #{line}\n"
+          expect(parser.parse(source).columns.first.title).to eq(title)
+        end
+      end
+
+      it "refuses an empty quoted fragment with no text after it" do
+        expect { parser.parse("kanban\n  root[\"\"]\n") }.to raise_error(Sirena::Parser::ParseError)
+      end
+
+      it "keeps a quoted bracket label that merely contains a backtick pair" do
+        diagram = parser.parse("kanban\n  root[\"Hello `code` world\"]\n")
+        expect(diagram.columns.first.title).to eq("Hello `code` world")
+      end
+
+      it "keeps an unquoted bracket label that starts with a backtick" do
+        diagram = parser.parse("kanban\n  root[`Hello`]\n")
+        expect(diagram.columns.first.title).to eq("`Hello`")
+      end
+    end
+
+    context "with empty quoted fragments on a round-shaped item" do
+      # Mermaid's NODE lexer drops these fragments for every delimiter shape,
+      # not only for the bracket-labelled form exercised above.
+      {
+        'col(""a)' => "a",
+        'col("``"a)' => "a",
+        'col(""""a)' => "a",
+        'col(""a"")' => 'a""',
+        'col("a""")' => "a",
+        'col("a""``")' => "a",
+        'col("a""""``")' => "a",
+        'col("""a""")' => "a",
+        'col("""``""a""``""")' => "a",
+        '(""a)' => "a",
+      }.each do |line, title|
+        it "reads #{line.inspect} as #{title.inspect}" do
+          source = "kanban\n  #{line}\n"
+          expect(parser.parse(source).columns.first.title).to eq(title)
+        end
+      end
+    end
+
     context "with a shape-delimiter character in an unquoted round-shaped label" do
       # Not from the corpus - a Codex-constructed input. `round_text`'s
       # unquoted alternative excluded only `)`, the shape's own closer, so
@@ -434,16 +646,324 @@ RSpec.describe Sirena::Parser::Kanban do
 
       it "keeps every card across the blank row" do
         diagram = parser.parse(source)
-        expect(diagram.columns.map(&:id)).to eq(["root"])
-        column = diagram.columns.first
-        expect(column.title).to eq("Root")
-        expect(column.cards.map(&:id)).to eq(%w[Child a b])
-        expect(column.cards.map(&:text)).to eq(["Child", "a", "New Stuff"])
+        expect(diagram.columns.map do |column|
+          [column.id, column.title, column.cards.map(&:id),
+           column.cards.map(&:text)]
+        end).to eq([["root", "Root", %w[Child a b],
+                     ["Child", "a", "New Stuff"]]])
       end
     end
 
-    # corpus 012, 013 and 014 are byte-identical (20 bytes, same md5), so
-    # this pins one input that three corpus entries happen to share.
+    context "with a quoted bracket label containing the shape's own " \
+            "delimiters (corpus 028, 029)" do
+      # labelled_item's unquoted GreedyRun stopped at the FIRST `]`, which
+      # for a body containing one is inside the quotes - well before the
+      # real closing bracket - so the whole line failed to parse.
+      it "keeps a literal bracket pair inside a quoted column label (corpus " \
+         "028)" do
+        diagram = parser.parse("kanban\n    root[\"String containing []\"]")
+        expect([diagram.columns.map(&:id), diagram.columns.first.title])
+          .to eq([["root"], "String containing []"])
+      end
+
+      it "keeps a literal bracket pair and a literal paren pair on a column " \
+         "and its child (corpus 029)" do
+        diagram = parser.parse(
+          "kanban\n    root[\"String containing []\"]\n      child1[\"String " \
+          "containing ()\"]",
+        )
+        column = diagram.columns.first
+        expect([column.title, column.cards.map(&:id), column.cards.first.text])
+          .to eq(["String containing []", ["child1"], "String containing ()"])
+      end
+    end
+
+    context "with a standalone comment line between items (corpus 032)" do
+      let(:source) do
+        "kanban\n  root(Root)\n    Child(Child)\n      a(a)\n\n      %% This " \
+          "is a comment\n      b[New Stuff]"
+      end
+
+      it "ignores the comment line and keeps every card around it" do
+        diagram = parser.parse(source)
+        column = diagram.columns.first
+        expect([column.title, column.cards.map(&:id), column.cards.map(&:text)])
+          .to eq(["Root", %w[Child a b], ["Child", "a", "New Stuff"]])
+      end
+
+      it "accepts JavaScript whitespace before the comment marker" do
+        diagram = parser.parse("kanban\n\u00a0%% comment\n  root\n")
+        expect(diagram.columns.map(&:id)).to eq(["root"])
+      end
+    end
+
+    context "with a trailing comment on an item's own line (corpus 033)" do
+      let(:source) do
+        "kanban\n  root(Root)\n    Child(Child)\n      a(a) %% This is a " \
+          "comment\n      b[New Stuff]"
+      end
+
+      it "strips the trailing comment and keeps the item itself" do
+        diagram = parser.parse(source)
+        column = diagram.columns.first
+        expect([column.title, column.cards.map(&:id), column.cards.map(&:text)])
+          .to eq(["Root", %w[Child a b], ["Child", "a", "New Stuff"]])
+      end
+    end
+
+    # Measured against mmdc 11.12.0: a closing `]`, `)` or `}` ends the item,
+    # so `%%` after it opens a comment with or without JavaScript whitespace
+    # before it. After a bare id, `%%` - spaced or not - is part of the
+    # literal label (`root %% c` renders that label), which Sirena refuses
+    # rather than silently dropping the suffix.
+    {
+      "root[Root]%% c" => "Root",
+      "root[Root] %% c" => "Root",
+      "root[Root]\t%% c" => "Root",
+      "root[Root]\u00a0%% c" => "Root",
+      "root(Root)%% c" => "Root",
+      "(Root)%% c" => "Root",
+      "root[Root]@{ icon: star }%% c" => "Root",
+      "root[Root]@{ icon: star }\u00a0%% c" => "Root",
+      "root@{ icon: star } %% c" => "root",
+      "root[Root]\u00a0" => "Root",
+      "root[Root]@{ icon: star }\u00a0" => "Root",
+      "root[Root]%%" => "Root",
+    }.each do |line, title|
+      context "with a trailing comment on #{line.inspect}" do
+        it "keeps the item and drops the comment" do
+          source = "kanban\n  #{line}\n"
+          expect(parser.parse(source).columns.map(&:title)).to eq([title])
+        end
+      end
+    end
+
+    ["root%%keep", "root%% c", "root %% c", "root\t%% c", "root\u00a0%% c",
+     "root\u00a0", "root \u00a0"].each do |line|
+      context "with a bare item followed by `%%`: #{line.inspect}" do
+        it "raises ParseError instead of silently dropping the suffix" do
+          expect { parser.parse("kanban\n  #{line}\n") }.to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+    end
+
+    # Measured against mmdc 11.12.0: `::icon(x)` returns to the initial lexer
+    # state, so a comment may follow it; `:::cls` keeps `%%` as class text.
+    ["::icon(x)%% c", "::icon(x) %% c", "::icon(x)\t%% c",
+     "::icon(x)\u00a0%% c", "::icon(x)\u00a0"].each do |line|
+      context "with a trailing comment on the icon modifier #{line.inspect}" do
+        it "sets the icon and drops the comment" do
+          diagram = parser.parse("kanban\n  root[Root]\n    #{line}\n")
+          expect(diagram.columns.first.icon).to eq("x")
+        end
+      end
+    end
+
+    # Mermaid's `.*` comment body stops at U+2028/U+2029 and tokenizes what
+    # follows; Sirena refuses rather than swallowing it into the comment.
+    ["\u2028", "\u2029"].each do |separator|
+      context "with a line separator #{separator.dump} inside a comment" do
+        it "raises ParseError instead of dropping the text after it" do
+          source = "kanban\n  root[Root]%% c#{separator}child[Child]\n"
+          expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+
+      # A line holding only a comment is stripped up to its line feed, so
+      # unlike a trailing comment its body runs through the separator
+      # (mmdc 11.12.0).
+      context "with #{separator.dump} inside a standalone comment line" do
+        it "treats the text after it as comment" do
+          source = "kanban\n  %% c#{separator}child[Child]\n  root\n"
+          expect(parser.parse(source).columns.map(&:id)).to eq(["root"])
+        end
+      end
+    end
+
+    KanbanLineEndCases::PLACEMENTS.each do |placement, (template, cards, bad)|
+      context "with a character #{placement}" do
+        let(:source_for) { ->(char) { template.sub("<c>", char) } }
+        let(:accepted) do
+          KanbanLineEndCases::WHITESPACE.except(*bad)
+        end
+        let(:rejected) do
+          refusals = KanbanLineEndCases::WHITESPACE.slice(*bad)
+          next refusals if KanbanLineEndCases::TEXT_PLACEMENTS.include?(placement)
+
+          refusals.merge(KanbanLineEndCases::NOT_WHITESPACE)
+        end
+
+        it "keeps the column and its cards for each whitespace character " \
+           "mermaid accepts" do
+          expect_boards(accepted, source_for, cards)
+        end
+
+        it "raises ParseError for each character mermaid refuses" do
+          expect_refused(rejected, source_for)
+        end
+      end
+    end
+
+    # Mermaid accepts a separator after a trailing comment only when blank
+    # lines and comments alone follow it to the end of the input. Sirena
+    # accepts that, and also refuses `%% x<separator>y` at the end of the
+    # input, which mermaid accepts (stricter, never looser).
+    KanbanLineEndCases::SEPARATORS.each do |name|
+      context "with #{name} ending a trailing comment" do
+        let(:char) { KanbanLineEndCases::WHITESPACE.fetch(name) }
+
+        KanbanLineEndCases::BLANKS_AFTER.each do |after|
+          it "keeps the item when only #{after.inspect} follows" do
+            expect(boards_of("kanban\n  root[Root]%% x#{char}#{after}"))
+              .to eq([["root", []]])
+          end
+        end
+
+        it "raises ParseError when a card line follows" do
+          expect { parser.parse("kanban\n  root[Root]%% x#{char}\n    a[A]\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+    end
+
+    # `%%{` opens a directive, which mermaid refuses on a line of its own
+    # (mmdc 11.12.0); after an item it is an ordinary trailing comment.
+    ["%%{foo}%%\n", "  %%{init: {}}%%\n", "%%{foo}\n"].each do |line|
+      it "raises ParseError for the directive line #{line.inspect}" do
+        expect { parser.parse("kanban\n#{line}  col[Todo]\n") }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    it "accepts a %%{ comment after an item" do
+      expect(boards_of("kanban\n  col[Todo] %%{x}\n")).to eq([["col", []]])
+    end
+
+    it "refuses an item on the header line, as before" do
+      expect { parser.parse("kanban  root[Root]\n  second[Second]\n") }
+        .to raise_error(Sirena::Parser::ParseError)
+    end
+
+    # A blank row may hold any JavaScript whitespace, not only spaces and tabs.
+    context "with a row holding only a whitespace character" do
+      let(:source_for) do
+        ->(char) { "kanban\n  root[Root]\n#{char}\n    a[A]\n#{char}" }
+      end
+
+      it "ignores it between items and at the end of the input" do
+        spaces = KanbanLineEndCases::WHITESPACE.slice(*KanbanLineEndCases::EVERY_SPACE)
+        expect_boards(spaces, source_for, %w[a])
+      end
+
+      it "raises ParseError for a character that is not whitespace" do
+        expect_refused(KanbanLineEndCases::NOT_WHITESPACE, source_for)
+      end
+    end
+
+    # A carriage return alone ends a line, as it does in mermaid.
+    context "with lone carriage returns as line breaks" do
+      it "reads the same board as line feeds" do
+        diagram = parser.parse("kanban\r  root[Root]\r    a[A]\r")
+        expect([diagram.columns.first.id,
+                diagram.columns.first.cards.map(&:id)]).to eq(["root", %w[a]])
+      end
+
+      it "ends a trailing comment" do
+        diagram = parser.parse("kanban\n  root[Root]%% c\r    a[A]\n")
+        expect(diagram.columns.first.cards.map(&:id)).to eq(["a"])
+      end
+
+      it "ends a class modifier" do
+        diagram = parser.parse("kanban\n  root[Root]\n    :::hot\r    a[A]\n")
+        expect(diagram.columns.first.classes).to eq(["hot"])
+      end
+    end
+
+    # The class body stops at U+2028/U+2029, where mermaid's `.+` stops.
+    KanbanLineEndCases::SEPARATORS.each do |name|
+      context "with #{name} after a class modifier" do
+        let(:char) { KanbanLineEndCases::WHITESPACE.fetch(name) }
+
+        it "ends the class text there and the line with it" do
+          source = "kanban\n  root[Root]\n    :::hot#{char}\n    a[A]\n"
+          diagram = parser.parse(source)
+          expect(diagram.columns.first.classes).to eq(["hot"])
+        end
+
+        it "raises ParseError when more text follows on the line" do
+          expect { parser.parse("kanban\n  root[Root]\n    :::ho#{char}t\n") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+    end
+
+    # An empty `::icon()` decorates nothing and may sit anywhere; an empty
+    # `:::` swallows its line break in mermaid, so only blank or comment
+    # lines may follow it.
+    context "with an empty icon modifier" do
+      ["kanban\n  ::icon()\n  root[Root]\n",
+       "kanban\n  root[Root]\n    ::icon()\n    a[A]",
+       "kanban\n  root[Root]\n    ::icon() %% c\n    a[A]\n",
+       "kanban\n  root[Root]\n    ::icon()\n\n    a[A]\n"].each do |source|
+        it "parses #{source.inspect} and sets no icon" do
+          expect(parser.parse(source).columns.first.icon).to be_nil
+        end
+      end
+    end
+
+    ["    :::\n", "    :::", "    :::\n\n", "    :::\n%% c\n", "    :::\n  \n",
+     "    :::  \n"].each do |line|
+      context "with an empty class modifier #{line.inspect} as the last line" do
+        it "keeps the card and sets no classes" do
+          diagram = parser.parse("kanban\n  root[Root]\n    a[A]\n#{line}")
+          expect([diagram.columns.first.cards.map(&:id),
+                  diagram.columns.first.classes]).to eq([%w[a], []])
+        end
+      end
+    end
+
+    ["    :::\n    b[B]\n", "    :::\n    :::x\n",
+     "    :::\n      b[B]\n", "    :::\n    :::\n",
+     "    :::\n    ::icon()\n"].each do |lines|
+      context "with an empty class modifier followed by #{lines.inspect}" do
+        it "raises ParseError, as mermaid joins the next line onto it" do
+          expect { parser.parse("kanban\n  root[Root]\n    a[A]\n#{lines}") }
+            .to raise_error(Sirena::Parser::ParseError)
+        end
+      end
+    end
+
+    context "with many empty class modifiers in a row" do
+      it "raises ParseError instead of exhausting the stack" do
+        source = "kanban\n  root[Root]\n#{"    :::\n" * 400}"
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    context "with an empty class modifier before any item" do
+      it "raises ParseError" do
+        expect do
+          parser.parse("kanban\n  :::\n  root[Root]\n")
+        end.to raise_error(Sirena::Parser::ParseError)
+      end
+    end
+
+    context "with `%%` straight after `:::`" do
+      it "keeps it as class text rather than reading an empty modifier and a " \
+         "comment" do
+        diagram = parser.parse("kanban\n  root[Root]\n    :::%% c\n")
+        expect(diagram.columns.first.classes).to eq(["%%", "c"])
+      end
+    end
+
+    context "with `%%` after a class modifier" do
+      it "keeps it as class text" do
+        diagram = parser.parse("kanban\n  root[Root]\n    :::hot %% c\n")
+        expect(diagram.columns.first.classes).to eq(["hot", "%%", "c"])
+      end
+    end
+
     context "with blank and spaces-only rows (corpus 012 = 013 = 014)" do
       let(:source) { "kanban\nroot\n A\n \n\n B\n" }
 
@@ -979,33 +1499,66 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    # `::icon(...)`, `:::...`, a bracket label and a round-shape body all
-    # used the same `match(char_class).repeat(1)` shape, which Parslet
-    # applies once PER CHARACTER - a real DoS shape on untrusted input (an
-    # icon body of 50_000 chars took ~18.7s on the unfixed grammar; see the
-    # GreedyRun atom in lib/sirena/parser/atoms/greedy_run.rb). A bounded-time
-    # assertion is used here, not a structural one, because the property
-    # under test IS wall-clock behaviour - a structural check (e.g. asserting
-    # which atom class the grammar uses) would pass on a differently-broken
-    # rewrite that still walked the input character by character. The 5s
-    # bound is generous: fixed, this parses in well under 1s even on a
-    # loaded shared machine; unfixed, 50_000 chars alone measured ~18.7s.
-    context "with a long modifier or label body" do
-      it "stays well under a generous bound for a 100_000-char run" do
-        long = "x" * 100_000
-
-        aggregate_failures do
-          expect do
-            Timeout.timeout(5) { parser.parse("kanban\n  id1[Task]\n  ::icon(#{long})\n") }
-          end.not_to raise_error
-
-          expect do
-            Timeout.timeout(5) { parser.parse("kanban\n  id1[Task]\n  :::#{long}\n") }
-          end.not_to raise_error
-
-          expect do
-            Timeout.timeout(5) { parser.parse("kanban\n  id1[#{long}]\n") }
-          end.not_to raise_error
+    # Parslet folds a repetition of plain slices with `Slice#+`, which copies
+    # the string built so far on every step, and a rule that matches one
+    # character at a time makes one slice per character: either is quadratic
+    # in the input. Each row parses one family of inputs at SIZE and at four
+    # times SIZE; linear growth gives a ratio near 4 and quadratic growth one
+    # near 16, so the bound is 10: clear of both, and of timer noise on a
+    # loaded machine. Families of lines carry long lines, and families of
+    # runs long runs, because the copying only outweighs the per-piece cost
+    # of the parser once the pieces are large. The timer floor keeps a parse
+    # that takes a millisecond from inflating the ratio.
+    context "with an input that grows" do
+      fat = "x" * 3000
+      half = "x" * 1500
+      fat_space = " " * 3000
+      {
+        "standalone comment lines" =>
+          [1_000, ->(n) { "kanban\n#{"  %% #{fat}\n" * n}" }],
+        "standalone comment lines holding U+2028" =>
+          [1_000, ->(n) { "kanban\n#{"  %% #{half}\u2028#{half}\n" * n}" }],
+        "whitespace-only lines" =>
+          [1_000, ->(n) { "kanban\n#{"#{fat_space}\n" * n}" }],
+        "empty icon modifier lines" =>
+          [1_000, ->(n) { "kanban\n#{"  ::icon()#{fat_space}\n" * n}" }],
+        "comment lines after a U+2028 comment end" =>
+          [1_000, ->(n) { "kanban\n  r[R] %% a\u2028\n#{"%% #{fat}\n" * n}" }],
+        "comment lines after an empty class modifier" =>
+          [1_000, ->(n) { "kanban\n  r[R]\n  :::\n#{"%% #{fat}\n" * n}" }],
+        "empty quoted fragments in a bracket label" =>
+          [30_000, ->(n) { "kanban\n  r[#{'"``"' * n}a]\n" }],
+        "empty quoted fragments in a round label" =>
+          [30_000, ->(n) { "kanban\n  r(#{'"``"' * n}a)\n" }],
+        "one long identifier" =>
+          [50_000, ->(n) { "kanban\n  #{'x' * n}\n" }],
+        "whitespace after an item" =>
+          [60_000, ->(n) { "kanban\n  r[R]#{' ' * n}" }],
+        "whitespace alone after the last line" =>
+          [60_000, ->(n) { "kanban\n  r[R]\n#{' ' * n}" }],
+        "whitespace before an item" =>
+          [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
+        "whitespace before a trailing comment" =>
+          [60_000, ->(n) { "kanban\n  r[R]#{' ' * n}%% c\n" }],
+        "a trailing comment body" =>
+          [60_000, ->(n) { "kanban\n  r[R] %% #{'x' * n}\n" }],
+        "a comment body after a U+2028 comment end" =>
+          [60_000, ->(n) { "kanban\n  r[R] %% a\u2028 %% #{'x' * n}\n" }],
+        "an icon body" =>
+          [60_000, ->(n) { "kanban\n  r[R]\n  ::icon(#{'x' * n})\n" }],
+        "a class body" =>
+          [60_000, ->(n) { "kanban\n  r[R]\n  :::#{'x' * n}\n" }],
+        "a bracket label" =>
+          [60_000, ->(n) { "kanban\n  r[#{'x' * n}]\n" }],
+        "a quoted bracket label" =>
+          [60_000, ->(n) { "kanban\n  r[\"#{'x' * n}\"]\n" }],
+        "a round label" =>
+          [60_000, ->(n) { "kanban\n  r(#{'x' * n})\n" }],
+        "item indentation" =>
+          [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
+      }.each do |family, (size, build)|
+        it "parses #{family} in time linear in their size" do
+          expect(growth_ratio(size, build)).to be < 10
         end
       end
     end
@@ -1094,6 +1647,48 @@ RSpec.describe Sirena::Parser::Kanban do
         # spec does not re-derive its own expectation using the same
         # construction the production code under test uses.
         expect(atom.to_s_inner(0)).to eq('/\A(?:[^)])*/m')
+      end
+    end
+
+    context "with a source that is not tagged UTF-8" do
+      # The grammar and builder regexps carry non-ASCII character classes,
+      # which raise Encoding::CompatibilityError against a binary or
+      # ISO-8859-1 string that holds a non-ASCII byte.
+      let(:source) { "kanban\n  col[Todo]\n    task1[Task\u00E9]\n" }
+
+      it "parses a binary string with an accented label" do
+        card = parser.parse(source.b).columns.first.cards.first
+        expect(card.text).to eq("Task\uFFFD\uFFFD")
+      end
+
+      it "parses an ISO-8859-1 string with an accented label" do
+        latin1 = source.encode("ISO-8859-1")
+        expect(parser.parse(latin1).columns.first.cards.first.text)
+          .to eq("Task\u00E9")
+      end
+
+      %w[UTF-7 ISO-2022-JP-2].each do |name|
+        it "refuses #{name} strings (no UTF-8 converter) with a ParseError" do
+          expect { parser.parse(source.dup.force_encoding(name)) }
+            .to raise_error(Sirena::Parser::ParseError, /#{name}/)
+        end
+      end
+    end
+
+    context "with a UTF-8 string that holds an invalid byte" do
+      it "replaces the byte instead of raising ArgumentError from Parslet" do
+        source = (+"kanban\n  todo[T\xFF]\n").force_encoding("UTF-8")
+        expect(parser.parse(source).columns.first.title).to eq("T�")
+      end
+    end
+
+    context "with a source that is not a String" do
+      [nil, 42].each do |value|
+        it "raises ArgumentError for #{value.inspect}" do
+          expect do
+            parser.parse(value)
+          end.to raise_error(ArgumentError, /must be a String/)
+        end
       end
     end
   end

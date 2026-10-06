@@ -34,11 +34,17 @@ module Sirena
       # @param source [String] the Mermaid kanban diagram source
       # @return [Diagram::Kanban] the parsed kanban diagram
       # @raise [ParseError] if syntax is invalid
+      # @raise [ArgumentError] if source is not a String
       def parse(source)
+        unless source.is_a?(String)
+          raise ArgumentError,
+                "kanban source must be a String, got #{source.class}"
+        end
+
         grammar = Grammars::Kanban.new
 
         begin
-          parse_tree = grammar.parse(source)
+          parse_tree = grammar.parse(readable_source(source))
         rescue Parslet::ParseFailed => e
           raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
                            "#{e.parse_failure_cause}"
@@ -53,6 +59,30 @@ module Sirena
       end
 
       private
+
+      def readable_source(source)
+        normalize_line_ends(transcode_to_utf8(source))
+      end
+
+      # The grammar and builder regexps carry non-ASCII (`\u`) classes, so
+      # matching them against a binary or ISO-8859-1 string raises
+      # Encoding::CompatibilityError instead of a parse result. A UTF-8 string
+      # with invalid bytes is re-encoded too: Parslet raises ArgumentError on
+      # it.
+      def transcode_to_utf8(source)
+        source.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+      rescue Encoding::ConverterNotFoundError
+        raise ParseError,
+              "Cannot read a #{source.encoding} source: " \
+              "it has no UTF-8 converter."
+      end
+
+      # mermaid folds a CRLF and a lone CR into a newline before it lexes
+      # anything, so a bare `\r` ends a line and a comment. The grammar's
+      # `newline` knows `\n` and `\r\n` only.
+      def normalize_line_ends(source)
+        source.gsub(/\r\n?/, "\n")
+      end
 
       def create_diagram(result)
         diagram = Diagram::Kanban.new
