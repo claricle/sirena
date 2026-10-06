@@ -370,7 +370,7 @@ rows:
 - file: spec/sirena/renderer/architecture_spec.rb
   count: 56
 - file: spec/sirena/renderer/base_spec.rb
-  count: 17
+  count: 16
 - file: spec/sirena/renderer/class_diagram_spec.rb
   count: 18
 - file: spec/sirena/renderer/er_diagram_spec.rb

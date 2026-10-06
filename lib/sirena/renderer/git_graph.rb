@@ -105,9 +105,8 @@ module Sirena
         draw(layout, svg)
       end
 
-      # Horizontal extent of a text label, from its anchor and a width
-      # hint that errs wide (see WIDE_CHAR_WIDTH_RATIO): the average
-      # TextMeasurement uses clips ordinary ASCII labels at their real width.
+      # Horizontal extent of a text label, from its anchor and
+      # `reserved_text_width`, which leaves headroom over the measured width.
       #
       # @param text [Svg::Text] label
       # @return [Array<Float>] left and right edge
@@ -120,7 +119,7 @@ module Sirena
 
       def label_width(text)
         shown = Svg::Escaping.strip_forbidden(Array(text.content).join)
-        shown.length * text.font_size.to_f * WIDE_CHAR_WIDTH_RATIO
+        reserved_text_width(shown, text.font_size.to_f)
       end
       private :draw, :fit_labels, :label_spill, :widened_view_box,
               :redraw_shifted, :label_span, :label_width

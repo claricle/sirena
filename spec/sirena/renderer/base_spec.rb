@@ -10,7 +10,8 @@ RSpec.describe Sirena::Renderer::Base do
       public :theme_color, :theme_typography, :theme_shape, :theme_spacing,
              :theme_effect, :apply_theme_to_node, :apply_theme_to_edge,
              :apply_theme_to_text, :default_style, :create_path_data,
-             :create_document, :create_document_from_layout, :calculate_width, :calculate_height
+             :create_document, :create_document_from_layout,
+             :calculate_width, :calculate_height, :reserved_text_width
     end
   end
   let(:dark) { Sirena::Theme::Registry.get(:dark) }
@@ -249,6 +250,15 @@ RSpec.describe Sirena::Renderer::Base do
   describe "#initialize" do
     it "uses the default theme when none is given" do
       expect(renderer_class.new.theme).to equal(Sirena::Theme::Registry.get(:default))
+    end
+  end
+
+  describe "#reserved_text_width" do
+    it "is the measured width plus 20 percent for a substituted font" do
+      measured = Sirena::TextMeasurement.measure("Hello", font_size: 14)[:width]
+
+      expect(renderer.reserved_text_width("Hello", 14))
+        .to be_within(0.001).of(measured * 1.2)
     end
   end
 end

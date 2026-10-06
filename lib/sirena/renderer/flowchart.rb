@@ -144,11 +144,11 @@ module Sirena
       #
       # `overflow: 'hidden'` states SVG's specified clip policy explicitly
       # rather than leaving it to an unwritten default — see
-      # `WIDE_CHAR_WIDTH_RATIO` for why no character-count estimate can
-      # size a viewport correctly on its own. Do not rely on this
-      # attribute to bound a clipped label: the actual bound comes from
-      # geometry, not from this attribute (browsers that already clip an
-      # `<svg>` box by default see no change from setting it).
+      # `TextMeasurement` for the glyphs no measurement here can bound.
+      # Do not rely on this attribute to bound a clipped label: the actual
+      # bound comes from geometry, not from this attribute (browsers that
+      # already clip an `<svg>` box by default see no change from setting
+      # it).
       #
       # `clear_self_loop_overflow` and `self_loop_reach` size the page
       # from the loop's BENDS, which are exact numbers, not text
@@ -342,22 +342,21 @@ module Sirena
       # above `y`, SVG's default text baseline. [0.0, 0.0] when there is
       # no label to draw, since nothing then reaches past the anchor.
       #
-      # The width is a wider HINT (`WIDE_CHAR_WIDTH_RATIO`), not
-      # `TextMeasurement`'s average and not a bound either — see the
-      # constant for why no per-character number can be one. Chrome
-      # measured a wrong answer here as staying CONTAINED regardless —
-      # see `#render` — so the failure mode of this hint being wrong is
-      # an invisible label tail, not a distorted or escaping page. The
-      # height is still `TextMeasurement`'s, since neither finding
-      # touched it and mmdc's
-      # own measurement never showed it short.
+      # The width is `reserved_text_width`: `TextMeasurement`'s per-glyph
+      # width with headroom for a substituted font, not a bound either — see
+      # `TextMeasurement` for the glyphs it cannot bound. Chrome measured
+      # a wrong answer here as staying CONTAINED regardless — see
+      # `#render` — so the failure mode of this hint being wrong is an
+      # invisible label tail, not a distorted or escaping page. The height
+      # is still `TextMeasurement`'s, since neither finding touched it and
+      # mmdc's own measurement never showed it short.
       def loop_label_extent(edge)
         label = edge[:labels]&.first
         return [0.0, 0.0] unless label
 
         font_size = edge_label_font_size
         text = label[:text].to_s
-        width = text.length * font_size * WIDE_CHAR_WIDTH_RATIO
+        width = reserved_text_width(text, font_size)
         height = font_size * TextMeasurement::HEIGHT_RATIO
         [width / 2.0, height]
       end

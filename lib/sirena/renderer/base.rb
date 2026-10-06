@@ -37,13 +37,11 @@ module Sirena
     #
     # @abstract Subclass and implement rendering methods
     class Base
-      # Em-per-character width HINT for room around a text label; it is NOT a
-      # bound. At font-size 12 in Chrome, ASCII tops out at 0.89, CJK at 1.02,
-      # emoji at 1.42, and one codepoint (U+FDFD) renders at 6.49, so 1.5
-      # clears everything but that. Keep it above 1.0 so CJK fits; raise it
-      # only after re-measuring a real script.
-      WIDE_CHAR_WIDTH_RATIO = 1.5
-      private_constant :WIDE_CHAR_WIDTH_RATIO
+      # Factor on a measured text width for room around a label; it is NOT a
+      # bound. A viewer that lacks Arial substitutes its own sans-serif:
+      # DejaVu Sans and Verdana measured up to 1.19 times Arial's width.
+      SUBSTITUTE_FONT_HEADROOM = 1.2
+      private_constant :SUBSTITUTE_FONT_HEADROOM
 
       attr_accessor :theme
 
@@ -121,6 +119,18 @@ module Sirena
             @offset_y = padding
           end
         end
+      end
+
+      # Room to reserve for a text label: its measured width with headroom
+      # for a substituted font. Not a bound; see TextMeasurement for what the
+      # measurement itself does and does not cover.
+      #
+      # @param text [String] label text
+      # @param font_size [Numeric] the size the label is drawn at
+      # @return [Float] width in pixels
+      def reserved_text_width(text, font_size)
+        TextMeasurement.measure(text, font_size: font_size)[:width] *
+          SUBSTITUTE_FONT_HEADROOM
       end
 
       # Calculates the total width needed for the diagram.

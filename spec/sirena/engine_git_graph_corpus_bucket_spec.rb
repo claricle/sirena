@@ -313,6 +313,15 @@ RSpec.describe Sirena::Engine do
       end
     end
 
+    it "leaves a tag the measured width plus 20 percent headroom of room" do
+      tag = "HOTFIX-1234-PRODUCTION-ROLLBACK"
+      drawn = text_named(render_svg(tagged_commit("TB", tag)), tag)
+      size = number(drawn, "font-size")
+      measured = Sirena::TextMeasurement.measure(tag, font_size: size)[:width]
+
+      expect(number(drawn, "x")).to be_within(0.01).of(measured * 1.2)
+    end
+
     it "leaves the box alone when every label fits" do
       source = commit_chain("TB", %w[a b])
 

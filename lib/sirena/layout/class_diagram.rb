@@ -19,6 +19,12 @@ module Sirena
       # Default font size for text measurement
       DEFAULT_FONT_SIZE = 14
 
+      # The sizes the renderer draws the class name and the stereotype at
+      # (Renderer::ClassDiagram::CLASS_NAME_FONT_SIZE and
+      # STEREOTYPE_FONT_SIZE); keep them in step.
+      NAME_FONT_SIZE = 16
+      STEREOTYPE_FONT_SIZE = 11
+
       # Minimum width for a class box
       MIN_CLASS_WIDTH = 120
 
@@ -92,15 +98,7 @@ module Sirena
         max_width = MIN_CLASS_WIDTH
 
         # Check class name width
-        name_text = if entity.stereotype
-                      "<<#{entity.stereotype}>>\n#{entity.name}"
-                    else
-                      entity.name
-                    end
-        name_width = measure_text(
-          name_text,
-          font_size: DEFAULT_FONT_SIZE,
-        )[:width]
+        name_width = name_block_width(entity)
         max_width = [max_width, name_width].max
 
         # Check attribute widths
@@ -109,6 +107,7 @@ module Sirena
           attr_width = measure_text(
             attr_text,
             font_size: DEFAULT_FONT_SIZE,
+            monospace: true,
           )[:width]
           max_width = [max_width, attr_width].max
         end
@@ -119,6 +118,7 @@ module Sirena
           method_width = measure_text(
             method_text,
             font_size: DEFAULT_FONT_SIZE,
+            monospace: true,
           )[:width]
           max_width = [max_width, method_width].max
         end
@@ -162,6 +162,19 @@ module Sirena
         }
       end
 
+      # The name and the stereotype are drawn as two lines at their own
+      # sizes, so each is measured on its own. The name is bold, measured here
+      # regular at the drawn size: Chrome's bold Arial runs 1.04 to 1.11 times
+      # the regular width for ordinary names, which the box padding absorbs.
+      def name_block_width(entity)
+        widths = [measure_text(entity.name, font_size: NAME_FONT_SIZE)[:width]]
+        if entity.stereotype
+          widths << measure_text("<<#{entity.stereotype}>>",
+                                 font_size: STEREOTYPE_FONT_SIZE)[:width]
+        end
+        widths.max
+      end
+
       def entity_labels(entity)
         labels = []
 
@@ -175,7 +188,7 @@ module Sirena
 
         labels << {
           text: name_text,
-          width: name_dims[:width],
+          width: name_block_width(entity),
           height: name_dims[:height],
         }
 
