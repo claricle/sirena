@@ -1673,25 +1673,25 @@ RSpec.describe Sirena::Parser::Kanban do
         "whitespace alone after the last line" =>
           [60_000, ->(n) { "kanban\n  r[R]\n#{' ' * n}" }],
         "whitespace before an item" =>
-          [40_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
+          [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
         "whitespace between @ and the metadata brace" =>
-          [40_000, ->(n) { "kanban\n  r[R]@#{' ' * n}{ a: 1 }\n" }],
+          [60_000, ->(n) { "kanban\n  r[R]@#{' ' * n}{ a: 1 }\n" }],
         "whitespace before a trailing comment" =>
-          [40_000, ->(n) { "kanban\n  r[R]#{' ' * n}%% c\n" }],
+          [60_000, ->(n) { "kanban\n  r[R]#{' ' * n}%% c\n" }],
         "a trailing comment body" =>
-          [40_000, ->(n) { "kanban\n  r[R] %% #{'x' * n}\n" }],
+          [60_000, ->(n) { "kanban\n  r[R] %% #{'x' * n}\n" }],
         "a comment body after a U+2028 comment end" =>
-          [40_000, ->(n) { "kanban\n  r[R] %% a\u2028 %% #{'x' * n}\n" }],
+          [60_000, ->(n) { "kanban\n  r[R] %% a\u2028 %% #{'x' * n}\n" }],
         "an icon body" =>
-          [40_000, ->(n) { "kanban\n  r[R]\n  ::icon(#{'x' * n})\n" }],
+          [60_000, ->(n) { "kanban\n  r[R]\n  ::icon(#{'x' * n})\n" }],
         "a class body" =>
-          [40_000, ->(n) { "kanban\n  r[R]\n  :::#{'x' * n}\n" }],
+          [60_000, ->(n) { "kanban\n  r[R]\n  :::#{'x' * n}\n" }],
         "a bracket label" =>
-          [40_000, ->(n) { "kanban\n  r[#{'x' * n}]\n" }],
+          [60_000, ->(n) { "kanban\n  r[#{'x' * n}]\n" }],
         "a quoted bracket label" =>
-          [40_000, ->(n) { "kanban\n  r[\"#{'x' * n}\"]\n" }],
+          [60_000, ->(n) { "kanban\n  r[\"#{'x' * n}\"]\n" }],
         "a round label" =>
-          [40_000, ->(n) { "kanban\n  r(#{'x' * n})\n" }],
+          [60_000, ->(n) { "kanban\n  r(#{'x' * n})\n" }],
         "item indentation" =>
           [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
       }.each do |family, (size, build)|
