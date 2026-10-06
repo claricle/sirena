@@ -1,108 +1,54 @@
 # frozen_string_literal: true
 
+require_relative "notation/mermaid"
+
 module Sirena
-  # Registry for diagram type handlers.
+  # Registry for Mermaid diagram type handlers.
   #
-  # This class implements the registry pattern to manage diagram type
-  # handlers without hardcoding type checks. Each diagram type registers
-  # its parser, transform, and renderer components, which can be retrieved
-  # dynamically during diagram processing.
+  # @deprecated A thin facade over {Sirena::Notation::Mermaid}'s type table,
+  #   kept for one release. Register types with
+  #   {Sirena::Notation::Mermaid.register_type}.
   #
   # @example Registering a diagram type
   #   DiagramRegistry.register(
   #     :flowchart,
-  #     parser: Parser::FlowchartGrammar,
+  #     parser: Parser::Flowchart,
   #     transform: Layout::Flowchart,
   #     renderer: Renderer::Flowchart,
   #     model: Diagram::Flowchart
   #   )
-  #
-  # @example Retrieving handlers for a type
-  #   handlers = DiagramRegistry.get(:flowchart)
-  #   # => { parser: Parser::FlowchartGrammar,
-  #   #      transform: Layout::Flowchart,
-  #   #      renderer: Renderer::Flowchart,
-  #   #      model: Diagram::Flowchart }
-  #
-  # @example Listing registered types
-  #   DiagramRegistry.types
-  #   # => [:flowchart, :sequence, :class_diagram]
   class DiagramRegistry
-    @handlers = {}
-
     class << self
       # Registers handlers for a diagram type.
       #
-      # @param type [Symbol] the diagram type identifier
-      # @param parser [Class] the parser class for this diagram type
-      # @param transform [Class] the transform class for this diagram type
-      # @param renderer [Class] the renderer class for this diagram type
-      # @param model [Class] the Diagram::Base subclass this type's parser
-      #   returns. Named here so the contract spec (spec/contract_spec.rb)
-      #   has a single source for which class to check, instead of a
-      #   hand-kept list living apart from the registry.
-      # @return [Hash] the registered handler hash
-      #
-      # @example Register a new diagram type
-      #   DiagramRegistry.register(
-      #     :flowchart,
-      #     parser: Parser::FlowchartGrammar,
-      #     transform: Layout::Flowchart,
-      #     renderer: Renderer::Flowchart,
-      #     model: Diagram::Flowchart
-      #   )
+      # @param type [Symbol] diagram type identifier
+      # @param parser [Class] parser class
+      # @param transform [Class] transform class
+      # @param renderer [Class] renderer class
+      # @param model [Class] diagram model class
       def register(type, parser:, transform:, renderer:, model:)
-        @handlers[type] = {
-          parser: parser,
-          transform: transform,
-          renderer: renderer,
-          model: model,
-        }
+        Notation::Mermaid.register_type(
+          type, parser: parser, transform: transform,
+                renderer: renderer, model: model
+        )
       end
 
-      # Retrieves handlers for a diagram type.
-      #
-      # @param type [Symbol] the diagram type identifier
-      # @return [Hash, nil] hash with :parser, :transform, :renderer, and
-      #   :model keys, or nil if type not registered
-      #
-      # @example Get handlers for a type
-      #   handlers = DiagramRegistry.get(:flowchart)
-      #   parser_class = handlers[:parser]
+      # @return [Hash, nil] handlers for a type, nil when not registered
       def get(type)
-        @handlers[type]
+        Notation::Mermaid.type_handlers(type)
       end
 
-      # Returns all registered diagram types.
-      #
-      # @return [Array<Symbol>] list of registered diagram type identifiers
-      #
-      # @example List all types
-      #   DiagramRegistry.types
-      #   # => [:flowchart, :sequence, :class_diagram]
+      # @return [Array<Symbol>] registered types in registration order
       def types
-        @handlers.keys
+        Notation::Mermaid.types
       end
 
-      # Checks if a diagram type is registered.
-      #
-      # @param type [Symbol] the diagram type identifier
-      # @return [Boolean] true if type is registered
-      #
-      # @example Check if type is registered
-      #   DiagramRegistry.registered?(:flowchart)
-      #   # => true
       def registered?(type)
-        @handlers.key?(type)
+        Notation::Mermaid.type_registered?(type)
       end
 
-      # Clears all registered handlers.
-      #
-      # This method is primarily useful for testing purposes.
-      #
-      # @return [Hash] empty handler hash
       def clear
-        @handlers = {}
+        Notation::Mermaid.clear_types
       end
     end
   end

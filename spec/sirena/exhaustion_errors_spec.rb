@@ -18,7 +18,8 @@ require "timeout"
 module ExhaustionErrorsSpecHelpers
   def rendering(exception)
     engine = Sirena::Engine.new
-    allow(engine).to receive(:detect_diagram_type).and_raise(exception)
+    allow(Sirena::Notation::Mermaid).to receive(:detect_type)
+      .and_raise(exception)
     -> { engine.render("graph TD\nA-->B\n") }
   end
 end
