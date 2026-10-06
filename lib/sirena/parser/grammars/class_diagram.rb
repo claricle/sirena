@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'common'
-require_relative 'mermaid_unicode_text'
+require_relative "common"
+require_relative "mermaid_unicode_text"
 
 module Sirena
   module Parser
@@ -18,10 +18,10 @@ module Sirena
         # (https://mermaid.js.org/syntax/classDiagram#two-way-relations).
         # `<|`/`|>` must sort before `<`/`>` below (MIXED_OPERATOR_STRINGS)
         # so the two-char glyph wins over its one-char prefix.
-        TWO_WAY_MARKERS = ['<|', '|>', '*', 'o', '<', '>'].freeze
+        TWO_WAY_MARKERS = ["<|", "|>", "*", "o", "<", ">"].freeze
 
         # The two link styles a two-way relation can use.
-        TWO_WAY_LINKS = ['--', '..'].freeze
+        TWO_WAY_LINKS = ["--", ".."].freeze
 
         # Every [marker][link][marker] combination mermaid's structural
         # grammar allows, longest-string-first so `<|--|>` is matched whole
@@ -50,9 +50,9 @@ module Sirena
         # `classDiagram %%x` and `classDiagram-v2 %%x` just as it rejects a
         # direction there.
         rule(:header) do
-          (str('classDiagram-v2').as(:header) >>
+          (str("classDiagram-v2").as(:header) >>
             space? >> (newline | eof).present? >> ws?) |
-            (str('classDiagram').as(:header) >> header_end >>
+            (str("classDiagram").as(:header) >> header_end >>
               space? >> direction_value.maybe.as(:direction) >> space? >>
               (newline | eof).present? >> ws?)
         end
@@ -60,7 +60,7 @@ module Sirena
         # `classDiagramX` is not a header, and the line ends after the header:
         # `classDiagram `A`` is rejected by mmdc.
         rule(:header_end) do
-          (name_char | str('-')).absent?
+          (name_char | str("-")).absent?
         end
 
         rule(:direction_value) do
@@ -98,7 +98,7 @@ module Sirena
 
         # Namespace block: namespace Name { ... }
         rule(:namespace_block) do
-          str('namespace').as(:namespace_keyword) >> space >>
+          str("namespace").as(:namespace_keyword) >> space >>
             namespace_name.as(:namespace_name) >> space? >>
             lbrace >> ws? >>
             namespace_statements.maybe.as(:namespace_body) >>
@@ -107,7 +107,7 @@ module Sirena
         end
 
         rule(:namespace_name) do
-          (match['a-zA-Z0-9_.'] | str('-')).repeat(1)
+          (match["a-zA-Z0-9_."] | str("-")).repeat(1)
         end
 
         rule(:namespace_statements) do
@@ -130,7 +130,7 @@ module Sirena
         # `class C1~T~<<iface>>` (mmdc accepts it). Swapping them is also what
         # gives the text label exactly one home rather than two.
         rule(:class_declaration) do
-          str('class').as(:keyword) >> space >>
+          str("class").as(:keyword) >> space >>
             class_name.as(:class_id) >> space? >>
             generic_params.maybe.as(:generic) >> space? >>
             text_label.maybe.as(:text_label) >> space? >>
@@ -143,7 +143,7 @@ module Sirena
         # either order, and rejects a label after it, so it is an alternative
         # to the stereotype slot rather than a slot of its own.
         rule(:css_shorthand) do
-          str(':::') >> space? >> name_char.repeat(1).as(:css_class)
+          str(":::") >> space? >> name_char.repeat(1).as(:css_class)
         end
 
         # `class C1["Label"]` only, matching mmdc 11.12.0 exactly.
@@ -201,7 +201,7 @@ module Sirena
 
         # Link statement: link ClassName "url" "tooltip"
         rule(:link_statement) do
-          str('link').as(:link_keyword) >> space >>
+          str("link").as(:link_keyword) >> space >>
             class_name.as(:class_id) >> space >>
             string.as(:url) >>
             (space >> string.as(:tooltip)).maybe >>
@@ -210,7 +210,7 @@ module Sirena
 
         # Callback statement: callback ClassName "function" "tooltip"
         rule(:callback_statement) do
-          str('callback').as(:callback_keyword) >> space >>
+          str("callback").as(:callback_keyword) >> space >>
             class_name.as(:class_id) >> space >>
             string.as(:callback_fn) >>
             (space >> string.as(:tooltip)).maybe >>
@@ -329,22 +329,22 @@ module Sirena
         end
 
         rule(:backtick_name) do
-          str('`') >> (str('`').absent? >> any).repeat(1) >> str('`')
+          str("`") >> (str("`").absent? >> any).repeat(1) >> str("`")
         end
 
         rule(:plain_class_name) do
-          hyphenated_word >> (str('.') >> hyphenated_word).repeat
+          hyphenated_word >> (str(".") >> hyphenated_word).repeat
         end
 
         rule(:hyphenated_word) do
-          name_char.repeat(1) >> (str('-') >> name_char.repeat(1)).repeat
+          name_char.repeat(1) >> (str("-") >> name_char.repeat(1)).repeat
         end
 
         # Stereotype: <<interface>>, <<abstract>>, etc.
         rule(:stereotype) do
-          str('<<') >>
-            (str('>>').absent? >> any).repeat(1).as(:stereotype_value) >>
-            str('>>')
+          str("<<") >>
+            (str(">>").absent? >> any).repeat(1).as(:stereotype_value) >>
+            str(">>")
         end
 
         # Generic parameters: ~T~ or ~Type~
@@ -393,14 +393,14 @@ module Sirena
         # `<<` and ends with `>>`, so the last `>>` closes it:
         # `<<a>>b>>` is the annotation `a>>b`.
         rule(:body_annotation) do
-          str('<<') >>
+          str("<<") >>
             (annotation_text.as(:body_stereotype) |
-              str('').as(:body_stereotype)) >>
-            str('>>') >> member_end
+              str("").as(:body_stereotype)) >>
+            str(">>") >> member_end
         end
 
         rule(:annotation_text) do
-          ((str('>>') >> member_end).absent? >> body_char).repeat(1)
+          ((str(">>") >> member_end).absent? >> body_char).repeat(1)
         end
 
         # Same shape as body_annotation, for the colon-member form
@@ -408,14 +408,14 @@ module Sirena
         # member early there, the same ban colon_text enforces: mmdc rejects
         # `A : <<a;b>>` and `A : <<a:b>>`.
         rule(:colon_body_annotation) do
-          str('<<') >>
+          str("<<") >>
             (colon_annotation_text.as(:body_stereotype) |
-              str('').as(:body_stereotype)) >>
-            str('>>') >> member_end
+              str("").as(:body_stereotype)) >>
+            str(">>") >> member_end
         end
 
         rule(:colon_annotation_text) do
-          ((str('>>') >> member_end).absent? >> match[':;'].absent? >> body_char).repeat(1)
+          ((str(">>") >> member_end).absent? >> match[":;"].absent? >> body_char).repeat(1)
         end
 
         rule(:colon_text) do
@@ -426,7 +426,7 @@ module Sirena
         # outside the body; free-text member capture must stop there instead
         # of swallowing the comment as member text.
         rule(:body_char) do
-          (str('%%') | match["\n{}"]).absent? >> any
+          (str("%%") | match["\n{}"]).absent? >> any
         end
 
         rule(:body_text) do
@@ -479,7 +479,7 @@ module Sirena
 
         # Type expression (handles generics like List~String~)
         rule(:type_expression) do
-          match['a-zA-Z_'] >> match['a-zA-Z0-9_<>'].repeat >>
+          match["a-zA-Z_"] >> match["a-zA-Z0-9_<>"].repeat >>
             (tilde >> (tilde.absent? >> any).repeat >> tilde).maybe
         end
 
@@ -534,31 +534,31 @@ module Sirena
         # remaining marker character.
         rule(:mixed_operator) do
           (MIXED_OPERATOR_STRINGS.map { |operator| str(operator) }.reduce(:|) |
-            str('o..')).as(:arrow)
+            str("o..")).as(:arrow)
         end
 
         rule(:inheritance_operator) do
-          (str('<|--') | str('--|>')).as(:arrow)
+          (str("<|--") | str("--|>")).as(:arrow)
         end
 
         rule(:composition_operator) do
-          (str('*--') | str('--*')).as(:arrow)
+          (str("*--") | str("--*")).as(:arrow)
         end
 
         rule(:aggregation_operator) do
-          (str('o--') | str('--o')).as(:arrow)
+          (str("o--") | str("--o")).as(:arrow)
         end
 
         rule(:realization_operator) do
-          (str('..|>') | str('<|..')).as(:arrow)
+          (str("..|>") | str("<|..")).as(:arrow)
         end
 
         rule(:dependency_operator) do
-          (str('..>') | str('<..')).as(:arrow)
+          (str("..>") | str("<..")).as(:arrow)
         end
 
         rule(:association_operator) do
-          (str('-->') | str('<--') | str('--') | str('..')).as(:arrow)
+          (str("-->") | str("<--") | str("--") | str("..")).as(:arrow)
         end
 
         # Labels

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../../diagram/requirement'
+require "parslet"
+require_relative "../../diagram/requirement"
 
 module Sirena
   module Parser
@@ -17,12 +17,12 @@ module Sirena
 
         # Requirement type mapping (for shorthand to full type)
         REQUIREMENT_TYPE_MAP = {
-          'functionalRequirement' => 'functionalRequirement',
-          'interfaceRequirement' => 'interfaceRequirement',
-          'performanceRequirement' => 'performanceRequirement',
-          'physicalRequirement' => 'physicalRequirement',
-          'designConstraint' => 'designConstraint',
-          'requirement' => 'requirement',
+          "functionalRequirement" => "functionalRequirement",
+          "interfaceRequirement" => "interfaceRequirement",
+          "performanceRequirement" => "performanceRequirement",
+          "physicalRequirement" => "physicalRequirement",
+          "designConstraint" => "designConstraint",
+          "requirement" => "requirement",
         }.freeze
 
         # Process parsed diagram
@@ -84,9 +84,9 @@ module Sirena
         # value through this so an empty directive value becomes "",
         # matching Mermaid.
         def self.acc_value(captured)
-          return '' if captured.is_a?(Array) && captured.empty?
+          return "" if captured.is_a?(Array) && captured.empty?
 
-          captured.to_s.gsub(JS_WHITESPACE_AT_EDGE, '')
+          captured.to_s.gsub(JS_WHITESPACE_AT_EDGE, "")
         end
 
         def self.create_requirement(stmt)
@@ -106,13 +106,13 @@ module Sirena
                 value = prop[:value].to_s.strip if prop[:value]
 
                 case key
-                when 'id'
+                when "id"
                   req.id = value
-                when 'text'
+                when "text"
                   req.text = value
-                when 'risk'
+                when "risk"
                   req.risk = value
-                when 'verifymethod'
+                when "verifymethod"
                   req.verifymethod = value
                 end
               end
@@ -142,9 +142,9 @@ module Sirena
                 value = prop[:value].to_s.strip if prop[:value]
 
                 case key
-                when 'type'
+                when "type"
                   elem.type = value
-                when 'docref'
+                when "docref"
                   elem.docref = value
                 end
               end
@@ -189,16 +189,16 @@ module Sirena
               props.each do |prop|
                 prop_str = prop.to_s.strip
                 # Split by comma if it contains multiple properties
-                prop_parts = prop_str.split(',')
+                prop_parts = prop_str.split(",")
 
                 prop_parts.each do |part|
                   part = part.strip
-                  if part.start_with?('fill:')
-                    style.fill = part.sub('fill:', '').strip
-                  elsif part.start_with?('stroke:')
-                    style.stroke = part.sub('stroke:', '').strip
-                  elsif part.start_with?('stroke-width:')
-                    style.stroke_width = part.sub('stroke-width:', '').strip
+                  if part.start_with?("fill:")
+                    style.fill = part.sub("fill:", "").strip
+                  elsif part.start_with?("stroke:")
+                    style.stroke = part.sub("stroke:", "").strip
+                  elsif part.start_with?("stroke-width:")
+                    style.stroke_width = part.sub("stroke-width:", "").strip
                   else
                     style.add_property(part) unless part.empty?
                   end
@@ -220,16 +220,16 @@ module Sirena
               props.each do |prop|
                 prop_str = prop.to_s.strip
                 # Split by comma if it contains multiple properties
-                prop_parts = prop_str.split(',')
+                prop_parts = prop_str.split(",")
 
                 prop_parts.each do |part|
                   part = part.strip
-                  if part.start_with?('fill:')
-                    klass.fill = part.sub('fill:', '').strip
-                  elsif part.start_with?('stroke:')
-                    klass.stroke = part.sub('stroke:', '').strip
-                  elsif part.start_with?('stroke-width:')
-                    klass.stroke_width = part.sub('stroke-width:', '').strip
+                  if part.start_with?("fill:")
+                    klass.fill = part.sub("fill:", "").strip
+                  elsif part.start_with?("stroke:")
+                    klass.stroke = part.sub("stroke:", "").strip
+                  elsif part.start_with?("stroke-width:")
+                    klass.stroke_width = part.sub("stroke-width:", "").strip
                   else
                     klass.add_property(part) unless part.empty?
                   end
@@ -268,7 +268,7 @@ module Sirena
           classes = []
 
           if class_data.is_a?(String)
-            classes = class_data.split(',').map(&:strip)
+            classes = class_data.split(",").map(&:strip)
           elsif class_data.is_a?(Array)
             class_data.each do |item|
               if item.is_a?(String)

@@ -11,10 +11,10 @@
 #
 # Usage: ruby scripts/verify_docs_site.rb [--docs-dir DIR] [--baseurl BASEURL]
 
-require 'yaml'
-require 'optparse'
-require 'pathname'
-require 'nokogiri'
+require "yaml"
+require "optparse"
+require "pathname"
+require "nokogiri"
 
 module Sirena
   # Pure verification core: docs dir + site dir + baseurl in, an array of
@@ -32,7 +32,7 @@ module Sirena
       sidebarblock stemblock tableblock ulist verseblock videoblock
     ].freeze
 
-    LAYOUT_BODY_MARKER = 'main-content-wrap'
+    LAYOUT_BODY_MARKER = "main-content-wrap"
     # just-the-docs' `_layouts/default.html` nests the real content region
     # (`<main>`) and the theme footer as SIBLINGS, both inside
     # `.main-content-wrap`:
@@ -49,9 +49,9 @@ module Sirena
     # gem: `gem contents just-the-docs | grep _layouts` ->
     # `_layouts/default.html`, and against a real Jekyll build (see the
     # regression spec this constant backs).
-    CONTENT_REGION_SELECTOR = 'main'
-    SEARCH_INDEX_PATH = 'assets/js/search-data.json'
-    REQUIRED_DIAGRAM_PERMALINK = '/:collection/:path/'
+    CONTENT_REGION_SELECTOR = "main"
+    SEARCH_INDEX_PATH = "assets/js/search-data.json"
+    REQUIRED_DIAGRAM_PERMALINK = "/:collection/:path/"
 
     # A thin wrapper over Nokogiri::HTML5 -- a real DOM parser -- that
     # returns every tag on a page as { name:, attrs: }, with the CONTENT of
@@ -268,7 +268,7 @@ module Sirena
       def renders_content?
         return true unless rendered_text.empty?
 
-        @rendered_region.css('img, iframe, svg').any?
+        @rendered_region.css("img, iframe, svg").any?
       end
 
       # A skipped element (script/style/textarea/template) is still
@@ -282,7 +282,7 @@ module Sirena
         return @class_tokens if @class_tokens
 
         classes = tags.reject { |tag| TagTokenizer::SKIPPED_CONTENT_ELEMENTS.include?(tag[:name]) }
-          .filter_map { |tag| tag[:attrs]['class'] }.grep(String)
+          .filter_map { |tag| tag[:attrs]["class"] }.grep(String)
         @class_tokens = classes.flat_map { |value| value.split(/\s+/) }
       end
 
@@ -293,16 +293,16 @@ module Sirena
       def stylesheet_hrefs
         return @stylesheet_hrefs if @stylesheet_hrefs
 
-        @stylesheet_hrefs = tags.select { |tag| tag[:name] == 'link' && tag[:attrs]['rel'] == 'stylesheet' }
-          .filter_map { |tag| tag[:attrs]['href'] }
+        @stylesheet_hrefs = tags.select { |tag| tag[:name] == "link" && tag[:attrs]["rel"] == "stylesheet" }
+          .filter_map { |tag| tag[:attrs]["href"] }
           .grep(String)
       end
 
       def script_srcs
         return @script_srcs if @script_srcs
 
-        @script_srcs = tags.select { |tag| tag[:name] == 'script' }
-          .filter_map { |tag| tag[:attrs]['src'] }
+        @script_srcs = tags.select { |tag| tag[:name] == "script" }
+          .filter_map { |tag| tag[:attrs]["src"] }
           .grep(String)
       end
 
@@ -319,7 +319,7 @@ module Sirena
         elsif (wrap = document.css(".#{LAYOUT_BODY_MARKER}").first)
           [wrap, LAYOUT_BODY_MARKER]
         else
-          [document, 'the page']
+          [document, "the page"]
         end
       end
     end
@@ -334,8 +334,8 @@ module Sirena
       # `Psych::AliasesNotEnabled` instead of returning a Hash, so a
       # `_config.yml` Jekyll itself builds successfully would crash this
       # verifier instead of being checked.
-      @config = YAML.safe_load_file(@docs_dir.join('_config.yml').to_s, aliases: true)
-      @baseurl = (baseurl || @config['baseurl']).to_s
+      @config = YAML.safe_load_file(@docs_dir.join("_config.yml").to_s, aliases: true)
+      @baseurl = (baseurl || @config["baseurl"]).to_s
     end
 
     def failures
@@ -356,7 +356,7 @@ module Sirena
       # `.select { File.file? }` because a DIRECTORY named `index.html`
       # matches the glob, and reading it raises Errno::EISDIR. Same
       # defect as the `exist?`-versus-`file?` checks below, one level over.
-      Dir.glob(@site_dir.join('**/*.html').to_s)
+      Dir.glob(@site_dir.join("**/*.html").to_s)
         .select { |path| File.file?(path) }
         .map { |path| Page.new(path, @site_dir.to_s) }
     end
@@ -373,15 +373,15 @@ module Sirena
       # `Hash#dig` call `Array#dig` with a String key, which raises
       # TypeError instead of returning nil, so the guard is required
       # before digging any further, not just an optimization.
-      collections = @config['collections']
-      permalink = collections.is_a?(Hash) ? collections.dig('diagram_types', 'permalink') : nil
+      collections = @config["collections"]
+      permalink = collections.is_a?(Hash) ? collections.dig("diagram_types", "permalink") : nil
       if permalink != REQUIRED_DIAGRAM_PERMALINK
         failures << "config: collections.diagram_types.permalink is #{permalink.inspect}, " \
                      "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"
       end
 
-      theme = @config['theme']
-      failures << 'config: theme is absent or empty' if theme.nil? || theme.to_s.empty?
+      theme = @config["theme"]
+      failures << "config: theme is absent or empty" if theme.nil? || theme.to_s.empty?
 
       failures
     end
@@ -389,7 +389,7 @@ module Sirena
     # R3-R7
     def a1_manifest_completeness
       failures = []
-      include_active = Array(@config['include']).include?('_diagram_types')
+      include_active = Array(@config["include"]).include?("_diagram_types")
 
       diagram_sources.each do |rel|
         collection_path = "diagram_types/#{rel}/index.html"
@@ -409,9 +409,9 @@ module Sirena
     end
 
     def diagram_sources
-      diagram_dir = @docs_dir.join('_diagram_types')
-      Dir.glob(diagram_dir.join('**/*.adoc').to_s).map do |path|
-        Pathname.new(path).relative_path_from(diagram_dir).sub_ext('').to_s
+      diagram_dir = @docs_dir.join("_diagram_types")
+      Dir.glob(diagram_dir.join("**/*.adoc").to_s).map do |path|
+        Pathname.new(path).relative_path_from(diagram_dir).sub_ext("").to_s
       end
     end
 
@@ -422,8 +422,8 @@ module Sirena
     def include_path_for(rel)
       dir = File.dirname(rel)
       base = File.basename(rel)
-      if base == 'index'
-        dir == '.' ? '_diagram_types/index.html' : "_diagram_types/#{dir}/index.html"
+      if base == "index"
+        dir == "." ? "_diagram_types/index.html" : "_diagram_types/#{dir}/index.html"
       else
         "_diagram_types/#{rel}/index.html"
       end
@@ -432,7 +432,7 @@ module Sirena
     # R8-R11
     def a2_theme_layout_and_stylesheet(pages)
       failures = []
-      theme = @config['theme'].to_s
+      theme = @config["theme"].to_s
 
       pages.each do |page|
         unless page.has_class_token?(LAYOUT_BODY_MARKER)
@@ -469,7 +469,7 @@ module Sirena
     end
 
     def diagram_pages(pages)
-      pages.select { |page| page.rel_path.start_with?('diagram_types/', '_diagram_types/') }
+      pages.select { |page| page.rel_path.start_with?("diagram_types/", "_diagram_types/") }
     end
 
     # R17-R24
@@ -495,7 +495,7 @@ module Sirena
         failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
       end
 
-      if @config['search_enabled'] == true && !@site_dir.join(SEARCH_INDEX_PATH).file?
+      if @config["search_enabled"] == true && !@site_dir.join(SEARCH_INDEX_PATH).file?
         failures << "asset: search index #{SEARCH_INDEX_PATH.inspect} missing"
       end
 
@@ -524,7 +524,7 @@ module Sirena
     # the asset's name is not a stylesheet a server can return.
     def resolves_within_site_dir?(file_path)
       site_root = @site_dir.expand_path
-      candidate = site_root.join(file_path.delete_prefix('/')).expand_path
+      candidate = site_root.join(file_path.delete_prefix("/")).expand_path
 
       return false unless candidate.file?
 
@@ -532,11 +532,11 @@ module Sirena
     end
 
     def site_absolute?(ref)
-      ref.start_with?('/')
+      ref.start_with?("/")
     end
 
     def protocol_relative?(ref)
-      ref.start_with?('//')
+      ref.start_with?("//")
     end
 
     # `nil` means ref does not live under the configured baseurl at all --
@@ -554,20 +554,20 @@ module Sirena
 end
 
 if __FILE__ == $PROGRAM_NAME
-  options = { docs_dir: 'docs', baseurl: nil }
+  options = { docs_dir: "docs", baseurl: nil }
 
   OptionParser.new do |opts|
-    opts.banner = 'Usage: ruby scripts/verify_docs_site.rb [options]'
-    opts.on('--docs-dir DIR', 'Path to the docs directory (default: docs)') { |v| options[:docs_dir] = v }
-    opts.on('--baseurl BASEURL', 'Baseurl used to resolve site-absolute asset refs') { |v| options[:baseurl] = v }
+    opts.banner = "Usage: ruby scripts/verify_docs_site.rb [options]"
+    opts.on("--docs-dir DIR", "Path to the docs directory (default: docs)") { |v| options[:docs_dir] = v }
+    opts.on("--baseurl BASEURL", "Baseurl used to resolve site-absolute asset refs") { |v| options[:baseurl] = v }
   end.parse!
 
-  site_dir = File.join(options[:docs_dir], '_site')
+  site_dir = File.join(options[:docs_dir], "_site")
   verifier = Sirena::DocsSiteVerifier.new(docs_dir: options[:docs_dir], site_dir: site_dir, baseurl: options[:baseurl])
   failures = verifier.failures
 
   if failures.empty?
-    puts 'docs site verification: OK'
+    puts "docs site verification: OK"
   else
     failures.each { |failure| puts "FAIL: #{failure}" }
     puts "docs site verification: #{failures.size} failure(s)"

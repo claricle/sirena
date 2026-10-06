@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -23,7 +23,7 @@ module Sirena
       # Initialize with default visibility
       def initialize(*args)
         super
-        self.visibility ||= 'public'
+        self.visibility ||= "public"
       end
 
       # Validates the attribute has required fields.
@@ -38,11 +38,11 @@ module Sirena
       # @return [String] the visibility symbol (+, -, #, ~)
       def visibility_symbol
         case visibility
-        when 'public' then '+'
-        when 'private' then '-'
-        when 'protected' then '#'
-        when 'package' then '~'
-        else '+'
+        when "public" then "+"
+        when "private" then "-"
+        when "protected" then "#"
+        when "package" then "~"
+        else "+"
         end
       end
     end
@@ -68,7 +68,7 @@ module Sirena
       # Initialize with default visibility
       def initialize(*args)
         super
-        self.visibility ||= 'public'
+        self.visibility ||= "public"
       end
 
       # Validates the method has required fields.
@@ -83,11 +83,11 @@ module Sirena
       # @return [String] the visibility symbol (+, -, #, ~)
       def visibility_symbol
         case visibility
-        when 'public' then '+'
-        when 'private' then '-'
-        when 'protected' then '#'
-        when 'package' then '~'
-        else '+'
+        when "public" then "+"
+        when "private" then "-"
+        when "protected" then "#"
+        when "package" then "~"
+        else "+"
         end
       end
 
@@ -136,21 +136,21 @@ module Sirena
       #
       # @return [Boolean] true if stereotype is 'interface'
       def interface?
-        stereotype == 'interface'
+        stereotype == "interface"
       end
 
       # Checks if this is an abstract class.
       #
       # @return [Boolean] true if stereotype is 'abstract'
       def abstract?
-        stereotype == 'abstract'
+        stereotype == "abstract"
       end
 
       # Checks if this is an enum.
       #
       # @return [Boolean] true if stereotype is 'enum'
       def enum?
-        stereotype == 'enum'
+        stereotype == "enum"
       end
     end
 
@@ -197,7 +197,7 @@ module Sirena
       # Initialize with default relationship type
       def initialize(*args)
         super
-        self.relationship_type ||= 'association'
+        self.relationship_type ||= "association"
       end
 
       # Validates the relationship has required fields.
@@ -213,42 +213,42 @@ module Sirena
       #
       # @return [Boolean] true if inheritance type
       def inheritance?
-        relationship_type == 'inheritance'
+        relationship_type == "inheritance"
       end
 
       # Checks if this is a composition relationship.
       #
       # @return [Boolean] true if composition type
       def composition?
-        relationship_type == 'composition'
+        relationship_type == "composition"
       end
 
       # Checks if this is an aggregation relationship.
       #
       # @return [Boolean] true if aggregation type
       def aggregation?
-        relationship_type == 'aggregation'
+        relationship_type == "aggregation"
       end
 
       # Checks if this is an association relationship.
       #
       # @return [Boolean] true if association type
       def association?
-        relationship_type == 'association'
+        relationship_type == "association"
       end
 
       # Checks if this is a dependency relationship.
       #
       # @return [Boolean] true if dependency type
       def dependency?
-        relationship_type == 'dependency'
+        relationship_type == "dependency"
       end
 
       # Checks if this is a realization relationship.
       #
       # @return [Boolean] true if realization type
       def realization?
-        relationship_type == 'realization'
+        relationship_type == "realization"
       end
     end
 

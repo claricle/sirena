@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'escaping'
+require_relative "escaping"
 
 module Sirena
   module Svg

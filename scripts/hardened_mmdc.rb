@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'timeout'
+require "timeout"
 
 # Spawns mmdc the way its Chromium-backed process tree actually requires:
 # its own process group, a deadline, and a sweep for children that escape
@@ -33,14 +33,14 @@ module HardenedMmdc
   # close, even when the spawn itself raises.
   def run_mmdc(input, output)
     IO.pipe do |stdout_r, stdout_w|
-      pid = Process.spawn('mmdc', '-i', input, '-o', output,
+      pid = Process.spawn("mmdc", "-i", input, "-o", output,
                           out: stdout_w, err: stdout_w, pgroup: true)
       stdout_w.close
       # Appended to as bytes arrive, not returned once at the end: a drain
       # that never reaches EOF (an escaped descendant still holds the write
       # end) still leaves whatever it already read sitting in this buffer,
       # instead of losing it behind a `Thread#value` that never resolves.
-      buffer = +''
+      buffer = +""
       drain = Thread.new { drain_into(stdout_r, buffer) }
 
       descendants = descendants_of(pid)
@@ -104,7 +104,7 @@ module HardenedMmdc
   # would read as mermaid rejecting the source.
   def status_unless_killed(pid)
     _, status = Process.waitpid2(pid)
-    status.termsig == Signal.list.fetch('KILL') ? nil : status
+    status.termsig == Signal.list.fetch("KILL") ? nil : status
   end
 
   # Programs are spawned into a process group of their own, so a group's id is
@@ -116,14 +116,14 @@ module HardenedMmdc
   # a reaped leader gives ESRCH, and a leader that is still an unreaped zombie
   # gives EPERM.
   def kill_group_id(pid)
-    Process.kill('KILL', -pid)
+    Process.kill("KILL", -pid)
   rescue Errno::ESRCH, Errno::EPERM
     nil
   end
 
   def kill_each(pids)
     pids.each do |child|
-      Process.kill('KILL', child)
+      Process.kill("KILL", child)
     rescue Errno::ESRCH
       nil
     end
@@ -143,7 +143,7 @@ module HardenedMmdc
   # The whole subtree, from one `ps` snapshot.
   def subtree_of(pid)
     parents = Hash.new { |hash, key| hash[key] = [] }
-    capture(['ps', '-eo', 'pid=,ppid='], PS_TIMEOUT).each_line do |line|
+    capture(["ps", "-eo", "pid=,ppid="], PS_TIMEOUT).each_line do |line|
       child, parent = line.split.map { |field| Integer(field, exception: false) }
       parents[parent] << child if child&.positive? && parent&.positive?
     end

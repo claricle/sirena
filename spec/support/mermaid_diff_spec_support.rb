@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'rbconfig'
-require 'stringio'
-require 'timeout'
-require 'tmpdir'
+require "open3"
+require "rbconfig"
+require "stringio"
+require "timeout"
+require "tmpdir"
 
 module MermaidDiffSpecSupport
   module Helpers
@@ -33,39 +33,39 @@ module MermaidDiffSpecSupport
 
     def run_harness(source, *options, mmdc: accepting_mmdc, relative: false)
       Dir.mktmpdir do |dir|
-        probe = File.join(dir, 'probe.txt')
+        probe = File.join(dir, "probe.txt")
         File.write(probe, source)
         bin = fake_mmdc(dir, mmdc)
         script = if relative
-                   './scripts/mermaid_diff.rb'
+                   "./scripts/mermaid_diff.rb"
                  else
-                   File.expand_path('../../scripts/mermaid_diff.rb', __dir__)
+                   File.expand_path("../../scripts/mermaid_diff.rb", __dir__)
                  end
         command = if relative
-                    ['bundle', 'exec', script, *options, probe]
+                    ["bundle", "exec", script, *options, probe]
                   else
                     [RbConfig.ruby, script, *options, probe]
                   end
         capture = proc do
           Open3.capture3(
-            { 'PATH' => "#{bin}:#{ENV.fetch('PATH')}" },
+            { "PATH" => "#{bin}:#{ENV.fetch('PATH')}" },
             *command,
           )
         end
 
         stdout, stderr, status = if relative
-                                   Dir.chdir(File.expand_path('../..', __dir__), &capture)
+                                   Dir.chdir(File.expand_path("../..", __dir__), &capture)
                                  else
                                    capture.call
                                  end
-        [stdout, stderr.gsub(YEPTRIS_NOTICE, ''), status]
+        [stdout, stderr.gsub(YEPTRIS_NOTICE, ""), status]
       end
     end
 
     def oracle_verdict(svg)
-      MmdcOracle.verdict('probe') do |_input, output|
+      MmdcOracle.verdict("probe") do |_input, output|
         File.write(output, svg)
-        [true, '']
+        [true, ""]
       end.verdict
     end
 
@@ -83,7 +83,7 @@ module MermaidDiffSpecSupport
     # rather than stubbing File.binread.
     def with_svg_file(content)
       Dir.mktmpdir do |dir|
-        path = File.join(dir, 'probe.svg')
+        path = File.join(dir, "probe.svg")
         File.write(path, content)
         yield path
       end
@@ -105,7 +105,7 @@ module MermaidDiffSpecSupport
     # Every descriptor this process holds. /dev/fd lists them on both macOS and
     # Linux, and the reading itself costs the same on either side of a count.
     def open_descriptors
-      Dir.children('/dev/fd').size
+      Dir.children("/dev/fd").size
     end
 
     def dies?(pid)
@@ -141,7 +141,7 @@ module MermaidDiffSpecSupport
 
     def records_in(text)
       Dir.mktmpdir do |dir|
-        path = File.join(dir, 'probe.txt')
+        path = File.join(dir, "probe.txt")
         File.binwrite(path, text)
         harness.send(:probes, [path])
       end
@@ -152,10 +152,10 @@ module MermaidDiffSpecSupport
     # execing a fresh ruby costs seconds on a cold gem path.
     def spawn_tree
       Dir.mktmpdir do |dir|
-        pidfile = File.join(dir, 'child.pid')
+        pidfile = File.join(dir, "child.pid")
         parent = fork do
           Process.setpgid(0, 0)
-          File.write(pidfile, Process.spawn('sleep', '120', pgroup: true))
+          File.write(pidfile, Process.spawn("sleep", "120", pgroup: true))
           sleep 120
         ensure
           exit!(0)
@@ -191,7 +191,7 @@ module MermaidDiffSpecSupport
 
       prefix_path(fake_mmdc(dir, script)) do
         Timeout.timeout(guard) do
-          HardenedMmdc.run_mmdc(File.join(dir, 'in.mmd'), File.join(dir, 'out.svg'))
+          HardenedMmdc.run_mmdc(File.join(dir, "in.mmd"), File.join(dir, "out.svg"))
         end
       end
     end
@@ -199,10 +199,10 @@ module MermaidDiffSpecSupport
     # Puts one shell script on PATH under the name mmdc and hands back the
     # directory to prepend.
     def fake_mmdc(dir, script)
-      bin = File.join(dir, 'bin')
+      bin = File.join(dir, "bin")
       Dir.mkdir(bin)
-      File.write(File.join(bin, 'mmdc'), script)
-      File.chmod(0o755, File.join(bin, 'mmdc'))
+      File.write(File.join(bin, "mmdc"), script)
+      File.chmod(0o755, File.join(bin, "mmdc"))
       bin
     end
 
@@ -341,11 +341,11 @@ module MermaidDiffSpecSupport
     end
 
     def with_path(path)
-      old = ENV.fetch('PATH')
-      ENV['PATH'] = path
+      old = ENV.fetch("PATH")
+      ENV["PATH"] = path
       yield
     ensure
-      ENV['PATH'] = old
+      ENV["PATH"] = old
     end
 
     def alive?(pid)
@@ -356,7 +356,7 @@ module MermaidDiffSpecSupport
     end
 
     def kill_quietly(pid)
-      Process.kill('KILL', pid)
+      Process.kill("KILL", pid)
     rescue Errno::ESRCH
       nil
     ensure

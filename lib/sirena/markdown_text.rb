@@ -163,7 +163,7 @@ module Sirena
     # @return [Integer]
     # @api private
     def real_marker_count(raw)
-      raw.gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, '').count('*_')
+      raw.gsub(::Kramdown::Parser::Kramdown::ESCAPED_CHARS, "").count("*_")
     end
 
     # True when an escaped marker leaves a lone (length-1) unescaped

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 # The boundary, not a sample.
 #
@@ -14,7 +14,7 @@ require 'spec_helper'
 # name/value pairs, never rendered markup, which leaves exactly one place an
 # attribute becomes text.
 HOSTILE = %(<&>"'x)
-ESCAPED = '&lt;&amp;&gt;&quot;&apos;x'
+ESCAPED = "&lt;&amp;&gt;&quot;&apos;x"
 
 # Every hook emits conditionally, so a default instance returns an empty
 # array and the pair assertion would pass against raw-string code. Each
@@ -44,16 +44,16 @@ ELEMENT_ATTRIBUTES = {
 TRANSLATED_AWAY = {
   Sirena::Svg::Path => {
     marker_end: [
-      'marker-end',
-      'url(#arrowhead)',
+      "marker-end",
+      "url(#arrowhead)",
       [
         '<path stroke="#000000" d="M 0 0 L 10 0"/>',
         '<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>',
       ],
     ],
     marker_start: [
-      'marker-start',
-      'url(#arrowhead)',
+      "marker-start",
+      "url(#arrowhead)",
       [
         '<path stroke="#000000" d="M 0 0 L 10 0"/>',
         '<polygon fill="#000000" points="0.0,0.0 4.0,-2.0 4.0,2.0"/>',
@@ -62,8 +62,8 @@ TRANSLATED_AWAY = {
   },
   Sirena::Svg::Text => {
     dominant_baseline: [
-      'dominant-baseline',
-      'middle',
+      "dominant-baseline",
+      "middle",
       ['<text y="13.5" font-size="10"></text>'],
     ],
   },
@@ -76,12 +76,12 @@ TRANSLATED_AWAY = {
 # instead of silently taking another class's setup.
 TRANSLATED_AWAY_SETUP = {
   Sirena::Svg::Path => lambda { |path|
-    path.d = 'M 0 0 L 10 0'
-    path.stroke = '#000000'
+    path.d = "M 0 0 L 10 0"
+    path.stroke = "#000000"
   },
   Sirena::Svg::Text => lambda { |text|
     text.y = 10.0
-    text.font_size = '10'
+    text.font_size = "10"
   },
 }.freeze
 
@@ -91,7 +91,7 @@ COMMON_ATTRIBUTES = [:id, :class_name, :transform, :fill, :fill_opacity,
 
 RSpec.describe Sirena::Svg::Escaping do
   ELEMENT_ATTRIBUTES.each do |klass, writers|
-    context klass.name.split('::').last do
+    context klass.name.split("::").last do
       subject(:element) do
         klass.new.tap do |e|
           (writers + COMMON_ATTRIBUTES).each do |w|
@@ -100,14 +100,14 @@ RSpec.describe Sirena::Svg::Escaping do
         end
       end
 
-      it 'returns pairs from element_attributes, never rendered markup' do
+      it "returns pairs from element_attributes, never rendered markup" do
         pairs = element.send(:element_attributes)
 
         expect(pairs).to all(be_an(Array).and(have_attributes(size: 2)))
         expect(pairs.map(&:first)).to all(be_a(String))
       end
 
-      it 'escapes every one of its string attribute values' do
+      it "escapes every one of its string attribute values" do
         xml = element.to_xml
         # No duplicate allowance any more. Rect used to list fill-opacity in
         # writes_attributes while Element also emitted it, producing
@@ -124,7 +124,7 @@ RSpec.describe Sirena::Svg::Escaping do
   # Four of the six properties the profile has no room for: `opacity`,
   # `marker-end`, `marker-start` and `dominant-baseline`. The `dx` and `dy`
   # translations are covered in tiny_properties_spec.
-  describe 'properties SVG Tiny 1.2 does not have' do
+  describe "properties SVG Tiny 1.2 does not have" do
     TRANSLATED_AWAY.each do |klass, writers|
       writers.each do |writer, (attribute, sample, expected_lines)|
         it "never emits #{attribute} from #{klass.name.split('::').last}" do
@@ -140,7 +140,7 @@ RSpec.describe Sirena::Svg::Escaping do
       end
     end
 
-    it 'never emits opacity, which Tiny replaces with the two components' do
+    it "never emits opacity, which Tiny replaces with the two components" do
       rect = Sirena::Svg::Rect.new
       rect.opacity = 0.3
 
@@ -153,7 +153,7 @@ RSpec.describe Sirena::Svg::Escaping do
   # production and the corpus has no special-character attribute case, so
   # misrouting Document alone would leave the rest of this suite green.
   describe Sirena::Svg::Document do
-    it 'escapes its root attributes' do
+    it "escapes its root attributes" do
       doc = described_class.new
       doc.view_box = HOSTILE
       doc.version = HOSTILE
@@ -177,12 +177,12 @@ RSpec.describe Sirena::Svg::Escaping do
     # reverted (mutation-check.sh confirmed this). Keep it; it becomes the
     # only check for an explicitly-set version/baseProfile now that
     # from_xml round-tripping is gone.
-    it 'declares the SVG Tiny 1.2 profile by default, and honours a different one when set directly' do
+    it "declares the SVG Tiny 1.2 profile by default, and honours a different one when set directly" do
       defaults = described_class.new.to_xml
 
       other = described_class.new
-      other.version = '1.1'
-      other.base_profile = 'full'
+      other.version = "1.1"
+      other.base_profile = "full"
 
       expect(defaults).to include(%( version="1.2"\n baseProfile="tiny"))
       expect(other.to_xml).to include(%( version="1.1"\n baseProfile="full"))
@@ -193,7 +193,7 @@ RSpec.describe Sirena::Svg::Escaping do
   # assigns edge ids straight onto it. A seeded raw interpolation here left the
   # entire suite green, so it needs its own case.
   describe Sirena::Svg::Group do
-    it 'escapes the attributes on its opening tag' do
+    it "escapes the attributes on its opening tag" do
       group = described_class.new
       group.id = HOSTILE
       group.class_name = HOSTILE
@@ -210,19 +210,19 @@ RSpec.describe Sirena::Svg::Escaping do
   describe Sirena::Svg::Text do
     # Checking only for `<img` let a `<`-only escaper pass while leaving raw
     # `&` and `>` in the output. Assert the exact string instead.
-    it 'escapes every special character in its content' do
+    it "escapes every special character in its content" do
       text = described_class.new
-      text.content = '& < >'
+      text.content = "& < >"
 
-      expect(text.to_xml).to eq('<text>&amp; &lt; &gt;</text>')
+      expect(text.to_xml).to eq("<text>&amp; &lt; &gt;</text>")
     end
 
-    it 'neutralises a script payload' do
+    it "neutralises a script payload" do
       text = described_class.new
-      text.content = 'Alice<img src=x onerror=alert(1)>'
+      text.content = "Alice<img src=x onerror=alert(1)>"
 
-      expect(text.to_xml).to include('&lt;img src=x onerror=alert(1)&gt;')
-      expect(text.to_xml).not_to include('<img')
+      expect(text.to_xml).to include("&lt;img src=x onerror=alert(1)&gt;")
+      expect(text.to_xml).not_to include("<img")
     end
   end
 
@@ -231,8 +231,8 @@ RSpec.describe Sirena::Svg::Escaping do
   # with them. Their attributes are numeric or a coordinate string, so the
   # escaping matrix above cannot cover them; these assert the exact output, and
   # removing either declaration fails here.
-  describe 'geometry that used to be dropped' do
-    it 'serialises an Ellipse with all four of its radii and centres' do
+  describe "geometry that used to be dropped" do
+    it "serialises an Ellipse with all four of its radii and centres" do
       ellipse = Sirena::Svg::Ellipse.new
       ellipse.cx = 10.0
       ellipse.cy = 20.0
@@ -243,9 +243,9 @@ RSpec.describe Sirena::Svg::Escaping do
         .to eq('<ellipse cx="10.0" cy="20.0" rx="5.0" ry="6.0"/>')
     end
 
-    it 'serialises a Polyline with its points' do
+    it "serialises a Polyline with its points" do
       polyline = Sirena::Svg::Polyline.new
-      polyline.points = '1,2 3,4'
+      polyline.points = "1,2 3,4"
 
       expect(polyline.to_xml).to eq('<polyline points="1,2 3,4"/>')
     end
@@ -254,26 +254,26 @@ RSpec.describe Sirena::Svg::Escaping do
   # XML 1.0 has no escape for most C0 controls, and a sequence label accepts
   # any non-line-ending character, so a NUL reached the document and made it
   # unparseable.
-  describe 'characters XML cannot represent' do
-    it 'drops a forbidden control from text' do
-      expect(described_class.escape_text("a\u0000b\u000Bc")).to eq('abc')
+  describe "characters XML cannot represent" do
+    it "drops a forbidden control from text" do
+      expect(described_class.escape_text("a\u0000b\u000Bc")).to eq("abc")
     end
 
-    it 'keeps tab, newline and carriage return, which are legal' do
+    it "keeps tab, newline and carriage return, which are legal" do
       expect(described_class.escape_text("a\tb\nc\rd")).to eq("a\tb\nc\rd")
     end
   end
 
-  describe 'the pair contract' do
-    it 'refuses a pre-rendered string instead of dropping it' do
+  describe "the pair contract" do
+    it "refuses a pre-rendered string instead of dropping it" do
       expect { described_class.attributes([%( x="1")]) }
         .to raise_error(ArgumentError, /pair/)
     end
 
     # Only values were escaped, so a name carrying a quote injected a second
     # attribute and the document stayed valid.
-    it 'refuses an attribute name that would inject another attribute' do
-      expect { described_class.attributes([[%(x="s" onload), 'boom']]) }
+    it "refuses an attribute name that would inject another attribute" do
+      expect { described_class.attributes([[%(x="s" onload), "boom"]]) }
         .to raise_error(ArgumentError, /attribute name/)
     end
   end

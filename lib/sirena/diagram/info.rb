@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram

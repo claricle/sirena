@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -16,19 +16,19 @@ module Sirena
     class Requirement < Base
       # Risk level color mapping
       RISK_COLORS = {
-        'high' => '#ff6b6b',
-        'medium' => '#ffd93d',
-        'low' => '#6bcf7f',
+        "high" => "#ff6b6b",
+        "medium" => "#ffd93d",
+        "low" => "#6bcf7f",
       }.freeze
 
       # Requirement type labels
       REQUIREMENT_TYPE_LABELS = {
-        'requirement' => 'Requirement',
-        'functionalRequirement' => 'Functional Req',
-        'interfaceRequirement' => 'Interface Req',
-        'performanceRequirement' => 'Performance Req',
-        'physicalRequirement' => 'Physical Req',
-        'designConstraint' => 'Design Constraint',
+        "requirement" => "Requirement",
+        "functionalRequirement" => "Functional Req",
+        "interfaceRequirement" => "Interface Req",
+        "performanceRequirement" => "Performance Req",
+        "physicalRequirement" => "Physical Req",
+        "designConstraint" => "Design Constraint",
       }.freeze
 
       # Renders a positioned layout to SVG.
@@ -112,7 +112,7 @@ module Sirena
         if requirement.risk
           risk_text = create_property_text(x + 10, text_y, "Risk: #{requirement.risk.capitalize}")
           risk_text.fill = get_risk_color(requirement.risk)
-          risk_text.font_weight = 'bold'
+          risk_text.font_weight = "bold"
           group.children << risk_text
           text_y += line_height
         end
@@ -132,11 +132,11 @@ module Sirena
           rect.y = y
           rect.width = width
           rect.height = height
-          rect.fill = theme_color(:node_fill) || '#f9f9f9'
-          rect.stroke = get_risk_color(requirement.risk) || theme_color(:border_color) || '#333'
-          rect.stroke_width = '2'
-          rect.rx = '5'
-          rect.ry = '5'
+          rect.fill = theme_color(:node_fill) || "#f9f9f9"
+          rect.stroke = get_risk_color(requirement.risk) || theme_color(:border_color) || "#333"
+          rect.stroke_width = "2"
+          rect.rx = "5"
+          rect.ry = "5"
         end
       end
 
@@ -149,8 +149,8 @@ module Sirena
           rect.y = y
           rect.width = width
           rect.height = height
-          rect.fill = get_risk_color(requirement.risk) || theme_color(:node_fill) || '#e0e0e0'
-          rect.opacity = '0.3'
+          rect.fill = get_risk_color(requirement.risk) || theme_color(:node_fill) || "#e0e0e0"
+          rect.opacity = "0.3"
         end
         group.children << header_bg
 
@@ -160,10 +160,10 @@ module Sirena
           text.x = x + 10
           text.y = y + height / 2
           text.content = type_label
-          text.fill = theme_color(:text_color) || '#000'
-          text.font_size = '12'
-          text.font_weight = 'bold'
-          text.dominant_baseline = 'middle'
+          text.fill = theme_color(:text_color) || "#000"
+          text.font_size = "12"
+          text.font_weight = "bold"
+          text.dominant_baseline = "middle"
         end
         group.children << type_text
 
@@ -172,10 +172,10 @@ module Sirena
           text.x = x + width - 10
           text.y = y + height / 2
           text.content = requirement.name
-          text.fill = theme_color(:text_color) || '#000'
-          text.font_size = '11'
-          text.text_anchor = 'end'
-          text.dominant_baseline = 'middle'
+          text.fill = theme_color(:text_color) || "#000"
+          text.font_size = "11"
+          text.text_anchor = "end"
+          text.dominant_baseline = "middle"
         end
         group.children << name_text
 
@@ -209,11 +209,11 @@ module Sirena
           text.x = x + width / 2
           text.y = y + height / 2 - 10
           text.content = element.name
-          text.fill = theme_color(:text_color) || '#000'
-          text.font_size = '14'
-          text.font_weight = 'bold'
-          text.text_anchor = 'middle'
-          text.dominant_baseline = 'middle'
+          text.fill = theme_color(:text_color) || "#000"
+          text.font_size = "14"
+          text.font_weight = "bold"
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
         end
         group.children << name_text
 
@@ -223,10 +223,10 @@ module Sirena
             text.x = x + width / 2
             text.y = y + height / 2 + 10
             text.content = "Type: #{element.type}"
-            text.fill = theme_color(:text_color) || '#666'
-            text.font_size = '11'
-            text.text_anchor = 'middle'
-            text.dominant_baseline = 'middle'
+            text.fill = theme_color(:text_color) || "#666"
+            text.font_size = "11"
+            text.text_anchor = "middle"
+            text.dominant_baseline = "middle"
           end
           group.children << type_text
         end
@@ -247,13 +247,13 @@ module Sirena
           "#{cx + w},#{cy}",
           "#{cx + w/2},#{cy + h}",
           "#{cx - w/2},#{cy + h}",
-        ].join(' ')
+        ].join(" ")
 
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
-          polygon.fill = theme_color(:node_fill) || '#e0f2f1'
-          polygon.stroke = theme_color(:border_color) || '#00796b'
-          polygon.stroke_width = '2'
+          polygon.fill = theme_color(:node_fill) || "#e0f2f1"
+          polygon.stroke = theme_color(:border_color) || "#00796b"
+          polygon.stroke_width = "2"
         end
       end
 
@@ -270,10 +270,10 @@ module Sirena
         # Create path element
         path = Svg::Path.new.tap do |p|
           p.d = path_data
-          p.fill = 'none'
-          p.stroke = theme_color(:edge_color) || '#666'
-          p.stroke_width = '2'
-          p.marker_end = 'url(#arrowhead)'
+          p.fill = "none"
+          p.stroke = theme_color(:edge_color) || "#666"
+          p.stroke_width = "2"
+          p.marker_end = "url(#arrowhead)"
         end
 
         # Create group for relationship
@@ -294,10 +294,10 @@ module Sirena
             rect.y = mid_y - 10
             rect.width = label_width
             rect.height = 18
-            rect.fill = '#fff'
-            rect.stroke = theme_color(:edge_color) || '#666'
-            rect.stroke_width = '1'
-            rect.rx = '3'
+            rect.fill = "#fff"
+            rect.stroke = theme_color(:edge_color) || "#666"
+            rect.stroke_width = "1"
+            rect.rx = "3"
           end
           group.children << label_bg
 
@@ -305,10 +305,10 @@ module Sirena
             text.x = mid_x
             text.y = mid_y
             text.content = rel_info[:type]
-            text.fill = theme_color(:text_color) || '#000'
-            text.font_size = '10'
-            text.text_anchor = 'middle'
-            text.dominant_baseline = 'middle'
+            text.fill = theme_color(:text_color) || "#000"
+            text.font_size = "10"
+            text.text_anchor = "middle"
+            text.dominant_baseline = "middle"
           end
           group.children << label
         end
@@ -334,36 +334,36 @@ module Sirena
           text.x = x
           text.y = y
           text.content = content
-          text.fill = theme_color(:text_color) || '#000'
-          text.font_size = '12'
+          text.fill = theme_color(:text_color) || "#000"
+          text.font_size = "12"
         end
       end
 
       def get_risk_color(risk)
         return nil unless risk
 
-        RISK_COLORS[risk.downcase] || theme_color(:border_color) || '#666'
+        RISK_COLORS[risk.downcase] || theme_color(:border_color) || "#666"
       end
 
       def wrap_text(text, max_width, font_size)
         # Simple text wrapping
-        words = text.split(' ')
+        words = text.split(" ")
         lines = []
         current_line = []
 
         chars_per_line = (max_width / (font_size * 0.6)).to_i
 
         words.each do |word|
-          test_line = (current_line + [word]).join(' ')
+          test_line = (current_line + [word]).join(" ")
           if test_line.length <= chars_per_line
             current_line << word
           else
-            lines << current_line.join(' ') unless current_line.empty?
+            lines << current_line.join(" ") unless current_line.empty?
             current_line = [word]
           end
         end
 
-        lines << current_line.join(' ') unless current_line.empty?
+        lines << current_line.join(" ") unless current_line.empty?
         lines
       end
     end

@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require_relative 'example_tasks'
+require_relative "example_tasks"
 
 namespace :examples do
   desc "Generate all example SVGs from source files"
   task :generate do
-    require 'sirena'
-    require 'yaml'
-    require 'fileutils'
+    require "sirena"
+    require "yaml"
+    require "fileutils"
 
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
 
     unless Dir.exist?(examples_dir)
       puts "⚠️  Examples directory not found: #{examples_dir}"
@@ -36,7 +36,7 @@ namespace :examples do
 
   desc "Delete example SVGs whose source is gone or never renders (destructive, deliberate)"
   task :prune do
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
 
     ExampleTasks.with_examples_lock(examples_dir) do
       puts "Pruning example SVGs with no source..."
@@ -51,8 +51,8 @@ namespace :examples do
 
   desc "Copy generated examples to docs/assets/examples"
   task :copy_to_docs do
-    examples_dir = File.expand_path('../examples', __dir__)
-    docs_assets_dir = File.expand_path('../docs/assets/examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
+    docs_assets_dir = File.expand_path("../docs/assets/examples", __dir__)
 
     # No pre-creation of docs_assets_dir here: ExampleTasks.copy_to_docs
     # creates it itself, AFTER its own verified_root guard runs, not before.
@@ -74,21 +74,21 @@ namespace :examples do
 
   desc "Generate AsciiDoc include files for documentation"
   task :generate_docs do
-    require 'yaml'
-    require 'fileutils'
+    require "yaml"
+    require "fileutils"
 
-    examples_dir = File.expand_path('../examples', __dir__)
-    docs_examples_dir = File.expand_path('../docs/_diagram_types/examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
+    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples", __dir__)
 
     FileUtils.mkdir_p(docs_examples_dir)
 
-    diagram_dirs = Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }
+    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select { |f| File.directory?(f) }
 
     diagram_dirs.sort.each do |dir|
       diagram_type = File.basename(dir)
-      next if diagram_type == '.git' || diagram_type.start_with?('.')
+      next if diagram_type == ".git" || diagram_type.start_with?(".")
 
-      mmd_files = Dir.glob(File.join(dir, '*.mmd'))
+      mmd_files = Dir.glob(File.join(dir, "*.mmd"))
       next if mmd_files.empty?
 
       # Generate AsciiDoc include file
@@ -100,21 +100,21 @@ namespace :examples do
       content << ""
 
       mmd_files.each_with_index do |mmd_file, index|
-        basename = File.basename(mmd_file, '.mmd')
+        basename = File.basename(mmd_file, ".mmd")
         yml_file = File.join(dir, "#{basename}.yml")
 
         # Read metadata
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-        title = metadata['title'] || basename.split('-').map(&:capitalize).join(' ')
-        description = metadata['description'] || 'Example diagram'
-        complexity = metadata['complexity'] || 'basic'
-        use_cases = metadata['use_cases'] || []
+        title = metadata["title"] || basename.split("-").map(&:capitalize).join(" ")
+        description = metadata["description"] || "Example diagram"
+        complexity = metadata["complexity"] || "basic"
+        use_cases = metadata["use_cases"] || []
 
         content << "==== Example #{index + 1}: #{title}"
         content << ""
         content << ".#{description}"
 
-        if !use_cases.empty? || complexity != 'basic'
+        if !use_cases.empty? || complexity != "basic"
           content << "[NOTE]"
           content << "===="
           content << "Complexity: #{complexity.capitalize}"
@@ -148,10 +148,10 @@ namespace :examples do
 
   desc "Validate all examples (parse and render)"
   task :validate do
-    require 'sirena'
-    require 'yaml'
+    require "sirena"
+    require "yaml"
 
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
     begin
       ExampleTasks.validate_examples(examples_dir)
     rescue ExampleTasks::ValidationFailed => e
@@ -165,7 +165,7 @@ namespace :examples do
 
   desc "Create example template for a diagram type"
   task :create, [:type, :name] do |_t, args|
-    require 'fileutils'
+    require "fileutils"
 
     type = args[:type]
     name = args[:name]
@@ -176,14 +176,14 @@ namespace :examples do
       exit 1
     end
 
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
     type_dir = File.join(examples_dir, type)
 
     FileUtils.mkdir_p(type_dir)
 
     # Find next number
-    existing = Dir.glob(File.join(type_dir, '*.mmd')).map do |f|
-      File.basename(f).split('-').first.to_i
+    existing = Dir.glob(File.join(type_dir, "*.mmd")).map do |f|
+      File.basename(f).split("-").first.to_i
     end.max || 0
     number = existing + 1
 
@@ -214,9 +214,9 @@ namespace :examples do
 
   desc "List all examples with status"
   task :list do
-    require 'yaml'
+    require "yaml"
 
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
 
     unless Dir.exist?(examples_dir)
       puts "Examples directory not found: #{examples_dir}"
@@ -224,15 +224,15 @@ namespace :examples do
       exit 1
     end
 
-    diagram_dirs = Dir.glob(File.join(examples_dir, '*')).select { |f| File.directory?(f) }
+    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select { |f| File.directory?(f) }
 
     total_examples = 0
 
     diagram_dirs.sort.each do |dir|
       diagram_type = File.basename(dir)
-      next if diagram_type == '.git' || diagram_type.start_with?('.')
+      next if diagram_type == ".git" || diagram_type.start_with?(".")
 
-      examples = Dir.glob(File.join(dir, '*.mmd'))
+      examples = Dir.glob(File.join(dir, "*.mmd"))
       total_examples += examples.size
 
       puts "\n#{diagram_type.upcase.tr('-', ' ')} (#{examples.size} examples)"
@@ -244,13 +244,13 @@ namespace :examples do
       end
 
       examples.sort.each do |mmd_file|
-        basename = File.basename(mmd_file, '.mmd')
+        basename = File.basename(mmd_file, ".mmd")
         yml_file = File.join(dir, "#{basename}.yml")
         svg_file = File.join(dir, "#{basename}.svg")
 
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-        title = metadata['title'] || basename
-        complexity = metadata['complexity'] || 'basic'
+        title = metadata["title"] || basename
+        complexity = metadata["complexity"] || "basic"
 
         svg_status = File.exist?(svg_file) ? "✓" : "✗"
 
@@ -265,9 +265,9 @@ namespace :examples do
 
   desc "Initialize examples directory structure"
   task :init do
-    require 'fileutils'
+    require "fileutils"
 
-    examples_dir = File.expand_path('../examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
 
     # Create main examples directory
     FileUtils.mkdir_p(examples_dir)
@@ -340,7 +340,7 @@ namespace :examples do
       ```
     README
 
-    File.write(File.join(examples_dir, 'README.md'), readme_content)
+    File.write(File.join(examples_dir, "README.md"), readme_content)
 
     # Create .gitignore
     gitignore_content = <<~GITIGNORE
@@ -359,7 +359,7 @@ namespace :examples do
       *~
     GITIGNORE
 
-    File.write(File.join(examples_dir, '.gitignore'), gitignore_content)
+    File.write(File.join(examples_dir, ".gitignore"), gitignore_content)
 
     puts "✓ Created examples/ directory"
     puts "✓ Created README.md"
@@ -373,15 +373,15 @@ namespace :examples do
 
   desc "Clean stale generated directories and documentation copies"
   task :clean do
-    require 'fileutils'
+    require "fileutils"
 
-    examples_dir = File.expand_path('../examples', __dir__)
-    docs_assets_dir = File.expand_path('../docs/assets/examples', __dir__)
-    docs_examples_dir = File.expand_path('../docs/_diagram_types/examples', __dir__)
+    examples_dir = File.expand_path("../examples", __dir__)
+    docs_assets_dir = File.expand_path("../docs/assets/examples", __dir__)
+    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples", __dir__)
 
     # Clean the stale generated/ directories older checkouts left behind.
     # The tracked SVGs sit beside their sources now and are not touched.
-    Dir.glob(File.join(examples_dir, '*/generated')).each do |dir|
+    Dir.glob(File.join(examples_dir, "*/generated")).each do |dir|
       FileUtils.rm_rf(dir)
       puts "✓ Removed #{dir}"
     end

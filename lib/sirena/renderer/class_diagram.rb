@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -91,7 +91,7 @@ module Sirena
       def add_markers(svg)
         # Add definitions for various arrow types
         defs = Svg::Group.new
-        defs.id = 'defs'
+        defs.id = "defs"
 
         # Inheritance marker (hollow triangle)
         add_inheritance_marker(defs)
@@ -142,9 +142,9 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = '#ffffff'
-          r.stroke = '#000000'
-          r.stroke_width = '2'
+          r.fill = "#ffffff"
+          r.stroke = "#000000"
+          r.stroke_width = "2"
           r.rx = 3
           r.ry = 3
         end
@@ -178,8 +178,8 @@ module Sirena
           l.y1 = separator_y
           l.x2 = x + width
           l.y2 = separator_y
-          l.stroke = '#000000'
-          l.stroke_width = '1'
+          l.stroke = "#000000"
+          l.stroke_width = "1"
         end
         group.children << separator
         current_y = separator_y + 10
@@ -196,8 +196,8 @@ module Sirena
             l.y1 = separator_y
             l.x2 = x + width
             l.y2 = separator_y
-            l.stroke = '#000000'
-            l.stroke_width = '1'
+            l.stroke = "#000000"
+            l.stroke_width = "1"
           end
           group.children << separator
           current_y = separator_y + 10
@@ -214,10 +214,10 @@ module Sirena
           t.x = x + width / 2
           t.y = y
           t.content = "<<#{stereotype}>>"
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
           t.font_size = STEREOTYPE_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
+          t.text_anchor = "middle"
         end
         group.children << text
         y + LINE_HEIGHT
@@ -228,11 +228,11 @@ module Sirena
           t.x = x + width / 2
           t.y = y
           t.content = name
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
           t.font_size = CLASS_NAME_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         group.children << text
         y + LINE_HEIGHT
@@ -251,8 +251,8 @@ module Sirena
             t.x = x + BOX_PADDING
             t.y = current_y
             t.content = attr_text
-            t.fill = '#000000'
-            t.font_family = 'monospace'
+            t.fill = "#000000"
+            t.font_family = "monospace"
             t.font_size = MEMBER_FONT_SIZE.to_s
           end
           group.children << text
@@ -275,8 +275,8 @@ module Sirena
             t.x = x + BOX_PADDING
             t.y = current_y
             t.content = method_text
-            t.fill = '#000000'
-            t.font_family = 'monospace'
+            t.fill = "#000000"
+            t.font_family = "monospace"
             t.font_size = MEMBER_FONT_SIZE.to_s
           end
           group.children << text
@@ -288,11 +288,11 @@ module Sirena
 
       def visibility_symbol(visibility)
         case visibility
-        when 'public' then '+'
-        when 'private' then '-'
-        when 'protected' then '#'
-        when 'package' then '~'
-        else '+'
+        when "public" then "+"
+        when "private" then "-"
+        when "protected" then "#"
+        when "package" then "~"
+        else "+"
         end
       end
 
@@ -309,7 +309,7 @@ module Sirena
         return unless source && target
 
         metadata = edge[:metadata] || {}
-        rel_type = metadata[:relationship_type] || 'association'
+        rel_type = metadata[:relationship_type] || "association"
 
         # Create group for the relationship
         group = Svg::Group.new.tap do |g|
@@ -387,20 +387,20 @@ module Sirena
           l.y1 = from[:y]
           l.x2 = to[:x]
           l.y2 = to[:y]
-          l.stroke = '#000000'
-          l.stroke_width = '2'
-          l.stroke_dasharray = '5,5' if rel_type == 'dependency'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
+          l.stroke_dasharray = "5,5" if rel_type == "dependency"
         end
         group.children << line
       end
 
       def render_relationship_marker(from, to, rel_type, group)
         case rel_type
-        when 'inheritance', 'realization'
-          render_triangle_marker(from, to, rel_type == 'inheritance', group)
-        when 'composition'
+        when "inheritance", "realization"
+          render_triangle_marker(from, to, rel_type == "inheritance", group)
+        when "composition"
           render_diamond_marker(from, to, true, group)
-        when 'aggregation'
+        when "aggregation"
           render_diamond_marker(from, to, false, group)
         end
       end
@@ -411,9 +411,9 @@ module Sirena
           l.y1 = source_point[:y]
           l.x2 = target_point[:x]
           l.y2 = target_point[:y]
-          l.stroke = '#000000'
-          l.stroke_width = '2'
-          l.stroke_dasharray = '5,5' if metadata[:dashed]
+          l.stroke = "#000000"
+          l.stroke_width = "2"
+          l.stroke_dasharray = "5,5" if metadata[:dashed]
         end
         group.children << line
 
@@ -429,18 +429,18 @@ module Sirena
       # into the node at `point` -- see render_dart_marker.
       def render_marker_at(point, away_from, marker, group)
         case marker
-        when 'inheritance'
+        when "inheritance"
           # mermaid's classDiagram CSS renders extension/inheritance markers
           # with `fill: transparent !important` -- a hollow triangle, not the
           # filled one the single-type inheritance path draws.
           render_triangle_marker(away_from, point, false, group)
-        when 'dependency'
+        when "dependency"
           # mermaid renders the dependency marker filled (`fill: lineColor`)
           # as a concave dart -- see DART_NEAR/DART_FAR/DART_WIDTH above.
           render_dart_marker(point, away_from, group)
-        when 'composition'
+        when "composition"
           render_diamond_marker(point, away_from, true, group)
-        when 'aggregation'
+        when "aggregation"
           render_diamond_marker(point, away_from, false, group)
         end
       end
@@ -464,9 +464,9 @@ module Sirena
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
-          p.fill = filled ? '#000000' : '#ffffff'
-          p.stroke = '#000000'
-          p.stroke_width = '2'
+          p.fill = filled ? "#000000" : "#ffffff"
+          p.stroke = "#000000"
+          p.stroke_width = "2"
         end
         group.children << polygon
       end
@@ -499,9 +499,9 @@ module Sirena
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
-          p.fill = '#000000'
-          p.stroke = '#000000'
-          p.stroke_width = '2'
+          p.fill = "#000000"
+          p.stroke = "#000000"
+          p.stroke_width = "2"
         end
         group.children << polygon
       end
@@ -531,9 +531,9 @@ module Sirena
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
-          p.fill = filled ? '#000000' : '#ffffff'
-          p.stroke = '#000000'
-          p.stroke_width = '2'
+          p.fill = filled ? "#000000" : "#ffffff"
+          p.stroke = "#000000"
+          p.stroke_width = "2"
         end
         group.children << polygon
       end
@@ -552,40 +552,40 @@ module Sirena
             t.x = mid_x
             t.y = mid_y - 5
             t.content = main_label[:text]
-            t.fill = '#000000'
-            t.font_family = 'Arial, sans-serif'
-            t.font_size = '11'
-            t.text_anchor = 'middle'
+            t.fill = "#000000"
+            t.font_family = "Arial, sans-serif"
+            t.font_size = "11"
+            t.text_anchor = "middle"
           end
           group.children << text
         end
 
         # Source cardinality
-        source_label = labels.find { |l| l[:position] == 'source' }
+        source_label = labels.find { |l| l[:position] == "source" }
         if source_label
           text = Svg::Text.new.tap do |t|
             t.x = from[:x] + 5
             t.y = from[:y] - 5
             t.content = source_label[:text]
-            t.fill = '#000000'
-            t.font_family = 'Arial, sans-serif'
-            t.font_size = '10'
+            t.fill = "#000000"
+            t.font_family = "Arial, sans-serif"
+            t.font_size = "10"
           end
           group.children << text
         end
 
         # Target cardinality
-        target_label = labels.find { |l| l[:position] == 'target' }
+        target_label = labels.find { |l| l[:position] == "target" }
         return unless target_label
 
         text = Svg::Text.new.tap do |t|
           t.x = to[:x] - 5
           t.y = to[:y] - 5
           t.content = target_label[:text]
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
-          t.font_size = '10'
-          t.text_anchor = 'end'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
+          t.font_size = "10"
+          t.text_anchor = "end"
         end
         group.children << text
       end

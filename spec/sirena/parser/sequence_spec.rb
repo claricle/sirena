@@ -221,7 +221,7 @@ RSpec.describe Sirena::Parser::Sequence do
     # the arrow set was rewritten, so they are demotions we want. The last
     # three are the check that the wider vocabulary did not become
     # "anything with a dash in it".
-    ['->)', '-->)', '--->', '---)', '--@#$', '--|', '-|'].each do |arrow|
+    ["->)", "-->)", "--->", "---)", '--@#$', "--|", "-|"].each do |arrow|
       it "rejects #{arrow}" do
         source = "sequenceDiagram\n    A#{arrow}B: m\n"
 

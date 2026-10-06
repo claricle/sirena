@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -32,7 +32,7 @@ module Sirena
         end
 
         rule(:header) do
-          str('erDiagram').as(:header) >> ws?
+          str("erDiagram").as(:header) >> ws?
         end
 
         rule(:statements) do
@@ -49,7 +49,7 @@ module Sirena
         # Entity with attribute block
         rule(:entity_definition) do
           identifier.as(:entity_id) >>
-            (str(':::') >> class_name_list.as(:entity_classes)).maybe >>
+            (str(":::") >> class_name_list.as(:entity_classes)).maybe >>
             space? >>
             lbrace >> ws? >>
             attributes.maybe.as(:attributes) >>
@@ -65,11 +65,11 @@ module Sirena
         # stderr. A7 in the parser spec is the guard.
         rule(:relationship) do
           identifier.as(:from_id) >>
-            (str(':::') >> class_name_list.as(:from_classes)).maybe >>
+            (str(":::") >> class_name_list.as(:from_classes)).maybe >>
             space? >>
             relationship_pattern.as(:pattern) >> space? >>
             identifier.as(:to_id) >>
-            (str(':::') >> class_name_list.as(:to_classes)).maybe >>
+            (str(":::") >> class_name_list.as(:to_classes)).maybe >>
             space? >>
             relationship_label.maybe.as(:label) >>
             line_end
@@ -78,7 +78,7 @@ module Sirena
         # Stand-alone entity (no body, no relationship)
         rule(:entity_declaration) do
           identifier.as(:entity_id) >>
-            (str(':::') >> class_name_list.as(:entity_classes)).maybe >>
+            (str(":::") >> class_name_list.as(:entity_classes)).maybe >>
             line_end
         end
 
@@ -89,7 +89,7 @@ module Sirena
         # `fill:#f96` and mermaid's optional trailing `;` is not part of the
         # style text. A15 pins it.
         rule(:class_def_statement) do
-          str('classDef') >> space.repeat(1) >>
+          str("classDef") >> space.repeat(1) >>
             class_name_list.as(:classdef_names) >> space.repeat(1) >>
             (line_end.absent? >> any).repeat(1).as(:classdef_styles) >>
             line_end
@@ -155,7 +155,7 @@ module Sirena
         # the NEXT chunk), so `DelimitedRun` matches segment-by-segment
         # instead of scanning the whole compound pattern per chunk.
         rule(:tilde_marked_run) do
-          DelimitedRun.new('~', "[^~#{JS_LINE_TERMINATOR_CHARS}]")
+          DelimitedRun.new("~", "[^~#{JS_LINE_TERMINATOR_CHARS}]")
         end
 
         # `[^\s]` in mermaid's lexer is JS's `\s`, which is the full
@@ -173,7 +173,7 @@ module Sirena
         end
 
         rule(:key_type) do
-          (str('PK') | str('FK') | str('UK')).as(:key_type)
+          (str("PK") | str("FK") | str("UK")).as(:key_type)
         end
 
         # Relationship pattern: cardinality(2) + operator(2) + cardinality(2)
@@ -186,14 +186,14 @@ module Sirena
 
         # Cardinality symbols (2 characters)
         rule(:cardinality) do
-          str('||') | str('o{') | str('|{') | str('}o') | str('}|') |
-            str('o|') | str('|o') |
-            str('{o') | str('{|') | str('}{') | str('{}')
+          str("||") | str("o{") | str("|{") | str("}o") | str("}|") |
+            str("o|") | str("|o") |
+            str("{o") | str("{|") | str("}{") | str("{}")
         end
 
         # Relationship operators (2 characters)
         rule(:operator) do
-          str('==') | str('--') | str('..')
+          str("==") | str("--") | str("..")
         end
 
         # Relationship label (after colon)

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/quadrant'
-require_relative 'builders/quadrant'
-require_relative '../diagram/quadrant'
+require_relative "base"
+require_relative "grammars/quadrant"
+require_relative "builders/quadrant"
+require_relative "../diagram/quadrant"
 
 module Sirena
   module Parser

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../svg/document'
-require_relative '../svg/rect'
-require_relative '../svg/text'
-require_relative '../svg/group'
+require_relative "base"
+require_relative "../svg/document"
+require_relative "../svg/rect"
+require_relative "../svg/text"
+require_relative "../svg/group"
 
 module Sirena
   module Renderer
@@ -36,11 +36,11 @@ module Sirena
           t.content = title
           t.x = width / 2
           t.y = 25
-          t.fill = theme_color(:label_text) || '#333'
-          t.font_family = theme_typography(:font_family) || 'Arial, sans-serif'
-          t.font_size = '18'
-          t.font_weight = 'bold'
-          t.text_anchor = 'middle'
+          t.fill = theme_color(:label_text) || "#333"
+          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          t.font_size = "18"
+          t.font_weight = "bold"
+          t.text_anchor = "middle"
         end
         doc << text
       end
@@ -60,7 +60,7 @@ module Sirena
           r.height = cell[:height]
           r.fill = fill_color
           r.stroke = stroke_color
-          r.stroke_width = '2'
+          r.stroke_width = "2"
           r.rx = 4
           r.ry = 4
         end
@@ -72,10 +72,10 @@ module Sirena
           t.content = truncate_label(cell[:label], cell[:width] - 10)
           t.x = cell[:x] + 5
           t.y = label_y
-          t.fill = theme_color(:label_text) || '#333'
-          t.font_family = theme_typography(:font_family) || 'Arial, sans-serif'
-          t.font_size = '12'
-          t.font_weight = 'bold'
+          t.fill = theme_color(:label_text) || "#333"
+          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          t.font_size = "12"
+          t.font_weight = "bold"
         end
         group << label
 
@@ -87,9 +87,9 @@ module Sirena
             t.content = value_text
             t.x = cell[:x] + 5
             t.y = value_y
-            t.fill = theme_color(:label_text) || '#666'
-            t.font_family = theme_typography(:font_family) || 'Arial, sans-serif'
-            t.font_size = '10'
+            t.fill = theme_color(:label_text) || "#666"
+            t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+            t.font_size = "10"
           end
           group << value_label
         end
@@ -129,7 +129,7 @@ module Sirena
           end
         end
 
-        theme_color(:node_stroke) || '#333'
+        theme_color(:node_stroke) || "#333"
       end
 
       def truncate_label(label, max_width)
@@ -144,7 +144,7 @@ module Sirena
         if value == value.to_i
           value.to_i.to_s
         else
-          format('%.1f', value)
+          format("%.1f", value)
         end
       end
     end

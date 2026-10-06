@@ -15,15 +15,15 @@
 
 # The verdicts are only worth as much as the sirena that produced them, so
 # the Gemfile decides which one that is rather than whatever is installed.
-require 'bundler/setup'
+require "bundler/setup"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require 'timeout'
-require 'tmpdir'
-require_relative 'mmdc_oracle'
-require_relative 'hardened_mmdc'
+require "sirena"
+require "timeout"
+require "tmpdir"
+require_relative "mmdc_oracle"
+require_relative "hardened_mmdc"
 
 # `mmdc --version` boots node, which is slow but not this slow.
 VERSION_TIMEOUT = 30
@@ -32,10 +32,10 @@ VERSION_TIMEOUT = 30
 # will tell us: mmdc floats its mermaid dependency, so a matching CLI can
 # still resolve a different renderer underneath. The pin catches the CLI
 # moving, which is the part we can see.
-EXPECTED_CLI = '11.12.0'
+EXPECTED_CLI = "11.12.0"
 
-LABELS = { gap: 'GAP', over_acceptance: 'OVER-ACCEPTANCE',
-           infrastructure: 'MMDC FAILED' }.freeze
+LABELS = { gap: "GAP", over_acceptance: "OVER-ACCEPTANCE",
+           infrastructure: "MMDC FAILED" }.freeze
 
 Verdict = Struct.new(:source, :sirena, :mermaid) do
   def agree?
@@ -69,7 +69,7 @@ end
 # @return [Symbol] :accepts, :rejects, or :error when mmdc could not be run
 def mermaid_verdict(source)
   result = Dir.mktmpdir do |dir|
-    input = File.join(dir, 'probe.mmd')
+    input = File.join(dir, "probe.mmd")
     File.write(input, source)
 
     MmdcOracle.verdict(input) { |probe, output| HardenedMmdc.run_mmdc(probe, output) }
@@ -115,12 +115,12 @@ def report(verdicts, only_gaps:)
 
   shown.each do |verdict|
     label = LABELS.fetch(verdict.kind)
-    puts format('%-16s %s', label, one_line(verdict.source))
+    puts format("%-16s %s", label, one_line(verdict.source))
   end
 
   tally = verdicts.group_by(&:kind).transform_values(&:size)
   puts
-  puts format('%d probes: %d agree, %d gaps, %d over-accepted, %d mmdc failures',
+  puts format("%d probes: %d agree, %d gaps, %d over-accepted, %d mmdc failures",
               verdicts.size, tally[:agree].to_i, tally[:gap].to_i,
               tally[:over_acceptance].to_i, tally[:infrastructure].to_i)
 end
@@ -132,7 +132,7 @@ end
 # Scrubbed for the display and nowhere else: a probe may hold bytes UTF-8
 # cannot name, and both tools were asked about the real ones.
 def one_line(source)
-  folded = source.scrub.sub(/\r?\n\z/, '').gsub(/\r?\n/, ' | ')
+  folded = source.scrub.sub(/\r?\n\z/, "").gsub(/\r?\n/, " | ")
   folded.gsub(/[\x00-\x1F\x7F]/) { |control| format('\\x%02X', control.ord) }
 end
 
@@ -142,27 +142,27 @@ def check_oracle
 
   abort "  mmdc is #{version.empty? ? 'missing or not answering' : version}, " \
         "expected #{EXPECTED_CLI}. These probes were written against that " \
-        'oracle; a different one makes the verdicts meaningless.'
+        "oracle; a different one makes the verdicts meaningless."
 end
 
 # This runs before any of the per-case deadlines apply, so an mmdc that never
 # answers used to hang the whole harness here and outlive it afterwards.
 def mmdc_version
-  HardenedMmdc.capture(['mmdc', '--version'], VERSION_TIMEOUT).strip
+  HardenedMmdc.capture(["mmdc", "--version"], VERSION_TIMEOUT).strip
 rescue StandardError
-  ''
+  ""
 end
 
 return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
-only_gaps = !ARGV.delete('--only-gaps').nil?
+only_gaps = !ARGV.delete("--only-gaps").nil?
 paths = ARGV
-abort 'usage: mermaid_diff.rb [--only-gaps] <probe file>...' if paths.empty?
+abort "usage: mermaid_diff.rb [--only-gaps] <probe file>..." if paths.empty?
 
 check_oracle
 
 records = probes(paths)
-abort '  no probe records found — check the file and its separators' if records.empty?
+abort "  no probe records found — check the file and its separators" if records.empty?
 
 verdicts = records.map do |source|
   Verdict.new(source, sirena_verdict(source), mermaid_verdict(source))

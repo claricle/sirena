@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'fileutils'
+require "fileutils"
 
 module Sirena
   module Commands
@@ -20,8 +20,8 @@ module Sirena
       #
       # @return [void]
       def run
-        input_path = options[:input] || '.'
-        output_path = options[:output] || 'output'
+        input_path = options[:input] || "."
+        output_path = options[:output] || "output"
 
         puts "Sirena Batch Renderer"
         puts "=" * 60
@@ -65,7 +65,7 @@ module Sirena
 
       def find_mermaid_files(path)
         if File.directory?(path)
-          Dir.glob(File.join(path, '**', '*.mmd'))
+          Dir.glob(File.join(path, "**", "*.mmd"))
         elsif File.file?(path)
           [path]
         else
@@ -81,12 +81,12 @@ module Sirena
       def relative_path_for(file, input_base)
         return File.basename(file) if File.file?(input_base)
 
-        file.sub(/^#{Regexp.escape(input_base)}\/?/, '')
+        file.sub(/^#{Regexp.escape(input_base)}\/?/, "")
       end
 
       def process_file(file, input_base, output_base, current, total)
         relative = relative_path_for(file, input_base)
-        output_file = File.join(output_base, relative.sub(/\.mmd$/, '.svg'))
+        output_file = File.join(output_base, relative.sub(/\.mmd$/, ".svg"))
 
         print "[#{current}/#{total}] #{relative}... "
 

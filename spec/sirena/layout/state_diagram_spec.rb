@@ -1,142 +1,142 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Layout::StateDiagram do
   let(:transform) { described_class.new }
 
-  describe '#to_graph' do
+  describe "#to_graph" do
     let(:diagram) do
-      Sirena::Diagram::StateDiagram.new(direction: 'TD').tap do |d|
+      Sirena::Diagram::StateDiagram.new(direction: "TD").tap do |d|
         d.states << Sirena::Diagram::StateNode.new(
-          id: 'idle',
-          label: 'Idle',
-          state_type: 'normal',
+          id: "idle",
+          label: "Idle",
+          state_type: "normal",
         )
         d.states << Sirena::Diagram::StateNode.new(
-          id: 'active',
-          label: 'Active',
-          state_type: 'normal',
+          id: "active",
+          label: "Active",
+          state_type: "normal",
         )
         d.transitions << Sirena::Diagram::StateTransition.new(
-          from_id: 'idle',
-          to_id: 'active',
-          trigger: 'start',
+          from_id: "idle",
+          to_id: "active",
+          trigger: "start",
         )
       end
     end
 
-    it 'converts diagram to graph structure' do
+    it "converts diagram to graph structure" do
       graph = transform.to_graph(diagram)
 
       expect(graph).to be_a(Hash)
-      expect(graph[:id]).to eq('state_diagram')
+      expect(graph[:id]).to eq("state_diagram")
       expect(graph[:children]).to be_an(Array)
       expect(graph[:edges]).to be_an(Array)
       expect(graph[:layoutOptions]).to be_a(Hash)
     end
 
-    it 'creates states with dimensions' do
+    it "creates states with dimensions" do
       graph = transform.to_graph(diagram)
 
       expect(graph[:children].length).to eq(2)
 
-      state_idle = graph[:children].find { |s| s[:id] == 'idle' }
+      state_idle = graph[:children].find { |s| s[:id] == "idle" }
       expect(state_idle).not_to be_nil
       expect(state_idle[:width]).to be > 0
       expect(state_idle[:height]).to be > 0
       expect(state_idle[:labels]).to be_an(Array)
-      expect(state_idle[:labels].first[:text]).to eq('Idle')
-      expect(state_idle[:metadata][:state_type]).to eq('normal')
+      expect(state_idle[:labels].first[:text]).to eq("Idle")
+      expect(state_idle[:metadata][:state_type]).to eq("normal")
     end
 
-    it 'creates transitions with metadata' do
+    it "creates transitions with metadata" do
       graph = transform.to_graph(diagram)
 
       expect(graph[:edges].length).to eq(1)
 
       transition = graph[:edges].first
-      expect(transition[:sources]).to eq(['idle'])
-      expect(transition[:targets]).to eq(['active'])
-      expect(transition[:metadata][:trigger]).to eq('start')
+      expect(transition[:sources]).to eq(["idle"])
+      expect(transition[:targets]).to eq(["active"])
+      expect(transition[:metadata][:trigger]).to eq("start")
     end
 
-    it 'handles start state dimensions' do
+    it "handles start state dimensions" do
       diagram.states.clear
       diagram.transitions.clear
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'start_1',
-        label: '[*]',
-        state_type: 'start',
+        id: "start_1",
+        label: "[*]",
+        state_type: "start",
       )
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'idle',
-        label: 'Idle',
-        state_type: 'normal',
+        id: "idle",
+        label: "Idle",
+        state_type: "normal",
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
-        from_id: 'start_1',
-        to_id: 'idle',
+        from_id: "start_1",
+        to_id: "idle",
       )
 
       graph = transform.to_graph(diagram)
 
-      start = graph[:children].find { |s| s[:id] == 'start_1' }
+      start = graph[:children].find { |s| s[:id] == "start_1" }
       expect(start[:width]).to eq(30)
       expect(start[:height]).to eq(30)
     end
 
-    it 'handles choice state dimensions' do
+    it "handles choice state dimensions" do
       diagram.states.clear
       diagram.transitions.clear
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'choice1',
-        label: 'choice1',
-        state_type: 'choice',
+        id: "choice1",
+        label: "choice1",
+        state_type: "choice",
       )
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'idle',
-        label: 'Idle',
-        state_type: 'normal',
+        id: "idle",
+        label: "Idle",
+        state_type: "normal",
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
-        from_id: 'choice1',
-        to_id: 'idle',
+        from_id: "choice1",
+        to_id: "idle",
       )
 
       graph = transform.to_graph(diagram)
 
-      choice = graph[:children].find { |s| s[:id] == 'choice1' }
+      choice = graph[:children].find { |s| s[:id] == "choice1" }
       expect(choice[:width]).to be > 0
       expect(choice[:height]).to be > 0
-      expect(choice[:metadata][:state_type]).to eq('choice')
+      expect(choice[:metadata][:state_type]).to eq("choice")
     end
 
-    it 'sets layout options based on direction' do
+    it "sets layout options based on direction" do
       graph = transform.to_graph(diagram)
 
       options = graph[:layoutOptions]
-      expect(options['elk.algorithm']).to eq('layered')
-      expect(options['elk.direction']).to eq('DOWN')
+      expect(options["elk.algorithm"]).to eq("layered")
+      expect(options["elk.direction"]).to eq("DOWN")
     end
 
-    it 'converts LR direction to RIGHT layout' do
-      diagram.direction = 'LR'
+    it "converts LR direction to RIGHT layout" do
+      diagram.direction = "LR"
       graph = transform.to_graph(diagram)
 
-      expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
+      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
     end
 
     # A REGRESSION GUARD for pre-existing transform behaviour. The branch
     # rewrote how transition endpoints resolve, so this is the invariant that
     # must survive; it is green on origin/main by design.
-    it 'raises error when a transition names a state that does not exist' do
+    it "raises error when a transition names a state that does not exist" do
       invalid_diagram = Sirena::Diagram::StateDiagram.new
       invalid_diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'idle', label: 'Idle', state_type: 'normal',
+        id: "idle", label: "Idle", state_type: "normal",
       )
       invalid_diagram.transitions << Sirena::Diagram::StateTransition.new(
-        from_id: 'idle', to_id: 'nowhere',
+        from_id: "idle", to_id: "nowhere",
       )
 
       expect do
@@ -144,43 +144,43 @@ RSpec.describe Sirena::Layout::StateDiagram do
       end.to raise_error(Sirena::Layout::LayoutError)
     end
 
-    it 'transforms a diagram with no states at all' do
+    it "transforms a diagram with no states at all" do
       graph = transform.to_graph(Sirena::Diagram::StateDiagram.new)
 
       expect(graph[:children]).to eq([])
       expect(graph[:edges]).to eq([])
-      expect(graph[:id]).to eq('state_diagram')
-      expect(graph[:layoutOptions]['elk.direction']).to eq('DOWN')
+      expect(graph[:id]).to eq("state_diagram")
+      expect(graph[:layoutOptions]["elk.direction"]).to eq("DOWN")
     end
 
-    it 'includes description in labels when present' do
+    it "includes description in labels when present" do
       diagram.states.clear
       diagram.transitions.clear
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'idle',
-        label: 'Idle',
-        state_type: 'normal',
-        description: 'System is idle',
+        id: "idle",
+        label: "Idle",
+        state_type: "normal",
+        description: "System is idle",
       )
       diagram.states << Sirena::Diagram::StateNode.new(
-        id: 'active',
-        label: 'Active',
-        state_type: 'normal',
+        id: "active",
+        label: "Active",
+        state_type: "normal",
       )
       diagram.transitions << Sirena::Diagram::StateTransition.new(
-        from_id: 'idle',
-        to_id: 'active',
+        from_id: "idle",
+        to_id: "active",
       )
 
       graph = transform.to_graph(diagram)
 
-      state = graph[:children].find { |s| s[:id] == 'idle' }
+      state = graph[:children].find { |s| s[:id] == "idle" }
       expect(state[:labels].length).to eq(2)
-      expect(state[:labels][0][:text]).to eq('Idle')
-      expect(state[:labels][1][:text]).to eq('System is idle')
+      expect(state[:labels][0][:text]).to eq("Idle")
+      expect(state[:labels][1][:text]).to eq("System is idle")
     end
 
-    it 'uses a bare description as the only display text' do
+    it "uses a bare description as the only display text" do
       diagram = Sirena::Parser::StateDiagram.new.parse(
         "stateDiagram-v2\nA : ONLY_TEXT\n",
       )
@@ -188,10 +188,10 @@ RSpec.describe Sirena::Layout::StateDiagram do
       graph = transform.to_graph(diagram)
       labels = graph[:children].first[:labels].map { |label| label[:text] }
 
-      expect(labels).to eq(['ONLY_TEXT'])
+      expect(labels).to eq(["ONLY_TEXT"])
     end
 
-    it 'preserves aliases and descriptions in source order' do
+    it "preserves aliases and descriptions in source order" do
       diagram = Sirena::Parser::StateDiagram.new.parse(<<~MERMAID)
         stateDiagram-v2
         state "ALIAS_ONE" as A
@@ -213,16 +213,16 @@ RSpec.describe Sirena::Layout::StateDiagram do
     # the label turns `[*]` into an ordinary 100px box instead of a 30px circle.
     # No parsed source produces a marker with a label and no descriptions, so
     # only a directly built model can hold that combination.
-    it 'keeps a marker type when only a scalar label is set' do
+    it "keeps a marker type when only a scalar label is set" do
       labelled = Sirena::Diagram::StateNode.new(
-        id: 'C', label: 'C', state_type: 'choice',
+        id: "C", label: "C", state_type: "choice",
       )
       described = Sirena::Diagram::StateNode.new(
-        id: 'D', state_type: 'choice', descriptions: ['text'],
+        id: "D", state_type: "choice", descriptions: ["text"],
       )
 
-      expect(transform.send(:state_shape_type, labelled)).to eq('choice')
-      expect(transform.send(:state_shape_type, described)).to eq('normal')
+      expect(transform.send(:state_shape_type, labelled)).to eq("choice")
+      expect(transform.send(:state_shape_type, described)).to eq("normal")
     end
   end
 end

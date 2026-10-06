@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative 'sirena/version'
-require_relative 'sirena/error'
-require_relative 'sirena/error_report'
+require_relative "sirena/version"
+require_relative "sirena/error"
+require_relative "sirena/error_report"
 
 module Sirena
   # Faults a hostile DOCUMENT can provoke that are not `StandardError`, so
@@ -39,27 +39,27 @@ module Sirena
 end
 
 # Load modules in dependency order
-require_relative 'sirena/js_number'
-require_relative 'sirena/source'
-require_relative 'sirena/text_measurement'
-require_relative 'sirena/layout/grid'
-require_relative 'sirena/diagram_registry'
-require_relative 'sirena/theme'
-require_relative 'sirena/theme/registry'
-require_relative 'sirena/svg'
-require_relative 'sirena/parser'
-require_relative 'sirena/diagram'
-require_relative 'sirena/layout'
-require_relative 'sirena/renderer'
-require_relative 'sirena/engine'
+require_relative "sirena/js_number"
+require_relative "sirena/source"
+require_relative "sirena/text_measurement"
+require_relative "sirena/layout/grid"
+require_relative "sirena/diagram_registry"
+require_relative "sirena/theme"
+require_relative "sirena/theme/registry"
+require_relative "sirena/svg"
+require_relative "sirena/parser"
+require_relative "sirena/diagram"
+require_relative "sirena/layout"
+require_relative "sirena/renderer"
+require_relative "sirena/engine"
 
 # Initialize theme registry with built-in themes
 Sirena::Theme::Registry.load_builtin_themes
 
 # Load and register flowchart handlers
-require_relative 'sirena/parser/flowchart'
-require_relative 'sirena/layout/flowchart'
-require_relative 'sirena/renderer/flowchart'
+require_relative "sirena/parser/flowchart"
+require_relative "sirena/layout/flowchart"
+require_relative "sirena/renderer/flowchart"
 
 Sirena::DiagramRegistry.register(
   :flowchart,
@@ -70,9 +70,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register sequence diagram handlers
-require_relative 'sirena/parser/sequence'
-require_relative 'sirena/layout/sequence'
-require_relative 'sirena/renderer/sequence'
+require_relative "sirena/parser/sequence"
+require_relative "sirena/layout/sequence"
+require_relative "sirena/renderer/sequence"
 
 Sirena::DiagramRegistry.register(
   :sequence,
@@ -83,9 +83,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register class diagram handlers
-require_relative 'sirena/parser/class_diagram'
-require_relative 'sirena/layout/class_diagram'
-require_relative 'sirena/renderer/class_diagram'
+require_relative "sirena/parser/class_diagram"
+require_relative "sirena/layout/class_diagram"
+require_relative "sirena/renderer/class_diagram"
 
 Sirena::DiagramRegistry.register(
   :class_diagram,
@@ -96,9 +96,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register state diagram handlers
-require_relative 'sirena/parser/state_diagram'
-require_relative 'sirena/layout/state_diagram'
-require_relative 'sirena/renderer/state_diagram'
+require_relative "sirena/parser/state_diagram"
+require_relative "sirena/layout/state_diagram"
+require_relative "sirena/renderer/state_diagram"
 
 Sirena::DiagramRegistry.register(
   :state_diagram,
@@ -109,9 +109,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register ER diagram handlers
-require_relative 'sirena/parser/er_diagram'
-require_relative 'sirena/layout/er_diagram'
-require_relative 'sirena/renderer/er_diagram'
+require_relative "sirena/parser/er_diagram"
+require_relative "sirena/layout/er_diagram"
+require_relative "sirena/renderer/er_diagram"
 
 Sirena::DiagramRegistry.register(
   :er_diagram,
@@ -122,9 +122,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register user journey diagram handlers
-require_relative 'sirena/parser/user_journey'
-require_relative 'sirena/layout/user_journey'
-require_relative 'sirena/renderer/user_journey'
+require_relative "sirena/parser/user_journey"
+require_relative "sirena/layout/user_journey"
+require_relative "sirena/renderer/user_journey"
 
 Sirena::DiagramRegistry.register(
   :user_journey,
@@ -135,9 +135,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register pie chart diagram handlers
-require_relative 'sirena/parser/pie'
-require_relative 'sirena/layout/pie'
-require_relative 'sirena/renderer/pie'
+require_relative "sirena/parser/pie"
+require_relative "sirena/layout/pie"
+require_relative "sirena/renderer/pie"
 
 Sirena::DiagramRegistry.register(
   :pie,
@@ -148,9 +148,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Gantt chart diagram handlers
-require_relative 'sirena/parser/gantt'
-require_relative 'sirena/layout/gantt'
-require_relative 'sirena/renderer/gantt'
+require_relative "sirena/parser/gantt"
+require_relative "sirena/layout/gantt"
+require_relative "sirena/renderer/gantt"
 
 Sirena::DiagramRegistry.register(
   :gantt,
@@ -161,9 +161,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Timeline diagram handlers
-require_relative 'sirena/parser/timeline'
-require_relative 'sirena/layout/timeline'
-require_relative 'sirena/renderer/timeline'
+require_relative "sirena/parser/timeline"
+require_relative "sirena/layout/timeline"
+require_relative "sirena/renderer/timeline"
 
 Sirena::DiagramRegistry.register(
   :timeline,
@@ -174,9 +174,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Quadrant chart diagram handlers
-require_relative 'sirena/parser/quadrant'
-require_relative 'sirena/layout/quadrant'
-require_relative 'sirena/renderer/quadrant'
+require_relative "sirena/parser/quadrant"
+require_relative "sirena/layout/quadrant"
+require_relative "sirena/renderer/quadrant"
 
 Sirena::DiagramRegistry.register(
   :quadrant,
@@ -187,9 +187,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Git Graph diagram handlers
-require_relative 'sirena/parser/git_graph'
-require_relative 'sirena/layout/git_graph'
-require_relative 'sirena/renderer/git_graph'
+require_relative "sirena/parser/git_graph"
+require_relative "sirena/layout/git_graph"
+require_relative "sirena/renderer/git_graph"
 
 Sirena::DiagramRegistry.register(
   :git_graph,
@@ -200,9 +200,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Mindmap diagram handlers
-require_relative 'sirena/parser/mindmap'
-require_relative 'sirena/layout/mindmap'
-require_relative 'sirena/renderer/mindmap'
+require_relative "sirena/parser/mindmap"
+require_relative "sirena/layout/mindmap"
+require_relative "sirena/renderer/mindmap"
 
 Sirena::DiagramRegistry.register(
   :mindmap,
@@ -213,9 +213,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Kanban diagram handlers
-require_relative 'sirena/parser/kanban'
-require_relative 'sirena/layout/kanban'
-require_relative 'sirena/renderer/kanban'
+require_relative "sirena/parser/kanban"
+require_relative "sirena/layout/kanban"
+require_relative "sirena/renderer/kanban"
 
 Sirena::DiagramRegistry.register(
   :kanban,
@@ -226,9 +226,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Radar chart diagram handlers
-require_relative 'sirena/parser/radar'
-require_relative 'sirena/layout/radar'
-require_relative 'sirena/renderer/radar'
+require_relative "sirena/parser/radar"
+require_relative "sirena/layout/radar"
+require_relative "sirena/renderer/radar"
 
 Sirena::DiagramRegistry.register(
   :radar,
@@ -239,9 +239,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Block diagram handlers
-require_relative 'sirena/parser/block'
-require_relative 'sirena/layout/block'
-require_relative 'sirena/renderer/block'
+require_relative "sirena/parser/block"
+require_relative "sirena/layout/block"
+require_relative "sirena/renderer/block"
 
 Sirena::DiagramRegistry.register(
   :block,
@@ -253,9 +253,9 @@ Sirena::DiagramRegistry.register(
 
 
 # Load and register Requirement diagram handlers
-require_relative 'sirena/parser/requirement'
-require_relative 'sirena/layout/requirement'
-require_relative 'sirena/renderer/requirement'
+require_relative "sirena/parser/requirement"
+require_relative "sirena/layout/requirement"
+require_relative "sirena/renderer/requirement"
 
 Sirena::DiagramRegistry.register(
   :requirement,
@@ -266,9 +266,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register XY Chart diagram handlers
-require_relative 'sirena/parser/xy_chart'
-require_relative 'sirena/layout/xy_chart'
-require_relative 'sirena/renderer/xy_chart'
+require_relative "sirena/parser/xy_chart"
+require_relative "sirena/layout/xy_chart"
+require_relative "sirena/renderer/xy_chart"
 
 Sirena::DiagramRegistry.register(
   :xychart,
@@ -279,9 +279,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Architecture diagram handlers
-require_relative 'sirena/parser/architecture'
-require_relative 'sirena/layout/architecture'
-require_relative 'sirena/renderer/architecture'
+require_relative "sirena/parser/architecture"
+require_relative "sirena/layout/architecture"
+require_relative "sirena/renderer/architecture"
 
 Sirena::DiagramRegistry.register(
   :architecture,
@@ -292,9 +292,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Sankey diagram handlers
-require_relative 'sirena/parser/sankey'
-require_relative 'sirena/layout/sankey'
-require_relative 'sirena/renderer/sankey'
+require_relative "sirena/parser/sankey"
+require_relative "sirena/layout/sankey"
+require_relative "sirena/renderer/sankey"
 
 Sirena::DiagramRegistry.register(
   :sankey,
@@ -304,9 +304,9 @@ Sirena::DiagramRegistry.register(
   model: Sirena::Diagram::Sankey,
 )
 # Load and register Packet diagram handlers
-require_relative 'sirena/parser/packet'
-require_relative 'sirena/layout/packet'
-require_relative 'sirena/renderer/packet'
+require_relative "sirena/parser/packet"
+require_relative "sirena/layout/packet"
+require_relative "sirena/renderer/packet"
 
 Sirena::DiagramRegistry.register(
   :packet,
@@ -317,9 +317,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Treemap diagram handlers
-require_relative 'sirena/parser/treemap'
-require_relative 'sirena/layout/treemap'
-require_relative 'sirena/renderer/treemap'
+require_relative "sirena/parser/treemap"
+require_relative "sirena/layout/treemap"
+require_relative "sirena/renderer/treemap"
 
 Sirena::DiagramRegistry.register(
   :treemap,
@@ -330,9 +330,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register C4 diagram handlers
-require_relative 'sirena/parser/c4'
-require_relative 'sirena/layout/c4'
-require_relative 'sirena/renderer/c4'
+require_relative "sirena/parser/c4"
+require_relative "sirena/layout/c4"
+require_relative "sirena/renderer/c4"
 
 Sirena::DiagramRegistry.register(
   :c4,
@@ -343,9 +343,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Info diagram handlers
-require_relative 'sirena/parser/info'
-require_relative 'sirena/layout/info'
-require_relative 'sirena/renderer/info'
+require_relative "sirena/parser/info"
+require_relative "sirena/layout/info"
+require_relative "sirena/renderer/info"
 
 Sirena::DiagramRegistry.register(
   :info,
@@ -356,9 +356,9 @@ Sirena::DiagramRegistry.register(
 )
 
 # Load and register Error diagram handlers
-require_relative 'sirena/parser/error'
-require_relative 'sirena/layout/error'
-require_relative 'sirena/renderer/error'
+require_relative "sirena/parser/error"
+require_relative "sirena/layout/error"
+require_relative "sirena/renderer/error"
 
 Sirena::DiagramRegistry.register(
   :error,

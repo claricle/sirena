@@ -1005,7 +1005,7 @@ RSpec.describe Sirena::Source do
         # A double this large has already rounded to Infinity, same as
         # `title: 1e400` would -- the point is that parsing it does not
         # raise, not what string it prints.
-        expect(described_class.title("title: #{'9' * 1_000}")).to eq('Infinity')
+        expect(described_class.title("title: #{'9' * 1_000}")).to eq("Infinity")
       end
 
       it "refuses a bare integer one digit past the bound" do

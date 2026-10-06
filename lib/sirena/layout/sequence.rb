@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/sequence'
+require_relative "base"
+require_relative "../diagram/sequence"
 
 module Sirena
   module Layout
@@ -36,7 +36,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'sequence',
+          id: diagram.id || "sequence",
           children: transform_participants(diagram),
           edges: transform_messages(diagram),
           layoutOptions: layout_options(diagram),
@@ -133,8 +133,8 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 20,
           ElkOptions::EDGE_EDGE_SPACING => 15,
           # SIMPLE node placement maintains participant order
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
+          ElkOptions::NODE_PLACEMENT => "SIMPLE",
+          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
         )
       end
     end

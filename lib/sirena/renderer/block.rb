@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -120,10 +120,10 @@ module Sirena
           rect.y = y
           rect.width = width
           rect.height = height
-          rect.fill = 'none'
-          rect.stroke = theme_color(:border_color) || '#666'
-          rect.stroke_width = '2'
-          rect.stroke_dasharray = '5,5'
+          rect.fill = "none"
+          rect.stroke = theme_color(:border_color) || "#666"
+          rect.stroke_width = "2"
+          rect.stroke_dasharray = "5,5"
         end
       end
 
@@ -138,9 +138,9 @@ module Sirena
         return nil if block.compound?
 
         case block.shape
-        when 'circle'
+        when "circle"
           create_circle_block(x, y, width, height)
-        when 'arrow'
+        when "arrow"
           create_arrow_block(x, y, width, height, block.direction)
         else
           create_rectangle_block(x, y, width, height)
@@ -176,25 +176,25 @@ module Sirena
         cy = y + height / 2
 
         points = case direction
-                 when 'up'
+                 when "up"
                    [
                      "#{cx},#{y}",
                      "#{x + width},#{y + height}",
                      "#{x},#{y + height}",
                    ]
-                 when 'down'
+                 when "down"
                    [
                      "#{x},#{y}",
                      "#{x + width},#{y}",
                      "#{cx},#{y + height}",
                    ]
-                 when 'left'
+                 when "left"
                    [
                      "#{x},#{cy}",
                      "#{x + width},#{y}",
                      "#{x + width},#{y + height}",
                    ]
-                 when 'right'
+                 when "right"
                    [
                      "#{x},#{y}",
                      "#{x + width},#{cy}",
@@ -209,7 +209,7 @@ module Sirena
                  end
 
         Svg::Polygon.new.tap do |polygon|
-          polygon.points = points.join(' ')
+          polygon.points = points.join(" ")
           apply_theme_to_node(polygon)
         end
       end
@@ -230,8 +230,8 @@ module Sirena
           text.y = text_y
           text.content = block.label
           apply_theme_to_text(text)
-          text.text_anchor = 'middle'
-          text.dominant_baseline = 'middle'
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
         end
       end
 
@@ -248,9 +248,9 @@ module Sirena
         # Create path element
         path = Svg::Path.new.tap do |p|
           p.d = path_data
-          p.fill = 'none'
+          p.fill = "none"
           apply_theme_to_edge(p)
-          p.marker_end = 'url(#arrowhead)' if conn[:connection_type] == 'arrow'
+          p.marker_end = "url(#arrowhead)" if conn[:connection_type] == "arrow"
         end
 
         # Create group for connection

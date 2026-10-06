@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/requirement'
+require_relative "base"
+require_relative "../diagram/requirement"
 
 module Sirena
   module Layout
@@ -177,7 +177,7 @@ module Sirena
 
       def calculate_requirement_dimensions(requirement)
         # Calculate based on text content
-        text = requirement.text || ''
+        text = requirement.text || ""
         text_lines = text.length > 0 ? ((text.length / 25.0).ceil) : 1
 
         width = DEFAULT_REQ_WIDTH

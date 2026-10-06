@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/class_diagram'
+require_relative "../../diagram/class_diagram"
 
 module Sirena
   module Parser
@@ -13,24 +13,24 @@ module Sirena
       class ClassDiagram
         # Relationship type mappings from operators
         RELATIONSHIP_TYPES = {
-          '<|--' => 'inheritance',
-          '--|>' => 'inheritance',
-          '*--' => 'composition',
-          '--*' => 'composition',
-          'o--' => 'aggregation',
-          '--o' => 'aggregation',
-          '-->' => 'association',
-          '<--' => 'association',
-          '--' => 'association',
-          '..|>' => 'realization',
-          '<|..' => 'realization',
-          '..>' => 'dependency',
-          '<..' => 'dependency',
-          '..' => 'association',
+          "<|--" => "inheritance",
+          "--|>" => "inheritance",
+          "*--" => "composition",
+          "--*" => "composition",
+          "o--" => "aggregation",
+          "--o" => "aggregation",
+          "-->" => "association",
+          "<--" => "association",
+          "--" => "association",
+          "..|>" => "realization",
+          "<|.." => "realization",
+          "..>" => "dependency",
+          "<.." => "dependency",
+          ".." => "association",
         }.freeze
 
         # Operators where arrow points left (reverse direction)
-        LEFT_POINTING = ['<|--', '<--', '<|..', '<..'].freeze
+        LEFT_POINTING = ["<|--", "<--", "<|..", "<.."].freeze
 
         # `id1` keeps its parsed position for both ends here (mmdc never
         # swaps for these forms, unlike LEFT_POINTING's single-sided ones),
@@ -44,7 +44,7 @@ module Sirena
         # #mixed_markers_for instead -- add a new combination there, not
         # as a hardcoded entry here.
         MIXED_MARKER_ENDPOINTS = {
-          'o..' => { start_marker: 'aggregation', end_marker: nil, dashed: true },
+          "o.." => { start_marker: "aggregation", end_marker: nil, dashed: true },
         }.freeze
 
         # Marker glyph -> the marker type it draws, verified against
@@ -52,12 +52,12 @@ module Sirena
         # (`getArrowMarker(type)` per glyph): `<`/`>` decompose to
         # DEPENDENCY, so `<--*`'s `<` is a dependency marker, not absent.
         MARKER_TYPES = {
-          '<|' => 'inheritance',
-          '|>' => 'inheritance',
-          '*' => 'composition',
-          'o' => 'aggregation',
-          '<' => 'dependency',
-          '>' => 'dependency',
+          "<|" => "inheritance",
+          "|>" => "inheritance",
+          "*" => "composition",
+          "o" => "aggregation",
+          "<" => "dependency",
+          ">" => "dependency",
         }.freeze
 
         # Longest markers first so `<|`/`|>` win over the `<`/`>` they
@@ -81,10 +81,10 @@ module Sirena
 
         # Visibility symbol mappings
         VISIBILITY_SYMBOLS = {
-          '+' => 'public',
-          '-' => 'private',
-          '#' => 'protected',
-          '~' => 'package',
+          "+" => "public",
+          "-" => "private",
+          "#" => "protected",
+          "~" => "package",
         }.freeze
 
         # Transform parse tree into Class diagram.
@@ -135,7 +135,7 @@ module Sirena
           if stmt[:namespace_keyword]
             # Namespace block
             process_namespace(stmt)
-          elsif stmt[:keyword] == 'class' && stmt[:class_id]
+          elsif stmt[:keyword] == "class" && stmt[:class_id]
             # Class declaration
             process_class_declaration(stmt)
           elsif stmt[:stereotype] && stmt[:class_id] && !stmt[:keyword]
@@ -272,15 +272,15 @@ module Sirena
         def add_raw_member(entity, text)
           text = text.strip
           visible = text.match(/\A(?<symbol>[-+#~])\s*(?<rest>\S.*)\z/m)
-          visibility = visible ? VISIBILITY_SYMBOLS.fetch(visible[:symbol]) : 'public'
+          visibility = visible ? VISIBILITY_SYMBOLS.fetch(visible[:symbol]) : "public"
           text = visible[:rest] if visible
           call = text.match(RAW_METHOD)
           if call && !call[:name].strip.empty?
             entity.class_methods << raw_method(call, visibility)
-          elsif text.include?(')')
+          elsif text.include?(")")
             raise Parser::ParseError, "Cannot read #{text.inspect} as a class member."
           else
-            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ''), visibility: visibility)
+            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ""), visibility: visibility)
           end
         end
 
@@ -290,7 +290,7 @@ module Sirena
         # before it (`foo() $bar`) means `$bar` is the return type text, not
         # a marked-then-typed method.
         def raw_method(call, visibility)
-          return_type = call[:rest].sub(/\A[*$]?\s*/, '').sub(/\s*[*$]\z/, '')
+          return_type = call[:rest].sub(/\A[*$]?\s*/, "").sub(/\s*[*$]\z/, "")
           Diagram::ClassMethod.new(
             name: call[:name].strip, parameters: call[:params],
             return_type: return_type.empty? ? nil : return_type,
@@ -300,7 +300,7 @@ module Sirena
 
         def add_method_to_entity(entity, method_data, visibility)
           method_name = extract_text(method_data[:method_name])
-          parameters = method_data[:parameters] ? extract_text(method_data[:parameters]) : ''
+          parameters = method_data[:parameters] ? extract_text(method_data[:parameters]) : ""
           return_type = nil
 
           if method_data[:return_type] && method_data[:return_type][:type]
@@ -345,7 +345,7 @@ module Sirena
 
           # Get relationship type
           relationship_type = RELATIONSHIP_TYPES[operator]
-          relationship_type ||= 'association'
+          relationship_type ||= "association"
 
           # Parse cardinality
           source_card = nil
@@ -364,7 +364,7 @@ module Sirena
           if stmt[:pipe_label] && stmt[:pipe_label][:label_text]
             label = extract_text(stmt[:pipe_label][:label_text])
             # Strip surrounding quotes if present
-            label = label.gsub(/^["']|["']$/, '') if label
+            label = label.gsub(/^["']|["']$/, "") if label
           elsif stmt[:colon_label] && stmt[:colon_label][:label_text]
             label = extract_text(stmt[:colon_label][:label_text]).strip
           end
@@ -416,7 +416,7 @@ module Sirena
           {
             start_marker: MARKER_TYPES.fetch(match[:left]),
             end_marker: MARKER_TYPES.fetch(match[:right]),
-            dashed: match[:link] == '..',
+            dashed: match[:link] == "..",
           }
         end
 
@@ -458,16 +458,16 @@ module Sirena
 
         def qualify_name(name)
           return name unless @current_namespace
-          return name if name.include?('.')
+          return name if name.include?(".")
 
           "#{@current_namespace}.#{name}"
         end
 
         def parse_visibility(vis_data)
-          return 'public' unless vis_data
+          return "public" unless vis_data
 
           symbol = extract_text(vis_data[:vis_symbol])
-          VISIBILITY_SYMBOLS[symbol] || 'public'
+          VISIBILITY_SYMBOLS[symbol] || "public"
         end
 
         def extract_text(value)

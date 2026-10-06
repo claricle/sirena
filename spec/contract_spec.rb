@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 # :xychart is the one registered symbol this split-and-capitalize formula
 # cannot derive: it is public API (documented, printed by `sirena types`)
@@ -11,7 +11,7 @@ require 'spec_helper'
 # registry, 2026-09-22.
 module ContractSpecHelpers
   def irregular_camel_key(type)
-    { xychart: 'XyChart' }[type]
+    { xychart: "XyChart" }[type]
   end
 end
 
@@ -28,7 +28,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # its own error. Comparing against Engine::DIAGRAM_TYPE_PATTERNS.keys — a
   # list that does NOT shrink when a registry row is deleted — is what makes
   # deleting a row turn this file red.
-  it 'registers exactly the types Engine can detect' do
+  it "registers exactly the types Engine can detect" do
     expect(described_class.types.sort)
       .to eq(Sirena::Engine::DIAGRAM_TYPE_PATTERNS.keys.sort)
   end
@@ -36,9 +36,9 @@ RSpec.describe Sirena::DiagramRegistry do
   # R2 (RULES.md): an abstract method not walked by a spec is decoration.
   # `def type` was the pre-fix spelling on 5 models; grep is the same check
   # a reviewer would run by hand, kept here so it cannot silently reappear.
-  it 'has no diagram model still spelling the contract method `type`' do
+  it "has no diagram model still spelling the contract method `type`" do
     diagram_files = Dir.glob(
-      File.join(__dir__, '..', 'lib', 'sirena', 'diagram', '**', '*.rb'),
+      File.join(__dir__, "..", "lib", "sirena", "diagram", "**", "*.rb"),
     )
     offenders = diagram_files.select do |path|
       File.readlines(path).any? { |line| line.match?(/^\s*def type$/) }
@@ -62,7 +62,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # would still be gone. `instance_method(...).owner` answers the real
   # question (which class actually defines the method that runs) instead
   # of the proxy question (does this source file contain a matching line).
-  it 'has no registered transform overriding the guarded entry point' do
+  it "has no registered transform overriding the guarded entry point" do
     guard_methods = [:call, :to_graph]
     offenders = described_class.types.filter_map do |type|
       transform_class = described_class.get(type)[:transform]
@@ -77,7 +77,7 @@ RSpec.describe Sirena::DiagramRegistry do
     expect(offenders).to be_empty, message
   end
 
-  it 'has deleted the TreemapParser alias' do
+  it "has deleted the TreemapParser alias" do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
@@ -85,37 +85,37 @@ RSpec.describe Sirena::DiagramRegistry do
     describe type.inspect do
       let(:handlers) { described_class.get(type) }
       let(:camel_key) do
-        irregular_camel_key(type) || type.to_s.split('_').map(&:capitalize).join
+        irregular_camel_key(type) || type.to_s.split("_").map(&:capitalize).join
       end
       let(:fixture_path) do
-        File.join(__dir__, 'fixtures', 'contract', "#{type}.mmd")
+        File.join(__dir__, "fixtures", "contract", "#{type}.mmd")
       end
       let(:source) { File.read(fixture_path) }
       let(:diagram) { handlers[:parser].new.parse(source) }
 
-      it 'has a canonical fixture that parses' do
+      it "has a canonical fixture that parses" do
         expect(File).to exist(fixture_path)
       end
 
-      it 'registers a parser inheriting Parser::Base' do
+      it "registers a parser inheriting Parser::Base" do
         expect(handlers[:parser].ancestors).to include(Sirena::Parser::Base)
       end
 
-      it 'registers a transform inheriting Layout::Base' do
+      it "registers a transform inheriting Layout::Base" do
         expect(handlers[:transform].ancestors)
           .to include(Sirena::Layout::Base)
       end
 
-      it 'registers a renderer inheriting Renderer::Base' do
+      it "registers a renderer inheriting Renderer::Base" do
         expect(handlers[:renderer].ancestors)
           .to include(Sirena::Renderer::Base)
       end
 
-      it 'registers a model inheriting Diagram::Base' do
+      it "registers a model inheriting Diagram::Base" do
         expect(handlers[:model].ancestors).to include(Sirena::Diagram::Base)
       end
 
-      it 'returns diagram_type as the registered symbol' do
+      it "returns diagram_type as the registered symbol" do
         expect(diagram.diagram_type).to eq(type)
       end
 
@@ -125,21 +125,21 @@ RSpec.describe Sirena::DiagramRegistry do
       # the return value's type, not merely that the call didn't raise —
       # `def valid?; :maybe; end` must fail this and only this assertion
       # catches it.
-      it 'answers valid? with an actual boolean' do
+      it "answers valid? with an actual boolean" do
         expect(diagram.valid?).to be(true).or be(false)
       end
 
-      it 'has the parser return an instance of the registered model' do
+      it "has the parser return an instance of the registered model" do
         expect(diagram).to be_a(handlers[:model])
       end
 
       # The registered model is the type's top-level model, not a component
       # that happens to share the name (Diagram::Block was one).
-      it 'has Diagram::<CamelKey> be the class the parser returns' do
+      it "has Diagram::<CamelKey> be the class the parser returns" do
         expect(Sirena::Diagram.const_get(camel_key)).to be(diagram.class)
       end
 
-      it 'names parser, layout and renderer Sirena::<Layer>::<CamelKey>' do
+      it "names parser, layout and renderer Sirena::<Layer>::<CamelKey>" do
         names = handlers.values_at(:parser, :transform, :renderer).map(&:name)
 
         expect(names).to eq(
@@ -167,8 +167,8 @@ RSpec.describe Sirena::DiagramRegistry do
   # prove nothing about the new centralized one. Kanban's transform did not
   # call `valid?` at all — this is the type that actually exercises the new
   # mechanism.
-  describe 'an invalid model driven through Engine' do
-    it 'raises rather than silently producing SVG' do
+  describe "an invalid model driven through Engine" do
+    it "raises rather than silently producing SVG" do
       original = described_class.get(:kanban)
       invalid_diagram = Sirena::Diagram::Kanban.new.tap do |kanban|
         kanban.columns = [Sirena::Diagram::KanbanColumn.new(id: nil, title: nil)]
@@ -195,10 +195,10 @@ RSpec.describe Sirena::DiagramRegistry do
   # guarantee stay true together: the model-level predicate, and the
   # Engine-level guarantee it backs now that Layout::Base#call runs the
   # guard for kanban too.
-  describe 'a valid, empty model driven through Engine' do
-    it 'renders rather than raising' do
+  describe "a valid, empty model driven through Engine" do
+    it "renders rather than raising" do
       expect(Sirena::Diagram::Kanban.new.valid?).to be(true)
-      expect(Sirena::Engine.new.render("kanban\n")).to include('<svg')
+      expect(Sirena::Engine.new.render("kanban\n")).to include("<svg")
     end
   end
 end

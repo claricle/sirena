@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'fileutils'
-require 'rake'
-require 'tmpdir'
-require 'securerandom'
-require 'stringio'
-require 'yaml'
-require 'English'
+require "spec_helper"
+require "fileutils"
+require "rake"
+require "tmpdir"
+require "securerandom"
+require "stringio"
+require "yaml"
+require "English"
 
 # The generation task no longer deletes anything -- that ability was removed
 # after three rounds of guards each produced a new deletion path, and only
@@ -19,8 +19,8 @@ require 'English'
 # The rake file is loaded rather than reimplemented, so the helpers under test
 # are the ones the task runs. Loading it defines tasks into the default Rake
 # application; none is invoked here.
-TASKS_RAKE_FILE = File.expand_path('../../../tasks/examples.rake', __dir__)
-EXAMPLE_TASKS_FILE = File.expand_path('../../../tasks/example_tasks.rb', __dir__)
+TASKS_RAKE_FILE = File.expand_path("../../../tasks/examples.rake", __dir__)
+EXAMPLE_TASKS_FILE = File.expand_path("../../../tasks/example_tasks.rb", __dir__)
 load TASKS_RAKE_FILE unless defined?(ExampleTasks)
 
 # `capture` and `module_body` are pure and marked `module_function` in
@@ -54,7 +54,7 @@ module ExampleTasksSpecHelpers
   def fail_temporary_write_partway
     original_open = File.method(:open)
     allow(File).to receive(:open) do |path, *arguments, &block|
-      next original_open.call(path, *arguments, &block) unless path.to_s.end_with?('.tmp')
+      next original_open.call(path, *arguments, &block) unless path.to_s.end_with?(".tmp")
 
       original_open.call(path, *arguments) do |file|
         def file.write(content)
@@ -66,7 +66,7 @@ module ExampleTasksSpecHelpers
     end
   end
 
-  def write(relative_path, content = 'x')
+  def write(relative_path, content = "x")
     path = File.join(examples_dir, relative_path)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, content)
@@ -86,8 +86,8 @@ module ExampleTasksSpecHelpers
   end
 
   def module_body(source)
-    first = source.index { |line| line.start_with?('module ExampleTasks') }
-    last = (first...source.size).find { |i| source[i].rstrip == 'end' }
+    first = source.index { |line| line.start_with?("module ExampleTasks") }
+    last = (first...source.size).find { |i| source[i].rstrip == "end" }
     (first..last)
   end
   module_function :module_body
@@ -97,7 +97,7 @@ RSpec.describe ExampleTasks do
   include ExampleTasksSpecHelpers
 
   around do |example|
-    Dir.mktmpdir('sirena-examples') do |dir|
+    Dir.mktmpdir("sirena-examples") do |dir|
       @examples_dir = dir
       example.run
     end
@@ -105,18 +105,18 @@ RSpec.describe ExampleTasks do
 
   attr_reader :examples_dir
 
-  describe '.prune_orphan_svgs' do
-    it 'keeps an SVG whose source is still there' do
-      write('flowchart/01-basic.mmd')
-      svg = write('flowchart/01-basic.svg')
+  describe ".prune_orphan_svgs" do
+    it "keeps an SVG whose source is still there" do
+      write("flowchart/01-basic.mmd")
+      svg = write("flowchart/01-basic.svg")
 
       described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).to exist(svg)
     end
 
-    it 'removes an SVG whose source is gone' do
-      orphan = write('flowchart/02-deleted.svg')
+    it "removes an SVG whose source is gone" do
+      orphan = write("flowchart/02-deleted.svg")
 
       expect(described_class.prune_orphan_svgs(examples_dir)).to eq(1)
       expect(File).not_to exist(orphan)
@@ -124,16 +124,16 @@ RSpec.describe ExampleTasks do
 
     # The gemspec packages every SVG under examples/ at any depth, so a sweep
     # one level deep leaves exactly the orphans a human then deletes by hand.
-    it 'removes an orphan sitting directly under examples' do
-      orphan = write('stray_example.svg')
+    it "removes an orphan sitting directly under examples" do
+      orphan = write("stray_example.svg")
 
       described_class.prune_orphan_svgs(examples_dir)
 
       expect(File).not_to exist(orphan)
     end
 
-    it 'leaves files that are not SVGs alone' do
-      kept = write('flowchart/notes.txt')
+    it "leaves files that are not SVGs alone" do
+      kept = write("flowchart/notes.txt")
 
       described_class.prune_orphan_svgs(examples_dir)
 
@@ -143,8 +143,8 @@ RSpec.describe ExampleTasks do
     # The gemspec packages an SVG beside its source and one directly under
     # examples/; nothing here manages a deeper tree, and a sweep that reached
     # one deleted a fixture it had no claim on.
-    it 'leaves a nested tree it does not manage alone' do
-      nested = write('deep/nested/fixture.svg')
+    it "leaves a nested tree it does not manage alone" do
+      nested = write("deep/nested/fixture.svg")
 
       described_class.prune_orphan_svgs(examples_dir)
 
@@ -157,12 +157,12 @@ RSpec.describe ExampleTasks do
     # Asserting the TARGET survives proves nothing: deleting a symlink only
     # unlinks the link. The property is that the task does not manage a
     # symlink at all, so the link itself is still there afterwards.
-    it 'refuses an orphan that is a symlink out of the tree' do
-      outside = Dir.mktmpdir('sirena-outside')
-      target = File.join(outside, 'victim.svg')
-      File.write(target, '<svg>outside</svg>')
-      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-      link = File.join(examples_dir, 'flowchart', 'link.svg')
+    it "refuses an orphan that is a symlink out of the tree" do
+      outside = Dir.mktmpdir("sirena-outside")
+      target = File.join(outside, "victim.svg")
+      File.write(target, "<svg>outside</svg>")
+      FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+      link = File.join(examples_dir, "flowchart", "link.svg")
       File.symlink(target, link)
 
       described_class.prune_orphan_svgs(examples_dir)
@@ -177,8 +177,8 @@ RSpec.describe ExampleTasks do
     # Codex reproduced it by pausing prune mid-loop; this reproduces it
     # deterministically by making the first look see the orphan and the second
     # see the restored source, which is exactly what the pause created.
-    it 'keeps an SVG whose source is restored after the orphan list was built' do
-      restored = write('flowchart/03-restored.svg')
+    it "keeps an SVG whose source is restored after the orphan list was built" do
+      restored = write("flowchart/03-restored.svg")
       stale_list = [restored]
 
       # First call: the orphan list, as prune builds it. Every later call sees
@@ -189,32 +189,32 @@ RSpec.describe ExampleTasks do
       expect(File).to exist(restored)
     end
 
-    it 'still deletes an orphan that is an orphan on both looks' do
-      orphan = write('flowchart/04-gone.svg')
+    it "still deletes an orphan that is an orphan on both looks" do
+      orphan = write("flowchart/04-gone.svg")
 
       expect(silently { described_class.prune_orphan_svgs(examples_dir) }).to eq(1)
       expect(File).not_to exist(orphan)
     end
   end
 
-  describe '.with_examples_lock' do
-    it 'refuses a second holder while the first holds it' do
+  describe ".with_examples_lock" do
+    it "refuses a second holder while the first holds it" do
       held = nil
       described_class.with_examples_lock(examples_dir) { held = try_lock }
 
       expect(held).to be(false)
     end
 
-    it 'releases the lock when the block raises' do
-      expect { described_class.with_examples_lock(examples_dir) { raise 'boom' } }
-        .to raise_error('boom')
+    it "releases the lock when the block raises" do
+      expect { described_class.with_examples_lock(examples_dir) { raise "boom" } }
+        .to raise_error("boom")
 
       expect(try_lock).to eq(0)
     end
 
     # Windows refuses to open a directory. Refuse it here too, so a lock taken
     # on the examples root itself fails on every platform, not only there.
-    it 'never opens the examples directory itself' do
+    it "never opens the examples directory itself" do
       allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
         raise Errno::EISDIR, path.to_s if File.directory?(path.to_s)
 
@@ -231,12 +231,12 @@ RSpec.describe ExampleTasks do
     # write path in this file, the open here had no NOFOLLOW/symlink guard
     # at all -- planting a symlink to a not-yet-existing file made this
     # follow it and create that file for real, through the link.
-    it 'refuses to open a lock file that is a symlink' do
+    it "refuses to open a lock file that is a symlink" do
       lock_path = described_class.examples_lock_path(examples_dir)
       victim = File.join(Dir.tmpdir, "sirena-lock-victim-#{SecureRandom.hex(8)}")
       File.symlink(victim, lock_path)
 
-      expect { described_class.with_examples_lock(examples_dir) { raise 'must not run' } }
+      expect { described_class.with_examples_lock(examples_dir) { raise "must not run" } }
         .to raise_error(/examples lock became unsafe to open/)
       expect(File).not_to exist(victim)
     ensure
@@ -249,29 +249,29 @@ RSpec.describe ExampleTasks do
     # blame the lock file for a failure that has nothing to do with it. Only
     # an ELOOP from the open call itself (proven by the symlink spec above)
     # earns that message.
-    it 'does not relabel an Errno::ELOOP raised by the caller once the lock is already held' do
-      expect { described_class.with_examples_lock(examples_dir) { raise Errno::ELOOP, 'unrelated failure' } }
+    it "does not relabel an Errno::ELOOP raised by the caller once the lock is already held" do
+      expect { described_class.with_examples_lock(examples_dir) { raise Errno::ELOOP, "unrelated failure" } }
         .to raise_error(Errno::ELOOP, /unrelated failure/)
     end
   end
 
-  describe '.copy_to_docs' do
+  describe ".copy_to_docs" do
     # A link inside examples/ resolves somewhere this task has no claim on,
     # whether it is a whole diagram directory or one SVG.
-    it 'copies plain SVGs and skips a linked directory or file' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
-          File.write(File.join(outside, 'secret.svg'), '<svg/>')
-          File.symlink(outside, File.join(examples_dir, 'linked'))
-          File.symlink(File.join(outside, 'secret.svg'),
-                       File.join(examples_dir, 'flowchart', 'b.svg'))
+    it "copies plain SVGs and skips a linked directory or file" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
+          File.write(File.join(outside, "secret.svg"), "<svg/>")
+          File.symlink(outside, File.join(examples_dir, "linked"))
+          File.symlink(File.join(outside, "secret.svg"),
+                       File.join(examples_dir, "flowchart", "b.svg"))
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
-          expect([copied, Dir.glob('**/*', base: docs).sort])
-            .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+          expect([copied, Dir.glob("**/*", base: docs).sort])
+            .to eq([[["flowchart", 1]], ["flowchart", "flowchart/a.svg"]])
         end
       end
     end
@@ -282,24 +282,24 @@ RSpec.describe ExampleTasks do
     # the ordinary first run. Reproduced before this case was handled: a
     # docs_assets_dir several levels below a directory that does not exist
     # yet raised a raw Errno::ENOENT instead of creating the tree.
-    it 'creates docs_assets_dir and every ancestor when none of them exist yet' do
-      Dir.mktmpdir('sirena-outside') do |outside|
-        FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-        File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
-        docs = File.join(outside, 'nested', 'docs', 'assets', 'examples')
+    it "creates docs_assets_dir and every ancestor when none of them exist yet" do
+      Dir.mktmpdir("sirena-outside") do |outside|
+        FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+        File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
+        docs = File.join(outside, "nested", "docs", "assets", "examples")
         expect(File).not_to exist(File.dirname(docs))
 
         copied = described_class.copy_to_docs(examples_dir, docs)
 
-        expect([copied, Dir.glob('**/*', base: docs).sort])
-          .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+        expect([copied, Dir.glob("**/*", base: docs).sort])
+          .to eq([[["flowchart", 1]], ["flowchart", "flowchart/a.svg"]])
       end
     end
 
-    it 'refuses a docs root that is itself a link' do
-      Dir.mktmpdir('sirena-outside') do |outside|
-        FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-        File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
+    it "refuses a docs root that is itself a link" do
+      Dir.mktmpdir("sirena-outside") do |outside|
+        FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+        File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
         linked_docs = "#{outside}-link"
         File.symlink(outside, linked_docs)
 
@@ -315,18 +315,18 @@ RSpec.describe ExampleTasks do
     # the link and write the SVG wherever it points -- outside docs_dir
     # entirely. Reproduced before this guard existed: the copy landed inside
     # `outside/`, never inside `docs/flowchart/`.
-    it 'skips a diagram type whose docs target is already a link, rather than writing through it' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
-          File.symlink(outside, File.join(docs, 'flowchart'))
+    it "skips a diagram type whose docs target is already a link, rather than writing through it" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
+          File.symlink(outside, File.join(docs, "flowchart"))
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
           expect(copied).to eq([])
-          expect(File.symlink?(File.join(docs, 'flowchart'))).to be(true)
-          expect(File).not_to exist(File.join(outside, 'a.svg'))
+          expect(File.symlink?(File.join(docs, "flowchart"))).to be(true)
+          expect(File).not_to exist(File.join(outside, "a.svg"))
         end
       end
     end
@@ -338,21 +338,21 @@ RSpec.describe ExampleTasks do
     # which follows the link -- reproduced before this guard existed, with
     # the copy landing inside `outside/` while `docs/flowchart/a.svg` stayed
     # a symlink pointing there.
-    it 'refuses to write through a docs SVG slot that is itself a link' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>new</svg>')
-          FileUtils.mkdir_p(File.join(docs, 'flowchart'))
-          File.write(File.join(outside, 'secret.svg'), 'outside original')
-          File.symlink(File.join(outside, 'secret.svg'),
-                       File.join(docs, 'flowchart', 'a.svg'))
+    it "refuses to write through a docs SVG slot that is itself a link" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>new</svg>")
+          FileUtils.mkdir_p(File.join(docs, "flowchart"))
+          File.write(File.join(outside, "secret.svg"), "outside original")
+          File.symlink(File.join(outside, "secret.svg"),
+                       File.join(docs, "flowchart", "a.svg"))
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
-          expect([copied, File.symlink?(File.join(docs, 'flowchart', 'a.svg')),
-                  File.read(File.join(outside, 'secret.svg'))])
-            .to eq([[['flowchart', 0]], true, 'outside original'])
+          expect([copied, File.symlink?(File.join(docs, "flowchart", "a.svg")),
+                  File.read(File.join(outside, "secret.svg"))])
+            .to eq([[["flowchart", 0]], true, "outside original"])
         end
       end
     end
@@ -366,21 +366,21 @@ RSpec.describe ExampleTasks do
     # follows it. Reproduced before this second condition existed: the copy
     # landed inside `outside/` while `docs/flowchart/a.svg/` stayed a
     # directory holding the untouched inner link.
-    it 'refuses to write through a docs SVG slot that is a directory holding an inner link of the same name' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>new</svg>')
-          File.write(File.join(outside, 'secret.svg'), 'outside original')
-          FileUtils.mkdir_p(File.join(docs, 'flowchart', 'a.svg'))
-          File.symlink(File.join(outside, 'secret.svg'),
-                       File.join(docs, 'flowchart', 'a.svg', 'a.svg'))
+    it "refuses to write through a docs SVG slot that is a directory holding an inner link of the same name" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>new</svg>")
+          File.write(File.join(outside, "secret.svg"), "outside original")
+          FileUtils.mkdir_p(File.join(docs, "flowchart", "a.svg"))
+          File.symlink(File.join(outside, "secret.svg"),
+                       File.join(docs, "flowchart", "a.svg", "a.svg"))
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
-          expect([copied, File.directory?(File.join(docs, 'flowchart', 'a.svg')),
-                  File.read(File.join(outside, 'secret.svg'))])
-            .to eq([[['flowchart', 0]], true, 'outside original'])
+          expect([copied, File.directory?(File.join(docs, "flowchart", "a.svg")),
+                  File.read(File.join(outside, "secret.svg"))])
+            .to eq([[["flowchart", 0]], true, "outside original"])
         end
       end
     end
@@ -394,15 +394,15 @@ RSpec.describe ExampleTasks do
     # in tasks/examples.rake), so this stubs GEM_ROOT to the test's own
     # tmpdir -- the same boundary a real call site gets from its own
     # checkout root, without reaching into the real gem checkout.
-    it 'refuses a docs root reached through a symlinked ancestor, not just a link itself' do
-      Dir.mktmpdir('sirena-root') do |root|
-        stub_const('ExampleTasks::GEM_ROOT', root)
+    it "refuses a docs root reached through a symlinked ancestor, not just a link itself" do
+      Dir.mktmpdir("sirena-root") do |root|
+        stub_const("ExampleTasks::GEM_ROOT", root)
 
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
-          File.symlink(outside, File.join(root, 'assets'))
-          docs_assets_dir = File.join(root, 'assets', 'examples')
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
+          File.symlink(outside, File.join(root, "assets"))
+          docs_assets_dir = File.join(root, "assets", "examples")
 
           expect { described_class.copy_to_docs(examples_dir, docs_assets_dir) }
             .to raise_error(/docs assets root sits beneath a symlinked directory/)
@@ -417,15 +417,15 @@ RSpec.describe ExampleTasks do
     # `Dir.mkdir` itself succeeds here (the hijacked leaf is genuinely
     # fresh); the property that matters is that the re-verification raises
     # before anything is copied into that leaf.
-    it 'refuses rather than writing through an ancestor symlink raced in between the ancestor check and directory creation' do
-      Dir.mktmpdir('sirena-root') do |root|
-        stub_const('ExampleTasks::GEM_ROOT', root)
+    it "refuses rather than writing through an ancestor symlink raced in between the ancestor check and directory creation" do
+      Dir.mktmpdir("sirena-root") do |root|
+        stub_const("ExampleTasks::GEM_ROOT", root)
 
-        Dir.mktmpdir('sirena-attacker') do |attacker|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg/>')
-          docs_assets_dir = File.join(root, 'docs', 'assets', 'examples')
-          hijacked_ancestor = File.join(root, 'docs', 'assets')
+        Dir.mktmpdir("sirena-attacker") do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg/>")
+          docs_assets_dir = File.join(root, "docs", "assets", "examples")
+          hijacked_ancestor = File.join(root, "docs", "assets")
 
           allow(Dir).to receive(:mkdir).and_wrap_original do |original, path, *rest|
             if File.expand_path(path) == docs_assets_dir
@@ -437,7 +437,7 @@ RSpec.describe ExampleTasks do
 
           expect { described_class.copy_to_docs(examples_dir, docs_assets_dir) }
             .to raise_error(/docs assets root sits beneath a symlinked directory/)
-          expect(Dir.children(File.join(attacker, 'examples'))).to eq([])
+          expect(Dir.children(File.join(attacker, "examples"))).to eq([])
         end
       end
     end
@@ -445,19 +445,19 @@ RSpec.describe ExampleTasks do
     # The only spec exercising verified_root's non-raising GEM_ROOT arm: the
     # two specs above only ever hit the raising arm, so a broken `expected`
     # computation would still pass them.
-    it 'succeeds on an ordinary nested docs root once GEM_ROOT makes the ancestor check live' do
-      Dir.mktmpdir('sirena-root') do |root|
-        stub_const('ExampleTasks::GEM_ROOT', root)
+    it "succeeds on an ordinary nested docs root once GEM_ROOT makes the ancestor check live" do
+      Dir.mktmpdir("sirena-root") do |root|
+        stub_const("ExampleTasks::GEM_ROOT", root)
 
-        examples = File.join(root, 'examples')
-        FileUtils.mkdir_p(File.join(examples, 'flowchart'))
-        File.write(File.join(examples, 'flowchart', 'a.svg'), '<svg/>')
-        docs_assets_dir = File.join(root, 'docs', 'assets', 'examples')
+        examples = File.join(root, "examples")
+        FileUtils.mkdir_p(File.join(examples, "flowchart"))
+        File.write(File.join(examples, "flowchart", "a.svg"), "<svg/>")
+        docs_assets_dir = File.join(root, "docs", "assets", "examples")
 
         copied = described_class.copy_to_docs(examples, docs_assets_dir)
 
-        expect([copied, Dir.glob('**/*', base: docs_assets_dir).sort])
-          .to eq([[['flowchart', 1]], ['flowchart', 'flowchart/a.svg']])
+        expect([copied, Dir.glob("**/*", base: docs_assets_dir).sort])
+          .to eq([[["flowchart", 1]], ["flowchart", "flowchart/a.svg"]])
       end
     end
 
@@ -472,14 +472,14 @@ RSpec.describe ExampleTasks do
     # destination write path in general; that broader property is the other
     # seven specs across `.write_svg`/`.copy_to_docs`/`.generate_examples`
     # covering a debris-left-behind or partial-write failure.
-    it 'refuses a destination symlink raced in right at the File.rename call' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
-          victim = File.join(outside, 'victim.svg')
-          File.write(victim, 'KEEP ME')
-          destination = File.join(File.realpath(docs), 'flowchart', 'a.svg')
+    it "refuses a destination symlink raced in right at the File.rename call" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>real content</svg>")
+          victim = File.join(outside, "victim.svg")
+          File.write(victim, "KEEP ME")
+          destination = File.join(File.realpath(docs), "flowchart", "a.svg")
 
           allow(File).to receive(:rename).and_wrap_original do |original, from, to|
             File.symlink(victim, to) if File.expand_path(to) == destination
@@ -489,7 +489,7 @@ RSpec.describe ExampleTasks do
           copied = described_class.copy_to_docs(examples_dir, docs)
 
           expect([copied, File.symlink?(destination), File.read(victim)])
-            .to eq([[['flowchart', 1]], false, 'KEEP ME'])
+            .to eq([[["flowchart", 1]], false, "KEEP ME"])
         end
       end
     end
@@ -499,14 +499,14 @@ RSpec.describe ExampleTasks do
     # the destination-side rename guard above does nothing here, since the
     # vulnerable operation is the read, not the rename. Wraps `File.open` so
     # the source becomes a symlink only in the gap right before it opens.
-    it 'does not read through a source symlink raced in immediately before the read' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          source = File.join(examples_dir, 'flowchart', 'a.svg')
-          File.write(source, '<svg>real content</svg>')
-          secret = File.join(outside, 'secret.txt')
-          File.write(secret, 'TOP SECRET')
+    it "does not read through a source symlink raced in immediately before the read" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          source = File.join(examples_dir, "flowchart", "a.svg")
+          File.write(source, "<svg>real content</svg>")
+          secret = File.join(outside, "secret.txt")
+          File.write(secret, "TOP SECRET")
 
           allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
             if path == source && File.file?(path) && !File.symlink?(path)
@@ -518,8 +518,8 @@ RSpec.describe ExampleTasks do
 
           expect { described_class.copy_to_docs(examples_dir, docs) }
             .to raise_error(/source became unsafe to read/)
-          expect(File).not_to exist(File.join(docs, 'flowchart', 'a.svg'))
-          expect(File.read(secret)).to eq('TOP SECRET')
+          expect(File).not_to exist(File.join(docs, "flowchart", "a.svg"))
+          expect(File.read(secret)).to eq("TOP SECRET")
         end
       end
     end
@@ -533,18 +533,18 @@ RSpec.describe ExampleTasks do
     # DESTINATION -- SOURCE is re-checked once more right after the read,
     # and since the attacker never put it back, the stale symlink is still
     # there and the copy is discarded rather than completing.
-    it 'discards the copy instead of completing it when a NOFOLLOW-less platform already followed a raced-in source symlink' do
+    it "discards the copy instead of completing it when a NOFOLLOW-less platform already followed a raced-in source symlink" do
       allow(File).to receive(:const_defined?).and_wrap_original do |original, name, *rest|
         name == :NOFOLLOW ? false : original.call(name, *rest)
       end
 
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-outside') do |outside|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          source = File.join(examples_dir, 'flowchart', 'a.svg')
-          File.write(source, '<svg>real content</svg>')
-          secret = File.join(outside, 'secret.txt')
-          File.write(secret, 'TOP SECRET')
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-outside") do |outside|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          source = File.join(examples_dir, "flowchart", "a.svg")
+          File.write(source, "<svg>real content</svg>")
+          secret = File.join(outside, "secret.txt")
+          File.write(secret, "TOP SECRET")
 
           allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
             if path == source && File.file?(path) && !File.symlink?(path)
@@ -556,9 +556,9 @@ RSpec.describe ExampleTasks do
 
           expect { described_class.copy_to_docs(examples_dir, docs) }
             .to raise_error(/source became unsafe to read/)
-          expect(File).not_to exist(File.join(docs, 'flowchart', 'a.svg'))
-          expect(Dir.glob(File.join(docs, 'flowchart', '.*.tmp'))).to be_empty
-          expect(File.read(secret)).to eq('TOP SECRET')
+          expect(File).not_to exist(File.join(docs, "flowchart", "a.svg"))
+          expect(Dir.glob(File.join(docs, "flowchart", ".*.tmp"))).to be_empty
+          expect(File.read(secret)).to eq("TOP SECRET")
         end
       end
     end
@@ -573,12 +573,12 @@ RSpec.describe ExampleTasks do
     # `File.realpath(docs)` rather than the raw mktmpdir path -- `Dir.chdir`
     # resolves through macOS's `/var -> /private/var`, so matching against
     # the un-resolved alias would never fire.
-    it 'refuses rather than writing into a target_dir symlink raced in right before creation' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-attacker') do |attacker|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
-          target_dir = File.join(File.realpath(docs), 'flowchart')
+    it "refuses rather than writing into a target_dir symlink raced in right before creation" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-attacker") do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>real content</svg>")
+          target_dir = File.join(File.realpath(docs), "flowchart")
 
           allow(Dir).to receive(:mkdir).and_wrap_original do |original, path, *rest|
             if File.expand_path(path) == target_dir && !File.exist?(path)
@@ -599,11 +599,11 @@ RSpec.describe ExampleTasks do
     # is detected instead: identity is captured right before the chdir and
     # re-checked right after, so a symlink that wins this one-syscall race
     # is caught rather than silently walked into.
-    it 'refuses rather than proceeding when docs_assets_dir changes identity right before the pin is taken' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-attacker') do |attacker|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
+    it "refuses rather than proceeding when docs_assets_dir changes identity right before the pin is taken" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-attacker") do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>real content</svg>")
 
           allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
             if File.expand_path(path) == docs
@@ -625,12 +625,12 @@ RSpec.describe ExampleTasks do
     # `within_pinned_directory` entering it for the per-file loop. Matched
     # against `File.realpath` of docs for the same reason as the sibling
     # test above.
-    it 'refuses rather than proceeding when target_dir changes identity right before its own pin is taken' do
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-attacker') do |attacker|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>real content</svg>')
-          target_dir = File.join(File.realpath(docs), 'flowchart')
+    it "refuses rather than proceeding when target_dir changes identity right before its own pin is taken" do
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-attacker") do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>real content</svg>")
+          target_dir = File.join(File.realpath(docs), "flowchart")
 
           allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
             if File.expand_path(path) == target_dir
@@ -653,16 +653,16 @@ RSpec.describe ExampleTasks do
     # copied normally -- the harder-to-dismiss case, since it proves a
     # confirmation done before the loop started does not cover what comes
     # after it.
-    it 'keeps every later file pinned to the original target_dir, even after target_dir is renamed away and replaced mid-loop' do
-      skip 'Windows refuses to rename the current working directory (EACCES)' if Gem.win_platform?
+    it "keeps every later file pinned to the original target_dir, even after target_dir is renamed away and replaced mid-loop" do
+      skip "Windows refuses to rename the current working directory (EACCES)" if Gem.win_platform?
 
-      Dir.mktmpdir('sirena-docs') do |docs|
-        Dir.mktmpdir('sirena-attacker') do |attacker|
-          FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-          File.write(File.join(examples_dir, 'flowchart', 'a.svg'), '<svg>a</svg>')
-          File.write(File.join(examples_dir, 'flowchart', 'b.svg'), '<svg>b</svg>')
-          target_dir = File.join(docs, 'flowchart')
-          moved_aside = File.join(docs, 'flowchart-moved-by-attacker')
+      Dir.mktmpdir("sirena-docs") do |docs|
+        Dir.mktmpdir("sirena-attacker") do |attacker|
+          FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+          File.write(File.join(examples_dir, "flowchart", "a.svg"), "<svg>a</svg>")
+          File.write(File.join(examples_dir, "flowchart", "b.svg"), "<svg>b</svg>")
+          target_dir = File.join(docs, "flowchart")
+          moved_aside = File.join(docs, "flowchart-moved-by-attacker")
 
           renames = 0
           allow(File).to receive(:rename).and_wrap_original do |original, from, to|
@@ -679,7 +679,7 @@ RSpec.describe ExampleTasks do
 
           copied = described_class.copy_to_docs(examples_dir, docs)
 
-          expect(copied).to eq([['flowchart', 2]])
+          expect(copied).to eq([["flowchart", 2]])
           expect(Dir.children(attacker)).to eq([])
           expect(Dir.children(moved_aside).sort).to eq(%w[a.svg b.svg])
         end
@@ -691,20 +691,20 @@ RSpec.describe ExampleTasks do
   # racing a concurrent writer can never destroy fresh output. Deleting is
   # `.prune_known_unrenderable_svgs`'s job, exercised in its own describe
   # block below.
-  describe '.handle_failed_svgs' do
+  describe ".handle_failed_svgs" do
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
     # Derived, not typed out: naming the source by position and its SVG by
     # hand let a reorder of the constant pair the two up wrongly.
-    let(:expected_svg) { expected_source.sub(/\.mmd\z/, '.svg') }
+    let(:expected_svg) { expected_source.sub(/\.mmd\z/, ".svg") }
 
-    it 'reports, but does not delete, the stale SVG of a source that is expected not to render' do
+    it "reports, but does not delete, the stale SVG of a source that is expected not to render" do
       svg = write(expected_svg)
 
       expect { handle([[expected_source, svg]]) }.to output(/no longer render.*prune/m).to_stdout
       expect(File).to exist(svg)
     end
 
-    it 'says nothing when the stale SVG is already gone' do
+    it "says nothing when the stale SVG is already gone" do
       missing = File.join(examples_dir, expected_svg)
 
       expect { handle([[expected_source, missing]]) }.not_to output.to_stdout
@@ -716,11 +716,11 @@ RSpec.describe ExampleTasks do
     # the concurrent writer's fresh output survives by construction, not by a
     # timing check.
     it "never touches another run's SVG, even one written after this run started" do
-      svg = write(expected_svg, '<svg>written by another run</svg>')
+      svg = write(expected_svg, "<svg>written by another run</svg>")
 
       handle([[expected_source, svg]])
 
-      expect(File.read(svg)).to eq('<svg>written by another run</svg>')
+      expect(File.read(svg)).to eq("<svg>written by another run</svg>")
     end
 
     # An unexpected failure is a regression, not a cleanup. Raising before any
@@ -728,26 +728,26 @@ RSpec.describe ExampleTasks do
     # A plain StandardError, not SystemExit: this is a library method a
     # caller can require and call directly, and it must not end that
     # caller's whole process.
-    it 'raises without deleting anything when an unexpected source failed' do
-      svg = write('flowchart/01-basic.svg')
+    it "raises without deleting anything when an unexpected source failed" do
+      svg = write("flowchart/01-basic.svg")
 
-      expect { handle([['flowchart/01-basic.mmd', svg]]) }
+      expect { handle([["flowchart/01-basic.mmd", svg]]) }
         .to raise_error(described_class::UnexpectedRenderFailure).and(output(/Unexpected/).to_stdout)
       expect(File).to exist(svg)
     end
 
     it "keeps an expected failure's SVG when an unexpected one shares the run" do
       kept = write(expected_svg)
-      unexpected_svg = write('flowchart/01-basic.svg')
+      unexpected_svg = write("flowchart/01-basic.svg")
 
       expect do
-        handle([[expected_source, kept], ['flowchart/01-basic.mmd', unexpected_svg]])
+        handle([[expected_source, kept], ["flowchart/01-basic.mmd", unexpected_svg]])
       end.to raise_error(described_class::UnexpectedRenderFailure).and(output(/Unexpected/).to_stdout)
       expect(File).to exist(kept)
     end
 
-    it 'does nothing when every source rendered' do
-      svg = write('flowchart/01-basic.svg')
+    it "does nothing when every source rendered" do
+      svg = write("flowchart/01-basic.svg")
 
       expect { handle([]) }.not_to raise_error
       expect(File).to exist(svg)
@@ -757,42 +757,42 @@ RSpec.describe ExampleTasks do
   # The deliberate, standalone counterpart to .handle_failed_svgs' report: a
   # human runs this with no concurrent :generate to race, so it is the only
   # place a stale known-unrenderable SVG is actually removed.
-  describe '.known_unrenderable_svgs and .prune_known_unrenderable_svgs' do
+  describe ".known_unrenderable_svgs and .prune_known_unrenderable_svgs" do
     let(:expected_source) { EXPECTED_UNRENDERABLE_SOURCES.first }
-    let(:expected_svg) { expected_source.sub(/\.mmd\z/, '.svg') }
+    let(:expected_svg) { expected_source.sub(/\.mmd\z/, ".svg") }
 
-    it 'finds the stale SVG beside a source that never renders' do
+    it "finds the stale SVG beside a source that never renders" do
       svg = write(expected_svg)
       write(expected_source)
 
       expect(described_class.known_unrenderable_svgs(examples_dir)).to eq([svg])
     end
 
-    it 'ignores a source that renders normally' do
-      write('flowchart/01-basic.svg')
-      write('flowchart/01-basic.mmd')
+    it "ignores a source that renders normally" do
+      write("flowchart/01-basic.svg")
+      write("flowchart/01-basic.mmd")
 
       expect(described_class.known_unrenderable_svgs(examples_dir)).to eq([])
     end
 
-    it 'deletes the stale SVG and reports how many it removed' do
+    it "deletes the stale SVG and reports how many it removed" do
       svg = write(expected_svg)
 
       expect(described_class.prune_known_unrenderable_svgs(examples_dir)).to eq(1)
       expect(File).not_to exist(svg)
     end
 
-    it 'does nothing when there is no stale SVG to prune' do
+    it "does nothing when there is no stale SVG to prune" do
       expect(described_class.prune_known_unrenderable_svgs(examples_dir)).to eq(0)
     end
 
     # Same containment discipline as every other write path here: a symlink
     # sitting at the expected SVG path resolves somewhere this task has no
     # claim on, so it must not be followed.
-    it 'refuses a stale SVG slot that is a symlink out of the tree' do
-      outside = Dir.mktmpdir('sirena-outside')
-      target = File.join(outside, 'victim.svg')
-      File.write(target, '<svg>outside</svg>')
+    it "refuses a stale SVG slot that is a symlink out of the tree" do
+      outside = Dir.mktmpdir("sirena-outside")
+      target = File.join(outside, "victim.svg")
+      File.write(target, "<svg>outside</svg>")
       FileUtils.mkdir_p(File.dirname(File.join(examples_dir, expected_svg)))
       File.symlink(target, File.join(examples_dir, expected_svg))
 
@@ -806,29 +806,29 @@ RSpec.describe ExampleTasks do
   # Driven against a throwaway tree rather than pinned on the task's source
   # text. The two examples here used to assert that the rake file CONTAINED a
   # call; both stayed green while the task handed nothing to the cleanup.
-  describe '.generate_examples' do
+  describe ".generate_examples" do
     let(:source) { "flowchart TD\n  A --> B\n" }
 
-    it 'writes each SVG beside the source it came from' do
-      write('flowchart/01-basic.mmd', source)
+    it "writes each SVG beside the source it came from" do
+      write("flowchart/01-basic.mmd", source)
 
       generated, failed = silently { described_class.generate_examples(examples_dir) }
 
       expect([generated, failed]).to eq([1, []])
-      expect(File.read(File.join(examples_dir, 'flowchart/01-basic.svg'))).to include('<svg')
+      expect(File.read(File.join(examples_dir, "flowchart/01-basic.svg"))).to include("<svg")
     end
 
     # File.write truncates before it writes, so a render that produced nothing
     # used to leave a zero-byte SVG and still count as generated.
-    it 'keeps the previous SVG intact when a source renders nothing' do
-      write('flowchart/01-basic.mmd', source)
-      svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
+    it "keeps the previous SVG intact when a source renders nothing" do
+      write("flowchart/01-basic.mmd", source)
+      svg = write("flowchart/01-basic.svg", "<svg>previous</svg>")
       allow(Sirena).to receive(:render).and_return(nil)
 
       generated, failed = silently { described_class.generate_examples(examples_dir) }
 
-      expect([generated, failed.map(&:first)]).to eq([0, ['flowchart/01-basic.mmd']])
-      expect(File.read(svg)).to eq('<svg>previous</svg>')
+      expect([generated, failed.map(&:first)]).to eq([0, ["flowchart/01-basic.mmd"]])
+      expect(File.read(svg)).to eq("<svg>previous</svg>")
     end
 
     # The nil case is caught before any write, so it cannot see the rename.
@@ -840,14 +840,14 @@ RSpec.describe ExampleTasks do
     # disk for the source failing to render, and delete the SVG below on the
     # strength of it. So this now propagates out of generate_examples rather
     # than being caught, the same way an unreadable diagram directory does.
-    it 'keeps the previous SVG whole and fails the task when the write dies partway' do
-      write('flowchart/01-basic.mmd', source)
-      svg = write('flowchart/01-basic.svg', '<svg>previous</svg>')
+    it "keeps the previous SVG whole and fails the task when the write dies partway" do
+      write("flowchart/01-basic.mmd", source)
+      svg = write("flowchart/01-basic.svg", "<svg>previous</svg>")
       fail_temporary_write_partway
 
       expect { silently { described_class.generate_examples(examples_dir) } }
         .to raise_error(Errno::EFBIG)
-      expect(File.read(svg)).to eq('<svg>previous</svg>')
+      expect(File.read(svg)).to eq("<svg>previous</svg>")
     end
 
     # The scenario that actually loses data: a write failure lands on a
@@ -856,40 +856,40 @@ RSpec.describe ExampleTasks do
     # exiting — it quietly deleted the still-good SVG and reported success.
     # Proven at generate_examples alone: the fix is that it never reaches
     # handle_failed_svgs as a failed render in the first place.
-    it 'never treats a write failure on an allowlisted source as an expected render failure' do
+    it "never treats a write failure on an allowlisted source as an expected render failure" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
-      svg_path = source_path.sub(/\.mmd\z/, '.svg')
+      svg_path = source_path.sub(/\.mmd\z/, ".svg")
       write(source_path, source)
-      svg = write(svg_path, '<svg>previous good output</svg>')
+      svg = write(svg_path, "<svg>previous good output</svg>")
       fail_temporary_write_partway
 
       expect { silently { described_class.generate_examples(examples_dir) } }
         .to raise_error(Errno::EFBIG)
-      expect(File.read(svg)).to eq('<svg>previous good output</svg>')
+      expect(File.read(svg)).to eq("<svg>previous good output</svg>")
     end
 
     # Malformed metadata is an operational failure, not evidence the source
     # itself fails to render. Reading it inside the render-failure rescue
     # gave a bad .yml on an allowlisted source the same deletion permission
     # as a genuine render failure, and deleted the still-good SVG below.
-    it 'propagates a metadata error instead of treating it as a render failure' do
+    it "propagates a metadata error instead of treating it as a render failure" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
-      svg_path = source_path.sub(/\.mmd\z/, '.svg')
+      svg_path = source_path.sub(/\.mmd\z/, ".svg")
       write(source_path, source)
-      svg = write(svg_path, '<svg>previous good output</svg>')
-      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: [\n")
+      svg = write(svg_path, "<svg>previous good output</svg>")
+      write(source_path.sub(/\.mmd\z/, ".yml"), "theme: [\n")
 
       expect { silently { described_class.generate_examples(examples_dir) } }
         .to raise_error(Psych::SyntaxError)
-      expect(File.read(svg)).to eq('<svg>previous good output</svg>')
+      expect(File.read(svg)).to eq("<svg>previous good output</svg>")
     end
 
     # A symlinked diagram directory resolves outside examples/, and the loop
     # would write and delete there while reporting success.
-    it 'refuses a diagram directory that is a symlink out of the tree' do
-      outside = Dir.mktmpdir('sirena-outside')
-      File.write(File.join(outside, 'escaped.mmd'), source)
-      File.symlink(outside, File.join(examples_dir, 'linked'))
+    it "refuses a diagram directory that is a symlink out of the tree" do
+      outside = Dir.mktmpdir("sirena-outside")
+      File.write(File.join(outside, "escaped.mmd"), source)
+      File.symlink(outside, File.join(examples_dir, "linked"))
 
       generated, failed = nil
       output = capture { generated, failed = described_class.generate_examples(examples_dir) }
@@ -899,8 +899,8 @@ RSpec.describe ExampleTasks do
       # at all records a failed render, so an empty failure list is what
       # proves it was never entered.
       expect([generated, failed]).to eq([0, []])
-      expect(output).to include('skipped linked')
-      expect(File).not_to exist(File.join(outside, 'escaped.svg'))
+      expect(output).to include("skipped linked")
+      expect(File).not_to exist(File.join(outside, "escaped.svg"))
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -910,14 +910,14 @@ RSpec.describe ExampleTasks do
     # Driving the whole of generation, not the reporter alone: the point is
     # that a routine regeneration leaves it there, and calling the reporter
     # directly cannot see a generation that deletes.
-    it 'reports a sourceless SVG without deleting it' do
-      write('flowchart/01-basic.mmd', source)
-      orphan = write('flowchart/hand-drawn.svg', '<svg>by hand</svg>')
+    it "reports a sourceless SVG without deleting it" do
+      write("flowchart/01-basic.mmd", source)
+      orphan = write("flowchart/hand-drawn.svg", "<svg>by hand</svg>")
 
       output = capture { described_class.generate_examples(examples_dir) }
 
-      expect(output).to include('hand-drawn.svg')
-      expect(File.read(orphan)).to eq('<svg>by hand</svg>')
+      expect(output).to include("hand-drawn.svg")
+      expect(File.read(orphan)).to eq("<svg>by hand</svg>")
     end
   end
 
@@ -925,15 +925,15 @@ RSpec.describe ExampleTasks do
   # Kept as a second line of defence because the failure it prevents is
   # overwriting a file outside the repository, and tested directly because an
   # unreachable guard is one nobody notices breaking.
-  describe '.write_svg' do
-    it 'refuses to write outside the examples tree' do
-      outside = Dir.mktmpdir('sirena-outside')
-      victim = File.join(outside, 'victim.svg')
-      File.write(victim, '<svg>outside</svg>')
+  describe ".write_svg" do
+    it "refuses to write outside the examples tree" do
+      outside = Dir.mktmpdir("sirena-outside")
+      victim = File.join(outside, "victim.svg")
+      File.write(victim, "<svg>outside</svg>")
 
-      expect { described_class.write_svg(victim, '<svg>new</svg>', examples_dir) }
+      expect { described_class.write_svg(victim, "<svg>new</svg>", examples_dir) }
         .to raise_error(/refused an unsafe SVG target/)
-      expect(File.read(victim)).to eq('<svg>outside</svg>')
+      expect(File.read(victim)).to eq("<svg>outside</svg>")
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -941,23 +941,23 @@ RSpec.describe ExampleTasks do
     # The temporary name is predictable, and an ordinary write follows
     # whatever already answers to it. A leftover from a killed run, or a link
     # planted there, would otherwise be written straight through.
-    it 'aborts rather than writing through a name already in the temporary slot' do
-      outside = Dir.mktmpdir('sirena-outside')
-      victim = File.join(outside, 'victim')
-      File.write(victim, 'KEEP ME')
-      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
-      File.write(target, '<svg>previous</svg>')
+    it "aborts rather than writing through a name already in the temporary slot" do
+      outside = Dir.mktmpdir("sirena-outside")
+      victim = File.join(outside, "victim")
+      File.write(victim, "KEEP ME")
+      FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+      target = File.join(examples_dir, "flowchart", "a.svg")
+      File.write(target, "<svg>previous</svg>")
       # The name carries a random component, so it is pinned here rather than
       # guessed; the guard has to hold even when the name IS known.
-      allow(SecureRandom).to receive(:hex).and_return('feedface')
-      planted = File.join(examples_dir, 'flowchart', ".sirena-#{Process.pid}-feedface.tmp")
+      allow(SecureRandom).to receive(:hex).and_return("feedface")
+      planted = File.join(examples_dir, "flowchart", ".sirena-#{Process.pid}-feedface.tmp")
       File.symlink(victim, planted)
 
-      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+      expect { described_class.write_svg(target, "<svg>new</svg>", examples_dir) }
         .to raise_error(Errno::EEXIST)
       expect([File.read(victim), File.read(target), File.symlink?(planted)])
-        .to eq(['KEEP ME', '<svg>previous</svg>', true])
+        .to eq(["KEEP ME", "<svg>previous</svg>", true])
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -965,38 +965,38 @@ RSpec.describe ExampleTasks do
     # The guard is a check on the rendered document, not on nil alone: an
     # error page or an empty string is a String too, and accepting one would
     # replace a good SVG with it.
-    it 'refuses a render that is a String but not an SVG document' do
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
+    it "refuses a render that is a String but not an SVG document" do
+      target = File.join(examples_dir, "flowchart", "a.svg")
       FileUtils.mkdir_p(File.dirname(target))
-      File.write(target, '<svg>previous</svg>')
+      File.write(target, "<svg>previous</svg>")
 
-      expect { described_class.write_svg(target, 'Internal Server Error', examples_dir) }
+      expect { described_class.write_svg(target, "Internal Server Error", examples_dir) }
         .to raise_error(/rendered no SVG document/)
-      expect(File.read(target)).to eq('<svg>previous</svg>')
+      expect(File.read(target)).to eq("<svg>previous</svg>")
     end
 
-    it 'leaves no debris behind when the write dies partway' do
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
+    it "leaves no debris behind when the write dies partway" do
+      target = File.join(examples_dir, "flowchart", "a.svg")
       FileUtils.mkdir_p(File.dirname(target))
-      File.write(target, '<svg>previous</svg>')
+      File.write(target, "<svg>previous</svg>")
       fail_temporary_write_partway
 
-      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+      expect { described_class.write_svg(target, "<svg>new</svg>", examples_dir) }
         .to raise_error(Errno::EFBIG)
-      expect(Dir.glob(File.join(examples_dir, 'flowchart', '.*.tmp'))).to be_empty
+      expect(Dir.glob(File.join(examples_dir, "flowchart", ".*.tmp"))).to be_empty
     end
 
-    it 'refuses a target inside the tree that is a link elsewhere' do
-      outside = Dir.mktmpdir('sirena-outside')
-      victim = File.join(outside, 'victim.svg')
-      File.write(victim, 'KEEP ME')
-      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
+    it "refuses a target inside the tree that is a link elsewhere" do
+      outside = Dir.mktmpdir("sirena-outside")
+      victim = File.join(outside, "victim.svg")
+      File.write(victim, "KEEP ME")
+      FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+      target = File.join(examples_dir, "flowchart", "a.svg")
       File.symlink(victim, target)
 
-      expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+      expect { described_class.write_svg(target, "<svg>new</svg>", examples_dir) }
         .to raise_error(/refused an unsafe SVG target/)
-      expect(File.read(victim)).to eq('KEEP ME')
+      expect(File.read(victim)).to eq("KEEP ME")
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -1009,11 +1009,11 @@ RSpec.describe ExampleTasks do
     # theoretical one. Same detection `copy_to_docs` already uses for
     # docs_assets_dir and each type directory -- see its own "changes
     # identity right before the pin is taken" specs above.
-    it 'refuses rather than proceeding when the diagram directory changes identity right before its own pin is taken' do
-      Dir.mktmpdir('sirena-attacker') do |attacker|
-        flowchart = File.join(examples_dir, 'flowchart')
+    it "refuses rather than proceeding when the diagram directory changes identity right before its own pin is taken" do
+      Dir.mktmpdir("sirena-attacker") do |attacker|
+        flowchart = File.join(examples_dir, "flowchart")
         FileUtils.mkdir_p(flowchart)
-        target = File.join(flowchart, 'a.svg')
+        target = File.join(flowchart, "a.svg")
 
         allow(Dir).to receive(:chdir).and_wrap_original do |original, path, &block|
           if File.expand_path(path) == flowchart
@@ -1023,7 +1023,7 @@ RSpec.describe ExampleTasks do
           original.call(path, &block)
         end
 
-        expect { described_class.write_svg(target, '<svg>new</svg>', examples_dir) }
+        expect { described_class.write_svg(target, "<svg>new</svg>", examples_dir) }
           .to raise_error(/diagram directory (changed identity between verification and use|is not a directory)/)
         expect(Dir.children(attacker)).to eq([])
       end
@@ -1040,50 +1040,50 @@ RSpec.describe ExampleTasks do
     # original aside rather than deleting it, the same way `copy_to_docs`'s
     # own "renamed away and replaced mid-loop" spec does, so the write's
     # actual destination stays inspectable afterward.
-    it 'does not write through a diagram directory symlink raced in right before the final write, even after the pin is taken' do
-      skip 'Windows refuses to rename the current working directory (EACCES)' if Gem.win_platform?
+    it "does not write through a diagram directory symlink raced in right before the final write, even after the pin is taken" do
+      skip "Windows refuses to rename the current working directory (EACCES)" if Gem.win_platform?
 
-      Dir.mktmpdir('sirena-attacker') do |attacker|
-        flowchart = File.join(examples_dir, 'flowchart')
+      Dir.mktmpdir("sirena-attacker") do |attacker|
+        flowchart = File.join(examples_dir, "flowchart")
         FileUtils.mkdir_p(flowchart)
-        target = File.join(flowchart, 'a.svg')
-        moved_aside = File.join(examples_dir, 'flowchart-moved-by-attacker')
+        target = File.join(flowchart, "a.svg")
+        moved_aside = File.join(examples_dir, "flowchart-moved-by-attacker")
 
         allow(File).to receive(:open).and_wrap_original do |original, path, *rest, &block|
-          if path.to_s.end_with?('.tmp') && File.realpath(Dir.pwd) == File.realpath(flowchart)
+          if path.to_s.end_with?(".tmp") && File.realpath(Dir.pwd) == File.realpath(flowchart)
             FileUtils.mv(flowchart, moved_aside)
             File.symlink(attacker, flowchart)
           end
           original.call(path, *rest, &block)
         end
 
-        described_class.write_svg(target, '<svg>new</svg>', examples_dir)
+        described_class.write_svg(target, "<svg>new</svg>", examples_dir)
 
         expect(Dir.children(attacker)).to eq([])
-        expect(File.read(File.join(moved_aside, 'a.svg'))).to eq('<svg>new</svg>')
+        expect(File.read(File.join(moved_aside, "a.svg"))).to eq("<svg>new</svg>")
       end
     end
 
     # Once renamed, the temporary name belongs to nobody. Unlinking it anyway
     # is how one run removed the temporary file of another.
-    it 'unlinks nothing once the rename has succeeded' do
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
+    it "unlinks nothing once the rename has succeeded" do
+      target = File.join(examples_dir, "flowchart", "a.svg")
       FileUtils.mkdir_p(File.dirname(target))
 
       allow(FileUtils).to receive(:rm_f).and_call_original
 
-      described_class.write_svg(target, '<svg>fresh</svg>', examples_dir)
+      described_class.write_svg(target, "<svg>fresh</svg>", examples_dir)
 
       expect(FileUtils).not_to have_received(:rm_f)
     end
 
-    it 'writes a rendered document to a path inside the tree' do
-      target = File.join(examples_dir, 'flowchart', '01-basic.svg')
+    it "writes a rendered document to a path inside the tree" do
+      target = File.join(examples_dir, "flowchart", "01-basic.svg")
       FileUtils.mkdir_p(File.dirname(target))
 
-      described_class.write_svg(target, '<svg>fresh</svg>', examples_dir)
+      described_class.write_svg(target, "<svg>fresh</svg>", examples_dir)
 
-      expect(File.read(target)).to eq('<svg>fresh</svg>')
+      expect(File.read(target)).to eq("<svg>fresh</svg>")
     end
   end
 
@@ -1091,35 +1091,35 @@ RSpec.describe ExampleTasks do
   # neither is exotic: a directory may legitimately be named with a glob
   # character, and a link inside examples/ resolves to a real directory that
   # passes a containment test on its own.
-  describe 'unusual but legitimate names' do
+  describe "unusual but legitimate names" do
     let(:source) { "flowchart TD\n  A --> B\n" }
 
-    it 'treats a directory named with glob syntax as one literal directory' do
+    it "treats a directory named with glob syntax as one literal directory" do
       # `*` is illegal in an NTFS filename, so this used `g*` and a real
       # directory `gantt` it collides with under Dir.glob. `{gantt}` is a
       # brace-expansion pattern with the same property — Dir.glob("{gantt}")
       # resolves to ["gantt"] on every platform — and every character in it
       # is legal on Windows, so the case still exists there to fail.
-      FileUtils.mkdir_p([File.join(examples_dir, 'gantt'), File.join(examples_dir, '{gantt}')])
-      File.write(File.join(examples_dir, 'gantt', '01.mmd'), source)
-      by_hand = File.join(examples_dir, '{gantt}', '01.svg')
-      File.write(by_hand, 'HAND WRITTEN')
+      FileUtils.mkdir_p([File.join(examples_dir, "gantt"), File.join(examples_dir, "{gantt}")])
+      File.write(File.join(examples_dir, "gantt", "01.mmd"), source)
+      by_hand = File.join(examples_dir, "{gantt}", "01.svg")
+      File.write(by_hand, "HAND WRITTEN")
 
       generated, = silently { described_class.generate_examples(examples_dir) }
 
       # One, not two: globbing the literal name `{gantt}` reaches gantt as
       # well and renders it a second time under the wrong directory.
       expect(generated).to eq(1)
-      expect([File.read(by_hand), File.exist?(File.join(examples_dir, 'gantt', '01.svg'))])
-        .to eq(['HAND WRITTEN', true])
+      expect([File.read(by_hand), File.exist?(File.join(examples_dir, "gantt", "01.svg"))])
+        .to eq(["HAND WRITTEN", true])
     end
 
-    it 'does not reach a deeper file through a link inside the tree' do
-      FileUtils.mkdir_p(File.join(examples_dir, 'deep', 'nested'))
-      fixture = File.join(examples_dir, 'deep', 'nested', 'fixture.svg')
-      File.write(fixture, 'NESTED FIXTURE')
-      File.symlink(File.join(examples_dir, 'deep', 'nested'),
-                   File.join(examples_dir, 'alias'))
+    it "does not reach a deeper file through a link inside the tree" do
+      FileUtils.mkdir_p(File.join(examples_dir, "deep", "nested"))
+      fixture = File.join(examples_dir, "deep", "nested", "fixture.svg")
+      File.write(fixture, "NESTED FIXTURE")
+      File.symlink(File.join(examples_dir, "deep", "nested"),
+                   File.join(examples_dir, "alias"))
 
       described_class.prune_orphan_svgs(examples_dir)
 
@@ -1131,20 +1131,20 @@ RSpec.describe ExampleTasks do
   # None is exotic: a folder can be a link, a folder can be unreadable, a
   # render can fail while still containing the word svg, and a name can be
   # long.
-  describe 'refusing what it did not create' do
+  describe "refusing what it did not create" do
     let(:source) { "flowchart TD\n  A --> B\n" }
 
-    it 'refuses to work under an examples root that is a link' do
-      real = Dir.mktmpdir('sirena-real')
-      FileUtils.mkdir_p(File.join(real, 'flowchart'))
-      handmade = File.join(real, 'flowchart', 'handmade.svg')
-      File.write(handmade, 'HANDMADE')
-      linked_root = File.join(examples_dir, 'linked-root')
+    it "refuses to work under an examples root that is a link" do
+      real = Dir.mktmpdir("sirena-real")
+      FileUtils.mkdir_p(File.join(real, "flowchart"))
+      handmade = File.join(real, "flowchart", "handmade.svg")
+      File.write(handmade, "HANDMADE")
+      linked_root = File.join(examples_dir, "linked-root")
       File.symlink(real, linked_root)
 
       expect { described_class.prune_orphan_svgs(linked_root) }
         .to raise_error(/examples root must not be a link/)
-      expect(File.read(handmade)).to eq('HANDMADE')
+      expect(File.read(handmade)).to eq("HANDMADE")
     ensure
       FileUtils.remove_entry(real) if real
     end
@@ -1156,10 +1156,10 @@ RSpec.describe ExampleTasks do
     # that `children`'s SystemCallError propagates out of generate_examples
     # rather than being rescued — is proven by stubbing the one call that
     # would raise it, rather than by trying to make the OS refuse the read.
-    it 'fails loudly when a diagram directory cannot be read' do
-      locked = File.join(examples_dir, 'locked')
+    it "fails loudly when a diagram directory cannot be read" do
+      locked = File.join(examples_dir, "locked")
       FileUtils.mkdir_p(locked)
-      File.write(File.join(locked, 'a.mmd'), source)
+      File.write(File.join(locked, "a.mmd"), source)
       allow(Dir).to receive(:children).and_wrap_original do |original, dir|
         raise Errno::EACCES, dir if dir == locked
 
@@ -1173,40 +1173,40 @@ RSpec.describe ExampleTasks do
     # One table rather than one example per string: the property is where the
     # root element sits, and the shapes differ only in how that root is
     # spelled.
-    it 'accepts every spelling of an SVG root and nothing else' do
-      accepted = ['<svg/>', '<?xml version="1.0"?><svg/>', '<svg xmlns="x"/>',
-                  "<svg\n width=\"1\">x</svg>", '<!-- note --><svg/>']
+    it "accepts every spelling of an SVG root and nothing else" do
+      accepted = ["<svg/>", '<?xml version="1.0"?><svg/>', '<svg xmlns="x"/>',
+                  "<svg\n width=\"1\">x</svg>", "<!-- note --><svg/>"]
       # The malformed prefixes matter: matching one character after the name
       # accepted every one of them.
-      rejected = ['<html><svg/></html>', '', 'Error 500', '<svgx/>', nil,
-                  '<svg/garbage', '<svg ', '<svg/', '<svg width="1"', '<svg']
+      rejected = ["<html><svg/></html>", "", "Error 500", "<svgx/>", nil,
+                  "<svg/garbage", "<svg ", "<svg/", '<svg width="1"', "<svg"]
 
       expect(accepted.map { |doc| described_class.svg_document?(doc) }).to all(be(true))
       expect(rejected.map { |doc| described_class.svg_document?(doc) }).to all(be(false))
     end
 
-    it 'refuses a render that only contains an SVG element' do
-      target = File.join(examples_dir, 'flowchart', 'a.svg')
+    it "refuses a render that only contains an SVG element" do
+      target = File.join(examples_dir, "flowchart", "a.svg")
       FileUtils.mkdir_p(File.dirname(target))
-      File.write(target, '<svg>previous</svg>')
+      File.write(target, "<svg>previous</svg>")
       payload = '<html><body>Error 500 <svg width="1"></svg></body></html>'
 
       expect { described_class.write_svg(target, payload, examples_dir) }
         .to raise_error(/rendered no SVG document/)
-      expect(File.read(target)).to eq('<svg>previous</svg>')
+      expect(File.read(target)).to eq("<svg>previous</svg>")
     end
 
-    it 'ignores a source that is a link' do
-      outside = Dir.mktmpdir('sirena-outside')
-      File.write(File.join(outside, 'ext.mmd'), source)
-      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-      File.symlink(File.join(outside, 'ext.mmd'),
-                   File.join(examples_dir, 'flowchart', 'linked.mmd'))
+    it "ignores a source that is a link" do
+      outside = Dir.mktmpdir("sirena-outside")
+      File.write(File.join(outside, "ext.mmd"), source)
+      FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+      File.symlink(File.join(outside, "ext.mmd"),
+                   File.join(examples_dir, "flowchart", "linked.mmd"))
 
       generated, failed = silently { described_class.generate_examples(examples_dir) }
 
       expect([generated, failed]).to eq([0, []])
-      expect(File).not_to exist(File.join(examples_dir, 'flowchart', 'linked.svg'))
+      expect(File).not_to exist(File.join(examples_dir, "flowchart", "linked.svg"))
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -1214,35 +1214,35 @@ RSpec.describe ExampleTasks do
     # One predicate for both callers: generation used File.file? and pruning
     # used File.exist?, so a .mmd link to a directory was a source to one and
     # not the other, and the SVG beside it could never be removed.
-    it 'treats a .mmd link to a directory as no source at all' do
-      flowchart = File.join(examples_dir, 'flowchart')
-      FileUtils.mkdir_p([flowchart, File.join(examples_dir, 'adir')])
-      File.symlink(File.join(examples_dir, 'adir'), File.join(flowchart, 'ghost.mmd'))
-      File.write(File.join(flowchart, 'ghost.svg'), 'STALE')
+    it "treats a .mmd link to a directory as no source at all" do
+      flowchart = File.join(examples_dir, "flowchart")
+      FileUtils.mkdir_p([flowchart, File.join(examples_dir, "adir")])
+      File.symlink(File.join(examples_dir, "adir"), File.join(flowchart, "ghost.mmd"))
+      File.write(File.join(flowchart, "ghost.svg"), "STALE")
 
       expect(described_class.orphan_svgs(examples_dir).map { |path| File.basename(path) })
-        .to eq(['ghost.svg'])
+        .to eq(["ghost.svg"])
     end
 
-    it 'leaves an entry that is not a plain file where it is' do
+    it "leaves an entry that is not a plain file where it is" do
       # A FIFO makes the point (mkfifo has no NTFS equivalent), but the guard
       # is `File.lstat(path).file?`, which is exactly as false for a plain
       # directory sitting at the target path — same branch, no platform tool
       # required.
-      flowchart = File.join(examples_dir, 'flowchart')
+      flowchart = File.join(examples_dir, "flowchart")
       FileUtils.mkdir_p(flowchart)
-      not_a_file = File.join(flowchart, 'a.svg')
+      not_a_file = File.join(flowchart, "a.svg")
       FileUtils.mkdir_p(not_a_file)
 
-      expect { described_class.write_svg(not_a_file, '<svg>x</svg>', examples_dir) }
+      expect { described_class.write_svg(not_a_file, "<svg>x</svg>", examples_dir) }
         .to raise_error(/refused an unsafe SVG target/)
-      expect(File.ftype(not_a_file)).to eq('directory')
+      expect(File.ftype(not_a_file)).to eq("directory")
     end
 
     # The temporary name used to embed the target's, so a legal source name
     # produced an illegal temporary one.
-    it 'generates a source with a 251-byte name' do
-      flowchart = File.join(examples_dir, 'flowchart')
+    it "generates a source with a 251-byte name" do
+      flowchart = File.join(examples_dir, "flowchart")
       FileUtils.mkdir_p(flowchart)
       File.write(File.join(flowchart, "#{'a' * 247}.mmd"), source)
 
@@ -1251,53 +1251,53 @@ RSpec.describe ExampleTasks do
       expect([generated, failed]).to eq([1, []])
     end
 
-    it 'replaces an existing SVG with the new bytes and counts it once' do
-      flowchart = File.join(examples_dir, 'flowchart')
+    it "replaces an existing SVG with the new bytes and counts it once" do
+      flowchart = File.join(examples_dir, "flowchart")
       FileUtils.mkdir_p(flowchart)
-      File.write(File.join(flowchart, '01.mmd'), source)
-      stale = File.join(flowchart, '01.svg')
-      File.write(stale, '<svg>STALE</svg>')
+      File.write(File.join(flowchart, "01.mmd"), source)
+      stale = File.join(flowchart, "01.svg")
+      File.write(stale, "<svg>STALE</svg>")
 
       generated, = silently { described_class.generate_examples(examples_dir) }
 
       expect(generated).to eq(1)
-      expect(File.read(stale)).to start_with('<svg')
-      expect(File.read(stale)).not_to include('STALE')
+      expect(File.read(stale)).to start_with("<svg")
+      expect(File.read(stale)).not_to include("STALE")
     end
 
     # A later source must still be rendered after an earlier one fails.
-    it 'keeps generating after a source fails' do
-      flowchart = File.join(examples_dir, 'flowchart')
+    it "keeps generating after a source fails" do
+      flowchart = File.join(examples_dir, "flowchart")
       FileUtils.mkdir_p(flowchart)
-      File.write(File.join(flowchart, '01-bad.mmd'), 'not a diagram at all')
-      File.write(File.join(flowchart, '02-good.mmd'), source)
+      File.write(File.join(flowchart, "01-bad.mmd"), "not a diagram at all")
+      File.write(File.join(flowchart, "02-good.mmd"), source)
 
       generated, failed = silently { described_class.generate_examples(examples_dir) }
 
-      expect([generated, failed.map(&:first)]).to eq([1, ['flowchart/01-bad.mmd']])
-      expect(File).to exist(File.join(flowchart, '02-good.svg'))
+      expect([generated, failed.map(&:first)]).to eq([1, ["flowchart/01-bad.mmd"]])
+      expect(File).to exist(File.join(flowchart, "02-good.svg"))
     end
   end
 
-  describe '.theme_for' do
-    it 'reads the theme its metadata names' do
-      mmd = write('flowchart/01-basic.mmd')
-      write('flowchart/01-basic.yml', YAML.dump('theme' => 'dark'))
+  describe ".theme_for" do
+    it "reads the theme its metadata names" do
+      mmd = write("flowchart/01-basic.mmd")
+      write("flowchart/01-basic.yml", YAML.dump("theme" => "dark"))
 
-      expect(described_class.theme_for(mmd)).to eq('dark')
+      expect(described_class.theme_for(mmd)).to eq("dark")
     end
 
-    it 'falls back to default when the source carries no metadata' do
-      mmd = write('flowchart/01-basic.mmd')
+    it "falls back to default when the source carries no metadata" do
+      mmd = write("flowchart/01-basic.mmd")
 
-      expect(described_class.theme_for(mmd)).to eq('default')
+      expect(described_class.theme_for(mmd)).to eq("default")
     end
 
-    it 'falls back to default when the metadata names no theme' do
-      mmd = write('flowchart/01-basic.mmd')
-      write('flowchart/01-basic.yml', YAML.dump('title' => 'Basic'))
+    it "falls back to default when the metadata names no theme" do
+      mmd = write("flowchart/01-basic.mmd")
+      write("flowchart/01-basic.yml", YAML.dump("title" => "Basic"))
 
-      expect(described_class.theme_for(mmd)).to eq('default')
+      expect(described_class.theme_for(mmd)).to eq("default")
     end
 
     # This file's own doc comment claims ExampleTasks is a plain library a
@@ -1308,7 +1308,7 @@ RSpec.describe ExampleTasks do
     # into the process by the time any of them run. Only a fresh process that
     # loads the rake file WITHOUT requiring yaml first can catch a missing
     # `require 'yaml'` inside the module.
-    it 'resolves YAML without depending on a caller having required it first' do
+    it "resolves YAML without depending on a caller having required it first" do
       script = <<~RUBY
         require 'rake'
         Rake.application = Rake::Application.new
@@ -1321,19 +1321,19 @@ RSpec.describe ExampleTasks do
         end
       RUBY
 
-      output = IO.popen([RbConfig.ruby, '-rtmpdir', '-e', script], err: [:child, :out], &:read)
+      output = IO.popen([RbConfig.ruby, "-rtmpdir", "-e", script], err: [:child, :out], &:read)
 
       expect($CHILD_STATUS).to be_success
-      expect(output).to eq('dark')
+      expect(output).to eq("dark")
     end
   end
 
-  describe '.validate_examples' do
+  describe ".validate_examples" do
     # `exit` in a plain method takes the caller's whole process down, so a host
     # that requires this file loses everything on one bad example. Only the rake
     # task may decide an exit status.
-    it 'raises instead of exiting when an example fails to render' do
-      write('flowchart/01-broken.mmd', "flowchart TD\n  A --> \n")
+    it "raises instead of exiting when an example fails to render" do
+      write("flowchart/01-broken.mmd", "flowchart TD\n  A --> \n")
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(ExampleTasks::ValidationFailed, /validation failed/)
@@ -1344,9 +1344,9 @@ RSpec.describe ExampleTasks do
     # .yml on an ordinary source pass as an ordinary render failure — the
     # right classification here, but the wrong reason, and the next example
     # proves why that distinction matters.
-    it 'propagates a metadata error instead of treating it as a render failure' do
-      write('flowchart/01-basic.mmd', "flowchart TD\n  A --> B\n")
-      write('flowchart/01-basic.yml', "theme: [\n")
+    it "propagates a metadata error instead of treating it as a render failure" do
+      write("flowchart/01-basic.mmd", "flowchart TD\n  A --> B\n")
+      write("flowchart/01-basic.yml", "theme: [\n")
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(Psych::SyntaxError)
@@ -1357,10 +1357,10 @@ RSpec.describe ExampleTasks do
     # genuine "known unrenderable" render failure, so validation counted it as
     # K and reported success — silently hiding a broken sidecar file behind a
     # documented one.
-    it 'does not report success when an expected-unrenderable source has malformed metadata' do
+    it "does not report success when an expected-unrenderable source has malformed metadata" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
       write(source_path, "gantt\n  title Broken\n")
-      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: [\n")
+      write(source_path.sub(/\.mmd\z/, ".yml"), "theme: [\n")
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(Psych::SyntaxError)
@@ -1373,13 +1373,13 @@ RSpec.describe ExampleTasks do
     # failures. An allowlisted source whose theme would not load was counted
     # K and validation reported success, which is the same defect wearing a
     # second layer.
-    it 'does not report success when an expected-unrenderable source names a theme that will not load' do
+    it "does not report success when an expected-unrenderable source names a theme that will not load" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
-      broken_theme = File.join(examples_dir, 'broken-theme.yml')
+      broken_theme = File.join(examples_dir, "broken-theme.yml")
       File.write(broken_theme, "colors: [\n")
 
       write(source_path, "gantt\n  title Broken\n")
-      write(source_path.sub(/\.mmd\z/, '.yml'), "theme: #{broken_theme}\n")
+      write(source_path.sub(/\.mmd\z/, ".yml"), "theme: #{broken_theme}\n")
 
       # Either class: which one `Theme.load` raises depends on the process's
       # lutaml-model YAML backend, and requiring `svg_conform` (as
@@ -1394,24 +1394,24 @@ RSpec.describe ExampleTasks do
     # `known_unrenderable` and must NOT fail the task. Asserted on the printed
     # count rather than a bare `not_to raise_error`, so a mutant that folds
     # `known_unrenderable` into `failure_count` cannot pass silently.
-    it 'counts a real render failure on an expected-unrenderable source as known, not failed' do
+    it "counts a real render failure on an expected-unrenderable source as known, not failed" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
       write(source_path, "flowchart TD\n  A --> \n")
 
       output = capture { described_class.validate_examples(examples_dir) }
 
-      expect(output).to include('Known unrenderable: 1')
-      expect(output).to include('Failed: 0')
+      expect(output).to include("Known unrenderable: 1")
+      expect(output).to include("Failed: 0")
     end
 
     # The mirror image: an allowlisted source that starts rendering again must
     # fail validation loudly, or an EXPECTED_UNRENDERABLE_SOURCES entry rots
     # into a permanent excuse nobody revisits once Sirena actually fixes it.
-    it 'raises when an expected-unrenderable source unexpectedly renders' do
+    it "raises when an expected-unrenderable source unexpectedly renders" do
       source_path = EXPECTED_UNRENDERABLE_SOURCES.first
       write(source_path, "gantt\n  title Broken\n")
       allow(Sirena::Engine).to receive(:new)
-        .and_return(instance_double(Sirena::Engine, render: '<svg/>'))
+        .and_return(instance_double(Sirena::Engine, render: "<svg/>"))
 
       expect { described_class.validate_examples(examples_dir) }
         .to raise_error(ExampleTasks::ValidationFailed, /unexpectedly renderable/)
@@ -1423,16 +1423,16 @@ RSpec.describe ExampleTasks do
     # like a real source. Asserted on Total rather than a raise, because the
     # defect is the file being counted and read at all, not any error it
     # happens to produce.
-    it 'does not read a source file that is a symlink out of the tree' do
-      FileUtils.mkdir_p(File.join(examples_dir, 'flowchart'))
-      outside = Dir.mktmpdir('sirena-outside')
-      File.write(File.join(outside, 'escaped.mmd'), "flowchart TD\n  A --> B\n")
-      File.symlink(File.join(outside, 'escaped.mmd'),
-                   File.join(examples_dir, 'flowchart', 'a.mmd'))
+    it "does not read a source file that is a symlink out of the tree" do
+      FileUtils.mkdir_p(File.join(examples_dir, "flowchart"))
+      outside = Dir.mktmpdir("sirena-outside")
+      File.write(File.join(outside, "escaped.mmd"), "flowchart TD\n  A --> B\n")
+      File.symlink(File.join(outside, "escaped.mmd"),
+                   File.join(examples_dir, "flowchart", "a.mmd"))
 
       output = capture { described_class.validate_examples(examples_dir) }
 
-      expect(output).to include('Total:  0')
+      expect(output).to include("Total:  0")
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -1441,14 +1441,14 @@ RSpec.describe ExampleTasks do
     # diagram directory resolves outside examples/ entirely, and a raw
     # Dir.glob('*/*.mmd') follows it just as readily as it would a symlinked
     # leaf file.
-    it 'does not read sources inside a diagram directory that is a symlink out of the tree' do
-      outside = Dir.mktmpdir('sirena-outside')
-      File.write(File.join(outside, 'escaped.mmd'), "flowchart TD\n  A --> B\n")
-      File.symlink(outside, File.join(examples_dir, 'linked'))
+    it "does not read sources inside a diagram directory that is a symlink out of the tree" do
+      outside = Dir.mktmpdir("sirena-outside")
+      File.write(File.join(outside, "escaped.mmd"), "flowchart TD\n  A --> B\n")
+      File.symlink(outside, File.join(examples_dir, "linked"))
 
       output = capture { described_class.validate_examples(examples_dir) }
 
-      expect(output).to include('Total:  0')
+      expect(output).to include("Total:  0")
     ensure
       FileUtils.remove_entry(outside) if outside
     end
@@ -1458,13 +1458,13 @@ RSpec.describe ExampleTasks do
     # skipped with no warning at all -- unlike a symlink to a real directory
     # outside examples/, which prints one. A human staring at a diagram type
     # that vanished deserves the same clue either way.
-    it 'warns about a symlinked diagram directory even when its target is missing' do
-      File.symlink(File.join(examples_dir, 'nonexistent-target'),
-                   File.join(examples_dir, 'dangling'))
+    it "warns about a symlinked diagram directory even when its target is missing" do
+      File.symlink(File.join(examples_dir, "nonexistent-target"),
+                   File.join(examples_dir, "dangling"))
 
       output = capture { described_class.validate_examples(examples_dir) }
 
-      expect(output).to include('skipped dangling, a symlinked directory that leaves examples/')
+      expect(output).to include("skipped dangling, a symlinked directory that leaves examples/")
     end
   end
 
@@ -1479,7 +1479,7 @@ RSpec.describe ExampleTasks do
   # rake file to test the HELPERS and invokes no task. This asserts the boundary
   # those helpers sit behind instead, which is the property that actually
   # matters and cannot drift silently.
-  describe 'the deletion boundary' do
+  describe "the deletion boundary" do
     # A `let`, not a constant: `Lint/ConstantDefinitionInBlock` fires on a
     # constant here, and its autocorrect turns one into a block-local, which
     # has silently made a spec assert nothing before.
@@ -1506,7 +1506,7 @@ RSpec.describe ExampleTasks do
       Regexp.union(qualified_names.map { |name| /#{Regexp.escape(name)}\b/ })
     end
 
-    it 'confines every deletion call to the methods allowed to delete' do
+    it "confines every deletion call to the methods allowed to delete" do
       source = File.readlines(EXAMPLE_TASKS_FILE)
       current = nil
       offenders = []
@@ -1525,20 +1525,20 @@ RSpec.describe ExampleTasks do
   # Listed by hand, not derived from the module's own private_class_method
   # call: a helper added to one but not the other must fail this spec, not
   # silently pass by mirroring whatever the source currently says.
-  describe 'internal helper privacy' do
+  describe "internal helper privacy" do
     let(:internal_helpers) do
       [:directory_identity, :within_pinned_directory, :manageable_relative?,
        :create_real_directory, :copy_through_rename, :copy_type_into_pinned_docs_root,
        :atomic_write]
     end
 
-    it 'keeps every race-sensitive helper off the public API' do
+    it "keeps every race-sensitive helper off the public API" do
       exposed = internal_helpers.select { |name| described_class.respond_to?(name) }
 
       expect(exposed).to be_empty
     end
 
-    it 'still keeps the task-facing API public' do
+    it "still keeps the task-facing API public" do
       task_facing = [:copy_to_docs, :generate_examples, :validate_examples, :write_svg,
                      :prune_orphan_svgs, :prune_known_unrenderable_svgs]
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -22,7 +22,7 @@ module Sirena
       # Initialize with default actor type
       def initialize(*args)
         super
-        self.actor_type ||= 'participant'
+        self.actor_type ||= "participant"
       end
 
       # Validates the participant has required attributes.
@@ -61,14 +61,14 @@ module Sirena
 
       def initialize(*args)
         super
-        self.line_style ||= 'solid'
-        self.head_style ||= 'filled'
-        self.head_side ||= 'target'
+        self.line_style ||= "solid"
+        self.head_style ||= "filled"
+        self.head_side ||= "target"
       end
 
       # @return [Boolean] true when the marker is drawn at both ends
       def bidirectional?
-        head_side == 'both'
+        head_side == "both"
       end
 
       # Validates the message has required attributes.

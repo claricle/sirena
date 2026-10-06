@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'parslet'
+require "parslet"
 
 module Sirena
   module Parser
@@ -17,54 +17,54 @@ module Sirena
         rule(:eof) { any.absent? }
 
         # Comments
-        rule(:comment) { str('%%') >> (newline.absent? >> any).repeat }
+        rule(:comment) { str("%%") >> (newline.absent? >> any).repeat }
 
         # Numbers
         rule(:number) do
-          (match['-'].maybe >> match['0-9'].repeat(1) >>
-           (str('.') >> match['0-9'].repeat(1)).maybe).as(:number)
+          (match["-"].maybe >> match["0-9"].repeat(1) >>
+           (str(".") >> match["0-9"].repeat(1)).maybe).as(:number)
         end
 
         # Quoted strings
         rule(:quoted_string) do
           str('"') >> (
-            str('\\') >> any |
+            str("\\") >> any |
             str('"').absent? >> any
           ).repeat.as(:string) >> str('"')
         end
 
         # Identifiers
         rule(:identifier) do
-          (match['a-zA-Z_'] >> match['a-zA-Z0-9_-'].repeat).as(:identifier)
+          (match["a-zA-Z_"] >> match["a-zA-Z0-9_-"].repeat).as(:identifier)
         end
 
         # Keywords
         rule(:treemap_keyword) do
-          (str('treemap-beta') | str('treemap')).as(:keyword)
+          (str("treemap-beta") | str("treemap")).as(:keyword)
         end
 
         # Title declaration
         rule(:title_decl) do
-          str('title') >> spaces >> (newline.absent? >> any).repeat(1).as(:title)
+          str("title") >> spaces >> (newline.absent? >> any).repeat(1).as(:title)
         end
 
         # Accessibility declarations
         rule(:acc_title) do
-          str('accTitle:') >> spaces? >> (newline.absent? >> any).repeat(1).as(:acc_title)
+          str("accTitle:") >> spaces? >> (newline.absent? >> any).repeat(1).as(:acc_title)
         end
 
         rule(:acc_descr) do
-          str('accDescr') >> spaces? >> str(':').maybe >> spaces? >>
+          str("accDescr") >> spaces? >> str(":").maybe >> spaces? >>
             (newline.absent? >> any).repeat(1).as(:acc_descr)
         end
 
         # CSS class reference
         rule(:css_class) do
-          str(':::') >> identifier.as(:css_class)
+          str(":::") >> identifier.as(:css_class)
         end
 
         # Value separator (: or ,) with optional spaces before and after
-        rule(:value_separator) { spaces? >> (str(':') | str(',')) >> spaces? }
+        rule(:value_separator) { spaces? >> (str(":") | str(",")) >> spaces? }
 
         # Node with optional value and CSS class
         rule(:node_value) do
@@ -75,7 +75,7 @@ module Sirena
 
         # Capture leading spaces as a string to count indentation
         rule(:indent_str) do
-          match[' '].repeat.as(:indent)
+          match[" "].repeat.as(:indent)
         end
 
         # Node line (with indentation captured)
@@ -86,10 +86,10 @@ module Sirena
 
         # Class definition
         rule(:class_def) do
-          str('classDef') >> spaces >>
+          str("classDef") >> spaces >>
             identifier.as(:class_name) >> spaces >>
-            (str(';').absent? >> any).repeat(1).as(:class_styles) >>
-            str(';').maybe
+            (str(";").absent? >> any).repeat(1).as(:class_styles) >>
+            str(";").maybe
         end
 
         # Statement (title, acc, node, or class def)

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe 'ClassDiagram Integration' do
-  describe 'complete class diagram pipeline' do
+RSpec.describe "ClassDiagram Integration" do
+  describe "complete class diagram pipeline" do
     let(:parser) { Sirena::Parser::ClassDiagram.new }
     let(:transform) { Sirena::Layout::ClassDiagram.new }
     let(:renderer) { Sirena::Renderer::ClassDiagram.new }
 
-    it 'parses, transforms, and renders a simple class diagram' do
+    it "parses, transforms, and renders a simple class diagram" do
       source = "classDiagram\nAnimal <|-- Dog"
 
       # Parse
@@ -28,7 +28,7 @@ RSpec.describe 'ClassDiagram Integration' do
       expect(svg.children).not_to be_empty
     end
 
-    it 'handles multiple relationship types' do
+    it "handles multiple relationship types" do
       source = <<~MERMAID
         classDiagram
         Animal <|-- Dog
@@ -51,7 +51,7 @@ RSpec.describe 'ClassDiagram Integration' do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
-    it 'handles classes with attributes and methods' do
+    it "handles classes with attributes and methods" do
       source = <<~MERMAID
         classDiagram
         class Animal {
@@ -68,12 +68,12 @@ RSpec.describe 'ClassDiagram Integration' do
 
       diagram = parser.parse(source)
 
-      animal = diagram.find_entity('Animal')
+      animal = diagram.find_entity("Animal")
       expect(animal).not_to be_nil
       expect(animal.attributes.length).to eq(2)
       expect(animal.class_methods.length).to eq(2)
 
-      dog = diagram.find_entity('Dog')
+      dog = diagram.find_entity("Dog")
       expect(dog).not_to be_nil
       expect(dog.class_methods.length).to eq(1)
 
@@ -83,7 +83,7 @@ RSpec.describe 'ClassDiagram Integration' do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
-    it 'handles stereotypes' do
+    it "handles stereotypes" do
       source = <<~MERMAID
         classDiagram
         class Drawable <<interface>> {
@@ -97,10 +97,10 @@ RSpec.describe 'ClassDiagram Integration' do
 
       diagram = parser.parse(source)
 
-      drawable = diagram.find_entity('Drawable')
+      drawable = diagram.find_entity("Drawable")
       expect(drawable.interface?).to be true
 
-      shape = diagram.find_entity('Shape')
+      shape = diagram.find_entity("Shape")
       expect(shape.abstract?).to be true
 
       graph = transform.to_graph(diagram)
@@ -109,25 +109,25 @@ RSpec.describe 'ClassDiagram Integration' do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
-    it 'handles different directions' do
+    it "handles different directions" do
       source = "classDiagram LR\nAnimal <|-- Dog"
 
       diagram = parser.parse(source)
-      expect(diagram.direction).to eq('LR')
+      expect(diagram.direction).to eq("LR")
 
       graph = transform.to_graph(diagram)
-      expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
+      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
     end
 
-    it 'handles cardinality labels' do
+    it "handles cardinality labels" do
       source = "classDiagram\nStudent \"1\" -- \"0..*\" Course : enrolls in"
 
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.source_cardinality).to eq('1')
-      expect(rel.target_cardinality).to eq('0..*')
-      expect(rel.label).to eq('enrolls in')
+      expect(rel.source_cardinality).to eq("1")
+      expect(rel.target_cardinality).to eq("0..*")
+      expect(rel.label).to eq("enrolls in")
 
       graph = transform.to_graph(diagram)
       edge = graph[:edges].first
@@ -135,12 +135,12 @@ RSpec.describe 'ClassDiagram Integration' do
     end
   end
 
-  describe 'DiagramRegistry integration' do
-    it 'has class_diagram registered' do
+  describe "DiagramRegistry integration" do
+    it "has class_diagram registered" do
       expect(Sirena::DiagramRegistry.registered?(:class_diagram)).to be true
     end
 
-    it 'retrieves class diagram handlers' do
+    it "retrieves class diagram handlers" do
       handlers = Sirena::DiagramRegistry.get(:class_diagram)
 
       expect(handlers).not_to be_nil

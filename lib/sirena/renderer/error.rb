@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../svg/document'
-require_relative '../svg/rect'
-require_relative '../svg/text'
-require_relative '../svg/circle'
-require_relative '../svg/path'
+require_relative "base"
+require_relative "../svg/document"
+require_relative "../svg/rect"
+require_relative "../svg/text"
+require_relative "../svg/circle"
+require_relative "../svg/path"
 
 module Sirena
   module Renderer
@@ -66,11 +66,11 @@ module Sirena
           r.y = BOX_Y
           r.width = BOX_WIDTH
           r.height = BOX_HEIGHT
-          r.fill = '#FFEBEE'
-          r.stroke = '#D32F2F'
-          r.stroke_width = '2'
-          r.rx = '8'
-          r.ry = '8'
+          r.fill = "#FFEBEE"
+          r.stroke = "#D32F2F"
+          r.stroke_width = "2"
+          r.rx = "8"
+          r.ry = "8"
         end
 
         svg << box
@@ -82,9 +82,9 @@ module Sirena
           c.cx = ICON_CENTER_X
           c.cy = ICON_CENTER_Y
           c.r = ICON_RADIUS
-          c.fill = '#D32F2F'
-          c.stroke = '#B71C1C'
-          c.stroke_width = '2'
+          c.fill = "#D32F2F"
+          c.stroke = "#B71C1C"
+          c.stroke_width = "2"
         end
         svg << circle
 
@@ -94,8 +94,8 @@ module Sirena
           r.y = ICON_CENTER_Y - 10
           r.width = 4
           r.height = 12
-          r.fill = '#FFFFFF'
-          r.rx = '2'
+          r.fill = "#FFFFFF"
+          r.rx = "2"
         end
         svg << line
 
@@ -104,24 +104,24 @@ module Sirena
           c.cx = ICON_CENTER_X
           c.cy = ICON_CENTER_Y + 6
           c.r = 2
-          c.fill = '#FFFFFF'
+          c.fill = "#FFFFFF"
         end
         svg << dot
       end
 
       def render_error_text(graph, svg)
-        message = graph[:message] || 'Error'
+        message = graph[:message] || "Error"
 
         text = Svg::Text.new.tap do |t|
           t.x = TEXT_X
           t.y = TEXT_Y
           t.content = message
-          t.fill = '#C62828'
+          t.fill = "#C62828"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_base) || 16).to_s
-          t.text_anchor = 'start'
-          t.font_weight = 'bold'
+          t.text_anchor = "start"
+          t.font_weight = "bold"
         end
 
         svg << text

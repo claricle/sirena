@@ -1,52 +1,52 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Parser::Flowchart do
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    it 'parses simple flowchart with two nodes' do
+  describe "#parse" do
+    it "parses simple flowchart with two nodes" do
       source = "graph TD\nA[Start]-->B[End]"
       diagram = parser.parse(source)
 
       expect(diagram).to be_a(Sirena::Diagram::Flowchart)
-      expect(diagram.direction).to eq('TD')
+      expect(diagram.direction).to eq("TD")
       expect(diagram.nodes.length).to eq(2)
       expect(diagram.edges.length).to eq(1)
     end
 
-    it 'parses node with rectangle shape' do
+    it "parses node with rectangle shape" do
       source = "graph TD\nA[Label Text]"
       diagram = parser.parse(source)
 
-      node = diagram.find_node('A')
+      node = diagram.find_node("A")
       expect(node).not_to be_nil
-      expect(node.label).to eq('Label Text')
-      expect(node.shape).to eq('rect')
+      expect(node.label).to eq("Label Text")
+      expect(node.shape).to eq("rect")
     end
 
-    it 'parses node with rounded shape' do
+    it "parses node with rounded shape" do
       source = "graph TD\nA(Rounded Label)"
       diagram = parser.parse(source)
 
-      node = diagram.find_node('A')
+      node = diagram.find_node("A")
       expect(node).not_to be_nil
-      expect(node.label).to eq('Rounded Label')
-      expect(node.shape).to eq('rounded')
+      expect(node.label).to eq("Rounded Label")
+      expect(node.shape).to eq("rounded")
     end
 
-    it 'parses node with rhombus shape' do
+    it "parses node with rhombus shape" do
       source = "graph TD\nA{Decision}"
       diagram = parser.parse(source)
 
-      node = diagram.find_node('A')
+      node = diagram.find_node("A")
       expect(node).not_to be_nil
-      expect(node.label).to eq('Decision')
-      expect(node.shape).to eq('rhombus')
+      expect(node.label).to eq("Decision")
+      expect(node.shape).to eq("rhombus")
     end
 
-    it 'parses multiple edges in sequence' do
+    it "parses multiple edges in sequence" do
       source = "graph TD\nA-->B-->C"
       diagram = parser.parse(source)
 
@@ -54,19 +54,19 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(diagram.edges.length).to eq(2)
 
       edge1 = diagram.edges[0]
-      expect(edge1.source_id).to eq('A')
-      expect(edge1.target_id).to eq('B')
+      expect(edge1.source_id).to eq("A")
+      expect(edge1.target_id).to eq("B")
 
       edge2 = diagram.edges[1]
-      expect(edge2.source_id).to eq('B')
-      expect(edge2.target_id).to eq('C')
+      expect(edge2.source_id).to eq("B")
+      expect(edge2.target_id).to eq("C")
     end
 
-    it 'parses flowchart with LR direction' do
+    it "parses flowchart with LR direction" do
       source = "graph LR\nA-->B"
       diagram = parser.parse(source)
 
-      expect(diagram.direction).to eq('LR')
+      expect(diagram.direction).to eq("LR")
     end
 
     # No `@{}` anywhere on purpose. Re-mentioning a node is the widest
@@ -74,15 +74,15 @@ RSpec.describe Sirena::Parser::Flowchart do
     # a metadata block, so restoring the old label default left them green.
     # mmdc draws B as a rhombus labelled `Choice`; it used to come out here
     # as a rectangle named `B`.
-    it 'keeps a label and shape given before the node was re-mentioned' do
+    it "keeps a label and shape given before the node was re-mentioned" do
       source = "graph TD\nA[Start] --> B{Choice}\nB -->|yes| C[End]"
-      node = parser.parse(source).nodes.find { |n| n.id == 'B' }
+      node = parser.parse(source).nodes.find { |n| n.id == "B" }
 
       expect([node.label, node.shape]).to eq(%w[Choice rhombus])
     end
 
-    it 'raises ParseError for invalid syntax' do
-      source = 'invalid syntax'
+    it "raises ParseError for invalid syntax" do
+      source = "invalid syntax"
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError,
       )

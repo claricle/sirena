@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../svg/document'
-require_relative '../svg/rect'
-require_relative '../svg/line'
-require_relative '../svg/circle'
-require_relative '../svg/text'
-require_relative '../svg/group'
+require_relative "base"
+require_relative "../svg/document"
+require_relative "../svg/rect"
+require_relative "../svg/line"
+require_relative "../svg/circle"
+require_relative "../svg/text"
+require_relative "../svg/group"
 
 module Sirena
   module Renderer
@@ -21,10 +21,10 @@ module Sirena
     class Quadrant < Base
       # Quadrant colors (can be overridden by theme)
       QUADRANT_COLORS = {
-        1 => '#e3f2fd', # Light blue
-        2 => '#fff3e0', # Light orange
-        3 => '#f3e5f5', # Light purple
-        4 => '#e8f5e9', # Light green
+        1 => "#e3f2fd", # Light blue
+        2 => "#fff3e0", # Light orange
+        3 => "#f3e5f5", # Light purple
+        4 => "#e8f5e9", # Light green
       }.freeze
 
       # Renders a quadrant chart diagram to SVG.
@@ -74,12 +74,12 @@ module Sirena
           t.x = dims[:width] / 2
           t.y = 30
           t.content = graph[:title]
-          t.fill = theme_color(:label_text) || '#000000'
+          t.fill = theme_color(:label_text) || "#000000"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_large) || 18).to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         svg << title_text
       end
@@ -98,9 +98,9 @@ module Sirena
             r.width = bounds[:width]
             r.height = bounds[:height]
             r.fill = color
-            r.stroke = theme_color(:grid_line) || '#cccccc'
-            r.stroke_width = '1'
-            r.opacity = '0.3'
+            r.stroke = theme_color(:grid_line) || "#cccccc"
+            r.stroke_width = "1"
+            r.opacity = "0.3"
           end
           svg << rect
         end
@@ -116,8 +116,8 @@ module Sirena
           line.y1 = dims[:chart_y]
           line.x2 = center_x
           line.y2 = dims[:chart_y] + dims[:chart_height]
-          line.stroke = theme_color(:grid_line) || '#666666'
-          line.stroke_width = '2'
+          line.stroke = theme_color(:grid_line) || "#666666"
+          line.stroke_width = "2"
         end
         svg << vertical_line
 
@@ -128,8 +128,8 @@ module Sirena
           line.y1 = center_y
           line.x2 = dims[:chart_x] + dims[:chart_width]
           line.y2 = center_y
-          line.stroke = theme_color(:grid_line) || '#666666'
-          line.stroke_width = '2'
+          line.stroke = theme_color(:grid_line) || "#666666"
+          line.stroke_width = "2"
         end
         svg << horizontal_line
       end
@@ -143,7 +143,7 @@ module Sirena
           axes[:x_left],
           dims[:chart_x] - 10,
           dims[:chart_y] + dims[:chart_height] + 30,
-          'end',
+          "end",
           svg,
         )
 
@@ -152,7 +152,7 @@ module Sirena
           axes[:x_right],
           dims[:chart_x] + dims[:chart_width] + 10,
           dims[:chart_y] + dims[:chart_height] + 30,
-          'start',
+          "start",
           svg,
         )
 
@@ -161,7 +161,7 @@ module Sirena
           axes[:y_bottom],
           dims[:chart_x] - 30,
           dims[:chart_y] + dims[:chart_height] + 10,
-          'middle',
+          "middle",
           svg,
         )
 
@@ -170,7 +170,7 @@ module Sirena
           axes[:y_top],
           dims[:chart_x] - 30,
           dims[:chart_y] - 10,
-          'middle',
+          "middle",
           svg,
         )
       end
@@ -182,9 +182,9 @@ module Sirena
           t.x = x
           t.y = y
           t.content = text
-          t.fill = theme_color(:label_text) || '#666666'
+          t.fill = theme_color(:label_text) || "#666666"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_small) || 12).to_s
           t.text_anchor = anchor
         end
@@ -207,13 +207,13 @@ module Sirena
             t.x = label_x
             t.y = label_y
             t.content = quadrant[:label]
-            t.fill = theme_color(:label_text) || '#333333'
+            t.fill = theme_color(:label_text) || "#333333"
             t.font_family = theme_typography(:font_family) ||
-                            'Arial, sans-serif'
+                            "Arial, sans-serif"
             t.font_size = (theme_typography(:font_size_normal) || 14).to_s
-            t.text_anchor = 'middle'
-            t.font_weight = 'bold'
-            t.opacity = '0.7'
+            t.text_anchor = "middle"
+            t.font_weight = "bold"
+            t.opacity = "0.7"
           end
           svg << label
         end
@@ -233,7 +233,7 @@ module Sirena
         color = point[:color] || get_point_color(point[:quadrant])
         stroke_color = point[:stroke_color] ||
                        theme_color(:node_stroke) ||
-                       '#ffffff'
+                       "#ffffff"
         stroke_width = point[:stroke_width] || 2
 
         circle = Svg::Circle.new.tap do |c|
@@ -257,11 +257,11 @@ module Sirena
           t.x = label_x
           t.y = label_y
           t.content = point[:label]
-          t.fill = theme_color(:label_text) || '#000000'
+          t.fill = theme_color(:label_text) || "#000000"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_small) || 11).to_s
-          t.text_anchor = 'start'
+          t.text_anchor = "start"
         end
         svg << label
       end
@@ -276,15 +276,15 @@ module Sirena
         # Use darker version of quadrant color for points
         case quadrant_number
         when 1
-          theme_color(:primary) || '#2196f3'
+          theme_color(:primary) || "#2196f3"
         when 2
-          theme_color(:secondary) || '#ff9800'
+          theme_color(:secondary) || "#ff9800"
         when 3
-          theme_color(:accent) || '#9c27b0'
+          theme_color(:accent) || "#9c27b0"
         when 4
-          theme_color(:success) || '#4caf50'
+          theme_color(:success) || "#4caf50"
         else
-          theme_color(:primary) || '#2196f3'
+          theme_color(:primary) || "#2196f3"
         end
       end
     end

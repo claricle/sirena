@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/c4'
+require_relative "../../diagram/c4"
 
 module Sirena
   module Parser
@@ -92,20 +92,20 @@ module Sirena
           if header && header[:header]
             header_str = header[:header].to_s
             diagram.level = case header_str
-                            when 'C4Context'
-                              'Context'
-                            when 'C4Container'
-                              'Container'
-                            when 'C4Component'
-                              'Component'
-                            when 'C4Dynamic'
-                              'Dynamic'
-                            when 'C4Deployment'
-                              'Deployment'
-                            when 'C4 diagram'
-                              'Context' # Default
+                            when "C4Context"
+                              "Context"
+                            when "C4Container"
+                              "Container"
+                            when "C4Component"
+                              "Component"
+                            when "C4Dynamic"
+                              "Dynamic"
+                            when "C4Deployment"
+                              "Deployment"
+                            when "C4 diagram"
+                              "Context" # Default
                             else
-                              'Context'
+                              "Context"
                             end
           end
         end
@@ -144,7 +144,7 @@ module Sirena
             config_parts << "#{key}=#{value}"
           end
 
-          diagram.layout_config = config_parts.join(', ')
+          diagram.layout_config = config_parts.join(", ")
         end
 
         def process_boundary(diagram, stmt)
@@ -306,7 +306,7 @@ module Sirena
           element.tags = extract_text(stmt[:tags]) if stmt[:tags]
 
           # Set external flag based on element type
-          element.external = element.element_type&.end_with?('_Ext') || false
+          element.external = element.element_type&.end_with?("_Ext") || false
 
           element
         end

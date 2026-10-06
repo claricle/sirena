@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../../diagram/block'
+require "parslet"
+require_relative "../../diagram/block"
 
 module Sirena
   module Parser
@@ -13,14 +13,14 @@ module Sirena
       class Block < Parslet::Transform
         # Shape delimiter to type mapping
         SHAPE_MAP = {
-          '[]' => 'rect',
-          '(())' => 'circle',
+          "[]" => "rect",
+          "(())" => "circle",
         }.freeze
 
         # Arrow type mapping
         ARROW_MAP = {
-          '-->' => 'arrow',
-          '---' => 'line',
+          "-->" => "arrow",
+          "---" => "line",
         }.freeze
 
         # Block ID
@@ -28,7 +28,7 @@ module Sirena
         rule(block_id: { string: simple(:s) }) { s.to_s }
 
         # Block width (grammar includes colon, e.g. ":2")
-        rule(block_width: simple(:w)) { w.to_s.sub(/^:/, '').to_i }
+        rule(block_width: simple(:w)) { w.to_s.sub(/^:/, "").to_i }
 
         # Arrow direction
         rule(arrow_direction: { direction: simple(:d) }) { d.to_s }
@@ -43,7 +43,7 @@ module Sirena
         ) do
           delims = "#{o}#{c}"
           {
-            shape_type: SHAPE_MAP[delims] || 'rect',
+            shape_type: SHAPE_MAP[delims] || "rect",
             label: l.to_s.strip,
           }
         end
@@ -58,8 +58,8 @@ module Sirena
         ) do
           delims = "#{o}#{c}"
           {
-            shape_type: SHAPE_MAP[delims] || 'rect',
-            label: '',
+            shape_type: SHAPE_MAP[delims] || "rect",
+            label: "",
           }
         end
 
@@ -158,21 +158,21 @@ module Sirena
         # ever spell "compound-1". An underscore could, and the collision
         # silently dropped the generated block's children from the SVG.
         def self.anonymous_id(kind, parent_block, index)
-          prefix = parent_block ? "#{parent_block.id}-" : ''
+          prefix = parent_block ? "#{parent_block.id}-" : ""
           "#{prefix}#{kind}-#{index}"
         end
 
         def self.create_space_block(parent_block, index)
           Diagram::BlockNode.new.tap do |b|
-            b.id = anonymous_id('space', parent_block, index)
-            b.block_type = 'space'
+            b.id = anonymous_id("space", parent_block, index)
+            b.block_type = "space"
           end
         end
 
         def self.create_arrow_block(stmt)
           Diagram::BlockNode.new.tap do |b|
             b.id = stmt[:arrow_id].to_s
-            b.block_type = 'arrow'
+            b.block_type = "arrow"
             b.label = stmt[:arrow_label].to_s if stmt[:arrow_label]
             b.direction = stmt[:arrow_direction].to_s if stmt[:arrow_direction]
           end
@@ -183,7 +183,7 @@ module Sirena
             b.id = if stmt[:compound_id]
                      stmt[:compound_id].to_s
                    else
-                     anonymous_id('compound', parent_block, index)
+                     anonymous_id("compound", parent_block, index)
                    end
             b.is_compound = true
           end
@@ -200,7 +200,7 @@ module Sirena
               b.width = if width_val.is_a?(Hash)
                           width_val[:width].to_i
                         else
-                          width_val.to_s.sub(/^:/, '').to_i
+                          width_val.to_s.sub(/^:/, "").to_i
                         end
             end
 
@@ -211,17 +211,17 @@ module Sirena
                 # Check if it has open/close delimiters (raw parse tree)
                 if shape_data[:open] && shape_data[:close]
                   delims = "#{shape_data[:open]}#{shape_data[:close]}"
-                  b.shape = SHAPE_MAP[delims] || 'rect'
+                  b.shape = SHAPE_MAP[delims] || "rect"
                   label = shape_data[:label].to_s
                   # Strip surrounding quotes if present
-                  label = label.gsub(/^["']|["']$/, '')
+                  label = label.gsub(/^["']|["']$/, "")
                   b.label = label
                 # Or if it's been transformed already
                 elsif shape_data[:shape_type]
-                  b.shape = shape_data[:shape_type] || 'rect'
+                  b.shape = shape_data[:shape_type] || "rect"
                   label = shape_data[:label] || b.id
                   # Strip surrounding quotes if present
-                  label = label.to_s.gsub(/^["']|["']$/, '')
+                  label = label.to_s.gsub(/^["']|["']$/, "")
                   b.label = label
                 end
               end
@@ -241,9 +241,9 @@ module Sirena
                         end
 
             if arrow_type
-              c.connection_type = ARROW_MAP[arrow_type.to_s] || 'arrow'
+              c.connection_type = ARROW_MAP[arrow_type.to_s] || "arrow"
             else
-              c.connection_type = 'arrow'
+              c.connection_type = "arrow"
             end
           end
         end
@@ -258,12 +258,12 @@ module Sirena
 
               props.each do |prop|
                 prop_str = prop.to_s.strip
-                if prop_str.start_with?('fill:')
-                  s.fill = prop_str.sub('fill:', '').strip
-                elsif prop_str.start_with?('stroke:')
-                  s.stroke = prop_str.sub('stroke:', '').strip
-                elsif prop_str.start_with?('stroke-width:')
-                  s.stroke_width = prop_str.sub('stroke-width:', '').strip
+                if prop_str.start_with?("fill:")
+                  s.fill = prop_str.sub("fill:", "").strip
+                elsif prop_str.start_with?("stroke:")
+                  s.stroke = prop_str.sub("stroke:", "").strip
+                elsif prop_str.start_with?("stroke-width:")
+                  s.stroke_width = prop_str.sub("stroke-width:", "").strip
                 else
                   s.properties << prop_str
                 end

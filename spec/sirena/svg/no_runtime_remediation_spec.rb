@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'ripper'
+require "spec_helper"
+require "ripper"
 
 # Conformant by construction, not conformant after a repair pass.
 #
@@ -13,8 +13,8 @@ require 'ripper'
 #
 # A structural check rather than a behavioural one, because the failure mode
 # is a call nobody writes a test for.
-REMEDIATION_LIB_ROOT = File.expand_path('../../../lib', __dir__)
-REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, '**', '*.{rb,rake}')).freeze
+REMEDIATION_LIB_ROOT = File.expand_path("../../../lib", __dir__)
+REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "**", "*.{rb,rake}")).freeze
 
 # The remediation entry points, and the gem that owns them. Sirena's runtime
 # does not depend on svg_conform at all — it is the gate's tool, not the
@@ -42,30 +42,30 @@ module SvgNoRuntimeRemediationSpecHelpers
 end
 
 RSpec.describe Sirena::Svg do
-  describe 'runtime remediation' do
+  describe "runtime remediation" do
     include SvgNoRuntimeRemediationSpecHelpers
 
     # A bare count is not a population guard here: enough files live outside
     # lib/sirena/svg that the broad glob could lose the one directory where a
     # remediation call would land and still clear any useful threshold. The
     # focused glob names that directory independently.
-    it 'includes every SVG file in the broad lib/ glob' do
-      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, 'sirena', 'svg', '*.rb'))
+    it "includes every SVG file in the broad lib/ glob" do
+      svg_files = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "sirena", "svg", "*.rb"))
 
       expect(svg_files).not_to be_empty
       expect(REMEDIATION_LIB_FILES).to include(*svg_files)
     end
 
-    it 'never references svg_conform or its remediation engine at runtime' do
+    it "never references svg_conform or its remediation engine at runtime" do
       found_offences = offences
 
       expect(found_offences).to be_empty, -> { found_offences.join("\n") }
     end
 
-    it 'does not declare svg_conform as a runtime dependency' do
-      gemspec = Gem::Specification.load(File.expand_path('../../../sirena.gemspec', __dir__))
+    it "does not declare svg_conform as a runtime dependency" do
+      gemspec = Gem::Specification.load(File.expand_path("../../../sirena.gemspec", __dir__))
 
-      expect(gemspec.runtime_dependencies.map(&:name)).not_to include('svg_conform')
+      expect(gemspec.runtime_dependencies.map(&:name)).not_to include("svg_conform")
     end
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/error'
+require_relative "base"
+require_relative "../diagram/error"
 
 module Sirena
   module Layout
@@ -23,7 +23,7 @@ module Sirena
       # @return [Hash] data structure for rendering
       def build_graph(diagram)
         {
-          id: diagram.id || 'error',
+          id: diagram.id || "error",
           title: diagram.title,
           message: diagram.message,
           metadata: {

@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'rexml/document'
+require "spec_helper"
+require "rexml/document"
 
 # Single-user (this file only), pure — no let/expect/described_class.
 module KanbanSpecHelpers
   module_function
 
-  def layout_with(card_text:, column_title: 'Todo', header_height: 50)
+  def layout_with(card_text:, column_title: "Todo", header_height: 50)
     {
       columns: [
         {
-          id: 'todo',
+          id: "todo",
           title: column_title,
           x: 0,
           y: 0,
@@ -23,9 +23,9 @@ module KanbanSpecHelpers
       ],
       cards: [
         {
-          id: 'card',
+          id: "card",
           text: card_text,
-          column_id: 'todo',
+          column_id: "todo",
           x: 10,
           y: 60,
           width: 180,
@@ -44,14 +44,14 @@ RSpec.describe Sirena::Renderer::Kanban do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
-  describe '#render' do
-    context 'with a simple kanban board' do
+  describe "#render" do
+    context "with a simple kanban board" do
       let(:layout) do
         {
           columns: [
             {
-              id: 'todo',
-              title: 'Todo',
+              id: "todo",
+              title: "Todo",
               x: 0,
               y: 0,
               width: 200,
@@ -62,9 +62,9 @@ RSpec.describe Sirena::Renderer::Kanban do
           ],
           cards: [
             {
-              id: 'docs',
-              text: 'Create Documentation',
-              column_id: 'todo',
+              id: "docs",
+              text: "Create Documentation",
+              column_id: "todo",
               x: 10,
               y: 60,
               width: 180,
@@ -78,32 +78,32 @@ RSpec.describe Sirena::Renderer::Kanban do
         }
       end
 
-      it 'renders an SVG document' do
+      it "renders an SVG document" do
         svg = renderer.render(layout)
         expect(svg).to be_a(Sirena::Svg::Document)
       end
 
-      it 'includes column elements' do
+      it "includes column elements" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('rect')
-        expect(xml).to include('Todo')
+        expect(xml).to include("rect")
+        expect(xml).to include("Todo")
       end
 
-      it 'includes card elements' do
+      it "includes card elements" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('Create Documentation')
+        expect(xml).to include("Create Documentation")
       end
     end
 
-    context 'with multiple columns' do
+    context "with multiple columns" do
       let(:layout) do
         {
           columns: [
             {
-              id: 'todo',
-              title: 'Todo',
+              id: "todo",
+              title: "Todo",
               x: 0,
               y: 0,
               width: 200,
@@ -112,8 +112,8 @@ RSpec.describe Sirena::Renderer::Kanban do
               card_count: 1,
             },
             {
-              id: 'done',
-              title: 'Done',
+              id: "done",
+              title: "Done",
               x: 260,
               y: 0,
               width: 200,
@@ -124,9 +124,9 @@ RSpec.describe Sirena::Renderer::Kanban do
           ],
           cards: [
             {
-              id: 'docs',
-              text: 'Create Documentation',
-              column_id: 'todo',
+              id: "docs",
+              text: "Create Documentation",
+              column_id: "todo",
               x: 10,
               y: 60,
               width: 180,
@@ -135,9 +135,9 @@ RSpec.describe Sirena::Renderer::Kanban do
               has_metadata: false,
             },
             {
-              id: 'release',
-              text: 'Release v1.0',
-              column_id: 'done',
+              id: "release",
+              text: "Release v1.0",
+              column_id: "done",
               x: 270,
               y: 60,
               width: 180,
@@ -151,28 +151,28 @@ RSpec.describe Sirena::Renderer::Kanban do
         }
       end
 
-      it 'renders all columns' do
+      it "renders all columns" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('Todo')
-        expect(xml).to include('Done')
+        expect(xml).to include("Todo")
+        expect(xml).to include("Done")
       end
 
-      it 'renders all cards' do
+      it "renders all cards" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('Create Documentation')
-        expect(xml).to include('Release v1.0')
+        expect(xml).to include("Create Documentation")
+        expect(xml).to include("Release v1.0")
       end
     end
 
-    context 'with card metadata' do
+    context "with card metadata" do
       let(:layout) do
         {
           columns: [
             {
-              id: 'todo',
-              title: 'Todo',
+              id: "todo",
+              title: "Todo",
               x: 0,
               y: 0,
               width: 200,
@@ -183,16 +183,16 @@ RSpec.describe Sirena::Renderer::Kanban do
           ],
           cards: [
             {
-              id: 'docs',
-              text: 'Create Documentation',
-              column_id: 'todo',
+              id: "docs",
+              text: "Create Documentation",
+              column_id: "todo",
               x: 10,
               y: 60,
               width: 180,
               height: 110,
               metadata: {
-                priority: 'High',
-                ticket: 'MC-1001',
+                priority: "High",
+                ticket: "MC-1001",
               },
               has_metadata: true,
             },
@@ -202,17 +202,17 @@ RSpec.describe Sirena::Renderer::Kanban do
         }
       end
 
-      it 'renders metadata' do
+      it "renders metadata" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('Priority')
-        expect(xml).to include('High')
-        expect(xml).to include('Ticket')
-        expect(xml).to include('MC-1001')
+        expect(xml).to include("Priority")
+        expect(xml).to include("High")
+        expect(xml).to include("Ticket")
+        expect(xml).to include("MC-1001")
       end
     end
 
-    context 'with empty board' do
+    context "with empty board" do
       let(:layout) do
         {
           columns: [],
@@ -222,12 +222,12 @@ RSpec.describe Sirena::Renderer::Kanban do
         }
       end
 
-      it 'renders without errors' do
+      it "renders without errors" do
         expect { renderer.render(layout) }.not_to raise_error
       end
     end
 
-    context 'with markdown in card and column labels' do
+    context "with markdown in card and column labels" do
       # Regression guard for the reported bug: mermaid renders `**urgent**`
       # as bold, sirena printed it literally. Mutation-check: revert
       # `render_card_text` to build `Svg::Text` with `t.content =
@@ -235,18 +235,18 @@ RSpec.describe Sirena::Renderer::Kanban do
       # Watched red: the assertions below fail — the literal `**` reappears
       # in the XML and no `<tspan font-weight="bold">` exists.
       it 'renders a bold card run as a <tspan font-weight="bold">, with no literal markers' do
-        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: 'Hello **urgent**')).to_xml
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Hello **urgent**")).to_xml
 
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>urgent</tspan>})
-        expect(xml).to include('<tspan>Hello </tspan>')
-        expect(xml).not_to include('**')
+        expect(xml).to include("<tspan>Hello </tspan>")
+        expect(xml).not_to include("**")
       end
 
       # Truncation must cut on run boundaries (`truncate_runs`), not the
       # raw markup string, even when the cut falls INSIDE a bold run: a
       # naive `text[0...22]` on "Hello **xxxx...xxx**" would slice through
       # the closing `**`, leaving a stray asterisk and an unclosed style.
-      it 'truncates a markdown card label on run boundaries, never mid-marker' do
+      it "truncates a markdown card label on run boundaries, never mid-marker" do
         long_text = "Hello **#{'x' * 30}**"
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
 
@@ -259,13 +259,13 @@ RSpec.describe Sirena::Renderer::Kanban do
       # SECOND line alone overflows the remaining budget, it is dropped
       # whole, never cut partway through. Only the first line ever gets a
       # partial "..." cut.
-      it 'drops a later line whole on overflow, never truncating it mid-line' do
+      it "drops a later line whole on overflow, never truncating it mid-line" do
         long_text = "Short\n#{'q' * 30}"
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
 
-        expect(xml).to include('Short')
-        expect(xml).not_to include('q')
-        expect(xml).not_to include('...')
+        expect(xml).to include("Short")
+        expect(xml).not_to include("q")
+        expect(xml).not_to include("...")
         expect { REXML::Document.new(xml) }.not_to raise_error
       end
 
@@ -273,11 +273,11 @@ RSpec.describe Sirena::Renderer::Kanban do
       # surface: label text an author writes ends up inside a `<tspan>`.
       # `<`, `&` and `"` must come out escaped, and REXML must still parse
       # the result, or a hostile label breaks or injects into the document.
-      it 'escapes XML-significant characters inside a styled run' do
+      it "escapes XML-significant characters inside a styled run" do
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: 'Plain **<b>&"x**')).to_xml
 
         expect(xml).to include('<tspan font-weight="bold">&lt;b&gt;&amp;"x</tspan>')
-        expect(xml).not_to include('<b>')
+        expect(xml).not_to include("<b>")
 
         parsed = REXML::Document.new(xml)
         bold_tspan = REXML::XPath.first(parsed, '//tspan[@font-weight="bold"]')
@@ -292,8 +292,8 @@ RSpec.describe Sirena::Renderer::Kanban do
       # `build_markdown_tspans` (`run.bold || base_font_weight == "bold"`
       # becomes just `run.bold`). Watched red: the plain "Todo " run's
       # `<tspan>` loses `font-weight="bold"` entirely.
-      it 'renders bold in a column header, and keeps a plain header run bold' do
-        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: 'plain', column_title: 'Todo **urgent**')).to_xml
+      it "renders bold in a column header, and keeps a plain header run bold" do
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "plain", column_title: "Todo **urgent**")).to_xml
 
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>urgent</tspan>})
         expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>Todo </tspan>})
@@ -310,18 +310,18 @@ RSpec.describe Sirena::Renderer::Kanban do
       # (proving that assertion alone caught nothing); asserting the actual
       # value (card x 10 + document padding 40 + card text inset 10) is what
       # catches it.
-      it 'carries x on the line-starting tspan after a hard break, and font-style on an italic run' do
+      it "carries x on the line-starting tspan after a hard break, and font-style on an italic run" do
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Line one\nLine two")).to_xml
         parsed = REXML::Document.new(xml)
         second_line = REXML::XPath.first(parsed, '//tspan[text()="Line two"]')
 
-        expect(second_line.attributes['x']).to eq('60.0')
-        expect(second_line.attributes['dy']).to eq('1.2em')
+        expect(second_line.attributes["x"]).to eq("60.0")
+        expect(second_line.attributes["dy"]).to eq("1.2em")
 
-        italic_xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: 'Hello *urgent*')).to_xml
+        italic_xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Hello *urgent*")).to_xml
         italic_run = REXML::XPath.first(REXML::Document.new(italic_xml), '//tspan[text()="urgent"]')
 
-        expect(italic_run.attributes['font-style']).to eq('italic')
+        expect(italic_run.attributes["font-style"]).to eq("italic")
       end
 
       # Full-render coverage gap closed: every example above renders at
@@ -334,12 +334,12 @@ RSpec.describe Sirena::Renderer::Kanban do
       # run.bold ...` / `if run.italic ...` to an `if`/`elsif` pair.
       # Watched red: the single tspan carries `font-style="italic"` but
       # loses `font-weight="bold"`.
-      it 'renders ***both*** as one tspan carrying both bold and italic' do
-        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: '***both***')).to_xml
+      it "renders ***both*** as one tspan carrying both bold and italic" do
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "***both***")).to_xml
         run = REXML::XPath.first(REXML::Document.new(xml), '//tspan[text()="both"]')
 
-        expect(run.attributes['font-weight']).to eq('bold')
-        expect(run.attributes['font-style']).to eq('italic')
+        expect(run.attributes["font-weight"]).to eq("bold")
+        expect(run.attributes["font-style"]).to eq("italic")
       end
 
       # Mutation-check: move the `font_weight`/`font_style` assignments
@@ -347,37 +347,37 @@ RSpec.describe Sirena::Renderer::Kanban do
       # OWN styling is skipped (only the `x`/`dy` reset survives). Watched
       # red: the second tspan ("b", which is both line-starting AND bold)
       # loses `font-weight="bold"` while the first ("a") keeps it.
-      it 'keeps bold on both halves of a bold run split by a hard break' do
+      it "keeps bold on both halves of a bold run split by a hard break" do
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "**a\nb**")).to_xml
         parsed = REXML::Document.new(xml)
         first_half = REXML::XPath.first(parsed, '//tspan[text()="a"]')
         second_half = REXML::XPath.first(parsed, '//tspan[text()="b"]')
 
-        expect(first_half.attributes['font-weight']).to eq('bold')
-        expect(second_half.attributes['font-weight']).to eq('bold')
-        expect(second_half.attributes['dy']).to eq('1.2em')
+        expect(first_half.attributes["font-weight"]).to eq("bold")
+        expect(second_half.attributes["font-weight"]).to eq("bold")
+        expect(second_half.attributes["dy"]).to eq("1.2em")
       end
 
       # The column header rect and its text's baseline must grow with a
       # multi-line title, not stay at a hardcoded single-line height — a
       # header that doesn't grow spills its lower tspans past the rect
       # onto the board background below it.
-      it 'grows the column header rect to fit a multi-line title, keeping the tspans inside it' do
-        layout = KanbanSpecHelpers.layout_with(card_text: 'plain', column_title: "One\nTwo\nThree", header_height: 86)
+      it "grows the column header rect to fit a multi-line title, keeping the tspans inside it" do
+        layout = KanbanSpecHelpers.layout_with(card_text: "plain", column_title: "One\nTwo\nThree", header_height: 86)
         xml = renderer.render(layout).to_xml
         parsed = REXML::Document.new(xml)
 
         header_rect = REXML::XPath.first(parsed, "//rect[@height='86.0']")
-        header_text = REXML::XPath.first(parsed, '//text[tspan]')
-        tspan_count = header_text.elements.to_a('tspan').size
+        header_text = REXML::XPath.first(parsed, "//text[tspan]")
+        tspan_count = header_text.elements.to_a("tspan").size
 
         expect(header_rect).not_to be_nil
         expect(tspan_count).to eq(3)
 
-        font_size = header_text.attributes['font-size'].to_f
-        first_baseline = header_text.attributes['y'].to_f
+        font_size = header_text.attributes["font-size"].to_f
+        first_baseline = header_text.attributes["y"].to_f
         last_baseline = first_baseline + ((tspan_count - 1) * font_size * 1.2)
-        header_bottom = header_rect.attributes['y'].to_f + header_rect.attributes['height'].to_f
+        header_bottom = header_rect.attributes["y"].to_f + header_rect.attributes["height"].to_f
 
         expect(last_baseline).to be < header_bottom
       end
@@ -388,23 +388,23 @@ RSpec.describe Sirena::Renderer::Kanban do
       # margin under the flat `y + header_height / 2 + 5` formula that a
       # 4-line title exhausts. `header_text_baseline` must center the whole
       # text BLOCK, not one fixed baseline, to keep every line inside.
-      it 'keeps every baseline of a 4-line column title inside its own header rect' do
-        layout = KanbanSpecHelpers.layout_with(card_text: 'plain', column_title: "One\nTwo\nThree\nFour", header_height: 104)
+      it "keeps every baseline of a 4-line column title inside its own header rect" do
+        layout = KanbanSpecHelpers.layout_with(card_text: "plain", column_title: "One\nTwo\nThree\nFour", header_height: 104)
         xml = renderer.render(layout).to_xml
         parsed = REXML::Document.new(xml)
 
         header_rect = REXML::XPath.first(parsed, "//rect[@height='104.0']")
-        header_text = REXML::XPath.first(parsed, '//text[tspan]')
-        tspan_count = header_text.elements.to_a('tspan').size
+        header_text = REXML::XPath.first(parsed, "//text[tspan]")
+        tspan_count = header_text.elements.to_a("tspan").size
 
         expect(header_rect).not_to be_nil
         expect(tspan_count).to eq(4)
 
-        font_size = header_text.attributes['font-size'].to_f
-        first_baseline = header_text.attributes['y'].to_f
+        font_size = header_text.attributes["font-size"].to_f
+        first_baseline = header_text.attributes["y"].to_f
         last_baseline = first_baseline + ((tspan_count - 1) * font_size * 1.2)
-        header_top = header_rect.attributes['y'].to_f
-        header_bottom = header_top + header_rect.attributes['height'].to_f
+        header_top = header_rect.attributes["y"].to_f
+        header_bottom = header_top + header_rect.attributes["height"].to_f
 
         expect(first_baseline).to eq(71.8)
         expect(last_baseline).to be_within(0.001).of(122.2)
@@ -424,18 +424,18 @@ RSpec.describe Sirena::Renderer::Kanban do
       it "starts card metadata below a multi-line label's actual rendered height" do
         layout = {
           columns: [
-            { id: 'todo', title: 'Todo', x: 0, y: 0, width: 200, height: 200, header_height: 50, card_count: 1 },
+            { id: "todo", title: "Todo", x: 0, y: 0, width: 200, height: 200, header_height: 50, card_count: 1 },
           ],
           cards: [
             {
-              id: 'card',
+              id: "card",
               text: "A\nB\nC",
-              column_id: 'todo',
+              column_id: "todo",
               x: 10,
               y: 60,
               width: 180,
               height: 134,
-              metadata: { assigned: 'Alice' },
+              metadata: { assigned: "Alice" },
               has_metadata: true,
             },
           ],
@@ -446,16 +446,16 @@ RSpec.describe Sirena::Renderer::Kanban do
         xml = renderer.render(layout).to_xml
         parsed = REXML::Document.new(xml)
 
-        label_text = REXML::XPath.first(parsed, '//text[tspan]')
-        label_tspan_count = label_text.elements.to_a('tspan').size
+        label_text = REXML::XPath.first(parsed, "//text[tspan]")
+        label_tspan_count = label_text.elements.to_a("tspan").size
         metadata_label = REXML::XPath.first(parsed, "//text[.='Assigned:']")
 
-        font_size = label_text.attributes['font-size'].to_f
-        first_baseline = label_text.attributes['y'].to_f
+        font_size = label_text.attributes["font-size"].to_f
+        first_baseline = label_text.attributes["y"].to_f
         last_label_baseline = first_baseline + ((label_tspan_count - 1) * font_size * 1.2)
 
         expect(label_tspan_count).to eq(3)
-        expect(metadata_label.attributes['y'].to_f).to be > last_label_baseline
+        expect(metadata_label.attributes["y"].to_f).to be > last_label_baseline
       end
     end
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'edge_router'
+require_relative "base"
+require_relative "edge_router"
 
 module Sirena
   module Renderer
@@ -33,9 +33,9 @@ module Sirena
       # their ends rounded the whole way, so a head aiming at one pulls
       # in from the corners as far as a circle's does.
       NODE_OUTLINES = {
-        'rounded' => :rounded, 'stadium' => :rounded,
-        'circle' => :circle, 'double_circle' => :circle,
-        'rhombus' => :rhombus, 'hexagon' => :hexagon
+        "rounded" => :rounded, "stadium" => :rounded,
+        "circle" => :circle, "double_circle" => :circle,
+        "rhombus" => :rhombus, "hexagon" => :hexagon
       }.freeze
       private_constant :NODE_OUTLINES
 
@@ -45,7 +45,7 @@ module Sirena
       # see `thick_width`. mmdc's thick line is 3.5 times its normal one,
       # and its dotted one is dashed 2 on, 2 off.
       LINK_THICK_MULTIPLE = 3.5
-      LINK_DOTTED_DASHES = '2'
+      LINK_DOTTED_DASHES = "2"
       private_constant :LINK_THICK_MULTIPLE, :LINK_DOTTED_DASHES
 
       # Which marker each HEAD name draws, read off mmdc's own
@@ -53,8 +53,8 @@ module Sirena
       # the whole link type: `render_edge_heads` strips the weight prefix
       # and the `_both` suffix first, so `thick_arrow_both` looks up
       # `arrow` here rather than needing a key of its own.
-      EDGE_HEADS = { 'arrow' => :arrow, 'cross' => :cross,
-                     'circle' => :circle }.freeze
+      EDGE_HEADS = { "arrow" => :arrow, "cross" => :cross,
+                     "circle" => :circle }.freeze
       private_constant :EDGE_HEADS
 
       # Each head is mmdc's own marker, scaled the way mmdc scales it.
@@ -135,9 +135,9 @@ module Sirena
 
       # Which way a self loop is thrown: the way the diagram flows. mmdc
       # loops below for TD, right for LR, left for RL and above for BT.
-      SELF_LOOP_SIDES = { 'DOWN' => [0, 1].freeze, 'UP' => [0, -1].freeze,
-                          'RIGHT' => [1, 0].freeze,
-                          'LEFT' => [-1, 0].freeze }.freeze
+      SELF_LOOP_SIDES = { "DOWN" => [0, 1].freeze, "UP" => [0, -1].freeze,
+                          "RIGHT" => [1, 0].freeze,
+                          "LEFT" => [-1, 0].freeze }.freeze
       private_constant :SELF_LOOP_SIDES
 
       # Renders a laid-out graph to SVG.
@@ -166,7 +166,7 @@ module Sirena
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
         page = clear_self_loop_overflow(flatten(graph))
-        svg = create_document(page, overflow: 'hidden')
+        svg = create_document(page, overflow: "hidden")
 
         # mermaid's paint order: clusters sit behind everything, then
         # edges, then the nodes that cover where the edges end.
@@ -411,8 +411,8 @@ module Sirena
           text.y = cluster[:y] + CLUSTER_TITLE_BASELINE
           text.content = label[:text]
           apply_theme_to_text(text)
-          text.text_anchor = 'middle'
-          text.dominant_baseline = 'middle'
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
         end
       end
 
@@ -466,7 +466,7 @@ module Sirena
       end
 
       def render_node(node, svg)
-        shape = node.dig(:metadata, :shape) || 'rect'
+        shape = node.dig(:metadata, :shape) || "rect"
 
         # Create group for node and its label
         group = Svg::Group.new.tap do |g|
@@ -546,7 +546,7 @@ module Sirena
           "#{x + width},#{cy}",
           "#{cx},#{y + height}",
           "#{x},#{cy}",
-        ].join(' ')
+        ].join(" ")
 
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
@@ -565,7 +565,7 @@ module Sirena
           "#{x + width - w4},#{y + height}",
           "#{x + w4},#{y + height}",
           "#{x},#{cy}",
-        ].join(' ')
+        ].join(" ")
 
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
@@ -590,8 +590,8 @@ module Sirena
           text.y = text_y
           text.content = label[:text]
           apply_theme_to_text(text)
-          text.text_anchor = 'middle'
-          text.dominant_baseline = 'middle'
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
         end
       end
 
@@ -614,12 +614,12 @@ module Sirena
         # Create path element
         path = Svg::Path.new.tap do |p|
           p.d = path_data
-          p.fill = 'none'
+          p.fill = "none"
           apply_theme_to_edge(p)
           apply_link_weight(p, type)
           # The parsed link still emits a path, but no stroke keeps it
           # hidden. Today's edge-blind layout reserves no space for it.
-          p.stroke = 'none' if type == 'invisible'
+          p.stroke = "none" if type == "invisible"
         end
 
         # Create group for edge and label
@@ -743,8 +743,8 @@ module Sirena
       # The graph names the direction it flows in; a graph built by hand
       # need not, and then the loop hangs below as it does for TD.
       def self_loop_side(graph)
-        SELF_LOOP_SIDES[graph.dig(:layoutOptions, 'elk.direction')] ||
-          SELF_LOOP_SIDES['DOWN']
+        SELF_LOOP_SIDES[graph.dig(:layoutOptions, "elk.direction")] ||
+          SELF_LOOP_SIDES["DOWN"]
       end
 
       # A laid-out graph already knows where its edge turns. Only a self
@@ -808,7 +808,7 @@ module Sirena
         end
 
         path_parts << "L #{tx} #{ty}"
-        path_parts.join(' ')
+        path_parts.join(" ")
       end
 
       # A thick link is drawn heavier and a dotted one dashed. Every type
@@ -827,8 +827,8 @@ module Sirena
       # `edge-thickness-normal edge-pattern-dotted`, so dotting a line
       # does not thin it, and the theme's plain width still applies.
       def apply_link_weight(path, type)
-        path.stroke_width = thick_width.to_s if type.start_with?('thick_')
-        path.stroke_dasharray = dotted_dashes if type.start_with?('dotted_')
+        path.stroke_width = thick_width.to_s if type.start_with?("thick_")
+        path.stroke_dasharray = dotted_dashes if type.start_with?("dotted_")
       end
 
       # Three answers, in order. A theme naming a thick width gets it. One
@@ -853,7 +853,7 @@ module Sirena
       # no head.
       def render_edge_heads(group, route, source, target, type, bends)
         shape =
-          EDGE_HEADS[type.sub(/\A(?:thick|dotted)_/, '').delete_suffix('_both')]
+          EDGE_HEADS[type.sub(/\A(?:thick|dotted)_/, "").delete_suffix("_both")]
         return unless shape
 
         edge_head_ends(type).each do |which|
@@ -894,7 +894,7 @@ module Sirena
       end
 
       def edge_head_ends(type)
-        type.end_with?('_both') ? [:source, :target] : [:target]
+        type.end_with?("_both") ? [:source, :target] : [:target]
       end
 
       def node_centre(node)
@@ -1063,13 +1063,13 @@ module Sirena
              back_y + (along_x * ARROW_HALF_WIDTH)],
             [back_x + (along_y * ARROW_HALF_WIDTH),
              back_y - (along_x * ARROW_HALF_WIDTH)],
-          ].map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(' ')
+          ].map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(" ")
           # An unpainted polygon is not an invisible one: SVG fills it
           # black. A theme with no edge colour drew black heads floating
           # over nothing, because the line it belonged to had no stroke
           # and a path with no stroke really is invisible. So say `none`
           # out loud for the fill; leaving the stroke off is enough.
-          poly.fill = edge_ink || 'none'
+          poly.fill = edge_ink || "none"
           poly.stroke = edge_ink
         end
       end
@@ -1104,7 +1104,7 @@ module Sirena
             line.x2 = (tip_x + dx).round(1)
             line.y2 = (tip_y + dy).round(1)
             line.stroke = edge_ink
-            line.stroke_width = format('%g', CROSS_HEAD_STROKE)
+            line.stroke_width = format("%g", CROSS_HEAD_STROKE)
           end
         end
       end
@@ -1120,9 +1120,9 @@ module Sirena
           circle.cx = tip_x.round(1)
           circle.cy = tip_y.round(1)
           circle.r = CIRCLE_HEAD_RADIUS
-          circle.fill = edge_ink || 'none'
+          circle.fill = edge_ink || "none"
           circle.stroke = edge_ink
-          circle.stroke_width = format('%g', CIRCLE_HEAD_STROKE)
+          circle.stroke_width = format("%g", CIRCLE_HEAD_STROKE)
         end
       end
 
@@ -1138,7 +1138,7 @@ module Sirena
           if theme_typography(:font_size_small)
             text.font_size = theme_typography(:font_size_small).to_s
           end
-          text.text_anchor = 'middle'
+          text.text_anchor = "middle"
         end
       end
 

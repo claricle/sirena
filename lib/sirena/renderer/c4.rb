@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -16,13 +16,13 @@ module Sirena
     class C4 < Base
       # C4 standard colors (from C4-PlantUML)
       C4_COLORS = {
-        person: { bg: '#08427B', border: '#073B6F', text: '#FFFFFF' },
-        person_ext: { bg: '#6C6477', border: '#4A4552', text: '#FFFFFF' },
-        system: { bg: '#1168BD', border: '#0B4884', text: '#FFFFFF' },
-        system_ext: { bg: '#8F8F8F', border: '#6B6B6B', text: '#FFFFFF' },
-        container: { bg: '#438DD5', border: '#2E6295', text: '#FFFFFF' },
-        component: { bg: '#85BBF0', border: '#5D8FB9', text: '#000000' },
-        boundary: { bg: '#FFFFFF', border: '#9BA7B4', text: '#000000' },
+        person: { bg: "#08427B", border: "#073B6F", text: "#FFFFFF" },
+        person_ext: { bg: "#6C6477", border: "#4A4552", text: "#FFFFFF" },
+        system: { bg: "#1168BD", border: "#0B4884", text: "#FFFFFF" },
+        system_ext: { bg: "#8F8F8F", border: "#6B6B6B", text: "#FFFFFF" },
+        container: { bg: "#438DD5", border: "#2E6295", text: "#FFFFFF" },
+        component: { bg: "#85BBF0", border: "#5D8FB9", text: "#000000" },
+        boundary: { bg: "#FFFFFF", border: "#9BA7B4", text: "#000000" },
       }.freeze
 
       # Element dimensions
@@ -125,8 +125,8 @@ module Sirena
           r.height = boundary[:height]
           r.fill = C4_COLORS[:boundary][:bg]
           r.stroke = C4_COLORS[:boundary][:border]
-          r.stroke_width = '2'
-          r.stroke_dasharray = '10,5'
+          r.stroke_width = "2"
+          r.stroke_dasharray = "10,5"
           r.rx = 8
           r.ry = 8
         end
@@ -140,9 +140,9 @@ module Sirena
             t.y = boundary[:y] + 20
             t.content = label[:text]
             t.fill = C4_COLORS[:boundary][:text]
-            t.font_family = 'Arial, sans-serif'
-            t.font_size = '16'
-            t.font_weight = 'bold'
+            t.font_family = "Arial, sans-serif"
+            t.font_size = "16"
+            t.font_weight = "bold"
           end
           group.children << text
         end
@@ -219,7 +219,7 @@ module Sirena
           r.height = h
           r.fill = colors[:bg]
           r.stroke = colors[:border]
-          r.stroke_width = '2'
+          r.stroke_width = "2"
           r.rx = 10
           r.ry = 10
         end
@@ -273,7 +273,7 @@ module Sirena
           r.height = h
           r.fill = colors[:bg]
           r.stroke = colors[:border]
-          r.stroke_width = '2'
+          r.stroke_width = "2"
           r.rx = 5
           r.ry = 5
         end
@@ -299,7 +299,7 @@ module Sirena
           r.height = h
           r.fill = colors[:bg]
           r.stroke = colors[:border]
-          r.stroke_width = '2'
+          r.stroke_width = "2"
           r.rx = 5
           r.ry = 5
         end
@@ -325,7 +325,7 @@ module Sirena
           r.height = h
           r.fill = colors[:bg]
           r.stroke = colors[:border]
-          r.stroke_width = '2'
+          r.stroke_width = "2"
           r.rx = 3
           r.ry = 3
         end
@@ -342,26 +342,26 @@ module Sirena
         labels.each_with_index do |label, index|
           font_size = case index
                       when 0 # Main label
-                        '14'
+                        "14"
                       when 1 # Description
-                        '11'
+                        "11"
                       else # Technology
-                        '10'
+                        "10"
                       end
 
-          font_weight = index.zero? ? 'bold' : 'normal'
-          font_style = index == 2 ? 'italic' : 'normal'
+          font_weight = index.zero? ? "bold" : "normal"
+          font_style = index == 2 ? "italic" : "normal"
 
           text = Svg::Text.new.tap do |t|
             t.x = x + width / 2
             t.y = current_y
             t.content = label[:text]
             t.fill = text_color
-            t.font_family = 'Arial, sans-serif'
+            t.font_family = "Arial, sans-serif"
             t.font_size = font_size
             t.font_weight = font_weight
             t.font_style = font_style
-            t.text_anchor = 'middle'
+            t.text_anchor = "middle"
           end
           group.children << text
 
@@ -415,8 +415,8 @@ module Sirena
           l.y1 = y1
           l.x2 = x2 - ARROW_SIZE
           l.y2 = y2
-          l.stroke = '#707070'
-          l.stroke_width = '2'
+          l.stroke = "#707070"
+          l.stroke_width = "2"
         end
         group.children << line
 
@@ -447,19 +447,19 @@ module Sirena
                      "#{x2},#{y2}",
                      "#{x2 - ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
                      "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
-                   ].join(' ')
+                   ].join(" ")
                  else
                    [
                      "#{x2},#{y2}",
                      "#{x2 + ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
                      "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
-                   ].join(' ')
+                   ].join(" ")
                  end
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
-          p.fill = '#707070'
-          p.stroke = '#707070'
+          p.fill = "#707070"
+          p.stroke = "#707070"
         end
         group.children << polygon
       end
@@ -470,17 +470,17 @@ module Sirena
         label_y = (y1 + y2) / 2 - 15
 
         labels.each_with_index do |label, index|
-          font_size = index.zero? ? '12' : '10'
+          font_size = index.zero? ? "12" : "10"
           offset_y = index * 14
 
           text = Svg::Text.new.tap do |t|
             t.x = label_x
             t.y = label_y + offset_y
             t.content = label[:text]
-            t.fill = '#000000'
-            t.font_family = 'Arial, sans-serif'
+            t.fill = "#000000"
+            t.font_family = "Arial, sans-serif"
             t.font_size = font_size
-            t.text_anchor = 'middle'
+            t.text_anchor = "middle"
           end
           group.children << text
         end

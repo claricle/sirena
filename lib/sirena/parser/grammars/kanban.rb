@@ -28,7 +28,7 @@ module Sirena
         end
 
         rule(:item_line) do
-          str(' ').repeat.as(:indent) >>
+          str(" ").repeat.as(:indent) >>
             item >>
             (newline | eof)
         end
@@ -49,8 +49,8 @@ module Sirena
         end
 
         rule(:icon_modifier) do
-          str("::") >> match['iI'] >> match['cC'] >> match['oO'] >> match['nN'] >> str("(") >>
-            Atoms::GreedyRun.new('[^)]').as(:icon) >>
+          str("::") >> match["iI"] >> match["cC"] >> match["oO"] >> match["nN"] >> str("(") >>
+            Atoms::GreedyRun.new("[^)]").as(:icon) >>
             str(")")
         end
 
@@ -90,14 +90,14 @@ module Sirena
         # in the spec that pins them - see the 'reserves no other keyword'
         # example in spec/sirena/parser/kanban_spec.rb.
         rule(:reserved_token) do
-          kanban_keyword >> match['a-zA-Z0-9_'].absent?
+          kanban_keyword >> match["a-zA-Z0-9_"].absent?
         end
 
         # Parslet's `str` is case-sensitive and it offers no case-insensitive
         # literal, so the keyword is spelled out character by character.
         rule(:kanban_keyword) do
-          match['kK'] >> match['aA'] >> match['nN'] >>
-            match['bB'] >> match['aA'] >> match['nN']
+          match["kK"] >> match["aA"] >> match["nN"] >>
+            match["bB"] >> match["aA"] >> match["nN"]
         end
 
         rule(:labelled_item) do
@@ -162,7 +162,7 @@ module Sirena
         end
 
         rule(:markdown_string_body) do
-          str('`') >> match('[^"`]').repeat >> str('`') >> str('"')
+          str("`") >> match('[^"`]').repeat >> str("`") >> str('"')
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label
@@ -199,7 +199,7 @@ module Sirena
         end
 
         rule(:metadata_key) do
-          match['a-zA-Z_'] >> match['a-zA-Z0-9_'].repeat
+          match["a-zA-Z_"] >> match["a-zA-Z0-9_"].repeat
         end
 
         rule(:metadata_value) do

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../base'
-require_relative '../../diagram/flowchart'
-require_relative '../metadata_yaml'
-require_relative '../mermaid_shapes'
-require_relative '../../diagram/containment'
+require "parslet"
+require_relative "../base"
+require_relative "../../diagram/flowchart"
+require_relative "../metadata_yaml"
+require_relative "../mermaid_shapes"
+require_relative "../../diagram/containment"
 
 module Sirena
   module Parser
@@ -100,7 +100,7 @@ module Sirena
           document = metadata_document(metadata)
           # mermaid reads `doc.shape` off whatever `yaml.load` returns, so a
           # node's document that came back null throws there.
-          raise Parser::ParseError, 'Empty metadata.' if document.nil?
+          raise Parser::ParseError, "Empty metadata." if document.nil?
 
           entries(document)
         end
@@ -145,7 +145,7 @@ module Sirena
         # empty body sirena drew as a rectangle. mmdc refuses it, because
         # what is left after the comment goes is `A@{` nl `}`.
         def self.strip_metadata_comments(body)
-          body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, '')
+          body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, "")
         end
 
         # A newline inside a double-quoted value is a line break to
@@ -153,7 +153,7 @@ module Sirena
         # YAML fold it turned `"one` newline `two"` into `one two`, where
         # mmdc renders `one<br/>two`.
         def self.break_quoted_newlines(body)
-          body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, '<br/>') }
+          body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, "<br/>") }
         end
 
         # mermaid's lexer runs `/\n\s*/g` over the text between the quotes,
@@ -193,10 +193,10 @@ module Sirena
 
         # An empty repeat captures as [], not as an empty slice.
         def self.metadata_body(metadata)
-          return '' unless metadata.is_a?(Hash)
+          return "" unless metadata.is_a?(Hash)
 
           value = metadata[:body]
-          value.is_a?(Array) ? '' : value.to_s
+          value.is_a?(Array) ? "" : value.to_s
         end
 
         # Mermaid tests the value for truth before using it, so `null`,
@@ -210,7 +210,7 @@ module Sirena
         def self.usable_value(key, value)
           return nil unless truthy?(value)
 
-          value = value.first if value.is_a?(Array) && key == 'label'
+          value = value.first if value.is_a?(Array) && key == "label"
           return value if value.is_a?(String)
 
           raise Parser::ParseError, "Unusable #{key} in metadata."
@@ -230,20 +230,20 @@ module Sirena
 
         # Shape delimiter to type mapping
         SHAPE_MAP = {
-          '[]' => 'rect',
-          '()' => 'rounded',
-          '([])' => 'stadium',
-          '[[]]' => 'subroutine',
-          '[()]' => 'cylindrical',
-          '(())' => 'circle',
-          '((()))' => 'double_circle',
-          '>]' => 'asymmetric',
-          '{}' => 'rhombus',
-          '{{}}' => 'hexagon',
-          '[//]' => 'parallelogram',
-          '[\\\\]' => 'parallelogram_alt',
-          '[/\\]' => 'trapezoid',
-          '[\\/]' => 'trapezoid_alt',
+          "[]" => "rect",
+          "()" => "rounded",
+          "([])" => "stadium",
+          "[[]]" => "subroutine",
+          "[()]" => "cylindrical",
+          "(())" => "circle",
+          "((()))" => "double_circle",
+          ">]" => "asymmetric",
+          "{}" => "rhombus",
+          "{{}}" => "hexagon",
+          "[//]" => "parallelogram",
+          '[\\\\]' => "parallelogram_alt",
+          '[/\\]' => "trapezoid",
+          '[\\/]' => "trapezoid_alt",
         }.freeze
 
         # Which marker each character draws. One table serves both ends
@@ -252,8 +252,8 @@ module Sirena
         # `Grammars::Flowchart`, which are the sole producers of this
         # token.
         LINK_MARKERS = {
-          '>' => 'arrow', '<' => 'arrow',
-          'x' => 'cross', 'o' => 'circle'
+          ">" => "arrow", "<" => "arrow",
+          "x" => "cross", "o" => "circle"
         }.freeze
         private_constant :LINK_MARKERS
 
@@ -270,11 +270,11 @@ module Sirena
         # `BR` TB. Keeping the raw lexeme sent the three glyphs down the
         # default branch in the graph transform and drew them top-to-bottom.
         DIRECTION_ALIASES = {
-          '<' => 'RL',
-          '>' => 'LR',
-          '^' => 'BT',
-          'v' => 'TB',
-          'BR' => 'TB',
+          "<" => "RL",
+          ">" => "LR",
+          "^" => "BT",
+          "v" => "TB",
+          "BR" => "TB",
         }.freeze
 
         # Mermaid honours a leading marker only when the trailing one
@@ -283,12 +283,12 @@ module Sirena
         # dots. `o==x` is no thicker than `o--x`, while `<-.-x` stays
         # dotted. Both were read as two-ended links here.
         def self.link_type(token)
-          return 'invisible' if token.start_with?('~')
+          return "invisible" if token.start_with?("~")
 
           head = LINK_MARKERS[token[-1]]
           tail = LINK_MARKERS[token[0]]
           matched = !head.nil? && head == tail
-          ends = matched ? "#{head}_both" : head || 'line'
+          ends = matched ? "#{head}_both" : head || "line"
 
           "#{link_weight(token, tail, matched)}#{ends}"
         end
@@ -297,10 +297,10 @@ module Sirena
         # A thick body keeps its weight only when it carries no leading
         # marker, or a leading marker mermaid actually honours.
         def self.link_weight(token, tail, matched)
-          return 'dotted_' if token.include?('.')
-          return 'thick_' if token.include?('=') && (matched || tail.nil?)
+          return "dotted_" if token.include?(".")
+          return "thick_" if token.include?("=") && (matched || tail.nil?)
 
-          ''
+          ""
         end
         private_class_method :link_weight
 
@@ -320,7 +320,7 @@ module Sirena
         ) do
           delims = "#{o}#{c}"
           {
-            shape_type: SHAPE_MAP[delims] || 'rect',
+            shape_type: SHAPE_MAP[delims] || "rect",
             label: l.to_s.strip,
           }
         end
@@ -335,8 +335,8 @@ module Sirena
         ) do
           delims = "#{o}#{c}"
           {
-            shape_type: SHAPE_MAP[delims] || 'rect',
-            label: '',
+            shape_type: SHAPE_MAP[delims] || "rect",
+            label: "",
           }
         end
 
@@ -349,7 +349,7 @@ module Sirena
           Diagram::FlowchartNode.new.tap do |n|
             n.id = node_data[:node_id]
             n.label = node_data[:label] || node_data[:node_id]
-            n.shape = node_data[:shape_type] || 'rect'
+            n.shape = node_data[:shape_type] || "rect"
             n.classes = node_data[:classes] if node_data[:classes]
           end
         end
@@ -414,7 +414,7 @@ module Sirena
               process_node_edge_statement(diagram, stmt, parents.last, context)
             elsif stmt[:node_id]
               # Standalone node
-              node_data = { node_id: stmt[:node_id], shape_type: 'rect', label: stmt[:node_id] }
+              node_data = { node_id: stmt[:node_id], shape_type: "rect", label: stmt[:node_id] }
               add_or_update_node(diagram, node_data)
               claim_member(parents.last, stmt[:node_id].to_s, context)
             elsif stmt[:subgraph_keyword]
@@ -435,10 +435,10 @@ module Sirena
         # mmdc refuses `linkStyle 1` when only edge 0 has been drawn so
         # far, so the count is the edges written above the statement.
         def self.check_link_indices(diagram, targets)
-          return if targets == 'default'
+          return if targets == "default"
 
           last = diagram.edges.size - 1
-          targets.split(',').each do |token|
+          targets.split(",").each do |token|
             index = token.to_i
             # `00` and `01` name no edge: mermaid looks the text up as a key.
             next if index.to_s == token && index <= last
@@ -471,13 +471,13 @@ module Sirena
             word = text.to_s[LINK_STYLE_KEYWORD, 1] or next
             raise Parser::ParseError,
                   "linkStyle cannot use `#{word}` here: " \
-                  'write `interpolate <curve>` first, then the styles.'
+                  "write `interpolate <curve>` first, then the styles."
           end
           # mermaid runs the strip over the whole source line, so a curve
           # name and the styles after it share one entity check even
           # though the grammar splits them into two fields. The `;` that
           # ends the statement is part of an entity too.
-          text = [stmt[:link_curve], stmt[:link_props]].compact.join(' ')
+          text = [stmt[:link_curve], stmt[:link_props]].compact.join(" ")
           check_link_entities("#{text}#{stmt[:link_end]}")
         end
         private_class_method :check_link_words
@@ -487,7 +487,7 @@ module Sirena
 
           raise Parser::ParseError,
                 "linkStyle reads `#{entity}` as an HTML entity; " \
-                'drop the `;` after the colour.'
+                "drop the `;` after the colour."
         end
         private_class_method :check_link_entities
 
@@ -498,7 +498,7 @@ module Sirena
           return if diagram.find_node(target.to_s)
           return if context.edge_ids.include?(target.to_s)
 
-          node_data = { node_id: target, shape_type: 'rect', label: target }
+          node_data = { node_id: target, shape_type: "rect", label: target }
           add_or_update_node(diagram, node_data)
         end
 
@@ -606,7 +606,7 @@ module Sirena
           parent, child = loop_found
           raise Parser::ParseError,
                 "Setting #{parent} as parent of #{child} would create " \
-                'a cycle.'
+                "a cycle."
         end
 
         # Declaration order is kept in the model. Ownership is independent:
@@ -839,10 +839,10 @@ module Sirena
         # quotes of a quoted run are delimiters, not text.
         # @raise [Parser::ParseError] on a label that nothing is left of
         def self.inline_label(label)
-          text = label.to_s.gsub(COMMENT_LINE, '').delete('"')
+          text = label.to_s.gsub(COMMENT_LINE, "").delete('"')
           return text unless text.empty?
 
-          raise Parser::ParseError, 'An inline link label cannot be empty.'
+          raise Parser::ParseError, "An inline link label cannot be empty."
         end
         private_class_method :inline_label
         # The nodes one side of a link names: the first, and any that
@@ -912,7 +912,7 @@ module Sirena
           open = edge_data[:open].to_s
           close = edge_data[:close].to_s
           reject_unmatched_marker(open, close)
-          close = close[1..] if open.start_with?('<') && close.match?(/\A[ox]/)
+          close = close[1..] if open.start_with?("<") && close.match?(/\A[ox]/)
           return "#{open}#{close}" unless lifts_start_head?(open, close)
 
           "#{close[0]}#{open}#{close[1..]}"
@@ -924,7 +924,7 @@ module Sirena
         def self.lifts_start_head?(open, close)
           return false if open.match?(/\A[ox<]/)
 
-          close.start_with?('<') ||
+          close.start_with?("<") ||
             (close.match?(/\A[ox]/) && close[-1] == close[0])
         end
         private_class_method :lifts_start_head?
@@ -934,7 +934,7 @@ module Sirena
 
           raise Parser::ParseError,
                 "The link #{open}#{close} opens with #{open[0]} " \
-                'and does not close with it.'
+                "and does not close with it."
         end
 
         # An opening `<` closes on a head and takes no second `<` start
@@ -950,15 +950,15 @@ module Sirena
                           close[-1] != head_for(close[0])
 
           case marker
-          when 'x', 'o' then close[-1] == marker && close[0] != marker
-          when '<' then close[-1] == '>' && !close.start_with?('<')
+          when "x", "o" then close[-1] == marker && close[0] != marker
+          when "<" then close[-1] == ">" && !close.start_with?("<")
           else true
           end
         end
         private_class_method :marker_closed?
 
         def self.head_for(start)
-          start == '<' ? '>' : start
+          start == "<" ? ">" : start
         end
         private_class_method :head_for
         private_class_method :reject_unmatched_marker
@@ -992,8 +992,8 @@ module Sirena
 
           {
             node_id: node_id,
-            shape_type: metadata_shape(entries['shape']) || shape_type,
-            label: entries['label'] || label,
+            shape_type: metadata_shape(entries["shape"]) || shape_type,
+            label: entries["label"] || label,
             classes: node_hash[:inline_class]&.to_s,
           }
         end
@@ -1009,8 +1009,8 @@ module Sirena
           # `A[ ]` is an EMPTY label, not an absent one: mmdc draws a node
           # with nothing in it, and treating it as absent named the node
           # after itself and kept an older label on a re-mention.
-          label = label.to_s.gsub(COMMENT_LINE, '') if delims == '()'
-          [SHAPE_MAP[delims] || 'rect', label.nil? ? nil : label.to_s.strip]
+          label = label.to_s.gsub(COMMENT_LINE, "") if delims == "()"
+          [SHAPE_MAP[delims] || "rect", label.nil? ? nil : label.to_s.strip]
         end
       end
     end

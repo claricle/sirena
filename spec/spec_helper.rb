@@ -45,17 +45,17 @@ RSpec.configure do |config|
       next if scheduled.empty?
 
       more = scheduled.size - 1
-      suffix = more.zero? ? '' : " and #{more} more"
+      suffix = more.zero? ? "" : " and #{more} more"
       raise "COVERAGE=true scheduled #{scheduled.size} :corpus-tagged example(s) to run " \
             "instrumented (#{scheduled.first.full_description.inspect}#{suffix}) -- this " \
-            'would inflate coverage.json. Run without COVERAGE, or exclude with --tag ~corpus.'
+            "would inflate coverage.json. Run without COVERAGE, or exclude with --tag ~corpus."
     end
   end
-  config.example_status_persistence_file_path = 'spec/examples.txt'
+  config.example_status_persistence_file_path = "spec/examples.txt"
   config.disable_monkey_patching!
   config.warnings = true
 
-  config.default_formatter = 'doc' if config.files_to_run.one?
+  config.default_formatter = "doc" if config.files_to_run.one?
 
   config.profile_examples = 10
   config.order = :random

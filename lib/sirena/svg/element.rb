@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'escaping'
-require 'lutaml/model'
-require_relative 'numbers'
-require_relative 'style'
+require_relative "escaping"
+require "lutaml/model"
+require_relative "numbers"
+require_relative "style"
 
 module Sirena
   module Svg
@@ -25,7 +25,7 @@ module Sirena
 
       # class_name is the only reader whose SVG name is not just its own
       # with underscores hyphenated.
-      ATTRIBUTE_NAMES = { class_name: 'class' }.freeze
+      ATTRIBUTE_NAMES = { class_name: "class" }.freeze
       private_constant :ATTRIBUTE_NAMES
 
       # The SVG name for a Ruby attribute reader.
@@ -33,7 +33,7 @@ module Sirena
       # @param name [Symbol] the reader
       # @return [String] the attribute name to emit
       def self.svg_name(name)
-        ATTRIBUTE_NAMES.fetch(name) { name.to_s.tr('_', '-') }
+        ATTRIBUTE_NAMES.fetch(name) { name.to_s.tr("_", "-") }
       end
       private_class_method :svg_name
 
@@ -101,7 +101,7 @@ module Sirena
       #
       # @return [String] XML string
       def element_markup
-        tag = self.class.name.split('::').last.downcase
+        tag = self.class.name.split("::").last.downcase
         attrs = build_attributes
 
         "<#{tag}#{attrs}/>"

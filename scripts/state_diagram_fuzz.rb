@@ -48,12 +48,12 @@
 # two parsers agree on how to identify a bare, standalone state id --
 # and, per the KNOWN_DIVERGENCES below, they currently do not.
 
-require 'bundler/setup'
+require "bundler/setup"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require_relative 'mermaid_fuzz'
+require "sirena"
+require_relative "mermaid_fuzz"
 
 module StateDiagramFuzz
   WILD_CHARS = MermaidFuzz::IdentifierGenerator::DEFAULT_WILD_CHARS
@@ -68,7 +68,7 @@ module StateDiagramFuzz
     # Sirena's state_id falls through to the narrow common `identifier`
     # rule and has no case for a bare "$". mermaid accepts it as an
     # ordinary state id.
-    MermaidFuzz::Case.new('known-1-dollar-state-id', "stateDiagram-v2\n    $\n"),
+    MermaidFuzz::Case.new("known-1-dollar-state-id", "stateDiagram-v2\n    $\n"),
   ].freeze
 
   # Runs Sirena's own StateDiagram in-process, via
@@ -81,11 +81,11 @@ module StateDiagramFuzz
   end
 
   RUNNER_KWARGS = {
-    label: 'state_diagram',
+    label: "state_diagram",
     generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
-    mermaid_getter: 'getStates',
+    mermaid_getter: "getStates",
     mermaid_preflight: "stateDiagram-v2\n    A\n",
   }.freeze
 end

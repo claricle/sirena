@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Base do
   # The helpers under test are protected; a subclass that widens them is the
@@ -20,20 +20,20 @@ RSpec.describe Sirena::Renderer::Base do
   let(:themeless) { renderer_class.new.tap { |r| r.theme = nil } }
   let(:hostile) { renderer_class.new.tap { |r| r.theme = Object.new } }
 
-  describe '#render' do
-    it 'names the subclass that forgot to implement it' do
+  describe "#render" do
+    it "names the subclass that forgot to implement it" do
       expect { renderer_class.new.render(nil) }
         .to raise_error(NotImplementedError, /#{Regexp.escape(renderer_class.to_s)} must implement #render/)
     end
   end
 
-  describe 'theme accessors' do
-    it 'reads the value from the active theme, not the default one' do
+  describe "theme accessors" do
+    it "reads the value from the active theme, not the default one" do
       expect(renderer.theme_color(:node_fill)).to eq(dark.colors.node_fill)
       expect(dark.colors.node_fill).not_to eq(Sirena::Theme::Registry.get(:default).colors.node_fill)
     end
 
-    it 'reads each accessor from its own section of the theme' do
+    it "reads each accessor from its own section of the theme" do
       expect([
                renderer.theme_color(:node_fill), renderer.theme_typography(:font_family),
                renderer.theme_shape(:stroke_width), renderer.theme_spacing(:rank_spacing),
@@ -60,8 +60,8 @@ RSpec.describe Sirena::Renderer::Base do
     end
   end
 
-  describe 'apply_theme_to_*' do
-    it 'paints a node with the theme fill, stroke and stroke width' do
+  describe "apply_theme_to_*" do
+    it "paints a node with the theme fill, stroke and stroke width" do
       element = Sirena::Svg::Rect.new
       renderer.apply_theme_to_node(element)
 
@@ -71,7 +71,7 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'paints an edge with the theme stroke and stroke width, leaving fill alone' do
+    it "paints an edge with the theme stroke and stroke width, leaving fill alone" do
       element = Sirena::Svg::Path.new
       renderer.apply_theme_to_edge(element)
 
@@ -80,7 +80,7 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'paints text with the theme colour, family and size' do
+    it "paints text with the theme colour, family and size" do
       element = Sirena::Svg::Text.new
       renderer.apply_theme_to_text(element)
 
@@ -90,7 +90,7 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'leaves every element untouched when the theme has nothing to say' do
+    it "leaves every element untouched when the theme has nothing to say" do
       node = Sirena::Svg::Rect.new
       edge = Sirena::Svg::Path.new
       text = Sirena::Svg::Text.new
@@ -104,8 +104,8 @@ RSpec.describe Sirena::Renderer::Base do
     end
   end
 
-  describe '#default_style' do
-    it 'takes node colours and stroke width from the theme' do
+  describe "#default_style" do
+    it "takes node colours and stroke width from the theme" do
       css = renderer.default_style(:node).to_css
 
       expect(css).to eq(
@@ -114,7 +114,7 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'draws an edge unfilled, with the theme stroke' do
+    it "draws an edge unfilled, with the theme stroke" do
       css = renderer.default_style(:edge).to_css
 
       expect(css).to eq(
@@ -123,7 +123,7 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'centres text and takes colour, family and size from the theme' do
+    it "centres text and takes colour, family and size from the theme" do
       css = renderer.default_style(:text).to_css
 
       expect(css).to eq(
@@ -133,68 +133,68 @@ RSpec.describe Sirena::Renderer::Base do
       )
     end
 
-    it 'falls back to plain black-on-white values when the theme is absent' do
+    it "falls back to plain black-on-white values when the theme is absent" do
       expect(themeless.default_style(:node).to_css)
-        .to eq('fill:#ffffff;stroke:#000000;stroke-width:2.0')
+        .to eq("fill:#ffffff;stroke:#000000;stroke-width:2.0")
       expect(themeless.default_style(:edge).to_css)
-        .to eq('fill:none;stroke:#000000;stroke-width:2.0')
+        .to eq("fill:none;stroke:#000000;stroke-width:2.0")
       expect(themeless.default_style(:text).to_css).to eq(
-        'fill:#000000;font-family:Arial, sans-serif;font-size:14.0;' \
-        'text-anchor:middle',
+        "fill:#000000;font-family:Arial, sans-serif;font-size:14.0;" \
+        "text-anchor:middle",
       )
     end
 
-    it 'is empty for an element type it does not know' do
-      expect(renderer.default_style(:cloud).to_css).to eq('')
+    it "is empty for an element type it does not know" do
+      expect(renderer.default_style(:cloud).to_css).to eq("")
     end
   end
 
-  describe '#create_path_data' do
-    it 'runs a straight line when there are no bend points' do
-      expect(renderer.create_path_data({ x: 1, y: 2 }, { x: 9, y: 8 })).to eq('M 1 2 L 9 8')
+  describe "#create_path_data" do
+    it "runs a straight line when there are no bend points" do
+      expect(renderer.create_path_data({ x: 1, y: 2 }, { x: 9, y: 8 })).to eq("M 1 2 L 9 8")
     end
 
-    it 'visits the bend points in order between start and end' do
+    it "visits the bend points in order between start and end" do
       bends = [{ x: 3, y: 4 }, { x: 5, y: 6 }]
 
       expect(renderer.create_path_data({ x: 1, y: 2 }, { x: 9, y: 8 }, bends))
-        .to eq('M 1 2 L 3 4 L 5 6 L 9 8')
+        .to eq("M 1 2 L 3 4 L 5 6 L 9 8")
     end
   end
 
-  describe 'document sizing' do
-    it 'defaults to 800x600' do
+  describe "document sizing" do
+    it "defaults to 800x600" do
       expect([renderer.calculate_width(nil), renderer.calculate_height(nil)])
         .to eq([800, 600])
     end
 
-    it 'grows each dimension by twice the padding and starts the viewBox at zero' do
+    it "grows each dimension by twice the padding and starts the viewBox at zero" do
       doc = renderer.create_document(nil, padding: 5)
 
       expect([doc.width, doc.height, doc.view_box])
-        .to eq([810, 610, '0 0 810 610'])
+        .to eq([810, 610, "0 0 810 610"])
     end
 
-    it 'pads by 20 when no padding is given' do
-      expect(renderer.create_document(nil).view_box).to eq('0 0 840 640')
+    it "pads by 20 when no padding is given" do
+      expect(renderer.create_document(nil).view_box).to eq("0 0 840 640")
     end
 
-    it 'sets the overflow attribute only when asked' do
+    it "sets the overflow attribute only when asked" do
       expect(renderer.create_document(nil).overflow).to be_nil
-      expect(renderer.create_document(nil, overflow: 'hidden').overflow)
-        .to eq('hidden')
+      expect(renderer.create_document(nil, overflow: "hidden").overflow)
+        .to eq("hidden")
     end
   end
 
-  describe '#create_document_from_layout' do
-    it 'sizes the document straight from layout width/height with no padding' do
+  describe "#create_document_from_layout" do
+    it "sizes the document straight from layout width/height with no padding" do
       doc = renderer.create_document_from_layout({ width: 100, height: 50 })
 
       expect([doc.width, doc.height, doc.view_box])
-        .to eq([100.0, 50.0, '0 0 100.0 50.0'])
+        .to eq([100.0, 50.0, "0 0 100.0 50.0"])
     end
 
-    it 'leaves @offset_x/@offset_y unset' do
+    it "leaves @offset_x/@offset_y unset" do
       renderer.create_document_from_layout({ width: 100, height: 50 })
 
       expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
@@ -202,22 +202,22 @@ RSpec.describe Sirena::Renderer::Base do
     end
   end
 
-  describe '#build_document_from_layout' do
-    it 'sizes the document straight from layout width/height with no padding' do
+  describe "#build_document_from_layout" do
+    it "sizes the document straight from layout width/height with no padding" do
       doc = renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 0)
 
       expect([doc.width, doc.height, doc.view_box])
-        .to eq([100.0, 50.0, '0 0 100.0 50.0'])
+        .to eq([100.0, 50.0, "0 0 100.0 50.0"])
     end
 
-    it 'leaves @offset_x/@offset_y unset when padding is zero' do
+    it "leaves @offset_x/@offset_y unset when padding is zero" do
       renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 0)
 
       expect(renderer.instance_variable_defined?(:@offset_x)).to be(false)
       expect(renderer.instance_variable_defined?(:@offset_y)).to be(false)
     end
 
-    it 'grows by twice the padding and offsets the renderer only when padding is given' do
+    it "grows by twice the padding and offsets the renderer only when padding is given" do
       doc = renderer.send(:build_document_from_layout, { width: 100, height: 50 }, padding: 40)
 
       expect([doc.width, doc.height, renderer.instance_variable_get(:@offset_x),
@@ -230,7 +230,7 @@ RSpec.describe Sirena::Renderer::Base do
   # byte-identical to origin/main's, only the internal delegation changed.
   # Asserting the delegation itself does go red -- reverting the diff removes
   # the build_document_from_layout call entirely, not just its padding value.
-  describe 'padded subclasses delegate create_document_from_layout' do
+  describe "padded subclasses delegate create_document_from_layout" do
     {
       Sirena::Renderer::GitGraph => 40, Sirena::Renderer::Kanban => 40, Sirena::Renderer::Mindmap => 40
     }.each do |renderer_klass, padding|
@@ -246,8 +246,8 @@ RSpec.describe Sirena::Renderer::Base do
     end
   end
 
-  describe '#initialize' do
-    it 'uses the default theme when none is given' do
+  describe "#initialize" do
+    it "uses the default theme when none is given" do
       expect(renderer_class.new.theme).to equal(Sirena::Theme::Registry.get(:default))
     end
   end

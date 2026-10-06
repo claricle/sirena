@@ -1,40 +1,40 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'sirena/renderer/user_journey'
+require "spec_helper"
+require "sirena/renderer/user_journey"
 
 RSpec.describe Sirena::Renderer::UserJourney do
   let(:renderer) { described_class.new }
 
-  describe '#render' do
+  describe "#render" do
     let(:graph) do
       {
-        id: 'user_journey',
+        id: "user_journey",
         children: [
           {
-            id: 'task_0',
+            id: "task_0",
             x: 100,
             y: 100,
             width: 150,
             height: 80,
             metadata: {
-              name: 'Browse products',
+              name: "Browse products",
               score: 5,
               score_color: :green,
-              actors: ['Customer'],
-              section_name: 'Shopping',
+              actors: ["Customer"],
+              section_name: "Shopping",
             },
           },
         ],
         edges: [],
         metadata: {
-          title: 'My Journey',
-          sections: ['Shopping'],
+          title: "My Journey",
+          sections: ["Shopping"],
         },
       }
     end
 
-    it 'renders graph to SVG document' do
+    it "renders graph to SVG document" do
       svg = renderer.render(graph)
 
       expect(svg).to be_a(Sirena::Svg::Document)
@@ -42,16 +42,16 @@ RSpec.describe Sirena::Renderer::UserJourney do
       expect(svg.height).to be > 0
     end
 
-    it 'includes task boxes in SVG' do
+    it "includes task boxes in SVG" do
       svg = renderer.render(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
       expect(groups.length).to be > 0
-      expect(groups.first.id).to include('task-')
+      expect(groups.first.id).to include("task-")
     end
 
-    it 'renders task boxes as rectangles' do
+    it "renders task boxes as rectangles" do
       svg = renderer.render(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
@@ -61,19 +61,19 @@ RSpec.describe Sirena::Renderer::UserJourney do
       expect(rects).not_to be_empty
     end
 
-    it 'uses score-based colors for task boxes' do
+    it "uses score-based colors for task boxes" do
       svg = renderer.render(graph)
 
       groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.include?('task-')
+        c.is_a?(Sirena::Svg::Group) && c.id&.include?("task-")
       end
 
       rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
 
-      expect(rects.first.fill).to eq('#48dbfb')
+      expect(rects.first.fill).to eq("#48dbfb")
     end
 
-    it 'renders task content as text elements' do
+    it "renders task content as text elements" do
       svg = renderer.render(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
@@ -83,54 +83,54 @@ RSpec.describe Sirena::Renderer::UserJourney do
       expect(texts).not_to be_empty
     end
 
-    it 'renders title as text element' do
+    it "renders title as text element" do
       svg = renderer.render(graph)
 
       texts = svg.children.grep(Sirena::Svg::Text)
 
       # `content` is `collection: true`, so read it through Array(...).
-      title_text = texts.find { |t| Array(t.content).join == 'My Journey' }
+      title_text = texts.find { |t| Array(t.content).join == "My Journey" }
       expect(title_text).not_to be_nil
     end
 
-    it 'renders section headers as text elements' do
+    it "renders section headers as text elements" do
       svg = renderer.render(graph)
 
       texts = svg.children.grep(Sirena::Svg::Text)
 
-      section_text = texts.find { |t| Array(t.content).join == 'Shopping' }
+      section_text = texts.find { |t| Array(t.content).join == "Shopping" }
       expect(section_text).not_to be_nil
     end
 
-    it 'renders timeline arrows between tasks' do
+    it "renders timeline arrows between tasks" do
       graph_with_edges = graph.dup
       graph_with_edges[:children] << {
-        id: 'task_1',
+        id: "task_1",
         x: 300,
         y: 100,
         width: 150,
         height: 80,
         metadata: {
-          name: 'Select item',
+          name: "Select item",
           score: 4,
           score_color: :green,
-          actors: ['Customer'],
-          section_name: 'Shopping',
+          actors: ["Customer"],
+          section_name: "Shopping",
         },
       }
       graph_with_edges[:edges] = [
         {
-          id: 'flow_0',
-          sources: ['task_0'],
-          targets: ['task_1'],
-          metadata: { type: 'sequence' },
+          id: "flow_0",
+          sources: ["task_0"],
+          targets: ["task_1"],
+          metadata: { type: "sequence" },
         },
       ]
 
       svg = renderer.render(graph_with_edges)
 
       groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.include?('arrow-')
+        c.is_a?(Sirena::Svg::Group) && c.id&.include?("arrow-")
       end
 
       expect(groups).not_to be_empty

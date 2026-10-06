@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
+require "lutaml/model"
 
 module Sirena
   module Svg
@@ -37,7 +37,7 @@ module Sirena
         properties << "font-size:#{font_size}" if font_size
         properties << "font-weight:#{font_weight}" if font_weight
         properties << "text-anchor:#{text_anchor}" if text_anchor
-        properties.join(';')
+        properties.join(";")
       end
     end
   end

@@ -59,8 +59,8 @@ RSpec.describe Sirena do
       out, status = Open3.capture2e(
         "ruby", "-Ilib", "-e",
         'require "sirena/engine"; ' \
-        'puts Sirena::Engine::DiagramTypeError < Sirena::Error; ' \
-        'puts Sirena::Engine::PipelineError < Sirena::Error'
+        "puts Sirena::Engine::DiagramTypeError < Sirena::Error; " \
+        "puts Sirena::Engine::PipelineError < Sirena::Error"
       )
 
       expect(status).to be_success, "expected exit 0, got #{status.exitstatus}:\n#{out}"

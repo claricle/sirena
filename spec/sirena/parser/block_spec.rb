@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Parser::Block do
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    context 'with basic block diagram' do
+  describe "#parse" do
+    context "with basic block diagram" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -15,16 +15,16 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses successfully' do
+      it "parses successfully" do
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Block)
         expect(diagram.blocks.length).to eq(2)
-        expect(diagram.blocks.first.id).to eq('A')
-        expect(diagram.blocks.last.id).to eq('B')
+        expect(diagram.blocks.first.id).to eq("A")
+        expect(diagram.blocks.last.id).to eq("B")
       end
     end
 
-    context 'with columns statement' do
+    context "with columns statement" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -34,14 +34,14 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses columns value' do
+      it "parses columns value" do
         diagram = parser.parse(source)
         expect(diagram.columns).to eq(2)
         expect(diagram.blocks.length).to eq(2)
       end
     end
 
-    context 'with block labels' do
+    context "with block labels" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -50,14 +50,14 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses block labels' do
+      it "parses block labels" do
         diagram = parser.parse(source)
-        expect(diagram.blocks.first.label).to eq('Block A')
-        expect(diagram.blocks.last.label).to eq('Block B')
+        expect(diagram.blocks.first.label).to eq("Block A")
+        expect(diagram.blocks.last.label).to eq("Block B")
       end
     end
 
-    context 'with block widths' do
+    context "with block widths" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -67,14 +67,14 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses block widths' do
+      it "parses block widths" do
         diagram = parser.parse(source)
         expect(diagram.blocks.first.width).to eq(2)
         expect(diagram.blocks.last.width).to eq(1)
       end
     end
 
-    context 'with connections' do
+    context "with connections" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -84,16 +84,16 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses connections' do
+      it "parses connections" do
         diagram = parser.parse(source)
         expect(diagram.connections.length).to eq(1)
-        expect(diagram.connections.first.from).to eq('A')
-        expect(diagram.connections.first.to).to eq('B')
-        expect(diagram.connections.first.connection_type).to eq('arrow')
+        expect(diagram.connections.first.from).to eq("A")
+        expect(diagram.connections.first.to).to eq("B")
+        expect(diagram.connections.first.connection_type).to eq("arrow")
       end
     end
 
-    context 'with compound blocks' do
+    context "with compound blocks" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -104,17 +104,17 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses compound blocks' do
+      it "parses compound blocks" do
         diagram = parser.parse(source)
         expect(diagram.blocks.length).to eq(1)
         compound = diagram.blocks.first
         expect(compound.compound?).to be true
-        expect(compound.id).to eq('ID')
+        expect(compound.id).to eq("ID")
         expect(compound.children.length).to eq(2)
       end
     end
 
-    context 'with space blocks' do
+    context "with space blocks" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -125,14 +125,14 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses space placeholders' do
+      it "parses space placeholders" do
         diagram = parser.parse(source)
         expect(diagram.blocks.length).to eq(3)
         expect(diagram.blocks[1].space?).to be true
       end
     end
 
-    context 'with circle shape' do
+    context "with circle shape" do
       let(:source) do
         <<~MERMAID
           block-beta
@@ -140,10 +140,10 @@ RSpec.describe Sirena::Parser::Block do
         MERMAID
       end
 
-      it 'parses circle shape' do
+      it "parses circle shape" do
         diagram = parser.parse(source)
-        expect(diagram.blocks.first.shape).to eq('circle')
-        expect(diagram.blocks.first.label).to eq('Circle')
+        expect(diagram.blocks.first.shape).to eq("circle")
+        expect(diagram.blocks.first.label).to eq("Circle")
       end
     end
   end

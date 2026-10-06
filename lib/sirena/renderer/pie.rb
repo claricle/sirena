@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../svg/document'
-require_relative '../svg/circle'
-require_relative '../svg/path'
-require_relative '../svg/text'
-require_relative '../svg/group'
+require_relative "base"
+require_relative "../svg/document"
+require_relative "../svg/circle"
+require_relative "../svg/path"
+require_relative "../svg/text"
+require_relative "../svg/group"
 
 module Sirena
   module Renderer
@@ -27,9 +27,9 @@ module Sirena
 
       # Default color palette for slices
       DEFAULT_COLORS = [
-        '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000',
-        '#5B9BD5', '#70AD47', '#264478', '#9E480E',
-        '#636363', '#997300', '#255E91', '#43682B'
+        "#4472C4", "#ED7D31", "#A5A5A5", "#FFC000",
+        "#5B9BD5", "#70AD47", "#264478", "#9E480E",
+        "#636363", "#997300", "#255E91", "#43682B"
       ].freeze
 
       # Renders a pie chart diagram to SVG.
@@ -79,12 +79,12 @@ module Sirena
           t.x = PIE_CENTER_X
           t.y = TITLE_Y
           t.content = graph[:title]
-          t.fill = theme_color(:label_text) || '#000000'
+          t.fill = theme_color(:label_text) || "#000000"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_large) || 18).to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         svg << title_text
       end
@@ -122,8 +122,8 @@ module Sirena
         path = Svg::Path.new.tap do |p|
           p.d = path_data
           p.fill = color
-          p.stroke = theme_color(:node_stroke) || '#ffffff'
-          p.stroke_width = '2'
+          p.stroke = theme_color(:node_stroke) || "#ffffff"
+          p.stroke_width = "2"
           p.id = "slice-#{index}"
         end
 
@@ -149,8 +149,8 @@ module Sirena
           "M #{PIE_CENTER_X} #{PIE_CENTER_Y}",
           "L #{start_x} #{start_y}",
           "A #{PIE_RADIUS} #{PIE_RADIUS} 0 #{large_arc} 1 #{end_x} #{end_y}",
-          'Z',
-        ].join(' ')
+          "Z",
+        ].join(" ")
       end
 
       def render_labels(graph, svg)
@@ -196,12 +196,12 @@ module Sirena
           t.x = x
           t.y = y
           t.content = label_text
-          t.fill = theme_color(:label_text) || '#000000'
+          t.fill = theme_color(:label_text) || "#000000"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_small) || 12).to_s
-          t.text_anchor = 'middle'
-          t.dominant_baseline = 'middle'
+          t.text_anchor = "middle"
+          t.dominant_baseline = "middle"
         end
 
         svg << text

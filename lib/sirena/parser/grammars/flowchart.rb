@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'common'
-require_relative 'mermaid_unicode_text'
+require_relative "common"
+require_relative "mermaid_unicode_text"
 
 module Sirena
   module Parser
@@ -82,7 +82,7 @@ module Sirena
         # `flowchart` alternative, or the bare keyword would match first
         # and leave `-elk` to fail against the direction.
         rule(:header) do
-          (str('flowchart-elk') | str('flowchart') | str('graph')).as(:header) >>
+          (str("flowchart-elk") | str("flowchart") | str("graph")).as(:header) >>
             (directed_header | undirected_header)
         end
 
@@ -111,7 +111,7 @@ module Sirena
         # rejects `graph TD;%% c`, while `;` then a newline then `%% c` is
         # ordinary.
         rule(:separator) do
-          (semicolon >> space?).repeat(1) >> str('%%').absent?
+          (semicolon >> space?).repeat(1) >> str("%%").absent?
         end
 
         # Node statements tolerate a space before the separator
@@ -129,12 +129,12 @@ module Sirena
         rule(:direction) { (word_direction | glyph_direction).as(:dir_value) }
 
         rule(:word_direction) do
-          str('TD') | str('TB') | str('BT') | str('BR') | str('LR') |
-            str('RL') | str('v')
+          str("TD") | str("TB") | str("BT") | str("BR") | str("LR") |
+            str("RL") | str("v")
         end
 
         # These three need no gap after the keyword — mmdc draws `graph<`.
-        rule(:glyph_direction) { match['<>^'] }
+        rule(:glyph_direction) { match["<>^"] }
 
         # `direction LR` inside a subgraph turns that box's contents.
         # mmdc 11.12.0 accepts a top-level one too but does not honour it,
@@ -145,7 +145,7 @@ module Sirena
         # 11.12.0 renders `direction LR;A`, and `line_end` takes the
         # semicolon only when a newline follows it.
         rule(:direction_statement) do
-          str('direction').as(:direction_keyword) >> space >>
+          str("direction").as(:direction_keyword) >> space >>
             statement_direction >> statement_end
         end
 
@@ -154,8 +154,8 @@ module Sirena
         # them after `direction` — measured on 11.12.0. Reusing the
         # header rule here accepted three sources mermaid will not draw.
         rule(:statement_direction) do
-          (str('TD') | str('TB') | str('BT') | str('LR') |
-            str('RL')).as(:dir_value)
+          (str("TD") | str("TB") | str("BT") | str("LR") |
+            str("RL")).as(:dir_value)
         end
 
         rule(:statements) do
@@ -191,8 +191,8 @@ module Sirena
         # The text may be empty — mmdc renders `accTitle:` with nothing
         # after it.
         rule(:acc_line) do
-          (str('accTitle') | str('accDescr')).as(:acc_keyword) >>
-            acc_gap >> str(':') >> acc_gap >>
+          (str("accTitle") | str("accDescr")).as(:acc_keyword) >>
+            acc_gap >> str(":") >> acc_gap >>
             (newline.absent? >> any).repeat.as(:acc_text) >> (newline | eof)
         end
 
@@ -235,12 +235,12 @@ module Sirena
         # source just ends the repeat. The strip is anchored to the line
         # start, so mmdc closes the block in `accDescr {text %% }`.
         rule(:comment_line) do
-          newline >> line_space.repeat >> str('%%') >>
+          newline >> line_space.repeat >> str("%%") >>
             (newline.absent? >> any).repeat
         end
 
         rule(:acc_block_body) do
-          (comment_line | (str('}').absent? >> any)).repeat
+          (comment_line | (str("}").absent? >> any)).repeat
         end
 
         # The block form ends at its closing brace, with no line end
@@ -250,22 +250,22 @@ module Sirena
         # failing, because mmdc draws `accDescr {Unterminated` and
         # swallows every line after it.
         rule(:acc_descr_block) do
-          str('accDescr').as(:acc_keyword) >> acc_gap >> str('{') >>
+          str("accDescr").as(:acc_keyword) >> acc_gap >> str("{") >>
             acc_block_body.as(:acc_text) >>
-            (str('}') >> line_space.repeat >> semicolon.maybe).maybe
+            (str("}") >> line_space.repeat >> semicolon.maybe).maybe
         end
 
         # Subgraph: subgraph id [title] ... end, or `subgraph id title`
         # with the rest of the line as the title.
         rule(:subgraph_statement) do
-          str('subgraph').as(:subgraph_keyword) >> space >>
+          str("subgraph").as(:subgraph_keyword) >> space >>
             subgraph_id.as(:subgraph_id) >>
             subgraph_name_and_title >>
             declaration_end >>
             ws? >>
             statements.maybe.as(:subgraph_statements) >>
             ws? >>
-            str('end').as(:subgraph_end) >>
+            str("end").as(:subgraph_end) >>
             subgraph_close
         end
 
@@ -333,7 +333,7 @@ module Sirena
         # Mermaid only strips a comment at the start of a line, so behind
         # the id it stays text and owns the rest of the line.
         rule(:comment_word) do
-          str('%%') >> (newline.absent? >> any).repeat
+          str("%%") >> (newline.absent? >> any).repeat
         end
 
         # Main's guarded name word, not a loose character run. A free
@@ -359,7 +359,7 @@ module Sirena
         # the guard is what a statement cannot start with — a comment, a
         # separator, or the end of the line.
         rule(:close_at_space) do
-          (str('%%') | semicolon | newline | eof).absent?
+          (str("%%") | semicolon | newline | eof).absent?
         end
 
         # `end` finishes its line, with any number of trailing semicolons.
@@ -373,7 +373,7 @@ module Sirena
         # same line: mmdc renders `end; B-->C` and `end;end`. A comment is
         # still not a statement, and `end; %% note` is refused.
         rule(:close_at_semicolon) do
-          semicolon_run >> str('%%').absent?
+          semicolon_run >> str("%%").absent?
         end
 
         rule(:semicolon_run) { (semicolon >> space?).repeat(1) }
@@ -381,7 +381,7 @@ module Sirena
         # A comment is not a statement, so it cannot follow a separator on
         # the same line: mmdc refuses `end; %% note` and
         # `subgraph s; %% note`.
-        rule(:no_comment) { str('%%').absent? }
+        rule(:no_comment) { str("%%").absent? }
 
         # An unbracketed name runs on past the first space: mermaid titles
         # `subgraph 1 abc` "1 abc". Every trailing word carries the same
@@ -407,11 +407,11 @@ module Sirena
             subgraph_title.maybe
         end
 
-        rule(:subgraph_end_word) { str('end') >> word_boundary }
+        rule(:subgraph_end_word) { str("end") >> word_boundary }
 
         # Style: style nodeId fill:#f9f
         rule(:style_statement) do
-          str('style').as(:style_keyword) >> space >>
+          str("style").as(:style_keyword) >> space >>
             reserved_keyword.absent? >> node_id.as(:style_target) >>
             (space >> style_property_list).as(:style_props) >>
             statement_end
@@ -486,7 +486,7 @@ module Sirena
         # every character in it is legal on its own. In a style tail and in
         # a callback name alike, `B-C`, `B.C` and `B::C` are ordinary text
         # while `B--C`, `B-.C` and `B:::C` are errors.
-        rule(:compound_token) { str(':::') | str('--') | str('-.') }
+        rule(:compound_token) { str(":::") | str("--") | str("-.") }
 
         # The single-character half of the set. Every other printable ASCII
         # character is fine in both places.
@@ -536,7 +536,7 @@ module Sirena
         # `linkStyle default ...` every one. Mermaid takes the numbers with
         # no space around a comma, and refuses `linkStyle 0 ,1 ...`.
         rule(:link_style_statement) do
-          str('linkStyle').as(:link_style_keyword) >> line_space >>
+          str("linkStyle").as(:link_style_keyword) >> line_space >>
             link_style_targets.as(:link_targets) >> line_space >>
             link_style_props >> statement_end.as(:link_end)
         end
@@ -546,7 +546,7 @@ module Sirena
         # `stroke:red interpolate basis`. The builder refuses the word
         # `interpolate` or `default` anywhere else.
         rule(:link_style_props) do
-          (str('interpolate') >> line_space >>
+          (str("interpolate") >> line_space >>
             match["^#{LINE_SPACE_CHARS}\n;"].repeat(1).as(:link_curve) >>
             (line_space.repeat(1) >> style_property_list.as(:link_props))
               .maybe) |
@@ -554,14 +554,14 @@ module Sirena
         end
 
         rule(:link_style_targets) do
-          str('default') | (link_index >> (comma >> link_index).repeat)
+          str("default") | (link_index >> (comma >> link_index).repeat)
         end
 
-        rule(:link_index) { match['0-9'].repeat(1) }
+        rule(:link_index) { match["0-9"].repeat(1) }
 
         # ClassDef: classDef className fill:#f9f
         rule(:class_def_statement) do
-          str('classDef').as(:classdef_keyword) >> space >>
+          str("classDef").as(:classdef_keyword) >> space >>
             class_name_list.as(:class_name) >>
             (space >> style_property_list).as(:class_props) >>
             statement_end
@@ -574,7 +574,7 @@ module Sirena
 
         # Class assignment: class nodeId className
         rule(:class_assignment_statement) do
-          str('class').as(:class_keyword) >> space >>
+          str("class").as(:class_keyword) >> space >>
             reserved_keyword.absent? >> node_id.as(:class_target) >> space >>
             identifier.as(:class_name) >>
             statement_end
@@ -586,7 +586,7 @@ module Sirena
         # before the action. mermaid opens its click state on `"click"\s+`,
         # so mmdc draws `click  A "url"` where a single space refused it.
         rule(:click_statement) do
-          str('click').as(:click_keyword) >> space.repeat(1) >>
+          str("click").as(:click_keyword) >> space.repeat(1) >>
             click_target.as(:click_target) >>
             (space >> click_action.as(:click_action)) >>
             statement_end
@@ -624,7 +624,7 @@ module Sirena
 
         # Once `call` has opened a callback the parens are compulsory: mmdc
         # exits 1 on `click A call cb`.
-        rule(:call_opener) { str('call') >> callback_gap }
+        rule(:call_opener) { str("call") >> callback_gap }
 
         # mermaid stops caring about line structure inside a callback, so
         # whitespace and comments are ignorable after `call` and again
@@ -645,7 +645,7 @@ module Sirena
         # `href` takes a quoted url, then at most a quoted tooltip and a
         # link target, in that order. mmdc refuses `href` on its own,
         # `href cb`, `href "u" nope` and a third quoted run.
-        rule(:href_action) { str('href') >> space >> quoted_run >> link_tail }
+        rule(:href_action) { str("href") >> space >> quoted_run >> link_tail }
 
         # The same shape without the keyword: `click A "u" "tip" _blank`.
         rule(:link_action) { quoted_run >> link_tail }
@@ -715,7 +715,7 @@ module Sirena
         # These three words also guard an id, which is why `node_keyword`
         # reaches for this rule rather than restating it.
         rule(:spaced_keyword) do
-          (str('click') | str('href') | str('call')) >>
+          (str("click") | str("href") | str("call")) >>
             (space | newline | eof).present?
         end
 
@@ -724,17 +724,17 @@ module Sirena
         # too, but that is `RESERVED_WORDS`' job now — this rule is only
         # the click-action tail, which is why it survives on its own.
         rule(:link_target) do
-          (str('_parent') | str('_blank') | str('_self') | str('_top')) >>
+          (str("_parent") | str("_blank") | str("_self") | str("_top")) >>
             word_boundary
         end
 
         # A word ends where the next character cannot continue it, and
         # mermaid counts an accent as the end: `1endé` is refused while
         # `1end_`, `1end2` and `1endx` are all ids.
-        rule(:word_boundary) { match['a-zA-Z0-9_'].absent? }
+        rule(:word_boundary) { match["a-zA-Z0-9_"].absent? }
 
         # One `x` or `o` and then a link body, with nothing between them.
-        rule(:flush_link_marker) { match['xo'] >> link_body }
+        rule(:flush_link_marker) { match["xo"] >> link_body }
 
         # Node with optional shape and edges
         rule(:node_edge_statement) do
@@ -798,7 +798,7 @@ module Sirena
         # part ways: the other five — `A:::c.-B`, `A[x]:::c.-B` and the
         # three `.->` forms — are still refused rather than read as a
         # link.
-        rule(:dot_absent) { str('.').absent? }
+        rule(:dot_absent) { str(".").absent? }
 
         # `D@{ shape: rounded, label: "DD" }` — mermaid's newer way of
         # giving a node a shape or a label, usable as a statement of its own
@@ -813,7 +813,7 @@ module Sirena
         # mermaid leaves the following `e1@` out of its LINK_ID state and
         # refuses the statement, though an ordinary link may still follow.
         rule(:node_metadata) do
-          str('@{') >> metadata_body.as(:body) >> str('}') >>
+          str("@{") >> metadata_body.as(:body) >> str("}") >>
             (line_space.repeat(1) >> edge_id_ahead).absent?
         end
 
@@ -831,7 +831,7 @@ module Sirena
             (metadata_stop.absent? >> any)).repeat
         end
 
-        rule(:metadata_stop) { str('"') | str('}') | str('^') }
+        rule(:metadata_stop) { str('"') | str("}") | str("^") }
 
         # Mermaid strips comments before lexing, so their stops are text.
         # `line_space` rather than Ruby's `\s`: the indent has to be the set
@@ -842,7 +842,7 @@ module Sirena
         # which is what makes sirena refuse `A@{ shape: rect` nl `%%{ x }`
         # nl `}` the way mmdc does.
         rule(:metadata_comment_line) do
-          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+          newline >> line_space.repeat >> str("%%") >> str("{").absent? >>
             (newline.absent? >> any).repeat(1)
         end
 
@@ -861,7 +861,7 @@ module Sirena
 
         # Inline class syntax: :::className
         rule(:inline_class) do
-          str(':::') >> identifier
+          str(":::") >> identifier
         end
 
         # Node shape with label
@@ -905,42 +905,42 @@ module Sirena
 
         # Stadium: ([label])
         rule(:shape_stadium) do
-          str('([').as(:open) >>
-            (str('])').absent? >> any).repeat.as(:label) >>
-            str('])').as(:close)
+          str("([").as(:open) >>
+            (str("])").absent? >> any).repeat.as(:label) >>
+            str("])").as(:close)
         end
 
         # Subroutine: [[label]]
         rule(:shape_subroutine) do
-          str('[[').as(:open) >>
-            (str(']]').absent? >> any).repeat.as(:label) >>
-            str(']]').as(:close)
+          str("[[").as(:open) >>
+            (str("]]").absent? >> any).repeat.as(:label) >>
+            str("]]").as(:close)
         end
 
         # Cylindrical/Database: [(label)]
         rule(:shape_cylindrical) do
-          str('[(').as(:open) >>
-            (str(')]').absent? >> any).repeat.as(:label) >>
-            str(')]').as(:close)
+          str("[(").as(:open) >>
+            (str(")]").absent? >> any).repeat.as(:label) >>
+            str(")]").as(:close)
         end
 
         # Circle: ((label))
         rule(:shape_double_circle) do
-          str('((').as(:open) >>
-            (str('))').absent? >> any).repeat.as(:label) >>
-            str('))').as(:close)
+          str("((").as(:open) >>
+            (str("))").absent? >> any).repeat.as(:label) >>
+            str("))").as(:close)
         end
 
         # Triple Circle: (((label)))
         rule(:shape_triple_circle) do
-          str('(((').as(:open) >>
-            (str(')))').absent? >> any).repeat.as(:label) >>
-            str(')))').as(:close)
+          str("(((").as(:open) >>
+            (str(")))").absent? >> any).repeat.as(:label) >>
+            str(")))").as(:close)
         end
 
         # Asymmetric: >label]
         rule(:shape_asymmetric) do
-          str('>').as(:open) >>
+          str(">").as(:open) >>
             (rbracket.absent? >> any).repeat.as(:label) >>
             rbracket.as(:close)
         end
@@ -954,37 +954,37 @@ module Sirena
 
         # Hexagon: {{label}}
         rule(:shape_hexagon) do
-          str('{{').as(:open) >>
-            (str('}}').absent? >> any).repeat.as(:label) >>
-            str('}}').as(:close)
+          str("{{").as(:open) >>
+            (str("}}").absent? >> any).repeat.as(:label) >>
+            str("}}").as(:close)
         end
 
         # Parallelogram: [/label/]
         rule(:shape_parallelogram) do
-          str('[/').as(:open) >>
-            (str('/]').absent? >> any).repeat.as(:label) >>
-            str('/]').as(:close)
+          str("[/").as(:open) >>
+            (str("/]").absent? >> any).repeat.as(:label) >>
+            str("/]").as(:close)
         end
 
         # Parallelogram Alt: [\label\]
         rule(:shape_parallelogram_alt) do
-          str('[\\').as(:open) >>
+          str("[\\").as(:open) >>
             (str('\\]').absent? >> any).repeat.as(:label) >>
             str('\\]').as(:close)
         end
 
         # Trapezoid: [/label\]
         rule(:shape_trapezoid) do
-          str('[/').as(:open) >>
+          str("[/").as(:open) >>
             (str('\\]').absent? >> any).repeat.as(:label) >>
             str('\\]').as(:close)
         end
 
         # Trapezoid Alt: [\label/]
         rule(:shape_trapezoid_alt) do
-          str('[\\').as(:open) >>
-            (str('/]').absent? >> any).repeat.as(:label) >>
-            str('/]').as(:close)
+          str("[\\").as(:open) >>
+            (str("/]").absent? >> any).repeat.as(:label) >>
+            str("/]").as(:close)
         end
 
         # Edge chain: can have multiple edges from one node
@@ -1014,7 +1014,7 @@ module Sirena
         # shared `space` rule's business, and it is narrower than mermaid's
         # `\s`: a tab passes here, an NBSP does not.
         rule(:amp_group) do
-          (space.repeat(1) >> edge_id_ahead.absent? >> str('&') >> space.repeat(1) >>
+          (space.repeat(1) >> edge_id_ahead.absent? >> str("&") >> space.repeat(1) >>
             reserved_keyword.absent? >> node_with_shape).repeat
         end
 
@@ -1066,9 +1066,9 @@ module Sirena
         # require whitespace after the word, and `@` does not provide it.
         rule(:edge_id_preempted) do
           reserved_word |
-            (str('default') >> word_boundary) |
-            (str('accTitle') >> str(':')) |
-            (str('accDescr') >> (str(':') | str('{')))
+            (str("default") >> word_boundary) |
+            (str("accTitle") >> str(":")) |
+            (str("accDescr") >> (str(":") | str("{")))
         end
 
         # True where an edge id starts, so a caller can leave it alone.
@@ -1082,13 +1082,13 @@ module Sirena
         # and failing — the Deepest-reporter problem described above.
         rule(:edge_id_ahead) do
           dynamic do |source, _|
-            source.matches?(EDGE_ID_AHEAD) ? str('') : str('').absent?
+            source.matches?(EDGE_ID_AHEAD) ? str("") : str("").absent?
           end
         end
 
         rule(:edge_id_end_ahead) do
           dynamic do |source, _|
-            edge_id_end?(source) ? str('') : str('').absent?
+            edge_id_end?(source) ? str("") : str("").absent?
           end
         end
 
@@ -1109,7 +1109,7 @@ module Sirena
 
         rule(:edge_id_body) do
           ((edge_id_end_ahead | line_space | newline).absent? >> any)
-            .repeat(1).as(:edge_id) >> str('@') >>
+            .repeat(1).as(:edge_id) >> str("@") >>
             line_space.repeat >>
             (newline >> (line_space | newline | comment).repeat).repeat
         end
@@ -1126,31 +1126,31 @@ module Sirena
         end
 
         rule(:inline_solid) do
-          inline_halves(str('--'), solid_close, str('--'))
+          inline_halves(str("--"), solid_close, str("--"))
         end
 
         rule(:inline_thick) do
-          inline_halves(str('=='), thick_close, str('='))
+          inline_halves(str("=="), thick_close, str("="))
         end
 
         # A thick or dotted label cannot carry even one of its own body
         # characters, `=` or `.`: mmdc refuses `A == a=b ==> B` and
         # `A -. a.b .-> B`. Only the solid body may hold a single hyphen.
-        rule(:inline_dotted) { inline_halves(str('-.'), dotted_close, str('.')) }
+        rule(:inline_dotted) { inline_halves(str("-."), dotted_close, str(".")) }
 
         # A closing link carries at least one character more than the
         # opening half, a head or another body character, so `--` alone
         # never closes.
         rule(:solid_close) do
-          str('--') >> (match['>xo'] | (str('-').repeat(1) >> match['>xo'].maybe))
+          str("--") >> (match[">xo"] | (str("-").repeat(1) >> match[">xo"].maybe))
         end
 
         rule(:thick_close) do
-          str('==') >> (match['>xo'] | (str('=').repeat(1) >> match['>xo'].maybe))
+          str("==") >> (match[">xo"] | (str("=").repeat(1) >> match[">xo"].maybe))
         end
 
         rule(:dotted_close) do
-          str('-').maybe >> str('.').repeat(1) >> str('-') >> match['>xo'].maybe
+          str("-").maybe >> str(".").repeat(1) >> str("-") >> match[">xo"].maybe
         end
 
         # The label runs to the closing link, across lines as mermaid reads
@@ -1169,13 +1169,13 @@ module Sirena
           # closing delimiter is absent altogether.
           closing_ahead = dynamic do |source|
             if source.chars_until(forbidden.str) < source.chars_left
-              str('')
+              str("")
             else
               forbidden
             end
           end
           char = closing.absent? >> blank.absent? >> str('"').absent? >>
-                 str('%%{').absent? >> any
+                 str("%%{").absent? >> any
           char = forbidden.absent? >> char if forbidden
           gap = blank.repeat(1) >> closing.absent?
           text = char >> (char | gap).repeat
@@ -1193,7 +1193,7 @@ module Sirena
         # deletes it before the quote inside it can end the label early.
         rule(:quoted_label) do
           str('"') >>
-            (inline_comment_line | (str('%%{').absent? >> match['^"']))
+            (inline_comment_line | (str("%%{").absent? >> match['^"']))
               .repeat >> str('"')
         end
 
@@ -1201,7 +1201,7 @@ module Sirena
         # it whole before reading the label. `%%{` opens a directive
         # rather than a comment and is left alone.
         rule(:inline_comment_line) do
-          newline >> line_space.repeat >> str('%%') >> str('{').absent? >>
+          newline >> line_space.repeat >> str("%%") >> str("{").absent? >>
             (newline.absent? >> any).repeat
         end
 
@@ -1224,7 +1224,7 @@ module Sirena
         # either — `A o~~~o B` is refused, and written flush `Ao~~~oB` is
         # DRAWN, as the two nodes `Ao` and `oB` with an invisible link
         # between them. Sirena gives both the same answers.
-        rule(:invisible_link) { str('~~~') >> str('~').repeat }
+        rule(:invisible_link) { str("~~~") >> str("~").repeat }
 
         # The vocabulary is generated, not listed. Enumerating it missed
         # forms mmdc renders — `====`, `-.-x`, `<--x`, `o----o` among them
@@ -1240,8 +1240,8 @@ module Sirena
         # parse — the whole diagram would be thrown away.
         rule(:visible_link) { link_start.maybe >> (headed_link | long_link) }
 
-        rule(:link_start) { match['ox<'] }
-        rule(:link_end) { match['>xo'] }
+        rule(:link_start) { match["ox<"] }
+        rule(:link_end) { match[">xo"] }
 
         rule(:headed_link) { link_body >> link_end }
 
@@ -1251,21 +1251,21 @@ module Sirena
         # the one above is load-bearing.
         rule(:link_body) { solid_body | thick_body | dotted_body }
 
-        rule(:solid_body) { str('--') >> str('-').repeat }
-        rule(:thick_body) { str('==') >> str('=').repeat }
+        rule(:solid_body) { str("--") >> str("-").repeat }
+        rule(:thick_body) { str("==") >> str("=").repeat }
 
         # The opening hyphen is optional. mmdc draws `.-`, `..->` and
         # `<.-x` exactly as it draws `-.-`, `-..->` and `<-.-x`, and this
         # rule refused the whole leading-dot half of the family.
-        rule(:dotted_body) { str('-').maybe >> str('.').repeat(1) >> str('-') }
+        rule(:dotted_body) { str("-").maybe >> str(".").repeat(1) >> str("-") }
 
         # Without a marker the body has to be longer than its minimum:
         # mmdc draws `---` and `===` and refuses `--` and `==`. A dotted
         # body carries a dot already, so its own minimum — `.-` — is a
         # link on its own and it stands here unchanged.
         rule(:long_link) { long_solid | long_thick | dotted_body }
-        rule(:long_solid) { str('---') >> str('-').repeat }
-        rule(:long_thick) { str('===') >> str('=').repeat }
+        rule(:long_solid) { str("---") >> str("-").repeat }
+        rule(:long_thick) { str("===") >> str("=").repeat }
 
         # Edge label: can be in pipes |label|
         rule(:edge_label) do
@@ -1444,7 +1444,7 @@ module Sirena
         # while `#x.-B` and `éx.-B` are refused.
         rule(:xo_link_open) do
           arrowhead_open |
-            (match['xo'] >> (str('--') | str('==') | str('-.')))
+            (match["xo"] >> (str("--") | str("==") | str("-.")))
         end
 
         # A hyphen joins the id unless another dash or a dot follows, which
@@ -1453,7 +1453,7 @@ module Sirena
         # because the hyphen joins the id here and `>B` cannot continue a
         # statement — not because `->` is unknown; `A -> B` is refused by
         # `visible_link`, which spells its shortest solid body `--`.
-        rule(:id_hyphen) { str('-') >> match['-.'].absent? }
+        rule(:id_hyphen) { str("-") >> match["-."].absent? }
 
         rule(:reserved_word) do
           RESERVED_WORDS.map { |word| str(word) }.reduce(:|) >> word_boundary
@@ -1513,12 +1513,12 @@ module Sirena
         # exactly where one without it does, and the only reader
         # (`dot_run_before_link`) is consumed under `.absent?`, where the
         # length never matters either.
-        rule(:dotted_link_open) { str('.').repeat(1) >> str('-') }
+        rule(:dotted_link_open) { str(".").repeat(1) >> str("-") }
 
         # Everywhere else a dot just joins, dash or no dash: mmdc draws
         # `A.-->B` as `A.` and `B`, and draws `A.-` `A.-B` `A..-->B` and
         # `y.- --> Z`.
-        rule(:id_dot) { str('.') }
+        rule(:id_dot) { str(".") }
 
         # Reads mermaid's dotted left-arrowhead opening — the whole of it,
         # as `arrowhead_open` spells it out below — as a link instead of an
@@ -1552,8 +1552,8 @@ module Sirena
         # it is not an id character here, so it can never be reached
         # inside one.
         rule(:arrowhead_open) do
-          (str('x') | str('o')) >> str('-').maybe >> str('.').repeat(1) >>
-            str('-') >> match['xo>'].maybe
+          (str("x") | str("o")) >> str("-").maybe >> str(".").repeat(1) >>
+            str("-") >> match["xo>"].maybe
         end
 
         # An arrowhead opening with nothing after it that could continue an
@@ -1598,7 +1598,7 @@ module Sirena
         end
 
         # These carry mermaid's keyword hunt along rather than ending it.
-        rule(:id_carry_char) { match['#&*0-9'] }
+        rule(:id_carry_char) { match["#&*0-9"] }
 
         # And a letter outside ASCII starts it over.
         rule(:id_restart_char) { match[MERMAID_UNICODE_TEXT] }
@@ -1637,7 +1637,7 @@ module Sirena
         # so `A[#a;]` draws a node labelled `&a;`, and rendering that text
         # belongs to a change that models the escape rather than refuses it.
         rule(:entity_escape) do
-          str('#') >> match['a-zA-Z0-9_'].repeat(1) >> semicolon
+          str("#") >> match["a-zA-Z0-9_"].repeat(1) >> semicolon
         end
 
         # Line terminator. A statement ends at the newline, and NOT at a

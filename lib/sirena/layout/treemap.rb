@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/treemap'
+require_relative "base"
+require_relative "../diagram/treemap"
 
 module Sirena
   module Layout

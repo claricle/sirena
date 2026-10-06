@@ -35,13 +35,13 @@
 # and, for a generator that declares one, a check that its wild-character
 # pool was actually reached -- see Runner#proven? for why each exists.
 
-require 'json'
-require 'open3'
-require 'optparse'
+require "json"
+require "open3"
+require "optparse"
 
 module MermaidFuzz
-  ROOT = File.expand_path('..', __dir__)
-  MERMAID_RUNNER = File.join(ROOT, 'scripts', 'mermaid_fuzz_runner.js')
+  ROOT = File.expand_path("..", __dir__)
+  MERMAID_RUNNER = File.join(ROOT, "scripts", "mermaid_fuzz_runner.js")
 
   # One generated (or fixed) fuzz case: the source text sirena and
   # mermaid both see, and an id used to match up the two sides' results
@@ -62,7 +62,7 @@ module MermaidFuzz
   # statement with its own arrow/message axes, not a single bare line,
   # so the "one token, one template" shape genuinely does not fit it.
   class IdentifierGenerator
-    SAFE_CHARS = [*'a'..'z', *'A'..'Z', *'0'..'9', '_'].freeze
+    SAFE_CHARS = [*"a".."z", *"A".."Z", *"0".."9", "_"].freeze
 
     # Shared default wild-character pool for a type with no punctuation
     # of its own to call out (class_diagram, state_diagram, er_diagram
@@ -72,7 +72,7 @@ module MermaidFuzz
     # a reason for a wider or narrower set should define its own too,
     # the way class_diagram documents `~` and `<<>>` for generics and
     # stereotypes even though it currently reuses this default.
-    DEFAULT_WILD_CHARS = %w[- ( ) % @ / \\ < > + . | ~ $ : *].push(' ').freeze
+    DEFAULT_WILD_CHARS = %w[- ( ) % @ / \\ < > + . | ~ $ : *].push(" ").freeze
 
     # @param rng [Random] seeded RNG, for a reproducible run
     # @param wild_chars [Array<String>] punctuation plausible for this
@@ -80,7 +80,7 @@ module MermaidFuzz
     # @param template [#call(String)] embeds one generated id into a
     #   full diagram source, e.g. ->(id) { "flowchart TD\n    #{id}\n" }
     def initialize(rng, wild_chars:, template:)
-      raise ArgumentError, 'wild_chars must not be empty' if wild_chars.empty?
+      raise ArgumentError, "wild_chars must not be empty" if wild_chars.empty?
 
       @rng = rng
       @wild_chars = wild_chars
@@ -156,7 +156,7 @@ module MermaidFuzz
         preflight: preflight,
         cases: cases.map { |c| { id: c.id, source: c.source } },
       }.to_json
-      stdout, stderr, status = Open3.capture3('node', MERMAID_RUNNER, stdin_data: payload)
+      stdout, stderr, status = Open3.capture3("node", MERMAID_RUNNER, stdin_data: payload)
       raise "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}" unless status.success?
 
       JSON.parse(stdout, symbolize_names: true).to_h do |r|
@@ -224,7 +224,7 @@ module MermaidFuzz
 
     def classify
       return accept_reject_mismatch unless @sirena[:accepted] == @mermaid[:accepted]
-      return [:agree, 'both rejected'] unless @sirena[:accepted]
+      return [:agree, "both rejected"] unless @sirena[:accepted]
 
       id_mismatch
     end
@@ -286,7 +286,7 @@ module MermaidFuzz
     # Confirmed exactly that gap during review: a Comparison monkeypatched
     # to always return divergent still passed the known-divergence-only
     # check.
-    AGREEMENT_CASE_ID = 'known-agreement-preflight'
+    AGREEMENT_CASE_ID = "known-agreement-preflight"
 
     # @param label [String] diagram type name, for the report header
     # @param generator_factory [#call(rng)] builds a fresh generator (an
@@ -375,19 +375,19 @@ module MermaidFuzz
 
       if @known_divergences.empty?
         warn "#{@label}: NO known-divergence regression case -- " \
-             'this generator has never been shown to catch anything real. ' \
-             'See mermaid_fuzz.rb banner.'
+             "this generator has never been shown to catch anything real. " \
+             "See mermaid_fuzz.rb banner."
       elsif !known_comparisons.all?(&:divergence?)
         caught = known_comparisons.count(&:divergence?)
         warn "#{@label}: #{caught}/#{@known_divergences.size} known divergences caught -- " \
-             'a regression case stopped diverging. Investigate before trusting this run.'
+             "a regression case stopped diverging. Investigate before trusting this run."
         known_comparisons.reject(&:divergence?).each { |c| warn "  NOT caught: #{c}" }
       end
 
       if generated.any? && generator.respond_to?(:exercised_both_pools?) && !generator.exercised_both_pools?
         warn "#{@label}: GENERATOR NEVER EXPLORED ITS WILD CHARACTER POOL across " \
              "#{generated.size} generated cases -- the reported numbers test nothing beyond " \
-             'safe identifiers. Check the generator_factory wiring.'
+             "safe identifiers. Check the generator_factory wiring."
       end
     end
 
@@ -428,9 +428,9 @@ module MermaidFuzz
 
     def parse!(argv)
       OptionParser.new do |o|
-        o.on('--seed N', Integer) { |v| @seed = v }
-        o.on('--count N', Integer) { |v| @count = v }
-        o.on('--verbose') { @verbose = true }
+        o.on("--seed N", Integer) { |v| @seed = v }
+        o.on("--count N", Integer) { |v| @count = v }
+        o.on("--verbose") { @verbose = true }
       end.parse!(argv)
     end
   end

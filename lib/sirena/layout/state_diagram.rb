@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/state_diagram'
+require_relative "base"
+require_relative "../diagram/state_diagram"
 
 module Sirena
   module Layout
@@ -24,7 +24,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'state_diagram',
+          id: diagram.id || "state_diagram",
           children: transform_states(diagram),
           edges: transform_transitions(diagram),
           layoutOptions: layout_options(diagram),
@@ -107,11 +107,11 @@ module Sirena
 
         # Adjust dimensions based on state type
         state_dims = case state_shape_type(state)
-                     when 'start', 'end'
+                     when "start", "end"
                        calculate_terminal_dimensions
-                     when 'choice'
+                     when "choice"
                        calculate_choice_dimensions(label_dims)
-                     when 'fork', 'join'
+                     when "fork", "join"
                        calculate_fork_join_dimensions
                      else
                        calculate_normal_state_dimensions(
@@ -158,8 +158,8 @@ module Sirena
       # directly built model can hold that combination, and it keeps its
       # declared marker type.
       def state_shape_type(state)
-        return 'normal' unless Array(state.descriptions).reject(&:empty?).empty?
-        return 'normal' if state.description && !state.description.empty?
+        return "normal" unless Array(state.descriptions).reject(&:empty?).empty?
+        return "normal" if state.description && !state.description.empty?
 
         state.state_type
       end
@@ -225,19 +225,19 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 40,
           ElkOptions::EDGE_EDGE_SPACING => 30,
           # SIMPLE node placement for predictable state flow
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
+          ElkOptions::NODE_PLACEMENT => "SIMPLE",
         )
       end
 
       def direction_to_layout(direction)
         case direction
-        when 'TD', 'TB'
+        when "TD", "TB"
           DIRECTION_DOWN
-        when 'LR'
+        when "LR"
           DIRECTION_RIGHT
-        when 'RL'
+        when "RL"
           DIRECTION_LEFT
-        when 'BT'
+        when "BT"
           DIRECTION_UP
         else
           DIRECTION_DOWN # Default direction

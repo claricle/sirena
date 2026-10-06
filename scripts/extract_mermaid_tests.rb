@@ -6,11 +6,11 @@
 # class per file, which is right for lib/ and wrong for a script whose
 # helpers exist only to serve it.
 # rubocop:disable Style/OneClassPerFile
-require 'fileutils'
-require 'json'
+require "fileutils"
+require "json"
 
 MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
-SIRENA_ROOT = File.expand_path('../..', __FILE__)
+SIRENA_ROOT = File.expand_path("../..", __FILE__)
 OUTPUT_DIR = "#{SIRENA_ROOT}/spec/mermaid"
 
 # All Mermaid diagram types discovered from packages/mermaid/src/diagrams/
@@ -56,7 +56,7 @@ class TestCase
   end
 
   def to_mmd_filename
-    safe_name = name.gsub(/[^a-zA-Z0-9_-]/, '_').downcase
+    safe_name = name.gsub(/[^a-zA-Z0-9_-]/, "_").downcase
     "#{safe_name}.mmd"
   end
 end
@@ -97,7 +97,7 @@ class MermaidTestExtractor
     content = File.read(file)
 
     # Build regex pattern for all diagram keywords
-    keywords = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '').gsub(/\|/, '\\|') }.join('|')
+    keywords = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "").gsub(/\|/, '\\|') }.join("|")
 
     # Find all backtick diagram blocks
     content.scan(/`((?:#{keywords})[^`]*)`/mi) do
@@ -130,7 +130,7 @@ class MermaidTestExtractor
       file_count = 0
 
       # Pattern 1: Backtick strings
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '') }.join('|')
+      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
       content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
@@ -181,7 +181,7 @@ class MermaidTestExtractor
       content.scan(/<pre\s+class="mermaid"[^>]*>(.*?)<\/pre>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub(/&lt;/, '<').gsub(/&gt;/, '>').gsub(/&amp;/, '&')
+        diagram_src = diagram_src.gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&amp;/, "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
@@ -199,7 +199,7 @@ class MermaidTestExtractor
       content.scan(/<div\s+class="mermaid"[^>]*>(.*?)<\/div>/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
-        diagram_src = diagram_src.gsub(/&lt;/, '<').gsub(/&gt;/, '>').gsub(/&amp;/, '&')
+        diagram_src = diagram_src.gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&amp;/, "&")
         type = detect_diagram_type(diagram_src)
         next if type == :unknown
 
@@ -227,7 +227,7 @@ class MermaidTestExtractor
       file_count = 0
 
       # Pattern 1: diagram: `...`
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '') }.join('|')
+      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
       content.scan(/diagram\s*:\s*`((?:#{keywords_pattern})[^`]*)`/mi) do
         match_pos = $~.begin(0)
         diagram_src = $1.strip
@@ -298,7 +298,7 @@ class MermaidTestExtractor
       end
 
       # Pattern 2: Direct backtick strings in tests
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '') }.join('|')
+      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
       content.scan(/(?:it|test)\s*\(\s*['"]([^'"]+)['"]\s*,.*?`((?:#{keywords_pattern})[^`]*)`/mi) do
         match_pos = $~.begin(0)
         test_name = $1
@@ -330,7 +330,7 @@ class MermaidTestExtractor
       content = File.read(file)
       file_count = 0
 
-      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '') }.join('|')
+      keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
 
       # Backtick strings
       content.scan(/`((?:#{keywords_pattern})[^`]*)`/mi) do
@@ -371,7 +371,7 @@ class MermaidTestExtractor
         content = File.read(file)
         file_count = 0
 
-        keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, '') }.join('|')
+        keywords_pattern = DIAGRAM_TYPES.values.map { |r| r.source.gsub(/[\\^$]/, "") }.join("|")
 
         content.scan(/[`'"]((?:#{keywords_pattern})[^`'"]*)[`'"]/mi) do
           match_pos = $~.begin(0)
@@ -403,7 +403,7 @@ class MermaidTestExtractor
     str_value.scan(/['"]([^'"\\]*(?:\\.[^'"\\]*)*)['"]/) do |match|
       parts << match[0].gsub(/\\n/, "\n").gsub(/\\t/, "\t").gsub(/\\"/, '"').gsub(/\\'/, "'")
     end
-    parts.join('')
+    parts.join("")
   end
 
   def detect_diagram_type(source)
@@ -418,7 +418,7 @@ class MermaidTestExtractor
   end
 
   def sanitize_test_name(name)
-    name.gsub(/[^a-zA-Z0-9_-]/, '_').gsub(/_+/, '_')
+    name.gsub(/[^a-zA-Z0-9_-]/, "_").gsub(/_+/, "_")
   end
 
   def add_test(name:, type:, source:, file:, line:, metadata: {})
@@ -451,11 +451,11 @@ class MermaidTestExtractor
         File.write(filename, test_case.source)
 
         # Write metadata
-        meta_file = filename.sub('.mmd', '.meta.json')
+        meta_file = filename.sub(".mmd", ".meta.json")
         File.write(meta_file, JSON.pretty_generate({
           name: test_case.name,
           type: test_case.diagram_type,
-          source_file: test_case.source_file.sub(MERMAID_JS_ROOT, ''),
+          source_file: test_case.source_file.sub(MERMAID_JS_ROOT, ""),
           line_number: test_case.line_number,
           metadata: test_case.metadata,
         }))

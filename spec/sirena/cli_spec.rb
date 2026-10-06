@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'timeout'
-require 'sirena/cli'
-require 'sirena/commands/render'
-require 'sirena/commands/batch'
+require "spec_helper"
+require "timeout"
+require "sirena/cli"
+require "sirena/commands/render"
+require "sirena/commands/batch"
 
 # `rendering` needs `described_class`, so it is included; `capture_stdout`
 # is pure and needs no example state, so it is a module function.
@@ -14,7 +14,7 @@ module CliSpecHelpers
     allow(fake_command).to receive(:run).and_raise(exception)
     allow(Sirena::Commands::RenderCommand).to receive(:new)
       .and_return(fake_command)
-    -> { described_class.start(['render', 'unused.mmd']) }
+    -> { described_class.start(["render", "unused.mmd"]) }
   end
 
   def capture_stdout(&block)
@@ -37,38 +37,38 @@ RSpec.describe Sirena::Cli do
   # boundary needs the same proof as the engine's and the batch
   # command's: it survives EXHAUSTION_ERRORS and it does not swallow
   # Ruby's own control flow.
-  describe 'render command' do
-    it 'converts a stack overflow into a clean exit instead of a raw crash' do
-      overflow = SystemStackError.new('stack level too deep')
+  describe "render command" do
+    it "converts a stack overflow into a clean exit instead of a raw crash" do
+      overflow = SystemStackError.new("stack level too deep")
 
       expect(&rendering(overflow))
         .to output(/\AError: stack level too deep\n\z/).to_stderr
         .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
     end
 
-    it 'converts an exhausted heap into a clean exit instead of a raw crash' do
-      exhausted = NoMemoryError.new('failed to allocate memory')
+    it "converts an exhausted heap into a clean exit instead of a raw crash" do
+      exhausted = NoMemoryError.new("failed to allocate memory")
 
       expect(&rendering(exhausted))
         .to output(/\AError: failed to allocate memory\n\z/).to_stderr
         .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
     end
 
-    it 'lets an exit request through untouched' do
+    it "lets an exit request through untouched" do
       expect(&rendering(SystemExit)).to raise_error(SystemExit) do |error|
         expect(error.status).not_to eq(1)
       end
     end
 
-    it 'lets an interrupt through untouched' do
+    it "lets an interrupt through untouched" do
       expect(&rendering(Interrupt)).to raise_error(Interrupt)
     end
 
     # A host that wraps a CLI invocation in `Timeout.timeout` unwinds
     # through this class. Swallowing it would print a render failure and
     # never let the timeout fire.
-    it 'lets a host timeout unwind through it' do
-      expect(&rendering(Timeout::ExitException.new('too slow')))
+    it "lets a host timeout unwind through it" do
+      expect(&rendering(Timeout::ExitException.new("too slow")))
         .to raise_error(Timeout::ExitException)
     end
 
@@ -76,7 +76,7 @@ RSpec.describe Sirena::Cli do
     # `Lint/InheritException` autocorrect rewrites the latter to
     # `StandardError`, which would quietly turn this into a test of
     # nothing.
-    it 'lets a class outside the exhaustion family through untouched' do
+    it "lets a class outside the exhaustion family through untouched" do
       expect(&rendering(NotImplementedError)).to raise_error(NotImplementedError)
     end
 
@@ -106,8 +106,8 @@ RSpec.describe Sirena::Cli do
     # directly, `e.backtrace` still reads nil after the exception has
     # passed through `and_raise`'s `raise`. No VM allocation, no
     # platform dependency.
-    it 'reports a backtrace-less exhaustion under --verbose without crashing' do
-      exhausted = NoMemoryError.new('failed to allocate memory')
+    it "reports a backtrace-less exhaustion under --verbose without crashing" do
+      exhausted = NoMemoryError.new("failed to allocate memory")
       allow(exhausted).to receive(:backtrace).and_return(nil)
       fake_command = instance_double(Sirena::Commands::RenderCommand)
       allow(fake_command).to receive(:run).and_raise(exhausted)
@@ -118,7 +118,7 @@ RSpec.describe Sirena::Cli do
       # an extra blank line, not a crash. That blank line is what proves
       # the `&.` ran rather than raising, so it is asserted here rather
       # than trimmed away.
-      expect { described_class.start(['render', 'unused.mmd', '--verbose']) }
+      expect { described_class.start(["render", "unused.mmd", "--verbose"]) }
         .to output("Error: failed to allocate memory\n\n").to_stderr
         .and raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
     end
@@ -127,8 +127,8 @@ RSpec.describe Sirena::Cli do
   # D1: a multi-item command exits non-zero if any item failed, the same
   # promise `render` already keeps for a single item. `BatchCommand#run`
   # does the work; `#success?` carries the verdict the CLI acts on.
-  describe 'batch command' do
-    subject(:batching) { -> { described_class.start(['batch']) } }
+  describe "batch command" do
+    subject(:batching) { -> { described_class.start(["batch"]) } }
 
     let(:every_item_succeeded) { true }
 
@@ -142,51 +142,51 @@ RSpec.describe Sirena::Cli do
       )
     end
 
-    context 'when an item failed' do
+    context "when an item failed" do
       let(:every_item_succeeded) { false }
 
-      it 'exits 1' do
+      it "exits 1" do
         expect(&batching)
           .to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
       end
     end
 
-    context 'when every item succeeded' do
-      it 'does not exit with an error status' do
+    context "when every item succeeded" do
+      it "does not exit with an error status" do
         expect(&batching).not_to raise_error
       end
     end
   end
 
-  describe 'version command' do
-    it 'displays version information' do
-      expect { described_class.start(['version']) }.to output(
+  describe "version command" do
+    it "displays version information" do
+      expect { described_class.start(["version"]) }.to output(
         /sirena version #{Sirena::VERSION}/o,
       ).to_stdout
     end
   end
 
-  describe 'types command' do
-    it 'lists supported diagram types' do
-      expect { described_class.start(['types']) }.to output(
+  describe "types command" do
+    it "lists supported diagram types" do
+      expect { described_class.start(["types"]) }.to output(
         /Supported diagram types:/,
       ).to_stdout
     end
 
-    it 'includes all registered types' do
-      output = capture_stdout { described_class.start(['types']) }
-      expect(output).to include('flowchart')
-      expect(output).to include('sequence')
-      expect(output).to include('class_diagram')
-      expect(output).to include('state_diagram')
-      expect(output).to include('er_diagram')
-      expect(output).to include('user_journey')
+    it "includes all registered types" do
+      output = capture_stdout { described_class.start(["types"]) }
+      expect(output).to include("flowchart")
+      expect(output).to include("sequence")
+      expect(output).to include("class_diagram")
+      expect(output).to include("state_diagram")
+      expect(output).to include("er_diagram")
+      expect(output).to include("user_journey")
     end
   end
 
-  describe 'help command' do
-    it 'displays help information' do
-      expect { described_class.start(['help']) }.to output(
+  describe "help command" do
+    it "displays help information" do
+      expect { described_class.start(["help"]) }.to output(
         /Commands:/,
       ).to_stdout
     end

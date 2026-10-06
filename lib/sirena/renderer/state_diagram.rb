@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -60,7 +60,7 @@ module Sirena
 
       def render_state(state, svg)
         state_type = state.dig(:metadata, :shape_type) ||
-                     state.dig(:metadata, :state_type) || 'normal'
+                     state.dig(:metadata, :state_type) || "normal"
 
         # Create group for state and its label
         group = Svg::Group.new.tap do |g|
@@ -89,13 +89,13 @@ module Sirena
         height = state[:height] || 50
 
         case state_type
-        when 'start'
+        when "start"
           create_start_state(x, y, width, height)
-        when 'end'
+        when "end"
           create_end_state(x, y, width, height)
-        when 'choice'
+        when "choice"
           create_choice_state(x, y, width, height)
-        when 'fork', 'join'
+        when "fork", "join"
           create_fork_join_state(x, y, width, height)
         else
           create_normal_state(x, y, width, height)
@@ -110,9 +110,9 @@ module Sirena
           rect.height = height
           rect.rx = 10
           rect.ry = 10
-          rect.fill = '#ffffff'
-          rect.stroke = '#000000'
-          rect.stroke_width = '2'
+          rect.fill = "#ffffff"
+          rect.stroke = "#000000"
+          rect.stroke_width = "2"
         end
       end
 
@@ -126,8 +126,8 @@ module Sirena
           circle.cx = cx
           circle.cy = cy
           circle.r = r
-          circle.fill = '#000000'
-          circle.stroke = 'none'
+          circle.fill = "#000000"
+          circle.stroke = "none"
         end
       end
 
@@ -144,9 +144,9 @@ module Sirena
           circle.cx = cx
           circle.cy = cy
           circle.r = r
-          circle.fill = 'none'
-          circle.stroke = '#000000'
-          circle.stroke_width = '2'
+          circle.fill = "none"
+          circle.stroke = "#000000"
+          circle.stroke_width = "2"
         end
         group.children << outer
 
@@ -155,8 +155,8 @@ module Sirena
           circle.cx = cx
           circle.cy = cy
           circle.r = r - 5
-          circle.fill = '#000000'
-          circle.stroke = 'none'
+          circle.fill = "#000000"
+          circle.stroke = "none"
         end
         group.children << inner
 
@@ -173,13 +173,13 @@ module Sirena
           "#{x + width},#{cy}",
           "#{cx},#{y + height}",
           "#{x},#{cy}",
-        ].join(' ')
+        ].join(" ")
 
         Svg::Polygon.new.tap do |polygon|
           polygon.points = points
-          polygon.fill = '#ffffff'
-          polygon.stroke = '#000000'
-          polygon.stroke_width = '2'
+          polygon.fill = "#ffffff"
+          polygon.stroke = "#000000"
+          polygon.stroke_width = "2"
         end
       end
 
@@ -190,8 +190,8 @@ module Sirena
           rect.y = y + height / 2 - 5
           rect.width = width
           rect.height = 10
-          rect.fill = '#000000'
-          rect.stroke = 'none'
+          rect.fill = "#000000"
+          rect.stroke = "none"
         end
       end
 
@@ -207,17 +207,17 @@ module Sirena
         stack_offset = (label_count - 1) * 10
         text_y = y + height / 2 - stack_offset + (index * 20)
 
-        font_size = index.zero? ? '14' : '12'
+        font_size = index.zero? ? "14" : "12"
 
         Svg::Text.new.tap do |text|
           text.x = text_x
           text.y = text_y
           text.content = label[:text]
-          text.fill = '#000000'
-          text.font_family = 'Arial, sans-serif'
+          text.fill = "#000000"
+          text.font_family = "Arial, sans-serif"
           text.font_size = font_size
-          text.text_anchor = 'middle'
-          text.dominant_baseline = 'middle'
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
         end
       end
 
@@ -239,10 +239,10 @@ module Sirena
         # Create path element
         path = Svg::Path.new.tap do |p|
           p.d = path_data
-          p.fill = 'none'
-          p.stroke = '#000000'
-          p.stroke_width = '2'
-          p.marker_end = 'url(#arrowhead)'
+          p.fill = "none"
+          p.stroke = "#000000"
+          p.stroke_width = "2"
+          p.marker_end = "url(#arrowhead)"
         end
 
         # Create group for transition and label
@@ -298,7 +298,7 @@ module Sirena
         end
 
         path_parts << "L #{tx} #{ty}"
-        path_parts.join(' ')
+        path_parts.join(" ")
       end
 
       def create_transition_label(source, target, label)
@@ -315,10 +315,10 @@ module Sirena
           text.x = mid_x
           text.y = mid_y - 8 # Offset slightly above line
           text.content = label[:text]
-          text.fill = '#000000'
-          text.font_family = 'Arial, sans-serif'
-          text.font_size = '12'
-          text.text_anchor = 'middle'
+          text.fill = "#000000"
+          text.font_family = "Arial, sans-serif"
+          text.font_size = "12"
+          text.text_anchor = "middle"
         end
       end
     end

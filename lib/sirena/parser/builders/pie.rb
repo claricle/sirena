@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/pie'
+require_relative "../../diagram/pie"
 
 module Sirena
   module Parser

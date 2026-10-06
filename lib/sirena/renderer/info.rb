@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../svg/document'
-require_relative '../svg/rect'
-require_relative '../svg/text'
+require_relative "base"
+require_relative "../svg/document"
+require_relative "../svg/rect"
+require_relative "../svg/text"
 
 module Sirena
   module Renderer
@@ -57,11 +57,11 @@ module Sirena
           r.y = BOX_Y
           r.width = BOX_WIDTH
           r.height = BOX_HEIGHT
-          r.fill = theme_color(:node_bg) || '#E3F2FD'
-          r.stroke = theme_color(:node_stroke) || '#2196F3'
-          r.stroke_width = '2'
-          r.rx = '8'
-          r.ry = '8'
+          r.fill = theme_color(:node_bg) || "#E3F2FD"
+          r.stroke = theme_color(:node_stroke) || "#2196F3"
+          r.stroke_width = "2"
+          r.rx = "8"
+          r.ry = "8"
         end
 
         svg << box
@@ -69,21 +69,21 @@ module Sirena
 
       def render_info_text(graph, svg)
         message = if graph[:show_info]
-                    'Info: showInfo enabled'
+                    "Info: showInfo enabled"
                   else
-                    'Info'
+                    "Info"
                   end
 
         text = Svg::Text.new.tap do |t|
           t.x = BOX_X + (BOX_WIDTH / 2)
           t.y = TEXT_Y
           t.content = message
-          t.fill = theme_color(:label_text) || '#1976D2'
+          t.fill = theme_color(:label_text) || "#1976D2"
           t.font_family = theme_typography(:font_family) ||
-                          'Arial, sans-serif'
+                          "Arial, sans-serif"
           t.font_size = (theme_typography(:font_size_base) || 16).to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
 
         svg << text

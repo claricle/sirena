@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../error'
-require_relative '../error/render_error'
+require_relative "../error"
+require_relative "../error/render_error"
 
 module Sirena
   module Renderer
@@ -240,26 +240,26 @@ module Sirena
         case element_type
         when :node
           Svg::Style.new.tap do |style|
-            style.fill = theme_color(:node_fill) || '#ffffff'
-            style.stroke = theme_color(:node_stroke) || '#000000'
+            style.fill = theme_color(:node_fill) || "#ffffff"
+            style.stroke = theme_color(:node_stroke) || "#000000"
             style.stroke_width =
               (theme_shape(:stroke_width) || 2).to_s
           end
         when :edge
           Svg::Style.new.tap do |style|
-            style.fill = 'none'
-            style.stroke = theme_color(:edge_stroke) || '#000000'
+            style.fill = "none"
+            style.stroke = theme_color(:edge_stroke) || "#000000"
             style.stroke_width =
               (theme_shape(:stroke_width) || 2).to_s
           end
         when :text
           Svg::Style.new.tap do |style|
-            style.fill = theme_color(:label_text) || '#000000'
+            style.fill = theme_color(:label_text) || "#000000"
             style.font_family =
-              theme_typography(:font_family) || 'Arial, sans-serif'
+              theme_typography(:font_family) || "Arial, sans-serif"
             style.font_size =
               (theme_typography(:font_size_normal) || 14).to_s
-            style.text_anchor = 'middle'
+            style.text_anchor = "middle"
           end
         else
           Svg::Style.new
@@ -280,7 +280,7 @@ module Sirena
           path_parts << "L #{point[:x]} #{point[:y]}"
         end
 
-        path_parts.join(' ')
+        path_parts.join(" ")
       end
 
       # Adds an arrow marker to the SVG document.
@@ -288,7 +288,7 @@ module Sirena
       # @param svg [Svg::Document] the SVG document
       # @param id [String] unique identifier for the marker
       # @return [void]
-      def add_arrow_marker(svg, id: 'arrow')
+      def add_arrow_marker(svg, id: "arrow")
         # This is a placeholder for actual marker implementation
         # Subclasses can implement this to add arrow markers
       end

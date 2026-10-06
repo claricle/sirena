@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/state_diagram'
+require_relative "../../diagram/state_diagram"
 
 module Sirena
   module Parser
@@ -11,7 +11,7 @@ module Sirena
       # fully-formed Diagram::StateDiagram object with states and transitions.
       class StateDiagram
         # Special state markers
-        START_END_MARKER = '[*]'
+        START_END_MARKER = "[*]"
 
         # Transform parse tree into State diagram.
         #
@@ -51,7 +51,7 @@ module Sirena
         def process_statement(stmt)
           return unless stmt.is_a?(Hash)
 
-          if stmt[:keyword] == 'state' && stmt[:state_id]
+          if stmt[:keyword] == "state" && stmt[:state_id]
             # State declaration
             process_state_declaration(stmt)
           elsif stmt[:from] && stmt[:to]
@@ -210,11 +210,11 @@ module Sirena
           start_state = @diagram.start_state
           return start_state.id if start_state
 
-          start_id = generate_state_id('start')
+          start_id = generate_state_id("start")
           state = Diagram::StateNode.new.tap do |s|
             s.id = start_id
             s.label = START_END_MARKER
-            s.state_type = 'start'
+            s.state_type = "start"
           end
           @diagram.states << state
           start_id
@@ -224,11 +224,11 @@ module Sirena
           end_state = @diagram.end_states.first
           return end_state.id if end_state
 
-          end_id = generate_state_id('end')
+          end_id = generate_state_id("end")
           state = Diagram::StateNode.new.tap do |s|
             s.id = end_id
             s.label = START_END_MARKER
-            s.state_type = 'end'
+            s.state_type = "end"
           end
           @diagram.states << state
           end_id
@@ -241,7 +241,7 @@ module Sirena
           state = Diagram::StateNode.new.tap do |s|
             s.id = state_id
             s.label = state_id
-            s.state_type = 'normal'
+            s.state_type = "normal"
           end
           @diagram.states << state
           state
@@ -266,7 +266,7 @@ module Sirena
             state = Diagram::StateNode.new.tap do |s|
               s.id = state_id
               s.label = label || state_id
-              s.state_type = 'normal'
+              s.state_type = "normal"
             end
             @diagram.states << state
             state
@@ -275,8 +275,8 @@ module Sirena
 
         def create_transition(from_id, to_id, trigger = nil, guard = nil)
           # Ensure both states exist
-          ensure_state_exists(from_id) unless from_id.start_with?('start_', 'end_')
-          ensure_state_exists(to_id) unless to_id.start_with?('start_', 'end_')
+          ensure_state_exists(from_id) unless from_id.start_with?("start_", "end_")
+          ensure_state_exists(to_id) unless to_id.start_with?("start_", "end_")
 
           transition = Diagram::StateTransition.new.tap do |t|
             t.from_id = from_id

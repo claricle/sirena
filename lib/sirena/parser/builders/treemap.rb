@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../../diagram/treemap'
+require "parslet"
+require_relative "../../diagram/treemap"
 
 module Sirena
   module Parser
@@ -10,7 +10,7 @@ module Sirena
       class Treemap < Parslet::Transform
         rule(number: simple(:x)) { x.to_f }
         rule(string: simple(:x)) { x.to_s }
-        rule(string: sequence(:x)) { '' }  # Empty string
+        rule(string: sequence(:x)) { "" }  # Empty string
         rule(identifier: simple(:x)) { x.to_s }
 
         rule(keyword: simple(:_kw), statements: subtree(:stmts)) do

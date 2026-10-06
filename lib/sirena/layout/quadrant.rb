@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/quadrant'
+require_relative "base"
+require_relative "../diagram/quadrant"
 
 module Sirena
   module Layout
@@ -36,7 +36,7 @@ module Sirena
         chart_height = height - (margin * 2)
 
         {
-          id: diagram.id || 'quadrant',
+          id: diagram.id || "quadrant",
           title: diagram.title,
           dimensions: {
             width: width,
@@ -48,10 +48,10 @@ module Sirena
             chart_y: margin,
           },
           axes: {
-            x_left: diagram.x_axis_left || '',
-            x_right: diagram.x_axis_right || '',
-            y_bottom: diagram.y_axis_bottom || '',
-            y_top: diagram.y_axis_top || '',
+            x_left: diagram.x_axis_left || "",
+            x_right: diagram.x_axis_right || "",
+            y_bottom: diagram.y_axis_bottom || "",
+            y_top: diagram.y_axis_top || "",
           },
           quadrants: {
             q1: {

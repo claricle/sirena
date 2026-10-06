@@ -39,19 +39,19 @@ module ErTildeTiming
   # Parslet rules, so a regression that reverted only one of them needs
   # a long run on each side to be caught.
   def time_tilde_parse(char_count, position: :prefix)
-    long_run = 'a' * char_count
+    long_run = "a" * char_count
     body = position == :prefix ? "#{long_run}~foo bar~x" : "foo~bar baz~#{long_run}"
     source = "erDiagram\n  ENTITY {\n    #{body} rental_date\n  }\n"
 
     diagram = nil
     elapsed = cpu_time { diagram = parser.parse(source) }
 
-    attr = diagram.find_entity('ENTITY').attributes.first
+    attr = diagram.find_entity("ENTITY").attributes.first
     # `body` has 2 tildes, so `extract_attribute_type` pairs them into
     # `<`/`>` (mermaid's own display convention) rather than leaving them
     # be -- assert on that, not the raw tilde text, so this stays a
     # correctness check and not just a speed check.
-    expect(attr.attribute_type).to eq(body.sub('~', '<').sub('~', '>'))
+    expect(attr.attribute_type).to eq(body.sub("~", "<").sub("~", ">"))
     elapsed
   end
 
@@ -78,14 +78,14 @@ module ErTildeTiming
     diagram = nil
     elapsed = cpu_time { diagram = parser.parse(source) }
 
-    attr = diagram.find_entity('ENTITY').attributes.first
+    attr = diagram.find_entity("ENTITY").attributes.first
     # Outside-in pairing (first tilde with last, second with
     # second-to-last, ...) means the result is NOT simply `<a0><a1>...` --
     # assert on the invariant that stays true regardless of pairing order:
     # every tilde became exactly one `<` or `>`, none survive.
-    expect(attr.attribute_type).not_to include('~')
-    expect(attr.attribute_type.count('<')).to eq(pair_count)
-    expect(attr.attribute_type.count('>')).to eq(pair_count)
+    expect(attr.attribute_type).not_to include("~")
+    expect(attr.attribute_type.count("<")).to eq(pair_count)
+    expect(attr.attribute_type.count(">")).to eq(pair_count)
     elapsed
   end
 
@@ -105,13 +105,13 @@ module ErTildeTiming
   end
 
   def time_note_parse(char_count)
-    note = 'n' * char_count
+    note = "n" * char_count
     source = "erDiagram\n  ENTITY {\n    int id PK \"#{note}\"\n  }\n"
 
     diagram = nil
     elapsed = cpu_time { diagram = parser.parse(source) }
 
-    attr = diagram.find_entity('ENTITY').attributes.first
+    attr = diagram.find_entity("ENTITY").attributes.first
     expect(attr.note).to eq(note)
     elapsed
   end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/class_diagram'
-require_relative 'builders/class_diagram'
-require_relative '../diagram/class_diagram'
+require_relative "base"
+require_relative "grammars/class_diagram"
+require_relative "builders/class_diagram"
+require_relative "../diagram/class_diagram"
 
 module Sirena
   module Parser

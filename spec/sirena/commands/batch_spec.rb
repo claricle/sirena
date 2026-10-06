@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'stringio'
-require 'timeout'
-require 'tmpdir'
-require 'sirena/commands/batch'
+require "spec_helper"
+require "stringio"
+require "timeout"
+require "tmpdir"
+require "sirena/commands/batch"
 
 # `bomb`, `batching`, `run_batch` are ordinary domain words: `include` this
 # per example group, never register it globally. It stays `include`d (not
@@ -92,7 +92,7 @@ module BatchCommandRunner
   # raises for the same two classes -- not load-bearing to the assertion
   # below, only to reading the report as a person would.
   def exhaustion_message_for(exhaustion_class)
-    exhaustion_class == SystemStackError ? 'stack level too deep' : 'failed to allocate memory'
+    exhaustion_class == SystemStackError ? "stack level too deep" : "failed to allocate memory"
   end
   module_function :exhaustion_message_for
 end
@@ -106,29 +106,29 @@ RSpec.describe Sirena::Commands::BatchCommand do
   include BatchCommandRunner
   include DefaultExternalEncoding
 
-  it 'renders the files after a bomb instead of dying at it' do
+  it "renders the files after a bomb instead of dying at it" do
     in_batch_dir do |input, output|
       run_batch(input, output)
 
-      expect(Dir.children(output).sort).to eq(['1-ok.svg', '3-ok.svg'])
+      expect(Dir.children(output).sort).to eq(["1-ok.svg", "3-ok.svg"])
     end
   end
 
-  it 'reports the bomb as one failure and the rest as successes' do
+  it "reports the bomb as one failure and the rest as successes" do
     in_batch_dir do |input, output|
       report = run_batch(input, output)
 
-      expect(report).to include('Success: 2')
-      expect(report).to include('Failed:  1')
-      expect(report).to include('Total:   3')
+      expect(report).to include("Success: 2")
+      expect(report).to include("Failed:  1")
+      expect(report).to include("Total:   3")
     end
   end
 
-  it 'names the file that failed and why' do
+  it "names the file that failed and why" do
     in_batch_dir do |input, output|
       report = run_batch(input, output)
 
-      expect(report).to include('2-bomb.mmd: Diagram nests too deeply to parse.')
+      expect(report).to include("2-bomb.mmd: Diagram nests too deeply to parse.")
     end
   end
 
@@ -150,7 +150,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
   Sirena::EXHAUSTION_ERRORS.each do |exhaustion_class|
     it "survives #{exhaustion_class} raised while reading a file, not only while rendering" do
       in_batch_dir do |input, output|
-        bomb_path = File.join(input, '2-bomb.mmd')
+        bomb_path = File.join(input, "2-bomb.mmd")
         message = exhaustion_message_for(exhaustion_class)
         allow(File).to receive(:binread).and_call_original
         allow(File).to receive(:binread)
@@ -158,7 +158,7 @@ RSpec.describe Sirena::Commands::BatchCommand do
 
         report = run_batch(input, output)
 
-        expect(Dir.children(output).sort).to eq(['1-ok.svg', '3-ok.svg'])
+        expect(Dir.children(output).sort).to eq(["1-ok.svg", "3-ok.svg"])
         expect(report).to include("2-bomb.mmd: #{message}")
       end
     end
@@ -167,35 +167,35 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # Reaching the summary is the exit-0 guarantee in observable form: the CLI
   # only gets to its own exit if `run` came back rather than unwinding past
   # it, and `print_summary` is the last thing `run` does.
-  it 'reaches the end of the run rather than unwinding past the caller' do
+  it "reaches the end of the run rather than unwinding past the caller" do
     in_batch_dir do |input, output|
       report = run_batch(input, output)
 
-      expect(report).to include('BATCH RENDERING SUMMARY')
+      expect(report).to include("BATCH RENDERING SUMMARY")
       expect(report).to end_with("Success rate: 66.7%\n")
     end
   end
 
-  it 'lets an exit request through untouched' do
+  it "lets an exit request through untouched" do
     expect(&batching(SystemExit)).to raise_error(SystemExit)
   end
 
-  it 'lets an interrupt through untouched' do
+  it "lets an interrupt through untouched" do
     expect(&batching(Interrupt)).to raise_error(Interrupt)
   end
 
   # A host that wraps a batch run in `Timeout.timeout` unwinds through this
   # class. Swallowing it would make the timeout report a file failure, carry
   # on with the next file, and never fire.
-  it 'lets a host timeout unwind through it' do
-    expect(&batching(Timeout::ExitException.new('too slow')))
+  it "lets a host timeout unwind through it" do
+    expect(&batching(Timeout::ExitException.new("too slow")))
       .to raise_error(Timeout::ExitException)
   end
 
   # `NotImplementedError` rather than a `Class.new(Exception)`: the
   # `Lint/InheritException` autocorrect rewrites the latter to
   # `StandardError`, which would quietly turn this into a test of nothing.
-  it 'lets a class outside the exhaustion family through untouched' do
+  it "lets a class outside the exhaustion family through untouched" do
     expect(&batching(NotImplementedError)).to raise_error(NotImplementedError)
   end
 
@@ -206,15 +206,15 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # file it stripped the path down to '', landing `File.write` on the
   # output directory itself and raising `Errno::EISDIR`, counted as a
   # failure, nothing ever written.
-  it 'renders a single file passed via -i, not only a directory' do
+  it "renders a single file passed via -i, not only a directory" do
     Dir.mktmpdir do |dir|
-      input = File.join(dir, 'solo.mmd')
-      output = File.join(dir, 'out')
+      input = File.join(dir, "solo.mmd")
+      output = File.join(dir, "out")
       File.write(input, "graph TD\nAlpha-->Beta\n")
 
       run_batch(input, output)
 
-      expect(Dir.children(output)).to eq(['solo.svg'])
+      expect(Dir.children(output)).to eq(["solo.svg"])
     end
   end
 
@@ -246,17 +246,17 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # code (D1: exit 1 if any item failed). Asserted directly here rather
   # than only through the CLI spec, since `BatchCommand` is also used
   # directly by callers that are not the CLI.
-  it 'reports success when every item succeeds' do
+  it "reports success when every item succeeds" do
     in_batch_dir do |input, output|
       # Route around the bomb fixture -- this example wants an all-success
       # run, not the mixed one `in_batch_dir` builds by default.
-      FileUtils.rm(File.join(input, '2-bomb.mmd'))
+      FileUtils.rm(File.join(input, "2-bomb.mmd"))
 
       expect(batch_command(input, output).success?).to be(true)
     end
   end
 
-  it 'reports failure when any item fails' do
+  it "reports failure when any item fails" do
     in_batch_dir do |input, output|
       expect(batch_command(input, output).success?).to be(false)
     end
@@ -268,20 +268,20 @@ RSpec.describe Sirena::Commands::BatchCommand do
   # directory and a nonexistent one, since `find_mermaid_files` returns
   # `[]` for either (`File.directory?` is false on a path that doesn't
   # exist, falling through to the final `else []` branch).
-  it 'reports success on an empty input directory' do
+  it "reports success on an empty input directory" do
     Dir.mktmpdir do |dir|
-      input = File.join(dir, 'empty')
-      output = File.join(dir, 'out')
+      input = File.join(dir, "empty")
+      output = File.join(dir, "out")
       Dir.mkdir(input)
 
       expect(batch_command(input, output).success?).to be(true)
     end
   end
 
-  it 'reports success on a nonexistent input path' do
+  it "reports success on a nonexistent input path" do
     Dir.mktmpdir do |dir|
-      input = File.join(dir, 'does-not-exist')
-      output = File.join(dir, 'out')
+      input = File.join(dir, "does-not-exist")
+      output = File.join(dir, "out")
 
       expect(batch_command(input, output).success?).to be(true)
     end

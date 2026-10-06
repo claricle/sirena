@@ -64,18 +64,18 @@
 # parsers agree on how to identify an actor's name in a single message
 # statement.
 
-require 'bundler/setup'
+require "bundler/setup"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require 'json'
-require 'open3'
-require 'optparse'
+require "sirena"
+require "json"
+require "open3"
+require "optparse"
 
 module SequenceFuzz
-  ROOT = File.expand_path('..', __dir__)
-  MERMAID_RUNNER = File.join(ROOT, 'scripts', 'sequence_fuzz_mermaid.js')
+  ROOT = File.expand_path("..", __dir__)
+  MERMAID_RUNNER = File.join(ROOT, "scripts", "sequence_fuzz_mermaid.js")
 
   # Exact arrow spellings mermaid's own sequence lexer draws (mirrors the
   # list in lib/sirena/parser/grammars/sequence.rb). The arrow token is
@@ -85,16 +85,16 @@ module SequenceFuzz
     ->> --> -> --) -) --x -x --// -// --\\ -\\ --|/ -|/ --|\\ -|\\
   ].freeze
 
-  SAFE_ACTOR_CHARS = [*'a'..'z', *'A'..'Z', *'0'..'9', '_'].freeze
+  SAFE_ACTOR_CHARS = [*"a".."z", *"A".."Z", *"0".."9", "_"].freeze
 
   # Characters PR #38's fix measured as significant for mermaid's actor
   # lexer (dash-fusion, central-connection parens, comment/shape-metadata
   # openers, reversed-arrow leads). Kept narrow and named rather than
   # "everything printable" -- an unbounded alphabet would make a
   # divergence's cause harder to read off the failing input, not easier.
-  WILD_ACTOR_CHARS = %w[- ( ) % @ / \\ < > + . |].push(' ').freeze
+  WILD_ACTOR_CHARS = %w[- ( ) % @ / \\ < > + . |].push(" ").freeze
 
-  MESSAGE_TEXTS = ['', 'hello', 'a message with spaces', 'msg 123'].freeze
+  MESSAGE_TEXTS = ["", "hello", "a message with spaces", "msg 123"].freeze
 
   # One generated (or fixed) fuzz case: the source text sirena and
   # mermaid both see, and an id used to match up the two sides' results
@@ -116,8 +116,8 @@ module SequenceFuzz
   # the regression corpus because #38 landing is exactly the change that
   # could make it start disagreeing.
   KNOWN_DIVERGENCES = [
-    Case.new('known-1-dash-paren-comment', "sequenceDiagram\n    B->>A-(%%C: m\n"),
-    Case.new('known-2-reversed-arrow-lead', "sequenceDiagram\n    A-(//-B: m\n"),
+    Case.new("known-1-dash-paren-comment", "sequenceDiagram\n    B->>A-(%%C: m\n"),
+    Case.new("known-2-reversed-arrow-lead", "sequenceDiagram\n    A-(//-B: m\n"),
   ].freeze
 
   # Generates random single-message sequence-diagram sources with a
@@ -153,7 +153,7 @@ module SequenceFuzz
 
     def random_message
       text = MESSAGE_TEXTS.sample(random: @rng)
-      text.empty? ? '' : ": #{text}"
+      text.empty? ? "" : ": #{text}"
     end
   end
 
@@ -184,7 +184,7 @@ module SequenceFuzz
 
     def run(cases)
       payload = cases.map { |c| { id: c.id, source: c.source } }.to_json
-      stdout, stderr, status = Open3.capture3('node', MERMAID_RUNNER, stdin_data: payload)
+      stdout, stderr, status = Open3.capture3("node", MERMAID_RUNNER, stdin_data: payload)
       raise "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}" unless status.success?
 
       JSON.parse(stdout, symbolize_names: true).to_h do |r|
@@ -217,7 +217,7 @@ module SequenceFuzz
 
     def classify
       return accept_reject_mismatch unless @sirena[:accepted] == @mermaid[:accepted]
-      return [:agree, 'both rejected'] unless @sirena[:accepted]
+      return [:agree, "both rejected"] unless @sirena[:accepted]
 
       actor_mismatch
     end
@@ -267,9 +267,9 @@ module SequenceFuzz
 
     def parse!(argv)
       OptionParser.new do |o|
-        o.on('--seed N', Integer) { |v| @seed = v }
-        o.on('--count N', Integer) { |v| @count = v }
-        o.on('--verbose') { @verbose = true }
+        o.on("--seed N", Integer) { |v| @seed = v }
+        o.on("--count N", Integer) { |v| @count = v }
+        o.on("--verbose") { @verbose = true }
       end.parse!(argv)
     end
 
@@ -301,8 +301,8 @@ module SequenceFuzz
     end
 
     def print_timings(total, sirena_elapsed, mermaid_elapsed)
-      puts format('sirena:  %d cases in %.3fs (%.1f/s)', total, sirena_elapsed, total / sirena_elapsed)
-      puts format('mermaid: %d cases in %.3fs (%.1f/s)', total, mermaid_elapsed, total / mermaid_elapsed)
+      puts format("sirena:  %d cases in %.3fs (%.1f/s)", total, sirena_elapsed, total / sirena_elapsed)
+      puts format("mermaid: %d cases in %.3fs (%.1f/s)", total, mermaid_elapsed, total / mermaid_elapsed)
     end
 
     def print_summary(total, divergences)

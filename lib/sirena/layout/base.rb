@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'date'
-require_relative '../error'
-require_relative '../error/layout_error'
-require_relative 'scene'
-require_relative 'legacy'
+require "date"
+require_relative "../error"
+require_relative "../error/layout_error"
+require_relative "scene"
+require_relative "legacy"
 
 module Sirena
   module Layout
@@ -61,17 +61,17 @@ module Sirena
 
       # ELK layout algorithms supported (matching mermaid-js)
       # @see https://www.eclipse.org/elk/reference/algorithms.html
-      ALGORITHM_LAYERED = 'layered'
-      ALGORITHM_STRESS = 'stress'
-      ALGORITHM_FORCE = 'force'
-      ALGORITHM_MRTREE = 'mrtree'
-      ALGORITHM_SPORE_OVERLAP = 'sporeOverlap'
+      ALGORITHM_LAYERED = "layered"
+      ALGORITHM_STRESS = "stress"
+      ALGORITHM_FORCE = "force"
+      ALGORITHM_MRTREE = "mrtree"
+      ALGORITHM_SPORE_OVERLAP = "sporeOverlap"
 
       # ELK layout directions
-      DIRECTION_DOWN = 'DOWN'
-      DIRECTION_UP = 'UP'
-      DIRECTION_LEFT = 'LEFT'
-      DIRECTION_RIGHT = 'RIGHT'
+      DIRECTION_DOWN = "DOWN"
+      DIRECTION_UP = "UP"
+      DIRECTION_LEFT = "LEFT"
+      DIRECTION_RIGHT = "RIGHT"
 
       # Default spacing values (in pixels)
       DEFAULT_NODE_SPACING = 50
@@ -81,27 +81,27 @@ module Sirena
       # ELK option keys for consistent configuration
       # @see https://www.eclipse.org/elk/reference/options.html
       module ElkOptions
-        ALGORITHM = 'elk.algorithm'
-        DIRECTION = 'elk.direction'
+        ALGORITHM = "elk.algorithm"
+        DIRECTION = "elk.direction"
 
         # Spacing options
-        NODE_NODE_SPACING = 'elk.spacing.nodeNode'
-        EDGE_NODE_SPACING = 'elk.spacing.edgeNode'
-        EDGE_EDGE_SPACING = 'elk.spacing.edgeEdge'
-        LAYER_SPACING = 'elk.layered.spacing.nodeNodeBetweenLayers'
+        NODE_NODE_SPACING = "elk.spacing.nodeNode"
+        EDGE_NODE_SPACING = "elk.spacing.edgeNode"
+        EDGE_EDGE_SPACING = "elk.spacing.edgeEdge"
+        LAYER_SPACING = "elk.layered.spacing.nodeNodeBetweenLayers"
 
         # Layered algorithm options
-        NODE_PLACEMENT = 'elk.layered.nodePlacement.strategy'
+        NODE_PLACEMENT = "elk.layered.nodePlacement.strategy"
         CROSSING_MINIMIZATION =
-          'elk.layered.crossingMinimization.strategy'
-        MODEL_ORDER = 'elk.layered.considerModelOrder.strategy'
-        COMPACTION = 'elk.layered.compaction.postCompaction.strategy'
+          "elk.layered.crossingMinimization.strategy"
+        MODEL_ORDER = "elk.layered.considerModelOrder.strategy"
+        COMPACTION = "elk.layered.compaction.postCompaction.strategy"
 
         # Hierarchy and grouping
-        HIERARCHY_HANDLING = 'elk.hierarchyHandling'
+        HIERARCHY_HANDLING = "elk.hierarchyHandling"
 
         # Edge routing
-        EDGE_ROUTING = 'elk.edgeRouting'
+        EDGE_ROUTING = "elk.edgeRouting"
       end
 
       # Lays out a diagram: the one entry point, for every type.
@@ -123,7 +123,7 @@ module Sirena
       # @raise [LayoutError] if the diagram fails its own #valid? check
       def call(diagram, theme: nil, today: nil)
         today_before_call = @today
-        raise LayoutError, 'Invalid diagram' if diagram.nil? || !diagram.valid?
+        raise LayoutError, "Invalid diagram" if diagram.nil? || !diagram.valid?
 
         @theme = theme if theme
         @today = today if today
@@ -246,10 +246,10 @@ module Sirena
           ElkOptions::LAYER_SPACING => DEFAULT_LAYER_SPACING,
 
           # Use SIMPLE node placement for predictable layouts
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
+          ElkOptions::NODE_PLACEMENT => "SIMPLE",
 
           # Consider model order for consistent positioning
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
+          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
         }
       end
 

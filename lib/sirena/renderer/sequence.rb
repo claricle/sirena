@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -20,7 +20,7 @@ module Sirena
       PARTICIPANT_MARGIN = 20
 
       # Lifeline styling
-      LIFELINE_DASH = '5,5'
+      LIFELINE_DASH = "5,5"
 
       # Message arrow dimensions
       ARROW_SIZE = 8
@@ -119,7 +119,7 @@ module Sirena
         return unless pos
 
         metadata = participant[:metadata] || {}
-        actor_type = metadata[:actor_type] || 'participant'
+        actor_type = metadata[:actor_type] || "participant"
 
         # Create group for participant
         group = Svg::Group.new.tap do |g|
@@ -127,7 +127,7 @@ module Sirena
         end
 
         # Render participant shape
-        if actor_type == 'actor'
+        if actor_type == "actor"
           render_actor(pos[:x], pos[:y], participant, group)
         else
           render_participant_box(pos[:x], pos[:y], participant, group)
@@ -143,9 +143,9 @@ module Sirena
           r.y = y
           r.width = PARTICIPANT_WIDTH
           r.height = PARTICIPANT_HEIGHT
-          r.fill = '#ffffff'
-          r.stroke = '#000000'
-          r.stroke_width = '2'
+          r.fill = "#ffffff"
+          r.stroke = "#000000"
+          r.stroke_width = "2"
           r.rx = 5
           r.ry = 5
         end
@@ -159,11 +159,11 @@ module Sirena
           t.x = x + PARTICIPANT_WIDTH / 2
           t.y = y + PARTICIPANT_HEIGHT / 2
           t.content = label[:text]
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
-          t.font_size = '14'
-          t.text_anchor = 'middle'
-          t.dominant_baseline = 'middle'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
+          t.font_size = "14"
+          t.text_anchor = "middle"
+          t.dominant_baseline = "middle"
         end
         group.children << text
       end
@@ -178,9 +178,9 @@ module Sirena
           c.cx = center_x
           c.cy = head_y
           c.r = 8
-          c.fill = 'none'
-          c.stroke = '#000000'
-          c.stroke_width = '2'
+          c.fill = "none"
+          c.stroke = "#000000"
+          c.stroke_width = "2"
         end
         group.children << circle
 
@@ -194,8 +194,8 @@ module Sirena
           l.y1 = body_top
           l.x2 = center_x
           l.y2 = body_bottom
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << body
 
@@ -205,8 +205,8 @@ module Sirena
           l.y1 = body_top + 7
           l.x2 = center_x + 10
           l.y2 = body_top + 7
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << arms
 
@@ -216,8 +216,8 @@ module Sirena
           l.y1 = body_bottom
           l.x2 = center_x - 8
           l.y2 = body_bottom + 10
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << left_leg
 
@@ -226,8 +226,8 @@ module Sirena
           l.y1 = body_bottom
           l.x2 = center_x + 8
           l.y2 = body_bottom + 10
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << right_leg
       end
@@ -241,8 +241,8 @@ module Sirena
             l.y1 = PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT
             l.x2 = pos[:center_x]
             l.y2 = PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT + lifeline_length
-            l.stroke = '#000000'
-            l.stroke_width = '1'
+            l.stroke = "#000000"
+            l.stroke_width = "1"
             l.stroke_dasharray = LIFELINE_DASH
           end
           svg << line
@@ -258,9 +258,9 @@ module Sirena
       def render_message(edge, positions, index, svg)
         metadata = edge[:metadata] || {}
         style = {
-          line: metadata[:line_style] || 'solid',
-          head: metadata[:head_style] || 'filled',
-          side: metadata[:head_side] || 'target',
+          line: metadata[:line_style] || "solid",
+          head: metadata[:head_style] || "filled",
+          side: metadata[:head_side] || "target",
         }
         message_text = metadata[:message_text]
 
@@ -327,10 +327,10 @@ module Sirena
 
         group.children << Svg::Path.new.tap do |p|
           p.d = "M #{x},#{top} C #{reach},#{top} #{reach},#{bottom} #{x},#{bottom}"
-          p.fill = 'none'
-          p.stroke = '#000000'
-          p.stroke_width = '2'
-          p.stroke_dasharray = '5,5' if style[:line] == 'dotted'
+          p.fill = "none"
+          p.stroke = "#000000"
+          p.stroke_width = "2"
+          p.stroke_dasharray = "5,5" if style[:line] == "dotted"
         end
 
         # Each end of the loop carries its own head, so a bidirectional
@@ -348,15 +348,15 @@ module Sirena
       # target, one at the source for the reversed spellings, both for its
       # <<->> arrows, and none for the bare -> and -->.
       HEAD_ENDS = {
-        'target' => [:target].freeze,
-        'source' => [:source].freeze,
-        'both' => [:source, :target].freeze,
+        "target" => [:target].freeze,
+        "source" => [:source].freeze,
+        "both" => [:source, :target].freeze,
       }.freeze
 
       def head_ends(style)
-        return [] if style[:head] == 'none'
+        return [] if style[:head] == "none"
 
-        HEAD_ENDS.fetch(style[:side], HEAD_ENDS['target'])
+        HEAD_ENDS.fetch(style[:side], HEAD_ENDS["target"])
       end
 
       # Heads that sit on the line rather than in front of it. Only a
@@ -379,9 +379,9 @@ module Sirena
           l.y1 = span[:y1]
           l.x2 = span[:x2] - (ends.include?(:target) ? inset : 0)
           l.y2 = span[:y2]
-          l.stroke = '#000000'
-          l.stroke_width = '2'
-          l.stroke_dasharray = '5,5' if style[:line] == 'dotted'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
+          l.stroke_dasharray = "5,5" if style[:line] == "dotted"
         end
       end
 
@@ -401,15 +401,15 @@ module Sirena
         side = tip_x <=> from_x
 
         case style[:head]
-        when 'cross' then render_cross(tip_x, tip_y, group)
-        when 'open' then render_chevron(from_x, tip_x, tip_y, group)
-        when 'half_bottom'
+        when "cross" then render_cross(tip_x, tip_y, group)
+        when "open" then render_chevron(from_x, tip_x, tip_y, group)
+        when "half_bottom"
           render_half_head(from_x, tip_x, tip_y, side, group)
-        when 'half_top'
+        when "half_top"
           render_half_head(from_x, tip_x, tip_y, -side, group)
-        when 'stick_bottom'
+        when "stick_bottom"
           render_stick_head(from_x, tip_x, tip_y, side, group)
-        when 'stick_top'
+        when "stick_top"
           render_stick_head(from_x, tip_x, tip_y, -side, group)
         else render_filled_arrowhead(from_x, tip_y, tip_x, tip_y, group)
         end
@@ -426,8 +426,8 @@ module Sirena
           l.y1 = tip_y
           l.x2 = tip_x - (direction * ARROW_SIZE)
           l.y2 = tip_y + (side * ARROW_SIZE / 2)
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
       end
 
@@ -442,19 +442,19 @@ module Sirena
                      "#{x2},#{y2}",
                      "#{x2 - ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
                      "#{x2 - ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
-                   ].join(' ')
+                   ].join(" ")
                  else
                    [
                      "#{x2},#{y2}",
                      "#{x2 + ARROW_SIZE},#{y2 - ARROW_SIZE / 2}",
                      "#{x2 + ARROW_SIZE},#{y2 + ARROW_SIZE / 2}",
-                   ].join(' ')
+                   ].join(" ")
                  end
 
         polygon = Svg::Polygon.new.tap do |p|
           p.points = points
-          p.fill = '#000000'
-          p.stroke = '#000000'
+          p.fill = "#000000"
+          p.stroke = "#000000"
         end
         group.children << polygon
       end
@@ -472,9 +472,9 @@ module Sirena
             "#{tip_x},#{tip_y}",
             "#{back},#{tip_y + (side * ARROW_SIZE / 2)}",
             "#{back},#{tip_y}",
-          ].join(' ')
-          p.fill = '#000000'
-          p.stroke = '#000000'
+          ].join(" ")
+          p.fill = "#000000"
+          p.stroke = "#000000"
         end
         group.children << polygon
       end
@@ -493,9 +493,9 @@ module Sirena
             "#{back},#{tip_y - ARROW_SIZE / 2}",
             "#{notch},#{tip_y}",
             "#{back},#{tip_y + ARROW_SIZE / 2}",
-          ].join(' ')
-          p.fill = '#000000'
-          p.stroke = '#000000'
+          ].join(" ")
+          p.fill = "#000000"
+          p.stroke = "#000000"
         end
         group.children << polygon
       end
@@ -509,8 +509,8 @@ module Sirena
           l.y1 = y - size
           l.x2 = x + size
           l.y2 = y + size
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << line1
 
@@ -519,8 +519,8 @@ module Sirena
           l.y1 = y + size
           l.x2 = x + size
           l.y2 = y - size
-          l.stroke = '#000000'
-          l.stroke_width = '2'
+          l.stroke = "#000000"
+          l.stroke_width = "2"
         end
         group.children << line2
       end
@@ -536,10 +536,10 @@ module Sirena
           t.x = label_x
           t.y = label_y
           t.content = text
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
-          t.font_size = '12'
-          t.text_anchor = 'middle'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
+          t.font_size = "12"
+          t.text_anchor = "middle"
         end
         group.children << text_element
       end

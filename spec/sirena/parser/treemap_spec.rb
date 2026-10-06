@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'sirena/parser/treemap'
+require "spec_helper"
+require "sirena/parser/treemap"
 
 RSpec.describe Sirena::Parser::Treemap do
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    context 'with basic treemap syntax' do
-      it 'parses simple treemap with single node' do
+  describe "#parse" do
+    context "with basic treemap syntax" do
+      it "parses simple treemap with single node" do
         source = <<~MERMAID
           treemap
           "Root"
@@ -19,13 +19,13 @@ RSpec.describe Sirena::Parser::Treemap do
 
         expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.root_nodes.length).to eq(1)
-        expect(diagram.root_nodes.first.label).to eq('Root')
+        expect(diagram.root_nodes.first.label).to eq("Root")
         expect(diagram.root_nodes.first.children.length).to eq(1)
-        expect(diagram.root_nodes.first.children.first.label).to eq('Child')
+        expect(diagram.root_nodes.first.children.first.label).to eq("Child")
         expect(diagram.root_nodes.first.children.first.value).to eq(100.0)
       end
 
-      it 'parses treemap-beta keyword' do
+      it "parses treemap-beta keyword" do
         source = <<~MERMAID
           treemap-beta
           "Node": 50
@@ -37,7 +37,7 @@ RSpec.describe Sirena::Parser::Treemap do
         expect(diagram.root_nodes.length).to eq(1)
       end
 
-      it 'parses multiple root nodes' do
+      it "parses multiple root nodes" do
         source = <<~MERMAID
           treemap
           "Section 1"
@@ -49,13 +49,13 @@ RSpec.describe Sirena::Parser::Treemap do
         diagram = parser.parse(source)
 
         expect(diagram.root_nodes.length).to eq(2)
-        expect(diagram.root_nodes[0].label).to eq('Section 1')
-        expect(diagram.root_nodes[1].label).to eq('Section 2')
+        expect(diagram.root_nodes[0].label).to eq("Section 1")
+        expect(diagram.root_nodes[1].label).to eq("Section 2")
       end
     end
 
-    context 'with hierarchical structure' do
-      it 'parses nested nodes' do
+    context "with hierarchical structure" do
+      it "parses nested nodes" do
         source = <<~MERMAID
           treemap-beta
           "Level 1"
@@ -66,19 +66,19 @@ RSpec.describe Sirena::Parser::Treemap do
         diagram = parser.parse(source)
 
         level1 = diagram.root_nodes.first
-        expect(level1.label).to eq('Level 1')
+        expect(level1.label).to eq("Level 1")
         expect(level1.children.length).to eq(1)
 
         level2 = level1.children.first
-        expect(level2.label).to eq('Level 2')
+        expect(level2.label).to eq("Level 2")
         expect(level2.children.length).to eq(1)
 
         level3 = level2.children.first
-        expect(level3.label).to eq('Level 3')
+        expect(level3.label).to eq("Level 3")
         expect(level3.value).to eq(10.0)
       end
 
-      it 'parses complex hierarchy' do
+      it "parses complex hierarchy" do
         source = <<~MERMAID
           treemap-beta
           "Level 1"
@@ -98,8 +98,8 @@ RSpec.describe Sirena::Parser::Treemap do
       end
     end
 
-    context 'with value separators' do
-      it 'parses values with colon separator' do
+    context "with value separators" do
+      it "parses values with colon separator" do
         source = <<~MERMAID
           treemap
           "Root"
@@ -111,7 +111,7 @@ RSpec.describe Sirena::Parser::Treemap do
         expect(child.value).to eq(200.0)
       end
 
-      it 'parses values with comma separator' do
+      it "parses values with comma separator" do
         source = <<~MERMAID
           treemap
           "Root"
@@ -124,8 +124,8 @@ RSpec.describe Sirena::Parser::Treemap do
       end
     end
 
-    context 'with CSS classes' do
-      it 'parses nodes with CSS class' do
+    context "with CSS classes" do
+      it "parses nodes with CSS class" do
         source = <<~MERMAID
           treemap-beta
           "Main"
@@ -135,10 +135,10 @@ RSpec.describe Sirena::Parser::Treemap do
 
         diagram = parser.parse(source)
         node_b = diagram.root_nodes.first.children.first
-        expect(node_b.css_class).to eq('important')
+        expect(node_b.css_class).to eq("important")
       end
 
-      it 'parses leaf nodes with value and CSS class' do
+      it "parses leaf nodes with value and CSS class" do
         source = <<~MERMAID
           treemap-beta
           "Main"
@@ -148,12 +148,12 @@ RSpec.describe Sirena::Parser::Treemap do
         diagram = parser.parse(source)
         node_c = diagram.root_nodes.first.children.first
         expect(node_c.value).to eq(5.0)
-        expect(node_c.css_class).to eq('secondary')
+        expect(node_c.css_class).to eq("secondary")
       end
     end
 
-    context 'with class definitions' do
-      it 'parses classDef statements' do
+    context "with class definitions" do
+      it "parses classDef statements" do
         source = <<~MERMAID
           treemap-beta
           "Main"
@@ -163,11 +163,11 @@ RSpec.describe Sirena::Parser::Treemap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.class_defs).to have_key('important')
-        expect(diagram.class_defs['important']).to include('fill:#f96')
+        expect(diagram.class_defs).to have_key("important")
+        expect(diagram.class_defs["important"]).to include("fill:#f96")
       end
 
-      it 'parses multiple classDef statements' do
+      it "parses multiple classDef statements" do
         source = <<~MERMAID
           treemap-beta
           "Main"
@@ -178,12 +178,12 @@ RSpec.describe Sirena::Parser::Treemap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.class_defs.keys).to include('important', 'secondary')
+        expect(diagram.class_defs.keys).to include("important", "secondary")
       end
     end
 
-    context 'with metadata' do
-      it 'parses title' do
+    context "with metadata" do
+      it "parses title" do
         source = <<~MERMAID
           treemap
           title My Treemap Diagram
@@ -192,10 +192,10 @@ RSpec.describe Sirena::Parser::Treemap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.title).to eq('My Treemap Diagram')
+        expect(diagram.title).to eq("My Treemap Diagram")
       end
 
-      it 'parses accessibility metadata' do
+      it "parses accessibility metadata" do
         source = <<~MERMAID
           treemap
           title My Treemap
@@ -206,13 +206,13 @@ RSpec.describe Sirena::Parser::Treemap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.title).to eq('My Treemap')
+        expect(diagram.title).to eq("My Treemap")
         # Note: accTitle and accDescr are parsed but not currently stored
       end
     end
 
-    context 'with comments' do
-      it 'ignores comment lines' do
+    context "with comments" do
+      it "ignores comment lines" do
         source = <<~MERMAID
           treemap
           %% This is a comment
@@ -225,8 +225,8 @@ RSpec.describe Sirena::Parser::Treemap do
       end
     end
 
-    context 'with node calculations' do
-      it 'calculates total values correctly' do
+    context "with node calculations" do
+      it "calculates total values correctly" do
         source = <<~MERMAID
           treemap
           "Root"
@@ -238,7 +238,7 @@ RSpec.describe Sirena::Parser::Treemap do
         expect(diagram.total_value).to eq(300.0)
       end
 
-      it 'calculates node depth correctly' do
+      it "calculates node depth correctly" do
         source = <<~MERMAID
           treemap
           "Level 1"
@@ -257,8 +257,8 @@ RSpec.describe Sirena::Parser::Treemap do
       end
     end
 
-    context 'with edge cases' do
-      it 'handles empty labels' do
+    context "with edge cases" do
+      it "handles empty labels" do
         source = <<~MERMAID
           treemap
           ""
@@ -266,11 +266,11 @@ RSpec.describe Sirena::Parser::Treemap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.root_nodes.first.label).to eq('')
+        expect(diagram.root_nodes.first.label).to eq("")
       end
 
-      it 'handles long labels' do
-        long_label = 'This is a very long item name that should wrap to the next line when rendered in the treemap diagram'
+      it "handles long labels" do
+        long_label = "This is a very long item name that should wrap to the next line when rendered in the treemap diagram"
         source = <<~MERMAID
           treemap-beta
           "Main"
@@ -282,7 +282,7 @@ RSpec.describe Sirena::Parser::Treemap do
         expect(child.label).to eq(long_label)
       end
 
-      it 'handles decimal values' do
+      it "handles decimal values" do
         source = <<~MERMAID
           treemap
           "Root"
@@ -295,31 +295,31 @@ RSpec.describe Sirena::Parser::Treemap do
       end
     end
 
-    context 'with fixtures' do
-      it 'parses fixture 001' do
-        source = File.read('spec/mermaid/treemap/001_rendering_treemap_spec_treemap_0.mmd')
+    context "with fixtures" do
+      it "parses fixture 001" do
+        source = File.read("spec/mermaid/treemap/001_rendering_treemap_spec_treemap_0.mmd")
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Treemap)
       end
 
-      it 'parses fixture 002' do
-        source = File.read('spec/mermaid/treemap/002_rendering_treemap_spec_treemap_1.mmd')
+      it "parses fixture 002" do
+        source = File.read("spec/mermaid/treemap/002_rendering_treemap_spec_treemap_1.mmd")
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Treemap)
       end
 
-      it 'parses fixture 008 (example)' do
-        source = File.read('spec/mermaid/treemap/008_example_treemap_7.mmd')
+      it "parses fixture 008 (example)" do
+        source = File.read("spec/mermaid/treemap/008_example_treemap_7.mmd")
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Treemap)
         expect(diagram.root_nodes.length).to eq(2)
       end
 
-      it 'parses fixture 010 (with metadata)' do
-        source = File.read('spec/mermaid/treemap/010_parsertest_treemap_test_9.mmd')
+      it "parses fixture 010 (with metadata)" do
+        source = File.read("spec/mermaid/treemap/010_parsertest_treemap_test_9.mmd")
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Treemap)
-        expect(diagram.title).to eq('My Treemap Diagram')
+        expect(diagram.title).to eq("My Treemap Diagram")
       end
     end
   end

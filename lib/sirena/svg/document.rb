@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'element'
+require "lutaml/model"
+require_relative "element"
 
 module Sirena
   module Svg
@@ -11,10 +11,10 @@ module Sirena
     # viewBox, and dimension attributes. Contains all other SVG elements
     # as children.
     class Document < Lutaml::Model::Serializable
-      SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
-      XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/'
-      SVG_VERSION = '1.2'
-      SVG_BASE_PROFILE = 'tiny'
+      SVG_NAMESPACE = "http://www.w3.org/2000/svg"
+      XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/"
+      SVG_VERSION = "1.2"
+      SVG_BASE_PROFILE = "tiny"
 
       attribute :width, :float
       attribute :height, :float
@@ -65,13 +65,13 @@ module Sirena
         # pair at a time so the newline join below still formats the document
         # the way it always did.
         [
-          ['width', width],
-          ['height', height],
-          ['viewBox', view_box],
-          ['version', version],
-          ['baseProfile', base_profile],
-          ['xmlns', xmlns],
-          ['overflow', overflow],
+          ["width", width],
+          ["height", height],
+          ["viewBox", view_box],
+          ["version", version],
+          ["baseProfile", base_profile],
+          ["xmlns", xmlns],
+          ["overflow", overflow],
         ].each do |name, value|
           parts << Escaping.attribute(name, value) unless value.nil?
         end

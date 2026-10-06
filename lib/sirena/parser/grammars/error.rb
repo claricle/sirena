@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -26,7 +26,7 @@ module Sirena
 
         # Header: error [message text] or Error [message text]
         rule(:header) do
-          (str('Error') | str('error')).as(:header) >>
+          (str("Error") | str("error")).as(:header) >>
             (space.repeat(1) >> message_text).maybe.as(:message) >>
             ws?
         end

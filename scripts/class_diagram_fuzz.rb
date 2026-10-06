@@ -53,12 +53,12 @@
 # two parsers agree on how to identify a bare, standalone class name --
 # and, per the KNOWN_DIVERGENCES below, they currently do not.
 
-require 'bundler/setup'
+require "bundler/setup"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require_relative 'mermaid_fuzz'
+require "sirena"
+require_relative "mermaid_fuzz"
 
 module ClassDiagramFuzz
   # `~` and `<<>>` participate in mermaid's real class-diagram syntax
@@ -84,11 +84,11 @@ module ClassDiagramFuzz
     # not a punctuation edge case: it reproduces on ordinary letters
     # ("K", "q", "h", ...), so it is a systemic difference in what
     # counts as a class declaration, not a lexer gap.
-    MermaidFuzz::Case.new('known-1-bare-identifier-not-a-class-in-mermaid', "classDiagram\n    K\n"),
+    MermaidFuzz::Case.new("known-1-bare-identifier-not-a-class-in-mermaid", "classDiagram\n    K\n"),
     # A bare "-" is likewise silently accepted (and dropped) by mermaid,
     # while sirena's class_name rule (which requires a leading
     # `[a-zA-Z_]`) rejects the line outright.
-    MermaidFuzz::Case.new('known-2-dash-rejected-by-sirena-only', "classDiagram\n    -\n"),
+    MermaidFuzz::Case.new("known-2-dash-rejected-by-sirena-only", "classDiagram\n    -\n"),
   ].freeze
 
   # Runs Sirena's own ClassDiagram in-process, via
@@ -99,11 +99,11 @@ module ClassDiagramFuzz
   end
 
   RUNNER_KWARGS = {
-    label: 'class_diagram',
+    label: "class_diagram",
     generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
-    mermaid_getter: 'getClasses',
+    mermaid_getter: "getClasses",
     mermaid_preflight: "classDiagram\n    class A\n",
   }.freeze
 end

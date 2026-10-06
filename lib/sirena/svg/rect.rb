@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'element'
+require "lutaml/model"
+require_relative "element"
 
 module Sirena
   module Svg

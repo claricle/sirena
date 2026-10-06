@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'thor'
+require "thor"
 
 module Sirena
   # Command-line interface for sirena.
@@ -12,7 +12,7 @@ module Sirena
       true
     end
 
-    desc 'render [FILE]', 'Render a Mermaid diagram to SVG'
+    desc "render [FILE]", "Render a Mermaid diagram to SVG"
     long_desc <<~DESC
       Renders a Mermaid diagram from FILE or stdin to SVG format.
 
@@ -29,26 +29,26 @@ module Sirena
         sirena render --verbose diagram.mmd
     DESC
     method_option :output,
-                  aliases: '-o',
+                  aliases: "-o",
                   type: :string,
-                  desc: 'Output file path (default: stdout)'
+                  desc: "Output file path (default: stdout)"
     method_option :format,
-                  aliases: '-f',
+                  aliases: "-f",
                   type: :string,
-                  default: 'svg',
-                  desc: 'Output format (only svg supported)'
+                  default: "svg",
+                  desc: "Output format (only svg supported)"
     method_option :theme,
-                  aliases: '-t',
+                  aliases: "-t",
                   type: :string,
-                  desc: 'Theme name or path to theme file ' \
-                        '(default, dark, light, high_contrast)'
+                  desc: "Theme name or path to theme file " \
+                        "(default, dark, light, high_contrast)"
     method_option :verbose,
-                  aliases: '-v',
+                  aliases: "-v",
                   type: :boolean,
                   default: false,
-                  desc: 'Enable verbose output'
-    def render(file = '-')
-      require_relative 'commands/render'
+                  desc: "Enable verbose output"
+    def render(file = "-")
+      require_relative "commands/render"
       Commands::RenderCommand.new(file, options).run
     rescue *EXHAUSTION_ERRORS, StandardError => e
       # `RenderCommand#run` builds the theme (a hostile `--theme` YAML
@@ -60,7 +60,7 @@ module Sirena
       handle_error(e)
     end
 
-    desc 'types', 'List supported diagram types'
+    desc "types", "List supported diagram types"
     long_desc <<~DESC
       Lists all diagram types currently supported by sirena.
 
@@ -68,13 +68,13 @@ module Sirena
         sirena types
     DESC
     def types
-      require_relative 'commands/types'
+      require_relative "commands/types"
       Commands::TypesCommand.new(options).run
     rescue StandardError => e
       handle_error(e)
     end
 
-    desc 'batch', 'Batch render multiple Mermaid diagrams'
+    desc "batch", "Batch render multiple Mermaid diagrams"
     long_desc <<~DESC
       Renders all Mermaid diagrams in a directory to SVG format.
 
@@ -87,26 +87,26 @@ module Sirena
         sirena batch -i docs -o output -v
     DESC
     method_option :input,
-                  aliases: '-i',
+                  aliases: "-i",
                   type: :string,
-                  default: '.',
-                  desc: 'Input directory or file'
+                  default: ".",
+                  desc: "Input directory or file"
     method_option :output,
-                  aliases: '-o',
+                  aliases: "-o",
                   type: :string,
-                  default: 'output',
-                  desc: 'Output directory'
+                  default: "output",
+                  desc: "Output directory"
     method_option :theme,
-                  aliases: '-t',
+                  aliases: "-t",
                   type: :string,
-                  desc: 'Theme name or path to theme file'
+                  desc: "Theme name or path to theme file"
     method_option :verbose,
-                  aliases: '-v',
+                  aliases: "-v",
                   type: :boolean,
                   default: false,
-                  desc: 'Enable verbose output'
+                  desc: "Enable verbose output"
     def batch
-      require_relative 'commands/batch'
+      require_relative "commands/batch"
       command = Commands::BatchCommand.new(options)
       command.run
       exit 1 unless command.success?
@@ -114,7 +114,7 @@ module Sirena
       handle_error(e)
     end
 
-    desc 'version', 'Show sirena version'
+    desc "version", "Show sirena version"
     long_desc <<~DESC
       Displays the current version of sirena.
 
@@ -122,7 +122,7 @@ module Sirena
         sirena version
     DESC
     def version
-      require_relative 'commands/version'
+      require_relative "commands/version"
       Commands::VersionCommand.new(options).run
     rescue StandardError => e
       handle_error(e)

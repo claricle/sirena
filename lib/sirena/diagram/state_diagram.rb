@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -32,7 +32,7 @@ module Sirena
       # Initialize with default state type
       def initialize(*args)
         super
-        self.state_type ||= 'normal'
+        self.state_type ||= "normal"
       end
 
       # Validates the state node has required attributes.
@@ -47,35 +47,35 @@ module Sirena
       #
       # @return [Boolean] true if start state
       def start_state?
-        state_type == 'start'
+        state_type == "start"
       end
 
       # Checks if this is an end state.
       #
       # @return [Boolean] true if end state
       def end_state?
-        state_type == 'end'
+        state_type == "end"
       end
 
       # Checks if this is a choice state.
       #
       # @return [Boolean] true if choice state
       def choice_state?
-        state_type == 'choice'
+        state_type == "choice"
       end
 
       # Checks if this is a fork state.
       #
       # @return [Boolean] true if fork state
       def fork_state?
-        state_type == 'fork'
+        state_type == "fork"
       end
 
       # Checks if this is a join state.
       #
       # @return [Boolean] true if join state
       def join_state?
-        state_type == 'join'
+        state_type == "join"
       end
 
       # Checks if this is a composite state.
@@ -118,7 +118,7 @@ module Sirena
         parts = []
         parts << trigger if trigger && !trigger.empty?
         parts << "[#{guard_condition}]" if guard_condition && !guard_condition.empty?
-        parts.join(' ')
+        parts.join(" ")
       end
     end
 
