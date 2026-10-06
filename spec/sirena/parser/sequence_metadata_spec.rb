@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "benchmark"
 require "sirena/parser/sequence"
 
 # Corpus bucket "diagram metadata statements": mmdc renders every sequence
@@ -79,7 +78,7 @@ RSpec.describe Sirena::Parser::Sequence do
   # A run of interior spaces made `rest_of_line` rescan the whole run at
   # every character: 2560 spaces took about 1.5s, doubling the input
   # quadrupled the time. Linear parsing finishes in milliseconds.
-  describe "text with a long run of interior spaces" do
+  describe "text with a long run of interior spaces", :speed do
     {
       "title" => "title x",
       "accTitle" => "accTitle: x",
@@ -87,7 +86,7 @@ RSpec.describe Sirena::Parser::Sequence do
     }.each do |name, prefix|
       it "parses a #{name} line in linear time" do
         source = "sequenceDiagram\n#{prefix}#{' ' * 2560}y\nAlice->Bob: hi\n"
-        elapsed = Benchmark.realtime { parser.parse(source) }
+        elapsed = wall_time { parser.parse(source) }
 
         expect(elapsed).to be < 0.5
       end

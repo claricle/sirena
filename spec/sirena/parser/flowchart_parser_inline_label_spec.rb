@@ -144,11 +144,9 @@ RSpec.describe Sirena::Parser::Flowchart do
       "text of a dotted label" => "A -. #{'a' * 5_000} .-> B",
       "text of a thick label" => "A == #{'a' * 5_000} ==> B",
     }.each do |what, source|
-      it "parses a long run of #{what} within a fixed bound" do
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        expect(edge_tuples(source).length).to eq(1)
-        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
-          .to be < 2
+      it "parses a long run of #{what} within a fixed bound", :speed do
+        elapsed = wall_time { expect(edge_tuples(source).length).to eq(1) }
+        expect(elapsed).to be < 2
       end
     end
 
@@ -157,12 +155,11 @@ RSpec.describe Sirena::Parser::Flowchart do
       "dots of an unclosed dotted label" => "A -. a#{'.' * 20_000}",
       "equals of an unclosed thick label" => "A == a#{'=' * 20_000}",
     }.each do |what, source|
-      it "refuses a long run of #{what} at once" do
-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        expect { edge_tuples(source) }
-          .to raise_error(Sirena::Parser::ParseError)
-        expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started)
-          .to be < 2
+      it "refuses a long run of #{what} at once", :speed do
+        elapsed = wall_time do
+          expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
+        end
+        expect(elapsed).to be < 2
       end
     end
   end

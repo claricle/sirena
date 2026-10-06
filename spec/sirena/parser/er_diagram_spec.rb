@@ -495,7 +495,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # SCALING RATIO between a small and a 16x-larger run survives that:
     # see spec/support/er_tilde_timing.rb for the measured linear vs
     # quadratic ratios MAX_LINEAR_SCALING_RATIO sits between.
-    it "parses a long non-tilde run before a tilde type at a linear rate" do
+    it "parses a long non-tilde run before a tilde type at a linear rate",
+       :speed do
       expect(tilde_parse_scaling_ratio(50_000, 800_000, position: :prefix))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -504,7 +505,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # together; a mutant that reverts only tilde_suffix leaves the
     # prefix-only case above green, so this covers the suffix side with
     # the same scaling-ratio bound.
-    it "parses a long non-tilde run after a tilde type at a linear rate" do
+    it "parses a long non-tilde run after a tilde type at a linear rate",
+       :speed do
       expect(tilde_parse_scaling_ratio(50_000, 800_000, position: :suffix))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -515,7 +517,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # number of tildes in a single attribute type. A many-tilde-pair type
     # is a different input family than the long-single-run cases above --
     # this exercises the builder's pairing loop, not the grammar's atom.
-    it "converts a type with many adjacent tilde pairs at a linear rate" do
+    it "converts a type with many adjacent tilde pairs at a linear rate",
+       :speed do
       expect(tilde_pair_count_scaling_ratio(1_000, 16_000))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -524,7 +527,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # native `match('[^"]').repeat` folds one-char Slices back together
     # with `Slice#+`, quadratic in note length -- measured at 8.8GB RSS
     # and 0.42s CPU for a single 32,000-char note before the fix.
-    it "parses a long quoted note at a linear rate" do
+    it "parses a long quoted note at a linear rate", :speed do
       expect(note_parse_scaling_ratio(10_000, 160_000))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -610,7 +613,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # own length. An absolute bound is too tight on a loaded CI box; the
     # scaling ratio between a small and 8x-larger attribute count
     # survives that (see spec/support/er_tilde_timing.rb's reasoning).
-    it "parses many short tilde-typed attributes at a linear rate, not one per fixed chunk" do
+    it "parses many short tilde-typed attributes at a linear rate, not one per fixed chunk", :speed do
       small_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(500)) } }
       large_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(4_000)) } }
 

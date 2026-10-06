@@ -76,7 +76,8 @@ RSpec.describe Sirena::Parser::Atoms::DelimitedRun do
     # a loaded CI box; the scaling RATIO between a small and 8x-larger
     # segment count survives that (see spec/support/cpu_timing.rb's header
     # comment).
-    it "scales linearly with the number of segments, not their square" do
+    it "scales linearly with the number of segments, not their square",
+       :speed do
       small_time = min_call_time { cpu_time { atom.parse(build_input(500), prefix: true) } }
       large_time = min_call_time { cpu_time { atom.parse(build_input(4_000), prefix: true) } }
 

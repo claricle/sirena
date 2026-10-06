@@ -27,6 +27,7 @@ module CpuTiming
   # Process.times, not clock_gettime: Windows Ruby has no CPU-time clock
   # for clock_gettime and raises Errno::EINVAL.
   def cpu_time
+    SpeedClock.require_speed_tag!
     start = Process.times
     yield
     finish = Process.times

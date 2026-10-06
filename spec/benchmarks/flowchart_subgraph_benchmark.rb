@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "benchmark"
 require "spec_helper"
 
 # Speed and size, kept apart from the correctness suite.
@@ -26,11 +25,11 @@ RSpec.describe Sirena::Parser::Flowchart do
   # A title carrying a run of spaces parsed in quadratic time: the old rule
   # re-ran its terminator test at every byte, and each test rescanned the
   # whole run. 4k spaces took 3.7 seconds on a source mmdc renders.
-  describe "a long title" do
+  describe "a long title", :speed do
     it "parses in linear time" do
       source = "graph TD\nsubgraph s #{' ' * 8000}Title\nA\nend\n"
 
-      elapsed = Benchmark.realtime { described_class.new.parse(source) }
+      elapsed = wall_time { described_class.new.parse(source) }
 
       expect(elapsed).to be < 1.0
     end
@@ -41,12 +40,12 @@ RSpec.describe Sirena::Parser::Flowchart do
   # path-local visited list re-entered every box once per route into it,
   # and the cost doubled per box: 22 took 8 seconds, 24 took fifty, and
   # the 220 mmdc draws would never have come back.
-  describe "a deeply nested diagram" do
+  describe "a deeply nested diagram", :speed do
     it "checks for a cycle without re-walking every route" do
       nested = (0...22).map { |i| "subgraph s#{i}\n" }.join
       source = "graph TD\n#{nested}A-->B\n#{"end\n" * 22}"
 
-      elapsed = Benchmark.realtime { described_class.new.parse(source) }
+      elapsed = wall_time { described_class.new.parse(source) }
 
       expect(elapsed).to be < 1.0
     end
@@ -57,11 +56,11 @@ RSpec.describe Sirena::Parser::Flowchart do
   # same nodes at the top level, because that is the same parse without
   # the claiming — the machine cancels out and the quadratic term does
   # not. The ratio was 3.6 before and sits under 1 now.
-  describe "a subgraph holding many nodes" do
+  describe "a subgraph holding many nodes", :speed do
     it "costs no more than the same nodes outside one" do
       body = (0...1600).map { |i| "n#{i}" }.join("\n")
-      loose = Benchmark.realtime { described_class.new.parse("graph TD\n#{body}\n") }
-      boxed = Benchmark.realtime do
+      loose = wall_time { described_class.new.parse("graph TD\n#{body}\n") }
+      boxed = wall_time do
         described_class.new.parse("graph TD\nsubgraph s [T]\n#{body}\nend\n")
       end
 
