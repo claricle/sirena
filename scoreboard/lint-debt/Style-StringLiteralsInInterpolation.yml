@@ -1,5 +1,0 @@
----
-cop: Style/StringLiteralsInInterpolation
-rows:
-- file: tasks/benchmark.rake
-  count: 3

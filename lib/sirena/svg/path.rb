@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'arrowhead'
-require_relative 'element'
+require "lutaml/model"
+require_relative "arrowhead"
+require_relative "element"
 
 module Sirena
   module Svg
@@ -43,9 +43,9 @@ module Sirena
             c2y = cmd[:c2y]
             "C #{c1x} #{c1y} #{c2x} #{c2y} #{cmd[:x]} #{cmd[:y]}"
           when :close
-            'Z'
+            "Z"
           end
-        end.join(' ')
+        end.join(" ")
       end
 
       protected

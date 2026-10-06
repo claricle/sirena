@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../atoms/greedy_run'
-require_relative '../atoms/trimmed_run'
-require_relative '../atoms/delimited_run'
+require "parslet"
+require_relative "../atoms/greedy_run"
+require_relative "../atoms/trimmed_run"
+require_relative "../atoms/delimited_run"
 
 module Sirena
   module Parser
@@ -39,51 +39,51 @@ module Sirena
         rule(:whitespace?) { (space | newline).repeat }
 
         # Comments
-        rule(:comment) { str('%%') >> (newline.absent? >> any).repeat }
+        rule(:comment) { str("%%") >> (newline.absent? >> any).repeat }
 
         # Identifiers and keywords
         rule(:identifier) do
-          match['a-zA-Z_'] >> match['a-zA-Z0-9_'].repeat
+          match["a-zA-Z_"] >> match["a-zA-Z0-9_"].repeat
         end
 
         rule(:quoted_string) do
           str('"') >> (
-            str('\\') >> any | str('"').absent? >> any
+            str("\\") >> any | str('"').absent? >> any
           ).repeat.as(:string) >> str('"')
         end
 
         rule(:single_quoted_string) do
           str("'") >> (
-            str('\\') >> any | str("'").absent? >> any
+            str("\\") >> any | str("'").absent? >> any
           ).repeat.as(:string) >> str("'")
         end
 
         rule(:string) { quoted_string | single_quoted_string }
 
         # Numbers
-        rule(:integer) { match['0-9'].repeat(1) }
+        rule(:integer) { match["0-9"].repeat(1) }
         rule(:float) do
-          integer >> str('.') >> integer
+          integer >> str(".") >> integer
         end
         rule(:number) { float | integer }
 
         # Common punctuation
-        rule(:colon) { str(':') }
-        rule(:semicolon) { str(';') }
-        rule(:comma) { str(',') }
-        rule(:lparen) { str('(') }
-        rule(:rparen) { str(')') }
-        rule(:lbracket) { str('[') }
-        rule(:rbracket) { str(']') }
-        rule(:lbrace) { str('{') }
-        rule(:rbrace) { str('}') }
-        rule(:pipe) { str('|') }
-        rule(:equals) { str('=') }
-        rule(:plus) { str('+') }
-        rule(:minus) { str('-') }
-        rule(:asterisk) { str('*') }
-        rule(:tilde) { str('~') }
-        rule(:hash_char) { str('#') }
+        rule(:colon) { str(":") }
+        rule(:semicolon) { str(";") }
+        rule(:comma) { str(",") }
+        rule(:lparen) { str("(") }
+        rule(:rparen) { str(")") }
+        rule(:lbracket) { str("[") }
+        rule(:rbracket) { str("]") }
+        rule(:lbrace) { str("{") }
+        rule(:rbrace) { str("}") }
+        rule(:pipe) { str("|") }
+        rule(:equals) { str("=") }
+        rule(:plus) { str("+") }
+        rule(:minus) { str("-") }
+        rule(:asterisk) { str("*") }
+        rule(:tilde) { str("~") }
+        rule(:hash_char) { str("#") }
 
         # Line terminators
         rule(:line_end) do

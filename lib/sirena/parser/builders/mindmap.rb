@@ -144,7 +144,7 @@ module Sirena
                 # via ||= below and the first root's whole subtree, still
                 # linked as node[:children] on the dropped node, vanished
                 # from the diagram with no error.
-                raise Sirena::Parser::ParseError, 'Multiple roots are illegal' if @root
+                raise Sirena::Parser::ParseError, "Multiple roots are illegal" if @root
 
                 node[:level] = 0
                 @root = node
@@ -164,7 +164,7 @@ module Sirena
             return 0 if indent_data.is_a?(Array) && indent_data.empty?
 
             indent_str = if indent_data.is_a?(Array)
-                          indent_data.join('')
+                          indent_data.join("")
                         else
                           indent_data.to_s
                         end
@@ -179,7 +179,7 @@ module Sirena
 
             # Convert to string and count length
             indent_str = if indent_data.is_a?(Array)
-                          indent_data.join('')
+                          indent_data.join("")
                         else
                           indent_data.to_s
                         end

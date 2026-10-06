@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/pie'
+require_relative "base"
+require_relative "../diagram/pie"
 
 module Sirena
   module Layout
@@ -25,7 +25,7 @@ module Sirena
       # @return [Hash] data structure for rendering
       def build_graph(diagram)
         {
-          id: diagram.id || 'pie',
+          id: diagram.id || "pie",
           title: diagram.title,
           show_data: diagram.show_data || false,
           acc_title: diagram.acc_title,

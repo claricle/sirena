@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -35,7 +35,7 @@ module Sirena
 
         # Header: quadrantChart
         rule(:header) do
-          str('quadrantChart').as(:header) >> ws?
+          str("quadrantChart").as(:header) >> ws?
         end
 
         # Statements (title, axis labels, quadrant labels, points)
@@ -55,7 +55,7 @@ module Sirena
 
         # Title declaration
         rule(:title_declaration) do
-          str('title') >> space.repeat(1) >>
+          str("title") >> space.repeat(1) >>
             title_text.as(:title) >>
             line_end
         end
@@ -66,18 +66,18 @@ module Sirena
 
         # X-axis: x-axis label1 --> label2
         rule(:x_axis_declaration) do
-          str('x-axis') >> space.repeat(1) >>
+          str("x-axis") >> space.repeat(1) >>
             axis_label.as(:x_axis_left) >>
-            space? >> str('-->') >> space? >>
+            space? >> str("-->") >> space? >>
             axis_label.as(:x_axis_right) >>
             line_end
         end
 
         # Y-axis: y-axis label1 --> label2
         rule(:y_axis_declaration) do
-          str('y-axis') >> space.repeat(1) >>
+          str("y-axis") >> space.repeat(1) >>
             axis_label.as(:y_axis_bottom) >>
-            space? >> str('-->') >> space? >>
+            space? >> str("-->") >> space? >>
             axis_label.as(:y_axis_top) >>
             line_end
         end
@@ -88,13 +88,13 @@ module Sirena
         end
 
         rule(:unquoted_axis_label) do
-          (str('-->').absent? >> line_end.absent? >> any).repeat(1)
+          (str("-->").absent? >> line_end.absent? >> any).repeat(1)
         end
 
         # Quadrant labels: quadrant-1 through quadrant-4
         rule(:quadrant_label_declaration) do
-          str('quadrant-') >>
-            match['1-4'].as(:quadrant_number) >>
+          str("quadrant-") >>
+            match["1-4"].as(:quadrant_number) >>
             space.repeat(1) >>
             quadrant_label_text.as(:quadrant_label) >>
             line_end
@@ -106,14 +106,14 @@ module Sirena
 
         # Class definition: classDef name fill:#color
         rule(:class_def_declaration) do
-          str('classDef') >> space.repeat(1) >>
+          str("classDef") >> space.repeat(1) >>
             class_name.as(:class_name) >> space.repeat(1) >>
             (line_end.absent? >> any).repeat.as(:class_style) >>
             line_end
         end
 
         rule(:class_name) do
-          match['a-zA-Z_'].repeat(1) >> match['a-zA-Z0-9_'].repeat
+          match["a-zA-Z_"].repeat(1) >> match["a-zA-Z0-9_"].repeat
         end
 
         # Data point: label[:::class]: [x, y] [styling...]
@@ -128,12 +128,12 @@ module Sirena
 
         # Point label (text before class reference or colon)
         rule(:point_label) do
-          (str(':::').absent? >> colon.absent? >> any).repeat(1)
+          (str(":::").absent? >> colon.absent? >> any).repeat(1)
         end
 
         # Class reference: :::className
         rule(:class_reference) do
-          str(':::') >> class_name
+          str(":::") >> class_name
         end
 
         # Coordinates: [x, y]
@@ -161,38 +161,38 @@ module Sirena
 
         # radius: value
         rule(:radius_param) do
-          str('radius') >> space? >> colon >> space? >>
+          str("radius") >> space? >> colon >> space? >>
             (float | integer).as(:radius)
         end
 
         # color: #hex
         rule(:color_param) do
-          str('color') >> space? >> colon >> space? >>
+          str("color") >> space? >> colon >> space? >>
             color_value.as(:color)
         end
 
         # stroke-color: #hex
         rule(:stroke_color_param) do
-          str('stroke-color') >> space? >> colon >> space? >>
+          str("stroke-color") >> space? >> colon >> space? >>
             color_value.as(:stroke_color)
         end
 
         # stroke-width: valuepx
         rule(:stroke_width_param) do
-          str('stroke-width') >> space? >> colon >> space? >>
+          str("stroke-width") >> space? >> colon >> space? >>
             (float | integer).as(:stroke_width) >>
-            str('px').maybe
+            str("px").maybe
         end
 
         # Color value (#hex or named color)
         rule(:color_value) do
-          str('#') >> match['0-9a-fA-F'].repeat(3, 8) |
-            match['a-zA-Z'].repeat(1)
+          str("#") >> match["0-9a-fA-F"].repeat(3, 8) |
+            match["a-zA-Z"].repeat(1)
         end
 
         # Brackets
-        rule(:lbracket) { str('[') }
-        rule(:rbracket) { str(']') }
+        rule(:lbracket) { str("[") }
+        rule(:rbracket) { str("]") }
       end
     end
   end

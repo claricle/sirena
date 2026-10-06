@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/error'
+require_relative "../../diagram/error"
 
 module Sirena
   module Parser

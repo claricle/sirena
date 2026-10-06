@@ -37,17 +37,17 @@
 # Otherwise: 0 if every type agreed on every case, 1 if any type had at
 # least one real divergence.
 
-require 'bundler/setup'
-require 'optparse'
+require "bundler/setup"
+require "optparse"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require_relative 'mermaid_fuzz'
-require_relative 'flowchart_fuzz'
-require_relative 'class_diagram_fuzz'
-require_relative 'state_diagram_fuzz'
-require_relative 'er_diagram_fuzz'
+require "sirena"
+require_relative "mermaid_fuzz"
+require_relative "flowchart_fuzz"
+require_relative "class_diagram_fuzz"
+require_relative "state_diagram_fuzz"
+require_relative "er_diagram_fuzz"
 
 module DiagramFuzzReport
   # Order matches the mermaid-js corpus case count per type, highest
@@ -122,17 +122,17 @@ module DiagramFuzzReport
 
     def parse!(argv)
       OptionParser.new do |o|
-        o.on('--seed N', Integer) { |v| @seed = v }
-        o.on('--count N', Integer) { |v| @count = v }
+        o.on("--seed N", Integer) { |v| @seed = v }
+        o.on("--count N", Integer) { |v| @count = v }
       end.parse!(argv)
     end
 
     def print_table(results)
       puts "\n== summary =="
-      puts 'type               cases  divergences   breakdown'
+      puts "type               cases  divergences   breakdown"
       results.each do |r|
         by_kind = r.divergences.group_by(&:kind).transform_values(&:size)
-        puts format('%-15s %8d %12d   %s', r.label, r.cases_total, r.divergences.size, by_kind)
+        puts format("%-15s %8d %12d   %s", r.label, r.cases_total, r.divergences.size, by_kind)
       end
     end
   end

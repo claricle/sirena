@@ -47,12 +47,12 @@
 # two parsers agree on how to identify a bare, standalone entity id --
 # and, per the KNOWN_DIVERGENCES below, they currently do not.
 
-require 'bundler/setup'
+require "bundler/setup"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-require 'sirena'
-require_relative 'mermaid_fuzz'
+require "sirena"
+require_relative "mermaid_fuzz"
 
 module ErDiagramFuzz
   WILD_CHARS = MermaidFuzz::IdentifierGenerator::DEFAULT_WILD_CHARS
@@ -65,7 +65,7 @@ module ErDiagramFuzz
   KNOWN_DIVERGENCES = [
     # Sirena's entity id, via the common `identifier` rule, cannot lead
     # with a digit. mermaid accepts a bare "1" as an entity id.
-    MermaidFuzz::Case.new('known-1-digit-leading-entity-id', "erDiagram\n    1\n"),
+    MermaidFuzz::Case.new("known-1-digit-leading-entity-id", "erDiagram\n    1\n"),
   ].freeze
 
   # Runs Sirena's own ErDiagram in-process, via MermaidFuzz.safe_parse
@@ -76,11 +76,11 @@ module ErDiagramFuzz
   end
 
   RUNNER_KWARGS = {
-    label: 'er_diagram',
+    label: "er_diagram",
     generator_factory: ->(rng) { MermaidFuzz::IdentifierGenerator.new(rng, wild_chars: WILD_CHARS, template: TEMPLATE) },
     known_divergences: KNOWN_DIVERGENCES,
     sirena_verdict_for: SIRENA_VERDICT_FOR,
-    mermaid_getter: 'getEntities',
+    mermaid_getter: "getEntities",
     mermaid_preflight: "erDiagram\n    A\n",
   }.freeze
 end

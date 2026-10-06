@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 module BlockSpecHelpers
   def build_block(id, label)
@@ -17,20 +17,20 @@ RSpec.describe Sirena::Renderer::Block do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
-  describe '#render' do
-    context 'with basic layout' do
+  describe "#render" do
+    context "with basic layout" do
       let(:layout) do
         {
           blocks: {
-            'A' => {
-              block: build_block('A', 'Block A'),
+            "A" => {
+              block: build_block("A", "Block A"),
               x: 20,
               y: 20,
               width: 100,
               height: 60,
             },
-            'B' => {
-              block: build_block('B', 'Block B'),
+            "B" => {
+              block: build_block("B", "Block B"),
               x: 140,
               y: 20,
               width: 100,
@@ -44,34 +44,34 @@ RSpec.describe Sirena::Renderer::Block do
         }
       end
 
-      it 'renders SVG document' do
+      it "renders SVG document" do
         svg = renderer.render(layout)
         expect(svg).to be_a(Sirena::Svg::Document)
         expect(svg.width).to eq(260)
         expect(svg.height).to eq(100)
       end
 
-      it 'renders blocks' do
+      it "renders blocks" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('Block A')
-        expect(xml).to include('Block B')
+        expect(xml).to include("Block A")
+        expect(xml).to include("Block B")
       end
     end
 
-    context 'with connections' do
+    context "with connections" do
       let(:layout) do
         {
           blocks: {
-            'A' => {
-              block: build_block('A', 'A'),
+            "A" => {
+              block: build_block("A", "A"),
               x: 20,
               y: 20,
               width: 100,
               height: 60,
             },
-            'B' => {
-              block: build_block('B', 'B'),
+            "B" => {
+              block: build_block("B", "B"),
               x: 20,
               y: 100,
               width: 100,
@@ -80,13 +80,13 @@ RSpec.describe Sirena::Renderer::Block do
           },
           connections: [
             {
-              from: 'A',
-              to: 'B',
+              from: "A",
+              to: "B",
               from_x: 70,
               from_y: 80,
               to_x: 70,
               to_y: 100,
-              connection_type: 'arrow',
+              connection_type: "arrow",
             },
           ],
           columns: 1,
@@ -95,7 +95,7 @@ RSpec.describe Sirena::Renderer::Block do
         }
       end
 
-      it 'renders connections' do
+      it "renders connections" do
         svg = renderer.render(layout)
         xml = svg.to_xml
         expect(xml).to include('d="M 70 80 L 70 100"')
@@ -104,25 +104,25 @@ RSpec.describe Sirena::Renderer::Block do
       # The renderer still asks for a marker. It used to be emitted as
       # `marker-end="url(#arrowhead)"`, which no document ever defined, so
       # the arrow drew as a bare line. The SVG layer draws the head now.
-      it 'draws the arrowhead the connection asks for' do
+      it "draws the arrowhead the connection asks for" do
         xml = renderer.render(layout).to_xml
 
-        expect(xml).not_to include('marker-end')
+        expect(xml).not_to include("marker-end")
         expect(xml)
           .to include('<polygon fill="#000000" ' \
                       'points="70.0,100.0 66.0,92.0 74.0,92.0"/>')
       end
     end
 
-    context 'with circle shape' do
+    context "with circle shape" do
       let(:layout) do
         {
           blocks: {
-            'A' => {
+            "A" => {
               block: Sirena::Diagram::BlockNode.new.tap do |b|
-                b.id = 'A'
-                b.label = 'Circle'
-                b.shape = 'circle'
+                b.id = "A"
+                b.label = "Circle"
+                b.shape = "circle"
               end,
               x: 20,
               y: 20,
@@ -137,10 +137,10 @@ RSpec.describe Sirena::Renderer::Block do
         }
       end
 
-      it 'renders circle shape' do
+      it "renders circle shape" do
         svg = renderer.render(layout)
         xml = svg.to_xml
-        expect(xml).to include('<circle')
+        expect(xml).to include("<circle")
       end
     end
   end

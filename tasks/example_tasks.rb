@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'date'
-require 'fileutils'
-require 'digest'
-require 'securerandom'
-require 'tmpdir'
-require 'yaml'
+require "date"
+require "fileutils"
+require "digest"
+require "securerandom"
+require "tmpdir"
+require "yaml"
 
 # Rendering must not depend on the day it ran. Gantt derives its whole date
 # range from the reference date, so an unpinned run produces different output
@@ -20,7 +20,7 @@ EXAMPLE_TODAY = Date.new(2026, 1, 1)
 
 # The only example sources legitimately unrenderable today.
 EXPECTED_UNRENDERABLE_SOURCES = [
-  'packet/01-basic-packet.beta.mmd',
+  "packet/01-basic-packet.beta.mmd",
 ].freeze
 
 # Keeps helper methods off Object; ExampleTasks itself remains top-level.
@@ -45,14 +45,14 @@ module ExampleTasks
   # examples_dir/docs_assets_dir actually is -- through `/var -> private/var`)
   # as a violation. Confirmed by execution: `File.symlink?('/var')` and
   # `File.symlink?('/tmp')` are both true on this machine.
-  GEM_ROOT = File.expand_path('..', __dir__)
+  GEM_ROOT = File.expand_path("..", __dir__)
 
   # The one place an example's theme is decided. Both :generate and :validate
   # read it here so they cannot drift into rendering the same source two ways.
   def theme_for(mmd_file)
-    yml_file = mmd_file.sub(/\.mmd\z/, '.yml')
+    yml_file = mmd_file.sub(/\.mmd\z/, ".yml")
     metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-    metadata['theme'] || 'default'
+    metadata["theme"] || "default"
   end
 
   def validate_examples(examples_dir)
@@ -83,7 +83,7 @@ module ExampleTasks
       # rendering unexpected content, not a verbatim file leak. Revisit if
       # this task's threat model changes (e.g. moves to a shared machine).
       source = File.read(mmd_file)
-      relative_path = mmd_file.sub("#{examples_dir}/", '')
+      relative_path = mmd_file.sub("#{examples_dir}/", "")
       expected_unrenderable = EXPECTED_UNRENDERABLE_SOURCES.include?(relative_path)
       # Read outside the render-failure rescue below, the same as generation:
       # a malformed .yml is a metadata problem, not evidence the source fails
@@ -109,18 +109,18 @@ module ExampleTasks
         engine.render(source)
         if expected_unrenderable
           unexpectedly_renderable << relative_path
-          print 'F'
+          print "F"
         else
           passed += 1
-          print '.'
+          print "."
         end
       rescue StandardError => e
         if expected_unrenderable
           known_unrenderable << { file: relative_path, error: e.message }
-          print 'K'
+          print "K"
         else
           failed << { file: relative_path, error: e.message }
-          print 'F'
+          print "F"
         end
       end
     end
@@ -183,14 +183,14 @@ module ExampleTasks
   end
 
   def plain_svg?(path)
-    path.end_with?('.svg') && File.file?(path) && !File.symlink?(path)
+    path.end_with?(".svg") && File.file?(path) && !File.symlink?(path)
   end
 
   # One predicate for both callers. Generation used File.file? and the orphan
   # pairing used File.exist?, so a .mmd link to a directory was invisible to
   # one and a source to the other: the SVG beside it could never be pruned.
   def plain_mmd?(path)
-    path.end_with?('.mmd') && File.file?(path) && !File.symlink?(path)
+    path.end_with?(".mmd") && File.file?(path) && !File.symlink?(path)
   end
 
   # The one place a diagram directory's sources are listed. :generate walks
@@ -256,7 +256,7 @@ module ExampleTasks
   #
   # @return [Array<Array(String, Integer)>] diagram type and count copied
   def copy_to_docs(examples_dir, docs_assets_dir)
-    docs_identity = create_real_directory(docs_assets_dir, label: 'docs assets root')
+    docs_identity = create_real_directory(docs_assets_dir, label: "docs assets root")
 
     dirs = children(verified_root(examples_dir)).select { |path| plain_directory?(path) }
     work = dirs.filter_map do |dir|
@@ -264,7 +264,7 @@ module ExampleTasks
       svg_files.empty? ? nil : [File.basename(dir), svg_files]
     end
 
-    within_pinned_directory(docs_assets_dir, expected_identity: docs_identity, label: 'docs assets root') do
+    within_pinned_directory(docs_assets_dir, expected_identity: docs_identity, label: "docs assets root") do
       work.filter_map { |type, svg_files| copy_type_into_pinned_docs_root(type, svg_files) }
     end
   end
@@ -286,7 +286,7 @@ module ExampleTasks
         destination = File.basename(svg_file)
         unless manageable_relative?(destination)
           puts "  ⚠️  skipped #{type}/#{destination}, " \
-               'its docs copy target is a symlink or already exists as something other than a plain file'
+               "its docs copy target is a symlink or already exists as something other than a plain file"
           next false
         end
 
@@ -324,7 +324,7 @@ module ExampleTasks
   # for exactly that gap and how it is closed instead).
   def within_pinned_directory(path, expected_identity:, label:)
     Dir.chdir(path) do
-      actual_identity = directory_identity('.', label: label)
+      actual_identity = directory_identity(".", label: label)
       if actual_identity != expected_identity
         raise "#{label} changed identity between verification and use: #{path}"
       end
@@ -457,7 +457,7 @@ module ExampleTasks
   # A future caller building them from different sources must normalize
   # casing itself; do not "fix" this with a case-fold (wrong on a
   # case-SENSITIVE filesystem).
-  def verified_root(path, label: 'examples root')
+  def verified_root(path, label: "examples root")
     path = File.expand_path(path)
     raise "#{label} must not be a link: #{path}" if File.symlink?(path)
 
@@ -540,7 +540,7 @@ module ExampleTasks
   # the prune task deliberately.
   def orphan_svgs(examples_dir)
     managed_svgs(examples_dir)
-      .reject { |svg| plain_mmd?(svg.sub(/\.svg\z/, '.mmd')) }
+      .reject { |svg| plain_mmd?(svg.sub(/\.svg\z/, ".mmd")) }
       .select { |svg| manageable?(examples_dir, svg) }
       .sort
   end
@@ -583,7 +583,7 @@ module ExampleTasks
   def known_unrenderable_svgs(examples_dir)
     root = verified_root(examples_dir)
     EXPECTED_UNRENDERABLE_SOURCES
-      .map { |source| File.join(root, source.sub(/\.mmd\z/, '.svg')) }
+      .map { |source| File.join(root, source.sub(/\.mmd\z/, ".svg")) }
       .select { |svg| plain_svg?(svg) }
       .select { |svg| manageable?(examples_dir, svg) }
       .sort
@@ -657,12 +657,12 @@ module ExampleTasks
   # the outer name afterward cannot redirect the write that follows.
   def write_svg(svg_file, svg, examples_dir)
     raise "refused an unsafe SVG target: #{svg_file}" unless manageable?(examples_dir, svg_file)
-    raise 'rendered no SVG document' unless svg_document?(svg)
+    raise "rendered no SVG document" unless svg_document?(svg)
 
     directory = File.dirname(svg_file)
-    identity = verified_directory_identity(directory, label: 'diagram directory')
+    identity = verified_directory_identity(directory, label: "diagram directory")
 
-    within_pinned_directory(directory, expected_identity: identity, label: 'diagram directory') do
+    within_pinned_directory(directory, expected_identity: identity, label: "diagram directory") do
       basename = File.basename(svg_file)
       raise "refused an unsafe SVG target: #{svg_file}" unless manageable_relative?(basename)
 
@@ -688,10 +688,10 @@ module ExampleTasks
       end
 
       mmd_files.each do |mmd_file|
-        basename = File.basename(mmd_file, '.mmd')
+        basename = File.basename(mmd_file, ".mmd")
         # From the source path, not rebuilt from the directory: a directory
         # named with glob syntax made those two disagree.
-        svg_file = mmd_file.sub(/\.mmd\z/, '.svg')
+        svg_file = mmd_file.sub(/\.mmd\z/, ".svg")
         # Read outside the render-failure rescue below: a malformed .yml is a
         # metadata problem, not evidence the source fails to render, and
         # folding it into failed_renders gave a bad .yml on an allowlisted
@@ -740,7 +740,7 @@ module ExampleTasks
   def diagram_dirs(examples_dir)
     children(verified_root(examples_dir)).select do |entry|
       name = File.basename(entry)
-      next false if name.start_with?('.')
+      next false if name.start_with?(".")
 
       if File.symlink?(entry)
         puts "  \u26a0\ufe0f  skipped #{name}, a symlinked directory that leaves examples/"

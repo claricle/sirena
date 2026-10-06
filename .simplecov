@@ -21,7 +21,7 @@ SimpleCov.configure do
   # completes successfully. SIMPLECOV_COVERAGE_DIR lets such a caller point
   # the child at a throwaway directory instead, without touching the real one
   # coverage:changed_lines reads.
-  coverage_dir ENV.fetch('SIMPLECOV_COVERAGE_DIR', 'coverage')
+  coverage_dir ENV.fetch("SIMPLECOV_COVERAGE_DIR", "coverage")
 
   enable_coverage :branch
   # Visible in the report (Line floor comment below) but carries no minimum
@@ -38,7 +38,7 @@ SimpleCov.configure do
   # extension (`SimpleCov::UnloadedFileInjector.discover` /
   # `SimpleCov::Result#apply_cover_filters!`, gem source), not by whether
   # Ruby's Coverage module ever saw the file.
-  cover 'lib/**/*.rb'
+  cover "lib/**/*.rb"
 
   # TODO.foundation/03-coverage-gate.md item 1: grouped by component, so a
   # regression is traceable to the architecture layer that caused it

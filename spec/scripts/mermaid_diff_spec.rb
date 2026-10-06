@@ -1,27 +1,27 @@
 # frozen_string_literal: true
 
-require 'open3'
+require "open3"
 # RbConfig arrives with RubyGems, not with the interpreter: `ruby --disable-gems`
 # raises NameError on it. The example at :587 calls `RbConfig.ruby` to re-invoke
 # the current interpreter, so requiring it here is what makes that example
 # independent of how the suite was launched.
-require 'rbconfig'
-require 'stringio'
-require 'timeout'
-require 'tmpdir'
+require "rbconfig"
+require "stringio"
+require "timeout"
+require "tmpdir"
 
-require_relative '../support/mermaid_diff_spec_support'
+require_relative "../support/mermaid_diff_spec_support"
 
 # The harness is a program, not a library. Loading it into a module runs the
 # definitions without the main block, and keeps its methods and constants off
 # Object for the rest of the suite.
 unless defined?(MermaidDiff)
   MermaidDiff = Module.new
-  load File.expand_path('../../scripts/mermaid_diff.rb', __dir__), MermaidDiff
+  load File.expand_path("../../scripts/mermaid_diff.rb", __dir__), MermaidDiff
 end
 unless defined?(CorpusVerdicts)
   CorpusVerdicts = Module.new
-  load File.expand_path('../../scripts/corpus_verdicts.rb', __dir__), CorpusVerdicts
+  load File.expand_path("../../scripts/corpus_verdicts.rb", __dir__), CorpusVerdicts
 end
 
 # Every example that breaks `ps` puts a real broken `ps` on PATH, and every
@@ -39,12 +39,12 @@ RSpec.describe MermaidDiff do
   # Windows has neither, so the program cannot run there and there is nothing
   # here to check. Without this the whole windows-latest column went red while
   # every other platform passed.
-  before { skip('the harness is POSIX-only') if Gem.win_platform? }
+  before { skip("the harness is POSIX-only") if Gem.win_platform? }
 
   after { spawned.each { |pid| kill_quietly(pid) } }
 
-  describe 'classifying a verdict' do
-    it 'maps every tool-result pair to its kind and agreement' do
+  describe "classifying a verdict" do
+    it "maps every tool-result pair to its kind and agreement" do
       states = [
         [:accepts, :accepts],
         [:rejects, :rejects],
@@ -55,7 +55,7 @@ RSpec.describe MermaidDiff do
       ]
 
       actual = states.map do |sirena, mermaid|
-        verdict = MermaidDiff::Verdict.new('source', sirena, mermaid)
+        verdict = MermaidDiff::Verdict.new("source", sirena, mermaid)
         [verdict.kind, verdict.agree?]
       end
 
@@ -77,8 +77,8 @@ RSpec.describe MermaidDiff do
   # started sharing this hardening instead of calling mmdc through a bare
   # Open3.capture3.
 
-  describe 'asking sirena for a verdict' do
-    it 'accepts a source sirena can render' do
+  describe "asking sirena for a verdict" do
+    it "accepts a source sirena can render" do
       expect(harness.send(:sirena_verdict, trivial_source)).to be(:accepts)
     end
 
@@ -86,8 +86,8 @@ RSpec.describe MermaidDiff do
     # sirena was still rendering it 60s in, so one probe like it stalled every
     # verdict after it and the report never arrived. The guard is here so a
     # regression fails this example instead of wedging the suite.
-    it 'gives up on a source sirena cannot finish' do
-      stub_const('HardenedMmdc::CASE_TIMEOUT', 0.5)
+    it "gives up on a source sirena cannot finish" do
+      stub_const("HardenedMmdc::CASE_TIMEOUT", 0.5)
       source = "packet-beta\n0-2000000: \"x\"\n"
 
       verdict = Timeout.timeout(guard) { harness.send(:sirena_verdict, source) }
@@ -100,41 +100,41 @@ RSpec.describe MermaidDiff do
     # error, 400 already blow the stack. 2,000 leaves room for a deeper stack
     # than this one. SystemStackError is not a StandardError, so it took the
     # whole run down instead of being one rejected probe.
-    it 'answers instead of crashing when the parser runs out of stack' do
+    it "answers instead of crashing when the parser runs out of stack" do
       deep = "flowchart LR\n#{"  subgraph s\n" * 2000}  A --> B\n#{"  end\n" * 2000}"
 
       expect(harness.send(:sirena_verdict, deep)).to be(:rejects)
     end
   end
 
-  describe 'asking mermaid for a verdict' do
-    it 'treats a missing process status as infrastructure failure' do
-      result = MmdcOracle.verdict('probe') do |input, _output|
-        raise 'unexpected canary run' unless input == 'probe'
+  describe "asking mermaid for a verdict" do
+    it "treats a missing process status as infrastructure failure" do
+      result = MmdcOracle.verdict("probe") do |input, _output|
+        raise "unexpected canary run" unless input == "probe"
 
-        [nil, 'case timed out']
+        [nil, "case timed out"]
       end
 
-      expect([result.verdict, result.diagnostic]).to eq([:error, 'case timed out'])
+      expect([result.verdict, result.diagnostic]).to eq([:error, "case timed out"])
     end
 
-    it 'treats success without an SVG as infrastructure failure' do
-      result = MmdcOracle.verdict('probe') do |input, _output|
-        raise 'unexpected canary run' unless input == 'probe'
+    it "treats success without an SVG as infrastructure failure" do
+      result = MmdcOracle.verdict("probe") do |input, _output|
+        raise "unexpected canary run" unless input == "probe"
 
-        [true, 'no SVG was written']
+        [true, "no SVG was written"]
       end
 
-      expect([result.verdict, result.diagnostic]).to eq([:error, 'no SVG was written'])
+      expect([result.verdict, result.diagnostic]).to eq([:error, "no SVG was written"])
     end
 
     # mmdc can fail to spawn long after the version check passed — the
     # process table fills up while Chromium is started once per case. That
     # used to abort the sweep with a traceback.
-    it 'reports an infrastructure failure when mmdc cannot be spawned' do
+    it "reports an infrastructure failure when mmdc cannot be spawned" do
       verdict = nil
 
-      only('mmdc', nil) do
+      only("mmdc", nil) do
         expect { verdict = harness.send(:mermaid_verdict, trivial_source) }
           .to output(/mmdc/).to_stderr
       end
@@ -145,8 +145,8 @@ RSpec.describe MermaidDiff do
     # The pipe's write end was closed by hand right after the spawn, so a
     # spawn that raised never got there. One descriptor went per failure, and
     # a run that keeps going through them runs the harness out of them.
-    it 'does not leak a descriptor when mmdc cannot be spawned' do
-      only('mmdc', nil) do
+    it "does not leak a descriptor when mmdc cannot be spawned" do
+      only("mmdc", nil) do
         failing_verdict
         before = open_descriptors
 
@@ -156,7 +156,7 @@ RSpec.describe MermaidDiff do
       end
     end
 
-    it 'uses a canary to separate source rejection from a broken browser' do
+    it "uses a canary to separate source rejection from a broken browser" do
       rejected = Dir.mktmpdir do |dir|
         prefix_path(fake_mmdc(dir, rejecting_probe_mmdc)) do
           harness.send(:mermaid_verdict, "not a diagram\n")
@@ -166,20 +166,20 @@ RSpec.describe MermaidDiff do
       expect(rejected).to be(:rejects)
 
       broken = nil
-      only('mmdc', broken_browser_mmdc) do
+      only("mmdc", broken_browser_mmdc) do
         expect { broken = harness.send(:mermaid_verdict, trivial_source) }
           .to output(/browser launch failed/).to_stderr
       end
       expect(broken).to be(:error)
     end
 
-    it 'does not call a transient renderer failure a source rejection' do
-      result = MmdcOracle.verdict('probe') do |input, output|
-        if input == 'probe'
-          [false, 'browser launch failed once']
+    it "does not call a transient renderer failure a source rejection" do
+      result = MmdcOracle.verdict("probe") do |input, output|
+        if input == "probe"
+          [false, "browser launch failed once"]
         else
-          File.write(output, '<svg/>')
-          [true, 'Generating single mermaid chart']
+          File.write(output, "<svg/>")
+          [true, "Generating single mermaid chart"]
         end
       end
 
@@ -188,42 +188,42 @@ RSpec.describe MermaidDiff do
       # otherwise a probe failure report gets the canary's own success noise
       # appended to the text a developer reads to triage the gap.
       expect([result.verdict, result.diagnostic]).to eq(
-        [:error, 'browser launch failed once'],
+        [:error, "browser launch failed once"],
       )
     end
   end
 
   # The version check runs before any per-case deadline applies, so a wedged
   # mmdc used to hang the harness here with nothing to stop it.
-  describe 'checking the oracle' do
-    it 'continues when mmdc reports the pinned version' do
-      only('mmdc', version_mmdc(MermaidDiff::EXPECTED_CLI)) do
+  describe "checking the oracle" do
+    it "continues when mmdc reports the pinned version" do
+      only("mmdc", version_mmdc(MermaidDiff::EXPECTED_CLI)) do
         expect(harness.send(:check_oracle)).to be_nil
       end
     end
 
-    it 'aborts when mmdc reports a different version' do
-      only('mmdc', version_mmdc('11.11.0')) do
+    it "aborts when mmdc reports a different version" do
+      only("mmdc", version_mmdc("11.11.0")) do
         expect { harness.send(:check_oracle) }
           .to raise_error(SystemExit)
           .and output(/mmdc is 11\.11\.0, expected 11\.12\.0/).to_stderr
       end
     end
 
-    it 'gives up on an mmdc that never answers instead of hanging on it' do
-      stub_const('MermaidDiff::VERSION_TIMEOUT', 1)
+    it "gives up on an mmdc that never answers instead of hanging on it" do
+      stub_const("MermaidDiff::VERSION_TIMEOUT", 1)
 
-      only('mmdc', wedge('20.31')) do
+      only("mmdc", wedge("20.31")) do
         expect { Timeout.timeout(guard) { harness.send(:check_oracle) } }
           .to raise_error(SystemExit).and output(/missing or not answering/).to_stderr
       end
 
-      expect(gone?('20.31')).to be(true)
+      expect(gone?("20.31")).to be(true)
     end
   end
 
-  describe 'running the harness as a program' do
-    it 'exits zero only when every verdict agrees' do
+  describe "running the harness as a program" do
+    it "exits zero only when every verdict agrees" do
       mixed = "#{trivial_source}%%%%\nnot a diagram\n"
       _agree_out, agree_err, agree_status = run_harness(trivial_source)
       mixed_out, mixed_err, mixed_status = run_harness(mixed)
@@ -248,15 +248,15 @@ RSpec.describe MermaidDiff do
       ]
       expected = [
         0,
-        '',
+        "",
         1,
         "GAP              not a diagram\n\n" \
           "2 probes: 1 agree, 1 gaps, 0 over-accepted, 0 mmdc failures\n",
-        '',
+        "",
         1,
         "OVER-ACCEPTANCE  flowchart LR |   A[reject-by-fake]\n\n" \
           "1 probes: 0 agree, 0 gaps, 1 over-accepted, 0 mmdc failures\n",
-        '',
+        "",
         1,
         "MMDC FAILED      flowchart LR |   A --> B\n\n" \
           "1 probes: 0 agree, 0 gaps, 0 over-accepted, 1 mmdc failures\n",
@@ -266,60 +266,60 @@ RSpec.describe MermaidDiff do
       expect(actual).to eq(expected)
     end
 
-    it 'passes the only-gaps flag through to the report' do
+    it "passes the only-gaps flag through to the report" do
       source = "not a diagram\n%%%%\nflowchart LR\n  A[reject-by-fake]\n"
 
-      stdout, stderr, status = run_harness(source, '--only-gaps', mmdc: selective_mmdc)
+      stdout, stderr, status = run_harness(source, "--only-gaps", mmdc: selective_mmdc)
 
       expected = [
         1,
         "GAP              not a diagram\n\n" \
           "2 probes: 0 agree, 1 gaps, 1 over-accepted, 0 mmdc failures\n",
-        '',
+        "",
       ]
 
       expect([status.exitstatus, stdout, stderr]).to eq(expected)
     end
 
-    it 'runs when invoked through a relative script path' do
+    it "runs when invoked through a relative script path" do
       stdout, stderr, status = run_harness(trivial_source, relative: true)
 
       expect([status.exitstatus, stdout, stderr]).to eq(
-        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", ''],
+        [0, "\n1 probes: 1 agree, 0 gaps, 0 over-accepted, 0 mmdc failures\n", ""],
       )
     end
   end
 
-  describe 'splitting a probe file into records' do
-    it 'splits on a line that is exactly the separator' do
+  describe "splitting a probe file into records" do
+    it "splits on a line that is exactly the separator" do
       expect(records_in("flowchart LR\n%%%%\n  A --> B\n"))
         .to eq(["flowchart LR\n", "  A --> B\n"])
     end
 
-    it 'splits a CRLF separator' do
+    it "splits a CRLF separator" do
       expect(records_in("flowchart LR\r\n%%%%\r\n  A --> B\r\n"))
         .to eq(["flowchart LR\r\n", "  A --> B\r\n"])
     end
 
-    it 'accepts a separator at the end of a file' do
+    it "accepts a separator at the end of a file" do
       expect(records_in("flowchart LR\n%%%%")).to eq(["flowchart LR\n"])
     end
 
     # mmdc 11.12.0 accepts `%%%%` followed by blanks as a comment, so a probe
     # may hold that line for real. Splitting there handed the two halves
     # verdicts the source itself never had.
-    it 'keeps a separator line with trailing blanks as content' do
+    it "keeps a separator line with trailing blanks as content" do
       source = "flowchart LR\n%%%%   \n  A --> B\n"
 
       expect(records_in(source)).to eq([source])
     end
 
-    it 'unescapes a separator the source itself needed' do
+    it "unescapes a separator the source itself needed" do
       expect(records_in("flowchart LR\n\\%%%%\n  A --> B\n"))
         .to eq(["flowchart LR\n%%%%\n  A --> B\n"])
     end
 
-    it 'leaves the backslash on a line that is not a separator' do
+    it "leaves the backslash on a line that is not a separator" do
       source = "flowchart LR\n\\%%%%   \n  A --> B\n"
 
       expect(records_in(source)).to eq([source])
@@ -329,7 +329,7 @@ RSpec.describe MermaidDiff do
     # because the escape rewrote it to `%%%%` and left a doubled backslash
     # doubled. mmdc 11.12.0 renders the intended source and sirena rejects it;
     # both accept the transformed source containing the bare `%%%%` line.
-    it 'writes a literal escape character with one more of them' do
+    it "writes a literal escape character with one more of them" do
       expect(records_in("flowchart LR\n\\\\%%%%\n  A --> B\n"))
         .to eq(["flowchart LR\n\\%%%%\n  A --> B\n"])
     end
@@ -337,21 +337,21 @@ RSpec.describe MermaidDiff do
     # mmdc renders a source that is not valid UTF-8 and sirena rejects it, so
     # the probe is a gap the harness should report. Reading the file as text
     # raised out of String#split instead, before a single case in it had run.
-    it 'loads a probe that is not valid UTF-8' do
+    it "loads a probe that is not valid UTF-8" do
       source = "flowchart LR\n  A[\xFF\xFE]\n".b
 
       expect(records_in(source)).to eq([source.dup.force_encoding(Encoding::UTF_8)])
     end
 
-    it 'keeps the bytes of such a probe exactly as they were written' do
+    it "keeps the bytes of such a probe exactly as they were written" do
       source = "flowchart LR\n  A[\xFF\xFE]\n".b
 
       expect(records_in(source).first.b).to eq(source)
     end
 
-    it 'loads all committed probe records' do
-      paths = Dir[File.expand_path('../../scripts/probes/*.txt', __dir__)]
-        .reject { |path| File.basename(path) == 'shape_names.txt' }
+    it "loads all committed probe records" do
+      paths = Dir[File.expand_path("../../scripts/probes/*.txt", __dir__)]
+        .reject { |path| File.basename(path) == "shape_names.txt" }
         .sort
 
       expect(paths.size).to eq(3)
@@ -363,11 +363,11 @@ RSpec.describe MermaidDiff do
   # renderings have the same root role; only the syntax-error page puts its
   # style element in the XHTML namespace.
   describe "reading mermaid's verdict off an SVG" do
-    it 'accepts an intentional error diagram' do
+    it "accepts an intentional error diagram" do
       expect(oracle_verdict(intentional_error_svg)).to be(:accepts)
     end
 
-    it 'rejects a rendered syntax-error page' do
+    it "rejects a rendered syntax-error page" do
       expect(oracle_verdict(syntax_error_svg)).to be(:rejects)
     end
 
@@ -378,28 +378,28 @@ RSpec.describe MermaidDiff do
     # ArgumentError, or dropping these rows, would let a rexml version that
     # stops wrapping crash the sweep on damaged mmdc output while every
     # other row here stays green.
-    it 'requires a valid SVG document' do
-      damaged = ['', 'plain text', '<svg>',
+    it "requires a valid SVG document" do
+      damaged = ["", "plain text", "<svg>",
                  "<?xml version='1.0' encoding='NOT-A-CHARSET'?><svg/>",
                  "<svg>\xFF\xFE</svg>",
-                 '<svg>&#xZZ;</svg>']
+                 "<svg>&#xZZ;</svg>"]
 
       damaged.each do |svg|
         expect(oracle_verdict(svg)).to be(:error)
       end
     end
 
-    it 'requires the error role as well as an XHTML style' do
+    it "requires the error role as well as an XHTML style" do
       svg = '<svg aria-roledescription="flowchart-v2">' \
             '<style xmlns="http://www.w3.org/1999/xhtml">text{fill:red;}</style></svg>'
 
       expect(oracle_verdict(svg)).to be(:accepts)
     end
 
-    it 'ignores the word error everywhere but the root element' do
+    it "ignores the word error everywhere but the root element" do
       svg = '<svg id="my-svg" class="flowchart" role="graphics-document document" ' \
             'aria-roledescription="flowchart-v2">' \
-            '<style>.error-icon{fill:#552222;}</style>' \
+            "<style>.error-icon{fill:#552222;}</style>" \
             '<g class="node"><span>Syntax error in text</span></g></svg>'
 
       expect(oracle_verdict(svg)).to be(:accepts)
@@ -409,7 +409,7 @@ RSpec.describe MermaidDiff do
     # `accDescr: aria-roledescription=#quot;error#quot;` and drops it into
     # <desc> with the quotes intact, so reading the whole document calls a
     # diagram mermaid drew a rejection. Cut from that output.
-    it 'ignores the error role when it sits below the root element' do
+    it "ignores the error role when it sits below the root element" do
       svg = '<svg id="my-svg" role="graphics-document document" ' \
             'aria-roledescription="flowchart-v2" aria-describedby="chart-desc-my-svg">' \
             '<desc id="chart-desc-my-svg">aria-roledescription="error"</desc>' \
@@ -419,11 +419,11 @@ RSpec.describe MermaidDiff do
     end
   end
 
-  describe 'sharing the mmdc oracle with corpus verification' do
-    it 'uses SVG contents rather than exit status alone' do
+  describe "sharing the mmdc oracle with corpus verification" do
+    it "uses SVG contents rather than exit status alone" do
       Dir.mktmpdir do |dir|
-        intentional = File.join(dir, 'intentional.mmd')
-        syntax_error = File.join(dir, 'syntax-error.mmd')
+        intentional = File.join(dir, "intentional.mmd")
+        syntax_error = File.join(dir, "syntax-error.mmd")
         File.write(intentional, intentional_error_svg)
         File.write(syntax_error, syntax_error_svg)
 
@@ -434,9 +434,9 @@ RSpec.describe MermaidDiff do
       end
     end
 
-    it 'uses a real rejection diagnostic when mmdc exits nonzero' do
+    it "uses a real rejection diagnostic when mmdc exits nonzero" do
       Dir.mktmpdir do |dir|
-        path = File.join(dir, 'syntax-error.mmd')
+        path = File.join(dir, "syntax-error.mmd")
         File.write(path, 'not a diagram\n')
 
         prefix_path(fake_mmdc(dir, rejecting_corpus_mmdc)) do
@@ -445,19 +445,19 @@ RSpec.describe MermaidDiff do
       end
     end
 
-    it 'maps every local verdict to the matching row update' do
+    it "maps every local verdict to the matching row update" do
       Dir.mktmpdir do |dir|
         entries = {
-          'accept.mmd' => intentional_error_svg,
-          'reject.mmd' => syntax_error_svg,
-          'error.mmd' => '<svg/>',
+          "accept.mmd" => intentional_error_svg,
+          "reject.mmd" => syntax_error_svg,
+          "error.mmd" => "<svg/>",
         }.map do |name, contents|
           path = File.join(dir, name)
           File.write(path, contents)
           { path: path }
         end
         rows = entries.map do |entry|
-          { 'case' => entry[:path], 'verdict' => 'invalid', 'evidence' => 'sidecar rejected it' }
+          { "case" => entry[:path], "verdict" => "invalid", "evidence" => "sidecar rejected it" }
         end
 
         errors = nil
@@ -467,12 +467,12 @@ RSpec.describe MermaidDiff do
         end
 
         expected = [
-          ['valid', 'local mmdc renders it (sidecar rejection was stale)'],
-          ['invalid', 'local mmdc rejects it too'],
-          ['invalid', 'local mmdc could not be run'],
+          ["valid", "local mmdc renders it (sidecar rejection was stale)"],
+          ["invalid", "local mmdc rejects it too"],
+          ["invalid", "local mmdc could not be run"],
         ]
 
-        expect(rows.map { |row| [row['verdict'], row['evidence']] }).to eq(expected)
+        expect(rows.map { |row| [row["verdict"], row["evidence"]] }).to eq(expected)
         # The CLI's abort-on-broken-mmdc gate reads exactly this return value
         # (corpus_verdicts.rb:318-319) -- only the third row is a genuine
         # :error (mmdc could not be run), so it must be 1, not 3.
@@ -480,26 +480,26 @@ RSpec.describe MermaidDiff do
       end
     end
 
-    it 'fails the verify command when mmdc cannot run' do
+    it "fails the verify command when mmdc cannot run" do
       environment = ENV.keys
         .grep(/\A(?:BUNDLE|BUNDLER|RUBY)/)
         .to_h { |key| [key, nil] }
-      environment['PATH'] = '/nonexistent'
+      environment["PATH"] = "/nonexistent"
       stdout, stderr, status = Open3.capture3(
         environment,
         RbConfig.ruby,
-        File.expand_path('../../scripts/corpus_verdicts.rb', __dir__),
-        '--verify',
-        'gitgraph',
+        File.expand_path("../../scripts/corpus_verdicts.rb", __dir__),
+        "--verify",
+        "gitgraph",
       )
 
-      expect(stdout).to eq('')
-      expect(stderr).to include('mmdc verification failed')
+      expect(stdout).to eq("")
+      expect(stderr).to include("mmdc verification failed")
       expect(status).not_to be_success
     end
   end
 
-  describe 'showing a probe in the report' do
+  describe "showing a probe in the report" do
     let(:verdicts) do
       [
         MermaidDiff::Verdict.new("same accepts\n", :accepts, :accepts),
@@ -511,7 +511,7 @@ RSpec.describe MermaidDiff do
       ]
     end
 
-    it 'prints labels and totals from the verdict states' do
+    it "prints labels and totals from the verdict states" do
       expected = <<~OUTPUT
         GAP              gap
         OVER-ACCEPTANCE  over
@@ -525,7 +525,7 @@ RSpec.describe MermaidDiff do
         .to output(expected).to_stdout
     end
 
-    it 'limits details to gaps without changing the totals' do
+    it "limits details to gaps without changing the totals" do
       expected = <<~OUTPUT
         GAP              gap
 
@@ -538,22 +538,22 @@ RSpec.describe MermaidDiff do
 
     # Leading whitespace is often the whole point of a probe, so only the
     # trailing newline goes and the rest of the line is left alone.
-    it 'folds a record onto one line and keeps its indentation' do
+    it "folds a record onto one line and keeps its indentation" do
       expect(harness.send(:one_line, "flowchart LR\n  A --> B\n"))
-        .to eq('flowchart LR |   A --> B')
+        .to eq("flowchart LR |   A --> B")
     end
 
     # A record may hold bytes UTF-8 cannot name, and the regexes that fold it
     # raise on those. Only the display is scrubbed: both tools were asked
     # about the real bytes.
-    it 'shows a record whose bytes are not valid UTF-8' do
+    it "shows a record whose bytes are not valid UTF-8" do
       source = +"flowchart LR\n  A[\xFF]\n"
       source.force_encoding(Encoding::UTF_8)
 
       expect(harness.send(:one_line, source)).to eq("flowchart LR |   A[\uFFFD]")
     end
 
-    it 'escapes terminal control bytes in a record' do
+    it "escapes terminal control bytes in a record" do
       source = "flowchart LR\n  A[\x1B]52;c;secret\x07\rB]\n"
 
       expect(harness.send(:one_line, source))

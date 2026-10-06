@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Layout::Kanban do
   let(:transform) { described_class.new }
 
-  describe '#to_graph' do
+  describe "#to_graph" do
     # Asserted through the public `#to_graph` output rather than the private
     # `calculate_card_height`: what matters is the height a card actually
     # gets positioned with. Card text kept well under
@@ -14,16 +14,16 @@ RSpec.describe Sirena::Layout::Kanban do
     # fixture crossing the budget belongs to the spec below instead.
     it "grows a card's height by one EXTRA_LINE_HEIGHT per embedded hard break" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
-        d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'todo', title: 'Todo').tap do |column|
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'plain', text: 'Plain card'))
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'broken', text: "One\nTwo\nThree"))
+        d.add_column(Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo").tap do |column|
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "plain", text: "Plain card"))
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "broken", text: "One\nTwo\nThree"))
         end)
       end
 
       graph = transform.to_graph(diagram)
 
-      plain_height = graph[:cards].find { |c| c[:id] == 'plain' }[:height]
-      broken_height = graph[:cards].find { |c| c[:id] == 'broken' }[:height]
+      plain_height = graph[:cards].find { |c| c[:id] == "plain" }[:height]
+      broken_height = graph[:cards].find { |c| c[:id] == "broken" }[:height]
 
       expect(broken_height - plain_height).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
@@ -39,16 +39,16 @@ RSpec.describe Sirena::Layout::Kanban do
     # that narrower case; the two together pin the real property.
     it "grows a card's height only by the lines the renderer's own truncation actually keeps" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
-        d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'todo', title: 'Todo').tap do |column|
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'plain', text: 'Plain card'))
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'over_budget', text: "Line one\nLine two\nLine three"))
+        d.add_column(Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo").tap do |column|
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "plain", text: "Plain card"))
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "over_budget", text: "Line one\nLine two\nLine three"))
         end)
       end
 
       graph = transform.to_graph(diagram)
 
-      plain_height = graph[:cards].find { |c| c[:id] == 'plain' }[:height]
-      over_budget_height = graph[:cards].find { |c| c[:id] == 'over_budget' }[:height]
+      plain_height = graph[:cards].find { |c| c[:id] == "plain" }[:height]
+      over_budget_height = graph[:cards].find { |c| c[:id] == "over_budget" }[:height]
 
       expect(over_budget_height - plain_height).to eq(described_class::EXTRA_LINE_HEIGHT)
     end
@@ -66,28 +66,28 @@ RSpec.describe Sirena::Layout::Kanban do
     # same starting y.
     it "grows a column's height and its first card's y by one EXTRA_LINE_HEIGHT per embedded hard break in the title" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
-        d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'plain', title: 'Todo').tap do |column|
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'card1', text: 'Card'))
+        d.add_column(Sirena::Diagram::KanbanColumn.new(id: "plain", title: "Todo").tap do |column|
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "card1", text: "Card"))
         end)
-        d.add_column(Sirena::Diagram::KanbanColumn.new(id: 'broken', title: "One\nTwo\nThree").tap do |column|
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: 'card2', text: 'Card'))
+        d.add_column(Sirena::Diagram::KanbanColumn.new(id: "broken", title: "One\nTwo\nThree").tap do |column|
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "card2", text: "Card"))
         end)
       end
 
       graph = transform.to_graph(diagram)
 
-      plain_column = graph[:columns].find { |c| c[:id] == 'plain' }
-      broken_column = graph[:columns].find { |c| c[:id] == 'broken' }
-      plain_card = graph[:cards].find { |c| c[:column_id] == 'plain' }
-      broken_card = graph[:cards].find { |c| c[:column_id] == 'broken' }
+      plain_column = graph[:columns].find { |c| c[:id] == "plain" }
+      broken_column = graph[:columns].find { |c| c[:id] == "broken" }
+      plain_card = graph[:cards].find { |c| c[:column_id] == "plain" }
+      broken_card = graph[:cards].find { |c| c[:column_id] == "broken" }
 
       expect(broken_column[:height] - plain_column[:height]).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
       expect(broken_card[:y] - plain_card[:y]).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
   end
 
-  describe '#build_graph' do
-    it 'treats nil columns the same as empty columns, matching Diagram::Kanban#valid?' do
+  describe "#build_graph" do
+    it "treats nil columns the same as empty columns, matching Diagram::Kanban#valid?" do
       diagram = Sirena::Diagram::Kanban.new
       diagram.columns = nil
 
@@ -97,7 +97,7 @@ RSpec.describe Sirena::Layout::Kanban do
       )
     end
 
-    it 'returns an empty graph for an empty (bare-header) board' do
+    it "returns an empty graph for an empty (bare-header) board" do
       diagram = Sirena::Diagram::Kanban.new
 
       expect(transform.build_graph(diagram)).to eq(

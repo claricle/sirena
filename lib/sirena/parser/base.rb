@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative '../error'
-require_relative '../error/parse_error'
+require "parslet"
+require_relative "../error"
+require_relative "../error/parse_error"
 
 module Sirena
   module Parser
@@ -73,7 +73,7 @@ module Sirena
       # @param cause [Parslet::Cause] the failure to describe
       # @return [String] the message alone
       def failure_message(cause)
-        Array(cause.message).map { |part| message_part(part) }.join('')
+        Array(cause.message).map { |part| message_part(part) }.join("")
       end
 
       # Parslet quotes a Slice and leaves everything else alone. Quoting by
@@ -115,7 +115,7 @@ module Sirena
       def failure_position(cause, source)
         line, = cause.source.line_and_column(cause.pos)
         lines = source.lines("\n")
-        preceding = lines[0, line - 1].to_a.join('')
+        preceding = lines[0, line - 1].to_a.join("")
         offset = cause.pos.bytepos - preceding.bytesize
 
         [line, lines[line - 1].to_s.byteslice(0, offset).to_s.length + 1]
@@ -153,7 +153,7 @@ module Sirena
         context << if line_num.positive? && line_num <= lines.length
                      lines[line_num - 1].chomp("\n")
                    else
-                     '(end of input)'
+                     "(end of input)"
                    end
         context << caret_for(lines[line_num - 1], col_num)
         context << failure_message(cause)
@@ -176,7 +176,7 @@ module Sirena
         context = if line_num <= lines.length
                     lines[line_num - 1].chomp("\n")
                   else
-                    '(end of input)'
+                    "(end of input)"
                   end
 
         "Parse error at line #{line_num}, column #{col_num}:\n" \

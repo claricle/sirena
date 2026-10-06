@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'rexml/document'
+require "spec_helper"
+require "rexml/document"
 
 # `rendered_node_width` and `detect` both need the `engine`/`source` lets
 # (or `engine` directly), so both stay included instance methods.
 module EngineSpecHelpers
   def rendered_node_width(theme_name)
     document = REXML::Document.new(engine.render(source, theme: theme_name))
-    REXML::XPath.first(document, '//rect').attributes['width'].to_f
+    REXML::XPath.first(document, "//rect").attributes["width"].to_f
   end
 
   def detect(source)
@@ -20,20 +20,20 @@ end
 RSpec.describe Sirena::Engine do
   include EngineSpecHelpers
 
-  describe '#render' do
+  describe "#render" do
     let(:engine) { described_class.new }
 
-    context 'with flowchart diagram' do
+    context "with flowchart diagram" do
       let(:source) { "graph TD\nA-->B" }
 
-      it 'detects flowchart diagram type' do
+      it "detects flowchart diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
 
-      it 'returns SVG output' do
+      it "returns SVG output" do
         result = engine.render(source)
         expect(result).to be_a(String)
-        expect(result).to include('<svg')
+        expect(result).to include("<svg")
       end
     end
 
@@ -41,68 +41,68 @@ RSpec.describe Sirena::Engine do
     # actually draws with. high_contrast's font_size_normal (16.0) is
     # larger than default's (14.0) -- rendering under it must widen the
     # node box, not leave it sized for the hardcoded constant.
-    context 'with a theme whose font_size_normal differs from the default' do
+    context "with a theme whose font_size_normal differs from the default" do
       let(:source) { "graph TD\nA[Start]" }
 
-      it 'widens the node box to match the theme font size' do
-        expect(rendered_node_width('high_contrast'))
-          .to be > rendered_node_width('default')
+      it "widens the node box to match the theme font size" do
+        expect(rendered_node_width("high_contrast"))
+          .to be > rendered_node_width("default")
       end
     end
 
-    context 'with sequence diagram' do
+    context "with sequence diagram" do
       let(:source) { "sequenceDiagram\nAlice->>Bob: Hello" }
 
-      it 'detects sequence diagram type' do
+      it "detects sequence diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
     end
 
-    context 'with class diagram' do
+    context "with class diagram" do
       let(:source) { "classDiagram\nClass01 <|-- Class02" }
 
-      it 'detects class diagram type' do
+      it "detects class diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
     end
 
-    context 'with state diagram' do
+    context "with state diagram" do
       let(:source) { "stateDiagram\n[*] --> Still" }
 
-      it 'detects state diagram type' do
+      it "detects state diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
     end
 
-    context 'with ER diagram' do
+    context "with ER diagram" do
       let(:source) { "erDiagram\nCUSTOMER ||--o{ ORDER : places" }
 
-      it 'detects ER diagram type' do
+      it "detects ER diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
     end
 
-    context 'with an empty ER diagram' do
+    context "with an empty ER diagram" do
       # The bare keyword, which is all three empty rows of the ER corpus
       # hold: spec/mermaid/er/059, 060 and 061.
-      let(:source) { 'erDiagram' }
+      let(:source) { "erDiagram" }
 
       let(:document) { REXML::Document.new(engine.render(source)) }
 
       # mmdc renders this source at viewBox="-8 -8 16 16", max-width 16px.
       # Sirena keeps its own "0 0" origin and matches the 16x16 extent.
-      it 'renders the 16x16 empty canvas with nothing in it' do
-        expect(document.root.attributes['width']).to eq('16.0')
-        expect(document.root.attributes['height']).to eq('16.0')
-        expect(document.root.attributes['viewBox']).to eq('0 0 16 16')
+      it "renders the 16x16 empty canvas with nothing in it" do
+        expect(document.root.attributes["width"]).to eq("16.0")
+        expect(document.root.attributes["height"]).to eq("16.0")
+        expect(document.root.attributes["viewBox"]).to eq("0 0 16 16")
         expect(document.root.elements.to_a).to eq([])
       end
     end
 
-    context 'with user journey diagram' do
+    context "with user journey diagram" do
       let(:source) { "journey\ntitle My working day\nsection Go to work" }
 
-      it 'detects user journey diagram type' do
+      it "detects user journey diagram type" do
         expect { engine.render(source) }.not_to raise_error
       end
     end
@@ -111,26 +111,26 @@ RSpec.describe Sirena::Engine do
     # output looks SVG-shaped. Runs in `spec:corpus`, isolated from the
     # coverage-collecting `spec:unit` run: see .simplecov and
     # tasks/coverage.rake.
-    context 'with treemap corpus cases', :corpus do
+    context "with treemap corpus cases", :corpus do
       # Globbing at definition time means an empty or moved directory
       # would silently define zero examples and still pass, so guard it.
-      it 'finds treemap corpus cases to render' do
+      it "finds treemap corpus cases to render" do
         expect(
-          Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__)),
+          Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__)),
         ).not_to be_empty
       end
 
       # 007 is excluded: it fails at parse and is flagged
       # probably-oracle-invalid (pending item 02's verdict).
-      Dir.glob(File.expand_path('../mermaid/treemap/*.mmd', __dir__))
-        .reject { |path| path.end_with?('007_rendering_treemap_spec_treemap_6.mmd') }
+      Dir.glob(File.expand_path("../mermaid/treemap/*.mmd", __dir__))
+        .reject { |path| path.end_with?("007_rendering_treemap_spec_treemap_6.mmd") }
         .each do |fixture_file|
         it "renders #{File.basename(fixture_file)}" do
           result = engine.render(File.read(fixture_file))
 
           expect(result).to be_a(String)
-          expect(result).to include('<svg')
-          expect(result.rstrip).to end_with('</svg>')
+          expect(result).to include("<svg")
+          expect(result.rstrip).to end_with("</svg>")
         end
       end
     end
@@ -138,19 +138,19 @@ RSpec.describe Sirena::Engine do
     # A direction glyph may sit right against the keyword. Detection
     # wanted whitespace there, so mmdc drew these and Sirena refused to
     # name the type at all.
-    context 'with a flowchart header the direction touches' do
+    context "with a flowchart header the direction touches" do
       %w[> < ^].each do |glyph|
         it "renders graph#{glyph}" do
-          expect(engine.render("graph#{glyph}\nA --- B\n")).to include('<svg')
+          expect(engine.render("graph#{glyph}\nA --- B\n")).to include("<svg")
         end
 
         it "renders flowchart#{glyph}" do
           expect(engine.render("flowchart#{glyph}\nA --- B\n"))
-            .to include('<svg')
+            .to include("<svg")
         end
       end
 
-      it 'detects flowchart-elk as a flowchart (unknown/012)' do
+      it "detects flowchart-elk as a flowchart (unknown/012)" do
         # mmdc renders flowchart-elk exactly like flowchart, only hinting
         # at the elk layout engine. Sirena has no elk layout yet, so it
         # renders like any other flowchart. Detection used to require the
@@ -158,10 +158,10 @@ RSpec.describe Sirena::Engine do
         # suffix fell through to DiagramTypeError before the parser saw it.
         source = "flowchart-elk\nA --- B\n"
 
-        expect(engine.render(source)).to include('<svg')
+        expect(engine.render(source)).to include("<svg")
       end
 
-      it 'raises DiagramTypeError for every header only the -elk suffix would license' do
+      it "raises DiagramTypeError for every header only the -elk suffix would license" do
         # mmdc recognises exactly one flowchart suffix, spelled exactly
         # `-elk` (its own detector is `/^\s*flowchart-elk/`, no `i` flag).
         # A detector that widened any of these three axes -- attaching the
@@ -178,17 +178,17 @@ RSpec.describe Sirena::Engine do
         end
       end
 
-      it 'names the type for a bare keyword, as the grammar does' do
+      it "names the type for a bare keyword, as the grammar does" do
         # mmdc renders `graph` on its own as an empty canvas, which the
         # flowchart model now accepts too -- proven here by rendering
         # cleanly, unlike the DiagramTypeError cases just above, whose
         # keyword the flowchart detector never recognises at all.
-        document = REXML::Document.new(engine.render('graph'))
+        document = REXML::Document.new(engine.render("graph"))
 
-        expect(document.root.name).to eq('svg')
+        expect(document.root.name).to eq("svg")
       end
 
-      it 'still refuses a keyword glued to a word' do
+      it "still refuses a keyword glued to a word" do
         expect { engine.render("graphTD\nA --- B\n") }.to raise_error(
           Sirena::Engine::DiagramTypeError,
         )
@@ -198,17 +198,17 @@ RSpec.describe Sirena::Engine do
     # mmdc renders a bare `gantt` or `pie` with nothing after the keyword.
     # Detection wanted whitespace there, so the header alone died as "no
     # type" before the parser met it.
-    context 'with a gantt or pie header that ends the source' do
-      let(:corpus) { File.expand_path('../mermaid', __dir__) }
+    context "with a gantt or pie header that ends the source" do
+      let(:corpus) { File.expand_path("../mermaid", __dir__) }
 
       {
-        'gantt/023_spec_diagram-orchestration_spec_22.mmd' => 'gantt',
-        'gantt/025_spec_mermaidapi_spec_24.mmd' => 'gantt',
-        'pie/025_parsertest_pie_test_24.mmd' => 'pie',
+        "gantt/023_spec_diagram-orchestration_spec_22.mmd" => "gantt",
+        "gantt/025_spec_mermaidapi_spec_24.mmd" => "gantt",
+        "pie/025_parsertest_pie_test_24.mmd" => "pie",
       }.each do |file, keyword|
         it "renders corpus case #{file}" do
           expect(engine.render(File.read(File.join(corpus, file))))
-            .to include('<svg')
+            .to include("<svg")
         end
 
         # Keep this; it stays green on the old code by design. It becomes
@@ -221,10 +221,10 @@ RSpec.describe Sirena::Engine do
       end
     end
 
-    context 'with unknown diagram type' do
+    context "with unknown diagram type" do
       let(:source) { "unknown\ntest" }
 
-      it 'raises DiagramTypeError' do
+      it "raises DiagramTypeError" do
         expect { engine.render(source) }.to raise_error(
           Sirena::Engine::DiagramTypeError,
           /Unable to detect diagram type/,
@@ -236,7 +236,7 @@ RSpec.describe Sirena::Engine do
       # key (`:sequence`) -- DIAGRAM_TYPE_KEYWORDS is the translation
       # table, checked for completeness against DiagramRegistry.types by
       # the spec below.
-      it 'names the actual keyword for every registered diagram type' do
+      it "names the actual keyword for every registered diagram type" do
         expect { engine.render(source) }.to raise_error(
           Sirena::Engine::DiagramTypeError,
         ) do |error|
@@ -252,7 +252,7 @@ RSpec.describe Sirena::Engine do
       # by construction that adding a type updates both; this spec is that
       # enforcement (falls back to the wrong internal name via #fetch's
       # default in production code, but here the omission itself fails).
-      it 'keeps DIAGRAM_TYPE_KEYWORDS in sync with every registered type' do
+      it "keeps DIAGRAM_TYPE_KEYWORDS in sync with every registered type" do
         expect(Sirena::DiagramRegistry.types.sort)
           .to eq(Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.keys.sort)
       end
@@ -261,48 +261,48 @@ RSpec.describe Sirena::Engine do
       # pass the include-per-type check above (each stays a contiguous
       # substring of the concatenation) -- assert the comma-separated
       # format the docstring promises, so dropping the separator is caught.
-      it 'separates each keyword with a comma and a space' do
+      it "separates each keyword with a comma and a space" do
         expect { engine.render(source) }.to raise_error(
           Sirena::Engine::DiagramTypeError,
         ) do |error|
           sorted_keywords = Sirena::DiagramRegistry.types.sort.map do |type|
             Sirena::Engine::DIAGRAM_TYPE_KEYWORDS.fetch(type)
           end
-          expect(error.message).to include(sorted_keywords.join(', '))
+          expect(error.message).to include(sorted_keywords.join(", "))
         end
       end
     end
 
-    context 'with verbose option' do
+    context "with verbose option" do
       let(:source) { "graph TD\nA-->B" }
 
       # Library code never writes diagnostics to stdout -- engine.rb used to
       # `puts` its log lines, landing ahead of the SVG that the CLI later
       # prints on the very same stream. A host embedding Sirena and reading
       # stdout as pure SVG got log noise mixed in.
-      it 'logs to stderr, not stdout' do
+      it "logs to stderr, not stdout" do
         expect { engine.render(source, verbose: true) }.to output(
           /Starting render pipeline/,
         ).to_stderr
       end
 
-      it 'writes nothing to stdout, even under verbose' do
+      it "writes nothing to stdout, even under verbose" do
         expect { engine.render(source, verbose: true) }.not_to output.to_stdout
       end
     end
 
-    context 'with a logger injected' do
+    context "with a logger injected" do
       let(:source) { "graph TD\nA-->B" }
       let(:log_output) { StringIO.new }
       let(:logger) { Logger.new(log_output) }
 
-      it 'logs through the injected logger instead of building its own' do
+      it "logs through the injected logger instead of building its own" do
         described_class.new(logger: logger).render(source, verbose: true)
 
-        expect(log_output.string).to include('Starting render pipeline')
+        expect(log_output.string).to include("Starting render pipeline")
       end
 
-      it 'suppresses debug logging when verbose is false' do
+      it "suppresses debug logging when verbose is false" do
         described_class.new(logger: logger).render(source, verbose: false)
 
         expect(log_output.string).to be_empty
@@ -314,7 +314,7 @@ RSpec.describe Sirena::Engine do
       # contract, and corrupting a shared logger's own level as a side
       # effect otherwise. Logging is now gated purely on @verbose, so
       # neither construction nor render ever calls `.level=`.
-      it 'accepts a duck-typed logger with no #level= method' do
+      it "accepts a duck-typed logger with no #level= method" do
         minimal_logger = Class.new do
           def debug(_msg); end
           def info(_msg); end
@@ -339,18 +339,18 @@ RSpec.describe Sirena::Engine do
     # could not resolve, silently -- exit 0, wrong theme drawn, nothing
     # printed. `--theme nosuchtheme` and a typo looked identical to asking
     # for `default` on purpose.
-    context 'with an unknown theme name' do
+    context "with an unknown theme name" do
       let(:source) { "graph TD\nA-->B" }
 
-      it 'raises instead of silently falling back to the default theme' do
-        expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
+      it "raises instead of silently falling back to the default theme" do
+        expect { engine.render(source, theme: "nosuchtheme") }.to raise_error(
           Sirena::Engine::PipelineError,
           /nosuchtheme/,
         )
       end
 
-      it 'lists the valid theme names in the error' do
-        expect { engine.render(source, theme: 'nosuchtheme') }.to raise_error(
+      it "lists the valid theme names in the error" do
+        expect { engine.render(source, theme: "nosuchtheme") }.to raise_error(
           Sirena::Engine::PipelineError,
         ) do |error|
           Sirena::Theme::Registry.list.each do |name|
@@ -359,8 +359,8 @@ RSpec.describe Sirena::Engine do
         end
       end
 
-      it 'still raises when the unknown theme is given at construction time' do
-        expect { described_class.new(theme: 'nosuchtheme') }.to raise_error(
+      it "still raises when the unknown theme is given at construction time" do
+        expect { described_class.new(theme: "nosuchtheme") }.to raise_error(
           Sirena::Engine::PipelineError,
           /nosuchtheme/,
         )
@@ -370,28 +370,28 @@ RSpec.describe Sirena::Engine do
       # is a plausible caller mistake, not an exotic one -- a Symbol used
       # to skip the raise entirely and fall through to the untouched
       # `else` branch, silently drawing the default theme instead.
-      it 'raises for an unknown Symbol theme, not only an unknown String' do
+      it "raises for an unknown Symbol theme, not only an unknown String" do
         expect { engine.render(source, theme: :nosuchtheme) }.to raise_error(
           Sirena::Engine::PipelineError,
           /nosuchtheme/,
         )
       end
 
-      it 'resolves a known Symbol theme instead of silently defaulting' do
+      it "resolves a known Symbol theme instead of silently defaulting" do
         themed_engine = described_class.new(theme: :dark)
 
-        expect(themed_engine.theme.name).to eq('dark')
+        expect(themed_engine.theme.name).to eq("dark")
       end
     end
   end
 
-  describe '#initialize' do
-    it 'creates engine with default options' do
+  describe "#initialize" do
+    it "creates engine with default options" do
       engine = described_class.new
       expect(engine.verbose).to be false
     end
 
-    it 'creates engine with verbose option' do
+    it "creates engine with verbose option" do
       engine = described_class.new(verbose: true)
       expect(engine.verbose).to be true
     end
@@ -411,70 +411,70 @@ RSpec.describe Sirena::Engine do
   # the last raises a raw Encoding::CompatibilityError/ArgumentError out of
   # Source.split or detect_diagram_type, caught only by #render's blanket
   # StandardError rescue. Flagged separately; out of scope for this pass.
-  describe 'diagram type detection past a leading directive or comment' do
+  describe "diagram type detection past a leading directive or comment" do
     let(:engine) { described_class.new }
 
     [
-      ['a single leading directive',
+      ["a single leading directive",
        "%%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['two stacked directives',
+      ["two stacked directives",
        "%%{init: {'theme':'dark'}}%%\n%%{wrap}%%\nsequenceDiagram\n" \
        "Alice->>Bob: hi\n",
        :sequence],
-      ['a directive with blank lines around it',
+      ["a directive with blank lines around it",
        "\n%%{init: {'theme':'dark'}}%%\n\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['an indented directive',
+      ["an indented directive",
        "   %%{init: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a directive broken over lines',
+      ["a directive broken over lines",
        "%%{init: {\n  'theme':'dark'\n}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a directive and the header on one line',
+      ["a directive and the header on one line",
        "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['CRLF line endings',
+      ["CRLF line endings",
        "%%{init: {'theme':'dark'}}%%\r\nsequenceDiagram\r\nAlice->>Bob: hi\r\n",
        :sequence],
-      ['a directive after the header',
+      ["a directive after the header",
        "sequenceDiagram\n%%{init: {'theme':'dark'}}%%\nAlice->>Bob: hi\n",
        :sequence],
-      ['a plain comment before the header',
+      ["a plain comment before the header",
        "%% just a note\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a comment ended by a bare carriage return',
+      ["a comment ended by a bare carriage return",
        "%% note\rsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a directive whose body names another diagram type',
+      ["a directive whose body names another diagram type",
        "%%{init: {'themeCSS':'flowchart'}}%%\nsequenceDiagram\n" \
        "Alice->>Bob: hi\n",
        :sequence],
-      ['a directive above a flowchart',
+      ["a directive above a flowchart",
        "%%{init: {'theme':'dark'}}%%\nflowchart TD\nA-->B\n",
        :flowchart],
-      ['a directive above a class diagram',
+      ["a directive above a class diagram",
        "%%{init: {'theme':'dark'}}%%\nclassDiagram\nA <|-- B\n",
        :class_diagram],
-      ['two directives sharing the header line',
+      ["two directives sharing the header line",
        "%%{init: {'theme':'dark'}}%%%%{init: {'look':'classic'}}%% " \
        "sequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['two comment lines above the header',
+      ["two comment lines above the header",
        "%% a\n%% b\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a colonless directive on the header line',
+      ["a colonless directive on the header line",
        "%%{wrap}%% sequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['an uppercase directive keyword',
+      ["an uppercase directive keyword",
        "%%{INIT: {'theme':'dark'}}%%\nsequenceDiagram\nAlice->>Bob: hi\n",
        :sequence],
-      ['a bare comment line with nothing after it',
+      ["a bare comment line with nothing after it",
        "%%\nflowchart TD\nA-->B\n",
        :flowchart],
       # mmdc's ELK-layout flowchart keyword — corpus case
       # unknown/012_platform_flow-elk_11.mmd.
-      ['the flowchart-elk keyword',
+      ["the flowchart-elk keyword",
        "flowchart-elk\na[hello] --> b[world]\n",
        :flowchart],
     ].each do |name, source, expected|
@@ -484,13 +484,13 @@ RSpec.describe Sirena::Engine do
     end
 
     [
-      ['a directive left unterminated, which swallows the header',
+      ["a directive left unterminated, which swallows the header",
        "%%{init: {'theme':'dark'}\nsequenceDiagram\nAlice->>Bob: hi\n"],
-      ['a bare carriage return that keeps the header off the first line',
+      ["a bare carriage return that keeps the header off the first line",
        "%% a\rb\nsequenceDiagram\nAlice->>Bob: hi\n"],
-      ['a comment splitting a keyword in half',
+      ["a comment splitting a keyword in half",
        "sequence%% x\nDiagram\nAlice->>Bob: hi\n"],
-      ['a comment splitting the flowchart keyword in half',
+      ["a comment splitting the flowchart keyword in half",
        "flow%% c\nchart TD\nA-->B\n"],
     ].each do |name, source|
       it "still refuses #{name}" do
@@ -500,7 +500,7 @@ RSpec.describe Sirena::Engine do
       end
     end
 
-    it 'draws a directive sharing the header line, end to end' do
+    it "draws a directive sharing the header line, end to end" do
       # Source.split lifts the directive off the body entirely (into
       # preamble[:directives]), so the parser never sees it -- unlike the
       # old detectable_source approach, this never depended on the
@@ -510,7 +510,7 @@ RSpec.describe Sirena::Engine do
         "%%{init: {'theme':'dark'}}%% sequenceDiagram\nAlice->>Bob: hi\n",
       )
 
-      expect(svg).to include('Alice').and include('Bob')
+      expect(svg).to include("Alice").and include("Bob")
     end
   end
 end

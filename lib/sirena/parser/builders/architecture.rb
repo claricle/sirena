@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/architecture'
+require_relative "../../diagram/architecture"
 
 module Sirena
   module Parser
@@ -41,11 +41,11 @@ module Sirena
             diagram.edges << create_edge(stmt)
           elsif stmt[:stmt_type]
             case extract_text(stmt[:stmt_type])
-            when 'group'
+            when "group"
               diagram.groups << create_group(stmt)
-            when 'service'
+            when "service"
               diagram.services << create_service(stmt)
-            when 'junction'
+            when "junction"
               diagram.junctions << create_junction(stmt)
             end
           end

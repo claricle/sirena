@@ -368,7 +368,7 @@ RSpec.describe Sirena::Parser::GitGraph do
         "ruby", "-Ilib", "-e",
         'require "sirena/parser/grammars/git_graph"; ' \
         'tree = Sirena::Parser::Grammars::GitGraph.new.parse("gitGraph\n  branch release/1.0\n"); ' \
-        'puts tree[:statements].first[:branch][:name]'
+        "puts tree[:statements].first[:branch][:name]"
       )
 
       expect(status).to be_success, "expected exit 0, got #{status.exitstatus}:\n#{out}"

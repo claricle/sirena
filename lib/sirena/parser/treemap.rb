@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/treemap'
-require_relative 'builders/treemap'
-require_relative '../diagram/treemap'
+require_relative "base"
+require_relative "grammars/treemap"
+require_relative "builders/treemap"
+require_relative "../diagram/treemap"
 
 module Sirena
   module Parser

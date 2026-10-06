@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/flowchart'
+require_relative "base"
+require_relative "../diagram/flowchart"
 
 module Sirena
   module Layout
@@ -34,7 +34,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'flowchart',
+          id: diagram.id || "flowchart",
           children: transform_children(diagram),
           edges: transform_edges(diagram),
           layoutOptions: layout_options(diagram),
@@ -219,11 +219,11 @@ module Sirena
 
       def shape_to_type(shape)
         case shape
-        when 'rect', 'subroutine'
+        when "rect", "subroutine"
           :rect
-        when 'circle', 'double_circle'
+        when "circle", "double_circle"
           :circle
-        when 'rhombus', 'hexagon'
+        when "rhombus", "hexagon"
           :diamond
         else
           :rect
@@ -246,19 +246,19 @@ module Sirena
           ElkOptions::EDGE_EDGE_SPACING => 20,
           # SIMPLE node placement for predictable, straightforward layouts
           # This is ideal for flowcharts where clarity is paramount
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
+          ElkOptions::NODE_PLACEMENT => "SIMPLE",
         )
       end
 
       def direction_to_layout(direction)
         case direction
-        when 'TD', 'TB'
+        when "TD", "TB"
           DIRECTION_DOWN
-        when 'LR'
+        when "LR"
           DIRECTION_RIGHT
-        when 'RL'
+        when "RL"
           DIRECTION_LEFT
-        when 'BT'
+        when "BT"
           DIRECTION_UP
         else
           DIRECTION_DOWN # Default direction

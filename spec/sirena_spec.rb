@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 # lib/sirena.rb used to carry a second `def self.render` written after
 # `module Sirena`'s closing `end` -- syntactically outside the module, so
@@ -10,7 +10,7 @@ require 'spec_helper'
 # constant Engine` if anyone ever did, because `Engine` unqualified does not
 # resolve to `Sirena::Engine` outside the module.
 RSpec.describe Sirena do
-  it 'does not leak a render method onto the top-level main object' do
+  it "does not leak a render method onto the top-level main object" do
     expect(TOPLEVEL_BINDING.receiver.respond_to?(:render, true)).to be false
   end
 end

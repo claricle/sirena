@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'strscan'
+require "strscan"
 
 module Sirena
   module Svg
@@ -24,8 +24,8 @@ module Sirena
       # Command letter to the number of numbers it consumes. Repeated
       # argument groups are the SVG rule, so `L 1 2 3 4` is two segments.
       ARITY = {
-        'm' => 2, 'l' => 2, 'h' => 1, 'v' => 1, 'c' => 6,
-        's' => 4, 'q' => 4, 't' => 2, 'a' => 7, 'z' => 0
+        "m" => 2, "l" => 2, "h" => 1, "v" => 1, "c" => 6,
+        "s" => 4, "q" => 4, "t" => 2, "a" => 7, "z" => 0
       }.freeze
       private_constant :ARITY
 
@@ -39,7 +39,7 @@ module Sirena
 
       # A move followed by more coordinates draws lines: only the first
       # group of `M 1 2 3 4` is a move. Every other command simply repeats.
-      AFTER_FIRST = { 'M' => 'L', 'm' => 'l' }.freeze
+      AFTER_FIRST = { "M" => "L", "m" => "l" }.freeze
       private_constant :AFTER_FIRST
 
       # @param data [String, nil] the `d` attribute
@@ -116,9 +116,9 @@ module Sirena
       end
 
       def arc_flag_position?(letter, numbers)
-        return false unless letter&.downcase == 'a'
+        return false unless letter&.downcase == "a"
 
-        (numbers.length % ARITY.fetch('a')).between?(3, 4)
+        (numbers.length % ARITY.fetch("a")).between?(3, 4)
       end
 
       # A group with too few numbers is dropped, and the walk carries on with
@@ -143,9 +143,9 @@ module Sirena
         lower = letter.downcase
         args = relative(letter, lower, args)
         clear_unrelated_control(lower)
-        return move(args) if lower == 'm'
-        return close if lower == 'z'
-        return arc(args) if lower == 'a'
+        return move(args) if lower == "m"
+        return close if lower == "z"
+        return arc(args) if lower == "a"
 
         segment(*references(lower, args))
       end
@@ -155,8 +155,8 @@ module Sirena
       # different command would bend a later shorthand curve unexpectedly.
       def clear_unrelated_control(lower)
         case lower
-        when 'q', 't' then @cubic_control = nil
-        when 'c', 's' then @quadratic_control = nil
+        when "q", "t" then @cubic_control = nil
+        when "c", "s" then @quadratic_control = nil
         else
           @quadratic_control = nil
           @cubic_control = nil
@@ -207,20 +207,20 @@ module Sirena
       # no references at all — see the note on the class.
       def references(lower, args)
         case lower
-        when 'l' then straight([args[0], args[1]])
-        when 'h' then straight([args[0], @point[1]])
-        when 'v' then straight([@point[0], args[0]])
-        when 'c'
+        when "l" then straight([args[0], args[1]])
+        when "h" then straight([args[0], @point[1]])
+        when "v" then straight([@point[0], args[0]])
+        when "c"
           @cubic_control = [args[2], args[3]]
           [[args[0], args[1]], @cubic_control, [args[4], args[5]]]
-        when 's'
+        when "s"
           out_reference = reflection(@cubic_control)
           @cubic_control = [args[0], args[1]]
           [out_reference, @cubic_control, [args[2], args[3]]]
-        when 'q'
+        when "q"
           @quadratic_control = [args[0], args[1]]
           [@quadratic_control, @quadratic_control, [args[2], args[3]]]
-        when 't'
+        when "t"
           @quadratic_control = reflection(@quadratic_control)
           [@quadratic_control, @quadratic_control, [args[0], args[1]]]
         end
@@ -246,9 +246,9 @@ module Sirena
         return args if letter == letter.upcase
 
         case lower
-        when 'h' then [args[0] + @point[0]]
-        when 'v' then [args[0] + @point[1]]
-        when 'a' then args[0, 5] + [args[5] + @point[0], args[6] + @point[1]]
+        when "h" then [args[0] + @point[0]]
+        when "v" then [args[0] + @point[1]]
+        when "a" then args[0, 5] + [args[5] + @point[0], args[6] + @point[1]]
         else args.each_slice(2).flat_map { |x, y| [x + @point[0], y + @point[1]] }
         end
       end

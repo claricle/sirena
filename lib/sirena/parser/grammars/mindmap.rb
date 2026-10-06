@@ -19,7 +19,7 @@ module Sirena
         # becomes the root, handled below by node_line falling through to
         # node_with_content with a zero-length indent.
         rule(:header) do
-          str("mindmap") >> match['a-zA-Z0-9_'].absent? >> header_tail
+          str("mindmap") >> match["a-zA-Z0-9_"].absent? >> header_tail
         end
 
         # A run of separators after the keyword is only ever discarded when
@@ -33,7 +33,7 @@ module Sirena
         rule(:header_tail) do
           (match[' \t'].repeat >> comment >> (newline | eof)) |
             (match[' \t'].repeat >> (newline | eof)) |
-            str('')
+            str("")
         end
 
         rule(:node_line) do
@@ -71,7 +71,7 @@ module Sirena
         # Node with icon: ::icon(fa fa-book)
         rule(:node_with_icon) do
           str("::icon(") >>
-            match('[^)]').repeat(1).as(:icon) >>
+            match("[^)]").repeat(1).as(:icon) >>
             str(")")
         end
 
@@ -86,14 +86,14 @@ module Sirena
         # so round_shape would otherwise swallow the first paren of a circle
         # node and leave its own close paren unconsumed.
         rule(:node_with_shape) do
-          match['a-zA-Z0-9_'].repeat >>
+          match["a-zA-Z0-9_"].repeat >>
             (circle_shape | bang_shape | cloud_shape | hexagon_shape | square_shape | round_shape)
         end
 
         # ((text)) - circle
         rule(:circle_shape) do
           str("((") >>
-            match('[^)]').repeat(1).as(:content) >>
+            match("[^)]").repeat(1).as(:content) >>
             str("))") >>
             str("").as(:shape_circle)
         end
@@ -101,7 +101,7 @@ module Sirena
         # ))text(( - bang
         rule(:bang_shape) do
           str("))") >>
-            match('[^(]').repeat(1).as(:content) >>
+            match("[^(]").repeat(1).as(:content) >>
             str("((") >>
             str("").as(:shape_bang)
         end
@@ -109,7 +109,7 @@ module Sirena
         # )text( - cloud
         rule(:cloud_shape) do
           str(")") >>
-            match('[^(]').repeat(1).as(:content) >>
+            match("[^(]").repeat(1).as(:content) >>
             str("(") >>
             str("").as(:shape_cloud)
         end
@@ -117,7 +117,7 @@ module Sirena
         # {{text}} - hexagon
         rule(:hexagon_shape) do
           str("{{") >>
-            match('[^}]').repeat(1).as(:content) >>
+            match("[^}]").repeat(1).as(:content) >>
             str("}}") >>
             str("").as(:shape_hexagon)
         end
@@ -162,7 +162,7 @@ module Sirena
         end
 
         rule(:round_unquoted_content) do
-          (round_comment_line | match('[^)]')).repeat(1).as(:content)
+          (round_comment_line | match("[^)]")).repeat(1).as(:content)
         end
 
         # A %% comment line embedded inside quoted round content is matched

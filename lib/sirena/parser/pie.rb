@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/pie'
-require_relative 'builders/pie'
-require_relative '../diagram/pie'
+require_relative "base"
+require_relative "grammars/pie"
+require_relative "builders/pie"
+require_relative "../diagram/pie"
 
 module Sirena
   module Parser

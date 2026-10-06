@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 # Every arrow Sirena drew before this pointed at nothing: the five renderers
 # that ask for a head set `marker-end="url(#arrowhead)"` and no document ever
@@ -11,32 +11,32 @@ module SvgArrowheadSpecHelpers
   # gets no head — the cases below are about geometry, not about that.
   def path(**attributes)
     Sirena::Svg::Path.new.tap do |p|
-      p.stroke = '#000000'
+      p.stroke = "#000000"
       attributes.each { |name, value| p.public_send("#{name}=", value) }
     end
   end
 
   def points_of(polygon)
-    polygon.points.split.map { |pair| pair.split(',').map(&:to_f) }
+    polygon.points.split.map { |pair| pair.split(",").map(&:to_f) }
   end
 end
 
 RSpec.describe Sirena::Svg::Arrowhead do
   include SvgArrowheadSpecHelpers
 
-  describe '.for' do
-    it 'draws nothing when the path asked for no marker' do
-      expect(described_class.for(path(d: 'M 0 0 L 10 0'))).to be_empty
+  describe ".for" do
+    it "draws nothing when the path asked for no marker" do
+      expect(described_class.for(path(d: "M 0 0 L 10 0"))).to be_empty
     end
 
-    it 'puts the tip on the end of the path' do
-      polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')).first
+    it "puts the tip on the end of the path" do
+      polygon = described_class.for(path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)")).first
 
       expect(points_of(polygon).first).to eq([10.0, 0.0])
     end
 
-    it 'points the head along the last segment' do
-      polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')).first
+    it "points the head along the last segment" do
+      polygon = described_class.for(path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)")).first
       tip, left, right = points_of(polygon)
 
       # Both back corners sit one arrow-length behind the tip, on either side.
@@ -45,9 +45,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect([left[1], right[1]]).to eq([2.0, -2.0])
     end
 
-    it 'scales with the stroke width of the line it ends' do
+    it "scales with the stroke width of the line it ends" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 20 0', marker_end: 'url(#arrowhead)', stroke_width: '2'),
+        path(d: "M 0 0 L 20 0", marker_end: "url(#arrowhead)", stroke_width: "2"),
       ).first
 
       # All three corners: asserting one back corner left the other free to
@@ -55,12 +55,12 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(points_of(polygon)).to eq([[20.0, 0.0], [12.0, 4.0], [12.0, -4.0]])
     end
 
-    it 'takes the colour of the line, because it is part of it' do
+    it "takes the colour of the line, because it is part of it" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke: '#ff0000'),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", stroke: "#ff0000"),
       ).first
 
-      expect(polygon.fill).to eq('#ff0000')
+      expect(polygon.fill).to eq("#ff0000")
     end
 
     # An arrowhead is the end of a line. A path with no stroke paints no
@@ -69,18 +69,18 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # edge_stroke unset and apply_theme_to_edge then sets no stroke.
     # nil covers a stroke nobody ever set as well: lutaml holds nil for an
     # unset Path stroke, whether it was built in Ruby or parsed in.
-    ['none', 'NONE', '', nil].each do |value|
+    ["none", "NONE", "", nil].each do |value|
       it "draws nothing for a path whose stroke is #{value.inspect}" do
-        unstroked = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')
+        unstroked = path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)")
         unstroked.stroke = value
 
         expect(described_class.for(unstroked)).to be_empty
       end
     end
 
-    it 'paints the head at the stroke opacity of the line it ends' do
+    it "paints the head at the stroke opacity of the line it ends" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', stroke_opacity: '0.5'),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", stroke_opacity: "0.5"),
       ).first
 
       expect(polygon.to_xml)
@@ -88,9 +88,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
                'points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
     end
 
-    it 'carries the whole-element opacity of the path it ends' do
+    it "carries the whole-element opacity of the path it ends" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', opacity: 0.4),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", opacity: 0.4),
       ).first
 
       expect(polygon.to_xml)
@@ -100,26 +100,26 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     # Without this the head lands in the untransformed coordinate space and
     # the line it belongs to lands somewhere else.
-    it 'carries the transform of the path it ends' do
+    it "carries the transform of the path it ends" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', transform: 'translate(5,5)'),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", transform: "translate(5,5)"),
       ).first
 
-      expect(polygon.transform).to eq('translate(5,5)')
+      expect(polygon.transform).to eq("translate(5,5)")
     end
 
-    it 'omits empty opacity and transform attributes from the polygon' do
+    it "omits empty opacity and transform attributes from the polygon" do
       polygon = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
-             stroke_opacity: '', transform: ''),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
+             stroke_opacity: "", transform: ""),
       ).first
 
       expect(polygon.to_xml)
         .to eq('<polygon fill="#000000" points="10.0,0.0 6.0,2.0 6.0,-2.0"/>')
     end
 
-    it 'points a start marker back the way the path came' do
-      polygon = described_class.for(path(d: 'M 0 0 L 10 0', marker_start: 'url(#arrowhead)')).first
+    it "points a start marker back the way the path came" do
+      polygon = described_class.for(path(d: "M 0 0 L 10 0", marker_start: "url(#arrowhead)")).first
 
       # The mirror of the end head: base one arrow-length FORWARD along the
       # path, so both corners must be asserted or a head pointing the wrong
@@ -127,54 +127,54 @@ RSpec.describe Sirena::Svg::Arrowhead do
       expect(points_of(polygon)).to eq([[0.0, 0.0], [4.0, -2.0], [4.0, 2.0]])
     end
 
-    it 'draws both when the path asked for both' do
+    it "draws both when the path asked for both" do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)', marker_start: 'url(#arrowhead)'),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)", marker_start: "url(#arrowhead)"),
       )
 
       # Both heads, each pointing its own way, in the documented order. A
       # count alone would pass for the end head drawn twice.
       expect(arrows.map(&:points))
-        .to eq(['10.0,0.0 6.0,2.0 6.0,-2.0', '0.0,0.0 4.0,-2.0 4.0,2.0'])
+        .to eq(["10.0,0.0 6.0,2.0 6.0,-2.0", "0.0,0.0 4.0,-2.0 4.0,2.0"])
     end
 
     # Drawing it in the wrong place is worse than not drawing it.
-    it 'draws nothing when the path data gives no heading' do
-      expect(described_class.for(path(d: 'M 10 10', marker_end: 'url(#arrowhead)'))).to be_empty
+    it "draws nothing when the path data gives no heading" do
+      expect(described_class.for(path(d: "M 10 10", marker_end: "url(#arrowhead)"))).to be_empty
     end
 
     # `none` is SVG's own way of saying no marker here, so a path carrying it
     # has asked for nothing rather than failed to ask.
-    ['none', 'NONE', '  none  '].each do |value|
+    ["none", "NONE", "  none  "].each do |value|
       it "draws nothing for a marker of #{value.inspect}" do
-        expect(described_class.for(path(d: 'M 0 0 L 10 0', marker_end: value))).to be_empty
+        expect(described_class.for(path(d: "M 0 0 L 10 0", marker_end: value))).to be_empty
       end
     end
 
-    it 'draws nothing for an empty marker value' do
-      expect(described_class.for(path(d: 'M 0 0 L 10 0', marker_end: ''))).to be_empty
+    it "draws nothing for an empty marker value" do
+      expect(described_class.for(path(d: "M 0 0 L 10 0", marker_end: ""))).to be_empty
     end
 
     # An arc's chord is not its tangent — on this half circle they are 90
     # degrees apart — and there is no control point to read one from.
-    it 'draws nothing at the end of an arc rather than pointing along its chord' do
-      arrows = described_class.for(path(d: 'M 0 0 A 10 10 0 1 1 20 0', marker_end: 'url(#arrowhead)'))
+    it "draws nothing at the end of an arc rather than pointing along its chord" do
+      arrows = described_class.for(path(d: "M 0 0 A 10 10 0 1 1 20 0", marker_end: "url(#arrowhead)"))
 
       expect(arrows).to be_empty
     end
 
-    it 'draws nothing when a terminal arc follows a line' do
+    it "draws nothing when a terminal arc follows a line" do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0 A 5 5 0 0 1 20 10',
-             marker_end: 'url(#arrowhead)'),
+        path(d: "M 0 0 L 10 0 A 5 5 0 0 1 20 10",
+             marker_end: "url(#arrowhead)"),
       )
 
       expect(arrows).to be_empty
     end
 
-    it 'draws nothing when a compact terminal arc follows a line' do
+    it "draws nothing when a compact terminal arc follows a line" do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0 a5 5 0 011 20 10', marker_end: 'url(#arrowhead)'),
+        path(d: "M 0 0 L 10 0 a5 5 0 011 20 10", marker_end: "url(#arrowhead)"),
       )
 
       expect(arrows).to be_empty
@@ -182,24 +182,24 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     # The arc still moves the pen, so a segment after it starts in the right
     # place and can carry the head.
-    it 'still ends where a segment after an arc ends' do
+    it "still ends where a segment after an arc ends" do
       polygon = described_class.for(
-        path(d: 'M 0 0 A 5 5 0 0 1 10 0 L 20 0', marker_end: 'url(#arrowhead)'),
+        path(d: "M 0 0 A 5 5 0 0 1 10 0 L 20 0", marker_end: "url(#arrowhead)"),
       ).first
 
       expect(points_of(polygon).first).to eq([20.0, 0.0])
     end
 
     # Infinity/Infinity is NaN, and NaN would be written into points verbatim.
-    it 'draws nothing when the path data has no finite heading' do
-      arrows = described_class.for(path(d: 'M 0 0 L 1e400 0', marker_end: 'url(#arrowhead)'))
+    it "draws nothing when the path data has no finite heading" do
+      arrows = described_class.for(path(d: "M 0 0 L 1e400 0", marker_end: "url(#arrowhead)"))
 
       expect(arrows).to be_empty
     end
 
-    it 'draws nothing when a non-finite endpoint follows a finite heading' do
+    it "draws nothing when a non-finite endpoint follows a finite heading" do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 5 0 L 1e400 0', marker_end: 'url(#arrowhead)'),
+        path(d: "M 0 0 L 5 0 L 1e400 0", marker_end: "url(#arrowhead)"),
       )
 
       expect(arrows).to be_empty
@@ -207,10 +207,10 @@ RSpec.describe Sirena::Svg::Arrowhead do
 
     # The early return is what keeps a marker-less path from paying for a
     # scan of its own data, and most paths carry no marker.
-    it 'does not read the path data when no marker was asked for' do
+    it "does not read the path data when no marker was asked for" do
       allow(Sirena::Svg::PathGeometry).to receive(:new).and_call_original
 
-      described_class.for(path(d: 'M 0 0 L 10 0'))
+      described_class.for(path(d: "M 0 0 L 10 0"))
 
       expect(Sirena::Svg::PathGeometry).not_to have_received(:new)
     end
@@ -218,22 +218,22 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # SVG's initial stroke-width is 1, so an unreadable or invalid declaration
     # still paints one and still ends in a head. `1e400` also avoids the NaN
     # that multiplying a perpendicular zero by Infinity would produce.
-    ['1e400', 'inherit', '-2'].each do |width|
+    ["1e400", "inherit", "-2"].each do |width|
       it "falls back to a 1-unit line for a stroke width of #{width.inspect}" do
-        odd = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+        odd = path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
                    stroke_width: width)
 
         points = described_class.for(odd).first.points
 
-        expect(points).to eq('10.0,0.0 6.0,2.0 6.0,-2.0')
+        expect(points).to eq("10.0,0.0 6.0,2.0 6.0,-2.0")
       end
     end
 
     # Both inputs are finite; it is LENGTH * stroke_width that overflows.
-    it 'draws nothing when scaling a finite stroke width overflows' do
+    it "draws nothing when scaling a finite stroke width overflows" do
       arrows = described_class.for(
-        path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
-             stroke: '#000', stroke_width: '1e308'),
+        path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
+             stroke: "#000", stroke_width: "1e308"),
       )
 
       expect(arrows).to be_empty
@@ -243,9 +243,9 @@ RSpec.describe Sirena::Svg::Arrowhead do
     # stroke at all, so substituting 1 would put a head on an invisible line —
     # the free-floating triangle this class exists to avoid. Reachable from a
     # custom theme carrying `stroke_width: 0`.
-    ['0', '0.0'].each do |width|
+    ["0", "0.0"].each do |width|
       it "draws nothing for a line of stroke width #{width.inspect}" do
-        unpainted = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)',
+        unpainted = path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)",
                          stroke_width: width)
 
         expect(described_class.for(unpainted)).to be_empty
@@ -253,19 +253,19 @@ RSpec.describe Sirena::Svg::Arrowhead do
     end
   end
 
-  describe '#polygons' do
+  describe "#polygons" do
     # A Path is mutable, so nothing may remember an answer for data the
     # caller has since replaced.
-    it 'reads the path data again when it has changed underneath' do
-      moving = path(d: 'M 0 0 L 10 0', marker_end: 'url(#arrowhead)')
+    it "reads the path data again when it has changed underneath" do
+      moving = path(d: "M 0 0 L 10 0", marker_end: "url(#arrowhead)")
       arrowhead = described_class.new(moving)
 
       # The new head in full, not merely a different one: "not what it was"
       # would pass for a head that moved to the wrong place.
-      expect(arrowhead.polygons.first.points).to eq('10.0,0.0 6.0,2.0 6.0,-2.0')
-      moving.d = 'M 0 0 L 20 0'
+      expect(arrowhead.polygons.first.points).to eq("10.0,0.0 6.0,2.0 6.0,-2.0")
+      moving.d = "M 0 0 L 20 0"
 
-      expect(arrowhead.polygons.first.points).to eq('20.0,0.0 16.0,2.0 16.0,-2.0')
+      expect(arrowhead.polygons.first.points).to eq("20.0,0.0 16.0,2.0 16.0,-2.0")
     end
   end
 end

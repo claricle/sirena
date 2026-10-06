@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -130,9 +130,9 @@ module Sirena
           r.y = y
           r.width = width
           r.height = height
-          r.fill = box_property(styles, 'fill', attributed) || '#f9f9f9'
-          r.stroke = box_property(styles, 'stroke', attributed) || '#333333'
-          r.stroke_width = box_property(styles, 'stroke-width', attributed) || '2'
+          r.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
+          r.stroke = box_property(styles, "stroke", attributed) || "#333333"
+          r.stroke_width = box_property(styles, "stroke-width", attributed) || "2"
         end
         group.children << box
 
@@ -154,7 +154,7 @@ module Sirena
         # case (`COLOR`, `Color`) is a box style instead, matched
         # case-insensitively there. Folding this lookup would route an
         # uppercase COLOR onto the entity name.
-        name_color = styles['color'] || '#000000'
+        name_color = styles["color"] || "#000000"
 
         # Render entity name
         name = metadata[:name] || node[:id]
@@ -163,10 +163,10 @@ module Sirena
           t.y = current_y
           t.content = name
           t.fill = name_color
-          t.font_family = 'Arial, sans-serif'
+          t.font_family = "Arial, sans-serif"
           t.font_size = ENTITY_NAME_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         group.children << text
 
@@ -177,8 +177,8 @@ module Sirena
           l.y1 = current_y
           l.x2 = x + width
           l.y2 = current_y
-          l.stroke = '#333333'
-          l.stroke_width = '1'
+          l.stroke = "#333333"
+          l.stroke_width = "1"
         end
         group.children << separator
 
@@ -206,7 +206,7 @@ module Sirena
         # appended last on that line instead of losing it.
         parts << attribute[:note] if attribute[:note] && !attribute[:note].empty?
 
-        attr_text = parts.join(' ')
+        attr_text = parts.join(" ")
 
         text = Svg::Text.new.tap do |t|
           t.x = x + BOX_PADDING
@@ -214,8 +214,8 @@ module Sirena
           t.content = attr_text
           # Exact-case lookup — see the comment on the same lookup in
           # render_entity_content.
-          t.fill = styles['color'] || '#000000'
-          t.font_family = 'monospace'
+          t.fill = styles["color"] || "#000000"
+          t.font_family = "monospace"
           t.font_size = ATTRIBUTE_FONT_SIZE.to_s
         end
         group.children << text
@@ -230,7 +230,7 @@ module Sirena
       # `"default a b a"`). A `classDef default` is stored like any other
       # name (grammar and process_class_def need no change for this); this
       # is the one place it has to be applied even when nothing assigned it.
-      DEFAULT_CLASS = 'default'
+      DEFAULT_CLASS = "default"
       private_constant :DEFAULT_CLASS
 
       # Resolves the style properties an entity's classes apply, by name and
@@ -310,7 +310,7 @@ module Sirena
       # @param declaration [String] raw style text for one class
       # @return [Array<String>] chunks, with colour-bearing ones repeated
       def class_chunks(declaration)
-        chunks = declaration.split(',')
+        chunks = declaration.split(",")
         chunks + chunks.select { |chunk| replayed_chunk?(chunk) }
       end
 
@@ -326,10 +326,10 @@ module Sirena
       # @param chunk [String] one raw comma-separated chunk
       # @return [Boolean]
       def replayed_chunk?(chunk)
-        return false unless chunk.include?('color')
+        return false unless chunk.include?("color")
 
         key, value = mermaid_split(chunk)
-        !value.nil? && key.strip != 'fill'
+        !value.nil? && key.strip != "fill"
       end
 
       # Applies a run of raw chunks into the shared, exact-case styles Hash,
@@ -397,7 +397,7 @@ module Sirena
       #   [key, value] — value is nil when the chunk has no colon, and both
       #   are nil (empty array) for an empty chunk
       def mermaid_split(chunk)
-        parts = chunk.split(':', -1)
+        parts = chunk.split(":", -1)
         [parts[0], parts[1]]
       end
 
@@ -473,7 +473,7 @@ module Sirena
       # @return [String, nil] VALUE, or the ambient colour declared for
       #   this box if VALUE is `currentColor` (any case) and one exists
       def resolve_current_color(value, styles)
-        return value unless value&.downcase == 'currentcolor'
+        return value unless value&.downcase == "currentcolor"
 
         ambient_color(styles) || value
       end
@@ -495,7 +495,7 @@ module Sirena
       # @return [String, nil] the winning ambient colour, or nil if none
       #   was validly declared
       def ambient_color(styles)
-        values = styles.select { |key, _| key != 'color' && key.downcase == 'color' }.values
+        values = styles.select { |key, _| key != "color" && key.downcase == "color" }.values
         values.filter_map { |value| present(value) }
           .reverse_each.find { |value| css_color?(value) }
       end
@@ -517,8 +517,8 @@ module Sirena
       # @return [Boolean]
       def css_valid?(property, value)
         case property
-        when 'fill', 'stroke' then css_color?(value)
-        when 'stroke-width' then css_length?(value)
+        when "fill", "stroke" then css_color?(value)
+        when "stroke-width" then css_length?(value)
         else true
         end
       end
@@ -647,7 +647,7 @@ module Sirena
         target_point = calculate_connection_point(target, source)
 
         # Render the line
-        rel_type = metadata[:relationship_type] || 'non-identifying'
+        rel_type = metadata[:relationship_type] || "non-identifying"
         render_relationship_line(
           source_point,
           target_point,
@@ -729,22 +729,22 @@ module Sirena
           l.y1 = from[:y]
           l.x2 = to[:x]
           l.y2 = to[:y]
-          l.stroke = '#333333'
-          l.stroke_width = '2'
-          l.stroke_dasharray = '5,5' if rel_type == 'non-identifying'
+          l.stroke = "#333333"
+          l.stroke_width = "2"
+          l.stroke_dasharray = "5,5" if rel_type == "non-identifying"
         end
         group.children << line
       end
 
       def render_cardinality(point, opposite_point, cardinality, _side, group)
         case cardinality
-        when 'one'
+        when "one"
           render_one_marker(point, opposite_point, group)
-        when 'zero_or_more'
+        when "zero_or_more"
           render_zero_or_more_marker(point, opposite_point, group)
-        when 'one_or_more'
+        when "one_or_more"
           render_one_or_more_marker(point, opposite_point, group)
-        when 'zero_or_one'
+        when "zero_or_one"
           render_zero_or_one_marker(point, opposite_point, group)
         end
       end
@@ -770,8 +770,8 @@ module Sirena
           l.y1 = y1
           l.x2 = x2
           l.y2 = y2
-          l.stroke = '#333333'
-          l.stroke_width = '2'
+          l.stroke = "#333333"
+          l.stroke_width = "2"
         end
         group.children << line
       end
@@ -808,9 +808,9 @@ module Sirena
           c.cx = cx
           c.cy = cy
           c.r = CARDINALITY_SIZE / 3
-          c.fill = 'none'
-          c.stroke = '#333333'
-          c.stroke_width = '2'
+          c.fill = "none"
+          c.stroke = "#333333"
+          c.stroke_width = "2"
         end
         group.children << circle
       end
@@ -838,8 +838,8 @@ module Sirena
             l.y1 = base_y
             l.x2 = end_x
             l.y2 = end_y
-            l.stroke = '#333333'
-            l.stroke_width = '2'
+            l.stroke = "#333333"
+            l.stroke_width = "2"
           end
           group.children << line
         end
@@ -857,10 +857,10 @@ module Sirena
           t.x = mid_x
           t.y = mid_y - 5
           t.content = main_label[:text]
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
-          t.font_size = '11'
-          t.text_anchor = 'middle'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
+          t.font_size = "11"
+          t.text_anchor = "middle"
         end
         group.children << text
       end

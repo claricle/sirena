@@ -38,11 +38,11 @@ module Sirena
       # @return [void]
       # @raise [ArgumentError] if format is not supported
       def validate_format!
-        return if options[:format] == 'svg'
+        return if options[:format] == "svg"
 
         raise ArgumentError,
               "Unsupported format: #{options[:format]}. " \
-              'Only SVG format is currently supported.'
+              "Only SVG format is currently supported."
       end
 
       # Reads input from file or stdin.
@@ -54,7 +54,7 @@ module Sirena
       #
       # @return [String] Mermaid source code
       def read_input
-        if file == '-' || file.nil?
+        if file == "-" || file.nil?
           $stdin.binmode.read
         else
           File.binread(file)

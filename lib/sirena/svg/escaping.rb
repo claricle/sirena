@@ -20,14 +20,14 @@ module Sirena
     # order the map is written in.
     module Escaping
       TEXT = {
-        '&' => '&amp;',
-        '<' => '&lt;',
-        '>' => '&gt;',
+        "&" => "&amp;",
+        "<" => "&lt;",
+        ">" => "&gt;",
       }.freeze
 
       ATTRIBUTE = TEXT.merge(
-        '"' => '&quot;',
-        "'" => '&apos;',
+        '"' => "&quot;",
+        "'" => "&apos;",
       ).freeze
 
       # Derived from the maps, never written out again. A hand-kept pattern
@@ -52,7 +52,7 @@ module Sirena
       # and inventing a replacement character would put content in the document
       # that the author never wrote.
       def strip_forbidden(text)
-        text.gsub(FORBIDDEN, '')
+        text.gsub(FORBIDDEN, "")
       end
 
       # Escapes a value destined for element text content.
@@ -90,7 +90,7 @@ module Sirena
       # @return [String] ` name="escaped"`
       # @raise [ArgumentError] if the name is not a valid XML attribute name
       def attribute(name, value)
-        return '' if blank?(value)
+        return "" if blank?(value)
 
         unless name.to_s.match?(NAME)
           raise ArgumentError, "not a valid attribute name: #{name.inspect}"
@@ -141,7 +141,7 @@ module Sirena
 
         raise ArgumentError,
               "expected a [name, value] pair, got #{pair.inspect}. " \
-              'element_attributes returns pairs, not rendered markup.'
+              "element_attributes returns pairs, not rendered markup."
       end
     end
   end

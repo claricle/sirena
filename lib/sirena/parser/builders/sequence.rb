@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/sequence'
+require_relative "../../diagram/sequence"
 
 module Sirena
   module Parser
@@ -17,34 +17,34 @@ module Sirena
         # forward twin only in that last axis — `\\-` puts the same head
         # mermaid gives `-\\` on the source end instead.
         ARROW_STYLES = {
-          '->' => %w[solid none target],
-          '-->' => %w[dotted none target],
-          '->>' => %w[solid filled target],
-          '-->>' => %w[dotted filled target],
-          '-x' => %w[solid cross target],
-          '--x' => %w[dotted cross target],
-          '-X' => %w[solid cross target],
-          '--X' => %w[dotted cross target],
-          '-)' => %w[solid open target],
-          '--)' => %w[dotted open target],
-          '-|/' => %w[solid half_bottom target],
-          '--|/' => %w[dotted half_bottom target],
-          '-|\\' => %w[solid half_top target],
-          '--|\\' => %w[dotted half_top target],
-          '-//' => %w[solid stick_bottom target],
-          '--//' => %w[dotted stick_bottom target],
-          '-\\\\' => %w[solid stick_top target],
-          '--\\\\' => %w[dotted stick_top target],
-          '/|-' => %w[solid half_bottom source],
-          '/|--' => %w[dotted half_bottom source],
+          "->" => %w[solid none target],
+          "-->" => %w[dotted none target],
+          "->>" => %w[solid filled target],
+          "-->>" => %w[dotted filled target],
+          "-x" => %w[solid cross target],
+          "--x" => %w[dotted cross target],
+          "-X" => %w[solid cross target],
+          "--X" => %w[dotted cross target],
+          "-)" => %w[solid open target],
+          "--)" => %w[dotted open target],
+          "-|/" => %w[solid half_bottom target],
+          "--|/" => %w[dotted half_bottom target],
+          "-|\\" => %w[solid half_top target],
+          "--|\\" => %w[dotted half_top target],
+          "-//" => %w[solid stick_bottom target],
+          "--//" => %w[dotted stick_bottom target],
+          "-\\\\" => %w[solid stick_top target],
+          "--\\\\" => %w[dotted stick_top target],
+          "/|-" => %w[solid half_bottom source],
+          "/|--" => %w[dotted half_bottom source],
           '\\|-' => %w[solid half_top source],
           '\\|--' => %w[dotted half_top source],
-          '//-' => %w[solid stick_bottom source],
-          '//--' => %w[dotted stick_bottom source],
+          "//-" => %w[solid stick_bottom source],
+          "//--" => %w[dotted stick_bottom source],
           '\\\\-' => %w[solid stick_top source],
           '\\\\--' => %w[dotted stick_top source],
-          '<<->>' => %w[solid filled both],
-          '<<-->>' => %w[dotted filled both],
+          "<<->>" => %w[solid filled both],
+          "<<-->>" => %w[dotted filled both],
         }.freeze
 
         # Transform parse tree into Sequence diagram.
@@ -99,9 +99,9 @@ module Sirena
           register_created(actor_id(stmt[:id])) if stmt[:create]
 
           if stmt[:participant]
-            add_participant(diagram, stmt, 'participant')
+            add_participant(diagram, stmt, "participant")
           elsif stmt[:actor]
-            add_participant(diagram, stmt, 'actor')
+            add_participant(diagram, stmt, "actor")
           elsif stmt[:destroy]
             register_destroyed(actor_id(stmt[:destroy]))
           elsif stmt[:links]
@@ -161,7 +161,7 @@ module Sirena
 
           from_id = actor_id(stmt[:from])
           to_id = actor_id(stmt[:to])
-          message_text = stmt[:text] ? extract_text(stmt[:text]) : ''
+          message_text = stmt[:text] ? extract_text(stmt[:text]) : ""
 
           base = arrow_base(stmt[:arrow])
           line_style, head_style, head_side =
@@ -197,7 +197,7 @@ module Sirena
         def register_created(id)
           if @known_actor_ids.include?(id)
             raise Parser::ParseError,
-                  'It is not possible to have actors with the same id, ' \
+                  "It is not possible to have actors with the same id, " \
                   "even if one is destroyed before the next is created (#{id})."
           end
 
@@ -222,16 +222,16 @@ module Sirena
             unless to_id == @pending_created
               raise Parser::ParseError,
                     "The created participant #{@pending_created} does not " \
-                    'have an associated creating message after its ' \
-                    'declaration. Please check the sequence diagram.'
+                    "have an associated creating message after its " \
+                    "declaration. Please check the sequence diagram."
             end
             @pending_created = nil
           elsif @pending_destroyed
             unless to_id == @pending_destroyed || from_id == @pending_destroyed
               raise Parser::ParseError,
                     "The destroyed participant #{@pending_destroyed} does " \
-                    'not have an associated destroying message after its ' \
-                    'declaration. Please check the sequence diagram.'
+                    "not have an associated destroying message after its " \
+                    "declaration. Please check the sequence diagram."
             end
             @pending_destroyed = nil
           end
@@ -244,13 +244,13 @@ module Sirena
         def activation(arrow)
           # Stripped: mermaid allows whitespace before the suffix, so the
           # capture can arrive as " +" and never matched a bare "+".
-          arrow.is_a?(Hash) ? arrow[:activation].to_s.strip : ''
+          arrow.is_a?(Hash) ? arrow[:activation].to_s.strip : ""
         end
 
         def handle_arrow_activation(diagram, from_id, to_id, suffix)
           case suffix
-          when '+' then track_activation(diagram, to_id, true)
-          when '-' then track_activation(diagram, from_id, false)
+          when "+" then track_activation(diagram, to_id, true)
+          when "-" then track_activation(diagram, from_id, false)
           end
         end
 
@@ -258,16 +258,16 @@ module Sirena
           position_data = stmt[:position]
           position = if position_data.is_a?(Hash)
                        if position_data[:left_of]
-                         'left_of'
+                         "left_of"
                        elsif position_data[:right_of]
-                         'right_of'
+                         "right_of"
                        elsif position_data[:over]
-                         'over'
+                         "over"
                        else
-                         'over'
+                         "over"
                        end
                      else
-                       'over'
+                       "over"
                      end
 
           participants = if stmt[:participants].is_a?(Array)
@@ -434,7 +434,7 @@ module Sirena
           participant = Diagram::SequenceParticipant.new.tap do |p|
             p.id = participant_id
             p.label = participant_id
-            p.actor_type = 'participant'
+            p.actor_type = "participant"
           end
 
           diagram.participants << participant
@@ -456,7 +456,7 @@ module Sirena
             else
               extract_text(value.values.first)
             end
-          when Array then ''
+          when Array then ""
           when String then value
           else value.to_s
           end.strip

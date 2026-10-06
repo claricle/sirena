@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/c4'
+require_relative "base"
+require_relative "../diagram/c4"
 
 module Sirena
   module Layout
@@ -43,7 +43,7 @@ module Sirena
         root_boundaries = diagram.boundaries.select { |b| b.parent_id.nil? }
 
         {
-          id: diagram.id || 'c4',
+          id: diagram.id || "c4",
           children: transform_root_nodes(diagram, root_elements,
                                          root_boundaries),
           edges: transform_relationships(diagram),
@@ -252,7 +252,7 @@ module Sirena
         # C4 diagrams use hierarchical layout
         # Top-down for Context/Container, can be left-right for Component
         direction = case diagram.level
-                    when 'Component', 'Code'
+                    when "Component", "Code"
                       DIRECTION_RIGHT
                     else
                       DIRECTION_DOWN
@@ -265,19 +265,19 @@ module Sirena
           ElkOptions::LAYER_SPACING => LEVEL_SPACING,
           ElkOptions::EDGE_NODE_SPACING => 25,
           ElkOptions::EDGE_EDGE_SPACING => 20,
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
-          ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
+          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
+          ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
         )
       end
 
       def boundary_layout_options
         # Boundaries use box packing for internal layout
         {
-          'elk.algorithm' => 'box',
-          'elk.box.packingMode' => 'GROUP_MIXED',
-          'elk.padding' => "[top=#{BOUNDARY_PADDING},left=#{BOUNDARY_PADDING}," \
+          "elk.algorithm" => "box",
+          "elk.box.packingMode" => "GROUP_MIXED",
+          "elk.padding" => "[top=#{BOUNDARY_PADDING},left=#{BOUNDARY_PADDING}," \
                           "bottom=#{BOUNDARY_PADDING},right=#{BOUNDARY_PADDING}]",
-          'elk.spacing.nodeNode' => ELEMENT_SPACING.to_s,
+          "elk.spacing.nodeNode" => ELEMENT_SPACING.to_s,
         }
       end
     end

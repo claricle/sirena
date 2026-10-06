@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'tmpdir'
-require 'rexml/document'
+require "tmpdir"
+require "rexml/document"
 
 # Interprets mmdc output consistently for every development script that asks
 # whether Mermaid accepts a source. Process execution stays with each caller.
@@ -16,8 +16,8 @@ module MmdcOracle
   module_function
 
   def verdict(input, &runner)
-    Dir.mktmpdir('mmdc-oracle') do |dir|
-      probe = run_once(input, File.join(dir, 'probe.svg'), &runner)
+    Dir.mktmpdir("mmdc-oracle") do |dir|
+      probe = run_once(input, File.join(dir, "probe.svg"), &runner)
       return probe unless probe.verdict == :ambiguous
 
       canary = run_canary(dir, &runner)
@@ -64,9 +64,9 @@ module MmdcOracle
   end
 
   def run_canary(dir, &)
-    input = File.join(dir, 'canary.mmd')
+    input = File.join(dir, "canary.mmd")
     File.write(input, CANARY_SOURCE)
-    run_once(input, File.join(dir, 'canary.svg'), &)
+    run_once(input, File.join(dir, "canary.svg"), &)
   end
 
   def disambiguate(probe, canary)
@@ -74,7 +74,7 @@ module MmdcOracle
     return Result.new(:error, probe.diagnostic) if canary.verdict == :accepts
 
     messages = [probe.diagnostic, canary.diagnostic].reject(&:empty?).uniq
-    messages << 'mmdc also failed its known-valid health check' if messages.empty?
+    messages << "mmdc also failed its known-valid health check" if messages.empty?
     Result.new(:error, messages.join("\n"))
   end
 
@@ -89,7 +89,7 @@ module MmdcOracle
   def valid_svg?(svg)
     return false unless svg
 
-    REXML::Document.new(svg).root&.name == 'svg'
+    REXML::Document.new(svg).root&.name == "svg"
   rescue REXML::ParseException
     false
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Svg::Text do
   # `content` must stay readable through `Array(content)` regardless of
@@ -14,12 +14,12 @@ RSpec.describe Sirena::Svg::Text do
   # dropping it does not turn this example red. Keep it anyway -- it pins the
   # cross-version read-back contract `#body` relies on, which is exactly what
   # broke lutaml-model 0.7 -> 0.8 (see the file's git history).
-  describe '#content' do
-    it 'reads back a scalar assignment as something Array() flattens to that scalar, on any lutaml-model 0.8.x' do
+  describe "#content" do
+    it "reads back a scalar assignment as something Array() flattens to that scalar, on any lutaml-model 0.8.x" do
       text = described_class.new
-      text.content = 'plain string'
+      text.content = "plain string"
 
-      expect(Array(text.content).join).to eq('plain string')
+      expect(Array(text.content).join).to eq("plain string")
     end
   end
 end

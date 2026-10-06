@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -28,7 +28,7 @@ module Sirena
 
         # Header: info [showInfo] [additional text...]
         rule(:header) do
-          str('info').as(:header) >>
+          str("info").as(:header) >>
             (space.repeat(1) >> show_info_inline).maybe.as(:show_info_inline) >>
             (space.repeat(1) >> additional_text).maybe >>
             ws?
@@ -36,12 +36,12 @@ module Sirena
 
         # showInfo on same line as info
         rule(:show_info_inline) do
-          str('showInfo').as(:show_info)
+          str("showInfo").as(:show_info)
         end
 
         # Additional text after info keyword (ignored, but not showInfo)
         rule(:additional_text) do
-          (str('showInfo').absent? >> line_end.absent? >> any).repeat(1)
+          (str("showInfo").absent? >> line_end.absent? >> any).repeat(1)
         end
 
         # Body: showInfo on separate line
@@ -50,7 +50,7 @@ module Sirena
         end
 
         rule(:show_info_statement) do
-          str('showInfo')
+          str("showInfo")
         end
       end
     end

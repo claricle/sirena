@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -22,7 +22,7 @@ module Sirena
         end
 
         rule(:header) do
-          str('requirementDiagram').as(:header) >> ws?
+          str("requirementDiagram").as(:header) >> ws?
         end
 
         rule(:statements) do
@@ -69,7 +69,7 @@ module Sirena
         # mandatory value). `.repeat` (0+) would accept and silently emit
         # `''`, matching nothing mermaid can actually produce.
         rule(:acc_title_declaration) do
-          str('accTitle') >> whitespace? >> colon >> whitespace? >>
+          str("accTitle") >> whitespace? >> colon >> whitespace? >>
             (newline.absent? >> any).repeat(1).as(:acc_title) >>
             (newline | eof)
         end
@@ -86,7 +86,7 @@ module Sirena
         # DOES allow an empty value there -- confirmed separately -- so it
         # keeps `.repeat` (0+).
         rule(:acc_descr_single_line) do
-          str('accDescr') >> whitespace? >> colon >> whitespace? >>
+          str("accDescr") >> whitespace? >> colon >> whitespace? >>
             (newline.absent? >> any).repeat(1).as(:acc_descr) >>
             (newline | eof)
         end
@@ -101,7 +101,7 @@ module Sirena
         # here: the enclosing `statements` rule's own `ws?` absorbs
         # whatever separates this from the next statement, including none.
         rule(:acc_descr_multi_line) do
-          str('accDescr') >> whitespace? >> lbrace >> whitespace? >>
+          str("accDescr") >> whitespace? >> lbrace >> whitespace? >>
             (rbrace.absent? >> any).repeat.as(:acc_descr) >>
             rbrace
         end
@@ -123,17 +123,17 @@ module Sirena
         end
 
         rule(:requirement_keyword) do
-          str('functionalRequirement') |
-            str('interfaceRequirement') |
-            str('performanceRequirement') |
-            str('physicalRequirement') |
-            str('designConstraint') |
-            str('requirement')
+          str("functionalRequirement") |
+            str("interfaceRequirement") |
+            str("performanceRequirement") |
+            str("physicalRequirement") |
+            str("designConstraint") |
+            str("requirement")
         end
 
         # Element: element name { properties }
         rule(:element_statement) do
-          str('element').as(:elem_keyword) >>
+          str("element").as(:elem_keyword) >>
             space >>
             identifier.as(:elem_name) >>
             (ws? >> class_shorthand.as(:elem_classes)).maybe >>
@@ -161,8 +161,8 @@ module Sirena
         end
 
         rule(:property_key) do
-          (str('id') | str('text') | str('risk') | str('verifymethod') |
-           str('type') | str('docref')).as(:prop_key)
+          (str("id") | str("text") | str("risk") | str("verifymethod") |
+           str("type") | str("docref")).as(:prop_key)
         end
 
         rule(:property_value) do
@@ -173,25 +173,25 @@ module Sirena
         rule(:relationship_statement) do
           identifier.as(:rel_source) >>
             ws? >>
-            str('-') >>
+            str("-") >>
             ws? >>
             relationship_type.as(:rel_type) >>
             ws? >>
-            str('->') >>
+            str("->") >>
             ws? >>
             identifier.as(:rel_target) >>
             line_end
         end
 
         rule(:relationship_type) do
-          (str('contains') | str('copies') | str('derives') |
-           str('satisfies') | str('verifies') | str('refines') |
-           str('traces')).as(:type)
+          (str("contains") | str("copies") | str("derives") |
+           str("satisfies") | str("verifies") | str("refines") |
+           str("traces")).as(:type)
         end
 
         # Style: style target1 [target2 ...] fill:#f9f,stroke:#333
         rule(:style_statement) do
-          str('style').as(:style_keyword) >> space >>
+          str("style").as(:style_keyword) >> space >>
             style_targets.as(:style_targets) >> space >>
             style_properties.as(:style_props) >>
             line_end
@@ -211,7 +211,7 @@ module Sirena
 
         # Class definition: classDef className fill:#f9f,stroke:#333
         rule(:class_definition_statement) do
-          str('classDef').as(:classdef_keyword) >> space >>
+          str("classDef").as(:classdef_keyword) >> space >>
             identifier.as(:class_name) >>
             (space >> class_property).repeat(1).as(:class_props) >>
             line_end
@@ -223,7 +223,7 @@ module Sirena
 
         # Class assignment: class target1,target2 className1,className2
         rule(:class_assignment_statement) do
-          str('class').as(:class_keyword) >> space >>
+          str("class").as(:class_keyword) >> space >>
             class_assign_targets.as(:class_targets) >> space >>
             class_assign_names.as(:class_names) >>
             line_end
@@ -239,7 +239,7 @@ module Sirena
 
         # Class shorthand: :::className or :::class1,class2
         rule(:class_shorthand) do
-          str(':::') >> class_shorthand_names
+          str(":::") >> class_shorthand_names
         end
 
         rule(:class_shorthand_names) do

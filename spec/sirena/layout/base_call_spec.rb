@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Layout::Base do
   let(:diagram) { instance_double(Sirena::Diagram::Base, valid?: true) }
@@ -15,21 +15,21 @@ RSpec.describe Sirena::Layout::Base do
   end
   let(:engine) { Sirena::Engine.new }
 
-  describe '#call' do
-    it 'returns a Scene bare from a converted layout' do
+  describe "#call" do
+    it "returns a Scene bare from a converted layout" do
       expect(converted_layout.call(diagram, theme: Sirena::Theme::Registry.get(:high_contrast),
                                             today: Date.new(2001, 2, 3)))
         .to have_attributes(width: 16.0, height: 2001)
     end
 
-    it 'wraps the graph of an unconverted layout in Layout::Legacy' do
+    it "wraps the graph of an unconverted layout in Layout::Legacy" do
       result = legacy_layout.call(diagram)
 
       expect(result).to be_a(Sirena::Layout::Legacy)
-        .and have_attributes(payload: hash_including(id: 'root'))
+        .and have_attributes(payload: hash_including(id: "root"))
     end
 
-    it 'treats today: nil as the real date and a pinned date as different' do
+    it "treats today: nil as the real date and a pinned date as different" do
       dates = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
       end.new
@@ -38,7 +38,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: Date.new(1999, 1, 1)).width).to eq(1999)
     end
 
-    it 'keeps a date pinned with today= when called with today: nil' do
+    it "keeps a date pinned with today= when called with today: nil" do
       dates = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
       end.new
@@ -48,7 +48,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: nil).width).to eq(1999)
     end
 
-    it 'does not leak a today: kwarg from one call into the next call on the same instance' do
+    it "does not leak a today: kwarg from one call into the next call on the same instance" do
       dates = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
       end.new
@@ -58,7 +58,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: nil).width).to eq(Date.today.year)
     end
 
-    it 'does not clobber a today= pin when a call with today: raises on an invalid diagram' do
+    it "does not clobber a today= pin when a call with today: raises on an invalid diagram" do
       dates = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: today.year, height: 0)
       end.new
@@ -71,7 +71,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(dates.call(diagram, today: nil).width).to eq(1999)
     end
 
-    it 'treats a #scene supplied by a module mixed into the layout as converted' do
+    it "treats a #scene supplied by a module mixed into the layout as converted" do
       scene_hook = Module.new do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: 3, height: 4)
       end
@@ -80,7 +80,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(mixed_in.call(diagram)).to be_a(Sirena::Layout::Scene)
     end
 
-    it 'is not fooled by a private #scene inherited from outside the layout hierarchy' do
+    it "is not fooled by a private #scene inherited from outside the layout hierarchy" do
       # Simulates a host app or gem monkeypatching Kernel with a method of
       # this exact name -- not a layout-defined #scene. respond_to?(:scene,
       # true) alone would match this too, since it walks the WHOLE
@@ -97,7 +97,7 @@ RSpec.describe Sirena::Layout::Base do
       end
     end
 
-    it 'takes a private scene hook as a converted layout' do
+    it "takes a private scene hook as a converted layout" do
       hidden = Class.new(described_class) do
         def scene(_diagram) = Sirena::Layout::Scene.new(width: 1, height: 2)
         private :scene
@@ -106,23 +106,23 @@ RSpec.describe Sirena::Layout::Base do
       expect(hidden.call(diagram)).to be_a(Sirena::Layout::Scene)
     end
 
-    it 'keeps theme a private reader' do
+    it "keeps theme a private reader" do
       expect { converted_layout.theme }
         .to raise_error(NoMethodError, /private method/)
     end
   end
 
-  describe '#to_graph' do
-    it 'unwraps the legacy result' do
+  describe "#to_graph" do
+    it "unwraps the legacy result" do
       allow(legacy_layout).to receive(:call)
-        .and_return(Sirena::Layout::Legacy.new({ id: 'root' }))
+        .and_return(Sirena::Layout::Legacy.new({ id: "root" }))
 
-      expect(legacy_layout.to_graph(diagram)).to eq(id: 'root')
+      expect(legacy_layout.to_graph(diagram)).to eq(id: "root")
     end
   end
 
-  describe 'Engine#transform_diagram' do
-    it 'passes the layout result through and hands the layout the theme and date' do
+  describe "Engine#transform_diagram" do
+    it "passes the layout result through and hands the layout the theme and date" do
       theme = Sirena::Theme::Registry.get(:high_contrast)
       result = engine.send(:transform_diagram, diagram, converted_layout.class,
                            Date.new(2001, 2, 3), theme)
@@ -131,10 +131,10 @@ RSpec.describe Sirena::Layout::Base do
     end
   end
 
-  describe 'Engine#layout_graph' do
-    it 'runs Grid on a legacy result and hands the renderer the bare graph' do
+  describe "Engine#layout_graph" do
+    it "runs Grid on a legacy result and hands the renderer the bare graph" do
       allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
-      payload = { id: 'root', children: [{ id: 'a', width: 50, height: 30 }] }
+      payload = { id: "root", children: [{ id: "a", width: 50, height: 30 }] }
       graph = engine.send(:layout_graph, Sirena::Layout::Legacy.new(payload))
 
       expect(Sirena::Layout::Grid).to have_received(:apply).once
@@ -143,7 +143,7 @@ RSpec.describe Sirena::Layout::Base do
       expect(graph[:children].first).to include(x: 50, y: 50)
     end
 
-    it 'leaves a Scene untouched, coordinates included' do
+    it "leaves a Scene untouched, coordinates included" do
       scene = Class.new(Sirena::Layout::Scene) do
         attribute :children, :hash, collection: true
       end.new(width: 1, height: 2, children: [{ x: 7, y: 9 }])

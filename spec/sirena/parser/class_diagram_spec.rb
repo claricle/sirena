@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 module ClassDiagramTextLabelHelpers
   def entities(source)
@@ -13,8 +13,8 @@ RSpec.describe Sirena::Parser::ClassDiagram do
 
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    it 'parses simple class diagram with two classes' do
+  describe "#parse" do
+    it "parses simple class diagram with two classes" do
       source = "classDiagram\nAnimal <|-- Dog"
       diagram = parser.parse(source)
 
@@ -23,81 +23,81 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       expect(diagram.relationships.length).to eq(1)
     end
 
-    it 'parses inheritance relationship' do
+    it "parses inheritance relationship" do
       source = "classDiagram\nAnimal <|-- Dog"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.from_id).to eq('Dog')
-      expect(rel.to_id).to eq('Animal')
-      expect(rel.relationship_type).to eq('inheritance')
+      expect(rel.from_id).to eq("Dog")
+      expect(rel.to_id).to eq("Animal")
+      expect(rel.relationship_type).to eq("inheritance")
     end
 
-    it 'parses composition relationship' do
+    it "parses composition relationship" do
       source = "classDiagram\nCar *-- Engine"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.relationship_type).to eq('composition')
+      expect(rel.relationship_type).to eq("composition")
     end
 
-    it 'parses aggregation relationship' do
+    it "parses aggregation relationship" do
       source = "classDiagram\nTeam o-- Player"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.relationship_type).to eq('aggregation')
+      expect(rel.relationship_type).to eq("aggregation")
     end
 
-    it 'parses association relationship' do
+    it "parses association relationship" do
       source = "classDiagram\nStudent -- Course"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.relationship_type).to eq('association')
+      expect(rel.relationship_type).to eq("association")
     end
 
-    it 'parses a mixed aggregation/inheritance relationship (corpus 044/019)' do
+    it "parses a mixed aggregation/inheritance relationship (corpus 044/019)" do
       source = "classDiagram\nAnimal o--|> Zebra"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.from_id).to eq('Animal')
-      expect(rel.to_id).to eq('Zebra')
-      expect(rel.start_marker).to eq('aggregation')
-      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.from_id).to eq("Animal")
+      expect(rel.to_id).to eq("Zebra")
+      expect(rel.start_marker).to eq("aggregation")
+      expect(rel.end_marker).to eq("inheritance")
       expect(rel.dashed).to be false
     end
 
-    it 'parses a mixed dependency/composition relationship (corpus 118/091)' do
+    it "parses a mixed dependency/composition relationship (corpus 118/091)" do
       source = "classDiagram\nClass19 <--* Class20"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.from_id).to eq('Class19')
-      expect(rel.to_id).to eq('Class20')
-      expect(rel.start_marker).to eq('dependency')
-      expect(rel.end_marker).to eq('composition')
+      expect(rel.from_id).to eq("Class19")
+      expect(rel.to_id).to eq("Class20")
+      expect(rel.start_marker).to eq("dependency")
+      expect(rel.end_marker).to eq("composition")
       expect(rel.dashed).to be false
     end
 
-    it 'parses a dashed aggregation relationship (corpus 121/094)' do
+    it "parses a dashed aggregation relationship (corpus 121/094)" do
       source = "classDiagram\nClass1 o.. Class02"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.start_marker).to eq('aggregation')
+      expect(rel.start_marker).to eq("aggregation")
       expect(rel.end_marker).to be_nil
       expect(rel.dashed).to be true
     end
 
-    it 'parses a double-sided composition relationship (corpus 122/095)' do
+    it "parses a double-sided composition relationship (corpus 122/095)" do
       source = "classDiagram\nClass1 *--* Class02"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.start_marker).to eq('composition')
-      expect(rel.end_marker).to eq('composition')
+      expect(rel.start_marker).to eq("composition")
+      expect(rel.end_marker).to eq("composition")
       expect(rel.dashed).to be false
     end
 
@@ -106,51 +106,51 @@ RSpec.describe Sirena::Parser::ClassDiagram do
     # (https://mermaid.js.org/syntax/classDiagram#two-way-relations), not
     # as a fixed list. mermaid's own documented example, plus two
     # combinations the branch's earlier 4-entry hardcoded table never had.
-    it 'parses mermaid\'s own two-way relation example (Animal <|--|> Zebra)' do
+    it "parses mermaid's own two-way relation example (Animal <|--|> Zebra)" do
       source = "classDiagram\nAnimal <|--|> Zebra"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.from_id).to eq('Animal')
-      expect(rel.to_id).to eq('Zebra')
-      expect(rel.start_marker).to eq('inheritance')
-      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.from_id).to eq("Animal")
+      expect(rel.to_id).to eq("Zebra")
+      expect(rel.start_marker).to eq("inheritance")
+      expect(rel.end_marker).to eq("inheritance")
       expect(rel.dashed).to be false
     end
 
-    it 'parses a two-way aggregation/dependency relationship absent from the old table' do
+    it "parses a two-way aggregation/dependency relationship absent from the old table" do
       source = "classDiagram\nAnimal o--< Zebra"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.start_marker).to eq('aggregation')
-      expect(rel.end_marker).to eq('dependency')
+      expect(rel.start_marker).to eq("aggregation")
+      expect(rel.end_marker).to eq("dependency")
       expect(rel.dashed).to be false
     end
 
-    it 'parses a dashed two-way composition/inheritance relationship absent from the old table' do
+    it "parses a dashed two-way composition/inheritance relationship absent from the old table" do
       source = "classDiagram\nAnimal *..|> Zebra"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.start_marker).to eq('composition')
-      expect(rel.end_marker).to eq('inheritance')
+      expect(rel.start_marker).to eq("composition")
+      expect(rel.end_marker).to eq("inheritance")
       expect(rel.dashed).to be true
     end
 
-    it 'parses class with stereotype' do
+    it "parses class with stereotype" do
       source = <<~MERMAID
         classDiagram
         class Drawable <<interface>>
       MERMAID
       diagram = parser.parse(source)
 
-      entity = diagram.find_entity('Drawable')
+      entity = diagram.find_entity("Drawable")
       expect(entity).not_to be_nil
-      expect(entity.stereotype).to eq('interface')
+      expect(entity.stereotype).to eq("interface")
     end
 
-    it 'parses class with attributes' do
+    it "parses class with attributes" do
       source = <<~MERMAID
         classDiagram
         class Animal {
@@ -160,21 +160,21 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      entity = diagram.find_entity('Animal')
+      entity = diagram.find_entity("Animal")
       expect(entity.attributes.length).to eq(2)
 
       attr1 = entity.attributes.first
-      expect(attr1.name).to eq('name')
-      expect(attr1.type).to eq('string')
-      expect(attr1.visibility).to eq('public')
+      expect(attr1.name).to eq("name")
+      expect(attr1.type).to eq("string")
+      expect(attr1.visibility).to eq("public")
 
       attr2 = entity.attributes.last
-      expect(attr2.name).to eq('age')
-      expect(attr2.type).to eq('int')
-      expect(attr2.visibility).to eq('private')
+      expect(attr2.name).to eq("age")
+      expect(attr2.type).to eq("int")
+      expect(attr2.visibility).to eq("private")
     end
 
-    it 'parses class with methods' do
+    it "parses class with methods" do
       source = <<~MERMAID
         classDiagram
         class Animal {
@@ -184,112 +184,112 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      entity = diagram.find_entity('Animal')
+      entity = diagram.find_entity("Animal")
       expect(entity.class_methods.length).to eq(2)
 
       method1 = entity.class_methods.first
-      expect(method1.name).to eq('breathe')
-      expect(method1.visibility).to eq('public')
+      expect(method1.name).to eq("breathe")
+      expect(method1.visibility).to eq("public")
 
       method2 = entity.class_methods.last
-      expect(method2.name).to eq('move')
-      expect(method2.parameters).to eq('x: int, y: int')
-      expect(method2.return_type).to eq('void')
+      expect(method2.name).to eq("move")
+      expect(method2.parameters).to eq("x: int, y: int")
+      expect(method2.return_type).to eq("void")
     end
 
-    it 'parses relationship with cardinality' do
+    it "parses relationship with cardinality" do
       source = "classDiagram\nStudent \"1\" -- \"0..*\" Course"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.source_cardinality).to eq('1')
-      expect(rel.target_cardinality).to eq('0..*')
+      expect(rel.source_cardinality).to eq("1")
+      expect(rel.target_cardinality).to eq("0..*")
     end
 
-    it 'parses relationship with label' do
+    it "parses relationship with label" do
       source = "classDiagram\nStudent -- Course : enrolls in"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('enrolls in')
+      expect(rel.label).to eq("enrolls in")
     end
 
-    it 'parses relationship with pipe-delimited label' do
+    it "parses relationship with pipe-delimited label" do
       source = "classDiagram\nStudent --|\"enrolls in\"| Course"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('enrolls in')
+      expect(rel.label).to eq("enrolls in")
     end
 
-    it 'parses relationship with pipe-delimited label using single quotes' do
+    it "parses relationship with pipe-delimited label using single quotes" do
       source = "classDiagram\nStudent --|'enrolls in'| Course"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('enrolls in')
+      expect(rel.label).to eq("enrolls in")
     end
 
-    it 'parses arrow relationship with pipe-delimited label' do
+    it "parses arrow relationship with pipe-delimited label" do
       source = "classDiagram\nClassA -->|\"uses\"| ClassB"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('uses')
-      expect(rel.relationship_type).to eq('association')
+      expect(rel.label).to eq("uses")
+      expect(rel.relationship_type).to eq("association")
     end
 
-    it 'parses aggregation with pipe-delimited label' do
+    it "parses aggregation with pipe-delimited label" do
       source = "classDiagram\nTeam o--|\"contains\"| Player"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('contains')
-      expect(rel.relationship_type).to eq('aggregation')
+      expect(rel.label).to eq("contains")
+      expect(rel.relationship_type).to eq("aggregation")
     end
 
-    it 'parses composition with pipe-delimited label' do
+    it "parses composition with pipe-delimited label" do
       source = "classDiagram\nCar *--|\"has\"| Engine"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.label).to eq('has')
-      expect(rel.relationship_type).to eq('composition')
+      expect(rel.label).to eq("has")
+      expect(rel.relationship_type).to eq("composition")
     end
 
-    it 'parses relationship with cardinality and pipe-delimited label' do
+    it "parses relationship with cardinality and pipe-delimited label" do
       source = "classDiagram\nStudent \"1\" --|\"enrolls in\"| \"0..*\" Course"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.source_cardinality).to eq('1')
-      expect(rel.target_cardinality).to eq('0..*')
-      expect(rel.label).to eq('enrolls in')
+      expect(rel.source_cardinality).to eq("1")
+      expect(rel.target_cardinality).to eq("0..*")
+      expect(rel.label).to eq("enrolls in")
     end
 
-    it 'parses class diagram with direction' do
+    it "parses class diagram with direction" do
       source = "classDiagram TB\nAnimal <|-- Dog"
       diagram = parser.parse(source)
 
-      expect(diagram.direction).to eq('TB')
+      expect(diagram.direction).to eq("TB")
     end
 
     # Clause order matters and ours was inverted. Each of these is checked
     # against mmdc 11.12.0 rather than against what looks reasonable.
-    describe 'class text labels' do
-      it 'uses the label for display and keeps the id' do
+    describe "class text labels" do
+      it "uses the label for display and keeps the id" do
         expect(entities(%(classDiagram\n class C1["Class One"]\n)))
-          .to eq([['C1', 'Class One']])
+          .to eq([["C1", "Class One"]])
       end
 
-      it 'lets a label win over the generic, as mermaid does' do
+      it "lets a label win over the generic, as mermaid does" do
         expect(entities(%(classDiagram\n class Animal~T~["A label"]\n)))
-          .to eq([['Animal', 'A label']])
+          .to eq([["Animal", "A label"]])
       end
 
-      it 'still appends the generic when there is no label' do
+      it "still appends the generic when there is no label" do
         expect(entities(%(classDiagram\n class Animal~T~\n)))
-          .to eq([['Animal', 'Animal~T~']])
+          .to eq([["Animal", "Animal~T~"]])
       end
 
       # mmdc 11.12.0 rejects `class C1[]` with "Expecting 'STR', got 'SQE'",
@@ -297,56 +297,56 @@ RSpec.describe Sirena::Parser::ClassDiagram do
       # use the empty form with no sidecar, and their test names say they
       # should have a label — the content was lost in extraction, so accepting
       # it would be over-acceptance against damaged input.
-      it 'rejects an empty label, as mermaid does' do
+      it "rejects an empty label, as mermaid does" do
         expect { parser.parse(%(classDiagram\n class C1[]\n)) }
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      it 'rejects a single-quoted label, as mermaid does' do
+      it "rejects a single-quoted label, as mermaid does" do
         expect { parser.parse(%(classDiagram\n class C1['L']\n)) }
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      it 'allows spaces inside the brackets, as mermaid does' do
+      it "allows spaces inside the brackets, as mermaid does" do
         expect(entities(%(classDiagram\n class C1[ "L" ]\n)))
-          .to eq([['C1', 'L']])
+          .to eq([["C1", "L"]])
       end
 
       # common.rb's quoted_string has a backslash-escape branch that swallowed
       # \" and made us accept this; mmdc rejects it with
       # "Expecting 'SQE', got 'ALPHA'". The label uses its own string rule so
       # 15 other grammars keep the escape.
-      it 'rejects a backslash-escaped quote, as mermaid does' do
+      it "rejects a backslash-escaped quote, as mermaid does" do
         expect { parser.parse(%(classDiagram\n class C1["a\\"b"]\n)) }
           .to raise_error(Sirena::Parser::ParseError)
       end
 
-      it 'still swallows a bracket inside the label' do
+      it "still swallows a bracket inside the label" do
         expect(entities(%(classDiagram\n class C4["With [Brackets]"]\n)))
-          .to eq([['C4', 'With [Brackets]']])
+          .to eq([["C4", "With [Brackets]"]])
       end
 
       # The generic must not append to a label set by an EARLIER declaration.
       # This produced `Label~T~` where mmdc renders `Label`.
-      it 'keeps a label when a later declaration adds a generic' do
+      it "keeps a label when a later declaration adds a generic" do
         source = %(classDiagram\n class C1["Label"]\n class C1~T~\n)
 
-        expect(entities(source)).to eq([['C1', 'Label']])
+        expect(entities(source)).to eq([["C1", "Label"]])
       end
 
-      it 'keeps a label declared after the generic' do
+      it "keeps a label declared after the generic" do
         source = %(classDiagram\n class C1~T~\n class C1["Label"]\n)
 
-        expect(entities(source)).to eq([['C1', 'Label']])
+        expect(entities(source)).to eq([["C1", "Label"]])
       end
 
-      it 'labels a class already created by an earlier relationship' do
+      it "labels a class already created by an earlier relationship" do
         source = %(classDiagram\n C1 --> C2\n class C1["Later"]\n)
 
-        expect(entities(source)).to eq([['C1', 'Later'], ['C2', 'C2']])
+        expect(entities(source)).to eq([["C1", "Later"], ["C2", "C2"]])
       end
 
-      it 'accepts a label alongside a stereotype' do
+      it "accepts a label alongside a stereotype" do
         [
           'class C1["L"] <<interface>>',
           'class Animal~T~["L"] <<svc>>',
@@ -358,21 +358,21 @@ RSpec.describe Sirena::Parser::ClassDiagram do
 
       # mmdc accepts generic-then-stereotype and rejects the reverse. Ours was
       # the wrong way round, so these pin the corrected order.
-      it 'accepts the generic before the stereotype' do
+      it "accepts the generic before the stereotype" do
         expect { parser.parse(%(classDiagram\n class C1~T~<<iface>>\n)) }
           .not_to raise_error
       end
 
-      it 'rejects orderings mermaid rejects' do
-        ['class C1["L"]~T~', 'class C1<<iface>>~T~'].each do |form|
+      it "rejects orderings mermaid rejects" do
+        ['class C1["L"]~T~', "class C1<<iface>>~T~"].each do |form|
           expect { parser.parse("classDiagram\n    #{form}\n") }
             .to raise_error(Sirena::Parser::ParseError), form
         end
       end
     end
 
-    it 'raises ParseError for invalid syntax' do
-      source = 'invalid syntax'
+    it "raises ParseError for invalid syntax" do
+      source = "invalid syntax"
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError,
       )

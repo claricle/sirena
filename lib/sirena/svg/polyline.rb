@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'element'
+require "lutaml/model"
+require_relative "element"
 
 module Sirena
   module Svg
@@ -20,7 +20,7 @@ module Sirena
       # @param coords [Array<Array>] Array of [x, y] coordinates
       # @return [String] Points string for polyline
       def self.build_points(coords)
-        coords.map { |x, y| "#{x},#{y}" }.join(' ')
+        coords.map { |x, y| "#{x},#{y}" }.join(" ")
       end
     end
   end

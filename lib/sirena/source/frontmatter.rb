@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'psych'
-require_relative '../js_number'
+require "psych"
+require_relative "../js_number"
 
 module Sirena
   class Source
@@ -53,15 +53,15 @@ module Sirena
       # the ordinary way. `!!float 1` is fine and draws "1"; `!!int 1.5`
       # is not. `!!str` is missing on purpose — it takes any text at all.
       SCALAR_TAGS = {
-        'null' => [NilClass],
-        'bool' => [TrueClass, FalseClass],
-        'int' => [Integer],
-        'float' => [Numeric],
+        "null" => [NilClass],
+        "bool" => [TrueClass, FalseClass],
+        "int" => [Integer],
+        "float" => [Numeric],
       }.freeze
 
       # What a mapping stringifies to in JS, whatever it holds. Two
       # different mappings used as keys therefore collide.
-      OBJECT = '[object Object]'
+      OBJECT = "[object Object]"
 
       # A block holding only whitespace sets no title, and mermaid renders
       # the diagram under it. Only space, tab, tab+space, newline and CR
@@ -124,7 +124,7 @@ module Sirena
 
         drawn(value_of(@title_node, budget))
       rescue SystemStackError
-        raise MalformedFrontmatter, 'Frontmatter is nested too deeply.'
+        raise MalformedFrontmatter, "Frontmatter is nested too deeply."
       end
 
       private
@@ -141,7 +141,7 @@ module Sirena
 
         stream.children.first&.children&.first
       rescue Psych::Exception, ArgumentError
-        raise MalformedFrontmatter, 'Malformed frontmatter.'
+        raise MalformedFrontmatter, "Malformed frontmatter."
       end
 
       # Bytes that are not valid text are not whitespace, and asking the
@@ -153,7 +153,7 @@ module Sirena
 
       def reject_multiple
         raise MalformedFrontmatter,
-              'Frontmatter holds more than one YAML document.'
+              "Frontmatter holds more than one YAML document."
       end
 
       # The loader walks the document once, in order, and throws at the
@@ -185,7 +185,7 @@ module Sirena
       end
 
       def reject_depth
-        raise MalformedFrontmatter, 'Frontmatter is nested too deeply.'
+        raise MalformedFrontmatter, "Frontmatter is nested too deeply."
       end
 
       # Keys collide when they spell the same JS property name. A
@@ -208,7 +208,7 @@ module Sirena
       # passed it, so the value can be built once the walk is over and
       # still read the anchors that stood where each alias sat.
       def note_title(name, value)
-        return unless name == 'title'
+        return unless name == "title"
 
         @title_node = value
       end
@@ -254,7 +254,7 @@ module Sirena
 
       def reject_nested_key
         raise MalformedFrontmatter,
-              'Frontmatter nests a sequence inside a key.'
+              "Frontmatter nests a sequence inside a key."
       end
 
       def check_tag(node)
@@ -265,7 +265,7 @@ module Sirena
         # tag string — so `String#[]` below can meet invalid bytes. Reject
         # by name rather than let `Regexp#match?` raise a bare ArgumentError.
         unless node.tag.valid_encoding?
-          raise MalformedFrontmatter, 'Frontmatter carries an unknown tag.'
+          raise MalformedFrontmatter, "Frontmatter carries an unknown tag."
         end
 
         kind = node.tag[TAG, 1]
@@ -286,8 +286,8 @@ module Sirena
 
       def fits?(node, kind)
         case node
-        when Psych::Nodes::Sequence then kind == 'seq'
-        when Psych::Nodes::Mapping then kind == 'map'
+        when Psych::Nodes::Sequence then kind == "seq"
+        when Psych::Nodes::Mapping then kind == "map"
         else scalar_fits?(node, kind)
         end
       end
@@ -299,8 +299,8 @@ module Sirena
       # in it: the loader takes `!!int 0x10` and refuses `!!float 0x10`,
       # though both resolve to 16 with no tag at all.
       def scalar_fits?(node, kind)
-        return true if kind == 'str'
-        return false if kind == 'float' && RADIX.match?(node.value)
+        return true if kind == "str"
+        return false if kind == "float" && RADIX.match?(node.value)
 
         held = SCALAR_TAGS[kind]
         held&.any? { |type| resolve(node.value).is_a?(type) }
@@ -341,7 +341,7 @@ module Sirena
       end
 
       def reject_expansion
-        raise MalformedFrontmatter, 'Frontmatter expands to too many values.'
+        raise MalformedFrontmatter, "Frontmatter expands to too many values."
       end
 
       def scalar_value(node)
@@ -356,7 +356,7 @@ module Sirena
       # is the value — `!!float 1` resolves to 1 and draws "1", which is
       # what mmdc draws.
       def tagged_value(node)
-        return node.value if node.tag[TAG, 1] == 'str'
+        return node.value if node.tag[TAG, 1] == "str"
 
         resolve(node.value)
       end
@@ -369,7 +369,7 @@ module Sirena
         # Underscores are grouping marks, and a number cannot end on one.
         # That is the whole difference between `1_0`, which is ten, and
         # `1_`, which mmdc draws as the text "1_".
-        return text if text.end_with?('_')
+        return text if text.end_with?("_")
 
         number(text) || text
       end
@@ -379,7 +379,7 @@ module Sirena
         return infinity(text) if INFINITY.match?(text)
         return radix(text) if RADIX.match?(text)
         return decimal(text) if DECIMAL.match?(text)
-        return text.delete('_').to_f if FLOAT.match?(text)
+        return text.delete("_").to_f if FLOAT.match?(text)
 
         nil
       end
@@ -387,22 +387,22 @@ module Sirena
       def decimal(text)
         reject_number_length if text.length > MAX_NUMBER_LENGTH
 
-        text.delete('_').to_i
+        text.delete("_").to_i
       end
 
       def reject_number_length
-        raise MalformedFrontmatter, 'Frontmatter carries too long a number.'
+        raise MalformedFrontmatter, "Frontmatter carries too long a number."
       end
 
       def infinity(text)
-        text[INFINITY, 1] == '-' ? -Float::INFINITY : Float::INFINITY
+        text[INFINITY, 1] == "-" ? -Float::INFINITY : Float::INFINITY
       end
 
       def radix(text)
         found = text.match(RADIX)
         name, base = RADICES.detect { |key, _| found[key] }
-        magnitude = Integer(found[name].delete('_'), base)
-        found[:sign] == '-' ? -magnitude : magnitude
+        magnitude = Integer(found[name].delete("_"), base)
+        found[:sign] == "-" ? -magnitude : magnitude
       end
 
       # Mermaid draws the title only when the value is truthy AND its
@@ -427,10 +427,10 @@ module Sirena
 
       def js_string(value)
         case value
-        when nil then 'null'
+        when nil then "null"
         when Numeric then Sirena::JsNumber.stringify(value)
         when Array
-          value.map { |item| item.nil? ? '' : js_string(item) }.join(',')
+          value.map { |item| item.nil? ? "" : js_string(item) }.join(",")
         else value.to_s
         end
       end

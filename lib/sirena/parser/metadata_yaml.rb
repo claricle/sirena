@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'psych'
-require_relative '../js_number'
-require_relative 'base'
+require "psych"
+require_relative "../js_number"
+require_relative "base"
 
 module Sirena
   module Parser
@@ -18,17 +18,17 @@ module Sirena
     # registered with `Psych.add_domain_type` — a host-global list any other
     # gem can add to. One of those built an object out of a node label.
     class MetadataYaml
-      NON_SPECIFIC_TAG = '!'
-      STR_TAG = 'tag:yaml.org,2002:str'
-      INT_TAG = 'tag:yaml.org,2002:int'
-      FLOAT_TAG = 'tag:yaml.org,2002:float'
-      BOOL_TAG = 'tag:yaml.org,2002:bool'
-      NULL_TAG = 'tag:yaml.org,2002:null'
-      SEQ_TAG = 'tag:yaml.org,2002:seq'
-      MAP_TAG = 'tag:yaml.org,2002:map'
+      NON_SPECIFIC_TAG = "!"
+      STR_TAG = "tag:yaml.org,2002:str"
+      INT_TAG = "tag:yaml.org,2002:int"
+      FLOAT_TAG = "tag:yaml.org,2002:float"
+      BOOL_TAG = "tag:yaml.org,2002:bool"
+      NULL_TAG = "tag:yaml.org,2002:null"
+      SEQ_TAG = "tag:yaml.org,2002:seq"
+      MAP_TAG = "tag:yaml.org,2002:map"
 
       # What JavaScript writes when it needs a string for a plain object.
-      OBJECT_STRING = '[object Object]'
+      OBJECT_STRING = "[object Object]"
 
       PLAIN_SCALAR = Psych::Nodes::Scalar::PLAIN
 
@@ -61,7 +61,7 @@ module Sirena
       # A major other than 1, a second directive and anything else on the
       # line still fail in libyaml, as they do in js-yaml.
       DOCUMENT_VERSION = /^%YAML[ \t]+\K1\.\d+(?=[ \t]|$)/
-      LEVELLED_VERSION = '1.2'
+      LEVELLED_VERSION = "1.2"
 
       # A directive only counts ahead of the document, next to the blank
       # lines and comments allowed to sit with it. Past that point a
@@ -85,8 +85,8 @@ module Sirena
       NULL_WORDS = %w[~ null Null NULL].freeze
 
       BOOL_WORDS = {
-        'true' => true, 'True' => true, 'TRUE' => true,
-        'false' => false, 'False' => false, 'FALSE' => false
+        "true" => true, "True" => true, "TRUE" => true,
+        "false" => false, "False" => false, "FALSE" => false
       }.freeze
 
       # js-yaml's JSON_SCHEMA is what mermaid parses with, and it is not
@@ -133,8 +133,8 @@ module Sirena
       module PlainScalars
         def plain_scalar(text)
           return JSON_WORDS[text] if JSON_WORDS.key?(text)
-          return json_int(text.delete('_')) if json_int?(text)
-          return json_float(text.delete('_')) if json_float?(text)
+          return json_int(text.delete("_")) if json_int?(text)
+          return json_float(text.delete("_")) if json_float?(text)
 
           text
         end
@@ -142,11 +142,11 @@ module Sirena
         # js-yaml tries the integer resolver before the float one, and
         # neither takes a trailing `_` — `1_` is a string.
         def json_int?(text)
-          !text.end_with?('_') && JSON_INT.match?(text)
+          !text.end_with?("_") && JSON_INT.match?(text)
         end
 
         def json_float?(text)
-          !text.end_with?('_') && JSON_FLOAT.match?(text)
+          !text.end_with?("_") && JSON_FLOAT.match?(text)
         end
 
         # Ruby reads the same three prefixes, but it also reads a bare
@@ -163,9 +163,9 @@ module Sirena
         # throwing out of the parser.
         def json_float(digits)
           case digits.downcase
-          when '.inf', '+.inf' then Float::INFINITY
-          when '-.inf' then -Float::INFINITY
-          when '.nan' then Float::NAN
+          when ".inf", "+.inf" then Float::INFINITY
+          when "-.inf" then -Float::INFINITY
+          when ".nan" then Float::NAN
           else digits.to_f
           end
         end
@@ -182,7 +182,7 @@ module Sirena
         # runs the stack out. mermaid blows its own browser stack on the
         # same source and refuses it, but SystemStackError is not a
         # StandardError and sailed past every caller on the way up.
-        raise ParseError, 'Metadata nested too deeply.'
+        raise ParseError, "Metadata nested too deeply."
       end
 
       def initialize(document)
@@ -213,20 +213,20 @@ module Sirena
       def root
         reject_ambiguous_text
         documents = Psych.parse_stream(@document).children
-        raise ParseError, 'Malformed metadata.' unless documents.one?
+        raise ParseError, "Malformed metadata." unless documents.one?
 
         documents.first.children.first
       rescue Psych::Exception
-        raise ParseError, 'Malformed metadata.'
+        raise ParseError, "Malformed metadata."
       end
 
       # Two characters the two parsers read differently, and neither leaves
       # a trace in the tree afterwards. The body is refused rather than
       # read the wrong way round.
       def reject_ambiguous_text
-        raise ParseError, 'Unreadable line break.' if
+        raise ParseError, "Unreadable line break." if
           FOREIGN_BREAK.match?(@document)
-        raise ParseError, 'Stray byte-order mark.' if
+        raise ParseError, "Stray byte-order mark." if
           @lines.any? { |line| line.start_with?(BOM) }
       end
 
@@ -310,7 +310,7 @@ module Sirena
       def empty_node(tag)
         case tag
         when nil, NON_SPECIFIC_TAG, NULL_TAG then nil
-        when STR_TAG then ''
+        when STR_TAG then ""
         when SEQ_TAG then []
         when MAP_TAG then {}
         when INT_TAG, FLOAT_TAG, BOOL_TAG then unresolvable(tag)
@@ -333,11 +333,11 @@ module Sirena
       end
 
       def tagged_int(text)
-        json_int?(text) ? json_int(text.delete('_')) : unresolvable(INT_TAG)
+        json_int?(text) ? json_int(text.delete("_")) : unresolvable(INT_TAG)
       end
 
       def tagged_float(text)
-        json_float?(text) ? json_float(text.delete('_')) : unresolvable(FLOAT_TAG)
+        json_float?(text) ? json_float(text.delete("_")) : unresolvable(FLOAT_TAG)
       end
 
       def tagged_null(text)
@@ -401,7 +401,7 @@ module Sirena
         return unless first.start_line == node.start_line &&
                       first.start_column == node.start_column
 
-        raise ParseError, 'Node property on a block mapping key.'
+        raise ParseError, "Node property on a block mapping key."
       end
 
       # JavaScript stores a mapping key as a string, so `1` and `1.0` are
@@ -409,7 +409,7 @@ module Sirena
       # object as "[object Object]" and refuses a nested array outright.
       def key_string(key)
         case key
-        when Array then key.map { |item| key_element(item) }.join(',')
+        when Array then key.map { |item| key_element(item) }.join(",")
         when Hash then OBJECT_STRING
         else js_string(key)
         end
@@ -417,8 +417,8 @@ module Sirena
 
       def key_element(item)
         case item
-        when nil then '' # Array#join writes nothing at all for null.
-        when Array then raise ParseError, 'Nested array in a metadata key.'
+        when nil then "" # Array#join writes nothing at all for null.
+        when Array then raise ParseError, "Nested array in a metadata key."
         when Hash then OBJECT_STRING
         else js_string(item)
         end
@@ -426,7 +426,7 @@ module Sirena
 
       def js_string(value)
         case value
-        when nil then 'null'
+        when nil then "null"
         when true, false then value.to_s
         when Numeric then Sirena::JsNumber.stringify(value)
         else value

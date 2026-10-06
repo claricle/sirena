@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/user_journey'
+require_relative "base"
+require_relative "../diagram/user_journey"
 
 module Sirena
   module Layout
@@ -40,7 +40,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'user_journey',
+          id: diagram.id || "user_journey",
           children: transform_tasks(diagram),
           edges: transform_task_flow(diagram),
           layoutOptions: layout_options,
@@ -97,7 +97,7 @@ module Sirena
             sources: ["task_#{task_id}"],
             targets: ["task_#{task_id + 1}"],
             metadata: {
-              type: 'sequence',
+              type: "sequence",
             },
           }
 
@@ -119,7 +119,7 @@ module Sirena
         max_width = [max_width, name_width].max
 
         # Check actors width (displayed as comma-separated list)
-        actors_text = task.actors.join(', ')
+        actors_text = task.actors.join(", ")
         actors_width = measure_text(
           actors_text,
           font_size: DEFAULT_FONT_SIZE,
@@ -166,7 +166,7 @@ module Sirena
         }
 
         # Actors label
-        actors_text = task.actors.join(', ')
+        actors_text = task.actors.join(", ")
         actors_dims = measure_text(
           actors_text,
           font_size: DEFAULT_FONT_SIZE - 2,
@@ -194,9 +194,9 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 30,
           ElkOptions::EDGE_EDGE_SPACING => 20,
           # SIMPLE node placement for chronological task ordering
-          ElkOptions::NODE_PLACEMENT => 'SIMPLE',
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
+          ElkOptions::NODE_PLACEMENT => "SIMPLE",
+          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
         )
       end
     end

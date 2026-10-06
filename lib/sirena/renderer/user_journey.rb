@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base'
+require_relative "base"
 
 module Sirena
   module Renderer
@@ -37,9 +37,9 @@ module Sirena
 
       # Score-based color mapping
       SCORE_COLORS = {
-        red: '#ff6b6b',
-        yellow: '#feca57',
-        green: '#48dbfb',
+        red: "#ff6b6b",
+        yellow: "#feca57",
+        green: "#48dbfb",
       }.freeze
 
       # Renders a laid-out graph to SVG.
@@ -99,10 +99,10 @@ module Sirena
           t.x = 20
           t.y = y_pos + TITLE_FONT_SIZE
           t.content = title
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
           t.font_size = TITLE_FONT_SIZE.to_s
-          t.font_weight = 'bold'
+          t.font_weight = "bold"
         end
         svg << text
 
@@ -137,7 +137,7 @@ module Sirena
 
         nodes.each do |node|
           metadata = node[:metadata] || {}
-          section_name = metadata[:section_name] || 'Default'
+          section_name = metadata[:section_name] || "Default"
 
           grouped[section_name] ||= []
           grouped[section_name] << node
@@ -151,10 +151,10 @@ module Sirena
           t.x = 20
           t.y = y_pos + SECTION_FONT_SIZE
           t.content = section_name
-          t.fill = '#666666'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#666666"
+          t.font_family = "Arial, sans-serif"
           t.font_size = SECTION_FONT_SIZE.to_s
-          t.font_weight = 'bold'
+          t.font_weight = "bold"
         end
         svg << text
 
@@ -182,10 +182,10 @@ module Sirena
           r.width = width
           r.height = height
           r.fill = SCORE_COLORS[score_color]
-          r.stroke = '#333333'
-          r.stroke_width = '2'
-          r.rx = '5'
-          r.ry = '5'
+          r.stroke = "#333333"
+          r.stroke_width = "2"
+          r.rx = "5"
+          r.ry = "5"
         end
         group.children << box
 
@@ -204,16 +204,16 @@ module Sirena
         current_y = y + TASK_PADDING
 
         # Render task name at top
-        name = metadata[:name] || 'Task'
+        name = metadata[:name] || "Task"
         name_text = Svg::Text.new.tap do |t|
           t.x = x + width / 2
           t.y = current_y + TASK_NAME_FONT_SIZE
           t.content = name
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
           t.font_size = TASK_NAME_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         group.children << name_text
 
@@ -225,11 +225,11 @@ module Sirena
           t.x = x + width / 2
           t.y = current_y + SCORE_FONT_SIZE
           t.content = score.to_s
-          t.fill = '#000000'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#000000"
+          t.font_family = "Arial, sans-serif"
           t.font_size = SCORE_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
-          t.font_weight = 'bold'
+          t.text_anchor = "middle"
+          t.font_weight = "bold"
         end
         group.children << score_text
 
@@ -237,15 +237,15 @@ module Sirena
 
         # Render actors at bottom
         actors = metadata[:actors] || []
-        actors_text = actors.join(', ')
+        actors_text = actors.join(", ")
         actor_text = Svg::Text.new.tap do |t|
           t.x = x + width / 2
           t.y = current_y + ACTOR_FONT_SIZE
           t.content = actors_text
-          t.fill = '#333333'
-          t.font_family = 'Arial, sans-serif'
+          t.fill = "#333333"
+          t.font_family = "Arial, sans-serif"
           t.font_size = ACTOR_FONT_SIZE.to_s
-          t.text_anchor = 'middle'
+          t.text_anchor = "middle"
         end
         group.children << actor_text
       end
@@ -282,8 +282,8 @@ module Sirena
           l.y1 = from_y
           l.x2 = to_x
           l.y2 = to_y
-          l.stroke = '#666666'
-          l.stroke_width = '2'
+          l.stroke = "#666666"
+          l.stroke_width = "2"
         end
         group.children << line
 
@@ -314,9 +314,9 @@ module Sirena
 
         path = Svg::Path.new.tap do |p|
           p.d = path_d
-          p.stroke = '#666666'
-          p.stroke_width = '2'
-          p.fill = 'none'
+          p.stroke = "#666666"
+          p.stroke_width = "2"
+          p.fill = "none"
         end
         group.children << path
       end

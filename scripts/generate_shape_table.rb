@@ -27,14 +27,14 @@
 #
 # Needs mmdc on PATH. Slow on purpose — one browser launch per name.
 
-require 'tmpdir'
-require 'open3'
-require 'digest'
+require "tmpdir"
+require "open3"
+require "digest"
 
 # The label is the same on both sides of the comparison. Mermaid sizes a
 # node around its text, and an unlabelled probe measured against a labelled
 # one differs by that sizing rather than by shape.
-LABEL = 'XX'
+LABEL = "XX"
 
 # The classic bracket syntax for each shape sirena draws. These are the
 # reference drawings: mermaid renders them through the same shape code as
@@ -42,35 +42,35 @@ LABEL = 'XX'
 # of these is that shape, and a name that matches none of them is a shape
 # sirena has no way to draw.
 CLASSIC = {
-  'rect' => %(D["#{LABEL}"]),
-  'rounded' => %(D("#{LABEL}")),
-  'stadium' => %(D(["#{LABEL}"])),
-  'subroutine' => %(D[["#{LABEL}"]]),
-  'cylindrical' => %(D[("#{LABEL}")]),
-  'circle' => %(D(("#{LABEL}"))),
-  'double_circle' => %(D((("#{LABEL}")))),
-  'asymmetric' => %(D>"#{LABEL}"]),
-  'rhombus' => %(D{"#{LABEL}"}),
-  'hexagon' => %(D{{"#{LABEL}"}}),
-  'parallelogram' => %(D[/"#{LABEL}"/]),
-  'parallelogram_alt' => %(D[\\"#{LABEL}"\\]),
-  'trapezoid' => %(D[/"#{LABEL}"\\]),
-  'trapezoid_alt' => %(D[\\"#{LABEL}"/]),
+  "rect" => %(D["#{LABEL}"]),
+  "rounded" => %(D("#{LABEL}")),
+  "stadium" => %(D(["#{LABEL}"])),
+  "subroutine" => %(D[["#{LABEL}"]]),
+  "cylindrical" => %(D[("#{LABEL}")]),
+  "circle" => %(D(("#{LABEL}"))),
+  "double_circle" => %(D((("#{LABEL}")))),
+  "asymmetric" => %(D>"#{LABEL}"]),
+  "rhombus" => %(D{"#{LABEL}"}),
+  "hexagon" => %(D{{"#{LABEL}"}}),
+  "parallelogram" => %(D[/"#{LABEL}"/]),
+  "parallelogram_alt" => %(D[\\"#{LABEL}"\\]),
+  "trapezoid" => %(D[/"#{LABEL}"\\]),
+  "trapezoid_alt" => %(D[\\"#{LABEL}"/]),
 }.freeze
 
 # What mermaid draws for one diagram line, as a fingerprint of the node's
 # geometry. Two bodies with the same fingerprint are the same shape.
 def render(body)
   Dir.mktmpdir do |dir|
-    input = File.join(dir, 'probe.mmd')
-    output = File.join(dir, 'probe.svg')
+    input = File.join(dir, "probe.mmd")
+    output = File.join(dir, "probe.svg")
     # The seed pins the hand-drawn renderer, which is the one that would
     # group names by noise rather than by geometry. Measured: the default
     # look is already deterministic, so this only bites if the probe is
     # ever run with `look: handDrawn`.
     File.write(input, "%%{init: {\"handDrawnSeed\": 1}}%%\n" \
                       "flowchart TD\n  #{body}\n")
-    _, _, status = Open3.capture3('mmdc', '-i', input, '-o', output)
+    _, _, status = Open3.capture3("mmdc", "-i", input, "-o", output)
     return nil unless status.success?
 
     svg = File.read(output)
@@ -93,7 +93,7 @@ def fingerprint(svg)
   parts = node.scan(/<(path|polygon|rect|circle|ellipse|line)\b([^>]*)>/)
     .map { |kind, attrs| "#{kind}:#{geometry(attrs)}" }
 
-  Digest::SHA256.hexdigest(parts.sort.join('|'))[0, 16]
+  Digest::SHA256.hexdigest(parts.sort.join("|"))[0, 16]
 end
 
 def geometry(attrs)
@@ -103,7 +103,7 @@ def geometry(attrs)
     # Values, not just which attributes are present: ignoring them
     # collapsed a rounded rectangle into a plain one.
     return attrs.scan(/\b(rx|ry|r|width|height)="([^"]*)"/)
-        .map { |k, v| "#{k}=#{v.to_f.round(2)}" }.sort.join(',')
+        .map { |k, v| "#{k}=#{v.to_f.round(2)}" }.sort.join(",")
   end
 
   letters = source.scan(/[A-Za-z]/).join
@@ -113,12 +113,12 @@ end
 # Every other number is an x, the rest a y. Each axis is scaled into 0..8
 # against its own range and rounded, so only the proportions survive.
 def normalised(numbers)
-  return '' if numbers.empty?
+  return "" if numbers.empty?
 
   xs = numbers.each_slice(2).map(&:first)
   ys = numbers.each_slice(2).filter_map { |pair| pair[1] }
 
-  (scale(xs) + scale(ys)).join(',')
+  (scale(xs) + scale(ys)).join(",")
 end
 
 def scale(values)

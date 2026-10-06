@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
-require_relative 'containment'
+require "lutaml/model"
+require_relative "base"
+require_relative "containment"
 
 module Sirena
   module Diagram
@@ -28,7 +28,7 @@ module Sirena
       # Initialize with default shape
       def initialize(*args)
         super
-        self.shape ||= 'rect'
+        self.shape ||= "rect"
       end
 
       # Validates the node has required attributes.
@@ -62,7 +62,7 @@ module Sirena
       # Initialize with default arrow type
       def initialize(*args)
         super
-        self.arrow_type ||= 'arrow'
+        self.arrow_type ||= "arrow"
       end
 
       # Validates the edge has required attributes.

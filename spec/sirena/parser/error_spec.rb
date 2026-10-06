@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'sirena/parser/error'
+require "spec_helper"
+require "sirena/parser/error"
 
 RSpec.describe Sirena::Parser::Error do
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    it 'parses a simple error diagram' do
-      source = 'error'
+  describe "#parse" do
+    it "parses a simple error diagram" do
+      source = "error"
 
       diagram = parser.parse(source)
 
@@ -16,17 +16,17 @@ RSpec.describe Sirena::Parser::Error do
       expect(diagram.message).to be_nil
     end
 
-    it 'parses error diagram with message' do
-      source = 'Error Diagrams'
+    it "parses error diagram with message" do
+      source = "Error Diagrams"
 
       diagram = parser.parse(source)
 
       expect(diagram).to be_a(Sirena::Diagram::Error)
-      expect(diagram.message).to eq('Diagrams')
+      expect(diagram.message).to eq("Diagrams")
     end
 
-    it 'validates diagram structure' do
-      source = 'error'
+    it "validates diagram structure" do
+      source = "error"
 
       diagram = parser.parse(source)
 
@@ -38,8 +38,8 @@ RSpec.describe Sirena::Parser::Error do
   # `not_to raise_error`. Runs in `spec:corpus`, isolated from the
   # coverage-collecting `spec:unit` run: see .simplecov and
   # tasks/coverage.rake.
-  describe 'fixture files', :corpus do
-    Dir.glob('spec/mermaid/error/*.mmd').each do |fixture_file|
+  describe "fixture files", :corpus do
+    Dir.glob("spec/mermaid/error/*.mmd").each do |fixture_file|
       it "parses #{File.basename(fixture_file)}" do
         source = File.read(fixture_file)
 

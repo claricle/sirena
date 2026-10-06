@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Sirena::Parser::ErDiagram do
   include ErTildeTiming
 
   let(:parser) { described_class.new }
 
-  describe '#parse' do
-    it 'parses simple ER diagram with relationship' do
+  describe "#parse" do
+    it "parses simple ER diagram with relationship" do
       source = "erDiagram\nCUSTOMER ||--o{ ORDER"
       diagram = parser.parse(source)
 
@@ -17,27 +17,27 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect(diagram.relationships.length).to eq(1)
     end
 
-    it 'parses non-identifying relationship' do
+    it "parses non-identifying relationship" do
       source = "erDiagram\nCUSTOMER ||--o{ ORDER"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.from_id).to eq('CUSTOMER')
-      expect(rel.to_id).to eq('ORDER')
-      expect(rel.relationship_type).to eq('non-identifying')
-      expect(rel.cardinality_from).to eq('one')
-      expect(rel.cardinality_to).to eq('zero_or_more')
+      expect(rel.from_id).to eq("CUSTOMER")
+      expect(rel.to_id).to eq("ORDER")
+      expect(rel.relationship_type).to eq("non-identifying")
+      expect(rel.cardinality_from).to eq("one")
+      expect(rel.cardinality_to).to eq("zero_or_more")
     end
 
-    it 'parses identifying relationship' do
+    it "parses identifying relationship" do
       source = "erDiagram\nCUSTOMER ||==o{ ORDER"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.relationship_type).to eq('identifying')
+      expect(rel.relationship_type).to eq("identifying")
     end
 
-    it 'parses entity with attributes' do
+    it "parses entity with attributes" do
       source = <<~MERMAID
         erDiagram
         CUSTOMER {
@@ -48,29 +48,29 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      entity = diagram.find_entity('CUSTOMER')
+      entity = diagram.find_entity("CUSTOMER")
       expect(entity).not_to be_nil
       expect(entity.attributes.length).to eq(3)
 
       attr1 = entity.attributes[0]
-      expect(attr1.name).to eq('id')
-      expect(attr1.attribute_type).to eq('int')
-      expect(attr1.key_type).to eq('PK')
+      expect(attr1.name).to eq("id")
+      expect(attr1.attribute_type).to eq("int")
+      expect(attr1.key_type).to eq("PK")
 
       attr2 = entity.attributes[1]
-      expect(attr2.name).to eq('name')
-      expect(attr2.attribute_type).to eq('string')
+      expect(attr2.name).to eq("name")
+      expect(attr2.attribute_type).to eq("string")
       expect(attr2.key_type).to be_nil
 
       attr3 = entity.attributes[2]
-      expect(attr3.name).to eq('email')
-      expect(attr3.attribute_type).to eq('string')
-      expect(attr3.key_type).to eq('FK')
+      expect(attr3.name).to eq("email")
+      expect(attr3.attribute_type).to eq("string")
+      expect(attr3.key_type).to eq("FK")
     end
 
     # A type name that isn't a bare identifier -- mermaid accepts a
     # `~...~`-quoted one. Corpus case unknown/079_platform_yari2_78.mmd.
-    it 'parses an attribute with a tilde-quoted multi-word type' do
+    it "parses an attribute with a tilde-quoted multi-word type" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -79,9 +79,9 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('rental_date')
-      expect(attr.attribute_type).to eq('<timestamp with time zone>')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("rental_date")
+      expect(attr.attribute_type).to eq("<timestamp with time zone>")
     end
 
     # A quoted note after the key type -- mermaid renders it as the
@@ -89,7 +89,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # verified against spec/mermaid/unknown/079_platform_yari2_78.svg). It
     # must reach the model, not just be consumed and dropped by the
     # grammar -- the renderer spec proves it reaches the rendered SVG too.
-    it 'carries the quoted note after the key type into the model' do
+    it "carries the quoted note after the key type into the model" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -98,10 +98,10 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('rental_id')
-      expect(attr.key_type).to eq('PK')
-      expect(attr.note).to eq('NN')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("rental_id")
+      expect(attr.key_type).to eq("PK")
+      expect(attr.note).to eq("NN")
     end
 
     # An empty quoted note, `""`, comes back from `GreedyRun` as a real
@@ -118,8 +118,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.note).to eq('')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.note).to eq("")
     end
 
     # Mermaid's ER `COMMENT` token accepts only double-quoted text with no
@@ -127,7 +127,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # note rule reused the shared `string`/`single_quoted_string` grammar
     # (`common.rb`), which accepts BOTH, wrongly parsing text mermaid
     # 11.16.1 rejects outright.
-    it 'refuses a single-quoted note the way mermaid does' do
+    it "refuses a single-quoted note the way mermaid does" do
       # Proves the refusal below is specific to the quote style, not note
       # support being absent -- without this, the raise_error expectation
       # passes for the wrong reason on code that never parses notes at all.
@@ -138,8 +138,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
         }
       MERMAID
       plain_diagram = parser.parse(plain_source)
-      plain_attr = plain_diagram.find_entity('RENTAL').attributes.first
-      expect(plain_attr.note).to eq('NN')
+      plain_attr = plain_diagram.find_entity("RENTAL").attributes.first
+      expect(plain_attr.note).to eq("NN")
 
       source = <<~MERMAID
         erDiagram
@@ -151,7 +151,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
     end
 
-    it 'refuses a note with a backslash-escaped quote the way mermaid does' do
+    it "refuses a note with a backslash-escaped quote the way mermaid does" do
       # Same guard as above: pins that a plain double-quoted note parses
       # before asserting the escaped one is refused.
       plain_source = <<~MERMAID
@@ -161,8 +161,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
         }
       MERMAID
       plain_diagram = parser.parse(plain_source)
-      plain_attr = plain_diagram.find_entity('RENTAL').attributes.first
-      expect(plain_attr.note).to eq('ab')
+      plain_attr = plain_diagram.find_entity("RENTAL").attributes.first
+      expect(plain_attr.note).to eq("ab")
 
       source = <<~MERMAID
         erDiagram
@@ -184,7 +184,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `"foo<bar baz><CJK char> f"` and name `"ield"` -- the multibyte
     # suffix char (3 bytes, 1 character) pulled 2 extra ASCII characters
     # into the type.
-    it 'does not over-consume past a multibyte character in the tilde suffix' do
+    it "does not over-consume past a multibyte character in the tilde suffix" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -193,17 +193,17 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.attribute_type).to eq('foo<bar baz>中')
-      expect(attr.name).to eq('field')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.attribute_type).to eq("foo<bar baz>中")
+      expect(attr.name).to eq("field")
     end
 
     # Same byte/character bug, prefix side: a multibyte character before
     # the opening tilde must count as one character, not several bytes.
-    it 'does not over-consume past a multibyte character in the tilde prefix' do
+    it "does not over-consume past a multibyte character in the tilde prefix" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
 
-      expect(grammar.tilde_type.parse('é~foo~')[:string].to_s).to eq('é~foo~')
+      expect(grammar.tilde_type.parse("é~foo~")[:string].to_s).to eq("é~foo~")
     end
 
     # End-to-end regression, not a pin on `GreedyRun.scan`'s own contract
@@ -213,14 +213,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `tilde_prefix`'s scan behaves on the note's incompatible byte -- it
     # only proves the parser still returns the right `attribute_type` and
     # `note` for an ASCII-8BIT source that happens to hold one.
-    it 'extracts a note holding a byte an encoding-fixed tilde regex cannot match' do
+    it "extracts a note holding a byte an encoding-fixed tilde regex cannot match" do
       source = (+"erDiagram\nCUSTOMER {\n  string name \"note \xFF here\"\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('CUSTOMER').attributes.first
-      expect(attr.attribute_type).to eq('string')
+      attr = diagram.find_entity("CUSTOMER").attributes.first
+      expect(attr.attribute_type).to eq("string")
       expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
     end
 
@@ -234,19 +234,19 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # value) -- reproduced by hand against the pre-fix code. The scan's own
     # contract (what it returns, not just that the full parse doesn't blow
     # up) is pinned directly by greedy_run_spec.rb.
-    it 'parses a tilde-quoted type followed by a note holding a byte the tilde regex cannot match' do
+    it "parses a tilde-quoted type followed by a note holding a byte the tilde regex cannot match" do
       source = (+"erDiagram\nCUSTOMER {\n  List~type~ name \"note \xFF here\"\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('CUSTOMER').attributes.first
-      expect(attr.attribute_type).to eq('List<type>')
-      expect(attr.name).to eq('name')
+      attr = diagram.find_entity("CUSTOMER").attributes.first
+      expect(attr.attribute_type).to eq("List<type>")
+      expect(attr.name).to eq("name")
       expect(attr.note).to eq((+"note \xFF here").force_encoding(Encoding::ASCII_8BIT))
     end
 
-    it 'refuses a tilde-quoted type whose core holds a byte the same regex cannot match' do
+    it "refuses a tilde-quoted type whose core holds a byte the same regex cannot match" do
       source = (+"erDiagram\nCUSTOMER {\n  List~\xFFtype\xFF~ name\n}\n")
         .force_encoding(Encoding::ASCII_8BIT)
 
@@ -260,7 +260,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # cache -- an empty cache assumes no newlines exist at all, so it
     # agrees with the real one at [1, 1]. Starting after a real newline
     # makes them disagree: an empty cache reports [1, 3].
-    it 'keeps a captured tilde type slice able to report its real line and column' do
+    it "keeps a captured tilde type slice able to report its real line and column" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
 
       result = (Parslet.str("x\n") >> grammar.tilde_type.as(:r)).parse("x\n~foo~")
@@ -273,7 +273,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # a newline in a JS regex without that flag, so mermaid never treats
     # this as one tilde-quoted type spanning the break. Sirena's grammar
     # must refuse it too, not silently accept a newline inside the tildes.
-    it 'refuses a tilde-quoted type only when it spans a newline' do
+    it "refuses a tilde-quoted type only when it spans a newline" do
       single_line = <<~MERMAID
         erDiagram
         RENTAL {
@@ -284,8 +284,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
       # support being absent -- without this, the raise_error expectation
       # passes for the wrong reason on code that never parses tildes at all.
       single_diagram = parser.parse(single_line)
-      single_attr = single_diagram.find_entity('RENTAL').attributes.first
-      expect(single_attr.attribute_type).to eq('<timestamp with time zone>')
+      single_attr = single_diagram.find_entity("RENTAL").attributes.first
+      expect(single_attr.attribute_type).to eq("<timestamp with time zone>")
 
       multi_line = <<~MERMAID
         erDiagram
@@ -308,7 +308,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     it 'stops the tilde suffix at an NBSP, matching JS `\s`' do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
 
-      expect(grammar.tilde_suffix.parse('foo').to_s).to eq('foo')
+      expect(grammar.tilde_suffix.parse("foo").to_s).to eq("foo")
       expect { grammar.tilde_suffix.parse("foo bar") }
         .to raise_error(Parslet::ParseFailed, /Don't know what to do with/)
     end
@@ -358,14 +358,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `\n` -- CR and the Unicode line/paragraph separators (U+2028,
     # U+2029) too. A bare CR inside the tildes must refuse exactly like
     # the `\n` case above, not be silently swallowed as an ordinary char.
-    it 'refuses a tilde-quoted type that spans a bare CR' do
+    it "refuses a tilde-quoted type that spans a bare CR" do
       # Proves the refusal below is specific to the CR, not tilde support
       # being absent -- without this, the raise_error expectation passes
       # for the wrong reason on code that never parses tildes at all.
       no_cr_source = "erDiagram\nRENTAL {\n  ~foobar~ name\n}\n"
       no_cr_diagram = parser.parse(no_cr_source)
-      no_cr_attr = no_cr_diagram.find_entity('RENTAL').attributes.first
-      expect(no_cr_attr.attribute_type).to eq('<foobar>')
+      no_cr_attr = no_cr_diagram.find_entity("RENTAL").attributes.first
+      expect(no_cr_attr.attribute_type).to eq("<foobar>")
 
       source = "erDiagram\nRENTAL {\n  ~foo\rbar~ name\n}\n"
 
@@ -376,7 +376,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # themselves (U+2028, U+2029) -- checked at the grammar rule directly
     # against the same whole-input reference regex used by the
     # chunk-boundary specs below, not hand-derived.
-    it 'stops tilde_marked_run at U+2028 and U+2029, matching the whole-input reference regex' do
+    it "stops tilde_marked_run at U+2028 and U+2029, matching the whole-input reference regex" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
 
@@ -392,7 +392,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # by running that regex directly (node) against mermaid's own compiled
     # erDiagram lexer. Sirena's grammar previously required `repeat(1)`,
     # which refused a diagram mermaid renders fine.
-    it 'accepts an empty tilde-quoted type' do
+    it "accepts an empty tilde-quoted type" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -401,13 +401,13 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('rental_date')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("rental_date")
       # `~~` has two tildes, so mermaid's own `parseGenericTypes` still
       # pairs them into `<>` rather than deleting them -- it is not a
       # special case for emptiness, just the general first/last-tilde
       # pairing applied to a zero-length middle.
-      expect(attr.attribute_type).to eq('<>')
+      expect(attr.attribute_type).to eq("<>")
     end
 
     # Mermaid's lexer captures a non-whitespace run directly before the
@@ -415,7 +415,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # `foo~bar baz~qux` parses in mermaid as the single type
     # `foo~bar baz~qux`, verified by running mermaid's own erDiagram
     # parser. Codex round-2 finding 1 (ffaabf5d).
-    it 'keeps a non-whitespace prefix and suffix around a tilde-quoted type' do
+    it "keeps a non-whitespace prefix and suffix around a tilde-quoted type" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -424,9 +424,9 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('rental_date')
-      expect(attr.attribute_type).to eq('foo<bar baz>qux')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("rental_date")
+      expect(attr.attribute_type).to eq("foo<bar baz>qux")
     end
 
     # Codex round-2 finding: the greedy inner match (`.*` in mermaid's
@@ -434,7 +434,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # type with two embedded pairs -- `~bar~baz qux~` and
     # `foo~one~two three~four~five` -- is ONE token, not split at the
     # first closing tilde.
-    it 'greedily matches to the last tilde on the line, not the first' do
+    it "greedily matches to the last tilde on the line, not the first" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -443,14 +443,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('name')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("name")
       # 3 tildes (odd): the leading one is unpaired and stays literal,
       # per mermaid's own `parseGenericTypes` (`~test~T~` -> `~test<T>`).
-      expect(attr.attribute_type).to eq('~bar<baz qux>')
+      expect(attr.attribute_type).to eq("~bar<baz qux>")
     end
 
-    it 'greedily spans multiple embedded tilde pairs across spaces' do
+    it "greedily spans multiple embedded tilde pairs across spaces" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -459,11 +459,11 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('name')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("name")
       # 4 tildes pair from the outside in: the outermost pair (1st/4th)
       # wraps the whole middle, the inner pair (2nd/3rd) nests inside it.
-      expect(attr.attribute_type).to eq('foo<one<two three>four>five')
+      expect(attr.attribute_type).to eq("foo<one<two three>four>five")
     end
 
     # A comma inside a generic's tildes (`Map~K, V~`) splits the type text
@@ -473,7 +473,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # diagrams/common/common.ts, verified against the compiled function in
     # node_modules/mermaid/dist/mermaid.js) on the identical input, not
     # hand-derived.
-    it 'rejoins a comma inside a single tilde-quoted generic type' do
+    it "rejoins a comma inside a single tilde-quoted generic type" do
       source = <<~MERMAID
         erDiagram
         RENTAL {
@@ -482,9 +482,9 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
       diagram = parser.parse(source)
 
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('rental_date')
-      expect(attr.attribute_type).to eq('Map<K, V>')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("rental_date")
+      expect(attr.attribute_type).to eq("Map<K, V>")
     end
 
     # Guards the O(n) fix for tilde_prefix/tilde_suffix (see grammar
@@ -495,7 +495,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # SCALING RATIO between a small and a 16x-larger run survives that:
     # see spec/support/er_tilde_timing.rb for the measured linear vs
     # quadratic ratios MAX_LINEAR_SCALING_RATIO sits between.
-    it 'parses a long non-tilde run before a tilde type at a linear rate' do
+    it "parses a long non-tilde run before a tilde type at a linear rate" do
       expect(tilde_parse_scaling_ratio(50_000, 800_000, position: :prefix))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -504,7 +504,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # together; a mutant that reverts only tilde_suffix leaves the
     # prefix-only case above green, so this covers the suffix side with
     # the same scaling-ratio bound.
-    it 'parses a long non-tilde run after a tilde type at a linear rate' do
+    it "parses a long non-tilde run after a tilde type at a linear rate" do
       expect(tilde_parse_scaling_ratio(50_000, 800_000, position: :suffix))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -515,7 +515,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # number of tildes in a single attribute type. A many-tilde-pair type
     # is a different input family than the long-single-run cases above --
     # this exercises the builder's pairing loop, not the grammar's atom.
-    it 'converts a type with many adjacent tilde pairs at a linear rate' do
+    it "converts a type with many adjacent tilde pairs at a linear rate" do
       expect(tilde_pair_count_scaling_ratio(1_000, 16_000))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -524,7 +524,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # native `match('[^"]').repeat` folds one-char Slices back together
     # with `Slice#+`, quadratic in note length -- measured at 8.8GB RSS
     # and 0.42s CPU for a single 32,000-char note before the fix.
-    it 'parses a long quoted note at a linear rate' do
+    it "parses a long quoted note at a linear rate" do
       expect(note_parse_scaling_ratio(10_000, 160_000))
         .to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
@@ -538,7 +538,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # entirely, for a single run longer than one chunk). Compared
     # against the SAME whole-input regex mermaid's own lexer builds for
     # this token, not hand-derived.
-    it 'matches a tilde-marked run whose content crosses the internal chunk boundary' do
+    it "matches a tilde-marked run whose content crosses the internal chunk boundary" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
 
@@ -551,7 +551,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
       end
     end
 
-    it 'parses a full ER attribute type whose tilde run crosses the internal chunk boundary' do
+    it "parses a full ER attribute type whose tilde run crosses the internal chunk boundary" do
       inner = "a" * 60_000
       source = <<~MERMAID
         erDiagram
@@ -561,8 +561,8 @@ RSpec.describe Sirena::Parser::ErDiagram do
       MERMAID
 
       diagram = parser.parse(source)
-      attr = diagram.find_entity('RENTAL').attributes.first
-      expect(attr.name).to eq('name')
+      attr = diagram.find_entity("RENTAL").attributes.first
+      expect(attr.name).to eq("name")
       expect(attr.attribute_type).to eq("<#{inner}>")
     end
 
@@ -571,11 +571,11 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # clustered around the internal chunk boundary (plus a spread of
     # other sizes) -- proves the chunk-boundary fix generalises past the
     # two hand-picked counterexamples above.
-    it 'matches the whole-input reference regex across random inputs near the chunk boundary' do
+    it "matches the whole-input reference regex across random inputs near the chunk boundary" do
       grammar = Sirena::Parser::Grammars::ErDiagram.new
       whole_input_regex = Regexp.new("\\A(?:~(?:[^~\n\r\u2028\u2029]*~)+)", Regexp::MULTILINE)
-      broad_pool = ('a'..'z').to_a + ('0'..'9').to_a + ['-', '.', '/', '_']
-      noise_pool = [' ', '!', '@']
+      broad_pool = ("a".."z").to_a + ("0".."9").to_a + ["-", ".", "/", "_"]
+      noise_pool = [" ", "!", "@"]
       rng = Random.new(20_260_929)
       lengths = Array.new(40) { rng.rand(1..20) } +
                 Array.new(40) { rng.rand(49_990..50_010) } +
@@ -584,7 +584,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
       mismatches = lengths.filter_map do |length|
         body = Array.new(length) do
           if rng.rand(15).zero?
-            '~'
+            "~"
           else
             rng.rand(20) < 19 ? broad_pool.sample(random: rng) : noise_pool.sample(random: rng)
           end
@@ -610,62 +610,62 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # own length. An absolute bound is too tight on a loaded CI box; the
     # scaling ratio between a small and 8x-larger attribute count
     # survives that (see spec/support/er_tilde_timing.rb's reasoning).
-    it 'parses many short tilde-typed attributes at a linear rate, not one per fixed chunk' do
+    it "parses many short tilde-typed attributes at a linear rate, not one per fixed chunk" do
       small_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(500)) } }
       large_time = min_call_time { cpu_time { parser.parse(many_tilde_attributes(4_000)) } }
 
       expect(large_time / small_time).to be < ErTildeTiming::MAX_LINEAR_SCALING_RATIO
     end
 
-    it 'parses one-to-one cardinality' do
+    it "parses one-to-one cardinality" do
       source = "erDiagram\nCUSTOMER ||--|| ADDRESS"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.cardinality_from).to eq('one')
-      expect(rel.cardinality_to).to eq('one')
+      expect(rel.cardinality_from).to eq("one")
+      expect(rel.cardinality_to).to eq("one")
     end
 
-    it 'parses zero-or-one cardinality' do
+    it "parses zero-or-one cardinality" do
       source = "erDiagram\nCUSTOMER ||--}o ADDRESS"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.cardinality_from).to eq('one')
-      expect(rel.cardinality_to).to eq('zero_or_one')
+      expect(rel.cardinality_from).to eq("one")
+      expect(rel.cardinality_to).to eq("zero_or_one")
     end
 
-    it 'parses one-or-more cardinality' do
+    it "parses one-or-more cardinality" do
       source = "erDiagram\nCUSTOMER ||--{| ORDER"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.cardinality_from).to eq('one')
-      expect(rel.cardinality_to).to eq('one_or_more')
+      expect(rel.cardinality_from).to eq("one")
+      expect(rel.cardinality_to).to eq("one_or_more")
     end
 
     # `}|`, `o|` and `|o` are real crow's-foot cardinality tokens the
     # grammar was missing entirely. Corpus case
     # unknown/079_platform_yari2_78.mmd uses `}|..||`.
-    it 'parses one-or-more and zero-or-one cardinality tokens' do
+    it "parses one-or-more and zero-or-one cardinality tokens" do
       source = "erDiagram\nFILM_ACTOR }|..|| FILM : fk"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.cardinality_from).to eq('one_or_more')
-      expect(rel.cardinality_to).to eq('one')
+      expect(rel.cardinality_from).to eq("one_or_more")
+      expect(rel.cardinality_to).to eq("one")
     end
 
-    it 'parses the o| and |o zero-or-one cardinality tokens' do
+    it "parses the o| and |o zero-or-one cardinality tokens" do
       source = "erDiagram\nCUSTOMER o|--|o ADDRESS"
       diagram = parser.parse(source)
 
       rel = diagram.relationships.first
-      expect(rel.cardinality_from).to eq('zero_or_one')
-      expect(rel.cardinality_to).to eq('zero_or_one')
+      expect(rel.cardinality_from).to eq("zero_or_one")
+      expect(rel.cardinality_to).to eq("zero_or_one")
     end
 
-    it 'parses relationship without label' do
+    it "parses relationship without label" do
       source = "erDiagram\nCUSTOMER ||--o{ ORDER"
       diagram = parser.parse(source)
 
@@ -673,7 +673,7 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect(rel.label).to be_nil
     end
 
-    it 'parses multiple entities and relationships' do
+    it "parses multiple entities and relationships" do
       source = <<~MERMAID
         erDiagram
         CUSTOMER ||--o{ ORDER
@@ -688,29 +688,29 @@ RSpec.describe Sirena::Parser::ErDiagram do
       expect(entity_ids).to eq(%w[CUSTOMER LINE_ITEM ORDER PRODUCT])
     end
 
-    it 'raises ParseError for invalid syntax' do
-      source = 'invalid syntax'
+    it "raises ParseError for invalid syntax" do
+      source = "invalid syntax"
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError,
       )
     end
   end
 
-  describe 'style classes' do
-    it 'carries the class assigned via ::: (A1)' do
+  describe "style classes" do
+    it "carries the class assigned via ::: (A1)" do
       diagram = parser.parse("erDiagram\nCAR:::someclass")
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[someclass])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[someclass])
     end
 
-    it 'carries multiple classes in source order (A2)' do
+    it "carries multiple classes in source order (A2)" do
       diagram = parser.parse("erDiagram\nPERSON:::anotherclass,someclass")
 
-      expect(diagram.find_entity('PERSON').classes)
+      expect(diagram.find_entity("PERSON").classes)
         .to eq(%w[anotherclass someclass])
     end
 
-    it 'records each classDef with its own style text (A3)' do
+    it "records each classDef with its own style text (A3)" do
       source = <<~MERMAID
         erDiagram
         classDef someclass fill:#f96
@@ -719,35 +719,35 @@ RSpec.describe Sirena::Parser::ErDiagram do
       diagram = parser.parse(source)
 
       expect(diagram.class_defs).to eq(
-        'someclass' => 'fill:#f96', 'anotherclass' => 'color:blue',
+        "someclass" => "fill:#f96", "anotherclass" => "color:blue",
       )
     end
 
-    it 'keeps a class on an entity with an attribute block (A4)' do
+    it "keeps a class on an entity with an attribute block (A4)" do
       source = "erDiagram\nCAR:::x {\nstring make\n}"
       diagram = parser.parse(source)
-      entity = diagram.find_entity('CAR')
+      entity = diagram.find_entity("CAR")
 
       expect(entity.classes).to eq(%w[x])
       expect(entity.attributes.map(&:name)).to eq(%w[make])
     end
 
-    it 'keeps a class on an entity with an empty block (A5)' do
+    it "keeps a class on an entity with an empty block (A5)" do
       # An empty block yields a nil :attributes capture. Routing on
       # :entity_id alone (not :entity_id && :attributes) is what keeps
       # this case from losing its class.
       diagram = parser.parse("erDiagram\nCAR:::x {\n}")
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[x])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[x])
     end
 
-    it 'gives an unclassed entity an empty class list (A6)' do
+    it "gives an unclassed entity an empty class list (A6)" do
       diagram = parser.parse("erDiagram\nCAR")
 
-      expect(diagram.find_entity('CAR').classes).to eq([])
+      expect(diagram.find_entity("CAR").classes).to eq([])
     end
 
-    it 'keeps classes on both relationship ends (A7)' do
+    it "keeps classes on both relationship ends (A7)" do
       # Each end captures under a DIFFERENT name (:from_classes,
       # :to_classes). Giving both the same name would drop the from-end
       # class silently when Parslet merges the statement hash.
@@ -755,61 +755,61 @@ RSpec.describe Sirena::Parser::ErDiagram do
       diagram = parser.parse(source)
       rel = diagram.relationships.first
 
-      expect(diagram.find_entity('A').classes).to eq(%w[x])
-      expect(diagram.find_entity('B').classes).to eq(%w[y])
-      expect(rel.cardinality_from).to eq('one')
-      expect(rel.cardinality_to).to eq('zero_or_more')
+      expect(diagram.find_entity("A").classes).to eq(%w[x])
+      expect(diagram.find_entity("B").classes).to eq(%w[y])
+      expect(rel.cardinality_from).to eq("one")
+      expect(rel.cardinality_to).to eq("zero_or_more")
     end
 
-    it 'accepts a space after the comma (A8)' do
+    it "accepts a space after the comma (A8)" do
       diagram = parser.parse("erDiagram\nCAR:::a, b")
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[a b])
     end
 
-    it 'lets one classDef name several classes (A11)' do
+    it "lets one classDef name several classes (A11)" do
       diagram = parser.parse("erDiagram\nclassDef a, b fill:#f9f")
 
-      expect(diagram.class_defs).to eq('a' => 'fill:#f9f', 'b' => 'fill:#f9f')
+      expect(diagram.class_defs).to eq("a" => "fill:#f9f", "b" => "fill:#f9f")
     end
 
-    it 'keeps a repeated assignment in source order, not deduped (A12)' do
+    it "keeps a repeated assignment in source order, not deduped (A12)" do
       # Verified against mermaid's own db: cssClasses is "default a a" for
       # this source, not "default a" — a repeat is NOT collapsed. Whether
       # that matters is a rendering question (a later duplicate can win a
       # conflict); the parser's job is only to keep what was written.
       diagram = parser.parse("erDiagram\nCAR:::a\nCAR:::a")
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[a a])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[a a])
     end
 
-    it 'adds rather than replaces on a second entity-path assignment (A13)' do
+    it "adds rather than replaces on a second entity-path assignment (A13)" do
       source = "erDiagram\nCAR:::a\nCAR:::b {\nstring m\n}"
       diagram = parser.parse(source)
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[a b])
     end
 
-    it 'adds rather than replaces on the relationship path too (A13b)' do
+    it "adds rather than replaces on the relationship path too (A13b)" do
       source = "erDiagram\nCAR:::a\nCAR:::b ||--o{ X : r"
       diagram = parser.parse(source)
 
-      expect(diagram.find_entity('CAR').classes).to eq(%w[a b])
+      expect(diagram.find_entity("CAR").classes).to eq(%w[a b])
     end
 
-    it 'does not include a trailing semicolon in the style text (A15)' do
+    it "does not include a trailing semicolon in the style text (A15)" do
       diagram = parser.parse("erDiagram\nclassDef x fill:#f96;")
 
-      expect(diagram.class_defs).to eq('x' => 'fill:#f96')
+      expect(diagram.class_defs).to eq("x" => "fill:#f96")
     end
 
-    it 'accumulates a repeated classDef for the same name (A16)' do
+    it "accumulates a repeated classDef for the same name (A16)" do
       # Verified against mermaid's own parser: two classDef statements for
       # one name both survive, in source order — not the last one alone.
       source = "erDiagram\nclassDef a fill:red\nclassDef a stroke:blue"
       diagram = parser.parse(source)
 
-      expect(diagram.class_defs).to eq('a' => 'fill:red,stroke:blue')
+      expect(diagram.class_defs).to eq("a" => "fill:red,stroke:blue")
     end
 
     # These six all raise TODAY, so a whole-file revert leaves them green —
@@ -817,14 +817,14 @@ RSpec.describe Sirena::Parser::ErDiagram do
     # each is the set mermaid itself rejects (verified against its own
     # parser, see the plan's harness), and nothing else in this suite
     # notices if the grammar is ever widened past mermaid.
-    it 'rejects what mermaid rejects (A14)' do
+    it "rejects what mermaid rejects (A14)" do
       fragments = [
-        'CAR:::',
-        'CAR::x',
-        'CAR:::a,',
-        'CAR:::1bad',
-        'classDef x',
-        'CAR:::--',
+        "CAR:::",
+        "CAR::x",
+        "CAR:::a,",
+        "CAR:::1bad",
+        "classDef x",
+        "CAR:::--",
       ]
 
       fragments.each do |fragment|

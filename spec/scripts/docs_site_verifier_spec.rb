@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'tmpdir'
-require 'fileutils'
-require 'yaml'
-require 'timeout'
-require_relative '../../scripts/verify_docs_site'
+require "tmpdir"
+require "fileutils"
+require "yaml"
+require "timeout"
+require_relative "../../scripts/verify_docs_site"
 
 # Defined outside the RSpec.describe block deliberately: RuboCop's
 # Lint/ConstantDefinitionInBlock autocorrect turns a block-level constant
@@ -12,8 +12,8 @@ require_relative '../../scripts/verify_docs_site'
 # silently making a later example's own assignment shadow the "constant"
 # instead of raising. Keeping these at file scope avoids the hazard rather
 # than relying on nobody running `rubocop -a` on this file later.
-DOCS_SITE_VERIFIER_DEFAULT_THEME = 'just-the-docs'
-DOCS_SITE_VERIFIER_DEFAULT_BASEURL = '/sirena'
+DOCS_SITE_VERIFIER_DEFAULT_THEME = "just-the-docs"
+DOCS_SITE_VERIFIER_DEFAULT_BASEURL = "/sirena"
 
 # -- fixture builders -------------------------------------------------
 # `def`s, not `let`s: every one takes arguments (rspec.rubystyle.guide has
@@ -21,19 +21,19 @@ DOCS_SITE_VERIFIER_DEFAULT_BASEURL = '/sirena'
 module DocsSiteVerifierSpecHelpers
   def write_config(docs_dir, overrides = {})
     config = {
-      'theme' => DOCS_SITE_VERIFIER_DEFAULT_THEME,
-      'baseurl' => DOCS_SITE_VERIFIER_DEFAULT_BASEURL,
-      'search_enabled' => true,
-      'include' => ['_diagram_types'],
-      'collections' => {
-        'diagram_types' => { 'permalink' => '/:collection/:path/' },
+      "theme" => DOCS_SITE_VERIFIER_DEFAULT_THEME,
+      "baseurl" => DOCS_SITE_VERIFIER_DEFAULT_BASEURL,
+      "search_enabled" => true,
+      "include" => ["_diagram_types"],
+      "collections" => {
+        "diagram_types" => { "permalink" => "/:collection/:path/" },
       },
     }.merge(overrides)
-    File.write(File.join(docs_dir, '_config.yml'), YAML.dump(config))
+    File.write(File.join(docs_dir, "_config.yml"), YAML.dump(config))
   end
 
   def write_source(docs_dir, relative)
-    path = File.join(docs_dir, '_diagram_types', "#{relative}.adoc")
+    path = File.join(docs_dir, "_diagram_types", "#{relative}.adoc")
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, "= #{File.basename(relative)}\n\nplaceholder\n")
   end
@@ -44,7 +44,7 @@ module DocsSiteVerifierSpecHelpers
     File.write(path, html)
   end
 
-  def write_asset(site_dir, relative_path, content = '/* asset */')
+  def write_asset(site_dir, relative_path, content = "/* asset */")
     path = File.join(site_dir, relative_path)
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, content)
@@ -55,11 +55,11 @@ module DocsSiteVerifierSpecHelpers
   # correct value so a test overriding exactly one produces exactly one
   # failure.
   def page_html(theme: DOCS_SITE_VERIFIER_DEFAULT_THEME, baseurl: DOCS_SITE_VERIFIER_DEFAULT_BASEURL,
-                 marker: 'paragraph', layout_marker: 'main-content-wrap', stylesheet: true, extra: {})
-    stylesheet_tag = stylesheet ? %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">) : ''
-    script_tag = extra[:script] ? %(<script src="#{extra[:script]}"></script>) : ''
-    link_tag = extra[:link] ? %(<link rel="#{extra[:link][:rel]}" href="#{extra[:link][:href]}">) : ''
-    anchor_tag = extra[:dangling_anchor] ? %(<a href="#{baseurl}/does-not-exist-anywhere">x</a>) : ''
+                 marker: "paragraph", layout_marker: "main-content-wrap", stylesheet: true, extra: {})
+    stylesheet_tag = stylesheet ? %(<link rel="stylesheet" href="#{baseurl}/assets/css/#{theme}-default.css">) : ""
+    script_tag = extra[:script] ? %(<script src="#{extra[:script]}"></script>) : ""
+    link_tag = extra[:link] ? %(<link rel="#{extra[:link][:rel]}" href="#{extra[:link][:href]}">) : ""
+    anchor_tag = extra[:dangling_anchor] ? %(<a href="#{baseurl}/does-not-exist-anywhere">x</a>) : ""
     <<~HTML
       <html><head>#{stylesheet_tag}#{link_tag}</head>
       <body>
@@ -77,16 +77,16 @@ module DocsSiteVerifierSpecHelpers
   # plus the theme asset it references. Every other example starts from
   # this and breaks exactly one thing.
   def build_valid_site(tmp, config_overrides: {})
-    docs_dir = File.join(tmp, 'docs')
-    site_dir = File.join(docs_dir, '_site')
+    docs_dir = File.join(tmp, "docs")
+    site_dir = File.join(docs_dir, "_site")
     FileUtils.mkdir_p(docs_dir)
 
     write_config(docs_dir, config_overrides)
-    write_source(docs_dir, 'mindmap')
-    write_page(site_dir, 'diagram_types/mindmap/index.html', page_html)
-    write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+    write_source(docs_dir, "mindmap")
+    write_page(site_dir, "diagram_types/mindmap/index.html", page_html)
+    write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
     write_asset(site_dir, "assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css")
-    write_asset(site_dir, 'assets/js/search-data.json')
+    write_asset(site_dir, "assets/js/search-data.json")
 
     [docs_dir, site_dir]
   end
@@ -115,82 +115,82 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 1 — green control. Also, per the plan, the dangling
   # site-absolute <a href> doubles as R23's detector: if the verifier ever
   # started collecting anchor refs, this example alone would catch it.
-  it 'reports no failures for a complete site, and does not collect a dangling <a href>' do
+  it "reports no failures for a complete site, and does not collect a dangling <a href>" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(extra: { dangling_anchor: true }))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html(extra: { dangling_anchor: true }))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 2 — R3
-  it 'names the source and path when the collection-path page is absent' do
+  it "names the source and path when the collection-path page is absent" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_rf(File.join(site_dir, 'diagram_types'))
+      FileUtils.rm_rf(File.join(site_dir, "diagram_types"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html',
+        "manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html",
       )
     end
   end
 
   # Example 3 — R4
-  it 'names the source and path when the include-path page is absent and include: names _diagram_types' do
+  it "names the source and path when the include-path page is absent and include: names _diagram_types" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_rf(File.join(site_dir, '_diagram_types'))
+      FileUtils.rm_rf(File.join(site_dir, "_diagram_types"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html',
+        "manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html",
       )
     end
   end
 
   # Example 4 — R5
-  it 'reports no failures when include: omits _diagram_types and _site has no include-path copy' do
+  it "reports no failures when include: omits _diagram_types and _site has no include-path copy" do
     Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'include' => [] })
-      FileUtils.rm_rf(File.join(site_dir, '_diagram_types'))
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { "include" => [] })
+      FileUtils.rm_rf(File.join(site_dir, "_diagram_types"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 5 — R6
-  it 'requires a nested source at both nested paths' do
+  it "requires a nested source at both nested paths" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, 'examples/flowchart-examples')
-      write_page(site_dir, 'diagram_types/examples/flowchart-examples/index.html', page_html)
-      write_page(site_dir, '_diagram_types/examples/flowchart-examples/index.html', page_html)
-      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/examples'))
-      FileUtils.rm_rf(File.join(site_dir, '_diagram_types/examples'))
+      write_source(docs_dir, "examples/flowchart-examples")
+      write_page(site_dir, "diagram_types/examples/flowchart-examples/index.html", page_html)
+      write_page(site_dir, "_diagram_types/examples/flowchart-examples/index.html", page_html)
+      FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples"))
+      FileUtils.rm_rf(File.join(site_dir, "_diagram_types/examples"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
-          'diagram_types/examples/flowchart-examples/index.html',
-        'manifest: _diagram_types/examples/flowchart-examples.adoc missing at ' \
-          '_diagram_types/examples/flowchart-examples/index.html',
+        "manifest: _diagram_types/examples/flowchart-examples.adoc missing at " \
+          "diagram_types/examples/flowchart-examples/index.html",
+        "manifest: _diagram_types/examples/flowchart-examples.adoc missing at " \
+          "_diagram_types/examples/flowchart-examples/index.html",
       )
     end
   end
 
   # Example 6 — R7
-  it 'requires index.adoc at diagram_types/index/index.html and _diagram_types/index.html' do
+  it "requires index.adoc at diagram_types/index/index.html and _diagram_types/index.html" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, 'index')
-      write_page(site_dir, 'diagram_types/index/index.html', page_html)
-      write_page(site_dir, '_diagram_types/index.html', page_html)
-      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/index'))
-      FileUtils.rm(File.join(site_dir, '_diagram_types/index.html'))
+      write_source(docs_dir, "index")
+      write_page(site_dir, "diagram_types/index/index.html", page_html)
+      write_page(site_dir, "_diagram_types/index.html", page_html)
+      FileUtils.rm_rf(File.join(site_dir, "diagram_types/index"))
+      FileUtils.rm(File.join(site_dir, "_diagram_types/index.html"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/index.adoc missing at diagram_types/index/index.html',
-        'manifest: _diagram_types/index.adoc missing at _diagram_types/index.html',
+        "manifest: _diagram_types/index.adoc missing at diagram_types/index/index.html",
+        "manifest: _diagram_types/index.adoc missing at _diagram_types/index.html",
       )
     end
   end
@@ -199,28 +199,28 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `dir == '.'` arm; a mutant that collapsed every index source to the
   # same top-level `_diagram_types/index.html` survived every other
   # example because none of them nested an index.adoc in a subdirectory.
-  it 'collapses a nested index.adoc to its own subdirectory, not the site root' do
+  it "collapses a nested index.adoc to its own subdirectory, not the site root" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, 'examples/index')
-      write_page(site_dir, 'diagram_types/examples/index/index.html', page_html)
-      write_page(site_dir, '_diagram_types/examples/index.html', page_html)
-      FileUtils.rm_rf(File.join(site_dir, 'diagram_types/examples/index'))
-      FileUtils.rm(File.join(site_dir, '_diagram_types/examples/index.html'))
+      write_source(docs_dir, "examples/index")
+      write_page(site_dir, "diagram_types/examples/index/index.html", page_html)
+      write_page(site_dir, "_diagram_types/examples/index.html", page_html)
+      FileUtils.rm_rf(File.join(site_dir, "diagram_types/examples/index"))
+      FileUtils.rm(File.join(site_dir, "_diagram_types/examples/index.html"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/examples/index.adoc missing at diagram_types/examples/index/index.html',
-        'manifest: _diagram_types/examples/index.adoc missing at _diagram_types/examples/index.html',
+        "manifest: _diagram_types/examples/index.adoc missing at diagram_types/examples/index/index.html",
+        "manifest: _diagram_types/examples/index.adoc missing at _diagram_types/examples/index.html",
       )
     end
   end
 
   # Example 7 — R8. Strip the layout marker while keeping the stylesheet
   # links, proving R8 is not a duplicate of R9.
-  it 'names the page lacking the layout marker while its theme stylesheet stays intact' do
+  it "names the page lacking the layout marker while its theme stylesheet stays intact" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(layout_marker: 'main-content-wrapX'))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(layout_marker: "main-content-wrapX"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
@@ -231,11 +231,11 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 8 — R9. Strip the stylesheet while keeping the layout marker
   # and a theme-named <script src>, so an implementation reading R9 as
   # "any ref containing the theme name" is defeated.
-  it 'names the page linking no theme stylesheet while the layout marker and a theme-named script stay' do
+  it "names the page linking no theme stylesheet while the layout marker and a theme-named script stay" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
+        site_dir, "diagram_types/mindmap/index.html",
         page_html(stylesheet: false, extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}.js" })
       )
       write_asset(site_dir, "assets/js/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}.js")
@@ -248,9 +248,9 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
   # Example 9 — R10. theme: is "pico" while the page links just-the-docs
   # CSS, so a hardcoded "just-the-docs" string cannot pass by accident.
-  it 'reports a page linking only just-the-docs CSS when theme: is pico' do
+  it "reports a page linking only just-the-docs CSS when theme: is pico" do
     Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => 'pico' })
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { "theme" => "pico" })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "pico"',
@@ -261,10 +261,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
 
   # Example 10 — R11. A2 is site-wide: a non-diagram page missing the
   # stylesheet is reported too.
-  it 'reports a non-diagram page missing the theme stylesheet' do
+  it "reports a non-diagram page missing the theme stylesheet" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'pages/comparison/index.html', page_html(stylesheet: false))
+      write_page(site_dir, "pages/comparison/index.html", page_html(stylesheet: false))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'layout: pages/comparison/index.html links no stylesheet naming theme "just-the-docs"',
@@ -281,26 +281,26 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # own example each: a spec built against one cannot exercise the other,
   # since `include_path_for('mindmap')` and the collection path are
   # different strings.
-  it 'does not accept a directory standing in for the collection-path page' do
+  it "does not accept a directory standing in for the collection-path page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_f(File.join(site_dir, 'diagram_types/mindmap/index.html'))
-      FileUtils.mkdir_p(File.join(site_dir, 'diagram_types/mindmap/index.html'))
+      FileUtils.rm_f(File.join(site_dir, "diagram_types/mindmap/index.html"))
+      FileUtils.mkdir_p(File.join(site_dir, "diagram_types/mindmap/index.html"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html',
+        "manifest: _diagram_types/mindmap.adoc missing at diagram_types/mindmap/index.html",
       )
     end
   end
 
-  it 'does not accept a directory standing in for the include-path page' do
+  it "does not accept a directory standing in for the include-path page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm_f(File.join(site_dir, '_diagram_types/mindmap/index.html'))
-      FileUtils.mkdir_p(File.join(site_dir, '_diagram_types/mindmap/index.html'))
+      FileUtils.rm_f(File.join(site_dir, "_diagram_types/mindmap/index.html"))
+      FileUtils.mkdir_p(File.join(site_dir, "_diagram_types/mindmap/index.html"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html',
+        "manifest: _diagram_types/mindmap.adoc missing at _diagram_types/mindmap/index.html",
       )
     end
   end
@@ -323,16 +323,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Nokogiri cannot tell `<script src>` from `<script src="">` — both give ""
   # — and nothing tested an attribute for `true`, so the sentinel was dead
   # weight as well as harmful.
-  it 'keeps an empty attribute value instead of turning it into true' do
+  it "keeps an empty attribute value instead of turning it into true" do
     Dir.mktmpdir do |tmp|
       _docs_dir, site_dir = build_valid_site(tmp)
-      html = page_html.sub('</head>', '<script src=""></script></head>')
-      path = File.join(site_dir, 'pages/comparison/index.html')
-      write_page(site_dir, 'pages/comparison/index.html', html)
+      html = page_html.sub("</head>", '<script src=""></script></head>')
+      path = File.join(site_dir, "pages/comparison/index.html")
+      write_page(site_dir, "pages/comparison/index.html", html)
 
       page = Sirena::DocsSiteVerifier::Page.new(path, site_dir)
 
-      expect(page.script_srcs).to eq([''])
+      expect(page.script_srcs).to eq([""])
     end
   end
 
@@ -340,10 +340,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # clauses (layout marker, stylesheet); example 10 above only pins the
   # stylesheet one. A mutant that scopes the LAYOUT check to diagram pages
   # only survived every example until this was added.
-  it 'reports a non-diagram page missing the layout marker' do
+  it "reports a non-diagram page missing the layout marker" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'pages/comparison/index.html', page_html(layout_marker: 'main-content-wrapX'))
+      write_page(site_dir, "pages/comparison/index.html", page_html(layout_marker: "main-content-wrapX"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'layout: pages/comparison/index.html missing layout marker "main-content-wrap"',
@@ -352,13 +352,13 @@ RSpec.describe Sirena::DocsSiteVerifier do
   end
 
   # Example 11 — R12
-  it 'names the diagram page carrying no recognized block marker' do
+  it "names the diagram page carrying no recognized block marker" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(marker: "not-a-real-marker"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -368,7 +368,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # and image-only (examples.rake's default-metadata output, split so
   # neither masks the other -- see the note on the LOW finding below).
   # None exists in today's real _site.
-  it 'passes a table-only page, a list-only page, a listing-only page and an image-only page' do
+  it "passes a table-only page, a list-only page, a listing-only page and an image-only page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       %w[table-page list-page listing-page image-page].each { |name| write_source(docs_dir, name) }
@@ -382,10 +382,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
       # page has NO text at all. Confirmed directly:
       # `Nokogiri::HTML5.parse(real_imageblock_html).text == ""`.
       bodies = {
-        'table-page' => '<table class="tableblock"><tr><td>x</td></tr></table>',
-        'list-page' => '<ul class="ulist"><li>x</li></ul>',
-        'listing-page' => '<div class="listingblock">x</div>',
-        'image-page' => '<div class="imageblock"><div class="content">' \
+        "table-page" => '<table class="tableblock"><tr><td>x</td></tr></table>',
+        "list-page" => '<ul class="ulist"><li>x</li></ul>',
+        "listing-page" => '<div class="listingblock">x</div>',
+        "image-page" => '<div class="imageblock"><div class="content">' \
                          '<img src="diagram.png" alt="Example"></div></div>',
       }
       bodies.each do |name, body|
@@ -404,10 +404,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
   it 'does not accept bare "table" as a recognized block marker' do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(marker: 'table'))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(marker: "table"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -418,17 +418,17 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # markers on SEPARATE pages, so each is independently load-bearing; this
   # example pins that directly by deleting the marker from a page's own
   # class list and expecting a failure.
-  it 'reports an image-only page whose sole marker class is missing' do
+  it "reports an image-only page whose sole marker class is missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_source(docs_dir, 'image-only')
+      write_source(docs_dir, "image-only")
       body = '<div class="not-a-real-marker">x</div>'
-      write_page(site_dir, 'diagram_types/image-only/index.html', page_html_with_body(body))
-      write_page(site_dir, '_diagram_types/image-only/index.html', page_html_with_body(body))
+      write_page(site_dir, "diagram_types/image-only/index.html", page_html_with_body(body))
+      write_page(site_dir, "_diagram_types/image-only/index.html", page_html_with_body(body))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/image-only/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/image-only/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/image-only/index.html has no recognized Asciidoctor block marker",
+        "content: _diagram_types/image-only/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -447,16 +447,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # content, which never reaches the page). Confirmed directly against the
   # installed gem before this fix: both bodies made `renders_content?`
   # return `false`.
-  it 'passes a video-only page and a textarea-content page' do
+  it "passes a video-only page and a textarea-content page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       %w[video-page textarea-page].each { |name| write_source(docs_dir, name) }
 
       bodies = {
-        'video-page' => '<div class="videoblock"><div class="content">' \
+        "video-page" => '<div class="videoblock"><div class="content">' \
                          '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" ' \
                          'frameborder="0" allowfullscreen></iframe></div></div>',
-        'textarea-page' => '<div class="paragraph"><p><textarea>Visible</textarea></p></div>',
+        "textarea-page" => '<div class="paragraph"><p><textarea>Visible</textarea></p></div>',
       }
       bodies.each do |name, body|
         write_page(site_dir, "diagram_types/#{name}/index.html", page_html_with_body(body))
@@ -503,17 +503,17 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # directly: reverting `rendered_text`'s `[hidden]` unlink to
   # `.each { |el| el.children.unlink }` leaves this page's `failures`
   # empty; the real code (unlinking the element itself) correctly reports it.
-  it 'rejects a hidden-text-only page and accepts an inline-SVG-only page' do
+  it "rejects a hidden-text-only page and accepts an inline-SVG-only page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       %w[hidden-text-page inline-svg-page hidden-svg-page].each { |name| write_source(docs_dir, name) }
 
       bodies = {
-        'hidden-text-page' => '<div class="paragraph"><p><span hidden>Invisible</span></p></div>',
-        'inline-svg-page' => '<div class="imageblock"><div class="content">' \
+        "hidden-text-page" => '<div class="paragraph"><p><span hidden>Invisible</span></p></div>',
+        "inline-svg-page" => '<div class="imageblock"><div class="content">' \
                               '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
                               '<rect width="10" height="10" fill="red"/></svg></div></div>',
-        'hidden-svg-page' => '<div class="imageblock"><div class="content">' \
+        "hidden-svg-page" => '<div class="imageblock"><div class="content">' \
                               '<svg hidden xmlns="http://www.w3.org/2000/svg" width="10" height="10">' \
                               '<rect width="10" height="10" fill="red"/></svg></div></div>',
       }
@@ -523,10 +523,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
       end
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/hidden-text-page/index.html renders no text in main-content-wrap',
-        'content: diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap',
+        "content: diagram_types/hidden-text-page/index.html renders no text in main-content-wrap",
+        "content: _diagram_types/hidden-text-page/index.html renders no text in main-content-wrap",
+        "content: diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap",
+        "content: _diagram_types/hidden-svg-page/index.html renders no text in main-content-wrap",
       )
     end
   end
@@ -536,8 +536,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       body = '<div class="paragraph lead"><p>hi</p></div>'
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html_with_body(body))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html_with_body(body))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html_with_body(body))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html_with_body(body))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -548,30 +548,30 @@ RSpec.describe Sirena::DocsSiteVerifier do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       body = '<div id="example-metadata" class="paragraph"><p>hi</p></div>'
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html_with_body(body))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html_with_body(body))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html_with_body(body))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html_with_body(body))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 15 — R15
-  it 'reports a page in the underscore tree missing every marker' do
+  it "reports a page in the underscore tree missing every marker" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(marker: 'not-a-real-marker'))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html(marker: "not-a-real-marker"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
 
   # Example 16 — R16
-  it 'does not report a non-diagram page missing every marker' do
+  it "does not report a non-diagram page missing every marker" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'pages/comparison/index.html', page_html(marker: 'not-a-real-marker'))
+      write_page(site_dir, "pages/comparison/index.html", page_html(marker: "not-a-real-marker"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -580,18 +580,18 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 17 — R17, "collected from every page". The unique missing
   # asset sits on the page that sorts LAST under Dir.glob's sorted order,
   # so a first-page-only implementation would miss it.
-  it 'reports a unique missing asset referenced only by the last-traversed non-diagram page' do
+  it "reports a unique missing asset referenced only by the last-traversed non-diagram page" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       # 'pages/zzz-last' sorts after 'diagram_types/...' and '_diagram_types/...'
       write_page(
-        site_dir, 'pages/zzz-last/index.html',
+        site_dir, "pages/zzz-last/index.html",
         page_html(extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/only-here.js" })
       )
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/only-here.js (referenced by pages/zzz-last/index.html) " \
-          'does not resolve to /assets/js/only-here.js',
+          "does not resolve to /assets/js/only-here.js",
       )
     end
   end
@@ -602,13 +602,13 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # happens to be walked last. A mutant that flips `||=` to `=` reports
   # the same count with the same asset name and stayed green here until
   # the referencing page itself was pinned.
-  it 'reports one missing asset referenced by three pages exactly once, attributed to the first' do
+  it "reports one missing asset referenced by three pages exactly once, attributed to the first" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       missing_script = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/shared-missing.js"
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { script: missing_script }))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(extra: { script: missing_script }))
-      write_page(site_dir, 'pages/other/index.html', page_html(extra: { script: missing_script }))
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(extra: { script: missing_script }))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html(extra: { script: missing_script }))
+      write_page(site_dir, "pages/other/index.html", page_html(extra: { script: missing_script }))
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures.length).to eq(1)
@@ -616,107 +616,107 @@ RSpec.describe Sirena::DocsSiteVerifier do
       # 'pages/...' under Dir.glob's default sorted order.
       expect(failures.first).to eq(
         "asset: #{missing_script} (referenced by _diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/js/shared-missing.js',
+          "does not resolve to /assets/js/shared-missing.js",
       )
     end
   end
 
   # Example 19 — R18. A supplied baseurl different from the config's is
   # what gets stripped.
-  it 'strips the supplied --baseurl, not the config baseurl, when resolving refs' do
+  it "strips the supplied --baseurl, not the config baseurl, when resolving refs" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(baseurl: '/other-base'))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html(baseurl: '/other-base'))
-      write_asset(site_dir, 'assets/css/just-the-docs-default.css')
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(baseurl: "/other-base"))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html(baseurl: "/other-base"))
+      write_asset(site_dir, "assets/css/just-the-docs-default.css")
 
-      failures = verifier_for(docs_dir, site_dir, baseurl: '/other-base').failures
+      failures = verifier_for(docs_dir, site_dir, baseurl: "/other-base").failures
       expect(failures).to eq([])
     end
   end
 
   # Example 20 — R19
-  it 'reports a missing asset referenced only by a link[rel=stylesheet]' do
+  it "reports a missing asset referenced only by a link[rel=stylesheet]" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
-        page_html(extra: { link: { rel: 'stylesheet', href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css" } })
+        site_dir, "diagram_types/mindmap/index.html",
+        page_html(extra: { link: { rel: "stylesheet", href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css" } })
       )
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/missing.css (referenced by diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/css/missing.css',
+          "does not resolve to /assets/css/missing.css",
       )
     end
   end
 
   # Example 21 — R20
-  it 'reports a missing asset referenced only by a script[src]' do
+  it "reports a missing asset referenced only by a script[src]" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
+        site_dir, "diagram_types/mindmap/index.html",
         page_html(extra: { script: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js" })
       )
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         "asset: #{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js (referenced by diagram_types/mindmap/index.html) " \
-          'does not resolve to /assets/js/missing.js',
+          "does not resolve to /assets/js/missing.js",
       )
     end
   end
 
   # Example 22 — R21, external
-  it 'does not report an external https stylesheet as missing' do
+  it "does not report an external https stylesheet as missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
-        page_html(extra: { link: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/x.css' } })
+        site_dir, "diagram_types/mindmap/index.html",
+        page_html(extra: { link: { rel: "stylesheet", href: "https://fonts.googleapis.com/x.css" } })
       )
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 23 — R21, relative
-  it 'does not report a relative stylesheet as missing' do
+  it "does not report a relative stylesheet as missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
-        page_html(extra: { link: { rel: 'stylesheet', href: 'assets/css/relative.css' } })
+        site_dir, "diagram_types/mindmap/index.html",
+        page_html(extra: { link: { rel: "stylesheet", href: "assets/css/relative.css" } })
       )
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 24 — R22
-  it 'does not report a protocol-relative stylesheet as missing' do
+  it "does not report a protocol-relative stylesheet as missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
-        page_html(extra: { link: { rel: 'stylesheet', href: '//cdn.example.com/x.css' } })
+        site_dir, "diagram_types/mindmap/index.html",
+        page_html(extra: { link: { rel: "stylesheet", href: "//cdn.example.com/x.css" } })
       )
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 25 — R23, anchor
-  it 'does not report a dangling site-absolute <a href> as a missing asset' do
+  it "does not report a dangling site-absolute <a href> as a missing asset" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_page(site_dir, 'diagram_types/mindmap/index.html', page_html(extra: { dangling_anchor: true }))
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", page_html(extra: { dangling_anchor: true }))
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -725,41 +725,41 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # Example 26 — R23, non-stylesheet <link>. Site-absolute, unlike a real
   # canonical link, so the site-absolute filter cannot mask this the way
   # it masks real rel="canonical" hrefs.
-  it 'does not report a dangling site-absolute link[rel=preload] as a missing asset' do
+  it "does not report a dangling site-absolute link[rel=preload] as a missing asset" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       write_page(
-        site_dir, 'diagram_types/mindmap/index.html',
-        page_html(extra: { link: { rel: 'preload', href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/does-not-exist.woff2" } })
+        site_dir, "diagram_types/mindmap/index.html",
+        page_html(extra: { link: { rel: "preload", href: "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/does-not-exist.woff2" } })
       )
-      write_page(site_dir, '_diagram_types/mindmap/index.html', page_html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", page_html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
   end
 
   # Example 27 — R24
-  it 'requires the search index when search_enabled is true, and not when false' do
+  it "requires the search index when search_enabled is true, and not when false" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.rm(File.join(site_dir, 'assets/js/search-data.json'))
+      FileUtils.rm(File.join(site_dir, "assets/js/search-data.json"))
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
         'asset: search index "assets/js/search-data.json" missing',
       )
 
-      docs_dir2, site_dir2 = build_valid_site(File.join(tmp, 'no-search'), config_overrides: { 'search_enabled' => false })
-      FileUtils.rm(File.join(site_dir2, 'assets/js/search-data.json'))
+      docs_dir2, site_dir2 = build_valid_site(File.join(tmp, "no-search"), config_overrides: { "search_enabled" => false })
+      FileUtils.rm(File.join(site_dir2, "assets/js/search-data.json"))
 
       expect(verifier_for(docs_dir2, site_dir2).failures).to eq([])
     end
   end
 
   # Example 28 — R1
-  it 'refuses, naming the template found, when the collection permalink differs' do
+  it "refuses, naming the template found, when the collection permalink differs" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(
-        tmp, config_overrides: { 'collections' => { 'diagram_types' => { 'permalink' => '/:path/' } } }
+        tmp, config_overrides: { "collections" => { "diagram_types" => { "permalink" => "/:path/" } } }
       )
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
@@ -769,12 +769,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   end
 
   # Example 29 — R2, empty string.
-  it 'refuses when theme: is empty' do
+  it "refuses when theme: is empty" do
     Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => '' })
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { "theme" => "" })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: theme is absent or empty',
+        "config: theme is absent or empty",
       )
     end
   end
@@ -783,12 +783,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # string. `theme.nil? || theme.to_s.empty?` collapses to `theme == ''`
   # and stays true for '' -- but a config with no `theme:` key at all
   # (Psych parses that as nil) is only caught by the `.nil?` half.
-  it 'refuses when theme: is not set at all' do
+  it "refuses when theme: is not set at all" do
     Dir.mktmpdir do |tmp|
-      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { 'theme' => nil })
+      docs_dir, site_dir = build_valid_site(tmp, config_overrides: { "theme" => nil })
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'config: theme is absent or empty',
+        "config: theme is absent or empty",
       )
     end
   end
@@ -801,7 +801,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-1a. A commented-out stylesheet link must not satisfy A2's
   # stylesheet clause -- text-matching without stripping comments made a
   # dead link indistinguishable from a live one.
-  it 'reports a page whose only theme stylesheet link is inside an HTML comment' do
+  it "reports a page whose only theme stylesheet link is inside an HTML comment" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
@@ -809,8 +809,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
         <html><head><!-- <link rel="stylesheet" href="#{href}"> --></head>
         <body><div class="main-content-wrap"><div class="paragraph"><p>hi</p></div></div></body></html>
       HTML
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
@@ -822,12 +822,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-1b. `data-class="main-content-wrap"` is a different attribute
   # from `class="main-content-wrap"` -- a `\b`-based regex cannot tell
   # them apart because `-` is a non-word character.
-  it 'reports a page whose layout marker sits in a data-class attribute, not class' do
+  it "reports a page whose layout marker sits in a data-class attribute, not class" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html.sub('class="main-content-wrap"', 'data-class="main-content-wrap"')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
@@ -837,22 +837,22 @@ RSpec.describe Sirena::DocsSiteVerifier do
   end
 
   # HIGH-1c. The sole content marker, commented out, must not satisfy A3.
-  it 'reports a diagram page whose only block marker is inside an HTML comment' do
+  it "reports a diagram page whose only block marker is inside an HTML comment" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body('<!-- <div class="paragraph"><p>hi</p></div> -->')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       # FOUR failures, not two. A marker commented out of the page renders
       # nothing, so the page fails on both halves -- missing marker AND no
       # rendered text. The second half is what catches a page that KEEPS its
       # marker and still shows nothing, which the marker check alone passed.
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+        "content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+        "content: diagram_types/mindmap/index.html renders no text in main-content-wrap",
+        "content: _diagram_types/mindmap/index.html renders no text in main-content-wrap",
       )
     end
   end
@@ -860,16 +860,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-1d. Marker presence is a PROXY for "this page has content".
   # A page can carry the marker and render nothing at all, which is what
   # the marker check alone passed for the whole life of this verifier.
-  it 'reports a diagram page carrying a block marker that renders no text' do
+  it "reports a diagram page carrying a block marker that renders no text" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body('<div class="paragraph"></div>')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        "content: diagram_types/mindmap/index.html renders no text in main-content-wrap",
+        "content: _diagram_types/mindmap/index.html renders no text in main-content-wrap",
       )
     end
   end
@@ -885,8 +885,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # scanner and a real parser pass it. That version of this spec stayed
   # green against the reverted file, which is how it was caught.
   {
-    'an attribute value' => '<div data-x="</template>"></div>',
-    'a script string' => '<script>var s = "</template>";</script>',
+    "an attribute value" => '<div data-x="</template>"></div>',
+    "a script string" => '<script>var s = "</template>";</script>',
   }.each do |placement, trap|
     it "does not read template content as live when #{placement} holds a closing tag" do
       Dir.mktmpdir do |tmp|
@@ -894,14 +894,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
         html = page_html_with_body(
           %(<template>#{trap}<div class="paragraph">Inert</div></template>),
         )
-        write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-        write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+        write_page(site_dir, "diagram_types/mindmap/index.html", html)
+        write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
         expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-          'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-          'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-          'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-          'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
+          "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+          "content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+          "content: diagram_types/mindmap/index.html renders no text in main-content-wrap",
+          "content: _diagram_types/mindmap/index.html renders no text in main-content-wrap",
         )
       end
     end
@@ -912,18 +912,18 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # that content is genuinely inert and the page really does render nothing.
   # The old scanner's `scan_until` found no closing tag, left the position
   # unmoved, and carried on reading the swallowed markup as live.
-  it 'treats markup after an unclosed template as inert, not live' do
+  it "treats markup after an unclosed template as inert, not live" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body('<template><div class="paragraph">Swallowed</div>')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: diagram_types/mindmap/index.html renders no text in main-content-wrap',
-        'content: _diagram_types/mindmap/index.html renders no text in main-content-wrap',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+        "content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+        "content: diagram_types/mindmap/index.html renders no text in main-content-wrap",
+        "content: _diagram_types/mindmap/index.html renders no text in main-content-wrap",
       )
     end
   end
@@ -932,16 +932,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # reported, even though the SAME relative path happens to exist
   # physically in `_site` (which carries no baseurl directory at all) --
   # under a real deployment at that baseurl, the un-prefixed URL 404s.
-  it 'reports a stylesheet URL missing the required baseurl prefix' do
+  it "reports a stylesheet URL missing the required baseurl prefix" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html.sub(%(href="#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets), 'href="/assets')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        'asset: /assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
+        "asset: /assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) " \
           'does not begin with baseurl "/sirena"',
       )
     end
@@ -950,16 +950,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-2b. `/sirenax/...` is a different path than `/sirena/...` --
   # `start_with?(baseurl)` alone would strip the substring and wrongly
   # resolve it. The boundary must be segment-aware.
-  it 'reports a stylesheet URL whose path merely starts with the baseurl string' do
+  it "reports a stylesheet URL whose path merely starts with the baseurl string" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html.sub(%(href="#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets), 'href="/sirenax/assets')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
-        'asset: /sirenax/assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) ' \
+        "asset: /sirenax/assets/css/just-the-docs-default.css (referenced by _diagram_types/mindmap/index.html) " \
           'does not begin with baseurl "/sirena"',
       )
     end
@@ -968,12 +968,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # MEDIUM-2. A query string is not part of the file path a server looks
   # up -- `?v=1` on an otherwise-valid asset URL must not turn it into a
   # false failure.
-  it 'does not report a valid asset carrying a cache-busting query string as missing' do
+  it "does not report a valid asset carrying a cache-busting query string as missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html.sub('.css">', '.css?v=1">')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -982,12 +982,12 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # MEDIUM-2, the other half. The same comment (scripts/verify_docs_site.rb)
   # names a fragment alongside a query string; only the query string had a
   # spec until this one.
-  it 'does not report a valid asset carrying a URL fragment as missing' do
+  it "does not report a valid asset carrying a URL fragment as missing" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html.sub('.css">', '.css#section">')
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -1004,7 +1004,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # renders it and nothing here clones it in -- a stylesheet link, layout
   # marker and content marker that exist only inside a <template> have not
   # actually shipped.
-  it 'reports a page whose stylesheet, layout marker and content marker exist only inside a <template>' do
+  it "reports a page whose stylesheet, layout marker and content marker exist only inside a <template>" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
@@ -1017,14 +1017,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
           </template>
         </body></html>
       HTML
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -1032,13 +1032,13 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # HIGH-3b. Attribute parsing is grammar-based, not whitespace-shaped --
   # `src = "…"` (spaced `=`) is exactly as much a `src` attribute as
   # `src="…"`, so a missing target must still be reported.
-  it 'reports a missing script asset whose src attribute has whitespace around the equals sign' do
+  it "reports a missing script asset whose src attribute has whitespace around the equals sign" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       missing = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/js/missing.js"
-      html = page_html.sub('</head>', %(<script src = "#{missing}"></script></head>))
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      html = page_html.sub("</head>", %(<script src = "#{missing}"></script></head>))
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
@@ -1050,14 +1050,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # MEDIUM-3a. `File.exist?` is true for a directory. A stylesheet href
   # that resolves to a directory sharing the asset's name is not a file a
   # server can return, so it must be reported the same as a missing one.
-  it 'reports a stylesheet asset that resolves to a directory, not a file' do
+  it "reports a stylesheet asset that resolves to a directory, not a file" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      FileUtils.mkdir_p(File.join(site_dir, 'assets/css/phantom.css'))
+      FileUtils.mkdir_p(File.join(site_dir, "assets/css/phantom.css"))
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/phantom.css"
-      html = page_html.sub('</head>', %(<link rel="stylesheet" href="#{href}"></head>))
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      html = page_html.sub("</head>", %(<link rel="stylesheet" href="#{href}"></head>))
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
@@ -1069,14 +1069,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # MEDIUM-3b. `../` in a ref can walk the resolved path outside `_site`
   # entirely, onto a real file that happens to sit next to it in `docs/`.
   # That file existing is not the asset existing.
-  it 'reports a stylesheet asset whose ../ reference resolves outside _site' do
+  it "reports a stylesheet asset whose ../ reference resolves outside _site" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      File.write(File.join(docs_dir, 'outside.css'), '/* not part of the deployed site */')
+      File.write(File.join(docs_dir, "outside.css"), "/* not part of the deployed site */")
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/../outside.css"
-      html = page_html.sub('</head>', %(<link rel="stylesheet" href="#{href}"></head>))
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      html = page_html.sub("</head>", %(<link rel="stylesheet" href="#{href}"></head>))
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
@@ -1099,7 +1099,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # on ordinary valid HTML regardless of anything in this file. Keep this
   # spec; it becomes the only check that catches a regression back to a
   # hand-rolled/backtracking tokenizer.
-  it 'does not hang tokenizing a page whose only remaining markup after the last tag is closing tags' do
+  it "does not hang tokenizing a page whose only remaining markup after the last tag is closing tags" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
 
@@ -1119,7 +1119,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # unconditionally, which closes only the INNER template here -- the
   # stylesheet link, layout marker and content marker that follow it are
   # still inside the outer template and must stay inert.
-  it 'reports a page whose live-looking markup sits inside a template nested in another template' do
+  it "reports a page whose live-looking markup sits inside a template nested in another template" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
@@ -1133,14 +1133,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
           </template>
         </body></html>
       HTML
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -1150,7 +1150,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # parsed into real elements, so a stylesheet link, layout marker or
   # content marker living only inside a `<textarea>` has not actually
   # shipped, the same as script/style content.
-  it 'reports a page whose live-looking markup sits only inside a textarea' do
+  it "reports a page whose live-looking markup sits only inside a textarea" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
@@ -1163,14 +1163,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
           </textarea>
         </body></html>
       HTML
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       failures = verifier_for(docs_dir, site_dir).failures
       expect(failures).to include(
         'layout: diagram_types/mindmap/index.html missing layout marker "main-content-wrap"',
         'layout: diagram_types/mindmap/index.html links no stylesheet naming theme "just-the-docs"',
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -1181,10 +1181,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `.exist?` is true for a directory, so a directory happening to sit at
   # `assets/js/search-data.json` satisfied the requirement without a real
   # search index ever being built.
-  it 'reports the search index missing when a directory sits at its path instead of a file' do
+  it "reports the search index missing when a directory sits at its path instead of a file" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      search_index = File.join(site_dir, 'assets/js/search-data.json')
+      search_index = File.join(site_dir, "assets/js/search-data.json")
       FileUtils.rm(search_index)
       FileUtils.mkdir_p(search_index)
 
@@ -1214,7 +1214,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # otherwise-empty page): rendered `<main>` text was "", but the verifier's
   # `.main-content-wrap`-scoped text was "Back to top This site uses Just
   # the Docs, a documentation theme for Jekyll."
-  it 'reports empty content even when the theme footer pads .main-content-wrap with visible text' do
+  it "reports empty content even when the theme footer pads .main-content-wrap with visible text" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       href = "#{DOCS_SITE_VERIFIER_DEFAULT_BASEURL}/assets/css/#{DOCS_SITE_VERIFIER_DEFAULT_THEME}-default.css"
@@ -1232,8 +1232,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
           </div>
         </body></html>
       HTML
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       # MEDIUM-9, found by Codex. The old message always named
       # `LAYOUT_BODY_MARKER`, which was false here: `rendered_text` reads
@@ -1242,8 +1242,8 @@ RSpec.describe Sirena::DocsSiteVerifier do
       # -- the wrapper genuinely renders text (the footer) and saying so
       # would contradict the fix this spec exists to pin.
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html renders no text in main',
-        'content: _diagram_types/mindmap/index.html renders no text in main',
+        "content: diagram_types/mindmap/index.html renders no text in main",
+        "content: _diagram_types/mindmap/index.html renders no text in main",
       )
     end
   end
@@ -1259,10 +1259,10 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # "diagram_types", "permalink")` raises
   # "TypeError: no implicit conversion of String into Integer". The
   # contract of `failures` is an array of strings, never a raised error.
-  it 'reports a config failure instead of raising when collections uses the array shorthand' do
+  it "reports a config failure instead of raising when collections uses the array shorthand" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
-      write_config(docs_dir, 'collections' => ['diagram_types'])
+      write_config(docs_dir, "collections" => ["diagram_types"])
 
       expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
 
@@ -1287,14 +1287,14 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # (verified: a `<!-- comment -->` sibling of a live `<div>` never
   # contributes to `.text`, and never shows up as a `document.css` match),
   # so the pre-strip only ever subtracts content it did not need to.
-  it 'does not delete real content between a false comment-open in a script and a later real comment' do
+  it "does not delete real content between a false comment-open in a script and a later real comment" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body(
         %(<script>const marker = "<!--";</script><div class="paragraph"><p>hi</p></div><!-- trailing comment -->),
       )
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])
     end
@@ -1308,16 +1308,16 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # check even though a `<template>`'s content never ships. The visible
   # fallback text elsewhere on the page carries no marker at all, so the
   # only Asciidoctor marker on the page is the inert one.
-  it 'reports no recognized marker when the only marker class sits on a skipped element itself' do
+  it "reports no recognized marker when the only marker class sits on a skipped element itself" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       html = page_html_with_body(%(<template class="paragraph"></template><p>Visible fallback text</p>))
-      write_page(site_dir, 'diagram_types/mindmap/index.html', html)
-      write_page(site_dir, '_diagram_types/mindmap/index.html', html)
+      write_page(site_dir, "diagram_types/mindmap/index.html", html)
+      write_page(site_dir, "_diagram_types/mindmap/index.html", html)
 
       expect(verifier_for(docs_dir, site_dir).failures).to contain_exactly(
-        'content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
-        'content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker',
+        "content: diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
+        "content: _diagram_types/mindmap/index.html has no recognized Asciidoctor block marker",
       )
     end
   end
@@ -1334,7 +1334,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
   # `{"permalink"=>"/:collection/:path/"}` makes plain
   # `YAML.safe_load_file` raise `Psych::AliasesNotEnabled`. A config Jekyll
   # itself builds successfully must not crash this verifier.
-  it 'reads a real _config.yml that uses a YAML anchor/alias for collection options' do
+  it "reads a real _config.yml that uses a YAML anchor/alias for collection options" do
     Dir.mktmpdir do |tmp|
       docs_dir, site_dir = build_valid_site(tmp)
       config_yaml = <<~YAML
@@ -1349,7 +1349,7 @@ RSpec.describe Sirena::DocsSiteVerifier do
           diagram_types:
             <<: *defaults
       YAML
-      File.write(File.join(docs_dir, '_config.yml'), config_yaml)
+      File.write(File.join(docs_dir, "_config.yml"), config_yaml)
 
       expect { verifier_for(docs_dir, site_dir).failures }.not_to raise_error
       expect(verifier_for(docs_dir, site_dir).failures).to eq([])

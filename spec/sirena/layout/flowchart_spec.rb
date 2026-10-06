@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
 module LayoutFlowchartSpecHelpers
   def node_width(theme_name)
@@ -23,8 +23,8 @@ module LayoutFlowchartSpecHelpers
         font_size_normal: font_size_normal,
       ),
     )
-    diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
-      d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+    diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+      d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
     end
     themed_transform.to_graph(diagram)[:children].first[:labels].first[:width]
   end
@@ -35,80 +35,80 @@ RSpec.describe Sirena::Layout::Flowchart do
 
   let(:transform) { described_class.new }
 
-  describe '#to_graph' do
+  describe "#to_graph" do
     let(:diagram) do
-      Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+      Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
         d.nodes << Sirena::Diagram::FlowchartNode.new(
-          id: 'A',
-          label: 'Start',
-          shape: 'rect',
+          id: "A",
+          label: "Start",
+          shape: "rect",
         )
         d.nodes << Sirena::Diagram::FlowchartNode.new(
-          id: 'B',
-          label: 'End',
-          shape: 'rect',
+          id: "B",
+          label: "End",
+          shape: "rect",
         )
         d.edges << Sirena::Diagram::FlowchartEdge.new(
-          source_id: 'A',
-          target_id: 'B',
-          arrow_type: 'arrow',
+          source_id: "A",
+          target_id: "B",
+          arrow_type: "arrow",
         )
       end
     end
 
-    it 'converts diagram to graph structure' do
+    it "converts diagram to graph structure" do
       graph = transform.to_graph(diagram)
 
       expect(graph).to be_a(Hash)
-      expect(graph[:id]).to eq('flowchart')
+      expect(graph[:id]).to eq("flowchart")
       expect(graph[:children]).to be_an(Array)
       expect(graph[:edges]).to be_an(Array)
       expect(graph[:layoutOptions]).to be_a(Hash)
     end
 
-    it 'creates nodes with dimensions' do
+    it "creates nodes with dimensions" do
       graph = transform.to_graph(diagram)
 
       expect(graph[:children].length).to eq(2)
 
-      node_a = graph[:children].find { |n| n[:id] == 'A' }
+      node_a = graph[:children].find { |n| n[:id] == "A" }
       expect(node_a).not_to be_nil
       expect(node_a[:width]).to be > 0
       expect(node_a[:height]).to be > 0
       expect(node_a[:labels]).to be_an(Array)
-      expect(node_a[:labels].first[:text]).to eq('Start')
+      expect(node_a[:labels].first[:text]).to eq("Start")
     end
 
     # `assemble` attaches nested clusters before member nodes, and the
     # order is what the grid slices three to a row: run `place_nodes`
     # first instead and the inner box drops from [20, 54] to the second
     # row, taking the outer box from 308 units tall to 398.
-    it 'lists a nested cluster before the nodes beside it' do
+    it "lists a nested cluster before the nodes beside it" do
       source = "flowchart TD\nsubgraph outer\nsubgraph inner\ni1\nend\n" \
                "n1\nn2\nn3\nend\n"
       model = Sirena::Parser::Flowchart.new.parse(source)
 
       outer = transform.to_graph(model)[:children]
-        .find { |child| child[:id] == 'outer' }
+        .find { |child| child[:id] == "outer" }
 
       expect(outer[:children].map { |child| child[:id] })
         .to eq(%w[inner n1 n2 n3])
     end
 
-    it 'emits every node and subgraph when valid model ids repeat' do
-      model = Sirena::Diagram::Flowchart.new(direction: 'TD')
+    it "emits every node and subgraph when valid model ids repeat" do
+      model = Sirena::Diagram::Flowchart.new(direction: "TD")
       model.nodes.push(
-        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'First'),
-        Sirena::Diagram::FlowchartNode.new(id: 'same', label: 'Second'),
-        Sirena::Diagram::FlowchartNode.new(id: 'one', label: 'One'),
-        Sirena::Diagram::FlowchartNode.new(id: 'two', label: 'Two'),
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "First"),
+        Sirena::Diagram::FlowchartNode.new(id: "same", label: "Second"),
+        Sirena::Diagram::FlowchartNode.new(id: "one", label: "One"),
+        Sirena::Diagram::FlowchartNode.new(id: "two", label: "Two"),
       )
       model.subgraphs.push(
         Sirena::Diagram::FlowchartSubgraph.new(
-          id: 'group', declared_title: 'First group', node_ids: %w[one],
+          id: "group", declared_title: "First group", node_ids: %w[one],
         ),
         Sirena::Diagram::FlowchartSubgraph.new(
-          id: 'group', declared_title: 'Second group', node_ids: %w[two],
+          id: "group", declared_title: "Second group", node_ids: %w[two],
         ),
       )
 
@@ -123,38 +123,38 @@ RSpec.describe Sirena::Layout::Flowchart do
           [title, held]
         end
 
-      expect(labels).to eq(['First', 'Second', 'First group', 'Second group'])
-      expect(members).to eq('First group' => %w[One],
-                            'Second group' => %w[Two])
+      expect(labels).to eq(["First", "Second", "First group", "Second group"])
+      expect(members).to eq("First group" => %w[One],
+                            "Second group" => %w[Two])
     end
 
-    it 'creates edges with metadata' do
+    it "creates edges with metadata" do
       graph = transform.to_graph(diagram)
 
       expect(graph[:edges].length).to eq(1)
 
       edge = graph[:edges].first
-      expect(edge[:sources]).to eq(['A'])
-      expect(edge[:targets]).to eq(['B'])
-      expect(edge[:metadata][:arrow_type]).to eq('arrow')
+      expect(edge[:sources]).to eq(["A"])
+      expect(edge[:targets]).to eq(["B"])
+      expect(edge[:metadata][:arrow_type]).to eq("arrow")
     end
 
-    it 'sets layout options based on direction' do
+    it "sets layout options based on direction" do
       graph = transform.to_graph(diagram)
 
       options = graph[:layoutOptions]
-      expect(options['elk.algorithm']).to eq('layered')
-      expect(options['elk.direction']).to eq('DOWN')
+      expect(options["elk.algorithm"]).to eq("layered")
+      expect(options["elk.direction"]).to eq("DOWN")
     end
 
-    it 'converts LR direction to RIGHT layout' do
-      diagram.direction = 'LR'
+    it "converts LR direction to RIGHT layout" do
+      diagram.direction = "LR"
       graph = transform.to_graph(diagram)
 
-      expect(graph[:layoutOptions]['elk.direction']).to eq('RIGHT')
+      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
     end
 
-    it 'raises error for invalid diagram' do
+    it "raises error for invalid diagram" do
       # A default Flowchart.new (0 nodes, 0 subgraphs) is a valid empty
       # diagram now -- nodes: nil is the shape #valid? still refuses.
       invalid_diagram = Sirena::Diagram::Flowchart.new(nodes: nil)
@@ -168,18 +168,18 @@ RSpec.describe Sirena::Layout::Flowchart do
     # draws with, not a hardcoded constant -- otherwise a theme with a
     # larger font_size_normal (high_contrast: 16.0 vs default: 14.0) draws
     # text wider than the box sirena measured for it.
-    context 'with a theme injected for sizing' do
+    context "with a theme injected for sizing" do
       let(:diagram) do
-        Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
+        Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
           d.nodes << Sirena::Diagram::FlowchartNode.new(
-            id: 'A',
-            label: 'Start',
-            shape: 'rect',
+            id: "A",
+            label: "Start",
+            shape: "rect",
           )
         end
       end
 
-      it 'measures a wider node under a theme with a larger font_size_normal' do
+      it "measures a wider node under a theme with a larger font_size_normal" do
         expect(node_width(:high_contrast)).to be > node_width(:default)
       end
     end
@@ -188,19 +188,19 @@ RSpec.describe Sirena::Layout::Flowchart do
     # (renderer/flowchart.rb#edge_label_font_size), not font_size_normal --
     # so the layout must reserve room against the same font, or an edge
     # label's box is sized for text the renderer never draws.
-    context 'with an edge label and a theme whose small and normal sizes differ' do
+    context "with an edge label and a theme whose small and normal sizes differ" do
       let(:diagram) do
-        Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'B', label: 'B')
+        Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "B", label: "B")
           d.edges << Sirena::Diagram::FlowchartEdge.new(
-            source_id: 'A', target_id: 'B', arrow_type: 'arrow',
-            label: 'edge label text'
+            source_id: "A", target_id: "B", arrow_type: "arrow",
+            label: "edge label text"
           )
         end
       end
 
-      it 'sizes the edge label at font_size_small, not font_size_normal' do
+      it "sizes the edge label at font_size_small, not font_size_normal" do
         small_typography = Sirena::Theme::Typography.new(
           font_size_small: 12.0, font_size_normal: 30.0,
         )
@@ -218,10 +218,10 @@ RSpec.describe Sirena::Layout::Flowchart do
     # no typography or no font_size_normal -- so the layout's own fallback
     # has to match 16.0, not a different value, or this exact gap D10 fixes
     # for the has-typography case reopens for the no-typography one.
-    context 'with a theme that has no typography at all' do
-      it 'measures node text at the SVG render-side default of 16.0' do
-        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
+    context "with a theme that has no typography at all" do
+      it "measures node text at the SVG render-side default of 16.0" do
+        diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
         end
 
         no_typography = described_class.new
@@ -243,20 +243,20 @@ RSpec.describe Sirena::Layout::Flowchart do
     # negative one silently produces a smaller-than-fallback label_width
     # (padding alone can mask it in the padded node :width, so this checks
     # the unpadded label measurement directly).
-    context 'with a theme carrying an invalid font_size_normal' do
-      it 'falls back to DEFAULT_FONT_SIZE for a negative value' do
+    context "with a theme carrying an invalid font_size_normal" do
+      it "falls back to DEFAULT_FONT_SIZE for a negative value" do
         default_label_width = label_width_for(nil)
 
         expect(label_width_for(-50.0)).to eq(default_label_width)
       end
 
-      it 'falls back to DEFAULT_FONT_SIZE for a zero value' do
+      it "falls back to DEFAULT_FONT_SIZE for a zero value" do
         default_label_width = label_width_for(nil)
 
         expect(label_width_for(0)).to eq(default_label_width)
       end
 
-      it 'does not reach a fuller render for a NaN value' do
+      it "does not reach a fuller render for a NaN value" do
         source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
 
         expect do
@@ -266,7 +266,7 @@ RSpec.describe Sirena::Layout::Flowchart do
         end.not_to raise_error
       end
 
-      it 'does not reach a fuller render for an Infinity value' do
+      it "does not reach a fuller render for an Infinity value" do
         source = "flowchart TD\nA[Start]\nB[End]\nA --> B\n"
 
         expect do
@@ -284,15 +284,15 @@ RSpec.describe Sirena::Layout::Flowchart do
     # already tolerates a nil theme via safe navigation
     # (renderer/base.rb#theme_typography); layout_font_size and
     # edge_label_font_size must match that, not dereference theme directly.
-    context 'with no theme registered at all' do
-      it 'still measures node and edge-label text instead of raising' do
+    context "with no theme registered at all" do
+      it "still measures node and edge-label text instead of raising" do
         Sirena::Theme::Registry.clear
-        diagram = Sirena::Diagram::Flowchart.new(direction: 'TD').tap do |d|
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'A', label: 'A')
-          d.nodes << Sirena::Diagram::FlowchartNode.new(id: 'B', label: 'B')
+        diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
+          d.nodes << Sirena::Diagram::FlowchartNode.new(id: "B", label: "B")
           d.edges << Sirena::Diagram::FlowchartEdge.new(
-            source_id: 'A', target_id: 'B', arrow_type: 'arrow',
-            label: 'edge label text'
+            source_id: "A", target_id: "B", arrow_type: "arrow",
+            label: "edge label text"
           )
         end
 

@@ -65,7 +65,7 @@ RSpec.describe "tasks/benchmark.rake" do
 
   it "fails the same way this bug used to, if the require is removed (mutation control)" do
     source = File.read(File.join(repo_root, "tasks/benchmark.rake"))
-    without_require = source.sub("require 'sirena'\n", "")
+    without_require = source.sub("require \"sirena\"\n", "")
     expect(without_require).not_to eq(source) # sanity: the substitution actually matched
 
     Dir.mktmpdir do |dir|

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/er_diagram'
+require_relative "base"
+require_relative "../diagram/er_diagram"
 
 module Sirena
   module Layout
@@ -37,7 +37,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'er_diagram',
+          id: diagram.id || "er_diagram",
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
           class_defs: diagram.class_defs,
@@ -174,7 +174,7 @@ module Sirena
         # the entity box computed here.
         parts << attribute.note if attribute.note && !attribute.note.empty?
 
-        parts.join(' ')
+        parts.join(" ")
       end
 
       def attribute_to_hash(attribute)
@@ -199,9 +199,9 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 50,
           ElkOptions::EDGE_EDGE_SPACING => 30,
           # NETWORK_SIMPLEX for better entity relationship layout
-          ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
+          ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
+          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
         )
       end
     end

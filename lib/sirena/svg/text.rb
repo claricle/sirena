@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'element'
-require_relative 'numbers'
-require_relative 'tspan'
+require "lutaml/model"
+require_relative "element"
+require_relative "numbers"
+require_relative "tspan"
 
 module Sirena
   module Svg
@@ -35,12 +35,12 @@ module Sirena
       # a foreign document (`2em`) has no parent to resolve against and
       # reads as the bare number.
       BASELINE_SHIFTS = {
-        'middle' => 0.35,
-        'central' => 0.35,
-        'hanging' => 0.8,
-        'text-before-edge' => 0.8,
-        'text-after-edge' => -0.2,
-        'ideographic' => -0.2,
+        "middle" => 0.35,
+        "central" => 0.35,
+        "hanging" => 0.8,
+        "text-before-edge" => 0.8,
+        "text-after-edge" => -0.2,
+        "ideographic" => -0.2,
       }.freeze
 
       # The CSS initial font-size, used when a Text carries a baseline
@@ -56,13 +56,13 @@ module Sirena
       # `x` and `y` are emitted from computed readers — see #offset_x and
       # #baseline_y.
       ATTRIBUTE_PAIRS = [
-        ['x', :offset_x],
-        ['y', :baseline_y],
-        ['text-anchor', :text_anchor],
-        ['font-family', :font_family],
-        ['font-size', :font_size],
-        ['font-weight', :font_weight],
-        ['font-style', :font_style],
+        ["x", :offset_x],
+        ["y", :baseline_y],
+        ["text-anchor", :text_anchor],
+        ["font-family", :font_family],
+        ["font-size", :font_size],
+        ["font-weight", :font_weight],
+        ["font-style", :font_style],
       ].map(&:freeze).freeze
       private_constant :ATTRIBUTE_PAIRS
 

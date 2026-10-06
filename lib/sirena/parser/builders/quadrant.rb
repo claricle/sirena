@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/quadrant'
+require_relative "../../diagram/quadrant"
 
 module Sirena
   module Parser
@@ -72,13 +72,13 @@ module Sirena
           label_text = extract_text(item[:quadrant_label])
 
           case quadrant_num
-          when '1'
+          when "1"
             diagram.quadrant_1_label = label_text
-          when '2'
+          when "2"
             diagram.quadrant_2_label = label_text
-          when '3'
+          when "3"
             diagram.quadrant_3_label = label_text
-          when '4'
+          when "4"
             diagram.quadrant_4_label = label_text
           end
         end

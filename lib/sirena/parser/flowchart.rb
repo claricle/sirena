@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/flowchart'
-require_relative 'builders/flowchart'
-require_relative '../diagram/flowchart'
+require_relative "base"
+require_relative "grammars/flowchart"
+require_relative "builders/flowchart"
+require_relative "../diagram/flowchart"
 
 module Sirena
   module Parser
@@ -56,7 +56,7 @@ module Sirena
       def parse_tree(source)
         parse_with_grammar(Grammars::Flowchart.new, source)
       rescue SystemStackError
-        raise ParseError, 'Diagram nests too deeply to parse.'
+        raise ParseError, "Diagram nests too deeply to parse."
       end
 
       # mermaid folds a CRLF and a lone CR into a newline before it reads

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -36,7 +36,7 @@ module Sirena
         # `stateDiagram-v2 LR` as a state called LR, not as a left-to-right
         # diagram. Direction is a statement of its own.
         rule(:header) do
-          (str('stateDiagram-v2') | str('stateDiagram')).as(:header)
+          (str("stateDiagram-v2") | str("stateDiagram")).as(:header)
         end
 
         rule(:statements) do
@@ -71,12 +71,12 @@ module Sirena
         # keyword lets the transform drop it like any declaration without an
         # id, while `reserved_name` keeps it out of state and transition ids.
         rule(:empty_state_statement) do
-          str('state').as(:keyword) >> line_end
+          str("state").as(:keyword) >> line_end
         end
 
         # State declaration with description, marker, or composite body
         rule(:state_declaration) do
-          str('state').as(:keyword) >> spaces >>
+          str("state").as(:keyword) >> spaces >>
             (
               marker_declaration |
               state_target >> space? >>
@@ -109,7 +109,7 @@ module Sirena
         rule(:state_target) do
           (
             str('""').absent? >> state_label_string.as(:state_label) >>
-              spaces >> str('as') >> spaces >>
+              spaces >> str("as") >> spaces >>
               (quoted_state_id | state_name).as(:state_id)
           ) |
             state_id.as(:state_id)
@@ -126,12 +126,12 @@ module Sirena
         rule(:quoted_state_id) do
           (
             str('"') >>
-              (str('\\') >> any | str('"').absent? >> any).repeat >>
+              (str("\\") >> any | str('"').absent? >> any).repeat >>
               str('"')
           ) |
             (
               str("'") >>
-                (str('\\') >> any | str("'").absent? >> any).repeat >>
+                (str("\\") >> any | str("'").absent? >> any).repeat >>
                 str("'")
             )
         end
@@ -140,18 +140,18 @@ module Sirena
         # RL here and nothing else: `direction TD` draws two states called
         # `direction` and `TD`, which this grammar has no shape for.
         rule(:direction_statement) do
-          str('direction') >> spaces >> direction.as(:direction) >> line_end
+          str("direction") >> spaces >> direction.as(:direction) >> line_end
         end
 
         rule(:direction) do
-          (str('TB') | str('BT') | str('LR') | str('RL')).as(:dir_value)
+          (str("TB") | str("BT") | str("LR") | str("RL")).as(:dir_value)
         end
 
         # Styling directive, parsed and dropped the way the flowchart
         # grammar treats `style`. mmdc 11.12.0 takes a bare `style A` with
         # no properties at all, so the property list is optional.
         rule(:style_statement) do
-          str('style').as(:style_keyword) >> spaces >>
+          str("style").as(:style_keyword) >> spaces >>
             style_targets.as(:style_targets) >>
             (spaces >> style_properties.as(:style_props)).maybe >>
             line_end
@@ -202,9 +202,9 @@ module Sirena
         end
 
         rule(:note_head) do
-          str('note').as(:note_keyword) >> spaces >>
+          str("note").as(:note_keyword) >> spaces >>
             note_position.as(:position) >> space >>
-            str('of') >> spaces >>
+            str("of") >> spaces >>
             state_id.as(:note_target) >> space?
         end
 
@@ -220,15 +220,15 @@ module Sirena
         # `end note` closes the note only when the line ends there. mmdc
         # 11.12.0 keeps `say end notes here` as note text, and keeps a body
         # line ending in `;` or holding a `%%` comment.
-        rule(:note_block_end) { space? >> str('end note') >> line_end }
+        rule(:note_block_end) { space? >> str("end note") >> line_end }
 
         # A floating note names itself instead of a target. mmdc 11.12.0
         # parses it, draws nothing for it, and takes a non-empty
         # double-quoted text only.
         rule(:floating_note) do
-          str('note').as(:note_keyword) >> spaces >>
+          str("note").as(:note_keyword) >> spaces >>
             str('""').absent? >> quoted_string.as(:note_text) >> spaces >>
-            str('as') >> spaces >>
+            str("as") >> spaces >>
             state_id.as(:note_id) >> line_end
         end
 
@@ -280,7 +280,7 @@ module Sirena
           RESERVED_WORDS.sort_by { |word| -word.length }
             .map { |word| word_ci(word) }
             .reduce(:|) >>
-            match['a-zA-Z0-9_'].absent?
+            match["a-zA-Z0-9_"].absent?
         end
 
         # Case matters and this bundle of parslet has no `stri`. The house
@@ -297,7 +297,7 @@ module Sirena
         # `[a-zA-Z_][a-zA-Z0-9_]*` and so refuses a leading digit: mmdc
         # 11.12.0 draws `55` as a state called 55.
         rule(:state_name) do
-          match['a-zA-Z0-9_'].repeat(1)
+          match["a-zA-Z0-9_"].repeat(1)
         end
 
         # State description on a `state` statement. The brace is out: it
@@ -327,9 +327,9 @@ module Sirena
 
         # State marker: <<choice>>, <<fork>>, <<join>>
         rule(:state_marker) do
-          str('<<') >>
-            (str('choice') | str('fork') | str('join')).as(:marker_type) >>
-            str('>>')
+          str("<<") >>
+            (str("choice") | str("fork") | str("join")).as(:marker_type) >>
+            str(">>")
         end
 
         # Composite state body with nested statements
@@ -350,12 +350,12 @@ module Sirena
 
         # Concurrent state separator
         rule(:concurrent_separator) do
-          str('--').as(:concurrent_sep) >> line_end
+          str("--").as(:concurrent_sep) >> line_end
         end
 
         # Arrow for transitions
         rule(:arrow) do
-          str('-->').as(:arrow)
+          str("-->").as(:arrow)
         end
 
         # Transition label (after colon)
@@ -366,7 +366,7 @@ module Sirena
 
         # Note position
         rule(:note_position) do
-          str('left') | str('right')
+          str("left") | str("right")
         end
 
         # Note text

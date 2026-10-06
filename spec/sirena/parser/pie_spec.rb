@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'sirena/parser/pie'
-require 'sirena/layout/pie'
-require 'sirena/renderer/pie'
+require "spec_helper"
+require "sirena/parser/pie"
+require "sirena/layout/pie"
+require "sirena/renderer/pie"
 
 RSpec.describe Sirena::Parser::Pie do
   let(:parser) { described_class.new }
   let(:transform) { Sirena::Layout::Pie.new }
   let(:renderer) { Sirena::Renderer::Pie.new }
 
-  describe '#parse' do
-    context 'with simple pie chart' do
+  describe "#parse" do
+    context "with simple pie chart" do
       let(:source) do
         <<~MERMAID
           pie
@@ -20,18 +20,18 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'parses successfully' do
+      it "parses successfully" do
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Pie)
         expect(diagram.slices.length).to eq(2)
-        expect(diagram.slices[0].label).to eq('Apples')
+        expect(diagram.slices[0].label).to eq("Apples")
         expect(diagram.slices[0].value).to eq(42.0)
-        expect(diagram.slices[1].label).to eq('Oranges')
+        expect(diagram.slices[1].label).to eq("Oranges")
         expect(diagram.slices[1].value).to eq(58.0)
       end
     end
 
-    context 'with title' do
+    context "with title" do
       let(:source) do
         <<~MERMAID
           pie title Sales Distribution
@@ -40,14 +40,14 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'parses title correctly' do
+      it "parses title correctly" do
         diagram = parser.parse(source)
-        expect(diagram.title).to eq('Sales Distribution')
+        expect(diagram.title).to eq("Sales Distribution")
         expect(diagram.slices.length).to eq(2)
       end
     end
 
-    context 'with showData flag' do
+    context "with showData flag" do
       let(:source) do
         <<~MERMAID
           pie showData
@@ -56,14 +56,14 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'sets show_data flag' do
+      it "sets show_data flag" do
         diagram = parser.parse(source)
         expect(diagram.show_data).to be true
         expect(diagram.slices.length).to eq(2)
       end
     end
 
-    context 'with comments' do
+    context "with comments" do
       let(:source) do
         <<~MERMAID
           pie
@@ -73,13 +73,13 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'ignores comments' do
+      it "ignores comments" do
         diagram = parser.parse(source)
         expect(diagram.slices.length).to eq(2)
       end
     end
 
-    context 'with accessibility features' do
+    context "with accessibility features" do
       let(:source) do
         <<~MERMAID
           pie title Sales Chart
@@ -90,15 +90,15 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'parses accessibility attributes' do
+      it "parses accessibility attributes" do
         diagram = parser.parse(source)
-        expect(diagram.title).to eq('Sales Chart')
-        expect(diagram.acc_title).to eq('Accessible Title')
-        expect(diagram.acc_description).to eq('This chart shows sales distribution')
+        expect(diagram.title).to eq("Sales Chart")
+        expect(diagram.acc_title).to eq("Accessible Title")
+        expect(diagram.acc_description).to eq("This chart shows sales distribution")
       end
     end
 
-    context 'with decimal values' do
+    context "with decimal values" do
       let(:source) do
         <<~MERMAID
           pie
@@ -107,14 +107,14 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'handles decimal values' do
+      it "handles decimal values" do
         diagram = parser.parse(source)
         expect(diagram.slices[0].value).to eq(42.5)
         expect(diagram.slices[1].value).to eq(57.5)
       end
     end
 
-    context 'with negative values' do
+    context "with negative values" do
       let(:source) do
         <<~MERMAID
           pie
@@ -123,16 +123,16 @@ RSpec.describe Sirena::Parser::Pie do
         MERMAID
       end
 
-      it 'handles negative values' do
+      it "handles negative values" do
         diagram = parser.parse(source)
         expect(diagram.slices[1].value).to eq(-50.0)
       end
     end
 
-    context 'with empty diagram' do
-      let(:source) { 'pie' }
+    context "with empty diagram" do
+      let(:source) { "pie" }
 
-      it 'parses empty diagram' do
+      it "parses empty diagram" do
         diagram = parser.parse(source)
         expect(diagram).to be_a(Sirena::Diagram::Pie)
         expect(diagram.slices).to be_empty
@@ -140,25 +140,25 @@ RSpec.describe Sirena::Parser::Pie do
       end
     end
 
-    context 'with case-insensitive pie keyword' do
+    context "with case-insensitive pie keyword" do
       it 'parses "Pie Chart"' do
-        diagram = parser.parse('Pie Chart')
+        diagram = parser.parse("Pie Chart")
         expect(diagram).to be_a(Sirena::Diagram::Pie)
       end
 
       it 'parses "pie chart"' do
-        diagram = parser.parse('pie chart')
+        diagram = parser.parse("pie chart")
         expect(diagram).to be_a(Sirena::Diagram::Pie)
       end
 
       it 'parses "pie"' do
-        diagram = parser.parse('pie')
+        diagram = parser.parse("pie")
         expect(diagram).to be_a(Sirena::Diagram::Pie)
       end
     end
   end
 
-  describe 'transform and render pipeline' do
+  describe "transform and render pipeline" do
     let(:source) do
       <<~MERMAID
         pie title Product Distribution
@@ -168,7 +168,7 @@ RSpec.describe Sirena::Parser::Pie do
       MERMAID
     end
 
-    it 'produces valid SVG output' do
+    it "produces valid SVG output" do
       diagram = parser.parse(source)
       graph = transform.to_graph(diagram)
       svg = renderer.render(graph)
@@ -179,7 +179,7 @@ RSpec.describe Sirena::Parser::Pie do
       expect(svg.children).not_to be_empty
     end
 
-    it 'calculates correct percentages and angles' do
+    it "calculates correct percentages and angles" do
       diagram = parser.parse(source)
       graph = transform.to_graph(diagram)
 

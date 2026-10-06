@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'strscan'
+require "strscan"
 
 module Sirena
   # Separates a Mermaid source's preamble from its diagram body.
@@ -157,7 +157,7 @@ module Sirena
       def dedent(yaml, indent)
         return yaml if indent.empty?
 
-        yaml.gsub(/^#{Regexp.escape(indent)}/, '')
+        yaml.gsub(/^#{Regexp.escape(indent)}/, "")
       end
 
       # A fence met here is never frontmatter — it stays in the text for
@@ -201,4 +201,4 @@ module Sirena
   end
 end
 
-require_relative 'source/frontmatter'
+require_relative "source/frontmatter"

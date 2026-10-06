@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'logger'
+require "logger"
 
-require_relative 'error/diagram_type_error'
-require_relative 'error/pipeline_error'
+require_relative "error/diagram_type_error"
+require_relative "error/pipeline_error"
 
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
@@ -74,30 +74,30 @@ module Sirena
     # one without the other fails a spec rather than silently printing the
     # wrong word for it.
     DIAGRAM_TYPE_KEYWORDS = {
-      flowchart: 'graph, flowchart, or flowchart-elk',
-      sequence: 'sequenceDiagram',
-      class_diagram: 'classDiagram',
-      state_diagram: 'stateDiagram or stateDiagram-v2',
-      er_diagram: 'erDiagram',
-      user_journey: 'journey',
-      gantt: 'gantt',
-      pie: 'pie',
-      timeline: 'timeline',
-      quadrant: 'quadrantChart',
-      git_graph: 'gitGraph',
-      mindmap: 'mindmap',
-      kanban: 'kanban',
-      radar: 'radar-beta',
-      block: 'block-beta',
-      requirement: 'requirementDiagram',
-      xychart: 'xychart-beta',
-      architecture: 'architecture-beta',
-      sankey: 'sankey-beta',
-      packet: 'packet-beta',
-      treemap: 'treemap or treemap-beta',
-      c4: 'C4Context, C4Container, C4Component, C4Dynamic, C4Deployment, or a C4 diagram',
-      info: 'info',
-      error: 'error',
+      flowchart: "graph, flowchart, or flowchart-elk",
+      sequence: "sequenceDiagram",
+      class_diagram: "classDiagram",
+      state_diagram: "stateDiagram or stateDiagram-v2",
+      er_diagram: "erDiagram",
+      user_journey: "journey",
+      gantt: "gantt",
+      pie: "pie",
+      timeline: "timeline",
+      quadrant: "quadrantChart",
+      git_graph: "gitGraph",
+      mindmap: "mindmap",
+      kanban: "kanban",
+      radar: "radar-beta",
+      block: "block-beta",
+      requirement: "requirementDiagram",
+      xychart: "xychart-beta",
+      architecture: "architecture-beta",
+      sankey: "sankey-beta",
+      packet: "packet-beta",
+      treemap: "treemap or treemap-beta",
+      c4: "C4Context, C4Container, C4Component, C4Dynamic, C4Deployment, or a C4 diagram",
+      info: "info",
+      error: "error",
     }.freeze
 
     # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
@@ -130,10 +130,10 @@ module Sirena
     # What each preamble item mermaid cannot make sense of costs, and how
     # to say so.
     REFUSED_PREAMBLE = {
-      comment: ['an empty comment', REFUSES_BARE_COMMENT],
-      directive: ['a directive with no header', REFUSES_HEADERLESS_DIRECTIVE],
+      comment: ["an empty comment", REFUSES_BARE_COMMENT],
+      directive: ["a directive with no header", REFUSES_HEADERLESS_DIRECTIVE],
       frontmatter: [
-        'frontmatter behind another item',
+        "frontmatter behind another item",
         REFUSES_LATE_FRONTMATTER,
       ],
     }.freeze
@@ -197,7 +197,7 @@ module Sirena
       # silently — examples:generate rewrote its committed gantt SVG daily.
       today = options.key?(:today) ? options[:today] : @today
 
-      log 'Starting render pipeline...'
+      log "Starting render pipeline..."
 
       # Mermaid allows frontmatter, %%{init}%% directives and %% comments
       # before the diagram keyword; detection and parsing both need the body.
@@ -273,7 +273,7 @@ module Sirena
       end
 
       raise DiagramTypeError,
-            'Unable to detect diagram type from source. ' \
+            "Unable to detect diagram type from source. " \
             "Source must start with one of: #{registered_type_names}"
     end
 
@@ -287,7 +287,7 @@ module Sirena
     #   source can start with
     def registered_type_names
       DiagramRegistry.types.sort.map { |type| DIAGRAM_TYPE_KEYWORDS.fetch(type, type.to_s) }
-        .join(', ')
+        .join(", ")
     end
 
     # Whether an odd preamble item is an error belongs to the diagram
@@ -339,7 +339,7 @@ module Sirena
     # @param parser_class [Class] parser class
     # @return [Diagram::Base] parsed diagram model
     def parse_diagram(source, parser_class)
-      log 'Parsing diagram...'
+      log "Parsing diagram..."
       parser = parser_class.new
       diagram = parser.parse(source)
       log "Parse complete: #{diagram.class.name}"
@@ -354,9 +354,9 @@ module Sirena
     # @param theme [Theme] theme the layout may size text with
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
     def transform_diagram(diagram, transform_class, today, theme)
-      log 'Transforming diagram to graph...'
+      log "Transforming diagram to graph..."
       result = transform_class.new.call(diagram, theme: theme, today: today)
-      log 'Transform complete'
+      log "Transform complete"
       result
     end
 
@@ -369,12 +369,12 @@ module Sirena
     # @param result [Layout::Scene, Layout::Legacy] layout result
     # @return [Layout::Scene, Hash] what the renderer takes
     def layout_graph(result)
-      log 'Computing layout...'
+      log "Computing layout..."
       return result unless result.is_a?(Layout::Legacy)
 
       graph = Layout::Grid.apply(result.payload)
 
-      log 'Layout complete (using fallback positioning)'
+      log "Layout complete (using fallback positioning)"
       graph
     end
 
@@ -386,10 +386,10 @@ module Sirena
     # @param theme [Theme] theme to use for rendering
     # @return [Svg::Document] SVG document
     def render_svg(graph, renderer_class, theme)
-      log 'Rendering to SVG...'
+      log "Rendering to SVG..."
       renderer = renderer_class.new(theme: theme)
       svg = renderer.render(graph)
-      log 'SVG render complete'
+      log "SVG render complete"
       svg
     end
 

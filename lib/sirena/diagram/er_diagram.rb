@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -39,14 +39,14 @@ module Sirena
       #
       # @return [Boolean] true if key_type is 'PK'
       def primary_key?
-        key_type == 'PK'
+        key_type == "PK"
       end
 
       # Checks if this is a foreign key.
       #
       # @return [Boolean] true if key_type is 'FK'
       def foreign_key?
-        key_type == 'FK'
+        key_type == "FK"
       end
     end
 
@@ -109,7 +109,7 @@ module Sirena
       # Initialize with default relationship type
       def initialize(*args)
         super
-        self.relationship_type ||= 'non-identifying'
+        self.relationship_type ||= "non-identifying"
       end
 
       # Validates the relationship has required fields.
@@ -127,14 +127,14 @@ module Sirena
       #
       # @return [Boolean] true if identifying type
       def identifying?
-        relationship_type == 'identifying'
+        relationship_type == "identifying"
       end
 
       # Checks if this is a non-identifying relationship.
       #
       # @return [Boolean] true if non-identifying type
       def non_identifying?
-        relationship_type == 'non-identifying'
+        relationship_type == "non-identifying"
       end
     end
 

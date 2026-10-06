@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../diagram/er_diagram'
+require_relative "../../diagram/er_diagram"
 
 module Sirena
   module Parser
@@ -13,17 +13,17 @@ module Sirena
       class ErDiagram
         # Cardinality symbol mappings
         CARDINALITY_SYMBOLS = {
-          '||' => 'one',
-          'o{' => 'zero_or_more',
-          '|{' => 'one_or_more',
-          '}o' => 'zero_or_one',
-          '{o' => 'zero_or_more',
-          '{|' => 'one_or_more',
-          '}{' => 'one_or_more',
-          '{}' => 'one_or_more',
-          'o|' => 'zero_or_one',
-          '|o' => 'zero_or_one',
-          '}|' => 'one_or_more',
+          "||" => "one",
+          "o{" => "zero_or_more",
+          "|{" => "one_or_more",
+          "}o" => "zero_or_one",
+          "{o" => "zero_or_more",
+          "{|" => "one_or_more",
+          "}{" => "one_or_more",
+          "{}" => "one_or_more",
+          "o|" => "zero_or_one",
+          "|o" => "zero_or_one",
+          "}|" => "one_or_more",
         }.freeze
 
         # Transform parse tree into ER diagram.
@@ -124,7 +124,7 @@ module Sirena
           card_to_val = CARDINALITY_SYMBOLS[card_to]
 
           # Determine relationship type from operator
-          rel_type = operator == '==' ? 'identifying' : 'non-identifying'
+          rel_type = operator == "==" ? "identifying" : "non-identifying"
 
           # Extract label if present
           label = nil
@@ -175,7 +175,7 @@ module Sirena
         end
 
         def split_class_names(slice)
-          slice.to_s.split(',').map(&:strip)
+          slice.to_s.split(",").map(&:strip)
         end
 
         # `tilde_type` in the grammar captures the FULL match -- optional
@@ -202,7 +202,7 @@ module Sirena
           index = 0
           while index < sets.length
             this_set = sets[index]
-            if this_set == ',' && index.positive? && index + 1 < sets.length &&
+            if this_set == "," && index.positive? && index + 1 < sets.length &&
                should_combine_tilde_sets?(sets[index - 1], sets[index + 1])
               this_set = "#{sets[index - 1]},#{sets[index + 1]}"
               index += 1
@@ -220,11 +220,11 @@ module Sirena
         # tilde each, meaning they are the two halves of one pair mermaid
         # split apart, not two independent tilde types.
         def should_combine_tilde_sets?(previous_set, next_set)
-          previous_set.count('~') == 1 && next_set.count('~') == 1
+          previous_set.count("~") == 1 && next_set.count("~") == 1
         end
 
         def process_tilde_set(input)
-          has_starting_tilde = input.count('~').odd? && input.start_with?('~')
+          has_starting_tilde = input.count("~").odd? && input.start_with?("~")
           input = input[1..] if has_starting_tilde
 
           chars = input.chars
@@ -234,16 +234,16 @@ module Sirena
           # Pairing outside-in from a fixed index list gives the same
           # result in one scan: pair 0 is (first, last), pair 1 is
           # (second, second-to-last), and so on.
-          tilde_indices = chars.each_index.select { |i| chars[i] == '~' }
+          tilde_indices = chars.each_index.select { |i| chars[i] == "~" }
           (tilde_indices.length / 2).times do |pair|
             first = tilde_indices[pair]
             last = tilde_indices[-(pair + 1)]
 
-            chars[first] = '<'
-            chars[last] = '>'
+            chars[first] = "<"
+            chars[last] = ">"
           end
 
-          chars.unshift('~') if has_starting_tilde
+          chars.unshift("~") if has_starting_tilde
           chars.join
         end
 

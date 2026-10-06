@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative 'grammars/c4'
-require_relative 'builders/c4'
-require_relative '../diagram/c4'
+require_relative "base"
+require_relative "grammars/c4"
+require_relative "builders/c4"
+require_relative "../diagram/c4"
 
 module Sirena
   module Parser

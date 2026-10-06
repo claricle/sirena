@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -22,7 +22,7 @@ module Sirena
         end
 
         rule(:header) do
-          str('block-beta').as(:header) >> ws?
+          str("block-beta").as(:header) >> ws?
         end
 
         rule(:statements) do
@@ -39,21 +39,21 @@ module Sirena
 
         # Columns: columns N
         rule(:columns_statement) do
-          str('columns').as(:columns_keyword) >> space >>
+          str("columns").as(:columns_keyword) >> space >>
             integer.as(:columns_value) >>
             line_end
         end
 
         # Compound block: block:ID ... end or block ... end
         rule(:compound_block_statement) do
-          str('block').as(:compound_keyword) >>
+          str("block").as(:compound_keyword) >>
             (colon >> block_id.as(:compound_id)).maybe >>
             space? >>
             line_end >>
             ws? >>
             compound_statements.maybe.as(:compound_statements) >>
             ws? >>
-            str('end').as(:compound_end) >>
+            str("end").as(:compound_end) >>
             line_end
         end
 
@@ -68,7 +68,7 @@ module Sirena
 
         # Style: style blockId fill:#f9f,stroke:#333
         rule(:style_statement) do
-          str('style').as(:style_keyword) >> space >>
+          str("style").as(:style_keyword) >> space >>
             block_id.as(:style_target) >>
             space >>
             style_properties.as(:style_props) >>
@@ -94,8 +94,8 @@ module Sirena
         end
 
         rule(:arrow) do
-          str('-->').as(:arrow_type) |
-            str('---').as(:line_type)
+          str("-->").as(:arrow_type) |
+            str("---").as(:line_type)
         end
 
         # Block statement: can be space, simple block, or block with shape/width
@@ -107,17 +107,17 @@ module Sirena
 
         # Space placeholder
         rule(:space_block) do
-          str('space').as(:space_keyword) >> line_end
+          str("space").as(:space_keyword) >> line_end
         end
 
         # Arrow block: blockArrowId<["&nbsp;"]>(down)
         rule(:arrow_block) do
           block_id.as(:arrow_id) >>
-            str('<').as(:arrow_open) >>
+            str("<").as(:arrow_open) >>
             lbracket >>
             (rbracket.absent? >> any).repeat.as(:arrow_label) >>
             rbracket >>
-            str('>').as(:arrow_close) >>
+            str(">").as(:arrow_close) >>
             lparen >>
             arrow_direction.as(:arrow_direction) >>
             rparen >>
@@ -125,7 +125,7 @@ module Sirena
         end
 
         rule(:arrow_direction) do
-          (str('up') | str('down') | str('left') | str('right')).as(:direction)
+          (str("up") | str("down") | str("left") | str("right")).as(:direction)
         end
 
         # Block with optional shape and width
@@ -156,9 +156,9 @@ module Sirena
 
         # Circle shape: (("label"))
         rule(:shape_double_circle) do
-          str('((').as(:open) >>
-            (str('))').absent? >> any).repeat.as(:label) >>
-            str('))').as(:close)
+          str("((").as(:open) >>
+            (str("))").absent? >> any).repeat.as(:label) >>
+            str("))").as(:close)
         end
 
         # Block identifier - can be quoted string or identifier
@@ -171,13 +171,13 @@ module Sirena
         # Reserved keywords that can't be used as standalone block IDs
         # Only keywords that would be ambiguous in block_statement context
         rule(:reserved_keyword) do
-          (str('block') | str('end') | str('space')) >>
+          (str("block") | str("end") | str("space")) >>
             (identifier_char.absent?)
         end
 
         # Identifier character (for lookahead)
         rule(:identifier_char) do
-          match['a-zA-Z0-9_']
+          match["a-zA-Z0-9_"]
         end
 
         # Line terminator

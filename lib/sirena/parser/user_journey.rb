@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'parslet'
-require_relative 'base'
-require_relative '../diagram/user_journey'
+require "parslet"
+require_relative "base"
+require_relative "../diagram/user_journey"
 
 module Sirena
   module Parser
@@ -12,10 +12,10 @@ module Sirena
       rule(:sp?) { sp.maybe }
       rule(:nl) { str("\n") }
 
-      rule(:journey) { str('journey') >> sp? >> (nl | any.absent?) }
-      rule(:title_decl) { sp? >> str('title') >> sp >> text_line.as(:title) >> (nl | any.absent?) }
+      rule(:journey) { str("journey") >> sp? >> (nl | any.absent?) }
+      rule(:title_decl) { sp? >> str("title") >> sp >> text_line.as(:title) >> (nl | any.absent?) }
       rule(:section_decl) do
-        sp? >> str('section') >> sp >> text_line.as(:section) >> (nl | any.absent?)
+        sp? >> str("section") >> sp >> text_line.as(:section) >> (nl | any.absent?)
       end
       # accTitle/accDescr text is parsed and discarded: no Diagram::UserJourney
       # attribute holds it yet.
@@ -36,11 +36,11 @@ module Sirena
       # `sp?` here is ASCII-only by design (mermaid's wider `\s` is a known,
       # unclosed gap; see acc_line_space for where the wider set IS required).
       rule(:acc_line) do
-        sp? >> (word_ci('accTitle') | word_ci('accDescr')) >> sp? >> str(':') >>
+        sp? >> (word_ci("accTitle") | word_ci("accDescr")) >> sp? >> str(":") >>
           (nl.absent? >> any).repeat >> (nl | any.absent?)
       end
 
-      rule(:acc_descr_open) { sp? >> word_ci('accDescr') >> sp? >> str('{') }
+      rule(:acc_descr_open) { sp? >> word_ci("accDescr") >> sp? >> str("{") }
 
       # The braced form. The closing brace ends the block; nothing after it on
       # the same line is required -- do not add a line-end requirement here,
@@ -51,7 +51,7 @@ module Sirena
       # block, even one that belongs to unrelated text further down the
       # source, to match the oracle's own lexer (see gate record).
       rule(:acc_descr_block) do
-        acc_descr_open >> acc_block_body >> str('}')
+        acc_descr_open >> acc_block_body >> str("}")
       end
 
       # INVARIANT: every alternative reachable from `acc_block_comment` must be
@@ -61,7 +61,7 @@ module Sirena
       # parse quadratic in the block's length. Anything added to
       # `acc_block_comment` inherits this constraint.
       rule(:acc_block_body) do
-        (acc_block_comment | (str('}').absent? >> any)).repeat
+        (acc_block_comment | (str("}").absent? >> any)).repeat
       end
 
       # An opener whose brace never closes makes the whole source unparseable,
@@ -85,12 +85,12 @@ module Sirena
       # Do not make the body unbounded -- it must stay LINE-BOUNDED per the
       # invariant on `acc_block_body`, or it reintroduces a quadratic scan.
       rule(:acc_directive) do
-        acc_nl >> acc_line_space.repeat >> str('%%{') >>
-          (acc_nl.absent? >> str('}%%').absent? >> any).repeat >> str('}%%')
+        acc_nl >> acc_line_space.repeat >> str("%%{") >>
+          (acc_nl.absent? >> str("}%%").absent? >> any).repeat >> str("}%%")
       end
 
       rule(:acc_comment_line) do
-        acc_nl >> acc_line_space.repeat >> str('%%') >> str('{').absent? >>
+        acc_nl >> acc_line_space.repeat >> str("%%") >> str("{").absent? >>
           (acc_nl.absent? >> any).repeat
       end
 
@@ -111,8 +111,8 @@ module Sirena
           '\u2000-\u200A\u202F\u205F\u3000\uFEFF']
       end
 
-      rule(:text_line) { (nl.absent? >> str(':').absent? >> any).repeat(1) }
-      rule(:task_text) { (str(':').absent? >> nl.absent? >> any).repeat(1) }
+      rule(:text_line) { (nl.absent? >> str(":").absent? >> any).repeat(1) }
+      rule(:task_text) { (str(":").absent? >> nl.absent? >> any).repeat(1) }
       rule(:actor_text) { (match('[,\n]').absent? >> any).repeat(1) }
 
       # The actor group (second colon plus the actor list) is optional --
@@ -122,22 +122,22 @@ module Sirena
       # second colon, mirroring the SP? mermaid's own lexer permits there.
       rule(:task_line) do
         sp? >>
-          task_text.as(:task) >> str(':') >> sp? >>
-          match('[0-9]').repeat(1).as(:score) >>
-          (sp? >> str(':') >> sp? >> actor_list.as(:actors)).maybe >>
+          task_text.as(:task) >> str(":") >> sp? >>
+          match("[0-9]").repeat(1).as(:score) >>
+          (sp? >> str(":") >> sp? >> actor_list.as(:actors)).maybe >>
           sp? >> (nl | any.absent?)
       end
 
       rule(:actor_list) do
         (actor_text.as(:actor) >>
-          (sp? >> str(',') >> sp? >> actor_text.as(:actor)).repeat).maybe
+          (sp? >> str(",") >> sp? >> actor_text.as(:actor)).repeat).maybe
       end
 
       rule(:line) do
         title_decl | section_decl | accessibility_decl |
           (acc_descr_unclosed.absent? >> task_line) | comment_line | blank_line
       end
-      rule(:comment_line) { sp? >> str('%%') >> (nl.absent? >> any).repeat >> nl }
+      rule(:comment_line) { sp? >> str("%%") >> (nl.absent? >> any).repeat >> nl }
       rule(:blank_line) { sp? >> nl }
 
       rule(:journey_doc) do

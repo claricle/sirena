@@ -1,39 +1,39 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'parslet'
-require 'sirena/parser/atoms/trimmed_run'
+require "spec_helper"
+require "parslet"
+require "sirena/parser/atoms/trimmed_run"
 
 RSpec.describe Sirena::Parser::Atoms::TrimmedRun do
   let(:atom) { described_class.new('[-.\/\w]', '[.\/]') }
 
-  describe '#try' do
-    it 'keeps the whole run when it already ends in the narrow class' do
-      tree = atom.parse('release/1.0.0')
+  describe "#try" do
+    it "keeps the whole run when it already ends in the narrow class" do
+      tree = atom.parse("release/1.0.0")
 
-      expect(tree.to_s).to eq('release/1.0.0')
+      expect(tree.to_s).to eq("release/1.0.0")
     end
 
-    it 'trims one trailing dot, leaving it for the next atom' do
-      tree = (atom.as(:name) >> Parslet.str('.')).parse('foo.')
+    it "trims one trailing dot, leaving it for the next atom" do
+      tree = (atom.as(:name) >> Parslet.str(".")).parse("foo.")
 
-      expect(tree[:name].to_s).to eq('foo')
+      expect(tree[:name].to_s).to eq("foo")
     end
 
-    it 'trims a run of several trailing dots and slashes' do
-      tree = (atom.as(:name) >> Parslet.str('../')).parse('foo../')
+    it "trims a run of several trailing dots and slashes" do
+      tree = (atom.as(:name) >> Parslet.str("../")).parse("foo../")
 
-      expect(tree[:name].to_s).to eq('foo')
+      expect(tree[:name].to_s).to eq("foo")
     end
 
-    it 'matches empty when the whole run is outside the narrow class' do
-      tree = (atom.as(:name) >> Parslet.str('.')).parse('.')
+    it "matches empty when the whole run is outside the narrow class" do
+      tree = (atom.as(:name) >> Parslet.str(".")).parse(".")
 
-      expect(tree[:name].to_s).to eq('')
+      expect(tree[:name].to_s).to eq("")
     end
 
-    it 'matches empty at end of input' do
-      expect(atom.parse('').to_s).to eq('')
+    it "matches empty at end of input" do
+      expect(atom.parse("").to_s).to eq("")
     end
 
     # The underlying `GreedyRun` reads in chunks of 64, 128, 256, ...
@@ -70,8 +70,8 @@ RSpec.describe Sirena::Parser::Atoms::TrimmedRun do
     end
   end
 
-  describe '#to_s_inner' do
-    it 'renders the underlying run pattern and the trim class' do
+  describe "#to_s_inner" do
+    it "renders the underlying run pattern and the trim class" do
       expect(atom.to_s).to eq('/\A(?:[-.\/\w])*/m(trim: /(?:[.\/])*\z/)')
     end
   end

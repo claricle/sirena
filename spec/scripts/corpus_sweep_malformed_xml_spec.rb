@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'open3'
-require 'rbconfig'
-require 'tmpdir'
+require "open3"
+require "rbconfig"
+require "tmpdir"
 
 # scripts/corpus_sweep.rb is a program that sweeps on load, so it runs as a
 # subprocess. Its `info` cases all render well-formed SVG, which makes the
 # unpatched run the control: the only difference in the seeded run is that
 # Engine#render returns SVG-shaped output that is not XML.
-RSpec.describe 'scripts/corpus_sweep.rb', type: :task do
-  let(:root) { File.expand_path('../..', __dir__) }
-  let(:info_cases) { Dir.glob(File.join(root, 'spec', 'mermaid', 'info', '*.mmd')).size }
+RSpec.describe "scripts/corpus_sweep.rb", type: :task do
+  let(:root) { File.expand_path("../..", __dir__) }
+  let(:info_cases) { Dir.glob(File.join(root, "spec", "mermaid", "info", "*.mmd")).size }
 
   # `<img src=` opens a tag that never closes, the shape of the XSS corpus case.
   let(:malformed_svg) do
@@ -20,18 +20,18 @@ RSpec.describe 'scripts/corpus_sweep.rb', type: :task do
   # Returns [stdout, status]; stderr is not part of what is asserted.
   let(:sweep_info) do
     lambda do |prelude = nil|
-      args = prelude ? ['-r', prelude] : []
-      out, _err, status = Open3.capture3(RbConfig.ruby, *args, File.join(root, 'scripts', 'corpus_sweep.rb'),
-                                         '--failing', 'info', chdir: root)
+      args = prelude ? ["-r", prelude] : []
+      out, _err, status = Open3.capture3(RbConfig.ruby, *args, File.join(root, "scripts", "corpus_sweep.rb"),
+                                         "--failing", "info", chdir: root)
       [out, status]
     end
   end
 
-  it 'has info cases to sweep' do
+  it "has info cases to sweep" do
     expect(info_cases).to be_positive
   end
 
-  it 'passes every info case when the renderer emits well-formed SVG' do
+  it "passes every info case when the renderer emits well-formed SVG" do
     out, status = sweep_info.call
 
     expect(status).to be_success
@@ -39,9 +39,9 @@ RSpec.describe 'scripts/corpus_sweep.rb', type: :task do
     expect(out).not_to match(/^fail:/)
   end
 
-  it 'reports a failure, not a pass, for SVG-shaped output that is not XML' do
+  it "reports a failure, not a pass, for SVG-shaped output that is not XML" do
     Dir.mktmpdir do |dir|
-      prelude = File.join(dir, 'seed_malformed.rb')
+      prelude = File.join(dir, "seed_malformed.rb")
       File.write(prelude, <<~RUBY)
         require 'bundler/setup'
         $LOAD_PATH.unshift(#{File.join(root, 'lib').inspect})

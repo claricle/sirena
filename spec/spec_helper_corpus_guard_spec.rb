@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'open3'
-require 'tmpdir'
+require "spec_helper"
+require "open3"
+require "tmpdir"
 
 # This hook only registers at spec_helper.rb LOAD time, so it needs a real
 # subprocess with COVERAGE=true set before load -- toggling ENV in-process
@@ -14,17 +14,17 @@ require 'tmpdir'
 # coverage/ directory to simplify the assertion -- that destroys a report a
 # developer already generated. Record its prior state (present or absent)
 # and require it unchanged instead.
-RSpec.describe 'spec_helper.rb corpus-tag coverage guard' do
-  it 'raises when COVERAGE=true schedules a :corpus-tagged example instrumented, ' \
+RSpec.describe "spec_helper.rb corpus-tag coverage guard" do
+  it "raises when COVERAGE=true schedules a :corpus-tagged example instrumented, " \
      "without touching this repo's real coverage report" do
-    real_coverage_dir = File.expand_path('../coverage', __dir__)
+    real_coverage_dir = File.expand_path("../coverage", __dir__)
     existed_before = File.exist?(real_coverage_dir)
     entries_before = existed_before ? Dir.children(real_coverage_dir).sort : nil
 
-    Dir.mktmpdir('corpus-guard-spec-coverage') do |scratch_dir|
-      env = { 'COVERAGE' => 'true', 'SIMPLECOV_COVERAGE_DIR' => scratch_dir }
+    Dir.mktmpdir("corpus-guard-spec-coverage") do |scratch_dir|
+      env = { "COVERAGE" => "true", "SIMPLECOV_COVERAGE_DIR" => scratch_dir }
       out, status = Open3.capture2e(
-        env, 'bundle', 'exec', 'rspec', '--tag', 'corpus', 'spec/sirena/parser/error_spec.rb'
+        env, "bundle", "exec", "rspec", "--tag", "corpus", "spec/sirena/parser/error_spec.rb"
       )
 
       expect(status).not_to be_success

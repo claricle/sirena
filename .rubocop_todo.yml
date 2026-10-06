@@ -579,20 +579,13 @@ Style/StringConcatenation:
     - 'tasks/generate_mermaid_fixtures.rake'
     - 'scripts/extract_mermaid_tests.rb'
 
-# Offense count: 3763
+# Offense count: 15
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, ConsistentQuotesInMultiline.
 # SupportedStyles: single_quotes, double_quotes
 Style/StringLiterals:
-  Enabled: false
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: single_quotes, double_quotes
-Style/StringLiteralsInInterpolation:
   Exclude:
-    - 'tasks/benchmark.rake'
+    - 'docs/Gemfile'
 
 # Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).

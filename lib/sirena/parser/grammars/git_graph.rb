@@ -154,7 +154,7 @@ module Sirena
         end
 
         rule(:branch_option) do
-          str("order:") >> space? >> match('[0-9]').repeat(1).as(:order)
+          str("order:") >> space? >> match("[0-9]").repeat(1).as(:order)
         end
 
         rule(:checkout_stmt) do

@@ -47,13 +47,13 @@
 #   4. Structural damage in the source itself. Detected by shape, never by
 #      whether Sirena can parse it — the point is to judge the input, not us.
 
-require 'digest'
-require 'yaml'
-require_relative 'hardened_mmdc'
-require_relative 'mmdc_oracle'
+require "digest"
+require "yaml"
+require_relative "hardened_mmdc"
+require_relative "mmdc_oracle"
 
-CORPUS_ROOT = File.expand_path('../spec/mermaid', __dir__)
-REFERENCE_ROOT = File.expand_path('../spec/fixtures_mermaid', __dir__)
+CORPUS_ROOT = File.expand_path("../spec/mermaid", __dir__)
+REFERENCE_ROOT = File.expand_path("../spec/fixtures_mermaid", __dir__)
 
 # A JS string escape that survived extraction: the file holds a backslash and
 # an "n" where the source had a newline. Mermaid reports it as a syntax error.
@@ -85,7 +85,7 @@ INDENTED_FRONTMATTER = /\A---[ \t]*\n(?:.*\n)*?[ \t]+---[ \t]*(?:\n|\z)/
 # A placeholder that sits outside every quoted run. Quoted content is label
 # text, and mermaid renders it verbatim.
 def unquoted_placeholder?(source)
-  source.gsub(/"[^"]*"/, '').gsub(/'[^']*'/, '').match?(TEMPLATE_PLACEHOLDER)
+  source.gsub(/"[^"]*"/, "").gsub(/'[^']*'/, "").match?(TEMPLATE_PLACEHOLDER)
 end
 
 # An .error sidecar echoes the input it judged. If that echo does not appear in
@@ -102,12 +102,12 @@ def stale_rejection?(base, source)
   marker = lines.index { |l| l.match?(/Parse error on line \d+:/) }
   return false unless marker
 
-  echo = lines[marker + 1].to_s.strip.delete_prefix('...').strip
+  echo = lines[marker + 1].to_s.strip.delete_prefix("...").strip
   return false if echo.length < 12
 
   # Whitespace differs between the echo and the source, so compare on the
   # non-space characters.
-  squash = ->(s) { s.gsub(/\s+/, '') }
+  squash = ->(s) { s.gsub(/\s+/, "") }
 
   !squash.call(source).include?(squash.call(echo[0, 40]))
 end
@@ -116,20 +116,20 @@ end
 # `error` diagram type and renders one deliberately. An mmdc rejection there is
 # the point of the case, not a judgement that the case is invalid.
 def intentional_error_type?(entry)
-  entry[:type] == 'error'
+  entry[:type] == "error"
 end
 
 def artifact_reason(source)
   return 'literal \\n escape' if source.match?(LITERAL_NEWLINE)
   # Only outside a quoted string. A quoted `${keyword}` is a label mermaid
   # renders happily — one class note was binned as damage on exactly that.
-  return 'uninterpolated ${} template' if unquoted_placeholder?(source)
-  return 'html-entity escaped source' if source.match?(HTML_ENTITY)
+  return "uninterpolated ${} template" if unquoted_placeholder?(source)
+  return "html-entity escaped source" if source.match?(HTML_ENTITY)
 
-  return 'indented frontmatter closer' if source.match?(INDENTED_FRONTMATTER)
+  return "indented frontmatter closer" if source.match?(INDENTED_FRONTMATTER)
 
   stripped = source.rstrip
-  return 'truncated source' if TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
+  return "truncated source" if TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
 
   nil
 end
@@ -165,12 +165,12 @@ end
 # files is avoidable work.
 def cases(types)
   corpus_types(types).flat_map do |type|
-    Dir.glob(File.join(CORPUS_ROOT, type, '*.mmd')).map do |path|
+    Dir.glob(File.join(CORPUS_ROOT, type, "*.mmd")).map do |path|
       source = File.read(path)
       {
         type: type,
         path: path,
-        base: path.delete_suffix('.mmd'),
+        base: path.delete_suffix(".mmd"),
         source: source,
         digest: Digest::SHA256.hexdigest(source),
       }
@@ -229,21 +229,21 @@ def classify(entry, group)
   artifact = artifact_reason(entry[:source])
 
   if rendered?(entry)
-    return ['valid', "mmdc rendered it (source also looks damaged: #{artifact})"] if artifact
+    return ["valid", "mmdc rendered it (source also looks damaged: #{artifact})"] if artifact
 
-    return ['valid', 'mmdc rendered it']
+    return ["valid", "mmdc rendered it"]
   end
 
   twin = twins.find { |other| rendered?(other) }
-  return ['valid', "twin rendered: #{File.basename(twin[:base])}"] if twin
+  return ["valid", "twin rendered: #{File.basename(twin[:base])}"] if twin
 
-  return ['artifact', artifact] if artifact
-  return ['invalid', 'mmdc rejected it'] if rejected?(entry)
+  return ["artifact", artifact] if artifact
+  return ["invalid", "mmdc rejected it"] if rejected?(entry)
 
   twin = twins.find { |other| rejected?(other) }
-  return ['invalid', "twin rejected: #{File.basename(twin[:base])}"] if twin
+  return ["invalid", "twin rejected: #{File.basename(twin[:base])}"] if twin
 
-  ['unknown', 'no evidence']
+  ["unknown", "no evidence"]
 end
 
 # Re-checks one case against the installed mmdc using the shared oracle.
@@ -263,25 +263,25 @@ end
 # other verdict alone: rendering evidence already outranks everything, and
 # artifact rows are about the source rather than about mermaid's opinion.
 def verify_invalid!(rows, entries)
-  by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ''), e] }
+  by_case = entries.to_h { |e| [e[:path].sub("#{CORPUS_ROOT}/", ""), e] }
   checked = 0
   promoted = 0
   errors = 0
 
   rows.each do |row|
-    next unless row['verdict'] == 'invalid'
+    next unless row["verdict"] == "invalid"
 
-    entry = by_case[row['case']] or next
+    entry = by_case[row["case"]] or next
     checked += 1
     case local_mmdc_verdict(entry[:path])
     when :accepts
-      row['verdict'] = 'valid'
-      row['evidence'] = 'local mmdc renders it (sidecar rejection was stale)'
+      row["verdict"] = "valid"
+      row["evidence"] = "local mmdc renders it (sidecar rejection was stale)"
       promoted += 1
     when :rejects
-      row['evidence'] = 'local mmdc rejects it too'
+      row["evidence"] = "local mmdc rejects it too"
     when :error
-      row['evidence'] = 'local mmdc could not be run'
+      row["evidence"] = "local mmdc could not be run"
       errors += 1
     end
   end
@@ -293,14 +293,14 @@ end
 
 return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
-types = ARGV.reject { |a| a.start_with?('--') }
-write = ARGV.include?('--write')
-verify = ARGV.include?('--verify')
+types = ARGV.reject { |a| a.start_with?("--") }
+write = ARGV.include?("--write")
+verify = ARGV.include?("--verify")
 
 # Checked before doing any work: a filtered --write would replace the whole
 # committed file with a fraction of it.
 if write && !types.empty?
-  abort '--write needs the whole corpus; a type filter would truncate the file.'
+  abort "--write needs the whole corpus; a type filter would truncate the file."
 end
 
 entries = cases(types)
@@ -314,28 +314,28 @@ by_digest = index_by_digest(types.empty? ? entries : cases([]))
 rows = entries.map do |entry|
   verdict, evidence = classify(entry, by_digest[entry[:digest]])
   {
-    'case' => entry[:path].sub("#{CORPUS_ROOT}/", ''),
-    'verdict' => verdict,
-    'evidence' => evidence,
+    "case" => entry[:path].sub("#{CORPUS_ROOT}/", ""),
+    "verdict" => verdict,
+    "evidence" => evidence,
   }
 end
 
 verification_errors = verify_invalid!(rows, entries) if verify
 abort "mmdc verification failed for #{verification_errors} case(s)" if verification_errors&.positive?
 
-tally = rows.group_by { |r| r['verdict'] }.transform_values(&:size)
-puts 'TYPE       VALID    INVALID  ARTIFACT  UNKNOWN'
-rows.group_by { |r| r['case'].split('/').first }.sort.each do |type, list|
-  t = list.group_by { |r| r['verdict'] }.transform_values(&:size)
-  puts format('%-10s %-8d %-8d %-9d %d', type, t.fetch('valid', 0),
-              t.fetch('invalid', 0), t.fetch('artifact', 0), t.fetch('unknown', 0))
+tally = rows.group_by { |r| r["verdict"] }.transform_values(&:size)
+puts "TYPE       VALID    INVALID  ARTIFACT  UNKNOWN"
+rows.group_by { |r| r["case"].split("/").first }.sort.each do |type, list|
+  t = list.group_by { |r| r["verdict"] }.transform_values(&:size)
+  puts format("%-10s %-8d %-8d %-9d %d", type, t.fetch("valid", 0),
+              t.fetch("invalid", 0), t.fetch("artifact", 0), t.fetch("unknown", 0))
 end
 puts format("\nTOTAL %d cases: valid=%d invalid=%d artifact=%d unknown=%d",
-            rows.size, tally.fetch('valid', 0), tally.fetch('invalid', 0),
-            tally.fetch('artifact', 0), tally.fetch('unknown', 0))
+            rows.size, tally.fetch("valid", 0), tally.fetch("invalid", 0),
+            tally.fetch("artifact", 0), tally.fetch("unknown", 0))
 
 if write
-  out = File.join(CORPUS_ROOT, 'corpus-verdicts.yml')
+  out = File.join(CORPUS_ROOT, "corpus-verdicts.yml")
   File.write(out, rows.to_yaml)
   puts "wrote #{out}"
 end

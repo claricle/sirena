@@ -18,7 +18,7 @@ module Sirena
     def stringify(value)
       double = value.to_f
       return double.to_s unless double.finite?
-      return '0' if double.zero?
+      return "0" if double.zero?
 
       digits, point = decompose(double)
       text = place(digits, point)
@@ -30,19 +30,19 @@ module Sirena
     # differs. So this pulls the two apart and `place` puts them back
     # together the way JS does.
     def decompose(double)
-      mantissa, _, exponent = double.abs.to_s.partition('e')
-      whole, _, fraction = mantissa.partition('.')
+      mantissa, _, exponent = double.abs.to_s.partition("e")
+      whole, _, fraction = mantissa.partition(".")
       combined = whole + fraction
-      digits = combined.sub(/\A0+/, '')
+      digits = combined.sub(/\A0+/, "")
       point = whole.length - (combined.length - digits.length) +
               exponent.to_i
-      [digits.sub(/0+\z/, ''), point]
+      [digits.sub(/0+\z/, ""), point]
     end
     private_class_method :decompose
 
     def place(digits, point)
       return exponential(digits, point) unless point > -6 && point <= 21
-      return digits + ('0' * (point - digits.length)) if
+      return digits + ("0" * (point - digits.length)) if
         digits.length <= point
       return "0.#{'0' * -point}#{digits}" unless point.positive?
 

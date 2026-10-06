@@ -6,7 +6,7 @@ module SpecSupport
   # 06 deletes the legacy branch of Layout::Base#call.
   class LegacyLayout < Sirena::Layout::Base
     def build_graph(_diagram)
-      { id: 'root', children: [{ id: 'a', width: 50, height: 30 }] }
+      { id: "root", children: [{ id: "a", width: 50, height: 30 }] }
     end
   end
 end

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe 'Requirement Integration' do
-  describe 'complete requirement pipeline' do
+RSpec.describe "Requirement Integration" do
+  describe "complete requirement pipeline" do
     let(:parser) { Sirena::Parser::Requirement.new }
     let(:transform) { Sirena::Layout::Requirement.new }
     let(:renderer) { Sirena::Renderer::Requirement.new }
 
-    it 'parses, transforms, and renders a simple requirement diagram' do
+    it "parses, transforms, and renders a simple requirement diagram" do
       source = <<~MERMAID
         requirementDiagram
 
@@ -35,22 +35,22 @@ RSpec.describe 'Requirement Integration' do
 
       # Verify requirement
       req = diagram.requirements.first
-      expect(req.name).to eq('test_req')
-      expect(req.id).to eq('1')
-      expect(req.text).to eq('the test text.')
-      expect(req.risk).to eq('high')
-      expect(req.verifymethod).to eq('test')
+      expect(req.name).to eq("test_req")
+      expect(req.id).to eq("1")
+      expect(req.text).to eq("the test text.")
+      expect(req.risk).to eq("high")
+      expect(req.verifymethod).to eq("test")
 
       # Verify element
       elem = diagram.elements.first
-      expect(elem.name).to eq('test_entity')
-      expect(elem.type).to eq('simulation')
+      expect(elem.name).to eq("test_entity")
+      expect(elem.type).to eq("simulation")
 
       # Verify relationship
       rel = diagram.relationships.first
-      expect(rel.source).to eq('test_entity')
-      expect(rel.target).to eq('test_req')
-      expect(rel.type).to eq('satisfies')
+      expect(rel.source).to eq("test_entity")
+      expect(rel.target).to eq("test_req")
+      expect(rel.type).to eq("satisfies")
 
       # Transform
       graph = transform.to_graph(diagram)
@@ -65,7 +65,7 @@ RSpec.describe 'Requirement Integration' do
       expect(svg.children).not_to be_empty
     end
 
-    it 'handles multiple requirement types' do
+    it "handles multiple requirement types" do
       source = <<~MERMAID
         requirementDiagram
 
@@ -87,11 +87,11 @@ RSpec.describe 'Requirement Integration' do
       diagram = parser.parse(source)
       expect(diagram.requirements.length).to eq(2)
 
-      func_req = diagram.requirements.find { |r| r.name == 'func_req' }
-      expect(func_req.type).to eq('functionalRequirement')
+      func_req = diagram.requirements.find { |r| r.name == "func_req" }
+      expect(func_req.type).to eq("functionalRequirement")
 
-      perf_req = diagram.requirements.find { |r| r.name == 'perf_req' }
-      expect(perf_req.type).to eq('performanceRequirement')
+      perf_req = diagram.requirements.find { |r| r.name == "perf_req" }
+      expect(perf_req.type).to eq("performanceRequirement")
 
       graph = transform.to_graph(diagram)
       svg = renderer.render(graph)
@@ -99,7 +99,7 @@ RSpec.describe 'Requirement Integration' do
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
-    it 'handles all relationship types' do
+    it "handles all relationship types" do
       source = <<~MERMAID
         requirementDiagram
 
@@ -124,18 +124,18 @@ RSpec.describe 'Requirement Integration' do
       diagram = parser.parse(source)
       expect(diagram.relationships.length).to eq(2)
 
-      contains_rel = diagram.relationships.find { |r| r.type == 'contains' }
+      contains_rel = diagram.relationships.find { |r| r.type == "contains" }
       expect(contains_rel).not_to be_nil
-      expect(contains_rel.source).to eq('req1')
-      expect(contains_rel.target).to eq('req2')
+      expect(contains_rel.source).to eq("req1")
+      expect(contains_rel.target).to eq("req2")
 
-      satisfies_rel = diagram.relationships.find { |r| r.type == 'satisfies' }
+      satisfies_rel = diagram.relationships.find { |r| r.type == "satisfies" }
       expect(satisfies_rel).not_to be_nil
-      expect(satisfies_rel.source).to eq('req2')
-      expect(satisfies_rel.target).to eq('elem1')
+      expect(satisfies_rel.source).to eq("req2")
+      expect(satisfies_rel.target).to eq("elem1")
     end
 
-    it 'handles styling directives' do
+    it "handles styling directives" do
       source = <<~MERMAID
         requirementDiagram
 
@@ -151,13 +151,13 @@ RSpec.describe 'Requirement Integration' do
       expect(diagram.styles.length).to eq(1)
 
       style = diagram.styles.first
-      expect(style.target_ids).to include('test_req')
-      expect(style.fill).to eq('#f9f')
-      expect(style.stroke).to eq('#333')
-      expect(style.stroke_width).to eq('4px')
+      expect(style.target_ids).to include("test_req")
+      expect(style.fill).to eq("#f9f")
+      expect(style.stroke).to eq("#333")
+      expect(style.stroke_width).to eq("4px")
     end
 
-    it 'handles class definitions and assignments' do
+    it "handles class definitions and assignments" do
       source = <<~MERMAID
         requirementDiagram
 
@@ -176,21 +176,21 @@ RSpec.describe 'Requirement Integration' do
       expect(diagram.class_assignments.length).to eq(1)
 
       klass = diagram.classes.first
-      expect(klass.name).to eq('critical')
-      expect(klass.fill).to eq('#ff0000')
+      expect(klass.name).to eq("critical")
+      expect(klass.fill).to eq("#ff0000")
 
       assignment = diagram.class_assignments.first
-      expect(assignment.target_ids).to include('req1')
-      expect(assignment.class_names).to include('critical')
+      expect(assignment.target_ids).to include("req1")
+      expect(assignment.class_names).to include("critical")
     end
   end
 
-  describe 'DiagramRegistry integration' do
-    it 'has requirement registered' do
+  describe "DiagramRegistry integration" do
+    it "has requirement registered" do
       expect(Sirena::DiagramRegistry.registered?(:requirement)).to be true
     end
 
-    it 'retrieves requirement handlers' do
+    it "retrieves requirement handlers" do
       handlers = Sirena::DiagramRegistry.get(:requirement)
 
       expect(handlers).not_to be_nil

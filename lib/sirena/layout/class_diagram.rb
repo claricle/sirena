@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base'
-require_relative '../diagram/class_diagram'
+require_relative "base"
+require_relative "../diagram/class_diagram"
 
 module Sirena
   module Layout
@@ -37,7 +37,7 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         {
-          id: diagram.id || 'class_diagram',
+          id: diagram.id || "class_diagram",
           children: transform_entities(diagram),
           edges: transform_relationships(diagram),
           layoutOptions: layout_options(diagram),
@@ -209,7 +209,7 @@ module Sirena
             text: relationship.source_cardinality,
             width: card_dims[:width],
             height: card_dims[:height],
-            position: 'source',
+            position: "source",
           }
         end
 
@@ -223,7 +223,7 @@ module Sirena
             text: relationship.target_cardinality,
             width: card_dims[:width],
             height: card_dims[:height],
-            position: 'target',
+            position: "target",
           }
         end
 
@@ -234,12 +234,12 @@ module Sirena
         parts = [attribute.visibility_symbol, attribute.name]
         parts << ": #{attribute.type}" if attribute.type &&
                                           !attribute.type.empty?
-        parts.join(' ')
+        parts.join(" ")
       end
 
       def format_method(method)
         parts = [method.visibility_symbol, method.signature]
-        parts.join(' ')
+        parts.join(" ")
       end
 
       def attribute_to_hash(attribute)
@@ -271,21 +271,21 @@ module Sirena
           ElkOptions::EDGE_NODE_SPACING => 40,
           ElkOptions::EDGE_EDGE_SPACING => 20,
           # NETWORK_SIMPLEX for better UML layout with inheritance
-          ElkOptions::NODE_PLACEMENT => 'NETWORK_SIMPLEX',
-          ElkOptions::MODEL_ORDER => 'NODES_AND_EDGES',
-          ElkOptions::HIERARCHY_HANDLING => 'INCLUDE_CHILDREN',
+          ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
+          ElkOptions::MODEL_ORDER => "NODES_AND_EDGES",
+          ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
         )
       end
 
       def direction_to_layout(direction)
         case direction
-        when 'TD', 'TB'
+        when "TD", "TB"
           DIRECTION_DOWN
-        when 'LR'
+        when "LR"
           DIRECTION_RIGHT
-        when 'RL'
+        when "RL"
           DIRECTION_LEFT
-        when 'BT'
+        when "BT"
           DIRECTION_UP
         else
           DIRECTION_DOWN # Default for class diagrams is top-down

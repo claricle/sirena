@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -24,7 +24,7 @@ module Sirena
         end
 
         rule(:header) do
-          str('sequenceDiagram').as(:header) >> semicolon.maybe >> ws?
+          str("sequenceDiagram").as(:header) >> semicolon.maybe >> ws?
         end
 
         # A `;`-terminated statement can be followed by another bare `;`
@@ -89,7 +89,7 @@ module Sirena
         # (`%%` to end of line) before `statements` ever gets a chance to
         # try this one. Do not read that case as evidence for this rule.
         rule(:comment_statement) do
-          str('%') >> str('{').absent? >>
+          str("%") >> str("{").absent? >>
             (line_end.absent? >> any).repeat >> line_end
         end
 
@@ -105,32 +105,32 @@ module Sirena
         end
 
         rule(:title_statement) do
-          str('title') >> (colon >> space? | space.repeat(1)) >>
+          str("title") >> (colon >> space? | space.repeat(1)) >>
             match['^#;\n'].repeat >> content_boundary
         end
 
         rule(:acc_title_statement) do
-          str('accTitle') >> space? >> colon >> rest_of_line
+          str("accTitle") >> space? >> colon >> rest_of_line
         end
 
         rule(:acc_descr_statement) do
-          str('accDescr') >> space? >> colon >> rest_of_line
+          str("accDescr") >> space? >> colon >> rest_of_line
         end
 
         rule(:acc_descr_block) do
-          str('accDescr') >> space? >> lbrace >>
+          str("accDescr") >> space? >> lbrace >>
             (rbrace.absent? >> any).repeat >> rbrace >> content_boundary
         end
 
         rule(:autonumber_statement) do
-          str('autonumber') >>
-            (space.repeat(1) >> (str('off') | numbering)).maybe >> content_boundary
+          str("autonumber") >>
+            (space.repeat(1) >> (str("off") | numbering)).maybe >> content_boundary
         end
 
         # mermaid's NUM: digits with up to two decimals, or a leading-dot decimal.
         rule(:number) do
-          (match['0-9'].repeat(1) >> (str('.') >> match['0-9'].repeat(1, 2)).maybe) |
-            (str('.') >> match['0-9'].repeat(1, 2))
+          (match["0-9"].repeat(1) >> (str(".") >> match["0-9"].repeat(1, 2)).maybe) |
+            (str(".") >> match["0-9"].repeat(1, 2))
         end
 
         rule(:numbering) do
@@ -140,7 +140,7 @@ module Sirena
         # A `#` comment runs to the physical line end, `;` included —
         # shared by every `content_boundary` caller below.
         rule(:trailing_comment) do
-          (space? >> str('#') >> match['^\n'].repeat).maybe
+          (space? >> str("#") >> match['^\n'].repeat).maybe
         end
 
         # The boundary a `;`-aware text capture (`text_run` below) yields
@@ -170,7 +170,7 @@ module Sirena
         # the regex-equivalent grammar rule, needed wherever a `;`-aware
         # boundary would otherwise split a character reference in half.
         rule(:char_ref) do
-          hash_char >> match['a-zA-Z0-9_'].repeat(1) >> semicolon
+          hash_char >> match["a-zA-Z0-9_"].repeat(1) >> semicolon
         end
 
         # A `;`-aware text capture: a character reference is consumed
@@ -209,11 +209,11 @@ module Sirena
         # `participant 1 as text` at the keyword without eating a name like
         # `Cast Away` (`t A` is not ` as `). `@{` (never a bare `@`) is the
         # shape-metadata opener.
-        rule(:alias_keyword) { space.repeat(1) >> str('as') >> space.repeat(1) }
+        rule(:alias_keyword) { space.repeat(1) >> str("as") >> space.repeat(1) }
 
         rule(:actor_stop) do
-          arrow_base | colon | comma | semicolon | str('%%') |
-            alias_keyword | str('@{') | newline
+          arrow_base | colon | comma | semicolon | str("%%") |
+            alias_keyword | str("@{") | newline
         end
 
         # `+` and `<` are never `actor_name` material (used by note/activate/
@@ -246,10 +246,10 @@ module Sirena
         # activation and note references instead of messages.
         rule(:actor_char) do
           actor_stop.absent? >>
-            (match['^+<>-'] |
-              (str('-') >>
-                (str('-') | arrow_base | colon | comma | semicolon |
-                  str('%%') | alias_keyword | str('@{')).absent?))
+            (match["^+<>-"] |
+              (str("-") >>
+                (str("-") | arrow_base | colon | comma | semicolon |
+                  str("%%") | alias_keyword | str("@{")).absent?))
         end
 
         # An arrow-tail character cannot open a name: `A->)B` is a bad
@@ -258,7 +258,7 @@ module Sirena
         # `/|--`, `//-`, `//--`), so `A->>/B` is a bad arrow rather than a
         # message to `/B`; measured, mermaid rejects it there while
         # accepting `/` elsewhere in a name.
-        rule(:actor_lead) { match[')|>/'].absent? >> actor_char }
+        rule(:actor_lead) { match[")|>/"].absent? >> actor_char }
 
         rule(:actor_name) { actor_lead >> actor_char.repeat }
 
@@ -288,8 +288,8 @@ module Sirena
         # through everywhere else in an id — measured against mermaid
         # 11.16.1, `participant A#B` gives id "A#B".
         rule(:declaration_stop) do
-          match['<>'] | colon | comma | semicolon | str('%%') |
-            str('@') | newline
+          match["<>"] | colon | comma | semicolon | str("%%") |
+            str("@") | newline
         end
 
         rule(:declaration_char) { declaration_stop.absent? >> any }
@@ -363,8 +363,8 @@ module Sirena
         # only to the first character, not to every character that
         # follows this rule via `message_actor_char`.
         rule(:message_actor_stop) do
-          arrow_base | colon | comma | semicolon | str('%%') |
-            str('@{') | lparen | rparen | newline
+          arrow_base | colon | comma | semicolon | str("%%") |
+            str("@{") | lparen | rparen | newline
         end
 
         # FOUR rounds of patching this rule each found a new gap, and the
@@ -419,7 +419,7 @@ module Sirena
         #   how `-/` was missed the first time — hand-reading nested
         #   backslash escapes in a 200-character alternation).
         rule(:message_actor_continuation_entry_stop) do
-          arrow_base | str('--') | str('-/') | str('-\\')
+          arrow_base | str("--") | str("-/") | str("-\\")
         end
 
         # The regex's own tail class, `[^\+<\->\->:\n,;]`, transliterated
@@ -437,7 +437,7 @@ module Sirena
         end
 
         rule(:message_actor_continuation) do
-          message_actor_continuation_entry_stop.absent? >> str('-') >>
+          message_actor_continuation_entry_stop.absent? >> str("-") >>
             message_actor_continuation_tail_char.repeat(1)
         end
 
@@ -456,9 +456,9 @@ module Sirena
         # continuation: `A->>B-/C: m` and `A->>B-\C: m` are rejected.
         rule(:message_actor_char) do
           message_actor_stop.absent? >>
-            (match['^+<>()-'] |
-              (str('-') >>
-                (str('-') | str('/') | str('\\') | message_actor_stop).absent?))
+            (match["^+<>()-"] |
+              (str("-") >>
+                (str("-") | str("/") | str("\\") | message_actor_stop).absent?))
         end
 
         # `>` joins `<` as never message-actor material, in any position —
@@ -488,7 +488,7 @@ module Sirena
         # so a `#` past the first character stays ordinary name material
         # (measured, `A->>B#C: m` gives recipient "B#C").
         rule(:message_actor_lead_char) do
-          message_actor_stop.absent? >> hash_char.absent? >> match['^+<>()-']
+          message_actor_stop.absent? >> hash_char.absent? >> match["^+<>()-"]
         end
 
         # `char_ref` is tried first so a name can OPEN with a character
@@ -497,7 +497,7 @@ module Sirena
         # stop the plain branch at its very first character.
         rule(:message_actor_lead) do
           char_ref |
-            (match[')>/\\\\'].absent? >> mermaid_token_opener.absent? >>
+            (match[")>/\\\\"].absent? >> mermaid_token_opener.absent? >>
               message_actor_lead_char)
         end
 
@@ -515,14 +515,14 @@ module Sirena
         # here: `%%` already ends the name, and the comment it opens leaves
         # the message without its required `: text`.
         rule(:mermaid_token_opener) do
-          (str('%') >> str('{').absent?) |
+          (str("%") >> str("{").absent?) |
             (lexed_number >> match[" \n"])
         end
 
         rule(:lexed_number) do
-          (match['0-9'].repeat(1) >>
-            (str('.') >> match['0-9'].repeat(1, 2)).maybe) |
-            (str('.') >> match['0-9'].repeat(1, 2))
+          (match["0-9"].repeat(1) >>
+            (str(".") >> match["0-9"].repeat(1, 2)).maybe) |
+            (str(".") >> match["0-9"].repeat(1, 2))
         end
 
         # `message_actor_continuation` is tried only in the repeat below —
@@ -544,7 +544,7 @@ module Sirena
         # sides, matching jison's `()` token lexing in the
         # whitespace-skipping INITIAL state (`A()->>B` and `A ()->>B`
         # are both legal).
-        rule(:central_connection) { str('()') }
+        rule(:central_connection) { str("()") }
 
         # Shape metadata (`@{"type":"boundary"}`) is parsed and discarded,
         # not validated as JSON — a nested `{...}` on one line still ends
@@ -555,9 +555,9 @@ module Sirena
         # than raising. `repeat(1)`, not `repeat`: mermaid rejects an
         # empty `@{}`, so the payload must not be empty either.
         rule(:shape_metadata) do
-          str('@{') >>
-            (str('}').absent? >> newline.absent? >> any).repeat(1) >>
-            str('}')
+          str("@{") >>
+            (str("}").absent? >> newline.absent? >> any).repeat(1) >>
+            str("}")
         end
 
         # Participant declarations. `keyword` and `id`/`label` are shared
@@ -569,7 +569,7 @@ module Sirena
         def declaration_body(keyword)
           str(keyword) >> space.repeat(1) >>
             declaration_name.as(:id) >> shape_metadata.maybe >> space? >>
-            (str('as') >> space.repeat(1) >> label.as(:label)).maybe
+            (str("as") >> space.repeat(1) >> label.as(:label)).maybe
         end
         private :declaration_body
 
@@ -581,11 +581,11 @@ module Sirena
         # outright, since it has nowhere to put the text still left after
         # its own leading `;`.
         rule(:participant_declaration) do
-          declaration_body('participant') >> content_boundary.as(:participant)
+          declaration_body("participant") >> content_boundary.as(:participant)
         end
 
         rule(:actor_declaration) do
-          declaration_body('actor') >> content_boundary.as(:actor)
+          declaration_body("actor") >> content_boundary.as(:actor)
         end
 
         # `.as(:create)` is required: the builder's lifecycle check (see
@@ -596,9 +596,9 @@ module Sirena
         # 11.16.1: `create participant B;A->>B: m` gives 2 participants,
         # 1 message.
         rule(:create_statement) do
-          str('create').as(:create) >> space.repeat(1) >>
-            ((declaration_body('participant') >> content_boundary.as(:participant)) |
-              (declaration_body('actor') >> content_boundary.as(:actor)))
+          str("create").as(:create) >> space.repeat(1) >>
+            ((declaration_body("participant") >> content_boundary.as(:participant)) |
+              (declaration_body("actor") >> content_boundary.as(:actor)))
         end
 
         # Draws no destroy marker (sirena's existing "not modeled" stance
@@ -611,7 +611,7 @@ module Sirena
         # participants, 1 message on mermaid 11.16.1; `line_end` alone
         # rejected it.
         rule(:destroy_statement) do
-          str('destroy') >> space.repeat(1) >>
+          str("destroy") >> space.repeat(1) >>
             declaration_name.as(:destroy) >> content_boundary
         end
 
@@ -624,7 +624,7 @@ module Sirena
         # `content_boundary` (not `rest_of_line`) so an inline `;` always
         # yields the following message instead of swallowing it.
         rule(:links_statement) do
-          str('links') >> space.repeat(1) >>
+          str("links") >> space.repeat(1) >>
             message_actor_name.as(:links) >> colon >> text_run >> content_boundary
         end
 
@@ -682,26 +682,26 @@ module Sirena
         # no solid arrow's second character is a dash, so the families are
         # order-independent between themselves.
         rule(:arrow_base) do
-          str('<<-->>') | str('<<->>') |
+          str("<<-->>") | str("<<->>") |
             dotted_arrow | solid_arrow | reversed_arrow
         end
 
         rule(:dotted_arrow) do
-          str('-->>') | str('--|/') | str('--|\\') | str('--//') |
-            str('--\\\\') | str('--x') | str('--X') | str('--)') | str('-->')
+          str("-->>") | str("--|/") | str("--|\\") | str("--//") |
+            str("--\\\\") | str("--x") | str("--X") | str("--)") | str("-->")
         end
 
         rule(:solid_arrow) do
-          str('->>') | str('-|/') | str('-|\\') | str('-//') |
-            str('-\\\\') | str('-x') | str('-X') | str('-)') | str('->')
+          str("->>") | str("-|/") | str("-|\\") | str("-//") |
+            str("-\\\\") | str("-x") | str("-X") | str("-)") | str("->")
         end
 
         rule(:reversed_arrow) do
-          str('/|--') | str('/|-') | str('\\|--') | str('\\|-') |
-            str('//--') | str('//-') | str('\\\\--') | str('\\\\-')
+          str("/|--") | str("/|-") | str('\\|--') | str('\\|-') |
+            str("//--") | str("//-") | str('\\\\--') | str('\\\\-')
         end
 
-        rule(:activation_suffix) { space? >> match['+-'] }
+        rule(:activation_suffix) { space? >> match["+-"] }
 
         rule(:message_text) do
           colon >> space? >>
@@ -710,7 +710,7 @@ module Sirena
 
         # Notes
         rule(:note_statement) do
-          (str('note') | str('Note')) >> space.repeat(1) >>
+          (str("note") | str("Note")) >> space.repeat(1) >>
             note_position.as(:position) >> space.repeat(1) >>
             note_participants.as(:participants) >> space? >>
             colon >> space? >>
@@ -719,9 +719,9 @@ module Sirena
         end
 
         rule(:note_position) do
-          (str('left') >> space.repeat(1) >> str('of')).as(:left_of) |
-            (str('right') >> space.repeat(1) >> str('of')).as(:right_of) |
-            str('over').as(:over)
+          (str("left") >> space.repeat(1) >> str("of")).as(:left_of) |
+            (str("right") >> space.repeat(1) >> str("of")).as(:right_of) |
+            str("over").as(:over)
         end
 
         rule(:note_participants) do
@@ -736,25 +736,25 @@ module Sirena
         # `participant 1` parse while `activate 1` failed on the very same
         # actor.
         rule(:activation_command) do
-          str('activate') >> space.repeat(1) >>
+          str("activate") >> space.repeat(1) >>
             actor_name.as(:activate) >>
             line_end
         end
 
         rule(:deactivation_command) do
-          str('deactivate') >> space.repeat(1) >>
+          str("deactivate") >> space.repeat(1) >>
             actor_name.as(:deactivate) >>
             line_end
         end
 
         # Box grouping
         rule(:box_statement) do
-          str('box') >> space.repeat(1) >>
+          str("box") >> space.repeat(1) >>
             text_run.as(:box_label) >> content_boundary >>
             ws? >>
             statements.as(:box_statements) >>
             ws? >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         # Control structures
@@ -768,12 +768,12 @@ module Sirena
         end
 
         rule(:loop_structure) do
-          str('loop') >> space? >>
+          str("loop") >> space? >>
             text_run.as(:loop_label) >> content_boundary >>
             ws? >>
             statements.as(:loop_statements) >>
             ws? >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         # Every block-opening/continuation label (this one through
@@ -783,19 +783,19 @@ module Sirena
         # — through one shared state whose label rule stops at `;`. `rect`
         # has no rule in this grammar at all.
         rule(:alt_structure) do
-          str('alt') >> space? >>
+          str("alt") >> space? >>
             text_run.as(:alt_label) >> content_boundary >>
             ws? >>
             statements.as(:alt_statements) >>
             ws? >>
             (
-              str('else') >> space? >>
+              str("else") >> space? >>
               text_run.as(:else_label) >> content_boundary >>
               ws? >>
               statements.as(:else_statements) >>
               ws?
             ).repeat.as(:else_blocks) >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         # `match['a-zA-Z0-9_'].absent?` after the literal `opt` is a real
@@ -806,53 +806,53 @@ module Sirena
         # consuming the real closing `end` and breaking the whole parse).
         # Verified mermaid also rejects a glued `optFoo`.
         rule(:opt_structure) do
-          str('opt') >> match['a-zA-Z0-9_'].absent? >> space? >>
+          str("opt") >> match["a-zA-Z0-9_"].absent? >> space? >>
             text_run.as(:opt_label) >> content_boundary >>
             ws? >>
             statements.as(:opt_statements) >>
             ws? >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         rule(:par_structure) do
-          str('par') >> space? >>
+          str("par") >> space? >>
             text_run.as(:par_label) >> content_boundary >>
             ws? >>
             statements.as(:par_statements) >>
             ws? >>
             (
-              str('and') >> space? >>
+              str("and") >> space? >>
               text_run.as(:and_label) >> content_boundary >>
               ws? >>
               statements.as(:and_statements) >>
               ws?
             ).repeat.as(:and_blocks) >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         rule(:critical_structure) do
-          str('critical') >> space? >>
+          str("critical") >> space? >>
             text_run.as(:critical_label) >> content_boundary >>
             ws? >>
             statements.as(:critical_statements) >>
             ws? >>
             (
-              str('option') >> space? >>
+              str("option") >> space? >>
               text_run.as(:option_label) >> content_boundary >>
               ws? >>
               statements.as(:option_statements) >>
               ws?
             ).repeat.as(:option_blocks) >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         rule(:break_structure) do
-          str('break') >> space? >>
+          str("break") >> space? >>
             text_run.as(:break_label) >> content_boundary >>
             ws? >>
             statements.as(:break_statements) >>
             ws? >>
-            str('end') >> line_end
+            str("end") >> line_end
         end
 
         # Label can be quoted or unquoted text

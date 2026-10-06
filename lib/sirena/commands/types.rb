@@ -17,7 +17,7 @@ module Sirena
       #
       # @return [void]
       def run
-        puts 'Supported diagram types:'
+        puts "Supported diagram types:"
         puts
 
         DiagramRegistry.types.each do |type|

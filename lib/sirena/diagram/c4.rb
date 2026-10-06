@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lutaml/model'
-require_relative 'base'
+require "lutaml/model"
+require_relative "base"
 
 module Sirena
   module Diagram
@@ -55,14 +55,14 @@ module Sirena
       #
       # @return [String] base element type
       def base_type
-        element_type&.gsub(/_Ext$/, '') || element_type
+        element_type&.gsub(/_Ext$/, "") || element_type
       end
 
       # Check if element is a person
       #
       # @return [Boolean] true if person
       def person?
-        base_type == 'Person'
+        base_type == "Person"
       end
 
       # Check if element is a system
@@ -83,7 +83,7 @@ module Sirena
       #
       # @return [Boolean] true if component
       def component?
-        base_type == 'Component'
+        base_type == "Component"
       end
     end
 
@@ -110,7 +110,7 @@ module Sirena
       # Initialize with default type
       def initialize(*args)
         super
-        self.rel_type ||= 'Rel'
+        self.rel_type ||= "Rel"
       end
 
       # Validates the relationship has required attributes.
@@ -125,7 +125,7 @@ module Sirena
       #
       # @return [Boolean] true if bidirectional
       def bidirectional?
-        rel_type == 'BiRel'
+        rel_type == "BiRel"
       end
     end
 
@@ -164,7 +164,7 @@ module Sirena
       # Initialize with default type
       def initialize(*args)
         super
-        self.boundary_type ||= 'Boundary'
+        self.boundary_type ||= "Boundary"
       end
 
       # Validates the boundary has required attributes.
@@ -179,14 +179,14 @@ module Sirena
       #
       # @return [Boolean] true if enterprise boundary
       def enterprise?
-        boundary_type == 'Enterprise_Boundary'
+        boundary_type == "Enterprise_Boundary"
       end
 
       # Check if system boundary
       #
       # @return [Boolean] true if system boundary
       def system?
-        boundary_type == 'System_Boundary'
+        boundary_type == "System_Boundary"
       end
     end
 
@@ -238,7 +238,7 @@ module Sirena
       # Initialize with default level
       def initialize(*args)
         super
-        self.level ||= 'Context'
+        self.level ||= "Context"
       end
 
       # Returns the diagram type identifier.

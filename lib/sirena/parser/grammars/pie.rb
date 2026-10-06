@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'common'
+require_relative "common"
 
 module Sirena
   module Parser
@@ -41,15 +41,15 @@ module Sirena
 
         # Pie keyword - case insensitive with optional "chart" suffix
         rule(:pie_keyword) do
-          match['Pp'] >> str('ie') >> (space.repeat(1) >> match['Cc'] >> str('hart')).maybe
+          match["Pp"] >> str("ie") >> (space.repeat(1) >> match["Cc"] >> str("hart")).maybe
         end
 
         rule(:show_data_flag) do
-          str('showData').as(:show_data)
+          str("showData").as(:show_data)
         end
 
         rule(:title_declaration) do
-          str('title') >> (colon | space.repeat(1)) >>
+          str("title") >> (colon | space.repeat(1)) >>
             title_text.as(:title)
         end
 
@@ -74,14 +74,14 @@ module Sirena
         rule(:standalone_title_declaration) do
           # Allow escaped tabs and other whitespace
           (str('\\t') | space).repeat >>
-            str('title') >> space.repeat(1) >>
+            str("title") >> space.repeat(1) >>
             title_text.as(:standalone_title) >>
             line_end
         end
 
         # Accessibility title
         rule(:acc_title_declaration) do
-          str('accTitle') >> space? >> colon >> space? >>
+          str("accTitle") >> space? >> colon >> space? >>
             (line_end.absent? >> any).repeat.as(:acc_title) >>
             line_end
         end
@@ -92,13 +92,13 @@ module Sirena
         end
 
         rule(:acc_descr_single_line) do
-          str('accDescr') >> space? >> colon >> space? >>
+          str("accDescr") >> space? >> colon >> space? >>
             (line_end.absent? >> any).repeat.as(:acc_descr) >>
             line_end
         end
 
         rule(:acc_descr_multi_line) do
-          str('accDescr') >> space? >> lbrace >> ws? >>
+          str("accDescr") >> space? >> lbrace >> ws? >>
             (rbrace.absent? >> any).repeat.as(:acc_descr) >>
             ws? >> rbrace >> line_end
         end

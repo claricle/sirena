@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative 'escaping'
-require_relative 'numbers'
-require_relative 'path_geometry'
-require_relative 'polygon'
+require_relative "escaping"
+require_relative "numbers"
+require_relative "path_geometry"
+require_relative "polygon"
 
 module Sirena
   module Svg
@@ -27,7 +27,7 @@ module Sirena
       # SVG's own "no marker here", and its initial `stroke`. A path carrying
       # either is asking for nothing to be drawn, which is not the same as
       # not having asked.
-      NONE = 'none'
+      NONE = "none"
       private_constant :LENGTH, :HALF_WIDTH, :DEFAULT_STROKE_WIDTH, :NONE
 
       # @param path [Svg::Path] the path to draw arrowheads for
