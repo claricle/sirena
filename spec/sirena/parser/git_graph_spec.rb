@@ -221,7 +221,7 @@ RSpec.describe Sirena::Parser::GitGraph do
       # linear in the chunk size per branch, not in the name's own
       # length. Scaling ratio, not an absolute bound, for the same
       # reason as spec/support/cpu_timing.rb.
-      it "parses many branches with short names at a linear rate, not one per fixed chunk" do
+      it "parses many branches with short names at a linear rate, not one per fixed chunk", :speed do
         small_time = min_call_time { cpu_time { parser.parse(many_branches_source(500)) } }
         large_time = min_call_time { cpu_time { parser.parse(many_branches_source(4_000)) } }
 

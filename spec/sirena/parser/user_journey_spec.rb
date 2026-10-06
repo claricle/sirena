@@ -576,7 +576,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       end
     end
 
-    describe "the cost of a large source" do
+    describe "the cost of a large source", :speed do
       # These examples are clock-based, which is why each is written against
       # a control rather than a bare stopwatch wherever it can be. They exist
       # because the defects they pin are invisible to every other assertion
@@ -593,11 +593,7 @@ RSpec.describe Sirena::Parser::UserJourney do
           "journey\naccDescr {d\n#{"#{line}\n" * 800}}\nsection S\nT: 1: M\n"
         end
         best = lambda do |source|
-          Array.new(3) do
-            started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            parser.parse(source)
-            Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-          end.min
+          Array.new(3) { wall_time { parser.parse(source) } }.min
         end
 
         control = best.call(block.call("x"))
@@ -623,15 +619,15 @@ RSpec.describe Sirena::Parser::UserJourney do
         expect(source.bytesize).to be > 30_000
 
         ratios = Array.new(3) do
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          expect { parser.parse(source) }
-            .to raise_error(Sirena::Parser::ParseError, /Parse error/)
-          refused = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          refused = wall_time do
+            expect { parser.parse(source) }
+              .to raise_error(Sirena::Parser::ParseError, /Parse error/)
+          end
 
-          started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          expect(parser.parse(control).sections.map { |s| [s.name, s.tasks.map(&:name)] })
-            .to eq([["S", ["T"]]])
-          accepted = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+          accepted = wall_time do
+            expect(parser.parse(control).sections.map { |s| [s.name, s.tasks.map(&:name)] })
+              .to eq([["S", ["T"]]])
+          end
 
           refused / accepted
         end.min
@@ -655,11 +651,7 @@ RSpec.describe Sirena::Parser::UserJourney do
         expect(sources.first).not_to eq(sources.last)
 
         results = sources.map do |source|
-          best = Array.new(3) do
-            started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-            parser.parse(source)
-            Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-          end.min
+          best = Array.new(3) { wall_time { parser.parse(source) } }.min
           [best, parser.parse(source).sections.map { |s| [s.name, s.tasks.map(&:name)] }]
         end
 
