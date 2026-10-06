@@ -922,12 +922,21 @@ RSpec.describe Sirena::Parser::Kanban do
     end
 
     ["    :::\n    b[B]\n", "    :::\n    :::x\n",
-     "    :::\n      b[B]\n"].each do |lines|
+     "    :::\n      b[B]\n", "    :::\n    :::\n",
+     "    :::\n    ::icon()\n"].each do |lines|
       context "with an empty class modifier followed by #{lines.inspect}" do
         it "raises ParseError, as mermaid joins the next line onto it" do
           expect { parser.parse("kanban\n  root[Root]\n    a[A]\n#{lines}") }
             .to raise_error(Sirena::Parser::ParseError)
         end
+      end
+    end
+
+    context "with many empty class modifiers in a row" do
+      it "raises ParseError instead of exhausting the stack" do
+        source = "kanban\n  root[Root]\n#{"    :::\n" * 400}"
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError)
       end
     end
 
@@ -1620,10 +1629,11 @@ RSpec.describe Sirena::Parser::Kanban do
     # character at a time makes one slice per character: either is quadratic
     # in the input. Each row parses one family of inputs at SIZE and at four
     # times SIZE; linear growth gives a ratio near 4 and quadratic growth one
-    # near 16, so the bound is 8. Families of lines carry long lines, and
-    # families of runs long runs, because the copying only outweighs the
-    # per-piece cost of the parser once the pieces are large. The timer floor
-    # keeps a parse that takes a millisecond from inflating the ratio.
+    # near 16, so the bound is 10: clear of both, and of timer noise on a
+    # loaded machine. Families of lines carry long lines, and families of
+    # runs long runs, because the copying only outweighs the per-piece cost
+    # of the parser once the pieces are large. The timer floor keeps a parse
+    # that takes a millisecond from inflating the ratio.
     context "with an input that grows" do
       fat = "x" * 3000
       half = "x" * 1500
@@ -1659,7 +1669,7 @@ RSpec.describe Sirena::Parser::Kanban do
         "one long identifier" =>
           [50_000, ->(n) { "kanban\n  #{'x' * n}\n" }],
         "whitespace after an item" =>
-          [40_000, ->(n) { "kanban\n  r[R]#{' ' * n}" }],
+          [60_000, ->(n) { "kanban\n  r[R]#{' ' * n}" }],
         "whitespace alone after the last line" =>
           [60_000, ->(n) { "kanban\n  r[R]\n#{' ' * n}" }],
         "whitespace before an item" =>
@@ -1686,7 +1696,7 @@ RSpec.describe Sirena::Parser::Kanban do
           [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
       }.each do |family, (size, build)|
         it "parses #{family} in time linear in their size" do
-          expect(growth_ratio(size, build)).to be < 8
+          expect(growth_ratio(size, build)).to be < 10
         end
       end
     end

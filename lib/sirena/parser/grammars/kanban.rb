@@ -22,7 +22,7 @@ module Sirena
 
         # Nothing but blank and comment lines up to the end of the source.
         rule(:blank_lines_left) do
-          (newline >> blank_run.maybe >> line_space_run >> eof) | eof
+          (newline >> blank_text_run.maybe >> line_space_run >> eof) | eof
         end
 
         # The lines that capture nothing, taken as ONE slice. Parslet folds a
@@ -33,6 +33,12 @@ module Sirena
           Atoms::Joined.new(
             (empty_line | comment_line | no_op_modifier_line).repeat(1),
           )
+        end
+
+        # Only blank and comment lines: an empty `:::` is not one of them, and
+        # `empty_class_modifier` looks ahead through this rule.
+        rule(:blank_text_run) do
+          Atoms::Joined.new((empty_line | comment_line).repeat(1))
         end
 
         rule(:content_line) do
