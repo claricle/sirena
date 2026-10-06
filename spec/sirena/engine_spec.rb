@@ -3,8 +3,8 @@
 require "spec_helper"
 require "rexml/document"
 
-# `rendered_node_width` and `detect` both need the `engine`/`source` lets
-# (or `engine` directly), so both stay included instance methods.
+# `rendered_node_width` needs the `engine`/`source` lets, so it stays an
+# included instance method; `detect` calls Notation::Mermaid directly.
 module EngineSpecHelpers
   def rendered_node_width(theme_name)
     document = REXML::Document.new(engine.render(source, theme: theme_name))
@@ -13,7 +13,7 @@ module EngineSpecHelpers
 
   def detect(source)
     preamble = Sirena::Source.split(source)
-    engine.send(:detect_diagram_type, preamble[:body])
+    Sirena::Notation::Mermaid.detect_type(preamble[:body])
   end
 end
 

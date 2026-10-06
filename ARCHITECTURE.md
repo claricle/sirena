@@ -31,8 +31,8 @@ declared dependency but is not called yet (see the TODO in
 ```mermaid
 flowchart TD
     Src["Mermaid source string"] --> Split["Source.split: frontmatter, directives, body"]
-    Split --> Detect["detect_diagram_type: DIAGRAM_TYPE_PATTERNS"]
-    Detect --> Reg["DiagramRegistry.get(type)"]
+    Split --> Detect["Notation::Mermaid.detect_type: DIAGRAM_TYPE_PATTERNS"]
+    Detect --> Reg["Notation::Mermaid.type_handlers(type)"]
     Reg --> Parse["Parser: Grammar, Builder, Parser"]
     Parse --> Model["Diagram model"]
     Model --> Trans["Layout::Base#to_graph: graph Hash"]
@@ -68,7 +68,7 @@ Sirena (Root Module)
     ├── Diagram (Domain Models)
     │     │
     │     ├── Base (Abstract)
-    │     └── one model per registered type (24; see lib/sirena.rb)
+    │     └── one model per registered type (24; see lib/sirena/notation/builtin.rb)
     │
     ├── Layout (Model Conversion)
     │     │
@@ -341,7 +341,8 @@ DiagramRegistry.register(
   model: Diagram::NewType
 )
 
-# 5. Add a detection regex to Engine::DIAGRAM_TYPE_PATTERNS
+# 5. Add a detection regex to Notation::Mermaid::DIAGRAM_TYPE_PATTERNS
+#    and a keyword to Notation::Mermaid::DIAGRAM_TYPE_KEYWORDS
 ```
 
 ### Adding New SVG Shapes
@@ -523,7 +524,7 @@ sequenceDiagram
     participant L as Layout::Grid
     participant D as Renderer
     U->>E: Sirena.render(source)
-    E->>E: Source.split, detect_diagram_type
+    E->>E: Source.split, Notation::Mermaid.detect_type
     E->>R: get(:flowchart)
     R-->>E: parser, transform, renderer, model
     E->>P: parse(body)
@@ -575,19 +576,19 @@ sequenceDiagram
 
 Allows dynamic registration and retrieval of diagram type handlers without
 hardcoding type checks. Each of the 24 types registers one handler set in
-`lib/sirena.rb`; detection is a separate table,
-`Engine::DIAGRAM_TYPE_PATTERNS`.
+`lib/sirena/notation/builtin.rb`; detection is a separate table,
+`Notation::Mermaid::DIAGRAM_TYPE_PATTERNS`.
 
 ```mermaid
 flowchart LR
-    Pat["Engine::DIAGRAM_TYPE_PATTERNS: regex to type"] --> Type["type symbol"]
+    Pat["Notation::Mermaid::DIAGRAM_TYPE_PATTERNS: regex to type"] --> Type["type symbol"]
     Type --> Get["DiagramRegistry.get(type)"]
     Get --> H["handler set"]
     H --> Pa["parser: Parser class"]
     H --> Tr["transform: Layout class"]
     H --> Re["renderer: Renderer class"]
     H --> Mo["model: Diagram class"]
-    Boot["lib/sirena.rb"] -->|"register(type, parser:, transform:, renderer:, model:)"| Get
+    Boot["lib/sirena/notation/builtin.rb"] -->|"register(type, parser:, transform:, renderer:, model:)"| Get
 ```
 
 ```ruby

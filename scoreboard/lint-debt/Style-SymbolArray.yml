@@ -1,12 +1,12 @@
 ---
 cop: Style/SymbolArray
 rows:
-- file: lib/sirena/engine.rb
-  count: 2
 - file: lib/sirena/markdown_text.rb
   count: 3
 - file: lib/sirena/markdown_text/emphasis_simulator.rb
   count: 8
+- file: lib/sirena/notation/mermaid.rb
+  count: 2
 - file: lib/sirena/renderer/flowchart.rb
   count: 1
 - file: lib/sirena/renderer/sequence.rb
