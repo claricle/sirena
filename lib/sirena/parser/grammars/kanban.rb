@@ -2,6 +2,7 @@
 
 require_relative "common"
 require_relative "../atoms/greedy_run"
+require_relative "../atoms/joined"
 
 module Sirena
   module Parser
@@ -9,28 +10,110 @@ module Sirena
       # Parslet grammar for Kanban diagrams
       class Kanban < Common
         rule(:diagram) do
-          space? >>
+          space_run >>
             header >>
-            (content_line).repeat(0).as(:lines) >>
-            space?
+            content_line.repeat(0).as(:lines) >>
+            line_space_run
         end
 
         rule(:header) do
           str("kanban") >> (newline | eof)
         end
 
+        # Nothing but blank and comment lines up to the end of the source.
+        rule(:blank_lines_left) do
+          (newline >> blank_text_run.maybe >> line_space_run >> eof) | eof
+        end
+
+        # The lines that capture nothing, taken as ONE slice. Parslet folds a
+        # repetition of plain slices with `Slice#+`, which is quadratic, so
+        # every repetition of such lines goes through `Joined`. A line that
+        # captures (an item or a modifier) breaks the run and is never joined.
+        rule(:blank_run) do
+          Atoms::Joined.new(
+            (empty_line | comment_line | no_op_modifier_line).repeat(1),
+          )
+        end
+
+        # Only blank and comment lines: an empty `:::` is not one of them, and
+        # `empty_class_modifier` looks ahead through this rule.
+        rule(:blank_text_run) do
+          Atoms::Joined.new((empty_line | comment_line).repeat(1))
+        end
+
         rule(:content_line) do
-          empty_line | modifier_line | item_line
+          blank_run | modifier_line | item_line
         end
 
         rule(:empty_line) do
-          space? >> newline
+          line_space_run >> newline
+        end
+
+        # Overrides Common's char-at-a-time `comment` with the bounded
+        # `GreedyRun` scan (see atoms/greedy_run.rb) so a long `%%` line
+        # cannot hang this grammar; `.maybe` covers the empty-body `%%` case,
+        # since GreedyRun itself errors on a zero-length match.
+        #
+        # The body stops at U+2028/U+2029, where mermaid's lexer `.*` stops.
+        # Carriage returns never reach the grammar: the parser turns them
+        # into line feeds first, as mermaid does.
+        rule(:comment) do
+          str("%%") >> Atoms::GreedyRun.new('[^\n\u2028\u2029]').maybe
+        end
+
+        # A line holding only a `%%` comment (corpus 032). Mermaid strips
+        # such a line, up to its line feed, before lexing - so unlike a
+        # trailing comment, its body runs through U+2028/U+2029 too. It
+        # captures nothing, the same way empty_line doesn't -
+        # Builders::Kanban's `rule(lines: subtree(:lines))` filters any
+        # non-Hash entry out of the lines array.
+        rule(:comment_line) do
+          line_space_run >> str("%%") >> str("{").absent? >>
+            Atoms::GreedyRun.new('[^\n]').maybe >> (newline | eof)
+        end
+
+        # How every item and modifier line ends: optional
+        # whitespace, an optional trailing `%%` comment, then the line
+        # break. After a closing delimiter (`]`, `)`, `}`) the comment needs
+        # no space (`root[Root]%% c`); after a bare id `%%` is part of the
+        # label, which `bare_item` refuses. Whitespace is mermaid's `\s`,
+        # not Common's ASCII `space`.
+        rule(:line_end) do
+          (hspace_run >> comment >> comment_end) |
+            (line_space_run >> (newline | eof))
+        end
+
+        # The comment body stops at U+2028/U+2029. Mermaid refuses one
+        # unless only blanks and comments follow it to the end of the input.
+        rule(:comment_end) do
+          newline | eof |
+            (line_sep >> line_space_run >>
+              (blank_lines_left | (comment_line_start >> blank_lines_left)))
+        end
+
+        rule(:comment_line_start) do
+          str("%%") >> str("{").absent? >>
+            Atoms::GreedyRun.new('[^\n]').maybe
         end
 
         rule(:item_line) do
-          str(" ").repeat.as(:indent) >>
+          Atoms::GreedyRun.new("[ ]", min: 0).as(:indent) >>
             item >>
-            (newline | eof)
+            line_end
+        end
+
+        # An empty `::icon()` decorates nothing and may sit anywhere. An
+        # empty `:::` swallows its own line break in mermaid's lexer, so the
+        # next item would be joined onto it: it is accepted only when
+        # nothing but blank or comment lines follow (measured against mmdc
+        # 11.12.0).
+        rule(:no_op_modifier_line) do
+          space_run >>
+            ((icon_keyword >> str(")") >> line_end) | empty_class_modifier)
+        end
+
+        rule(:empty_class_modifier) do
+          str(":::") >> blank_lines_left.present?
         end
 
         # A standalone `::icon(...)` or `:::classes` line applies to the
@@ -42,21 +125,25 @@ module Sirena
         # applies it to the last item the same way mindmap's `TreeBuilder`
         # applies it to the last node.
         rule(:modifier_line) do
-          space?.as(:indent) >>
-            (icon_modifier | class_modifier) >>
-            space? >>
-            (newline | eof)
+          space_run.as(:indent) >> (icon_modifier | class_modifier) >> line_end
+        end
+
+        rule(:icon_keyword) do
+          str("::") >> match["iI"] >> match["cC"] >> match["oO"] >>
+            match["nN"] >> str("(")
         end
 
         rule(:icon_modifier) do
-          str("::") >> match["iI"] >> match["cC"] >> match["oO"] >> match["nN"] >> str("(") >>
+          icon_keyword >>
             Atoms::GreedyRun.new("[^)]").as(:icon) >>
             str(")")
         end
 
+        # The body stops where mermaid's `.+` does, at a line break or
+        # U+2028/U+2029; `%%` inside it is class text.
         rule(:class_modifier) do
           str(":::") >>
-            Atoms::GreedyRun.new('[^\r\n]').as(:classes)
+            Atoms::GreedyRun.new('[^\n\u2028\u2029]').as(:classes)
         end
 
         # An item can be either a column or a card. The label is optional:
@@ -76,7 +163,8 @@ module Sirena
         # directory are written - see `mindmap.rb`'s `node` rule.
         rule(:item) do
           reserved_token.absent? >>
-            (labelled_item | shaped_item | unlabelled_shaped_item | bare_item) >>
+            (labelled_item | shaped_item | unlabelled_shaped_item |
+              bare_item) >>
             metadata.maybe
         end
 
@@ -100,11 +188,43 @@ module Sirena
             match["bB"] >> match["aA"] >> match["nN"]
         end
 
+        # Common's `identifier` repeats a one-character match, which Parslet
+        # folds with `Slice#+`: quadratic in the length of the id.
+        rule(:identifier) do
+          match["a-zA-Z_"] >> Atoms::GreedyRun.new("[a-zA-Z0-9_]", min: 0)
+        end
+
         rule(:labelled_item) do
           identifier.as(:id) >>
             lbracket >>
-            Atoms::GreedyRun.new('[^\]]').as(:text) >>
+            labelled_item_text >>
             rbracket
+        end
+
+        # Try the quoted form first: a quoted bracket label may contain `[`/`]`
+        # literally, so the unquoted fallback below (which stops at the first
+        # `]`) must not run against a quoted body. A markdown-string body
+        # (`"`text`"`) is refused in both alternatives, as `round_text` does:
+        # mermaid renders it as markdown and Sirena has no markdown renderer.
+        rule(:labelled_item_text) do
+          empty_quoted_fragments >>
+            ((str('"') >> markdown_string_body.absent? >>
+              Atoms::GreedyRun.new('[^"]').as(:text) >> str('"')) |
+              ((str('"') >> markdown_string_body).absent? >>
+                Atoms::GreedyRun.new('[^\]]').as(:text))) >>
+            empty_quoted_fragments
+        end
+
+        # mermaid's lexer drops an empty quoted fragment (`""` or an empty
+        # markdown string) beside the label text: `root[""a]` and
+        # `root["a"""]` are both `a`, while `root[""]` with no text-bearing
+        # fragment is refused.
+        rule(:empty_quoted_fragment) do
+          str('"``"') | str('""')
+        end
+
+        rule(:empty_quoted_fragments) do
+          Atoms::Joined.new(empty_quoted_fragment.repeat)
         end
 
         # Round shape with an id: id(text) - mermaid's rounded-node syntax,
@@ -157,8 +277,12 @@ module Sirena
         # below, rather than half-supporting a shape nothing here
         # understands.
         rule(:round_text) do
-          (str('"') >> markdown_string_body.absent? >> Atoms::GreedyRun.new('[^"]').as(:text) >> str('"')) |
-            (str('"').absent? >> Atoms::GreedyRun.new('[^()\]}]').as(:text))
+          empty_quoted_fragments >>
+            ((str('"') >> markdown_string_body.absent? >>
+              Atoms::GreedyRun.new('[^"]').as(:text) >> str('"')) |
+              (str('"').absent? >>
+                Atoms::GreedyRun.new('[^()\]}]').as(:text))) >>
+            empty_quoted_fragments
         end
 
         rule(:markdown_string_body) do
@@ -171,8 +295,33 @@ module Sirena
         # constructs into silently wrong output instead of parse failures.
         # `identifier` also refuses a leading digit, so `1col` fails to parse
         # while `col1` and `_col` are accepted.
+        # Trailing `%%`, or trailing JavaScript whitespace beyond space and
+        # tab, is part of a bare id's literal label in mermaid, so it is
+        # refused here rather than dropped by `line_end`.
         rule(:bare_item) do
-          identifier.as(:id)
+          identifier.as(:id) >>
+            (space.repeat >> (str("%%") | line_space)).absent?
+        end
+
+        LINE_SPACE_CHARS = '\t\v\f\x20\u00A0\u1680' \
+                           '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
+        HSPACE_CHARS = '\t\v\f\x20\u00A0\u1680' \
+                       '\u2000-\u200A\u202F\u205F\u3000\uFEFF'
+        private_constant :LINE_SPACE_CHARS, :HSPACE_CHARS
+
+        rule(:line_space) { match[LINE_SPACE_CHARS] }
+        rule(:line_sep) { match['\u2028\u2029'] }
+
+        # Whitespace runs go through `GreedyRun`: Parslet's own
+        # `line_space.repeat` is quadratic in the length of the run.
+        rule(:line_space_run) do
+          Atoms::GreedyRun.new("[#{LINE_SPACE_CHARS}]", min: 0)
+        end
+
+        rule(:space_run) { Atoms::GreedyRun.new("[ \\t]", min: 0) }
+
+        rule(:hspace_run) do
+          Atoms::GreedyRun.new("[#{HSPACE_CHARS}]", min: 0)
         end
 
         # Metadata: @{ key: 'value', key2: 'value2' }
