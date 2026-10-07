@@ -63,7 +63,7 @@ module GitGraphBucketHelpers
     element.attributes[name].to_f
   end
 
-  # Left and right edge of each label, by TextMeasurement's average width.
+  # Left and right edge of each label, by TextMeasurement's per-glyph width.
   # The renderer sizes by a wider hint, so a label inside the box here is
   # inside it by a margin; the real-width table below is the exact check.
   def label_edges(svg)

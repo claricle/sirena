@@ -14,8 +14,8 @@ module Sirena
   # ESTIMATES: emoji at 1.5 em, everything else at 1.0 em.
   # DOES NOT BOUND: a font the viewer substitutes for a glyph Arial lacks,
   # other stacks (DejaVu, Verdana run up to 1.19 times wider), bold, italic,
-  # shaping beyond OUTLIERS. Callers that need room use
-  # Renderer::Base#reserved_text_width. Kerning only narrows real text.
+  # kerning (it can widen a pair as well as narrow it), shaping beyond
+  # OUTLIERS. Callers that need room use Renderer::Base#reserved_text_width.
   #
   # @example Basic usage
   #   TextMeasurement.measure("Hello", font_size: 14)

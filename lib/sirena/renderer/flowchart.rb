@@ -278,9 +278,10 @@ module Sirena
       # half its width either side of `x` and the whole of its height
       # above `y`, never below. `loop_label_extent` supplies that
       # half-width and height as a wide HINT, not a bound — no
-      # per-character number is one, see the constant it reads — so this
-      # box can still be smaller than what Chrome renders for an extreme
-      # script. Chrome contains that gap on its own, measured — see
+      # measured width is one for a substituted font, see
+      # `TextMeasurement` — so this box can still be smaller than what
+      # Chrome renders for an extreme script. Chrome contains that gap on
+      # its own, measured — see
       # `#render` — so a wrong answer here costs legibility of one
       # label, never the rest of the page.
       #
