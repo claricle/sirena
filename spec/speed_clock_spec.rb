@@ -19,21 +19,27 @@ RSpec.describe SpeedClock do
   end
 
   describe "the spec files" do
-    let(:files) do
-      support = File.join(__dir__, "support", "")
-      Dir[File.join(__dir__, "**", "*.rb")]
-        .reject { |path| path.start_with?(support) || path == __FILE__ }
+    # Only the two files that implement the clocks may read it directly.
+    let(:clock_sources) do
+      ["speed_clock.rb", "cpu_timing.rb"].map do |name|
+        File.join(__dir__, "support", name)
+      end
     end
+    let(:files) { Dir[File.join(__dir__, "**", "*.rb")] - clock_sources }
+    let(:helpers) { Dir[File.join(__dir__, "support", "*.rb")] - clock_sources }
 
-    it "include the timed ones this check is for" do
+    it "include the timed benchmark this check is for" do
       benchmark = "spec/benchmarks/flowchart_subgraph_benchmark.rb"
       expect(files).to include(a_string_ending_with(benchmark))
     end
 
+    # Keep this: it fails if `files` stops scanning spec/support again.
+    it "include every support helper but the clocks themselves" do
+      expect(files).to include(*helpers)
+    end
+
     it "read the clock only through wall_time or cpu_time" do
-      raw_clock = /Process\.(?:clock_gettime|times)
-                  |Benchmark\.(?:realtime|measure|bm)/x
-      offenders = files.select { |path| File.read(path).match?(raw_clock) }
+      offenders = files.flat_map { |path| RawClockReads.find(path) }
       expect(offenders).to be_empty
     end
   end
