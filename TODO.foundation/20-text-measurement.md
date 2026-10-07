@@ -120,7 +120,7 @@ the stereotype and the name as two lines, so it measures each on its own, the
 name at the 16 it is drawn at (regular widths; Chrome's bold Arial runs 1.04 to
 1.11 times wider for ordinary names, which the box padding absorbs).
 
-Effect on output: 491 of the 1997 corpus renders change bytes (flowchart 219,
-class 161 across its two alias dirs, git 57, state 17, unknown 22, the rest
+Effect on output: 487 of the 1997 corpus renders change bytes (flowchart 219,
+class 157 across its two alias dirs, git 57, state 17, unknown 22, the rest
 under 16), none changes between rendering and erroring. `conformance:check`
 stays 1251/1251 and `corpus:check` stays clean.
