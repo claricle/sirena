@@ -178,8 +178,9 @@ module Sirena
               next unless entry.is_a?(Hash)
               next unless entry[:key] && entry[:value]
 
-              value = extract_value(entry[:value])
-              next if dropped_by_mermaid?(value, unquoted: entry[:value].key?(:unquoted))
+              value = mermaid_text(extract_value(entry[:value]),
+                                   unquoted: entry[:value].key?(:unquoted))
+              next if value.nil?
 
               key = entry[:key].to_s
 
@@ -238,20 +239,29 @@ module Sirena
           # unquoted resolution below never both apply. Past it, a non-empty
           # quoted string is always truthy, so `'0'` and `"false"` override.
           #
-          # Only the falsy half of resolution is mirrored. A truthy scalar is
-          # still rendered as its raw text where mermaid renders the resolved
-          # value - `1e0` draws `1`, `0x10` draws `16`. That divergence is
-          # pre-existing and belongs to the card-conformance bucket.
+          # Returns the text mermaid draws, or nil when it drops the entry.
+          #
+          # A kept scalar is drawn as mermaid prints the resolved value: it
+          # calls `.toString()`, so `1e0` draws `1`, `0x10` draws `16` and
+          # `True` draws `true`. Only a number or a boolean changes; a scalar
+          # js-yaml leaves as a string is kept as written.
           #
           # The resolution itself is MetadataYaml's, the same table the
           # flowchart body is read with. `no`, `off`, `True` and `0_1` stay
           # truthy there, and `false`, `null`, `~`, `.nan` and every zero
           # resolve falsy, which is what mermaid's js-yaml 4.1.1 does.
-          def dropped_by_mermaid?(text, unquoted:)
-            return true if text.empty?
-            return false unless unquoted
+          def mermaid_text(text, unquoted:)
+            return if text.empty?
+            return text unless unquoted
 
-            falsy_to_js?(MetadataYaml.plain_scalar(text))
+            resolved = MetadataYaml.plain_scalar(text)
+            return if falsy_to_js?(resolved)
+
+            case resolved
+            when Numeric then JsNumber.stringify(resolved)
+            when true then "true"
+            else text
+            end
           end
 
           # JavaScript's own falsy set, over the values js-yaml can hand

@@ -369,7 +369,7 @@ module Sirena
 
         # Captured as :unquoted, not :string, so the transform can tell an
         # unquoted scalar from a quoted one. What it does with that
-        # distinction is `dropped_by_mermaid?`'s responsibility, not this rule's.
+        # distinction is `mermaid_text`'s responsibility, not this rule's.
         #
         # `.`, `+` and `~` are in the set because js-yaml reads them and
         # mermaid draws them: `0.0`, `+0`, `~` and `.nan` are values it
