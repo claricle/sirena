@@ -4,8 +4,9 @@ require "prism"
 
 # Finds clock reads that bypass SpeedClock#wall_time and CpuTiming#cpu_time.
 # It parses the source rather than matching text, so a line break, `::` or a
-# comment cannot hide a read or invent one. A `defined?` check never runs its
-# operand, so it is not a read. It catches a direct call on the
+# comment cannot hide a read or invent one. `defined?(Process.times)` does
+# not run the call, so it is not a read; `defined?(Process.times.to_a)` runs
+# its receiver, so it is. It catches a direct call on the
 # constant, bare, `::`-rooted or under Object. It does not see dynamic calls
 # (`send`, `public_send`) or a parenthesised receiver such as `(Process).times`.
 module RawClockReads
@@ -38,10 +39,17 @@ module RawClockReads
   end
 
   def self.calls(node)
-    return [] if node.is_a?(Prism::DefinedNode)
-
-    found = node.compact_child_nodes.flat_map { |child| calls(child) }
+    found = children(node).flat_map { |child| calls(child) }
     raw?(node) ? [node, *found] : found
+  end
+
+  # `defined?(a.b(c))` runs `a` but not the call or its arguments, so only the
+  # receiver of a call under `defined?` can hold a read.
+  def self.children(node)
+    return node.compact_child_nodes unless node.is_a?(Prism::DefinedNode)
+    return node.compact_child_nodes unless node.value.is_a?(Prism::CallNode)
+
+    [node.value.receiver].compact
   end
 
   def self.raw?(node)
@@ -67,5 +75,5 @@ module RawClockReads
     node.name.to_s
   end
 
-  private_class_method :calls, :raw?, :constant_name, :path_name
+  private_class_method :calls, :children, :raw?, :constant_name, :path_name
 end
