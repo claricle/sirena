@@ -11,7 +11,8 @@ module Sirena
   # Arial wherever Arial has the glyph; macOS Arial lacks U+0487, U+2010,
   # U+202F, U+20BF and U+21D4); CJK and fullwidth at 1.0 em, the four Arabic
   # ligatures in OUTLIERS, and zero-width marks (all measured in Chrome).
-  # ESTIMATES: emoji at 1.5 em, everything else at 1.0 em.
+  # ESTIMATES: emoji, and any pictographic character followed by U+FE0F, at
+  # 1.5 em; everything else at 1.0 em. A ZWJ sequence counts each emoji.
   # DOES NOT BOUND: a font the viewer substitutes for a glyph Arial lacks,
   # other stacks (DejaVu, Verdana run up to 1.19 times wider), bold, italic,
   # kerning (it can widen a pair as well as narrow it), shaping beyond
@@ -48,6 +49,11 @@ module Sirena
     ZERO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}\p{Cc}]/
     EMOJI = /\p{Extended_Pictographic}/
 
+    # A pictographic character plus U+FE0F asks for the emoji glyph, even for
+    # one the table has as text (U+00A9 is 0.737 em as text, 1.0 em as emoji
+    # in Chrome). Any other character is a cluster of its own.
+    CLUSTER = /#{EMOJI}\uFE0F|./m
+
     # Measures the approximate dimensions of text.
     #
     # @param text [String] the text to measure, as one line: a caller that
@@ -67,16 +73,20 @@ module Sirena
 
     # @return [Float] the width of the text drawn as one line
     def self.calculate_width(text, font_size, monospace)
-      total = normalize(text).each_char.sum { |char| advance(char, monospace) }
+      total = normalize(text).scan(CLUSTER).sum do |cluster|
+        cluster.length == 2 ? EMOJI_ADVANCE : advance(cluster, monospace)
+      end
       total * font_size / 1000.0
     end
 
     # @return [Integer] the advance of one character in per-mille em
     def self.advance(char, monospace)
+      return whitespace_advance(monospace) if char.match?(SVG_WHITESPACE)
+      return 0 if char.match?(ZERO_WIDTH)
+
       code = char.ord
       table = ArialAdvances::TABLE[code]
       return table_advance(table, monospace) if table
-      return whitespace_advance(monospace) if char.match?(SVG_WHITESPACE)
 
       OUTLIERS.fetch(code) { fallback_advance(char, monospace) }
     end
@@ -91,7 +101,6 @@ module Sirena
     end
 
     def self.fallback_advance(char, monospace)
-      return 0 if char.match?(ZERO_WIDTH)
       return EMOJI_ADVANCE if char.match?(EMOJI)
 
       monospace ? MONOSPACE_ADVANCE : DEFAULT_ADVANCE

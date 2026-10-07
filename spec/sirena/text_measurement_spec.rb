@@ -56,6 +56,29 @@ RSpec.describe Sirena::TextMeasurement do
         .to eq(width("a b", monospace: true))
     end
 
+    # Chrome (SVG <text>, Arial 1000px): "a\u00ADb" and "ab" both 1.112 em.
+    it "measures a soft hyphen as zero width, though the table lists it" do
+      expect(width("a\u00ADb")).to eq(width("ab"))
+    end
+
+    # Chrome: "\u00A9" 0.737 em, "\u00A9\uFE0F" 1.0 em; same for the others.
+    {
+      "\u00A9" => "copyright",
+      "\u00AE" => "registered",
+      "\u203C" => "double exclamation",
+      "\u2122" => "trade mark",
+      "\u2194" => "left-right arrow",
+      "\u2195" => "up-down arrow",
+    }.each do |char, name|
+      it "measures #{name} wider with U+FE0F than without" do
+        expect(width("#{char}\uFE0F")).to be > width(char)
+      end
+    end
+
+    it "measures U+FE0F after a non-pictographic character as zero width" do
+      expect(width("x\uFE0F")).to eq(width("x"))
+    end
+
     it "measures an empty or nil text as zero" do
       expect([width(""), width(nil)]).to eq([0.0, 0.0])
     end
