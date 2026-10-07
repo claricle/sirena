@@ -53,6 +53,17 @@ RSpec.describe Sirena::Notation::Mermaid do
       expect(described_class.types).to be_empty
     end
 
+    it "replaces the table, so a hash an earlier clear returned stays as it was" do
+      returned = described_class.clear_types
+      described_class.register_type(
+        :probe, parser: Object, transform: Object, renderer: Object,
+                model: Object
+      )
+      described_class.clear_types
+
+      expect(returned).to include(:probe)
+    end
+
     it "is what DiagramRegistry.clear empties" do
       Sirena::DiagramRegistry.clear
 
