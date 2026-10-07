@@ -164,7 +164,7 @@ module Sirena
       end
 
       def clear_types
-        type_table.clear
+        @type_table = {}
       end
 
       # Parses Mermaid source into a {Parsed}.
