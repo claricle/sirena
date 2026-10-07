@@ -6,9 +6,10 @@ require "prism"
 # It parses the source rather than matching text, so a line break, `::` or a
 # comment cannot hide a read or invent one. `defined?(Process.times)` does
 # not run the call, so it is not a read; `defined?(Process.times.to_a)` runs
-# its receiver, so it is; other `defined?` operands are scanned whole. It catches a direct call on the
-# constant, bare, `::`-rooted or under Object. It does not see dynamic calls
-# (`send`, `public_send`) or a parenthesised receiver such as `(Process).times`.
+# its receiver, so it is; other `defined?` operands are scanned whole. It
+# catches a direct call on the constant, bare, `::`-rooted or under Object.
+# It does not see dynamic calls (`send`, `public_send`) or a parenthesised
+# receiver such as `(Process).times`.
 module RawClockReads
   # The method each clock read calls, and the constant it calls it on.
   CALLS = {
