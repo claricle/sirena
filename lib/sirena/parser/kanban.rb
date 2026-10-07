@@ -68,8 +68,13 @@ module Sirena
       # matching them against a binary or ISO-8859-1 string raises
       # Encoding::CompatibilityError instead of a parse result. A UTF-8 string
       # with invalid bytes is re-encoded too: Parslet raises ArgumentError on
-      # it.
+      # it. A binary or US-ASCII string holds the bytes of a file read as
+      # UTF-8, so it is retagged, as `Source.split` does, not transcoded.
       def transcode_to_utf8(source)
+        if [Encoding::BINARY, Encoding::US_ASCII].include?(source.encoding)
+          return source.dup.force_encoding(Encoding::UTF_8).scrub
+        end
+
         source.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
       rescue Encoding::ConverterNotFoundError
         raise ParseError,

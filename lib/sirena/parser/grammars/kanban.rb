@@ -348,7 +348,7 @@ module Sirena
         end
 
         rule(:metadata_key) do
-          match["a-zA-Z_"] >> match["a-zA-Z0-9_"].repeat
+          match["a-zA-Z_"] >> Atoms::GreedyRun.new("[a-zA-Z0-9_]", min: 0)
         end
 
         rule(:metadata_value) do
@@ -365,7 +365,7 @@ module Sirena
         # the whole line failed to parse. None of the three ends a value -
         # a comma or a closing brace does - so the rule stays unambiguous.
         rule(:unquoted_value) do
-          match['a-zA-Z0-9_\-.+~'].repeat(1).as(:unquoted)
+          Atoms::GreedyRun.new('[a-zA-Z0-9_\-.+~]').as(:unquoted)
         end
 
         root(:diagram)

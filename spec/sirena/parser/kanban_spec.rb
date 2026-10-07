@@ -19,7 +19,7 @@ module KanbanSpecHelpers
 
   # Time to parse the family at four times `size`, over the time at `size`.
   # Each is the fastest of three runs after a warm-up, and the divisor is
-  # never below 50ms (see the "with an input that grows" context).
+  # never below 20ms (see the "with an input that grows" context).
   def growth_ratio(size, build)
     parser.parse(build.call(size / 10))
     small = fastest_parse(build.call(size))
@@ -1556,6 +1556,10 @@ RSpec.describe Sirena::Parser::Kanban do
           [60_000, ->(n) { "kanban\n  r(#{'x' * n})\n" }],
         "item indentation" =>
           [60_000, ->(n) { "kanban\n#{' ' * n}r[R]\n" }],
+        "an unquoted metadata value" =>
+          [60_000, ->(n) { "kanban\n  r[R]@{ ticket: #{'x' * n} }\n" }],
+        "a metadata key" =>
+          [60_000, ->(n) { "kanban\n  r[R]@{ #{'x' * n}: 1 }\n" }],
       }.each do |family, (size, build)|
         it "parses #{family} in time linear in their size" do
           expect(growth_ratio(size, build)).to be < 10
@@ -1658,7 +1662,7 @@ RSpec.describe Sirena::Parser::Kanban do
 
       it "parses a binary string with an accented label" do
         card = parser.parse(source.b).columns.first.cards.first
-        expect(card.text).to eq("Task\uFFFD\uFFFD")
+        expect(card.text).to eq("Task\u00E9")
       end
 
       it "parses an ISO-8859-1 string with an accented label" do
