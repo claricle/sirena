@@ -4,12 +4,11 @@ require "prism"
 
 # Finds clock reads that bypass SpeedClock#wall_time and CpuTiming#cpu_time.
 # It parses the source rather than matching text, so a line break, `::` or a
-# comment cannot hide a read or invent one. `defined?(Process.times)` does
-# not run the call, so it is not a read; `defined?(Process.times.to_a)` runs
-# its receiver, so it is; other `defined?` operands are scanned whole. It
-# catches a direct call on the constant, bare, `::`-rooted or under Object.
-# It does not see dynamic calls (`send`, `public_send`) or a parenthesised
-# receiver such as `(Process).times`.
+# comment cannot hide a read or invent one. It catches a direct call on the
+# constant, bare, `::`-rooted or under Object. It does not see dynamic calls
+# (`send`, `public_send`) or a parenthesised receiver such as `(Process).times`.
+# Every call counts, including one under `defined?`, which Ruby does not run:
+# a spec that checks the method exists uses `Process.respond_to?(:times)`.
 module RawClockReads
   # The method each clock read calls, and the constant it calls it on.
   CALLS = {
@@ -40,55 +39,8 @@ module RawClockReads
   end
 
   def self.calls(node)
-    found = children(node).flat_map { |child| calls(child) }
+    found = node.compact_child_nodes.flat_map { |child| calls(child) }
     raw?(node) ? [node, *found] : found
-  end
-
-  def self.children(node)
-    return node.compact_child_nodes unless node.is_a?(Prism::DefinedNode)
-
-    run_by_defined(node.value)
-  end
-
-  # The expressions `defined?(node)` runs. Ruby checks an operand without
-  # running it: a call's receiver runs and its arguments are checked in turn,
-  # a call with a block runs nothing, and assignments, `&&`, `if` and string
-  # interpolation run nothing. Measured by spec/raw_clock_reads_spec.rb.
-  def self.run_by_defined(node)
-    case node
-    when Prism::CallNode then run_by_defined_call(node)
-    when Prism::ConstantPathNode then [node.parent].compact
-    when Prism::ParenthesesNode then run_by_defined_parentheses(node)
-    else run_by_defined_all(checked_parts(node))
-    end
-  end
-
-  # The operands a container checks one by one.
-  def self.checked_parts(node)
-    case node
-    when Prism::ArrayNode, Prism::HashNode, Prism::KeywordHashNode
-      node.elements
-    when Prism::AssocNode then [node.key, node.value]
-    when Prism::SplatNode then [node.expression]
-    when Prism::AssocSplatNode then [node.value]
-    else []
-    end
-  end
-
-  def self.run_by_defined_all(nodes)
-    nodes.compact.flat_map { |node| run_by_defined(node) }
-  end
-
-  def self.run_by_defined_call(node)
-    return [] if node.block
-
-    arguments = node.arguments&.arguments.to_a
-    [node.receiver, *run_by_defined_all(arguments)].compact
-  end
-
-  def self.run_by_defined_parentheses(node)
-    statements = node.body&.body.to_a
-    statements.size == 1 ? run_by_defined(statements.first) : []
   end
 
   def self.raw?(node)
@@ -114,8 +66,5 @@ module RawClockReads
     node.name.to_s
   end
 
-  private_class_method :calls, :children, :run_by_defined, :checked_parts,
-                       :run_by_defined_all, :run_by_defined_call,
-                       :run_by_defined_parentheses, :raw?, :constant_name,
-                       :path_name
+  private_class_method :calls, :raw?, :constant_name, :path_name
 end
