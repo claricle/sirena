@@ -58,13 +58,19 @@ module RawClockReads
     case node
     when Prism::CallNode then run_by_defined_call(node)
     when Prism::ConstantPathNode then [node.parent].compact
-    when Prism::ArrayNode, Prism::HashNode, Prism::KeywordHashNode
-      node.elements.flat_map { |element| run_by_defined(element) }
-    when Prism::AssocNode
-      [node.key, node.value].flat_map { |part| run_by_defined(part) }
-    when Prism::SplatNode then run_by_defined_all([node.expression])
-    when Prism::AssocSplatNode then run_by_defined_all([node.value])
     when Prism::ParenthesesNode then run_by_defined_parentheses(node)
+    else run_by_defined_all(checked_parts(node))
+    end
+  end
+
+  # The operands a container checks one by one.
+  def self.checked_parts(node)
+    case node
+    when Prism::ArrayNode, Prism::HashNode, Prism::KeywordHashNode
+      node.elements
+    when Prism::AssocNode then [node.key, node.value]
+    when Prism::SplatNode then [node.expression]
+    when Prism::AssocSplatNode then [node.value]
     else []
     end
   end
@@ -77,7 +83,7 @@ module RawClockReads
     return [] if node.block
 
     arguments = node.arguments&.arguments.to_a
-    [node.receiver, *arguments.flat_map { |argument| run_by_defined(argument) }].compact
+    [node.receiver, *run_by_defined_all(arguments)].compact
   end
 
   def self.run_by_defined_parentheses(node)
@@ -108,6 +114,8 @@ module RawClockReads
     node.name.to_s
   end
 
-  private_class_method :calls, :children, :run_by_defined,
-                       :run_by_defined_all, :run_by_defined_call, :run_by_defined_parentheses, :raw?, :constant_name, :path_name
+  private_class_method :calls, :children, :run_by_defined, :checked_parts,
+                       :run_by_defined_all, :run_by_defined_call,
+                       :run_by_defined_parentheses, :raw?, :constant_name,
+                       :path_name
 end
