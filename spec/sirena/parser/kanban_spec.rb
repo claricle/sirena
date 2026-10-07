@@ -1575,6 +1575,37 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
+    # A rule that matches one character per `repeat` step allocates a parse
+    # result per character, in linear time, so the timing ratios above cannot
+    # see it. Counting allocated objects can: a `GreedyRun` allocates a fixed
+    # handful however long the run.
+    context "with a long run a per-character rule would allocate for" do
+      def allocations_parsing(source)
+        GC.start
+        before = GC.stat(:total_allocated_objects)
+        begin
+          parser.parse(source)
+        rescue Sirena::Parser::ParseError
+          nil
+        end
+        GC.stat(:total_allocated_objects) - before
+      end
+
+      {
+        "whitespace after a bare item" => "kanban\n  root#{' ' * 40_000}\n",
+        "a bracket label opening with an unmatched backtick" =>
+          "kanban\n  r[\"`#{'a' * 40_000}]\n",
+        "a round label opening with an unmatched backtick" =>
+          "kanban\n  r(\"`#{'a' * 40_000})\n",
+        "a markdown-string bracket label" =>
+          "kanban\n  r[\"`#{'a' * 40_000}`\"]\n",
+      }.each do |family, source|
+        it "allocates a bounded number of objects for #{family}" do
+          expect(allocations_parsing(source)).to be < 10_000
+        end
+      end
+    end
+
     # GreedyRun originally measured the run's length with
     # `Parslet::Source#matches?`, which reports BYTES (it delegates to
     # `StringScanner#match?`), then fed that byte count into

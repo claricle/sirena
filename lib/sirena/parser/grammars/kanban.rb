@@ -286,7 +286,8 @@ module Sirena
         end
 
         rule(:markdown_string_body) do
-          str("`") >> match('[^"`]').repeat >> str("`") >> str('"')
+          str("`") >> Atoms::GreedyRun.new('[^"`]', min: 0) >>
+            str("`") >> str('"')
         end
 
         # Deliberately just an identifier. Mermaid also accepts a bare label
@@ -300,7 +301,7 @@ module Sirena
         # refused here rather than dropped by `line_end`.
         rule(:bare_item) do
           identifier.as(:id) >>
-            (space.repeat >> (str("%%") | line_space)).absent?
+            (space_run >> (str("%%") | line_space)).absent?
         end
 
         LINE_SPACE_CHARS = '\t\v\f\x20\u00A0\u1680' \
