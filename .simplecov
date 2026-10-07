@@ -24,8 +24,6 @@ SimpleCov.configure do
   coverage_dir ENV.fetch("SIMPLECOV_COVERAGE_DIR", "coverage")
 
   enable_coverage :branch
-  # Visible in the report (Line floor comment below) but carries no minimum
-  # yet -- staged separately (TODO.foundation/03-coverage-gate.md, "Bars").
 
   formats :html, :json # coverage/coverage.json feeds `simplecov patch` (tasks/coverage.rake: coverage:changed_lines)
 
@@ -54,10 +52,12 @@ SimpleCov.configure do
   group "Svg", %r{\Alib/sirena/svg(\.rb\z|/)}
   group "Theme", %r{\Alib/sirena/theme(\.rb\z|/)}
 
-  # Line floor, enforced by SimpleCov on `rake coverage:measure` (spec:unit).
-  # Coverage is order-sensitive (rescue/call-site pairs in
+  # Line and branch floors, enforced by SimpleCov on `rake coverage:measure`
+  # (spec:unit). A run with any failing example skips this check entirely.
+  # Coverage can be order-sensitive (rescue/call-site pairs in
   # renderer/{base,flowchart,pie}.rb resolve differently by execution order),
-  # so re-measure across several seeds before raising this off one run. A run
-  # with any failing example skips this check entirely.
-  minimum_coverage line: 92.00
+  # so re-measure across several seeds before raising either number off one
+  # run. Floors only rise; the next rungs are branch 90, then branch 97
+  # (TODO.foundation/03-coverage-gate.md, "Bars").
+  minimum_coverage line: 97.00, branch: 80.00
 end
