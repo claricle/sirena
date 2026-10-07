@@ -1,6 +1,9 @@
 # 10a — Notation contract
 
-Status: DRAFT for owner approval. Blocks 10b (implementation), which blocks 16, 12, 18.
+Status: approved (Reading A). 10b lands in two PRs. Part 1 moves Mermaid detection,
+parsing and the type table into `Notation::Mermaid`; `Engine` still calls it directly.
+Part 2 adds `Notation.register`/`resolve`, the `notation:` option, the CLI and the
+section 8 gates. A second notation needs part 2. 10b blocks 16, 12, 18.
 Measured against `origin/main` at `df0c8c05`, ruby 3.4.8, macOS. Every `file:line` below
 was read off that tree; every probe line is a command that was run.
 
