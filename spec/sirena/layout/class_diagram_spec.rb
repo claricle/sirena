@@ -155,7 +155,7 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     end
     let(:drawn_width) do
       Sirena::TextMeasurement.measure(
-        "+ #{name}", font_size: 14, monospace: true
+        "+ #{name}", font_size: 12, monospace: true
       )[:width] + 20
     end
 

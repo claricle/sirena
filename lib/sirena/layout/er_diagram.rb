@@ -19,6 +19,10 @@ module Sirena
       # Default font size for text measurement
       DEFAULT_FONT_SIZE = 14
 
+      # The size the renderer draws monospace attributes at
+      # (Renderer::ErDiagram::ATTRIBUTE_FONT_SIZE); keep them in step.
+      ATTRIBUTE_FONT_SIZE = 12
+
       # Minimum width for an entity box
       MIN_ENTITY_WIDTH = 150
 
@@ -100,7 +104,7 @@ module Sirena
           attr_text = format_attribute(attr)
           attr_width = measure_text(
             attr_text,
-            font_size: DEFAULT_FONT_SIZE,
+            font_size: ATTRIBUTE_FONT_SIZE,
             monospace: true,
           )[:width]
           max_width = [max_width, attr_width].max

@@ -162,7 +162,7 @@ RSpec.describe Sirena::Layout::ErDiagram do
       it "sizes the box in the monospace width the renderer draws" do
         node = transform.to_graph(narrow_diagram)[:children].first
         drawn = Sirena::TextMeasurement.measure(
-          name, font_size: 14, monospace: true
+          name, font_size: 12, monospace: true
         )[:width] + 20
 
         expect(node[:width]).to be_within(0.01).of(drawn)

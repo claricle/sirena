@@ -19,10 +19,11 @@ module Sirena
       # Default font size for text measurement
       DEFAULT_FONT_SIZE = 14
 
-      # The sizes the renderer draws the class name and the stereotype at
-      # (Renderer::ClassDiagram::CLASS_NAME_FONT_SIZE and
-      # STEREOTYPE_FONT_SIZE); keep them in step.
+      # The sizes the renderer draws the class name, the stereotype and the
+      # monospace members at (Renderer::ClassDiagram::CLASS_NAME_FONT_SIZE,
+      # STEREOTYPE_FONT_SIZE and MEMBER_FONT_SIZE); keep them in step.
       NAME_FONT_SIZE = 16
+      MEMBER_FONT_SIZE = 12
       STEREOTYPE_FONT_SIZE = 11
 
       # Minimum width for a class box
@@ -106,7 +107,7 @@ module Sirena
           attr_text = format_attribute(attr)
           attr_width = measure_text(
             attr_text,
-            font_size: DEFAULT_FONT_SIZE,
+            font_size: MEMBER_FONT_SIZE,
             monospace: true,
           )[:width]
           max_width = [max_width, attr_width].max
@@ -117,7 +118,7 @@ module Sirena
           method_text = format_method(method)
           method_width = measure_text(
             method_text,
-            font_size: DEFAULT_FONT_SIZE,
+            font_size: MEMBER_FONT_SIZE,
             monospace: true,
           )[:width]
           max_width = [max_width, method_width].max
