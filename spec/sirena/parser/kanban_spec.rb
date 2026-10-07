@@ -1390,8 +1390,9 @@ RSpec.describe Sirena::Parser::Kanban do
           %w[0.0 -0.0 +0 .nan ~].each do |zero|
             expect(title_for(zero)).to eq("A"), "expected #{zero} to be dropped"
           end
-          %w[1.5 0.1 +7].each do |kept|
-            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          { "1.5" => "1.5", "0.1" => "0.1", "+7" => "7" }.each do |text, drawn|
+            message = "expected #{text} to draw #{drawn}"
+            expect(title_for(text)).to eq(drawn), message
           end
         end
       end
@@ -1418,16 +1419,20 @@ RSpec.describe Sirena::Parser::Kanban do
         # and both would be dropped where mermaid draws a label.
         #
         # mmdc 11.12.0 resolves each of these to a truthy number and keeps
-        # the label row - `0x_1` to 1, `0x_a` to 10, `0x_10` to 16, `-0x_1`
-        # to -1. Sirena keeps the raw text, the pre-existing divergence
-        # noted above.
+        # the label row, drawn as the number: `0x_1` is 1, `0x_a` 10, `0x_10`
+        # 16, `-0x_1` -1.
+        drawn = {
+          "0__1" => "1", "0___1" => "1", "-0__1" => "-1", "00__01" => "1",
+          "0__10" => "10", "0x_1" => "1", "0x__1" => "1", "0x_10" => "16",
+          "0x_a" => "10", "-0x_1" => "-1", "0x_0_1" => "1", "0o_1" => "1",
+          "0o__1" => "1", "0o_10" => "8", "-0o_1" => "-1", "0o_0_1" => "1",
+          "0b_1" => "1", "0b__1" => "1", "0b_10" => "2", "-0b_1" => "-1",
+          "0b_0_1" => "1", "0__1e0" => "1", "0__1E0" => "1"
+        }
         aggregate_failures do
-          %w[0__1 0___1 -0__1 00__01 0__10
-             0x_1 0x__1 0x_10 0x_a -0x_1 0x_0_1
-             0o_1 0o__1 0o_10 -0o_1 0o_0_1
-             0b_1 0b__1 0b_10 -0b_1 0b_0_1
-             0__1e0 0__1E0].each do |kept|
-            expect(title_for(kept)).to eq(kept), "expected #{kept} to be kept"
+          drawn.each do |text, expected|
+            message = "expected #{text} to draw #{expected}"
+            expect(title_for(text)).to eq(expected), message
           end
         end
       end
