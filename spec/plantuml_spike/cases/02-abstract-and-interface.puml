@@ -1,0 +1,4 @@
+@startuml
+abstract class Shape
+interface Drawable
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+class Account {
+  +deposit(amount : int) : void
+  +balance() : int
+  close()
+}
+@enduml

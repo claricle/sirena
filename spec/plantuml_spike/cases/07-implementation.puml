@@ -1,0 +1,7 @@
+@startuml
+interface Drawable
+class Circle
+class Square
+Drawable <|.. Circle
+Square ..|> Drawable
+@enduml

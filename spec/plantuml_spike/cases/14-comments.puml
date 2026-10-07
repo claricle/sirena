@@ -1,0 +1,7 @@
+@startuml
+' a leading comment
+class Account
+' a comment between statements
+class Owner
+Owner --> Account
+@enduml

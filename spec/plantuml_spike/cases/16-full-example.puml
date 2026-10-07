@@ -1,0 +1,20 @@
+@startuml
+abstract class Shape {
+  #name : String
+  +area() : double
+}
+interface Drawable {
+  +draw() : void
+}
+class Circle {
+  -radius : double
+  +area() : double
+}
+class Canvas {
+  -shapes : List
+}
+Shape <|-- Circle
+Drawable <|.. Circle
+Canvas "1" *-- "0..*" Shape : holds
+Canvas o-- Drawable : renders
+@enduml

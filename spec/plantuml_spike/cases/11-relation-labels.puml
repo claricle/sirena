@@ -1,0 +1,6 @@
+@startuml
+class Customer
+class Order
+Customer --> Order : places
+Order <|-- Invoice : bills
+@enduml

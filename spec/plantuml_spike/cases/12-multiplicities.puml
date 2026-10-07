@@ -1,0 +1,5 @@
+@startuml
+class Customer
+class Order
+Customer "1" --> "0..*" Order
+@enduml

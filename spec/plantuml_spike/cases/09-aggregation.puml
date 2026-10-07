@@ -1,0 +1,7 @@
+@startuml
+class Team
+class Player
+class League
+Team o-- Player
+Team --o League
+@enduml
