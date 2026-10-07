@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "parslet"
+require_relative "../atoms/greedy_run"
 
 module Sirena
   module Parser
@@ -17,7 +18,8 @@ module Sirena
         rule(:eof) { any.absent? }
 
         # Comments
-        rule(:comment) { str("%%") >> (newline.absent? >> any).repeat }
+        # Same rule and reasoning as `Common#comment`.
+        rule(:comment) { str("%%") >> Atoms::GreedyRun.new('[^\n]', min: 0) }
 
         # Numbers
         rule(:number) do

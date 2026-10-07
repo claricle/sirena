@@ -39,7 +39,10 @@ module Sirena
         rule(:whitespace?) { (space | newline).repeat }
 
         # Comments
-        rule(:comment) { str("%%") >> (newline.absent? >> any).repeat }
+        # `GreedyRun`, not `(newline.absent? >> any).repeat`: that form
+        # applies once per character and joins the pieces pairwise, so a
+        # 100 KB comment took seconds.
+        rule(:comment) { str("%%") >> GreedyRun.new('[^\n]', min: 0) }
 
         # Identifiers and keywords
         rule(:identifier) do
