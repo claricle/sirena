@@ -1560,6 +1560,14 @@ RSpec.describe Sirena::Parser::Kanban do
           [60_000, ->(n) { "kanban\n  r[R]@{ ticket: #{'x' * n} }\n" }],
         "a metadata key" =>
           [60_000, ->(n) { "kanban\n  r[R]@{ #{'x' * n}: 1 }\n" }],
+        "whitespace between @ and the metadata brace" =>
+          [60_000, ->(n) { "kanban\n  r[R]@#{' ' * n}{ ticket: T }\n" }],
+        "a quoted metadata value" =>
+          [150_000, ->(n) { "kanban\n  r[R]@{ ticket: \"#{'x' * n}\" }\n" }],
+        "a quoted metadata value of escapes" =>
+          [60_000, ->(n) { "kanban\n  r[R]@{ ticket: \"#{'\\x' * n}\" }\n" }],
+        "a single-quoted metadata value" =>
+          [150_000, ->(n) { "kanban\n  r[R]@{ ticket: '#{'x' * n}' }\n" }],
       }.each do |family, (size, build)|
         it "parses #{family} in time linear in their size" do
           expect(growth_ratio(size, build)).to be < 10
@@ -1663,6 +1671,29 @@ RSpec.describe Sirena::Parser::Kanban do
       it "parses a binary string with an accented label" do
         card = parser.parse(source.b).columns.first.cards.first
         expect(card.text).to eq("Task\u00E9")
+      end
+
+      it "reads a US-ASCII-tagged string as UTF-8, like a binary one" do
+        ascii = source.dup.force_encoding("US-ASCII")
+        card = parser.parse(ascii).columns.first.cards.first
+        expect(card.text).to eq("Task\u00E9")
+      end
+
+      # `String#encode` leaves these four tagged UTF-8 with some invalid byte
+      # runs unreplaced; each row is a run found by fuzzing that does.
+      {
+        "CESU-8" => [211, 226, 151, 188],
+        "UTF8-DoCoMo" => [243, 243, 208, 175],
+        "UTF8-KDDI" => [6, 228, 223, 196, 165],
+        "UTF8-SoftBank" => [232, 183, 199, 162],
+      }.each do |name, bytes|
+        it "parses a #{name} string with an invalid byte run" do
+          head = "kanban\n  col[Todo]\n    task1[Task".b
+          bad = head + bytes.pack("C*") + "]\n".b
+          tagged = bad.force_encoding(name)
+          card = parser.parse(tagged).columns.first.cards.first
+          expect(card.text).to start_with("Task")
+        end
       end
 
       it "parses an ISO-8859-1 string with an accented label" do

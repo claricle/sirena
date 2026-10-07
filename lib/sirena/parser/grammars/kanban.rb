@@ -327,28 +327,39 @@ module Sirena
         # Metadata: @{ key: 'value', key2: 'value2' }
         rule(:metadata) do
           str("@") >>
-            space? >>
+            space_run >>
             lbrace >>
-            space? >>
+            space_run >>
             metadata_entries.maybe.as(:metadata) >>
-            space? >>
+            space_run >>
             rbrace
         end
 
         rule(:metadata_entries) do
-          metadata_entry >> (comma >> space? >> metadata_entry).repeat
+          metadata_entry >> (comma >> space_run >> metadata_entry).repeat
         end
 
         rule(:metadata_entry) do
           metadata_key.as(:key) >>
-            space? >>
+            space_run >>
             colon >>
-            space? >>
+            space_run >>
             metadata_value.as(:value)
         end
 
         rule(:metadata_key) do
           match["a-zA-Z_"] >> Atoms::GreedyRun.new("[a-zA-Z0-9_]", min: 0)
+        end
+
+        # Common's quoted strings take their body one character at a time,
+        # which is quadratic in a long value; these take it in runs.
+        rule(:quoted_string) { quoted_run('"') }
+        rule(:single_quoted_string) { quoted_run("'") }
+
+        def quoted_run(quote)
+          escape = str("\\") >> any
+          body = escape | Atoms::GreedyRun.new("[^#{quote}\\\\]")
+          str(quote) >> Atoms::Joined.new(body.repeat).as(:string) >> str(quote)
         end
 
         rule(:metadata_value) do
