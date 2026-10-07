@@ -244,16 +244,21 @@ module Sirena
         labels
       end
 
+      # The text the renderer draws for an attribute row.
       def format_attribute(attribute)
-        parts = [attribute.visibility_symbol, attribute.name]
-        parts << ": #{attribute.type}" if attribute.type &&
-                                          !attribute.type.empty?
-        parts.join(" ")
+        text = "#{attribute.visibility_symbol} #{attribute.name}"
+        text += ": #{attribute.type}" if attribute.type &&
+                                         !attribute.type.empty?
+        text
       end
 
+      # The text the renderer draws for a method row; an empty parameter
+      # list still draws "()".
       def format_method(method)
-        parts = [method.visibility_symbol, method.signature]
-        parts.join(" ")
+        text = "#{method.visibility_symbol} #{method.name}"
+        text += "(#{method.parameters})" if method.parameters
+        text += ": #{method.return_type}" if method.return_type
+        text
       end
 
       def attribute_to_hash(attribute)
