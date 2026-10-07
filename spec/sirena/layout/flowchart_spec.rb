@@ -307,6 +307,21 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
   end
 
+  describe "a node label holding a stray byte that still reports valid" do
+    let(:label) do
+      text = (+"\xD7\xC2\xA8").force_encoding("CESU-8")
+        .encode("UTF-8", invalid: :replace, undef: :replace)
+      model = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
+        d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: text)
+      end
+      transform.to_graph(model)[:children].first[:labels].first
+    end
+
+    it "is sized instead of raising" do
+      expect(label[:width]).to be > 0
+    end
+  end
+
   # The renderer draws a node label as ONE <text>, and SVG collapses the
   # newline in it to a space, so the box must fit the whole string. 301.78
   # is Chrome's getComputedTextLength for this label at 14px Arial.

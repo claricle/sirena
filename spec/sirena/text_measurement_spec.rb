@@ -106,6 +106,16 @@ RSpec.describe Sirena::TextMeasurement do
       expect(undecodable.map { |text| width(text) }).to all(be > 0)
     end
 
+    # Transcoding CESU-8 with invalid: :replace leaves a stray continuation
+    # byte after U+FFFD that valid_encoding? accepts but String#ord rejects.
+    it "never raises on a UTF-8 string that reports valid but cannot be read" do
+      stray = (+"\xD7\xC2\xA8").force_encoding("CESU-8")
+        .encode("UTF-8", invalid: :replace, undef: :replace)
+
+      expect([stray.valid_encoding?, width(stray)])
+        .to eq([true, width("\uFFFD\uFFFD")])
+    end
+
     it "treats high bytes tagged as UTF-7 as replacement characters" do
       tagged = (+"a\xFFb").force_encoding("UTF-7")
 
