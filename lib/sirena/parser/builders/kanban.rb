@@ -217,11 +217,11 @@ module Sirena
           # of `metadata_value` captures with `.as(:string)` or `.as(:unquoted)`,
           # and the caller has already skipped a nil value. So no guard here.
           #
-          # An empty quoted string captures as `{string: []}`, because the
-          # shared grammar takes the body with `.repeat`, and `[].to_s` is the
-          # literal "[]". Parslet::Slice answers false to `to_ary`, so
-          # `Array()` wraps a slice rather than splitting it; `join` then
-          # handles both shapes.
+          # An empty quoted string captures as `{string: Slice("")}`: the
+          # Kanban grammar joins the body, so there is no `[]` to stringify.
+          # Parslet::Slice answers false to `to_ary`, so `Array()` wraps a
+          # slice rather than splitting it; `join` then handles both a slice
+          # and an array.
           def extract_value(value_data)
             Array(value_data[:string] || value_data[:unquoted]).join
           end
