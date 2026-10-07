@@ -20,7 +20,7 @@ RSpec.describe Sirena::Notation::Mermaid do
       allow(described_class).to receive(:type_handlers) { defaulted_handlers }
       parsed = described_class.parse("pie\n\"a\": 1")
 
-      expect(parsed.to_h.values_at(:transform, :renderer))
+      expect([parsed.transform, parsed.renderer])
         .to eq(pie_handlers.values_at(:transform, :renderer))
     end
   end
