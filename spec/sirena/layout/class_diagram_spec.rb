@@ -168,6 +168,15 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       expect(node[:width]).to be_within(0.01).of(drawn_width)
     end
 
+    it "adds no type separator for an attribute with an empty type" do
+      entity.attributes << Sirena::Diagram::ClassAttribute.new(
+        name: name, visibility: "public", type: "",
+      )
+
+      node = transform.to_graph(narrow_diagram)[:children].first
+      expect(node[:width]).to be_within(0.01).of(drawn_width)
+    end
+
     it "sizes a method compartment in the monospace width drawn" do
       entity.class_methods << Sirena::Diagram::ClassMethod.new(
         name: name, visibility: "public",
@@ -175,6 +184,34 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
       node = transform.to_graph(narrow_diagram)[:children].first
       expect(node[:width]).to be_within(0.01).of(drawn_width)
+    end
+  end
+
+  # The box must fit the row text exactly as the renderer builds it: "()" for
+  # an empty parameter list, ": " before a return or attribute type.
+  describe "member row text" do
+    name = "i" * 40
+    {
+      "a zero-argument method" => ["+#{name}()", "+ #{name}()"],
+      "a method with a return type" =>
+        ["+#{name}() String", "+ #{name}(): String"],
+      "an attribute with a type" => ["+String #{name}", "+ #{name}: String"],
+    }.each do |label, (row, drawn)|
+      context "with #{label}" do
+        let(:source) { "classDiagram\nclass N {\n  #{row}\n}\n" }
+        let(:node) do
+          model = Sirena::Parser::ClassDiagram.new.parse(source)
+          transform.to_graph(model)[:children].first
+        end
+
+        it "sizes the box from the text drawn" do
+          drawn_width = Sirena::TextMeasurement.measure(
+            drawn, font_size: 12, monospace: true
+          )[:width]
+
+          expect(node[:width]).to be_within(0.01).of(drawn_width + 20)
+        end
+      end
     end
   end
 
