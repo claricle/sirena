@@ -527,17 +527,17 @@ sirena/
 sequenceDiagram
     participant U as Caller
     participant E as Engine
-    participant R as DiagramRegistry
+    participant N as Notation::Mermaid
     participant P as Parser
     participant T as Layout
     participant L as Layout::Grid
     participant D as Renderer
     U->>E: Sirena.render(source)
-    E->>E: Source.split, Notation::Mermaid.detect_type
-    E->>R: get(:flowchart)
-    R-->>E: parser, transform, renderer, model
-    E->>P: parse(body)
-    P-->>E: Diagram::Flowchart
+    E->>N: parse(source)
+    N->>N: Source.split, detect_type, type_handlers(:flowchart)
+    N->>P: parse(body)
+    P-->>N: Diagram::Flowchart
+    N-->>E: Parsed: diagram, transform, renderer
     E->>T: to_graph(diagram)
     T-->>E: graph Hash
     E->>L: apply(graph)
@@ -549,10 +549,10 @@ sequenceDiagram
 
 ### Detailed Flow
 
-1. **Engine receives mermaid source**
+1. **Engine receives mermaid source** and hands it to `Notation::Mermaid.parse`
    - Splits frontmatter, directives and body (`Source.split`)
    - Detects diagram type from syntax prefix
-   - Looks up handler in DiagramRegistry
+   - Looks up the type's handlers in `Notation::Mermaid`
 
 2. **Parser processes syntax** (Parslet)
    - Grammar parses input using Parslet rules
