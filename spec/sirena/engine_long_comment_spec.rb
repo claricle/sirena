@@ -4,9 +4,8 @@ require "spec_helper"
 require "date"
 
 # The shared `comment` rule (Grammars::Common, and Grammars::Treemap's own
-# copy) used to walk a comment one character at a time, and a 100 KB comment
-# took several CPU seconds in every type that uses it. Fixed it takes about
-# 20 ms.
+# copy) must scan a comment in one run. A per-character walk makes a 100 KB
+# comment take several CPU seconds in every type that uses the rule.
 RSpec.describe Sirena::Engine do
   include CpuTiming
 
