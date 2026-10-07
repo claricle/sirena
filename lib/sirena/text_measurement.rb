@@ -98,19 +98,18 @@ module Sirena
     end
 
     # Never raises on an undecodable string: a layout must not fail on bytes.
+    # The final re-tag is needed for UTF-8 too: encode from CESU-8 and the
+    # UTF8-DoCoMo/KDDI/SoftBank family can leave a stray continuation byte
+    # that still reports valid, and only a re-scan of the bytes sees it.
     def self.normalize(text)
       string = text.to_s
-      string = to_utf8(string) unless string.encoding == Encoding::UTF_8
-      string.scrub
+      unless string.encoding == Encoding::UTF_8
+        string = string.encode(Encoding::UTF_8, invalid: :replace,
+                                                undef: :replace)
+      end
+      string.b.force_encoding(Encoding::UTF_8).scrub
     rescue EncodingError
       string.b.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-    end
-
-    # encode from CESU-8 and the UTF8-DoCoMo/KDDI/SoftBank family can leave a
-    # stray continuation byte that still reports valid, so re-tag the bytes.
-    def self.to_utf8(string)
-      utf8 = string.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-      utf8.b.force_encoding(Encoding::UTF_8)
     end
 
     # @return [Float] the calculated height
@@ -120,6 +119,6 @@ module Sirena
 
     private_class_method :calculate_width, :calculate_height, :advance,
                          :fallback_advance, :table_advance, :whitespace_advance,
-                         :normalize, :to_utf8
+                         :normalize
   end
 end
