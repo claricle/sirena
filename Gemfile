@@ -15,6 +15,8 @@ gem "rexml"
 # that. Already resolved transitively; declared here so it cannot vanish
 # when whatever pulls it in stops doing so.
 gem "nokogiri"
+# The clock-read scan parses specs with it; a default gem only from Ruby 3.3.
+gem "prism"
 gem "rspec"
 # Exact versions on purpose. A floating rubocop turns a green lane red on
 # a release nobody here made, and "0 offences" only means something if the
