@@ -19,6 +19,7 @@ RSpec.describe RawClockReads do
     "def t\n  Benchmark.bmbm { 1 }\nend" => [2],
     "defined?(Process.times)" => [],
     "defined?(Process.times.to_a)" => [1],
+    "defined?(Process.times && 1)" => [1],
     "defined?(foo(Process.times))" => [],
     "defined?(Process.foo(Process.times))" => [],
     "# Process.times" => [],
