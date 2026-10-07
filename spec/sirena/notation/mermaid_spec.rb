@@ -36,6 +36,10 @@ RSpec.describe Sirena::Notation::Mermaid do
   end
 
   describe ".clear_types" do
+    let(:probe_handlers) do
+      { parser: Object, transform: Object, renderer: Object, model: Object }
+    end
+
     around do |example|
       snapshot = described_class.types.to_h do |type|
         [type, described_class.type_handlers(type).dup]
@@ -53,12 +57,9 @@ RSpec.describe Sirena::Notation::Mermaid do
       expect(described_class.types).to be_empty
     end
 
-    it "replaces the table, so a hash an earlier clear returned stays as it was" do
+    it "swaps in a new table instead of emptying the old one" do
       returned = described_class.clear_types
-      described_class.register_type(
-        :probe, parser: Object, transform: Object, renderer: Object,
-                model: Object
-      )
+      described_class.register_type(:probe, **probe_handlers)
       described_class.clear_types
 
       expect(returned).to include(:probe)
