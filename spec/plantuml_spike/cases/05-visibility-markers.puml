@@ -1,0 +1,12 @@
+@startuml
+class Visibility {
+  +publicField : int
+  -privateField : int
+  #protectedField : int
+  ~packageField : int
+  +publicMethod() : void
+  -privateMethod() : void
+  #protectedMethod() : void
+  ~packageMethod() : void
+}
+@enduml

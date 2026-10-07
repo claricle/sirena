@@ -1,0 +1,73 @@
+# The enumerated PlantUML class-diagram subset (card 16). Reviewed like code:
+# a construct added here needs a case, and a construct not here raises
+# UnsupportedConstructError. `patterns` are what a case's source must ALL
+# match to count as exercising the construct; `cases` is the written-down
+# mapping from construct to the cases that exercise it.
+wrapper:
+  what: "@startuml / @enduml around the diagram"
+  patterns: ['\A@startuml\n(?:.*\n)*@enduml\n?\z']
+  cases: [01-empty-class, 16-full-example]
+line_comment:
+  what: "' comment line, before, between or inside statements"
+  patterns: ["^[ \\t]*'"]
+  cases: [14-comments, 15-member-comment-and-blank-lines]
+class:
+  what: "class Name"
+  patterns: ['^class \w+']
+  cases: [01-empty-class, 06-extension]
+abstract_class:
+  what: "abstract class Name"
+  patterns: ['^abstract class \w+']
+  cases: [02-abstract-and-interface, 16-full-example]
+interface:
+  what: "interface Name"
+  patterns: ['^interface \w+']
+  cases: [02-abstract-and-interface, 07-implementation]
+class_body:
+  what: "class Name { ... } holding members, one per line"
+  patterns: ['^(?:abstract class |interface |class )\w+ \{\n[^\n]*\n(?:[^\n]*\n)*?\}$']
+  cases: [03-fields, 04-methods, 05-visibility-markers]
+field:
+  what: "name, optionally with a visibility marker and `: Type`"
+  patterns: ['^ +[+\-#~]?\w+(?: : \w+)?$']
+  cases: [03-fields, 15-member-comment-and-blank-lines]
+method:
+  what: "name(params), optionally with a visibility marker and `: Type`"
+  patterns: ['^ +[+\-#~]?\w+\([^()]*\)']
+  cases: [04-methods, 05-visibility-markers]
+visibility_markers:
+  what: "+ public, - private, # protected, ~ package"
+  patterns: ['^ +\+\w', '^ +-\w', '^ +#\w', '^ +~\w']
+  cases: [05-visibility-markers]
+implicit_class:
+  what: "a class created by naming it in a relation, never declared"
+  patterns: ['\A(?:(?!(?:abstract class|class|interface) )[^\n]*\n)*\z', '^\w+ [^\n]*(?:--|\.\.)']
+  cases: [13-implicit-classes]
+extension:
+  what: "<|-- and --|>"
+  patterns: ['<\|--', '--\|>']
+  cases: [06-extension, 17-mixed-arrow-sides]
+implementation:
+  what: "<|.. and ..|>"
+  patterns: ['<\|\.\.', '\.\.\|>']
+  cases: [07-implementation]
+association:
+  what: "-->, <-- and the plain --"
+  patterns: [' --> ', ' <-- ', ' -- ']
+  cases: [08-association]
+aggregation:
+  what: "o-- and --o"
+  patterns: [' o-- ', ' --o ']
+  cases: [09-aggregation]
+composition:
+  what: "*-- and --*"
+  patterns: [' \*-- ', ' --\* ']
+  cases: [10-composition]
+relation_label:
+  what: "a relation line ending in `: text`"
+  patterns: ['^\w+ [^\n]*(?:--|\.\.)[^\n]* \w+ : [^\n]+$']
+  cases: [11-relation-labels, 13-implicit-classes]
+multiplicity:
+  what: '"..." before the left or after the right arrow'
+  patterns: ['^\w+ "[^"]+" ', ' "[^"]+" \w+']
+  cases: [12-multiplicities, 16-full-example]

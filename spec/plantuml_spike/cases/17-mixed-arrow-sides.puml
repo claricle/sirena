@@ -1,0 +1,9 @@
+@startuml
+class A
+class B
+class C
+class D
+A <|-- B
+C --|> A
+D "1" --> "*" A : uses
+@enduml

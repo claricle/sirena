@@ -1,0 +1,105 @@
+# What each case must parse to, as `Diagram` summarised by the spec's
+# `summary` helper: one line per class, indented members, then relations.
+01-empty-class:
+  - class Account
+02-abstract-and-interface:
+  - abstract Shape
+  - interface Drawable
+03-fields:
+  - class Account
+  - "  -id : int"
+  - "  +owner : String"
+  - "  balance"
+04-methods:
+  - class Account
+  - "  +deposit(amount : int) : void"
+  - "  +balance() : int"
+  - "  close()"
+05-visibility-markers:
+  - class Visibility
+  - "  +publicField : int"
+  - "  -privateField : int"
+  - "  #protectedField : int"
+  - "  ~packageField : int"
+  - "  +publicMethod() : void"
+  - "  -privateMethod() : void"
+  - "  #protectedMethod() : void"
+  - "  ~packageMethod() : void"
+06-extension:
+  - class Animal
+  - class Dog
+  - class Cat
+  - Animal <|-- Dog
+  - Cat --|> Animal
+07-implementation:
+  - interface Drawable
+  - class Circle
+  - class Square
+  - Drawable <|.. Circle
+  - Square ..|> Drawable
+08-association:
+  - class Customer
+  - class Order
+  - class Address
+  - Customer --> Order
+  - Address <-- Customer
+  - Order -- Address
+09-aggregation:
+  - class Team
+  - class Player
+  - class League
+  - Team o-- Player
+  - Team --o League
+10-composition:
+  - class House
+  - class Room
+  - class City
+  - House *-- Room
+  - House --* City
+11-relation-labels:
+  - class Customer
+  - class Order
+  - class Invoice
+  - "Customer --> Order : places"
+  - "Order <|-- Invoice : bills"
+12-multiplicities:
+  - class Customer
+  - class Order
+  - Customer "1" --> "0..*" Order
+13-implicit-classes:
+  - class Animal
+  - class Dog
+  - class Bone
+  - Animal <|-- Dog
+  - "Dog --> Bone : chews"
+14-comments:
+  - class Account
+  - class Owner
+  - Owner --> Account
+15-member-comment-and-blank-lines:
+  - class Account
+  - "  -id : int"
+  - "  +close() : void"
+16-full-example:
+  - abstract Shape
+  - "  #name : String"
+  - "  +area() : double"
+  - interface Drawable
+  - "  +draw() : void"
+  - class Circle
+  - "  -radius : double"
+  - "  +area() : double"
+  - class Canvas
+  - "  -shapes : List"
+  - Shape <|-- Circle
+  - Drawable <|.. Circle
+  - "Canvas \"1\" *-- \"0..*\" Shape : holds"
+  - "Canvas o-- Drawable : renders"
+17-mixed-arrow-sides:
+  - class A
+  - class B
+  - class C
+  - class D
+  - A <|-- B
+  - C --|> A
+  - "D \"1\" --> \"*\" A : uses"

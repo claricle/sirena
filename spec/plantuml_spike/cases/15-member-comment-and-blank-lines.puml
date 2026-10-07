@@ -1,0 +1,10 @@
+@startuml
+
+class Account {
+  ' a comment inside a body
+  -id : int
+
+  +close() : void
+}
+
+@enduml

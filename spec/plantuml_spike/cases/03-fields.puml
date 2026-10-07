@@ -1,0 +1,7 @@
+@startuml
+class Account {
+  -id : int
+  +owner : String
+  balance
+}
+@enduml

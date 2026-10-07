@@ -1,0 +1,4 @@
+@startuml
+Animal <|-- Dog
+Dog --> Bone : chews
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+class House
+class Room
+class City
+House *-- Room
+House --* City
+@enduml
