@@ -5,15 +5,25 @@
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
 | Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml) | < 30 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `corpus` (`rake corpus:check`), `conformance` (`rake conformance:check` and `spec/svg_conformance_spec.rb`), `fresh-resolution` (no lockfile, no bundle cache: install, require `sirena` and `svg_conform`, full `rspec`) | < 30 min |
 
-Reserved, not yet wired: snippet spec (16), corpus (02b), parity (14),
-conformance (04), fresh-resolution install (01). The scoreboard guard (02b)
-goes in BOTH lanes. `lint` (19b) is folded into the fast lane as an ordinary
-job hanging off `fast-lane`; there is no standalone `lint.yml` workflow, and
-no separate `lint / rubocop` required check.
+Reserved, not yet wired: snippet spec (16), parity (14; no comparator or
+parity spec exists yet), scoreboard guard (02b; goes in BOTH lanes). `lint`
+(19b) is folded into the fast lane as an ordinary job hanging off
+`fast-lane`; there is no standalone `lint.yml` workflow, and no separate
+`lint / rubocop` required check.
 
-Budgets are targets. No cold or warm timing has been measured (19b).
+Budgets are targets. No cold or warm timing has been measured: that needs
+CI runs of the lanes as they now stand (19b step 9).
+
+`unit` runs `bundle exec rake`, whose default task already includes
+`corpus:check`, so the `corpus` job repeats it once on its own: it is the
+named check in the full lane, and the one place a corpus regression reads as
+"corpus" instead of as a failure inside a Ruby/OS matrix cell. The
+conformance spec likewise runs inside `unit` and again in `conformance`;
+`rake conformance:check` (the scoreboard ratchet) runs nowhere else in CI.
+`fresh-resolution` runs the whole suite again on purpose: it is the only job
+that resolves gems without a cache.
 
 ## Branch protection (owner applies; a repository setting, not YAML)
 
@@ -21,7 +31,11 @@ Owner action after merge (no branch protection exists today): mark `fast-lane`
 and `full-lane` as required checks. Also require ONE of: "Require branches to
 be up to date before merging" (strict), or a merge queue (the lanes already
 run on `merge_group`). Record which, and the date, here once applied:
-NOT YET APPLIED.
+NOT YET APPLIED. Re-checked 2026-10-07 after the full lane gained `corpus`,
+`conformance` and `fresh-resolution` (19b step 10): the required names are
+still exactly `fast-lane` and `full-lane`, and
+`gh api repos/claricle/sirena/branches/main/protection` still answers 404
+with no rulesets defined, so nothing is required today.
 
 ## Adding a gate to a lane
 
@@ -31,18 +45,22 @@ NOT YET APPLIED.
 4. Oracle and comparison specs FAIL, not skip, when their binary is missing in CI. Skip loudly only locally.
 5. Provision your own toolchain inside your job (02a: oracle, 12: PlantUML/Java/Graphviz).
 
-Worked example, a conformance job for the full lane:
+Worked example, the `conformance` job as it sits in the full lane:
 
 ```yaml
   conformance:
+    name: conformance
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
-        with: { ruby-version: '3.3', bundler-cache: true }
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: bundle exec rake conformance:check
       - run: bundle exec rspec spec/svg_conformance_spec.rb
-  # ...and in full-lane:  needs: [docs-build, links, conformance]
+  # ...and in full-lane:  needs: [docs-build, links, corpus, conformance, fresh-resolution]
 ```
 
 ## External pins

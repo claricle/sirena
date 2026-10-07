@@ -108,14 +108,59 @@ jobs:
   links:
     uses: ./.github/workflows/links.yml
 
-  # Reserved full-lane slots, added to `needs` below:
-  #   corpus (02b), parity (14), conformance (04), fresh-resolution install
-  #   (01), scoreboard guard (02b)
+  corpus:
+    # The mermaid corpus ratchet: a case that passed must still pass, and an
+    # improvement must be recorded in scoreboard/corpus.json.
+    name: corpus
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: bundle exec rake corpus:check
+
+  conformance:
+    name: conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: bundle exec rake conformance:check
+      - run: bundle exec rspec spec/svg_conformance_spec.rb
+
+  fresh-resolution:
+    # Resolves every dependency from scratch, as a user's `gem install` or
+    # a new checkout does, so an upstream release that breaks us fails here
+    # instead of on someone's machine. No bundler-cache: a cached bundle is
+    # the opposite of a fresh resolution.
+    name: fresh-resolution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: |
+          rm -f Gemfile.lock
+          bundle install --jobs 4 --retry 3
+      - run: bundle exec ruby -e 'require "sirena"; require "svg_conform"'
+      - run: bundle exec rspec
+
+  # Still reserved, one job each, added to `needs` below when its gate
+  # exists: parity (14), scoreboard guard (02b)
 
   full-lane:
     name: full-lane
     if: ${{ always() }}
-    needs: [docs-build, links]
+    needs: [docs-build, links, corpus, conformance, fresh-resolution]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

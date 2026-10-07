@@ -252,4 +252,4 @@ rows:
 - file: spec/tasks/coverage_rake_spec.rb
   count: 8
 - file: spec/workflows/workflows_spec.rb
-  count: 6
+  count: 5

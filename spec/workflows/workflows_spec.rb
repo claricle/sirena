@@ -13,6 +13,26 @@ module WorkflowHelpers
     { "jobs" => { "j" => { "timeout-minutes" => 1, "steps" => [{ "uses" => uses }] } } }
   end
 
+  def run_commands(job)
+    job.fetch("steps").filter_map { |step| step["run"] }
+  end
+
+  # Ways a job can fail without blocking its lane: failure tolerated, a
+  # skipped step, or a command whose status is thrown away.
+  def swallowed_failures(name, job)
+    steps = job.fetch("steps")
+    tolerated = [job, *steps].select { |h| h.key?("continue-on-error") }
+    skipped = steps.select { |step| step.key?("if") }
+    ignored = run_commands(job).grep(/\|\|\s*(true|:)\s*$/)
+    [*tolerated, *skipped, *ignored].map { |found| "#{name}: #{found.inspect}" }
+  end
+
+  def unsound_aggregator?(name, job)
+    job["if"] != "${{ always() }}" ||
+      run_commands(job) != ["ruby scripts/lane_verdict.rb"] ||
+      swallowed_failures(name, job).any?
+  end
+
   def result(name, outcome)
     { name => { "result" => outcome, "outputs" => {} } }
   end
@@ -131,9 +151,36 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       end
     end
 
-    it "wires lint into the fast lane, with no other gate slot filled yet" do
-      expect(jobs.keys).to include("lint")
-      expect(jobs.keys).not_to include("corpus", "parity", "conformance", "fresh-resolution")
+    %w[corpus conformance fresh-resolution].each do |slot|
+      it "hangs the #{slot} job off the full lane" do
+        expect(jobs.fetch("full-lane")["needs"]).to include(slot)
+      end
+
+      it "keeps the #{slot} job out of the fast lane" do
+        expect(jobs.fetch("fast-lane")["needs"]).not_to include(slot)
+      end
+    end
+
+    {
+      "corpus" => ["bundle exec rake corpus:check"],
+      "conformance" => ["bundle exec rake conformance:check",
+                        "bundle exec rspec spec/svg_conformance_spec.rb"],
+    }.each do |slot, commands|
+      it "runs #{commands.join(' and ')} in the #{slot} job" do
+        expect(run_commands(jobs.fetch(slot))).to include(*commands)
+      end
+    end
+
+    it "keeps every slot gate live: no job condition, no swallowed failure" do
+      gates = %w[lint corpus conformance fresh-resolution]
+      conditional = gates.select { |name| jobs.fetch(name).key?("if") }
+      leaks = gates.flat_map { |n| swallowed_failures(n, jobs.fetch(n)) }
+      expect(conditional + leaks).to eq([])
+    end
+
+    it "judges each lane with the verdict script, always" do
+      unsound = aggregators.select { |n| unsound_aggregator?(n, jobs.fetch(n)) }
+      expect(unsound).to eq([])
     end
 
     it "runs rubocop as the lint job, hung off fast-lane" do
@@ -144,6 +191,30 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
 
     it "has no standalone lint workflow file any more" do
       expect(workflow_files.map { |f| File.basename(f) }).not_to include("lint.yml")
+    end
+
+    describe "fresh-resolution job" do
+      it "does not restore a cached bundle, so gems resolve from scratch" do
+        steps = jobs.fetch("fresh-resolution")["steps"]
+        setup = steps.find { |s| s["uses"].to_s.include?("setup-ruby") }
+        expect(setup.fetch("with", {})["bundler-cache"]).to be_falsey
+      end
+
+      it "deletes any lockfile before it installs" do
+        script = run_commands(jobs.fetch("fresh-resolution")).join("\n")
+        expect(script).to match(/rm -f Gemfile\.lock.*bundle install/m)
+      end
+
+      it "requires sirena and svg_conform in the same bundle" do
+        smoke = 'require "sirena"; require "svg_conform"'
+        runs = run_commands(jobs.fetch("fresh-resolution"))
+        expect(runs).to include("bundle exec ruby -e '#{smoke}'")
+      end
+
+      it "finishes with the whole suite" do
+        runs = run_commands(jobs.fetch("fresh-resolution"))
+        expect(runs.last).to eq("bundle exec rspec")
+      end
     end
   end
 end
