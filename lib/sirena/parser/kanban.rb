@@ -75,7 +75,9 @@ module Sirena
           return source.dup.force_encoding(Encoding::UTF_8).scrub
         end
 
-        source.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+        recoded = source.encode(Encoding::UTF_8,
+                                invalid: :replace, undef: :replace)
+        recoded.b.force_encoding(Encoding::UTF_8).scrub
       rescue Encoding::ConverterNotFoundError
         raise ParseError,
               "Cannot read a #{source.encoding} source: " \

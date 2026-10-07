@@ -234,7 +234,7 @@ module Sirena
           # there is no metadata row and no height reserved for one.
           #
           # An empty value is dropped. Only a QUOTED one can be empty -
-          # `unquoted_value` captures with `repeat(1)` - so that rule and the
+          # `unquoted_value` needs one character - so that rule and the
           # unquoted resolution below never both apply. Past it, a non-empty
           # quoted string is always truthy, so `'0'` and `"false"` override.
           #
