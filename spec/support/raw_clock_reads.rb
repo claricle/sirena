@@ -44,13 +44,45 @@ module RawClockReads
     raw?(node) ? [node, *found] : found
   end
 
-  # `defined?(a.b(c))` runs `a` but not the call or its arguments, so only the
-  # receiver of a call under `defined?` can hold a read.
   def self.children(node)
     return node.compact_child_nodes unless node.is_a?(Prism::DefinedNode)
-    return node.compact_child_nodes unless node.value.is_a?(Prism::CallNode)
 
-    [node.value.receiver].compact
+    run_by_defined(node.value)
+  end
+
+  # The expressions `defined?(node)` runs. Ruby checks an operand without
+  # running it: a call's receiver runs and its arguments are checked in turn,
+  # a call with a block runs nothing, and assignments, `&&`, `if` and string
+  # interpolation run nothing. Measured by spec/raw_clock_reads_spec.rb.
+  def self.run_by_defined(node)
+    case node
+    when Prism::CallNode then run_by_defined_call(node)
+    when Prism::ConstantPathNode then [node.parent].compact
+    when Prism::ArrayNode, Prism::HashNode, Prism::KeywordHashNode
+      node.elements.flat_map { |element| run_by_defined(element) }
+    when Prism::AssocNode
+      [node.key, node.value].flat_map { |part| run_by_defined(part) }
+    when Prism::SplatNode then run_by_defined_all([node.expression])
+    when Prism::AssocSplatNode then run_by_defined_all([node.value])
+    when Prism::ParenthesesNode then run_by_defined_parentheses(node)
+    else []
+    end
+  end
+
+  def self.run_by_defined_all(nodes)
+    nodes.compact.flat_map { |node| run_by_defined(node) }
+  end
+
+  def self.run_by_defined_call(node)
+    return [] if node.block
+
+    arguments = node.arguments&.arguments.to_a
+    [node.receiver, *arguments.flat_map { |argument| run_by_defined(argument) }].compact
+  end
+
+  def self.run_by_defined_parentheses(node)
+    statements = node.body&.body.to_a
+    statements.size == 1 ? run_by_defined(statements.first) : []
   end
 
   def self.raw?(node)
@@ -76,5 +108,6 @@ module RawClockReads
     node.name.to_s
   end
 
-  private_class_method :calls, :children, :raw?, :constant_name, :path_name
+  private_class_method :calls, :children, :run_by_defined,
+                       :run_by_defined_all, :run_by_defined_call, :run_by_defined_parentheses, :raw?, :constant_name, :path_name
 end
