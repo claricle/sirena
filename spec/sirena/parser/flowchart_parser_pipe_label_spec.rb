@@ -49,6 +49,7 @@ RSpec.describe Sirena::Parser::Flowchart do
 
     {
       "A -->|  | B" => "only space",
+      "A -->|\t\u00A0\u3000\uFEFF| B" => "only no-break and full-width space",
       "A -->|\"\" | B" => "an empty pair of quotes",
       "A -->|\" \"| B" => "quotes round only space",
     }.each do |source, what|
