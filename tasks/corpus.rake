@@ -207,6 +207,11 @@ module Sirena
     # the corpus since the last `rake corpus`), because both mean the file
     # needs a fresh `rake corpus` and a commit before it can be trusted
     # again.
+    #
+    # A case also drifts when its oracle verdict differs from the committed
+    # one: the verdict column decides which cases count toward the valid
+    # rate, so a changed verdict with an unchanged pass flag is a stale file
+    # all the same.
     def diff_scoreboards(committed_rows, fresh_rows)
       committed_pass = committed_rows.to_h { |row| [row["case"], row["pass"]] }
       fresh_pass = fresh_rows.to_h { |row| [row["case"], row["pass"]] }
@@ -219,12 +224,22 @@ module Sirena
         fresh_pass[c] == true && committed_pass.fetch(c, false) != true
       end
 
-      { regressed: regressed.sort, unrecorded: unrecorded.sort }
+      { regressed: regressed.sort, unrecorded: unrecorded.sort,
+        reclassified: reclassified_cases(committed_rows, fresh_rows) }
     end
 
-    # Fresh run vs. the committed scoreboard. Fails on either drift
-    # direction -- the plan's own words are "so the file cannot go stale;
-    # you re-run rake corpus and commit the improvement".
+    # Cases in both files whose oracle verdict differs.
+    def reclassified_cases(committed_rows, fresh_rows)
+      before = committed_rows.to_h { |row| [row["case"], row["verdict"]] }
+      changed = fresh_rows.select do |row|
+        before.key?(row["case"]) && before[row["case"]] != row["verdict"]
+      end
+      changed.map { |row| row["case"] }.sort
+    end
+
+    # Fresh run vs. the committed scoreboard. Fails on any drift (regressed,
+    # unrecorded or reclassified) -- the plan's own words are "so the file
+    # cannot go stale; you re-run rake corpus and commit the improvement".
     def check!
       committed = load_scoreboard
       if committed.empty?
@@ -235,25 +250,31 @@ module Sirena
       fail_on_drift!(committed, fresh_rows)
     end
 
+    # What corpus:check prints above each list of drifted cases, in the order
+    # the lists are reported.
+    DRIFT_HEADINGS = {
+      regressed: "REGRESSED (passed in the committed scoreboard, fails now):",
+      unrecorded: "IMPROVED BUT NOT RECORDED (run `rake corpus` and commit " \
+                  "scoreboard/corpus.json):",
+      reclassified: "VERDICT CHANGED (run `rake corpus` and commit " \
+                    "scoreboard/corpus.json):",
+    }.freeze
+
     # The guard itself, separate from the render so a spec can seed both
-    # rows and watch the exit status. Aborts (non-zero) on either drift.
+    # rows and watch the exit status. Aborts (non-zero) on any drift.
     def fail_on_drift!(committed, fresh_rows)
       diff = diff_scoreboards(committed, fresh_rows)
+      drifted = DRIFT_HEADINGS.select { |kind, _| diff[kind].any? }
+      drifted.each { |kind, heading| print_drift(heading, diff[kind]) }
 
-      clean = true
-      if diff[:regressed].any?
-        clean = false
-        puts "REGRESSED (passed in the committed scoreboard, fails now):"
-        diff[:regressed].each { |c| puts "  #{c}" }
-      end
-      if diff[:unrecorded].any?
-        clean = false
-        puts "IMPROVED BUT NOT RECORDED (run `rake corpus` and commit scoreboard/corpus.json):"
-        diff[:unrecorded].each { |c| puts "  #{c}" }
-      end
+      abort "corpus:check: FAILED" if drifted.any?
+      puts "corpus:check: clean (#{fresh_rows.size} cases' pass/fail and " \
+           "verdicts match the committed scoreboard)"
+    end
 
-      abort "corpus:check: FAILED" unless clean
-      puts "corpus:check: clean (#{fresh_rows.size} cases' pass/fail match the committed scoreboard)"
+    def print_drift(heading, cases)
+      puts heading
+      cases.each { |c| puts "  #{c}" }
     end
   end
 end

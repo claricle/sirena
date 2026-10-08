@@ -252,7 +252,7 @@ rows:
 - file: tasks/benchmark.rake
   count: 5
 - file: tasks/corpus.rake
-  count: 4
+  count: 3
 - file: tasks/example_tasks.rb
   count: 6
 - file: tasks/generate_mermaid_fixtures.rake

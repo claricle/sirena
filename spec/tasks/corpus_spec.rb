@@ -17,7 +17,8 @@ module CorpusCheckStubs
   def stub_fresh_run(passes)
     results = passes.transform_values { |pass| { pass: pass, stage: "parse", exception_class: "X" } }
     allow(described_class).to receive_messages(
-      load_scoreboard: committed, cases: results.keys, run_cases: results, verdicts: {},
+      load_scoreboard: committed, cases: results.keys, run_cases: results,
+      verdicts: results.keys.to_h { |path| [path, "valid"] }
     )
   end
 
@@ -228,6 +229,31 @@ RSpec.describe Sirena::Corpus do
       expect(diff[:unrecorded]).to eq([])
     end
 
+    it "flags a case whose verdict changed though its pass flag did not" do
+      committed = [{ "case" => "a", "verdict" => "unknown", "pass" => false }]
+      fresh = [{ "case" => "a", "verdict" => "valid", "pass" => false }]
+
+      expect(described_class.diff_scoreboards(committed, fresh))
+        .to eq(regressed: [], unrecorded: [], reclassified: ["a"])
+    end
+
+    it "lists reclassified cases in sorted order" do
+      committed = %w[b a].map { |c| { "case" => c, "verdict" => "unknown" } }
+      fresh = %w[b a].map { |c| { "case" => c, "verdict" => "valid" } }
+
+      expect(described_class.diff_scoreboards(committed, fresh))
+        .to include(reclassified: %w[a b])
+    end
+
+    it "does not call a case new to the file reclassified" do
+      committed = [{ "case" => "a", "verdict" => "valid", "pass" => true }]
+      fresh = [{ "case" => "a", "verdict" => "valid", "pass" => true },
+               { "case" => "b", "verdict" => "valid", "pass" => false }]
+
+      expect(described_class.diff_scoreboards(committed, fresh))
+        .to include(reclassified: [])
+    end
+
     it "does not flag a case still failing the same way as either kind of drift" do
       committed = [{ "case" => "a", "pass" => false }]
       fresh = [{ "case" => "a", "pass" => false }]
@@ -240,6 +266,16 @@ RSpec.describe Sirena::Corpus do
   end
 
   describe ".fail_on_drift!" do
+    let(:recorded) do
+      verdicts = %w[valid unknown valid]
+      committed.zip(verdicts).map { |row, v| row.merge("verdict" => v) }
+    end
+    let(:all_valid) { committed.map { |row| row.merge("verdict" => "valid") } }
+    let(:verdict_changed_report) do
+      "VERDICT CHANGED (run `rake corpus` and commit " \
+        "scoreboard/corpus.json):\n  b\n"
+    end
+
     # "c" stays passing in both committed and fresh in every example below --
     # it never regresses and is always already recorded, so it must never
     # appear in either printed block. Asserting exact stdout (not a loose
@@ -277,6 +313,11 @@ RSpec.describe Sirena::Corpus do
       expect { described_class.fail_on_drift!(committed, fresh) }
         .to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
         .and output("IMPROVED BUT NOT RECORDED (run `rake corpus` and commit scoreboard/corpus.json):\n  b\n").to_stdout
+    end
+
+    it "exits non-zero and names only the case whose verdict changed" do
+      expect { described_class.fail_on_drift!(recorded, all_valid) }
+        .to raise_error(SystemExit).and output(verdict_changed_report).to_stdout
     end
 
     it "returns without exiting when the fresh run matches" do

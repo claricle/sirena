@@ -4,9 +4,12 @@
 # so the corpus pass rate stops being measured against files mermaid itself
 # cannot parse.
 #
-# Usage: ruby scripts/corpus_verdicts.rb [--write] [--verify] [type ...]
+# Usage: ruby scripts/corpus_verdicts.rb [--write] [--verify] [--oracle]
+#                                        [type ...]
 #   --write   emit spec/mermaid/corpus-verdicts.yml
 #   --verify  re-check every `invalid` verdict against the LOCAL mmdc
+#   --oracle  run the LOCAL mmdc over every case that is otherwise `unknown`
+#             and write spec/mermaid/oracle-verdicts.yml; follow with --write
 #
 # The COMMITTED corpus-verdicts.yml is generated WITHOUT --verify, so anyone
 # with Ruby can regenerate it byte-for-byte and review the diff. --verify needs
@@ -46,9 +49,13 @@
 #      The corpus holds several extraction generations of the same files.
 #   4. Structural damage in the source itself. Detected by shape, never by
 #      whether Sirena can parse it — the point is to judge the input, not us.
+#   5. A committed local-mmdc verdict for this exact source, from --oracle
+#      (scripts/corpus_oracle.rb). Last, because it only ever speaks for cases
+#      nothing above could settle.
 
 require "digest"
 require "yaml"
+require_relative "corpus_oracle"
 require_relative "hardened_mmdc"
 require_relative "mmdc_oracle"
 
@@ -219,12 +226,16 @@ end
 #      rejections ARE the damage — an indented frontmatter closer makes mermaid
 #      refuse a diagram it otherwise supports.
 #   3. Rejection, on this case or a twin.
-#   4. Nothing either way.
+#   4. A committed mmdc verdict for this exact source (oracle-verdicts.yml).
+#      Applies to spec/mermaid/error/ too: a deliberate `error` diagram is an
+#      accepted render, so only a thrown diagnostic is recorded as a rejection,
+#      and that means the source is not a diagram at all.
+#   5. Nothing either way.
 #
 # Twin evidence is checked in both directions at each step. Checking it only
 # for renders gave byte-identical files opposite verdicts depending on which
 # directory they sat in.
-def classify(entry, group)
+def classify(entry, group, oracle = {})
   twins = twins_of(entry, group)
   artifact = artifact_reason(entry[:source])
 
@@ -242,6 +253,9 @@ def classify(entry, group)
 
   twin = twins.find { |other| rejected?(other) }
   return ["invalid", "twin rejected: #{File.basename(twin[:base])}"] if twin
+
+  oracle_row = oracle[entry[:digest]]
+  return CorpusOracle.row_verdict(oracle_row) if oracle_row
 
   ["unknown", "no evidence"]
 end
@@ -291,16 +305,42 @@ def verify_invalid!(rows, entries)
   errors
 end
 
+# The cases no committed evidence settles, as CorpusOracle.refresh wants them.
+def oracle_targets(entries, by_digest)
+  open_cases = entries.select do |entry|
+    classify(entry, by_digest[entry[:digest]]).first == "unknown"
+  end
+  open_cases.map do |entry|
+    relative = entry[:path].sub("#{CORPUS_ROOT}/", "")
+    { path: entry[:path], digest: entry[:digest], case: relative }
+  end
+end
+
+# Asks the local mmdc about every case nothing else settles and records the
+# answers, or aborts having written nothing.
+def refresh_oracle!(entries, by_digest)
+  targets = oracle_targets(entries, by_digest)
+  provenance = CorpusOracle.provenance
+  CorpusOracle.refresh(targets, provenance: provenance) do |i, o|
+    HardenedMmdc.run_mmdc(i, o)
+  end
+  warn "  judged #{targets.size} case(s); wrote #{CorpusOracle::PATH}"
+rescue CorpusOracle::InfrastructureError => e
+  abort "oracle refresh failed, nothing written: #{e.message}"
+end
+
 return unless File.expand_path($PROGRAM_NAME) == File.expand_path(__FILE__)
 
 types = ARGV.reject { |a| a.start_with?("--") }
 write = ARGV.include?("--write")
 verify = ARGV.include?("--verify")
+refresh_oracle = ARGV.include?("--oracle")
 
 # Checked before doing any work: a filtered --write would replace the whole
 # committed file with a fraction of it.
-if write && !types.empty?
-  abort "--write needs the whole corpus; a type filter would truncate the file."
+if (write || refresh_oracle) && !types.empty?
+  abort "--write and --oracle need the whole corpus; " \
+        "a type filter would truncate the file."
 end
 
 entries = cases(types)
@@ -311,8 +351,12 @@ entries = cases(types)
 # because the twins were out of scope.
 by_digest = index_by_digest(types.empty? ? entries : cases([]))
 
+refresh_oracle!(entries, by_digest) if refresh_oracle
+
+oracle = CorpusOracle.load_rows
+
 rows = entries.map do |entry|
-  verdict, evidence = classify(entry, by_digest[entry[:digest]])
+  verdict, evidence = classify(entry, by_digest[entry[:digest]], oracle)
   {
     "case" => entry[:path].sub("#{CORPUS_ROOT}/", ""),
     "verdict" => verdict,

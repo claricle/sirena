@@ -1,0 +1,1003 @@
+---
+provenance:
+  mmdc: 11.12.0
+  mermaid: 11.16.1
+  note: toolchain not pinned (TODO.foundation/02a)
+cases:
+- sha256: 8eb412d817c7762cbd93dd64982b163e9b75ab1e4b584052b2c675247a7a9c22
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Block 1'
+  cases:
+  - block/005_parser_a_diagram_with_column_statements_4.mmd
+  - block/006_parser_a_diagram_without_column_statements_5.mmd
+  - block/007_parser_a_diagram_with_auto_column_statements_6.mmd
+  - block/011_parser_arrow_blocks_10.mmd
+- sha256: 204a531c432be7eccfb0869f6a0920d01bdf3a7b0e5d882cb169e729fc8105b0
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Block 1Block 2'
+  cases:
+  - block/008_parser_blocks_next_to_each_other_7.mmd
+  - block/009_parser_blocks_on_top_of_each_other_8.mmd
+- sha256: 7ff8da6f56d4b2dbcef018b0f835b0ba0b29368226ef0d43b4c3754441de2add
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Block 1Block 2Block 3'
+  cases:
+  - block/010_parser_blocks_mixed_with_compound_blocks_9.mmd
+- sha256: 7851917390599dbf5ec5fd4fefe96e43614ed222906420b77408f9e7afe10b12
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: C4 diagram'
+  cases:
+  - c4/001_rendering_c4_spec_c4_0.mmd
+- sha256: 261ec949152801115a16a816e1908e96c294c048ccfc981d78f13425ac1fd6bd
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: C4.1 should render a simple C4Conte'
+  cases:
+  - c4/002_rendering_c4_spec_c4_1.mmd
+- sha256: aa18f098f342e92512917f4a97830bb5d852b496ec1f39f01851b02722540e05
+  verdict: rejects
+  reason: 'Error: Lexical error on line 1. Unrecognized text.'
+  cases:
+  - c4/003_rendering_c4_spec_c4_2.mmd
+- sha256: 85de48a3f1515208c92ae149b2e129f83f4e6f26ec6ed8cd82c8c86a6fd2631c
+  verdict: rejects
+  reason: 'Error: Lexical error on line 1. Unrecognized text.'
+  cases:
+  - c4/004_rendering_c4_spec_c4_3.mmd
+- sha256: 16bdaded80d0d85dfcb0128a43decb3625def5ee4ef5f77dc522a59cceceecfc
+  verdict: rejects
+  reason: 'Error: Lexical error on line 1. Unrecognized text.'
+  cases:
+  - c4/005_rendering_c4_spec_c4_4.mmd
+- sha256: ecf545321a489c68ff2149f9df38763fe587e2a8df78e8b8a90f2e17a1cf3784
+  verdict: rejects
+  reason: 'Error: Lexical error on line 1. Unrecognized text.'
+  cases:
+  - c4/006_rendering_c4_spec_c4_5.mmd
+- sha256: 7ddb8a152490908b14e76c30a58bac475e5c2b4bed0c83256d97eecb3b5e9a69
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/029_parser_should_parse_a_sprite_28.mmd
+- sha256: fb9d843852771bf579365262783b8e2039d6bfaaeeaf22c77ac91fac653f3fb1
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/030_parser_should_parse_a_link_29.mmd
+- sha256: 7cbb425f9e2635955552746506f179c07830387f3a3f6ee54ee7d49db33a6606
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/031_parser_should_parse_tags_30.mmd
+- sha256: dea72a2aa6af26f141bf0b0f0c69986ddeeebe73cc5c0cdf3b0c042ee127fbe3
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/036_parser_should_parse_a_sprite_35.mmd
+- sha256: 8bf8e3f17a81c4e85f2ce3f2280a67a310b1391289cae921afa855f320c5d94a
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/037_parser_should_parse_a_link_36.mmd
+- sha256: 428d87101a25d08b69bd8f97627f7dad7c0ab61563b0e1853e0dde8e81f946c0
+  verdict: rejects
+  reason: 'TypeError: c4Shape[textType].text.split is not a function'
+  cases:
+  - c4/038_parser_should_parse_tags_37.mmd
+- sha256: f9eb9771cdaf24e8acf984d4468a46192290813388f45b8824c8ec8772d4a37e
+  verdict: rejects
+  reason: 'Error: Lexical error on line 1. Unrecognized text.'
+  cases:
+  - c4/046_spec_diagram-orchestration_spec_45.mmd
+- sha256: 63c49ecc612d6fc8eccbd15a1dbb54394ec280a34d963759c3d96f3c660bad03
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - c4/047_spec_mermaidapi_spec_46.mmd
+- sha256: 77ef6f927572fed6abdfe20eb2964a5378117a6e697648cf7cac317223fd6364
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - class/049_platform_yari_class_48.mmd
+- sha256: 92c3a8659d258a646d6860af0e07cc618fe76ff5478eab96b4db18e73a921ee0
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - class/050_platform_yari_class_49.mmd
+- sha256: 9da39232e69da53b4ade28b34c791ee8e19675eda0703faddd20242079ec773c
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - class/054_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_53.mmd
+  - class_diagram/027_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_26.mmd
+- sha256: '0608bd970948649a2b71f974befa7da6df57a3d92650802716cd625c9c044036'
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - class/055_parser_should_be_possible_to_apply_a_cssclass_to_a_class_54.mmd
+  - class_diagram/028_parser_should_be_possible_to_apply_a_cssclass_to_a_class_27.mmd
+- sha256: 86c99cc8d461559c90a3296382880ec3522cdc4d7fbef2bd6e09fd9beb028224
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/056_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_55.mmd
+  - class_diagram/029_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_28.mmd
+- sha256: a2509fb07dc121c1ea986989949a494e071d69a05304a6a6423a95c892a572b1
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - class/058_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_57.mmd
+  - class_diagram/031_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_30.mmd
+- sha256: 797ee2f3e765f8b49f500617e6978f47142ef96104fa171c93b31da0ba7d7c9e
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - class/061_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_60.mmd
+  - class_diagram/034_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_33.mmd
+- sha256: f44168c74e98cf8a885b28546bbe4f85997d881bfe2733d6bc715364bf8e0942
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/066_parser_should_parse_a_class_with_a_text_label_65.mmd
+  - class_diagram/039_parser_should_parse_a_class_with_a_text_label_38.mmd
+- sha256: a1f56cbd99098d857ed04a279f1cf5123f7f72dc489c237317a2fef91a024af6
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/067_parser_should_parse_two_classes_with_text_labels_66.mmd
+  - class_diagram/040_parser_should_parse_two_classes_with_text_labels_39.mmd
+- sha256: 1364a0b71ef28def67b5f25137fafcecc2f066bf1d0fdad79f1fc81b8bb5c385
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/068_parser_should_parse_a_class_with_a_text_label_and_member_67.mmd
+  - class_diagram/041_parser_should_parse_a_class_with_a_text_label_and_member_40.mmd
+- sha256: ec60cf7f74bd4a83f398de65fcfae4ff5c5d129560ce663a2bdc2c0a0f84d12d
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/069_parser_should_parse_a_class_with_a_text_label_member_and_annotation_68.mmd
+  - class_diagram/042_parser_should_parse_a_class_with_a_text_label_member_and_annotation_41.mmd
+- sha256: fcd738fa530894a0cf6fa6133ad0b26847e8a061350da5897f045427a481f296
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/070_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_69.mmd
+  - class_diagram/043_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_42.mmd
+- sha256: 2fb19059e4b4ada77cad6905350ef4bc58bfc7541e3f61ecb5f0346762a79d5f
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/071_parser_should_parse_a_class_with_text_label_and_css_class_70.mmd
+  - class_diagram/044_parser_should_parse_a_class_with_text_label_and_css_class_43.mmd
+- sha256: 287dc4b018c8da0e86fe4d2fe0b6a8627550a73078deb989e7bb23b40c9de76e
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/072_parser_should_parse_two_classes_with_text_labels_and_css_classes_71.mmd
+  - class_diagram/045_parser_should_parse_two_classes_with_text_labels_and_css_classes_44.mmd
+- sha256: c53289ee8e3a4f7ab74351ea05fc6f893bbd3c32f82fff68e5a8ccd91c220316
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/073_parser_should_parse_two_classes_with_text_labels_and_css_class_shorthands_72.mmd
+  - class_diagram/046_parser_should_parse_two_classes_with_text_labels_and_css_class_shorthands_45.mmd
+- sha256: 3f7af8ddb9985330a365cc983bf798e2cf84745aaed27936e649855e91d36e28
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/080_parser_should_parse_a_class_with_a_text_label_and_members_79.mmd
+  - class_diagram/053_parser_should_parse_a_class_with_a_text_label_and_members_52.mmd
+- sha256: 0b2b214483dcf7c70d8e0d5d07eb6bc79ab08a8bfd0e351b43b021ebc0ebab76
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/081_parser_should_parse_a_class_with_a_text_label_members_and_annotation_80.mmd
+  - class_diagram/054_parser_should_parse_a_class_with_a_text_label_members_and_annotation_53.mmd
+- sha256: 24f7b1c4cd4aeb6a1a79c412deabba22f3d379d58e8b3cf21c81630430898aac
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - class/083_parser_should_handle_href_link_82.mmd
+  - class/084_parser_should_handle_href_link_with_tooltip_83.mmd
+  - class_diagram/056_parser_should_handle_href_link_55.mmd
+  - class_diagram/057_parser_should_handle_href_link_with_tooltip_56.mmd
+- sha256: 671372d2b993a5080731c800d203cbae2500b6dbf40381485827ceacebcfcff2
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/085_parser_should_handle_href_link_with_tooltip_and_target_84.mmd
+  - class/138_parser_should_associate_click_and_href_link_with_tooltip_and_target_appropriately_137.mmd
+  - class_diagram/058_parser_should_handle_href_link_with_tooltip_and_target_57.mmd
+  - class_diagram/111_parser_should_associate_click_and_href_link_with_tooltip_and_target_appropriately_110.mmd
+- sha256: 3bb752d8903371eb593a2a04280c9b110fad9fa70b1a130b2672983cb7a590f4
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/134_parser_should_associate_link_and_css_appropriately_133.mmd
+  - class/136_parser_should_associate_link_with_tooltip_135.mmd
+  - class_diagram/107_parser_should_associate_link_and_css_appropriately_106.mmd
+  - class_diagram/109_parser_should_associate_link_with_tooltip_108.mmd
+- sha256: fc7ff5e1995430cde5c9b3d2f275d578315711e832b9730228e314768d139fb1
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/135_parser_should_associate_click_and_href_link_and_css_appropriately_134.mmd
+  - class/137_parser_should_associate_click_and_href_link_with_tooltip_136.mmd
+  - class/139_parser_should_associate_click_and_href_link_appropriately_138.mmd
+  - class_diagram/108_parser_should_associate_click_and_href_link_and_css_appropriately_107.mmd
+  - class_diagram/110_parser_should_associate_click_and_href_link_with_tooltip_109.mmd
+  - class_diagram/112_parser_should_associate_click_and_href_link_appropriately_111.mmd
+- sha256: c216ff396f6e47181daf613bc4424b6f299667d91937d27365e8212f68dc7dd2
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/140_parser_should_associate_click_and_href_link_with_target_appropriately_139.mmd
+  - class_diagram/113_parser_should_associate_click_and_href_link_with_target_appropriately_112.mmd
+- sha256: 9bce187b8da202e5a696dabb5a9e100ff874f645944c5ec5e44b49c6dbe3c7f3
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/141_parser_should_associate_link_appropriately_140.mmd
+  - class_diagram/114_parser_should_associate_link_appropriately_113.mmd
+- sha256: f5c7538789666e9f222b6479f016634028829975b46cc9f2e691d14e4fb71122
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - class/142_parser_should_associate_callback_appropriately_141.mmd
+  - class_diagram/115_parser_should_associate_callback_appropriately_114.mmd
+- sha256: 88cdfc5c153146c798bd9231cc7fb3c92198905c74a2193028977a0a6150825e
+  verdict: rejects
+  reason: 'Error: svg element not in render tree'
+  cases:
+  - class/152_parser_should_parse_classes_with_different_text_labels_151.mmd
+  - class/172_parser_should_parse_classes_with_different_text_labels_171.mmd
+  - class_diagram/044_parser_should_parse_classes_with_different_text_labels_43.mmd
+  - class_diagram/064_parser_should_parse_classes_with_different_text_labels_63.mmd
+  - class_diagram/125_parser_should_parse_classes_with_different_text_labels_124.mmd
+  - class_diagram/145_parser_should_parse_classes_with_different_text_labels_144.mmd
+- sha256: 417505ab8c45275b4cc90eba0216e14698bfc9b3d27c19b32ee7b322d99a7867
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/174_spec_diagram-orchestration_spec_173.mmd
+  - class/176_spec_diagram-orchestration_spec_175.mmd
+  - class/177_spec_mermaidapi_spec_176.mmd
+  - class/179_spec_mermaidapi_spec_178.mmd
+- sha256: 3efe59b37c432602a522d873541c22b948dd1c06c0e86e659004735b7c97859d
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - class/175_spec_diagram-orchestration_spec_174.mmd
+  - class/178_spec_mermaidapi_spec_177.mmd
+- sha256: dc52e24f2511b59957008ad8044c2385741380f6f849c4e82627d3e5ad9e5262
+  verdict: accepts
+  cases:
+  - class_diagram/030_parser_should_handle_backticked_class_names_29.mmd
+- sha256: e11b57641879fc8212e5fcd483fd1384a51dac90b09c6b1064b8cb98b23a2b4d
+  verdict: accepts
+  cases:
+  - er/001_rendering_erdiagram_spec_er_0.mmd
+- sha256: a6a45ca72b8598cd356014afb4036cdbc634cfbb173b2711c75bfdfc098a066a
+  verdict: accepts
+  cases:
+  - er/057_parser_should_handle_complex_diagram_with_special_entity_names_56.mmd
+  - er_diagram/056_parser_should_handle_complex_diagram_with_special_entity_names_55.mmd
+- sha256: 41b6fbea2acd668002cdb4503fe9c6d3dc8b290711919c3ab5344203f3d20a8f
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Error Diagrams'
+  cases:
+  - error/001_rendering_errordiagram_spec_error_0.mmd
+- sha256: ca00fccfb408989eddc401062c4d1219a6aceb6b9b55412357f1790862e8f178
+  verdict: accepts
+  cases:
+  - error/002_rendering_errordiagram_spec_error_1.mmd
+  - error/003_spec_diagram-orchestration_spec_2.mmd
+  - error/004_spec_diagram-orchestration_spec_3.mmd
+- sha256: 03b56b1b1a952e5f04278088a1b589f1b8929cffe5776a7b9d3ad0152fe263b7
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - flowchart/007_platform_current_flowchart_6.mmd
+- sha256: e50654635f0375b4b81b37df8c3c477b821f40d172c634782a33dc87aab0755a
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - flowchart/008_platform_current_flowchart_7.mmd
+- sha256: 5acf138815177e7d3bbfb47b1b81c885ef5ab238305882cb371ec99e8cb868a3
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - flowchart/033_parser_markdown_formatting_in_nodes_and_labels_28.mmd
+- sha256: eff655e9bf0ca2567668dbbd26281f768a5f8984c57396ca8eabb0f196572aa9
+  verdict: rejects
+  reason: 'Error: Parse error on line 4:'
+  cases:
+  - flowchart/034_parser_markdown_formatting_in_subgraphs_29.mmd
+- sha256: b3b07a9a0ff0c37317448f853899da596d555d3b27c3fc231048622d4aa2a539
+  verdict: rejects
+  reason: 'Error: No such shape: this-shape-does-not-exist.'
+  cases:
+  - flowchart/051_parser_should_error_on_nonexistent_shape_46.mmd
+- sha256: aef960230e1af9d2d8ace5b2e0ded01fe2e72374d2566ac3679bc96bea8c52da
+  verdict: rejects
+  reason: 'Error: No such shape: rect_left_inv_arrow. Shape names should be lowercase.'
+  cases:
+  - flowchart/052_parser_should_error_on_internal-only_shape_47.mmd
+- sha256: cc23840ba35d65dfe4896ed52a167f9bf4dd3cf29ec07fdf8ed4433b44b28768
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - flowchart/061_parser_should_be_possible_to_use_syntax_in_labels_56.mmd
+- sha256: 792ae05a31e80204eb1ef41c6d388cc24e113425f8d8a226f3b0a0b5c11a5494
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - flowchart/146_parser_should_keep_node_label_text__if_already_defined__when_a_style_is_applied_141.mmd
+- sha256: e6a584f44162bbd92added5cbacc9e7da855e0ee0f8365fb1a46c1672a3adacf
+  verdict: accepts
+  cases:
+  - gantt/001_rendering_gantt_spec_gantt_0.mmd
+- sha256: 7b93aa3cfd3f0827d5df58ad803056842069cdd35dad615389138e1159896ddb
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Gantt diagram'
+  cases:
+  - gantt/004_rendering_gantt_spec_gantt_3.mmd
+- sha256: df9f9092cf85e6548e2d1efa30bbad47f91c35fd22919f750cca139dd7023b13
+  verdict: rejects
+  reason: 'Error: Parse error on line 7:'
+  cases:
+  - gantt/019_parser_should_parse_callback_specifier_with_no_args_18.mmd
+- sha256: 48975b8341a6a3c28ca11bb40e27e4d093ba8f4f7b89d54cf2ff5cd40382b676
+  verdict: rejects
+  reason: 'Error: Parse error on line 7:'
+  cases:
+  - gantt/020_parser_should_parse_callback_specifier_with_arbitrary_number_of_args_19.mmd
+- sha256: 75c66aba355528e6a52b8dd5ad5c944635089d76988d86b3562873088e0f915a
+  verdict: accepts
+  cases:
+  - git/001_rendering_appli_spec_git_0.mmd
+  - git/002_rendering_gitgraph_spec_git_1.mmd
+- sha256: 8600a1521453cd214021566c6e39423f243eed397cfc23fd9fd5365ff31d06e2
+  verdict: accepts
+  cases:
+  - git/003_rendering_gitgraph_spec_git_2.mmd
+- sha256: d4aa03f7a3a6933344b4f8afda4a1002e95bd584237a4062dd2c98e52d910275
+  verdict: accepts
+  cases:
+  - git/004_rendering_gitgraph_spec_git_3.mmd
+- sha256: b7f5cb102ae1bae97c04448bac14415646009195b0b204be660a457459be4f61
+  verdict: accepts
+  cases:
+  - git/005_rendering_gitgraph_spec_git_4.mmd
+- sha256: 0b15d55943e7b129b842cbc90734e719eee90bc5aae3ecd322bf8c1006a6105b
+  verdict: accepts
+  cases:
+  - git/006_rendering_gitgraph_spec_git_5.mmd
+- sha256: 9a182d9b375ee987ce026354ba7327ba21f76a8ee7a425cf610fd0c34f334864
+  verdict: accepts
+  cases:
+  - git/007_rendering_gitgraph_spec_git_6.mmd
+- sha256: 3107af3bfa60a8b21db3549b7fa1bcb44a0b0609d772a4276ac36377759c1a46
+  verdict: accepts
+  cases:
+  - git/008_rendering_gitgraph_spec_git_7.mmd
+- sha256: b3e35b05d8fde39567514eeadf041202b436c34afcf68f3bd34e35d4426016f1
+  verdict: accepts
+  cases:
+  - git/009_rendering_gitgraph_spec_git_8.mmd
+- sha256: b3fd6ad545cc9e394bbe79b16479a05e6eda01af65b66cb4a46669f4fe241aa0
+  verdict: accepts
+  cases:
+  - git/010_rendering_gitgraph_spec_git_9.mmd
+- sha256: 270deb060249853f59a37dacac2386f91a5400b57db2e67b13b3cb36973cca2f
+  verdict: accepts
+  cases:
+  - git/011_rendering_gitgraph_spec_git_10.mmd
+- sha256: e1787523fb1d7d6ccf1abe76ecedf8dfd4c91b84b103604c6bba8ae6a0740555
+  verdict: accepts
+  cases:
+  - git/012_rendering_gitgraph_spec_git_11.mmd
+- sha256: 4a618b5055f2ae7280518cfa2ae0eaaa5d5246d4a793816b97c37e371e7f734c
+  verdict: accepts
+  cases:
+  - git/013_rendering_gitgraph_spec_git_12.mmd
+- sha256: a64b10eb2956bafd6e9e5538a62531a783900ed31330102f2f2a8556b3646a5b
+  verdict: accepts
+  cases:
+  - git/014_rendering_gitgraph_spec_git_13.mmd
+- sha256: 07176aae8215a422dc500d23ceac51fec45837be0170d6443b02b636f673bcbf
+  verdict: accepts
+  cases:
+  - git/015_rendering_gitgraph_spec_git_14.mmd
+- sha256: 44355723017fa5e81f172c96cb1ce74c5a4fb5d68ab3e17755805181ca89b72d
+  verdict: accepts
+  cases:
+  - git/016_rendering_gitgraph_spec_git_15.mmd
+- sha256: 3d1db76950c944b9d8aec84f5a68c896ed4c8539153f171584d00e89dbfe1e5a
+  verdict: accepts
+  cases:
+  - git/017_rendering_gitgraph_spec_git_16.mmd
+- sha256: c8c85defc492f495a56934cd1c437b29a0ae5d22f04247944e5fa038d6dc3d3c
+  verdict: accepts
+  cases:
+  - git/018_rendering_gitgraph_spec_git_17.mmd
+- sha256: e8d69706307f2305df1e0435c4a2a55144f714fa8cce5959518935b3ec99817c
+  verdict: accepts
+  cases:
+  - git/019_rendering_gitgraph_spec_git_18.mmd
+- sha256: 18485fc2af16201da59ffe0dbebd8c9c8d9007009627e0016021f8097cd4a248
+  verdict: accepts
+  cases:
+  - git/020_rendering_gitgraph_spec_git_19.mmd
+- sha256: 3f0ae95ace9a1c048e64e8a389d62cca1229b58e58ab924ac9ef00f969c66abf
+  verdict: accepts
+  cases:
+  - git/021_rendering_gitgraph_spec_git_20.mmd
+- sha256: e66d97a9a0fb341878acaad9fadff031ea7f553c3a2dfe23faec49107361857d
+  verdict: accepts
+  cases:
+  - git/022_rendering_gitgraph_spec_git_21.mmd
+- sha256: b33f6f67239876adb10f7af0ee50ae0a178ca552e13f5d4f26ad60f4afc8245c
+  verdict: accepts
+  cases:
+  - git/023_rendering_gitgraph_spec_git_22.mmd
+- sha256: 5f695f1677f2577f8485c5d32c2360035d4e381e35b247b223b11df3746d71ab
+  verdict: accepts
+  cases:
+  - git/024_rendering_gitgraph_spec_git_23.mmd
+- sha256: 494f0892a7a38f43d9b35923d7d73f3ab54ad06805abf7fcaaa6739f20eed475
+  verdict: accepts
+  cases:
+  - git/025_rendering_gitgraph_spec_git_24.mmd
+- sha256: dc574c309f49a3423a152697ecb37e43ad9a4b1646d037208540b9996dbb75c9
+  verdict: accepts
+  cases:
+  - git/026_rendering_gitgraph_spec_git_25.mmd
+- sha256: 74d99e88ffd7e8802b3cd55fb79ff4e6c1050cfa2b8ddf7f2c45fdd9fbe07be2
+  verdict: accepts
+  cases:
+  - git/027_rendering_gitgraph_spec_git_26.mmd
+  - git/028_rendering_gitgraph_spec_git_27.mmd
+- sha256: 6b19e540defdba2883d9a6aa4e3a82ccf5bf1546ca83c921d955b9a1a5919e9d
+  verdict: accepts
+  cases:
+  - git/029_rendering_gitgraph_spec_git_28.mmd
+- sha256: 42619ae0698275ecce1111cbdef3ce063418ee14243730375050d2fefe987c37
+  verdict: accepts
+  cases:
+  - git/030_rendering_gitgraph_spec_git_29.mmd
+  - git/031_rendering_gitgraph_spec_git_30.mmd
+- sha256: 110a84ff8facff86ecdb18ecd7743b097c421c588cb037eac929c79b1a0359df
+  verdict: accepts
+  cases:
+  - git/032_rendering_gitgraph_spec_git_31.mmd
+- sha256: f1035d0e9862d92d9ea03bb8825ef87b7e9d31d724146382de7a87656d8e6076
+  verdict: accepts
+  cases:
+  - git/033_rendering_gitgraph_spec_git_32.mmd
+- sha256: 1f46192556b0dcdc9b8c3ccfd58831cb9a3e6d0a501fffa7ffb4d5886cc05613
+  verdict: accepts
+  cases:
+  - git/034_rendering_gitgraph_spec_git_33.mmd
+- sha256: 28cc532810ed2cd57e1e41ee9f4f53772f386d3fcc9b82117bee13fe64a1fa58
+  verdict: accepts
+  cases:
+  - git/035_rendering_gitgraph_spec_git_34.mmd
+- sha256: 3aa70f482d12001dda0c75f64a4a36bac340cc898346b709d148d433049fbe9b
+  verdict: accepts
+  cases:
+  - git/036_rendering_gitgraph_spec_git_35.mmd
+- sha256: ffb7d42ec9bfa20b78c78a3f6c6ebb351e333ebab96aa8dbd4178799c2c37fa7
+  verdict: accepts
+  cases:
+  - git/037_rendering_gitgraph_spec_git_36.mmd
+- sha256: b351ae4ec519b08b6879a8d06b95664957cb08705139c9b361bd3fafe7409e30
+  verdict: accepts
+  cases:
+  - git/038_rendering_gitgraph_spec_git_37.mmd
+- sha256: '097179223531b64cd397c05547e7a4e253ab6207d31068e23620a4db81f1d662'
+  verdict: accepts
+  cases:
+  - git/039_rendering_gitgraph_spec_git_38.mmd
+- sha256: 559e01a29ef5060da5a835285c41fc8166ba198485425c0b53dc43c8135636e8
+  verdict: accepts
+  cases:
+  - git/040_rendering_gitgraph_spec_git_39.mmd
+- sha256: 336954c5c6f9dd742c6d1863a37f94c7e2c21a17d41708e9ae6fa6e5e709c318
+  verdict: accepts
+  cases:
+  - git/041_rendering_gitgraph_spec_git_40.mmd
+- sha256: 9bdcf306e9db7c396981396cd62cb9ab6cb69705fe58ebce51da2e199ea20ac4
+  verdict: accepts
+  cases:
+  - git/042_rendering_gitgraph_spec_git_41.mmd
+- sha256: 75ec2d78f09b44e215e2dda14cf5a864f55089163e00a7b222f87b0509de3277
+  verdict: accepts
+  cases:
+  - git/043_rendering_gitgraph_spec_git_42.mmd
+- sha256: 8930d7ae27e634e0882995e08f82e2f767bec44924eb7f5a0e84ac16380bb8a8
+  verdict: accepts
+  cases:
+  - git/044_rendering_gitgraph_spec_git_43.mmd
+- sha256: 0f85d22ee8fad08ad9c413056dcd4df369939a95bfd591abe9e2a87f157391ef
+  verdict: accepts
+  cases:
+  - git/045_rendering_gitgraph_spec_git_44.mmd
+- sha256: 2f05ba36873cc6d5dcd68fcd7890c210b4b14809fe9a462fec11ec061ab2fd26
+  verdict: accepts
+  cases:
+  - git/046_rendering_gitgraph_spec_git_45.mmd
+- sha256: bde1612ce498ababd51eb33134aa1124285846886a811982c03ff9174f0ce020
+  verdict: accepts
+  cases:
+  - git/047_rendering_gitgraph_spec_git_46.mmd
+- sha256: cc80ec429c44e9eb9021ee4bc713d0256448752ab0e31a1cea3aa7a713f74d85
+  verdict: accepts
+  cases:
+  - git/048_rendering_gitgraph_spec_git_47.mmd
+- sha256: c7ea0314946df9063c867949ae6b782848b1a0e7713712c15562c17fc38a6ec9
+  verdict: accepts
+  cases:
+  - git/049_rendering_gitgraph_spec_git_48.mmd
+- sha256: ff110266567f71ad09d72b6379311d0b70c1f916c31088ea53d38c4970d74fbd
+  verdict: accepts
+  cases:
+  - git/050_rendering_gitgraph_spec_git_49.mmd
+- sha256: 22062fba31065d2e22eb057c6dca4d1ca04e80c405388f93e6306c4039a4f10c
+  verdict: accepts
+  cases:
+  - git/051_rendering_gitgraph_spec_git_50.mmd
+- sha256: e1c321944b7a07afd1d90fafffb50859ec6ca5fe141fdb1a376f500aee6d86d8
+  verdict: accepts
+  cases:
+  - git/052_rendering_gitgraph_spec_git_51.mmd
+- sha256: 4859800dd1a01211ea2e02d64986a9f1a686c42a37d00fb8a2bd1e3d14298934
+  verdict: accepts
+  cases:
+  - git/053_rendering_gitgraph_spec_git_52.mmd
+- sha256: a0655f0ceb954df5ace678113540df69d72898311d00edefa56ba2bfa13fff8a
+  verdict: accepts
+  cases:
+  - git/054_rendering_gitgraph_spec_git_53.mmd
+  - git/055_rendering_gitgraph_spec_git_54.mmd
+  - git/056_rendering_gitgraph_spec_git_55.mmd
+  - git/057_rendering_gitgraph_spec_git_56.mmd
+  - git/058_rendering_gitgraph_spec_git_57.mmd
+  - git/059_rendering_gitgraph_spec_git_58.mmd
+  - git/156_spec_diagram-orchestration_spec_155.mmd
+  - git/157_spec_diagram-orchestration_spec_156.mmd
+  - git/158_spec_mermaidapi_spec_157.mmd
+  - git/159_spec_mermaidapi_spec_158.mmd
+  - git/160_spec_utils_spec_159.mmd
+  - git/161_spec_utils_spec_160.mmd
+- sha256: f010132560ae6c6d24eee86596b221a775a17a9fac4e7075db83a3ee47f507b0
+  verdict: accepts
+  cases:
+  - git/067_example_git_66.mmd
+- sha256: aca7ffc677b5c4c043c83efe6726269ef272b8f722684f84f9b7892483c15d1f
+  verdict: accepts
+  cases:
+  - git/068_parser_should_handle_set_direction_top_to_bottom_67.mmd
+- sha256: 5b97bac461ed898666775c6b6d6b2a680522ba53f5546cbf17ed418bedb30ba5
+  verdict: accepts
+  cases:
+  - git/069_parser_should_handle_set_direction_bottom_to_top_68.mmd
+- sha256: 9ea54948e255f09ab3128ebd89d5132538bc40a931a3cac933bfb9e534083228
+  verdict: accepts
+  cases:
+  - git/070_parser_should_checkout_a_branch_69.mmd
+- sha256: 972e803b67db39900fe620bba2392093bef557c7a9266dcc94dad5ba1a8eb51a
+  verdict: accepts
+  cases:
+  - git/071_parser_should_switch_a_branch_70.mmd
+- sha256: d11873975c3f2fd2d5040f7ea250e582b6cd77a7a07ba4cb8c8fcdf975c3f057
+  verdict: accepts
+  cases:
+  - git/072_parser_should_add_commits_to_checked_out_branch_71.mmd
+- sha256: 15a4281485c6706b45a3b19d3bc2daf146a3d4d9a8583017e8fc9a97e86b21ab
+  verdict: accepts
+  cases:
+  - git/073_parser_should_handle_commit_with_args_72.mmd
+- sha256: ce2d505d22d32aaed0eb823910789cefd0f414791f58bf0fecb0c6a28cce10fd
+  verdict: accepts
+  cases:
+  - git/074_parser_should_handle_cases_when_merge_is_a_noop_73.mmd
+- sha256: 4bfffa7e27f842f0c0067ddc109fa809238928edbd3162ad5672933067d535c8
+  verdict: accepts
+  cases:
+  - git/075_parser_should_handle_merge_with_2_parents_74.mmd
+- sha256: a82fc9e1cbf02a7a6d1404183307c83d9c01dde04f4a1ce213ab062607b8d498
+  verdict: accepts
+  cases:
+  - git/076_parser_should_generate_an_array_of_known_branches_75.mmd
+- sha256: df2f4348a2daf7dc4b0949a54936d1a92c732fb91278410de23400fb7541eae5
+  verdict: accepts
+  cases:
+  - git/078_parser_should_handle_set_direction_top_to_bottom_77.mmd
+- sha256: fe19de42c25bee679ec2c1f0959ae521bc3d2a2cc6dca05140bec0c4851ac62a
+  verdict: accepts
+  cases:
+  - git/079_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_only_78.mmd
+- sha256: 3f95e5eeb40cb7f6d796f7823eeed541c65b88b18bdc49dadb4aa67fca90439b
+  verdict: accepts
+  cases:
+  - git/080_parser_should_handle_a_gitgraph_commit_with_custom_commit_tag_only_79.mmd
+- sha256: 80a3418f7cdb452df78318a40210d3e3b92947cee76d4e437b0ea6c572683231
+  verdict: accepts
+  cases:
+  - git/081_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_highlight_only_80.mmd
+- sha256: 7139ad4438124095f310ad1cf2b22e7f0e11d9528aa53d02570ef15c89a97511
+  verdict: accepts
+  cases:
+  - git/082_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_reverse_only_81.mmd
+- sha256: 11d0a8237818d5db44ccbbe388d1f3ca906e4bcf35cc7a6508767d4fc27055e6
+  verdict: accepts
+  cases:
+  - git/083_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_normal_only_82.mmd
+- sha256: c031e848e586ab1c238d18aee16496942e65db34039625c3767809e22bc3b113
+  verdict: accepts
+  cases:
+  - git/084_parser_should_handle_a_gitgraph_commit_with_custom_commit_msg_only_83.mmd
+- sha256: 87b8004ff88fd7579df443cc11b286cfb875936d5b13387ac79a847684ca627d
+  verdict: accepts
+  cases:
+  - git/085_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_tag_only_84.mmd
+- sha256: 97619ca8e41c170c3cc57716f1f831a9a3f060b7e6857e354f6894ed221b227a
+  verdict: accepts
+  cases:
+  - git/086_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_tag_only_85.mmd
+- sha256: 884d8b64b570e11e33b39abdb6a4d01372d51c0630ab5dc916656b4bdd9e906b
+  verdict: accepts
+  cases:
+  - git/087_parser_should_handle_a_gitgraph_commit_with_custom_commit_tag_and_type_only_86.mmd
+- sha256: a47ff1b44ba8eac12d8da68e78e1b52c55b990beac973061d10c16afa5c6cb3d
+  verdict: accepts
+  cases:
+  - git/088_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_and_tag_only_87.mmd
+- sha256: 0f197744ecd8c0cc10dbc26ffe8718d71700fd01da0a3b1bb04b2272c4d7cba0
+  verdict: accepts
+  cases:
+  - git/089_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_tag_and_msg_88.mmd
+- sha256: c6f41e84b3bda01a46cc58e120f5243f8617a3831592ef6b1e61b097a54cc405
+  verdict: accepts
+  cases:
+  - git/090_parser_should_handle_a_gitgraph_commit_with_custom_type_tag_msg_commit_id__89.mmd
+- sha256: e2006f3acf1b43300f6b5f9ed44f028645aa43c95e7e743abb397aa2a6f8e679
+  verdict: accepts
+  cases:
+  - git/091_parser_should_handle_a_gitgraph_commit_with_custom_tag_msg_commit_id_type__90.mmd
+- sha256: f1bbf38613d8f4a342c8ddd95610e13fd7dea299d27c27a2ba63a5468d4004c0
+  verdict: accepts
+  cases:
+  - git/092_parser_should_handle_a_gitgraph_commit_with_custom_msg_commit_id_type_tag_91.mmd
+- sha256: 28590753a3e3975761ced063274d40f2c912be50f1c65095d5e5f734738e5d04
+  verdict: accepts
+  cases:
+  - git/093_parser_should_handle_3_straight_commits_92.mmd
+- sha256: 14210328ae15337ad3af477df2a04f244192495deaaebd752cb90e3bcc52b29e
+  verdict: accepts
+  cases:
+  - git/094_parser_should_handle_new_branch_creation_93.mmd
+- sha256: 0f8f0b5c552b85d2a614335eb0f7a8cb3ef3f5a41de405db55ae99ca46a0133c
+  verdict: accepts
+  cases:
+  - git/095_parser_should_allow_quoted_branch_names_94.mmd
+- sha256: cad6f6b8ecc72191bbc0f258df126bd72bedd67975e7bf29b259b0ed440131fa
+  verdict: accepts
+  cases:
+  - git/096_parser_should_allow_-_characters_in_branch_names_95.mmd
+- sha256: b61605aa91c1860e7a41e2228f8d6bea23d8222213c5b7f13e19d378b074f38a
+  verdict: accepts
+  cases:
+  - git/097_parser_should_allow_branch_names_starting_with_numbers_96.mmd
+- sha256: 1456d71294dfbf435e1ab7f6c2e9839d9f4475f0b93799655d1abc172af6bc50
+  verdict: accepts
+  cases:
+  - git/098_parser_should_allow_branch_names_starting_with_unusual_prefixes_97.mmd
+- sha256: b22cd1e0b2eeac927fb836f60bc8205603dc482c9b97c314c10e83ae736d093b
+  verdict: accepts
+  cases:
+  - git/099_parser_should_handle_new_branch_checkout_98.mmd
+- sha256: 331356bee46fd2a8323d2401c188b16eef30fb9224cd87a1a7d23fa306c24dd9
+  verdict: accepts
+  cases:
+  - git/100_parser_should_handle_new_branch_checkout_with_order_99.mmd
+- sha256: 1dd548b4c78bbd5b78d6bcbed918533105fe3e18f036b5e9a368c5f902a8bc46
+  verdict: accepts
+  cases:
+  - git/101_parser_should_handle_new_branch_checkout_with_and_without_order_100.mmd
+- sha256: 0124dcf6b078c3383accbbda238c4d526e9dbe0186bf7fd8876cc4039e9019ec
+  verdict: accepts
+  cases:
+  - git/102_parser_should_handle_new_branch_checkout_commit_101.mmd
+- sha256: a6ee58058deb627ab030ea7cb01d610df21a000c9927741753a3112b37414dea
+  verdict: accepts
+  cases:
+  - git/103_parser_should_handle_new_branch_checkout_commit_and_merge_102.mmd
+- sha256: 95cd445e9cfa1f6d1a91c36c5882ddac348efb0bd5d48a6168acdce32a624038
+  verdict: accepts
+  cases:
+  - git/104_parser_should_handle_new_branch_switch_103.mmd
+- sha256: 318af6216cf32589cffe01a82b3b2e977d5aabe1dd0b0b84d0fe9f17dda9a19f
+  verdict: accepts
+  cases:
+  - git/105_parser_should_handle_new_branch_switch_commit_104.mmd
+- sha256: 1a4f26667d454dc3522791df6d84a32cca8fb3377d657d60fb9b5cc72f852a11
+  verdict: accepts
+  cases:
+  - git/106_parser_should_handle_new_branch_switch_commit_and_merge_105.mmd
+- sha256: 1733b98187eb1ddd8e627a406cb4b834ae5b59f3fcc75f3c60c4b643be4b8347
+  verdict: accepts
+  cases:
+  - git/107_parser_should_handle_merge_tags_106.mmd
+- sha256: 3e2947b8a4e2286133598f7fa77e52db9d06d5fea1dad7986adbd1ef2e0b98cc
+  verdict: accepts
+  cases:
+  - git/108_parser_should_handle_merge_with_custom_ids_tags_and_type_107.mmd
+- sha256: 63de2744330ee128b7c68df274409fa684b737af74498f460138895794da91b9
+  verdict: accepts
+  cases:
+  - git/109_parser_should_support_cherry-picking_commits_108.mmd
+- sha256: 375c296e8bfec68ce134fb69278e2918934af0b55410b75e67c78f257b7eb381
+  verdict: accepts
+  cases:
+  - git/110_parser_should_support_cherry-picking_commits_with_custom_tag_109.mmd
+- sha256: e33bb8be119df9089bba7b590e8eb039c5f4bbe359e3e355b58cc389e359cb23
+  verdict: accepts
+  cases:
+  - git/111_parser_should_support_cherry-picking_commits_with_no_tag_110.mmd
+- sha256: fdbaa3ff4e5b17540d76b04033620b7a66b4712910b873106d095b1e5e732c0f
+  verdict: accepts
+  cases:
+  - git/112_parser_should_support_cherry-picking_of_merge_commits_111.mmd
+- sha256: '098da655848f7070d71b1c8b02cf4a68567daf4ad262713994e156e0414c2c15'
+  verdict: accepts
+  cases:
+  - git/113_parser_should_support_cherry-picking_of_merge_commits_with_tag_112.mmd
+- sha256: 2d6bc863dd0b2c55da596a38d683fe6109c4829328d8415a2e13383e94c230e1
+  verdict: accepts
+  cases:
+  - git/114_parser_should_support_cherry-picking_of_merge_commits_with_additional_commit_113.mmd
+- sha256: 0f9ff6ea9875a311d26395bdf756a16d5e2976ea84e52277839c78c553cbeb23
+  verdict: accepts
+  cases:
+  - git/115_parser_should_support_cherry-picking_of_merge_commits_with_empty_tag_114.mmd
+- sha256: 4c307f4ab853568175a570ed6f4fcd71ef907d04e1b455d931f59c3f387fe81f
+  verdict: rejects
+  reason: 'Error: Incorrect usage of cherry-pick: If the source commit is a merge
+    commit, an immediate parent commit must be specif'
+  cases:
+  - git/116_parser_should_fail_cherry-picking_of_merge_commits_if_the_parent_of_merge_commits_is_not_specified_115.mmd
+- sha256: 151cff5e914e09cb472455842aab5aa501b1b5042392314b7ab569d7a08ddfe6
+  verdict: rejects
+  reason: 'Error: Invalid operation: The specified parent commit is not an immediate
+    parent of the cherry-picked commit.'
+  cases:
+  - git/117_parser_should_fail_cherry-picking_of_merge_commits_when_the_parent_provided_is_not_an_immediate_parent_of_cherry_picked_commit_116.mmd
+- sha256: 98e3e171b7d03ad0b25fd46871114c45cf45856848b6c7042ffe4301520d005a
+  verdict: rejects
+  reason: 'Error: Trying to create an existing branch. (Help: Either use a new name
+    if you want create a new branch or try using "c'
+  cases:
+  - git/118_parser_should_throw_error_when_try_to_branch_existing_branch_main_117.mmd
+- sha256: 7d5472cb4b499b5e8fd862c43a726d440d60e2c1a7c070e85fdf70967cfb011b
+  verdict: rejects
+  reason: 'Error: Trying to create an existing branch. (Help: Either use a new name
+    if you want create a new branch or try using "c'
+  cases:
+  - git/119_parser_should_throw_error_when_try_to_branch_existing_branch_testbranch_118.mmd
+- sha256: 68dd8b1a7d75af4fab1776c32de5c193b64df96d37de9e77044a7da3a220c996
+  verdict: rejects
+  reason: 'Error: Trying to checkout branch which is not yet created. (Help try using
+    "branch testBranch")'
+  cases:
+  - git/120_parser_should_throw_error_when_try_to_checkout_unknown_branch_testbranch_119.mmd
+- sha256: 553fd96803c0f0b201c84bae2edc0d0ec22821b7864ece26825b5ce98a3fe000
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Current branch (main)has no commits'
+  cases:
+  - git/121_parser_should_throw_error_when_trying_to_merge_when_current_branch_has_no_commits_120.mmd
+- sha256: 8e66a4c1f24988e82da5a9f1496acad4f735047b7ad23e4ad9363fafbf529b76
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Branch to be merged (testBranch) does
+    not exist'
+  cases:
+  - git/122_parser_should_throw_error_when_trying_to_merge_unknown_branch_121.mmd
+- sha256: ef76c36a77806c1a6958217c33d033733bbcf294465399d3c67e056c0474d984
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Cannot merge a branch to itself'
+  cases:
+  - git/123_parser_should_throw_error_when_trying_to_merge_branch_to_itself_122.mmd
+- sha256: ec59357e2a1f63ada1e133d202d47847a13565615b8b94fe4e8f9e7c31fe2306
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Commit with id:1-111 already exists,
+    use different custom id'
+  cases:
+  - git/124_parser_should_throw_error_when_using_existing_id_as_merge_id_123.mmd
+- sha256: f2934fe9d98ccb198e7faaf97b608d89711a450103b3275ca82c54a3f2e6b4d7
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Both branches have same head'
+  cases:
+  - git/125_parser_should_throw_error_when_trying_to_merge_branches_having_same_heads_124.mmd
+- sha256: 62146cf7c22cd7dc1c069a6924577b27524ad1cd0ea4d5a16ae0f7417e585cc8
+  verdict: rejects
+  reason: 'Error: Incorrect usage of "merge". Branch to be merged (test1) has no commits'
+  cases:
+  - git/126_parser_should_throw_error_when_trying_to_merge_branch_which_has_no_commits_125.mmd
+- sha256: 49c4cba9dd739fa5beb9ad0e1aa3642151901872f8e54171132ab5d316fbe722
+  verdict: accepts
+  cases:
+  - git/127_parser_should_handle_a_title_and_a_description_accdescr__126.mmd
+- sha256: 2f94c81c12942619affc70a6d8a62a6d71f0f0855262174a56beb018848894b2
+  verdict: accepts
+  cases:
+  - git/128_parser_should_handle_a_title_and_a_multiline_description_accdescr__127.mmd
+- sha256: a433dc4a1a7e7645e96cd9d649c7625e8725905bdf3a26d50085abb40da794e4
+  verdict: accepts
+  cases:
+  - git/129_parser_should_log_a_warning_when_two_commits_have_the_same_id_128.mmd
+- sha256: 8058248e502d51dd6d53e7a2e111631d5b7842b4e90ded1f10ff8c456f3597b1
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Kanban diagram'
+  cases:
+  - kanban/011_rendering_kanban_spec_kanban_10.mmd
+- sha256: fd001ab28189874747f142133622c57e8ca80aafa6614a1e82bbd53fd1f17f37
+  verdict: rejects
+  reason: 'Error: Items without section detected, found section ("fakeRoot")'
+  cases:
+  - kanban/020_parser_knbn-6_real_root_in_wrong_place_19.mmd
+- sha256: ce4f19e4506a9211e94a7925ad4c90eab9963ccb2634b3f79dd4dc7379e20424
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Mindmap Tidy Tree'
+  cases:
+  - mindmap/001_rendering_mindmap-tidy-tree_spec_mindmap_0.mmd
+- sha256: c33612697164ea1a7feec8a4c9c899a7a3b17cf84528c1d4e36c464528fa1286
+  verdict: rejects
+  reason: 'Error: Parse error on line 3:'
+  cases:
+  - mindmap/018_rendering_mindmap_spec_mindmap_17.mmd
+- sha256: e213a933ace30b1fd9df79dbd265a7936bb40c5c69f95528ef58db10ea7a4bb2
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Mindmaps'
+  cases:
+  - mindmap/020_rendering_mindmap_spec_mindmap_19.mmd
+- sha256: 53c495263506154605cf92494288d2625eda08f53c0ab6dae35a2333210bef3a
+  verdict: rejects
+  reason: 'Error: There can be only one root. No parent could be found for ("fakeRoot")'
+  cases:
+  - mindmap/031_parser_5_multiple_roots_are_illegal_30.mmd
+- sha256: bc95ec978b95d2f711b1d33ae4462da8260145b7d2cd00fdd265e13c54d9e917
+  verdict: rejects
+  reason: 'Error: There can be only one root. No parent could be found for ("fakeRoot")'
+  cases:
+  - mindmap/032_parser_mmp-6_real_root_in_wrong_place_31.mmd
+- sha256: 0e8309dff245264cfe5854f8184c2ed1e98dcb3fa6a4f69b99fd29e0689f62d4
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - mindmap/050_spec_config_spec_49.mmd
+  - mindmap/051_spec_config_spec_50.mmd
+  - mindmap/052_spec_diagram-orchestration_spec_51.mmd
+  - mindmap/053_spec_diagram-orchestration_spec_52.mmd
+  - mindmap/055_spec_diagram-orchestration_spec_54.mmd
+- sha256: 6639db37852c6feff511412f896e26069a3c005aa87df5c40206a21298ca5dee
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Pie Chart'
+  cases:
+  - pie/001_rendering_theme_spec_pie_0.mmd
+- sha256: 4196aa988446d609b9b6e7dd2196408d178659d3c0585de103dd32e1e078b105
+  verdict: rejects
+  reason: 'Error: "ash" has invalid value: -60.67. Negative values are not allowed
+    in pie charts. All slice values must be >= 0.'
+  cases:
+  - pie/021_parser_should_handle_simple_pie_with_negative_decimal_20.mmd
+- sha256: 79b4171873e75c426dc80a2a4d93ce027098351a31ea6971579b875c77fd8790
+  verdict: rejects
+  reason: 'Error: style named fill is not supported.'
+  cases:
+  - quadrant/006_parser_should_be_able_to_handle_constructor_as_a_classname_5.mmd
+- sha256: 0a68e6e001b3575218981b0bc537acd6ab06ad6063b5234bf74c9c786073d20b
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: radar structure'
+  cases:
+  - radar/007_rendering_radar_spec_radar_6.mmd
+- sha256: 932d1d3d5b1485f8c7ffa2a8d5c289d8fd2191f34b0e4876211d0a0f4c8e19d0
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: radarmarginTopaxisLabelFactor'
+  cases:
+  - radar/008_parser_should_handle_radar_diagram_with_config_override_7.mmd
+- sha256: ff2e963ff6d0c33aae94a7f823b6e2bf7358004063f4275ba525539cb6ec6734
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: radar'
+  cases:
+  - radar/042_spec_mermaidapi_spec_41.mmd
+- sha256: c3e1a17ecab5bfa7baf0d4364ab8ba8c61d9c89a34fbe2c3ce79e9ece0459e40
+  verdict: rejects
+  reason: 'Error: circular link'
+  cases:
+  - sankey/001_parser_parses_csv_with_sankey-beta_syntax_0.mmd
+- sha256: 3d61bc954cdbf53ef80b94cc27a65a004853a7f5da70821e7665fa73c6fac838
+  verdict: rejects
+  reason: 'Error: The destroyed participant undefined does not have an associated
+    destroying message after its declaration. Please '
+  cases:
+  - sequence/018_rendering_sequencediagram_spec_sequence_17.mmd
+- sha256: 3ec6b464d16d1b0375fde87fe2e0bffb4043186303b2442518a139e19e3791c2
+  verdict: rejects
+  reason: 'Error: Parse error on line 2:'
+  cases:
+  - sequence/020_rendering_sequencediagram_spec_sequence_19.mmd
+- sha256: 4b754b171f63e66bbe57a262bd999af74fc1bfdc72c46f40add28bae25112e55
+  verdict: rejects
+  reason: 'Error: Parse error on line 1:'
+  cases:
+  - sequence/029_spec_diagram_spec_28.mmd
+- sha256: 7b2a150daf86769f62ba611207dc0ba4047ea395719e23030919d7a1cdf657d0
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Timeline diagram'
+  cases:
+  - timeline/005_rendering_timeline_spec_timeline_4.mmd
+- sha256: ef232588d04b6f5466a6fdc5454283b6249614aefe2c3aef3c1a43c994b1ae6f
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Treemap Diagram'
+  cases:
+  - treemap/007_rendering_treemap_spec_treemap_6.mmd
+- sha256: 83653e933e97291c9489c956a73e2619780160bbe8ee8c454d320b6ad3c6f967
+  verdict: accepts
+  cases:
+  - unknown/080_parser_should_handle_nested_namespaces_and_relationships_79.mmd
+- sha256: 358f9b0eb57ce53d6d5df9d2e651f461e3f34dba2a630f17673fef2a855356c2
+  verdict: accepts
+  cases:
+  - unknown/081_parser_should_parse_diagram_with_direction_80.mmd
+- sha256: a32287c69e5861543651668ca3c5970d278e9b6908ede671221eeb22f1d6616e
+  verdict: rejects
+  reason: 'Error: Trying to inactivate an inactive participant (Server)'
+  cases:
+  - unknown/082_parser_should_handle_a_sequencediagram_definition_with_a_title__81.mmd
+- sha256: 7243d398502846e14a9b8949b4a46c82dcbe1e47a5dd2534c8f3f40ac6e12c26
+  verdict: accepts
+  cases:
+  - unknown/083_parser_should_draw_background_rect_82.mmd
+- sha256: 8abbbf821b384aaa13a1a099fedca2316b3aa3838231e82f87543547c3c30bf2
+  verdict: accepts
+  cases:
+  - unknown/084_parser_super_simple_83.mmd
+- sha256: 466b16847a4d2af096b1bbe65befe792732fbe0dec18f1f1dc244ee38ad369bd
+  verdict: accepts
+  cases:
+  - unknown/085_parser_super_simple_84.mmd
+- sha256: db17015d0b16c93df60bbf43579a47134720d63e4ec68eb1dcf83a526f29fcd9
+  verdict: rejects
+  reason: 'UnknownDiagramError: No diagram type detected matching given configuration
+    for text: Journey to the shops'
+  cases:
+  - user_journey/016_spec_journeydb_spec_15.mmd
+  - user_journey/017_spec_journeydb_spec_16.mmd
+  - user_journey/018_spec_journeydb_spec_17.mmd
+  - user_journey/019_spec_journeydb_spec_18.mmd
+  - user_journey/020_spec_journeydb_spec_19.mmd
+  - user_journey/021_spec_journeydb_spec_20.mmd
+  - user_journey/022_spec_journeydb_spec_21.mmd
+  - user_journey/023_spec_journeydb_spec_22.mmd
+- sha256: d472ad23f33f382d72fffb7df4267122dfcc30540357b790581fb513663643ce
+  verdict: rejects
+  reason: 'TypeError: Cannot read properties of undefined (reading ''data'')'
+  cases:
+  - xychart/002_spec_mermaidapi_spec_1.mmd
