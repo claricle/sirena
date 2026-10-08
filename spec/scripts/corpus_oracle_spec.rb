@@ -38,6 +38,10 @@ module CorpusOracleSpecSupport
     { "mmdc" => CorpusOracle::EXPECTED_CLI }
   end
 
+  def oracle_yaml(provenance, rows)
+    { "provenance" => provenance, "cases" => rows }.compact.to_yaml
+  end
+
   def rendered_svg
     '<svg aria-roledescription="flowchart-v2"><style/></svg>'
   end
@@ -171,12 +175,19 @@ module CorpusOracleSpecSupport
   end
 
   def run_oracle(*args, mmdc:, seed: nil)
+    run_script("--oracle", *args, seed: seed) do |dir|
+      { "PATH" => "#{fake_mmdc(dir, mmdc)}:#{ENV.fetch('PATH')}" }
+    end
+  end
+
+  # The block, if given, returns the child's environment.
+  def run_script(*args, seed: nil)
     Dir.mktmpdir do |dir|
       root = File.join(dir, "repo")
       sandbox_tree(root, seed)
-      env = { "PATH" => "#{fake_mmdc(dir, mmdc)}:#{ENV.fetch('PATH')}" }
+      env = block_given? ? yield(dir) : {}
       out, err, status = Open3.capture3(env, RbConfig.ruby, script_in(root),
-                                        "--oracle", *args)
+                                        *args)
       OracleRun.new(out, err, status, read_if_present(oracle_file(root)),
                     read_if_present(verdicts_file(root)))
     end
@@ -554,9 +565,25 @@ RSpec.describe CorpusOracle do
     end
 
     it "keys the committed rows by source hash" do
-      File.write(out, { "cases" => [{ "sha256" => "abc" }] }.to_yaml)
+      File.write(out, oracle_yaml(provenance, [{ "sha256" => "abc" }]))
 
       expect(described_class.load_rows(out).keys).to eq(["abc"])
+    end
+
+    {
+      "another mmdc" => [{ "mmdc" => "99.0.0" }, '"99.0.0"'],
+      "no mmdc recorded" => [{ "mermaid" => "11.4.2" }, "nil"],
+      "no provenance at all" => [nil, "nil"],
+    }.each do |case_name, (recorded, shown)|
+      it "refuses a file with #{case_name}" do
+        File.write(out, oracle_yaml(recorded, [{ "sha256" => "abc" }]))
+
+        expect { described_class.load_rows(out) }.to raise_error(
+          described_class::InfrastructureError,
+          "#{File.basename(out)} was measured with mmdc #{shown}, " \
+          "not 11.12.0; run --oracle again",
+        )
+      end
     end
   end
 
@@ -670,6 +697,27 @@ RSpec.describe CorpusOracle do
       digests = harness.send(:cases, []).map { |entry| entry[:digest] }
 
       expect(described_class.load_rows.keys - digests).to eq([])
+    end
+  end
+
+  describe "the --write command" do
+    let(:digest) { Digest::SHA256.hexdigest("pie\na\n") }
+    let(:row) { { "sha256" => digest, "verdict" => "accepts" } }
+
+    it "refuses an oracle file another mmdc measured" do
+      seed = oracle_yaml({ "mmdc" => "99.0.0" }, [row])
+      run = run_script("--write", seed: seed)
+
+      expect([run.status.exitstatus, run.err, run.verdicts])
+        .to eq([1, "oracle-verdicts.yml was measured with mmdc \"99.0.0\", " \
+                    "not 11.12.0; run --oracle again\n", nil])
+    end
+
+    it "settles a case from an oracle file this mmdc measured" do
+      run = run_script("--write", seed: oracle_yaml(provenance, [row]))
+
+      expect(YAML.safe_load(run.verdicts).map { |entry| entry["verdict"] })
+        .to include("valid")
     end
   end
 

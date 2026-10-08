@@ -36,12 +36,21 @@ module CorpusOracle
 
   module_function
 
-  # digest => row, or {} when no refresh has been committed.
+  # digest => row, or {} when no refresh has been committed. Refuses a file
+  # measured with any other mmdc: row_verdict would name EXPECTED_CLI as the
+  # source of verdicts it never gave.
   def load_rows(path = PATH)
     return {} unless File.exist?(path)
 
-    rows = YAML.load_file(path).fetch("cases")
-    rows.to_h { |row| [row.fetch("sha256"), row] }
+    file = YAML.load_file(path)
+    measured = file.dig("provenance", "mmdc")
+    unless measured == EXPECTED_CLI
+      raise InfrastructureError,
+            "#{File.basename(path)} was measured with mmdc " \
+            "#{measured.inspect}, not #{EXPECTED_CLI}; run --oracle again"
+    end
+
+    file.fetch("cases").to_h { |row| [row.fetch("sha256"), row] }
   end
 
   # Returns [verdict, evidence] with verdict "valid" or "invalid".
