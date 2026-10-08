@@ -230,7 +230,7 @@ rows:
 - file: spec/integration/state_diagram_integration_spec.rb
   count: 5
 - file: spec/scripts/apply_fixes_never_called_spec.rb
-  count: 15
+  count: 14
 - file: spec/scripts/check_changelog_spec.rb
   count: 4
 - file: spec/scripts/corpus_sweep_malformed_xml_spec.rb
@@ -400,7 +400,7 @@ rows:
 - file: spec/sirena/svg/arrowhead_spec.rb
   count: 17
 - file: spec/sirena/svg/escaping_boundary_spec.rb
-  count: 4
+  count: 3
 - file: spec/sirena/svg/group_spec.rb
   count: 1
 - file: spec/sirena/svg/no_runtime_remediation_spec.rb

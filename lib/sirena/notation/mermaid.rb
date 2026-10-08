@@ -98,9 +98,9 @@ module Sirena
       # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
       # directive header — is not universally invalid. Every type was probed
       # with both, and these eight refuse both.
-      REFUSES_BARE_COMMENT = [
-        :flowchart, :er_diagram, :user_journey, :gantt, :timeline, :block,
-        :sankey, :requirement
+      REFUSES_BARE_COMMENT = %i[
+        flowchart er_diagram user_journey gantt timeline block
+        sankey requirement
       ].freeze
       private_constant :REFUSES_BARE_COMMENT
 
@@ -115,10 +115,10 @@ module Sirena
       # to mermaid. It stays in the text, and the diagram's own parser meets
       # it: these seventeen stop on it, and pie, gitGraph, radar,
       # architecture, packet and info skip the lines and draw the diagram.
-      REFUSES_LATE_FRONTMATTER = [
-        :flowchart, :sequence, :class_diagram, :state_diagram, :er_diagram,
-        :user_journey, :gantt, :timeline, :quadrant, :mindmap, :kanban,
-        :block, :requirement, :xychart, :sankey, :treemap, :c4
+      REFUSES_LATE_FRONTMATTER = %i[
+        flowchart sequence class_diagram state_diagram er_diagram
+        user_journey gantt timeline quadrant mindmap kanban
+        block requirement xychart sankey treemap c4
       ].freeze
       private_constant :REFUSES_LATE_FRONTMATTER
 

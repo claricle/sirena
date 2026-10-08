@@ -63,7 +63,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # question (which class actually defines the method that runs) instead
   # of the proxy question (does this source file contain a matching line).
   it "has no registered transform overriding the guarded entry point" do
-    guard_methods = [:call, :to_graph]
+    guard_methods = %i[call to_graph]
     offenders = described_class.types.filter_map do |type|
       transform_class = described_class.get(type)[:transform]
       owners = guard_methods.filter_map do |method_name|

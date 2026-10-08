@@ -240,5 +240,5 @@ namespace :coverage do
   end
 
   desc "coverage:measure, then the changed-line gate"
-  task guard: [:measure, :changed_lines]
+  task guard: %i[measure changed_lines]
 end

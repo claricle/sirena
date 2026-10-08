@@ -27,12 +27,12 @@ ESCAPED = "&lt;&amp;&gt;&quot;&apos;x"
 ELEMENT_ATTRIBUTES = {
   Sirena::Svg::Circle => [],
   Sirena::Svg::Line => [:stroke_dasharray],
-  Sirena::Svg::Path => [:d, :stroke_dasharray, :stroke_linecap, :stroke_linejoin],
+  Sirena::Svg::Path => %i[d stroke_dasharray stroke_linecap stroke_linejoin],
   Sirena::Svg::Polygon => [:points],
   Sirena::Svg::Polyline => [:points],
   Sirena::Svg::Ellipse => [],
   Sirena::Svg::Rect => [:stroke_dasharray],
-  Sirena::Svg::Text => [:text_anchor, :font_family, :font_size, :font_weight, :font_style],
+  Sirena::Svg::Text => %i[text_anchor font_family font_size font_weight font_style],
 }.freeze
 
 # Four renderers set marker-end, marker-start is set directly (Path.from_xml
@@ -86,8 +86,8 @@ TRANSLATED_AWAY_SETUP = {
 }.freeze
 
 # Inherited from Element, so every subclass carries them.
-COMMON_ATTRIBUTES = [:id, :class_name, :transform, :fill, :fill_opacity,
-                     :stroke, :stroke_width, :stroke_opacity].freeze
+COMMON_ATTRIBUTES = %i[id class_name transform fill fill_opacity
+                       stroke stroke_width stroke_opacity].freeze
 
 RSpec.describe Sirena::Svg::Escaping do
   ELEMENT_ATTRIBUTES.each do |klass, writers|

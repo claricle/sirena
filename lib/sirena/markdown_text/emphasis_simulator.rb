@@ -44,11 +44,11 @@ module Sirena
       # count, :tight is subject to the multiple-of-3 odd-match rule,
       # :none is invisible to the scan.
       def classify_ast(prefix, suffix)
-        ws_or_end = [:space, :boundary].include?(suffix)
-        ps_or_end = [:punct, :space, :boundary].include?(suffix)
+        ws_or_end = %i[space boundary].include?(suffix)
+        ps_or_end = %i[punct space boundary].include?(suffix)
         return :close if prefix == :punct && ws_or_end
         return :close if prefix == :word && ps_or_end
-        return :skip if [:punct, :space].include?(prefix) && suffix == :word
+        return :skip if %i[punct space].include?(prefix) && suffix == :word
         return :skip if prefix == :space && suffix == :punct
         return :tight if prefix == :punct && suffix == :punct
         return :tight if prefix == :word && suffix == :word
@@ -59,11 +59,11 @@ module Sirena
       # Same for `_`, ported from marked's `emStrongRDelimUnd` (7
       # alternatives, broader :skip case, no equivalent of Ast's alt8).
       def classify_und(prefix, suffix)
-        ws_or_end = [:space, :boundary].include?(suffix)
-        ps_or_end = [:punct, :space, :boundary].include?(suffix)
+        ws_or_end = %i[space boundary].include?(suffix)
+        ps_or_end = %i[punct space boundary].include?(suffix)
         return :close if prefix == :punct && ws_or_end
         return :close if prefix == :word && ps_or_end
-        return :skip if [:punct, :space].include?(prefix) && suffix == :word
+        return :skip if %i[punct space].include?(prefix) && suffix == :word
         return :skip if prefix == :space && suffix == :punct
         return :tight if prefix == :punct && suffix == :punct
 
@@ -76,7 +76,7 @@ module Sirena
       def open_gate_ok?(suffix_is_punct, prev_char)
         return true unless suffix_is_punct
         return true if prev_char.nil?
-        return true if prev_char != "*" && prev_char != "_" && [:space, :punct].include?(char_class(prev_char))
+        return true if prev_char != "*" && prev_char != "_" && %i[space punct].include?(char_class(prev_char))
 
         false
       end
@@ -93,7 +93,7 @@ module Sirena
         next_char = run_end < text.length ? text[run_end] : nil
         next_class = char_class(next_char)
 
-        return nil if [:boundary, :space].include?(next_class)
+        return nil if %i[boundary space].include?(next_class)
 
         suffix_is_punct = next_class == :punct
         return nil if !suffix_is_punct && c == "_" && alnum?(prev_char)

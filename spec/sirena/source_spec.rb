@@ -1134,7 +1134,7 @@ RSpec.describe Sirena::Source do
         RUBY
         env = { "RUBY_FIBER_VM_STACK_SIZE" => "32768" }
         output = IO.popen(env, [RbConfig.ruby, "-I", File.expand_path("../../lib", __dir__), "-e", script],
-                          err: [:child, :out], &:read)
+                          err: %i[child out], &:read)
 
         expect(levels).to be < Sirena::Source::Frontmatter::MAX_NESTING
         expect(output.lines.last).to eq("refused")

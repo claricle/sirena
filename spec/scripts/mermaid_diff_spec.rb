@@ -46,12 +46,12 @@ RSpec.describe MermaidDiff do
   describe "classifying a verdict" do
     it "maps every tool-result pair to its kind and agreement" do
       states = [
-        [:accepts, :accepts],
-        [:rejects, :rejects],
-        [:rejects, :accepts],
-        [:accepts, :rejects],
-        [:accepts, :error],
-        [:rejects, :error],
+        %i[accepts accepts],
+        %i[rejects rejects],
+        %i[rejects accepts],
+        %i[accepts rejects],
+        %i[accepts error],
+        %i[rejects error],
       ]
 
       actual = states.map do |sirena, mermaid|

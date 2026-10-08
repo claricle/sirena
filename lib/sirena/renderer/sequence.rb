@@ -350,7 +350,7 @@ module Sirena
       HEAD_ENDS = {
         "target" => [:target].freeze,
         "source" => [:source].freeze,
-        "both" => [:source, :target].freeze,
+        "both" => %i[source target].freeze,
       }.freeze
 
       def head_ends(style)
