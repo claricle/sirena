@@ -81,11 +81,12 @@ RSpec.describe Sirena::Parser::Kanban do
       expect(parse_card("ticket", "''").ticket).to be_nil
     end
 
-    # Passes without the fix; keep it. Mermaid rejects a repeated key, so
-    # this input has no mermaid reading. It goes red if a dropped value is
-    # stored as nil, which overwrites the earlier entry.
-    it "keeps an earlier value when a repeated key resolves to a dropped one" do
-      expect(parse_card("ticket", "A, ticket: 0").ticket).to eq("A")
+    # Mermaid rejects a repeated key, so a later value that resolves to a
+    # dropped one must not make it look like a single entry. It goes red if
+    # that repeat is accepted again.
+    it "refuses a repeated key whose later value resolves to a dropped one" do
+      expect { parse_card("ticket", "A, ticket: 0") }
+        .to raise_error(Sirena::Parser::ParseError, /Duplicate key: ticket/)
     end
 
     # Passes without the fix; keep it. Bracket text is not a metadata scalar
