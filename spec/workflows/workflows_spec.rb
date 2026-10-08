@@ -9,6 +9,9 @@ require_relative "../../scripts/lane_verdict"
 
 # Builders for the workflow-shaped hashes the CI workflow specs feed to scripts/.
 module WorkflowHelpers
+  # `|| true` or `|| :` as a whole shell word, whatever follows it.
+  IGNORED_STATUS = /\|\|\s*(?:true|:)(?=[\s;&|)]|\z)/
+
   def workflow_with(uses)
     { "jobs" => { "j" => { "timeout-minutes" => 1, "steps" => [{ "uses" => uses }] } } }
   end
@@ -23,7 +26,7 @@ module WorkflowHelpers
     steps = job.fetch("steps")
     tolerated = [job, *steps].select { |h| h.key?("continue-on-error") }
     skipped = steps.select { |step| step.key?("if") }
-    ignored = run_commands(job).grep(/\|\|\s*(true|:)\s*$/)
+    ignored = run_commands(job).grep(IGNORED_STATUS)
     [*tolerated, *skipped, *ignored].map { |found| "#{name}: #{found.inspect}" }
   end
 
@@ -90,6 +93,35 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
         _, err, status = Open3.capture3(RbConfig.ruby, File.join(dir, "scripts/check_workflow_pins.rb"))
         expect(status.exitstatus).to eq(1)
         expect(err).to include("unpinned actions/checkout@v4")
+      end
+    end
+  end
+
+  describe "swallowed failures in a run command" do
+    {
+      "check || true" => true,
+      "check ||true" => true,
+      "check || :" => true,
+      "check || true; echo done" => true,
+      "check || true # temporary workaround" => true,
+      "check || true && echo done" => true,
+      "check || true | tee log" => true,
+      "check || true|tee log" => true,
+      "check || true&&echo done" => true,
+      "check || : ; echo done" => true,
+      "(check || true)" => true,
+      "{ check || true; }" => true,
+      "check || true\necho done" => true,
+      "check || truest" => false,
+      "check || true_exit" => false,
+      "check || true#note" => false,
+      "check || :foo" => false,
+      "check && true" => false,
+      "check | grep true" => false,
+    }.each do |command, swallows|
+      it "#{swallows ? 'flags' : 'passes'} #{command.inspect}" do
+        job = { "steps" => [{ "run" => command }] }
+        expect(swallowed_failures("j", job).any?).to eq(swallows)
       end
     end
   end
