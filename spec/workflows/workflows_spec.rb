@@ -10,7 +10,8 @@ require_relative "../../scripts/lane_verdict"
 # Builders for the workflow-shaped hashes the CI workflow specs feed to scripts/.
 module WorkflowHelpers
   # `|| true` or `|| :` as a whole shell word, whatever follows it.
-  IGNORED_STATUS = /\|\|\s*(?:true|:)(?=[\s;&|)]|\z)/
+  # A redirection operator (`>`, `<`) also ends the word.
+  IGNORED_STATUS = /\|\|\s*(?:true|:)(?=[\s;&|)<>]|\z)/
 
   def workflow_with(uses)
     { "jobs" => { "j" => { "timeout-minutes" => 1, "steps" => [{ "uses" => uses }] } } }
@@ -112,10 +113,21 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       "(check || true)" => true,
       "{ check || true; }" => true,
       "check || true\necho done" => true,
+      "check || true>/dev/null" => true,
+      "check || true>>log" => true,
+      "check || true>&2" => true,
+      "check || true 2>/dev/null" => true,
+      "check || :>/dev/null" => true,
+      "check || true</dev/null" => true,
+      "check || true<<<input" => true,
+      "check || true<>log" => true,
       "check || truest" => false,
       "check || true_exit" => false,
       "check || true#note" => false,
       "check || :foo" => false,
+      "check || true2>/dev/null" => false,
+      "check || truex>/dev/null" => false,
+      "check || truex</dev/null" => false,
       "check && true" => false,
       "check | grep true" => false,
     }.each do |command, swallows|
