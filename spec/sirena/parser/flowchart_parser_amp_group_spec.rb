@@ -23,7 +23,7 @@ RSpec.describe Sirena::Parser::Flowchart do
     it "gives each edge of the product the same label" do
       labels = parse_flowchart("A & B -->|t| C").edges.map(&:label)
 
-      expect(labels).to eq(%w[|t| |t|])
+      expect(labels).to eq(%w[t t])
     end
 
     it "keeps each node's own shape data" do

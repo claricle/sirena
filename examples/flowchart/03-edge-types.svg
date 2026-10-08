@@ -22,12 +22,12 @@
 <g id="edge-E_to_F">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 364.2 267.0 L 550.0 267.0"/>
   <polygon fill="#000000" stroke="#000000" points="550.0,267.0 542.0,263.0 542.0,271.0"/>
-  <text fill="#000000" x="457.1" y="262.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|Yes|</text>
+  <text fill="#000000" x="457.1" y="262.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Yes</text>
 </g>
 <g id="edge-F_to_G">
   <path fill="none" stroke="#000000" stroke-width="2.0" d="M 565.9 284.0 L 129.0 451.8"/>
   <polygon fill="#000000" stroke="#000000" points="129.0,451.8 137.9,452.7 135.1,445.2"/>
-  <text fill="#000000" x="347.45" y="362.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">|No|</text>
+  <text fill="#000000" x="347.45" y="362.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">No</text>
 </g>
 <g id="node-A">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2.0" x="50.0" y="50.0" width="59.568" height="34.0"/>

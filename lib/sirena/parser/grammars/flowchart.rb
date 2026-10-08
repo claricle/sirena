@@ -1272,9 +1272,10 @@ module Sirena
           pipe_label
         end
 
-        # Pipe label: |label|
+        # Pipe label: |label|. The pipes are delimiters, not text, so only
+        # the run between them is captured.
         rule(:pipe_label) do
-          pipe >> (pipe.absent? >> any).repeat(1) >> pipe
+          pipe >> (pipe.absent? >> any).repeat(1).as(:pipe_text) >> pipe
         end
 
         # A subgraph is NAMED, not built. It takes a quoted string and the

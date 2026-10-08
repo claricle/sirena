@@ -406,13 +406,10 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "keeps the label itself" do
-      # The pipes are still in the label, here and on main. mmdc's label is
-      # `x:y`; stripping them is an edge-label fix, not a separator one, so
-      # this asserts what we do rather than pretending it is right.
       source = "graph TD;A;style A fill:red;B-->|x:y|C\n"
       diagram = described_class.new.parse(source)
 
-      expect(diagram.edges.map(&:label)).to eq(["|x:y|"])
+      expect(diagram.edges.map(&:label)).to eq(["x:y"])
     end
   end
 
