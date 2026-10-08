@@ -16,6 +16,7 @@ require_relative "../parser"
 require_relative "../diagram"
 require_relative "../layout"
 require_relative "../renderer"
+require_relative "../notation"
 require_relative "../engine"
 
 # Initialize theme registry with built-in themes
@@ -331,3 +332,5 @@ Sirena::Notation::Mermaid.register_type(
   renderer: Sirena::Renderer::Error,
   model: Sirena::Diagram::Error,
 )
+
+Sirena::Notation.register(Sirena::Notation::Mermaid)

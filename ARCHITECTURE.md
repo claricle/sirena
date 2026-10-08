@@ -30,13 +30,18 @@ declared dependency but is not called yet (see the TODO in
 
 ```mermaid
 flowchart TD
-    Src["Mermaid source string"] --> Split["Source.split: frontmatter, directives, body"]
+    Src["Source string"] --> Pick["Notation.resolve: explicit notation, path extension, claims?, then Mermaid"]
+    Pick --> Split["Notation::Mermaid: Source.split, frontmatter, directives, body"]
+    Pick --> Other["Any other registered notation: its own parse"]
     Split --> Detect["Notation::Mermaid.detect_type: DIAGRAM_TYPE_PATTERNS"]
     Detect --> Reg["Notation::Mermaid.type_handlers(type)"]
     Reg --> Parse["Parser: Grammar, Builder, Parser"]
     Parse --> Model["Diagram model"]
-    Model --> Trans["Layout::Base#to_graph: graph Hash"]
-    Trans --> Grid["Layout::Grid.apply: grid positions"]
+    Other --> Trans
+    Model --> Trans["parsed.transform.new.call(diagram, theme:, today:)"]
+    Trans --> Layout["Engine.layout_graph"]
+    Layout -->|"Layout::Legacy"| Grid["Layout::Grid.apply: grid positions"]
+    Layout -->|"any other result"| Rend
     Grid --> Rend["Renderer#render"]
     Rend --> Svg["Svg::Document model"]
     Svg --> Xml["to_xml: SVG string"]
@@ -44,7 +49,9 @@ flowchart TD
 
 Each stage raises its own `Sirena::Error` subclass (`Engine::DiagramTypeError`,
 `Parser::ParseError`, `Layout::LayoutError`, `Renderer::RenderError`);
-`Engine#render` wraps anything else in `Engine::PipelineError`.
+`Engine#render` wraps anything else in `Engine::PipelineError`. An unknown or
+invalid notation raises `Engine::PipelineError` unwrapped, and a malformed
+plugin raises `NotationRegistrationError` at registration.
 
 ## Component Architecture
 
@@ -92,6 +99,8 @@ Sirena (Root Module)
     │     ├── Line / Polyline
     │     ├── Polygon
     │     └── Style
+    │
+    ├── Notation (Registry: register, fetch, resolve)
     │
     ├── Notation::Mermaid (Detection, Parsing, Type Registration)
     │     │
@@ -295,7 +304,7 @@ the XML string comes from their hand-written `to_xml` methods.
 
 | Component | Responsibility | Dependencies |
 |-----------|---------------|--------------|
-| `Engine` | Orchestrate entire pipeline | Parser, Layout, Renderer |
+| `Engine` | Orchestrate entire pipeline | Notation, Layout, Renderer |
 | `Parser::Grammars::*` | Define Parslet syntax rules | Parslet, Common |
 | `Parser::Builders::*` | Transform parse trees | Parslet::Transform, Diagram models |
 | `Parser::*` | Orchestrate Grammar+Builder | Grammars, Builders |
@@ -306,6 +315,7 @@ the XML string comes from their hand-written `to_xml` methods.
 | `Renderer::Base` | Abstract SVG renderer | Svg |
 | `Renderer::*` | Diagram-specific rendering | Renderer::Base, Svg |
 | `Svg::*` | SVG graphic primitives | Lutaml::Model |
+| `Notation` | Registry of notations; picks one per render | Notation::Parsed, registration and pipeline errors |
 | `Notation::Mermaid` | Mermaid detection, parsing, and type handlers | Source, Notation::Parsed |
 | `DiagramRegistry` | Deprecated Mermaid type-handler facade | Notation::Mermaid |
 | `TextMeasurement` | Text dimension calculation | None |
@@ -433,6 +443,7 @@ Sirena::Error (StandardError)
    │
    ├── Engine::DiagramTypeError
    ├── Engine::PipelineError
+   ├── NotationRegistrationError
    ├── Parser::ParseError
    ├── Layout::LayoutError
    └── Renderer::RenderError
@@ -530,12 +541,15 @@ sirena/
 sequenceDiagram
     participant U as Caller
     participant E as Engine
+    participant R as Notation
     participant N as Notation::Mermaid
     participant P as Parser
     participant T as Layout
     participant L as Layout::Grid
     participant D as Renderer
     U->>E: Sirena.render(source)
+    E->>R: resolve(explicit:, path:, source:)
+    R-->>E: Notation::Mermaid
     E->>N: parse(source)
     N->>N: Source.split, detect_type, type_handlers(:flowchart)
     N->>P: parse(body)
@@ -552,7 +566,10 @@ sequenceDiagram
 
 ### Detailed Flow
 
-1. **Engine receives mermaid source** and hands it to `Notation::Mermaid.parse`
+1. **Engine receives source** and asks `Notation.resolve` for a notation:
+   the `notation:` option, else the `path:` extension, else the first
+   registered notation whose `claims?` accepts the source, else Mermaid.
+   It hands the source to that notation's `parse`; for Mermaid:
    - Splits frontmatter, directives and body (`Source.split`)
    - Detects diagram type from syntax prefix
    - Looks up the type's handlers in `Notation::Mermaid`
@@ -616,6 +633,19 @@ Notation::Mermaid.register_type(
 handlers = Notation::Mermaid.type_handlers(:flowchart)
 diagram = handlers[:parser].new.parse(source)
 ```
+
+### Registry Pattern (Notation)
+
+`Sirena::Notation` holds one entry per notation, in registration order, and
+Mermaid registers first from `lib/sirena/notation/builtin.rb`. A notation is
+any object answering `id`, `extensions`, `claims?(source)`, `parse(source)`
+(returning a `Notation::Parsed`) and `types`. A `parse` that also declares a
+`logger:` keyword receives the engine's logger (nil unless `verbose`). A file that calls
+`Sirena::Notation.register(plugin)` when loaded adds one, with no edit to
+Sirena itself: `require "sirena"; require "my_notation"`. `register` raises
+`NotationRegistrationError` for a malformed member, a duplicate id or a
+duplicate extension. The contract is
+`TODO.foundation/10a-notation-contract.md`.
 
 ### Strategy Pattern (Layout/Renderer)
 

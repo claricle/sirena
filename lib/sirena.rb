@@ -28,13 +28,13 @@ module Sirena
   # adding one to this list is a human decision, taken here.
   EXHAUSTION_ERRORS = [SystemStackError, NoMemoryError].freeze
 
-  # Convenience method for rendering mermaid diagrams to SVG
+  # Convenience method for rendering diagrams to SVG
   #
-  # @param mermaid_source [String] Mermaid diagram source code
-  # @param options [Hash] Rendering options
+  # @param source [String] diagram source code
+  # @param options [Hash] Rendering options, see {Engine#render}
   # @return [String] SVG output
-  def self.render(mermaid_source, options = {})
-    Engine.new.render(mermaid_source, options)
+  def self.render(source, options = {})
+    Engine.new.render(source, options)
   end
 end
 require_relative "sirena/notation/builtin"

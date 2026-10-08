@@ -4,15 +4,17 @@ require "logger"
 
 require_relative "error/diagram_type_error"
 require_relative "error/pipeline_error"
+require_relative "notation"
 require_relative "notation/mermaid"
 
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
   #
   # The Engine class coordinates the parse → transform → layout → render
-  # pipeline for converting Mermaid source code into SVG output. Detection
-  # and parsing belong to {Notation::Mermaid}; the engine runs what it returns
-  # and manages error handling throughout the process.
+  # pipeline for converting diagram source code into SVG output. Choosing the
+  # notation belongs to {Notation.resolve}, and detection and parsing to the
+  # notation itself (see {Notation::Mermaid}); the engine runs what the
+  # notation returns and manages error handling throughout the process.
   #
   # @example Render a flowchart
   #   engine = Sirena::Engine.new
@@ -38,12 +40,17 @@ module Sirena
     # @param today [Date, nil] reference date for diagrams that need one
     #   (gantt). Pin it to make rendering reproducible; nil uses the real
     #   date.
+    # @param notation [Symbol, String, nil] the notation to read sources
+    #   with; nil lets each render pick one from its path and source
     # @param logger [Logger, nil] destination for diagnostics. A host
     #   embedding Sirena and reading stdout as pure SVG cannot tolerate log
     #   lines landing on the same stream, so the default logs to $stderr
     #   instead; pass one in to redirect or format diagnostics your own way.
-    def initialize(verbose: false, theme: nil, today: nil, logger: nil)
+    # @raise [PipelineError] if `notation` is invalid or not registered
+    def initialize(verbose: false, theme: nil, today: nil, logger: nil,
+                   notation: nil)
       @verbose = verbose
+      @notation_id = registered_id(notation)
       @theme = load_theme(theme)
       @today = today
       @logger = logger || Logger.new($stderr).tap do |default_logger|
@@ -62,21 +69,25 @@ module Sirena
       raise PipelineError, "Theme loading failed: #{e.message}"
     end
 
-    # Renders Mermaid source code to SVG.
+    # Renders diagram source code to SVG.
     #
-    # @param mermaid_source [String] Mermaid diagram source code
+    # @param source [String] diagram source code
     # @param options [Hash] rendering options
     # @option options [Boolean] :verbose enable verbose output
     # @option options [String, Symbol, Theme, Hash, nil] :theme theme override
     # @option options [Date, nil] :today reference date override
+    # @option options [Symbol, String, nil] :notation notation override
+    # @option options [String, nil] :path where the source came from; its
+    #   extension picks the notation when none is given
     # @return [String] SVG XML string
+    # @raise [PipelineError] if `notation` is invalid or not registered
     # @raise [DiagramTypeError] if diagram type cannot be detected
     # @raise [Parser::ParseError] if the source fails to parse
     # @raise [Layout::LayoutError] if the diagram fails its own
     #   validity check
     # @raise [Renderer::RenderError] if rendering itself fails
     # @raise [PipelineError] if a stage fails with no error class of its own
-    def render(mermaid_source, options = {})
+    def render(source, options = {})
       @verbose = options[:verbose] if options.key?(:verbose)
 
       # Override theme if specified in options
@@ -89,10 +100,16 @@ module Sirena
 
       log "Starting render pipeline..."
 
-      # Notation::Mermaid strips the frontmatter, %%{init}%% directives and
-      # %% comments before the diagram keyword, detects the type and parses.
-      parsed = Notation::Mermaid.parse(mermaid_source,
-                                       logger: verbose ? logger : nil)
+      explicit_notation = case options[:notation]
+                          when nil then @notation_id
+                          else options[:notation]
+                          end
+      notation = Notation.resolve(
+        explicit: explicit_notation,
+        path: options[:path],
+        source: source,
+      )
+      parsed = parse_source(notation, source)
 
       graph = transform_diagram(parsed.diagram, parsed.transform, today, theme)
       laid_out_graph = layout_graph(graph)
@@ -126,14 +143,47 @@ module Sirena
       # are still one `.cause` away for anyone debugging; they are just
       # not baked into the string every caller of `#message` receives.
       raise PipelineError, "Rendering failed: #{e.message}"
-    rescue StandardError => e
-      # A failure with no layer error of its own. `e` becomes `cause`
+    rescue Notation::PluginFailure => e
+      # A failure with no layer error of its own, from a notation or the
+      # layers it returned: any Exception, not only a StandardError, but
+      # never exit, a signal or a host's timeout. `e` becomes `cause`
       # automatically because we are still inside the rescue; never
       # stringify a backtrace into the message.
       raise PipelineError, "Rendering failed: #{e.class}: #{e.message}"
     end
 
     private
+
+    # A notation that wants the engine's progress lines declares a `logger:`
+    # keyword; one that does not is called with the source alone.
+    def parse_source(notation, source)
+      if accepts_logger?(notation)
+        notation.parse(source, logger: verbose ? logger : nil)
+      else
+        notation.parse(source)
+      end
+    end
+
+    # The registry's key for a validated notation, not the id the plugin
+    # answers later.
+    def registered_id(notation)
+      case notation
+      when nil
+        nil
+      else
+        Notation.fetch(notation)
+        case notation
+        when Symbol then notation
+        when String then String.instance_method(:to_sym).bind_call(notation)
+        end
+      end
+    end
+
+    def accepts_logger?(notation)
+      notation.method(:parse).parameters.any? do |kind, name|
+        kind == :key && name == :logger
+      end
+    end
 
     # Lays out the diagram model.
     #
