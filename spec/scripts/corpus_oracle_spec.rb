@@ -42,6 +42,11 @@ module CorpusOracleSpecSupport
     { "provenance" => provenance, "cases" => rows }.compact.to_yaml
   end
 
+  def stale_oracle_message(file, shown_mmdc)
+    "#{file} was measured with mmdc #{shown_mmdc}, " \
+      "not 11.12.0; run --oracle again"
+  end
+
   def rendered_svg
     '<svg aria-roledescription="flowchart-v2"><style/></svg>'
   end
@@ -590,8 +595,7 @@ RSpec.describe CorpusOracle do
 
         expect { described_class.load_rows(out) }.to raise_error(
           described_class::InfrastructureError,
-          "#{File.basename(out)} was measured with mmdc #{shown}, " \
-          "not 11.12.0; run --oracle again",
+          stale_oracle_message(File.basename(out), shown),
         )
       end
     end
@@ -718,9 +722,10 @@ RSpec.describe CorpusOracle do
       seed = oracle_yaml({ "mmdc" => "99.0.0" }, [row])
       run = run_script("--write", seed: seed)
 
+      message = stale_oracle_message("oracle-verdicts.yml", '"99.0.0"')
+
       expect([run.status.exitstatus, run.err, run.verdicts])
-        .to eq([1, "oracle-verdicts.yml was measured with mmdc \"99.0.0\", " \
-                    "not 11.12.0; run --oracle again\n", nil])
+        .to eq([1, "#{message}\n", nil])
     end
 
     it "settles a case from an oracle file this mmdc measured" do
