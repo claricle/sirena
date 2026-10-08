@@ -59,13 +59,13 @@ RSpec.describe Sirena::Engine do
           let(:short) { place.call(source, "%% x") }
           let(:long) { place.call(source, "%% #{'x' * 100_000}") }
 
-          it "renders as with a short one, in bounded CPU time",
-             :aggregate_failures do
-            expected = engine.render(short)
-            output = nil
-            elapsed = cpu_time { output = engine.render(long) }
-            expect(output).to eq(expected)
-            expect(elapsed).to be < 0.5
+          it "renders as with a short one" do
+            expect(engine.render(long)).to eq(engine.render(short))
+          end
+
+          it "renders in bounded CPU time", :speed do
+            engine.render(short)
+            expect(cpu_time { engine.render(long) }).to be < 0.5
           end
         end
       end

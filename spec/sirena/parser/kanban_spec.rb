@@ -28,11 +28,7 @@ module KanbanSpecHelpers
   end
 
   def fastest_parse(source)
-    Array.new(3) do
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      parser.parse(source)
-      Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
-    end.min
+    Array.new(3) { wall_time { parser.parse(source) } }.min
   end
 
   # One failure per character, named, so a single run lists every one.
@@ -1569,7 +1565,7 @@ RSpec.describe Sirena::Parser::Kanban do
         "a single-quoted metadata value" =>
           [150_000, ->(n) { "kanban\n  r[R]@{ ticket: '#{'x' * n}' }\n" }],
       }.each do |family, (size, build)|
-        it "parses #{family} in time linear in their size" do
+        it "parses #{family} in time linear in their size", :speed do
           expect(growth_ratio(size, build)).to be < 10
         end
       end
