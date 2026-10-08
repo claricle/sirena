@@ -365,9 +365,7 @@ module Sirena
             e.source_id = source_id
             e.target_id = target_data[:node_id]
             e.arrow_type = link_type(link_token)
-            # Convert Parslet::Slice to string before checking empty
-            label_str = label.to_s if label
-            e.label = label_str if label_str && !label_str.empty?
+            e.label = label
           end
         end
         private_class_method :create_edge
@@ -837,8 +835,8 @@ module Sirena
           end
         end
 
-        # The text a link carries: nil when it has no label, an empty string
-        # when the pipes hold only space. Written around the link,
+        # The text a link carries: nil when it has no label, or when the
+        # pipes hold only space. Written around the link,
         # `A -- text --> B`, it arrives as the run itself; written after it,
         # `A -->|text| B`, as the run between the pipes.
         def self.edge_label(edge_data)
@@ -859,10 +857,11 @@ module Sirena
         private_class_method :inline_label
 
         # Mermaid trims the text between pipes, and `|  |` is a label of
-        # nothing rather than an error. The empty string it leaves is
-        # dropped by `create_edge`, so the link has no label.
+        # nothing rather than an error. Nothing left is nil, so the link
+        # has no label.
         def self.piped_label(text)
-          unquoted_label(text).gsub(LABEL_EDGE_SPACE, "")
+          trimmed = unquoted_label(text).gsub(LABEL_EDGE_SPACE, "")
+          trimmed unless trimmed.empty?
         end
         private_class_method :piped_label
 
