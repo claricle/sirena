@@ -193,6 +193,49 @@ reference container bbox (clusters, subgraphs, treemap sections, block groups).
 
 Part of the hard gate, together with all-nodes-present.
 
+- **Presence comes first.** The checks below run only on elements the
+  extractor found, so each is vacuous for an element the render dropped. The
+  gate therefore compares counts in both directions, per case, before any
+  endpoint or ownership check; a mismatch is a failure whose evidence names
+  the rule and the expected and actual counts:
+  - `node-presence`: for each `(kind, parent, key)` group of section 1, the
+    Sirena count equals the reference count. A missing or extra node or
+    container fails.
+  - `edge-presence`: an edge is any connector element of the type: the edges
+    of the node-and-edge types, sequence messages, sankey flows, and any other
+    relationship connector the extractor finds. The per-case total of edges
+    equals the reference total. Where this section or section 6 defines an
+    identity for the connector (the edge identity below, sequence messages,
+    sankey flows), each identity group also has equal counts, so a dropped,
+    extra or merged parallel edge fails even when every node is present.
+    A connector type with no endpoint identity defined here (mindmap) is
+    compared by total only, and the comparator PR defines its endpoint rule;
+    an edge whose end is unresolved or `ambiguous endpoint` counts in the
+    totals and is reported.
+  - `label-presence`: a label is one logical label, the extractor's per-type
+    grouping of text primitives (section 2a), applied identically to both
+    sides, so a renderer that splits one row over several `foreignObject`s
+    still yields one label; text with empty normalized text (a structural
+    empty cell) is not a label. A label belongs to one owner. Ownership is the
+    association this section and sections 2a and 6 define per type (a gantt
+    row text belongs to its bar, a pie legend text to its sector); where none
+    applies, a node or container label belongs to the innermost owner whose
+    bbox contains its anchor, ancestry from the reference (section 4). For
+    each owner the number of its labels equals the reference's, zero
+    included. A node keyed by an id (any type whose section 1 key is an id)
+    therefore still fails when its label is dropped, which the node check
+    cannot see. Text that exists on only one side by construction is not a
+    label: the Sirena state terminal's `[*]` and the id text Sirena draws on a
+    gantt bar (section 1). Every remaining text resolves to an owner by the
+    rules above or is a standalone label, a `(kind text, parent, key)` group
+    whose counts must match like any other node group, with `key` resolved as
+    section 1 resolves any key: the normalized text unless section 2a or 6
+    fixes a key or role (`info-text`, `error-icon`). Gitgraph commit ids and tags, drawn outside their marker's bbox on
+    both sides, are standalone labels. A text the extractor cannot place in
+    either way is a classification failure, reported and never skipped.
+    The rule counts owned labels and does not compare their text: the bar
+    asks for labels attached to owners, so text equality for owned labels is a
+    separate bar that would go to the owner.
 - **Edge identity** is `(source key, target key, ordinal among parallel edges in
   source order)`. Reference endpoints come from the id where it encodes them:
   flowchart `L_<src>_<dst>_<n>`, class `id_<src>_<dst>_<n>` and er `id_entity-<name>-<n>_entity-<name>-<n>_<n>`. Node keys may
