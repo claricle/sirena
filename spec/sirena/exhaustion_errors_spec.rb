@@ -137,8 +137,12 @@ RSpec.describe Sirena::Engine do
         .to raise_error(Timeout::ExitException)
     end
 
-    it "lets a class outside the exhaustion family through untouched" do
-      expect(&rendering(foreign)).to raise_error(foreign)
+    # Only control flow passes; the whole table is in
+    # spec/sirena/notation/plugin_failure_spec.rb.
+    it "wraps a class outside the exhaustion family that is not control flow" do
+      expect(&rendering(foreign))
+        .to raise_error(Sirena::Engine::PipelineError,
+                        /\ARendering failed: NotImplementedError/)
     end
   end
 

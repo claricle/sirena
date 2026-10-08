@@ -1,9 +1,12 @@
 # 10a — Notation contract
 
-Status: approved (Reading A). 10b lands in two PRs. Part 1 moves Mermaid detection,
+Status: approved (Reading A). 10b lands in three PRs. Part 1 moves Mermaid detection,
 parsing and the type table into `Notation::Mermaid`; `Engine` still calls it directly.
-Part 2 adds `Notation.register`/`resolve`, the `notation:` option, the CLI and the
-section 8 gates. A second notation needs part 2. 10b blocks 16, 12, 18.
+Part 2a adds `Notation.register`/`resolve`, the `notation:` and `path:` options and
+the library-side section 8 gates (truth table, conformance, fake notation).
+Part 2b adds the CLI (D10, section 6, section 6.1) and the cold-subprocess gate. A
+second notation needs part 2a to register and part 2b to be reached from the command
+line. 10b blocks 16, 12, 18.
 Measured against `origin/main` at `df0c8c05`, ruby 3.4.8, macOS. Every `file:line` below
 was read off that tree; every probe line is a command that was run.
 
@@ -139,8 +142,8 @@ A module or object. `Notation.register` validates every item and raises
 |---|---|
 | `id` | Symbol per D2. |
 | `extensions` | Frozen Array of lowercase dotted Strings, may be empty (stdin and explicit only). Mermaid is `[".mmd"]` and nothing else; adding `.mermaid` would change batch's output set for no requirement, and is additive later. |
-| `claims?(source)` | Pure. True or false. **Never raises for any String**, including ASCII-8BIT and invalid UTF-8: `commands/render.rb:56-65` reads raw bytes (`File.binread`, `$stdin.binmode.read`). Mermaid returns false on any `Source` refusal, so the default step lets Mermaid raise its own byte-identical error. |
-| `parse(source)` | Returns `Notation::Parsed`, a frozen plain class with keyword-only `type`, `diagram`, `transform`, `renderer`. Raises `DiagramTypeError`, `Parser::ParseError` or `PipelineError` exactly as today. Owns preamble, type detection, the degenerate-preamble rules, and **applies the frontmatter title to the diagram** before returning (`apply_frontmatter_title`, `engine.rb:223`, moves into Mermaid's `parse`; the title is still read before detection so `title: [` is refused as today, `engine.rb:206-209`). |
+| `claims?(source)` | Pure. True or false. **Never raises for any String**, including ASCII-8BIT and invalid UTF-8: `commands/render.rb:56-65` reads raw bytes (`File.binread`, `$stdin.binmode.read`). Mermaid's `claims?` matches the body past `Source.split`, which accepts any String, so it never raises; a source nothing claims reaches the default step, where Mermaid raises its own byte-identical error. |
+| `parse(source)` | Returns `Notation::Parsed`, a frozen plain class with keyword-only `type`, `diagram`, `transform`, `renderer`. Raises `DiagramTypeError`, `Parser::ParseError` or `PipelineError` exactly as today. May declare an optional `logger:` keyword; the engine passes its logger (nil unless `verbose`) only to a `parse` that declares it, so `parse(source)` alone is valid. Owns preamble, type detection, the degenerate-preamble rules, and **applies the frontmatter title to the diagram** before returning (`apply_frontmatter_title`, `engine.rb:223`, moves into Mermaid's `parse`; the title is still read before detection so `title: [` is refused as today, `engine.rb:206-209`). |
 | `types` | Array of Symbols, in display order, for the `types` command. |
 
 Errors a notation raises must be `Sirena::Error` subclasses or the engine wraps them as
@@ -181,7 +184,7 @@ Sirena::Notation.register(Fake)
 ```
 render(source, options):
   theme/today/verbose resolved as today                (engine.rb:190-198)
-  notation = Notation.resolve(explicit: options[:notation] || @notation,   # D5 raises on unknown
+  notation = Notation.resolve(explicit: options[:notation].nil? ? @notation : options[:notation],   # D5 raises on unknown; false is invalid, not absent
                               path:     options[:path],                    # D3 hint
                               source:   source)                            # D3 sniff, then DEFAULT
   parsed   = notation.parse(source)                    # D4: mismatch raises here

@@ -134,9 +134,27 @@ module Sirena
       }.freeze
       private_constant :REFUSED_PREAMBLE
 
+      EXTENSIONS = [".mmd"].freeze
+      private_constant :EXTENSIONS
+
       # @return [Symbol]
       def id
         :mermaid
+      end
+
+      # @return [Array<String>] file extensions this notation reads
+      def extensions
+        EXTENSIONS
+      end
+
+      # Whether the source, past its preamble, opens with a Mermaid type
+      # keyword. `Source.split` accepts any String, binary and invalid UTF-8
+      # included.
+      #
+      # @param source [String]
+      # @return [Boolean]
+      def claims?(source)
+        !matching_type(Source.split(source)[:body]).nil?
       end
 
       # Registers the handlers of one diagram type.
@@ -190,9 +208,8 @@ module Sirena
 
       # @return [Symbol] the first type whose pattern matches the body
       def detect_type(source)
-        DIAGRAM_TYPE_PATTERNS.each do |type, pattern|
-          return type if source.match?(pattern)
-        end
+        type = matching_type(source)
+        return type if type
 
         raise Engine::DiagramTypeError,
               "Unable to detect diagram type from source. " \
@@ -200,6 +217,13 @@ module Sirena
       end
 
       private
+
+      def matching_type(body)
+        DIAGRAM_TYPE_PATTERNS.each do |type, pattern|
+          return type if body.match?(pattern)
+        end
+        nil
+      end
 
       def handlers_for(type, logger)
         handlers = type_handlers(type)
