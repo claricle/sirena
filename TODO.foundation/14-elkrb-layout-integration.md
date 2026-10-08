@@ -5,7 +5,9 @@ Comparator DESIGN can start after 02b's reference regeneration (step 7)
 references are being rebuilt. INTEGRATION and Done need **both 01 and
 02**: step 1 proves elkrb works functionally under lutaml-model 0.8, and
 that cannot run while the gem still crashes at require. Completion also
-needs 03a, and raises the branch floor 80 → 90 jointly with item 07.
+needs 03a and 21 (the `label-text` rule is part of the hard gate, and 21
+removes the class and ER failures it reports), and raises the branch floor
+80 → 90 jointly with item 07.
 Blocks: 12; with item 04, blocks 16's completion; its emit/accept survey
 blocks item 18's start, and its rollout — the per-type migration in step 2,
 once every layout actually goes through elkrb — blocks item 18's
@@ -30,7 +32,8 @@ shapes — flowchart is ELK-ish, block/quadrant are pre-positioned — so
 
 - Structural invariants: **hard gate** — all nodes present, all edges
   connecting the right nodes, no PEER overlaps, labels attached to
-  owners. ("No overlaps" unqualified would reject correct output;
+  owners and carrying the reference's text.
+  ("No overlaps" unqualified would reject correct output;
   ancestor containment is legitimate — see the metric contract below.)
 - Geometry: per-case scoreboard ratchet; **8% node-center / 15%
   dimension-aspect are the targets**. Renegotiation happens **per type
@@ -215,8 +218,8 @@ Part of the hard gate, together with all-nodes-present.
   - `label-presence`: a label is one logical label, the extractor's per-type
     grouping of text primitives (section 2a), applied identically to both
     sides, so a renderer that splits one row over several `foreignObject`s
-    still yields one label; text with empty normalized text (a structural
-    empty cell) is not a label. A label belongs to one owner. Ownership is the
+    still yields one label (ER attribute rows are one, see `label-text`);
+    text with empty normalized text (a structural empty cell) is not a label. A label belongs to one owner. Ownership is the
     association this section and sections 2a and 6 define per type (a gantt
     row text belongs to its bar, a pie legend text to its sector); where none
     applies, a node or container label belongs to the innermost owner whose
@@ -233,9 +236,7 @@ Part of the hard gate, together with all-nodes-present.
     fixes a key or role (`info-text`, `error-icon`). Gitgraph commit ids and tags, drawn outside their marker's bbox on
     both sides, are standalone labels. A text the extractor cannot place in
     either way is a classification failure, reported and never skipped.
-    The rule counts owned labels and does not compare their text: the bar
-    asks for labels attached to owners, so text equality for owned labels is a
-    separate bar that would go to the owner.
+    This rule counts owned labels; their text is the `label-text` rule below.
 - **Edge identity** is `(source key, target key, ordinal among parallel edges in
   source order)`. Reference endpoints come from the id where it encodes them:
   flowchart `L_<src>_<dst>_<n>`, class `id_<src>_<dst>_<n>` and er `id_entity-<name>-<n>_entity-<name>-<n>_<n>`. Node keys may
@@ -249,6 +250,68 @@ Part of the hard gate, together with all-nodes-present.
   and the owner in the Sirena render must be the same edge (by edge identity) as
   in the reference; no distance threshold is needed. The anchor is the text
   anchor point, or the `foreignObject` rect center.
+- **Label text** (`label-text`, its own failure class, separate from
+  `label-presence`): an owned label has the reference's text. Text is
+  normalized as section 1 says for a key (whitespace collapsed, tags stripped,
+  entities decoded) and by nothing else; no new normalization is needed. Four
+  extractor details that sentence leaves open: a block boundary (`br`, `p`,
+  `div`, `li`, `tr`, `ul`, `ol`, `h1` to `h6`) counts as whitespace, because
+  without it `a<br>b` reads `ab` and Sirena's correct text then fails against
+  it (`flowchart/054_parser_multi_line_strings_should_be_supported_49`); any
+  Unicode space collapses, so a decoded `&nbsp;` does; adjacent `tspan`
+  elements are separated by a space; and a reference sequence message drawn as
+  several text lines is one label, the lines joined by one space. Label counts
+  are taken after the ER row merge below. For each owner present on both
+  sides with the same number of labels, the labels pair in reading order, the same on both sides:
+  top to bottom by anchor y (an anchor within 4 user units of the row's
+  first anchor shares its row), then left to right. ER attribute rows are the
+  one place a label is not one cell: the reference draws the type and the name
+  as two labels, Sirena draws the row as one. Before pairing, on both sides, the
+  labels of one entity that share a row merge into one label, their texts
+  joined by one space in reading order, so `string` and `registrationNumber`
+  become `string registrationNumber`. A pair with
+  unequal normalized text is a failure. Reading order rather than "equal texts
+  pair first", because the second passes two labels that carry each other's
+  text; on the corpus the two give the same failing cases for every type (see
+  the baseline). An owner whose label counts differ is a `label-presence`
+  failure and is not text-compared, since pairing labels that do not correspond
+  only reports a shifted list; its text is checked once the counts agree. An
+  owner present on one side only is a `node-presence` or `label-presence`
+  failure. Standalone labels are not compared here: their key is their text, so
+  a different text is a `node-presence` failure (except `info-text`, `error-icon`
+  and the error text lines of section 6, whose keys are fixed or role-based
+  because the two renderers word them differently). The hard gate does not
+  compare the wording of those texts.
+
+**Label-text baseline.** The failures `label-text` should report on `main` at
+`30a74ebe`, cohort cases only (oracle-valid or the `error` type, and the
+reference is not mermaid's own syntax-error diagram), from
+[`docs/label-text-baseline.md`](../docs/label-text-baseline.md). Its Reproduce
+block regenerates this table in under a minute. The comparator's first run
+should match it; a difference means the two extractors disagree and is
+explained, not accepted. `label-text` is part of the hard gate, so the gate
+starts red on these cases.
+
+| Type | Cohort | `label-text` failures | Shapes (cases, one example) |
+|---|---|---|---|
+| flowchart | 218 | 43, of which 21 fail only the pipe bug | edge label drawn as `\|text\|` (30, `flowchart/001_config_0`); markup or entity code kept (7, `flowchart/021_platform_xss22_flowchart_20`); quote marks kept (6, `flowchart/016_platform_subgraph_flowchart_15`); `fa:fa-car` drawn as text (5, `flowchart/001_config_0`) |
+| class | 142 | 73 | member text rewritten: `+ ` prefix, `name: type` order, spacing (`class/033_platform_yari_class_32`: `test` against `+ test`); `«interface»` against `<<interface>>` (13, `class/034_platform_yari_class_33`); class-name generics `Car<T>` against `Car~T~` (7, `class/108_parser_should_handle_generic_class_107`) |
+| sequence | 107 | 6 | markup or entity code kept in a message (4, `sequence/030_parser_should_handle_different_line_breaks_29`); `wrap:` prefix drawn (4, `sequence/019_parser_should_draw_two_actors_notes_to_the_left_with_text_wrapped_inline__18`) |
+| architecture | 19 | 2 | icon placeholder, `?` against `I` (`architecture/004_rendering_architecture_spec_architecture_3`) |
+| requirement | 24 | 1 | `<<satisfies>>` against `satisfies`, `Verification: Test` against `Verify: Test` (`requirement/001_example_requirement_0`) |
+| er | 6 | 3 | attribute rows read type then name in the reference, name then type in Sirena (3, `er/002_platform_yari2_er_1`: `string registrationNumber` against `registrationNumber string`) |
+| state | 22 | 0 | 4 cases have a note owner on one side only (presence) and are not text-compared; no compared state label differs |
+| other 16 types | 1 to 45 each | 0 by construction | keyed by label text: a text difference is a `node-presence` failure |
+
+Reading the table. 128 of the 538 cohort cases of the seven owner-aware types
+fail. A flowchart edge-label fix removes the 21 pipe-only cases, which would
+leave 22. Class and ER fail because Sirena draws text that differs from the
+reference's; that counts as a failure, so item 21 fixes it and the gate cannot
+pass before 21 lands. Owners are resolved
+for these seven types only; class cardinality terminals and the
+connector labels of other types need the edge path rule, so they are in no
+count and the numbers are a floor for them. The shapes, the pairing
+sensitivity, the controls and the scripts are in the document.
 
 ### 6. Every type has a metric
 
@@ -298,6 +361,18 @@ A failing case records one JSON object:
   geometry: { worst_e_c, worst_e_w, worst_e_h, worst_e_a, worst_analog, worst_keys,
               matched, ambiguous, top5: [{ key, bbox_sirena, bbox_reference }] },
   reproduce: "<command>" }
+```
+
+A `label-text` record uses the same shape: `rule` is `label-text`, `subject_keys`
+is the owner key and the pair's index in reading order, `expected` and `actual`
+are the reference's and Sirena's normalized texts, and `bbox_sirena` and
+`bbox_reference` are the two label anchors; `normalized` is unused. For the
+flowchart edge `A` to `B` in `flowchart/001_config_0`:
+
+```
+{ rule: "label-text", subject_keys: [["edge", "A", "B", 0], 0],
+  expected: "Get money", actual: "|Get money|", bbox_sirena: <anchor>,
+  bbox_reference: <anchor> }
 ```
 
 A missing reference is a FAIL record, never a skip. A Sirena render that raised
@@ -365,7 +440,8 @@ fail rather than pass silently.
   is left undecided, not that elkrb runs everywhere.
 - **Zero invariant failures across the cohort** (oracle-valid ∩
   has-a-reference ∩ Sirena-pass) — the hard gate, stated as the
-  completion bar, not just a mechanism. Cohort membership is read from
+  completion bar, not just a mechanism. It includes `label-text`, so item
+  21 must have landed. Cohort membership is read from
   the scoreboard, never hardcoded.
 - `docs/emit-accept-survey.md` is committed and covers every layout
   — item 18's start gate.
