@@ -364,17 +364,16 @@ module Sirena
         private_class_method :dropped_by_mermaid?
 
         # Mermaid draws `.toString()` of what js-yaml resolved: numbers and
-        # booleans as JavaScript prints them (`0x10` is "16", `True` is
-        # "true"), a list as its items joined by commas (`[one, two]` is
-        # "one,two"), a map as "[object Object]", a string as it resolved.
-        #
-        # An alias repeats a list by reference, so `JS_LIST_ITEMS` caps the
-        # items joined, as `Source::Frontmatter::MAX_VALUES` does; mmdc
-        # would draw some bodies this refuses.
+        # booleans as JavaScript prints them (`0x10` is "16"), a list as its
+        # items joined by commas (`[one, two]` is "one,two"), a map as
+        # "[object Object]". An alias repeats a list by reference, so
+        # `JS_LIST_ITEMS` caps the items joined, as
+        # `Source::Frontmatter::MAX_VALUES` does; mmdc draws some bodies
+        # this refuses.
         #
         # @param walk [Hash] items still allowed to be joined
-        # @param ancestors [Array<Array>] the lists being joined; one that
-        #   holds itself joins as "" the way JavaScript's `join` does
+        # @param ancestors [Array<Array>] lists being joined; one holding
+        #   itself joins as "" the way JavaScript's `join` does
         def self.js_text(value, walk = { left: JS_LIST_ITEMS }, ancestors = [])
           case value
           when Numeric then Sirena::JsNumber.stringify(value)
