@@ -565,7 +565,7 @@ RSpec.describe "tasks/coverage.rake" do
       Rake::Task.define_task("coverage:changed_lines") { order << :changed_lines }
 
       Rake::Task["coverage:guard"].invoke
-      expect(order).to eq([:measure, :changed_lines])
+      expect(order).to eq(%i[measure changed_lines])
     end
   end
 end

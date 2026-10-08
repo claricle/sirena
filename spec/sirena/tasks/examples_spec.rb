@@ -1321,7 +1321,7 @@ RSpec.describe ExampleTasks do
         end
       RUBY
 
-      output = IO.popen([RbConfig.ruby, "-rtmpdir", "-e", script], err: [:child, :out], &:read)
+      output = IO.popen([RbConfig.ruby, "-rtmpdir", "-e", script], err: %i[child out], &:read)
 
       expect($CHILD_STATUS).to be_success
       expect(output).to eq("dark")
@@ -1527,9 +1527,9 @@ RSpec.describe ExampleTasks do
   # silently pass by mirroring whatever the source currently says.
   describe "internal helper privacy" do
     let(:internal_helpers) do
-      [:directory_identity, :within_pinned_directory, :manageable_relative?,
-       :create_real_directory, :copy_through_rename, :copy_type_into_pinned_docs_root,
-       :atomic_write]
+      %i[directory_identity within_pinned_directory manageable_relative?
+         create_real_directory copy_through_rename copy_type_into_pinned_docs_root
+         atomic_write]
     end
 
     it "keeps every race-sensitive helper off the public API" do
@@ -1539,8 +1539,8 @@ RSpec.describe ExampleTasks do
     end
 
     it "still keeps the task-facing API public" do
-      task_facing = [:copy_to_docs, :generate_examples, :validate_examples, :write_svg,
-                     :prune_orphan_svgs, :prune_known_unrenderable_svgs]
+      task_facing = %i[copy_to_docs generate_examples validate_examples write_svg
+                       prune_orphan_svgs prune_known_unrenderable_svgs]
 
       expect(task_facing.select { |name| described_class.respond_to?(name) }).to eq(task_facing)
     end

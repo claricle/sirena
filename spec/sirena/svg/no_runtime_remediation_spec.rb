@@ -20,7 +20,7 @@ REMEDIATION_LIB_FILES = Dir.glob(File.join(REMEDIATION_LIB_ROOT, "**", "*.{rb,ra
 # does not depend on svg_conform at all — it is the gate's tool, not the
 # renderer's — so naming it anywhere under lib/ is the same finding.
 REMEDIATION = /apply_fixes|SvgConform|svg_conform|RemediationEngine|RemediationRunner/
-REMEDIATION_COMMENT_TOKENS = [:on_comment, :on_embdoc, :on_embdoc_beg, :on_embdoc_end].freeze
+REMEDIATION_COMMENT_TOKENS = %i[on_comment on_embdoc on_embdoc_beg on_embdoc_end].freeze
 
 module SvgNoRuntimeRemediationSpecHelpers
   # Lexed rather than grepped. Half the files under lib/ explain in a comment

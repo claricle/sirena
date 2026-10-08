@@ -894,7 +894,7 @@ module Sirena
       end
 
       def edge_head_ends(type)
-        type.end_with?("_both") ? [:source, :target] : [:target]
+        type.end_with?("_both") ? %i[source target] : [:target]
       end
 
       def node_centre(node)

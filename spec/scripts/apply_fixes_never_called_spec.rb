@@ -77,7 +77,7 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
     before do
       require "svg_conform"
       { SvgConform::ValidationResult => [:apply_fixes],
-        SvgConform::Fixer => [:apply_fix, :apply_fixes, :apply_validation_fixes],
+        SvgConform::Fixer => %i[apply_fix apply_fixes apply_validation_fixes],
         SvgConform::Profile => [:apply_remediations],
         SvgConform::RemediationEngine => [:apply_remediations] }.each do |klass, names|
         names.each { |name| allow_any_instance_of(klass).to receive(name).and_raise(fixes_called) } # rubocop:disable RSpec/AnyInstance

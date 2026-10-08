@@ -50,7 +50,7 @@ module Sirena
     # The only two block types `parse_lines` knows how to walk — anything
     # else in the parsed tree means the whole label falls back to
     # `literal_lines`. See the `root.children.any?` guard in `parse_lines`.
-    PLAIN_BLOCK_TYPES = [:p, :blank].freeze
+    PLAIN_BLOCK_TYPES = %i[p blank].freeze
 
     # The visible-character budget both `Renderer::Kanban#render_card_text`
     # (via `Renderer::MarkdownText`) and `Layout::Kanban#rendered_line_count`
@@ -319,8 +319,8 @@ module Sirena
     class Parser < ::Kramdown::Parser::Kramdown
       def initialize(source, options)
         super
-        @block_parsers = [:blank_line, :paragraph]
-        @span_parsers = [:emphasis, :escaped_chars]
+        @block_parsers = %i[blank_line paragraph]
+        @span_parsers = %i[emphasis escaped_chars]
       end
     end
     private_constant :Parser
