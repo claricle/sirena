@@ -7392,9 +7392,7 @@
   {
     "case": "kanban/038_parser_knbn-34_should_be_possible_to_set_the_metadata_using_multiple_lines_37.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "kanban/039_parser_knbn-35_should_be_possible_to_set_the_metadata_using_one_line_38.mmd",

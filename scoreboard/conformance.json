@@ -3392,6 +3392,10 @@
     "status": "conformant"
   },
   {
+    "case": "kanban/038_parser_knbn-34_should_be_possible_to_set_the_metadata_using_multiple_lines_37.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "kanban/039_parser_knbn-35_should_be_possible_to_set_the_metadata_using_one_line_38.mmd",
     "status": "conformant"
   },

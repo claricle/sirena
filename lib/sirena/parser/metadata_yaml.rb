@@ -6,12 +6,12 @@ require_relative "base"
 
 module Sirena
   module Parser
-    # The value mermaid ends up holding for a node's `@{ }` body.
+    # The value mermaid ends up holding for an `@{ }` metadata body.
     #
-    # Mermaid hands the body to js-yaml under its JSON schema and reads two
-    # keys off the result. js-yaml is not Psych: `no` stays a string there,
-    # a forward alias is an error, and a mapping key is whatever JavaScript
-    # makes of it. So the tree is composed here rather than loaded.
+    # Mermaid hands the body to js-yaml under its JSON schema, then reads
+    # diagram-specific keys from the result. js-yaml is not Psych: `no` stays
+    # a string there, a forward alias is an error, and a mapping key is whatever
+    # JavaScript makes of it. So the tree is composed here rather than loaded.
     #
     # Nothing calls `Psych.load`, `safe_load` or `to_ruby`. A loader applies
     # Ruby's type table instead of mermaid's, and it runs every converter
@@ -124,12 +124,7 @@ module Sirena
         )\z
       /x
 
-      # The part of js-yaml's scalar table that needs no document around
-      # it. Two readers want it: this composer, for a plain scalar in a
-      # flowchart body, and the kanban transform, whose grammar has already
-      # split the `@{ }` body into keys and values and so needs this one
-      # step. Sharing it keeps one js-yaml table in the gem, so the next
-      # change to js-yaml is one edit and not two.
+      # The part of js-yaml's scalar table that resolves plain scalar nodes.
       module PlainScalars
         def plain_scalar(text)
           return JSON_WORDS[text] if JSON_WORDS.key?(text)
@@ -172,7 +167,6 @@ module Sirena
       end
 
       include PlainScalars
-      extend PlainScalars
 
       # @raise [Parser::ParseError] on YAML mermaid would also refuse
       def self.value(document)

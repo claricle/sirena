@@ -165,7 +165,7 @@ module Sirena
           reserved_token.absent? >>
             (labelled_item | shaped_item | unlabelled_shaped_item |
               bare_item) >>
-            metadata.maybe
+            metadata.maybe.as(:metadata)
         end
 
         # `kanban` is the diagram's own header token, and mermaid reserves it
@@ -325,19 +325,61 @@ module Sirena
           Atoms::GreedyRun.new("[#{HSPACE_CHARS}]", min: 0)
         end
 
-        # Metadata: @{ key: 'value', key2: 'value2' }
+        # Metadata: @{ key: 'value', key2: 'value2' } - or newline-separated
+        # with no commas (corpus 038). The body is captured RAW, as
+        # `flowchart.rb`'s `node_metadata` does, and handed to a YAML engine
+        # in the builder (`MetadataYaml`): a grammar rule cannot express
+        # "block vs flow, decided by whether a newline appears ANYWHERE in
+        # the body" without reimplementing a YAML lexer.
+        #
+        # `metadata_entries` is the grammar seam: its default is that raw
+        # capture, and a subclass that overrides it controls the tree
+        # `metadata` holds. The builder reads only `:body` from it, so an
+        # override that drops `:body` gives the item no metadata.
         rule(:metadata) do
-          str("@") >>
-            space_run >>
-            lbrace >>
-            space_run >>
-            metadata_entries.maybe.as(:metadata) >>
-            space_run >>
-            rbrace
+          str("@") >> space_run >> lbrace >> metadata_entries >> rbrace
         end
 
+        # An unmatched `"` is not body text - mermaid's lexer stays in its
+        # string state to the end of the block and refuses the source.
+        # A caret is not body text either: mermaid takes the run between
+        # the braces with `[^}^"]+`, so a `^` outside a quoted value ends
+        # the block early.
+        rule(:metadata_body) do
+          Atoms::Joined.new(
+            (Atoms::GreedyRun.new('[^"}^\n]') | blank_line_run |
+              metadata_comment_line | metadata_quoted | newline).repeat,
+          )
+        end
+
+        # Every line break that another one follows; the last stays for
+        # `metadata_comment_line`, which opens on a line break.
+        rule(:blank_line_run) do
+          Atoms::GreedyRun.new('\r?\n(?=\r?\n)')
+        end
+
+        # Mermaid strips comment lines before the metadata lexer sees them.
+        rule(:metadata_comment_line) do
+          newline >> line_space_run >> str("%%") >> str("{").absent? >>
+            Atoms::GreedyRun.new('[^\r\n]')
+        end
+
+        # A double-quoted run is skipped whole so a brace inside it is text,
+        # mirroring flowchart.rb's `metadata_quoted`. A comment line inside
+        # it is still a comment: mermaid strips those before lexing.
+        rule(:metadata_quoted) do
+          str('"') >>
+            (metadata_comment_line | Atoms::GreedyRun.new('[^"\n]') |
+              newline).repeat >>
+            str('"')
+        end
+
+        # The next 5 rules are public methods released in sirena 0.1.0: do
+        # not delete or rename them outside a major version. Only
+        # `metadata_entries` is on the parse path; the other four are
+        # building blocks a subclass may use inside its own override.
         rule(:metadata_entries) do
-          metadata_entry >> (comma >> space_run >> metadata_entry).repeat
+          metadata_body.as(:body)
         end
 
         rule(:metadata_entry) do
@@ -352,24 +394,12 @@ module Sirena
           match["a-zA-Z_"] >> Atoms::GreedyRun.new("[a-zA-Z0-9_]", min: 0)
         end
 
-        # Common's quoted strings take their body one character at a time,
-        # which is quadratic in a long value; these take it in runs.
-        rule(:quoted_string) { quoted_run('"') }
-        rule(:single_quoted_string) { quoted_run("'") }
-
-        def quoted_run(quote)
-          escape = str("\\") >> any
-          body = escape | Atoms::GreedyRun.new("[^#{quote}\\\\]")
-          str(quote) >> Atoms::Joined.new(body.repeat).as(:string) >> str(quote)
-        end
-
         rule(:metadata_value) do
           quoted_string | single_quoted_string | unquoted_value
         end
 
-        # Captured as :unquoted, not :string, so the transform can tell an
-        # unquoted scalar from a quoted one. What it does with that
-        # distinction is `mermaid_text`'s responsibility, not this rule's.
+        # Captured as :unquoted, not :string, so an override of
+        # `metadata_entries` can tell an unquoted scalar from a quoted one.
         #
         # `.`, `+` and `~` are in the set because js-yaml reads them and
         # mermaid draws them: `0.0`, `+0`, `~` and `.nan` are values it
