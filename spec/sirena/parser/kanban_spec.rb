@@ -2353,5 +2353,35 @@ RSpec.describe Sirena::Parser::Kanban do
         expect(rule.parse("alpha+1.5~")).to eq(unquoted: "alpha+1.5~")
       end
     end
+
+    # The capture shape sirena 0.1.0 released, inherited from
+    # `Grammars::Common`: a quoted run is captured one repeat at a time, so
+    # an empty one is `[]`, not an empty slice. A run-based override of
+    # `quoted_string` here would change that shape for every subclass that
+    # builds on `metadata_value`.
+    context "with the metadata_value grammar rule on a quoted value" do
+      let(:rule) { Sirena::Parser::Grammars::Kanban.new.send(:metadata_value) }
+
+      ['"', "'"].each do |quote|
+        it "captures a #{quote}-quoted value as :string" do
+          expect(rule.parse("#{quote}alpha beta#{quote}"))
+            .to eq(string: "alpha beta")
+        end
+
+        it "captures a #{quote}-quoted value as one slice" do
+          expect(rule.parse("#{quote}alpha beta#{quote}")[:string])
+            .to be_a(Parslet::Slice)
+        end
+
+        it "captures an empty #{quote}-quoted value as an empty repeat" do
+          expect(rule.parse("#{quote}#{quote}")).to eq(string: [])
+        end
+
+        it "keeps an escaped #{quote} inside the :string capture" do
+          expect(rule.parse("#{quote}a\\#{quote}b#{quote}"))
+            .to eq(string: "a\\#{quote}b")
+        end
+      end
+    end
   end
 end
