@@ -21,7 +21,10 @@ module KanbanSpecHelpers
 
   def card_of(key, value)
     body = metadata_body(key, value)
-    source = "kanban\n  col[Todo]\n    task1[Task]@{#{body}}\n"
+    parsed_card("kanban\n  col[Todo]\n    task1[Task]@{#{body}}\n")
+  end
+
+  def parsed_card(source)
     parser.parse(source).columns.first.cards.first
   end
 
@@ -32,14 +35,26 @@ module KanbanSpecHelpers
   end
 
   # `levels` aliased lists of nine, each holding nine of the one before:
-  # 9**levels items from about 70 bytes per level.
-  def alias_expansion_source(levels)
+  # 9**levels items from about 70 bytes per level. The lists sit under
+  # unread keys; only `assigned` joins the last of them.
+  def alias_expansion_source(levels, assigned: true)
     entries = ["l0: &l0 [x, x, x, x, x, x, x, x, x]"]
     (1...levels).each do |level|
       nine = (["*l#{level - 1}"] * 9).join(", ")
       entries << "l#{level}: &l#{level} [#{nine}]"
     end
-    entries << "assigned: *l#{levels - 1}"
+    entries << "assigned: *l#{levels - 1}" if assigned
+    "kanban\n  col[Todo]\n    task1[Task]@{ #{entries.join(', ')} }\n"
+  end
+
+  # `depth` aliased lists, each holding only the one before, so `assigned`
+  # is a list nested `depth` deep from a body that is `depth` entries long.
+  def alias_chain_source(depth)
+    entries = ["l0: &l0 [x]"]
+    (1...depth).each do |level|
+      entries << "l#{level}: &l#{level} [*l#{level - 1}]"
+    end
+    entries << "assigned: *l#{depth - 1}"
     "kanban\n  col[Todo]\n    task1[Task]@{ #{entries.join(', ')} }\n"
   end
 
@@ -2011,25 +2026,59 @@ RSpec.describe Sirena::Parser::Kanban do
     # expansion the same way, and the same bodies are refused here that
     # mmdc would still draw.
     context "with a list that an alias repeats" do
+      let(:most) { (["x"] * 10_000).join(", ") }
+
       it "refuses an expansion of millions of items without building it" do
         expect do
           Timeout.timeout(5) { parser.parse(alias_expansion_source(8)) }
         end.to raise_error(Sirena::Parser::ParseError, /too large/)
       end
 
-      it "joins a list of exactly the permitted size" do
-        expect(card_of("assigned", "[#{(['x'] * 10_000).join(', ')}]").assigned)
-          .to eq((["x"] * 10_000).join(","))
-      end
-
-      it "refuses a list one item over the permitted size" do
-        expect { card_of("assigned", "[#{(['x'] * 10_001).join(', ')}]") }
-          .to raise_error(Sirena::Parser::ParseError, /too large/)
+      it "does not join the lists that only sit under unread keys" do
+        source = alias_expansion_source(8, assigned: false)
+        expect(Timeout.timeout(5) { parsed_card(source).metadata })
+          .to be_empty
       end
 
       it "joins a list that an alias repeats a few times" do
-        expect(parser.parse(alias_expansion_source(3)).columns.first.cards
-          .first.assigned.count(",")).to eq((9**3) - 1)
+        expect(parsed_card(alias_expansion_source(3)).assigned.count(","))
+          .to eq((9**3) - 1)
+      end
+
+      it "joins a list of exactly the permitted size" do
+        expect(card_of("assigned", "[#{most}]").assigned.count(","))
+          .to eq(9_999)
+      end
+
+      it "refuses a list one item over the permitted size" do
+        expect { card_of("assigned", "[#{most}, x]") }
+          .to raise_error(Sirena::Parser::ParseError, /too large/)
+      end
+
+      it "ignores a list over the permitted size under an unread key" do
+        expect(card_of("tags", "[#{most}, x]").metadata).to be_empty
+      end
+
+      it "counts the items of every field in the body together" do
+        half = (["x"] * 6_000).join(", ")
+        body = " assigned: [#{half}], ticket: [#{half}] "
+        source = "kanban\n  col[Todo]\n    task1[Task]@{#{body}}\n"
+        expect { parser.parse(source) }
+          .to raise_error(Sirena::Parser::ParseError, /too large/)
+      end
+
+      it "joins a list nested as deep as permitted" do
+        expect(parsed_card(alias_chain_source(256)).assigned).to eq("x")
+      end
+
+      it "refuses a list nested one level deeper" do
+        expect { parser.parse(alias_chain_source(257)) }
+          .to raise_error(Sirena::Parser::ParseError, /nested too deeply/)
+      end
+
+      it "refuses a list nested thousands deep without exhausting the stack" do
+        expect { parser.parse(alias_chain_source(5_000)) }
+          .to raise_error(Sirena::Parser::ParseError, /nested too deeply/)
       end
     end
 
