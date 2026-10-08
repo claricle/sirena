@@ -52,13 +52,16 @@ yet, and 14's gate needs them at zero as well.
 ## Done when
 
 - Re-running the baseline's Reproduce block reports 0 `label-text` failures
-  for class and er, and no class or er case outside the baseline's `presence`
-  set (class 10 cases, er none). The survey does not text-compare an owner whose
-  label counts differ, so a fix that changes a label count would otherwise move
-  a case from `label-text` to `presence` and report zero without fixing the
-  text. In the `--json` output a presence case has a non-empty `presence_diffs`
-  or an `owner_only_ref` or `owner_only_sirena` above 0. Once item 14's
-  comparator exists, the comparator reports the same.
+  for class and er, and no class or er label-count difference that the same
+  block does not report on `main` at `30a74ebe`. The survey does not
+  text-compare an owner whose label counts differ, so a fix that changes a label
+  count would otherwise move a text failure into `presence` and report zero
+  without fixing the text. In the `--json` output, compare per case the
+  `presence_diffs` entries (owner and both counts) and the `owner_only_ref` and
+  `owner_only_sirena` counts: none may be new or larger, including in a case
+  that is already a `presence` case (`class/153_parser_should_parse_diagram_with_direction_152`
+  has 2 entries and 5 text mismatches). Once item 14's comparator exists, the
+  comparator reports the same.
 - A spec per shape above asserts the drawn text against the reference text,
   and goes red when the fix is reverted.
 
