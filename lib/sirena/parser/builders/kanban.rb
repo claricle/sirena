@@ -288,17 +288,20 @@ module Sirena
         end
         private_class_method :taken_code_points
 
-        # Only `shape` refuses a list or map (`validate_shape`). `priority`
-        # drops one: mermaid compares it by identity, so `[High]` is not the
-        # priority `High`.
+        # A list or map is text only under the keys mermaid draws; `shape`
+        # refuses it (`validate_shape`) and any other key ignores it.
+        # `priority` is one of those: mermaid compares it by identity, so
+        # `[High]` is not the priority `High`. The one `walk` budget covers
+        # the whole body.
         def self.stored_fields(resolved)
+          walk = { left: JS_LIST_ITEMS }
           resolved.filter_map do |key, value|
             next if dropped_by_mermaid?(value)
 
             validate_shape(value) if key == "shape"
-            next if key == "priority" && collection?(value)
+            next if collection?(value) && !TEXT_KEYS.include?(key)
 
-            [key, js_text(value)]
+            [key, js_text(value, walk)]
           end.to_h
         end
         private_class_method :stored_fields
@@ -348,9 +351,12 @@ module Sirena
         FOREIGN_BREAKS = ["\u0085", "\u2028", "\u2029"].freeze
         YAML_CODE_ESCAPE = /\\(?:x(\h{2})|u(\h{4})|U(\h{8}))/
         JS_LIST_ITEMS = 10_000
+        JS_LIST_DEPTH = 256
+        TEXT_KEYS = %w[assigned ticket icon label].freeze
 
         private_constant :JS_SPACE, :QUOTED_BREAK, :FOREIGN_BREAKS,
-                         :YAML_CODE_ESCAPE, :JS_LIST_ITEMS
+                         :YAML_CODE_ESCAPE, :JS_LIST_ITEMS, :JS_LIST_DEPTH,
+                         :TEXT_KEYS
 
         # `null`, `false`, `0` and `""` are all falsy to mermaid, which
         # skips the key rather than failing on it - the same table
@@ -367,14 +373,14 @@ module Sirena
         # booleans as JavaScript prints them (`0x10` is "16"), a list as its
         # items joined by commas (`[one, two]` is "one,two"), a map as
         # "[object Object]". An alias repeats a list by reference, so
-        # `JS_LIST_ITEMS` caps the items joined, as
-        # `Source::Frontmatter::MAX_VALUES` does; mmdc draws some bodies
-        # this refuses.
+        # `JS_LIST_ITEMS` caps the items joined and `JS_LIST_DEPTH` the
+        # nesting, as `Source::Frontmatter` bounds its own walk; mmdc draws
+        # some bodies this refuses.
         #
-        # @param walk [Hash] items still allowed to be joined
+        # @param walk [Hash] items still allowed to be joined, body-wide
         # @param ancestors [Array<Array>] lists being joined; one holding
         #   itself joins as "" the way JavaScript's `join` does
-        def self.js_text(value, walk = { left: JS_LIST_ITEMS }, ancestors = [])
+        def self.js_text(value, walk, ancestors = [])
           case value
           when Numeric then Sirena::JsNumber.stringify(value)
           when Hash then "[object Object]"
@@ -387,19 +393,20 @@ module Sirena
         def self.js_join(list, walk, ancestors)
           return "" if ancestors.any? { |outer| outer.equal?(list) }
 
+          refuse_list("nested too deeply") if ancestors.size >= JS_LIST_DEPTH
           list.map do |item|
             walk[:left] -= 1
-            raise_list_too_large if walk[:left].negative?
+            refuse_list("too large") if walk[:left].negative?
 
             js_text(item, walk, ancestors + [list])
           end.join(",")
         end
         private_class_method :js_join
 
-        def self.raise_list_too_large
-          raise Parser::ParseError, "Metadata list too large."
+        def self.refuse_list(reason)
+          raise Parser::ParseError, "Metadata list #{reason}."
         end
-        private_class_method :raise_list_too_large
+        private_class_method :refuse_list
 
         # Transform the lines array into columns and cards
         rule(lines: subtree(:lines)) do
