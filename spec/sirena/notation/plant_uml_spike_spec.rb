@@ -569,7 +569,9 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "freezes the diagram, its collections and its records" do
       diagram = parse_plantuml(wrap("class A {", "+x", "}", "A --> A"))
 
-      expect([diagram, diagram.classes, diagram.classes.first.body,
+      klass = diagram.classes.first
+
+      expect([diagram, diagram.classes, klass, klass.body, klass.body.first,
               diagram.relations, diagram.relations.first])
         .to all(be_frozen)
     end

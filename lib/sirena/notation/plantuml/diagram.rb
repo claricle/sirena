@@ -12,7 +12,15 @@ module Sirena
       # labels) is the source text as written. PlantUML reads escape sequences
       # such as `\n` and creole or HTML markup inside that text; this stage
       # does not, so whatever draws the text must interpret or refuse them.
-      Diagram = Data.define(:classes, :relations)
+      class Diagram
+        attr_reader :classes, :relations
+
+        def initialize(classes:, relations:)
+          @classes = classes
+          @relations = relations
+          freeze
+        end
+      end
     end
   end
 end

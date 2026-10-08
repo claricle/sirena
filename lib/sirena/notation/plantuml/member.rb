@@ -9,7 +9,18 @@ module Sirena
       # :protected, :package, or nil when the line carries no marker.
       # `parameters` is the text between a method's parentheses and is nil
       # for a field. `type` is the text after `:` or nil.
-      Member = Data.define(:kind, :visibility, :name, :type, :parameters)
+      class Member
+        attr_reader :kind, :visibility, :name, :type, :parameters
+
+        def initialize(kind:, visibility:, name:, type:, parameters:)
+          @kind = kind
+          @visibility = visibility
+          @name = name
+          @type = type
+          @parameters = parameters
+          freeze
+        end
+      end
     end
   end
 end
