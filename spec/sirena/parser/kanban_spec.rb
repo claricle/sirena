@@ -31,6 +31,18 @@ module KanbanSpecHelpers
     parser.parse(source).columns.first
   end
 
+  # `levels` aliased lists of nine, each holding nine of the one before:
+  # 9**levels items from about 70 bytes per level.
+  def alias_expansion_source(levels)
+    entries = ["l0: &l0 [x, x, x, x, x, x, x, x, x]"]
+    (1...levels).each do |level|
+      nine = (["*l#{level - 1}"] * 9).join(", ")
+      entries << "l#{level}: &l#{level} [#{nine}]"
+    end
+    entries << "assigned: *l#{levels - 1}"
+    "kanban\n  col[Todo]\n    task1[Task]@{ #{entries.join(', ')} }\n"
+  end
+
   def boards_of(source)
     parser.parse(source).columns.map do |column|
       [column.id, column.cards.map(&:id)]
@@ -1991,6 +2003,33 @@ RSpec.describe Sirena::Parser::Kanban do
     collection_texts.each do |description, (value, text)|
       it "titles a column from #{description} as #{text.inspect}" do
         expect(column_of("label", value).title).to eq(text)
+      end
+    end
+
+    # An alias repeats a list by reference, so a short body can spell
+    # millions of items to join. `Source::Frontmatter` bounds its own alias
+    # expansion the same way, and the same bodies are refused here that
+    # mmdc would still draw.
+    context "with a list that an alias repeats" do
+      it "refuses an expansion of millions of items without building it" do
+        expect do
+          Timeout.timeout(5) { parser.parse(alias_expansion_source(8)) }
+        end.to raise_error(Sirena::Parser::ParseError, /too large/)
+      end
+
+      it "joins a list of exactly the permitted size" do
+        expect(card_of("assigned", "[#{(['x'] * 10_000).join(', ')}]").assigned)
+          .to eq((["x"] * 10_000).join(","))
+      end
+
+      it "refuses a list one item over the permitted size" do
+        expect { card_of("assigned", "[#{(['x'] * 10_001).join(', ')}]") }
+          .to raise_error(Sirena::Parser::ParseError, /too large/)
+      end
+
+      it "joins a list that an alias repeats a few times" do
+        expect(parser.parse(alias_expansion_source(3)).columns.first.cards
+          .first.assigned.count(",")).to eq((9**3) - 1)
       end
     end
 

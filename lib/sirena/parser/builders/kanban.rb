@@ -344,9 +344,10 @@ module Sirena
         QUOTED_BREAK = /\n#{JS_SPACE}*/
         FOREIGN_BREAKS = ["\u0085", "\u2028", "\u2029"].freeze
         YAML_CODE_ESCAPE = /\\(?:x(\h{2})|u(\h{4})|U(\h{8}))/
+        JS_LIST_ITEMS = 10_000
 
         private_constant :JS_SPACE, :QUOTED_BREAK, :FOREIGN_BREAKS,
-                         :YAML_CODE_ESCAPE
+                         :YAML_CODE_ESCAPE, :JS_LIST_ITEMS
 
         # `null`, `false`, `0` and `""` are all falsy to mermaid, which
         # skips the key rather than failing on it - the same table
@@ -368,25 +369,41 @@ module Sirena
         # out of the card, because mermaid compares that one by identity
         # rather than by text: `[High]` is not the priority `High`.
         #
+        # An alias repeats a list by reference, so a few hundred bytes of
+        # source can spell millions of items; `JS_LIST_ITEMS` caps how many
+        # are joined, the way `Source::Frontmatter::MAX_VALUES` does, and
+        # refuses some bodies mmdc would draw.
+        #
+        # @param walk [Hash] items still allowed to be joined
         # @param ancestors [Array<Array>] the lists being joined, so a list
         #   that contains itself through an alias joins as "" the way
         #   JavaScript's `join` does
-        def self.js_text(value, ancestors = [])
+        def self.js_text(value, walk = { left: JS_LIST_ITEMS }, ancestors = [])
           case value
           when Numeric then Sirena::JsNumber.stringify(value)
           when Hash then "[object Object]"
-          when Array then js_join(value, ancestors)
+          when Array then js_join(value, walk, ancestors)
           else value.to_s
           end
         end
         private_class_method :js_text
 
-        def self.js_join(list, ancestors)
+        def self.js_join(list, walk, ancestors)
           return "" if ancestors.any? { |outer| outer.equal?(list) }
 
-          list.map { |item| js_text(item, ancestors + [list]) }.join(",")
+          list.map do |item|
+            walk[:left] -= 1
+            raise_list_too_large if walk[:left].negative?
+
+            js_text(item, walk, ancestors + [list])
+          end.join(",")
         end
         private_class_method :js_join
+
+        def self.raise_list_too_large
+          raise Parser::ParseError, "Metadata list too large."
+        end
+        private_class_method :raise_list_too_large
 
         # Transform the lines array into columns and cards
         rule(lines: subtree(:lines)) do
