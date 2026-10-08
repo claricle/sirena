@@ -288,6 +288,9 @@ module Sirena
         end
         private_class_method :taken_code_points
 
+        # Only `shape` refuses a list or map (`validate_shape`). `priority`
+        # drops one: mermaid compares it by identity, so `[High]` is not the
+        # priority `High`.
         def self.stored_fields(resolved)
           resolved.filter_map do |key, value|
             next if dropped_by_mermaid?(value)
@@ -360,24 +363,18 @@ module Sirena
         end
         private_class_method :dropped_by_mermaid?
 
-        # Mermaid draws `.toString()` of what js-yaml resolved: a number or
-        # boolean is printed as JavaScript prints it (`1e0` is "1", `0x10`
-        # is "16", `True` is "true"), a string, quoted or not, as it
-        # resolved, a list as its items joined by commas (`[one, two]` is
-        # "one,two"), and a map as "[object Object]". Only `shape` refuses a
-        # list or map (see `validate_shape`) and only `priority` keeps it
-        # out of the card, because mermaid compares that one by identity
-        # rather than by text: `[High]` is not the priority `High`.
+        # Mermaid draws `.toString()` of what js-yaml resolved: numbers and
+        # booleans as JavaScript prints them (`0x10` is "16", `True` is
+        # "true"), a list as its items joined by commas (`[one, two]` is
+        # "one,two"), a map as "[object Object]", a string as it resolved.
         #
-        # An alias repeats a list by reference, so a few hundred bytes of
-        # source can spell millions of items; `JS_LIST_ITEMS` caps how many
-        # are joined, the way `Source::Frontmatter::MAX_VALUES` does, and
-        # refuses some bodies mmdc would draw.
+        # An alias repeats a list by reference, so `JS_LIST_ITEMS` caps the
+        # items joined, as `Source::Frontmatter::MAX_VALUES` does; mmdc
+        # would draw some bodies this refuses.
         #
         # @param walk [Hash] items still allowed to be joined
-        # @param ancestors [Array<Array>] the lists being joined, so a list
-        #   that contains itself through an alias joins as "" the way
-        #   JavaScript's `join` does
+        # @param ancestors [Array<Array>] the lists being joined; one that
+        #   holds itself joins as "" the way JavaScript's `join` does
         def self.js_text(value, walk = { left: JS_LIST_ITEMS }, ancestors = [])
           case value
           when Numeric then Sirena::JsNumber.stringify(value)
