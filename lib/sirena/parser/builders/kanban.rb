@@ -290,28 +290,20 @@ module Sirena
 
         def self.stored_fields(resolved)
           resolved.filter_map do |key, value|
-            reject_collection(key, value)
             next if dropped_by_mermaid?(value)
 
             validate_shape(value) if key == "shape"
+            next if key == "priority" && collection?(value)
 
             [key, js_text(value)]
           end.to_h
         end
         private_class_method :stored_fields
 
-        # Card metadata holds plain scalars only. Mermaid would stringify a
-        # nested list or map into text (`a,b`, `[object Object]`) that no
-        # card field could sensibly display, so it is refused outright,
-        # whatever key carries it.
-        def self.reject_collection(key, value)
-          return unless value.is_a?(Array) || value.is_a?(Hash)
-
-          raise Parser::ParseError,
-                "Metadata value for '#{key}' must be a plain scalar, " \
-                "not a list or map."
+        def self.collection?(value)
+          value.is_a?(Array) || value.is_a?(Hash)
         end
-        private_class_method :reject_collection
+        private_class_method :collection?
 
         def self.validate_shape(value)
           unless value.is_a?(String)
@@ -369,15 +361,32 @@ module Sirena
 
         # Mermaid draws `.toString()` of what js-yaml resolved: a number or
         # boolean is printed as JavaScript prints it (`1e0` is "1", `0x10`
-        # is "16", `True` is "true"), and a string, quoted or not, as it
-        # resolved. Collections never get this far (see `reject_collection`).
-        def self.js_text(value)
+        # is "16", `True` is "true"), a string, quoted or not, as it
+        # resolved, a list as its items joined by commas (`[one, two]` is
+        # "one,two"), and a map as "[object Object]". Only `shape` refuses a
+        # list or map (see `validate_shape`) and only `priority` keeps it
+        # out of the card, because mermaid compares that one by identity
+        # rather than by text: `[High]` is not the priority `High`.
+        #
+        # @param ancestors [Array<Array>] the lists being joined, so a list
+        #   that contains itself through an alias joins as "" the way
+        #   JavaScript's `join` does
+        def self.js_text(value, ancestors = [])
           case value
           when Numeric then Sirena::JsNumber.stringify(value)
+          when Hash then "[object Object]"
+          when Array then js_join(value, ancestors)
           else value.to_s
           end
         end
         private_class_method :js_text
+
+        def self.js_join(list, ancestors)
+          return "" if ancestors.any? { |outer| outer.equal?(list) }
+
+          list.map { |item| js_text(item, ancestors + [list]) }.join(",")
+        end
+        private_class_method :js_join
 
         # Transform the lines array into columns and cards
         rule(lines: subtree(:lines)) do

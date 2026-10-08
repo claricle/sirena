@@ -11,6 +11,26 @@ module KanbanSpecHelpers
     parser.parse("kanban\n  id1[A]@{ label: #{value} }\n").columns.first.title
   end
 
+  # A `@{ }` body that gives `key` the value. A value starting with a
+  # newline is block-style YAML and gets the body on separate lines.
+  def metadata_body(key, value)
+    return " #{key}: #{value} " unless value.start_with?("\n")
+
+    "\n      #{key}:#{value}\n    "
+  end
+
+  def card_of(key, value)
+    body = metadata_body(key, value)
+    source = "kanban\n  col[Todo]\n    task1[Task]@{#{body}}\n"
+    parser.parse(source).columns.first.cards.first
+  end
+
+  def column_of(key, value)
+    body = metadata_body(key, value)
+    source = "kanban\n  col[Todo]@{#{body}}\n    task1[Task]\n"
+    parser.parse(source).columns.first
+  end
+
   def boards_of(source)
     parser.parse(source).columns.map do |column|
       [column.id, column.cards.map(&:id)]
@@ -1936,40 +1956,85 @@ RSpec.describe Sirena::Parser::Kanban do
       end
     end
 
-    # Metadata values are plain scalars only. A list or map
-    # is refused whatever key carries it - a known field, an unknown one, or
-    # `classes`, which is otherwise dropped - and whether it is spelled in
-    # flow or block form, empty or not, or reached through an alias. A flow
+    # Mermaid calls `.toString()` on an assigned, ticket or icon value and
+    # keeps a label as written, so a list or map there is drawn as text, not
+    # refused: `[one, two]` is "one,two" and a map is "[object Object]".
+    # Each text below is what mmdc 11.12.0 drew for the same body. A flow
     # map cannot be spelled at all: the first `}` closes the `@{ }` body,
     # as in mermaid, so the grammar refuses it before this rule is reached.
-    nested_value_shapes = {
-      "a flow list on a known key" => "task1[Task]@{ assigned: [one, two] }",
-      "a block map on a known key" =>
-        "task1[Task]@{\n      assigned:\n        a: b\n    }",
-      "a block list on a known key" =>
-        "task1[Task]@{\n      assigned:\n        - a\n    }",
-      "a list on an unknown key beside a valid scalar" =>
-        "task1[Task]@{ icon: star, tags: [a, b] }",
-      "a block map on an unknown key" =>
-        "task1[Task]@{\n      extra:\n        a: b\n    }",
-      "a list on the dropped classes key" => "task1[Task]@{ classes: [a, b] }",
-      "an empty flow list" => "task1[Task]@{ assigned: [] }",
-      "an alias to an anchored list" =>
-        "task1[Task]@{\n      tags: &a [x]\n      assigned: *a\n    }",
+    collection_texts = {
+      "a flow list" => ["[one, two]", "one,two"],
+      "a flow list of one number" => ["[1]", "1"],
+      "an empty flow list" => ["[]", ""],
+      "a nested list" => ["[[a], b]", "a,b"],
+      "an empty list beside a scalar" => ["[[], a]", ",a"],
+      "a list holding null" => ["[a, null]", "a,"],
+      "a list of booleans" => ["[true, false]", "true,false"],
+      "a list of numbers" => ["[1.5, 0x10, 1e3, .nan]", "1.5,16,1000,NaN"],
+      "a block map" => ["\n        a: b", "[object Object]"],
+      "a block list" => ["\n        - a\n        - b", "a,b"],
+      "a block list of maps" =>
+        ["\n        - a: 1\n        - b: 2",
+         "[object Object],[object Object]"],
+      "a list that holds itself" => ["\n        &a\n        - x\n        - *a",
+                                     "x,"],
     }
 
-    nested_value_shapes.each do |description, item|
-      it "raises ParseError on a card with #{description}" do
-        source = "kanban\n  col[Todo]\n    #{item}\n"
-        expect { parser.parse(source) }
-          .to raise_error(Sirena::Parser::ParseError, /plain scalar/)
+    %w[assigned ticket icon].each do |key|
+      collection_texts.each do |description, (value, text)|
+        it "stores #{description} under #{key} as #{text.inspect}" do
+          expect(card_of(key, value).public_send(key)).to eq(text)
+        end
       end
     end
 
-    it "raises ParseError on a column whose metadata holds a list" do
-      source = "kanban\n  col[Todo]@{ label: [a, b] }\n    task1[Task]\n"
-      expect { parser.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError, /plain scalar/)
+    collection_texts.each do |description, (value, text)|
+      it "titles a column from #{description} as #{text.inspect}" do
+        expect(column_of("label", value).title).to eq(text)
+      end
+    end
+
+    # Mermaid ignores a key it does not read, whatever the value, and
+    # compares `priority` by identity: a list is truthy but never one of the
+    # named priorities, so `[High]` is not `High`.
+    context "with a list or map under a key mermaid does not draw as text" do
+      it "ignores an unknown key" do
+        expect(card_of("tags", "[a, b]").metadata).to be_empty
+      end
+
+      it "ignores a map under an unknown key" do
+        expect(card_of("tags", "\n        a: b").metadata).to be_empty
+      end
+
+      it "ignores a list under classes" do
+        expect(card_of("classes", "[a, b]").classes).to eq([])
+      end
+
+      ["[High]", "[]", "\n        a: b", "\n        - High"].each do |value|
+        it "does not read #{value.inspect} as a priority" do
+          expect(card_of("priority", value).priority).to be_nil
+        end
+      end
+
+      it "still reads a scalar priority" do
+        expect(card_of("priority", "High").priority).to eq("High")
+      end
+    end
+
+    # Mermaid lowercases the shape to compare it, which a list or map cannot
+    # do, so it refuses the source (mmdc 11.12.0, for every value below).
+    context "with a list or map under shape" do
+      ["[rect]", "[]", "\n        a: b", "\n        - rect"].each do |value|
+        it "raises ParseError on a card with #{value.inspect}" do
+          expect { card_of("shape", value) }
+            .to raise_error(Sirena::Parser::ParseError, /shape/i)
+        end
+
+        it "raises ParseError on a column with #{value.inspect}" do
+          expect { column_of("shape", value) }
+            .to raise_error(Sirena::Parser::ParseError, /shape/i)
+        end
+      end
     end
 
     context "with plain scalar metadata values" do
