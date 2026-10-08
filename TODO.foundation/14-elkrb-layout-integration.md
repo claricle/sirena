@@ -284,7 +284,9 @@ Part of the hard gate, together with all-nodes-present.
   compare the wording of those texts.
 
 **Label-text baseline.** The failures `label-text` should report on `main` at
-`30a74ebe`, cohort cases only (oracle-valid or the `error` type, and the
+`30a74ebe`, cohort cases only (oracle-valid, plus the 3 `error`-type cases whose
+verdict is `unknown`: the cohort section below names oracle-valid only, and the
+3 change no count here because `error` has no owner-aware labels; and the
 reference is not mermaid's own syntax-error diagram), from
 [`docs/label-text-baseline.md`](../docs/label-text-baseline.md). Its Reproduce
 block regenerates this table in under a minute. The comparator's first run
