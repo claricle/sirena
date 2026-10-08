@@ -536,6 +536,15 @@ RSpec.describe CorpusOracle do
     end
   end
 
+  describe ".load_rows with a file that is not a mapping" do
+    it "refuses it" do
+      File.write(out, [{ "sha256" => "abc" }].to_yaml)
+
+      expect { described_class.load_rows(out) }
+        .to raise_error(described_class::InfrastructureError, /mmdc nil/)
+    end
+  end
+
   describe ".row_verdict" do
     let(:rejection) { { "verdict" => "rejects", "reason" => "Error: boom" } }
 
@@ -574,6 +583,7 @@ RSpec.describe CorpusOracle do
       "another mmdc" => [{ "mmdc" => "99.0.0" }, '"99.0.0"'],
       "no mmdc recorded" => [{ "mermaid" => "11.4.2" }, "nil"],
       "no provenance at all" => [nil, "nil"],
+      "a provenance that is not a mapping" => [%w[11.12.0], "nil"],
     }.each do |case_name, (recorded, shown)|
       it "refuses a file with #{case_name}" do
         File.write(out, oracle_yaml(recorded, [{ "sha256" => "abc" }]))
@@ -716,8 +726,9 @@ RSpec.describe CorpusOracle do
     it "settles a case from an oracle file this mmdc measured" do
       run = run_script("--write", seed: oracle_yaml(provenance, [row]))
 
-      expect(YAML.safe_load(run.verdicts).map { |entry| entry["verdict"] })
-        .to include("valid")
+      expect(YAML.safe_load(run.verdicts))
+        .to include(a_hash_including("case" => "pie/a.mmd",
+                                     "verdict" => "valid"))
     end
   end
 
