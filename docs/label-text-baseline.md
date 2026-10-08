@@ -244,9 +244,10 @@ puts "cases=#{status.size} rendered=#{status.count { |_, v| v['status'] == 'rend
 # message drawn as several text lines is one label, joined by a space.
 
 # Method.
-#  * Cohort: references whose corpus verdict is valid or unknown (the error type, whose
-#    reference is meant to be mermaid's error diagram) and that are not mermaid's
-#    own syntax-error diagram.  The rest are listed as excluded.
+#  * Cohort: references whose corpus verdict is valid, plus the error type (its
+#    verdict is unknown; its reference is meant to be mermaid's error diagram),
+#    and that are not mermaid's own syntax-error diagram.  The rest are listed as
+#    excluded.
 #  * Label: one foreignObject, or one text element outside a foreignObject, with
 #    non-empty normalised text.  A reference sequence message drawn as several
 #    text lines is merged into one label (lines up to the next message line).
@@ -754,7 +755,7 @@ Dir.glob("spec/fixtures_mermaid/*/*.svg").sort.each do |ref|
   rec = { case: key, type: type, verdict: verdict }
   rsvg = File.read(ref)
   rec[:ref_is_error_svg] = rsvg.include?("Syntax error in text") && type != "error"
-  if rec[:ref_is_error_svg] || !%w[valid unknown].include?(verdict)
+  if rec[:ref_is_error_svg] || !(verdict == "valid" || type == "error")
     rec[:cohort] = false
     results << rec
     next
