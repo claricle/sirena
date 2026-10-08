@@ -219,9 +219,9 @@ module Sirena
 
         def relation_from(match)
           Relation.new(left: match[1], right: match[5],
-                       **ARROWS.fetch(match[3]),
-                       left_multiplicity: match[2],
-                       right_multiplicity: match[4], label: match[6])
+                       arrow: ARROWS.fetch(match[3]),
+                       multiplicities: { left: match[2], right: match[4] },
+                       label: match[6])
         end
 
         # nil for anything the subset does not read. A modifier, separator or
