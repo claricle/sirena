@@ -17,7 +17,11 @@ different count on its first run is a difference to explain, not to accept.
 - **Population.** The 847 unique references (each `correct/` copy is the same
   case and is not counted). 47 are outside the cohort: 30 have an oracle verdict
   of `invalid` and 17 of `artifact`, and the reference of every one is mermaid's
-  own syntax-error diagram. The cohort is the other 800. Sirena renders 810 of
+  own syntax-error diagram. The cohort is the other 800: 797 oracle-valid cases
+  and the 3 `error`-type cases, whose verdict is `unknown` (no evidence) and whose
+  reference is meant to be mermaid's error diagram. Card 14's cohort section
+  names oracle-valid only; the 3 are included here and change no count, because
+  `error` has no owner-aware labels. Sirena renders 810 of
   the 847 and all but one of the cohort (`kanban`, 1 case, which does not render,
   so it has no label text to compare).
 - **Label and owner.** One label per `foreignObject`, or per `text` outside one,
