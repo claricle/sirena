@@ -810,10 +810,12 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # so it could never catch that average being too small. This one
     # pins a real number instead: Chrome's `getBBox()` on Sirena's own
     # rendered `<text fill="#000000" ... font-size="12.0">WWWWWWWW`
-    # (eight characters) reads 90.609375 wide, not the 48 a 0.5-per-character
+    # (eight characters) reads about 90.55 wide, not the 48 a 0.5-per-character
     # average predicts. A shift sized off that average left the label's real
     # left edge short of the page while its anchor sat safely inside — this
-    # asserts against the pinned real half-width instead.
+    # asserts against the pinned real half-width instead. The figure is
+    # font-dependent (an HTML span of the same text reads 90.61), and the
+    # anchor clears it by about 9, so a different Arial still passes.
     it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
@@ -821,7 +823,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
         .find { |t| t.include?(">WWWWWWWW<") }
       anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
-      real_half_width = 90.609375 / 2.0
+      real_half_width = 90.55 / 2.0
 
       expect(anchor_x - real_half_width).to be >= 0
     end
