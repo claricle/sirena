@@ -809,20 +809,19 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # `TextMeasurement`, the same average the shift itself used to use —
     # so it could never catch that average being too small. This one
     # pins a real number instead: Chrome's `getBBox()` on Sirena's own
-    # rendered `<text fill="#000000" ... font-size="12.0">|WWWWWWWW|`
-    # (ten characters, the label's own pipe delimiters included) reads
-    # 96.84375 wide, not the 60 a 0.5-per-character average predicts. A
-    # shift sized off that average left the label's real left edge at
-    # x=-18.421875 while its anchor sat safely at x=30 — this asserts
-    # against the pinned real half-width instead.
+    # rendered `<text fill="#000000" ... font-size="12.0">WWWWWWWW`
+    # (eight characters) reads 90.609375 wide, not the 48 a 0.5-per-character
+    # average predicts. A shift sized off that average left the label's real
+    # left edge short of the page while its anchor sat safely inside — this
+    # asserts against the pinned real half-width instead.
     it "shifts a self loop far enough to clear a wide-glyph label's REAL width" do
       xml = Sirena.render(
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|WWWWWWWW| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| t.include?(">|WWWWWWWW|<") }
+        .find { |t| t.include?(">WWWWWWWW<") }
       anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
-      real_half_width = 96.84375 / 2.0
+      real_half_width = 90.609375 / 2.0
 
       expect(anchor_x - real_half_width).to be >= 0
     end

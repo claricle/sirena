@@ -264,6 +264,9 @@ module Sirena
         )
         private_constant :COMMENT_LINE
 
+        LABEL_EDGE_SPACE = /\A#{JS_SPACE}+|#{JS_SPACE}+\z/
+        private_constant :LABEL_EDGE_SPACE
+
         # mermaid resolves the alias lexemes to a direction word before
         # anything reads one, so `graph <` lays out exactly like `graph RL`.
         # Measured against mmdc 11.12.0: `<` RL, `>` LR, `^` BT, `v` and
@@ -808,8 +811,7 @@ module Sirena
             # holding `arrow` carries `label` and `target` too. So the
             # slice is read here, where the link is the only thing meant.
             link_token = link_token(edge_data)
-            label = edge_data[:label]
-            label = inline_label(label) if edge_data[:open]
+            label = edge_label(edge_data)
 
             # A diagnostic, not coverage: `rule(:edge)` makes the target
             # mandatory, so no source reaches this (0 fires across 4,529
@@ -835,16 +837,42 @@ module Sirena
           end
         end
 
-        # Mermaid deletes a whole comment line before it lexes, and the
-        # quotes of a quoted run are delimiters, not text.
+        # The text a link carries: nil when it has no label, an empty string
+        # when the pipes hold only space. Written around the link,
+        # `A -- text --> B`, it arrives as the run itself; written after it,
+        # `A -->|text| B`, as the run between the pipes.
+        def self.edge_label(edge_data)
+          label = edge_data[:label]
+          return inline_label(label) if edge_data[:open]
+
+          piped_label(label[:pipe_text]) if label.is_a?(Hash)
+        end
+        private_class_method :edge_label
+
         # @raise [Parser::ParseError] on a label that nothing is left of
         def self.inline_label(label)
-          text = label.to_s.gsub(COMMENT_LINE, "").delete('"')
+          text = unquoted_label(label)
           return text unless text.empty?
 
           raise Parser::ParseError, "An inline link label cannot be empty."
         end
         private_class_method :inline_label
+
+        # Mermaid trims the text between pipes, and `|  |` is a label of
+        # nothing rather than an error. The empty string it leaves is
+        # dropped by `create_edge`, so the link has no label.
+        def self.piped_label(text)
+          unquoted_label(text).gsub(LABEL_EDGE_SPACE, "")
+        end
+        private_class_method :piped_label
+
+        # Mermaid deletes a whole comment line before it lexes, and the
+        # quotes of a quoted run are delimiters, not text.
+        def self.unquoted_label(label)
+          label.to_s.gsub(COMMENT_LINE, "").delete('"')
+        end
+        private_class_method :unquoted_label
+
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
         #
