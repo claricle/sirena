@@ -117,6 +117,7 @@ flowchart TD
     S16 --> G12
     B04 --> G12
     I14 --> G12
+    K21[21 class + ER label text] -.completion.-> I14
     R17 --> G12
     D08[08 lint: live] --> D09
     H13[13 skills + agents] -.gates all dispatch.-> C06
@@ -224,3 +225,4 @@ Two rules that make it real:
 | 18 | Typed IR boundary | after 10, 14's survey and 16's spike; completes after 14's rollout; gates 12's Done |
 | 19a | CI lane skeleton + external pins | after 01's migration and 03a — the suite must be green before lanes can be |
 | 19b | CI consolidation + measured budgets | after the owned gates exist |
+| 21 | Class and ER label text | now; blocks 14's Done (the `label-text` hard gate) |
