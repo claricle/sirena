@@ -201,49 +201,49 @@
   },
   {
     "case": "block/005_parser_a_diagram_with_column_statements_4.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/006_parser_a_diagram_without_column_statements_5.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/007_parser_a_diagram_with_auto_column_statements_6.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/008_parser_blocks_next_to_each_other_7.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/009_parser_blocks_on_top_of_each_other_8.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/010_parser_blocks_mixed_with_compound_blocks_9.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "block/011_parser_arrow_blocks_10.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
@@ -260,40 +260,40 @@
   },
   {
     "case": "c4/001_rendering_c4_spec_c4_0.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "c4/002_rendering_c4_spec_c4_1.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "c4/003_rendering_c4_spec_c4_2.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "c4/004_rendering_c4_spec_c4_3.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "c4/005_rendering_c4_spec_c4_4.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "c4/006_rendering_c4_spec_c4_5.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
@@ -420,21 +420,21 @@
   },
   {
     "case": "c4/029_parser_should_parse_a_sprite_28.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/030_parser_should_parse_a_link_29.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/031_parser_should_parse_tags_30.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
@@ -461,21 +461,21 @@
   },
   {
     "case": "c4/036_parser_should_parse_a_sprite_35.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/037_parser_should_parse_a_link_36.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
   },
   {
     "case": "c4/038_parser_should_parse_tags_37.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "layout",
     "exception_class": "Sirena::Layout::LayoutError"
@@ -523,12 +523,12 @@
   },
   {
     "case": "c4/046_spec_diagram-orchestration_spec_45.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "c4/047_spec_mermaidapi_spec_46.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -775,14 +775,14 @@
   },
   {
     "case": "class/049_platform_yari_class_48.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/050_platform_yari_class_49.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -804,17 +804,17 @@
   },
   {
     "case": "class/054_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_53.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/055_parser_should_be_possible_to_apply_a_cssclass_to_a_class_54.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/056_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_55.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -824,7 +824,7 @@
   },
   {
     "case": "class/058_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_57.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -839,7 +839,7 @@
   },
   {
     "case": "class/061_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_60.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -864,56 +864,56 @@
   },
   {
     "case": "class/066_parser_should_parse_a_class_with_a_text_label_65.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/067_parser_should_parse_two_classes_with_text_labels_66.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/068_parser_should_parse_a_class_with_a_text_label_and_member_67.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/069_parser_should_parse_a_class_with_a_text_label_member_and_annotation_68.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/070_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_69.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/071_parser_should_parse_a_class_with_text_label_and_css_class_70.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/072_parser_should_parse_two_classes_with_text_labels_and_css_classes_71.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/073_parser_should_parse_two_classes_with_text_labels_and_css_class_shorthands_72.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -950,14 +950,14 @@
   },
   {
     "case": "class/080_parser_should_parse_a_class_with_a_text_label_and_members_79.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/081_parser_should_parse_a_class_with_a_text_label_members_and_annotation_80.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -969,17 +969,17 @@
   },
   {
     "case": "class/083_parser_should_handle_href_link_82.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/084_parser_should_handle_href_link_with_tooltip_83.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/085_parser_should_handle_href_link_with_tooltip_and_target_84.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1224,53 +1224,53 @@
   },
   {
     "case": "class/134_parser_should_associate_link_and_css_appropriately_133.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/135_parser_should_associate_click_and_href_link_and_css_appropriately_134.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/136_parser_should_associate_link_with_tooltip_135.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/137_parser_should_associate_click_and_href_link_with_tooltip_136.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/138_parser_should_associate_click_and_href_link_with_tooltip_and_target_appropriately_137.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/139_parser_should_associate_click_and_href_link_appropriately_138.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/140_parser_should_associate_click_and_href_link_with_target_appropriately_139.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/141_parser_should_associate_link_appropriately_140.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class/142_parser_should_associate_callback_appropriately_141.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1322,7 +1322,7 @@
   },
   {
     "case": "class/152_parser_should_parse_classes_with_different_text_labels_151.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1422,7 +1422,7 @@
   },
   {
     "case": "class/172_parser_should_parse_classes_with_different_text_labels_171.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1434,32 +1434,32 @@
   },
   {
     "case": "class/174_spec_diagram-orchestration_spec_173.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/175_spec_diagram-orchestration_spec_174.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/176_spec_diagram-orchestration_spec_175.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/177_spec_mermaidapi_spec_176.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/178_spec_mermaidapi_spec_177.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class/179_spec_mermaidapi_spec_178.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1622,7 +1622,7 @@
   },
   {
     "case": "class_diagram/027_parser_should_be_possible_to_apply_a_css_class_to_a_class_with_relations_26.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1632,7 +1632,7 @@
   },
   {
     "case": "class_diagram/028_parser_should_be_possible_to_apply_a_cssclass_to_a_class_27.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1642,7 +1642,7 @@
   },
   {
     "case": "class_diagram/029_parser_should_be_possible_to_apply_a_cssclass_to_a_comma_separated_list_of_classes_28.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1657,12 +1657,12 @@
   },
   {
     "case": "class_diagram/030_parser_should_handle_backticked_class_names_29.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "class_diagram/031_parser_should_be_possible_to_define_and_assign_a_class_inside_the_diagram_30.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1697,7 +1697,7 @@
   },
   {
     "case": "class_diagram/034_parser_should_properly_assign_multiple_classes_and_styles_from_classes_defined_inside_the_diagram_33.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1772,7 +1772,7 @@
   },
   {
     "case": "class_diagram/039_parser_should_parse_a_class_with_a_text_label_38.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1791,7 +1791,7 @@
   },
   {
     "case": "class_diagram/040_parser_should_parse_two_classes_with_text_labels_39.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1810,7 +1810,7 @@
   },
   {
     "case": "class_diagram/041_parser_should_parse_a_class_with_a_text_label_and_member_40.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1829,7 +1829,7 @@
   },
   {
     "case": "class_diagram/042_parser_should_parse_a_class_with_a_text_label_member_and_annotation_41.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1848,7 +1848,7 @@
   },
   {
     "case": "class_diagram/043_parser_should_parse_a_class_with_text_label_and_css_class_shorthand_42.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1862,14 +1862,14 @@
   },
   {
     "case": "class_diagram/044_parser_should_parse_a_class_with_text_label_and_css_class_43.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "class_diagram/044_parser_should_parse_classes_with_different_text_labels_43.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -1886,7 +1886,7 @@
   },
   {
     "case": "class_diagram/045_parser_should_parse_two_classes_with_text_labels_and_css_classes_44.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -1900,7 +1900,7 @@
   },
   {
     "case": "class_diagram/046_parser_should_parse_two_classes_with_text_labels_and_css_class_shorthands_45.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2014,7 +2014,7 @@
   },
   {
     "case": "class_diagram/053_parser_should_parse_a_class_with_a_text_label_and_members_52.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2033,7 +2033,7 @@
   },
   {
     "case": "class_diagram/054_parser_should_parse_a_class_with_a_text_label_members_and_annotation_53.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2060,7 +2060,7 @@
   },
   {
     "case": "class_diagram/056_parser_should_handle_href_link_55.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2077,7 +2077,7 @@
   },
   {
     "case": "class_diagram/057_parser_should_handle_href_link_with_tooltip_56.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2101,7 +2101,7 @@
   },
   {
     "case": "class_diagram/058_parser_should_handle_href_link_with_tooltip_and_target_57.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2206,7 +2206,7 @@
   },
   {
     "case": "class_diagram/064_parser_should_parse_classes_with_different_text_labels_63.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2714,7 +2714,7 @@
   },
   {
     "case": "class_diagram/107_parser_should_associate_link_and_css_appropriately_106.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2728,7 +2728,7 @@
   },
   {
     "case": "class_diagram/108_parser_should_associate_click_and_href_link_and_css_appropriately_107.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2740,7 +2740,7 @@
   },
   {
     "case": "class_diagram/109_parser_should_associate_link_with_tooltip_108.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2754,7 +2754,7 @@
   },
   {
     "case": "class_diagram/110_parser_should_associate_click_and_href_link_with_tooltip_109.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2766,7 +2766,7 @@
   },
   {
     "case": "class_diagram/111_parser_should_associate_click_and_href_link_with_tooltip_and_target_appropriately_110.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2778,7 +2778,7 @@
   },
   {
     "case": "class_diagram/112_parser_should_associate_click_and_href_link_appropriately_111.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -2797,12 +2797,12 @@
   },
   {
     "case": "class_diagram/113_parser_should_associate_click_and_href_link_with_target_appropriately_112.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "class_diagram/114_parser_should_associate_link_appropriately_113.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2816,7 +2816,7 @@
   },
   {
     "case": "class_diagram/115_parser_should_associate_callback_appropriately_114.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -2941,7 +2941,7 @@
   },
   {
     "case": "class_diagram/125_parser_should_parse_classes_with_different_text_labels_124.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -3090,7 +3090,7 @@
   },
   {
     "case": "class_diagram/145_parser_should_parse_classes_with_different_text_labels_144.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -3102,7 +3102,7 @@
   },
   {
     "case": "er/001_rendering_erdiagram_spec_er_0.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -3490,7 +3490,7 @@
   },
   {
     "case": "er/057_parser_should_handle_complex_diagram_with_special_entity_names_56.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4195,7 +4195,7 @@
   },
   {
     "case": "er_diagram/056_parser_should_handle_complex_diagram_with_special_entity_names_55.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4207,22 +4207,22 @@
   },
   {
     "case": "error/001_rendering_errordiagram_spec_error_0.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "error/002_rendering_errordiagram_spec_error_1.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "error/003_spec_diagram-orchestration_spec_2.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "error/004_spec_diagram-orchestration_spec_3.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -4292,7 +4292,7 @@
   },
   {
     "case": "flowchart/007_platform_current_flowchart_6.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4304,7 +4304,7 @@
   },
   {
     "case": "flowchart/008_platform_current_flowchart_7.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4551,7 +4551,7 @@
   },
   {
     "case": "flowchart/033_parser_markdown_formatting_in_nodes_and_labels_28.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4563,7 +4563,7 @@
   },
   {
     "case": "flowchart/034_parser_markdown_formatting_in_subgraphs_29.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4751,7 +4751,7 @@
   },
   {
     "case": "flowchart/051_parser_should_error_on_nonexistent_shape_46.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4765,7 +4765,7 @@
   },
   {
     "case": "flowchart/052_parser_should_error_on_internal-only_shape_47.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -4873,7 +4873,7 @@
   },
   {
     "case": "flowchart/061_parser_should_be_possible_to_use_syntax_in_labels_56.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -5556,7 +5556,7 @@
   },
   {
     "case": "flowchart/146_parser_should_keep_node_label_text__if_already_defined__when_a_style_is_applied_141.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -6096,7 +6096,7 @@
   },
   {
     "case": "gantt/001_rendering_gantt_spec_gantt_0.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -6111,7 +6111,7 @@
   },
   {
     "case": "gantt/004_rendering_gantt_spec_gantt_3.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -6188,14 +6188,14 @@
   },
   {
     "case": "gantt/019_parser_should_parse_callback_specifier_with_no_args_18.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "gantt/020_parser_should_parse_callback_specifier_with_arbitrary_number_of_args_19.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -6234,297 +6234,297 @@
   },
   {
     "case": "git/001_rendering_appli_spec_git_0.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/002_rendering_gitgraph_spec_git_1.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/003_rendering_gitgraph_spec_git_2.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/004_rendering_gitgraph_spec_git_3.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/005_rendering_gitgraph_spec_git_4.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/006_rendering_gitgraph_spec_git_5.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/007_rendering_gitgraph_spec_git_6.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/008_rendering_gitgraph_spec_git_7.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/009_rendering_gitgraph_spec_git_8.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/010_rendering_gitgraph_spec_git_9.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/011_rendering_gitgraph_spec_git_10.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/012_rendering_gitgraph_spec_git_11.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/013_rendering_gitgraph_spec_git_12.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/014_rendering_gitgraph_spec_git_13.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/015_rendering_gitgraph_spec_git_14.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/016_rendering_gitgraph_spec_git_15.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/017_rendering_gitgraph_spec_git_16.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/018_rendering_gitgraph_spec_git_17.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/019_rendering_gitgraph_spec_git_18.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/020_rendering_gitgraph_spec_git_19.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/021_rendering_gitgraph_spec_git_20.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/022_rendering_gitgraph_spec_git_21.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/023_rendering_gitgraph_spec_git_22.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/024_rendering_gitgraph_spec_git_23.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/025_rendering_gitgraph_spec_git_24.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/026_rendering_gitgraph_spec_git_25.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/027_rendering_gitgraph_spec_git_26.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/028_rendering_gitgraph_spec_git_27.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/029_rendering_gitgraph_spec_git_28.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/030_rendering_gitgraph_spec_git_29.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/031_rendering_gitgraph_spec_git_30.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/032_rendering_gitgraph_spec_git_31.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/033_rendering_gitgraph_spec_git_32.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/034_rendering_gitgraph_spec_git_33.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/035_rendering_gitgraph_spec_git_34.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/036_rendering_gitgraph_spec_git_35.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/037_rendering_gitgraph_spec_git_36.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/038_rendering_gitgraph_spec_git_37.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/039_rendering_gitgraph_spec_git_38.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/040_rendering_gitgraph_spec_git_39.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/041_rendering_gitgraph_spec_git_40.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/042_rendering_gitgraph_spec_git_41.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/043_rendering_gitgraph_spec_git_42.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/044_rendering_gitgraph_spec_git_43.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/045_rendering_gitgraph_spec_git_44.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/046_rendering_gitgraph_spec_git_45.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/047_rendering_gitgraph_spec_git_46.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/048_rendering_gitgraph_spec_git_47.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/049_rendering_gitgraph_spec_git_48.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/050_rendering_gitgraph_spec_git_49.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/051_rendering_gitgraph_spec_git_50.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/052_rendering_gitgraph_spec_git_51.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/053_rendering_gitgraph_spec_git_52.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/054_rendering_gitgraph_spec_git_53.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/055_rendering_gitgraph_spec_git_54.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/056_rendering_gitgraph_spec_git_55.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/057_rendering_gitgraph_spec_git_56.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/058_rendering_gitgraph_spec_git_57.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/059_rendering_gitgraph_spec_git_58.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -6566,52 +6566,52 @@
   },
   {
     "case": "git/067_example_git_66.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/068_parser_should_handle_set_direction_top_to_bottom_67.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/069_parser_should_handle_set_direction_bottom_to_top_68.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/070_parser_should_checkout_a_branch_69.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/071_parser_should_switch_a_branch_70.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/072_parser_should_add_commits_to_checked_out_branch_71.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/073_parser_should_handle_commit_with_args_72.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/074_parser_should_handle_cases_when_merge_is_a_noop_73.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/075_parser_should_handle_merge_with_2_parents_74.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/076_parser_should_generate_an_array_of_known_branches_75.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -6623,262 +6623,262 @@
   },
   {
     "case": "git/078_parser_should_handle_set_direction_top_to_bottom_77.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/079_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_only_78.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/080_parser_should_handle_a_gitgraph_commit_with_custom_commit_tag_only_79.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/081_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_highlight_only_80.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/082_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_reverse_only_81.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/083_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_normal_only_82.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/084_parser_should_handle_a_gitgraph_commit_with_custom_commit_msg_only_83.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/085_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_tag_only_84.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/086_parser_should_handle_a_gitgraph_commit_with_custom_commit_type_tag_only_85.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/087_parser_should_handle_a_gitgraph_commit_with_custom_commit_tag_and_type_only_86.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/088_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_and_tag_only_87.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/089_parser_should_handle_a_gitgraph_commit_with_custom_commit_id_type_tag_and_msg_88.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/090_parser_should_handle_a_gitgraph_commit_with_custom_type_tag_msg_commit_id__89.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/091_parser_should_handle_a_gitgraph_commit_with_custom_tag_msg_commit_id_type__90.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/092_parser_should_handle_a_gitgraph_commit_with_custom_msg_commit_id_type_tag_91.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/093_parser_should_handle_3_straight_commits_92.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/094_parser_should_handle_new_branch_creation_93.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/095_parser_should_allow_quoted_branch_names_94.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/096_parser_should_allow_-_characters_in_branch_names_95.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/097_parser_should_allow_branch_names_starting_with_numbers_96.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/098_parser_should_allow_branch_names_starting_with_unusual_prefixes_97.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/099_parser_should_handle_new_branch_checkout_98.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/100_parser_should_handle_new_branch_checkout_with_order_99.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/101_parser_should_handle_new_branch_checkout_with_and_without_order_100.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/102_parser_should_handle_new_branch_checkout_commit_101.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/103_parser_should_handle_new_branch_checkout_commit_and_merge_102.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/104_parser_should_handle_new_branch_switch_103.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/105_parser_should_handle_new_branch_switch_commit_104.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/106_parser_should_handle_new_branch_switch_commit_and_merge_105.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/107_parser_should_handle_merge_tags_106.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/108_parser_should_handle_merge_with_custom_ids_tags_and_type_107.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/109_parser_should_support_cherry-picking_commits_108.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/110_parser_should_support_cherry-picking_commits_with_custom_tag_109.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/111_parser_should_support_cherry-picking_commits_with_no_tag_110.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/112_parser_should_support_cherry-picking_of_merge_commits_111.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/113_parser_should_support_cherry-picking_of_merge_commits_with_tag_112.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/114_parser_should_support_cherry-picking_of_merge_commits_with_additional_commit_113.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/115_parser_should_support_cherry-picking_of_merge_commits_with_empty_tag_114.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/116_parser_should_fail_cherry-picking_of_merge_commits_if_the_parent_of_merge_commits_is_not_specified_115.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/117_parser_should_fail_cherry-picking_of_merge_commits_when_the_parent_provided_is_not_an_immediate_parent_of_cherry_picked_commit_116.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/118_parser_should_throw_error_when_try_to_branch_existing_branch_main_117.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/119_parser_should_throw_error_when_try_to_branch_existing_branch_testbranch_118.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/120_parser_should_throw_error_when_try_to_checkout_unknown_branch_testbranch_119.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/121_parser_should_throw_error_when_trying_to_merge_when_current_branch_has_no_commits_120.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/122_parser_should_throw_error_when_trying_to_merge_unknown_branch_121.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/123_parser_should_throw_error_when_trying_to_merge_branch_to_itself_122.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/124_parser_should_throw_error_when_using_existing_id_as_merge_id_123.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/125_parser_should_throw_error_when_trying_to_merge_branches_having_same_heads_124.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/126_parser_should_throw_error_when_trying_to_merge_branch_which_has_no_commits_125.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "git/127_parser_should_handle_a_title_and_a_description_accdescr__126.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/128_parser_should_handle_a_title_and_a_multiline_description_accdescr__127.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/129_parser_should_log_a_warning_when_two_commits_have_the_same_id_128.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -7065,32 +7065,32 @@
   },
   {
     "case": "git/156_spec_diagram-orchestration_spec_155.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/157_spec_diagram-orchestration_spec_156.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/158_spec_mermaidapi_spec_157.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/159_spec_mermaidapi_spec_158.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/160_spec_utils_spec_159.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "git/161_spec_utils_spec_160.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -7252,7 +7252,7 @@
   },
   {
     "case": "kanban/011_rendering_kanban_spec_kanban_10.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -7299,7 +7299,7 @@
   },
   {
     "case": "kanban/020_parser_knbn-6_real_root_in_wrong_place_19.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -7413,7 +7413,7 @@
   },
   {
     "case": "mindmap/001_rendering_mindmap-tidy-tree_spec_mindmap_0.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -7500,7 +7500,7 @@
   },
   {
     "case": "mindmap/018_rendering_mindmap_spec_mindmap_17.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -7510,7 +7510,7 @@
   },
   {
     "case": "mindmap/020_rendering_mindmap_spec_mindmap_19.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -7567,14 +7567,14 @@
   },
   {
     "case": "mindmap/031_parser_5_multiple_roots_are_illegal_30.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "mindmap/032_parser_mmp-6_real_root_in_wrong_place_31.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -7666,22 +7666,22 @@
   },
   {
     "case": "mindmap/050_spec_config_spec_49.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "mindmap/051_spec_config_spec_50.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "mindmap/052_spec_diagram-orchestration_spec_51.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
     "case": "mindmap/053_spec_diagram-orchestration_spec_52.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -7691,7 +7691,7 @@
   },
   {
     "case": "mindmap/055_spec_diagram-orchestration_spec_54.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -7716,7 +7716,7 @@
   },
   {
     "case": "pie/001_rendering_theme_spec_pie_0.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -7816,7 +7816,7 @@
   },
   {
     "case": "pie/021_parser_should_handle_simple_pie_with_negative_decimal_20.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -7986,7 +7986,7 @@
   },
   {
     "case": "quadrant/006_parser_should_be_able_to_handle_constructor_as_a_classname_5.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -8041,14 +8041,14 @@
   },
   {
     "case": "radar/007_rendering_radar_spec_radar_6.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
   },
   {
     "case": "radar/008_parser_should_handle_radar_diagram_with_config_override_7.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
@@ -8270,7 +8270,7 @@
   },
   {
     "case": "radar/042_spec_mermaidapi_spec_41.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "detect",
     "exception_class": "Sirena::Engine::DiagramTypeError"
@@ -8404,7 +8404,7 @@
   },
   {
     "case": "sankey/001_parser_parses_csv_with_sankey-beta_syntax_0.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -8667,7 +8667,7 @@
   },
   {
     "case": "sequence/018_rendering_sequencediagram_spec_sequence_17.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -8699,7 +8699,7 @@
   },
   {
     "case": "sequence/020_rendering_sequencediagram_spec_sequence_19.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   },
   {
@@ -8806,7 +8806,7 @@
   },
   {
     "case": "sequence/029_spec_diagram_spec_28.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -10629,7 +10629,7 @@
   },
   {
     "case": "timeline/005_rendering_timeline_spec_timeline_4.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -10726,7 +10726,7 @@
   },
   {
     "case": "treemap/007_rendering_treemap_spec_treemap_6.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -11235,12 +11235,12 @@
   },
   {
     "case": "unknown/080_parser_should_handle_nested_namespaces_and_relationships_79.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "unknown/081_parser_should_parse_diagram_with_direction_80.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -11252,19 +11252,19 @@
   },
   {
     "case": "unknown/083_parser_should_draw_background_rect_82.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "unknown/084_parser_super_simple_83.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
     "case": "unknown/085_parser_super_simple_84.mmd",
-    "verdict": "unknown",
+    "verdict": "valid",
     "pass": true
   },
   {
@@ -11394,56 +11394,56 @@
   },
   {
     "case": "user_journey/016_spec_journeydb_spec_15.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/017_spec_journeydb_spec_16.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/018_spec_journeydb_spec_17.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/019_spec_journeydb_spec_18.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/020_spec_journeydb_spec_19.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/021_spec_journeydb_spec_20.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/022_spec_journeydb_spec_21.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
   },
   {
     "case": "user_journey/023_spec_journeydb_spec_22.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": false,
     "stage": "parse",
     "exception_class": "Sirena::Parser::ParseError"
@@ -11465,7 +11465,7 @@
   },
   {
     "case": "xychart/002_spec_mermaidapi_spec_1.mmd",
-    "verdict": "unknown",
+    "verdict": "invalid",
     "pass": true
   }
 ]

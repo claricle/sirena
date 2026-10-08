@@ -34,8 +34,18 @@ the mermaid-js revision it came from.
 `corpus-verdicts.yml` holds one oracle verdict per case
 (`scripts/corpus_verdicts.rb`); `scoreboard/corpus.json` holds one
 pass/fail row per case (`rake corpus`, checked by `rake corpus:check`).
+
 Both key on the path `<type>/<file>.mmd`, so renaming a case changes its
 key in all three places.
+
+Cases no sidecar, reference or byte-identical twin settles are judged by
+the local mmdc: `ruby scripts/corpus_verdicts.rb --oracle` writes
+`oracle-verdicts.yml` (keyed by source hash, with the mmdc and mermaid
+versions it ran under), then `--write` regenerates `corpus-verdicts.yml`
+from it. A rejection is recorded only when the same diagnostic, thrown from
+mermaid's own code, repeats on a second run; any other failure aborts and
+writes nothing. The toolchain is not pinned yet (TODO.foundation/02a), so the
+file records the versions but cannot reproduce them.
 
 ## Known duplicate directories
 
