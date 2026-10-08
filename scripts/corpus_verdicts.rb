@@ -353,7 +353,11 @@ by_digest = index_by_digest(types.empty? ? entries : cases([]))
 
 refresh_oracle!(entries, by_digest) if refresh_oracle
 
-oracle = CorpusOracle.load_rows
+oracle = begin
+  CorpusOracle.load_rows
+rescue CorpusOracle::InfrastructureError => e
+  abort e.message
+end
 
 rows = entries.map do |entry|
   verdict, evidence = classify(entry, by_digest[entry[:digest]], oracle)
