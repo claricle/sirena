@@ -132,8 +132,25 @@ not decide the exceptions.
 
 ## Reproduce
 
-Run both from the repository root. `bundle exec ruby -Ilib survey.rb` takes
+The two scripts exist only as the code blocks below. From the repository root,
+this writes each block to a temporary directory and runs it. `survey.rb` takes
 about ten seconds of CPU; `probes.rb` under one.
+
+```sh
+dir=$(mktemp -d)
+for name in survey probes; do
+  awk -v head="### $name.rb" '
+    $0 == head { found = 1; next }
+    found && /^```ruby$/ { inside = 1; next }
+    inside && /^```$/ { exit }
+    inside' docs/emit-accept-survey.md > "$dir/$name.rb"
+done
+bundle exec ruby -Ilib "$dir/survey.rb"
+bundle exec ruby -Ilib "$dir/probes.rb"
+```
+
+The scripts read `spec/mermaid/` by relative path, so run them from the
+repository root.
 
 ### survey.rb
 
