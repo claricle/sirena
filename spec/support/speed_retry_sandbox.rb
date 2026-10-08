@@ -12,7 +12,7 @@ module SpeedRetrySandbox
   # The example fails its first `failures` runs. It counts runs through a
   # `let`, so a re-run that kept the old memoized value would fail again.
   def run_flaky_example(tags, failures, suite: :sandbox)
-    runs = 0 # rubocop:disable RSpec/LeakyLocalVariable -- the only channel out of the inner example
+    runs = 0
     outcome = run_example(tags, suite:) do
       let(:attempt) { runs += 1 }
 
