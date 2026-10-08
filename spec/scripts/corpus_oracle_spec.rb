@@ -490,6 +490,7 @@ RSpec.describe CorpusOracle do
     end
 
     it "names the mmdc and the mermaid it bundles" do
+      skip("the harness is POSIX-only") if Gem.win_platform?
       install_mmdc(install, on_path: on_path,
                             manifest: '{"version":"11.4.2"}')
 
@@ -674,6 +675,10 @@ RSpec.describe CorpusOracle do
 
   describe "the --oracle command" do
     let(:sentinel) { "cases: []\n" }
+
+    # The fake mmdc is a shell script and HardenedMmdc reads the process
+    # table with `ps`: neither exists on Windows.
+    before { skip("the harness is POSIX-only") if Gem.win_platform? }
 
     context "when mmdc renders every case" do
       let(:run) { run_oracle(mmdc: accepting_mmdc) }
