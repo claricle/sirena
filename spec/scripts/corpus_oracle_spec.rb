@@ -732,6 +732,20 @@ RSpec.describe CorpusOracle do
     end
   end
 
+  # Refused before any mmdc is asked, so no POSIX harness is involved.
+  describe "the --oracle command with a type filter" do
+    let(:sentinel) { "cases: []\n" }
+    let(:run) { run_script("--oracle", "pie", seed: sentinel) }
+
+    it "refuses, because it would truncate the committed file" do
+      expect(run.err).to include("need the whole corpus")
+    end
+
+    it "leaves the committed oracle file untouched" do
+      expect(run.written).to eq(sentinel)
+    end
+  end
+
   describe "the --oracle command" do
     let(:sentinel) { "cases: []\n" }
 
@@ -782,18 +796,6 @@ RSpec.describe CorpusOracle do
 
       it "exits with status 1" do
         expect(run.status.exitstatus).to eq(1)
-      end
-
-      it "leaves the committed oracle file untouched" do
-        expect(run.written).to eq(sentinel)
-      end
-    end
-
-    context "with a type filter" do
-      let(:run) { run_oracle("pie", mmdc: accepting_mmdc, seed: sentinel) }
-
-      it "refuses, because it would truncate the committed file" do
-        expect(run.err).to include("need the whole corpus")
       end
 
       it "leaves the committed oracle file untouched" do
