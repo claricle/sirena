@@ -38,7 +38,7 @@ pass/fail row per case (`rake corpus`, checked by `rake corpus:check`).
 Both key on the path `<type>/<file>.mmd`, so renaming a case changes its
 key in all three places.
 
-Cases no sidecar, reference or byte-identical twin settles are judged by
+Cases that no sidecar, reference or byte-identical twin settles are judged by
 the local mmdc: `ruby scripts/corpus_verdicts.rb --oracle` writes
 `oracle-verdicts.yml` (keyed by source hash, with the mmdc and mermaid
 versions it ran under), then `--write` regenerates `corpus-verdicts.yml`
