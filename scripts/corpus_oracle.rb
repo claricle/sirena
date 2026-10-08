@@ -43,7 +43,7 @@ module CorpusOracle
     return {} unless File.exist?(path)
 
     file = YAML.load_file(path)
-    measured = file.dig("provenance", "mmdc")
+    measured = recorded_mmdc(file)
     unless measured == EXPECTED_CLI
       raise InfrastructureError,
             "#{File.basename(path)} was measured with mmdc " \
@@ -51,6 +51,12 @@ module CorpusOracle
     end
 
     file.fetch("cases").to_h { |row| [row.fetch("sha256"), row] }
+  end
+
+  # nil unless the file is a mapping with a provenance mapping.
+  def recorded_mmdc(file)
+    provenance = file["provenance"] if file.is_a?(Hash)
+    provenance["mmdc"] if provenance.is_a?(Hash)
   end
 
   # Returns [verdict, evidence] with verdict "valid" or "invalid".
