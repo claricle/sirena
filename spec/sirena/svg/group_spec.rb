@@ -52,5 +52,12 @@ RSpec.describe Sirena::Svg::Group do
       expect(xml).to match(/^  <path\b/)
       expect(xml).to match(/^  <polygon\b/)
     end
+
+    it "skips children that are not SVG elements" do
+      group = described_class.new
+      group.children << Object.new
+
+      expect(group.to_xml).to eq("<g>\n</g>")
+    end
   end
 end
