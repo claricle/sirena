@@ -336,11 +336,9 @@ RSpec.describe Sirena::Notation::PlantUML do
       "package Domain {" => ["package", 3],
       "namespace Domain {" => ["namespace", 3],
       "enum Color" => ["enum", 3],
-      "note left of A : hi" => ["note", 3],
       "title My diagram" => ["title", 3],
       "!include other.puml" => ["preprocessor directive", 3],
       "/' block comment '/" => ["block comment", 3],
-      "class A <<entity>>" => ["stereotype", 3],
       "class A extends B" => ["class declaration form", 3],
       "class \"Long Name\" as L" => ["class declaration form", 3],
       "class A { +x : int }" => ["class declaration form", 3],
@@ -354,7 +352,6 @@ RSpec.describe Sirena::Notation::PlantUML do
       "hide A --> B" => ["hide", 3],
       "A --> B C" => ["statement", 3],
       "left to right direction x" => ["statement", 3],
-      "interface A <<x>>" => ["stereotype", 3],
       "abstract A" => ["class declaration form", 3],
       "A ->> B" => ["single-dash arrow", 3],
       "A <<- B" => ["single-dash arrow", 3],
@@ -363,7 +360,6 @@ RSpec.describe Sirena::Notation::PlantUML do
       "@startuml_x" => ["statement", 3],
       "ENUM Color" => ["enum", 3],
       "PACKAGE Domain {" => ["package", 3],
-      "Note left of A : hi" => ["note", 3],
       "CLASS A extends B" => ["class declaration form", 3],
       "CLASS A <<entity>>" => ["stereotype", 3],
       "STATIC CLASS A" => ["class declaration form", 3],
@@ -394,8 +390,6 @@ RSpec.describe Sirena::Notation::PlantUML do
       "-- " => ["member separator", 3],
       "==" => ["member separator", 3],
       ".." => ["member separator", 3],
-      "String name" => ["member declaration", 3],
-      "+void run(int x)" => ["member declaration", 3],
       "+run(" => ["member declaration", 3],
       "x : a(b" => ["member declaration", 3],
       "+cb : Func(int)" => ["member declaration", 3],
@@ -541,7 +535,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       end
     end
 
-    %w[1A a.b List<T>].each do |name|
+    %w[1A a.b].each do |name|
       it "refuses the class name #{name.inspect}" do
         expect { parse_plantuml(wrap("class #{name}")) }
           .to raise_error(unsupported_error)

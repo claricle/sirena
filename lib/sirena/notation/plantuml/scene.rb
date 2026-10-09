@@ -33,6 +33,8 @@ module Sirena
           attribute :height, :float
           attribute :texts, Text, collection: true
           attribute :separators, Segment, collection: true
+          attribute :kind, :string
+          attribute :fill, :string
         end
 
         class Relation < Lutaml::Model::Serializable

@@ -26,6 +26,7 @@ module Sirena
           specifications = diagram.classes.map do |klass|
             box_specification(klass)
           end
+          specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
           boxes = position_boxes(specifications, box_width)
 
@@ -38,7 +39,8 @@ module Sirena
           width = canvas_width(boxes, box_width)
           height = canvas_height(box_rows(boxes))
           relations = build_relations(diagram.relations, boxes) +
-                      build_junctions(diagram, boxes)
+                      build_junctions(diagram, boxes) +
+                      build_note_links(diagram.notes, boxes)
           Scene.new(width: width, height: height, boxes: boxes,
                     relations: relations)
         end
@@ -47,6 +49,15 @@ module Sirena
           member_rows = klass.body.map { |member| member_text(member) }
           title_rows = title_rows(klass)
           box_record(klass.name, title_rows, member_rows)
+        end
+
+        def note_specifications(notes)
+          notes.each_with_index.map do |note, index|
+            rows = note.lines
+            { id: "note-#{index}", note: note, rows: rows,
+              width: measured_box_width(rows),
+              height: (BOX_PADDING * 2) + ([rows.size, 1].max * ROW_HEIGHT) }
+          end
         end
 
         def box_record(name, title_rows, member_rows)
@@ -71,9 +82,13 @@ module Sirena
         end
 
         def title_rows(klass)
-          return [klass.name] if klass.kind == :class
+          kind = ["<<#{klass.kind}>>"] unless klass.kind == :class
+          tags = klass.stereotypes.map { |tag| "<<#{tag}>>" }
+          [*kind, *(tags.join(" ") unless tags.empty?), klass_title(klass)]
+        end
 
-          ["<<#{klass.kind}>>", klass.name]
+        def klass_title(klass)
+          klass.generics ? "#{klass.name}<#{klass.generics}>" : klass.name
         end
 
         def measured_width(text)
@@ -125,11 +140,34 @@ module Sirena
 
           Scene::Box.new(
             id: item[:id], x: x, y: y, width: box_width,
-            height: item[:height], texts: texts, separators: separators
+            height: item[:height], texts: texts, separators: separators,
+            kind: item[:note] ? "note" : "class", fill: item[:note]&.color
           )
         end
 
+        def note_texts(item, horizontal, vertical)
+          item[:rows].each_with_index.map do |content, index|
+            baseline = vertical + BOX_PADDING + font_size + (index * ROW_HEIGHT)
+            scene_text(content, horizontal + BOX_PADDING, baseline,
+                       "note", "start")
+          end
+        end
+
+        # A dashed line from each note to the class it is attached to.
+        def build_note_links(notes, boxes)
+          by_name = boxes.to_h { |box| [box.id, box] }
+          notes.each_with_index.map do |note, index|
+            ends = [by_name.fetch("note-#{index}"), by_name.fetch(note.target)]
+            edge = relation_endpoints(*ends)
+            Scene::Relation.new(id: "note-link-#{index}", dashed: true,
+                                path: relation_path(edge),
+                                marker_filled: false, texts: [])
+          end
+        end
+
         def box_contents(item, horizontal, vertical, width)
+          return [note_texts(item, horizontal, vertical), []] if item[:note]
+
           texts, cursor = title_texts(item, horizontal, vertical, width)
           members, separators = member_contents(
             item, horizontal, cursor, width
