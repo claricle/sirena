@@ -4,6 +4,17 @@ require "spec_helper"
 
 RSpec.describe Sirena::Renderer::StateDiagram do
   let(:renderer) { described_class.new }
+  let(:expected_hook_calls) do
+    {
+      calculate_width: 1,
+      calculate_height: 1,
+      create_state_shape: 2,
+      create_normal_state: 2,
+      calculate_transition_path: 1,
+      create_path_with_bends: 1,
+      create_transition_label: 1,
+    }
+  end
   let(:hook_renderer_class) do
     Class.new(described_class) do
       attr_reader :hook_calls
@@ -30,7 +41,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
         super
       end
 
-      def create_normal_state(x, y, width, height)
+      def create_normal_state(x_position, y_position, width, height)
         @hook_calls[:create_normal_state] += 1
         super
       end
@@ -40,7 +51,9 @@ RSpec.describe Sirena::Renderer::StateDiagram do
         super
       end
 
-      def create_path_with_bends(sx, sy, tx, ty, bend_points)
+      def create_path_with_bends(
+        source_x, source_y, target_x, target_y, bend_points
+      )
         @hook_calls[:create_path_with_bends] += 1
         super
       end
@@ -50,6 +63,11 @@ RSpec.describe Sirena::Renderer::StateDiagram do
         super
       end
     end
+  end
+
+  def forbid_layout_geometry(method_name)
+    allow(Sirena::Layout::StateDiagram).to receive(method_name)
+      .and_raise("geometry recalculated")
   end
 
   describe "#render" do
@@ -241,11 +259,8 @@ RSpec.describe Sirena::Renderer::StateDiagram do
 
     it "serializes a typed Scene without recalculating geometry" do
       scene = Sirena::Layout::StateDiagram.from_graph(graph)
-      allow(Sirena::Layout::StateDiagram).to receive(:shape_geometry)
-        .and_raise("renderer recalculated state geometry")
-      allow(Sirena::Layout::StateDiagram).to receive(:transition_label_geometry)
-        .and_raise("renderer recalculated label geometry")
-
+      forbid_layout_geometry(:shape_geometry)
+      forbid_layout_geometry(:transition_label_geometry)
       expect { renderer.render(scene) }.not_to raise_error
     end
 
@@ -254,15 +269,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
 
       hook_renderer.render(graph)
 
-      expect(hook_renderer.hook_calls).to eq(
-        calculate_width: 1,
-        calculate_height: 1,
-        create_state_shape: 2,
-        create_normal_state: 2,
-        calculate_transition_path: 1,
-        create_path_with_bends: 1,
-        create_transition_label: 1,
-      )
+      expect(hook_renderer.hook_calls).to eq(expected_hook_calls)
     end
 
     it "emits the font sizes already resolved by the themed layout" do

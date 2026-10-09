@@ -82,38 +82,16 @@ module Sirena
         end
 
         def shape_geometry(state, state_type)
-          x = state[:x] || 0
-          y = state[:y] || 0
-          width = state[:width] || 100
-          height = state[:height] || 50
-          center = center(state)
-          radius = [width, height].min / 2
-          points = if state_type == "choice"
-                     [
-                       "#{center[:x]},#{y}",
-                       "#{x + width},#{center[:y]}",
-                       "#{center[:x]},#{y + height}",
-                       "#{x},#{center[:y]}",
-                     ].join(" ")
-                   end
-
-          {
-            x: x, y: y, width: width, height: height,
-            center_x: center[:x], center_y: center[:y], radius: radius,
-            inner_radius: radius - 5,
-            shape_points: points, shape_y: y + (height / 2) - 5,
-            shape_height: 10
-          }
+          dimensions = box_geometry(state)
+          midpoint = center(dimensions)
+          dimensions.merge(shape_details(dimensions, midpoint, state_type))
         end
 
         def label_geometry(state, label, index, font_sizes)
-          center = center(state)
-          label_count = (state[:labels] || []).length
-          stack_offset = (label_count - 1) * 10
+          x_position, y_position = label_position(state, index)
           {
             text: label[:text], width: label[:width], height: label[:height],
-            x: center[:x],
-            y: center[:y] - stack_offset + (index * 20),
+            x: x_position, y: y_position,
             font_size: index.zero? ? font_sizes[:normal] : font_sizes[:small]
           }
         end
@@ -138,22 +116,65 @@ module Sirena
         end
 
         def renderer_extent(graph, axis)
-          if graph.is_a?(Scene)
-            return coordinate(graph.public_send(axis) - 40)
-          end
+          return coordinate(graph.public_send(axis) - 40) if graph.is_a?(Scene)
 
           boxes = graph[:children]
-          return axis == :width ? 800 : 600 unless boxes
+          return default_extent(axis) unless boxes
 
-          position = axis == :width ? :x : :y
-          fallback = axis == :width ? 100 : 50
-          maximum = boxes.map do |state|
-            (state[position] || 0) + (state[axis] || fallback)
-          end.max || (axis == :width ? 800 : 600)
-          maximum + 60
+          maximum_extent(boxes, axis) + 60
         end
 
         private
+
+        def box_geometry(state)
+          {
+            x: state[:x] || 0, y: state[:y] || 0,
+            width: state[:width] || 100, height: state[:height] || 50
+          }
+        end
+
+        def shape_details(dimensions, midpoint, state_type)
+          radius = [dimensions[:width], dimensions[:height]].min / 2
+          {
+            center_x: midpoint[:x], center_y: midpoint[:y], radius: radius,
+            inner_radius: radius - 5,
+            shape_points: choice_points(dimensions, midpoint, state_type),
+            shape_y: dimensions[:y] + (dimensions[:height] / 2) - 5,
+            shape_height: 10
+          }
+        end
+
+        def choice_points(dimensions, midpoint, state_type)
+          return unless state_type == "choice"
+
+          x_position = dimensions[:x]
+          y_position = dimensions[:y]
+          width = dimensions[:width]
+          height = dimensions[:height]
+          [
+            "#{midpoint[:x]},#{y_position}",
+            "#{x_position + width},#{midpoint[:y]}",
+            "#{midpoint[:x]},#{y_position + height}",
+            "#{x_position},#{midpoint[:y]}",
+          ].join(" ")
+        end
+
+        def label_position(state, index)
+          midpoint = center(state)
+          stack_offset = ((state[:labels] || []).length - 1) * 10
+          [midpoint[:x], midpoint[:y] - stack_offset + (index * 20)]
+        end
+
+        def default_extent(axis)
+          axis == :width ? 800 : 600
+        end
+
+        def maximum_extent(boxes, axis)
+          position, fallback = axis == :width ? [:x, 100] : [:y, 50]
+          boxes.map do |state|
+            (state[position] || 0) + (state[axis] || fallback)
+          end.max || default_extent(axis)
+        end
 
         def coordinate(number)
           number.to_i == number ? number.to_i : number
@@ -183,15 +204,9 @@ module Sirena
 
       def scene_from_graph(graph)
         children = typed_children(graph[:children] || [])
-        padding = graph.key?(:children) ? 100 : 40
-        width = canvas_width(graph) + padding
-        height = canvas_height(graph) + padding
-
         Scene.new(
           id: graph[:id] || "state_diagram",
-          width: width,
-          height: height,
-          view_box: "0 0 #{width} #{height}",
+          **scene_geometry(graph),
           children: children,
           edges: typed_edges(
             graph[:edges] || [], children, graph[:children] || []
@@ -199,57 +214,72 @@ module Sirena
         )
       end
 
-      def typed_children(children)
-        children.map do |state|
-          state_type = state.dig(:metadata, :state_type) || "normal"
-          shape_type = state.dig(:metadata, :shape_type) || state_type
-          geometry = self.class.shape_geometry(state, shape_type)
-          labels = (state[:labels] || []).each_with_index.map do |label, index|
-            Label.new(**self.class.label_geometry(
-              state, label, index, label_font_sizes
-            ))
-          end
+      def scene_geometry(graph)
+        padding = graph.key?(:children) ? 100 : 40
+        width = canvas_width(graph) + padding
+        height = canvas_height(graph) + padding
+        { width: width, height: height, view_box: "0 0 #{width} #{height}" }
+      end
 
-          Node.new(
-            id: state[:id], labels: labels, state_type: state_type,
-            shape_type: shape_type, **geometry
+      def typed_children(children)
+        children.map { |state| typed_node(state) }
+      end
+
+      def typed_node(state)
+        state_type = state.dig(:metadata, :state_type) || "normal"
+        shape_type = state.dig(:metadata, :shape_type) || state_type
+        Node.new(
+          id: state[:id], labels: typed_labels(state), state_type: state_type,
+          shape_type: shape_type,
+          **self.class.shape_geometry(state, shape_type)
+        )
+      end
+
+      def typed_labels(state)
+        (state[:labels] || []).each_with_index.map do |label, index|
+          geometry = self.class.label_geometry(
+            state, label, index, label_font_sizes
           )
+          Label.new(**geometry)
         end
       end
 
       def typed_edges(edges, children, raw_children)
         nodes = children.to_h { |node| [node.id, node] }
         raw_nodes = raw_children.to_h { |node| [node[:id], node] }
-        edges.filter_map do |edge|
-          source = nodes[edge[:sources]&.first]
-          target = nodes[edge[:targets]&.first]
-          next unless source && target
+        edges.filter_map { |edge| typed_edge_for(edge, nodes, raw_nodes) }
+      end
 
-          typed_edge(
-            edge, source, target, raw_nodes[source.id], raw_nodes[target.id]
-          )
-        end
+      def typed_edge_for(edge, nodes, raw_nodes)
+        source = nodes[edge[:sources]&.first]
+        target = nodes[edge[:targets]&.first]
+        return unless source && target
+
+        typed_edge(
+          edge, source, target, raw_nodes[source.id], raw_nodes[target.id]
+        )
       end
 
       def typed_edge(edge, source, target, raw_source, raw_target)
         sections = typed_sections(edge, raw_source, raw_target)
-        label = (edge[:labels] || []).first
-        labels = if label
-                   [Label.new(**self.class.transition_label_geometry(
-                     raw_source, raw_target, label,
-                     small_font_size
-                   ))]
-                 else
-                   []
-                 end
-
         Edge.new(
           id: edge[:id], source: source.id, target: target.id,
-          sections: sections, labels: labels,
+          sections: sections,
+          labels: typed_edge_labels(edge, raw_source, raw_target),
           path: section_path(sections.first),
           trigger: edge.dig(:metadata, :trigger),
           guard_condition: edge.dig(:metadata, :guard_condition)
         )
+      end
+
+      def typed_edge_labels(edge, source, target)
+        label = (edge[:labels] || []).first
+        return [] unless label
+
+        geometry = self.class.transition_label_geometry(
+          source, target, label, small_font_size
+        )
+        [Label.new(**geometry)]
       end
 
       def typed_sections(edge, source, target)
@@ -257,17 +287,25 @@ module Sirena
         target_point = point(self.class.center(target))
         sections = edge[:sections]
         unless sections&.any?
-          return [Section.new(start_point: source_point,
-                              end_point: target_point)]
+          return [straight_section(source_point, target_point)]
         end
 
         sections.map do |section|
-          Section.new(
-            start_point: point(section[:startPoint]) || source_point,
-            end_point: point(section[:endPoint]) || target_point,
-            bend_points: (section[:bendPoints] || []).map { |item| point(item) },
-          )
+          typed_section(section, source_point, target_point)
         end
+      end
+
+      def straight_section(source_point, target_point)
+        Section.new(start_point: source_point, end_point: target_point)
+      end
+
+      def typed_section(section, source_point, target_point)
+        bends = (section[:bendPoints] || []).map { |item| point(item) }
+        Section.new(
+          start_point: point(section[:startPoint]) || source_point,
+          end_point: point(section[:endPoint]) || target_point,
+          bend_points: bends,
+        )
       end
 
       def section_path(section)

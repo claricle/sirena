@@ -10,7 +10,9 @@ module Sirena
       # @param scene [Layout::StateDiagram::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        scene = Layout::StateDiagram.from_graph(scene, theme: theme) if scene.is_a?(Hash)
+        if scene.is_a?(Hash)
+          scene = Layout::StateDiagram.from_graph(scene, theme: theme)
+        end
         svg = create_document(scene)
         render_transitions(scene, svg)
         render_states(scene, svg)
@@ -273,10 +275,12 @@ module Sirena
         scene.edges.first
       end
 
-      def current_state_or(x, y, width, height, shape_type)
+      def current_state_or(x_position, y_position, width, height, shape_type)
         return @current_state if @current_state
 
-        values = { x: x, y: y, width: width, height: height }
+        values = {
+          x: x_position, y: y_position, width: width, height: height
+        }
         Layout::StateDiagram::Node.new(
           shape_type: shape_type,
           **Layout::StateDiagram.shape_geometry(values, shape_type),
