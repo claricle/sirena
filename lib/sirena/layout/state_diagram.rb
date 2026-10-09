@@ -266,7 +266,7 @@ module Sirena
           id: edge[:id], source: source.id, target: target.id,
           sections: sections,
           labels: typed_edge_labels(edge, raw_source, raw_target),
-          path: section_path(sections.first),
+          path: sections_path(sections),
           trigger: edge.dig(:metadata, :trigger),
           guard_condition: edge.dig(:metadata, :guard_condition)
         )
@@ -312,6 +312,10 @@ module Sirena
         self.class.path_data(
           section.start_point, section.end_point, section.bend_points
         )
+      end
+
+      def sections_path(sections)
+        sections.map { |section| section_path(section) }.join(" ")
       end
 
       def point(value)

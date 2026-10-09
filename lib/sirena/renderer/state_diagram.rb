@@ -10,7 +10,11 @@ module Sirena
       # @param scene [Layout::StateDiagram::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        svg = create_document(scene)
+        svg = if scene.is_a?(Layout::StateDiagram::Scene)
+                typed_document(scene)
+              else
+                create_document(scene)
+              end
         render_transitions(scene, svg)
         render_states(scene, svg)
         svg
@@ -100,11 +104,12 @@ module Sirena
 
       def calculate_transition_path(source, target, transition)
         if transition.is_a?(Layout::StateDiagram::Edge)
-          section = transition.sections.first
-          return create_path_with_bends(
-            section.start_point.x, section.start_point.y,
-            section.end_point.x, section.end_point.y, section.bend_points
-          )
+          return transition.sections.map do |section|
+            create_path_with_bends(
+              section.start_point.x, section.start_point.y,
+              section.end_point.x, section.end_point.y, section.bend_points
+            )
+          end.join(" ")
         end
 
         source_point = point(Layout::StateDiagram.center(source))
@@ -172,6 +177,14 @@ module Sirena
       end
 
       private
+
+      def typed_document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = scene.width
+          svg.height = scene.height
+          svg.view_box = scene.view_box
+        end
+      end
 
       def compatibility_state_shape(state_type, arguments)
         case state_type
