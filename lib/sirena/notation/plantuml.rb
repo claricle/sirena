@@ -4,10 +4,12 @@ require_relative "../../sirena"
 require_relative "plantuml/parser"
 require_relative "plantuml/layout"
 require_relative "plantuml/renderer"
+require_relative "plantuml/sequence"
 
 module Sirena
   module Notation
-    # The PlantUML notation, class diagrams only.
+    # The PlantUML notation: class diagrams, and sequence diagrams in
+    # {Sequence}.
     #
     # Not loaded by `require "sirena"`: a consumer requires this file, which
     # is how an external notation is meant to arrive (10a, "Discovery").
@@ -43,7 +45,7 @@ module Sirena
 
       # @return [Array<Symbol>] diagram types, in display order
       def types
-        [:class_diagram].freeze
+        %i[class_diagram sequence_diagram].freeze
       end
 
       # @param source [String] any String, including binary or invalid UTF-8
@@ -52,12 +54,15 @@ module Sirena
         source.is_a?(String) && source.b.match?(OPENER)
       end
 
-      # Parses one class diagram and names the PlantUML-local back half of
-      # the rendering pipeline. Nothing in Engine knows this notation exists.
+      # Parses one class or sequence diagram and names the PlantUML-local back
+      # half of the rendering pipeline. Nothing in Engine knows this notation
+      # exists.
       #
       # @param source [String] PlantUML source
       # @return [Notation::Parsed]
       def parse(source)
+        return Sequence.parse(source) if Sequence.sequence?(source)
+
         Notation::Parsed.new(
           type: :class_diagram,
           diagram: Parser.new.parse(source),
