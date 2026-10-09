@@ -31,10 +31,6 @@ module Sirena
             process_header(diagram, tree) if tree.key?(:header)
             process_title(diagram, tree) if tree.key?(:title)
             process_show_data(diagram, tree) if tree.key?(:show_data)
-
-            if tree[:statements]
-              process_statements(diagram, tree[:statements])
-            end
           end
 
           diagram
@@ -73,12 +69,6 @@ module Sirena
 
           # showData flag is present if this key exists
           diagram.show_data = true
-        end
-
-        def process_statements(diagram, statements)
-          Array(statements).each do |stmt|
-            process_statement(diagram, stmt) if stmt.is_a?(Hash)
-          end
         end
 
         def process_statement(diagram, stmt)
