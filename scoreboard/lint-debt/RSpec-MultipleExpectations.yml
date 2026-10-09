@@ -126,7 +126,7 @@ rows:
 - file: spec/sirena/parser/flowchart_subgraph_ownership_spec.rb
   count: 12
 - file: spec/sirena/parser/flowchart_subgraph_spec.rb
-  count: 17
+  count: 16
 - file: spec/sirena/parser/gantt_spec.rb
   count: 13
 - file: spec/sirena/parser/git_graph_spec.rb
