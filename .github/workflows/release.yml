@@ -1,11 +1,11 @@
-# Detached from Cimas: this tracked file is authoritative. No Cimas
-# configuration is tracked in this repo, so nothing regenerates it; edit it
-# here. Bump procedure for the pinned reusable workflow: see README.md.
+# Detached from Cimas: this tracked file is authoritative. The complete
+# release implementation is repository-owned; do not delegate publishing to
+# an external reusable workflow.
 name: release
 
 permissions:
+  checks: read
   contents: write
-  packages: write
 
 on:
   workflow_dispatch:
@@ -21,6 +21,8 @@ jobs:
     name: changelog preflight
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      target_version: ${{ steps.target.outputs.value }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
       - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
@@ -29,12 +31,79 @@ jobs:
       - run: ruby scripts/check_changelog.rb "$NEXT_VERSION"
         env:
           NEXT_VERSION: ${{ inputs.next_version }}
+      - id: target
+        name: resolve target version
+        run: |
+          target=$(ruby -r ./scripts/check_changelog -e \
+            'puts Sirena::ChangelogCheck.target_version(ARGV.fetch(0), Sirena::ChangelogCheck.current_version("lib/sirena/version.rb"))' \
+            "$NEXT_VERSION")
+          echo "value=$target" >> "$GITHUB_OUTPUT"
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
 
   release:
+    name: publish gem
     needs: [preflight]
-    uses: metanorma/ci/.github/workflows/rubygems-release.yml@875ae77e781264728ec8447c11b23d3335b68d6d  # main
-    with:
-      next_version: ${{ inputs.next_version }}
-    secrets:
-      rubygems-api-key: ${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}
-      pat_token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_VERSION: ${{ inputs.next_version }}
+      TARGET_VERSION: ${{ needs.preflight.outputs.target_version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+
+      - name: require the checked main head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          gh api "repos/$GITHUB_REPOSITORY/commits/$main_sha/check-runs?per_page=100" \
+            > "$RUNNER_TEMP/check-runs.json"
+          ruby scripts/check_release_source.rb checked-main \
+            "$GITHUB_SHA" "$main_sha" "$RUNNER_TEMP/check-runs.json"
+
+      - name: prepare version-only release commit
+        run: |
+          current=$(ruby -r ./scripts/check_changelog -e \
+            'puts Sirena::ChangelogCheck.current_version("lib/sirena/version.rb")')
+          if [ "$current" != "$TARGET_VERSION" ]; then
+            ruby scripts/check_release_source.rb write-version "$TARGET_VERSION"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/sirena/version.rb
+            git commit -m "bump version to $TARGET_VERSION"
+          fi
+          git diff --name-only "$GITHUB_SHA"..HEAD > "$RUNNER_TEMP/release-paths"
+          ruby scripts/check_release_source.rb version-only \
+            "$TARGET_VERSION" "$NEXT_VERSION" "$RUNNER_TEMP/release-paths"
+
+      - name: build gem
+        run: gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"
+
+      - name: push version commit and tag
+        run: |
+          tag="v$TARGET_VERSION"
+          if git rev-parse --verify --quiet "refs/tags/$tag"; then
+            test "$(git rev-list -n 1 "$tag")" = "$(git rev-parse HEAD)"
+          else
+            git tag -a "$tag" -m "Release $tag"
+          fi
+          git push --atomic origin HEAD:main "refs/tags/$tag"
+
+      - name: publish gem
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}
+        run: |
+          mkdir -p "$HOME/.gem"
+          printf '%s\n' '---' ":rubygems_api_key: $RUBYGEMS_API_KEY" > "$HOME/.gem/credentials"
+          chmod 0600 "$HOME/.gem/credentials"
+          gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"
+
+      - name: remove publishing credentials
+        if: always()
+        run: rm -f "$HOME/.gem/credentials"

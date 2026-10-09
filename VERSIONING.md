@@ -42,10 +42,11 @@ plugin shape becomes public only when this file lists it.
    `[X.Y.Z] - YYYY-MM-DD` and adds an empty `[Unreleased]`. A PR that wants a
    release says so in its body. No PR edits `lib/sirena/version.rb`.
 3. The maintainer dispatches the `release` workflow (`workflow_dispatch`) with
-   `next_version`. The bot bumps `lib/sirena/version.rb`, tags and pushes the
-   gem.
+   `next_version`. Repository-owned steps verify the checked `main` head, bump
+   only `lib/sirena/version.rb`, build the gem, push that commit and its tag
+   atomically, and publish with the repository's RubyGems API key.
 4. The changelog preflight (`scripts/check_changelog.rb <next_version>`) must
-   pass before the delegated release job starts. It is a prerequisite job in
+   pass before the publishing job starts. It is a prerequisite job in
    `release.yml`, so a missing or empty release section stops the workflow
    before any publishing logic runs.
 
@@ -61,10 +62,12 @@ checked bump PR contradicts the convention that no PR bumps a version.
 Conditions of the bypass:
 
 - Bypass actor: the release workflow's identity only, on the `main` ruleset.
-- The release job first asserts that the `main` head it is bumping has both
-  lane aggregators green (the checks 19a names) and that the bump commit changes
-  `lib/sirena/version.rb` and nothing else. Either assertion failing aborts
-  before the push.
+- The release job first uses the GitHub checks API to assert that the workflow
+  source is the current `main` head and that this exact SHA has successful
+  `fast-lane` and `full-lane` checks. It then uses
+  `scripts/check_release_source.rb` to assert that the generated bump commit
+  changes `lib/sirena/version.rb` and nothing else and contains the requested
+  target version. Either assertion failing aborts before the push.
 - Tag pushes made with `GITHUB_TOKEN` trigger no workflows; nothing downstream
   relies on them running.
 
@@ -80,9 +83,14 @@ without the local changelog preflight. CI still sends the independent
 `tests-passed` notification after its fast lane; tag pushes do not start a
 release.
 
+The tracked workflow contains the complete publishing implementation. It does
+not call a reusable workflow or install a release helper: its only external
+workflow actions are checkout and Ruby setup, both pinned to immutable commit
+SHAs. `skip` performs no version commit and publishes/tags the version already
+in `lib/sirena/version.rb`; use it to resume publishing if a prior run pushed
+the version commit and tag but failed during the RubyGems push.
+
 ## Open
 
-- Vendoring the delegated release workflow so its transitive action references
-  are pinned remains separate work in item 17.
 - Applying the branch-protection bypass: owner action.
 - Both pre-item-12 cuts: blocked on items 01 and 10/16 landing.
