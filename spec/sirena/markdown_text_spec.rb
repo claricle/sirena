@@ -675,6 +675,11 @@ RSpec.describe Sirena::MarkdownText do
       described_class::Run.new(text: text, bold: false, italic: false)
     end
 
+    def styled_runs
+      [described_class::Run.new(text: "abc", bold: true, italic: false),
+       described_class::Run.new(text: "defgh", bold: false, italic: true)]
+    end
+
     it "keeps every line when their visible text fits the budget" do
       lines = [[plain_run("one")], [plain_run("two")]]
 
@@ -682,10 +687,7 @@ RSpec.describe Sirena::MarkdownText do
     end
 
     it "cuts the first overflowing line while preserving each run's style" do
-      bold = described_class::Run.new(text: "abc", bold: true, italic: false)
-      italic = described_class::Run.new(
-        text: "defgh", bold: false, italic: true,
-      )
+      bold, italic = styled_runs
 
       expect(described_class.truncate_runs([[bold, italic]], 7))
         .to eq([[bold, italic.with(text: "d...")]])

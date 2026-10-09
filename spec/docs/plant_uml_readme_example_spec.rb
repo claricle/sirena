@@ -41,22 +41,18 @@ module PlantUmlReadmeExample
       Result.new(status:, stdout:, stderr:, svg:)
     end
   end
+
+  def facts(result)
+    document = REXML::Document.new(result.svg)
+    text = document.get_elements("//text").map(&:text)
+    [result.status.success?, result.stdout, result.stderr,
+     document.root.name, text.grep(/User|Account|owns/).sort]
+  end
 end
 
 RSpec.describe PlantUmlReadmeExample do
   it "uses the supported CLI notation-loading path to render valid SVG" do
-    result = described_class.render
-    document = REXML::Document.new(result.svg)
-    text = document.get_elements("//text").map(&:text)
-    facts = [
-      result.status.success?,
-      result.stdout,
-      result.stderr,
-      document.root.name,
-      text.grep(/User|Account|owns/).sort,
-    ]
-
-    expect(facts).to eq(
+    expect(described_class.facts(described_class.render)).to eq(
       [true, "", "", "svg", %w[Account User owns]],
     )
   end

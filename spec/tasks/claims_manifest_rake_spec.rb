@@ -18,29 +18,25 @@ module ClaimsManifestRake
   rescue SystemExit => e
     e.status
   end
+
+  def invoke_with_report(result)
+    with_rake_application do
+      load File.expand_path("../../tasks/claims_manifest.rake", __dir__)
+      allow(Sirena::ClaimsManifestCheck).to receive(:report!).and_return(result)
+      task_exit_status { Rake::Task["claims_manifest:check"].invoke }
+    end
+  end
 end
 
 RSpec.describe ClaimsManifestRake do
   include described_class
 
   it "fails the task when the manifest report is not clean" do
-    with_rake_application do
-      load File.expand_path("../../tasks/claims_manifest.rake", __dir__)
-      allow(Sirena::ClaimsManifestCheck).to receive(:report!).and_return(false)
-
-      status = task_exit_status { Rake::Task["claims_manifest:check"].invoke }
-      expect(status).not_to eq(0)
-    end
+    expect(invoke_with_report(false)).not_to eq(0)
   end
 
   it "passes the task when the manifest report is clean" do
-    with_rake_application do
-      load File.expand_path("../../tasks/claims_manifest.rake", __dir__)
-      allow(Sirena::ClaimsManifestCheck).to receive(:report!).and_return(true)
-
-      status = task_exit_status { Rake::Task["claims_manifest:check"].invoke }
-      expect(status).to eq(0)
-    end
+    expect(invoke_with_report(true)).to eq(0)
   end
 
   it "wires the check into the default rake task" do

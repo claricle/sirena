@@ -72,9 +72,8 @@ RSpec.describe Sirena::Diagram::StateDiagram do
 
     it "returns false when an embedded transition is invalid" do
       transition = Sirena::Diagram::StateTransition.new(from_id: "idle")
-      diagram = described_class.new(
-        states: [valid_state], transitions: [transition],
-      )
+      diagram = described_class.new(states: [valid_state],
+                                    transitions: [transition])
 
       expect(diagram.valid?).to be false
     end

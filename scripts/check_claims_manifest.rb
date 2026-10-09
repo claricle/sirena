@@ -18,7 +18,7 @@ module Sirena
       ":(exclude)TODO.foundation",
       ":(exclude)_site",
       ":(exclude)#{MANIFEST_RELPATH}",
-      ":(exclude)spec/scripts/check_claims_manifest_spec.rb",
+      ":(exclude)spec/sirena/claims_manifest_check_spec.rb",
     ].freeze
 
     module_function
@@ -37,46 +37,61 @@ module Sirena
     end
 
     def validate_row!(row, index, manifest_path)
-      unless row.is_a?(Hash)
-        raise ArgumentError, "#{manifest_path}: row #{index} is not a mapping"
-      end
+      context = "#{manifest_path}: row #{index}"
+      validate_mapping!(row, context)
+      validate_keys!(row, context)
+      validate_strings!(row, context)
+      validate_pr!(row, context)
+      validate_disposition!(row, context)
+      validate_claim!(row, context)
+    end
 
+    def validate_mapping!(row, context)
+      return if row.is_a?(Hash)
+
+      raise ArgumentError, "#{context} is not a mapping"
+    end
+
+    def validate_keys!(row, context)
       missing = REQUIRED_KEYS - row.keys
-      unless missing.empty?
-        raise ArgumentError,
-              "#{manifest_path}: row #{index} missing #{missing.join(', ')}"
-      end
+      raise ArgumentError, "#{context} missing #{missing.join(', ')}" if missing.any?
 
       unexpected = row.keys - REQUIRED_KEYS
-      unless unexpected.empty?
-        raise ArgumentError,
-              "#{manifest_path}: row #{index} has unknown keys " \
-              "#{unexpected.join(', ')}"
-      end
+      return if unexpected.empty?
 
-      invalid_strings = STRING_KEYS.reject do |key|
-        row[key].is_a?(String) && !row[key].strip.empty?
-      end
-      unless invalid_strings.empty?
-        raise ArgumentError,
-              "#{manifest_path}: row #{index} " \
-              "#{invalid_strings.join(', ')} must be non-empty strings"
-      end
+      raise ArgumentError, "#{context} has unknown keys #{unexpected.join(', ')}"
+    end
 
-      unless row["pr"].is_a?(Integer) && row["pr"].positive?
-        raise ArgumentError,
-              "#{manifest_path}: row #{index} pr must be a positive Integer"
-      end
-      unless DISPOSITIONS.include?(row["disposition"])
-        raise ArgumentError,
-              "#{manifest_path}: row #{index} has disposition " \
-              "#{row['disposition'].inspect}, " \
-              "want one of #{DISPOSITIONS.join(', ')}"
-      end
-      return unless row["claim"].include?("\n")
+    def validate_strings!(row, context)
+      invalid = STRING_KEYS.reject { |key| present_string?(row[key]) }
+      return if invalid.empty?
+
+      raise ArgumentError, "#{context} #{invalid.join(', ')} must be non-empty strings"
+    end
+
+    def present_string?(value)
+      value.is_a?(String) && !value.strip.empty?
+    end
+
+    def validate_pr!(row, context)
+      return if row["pr"].is_a?(Integer) && row["pr"].positive?
+
+      raise ArgumentError, "#{context} pr must be a positive Integer"
+    end
+
+    def validate_disposition!(row, context)
+      disposition = row["disposition"]
+      return if DISPOSITIONS.include?(disposition)
 
       raise ArgumentError,
-            "#{manifest_path}: row #{index} claim must not contain a newline"
+            "#{context} has disposition #{disposition.inspect}, " \
+            "want one of #{DISPOSITIONS.join(', ')}"
+    end
+
+    def validate_claim!(row, context)
+      return unless row["claim"].include?("\n")
+
+      raise ArgumentError, "#{context} claim must not contain a newline"
     end
 
     def problems(root: ".")
@@ -111,16 +126,19 @@ module Sirena
       warn "claims manifest check failed: #{e.message}"
       false
     else
-      if found.empty?
-        puts "claims manifest: clean"
-        true
-      else
-        messages = found.map do |problem|
-          "claims manifest check failed: #{problem}"
-        end
-        warn(*messages)
-        false
-      end
+      report_problems(found)
+    end
+
+    def report_problems(found)
+      return report_clean if found.empty?
+
+      warn(*found.map { |problem| "claims manifest check failed: #{problem}" })
+      false
+    end
+
+    def report_clean
+      puts "claims manifest: clean"
+      true
     end
   end
 end

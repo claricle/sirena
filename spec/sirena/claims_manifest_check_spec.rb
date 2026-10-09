@@ -62,6 +62,11 @@ module ClaimsManifestFixture
     FileUtils.mkdir_p(File.join(root, "scripts"))
     FileUtils.cp(source, File.join(root, "scripts"))
   end
+
+  def command_status(root)
+    command = [RbConfig.ruby, "scripts/check_claims_manifest.rb"]
+    Open3.capture3(*command, chdir: root).last
+  end
 end
 
 RSpec.describe Sirena::ClaimsManifestCheck do
@@ -200,9 +205,7 @@ RSpec.describe Sirena::ClaimsManifestCheck do
       git_repo("README.adoc" => "clean\n") do |root|
         install_checker(root)
         write_manifest(root, [removed_row])
-        command = [RbConfig.ruby, "scripts/check_claims_manifest.rb"]
-        _output, _error, status = Open3.capture3(*command, chdir: root)
-        expect(status).to be_success
+        expect(command_status(root)).to be_success
       end
     end
 
@@ -210,9 +213,7 @@ RSpec.describe Sirena::ClaimsManifestCheck do
       git_repo("README.adoc" => "16x faster batch processing\n") do |root|
         install_checker(root)
         write_manifest(root, [removed_row])
-        command = [RbConfig.ruby, "scripts/check_claims_manifest.rb"]
-        _output, _error, status = Open3.capture3(*command, chdir: root)
-        expect(status).not_to be_success
+        expect(command_status(root)).not_to be_success
       end
     end
   end

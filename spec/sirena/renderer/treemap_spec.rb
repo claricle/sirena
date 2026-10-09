@@ -13,6 +13,10 @@ RSpec.describe Sirena::Renderer::Treemap do
     children.each { |args| parent.add_child(Sirena::Diagram::TreemapNode.new(*args)) }
   end
 
+  def add_root_nodes(children)
+    children.each { |args| diagram.add_root_node(Sirena::Diagram::TreemapNode.new(*args)) }
+  end
+
   describe "#render" do
     context "with basic treemap" do
       it "renders simple treemap with one node" do
@@ -147,9 +151,7 @@ RSpec.describe Sirena::Renderer::Treemap do
       end
 
       it "skips nonpositive root nodes" do
-        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Positive", 10))
-        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Zero", 0))
-        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Negative", -2))
+        add_root_nodes([["Positive", 10], ["Zero", 0], ["Negative", -2]])
 
         layout = transform.to_graph(diagram)
 
