@@ -20,16 +20,37 @@ RSpec.describe SpecSupport::LayoutParity::ElementMatcher do
                           sirena: figure(*sirena_elements))
   end
 
-  def pair_keys(result)
-    result[:pairs].map { |pair| pair.map(&:key) }
+  def summary(result, attribute = :key)
+    pairs = result[:pairs].map { |pair| pair.map(&attribute) }
+    [pairs, result[:ambiguous_count], result[:failures]]
+  end
+
+  def failure(type, key, count, reference_count, sirena_count)
+    {
+      type: type, group: [:node, nil, key], match_by: :id,
+      count: count,
+      reference_count: reference_count, sirena_count: sirena_count
+    }
+  end
+
+  def scoped_elements(*parents)
+    parents.map { |parent| element("same", parent: parent) }
+  end
+
+  def duplicate_elements(prefix)
+    [element("same", label: "#{prefix} first"),
+     element("same", label: "#{prefix} second")]
+  end
+
+  def failure_types(result)
+    result[:failures].map { |entry| entry.values_at(:type, :group) }
   end
 
   it "matches semantic ids independently of source order" do
     result = match([element("a"), element("b")],
                    [element("b"), element("a")])
 
-    expect(pair_keys(result)).to eq([["a", "a"], ["b", "b"]])
-    expect(result.values_at(:ambiguous_count, :failures)).to eq([0, []])
+    expect(summary(result)).to eq([[["a", "a"], ["b", "b"]], 0, []])
   end
 
   it "uses labels when either side cannot expose a semantic id" do
@@ -40,81 +61,44 @@ RSpec.describe SpecSupport::LayoutParity::ElementMatcher do
   end
 
   it "keeps equal keys in different parent scopes separate" do
-    outer = element("same", parent: "outer")
-    inner = element("same", parent: "inner")
-    result = match([outer, inner],
-                   [element("same", parent: "inner"),
-                    element("same", parent: "outer")])
+    result = match(scoped_elements("outer", "inner"),
+                   scoped_elements("inner", "outer"))
 
-    expect(result[:pairs].map { |left, right| [left.parent, right.parent] })
+    expect(summary(result, :parent).first)
       .to eq([["outer", "outer"], ["inner", "inner"]])
   end
 
   it "pairs duplicate group members in source order and counts ambiguity" do
-    reference = [element("same", label: "reference first"),
-                 element("same", label: "reference second")]
-    sirena = [element("same", label: "sirena first"),
-              element("same", label: "sirena second")]
-    result = match(reference, sirena)
+    result = match(duplicate_elements("reference"),
+                   duplicate_elements("sirena"))
 
-    expect(result[:pairs].map { |pair| pair.map(&:label) })
-      .to eq([["reference first", "sirena first"],
-              ["reference second", "sirena second"]])
-    expect(result[:ambiguous_count]).to eq(2)
+    expect(summary(result, :label))
+      .to eq([[["reference first", "sirena first"],
+               ["reference second", "sirena second"]], 2, []])
   end
 
   it "pairs common duplicate members and reports unequal group counts" do
     result = match([element("same"), element("same")], [element("same")])
+    missing = failure(:missing, "same", 1, 2, 1)
 
-    expect(pair_keys(result)).to eq([["same", "same"]])
-    expect(result[:ambiguous_count]).to eq(1)
-    expect(result[:failures]).to eq(
-      [
-        {
-          type: :missing,
-          group: [:node, nil, "same"],
-          match_by: :id,
-          count: 1,
-          reference_count: 2,
-          sirena_count: 1,
-        },
-      ],
-    )
+    expect(summary(result)).to eq([[["same", "same"]], 1, [missing]])
   end
 
   it "reports missing and extra groups in their respective directions" do
     result = match([element("common"), element("missing")],
                    [element("common"), element("extra")])
+    expected = [failure(:missing, "missing", 1, 1, 0),
+                failure(:extra, "extra", 1, 0, 1)]
 
-    expect(result[:failures]).to eq(
-      [
-        {
-          type: :missing,
-          group: [:node, nil, "missing"],
-          match_by: :id,
-          count: 1,
-          reference_count: 1,
-          sirena_count: 0,
-        },
-        {
-          type: :extra,
-          group: [:node, nil, "extra"],
-          match_by: :id,
-          count: 1,
-          reference_count: 0,
-          sirena_count: 1,
-        },
-      ],
-    )
+    expect(result[:failures]).to eq(expected)
   end
 
   it "never matches equal keys across element kinds" do
     result = match([element("same", kind: :node)],
                    [element("same", kind: :cluster)])
+    failures = [[:missing, [:node, nil, "same"]],
+                [:extra, [:cluster, nil, "same"]]]
 
-    expect(result[:pairs]).to be_empty
-    expect(result[:failures].map { |failure| failure.values_at(:type, :group) })
-      .to eq([[:missing, [:node, nil, "same"]],
-              [:extra, [:cluster, nil, "same"]]])
+    expect([result[:pairs], failure_types(result)]).to eq([[], failures])
   end
 end
