@@ -42,6 +42,31 @@ RSpec.describe Sirena::Renderer::Kanban do
     Struct.new(:colors, :typography).new(colors, typography)
   end
 
+  def fallback_styles
+    ['fill="#f3f4f6"', 'stroke="#d1d5db"', 'fill="#3b82f6"',
+     'fill="#1f2937"', 'font-family="Arial, sans-serif"']
+  end
+
+  def metadata_texts
+    texts = REXML::XPath.match(parsed, "//text").filter_map(&:text)
+    texts.grep(/Assigned|Ticket|Story_points|\A5\z/)
+  end
+
+  def themed_xml
+    described_class.new(theme: custom_theme).render(layout).to_xml
+  end
+
+  def fallback_xml
+    described_class.new(theme: Sirena::Theme.new).render(layout).to_xml
+  end
+
+  def document_geometry
+    document = parsed.root
+    background = REXML::XPath.first(parsed, "//rect")
+    [document.attributes["width"], document.attributes["height"],
+     background.attributes["x"], background.attributes["y"]]
+  end
+
   describe "rendering branches" do
     it "omits the card-count badge for an empty column" do
       badge_rects = REXML::XPath.match(parsed, "//rect[@width='20.0']")
@@ -61,16 +86,12 @@ RSpec.describe Sirena::Renderer::Kanban do
         metadata: { assigned: nil, ticket: "", story_points: 5 },
         has_metadata: true,
       )
-      texts = REXML::XPath.match(parsed, "//text").filter_map(&:text)
-      metadata_texts = texts.grep(/Assigned|Ticket|Story_points|\A5\z/)
 
       expect(metadata_texts).to eq(["Story_points:", "5"])
     end
 
     it "uses theme colors and typography where the theme defines them" do
       cards << card(metadata: { assigned: "Alice" }, has_metadata: true)
-      themed_renderer = described_class.new(theme: custom_theme)
-      themed_xml = themed_renderer.render(layout).to_xml
 
       expect(themed_xml).to include(
         'fill="#101010"', 'fill="#202020"', 'fill="#303030"',
@@ -80,22 +101,12 @@ RSpec.describe Sirena::Renderer::Kanban do
 
     it "uses fallback styles when the theme omits them" do
       cards << card
-      fallback = described_class.new(theme: Sirena::Theme.new).render(layout).to_xml
 
-      expect(fallback).to include(
-        'fill="#f3f4f6"', 'stroke="#d1d5db"',
-        'fill="#3b82f6"', 'fill="#1f2937"',
-        'font-family="Arial, sans-serif"'
-      )
+      expect(fallback_xml).to include(*fallback_styles)
     end
 
     it "adds forty pixels of document padding and offsets board geometry" do
-      document = parsed.root
-      background = REXML::XPath.first(parsed, "//rect")
-
-      expect([document.attributes["width"], document.attributes["height"],
-              background.attributes["x"], background.attributes["y"]])
-        .to eq(%w[280.0 230.0 40.0 40.0])
+      expect(document_geometry).to eq(%w[280.0 230.0 40.0 40.0])
     end
   end
 end
