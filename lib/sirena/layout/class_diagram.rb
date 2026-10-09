@@ -379,14 +379,14 @@ module Sirena
 
       def typed_edge(edge, source, target)
         sections = typed_sections(edge, source, target)
-        from, to = section_endpoints(sections)
-        markers, dashed = typed_edge_style(edge, from, to)
+        terminals = section_terminals(sections)
+        markers, dashed = typed_edge_style(edge, terminals)
 
         Edge.new(
           id: edge[:id], source: source[:id], target: target[:id],
           sections: sections,
           markers: markers,
-          labels: positioned_labels(edge[:labels], from, to),
+          labels: positioned_terminal_labels(edge, terminals),
           dashed: dashed
         )
       end
@@ -423,28 +423,38 @@ module Sirena
         { x: normalized_coordinate(value.x), y: normalized_coordinate(value.y) }
       end
 
-      def section_endpoints(sections)
-        [
-          coordinate_hash(sections.first.start_point),
-          coordinate_hash(sections.last.end_point),
-        ]
+      def section_terminals(sections)
+        first = sections.first
+        last = sections.last
+        source_next = first.bend_points.first || first.end_point
+        target_previous = last.bend_points.last || last.start_point
+        {
+          source: coordinate_hash(first.start_point),
+          source_next: coordinate_hash(source_next),
+          target_previous: coordinate_hash(target_previous),
+          target: coordinate_hash(last.end_point),
+        }
       end
 
       def normalized_coordinate(value)
         value.to_i == value ? value.to_i : value
       end
 
-      def typed_edge_style(edge, from, to)
-        edge_style(from, to, edge[:metadata] || {})
+      def typed_edge_style(edge, terminals)
+        edge_style(terminals, edge[:metadata] || {})
       end
 
-      def edge_style(from, to, metadata)
+      def positioned_terminal_labels(edge, terminals)
+        positioned_labels(edge[:labels], terminals[:source], terminals[:target])
+      end
+
+      def edge_style(terminals, metadata)
         type = metadata[:relationship_type] || "association"
         mixed = metadata[:start_marker] || metadata[:end_marker]
         markers = if mixed
-                    mixed_markers(from, to, metadata)
+                    mixed_markers(terminals, metadata)
                   else
-                    relationship_markers(from, to, type)
+                    relationship_markers(terminals, type)
                   end
         [markers, mixed ? metadata[:dashed] : type == "dependency"]
       end
@@ -493,21 +503,41 @@ module Sirena
         ]
       end
 
-      def mixed_markers(from, to, metadata)
+      def mixed_markers(terminals, metadata)
         [
-          marker_at(from, to, metadata[:start_marker]),
-          marker_at(to, from, metadata[:end_marker]),
+          marker_at(
+            terminals[:source], terminals[:source_next],
+            metadata[:start_marker]
+          ),
+          marker_at(
+            terminals[:target], terminals[:target_previous],
+            metadata[:end_marker]
+          ),
         ].compact
       end
 
-      def relationship_markers(from, to, type)
-        marker = case type
-                 when "inheritance" then triangle_marker(from, to, true)
-                 when "realization" then triangle_marker(from, to, false)
-                 when "composition" then diamond_marker(from, to, true)
-                 when "aggregation" then diamond_marker(from, to, false)
-                 end
+      def relationship_markers(terminals, type)
+        marker = terminal_marker(terminals, type)
         marker ? [marker] : []
+      end
+
+      def terminal_marker(terminals, type)
+        case type
+        when "inheritance" then target_triangle(terminals, true)
+        when "realization" then target_triangle(terminals, false)
+        when "composition" then source_diamond(terminals, true)
+        when "aggregation" then source_diamond(terminals, false)
+        end
+      end
+
+      def target_triangle(terminals, filled)
+        triangle_marker(
+          terminals[:target_previous], terminals[:target], filled
+        )
+      end
+
+      def source_diamond(terminals, filled)
+        diamond_marker(terminals[:source], terminals[:source_next], filled)
       end
 
       def marker_at(point, away_from, type)
