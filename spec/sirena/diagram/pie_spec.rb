@@ -3,6 +3,11 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::Pie do
+  subject(:pie) { described_class.new }
+
+  let(:apples) { Sirena::Diagram::PieSlice.new(label: "Apples", value: 25) }
+  let(:oranges) { Sirena::Diagram::PieSlice.new(label: "Oranges", value: 75) }
+
   describe Sirena::Diagram::PieSlice do
     subject(:slice) { described_class.new(label: "Apples", value: 25) }
 
@@ -36,11 +41,6 @@ RSpec.describe Sirena::Diagram::Pie do
       expect(slice.percentage(0)).to eq(0.0)
     end
   end
-
-  subject(:pie) { described_class.new }
-
-  let(:apples) { Sirena::Diagram::PieSlice.new(label: "Apples", value: 25) }
-  let(:oranges) { Sirena::Diagram::PieSlice.new(label: "Oranges", value: 75) }
 
   it "identifies itself as a pie diagram" do
     expect(pie.diagram_type).to eq(:pie)

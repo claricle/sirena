@@ -3,6 +3,11 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::Sankey do
+  subject(:diagram) { described_class.new }
+
+  let(:first_flow) { Sirena::Diagram::SankeyFlow.new("source", "middle", 4) }
+  let(:second_flow) { Sirena::Diagram::SankeyFlow.new("middle", "sink", 3) }
+
   describe Sirena::Diagram::SankeyNode do
     it "uses the identifier when the label is blank" do
       node = described_class.new("source", "")
@@ -38,11 +43,6 @@ RSpec.describe Sirena::Diagram::Sankey do
       expect(described_class.new("source", "target", 1)).not_to be_self_loop
     end
   end
-
-  subject(:diagram) { described_class.new }
-
-  let(:first_flow) { Sirena::Diagram::SankeyFlow.new("source", "middle", 4) }
-  let(:second_flow) { Sirena::Diagram::SankeyFlow.new("middle", "sink", 3) }
 
   it "reports its diagram type" do
     expect(diagram.diagram_type).to eq(:sankey)

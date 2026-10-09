@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/diagram/gantt"
 
 RSpec.describe Sirena::Diagram::Gantt do
+  subject(:gantt) { described_class.new }
+
   describe Sirena::Diagram::GanttTask do
     subject(:task) { described_class.new }
 
@@ -30,8 +32,6 @@ RSpec.describe Sirena::Diagram::Gantt do
       expect([section.name, section.tasks]).to eq(["Delivery", []])
     end
   end
-
-  subject(:gantt) { described_class.new }
 
   it "starts with Mermaid's default date format and empty collections" do
     expect([gantt.date_format, gantt.sections, gantt.excludes])

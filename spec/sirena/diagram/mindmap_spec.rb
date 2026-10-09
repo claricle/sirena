@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/diagram/mindmap"
 
 RSpec.describe Sirena::Diagram::Mindmap do
+  subject(:mindmap) { described_class.new }
+
   describe Sirena::Diagram::Mindmap::MindmapNode do
     subject(:root) { described_class.new(id: "root", content: "Root") }
 
@@ -24,8 +26,6 @@ RSpec.describe Sirena::Diagram::Mindmap do
       expect(root.leaf?).to be(false)
     end
   end
-
-  subject(:mindmap) { described_class.new }
 
   it "records every node and promotes only a level-zero node to root" do
     root = Sirena::Diagram::Mindmap::MindmapNode.new(id: "root")

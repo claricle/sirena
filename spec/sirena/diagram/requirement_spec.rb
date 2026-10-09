@@ -2,58 +2,60 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram::RequirementElement do
-  it "appends a class name" do
-    element = described_class.new
+RSpec.describe Sirena::Diagram do
+  describe Sirena::Diagram::RequirementElement do
+    it "appends a class name" do
+      element = described_class.new
 
-    element.add_class("external")
+      element.add_class("external")
 
-    expect(element.classes).to eq(["external"])
-  end
-end
-
-RSpec.describe Sirena::Diagram::RequirementRelationship do
-  it "accepts a supported relationship type" do
-    relationship = described_class.new(type: "contains")
-
-    expect(relationship.valid?).to be(true)
+      expect(element.classes).to eq(["external"])
+    end
   end
 
-  it "rejects an unsupported relationship type" do
-    relationship = described_class.new(type: "depends")
+  describe Sirena::Diagram::RequirementRelationship do
+    it "accepts a supported relationship type" do
+      relationship = described_class.new(type: "contains")
 
-    expect(relationship.valid?).to be(false)
-  end
-end
+      expect(relationship.valid?).to be(true)
+    end
 
-RSpec.describe Sirena::Diagram::RequirementStyle do
-  it "appends a property" do
-    style = described_class.new
+    it "rejects an unsupported relationship type" do
+      relationship = described_class.new(type: "depends")
 
-    style.add_property("opacity:0.5")
-
-    expect(style.properties).to eq(["opacity:0.5"])
-  end
-end
-
-RSpec.describe Sirena::Diagram::RequirementClass do
-  it "appends a property" do
-    requirement_class = described_class.new
-
-    requirement_class.add_property("fill:red")
-
-    expect(requirement_class.properties).to eq(["fill:red"])
-  end
-end
-
-RSpec.describe Sirena::Diagram::Requirement do
-  subject(:diagram) { described_class.new }
-
-  it "identifies itself as a requirement diagram" do
-    expect(diagram.diagram_type).to eq(:requirement)
+      expect(relationship.valid?).to be(false)
+    end
   end
 
-  it "is valid without top-level content" do
-    expect(diagram.valid?).to be(true)
+  describe Sirena::Diagram::RequirementStyle do
+    it "appends a property" do
+      style = described_class.new
+
+      style.add_property("opacity:0.5")
+
+      expect(style.properties).to eq(["opacity:0.5"])
+    end
+  end
+
+  describe Sirena::Diagram::RequirementClass do
+    it "appends a property" do
+      requirement_class = described_class.new
+
+      requirement_class.add_property("fill:red")
+
+      expect(requirement_class.properties).to eq(["fill:red"])
+    end
+  end
+
+  describe Sirena::Diagram::Requirement do
+    subject(:diagram) { described_class.new }
+
+    it "identifies itself as a requirement diagram" do
+      expect(diagram.diagram_type).to eq(:requirement)
+    end
+
+    it "is valid without top-level content" do
+      expect(diagram.valid?).to be(true)
+    end
   end
 end
