@@ -21,4 +21,9 @@ Dir.glob("tasks/**/*.rake").each { |r| load r }
 # to run wherever `rake` does, or a refactor can drop 200 cases and nothing
 # notices. Measured: the whole corpus (1997 cases) renders in ~4s, so this
 # adds negligible time to the default task.
-task default: [:spec, :benchmark, "corpus:check"]
+task default: [
+  :spec,
+  :benchmark,
+  "corpus:check",
+  "claims_manifest:check",
+]

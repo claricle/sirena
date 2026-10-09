@@ -1,0 +1,118 @@
+# Decided documentation claims consumed by Foundation items 14 and 15.
+# Every row must have a final disposition and reproducible evidence. The
+# checker treats a removed claim as an exact substring that must stay absent
+# from tracked source outside the inventory/plan/build-output exclusions.
+
+- claim: "Sirena currently supports all diagram type languages defined in Mermaid."
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "supports all 24 Mermaid diagram types with complete parser, transform,"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "achieved ~80% code reduction during migration"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Code reduction** of ~80% compared to previous lexer-based approach"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Sirena implements comprehensive test coverage against the official mermaid-js"
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "The test suite generates 302 SVG reference fixtures using mermaid-cli v11.12.0."
+  file: "README.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "16x faster batch processing than Mermaid.js with browser"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "8x lower memory usage than Mermaid.js"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "|**16x faster**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "|**40x faster**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "|**8x less**"
+  file: "docs/_pages/compatibility.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "|Rails (native), Jekyll (native), Sinatra, Padrino"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Native integration with Rails, Jekyll, and Ruby applications"
+  file: "docs/_pages/comparison.adoc, docs/index.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Rails Integration**: Native Ruby integration with Rails helpers"
+  file: "docs/index.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Jekyll Support**: Static site generation compatibility"
+  file: "docs/index.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "|19+"
+  file: "docs/_pages/comparison.adoc"
+  disposition: "removed"
+  evidence: "ruby scripts/check_claims_manifest.rb"
+  pr: 106
+
+- claim: "Sirena registers 24 diagram types (replacing the former 19/19+ claims)"
+  file: "README.adoc, docs/_pages/comparison.adoc, docs/_pages/compatibility.adoc"
+  disposition: "corrected"
+  evidence: "bundle exec ruby -Ilib -e \"require 'sirena'; abort unless Sirena::DiagramRegistry.types.size == 24\""
+  pr: 106
+
+- claim: "Metanorma-oriented output means self-contained SVG validated with svg_conform"
+  file: "README.adoc"
+  disposition: "corrected"
+  evidence: "bundle exec rspec spec/svg_conformance_spec.rb"
+  pr: 106
+
+- claim: "benchmark:quick and benchmark:compare run; the report is a dated single-machine measurement"
+  file: "tasks/benchmark.rake, docs/PERFORMANCE_BENCHMARK.adoc"
+  disposition: "verified"
+  evidence: "bundle exec rspec spec/tasks/benchmark_rake_spec.rb spec/docs/performance_benchmark_truth_spec.rb"
+  pr: 216
