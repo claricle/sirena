@@ -4,15 +4,20 @@ require "spec_helper"
 
 # The geometry half of the link work. The parser's half — which tokens
 # are a link at all — is `spec/sirena/parser/flowchart_link_spec.rb`.
-# These examples read the drawn SVG back, and several hand a graph
-# straight to the renderer, so they belong to the renderer, not to the
-# parser that happens to feed it.
+# These examples read the drawn SVG back. Hand-positioned graphs are first
+# converted to a typed Scene, so they exercise the production boundary rather
+# than handing a Hash to the renderer.
 #
 # All single-user (this file only). `edge_group`/`edge_path` need example
 # state (`expect`), so the whole set lives in one `include`d module rather
 # than split module_function/included — nothing here is called at
 # describe-body level to generate examples, only from inside `it` blocks.
 module FlowchartLinkSpecHelpers
+  def render_graph(graph, theme: Sirena::Theme::Registry.get(:default))
+    scene = Sirena::Layout::Flowchart.from_graph(graph, theme: theme)
+    Sirena::Renderer::Flowchart.new(theme: theme).render(scene)
+  end
+
   # One node's rect, read off the node it belongs to rather than off
   # whichever rect happens to come first in the document. A coordinate may
   # be negative — a loop thrown up or left from a node near the origin
@@ -308,7 +313,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "cross" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       arms = xml.scan(
         /<line[^>]*x1="(-?[\d.]+)"[^>]*y1="(-?[\d.]+)"[^>]*
          x2="(-?[\d.]+)"[^>]*y2="(-?[\d.]+)"/x,
@@ -349,7 +354,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
           edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                     metadata: { arrow_type: "arrow" } }],
         }
-        xml = described_class.new.render(graph).to_xml
+        xml = render_graph(graph).to_xml
 
         # The edge group, not the document: a rhombus and a hexagon NODE
         # are drawn as polygons too, so asserting against the whole thing
@@ -369,7 +374,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
           edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                     metadata: { arrow_type: "arrow" } }],
         }
-        xml = described_class.new.render(graph).to_xml
+        xml = render_graph(graph).to_xml
         group = xml[%r{<g id="edge-A_to_B".*?</g>}m]
         tip = group[/<polygon[^>]*points="([^"]*)"/, 1]
           .split.first.split(",").map(&:to_f)
@@ -393,7 +398,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
 
       expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<polygon")
       expect(xml).not_to include("NaN")
@@ -414,7 +419,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       tip_x, tip_y = xml[/<polygon[^>]*points="(-?[\d.]+),(-?[\d.]+)/]
         .match(/(-?[\d.]+),(-?[\d.]+)/).captures.map(&:to_f)
 
@@ -432,7 +437,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                   metadata: { arrow_type: "arrow" } }],
         layoutOptions: { "elk.direction" => "DOWN" },
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       corners = xml[/<path[^>]*d="([^"]*)"/, 1]
         .scan(/(-?[\d.]+) (-?[\d.]+)/).map { |_x, y| y.to_f }
 
@@ -449,7 +454,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "circle" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
 
       expect(xml[%r{<g id="edge-A_to_B".*?</g>}m]).to include("<circle")
       expect(xml).not_to include("NaN")
@@ -466,7 +471,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "cross" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       arms = xml[%r{<g id="edge-A_to_B".*?</g>}m]
         .scan(/<line[^>]*x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"/)
         .map { |c| c.map(&:to_f) }
@@ -493,7 +498,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                   labels: [{ text: "x" }],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       text = xml[%r{<g id="edge-A_to_A".*?</g>}m][/<text\b[^>]*>/].to_s
 
       expect(text).to start_with("<text")
@@ -572,7 +577,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                      labels: [{ text: "A" }] }],
         edges: [],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       group = xml[%r{<g id="node-A".*?</g>}m]
       x, y, width, height = group.match(
         /<rect[^>]*x="(-?[\d.]+)"[^>]*y="(-?[\d.]+)"[^>]*
@@ -618,7 +623,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                   sections: [{ bendPoints: [{ x: 220, y: 0 }] }],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
       tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
         .split.map { |pair| pair.split(",").map(&:to_f) }
@@ -640,7 +645,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       group = xml[%r{<g id="edge-A_to_B".*?</g>}m].to_s
       tip, *back = group[/<polygon[^>]*points="([^"]*)"/, 1]
         .split.map { |pair| pair.split(",").map(&:to_f) }
@@ -772,7 +777,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
                                             { x: 80, y: -10 }] }],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
 
       expect(path_points(xml)[1..2]).to eq([[80.0, 40.0], [80.0, 0.0]])
     end
@@ -1060,7 +1065,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         edges: [{ id: "A_to_A", sources: ["A"], targets: ["A"],
                   metadata: { arrow_type: "arrow" } }],
       }
-      xml = described_class.new.render(graph).to_xml
+      xml = render_graph(graph).to_xml
 
       expect(path_points(xml).map(&:last).max).to be > 20
     end

@@ -5,6 +5,11 @@ require "spec_helper"
 RSpec.describe Sirena::Renderer::Flowchart do
   let(:renderer) { described_class.new }
 
+  def render_graph(graph)
+    scene = Sirena::Layout::Flowchart.from_graph(graph, theme: renderer.theme)
+    renderer.render(scene)
+  end
+
   describe "#render" do
     let(:graph) do
       {
@@ -41,7 +46,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "renders graph to SVG document" do
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
@@ -49,7 +54,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "includes nodes in SVG" do
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       # Should have groups for nodes
       groups = svg.children.grep(Sirena::Svg::Group)
@@ -57,7 +62,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "renders rectangle nodes" do
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       # Find groups and check for rect children
       groups = svg.children.grep(Sirena::Svg::Group)
@@ -70,7 +75,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     it "renders circle nodes" do
       graph[:children][0][:metadata][:shape] = "circle"
 
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -80,7 +85,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "renders node labels as text elements" do
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -92,7 +97,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     end
 
     it "renders edges as paths" do
-      svg = renderer.render(graph)
+      svg = render_graph(graph)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -143,7 +148,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # type), and its padding constant is sirena's own, not mermaid's.
     { width: 40.0, height: 40.0, view_box: "0 0 40 40" }.each do |property, expected|
       it "sets #{property} to #{expected.inspect}" do
-        svg = renderer.render(empty_graph)
+        svg = render_graph(empty_graph)
 
         expect(svg.public_send(property)).to eq(expected)
       end
@@ -154,7 +159,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
     # is the only check that a future addition to `render` does not draw
     # something into a canvas meant to stay blank.
     it "draws no child elements" do
-      svg = renderer.render(empty_graph)
+      svg = render_graph(empty_graph)
 
       expect(svg.children).to be_empty
     end

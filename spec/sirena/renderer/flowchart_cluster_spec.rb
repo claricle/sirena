@@ -13,6 +13,11 @@ module FlowchartClusterSpecHelpers
     described_class.new.render(source)
   end
 
+  def render_graph(graph)
+    scene = Sirena::Layout::Flowchart.from_graph(graph, theme: renderer.theme)
+    renderer.render(scene)
+  end
+
   def cluster_ids(xml)
     xml.scan(/<g id="cluster-([^"]+)">/).flatten
   end
@@ -306,7 +311,7 @@ module FlowchartClusterSpecHelpers
   end
 
   def path_of(graph, edge_id)
-    xml = renderer.render(graph).to_xml
+    xml = render_graph(graph).to_xml
     xml[/<g id="edge-#{edge_id}">\s*<path[^>]*\bd="([^"]*)"/, 1]
   end
 
@@ -602,14 +607,14 @@ RSpec.describe Sirena::Engine do
     # Neither a box nor a node: it is a grouping shell, and only what it
     # holds is drawn. Checking the box alone left the node half untested.
     it "draws no box and no node for it" do
-      xml = renderer.render(graph).to_xml
+      xml = render_graph(graph).to_xml
 
       expect(xml).not_to include("cluster-outer")
       expect(xml).not_to include("node-outer")
     end
 
     it "still draws what it holds, offset by it" do
-      xml = renderer.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       rect = xml[/<g id="node-inner">\s*<rect[^>]*>/]
 
       # The container sits at 10,10 and the node at 5,5 inside it.
@@ -746,9 +751,9 @@ RSpec.describe Sirena::Engine do
     end
   end
 
-  # Trimming touches the renderer every diagram goes through, so these
-  # drive it directly with coordinates the fallback grid never makes.
-  describe "an edge drawn straight onto the renderer" do
+  # These hand-positioned graphs exercise coordinates the fallback grid never
+  # makes. They cross the same typed Layout-to-Renderer boundary as production.
+  describe "a hand-positioned edge converted to a Scene" do
     let(:renderer) do
       Sirena::Renderer::Flowchart.new(
         theme: Sirena::Theme::Registry.get(:default),
@@ -784,7 +789,7 @@ RSpec.describe Sirena::Engine do
       graph = { id: "g", children: [leaf_node, cluster_node],
                 edges: [{ id: "a_to_s", sources: %w[a], targets: %w[s],
                           metadata: { arrow_type: "arrow" } }] }
-      xml = renderer.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       path_end, head_tip = edge_geometry(xml, "a_to_s")
 
       expect(head_tip).to eq(path_end)
@@ -804,7 +809,7 @@ RSpec.describe Sirena::Engine do
       graph = { id: "g", children: [leaf_node, cluster_node],
                 edges: [{ id: "s_to_a", sources: %w[s], targets: %w[a],
                           metadata: { arrow_type: "arrow" } }] }
-      xml = renderer.render(graph).to_xml
+      xml = render_graph(graph).to_xml
       _, head_tip = edge_geometry(xml, "s_to_a")
       head_points = xml[%r{<g id="edge-s_to_a">.*?<polygon[^>]*\bpoints="([^"]*)"}m, 1]
         .split.map { |pair| pair.split(",").map(&:to_f) }
@@ -954,7 +959,7 @@ RSpec.describe Sirena::Engine do
       }
 
       cases.each do |name, (source, target)|
-        document = renderer.render(graph_between(source, target, edge))
+        document = render_graph(graph_between(source, target, edge))
 
         expect_exterior_route(document, source, target, name)
       end
@@ -989,7 +994,7 @@ RSpec.describe Sirena::Engine do
 
     it "keeps eighty units beyond the right and bottom maxima" do
       source = cluster("s", x: 0.0, y: 0.0, width: 100.0, height: 100.0)
-      document = renderer.render({ id: "g", children: [source], edges: [] })
+      document = render_graph({ id: "g", children: [source], edges: [] })
       min_x, min_y, width, height = document.view_box.split.map(&:to_f)
 
       expect([min_x, min_y]).to eq([0.0, 0.0])

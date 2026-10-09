@@ -6,14 +6,14 @@ module LayoutFlowchartSpecHelpers
   def node_width(theme_name)
     themed_transform = described_class.new
     themed_transform.theme = Sirena::Theme::Registry.get(theme_name)
-    themed_transform.to_graph(diagram)[:children].first[:width]
+    themed_transform.to_graph(diagram).children.first.width
   end
 
   def edge_label_width(typography)
     themed_transform = described_class.new
     themed_transform.theme = Sirena::Theme.new(typography: typography)
-    graph = themed_transform.to_graph(diagram)
-    graph[:edges].first[:labels].first[:width]
+    scene = themed_transform.to_graph(diagram)
+    scene.edges.first.labels.first.width
   end
 
   def label_width_for(font_size_normal)
@@ -26,7 +26,7 @@ module LayoutFlowchartSpecHelpers
     diagram = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
       d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: "A")
     end
-    themed_transform.to_graph(diagram)[:children].first[:labels].first[:width]
+    themed_transform.to_graph(diagram).children.first.labels.first.width
   end
 end
 
@@ -56,27 +56,30 @@ RSpec.describe Sirena::Layout::Flowchart do
       end
     end
 
-    it "converts diagram to graph structure" do
-      graph = transform.to_graph(diagram)
+    it "converts the diagram to a typed scene" do
+      scene = transform.to_graph(diagram)
 
-      expect(graph).to be_a(Hash)
-      expect(graph[:id]).to eq("flowchart")
-      expect(graph[:children]).to be_an(Array)
-      expect(graph[:edges]).to be_an(Array)
-      expect(graph[:layoutOptions]).to be_a(Hash)
+      expect(scene).to be_a(described_class::Scene)
+      expect(scene.id).to eq("flowchart")
+      expect(scene.children).to all(be_a(described_class::Node))
+      expect(scene.edges).to all(be_a(described_class::Edge))
+      expect(scene.width).to be > 0
+      expect(scene.height).to be > 0
     end
 
     it "creates nodes with dimensions" do
-      graph = transform.to_graph(diagram)
+      scene = transform.to_graph(diagram)
 
-      expect(graph[:children].length).to eq(2)
+      expect(scene.children.length).to eq(2)
 
-      node_a = graph[:children].find { |n| n[:id] == "A" }
+      node_a = scene.children.find { |node| node.id == "A" }
       expect(node_a).not_to be_nil
-      expect(node_a[:width]).to be > 0
-      expect(node_a[:height]).to be > 0
-      expect(node_a[:labels]).to be_an(Array)
-      expect(node_a[:labels].first[:text]).to eq("Start")
+      expect(node_a.width).to be > 0
+      expect(node_a.height).to be > 0
+      expect(node_a.labels).to all(be_a(described_class::Label))
+      expect(node_a.labels.first.text).to eq("Start")
+      expect(node_a.labels.first.x).to eq(node_a.center_x)
+      expect(node_a.labels.first.y).to eq(node_a.center_y)
     end
 
     # `assemble` attaches nested clusters before member nodes, and the
@@ -88,10 +91,10 @@ RSpec.describe Sirena::Layout::Flowchart do
                "n1\nn2\nn3\nend\n"
       model = Sirena::Parser::Flowchart.new.parse(source)
 
-      outer = transform.to_graph(model)[:children]
-        .find { |child| child[:id] == "outer" }
+      outer = transform.to_graph(model).children
+        .find { |child| child.id == "outer" }
 
-      expect(outer[:children].map { |child| child[:id] })
+      expect(outer.children.map(&:id))
         .to eq(%w[inner n1 n2 n3])
     end
 
@@ -114,12 +117,12 @@ RSpec.describe Sirena::Layout::Flowchart do
 
       expect(model).to be_valid
 
-      children = transform.to_graph(model)[:children]
-      labels = children.map { |child| child[:labels].first[:text] }
-      members = children.select { |child| child.dig(:metadata, :cluster) }
+      children = transform.to_graph(model).children
+      labels = children.map { |child| child.labels.first.text }
+      members = children.select(&:cluster)
         .to_h do |box|
-          title = box[:labels].first[:text]
-          held = box[:children].map { |node| node[:labels].first[:text] }
+          title = box.labels.first.text
+          held = box.children.map { |node| node.labels.first.text }
           [title, held]
         end
 
@@ -129,29 +132,41 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
 
     it "creates edges with metadata" do
-      graph = transform.to_graph(diagram)
+      scene = transform.to_graph(diagram)
 
-      expect(graph[:edges].length).to eq(1)
+      expect(scene.edges.length).to eq(1)
 
-      edge = graph[:edges].first
-      expect(edge[:sources]).to eq(["A"])
-      expect(edge[:targets]).to eq(["B"])
-      expect(edge[:metadata][:arrow_type]).to eq("arrow")
+      edge = scene.edges.first
+      expect(edge.source).to eq("A")
+      expect(edge.target).to eq("B")
+      expect(edge.arrow_type).to eq("arrow")
+      expect(edge.sections.first.start_point).to be_a(described_class::Point)
+      expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
 
-    it "sets layout options based on direction" do
-      graph = transform.to_graph(diagram)
+    it "places nodes in final canvas coordinates" do
+      node = transform.to_graph(diagram).children.first
 
-      options = graph[:layoutOptions]
-      expect(options["elk.algorithm"]).to eq("layered")
-      expect(options["elk.direction"]).to eq("DOWN")
+      expect(node.x).to eq(50.0)
+      expect(node.y).to eq(50.0)
     end
 
-    it "converts LR direction to RIGHT layout" do
-      diagram.direction = "LR"
-      graph = transform.to_graph(diagram)
+    it "flattens nested coordinates into the final canvas frame" do
+      graph = {
+        id: "flowchart", edges: [],
+        children: [
+          { id: "shell", x: 10, y: 20, width: 100, height: 80,
+            children: [
+              { id: "A", x: 5, y: 7, width: 30, height: 20,
+                labels: [{ text: "A" }], metadata: { shape: "rect" } },
+            ] },
+        ],
+      }
 
-      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
+      scene = described_class.from_graph(graph)
+      node = scene.children.first.children.first
+
+      expect(node).to have_attributes(x: 15.0, y: 27.0)
     end
 
     it "raises error for invalid diagram" do
@@ -232,8 +247,8 @@ RSpec.describe Sirena::Layout::Flowchart do
         )
 
         expect(described_class::DEFAULT_FONT_SIZE).to eq(16.0)
-        expect(no_typography.to_graph(diagram)[:children].first[:width])
-          .to eq(explicit_sixteen.to_graph(diagram)[:children].first[:width])
+        expect(no_typography.to_graph(diagram).children.first.width)
+          .to eq(explicit_sixteen.to_graph(diagram).children.first.width)
       end
     end
 
@@ -297,9 +312,9 @@ RSpec.describe Sirena::Layout::Flowchart do
         end
 
         expect do
-          graph = transform.to_graph(diagram)
-          graph[:children].first[:width]
-          graph[:edges].first[:labels].first[:width]
+          scene = transform.to_graph(diagram)
+          scene.children.first.width
+          scene.edges.first.labels.first.width
         end.not_to raise_error
       ensure
         Sirena::Theme::Registry.load_builtin_themes
@@ -314,11 +329,11 @@ RSpec.describe Sirena::Layout::Flowchart do
       model = Sirena::Diagram::Flowchart.new(direction: "TD").tap do |d|
         d.nodes << Sirena::Diagram::FlowchartNode.new(id: "A", label: text)
       end
-      transform.to_graph(model)[:children].first[:labels].first
+      transform.to_graph(model).children.first.labels.first
     end
 
     it "is sized instead of raising" do
-      expect(label[:width]).to be > 0
+      expect(label.width).to be > 0
     end
   end
 
@@ -332,11 +347,11 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
     let(:label) do
       model = Sirena::Parser::Flowchart.new.parse(source)
-      transform.to_graph(model)[:children].first[:labels].first
+      transform.to_graph(model).children.first.labels.first
     end
 
     it "is sized for the whole string drawn on one line" do
-      expect(label[:width]).to be_within(0.1).of(301.78)
+      expect(label.width).to be_within(0.1).of(301.78)
     end
   end
 end

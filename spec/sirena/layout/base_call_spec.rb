@@ -16,6 +16,16 @@ RSpec.describe Sirena::Layout::Base do
   let(:engine) { Sirena::Engine.new }
 
   describe "#call" do
+    it "dispatches the converted flowchart and a legacy layout through one entry point" do
+      flowchart = Sirena::Parser::Flowchart.new.parse("flowchart TD\nA-->B\n")
+
+      converted = Sirena::Layout::Flowchart.new.call(flowchart)
+      legacy = legacy_layout.call(diagram)
+
+      expect(converted).to be_a(Sirena::Layout::Flowchart::Scene)
+      expect(legacy).to be_a(Sirena::Layout::Legacy)
+    end
+
     it "returns a Scene bare from a converted layout" do
       expect(converted_layout.call(diagram, theme: Sirena::Theme::Registry.get(:high_contrast),
                                             today: Date.new(2001, 2, 3)))
