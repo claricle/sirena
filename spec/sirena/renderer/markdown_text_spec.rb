@@ -3,6 +3,17 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::MarkdownText do
+  describe ".assign_markdown_text" do
+    it "renders an empty parsed label as an empty text element" do
+      lines = Sirena::MarkdownText.parse_lines("")
+      text = Sirena::Svg::Text.new
+
+      described_class.assign_markdown_text(text, lines, x: 5)
+
+      expect([lines, text.to_xml]).to eq([[[]], "<text></text>"])
+    end
+  end
+
   describe ".build_markdown_tspans" do
     # A blank-line paragraph gap must not shift the following line down by
     # one extra line-height per blank `\n` — real mmdc renders zero

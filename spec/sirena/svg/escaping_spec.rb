@@ -46,6 +46,12 @@ RSpec.describe Sirena::Svg::Escaping do
     end
   end
 
+  describe ".attribute" do
+    it "omits an attribute whose value is nil" do
+      expect(described_class.attribute("stroke", nil)).to eq("")
+    end
+  end
+
   describe ".attributes" do
     it "drops a nil value rather than emitting an empty attribute" do
       expect(described_class.attributes([%w[fill red], ["stroke", nil]]))

@@ -129,6 +129,13 @@ RSpec.describe Sirena::Layout::Base do
 
       expect(legacy_layout.to_graph(diagram)).to eq(id: "root")
     end
+
+    it "returns a converted scene unchanged" do
+      scene = Sirena::Layout::Scene.new(width: 12, height: 34)
+      allow(converted_layout).to receive(:call).and_return(scene)
+
+      expect(converted_layout.to_graph(diagram)).to be(scene)
+    end
   end
 
   describe "Engine#transform_diagram" do
