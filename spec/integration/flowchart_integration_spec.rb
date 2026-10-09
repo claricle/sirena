@@ -18,13 +18,12 @@ RSpec.describe "Flowchart Integration" do
       expect(diagram.valid?).to be true
 
       # Transform
-      graph = transform.to_graph(diagram)
-      expect(graph).to be_a(Hash)
-      expect(graph[:children].length).to eq(2)
-      expect(graph[:edges].length).to eq(1)
+      scene = transform.to_graph(diagram)
+      expect(scene).to be_a(Sirena::Layout::Flowchart::Scene)
+      expect(scene.children.length).to eq(2)
+      expect(scene.edges.length).to eq(1)
 
-      # Render (without elkrb layout, just with graph structure)
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.children).not_to be_empty
     end
@@ -45,20 +44,23 @@ RSpec.describe "Flowchart Integration" do
       expect(diagram.find_node("B").shape).to eq("rounded")
       expect(diagram.find_node("C").shape).to eq("rhombus")
 
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+      scene = transform.to_graph(diagram)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
     it "handles different directions" do
-      source = "graph LR\nA-->B"
+      source = "graph LR\nA-->A"
 
       diagram = parser.parse(source)
       expect(diagram.direction).to eq("LR")
 
-      graph = transform.to_graph(diagram)
-      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
+      scene = transform.to_graph(diagram)
+      node = scene.children.first
+      bends = scene.edges.first.sections.first.bend_points
+
+      expect(bends.map(&:x)).to all(be > node.center_x)
     end
   end
 

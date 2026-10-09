@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sirena
-  module Renderer
+  module Layout
     # Works out where an edge's line runs between two boxes.
     #
     # This is geometry only: it takes two laid-out boxes and gives back
@@ -20,10 +20,10 @@ module Sirena
     # place it becomes anything else.
     #
     # @example Route an edge
-    #   points, label_ends = EdgeRouter.new.route(source, target, bends)
-    class EdgeRouter
-      # Rounded the way mermaid paints a cluster. The renderer draws the
-      # same radius, and an endpoint on a corner has to land on it.
+    #   points, label_ends = FlowchartEdgeRouter.new.route(source, target, bends)
+    class FlowchartEdgeRouter
+      # Rounded the way mermaid paints a cluster. The Scene carries the same
+      # radius, and an endpoint on a corner has to land on it.
       CLUSTER_CORNER = 5
 
       # Two boxes that touch add up to exactly one run between their
@@ -41,9 +41,8 @@ module Sirena
       ROUTE_EPSILON = 0.01
 
       # How far a degenerate loop reaches past the borders it leaves.
-      # The renderer's `calculate_width` and `calculate_height` add 40
-      # past the drawn maxima, and `Base#create_document` keeps the
-      # origin at zero and adds another 40 to the right and bottom
+      # Flowchart's page sizing adds 40 past the drawn maxima, and the
+      # Scene framing keeps the origin at zero and adds another 40
       # extents, leaving 80 units there. A reach beyond that needs the
       # page to grow with it.
       LOOP_REACH = 20
@@ -59,8 +58,8 @@ module Sirena
         box.dig(:metadata, :cluster) == true
       end
 
-      # The exact centre of a laid-out box. The flowchart renderer aims
-      # heads and outlines at this same point, so keep one copy: two drifted
+      # The exact centre of a laid-out box. Flowchart aims routes, heads and
+      # outlines at this same point, so keep one copy: two drifted
       # apart once and put routed ends half a pixel off their heads.
       #
       # @param box [Hash] a laid-out box
@@ -197,8 +196,8 @@ module Sirena
       # with the same centre have none, so route from the source's top to
       # the target's bottom with two bends beyond both boxes.
       def coincident_loop(source, target)
-        source_centre = EdgeRouter.centre(source)
-        target_centre = EdgeRouter.centre(target)
+        source_centre = FlowchartEdgeRouter.centre(source)
+        target_centre = FlowchartEdgeRouter.centre(target)
         return nil unless near?(source_centre, target_centre)
 
         source_top, = vertical_outline(source, source_centre[:y])
@@ -241,8 +240,8 @@ module Sirena
       # end pulled back to the border of the box it leaves when that box
       # is a cluster.
       def trimmed_route(source, target)
-        from = EdgeRouter.centre(source)
-        to = EdgeRouter.centre(target)
+        from = FlowchartEdgeRouter.centre(source)
+        to = FlowchartEdgeRouter.centre(target)
         out = step_out(source, from, to)
         back = step_out(target, to, from)
 
@@ -364,7 +363,7 @@ module Sirena
       # is not trimmed, so it stays where it is.
       #
       # Measured off the sides themselves rather than from half the
-      # width: the centre above is the one this renderer has always
+      # width: the centre above is the one this flowchart has always
       # used, and its integer division puts it half a unit off centre on
       # an odd-width box. Halves either side of that would miss the side
       # by the same half unit.

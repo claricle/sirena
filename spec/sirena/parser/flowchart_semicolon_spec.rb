@@ -479,10 +479,21 @@ RSpec.describe Sirena::Parser::Flowchart do
     # The point of the words: this is the mapping the finding was about.
     it "carries a glyph through to the layout direction" do
       layouts = %w[< > ^].to_h do |glyph|
-        diagram = described_class.new.parse("graph #{glyph}\nA-->B\n")
-        graph = Sirena::Layout::Flowchart.new.to_graph(diagram)
+        diagram = described_class.new.parse("graph #{glyph}\nA-->A\n")
+        scene = Sirena::Layout::Flowchart.new.to_graph(diagram)
+        node = scene.children.first
+        bends = scene.edges.first.sections.first.bend_points
+        centre = [node.center_x, node.center_y]
+        average = [bends.sum(&:x) / bends.length,
+                   bends.sum(&:y) / bends.length]
+        direction = if (average[0] - centre[0]).abs >
+                       (average[1] - centre[1]).abs
+                      average[0] < centre[0] ? "LEFT" : "RIGHT"
+                    else
+                      average[1] < centre[1] ? "UP" : "DOWN"
+                    end
 
-        [glyph, graph[:layoutOptions]["elk.direction"]]
+        [glyph, direction]
       end
 
       expect(layouts).to eq("<" => "LEFT", ">" => "RIGHT", "^" => "UP")
