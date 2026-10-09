@@ -483,7 +483,7 @@ RSpec.describe Sirena::Renderer::Architecture do
 
       it "falls back to the straight line only for the edge that raised" do
         broken_router = instance_double(Sirena::Renderer::ArchitectureEdgeRouter)
-        allow(broken_router).to receive(:route) do |from:, to:, obstacles:| # rubocop:disable Lint/UnusedBlockArgument
+        allow(broken_router).to receive(:route) do |from:, to:, **|
           raise "boom" if from[:box][:x] == 40 # only edge a->b
 
           [from[:point], to[:point]]

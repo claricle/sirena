@@ -51,13 +51,16 @@ module Sirena
         }
 
         # Map groups
-        diagram.groups.each do |group|
+        hierarchy[:groups] = diagram.groups.to_h do |group|
           parent_id = group.parent_id || :root
-          hierarchy[:groups][group.id] = {
-            group: group,
-            parent_id: parent_id,
-            children: [],
-          }
+          [
+            group.id,
+            {
+              group: group,
+              parent_id: parent_id,
+              children: [],
+            },
+          ]
         end
 
         # Build parent-child relationships for groups

@@ -24,14 +24,6 @@ Layout/ArgumentAlignment:
     - 'lib/sirena/layout/treemap.rb'
     - 'spec/sirena/theme_spec.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: with_first_element, with_fixed_indentation
-Layout/ArrayAlignment:
-  Exclude:
-    - 'lib/sirena/diagram/c4.rb'
-
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
 Layout/ElseAlignment:
@@ -143,12 +135,6 @@ Layout/MultilineMethodCallIndentation:
 # SupportedStyles: aligned, indented
 Layout/MultilineOperationIndentation:
   Enabled: false
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Layout/SpaceAfterComma:
-  Exclude:
-    - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
@@ -312,28 +298,19 @@ Style/CaseLikeIf:
   Exclude:
     - 'lib/sirena/parser/builders/requirement.rb'
 
-# Offense count: 2
+# Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/CombinableLoops:
   Exclude:
-    - 'lib/sirena/layout/architecture.rb'
     - 'lib/sirena/layout/requirement.rb'
 
-# Offense count: 3
+# Offense count: 1
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, SingleLineConditionsOnly, IncludeTernaryExpressions.
 # SupportedStyles: assign_to_condition, assign_inside_condition
 Style/ConditionalAssignment:
   Exclude:
-    - 'lib/sirena/parser/builders/block.rb'
-    - 'lib/sirena/parser/builders/git_graph.rb'
     - 'lib/sirena/parser/builders/requirement.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/ExpandPathArguments:
-  Exclude:
-    - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 14
 # This cop supports safe autocorrection (--autocorrect).
@@ -382,14 +359,6 @@ Style/MultipleComparison:
   Exclude:
     - 'spec/sirena/renderer/radar_spec.rb'
     - 'spec/sirena/renderer/xy_chart_spec.rb'
-
-# Offense count: 2
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: literals, strict
-Style/MutableConstant:
-  Exclude:
-    - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 2
 # This cop supports safe autocorrection (--autocorrect).
