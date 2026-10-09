@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+require_relative "ir/model"
+require_relative "ir/scalar"
+require_relative "ir/property_set"
+require_relative "ir/item"
+require_relative "ir/integrity"
+require_relative "ir/placement"
+require_relative "ir/prepositioned_item"
+require_relative "ir/edge"
+require_relative "ir/prepositioned"
+require_relative "ir/node"
+require_relative "ir/graph"
+require_relative "ir/dimension"
+require_relative "ir/series"
+require_relative "ir/data_value"
+require_relative "ir/data"
