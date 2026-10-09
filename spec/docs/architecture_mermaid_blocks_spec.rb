@@ -61,14 +61,21 @@ module ArchitectureMermaidBlocks
 
   def section(title, level:)
     lines = content.lines
+    start = section_start(lines, title, level)
+    lines.drop(start + 1).take_while { |line| inside?(line, level) }.join
+  end
+
+  def section_start(lines, title, level)
     heading = "#{'#' * level} #{title}"
     start = lines.index { |line| line.chomp == heading }
-    raise "missing section: #{title}" unless start
+    return start if start
 
-    lines.drop(start + 1).take_while do |line|
-      marks = line.match(/\A(?<marks>#+)[ \t]+/)&.[](:marks)
-      !marks || marks.length > level
-    end.join
+    raise "missing section: #{title}"
+  end
+
+  def inside?(line, level)
+    marks = line.match(/\A(?<marks>#+)[ \t]+/)&.[](:marks)
+    !marks || marks.length > level
   end
 
   def label(block)
