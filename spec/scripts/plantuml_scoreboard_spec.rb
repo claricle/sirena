@@ -48,6 +48,7 @@ RSpec.describe PlantumlScoreboard do
 
       expect { described_class.check! }
         .to raise_error(SystemExit).and output(/class.passing/).to_stdout
+        .and output(/plantuml:check: FAILED/).to_stderr
     end
 
     it "returns quietly when the measurement matches" do
