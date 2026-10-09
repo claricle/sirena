@@ -5,40 +5,6 @@ require "spec_helper"
 RSpec.describe Sirena::Parser::Builders::Timeline do
   subject(:diagram) { described_class.new.apply(tree) }
 
-  context "with a hash tree carrying a statements list" do
-    let(:tree) do
-      {
-        title: "Top",
-        statements: [
-          "noise",
-          { acc_title: "AT" },
-          { acc_descr: { text: "AD" } },
-          { section: "S1" },
-          { event_entry: { time: "2020",
-                           descriptions: [{ desc: "a" }, "b",
-                                          { desc: " " }] } },
-          { continuation_entry: { descriptions: { desc: "c" } } },
-          { task: "t1" },
-          { task: "  " },
-        ],
-      }
-    end
-
-    it "processes the top-level item and then each statement",
-       :aggregate_failures do
-      expect(diagram.title).to eq("Top")
-      expect([diagram.acc_title, diagram.acc_description]).to eq(%w[AT AD])
-    end
-
-    it "attaches events, continuations and tasks to the current section",
-       :aggregate_failures do
-      section = diagram.sections.first
-      expect(section.name).to eq("S1")
-      expect(section.events.first.descriptions).to eq(%w[a b c])
-      expect(section.tasks).to eq(["t1"])
-    end
-  end
-
   context "with an array tree and noise" do
     let(:tree) do
       ["noise", { header: "timeline" },

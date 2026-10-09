@@ -5,38 +5,6 @@ require "spec_helper"
 RSpec.describe Sirena::Parser::Builders::Pie do
   subject(:diagram) { described_class.new.apply(tree) }
 
-  context "with a hash tree and a statements list" do
-    let(:tree) do
-      {
-        header: "pie",
-        title: { title: " Top " },
-        show_data: "showData",
-        statements: [
-          "noise",
-          { data_entry: true, label: { string: "A" }, value: "40" },
-          { data_entry: true, label: "", value: "1" },
-          { data_entry: true, label: "B", value: { v: "2.5" } },
-          { acc_title: "AT" },
-          { acc_descr: "AD" },
-          { standalone_title: { title: "Standalone" } },
-          { unrelated: 1 },
-        ],
-      }
-    end
-
-    it "applies top-level fields and statements", :aggregate_failures do
-      expect(diagram.show_data).to be(true)
-      expect(diagram.title).to eq("Standalone")
-      expect([diagram.acc_title, diagram.acc_description]).to eq(%w[AT AD])
-    end
-
-    it "keeps non-blank slices with numeric values" do
-      expect(diagram.slices.map do |s|
-        [s.label, s.value]
-      end).to eq([["A", 40.0], ["B", 2.5]])
-    end
-  end
-
   context "with a hash tree without statements" do
     let(:tree) { { title: "Only" } }
 

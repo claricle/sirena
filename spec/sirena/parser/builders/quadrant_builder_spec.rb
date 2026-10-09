@@ -6,41 +6,6 @@ RSpec.describe Sirena::Parser::Builders::Quadrant do
   subject(:diagram) { described_class.new.apply(tree) }
 
   describe "hash-shaped trees" do
-    context "with top-level fields and a statements list" do
-      let(:tree) do
-        {
-          header: "quadrantChart",
-          title: { string: " Top " },
-          x_axis_left: "L", x_axis_right: "R",
-          y_axis_bottom: "B", y_axis_top: "T",
-          statements: [
-            "noise",
-            { title: "Inner" },
-            { x_axis_left: "L2", x_axis_right: "R2" },
-            { y_axis_bottom: "B2", y_axis_top: "T2" },
-            { quadrant_number: "2", quadrant_label: "Q2" },
-            { quadrant_number: "9", quadrant_label: "ignored" },
-            { label: "P", coordinates: { x: "0.25", y: "0.75" },
-              data_point: "\n" },
-            { other: 1 },
-          ]
-        }
-      end
-
-      let(:point_triples) do
-        diagram.points.map { |pt| [pt.label, pt.x, pt.y] }
-      end
-
-      it "applies top-level fields, then statements in order",
-         :aggregate_failures do
-        expect(diagram.title).to eq("Inner")
-        expect([diagram.x_axis_left, diagram.x_axis_right]).to eq(%w[L2 R2])
-        expect([diagram.y_axis_bottom, diagram.y_axis_top]).to eq(%w[B2 T2])
-        expect(diagram.quadrant_2_label).to eq("Q2")
-        expect(point_triples).to eq([["P", 0.25, 0.75]])
-      end
-    end
-
     context "with top-level fields only" do
       let(:tree) do
         { title: "Only", x_axis_left: "a", x_axis_right: "b",

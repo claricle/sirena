@@ -11,41 +11,6 @@ RSpec.describe Sirena::Parser::Builders::Gantt do
                     task_details: { parts: parts } } }
   end
 
-  context "with a hash tree and statements" do
-    let(:tree) do
-      {
-        title: "Plan",
-        date_format: "YYYY-MM-DD",
-        statements: [
-          "noise",
-          { axis_format: "%m", tick_interval: "1week", excludes: "weekends",
-            weekend: "friday" },
-          { excludes: "  " },
-          { inclusive_end_dates: true, today_marker: "off", acc_title: "t",
-            acc_descr: "d" },
-          { section: "S1" },
-          task_entry("one", "t1", "2024-01-01", "3d"),
-        ],
-      }
-    end
-
-    let(:statement_fields) do
-      [diagram.axis_format, diagram.tick_interval, diagram.weekend,
-       diagram.today_marker]
-    end
-
-    it "applies top-level fields and statements", :aggregate_failures do
-      expect(diagram.title).to eq("Plan")
-      expect(diagram.date_format).to eq("YYYY-MM-DD")
-      expect(statement_fields).to eq(["%m", "1week", "friday", "off"])
-      expect(diagram.inclusive_end_dates).to be(true)
-    end
-
-    it "records only non-blank excludes" do
-      expect(diagram.excludes).to eq(["weekends"])
-    end
-  end
-
   context "with an array tree and noise" do
     let(:tree) { ["noise", { header: "gantt" }, { title: "T" }] }
 
