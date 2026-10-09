@@ -15,21 +15,12 @@ module SpecSupport
       end
 
       def match
-        pairs = []
-        failures = []
-        ambiguous_count = 0
-
-        scopes.each do |scope|
-          result = match_scope(scope)
-          pairs.concat(result[:pairs])
-          failures.concat(result[:failures])
-          ambiguous_count += result[:ambiguous_count]
-        end
+        result = aggregate(scopes.map { |scope| match_scope(scope) })
 
         {
-          pairs: order_pairs(pairs),
-          ambiguous_count: ambiguous_count,
-          failures: failures,
+          pairs: order_pairs(result[:pairs]),
+          ambiguous_count: result[:ambiguous_count],
+          failures: result[:failures],
         }
       end
 
@@ -72,24 +63,29 @@ module SpecSupport
       end
 
       def group_results(scope, match_by, reference_groups, sirena_groups)
-        result = { pairs: [], ambiguous_count: 0, failures: [] }
         keys = (reference_groups.keys + sirena_groups.keys).uniq
-
-        keys.each do |key|
-          reference_group = reference_groups.fetch(key, [])
-          sirena_group = sirena_groups.fetch(key, [])
-          pairs = reference_group.zip(sirena_group).first(
-            common_count(reference_group, sirena_group),
-          )
-          result[:pairs].concat(pairs)
-          result[:ambiguous_count] += pairs.length if ambiguous?(
-            reference_group, sirena_group
-          )
-          add_failure(result[:failures], scope, key, match_by,
-                      reference_group.length, sirena_group.length)
+        results = keys.map do |key|
+          match_group(scope, key, match_by, reference_groups, sirena_groups)
         end
+        aggregate(results)
+      end
 
-        result
+      def match_group(scope, key, match_by, reference_groups, sirena_groups)
+        reference_group = reference_groups.fetch(key, [])
+        sirena_group = sirena_groups.fetch(key, [])
+        pairs = reference_group.zip(sirena_group).first(
+          common_count(reference_group, sirena_group),
+        )
+
+        {
+          pairs: pairs,
+          ambiguous_count: ambiguity_count(
+            reference_group, sirena_group, pairs
+          ),
+          failures: failure(
+            scope, key, match_by, reference_group, sirena_group
+          ),
+        }
       end
 
       def common_count(reference_group, sirena_group)
@@ -100,24 +96,40 @@ module SpecSupport
         reference_group.length > 1 || sirena_group.length > 1
       end
 
-      def add_failure(failures, scope, key, match_by, reference_count,
-                      sirena_count)
-        return if reference_count == sirena_count
+      def ambiguity_count(reference_group, sirena_group, pairs)
+        ambiguous?(reference_group, sirena_group) ? pairs.length : 0
+      end
+
+      def failure(scope, key, match_by, reference_group, sirena_group)
+        reference_count = reference_group.length
+        sirena_count = sirena_group.length
+        return [] if reference_count == sirena_count
 
         type = reference_count > sirena_count ? :missing : :extra
-        failures << {
-          type: type,
-          group: [*scope, key],
-          match_by: match_by,
+        [{
+          type: type, group: [*scope, key], match_by: match_by,
           count: (reference_count - sirena_count).abs,
-          reference_count: reference_count,
-          sirena_count: sirena_count,
-        }
+          reference_count: reference_count, sirena_count: sirena_count
+        }]
+      end
+
+      def aggregate(results)
+        results.each_with_object(empty_result) do |result, aggregate|
+          aggregate[:pairs].concat(result[:pairs])
+          aggregate[:ambiguous_count] += result[:ambiguous_count]
+          aggregate[:failures].concat(result[:failures])
+        end
+      end
+
+      def empty_result
+        { pairs: [], ambiguous_count: 0, failures: [] }
       end
 
       def order_pairs(pairs)
         positions = reference.elements.each_with_index.to_h
-        pairs.sort_by { |reference_element, _sirena_element| positions.fetch(reference_element) }
+        pairs.sort_by do |reference_element, _sirena_element|
+          positions.fetch(reference_element)
+        end
       end
     end
   end
