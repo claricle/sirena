@@ -28,8 +28,8 @@ RSpec.describe "Git Graph Integration" do
 
       # Transform
       layout = transform.to_graph(diagram)
-      expect(layout[:commits].length).to eq(3)
-      expect(layout[:branches].length).to be >= 1
+      expect(layout.commits.length).to eq(3)
+      expect(layout.branches.length).to be >= 1
 
       # Render
       svg = renderer.render(layout)
@@ -42,7 +42,7 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      x_positions = layout[:commits].map { |c| c[:x] }
+      x_positions = layout.commits.map(&:x)
       expect(x_positions).to eq(x_positions.sort)
     end
 
@@ -50,7 +50,7 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      lanes = layout[:commits].map { |c| c[:lane] }.uniq
+      lanes = layout.commits.map(&:lane).uniq
       # All commits should be on the same lane
       expect(lanes.length).to eq(1)
     end
@@ -75,8 +75,8 @@ RSpec.describe "Git Graph Integration" do
       expect(diagram.branches.length).to be >= 1
 
       layout = transform.to_graph(diagram)
-      expect(layout[:commits].length).to eq(3)
-      expect(layout[:branches].length).to be >= 2
+      expect(layout.commits.length).to eq(3)
+      expect(layout.branches.length).to be >= 2
 
       svg = renderer.render(layout)
       expect(svg).to be_a(Sirena::Svg::Document)
@@ -87,11 +87,13 @@ RSpec.describe "Git Graph Integration" do
       layout = transform.to_graph(diagram)
 
       # Find commits on different branches
-      main_commits = layout[:commits].select { |c| c[:branch] == "main" }
-      develop_commits = layout[:commits].select { |c| c[:branch] == "develop" }
+      main_commits = layout.commits.select { |commit| commit.branch == "main" }
+      develop_commits = layout.commits.select do |commit|
+        commit.branch == "develop"
+      end
 
-      main_lanes = main_commits.map { |c| c[:lane] }.uniq
-      develop_lanes = develop_commits.map { |c| c[:lane] }.uniq
+      main_lanes = main_commits.map(&:lane).uniq
+      develop_lanes = develop_commits.map(&:lane).uniq
 
       # Different branches should have different lanes
       expect(main_lanes).not_to eq(develop_lanes)
@@ -123,8 +125,8 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      merge_connections = layout[:connections].select do |c|
-        c[:type] == :merge
+      merge_connections = layout.connections.select do |connection|
+        connection.type == :merge
       end
 
       expect(merge_connections).not_to be_empty
@@ -160,7 +162,9 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      tagged_commits = layout[:commits].select { |c| c[:tag] }
+      tagged_commits = layout.commits.select do |commit|
+        commit.labels.any? { |label| label.kind == "tag" }
+      end
       expect(tagged_commits.length).to eq(2)
     end
   end
@@ -186,7 +190,7 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      types = layout[:commits].map { |c| c[:type] }
+      types = layout.commits.map(&:type)
       expect(types).to include("NORMAL", "HIGHLIGHT", "REVERSE")
     end
   end
@@ -215,8 +219,8 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      cherry_pick_connections = layout[:connections].select do |c|
-        c[:type] == :cherry_pick
+      cherry_pick_connections = layout.connections.select do |connection|
+        connection.type == :cherry_pick
       end
 
       expect(cherry_pick_connections).not_to be_empty
@@ -248,8 +252,8 @@ RSpec.describe "Git Graph Integration" do
       expect(diagram.branches.length).to be >= 1
 
       layout = transform.to_graph(diagram)
-      expect(layout[:commits].length).to be >= 5
-      expect(layout[:connections].length).to be >= 4
+      expect(layout.commits.length).to be >= 5
+      expect(layout.connections.length).to be >= 4
 
       svg = renderer.render(layout)
       expect(svg).to be_a(Sirena::Svg::Document)
@@ -262,8 +266,8 @@ RSpec.describe "Git Graph Integration" do
       layout = transform.to_graph(diagram)
 
       # Each commit except the first should have at least one parent
-      commits_with_parents = layout[:commits].select do |c|
-        c[:parent_ids].any?
+      commits_with_parents = layout.commits.select do |commit|
+        commit.parent_ids.any?
       end
 
       expect(commits_with_parents.length).to be >= 4
@@ -273,8 +277,8 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      colors = layout[:branches].map { |b| b[:color] }.uniq
-      expect(colors.length).to eq(layout[:branches].length)
+      colors = layout.branches.map(&:color).uniq
+      expect(colors.length).to eq(layout.branches.length)
     end
   end
 end

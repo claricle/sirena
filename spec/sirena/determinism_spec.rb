@@ -131,8 +131,7 @@ RSpec.describe Sirena::Engine do
         diagram = Sirena::Parser::Gantt.new.parse(source)
         transform = Sirena::Layout::Gantt.new
         transform.today = pin
-        transform.to_graph(diagram)
-        diagram.sections.first.tasks.first.calculated_start.year
+        transform.to_graph(diagram).sections.first.tasks.first.start_date.year
       end
 
       expect(years).to eq([early.year, late.year])

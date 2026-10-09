@@ -14,6 +14,73 @@ module Sirena
     #   transform = Gantt.new
     #   data = transform.to_graph(gantt_diagram)
     class Gantt < Base
+      MARGIN_LEFT = 200
+      MARGIN_TOP = 80
+      MARGIN_RIGHT = 50
+      MARGIN_BOTTOM = 50
+      ROW_HEIGHT = 40
+      SECTION_HEIGHT = 30
+      TASK_BAR_HEIGHT = 24
+      TIMELINE_WIDTH = 800
+      TIMELINE_HEIGHT = 40
+      TITLE_Y = 40
+      MAX_TIMELINE_LABELS = 40
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :text_anchor, :string
+        attribute :font_size, :float
+        attribute :font_weight, :string
+        attribute :dominant_baseline, :string
+      end
+
+      class Rect < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :corner_radius, :float
+        attribute :kind, :string
+      end
+
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+      end
+
+      class Task < Lutaml::Model::Serializable
+        attribute :label, Label
+        attribute :bar, Rect
+        attribute :milestone_points, :string
+        attribute :id_label, Label
+        attribute :status, :string
+        attribute :start_date, :date
+        attribute :end_date, :date
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :background, Rect
+        attribute :label, Label
+        attribute :tasks, Task, collection: true, default: -> { [] }
+      end
+
+      class Timeline < Lutaml::Model::Serializable
+        attribute :background, Rect
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :grid_lines, Line, collection: true, default: -> { [] }
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :title, Label
+        attribute :timeline, Timeline
+        attribute :sections, Section, collection: true, default: -> { [] }
+      end
+
       # Converts a Gantt diagram to a layout structure with calculated positions.
       #
       # @param diagram [Diagram::Gantt] the Gantt diagram to transform
@@ -46,6 +113,186 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(calculation_copy(diagram))
+        width = MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT
+        height = scene_height(graph[:sections])
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          title: title_geometry(graph[:title]),
+          timeline: timeline_geometry(graph),
+          sections: section_geometry(graph[:sections]),
+        )
+      end
+
+      def calculation_copy(diagram)
+        diagram.dup.tap do |copy|
+          copy.sections = diagram.sections.map do |section|
+            section.dup.tap do |section_copy|
+              section_copy.tasks = section.tasks.map do |task|
+                task.dup.tap do |task_copy|
+                  task_copy.calculated_start = nil
+                  task_copy.calculated_end = nil
+                end
+              end
+            end
+          end
+        end
+      end
+
+      def scene_height(sections)
+        total_rows = sections.sum { |section| section[:tasks].length + 1 }
+        MARGIN_TOP + TIMELINE_HEIGHT + (total_rows * ROW_HEIGHT) + MARGIN_BOTTOM
+      end
+
+      def title_geometry(title)
+        return unless title
+
+        Label.new(text: title, x: MARGIN_LEFT + (TIMELINE_WIDTH / 2),
+                  y: TITLE_Y, text_anchor: "middle",
+                  font_size: large_font_size, font_weight: "bold")
+      end
+
+      def timeline_geometry(graph)
+        timeline = graph[:timeline]
+        return unless timeline
+
+        Timeline.new(
+          background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
+                               width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
+                               kind: "timeline"),
+          labels: date_labels(timeline, graph[:axis_format]),
+          grid_lines: timeline_grid_lines(timeline, graph[:sections]),
+        )
+      end
+
+      def date_labels(timeline, format)
+        days = timeline[:total_days]
+        return [] if days <= 0
+
+        (0..days).step(label_interval(days)).map do |day|
+          Label.new(
+            text: format_date(timeline[:start_date] + day, format),
+            x: MARGIN_LEFT + ((day.to_f / days) * TIMELINE_WIDTH),
+            y: MARGIN_TOP + TIMELINE_HEIGHT - 10,
+            text_anchor: "middle", font_size: small_font_size,
+          )
+        end
+      end
+
+      def timeline_grid_lines(timeline, sections)
+        days = timeline[:total_days]
+        return [] if days <= 0
+
+        rows = sections.sum { |section| section[:tasks].length + 1 }
+        (0..days).step(label_interval(days)).map do |day|
+          x = MARGIN_LEFT + ((day.to_f / days) * TIMELINE_WIDTH)
+          Line.new(x1: x, y1: MARGIN_TOP + TIMELINE_HEIGHT, x2: x,
+                   y2: MARGIN_TOP + TIMELINE_HEIGHT + (rows * ROW_HEIGHT))
+        end
+      end
+
+      def section_geometry(sections)
+        current_y = MARGIN_TOP + TIMELINE_HEIGHT
+        sections.map do |section|
+          header_y = current_y
+          current_y += SECTION_HEIGHT
+          tasks = section[:tasks].map do |task|
+            geometry = task_geometry(task, current_y)
+            current_y += ROW_HEIGHT
+            geometry
+          end
+          Section.new(
+            background: Rect.new(x: 0, y: header_y,
+                                 width: MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT,
+                                 height: SECTION_HEIGHT, kind: "section"),
+            label: Label.new(text: section[:name], x: 10,
+                             y: header_y + (SECTION_HEIGHT / 2),
+                             font_size: normal_font_size,
+                             font_weight: "bold",
+                             dominant_baseline: "middle"),
+            tasks: tasks,
+          )
+        end
+      end
+
+      def task_geometry(task, row_y)
+        label = Label.new(text: task[:description], x: 10,
+                          y: row_y + (ROW_HEIGHT / 2),
+                          font_size: small_font_size,
+                          dominant_baseline: "middle")
+        x = MARGIN_LEFT + task[:start_x]
+        y = row_y + ((ROW_HEIGHT - TASK_BAR_HEIGHT) / 2)
+        milestone = task[:milestone] || task[:width] < 10
+        Task.new(
+          label: label,
+          bar: milestone ? nil : Rect.new(x: x, y: y, width: task[:width],
+                                          height: TASK_BAR_HEIGHT,
+                                          corner_radius: 3, kind: "task"),
+          milestone_points: milestone ? milestone_points(x, y) : nil,
+          id_label: task_id_label(task, x, y),
+          status: task_status(task),
+          start_date: task[:start_date], end_date: task[:end_date],
+        )
+      end
+
+      def milestone_points(x, y)
+        center_y = y + (TASK_BAR_HEIGHT / 2)
+        size = 12
+        [[x, center_y], [x + size, center_y - size],
+         [x + (size * 2), center_y], [x + size, center_y + size]]
+          .map { |point| point.join(",") }.join(" ")
+      end
+
+      def task_id_label(task, x, y)
+        return unless task[:id] && task[:width] > 40
+
+        Label.new(text: task[:id], x: x + (task[:width] / 2),
+                  y: y + (TASK_BAR_HEIGHT / 2), text_anchor: "middle",
+                  font_size: small_font_size,
+                  dominant_baseline: "middle")
+      end
+
+      def task_status(task)
+        return "critical" if task[:critical]
+        return "done" if task[:done]
+        return "active" if task[:active]
+
+        "default"
+      end
+
+      def label_interval(total_days)
+        return 1 if total_days <= 7
+        return 7 if total_days <= 60
+        return 14 if total_days <= 120
+        return 30 if total_days <= 30 * MAX_TIMELINE_LABELS
+
+        (total_days.to_f / MAX_TIMELINE_LABELS).ceil
+      end
+
+      def format_date(date, format)
+        return date.strftime("%m-%d") unless format
+
+        date.strftime(format)
+      rescue StandardError
+        date.strftime("%m-%d")
+      end
+
+      def large_font_size
+        theme.typography&.font_size_large ||
+          Theme::Registry.get(:default).typography.font_size_large
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal ||
+          Theme::Registry.get(:default).typography.font_size_normal
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small ||
+          Theme::Registry.get(:default).typography.font_size_small
+      end
 
       def build_task_map(diagram)
         map = {}
