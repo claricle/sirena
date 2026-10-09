@@ -618,14 +618,28 @@ RSpec.describe Sirena::Parser::Flowchart do
     # nothing outside holds a handle on it.
     #
     # Both halves, because either alone can be satisfied while the other
-    # is false: an empty thread slot says nothing about a class-level
+    # is false: an empty thread slot says nothing about a builder-level
     # accessor, and a missing accessor says nothing about the slot.
-    it "keeps its bookkeeping off the class and off the thread" do
-      transform = Sirena::Parser::Builders::Flowchart
+    it "keeps its bookkeeping off the builder and off the thread" do
+      builder = Sirena::Parser::Builders::Flowchart.new
+      tree = Sirena::Parser::Grammars::Flowchart.new
+        .parse("graph TD\nsubgraph one A\nX\nend\n")
+      builder.apply(tree)
+
+      expect(builder).not_to respond_to(:state)
+    end
+
+    it "leaves nothing on the thread" do
       described_class.new.parse("graph TD\nsubgraph one A\nX\nend\n")
 
-      expect(transform).not_to respond_to(:state)
       expect(Thread.current.keys).not_to include(:sirena_flowchart_transform)
+    end
+
+    it "builds a fresh builder for every parse" do
+      allow(Sirena::Parser::Builders::Flowchart).to receive(:new).and_call_original
+      2.times { described_class.new.parse("graph TD\nA-->B\n") }
+
+      expect(Sirena::Parser::Builders::Flowchart).to have_received(:new).twice
     end
 
     # The bookkeeping references every subgraph statement, so keeping it

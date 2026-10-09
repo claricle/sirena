@@ -1560,7 +1560,7 @@ module Sirena
         # An arrowhead opening with nothing after it that could continue an
         # id. The crossed and circled links this opens ARE drawn — `x--x`,
         # `x-.-x` and the rest parse into real edges, see
-        # `Builders::Flowchart.link_type` — so this rule refuses nothing
+        # `Builders::Flowchart#link_type` — so this rule refuses nothing
         # on its own; it only decides where the id ends. `id_before_xo_link`
         # above is what actually stops the id at the restart.
         rule(:arrowhead_ends_id) { arrowhead_open >> id_body.absent? }

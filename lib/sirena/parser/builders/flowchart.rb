@@ -76,7 +76,7 @@ module Sirena
         # picture the source did not ask for, which is worse than saying no.
         #
         # @raise [Parser::ParseError] on a name sirena will not draw
-        def self.metadata_shape(name)
+        def metadata_shape(name)
           return nil if name.nil?
 
           MERMAID_SHAPES.fetch(name) do
@@ -84,19 +84,19 @@ module Sirena
           end
         end
 
-        def self.unsupported_shape(name)
+        def unsupported_shape(name)
           return "No such shape: #{name}." unless UNDRAWABLE_SHAPES.include?(name)
 
           "Shape not supported yet: #{name}."
         end
-        private_class_method :unsupported_shape
+        private :unsupported_shape
 
         # mermaid parses the body with js-yaml: a single-line body as a flow
         # mapping, a multiline one as block YAML. Psych does both, so the
         # rules fall out instead of being reimplemented in the grammar.
         #
         # @raise [Parser::ParseError] on YAML mermaid would also refuse
-        def self.metadata_entries(metadata)
+        def metadata_entries(metadata)
           document = metadata_document(metadata)
           # mermaid reads `doc.shape` off whatever `yaml.load` returns, so a
           # node's document that came back null throws there.
@@ -108,7 +108,7 @@ module Sirena
         # The parsed YAML of a metadata block, before any node rule reads
         # it. An edge's block stops here: `label` and `shape` mean nothing
         # to an edge, so mermaid never checks them there.
-        def self.metadata_document(metadata)
+        def metadata_document(metadata)
           body = line_feeds(metadata_body(metadata))
           body = strip_metadata_comments(body)
           body = break_quoted_newlines(body)
@@ -122,14 +122,14 @@ module Sirena
           document = body.include?("\n") ? "#{body}\n" : "{\n#{body}\n}"
           MetadataYaml.value(document)
         end
-        private_class_method :metadata_document
+        private :metadata_document
 
         # Mermaid turns every carriage return into a line feed before it
         # lexes anything, so a Windows line ending inside the block is an
         # ordinary newline by the time YAML sees it. Reading it as written
         # folded `"one` CR `two"` onto one line, left a `%YAML 1.3` CR
         # unlevelled, and took a body mermaid refuses.
-        def self.line_feeds(body)
+        def line_feeds(body)
           body.gsub(/\r\n?/, "\n")
         end
 
@@ -144,7 +144,7 @@ module Sirena
         # opened the block, which turned `A@{` nl `%% c` nl `}` into an
         # empty body sirena drew as a rectangle. mmdc refuses it, because
         # what is left after the comment goes is `A@{` nl `}`.
-        def self.strip_metadata_comments(body)
+        def strip_metadata_comments(body)
           body.gsub(/(?<=\n)#{JS_SPACE}*%%(?!\{)[^\n]+\n?/o, "")
         end
 
@@ -152,7 +152,7 @@ module Sirena
         # mermaid, which rewrites it before js-yaml ever sees it. Letting
         # YAML fold it turned `"one` newline `two"` into `one two`, where
         # mmdc renders `one<br/>two`.
-        def self.break_quoted_newlines(body)
+        def break_quoted_newlines(body)
           body.gsub(/"[^"]*"/) { |run| run.gsub(QUOTED_BREAK, "<br/>") }
         end
 
@@ -180,7 +180,7 @@ module Sirena
         # not: `A@{ icon: "fa:bell" }` and `A@{ img: "x.png" }` each draw a
         # node with an empty label there, and a plain rectangle named `A`
         # here. Both are node kinds sirena does not have yet.
-        def self.entries(document)
+        def entries(document)
           return {} unless document.is_a?(Hash)
 
           READ_KEYS.filter_map do |key|
@@ -192,7 +192,7 @@ module Sirena
         READ_KEYS = %w[shape label].freeze
 
         # An empty repeat captures as [], not as an empty slice.
-        def self.metadata_body(metadata)
+        def metadata_body(metadata)
           return "" unless metadata.is_a?(Hash)
 
           value = metadata[:body]
@@ -207,7 +207,7 @@ module Sirena
         # A sequence renders its first element and nothing else: mmdc draws
         # `label: [one, two]` as `one`, and refuses a shape or a nested
         # sequence, where the value it reaches for is not a scalar.
-        def self.usable_value(key, value)
+        def usable_value(key, value)
           return nil unless truthy?(value)
 
           value = value.first if value.is_a?(Array) && key == "label"
@@ -219,7 +219,7 @@ module Sirena
         # `null`, `false`, `0` and `""` are all falsy to mermaid, which
         # skips the key rather than failing on it. An empty collection is
         # NOT falsy in JavaScript, and mmdc does refuse `label: []`.
-        def self.truthy?(value)
+        def truthy?(value)
           return false if value.nil? || value == false
           return false if value.is_a?(Float) && value.nan?
           return false if value.is_a?(Numeric) && value.zero?
@@ -285,7 +285,7 @@ module Sirena
         # a mismatched pair drops back to normal thickness but keeps its
         # dots. `o==x` is no thicker than `o--x`, while `<-.-x` stays
         # dotted. Both were read as two-ended links here.
-        def self.link_type(token)
+        def link_type(token)
           return "invisible" if token.start_with?("~")
 
           head = LINK_MARKERS[token[-1]]
@@ -295,17 +295,17 @@ module Sirena
 
           "#{link_weight(token, tail, matched)}#{ends}"
         end
-        private_class_method :link_type
+        private :link_type
 
         # A thick body keeps its weight only when it carries no leading
         # marker, or a leading marker mermaid actually honours.
-        def self.link_weight(token, tail, matched)
+        def link_weight(token, tail, matched)
           return "dotted_" if token.include?(".")
           return "thick_" if token.include?("=") && (matched || tail.nil?)
 
           ""
         end
-        private_class_method :link_weight
+        private :link_weight
 
         # Direction value
         rule(dir_value: simple(:v)) { v.to_s }
@@ -348,7 +348,7 @@ module Sirena
         rule(label: sequence(:l)) { l.join.strip }
 
         # Helper method to create nodes
-        def self.create_node(node_data)
+        def create_node(node_data)
           Diagram::FlowchartNode.new.tap do |n|
             n.id = node_data[:node_id]
             n.label = node_data[:label] || node_data[:node_id]
@@ -360,7 +360,7 @@ module Sirena
         # `link_token` is the raw lexeme the grammar matched — `-->`,
         # `o--x`, `~~~`. `link_type` is what turns it into the edge's
         # arrow type; the two are not the same string.
-        def self.create_edge(source_id, target_data, link_token, label = nil)
+        def create_edge(source_id, target_data, link_token, label = nil)
           Diagram::FlowchartEdge.new.tap do |e|
             e.source_id = source_id
             e.target_id = target_data[:node_id]
@@ -368,10 +368,10 @@ module Sirena
             e.label = label
           end
         end
-        private_class_method :create_edge
+        private :create_edge
 
         # Process parsed diagram
-        def self.apply(tree, diagram = nil)
+        def apply(tree, diagram = nil)
           diagram ||= Diagram::Flowchart.new
 
           # Parse tree is an array: [header_element, *statement_elements]
@@ -401,12 +401,12 @@ module Sirena
           diagram
         end
 
-        def self.canonical_direction(value)
+        def canonical_direction(value)
           DIRECTION_ALIASES.fetch(value, value)
         end
-        private_class_method :canonical_direction
+        private :canonical_direction
 
-        def self.process_statements(diagram, statements, context, parents = [])
+        def process_statements(diagram, statements, context, parents = [])
           statements.each do |stmt|
             next unless stmt.is_a?(Hash)
 
@@ -435,7 +435,7 @@ module Sirena
 
         # mmdc refuses `linkStyle 1` when only edge 0 has been drawn so
         # far, so the count is the edges written above the statement.
-        def self.check_link_indices(diagram, targets)
+        def check_link_indices(diagram, targets)
           return if targets == "default"
 
           last = diagram.edges.size - 1
@@ -448,7 +448,7 @@ module Sirena
                   "The index #{token} for linkStyle is out of bounds."
           end
         end
-        private_class_method :check_link_indices
+        private :check_link_indices
 
         # mermaid lexes these two as keywords even inside the style text,
         # so `stroke:default`, `stroke:1default` and a bare `interpolate`
@@ -467,7 +467,7 @@ module Sirena
 
         private_constant :LINK_STYLE_KEYWORD, :STYLE_RUN, :CLASS_DEF_RUN, :ENTITY
 
-        def self.check_link_words(stmt)
+        def check_link_words(stmt)
           [stmt[:link_curve], stmt[:link_props]].each do |text|
             word = text.to_s[LINK_STYLE_KEYWORD, 1] or next
             raise Parser::ParseError,
@@ -481,21 +481,21 @@ module Sirena
           text = [stmt[:link_curve], stmt[:link_props]].compact.join(" ")
           check_link_entities("#{text}#{stmt[:link_end]}")
         end
-        private_class_method :check_link_words
+        private :check_link_words
 
-        def self.check_link_entities(text)
+        def check_link_entities(text)
           entity = text.sub(STYLE_RUN, &:chop).sub(CLASS_DEF_RUN, &:chop)[ENTITY] or return
 
           raise Parser::ParseError,
                 "linkStyle reads `#{entity}` as an HTML entity; " \
                 "drop the `;` after the colour."
         end
-        private_class_method :check_link_entities
+        private :check_link_entities
 
         # `style Q ...` names a vertex, and mermaid draws it even when no
         # other statement mentions it, unless an earlier edge carries that
         # id: then mermaid drops the line and draws no vertex.
-        def self.declare_styled_node(diagram, target, context)
+        def declare_styled_node(diagram, target, context)
           return if diagram.find_node(target.to_s)
           return if context.edge_ids.include?(target.to_s)
 
@@ -511,7 +511,7 @@ module Sirena
         # FREE title gets a generated `subGraph<n>` — so `subgraph s Some
         # Title` containing `s` is fine, and containing `subGraph0` is the
         # cycle. Only a bare or bracket-titled declaration keeps its word.
-        def self.process_subgraph(diagram, stmt, context, parents = [])
+        def process_subgraph(diagram, stmt, context, parents = [])
           id = subgraph_id(stmt, context)
           ancestry = parents + [id]
           record_subgraph(diagram, stmt, id, parents.last, context)
@@ -531,7 +531,7 @@ module Sirena
         # before it hands anything out. Measured on mmdc 11.12.0:
         # `subgraph a One` holding `subgraph b Two` makes b subGraph0 and
         # a subGraph1.
-        def self.assign_ids(statements, context)
+        def assign_ids(statements, context)
           statements = [statements] unless statements.is_a?(Array)
 
           statements.each do |stmt|
@@ -546,11 +546,11 @@ module Sirena
 
         # A quoted id arrives as a Hash, and `to_s` on that gave
         # `{string: "s"}`, so a quoted self-parent slipped through.
-        def self.subgraph_id(stmt, context)
+        def subgraph_id(stmt, context)
           context.ids[stmt] ||= allocate_id(stmt, context)
         end
 
-        def self.allocate_id(stmt, context)
+        def allocate_id(stmt, context)
           generated_id?(stmt) ? context.next_generated_id : written_id(stmt)
         end
 
@@ -558,13 +558,13 @@ module Sirena
         # whitespace — `subgraph "a b"` is subGraph0 titled "a b". A
         # bracket title keeps the written id even then, so
         # `subgraph "a b" [T]` stays `a b`. All measured on mmdc 11.12.0.
-        def self.generated_id?(stmt)
+        def generated_id?(stmt)
           return true if free_titled?(stmt)
 
           stmt[:subgraph_title].nil? && written_id(stmt).match?(/\s/)
         end
 
-        def self.written_id(stmt)
+        def written_id(stmt)
           plain_id(stmt[:subgraph_id])
         end
 
@@ -572,7 +572,7 @@ module Sirena
         # gives `{string: "a"@21}` and never matches the id it names.
         # Every place that compares an id has to unwrap it, not just the
         # subgraph's own — the cycle walk reads node ids too.
-        def self.plain_id(raw)
+        def plain_id(raw)
           return raw.to_s unless raw.is_a?(Hash)
 
           value = raw.values.first
@@ -583,7 +583,7 @@ module Sirena
         # the text cannot tell the two forms apart. They carry different
         # keys for that reason — testing for a leading `[` read every
         # bracketed title as free and generated an id for it.
-        def self.free_titled?(stmt)
+        def free_titled?(stmt)
           !stmt[:subgraph_free_title].nil?
         end
 
@@ -600,7 +600,7 @@ module Sirena
         # then `b` holding `a`, then `a` holding `b` draws clusters `c`
         # and `b` — the last claim loses, so nothing closes. Walking the
         # written source instead refused a diagram mmdc draws.
-        def self.reject_ownership_cycles(context)
+        def reject_ownership_cycles(context)
           loop_found = Diagram::Containment.looping_pair(context.ownership)
           return if loop_found.nil?
 
@@ -618,7 +618,7 @@ module Sirena
         # it loses, the box is still built and still holds what it
         # contains — it just does not become anybody's child, and the
         # earlier claimant adopts it once the walk is over.
-        def self.record_subgraph(diagram, stmt, id, parent, context)
+        def record_subgraph(diagram, stmt, id, parent, context)
           box = Diagram::FlowchartSubgraph.new
           box.id = id
           box.declared_title = subgraph_label(stmt)
@@ -644,7 +644,7 @@ module Sirena
         # looks like an id, and the gap after it, because mermaid labels
         # `subgraph s Some Title` with the whole run and generates the id
         # separately. Measured against mmdc 11.12.0.
-        def self.subgraph_label(stmt)
+        def subgraph_label(stmt)
           return stmt[:subgraph_title].to_s if stmt[:subgraph_title]
 
           if free_titled?(stmt)
@@ -672,7 +672,7 @@ module Sirena
         # already claimed.
         #
         # @return [Diagram::FlowchartSubgraph, nil] the box that took it
-        def self.claim(parent, id, context)
+        def claim(parent, id, context)
           box = enclosing(parent, context)
           return nil if box.nil? || id.empty? || context.claimed[id]
 
@@ -690,7 +690,7 @@ module Sirena
         # went through the model's collection setter once per member —
         # 1,600 nodes in one box took 2.3 seconds instead of half a
         # millisecond.
-        def self.claim_member(parent, node_id, context)
+        def claim_member(parent, node_id, context)
           box = claim(parent, node_id, context)
           box.node_ids << node_id if box
         end
@@ -698,7 +698,7 @@ module Sirena
         # Indexed rather than searched. Scanning every box for every node
         # made a 240-subgraph diagram take four times as long to parse as
         # it did before subgraphs were modelled.
-        def self.enclosing(parent, context)
+        def enclosing(parent, context)
           parent.nil? ? nil : context.boxes[parent]
         end
 
@@ -707,7 +707,7 @@ module Sirena
         # 11.12.0, where `flowchart TD` followed by `direction LR` still
         # stacks its nodes vertically. So there is nothing to do when no
         # box encloses it.
-        def self.set_direction(parent, value, context)
+        def set_direction(parent, value, context)
           box = enclosing(parent, context)
           box.direction = value.to_s if box
         end
@@ -727,7 +727,7 @@ module Sirena
         # `find_node` per box rescans the whole collection each time, and
         # a chain of 2,000 boxes spent 17 seconds in the transform where
         # this takes under one.
-        def self.promote_referenced_subgraphs(diagram, context)
+        def promote_referenced_subgraphs(diagram, context)
           holders = holders_by_member(diagram)
           promoted = surviving_boxes(context)
           return if promoted.empty?
@@ -750,11 +750,11 @@ module Sirena
         #
         # Measured before deleting the loop — 2,312 sources, 301 calls to
         # the old predicate, zero that disagreed with `drawable?`.
-        def self.surviving_boxes(context)
+        def surviving_boxes(context)
           context.boxes.select { |_id, box| box.drawable? }
         end
 
-        def self.holders_by_member(diagram)
+        def holders_by_member(diagram)
           diagram.subgraphs.each_with_object({}) do |box, acc|
             box.node_ids.each { |id| acc[id] = box }
           end
@@ -772,7 +772,7 @@ module Sirena
         # Checked as well as argued, before the guards came out: 2,312
         # sources, 50 adoptions, none with a parent already set and none
         # where the holder already listed the child.
-        def self.adopt(holder, box)
+        def adopt(holder, box)
           return if holder.nil?
 
           holder.node_ids.delete(box.id)
@@ -785,7 +785,7 @@ module Sirena
         # enclosing box there is nothing to claim, and the throwaway
         # context is only there to keep the claim path from special-casing
         # its absence.
-        def self.process_node_edge_statement(diagram, stmt, parent = nil,
+        def process_node_edge_statement(diagram, stmt, parent = nil,
                                              context = Context.new)
           edges = stmt[:edges]
           sources = declare_group(diagram, stmt[:node], stmt[:group], parent,
@@ -839,38 +839,38 @@ module Sirena
         # pipes hold only space. Written around the link,
         # `A -- text --> B`, it arrives as the run itself; written after it,
         # `A -->|text| B`, as the run between the pipes.
-        def self.edge_label(edge_data)
+        def edge_label(edge_data)
           label = edge_data[:label]
           return inline_label(label) if edge_data[:open]
 
           piped_label(label[:pipe_text]) if label.is_a?(Hash)
         end
-        private_class_method :edge_label
+        private :edge_label
 
         # @raise [Parser::ParseError] on a label that nothing is left of
-        def self.inline_label(label)
+        def inline_label(label)
           text = unquoted_label(label)
           return text unless text.empty?
 
           raise Parser::ParseError, "An inline link label cannot be empty."
         end
-        private_class_method :inline_label
+        private :inline_label
 
         # Mermaid trims the text between pipes, and `|  |` is a label of
         # nothing rather than an error. Nothing left is nil, so the link
         # has no label.
-        def self.piped_label(text)
+        def piped_label(text)
           trimmed = unquoted_label(text).gsub(LABEL_EDGE_SPACE, "")
           trimmed unless trimmed.empty?
         end
-        private_class_method :piped_label
+        private :piped_label
 
         # Mermaid deletes a whole comment line before it lexes, and the
         # quotes of a quoted run are delimiters, not text.
-        def self.unquoted_label(label)
+        def unquoted_label(label)
           label.to_s.gsub(COMMENT_LINE, "").delete('"')
         end
-        private_class_method :unquoted_label
+        private :unquoted_label
 
         # The nodes one side of a link names: the first, and any that
         # `&` joined to it. Returns their node data, in source order.
@@ -879,7 +879,7 @@ module Sirena
         # no node and changes no node that shares the id, except for its
         # class. Such a shared node still belongs to an enclosing subgraph
         # that names it. In a link, the id is still returned as its endpoint.
-        def self.declare_group(diagram, first, rest, parent, context,
+        def declare_group(diagram, first, rest, parent, context,
                                linkless: false)
           [first, *rest].filter_map do |node_hash|
             if edge_reference?(node_hash, context)
@@ -900,26 +900,26 @@ module Sirena
             node_data
           end
         end
-        private_class_method :declare_group
+        private :declare_group
 
         # Any mention of a known edge id — bare (`e1`), shaped (`e1[x]`),
         # carrying `@{...}`/`:::foo`, or used as a link endpoint — addresses
         # the edge named `e1`, even when a node is also called `e1`: mermaid
         # checks the edges first and stops there, so its shape, label and
         # metadata reach no node.
-        def self.edge_reference?(node_hash, context)
+        def edge_reference?(node_hash, context)
           context.edge_ids.include?(node_hash[:node_id].to_s)
         end
-        private_class_method :edge_reference?
+        private :edge_reference?
 
         # Mermaid gives a `:::foo` class to every node, edge and subgraph
         # with that id, so a node sharing an edge's id still takes it.
-        def self.class_shared_node(diagram, node_hash)
+        def class_shared_node(diagram, node_hash)
           node = diagram.find_node(node_hash[:node_id].to_s)
           node.classes = node_hash[:inline_class].to_s if node && node_hash[:inline_class]
           node
         end
-        private_class_method :class_shared_node
+        private :class_shared_node
         # A link written around its label, `A -- text --> B`, arrives in
         # two halves, and their concatenation reads like the one-piece
         # link of the same kind: `-- -->` is `---->`.
@@ -933,7 +933,7 @@ module Sirena
         # `A <-- t o--> B` render as a plain double arrow, measured against
         # mermaid 11.12.0's own parser.
         # @raise [Parser::ParseError] on an unmatched opening marker
-        def self.link_token(edge_data)
+        def link_token(edge_data)
           return edge_data[:arrow][:token].to_s if edge_data[:arrow]
 
           open = edge_data[:open].to_s
@@ -948,15 +948,15 @@ module Sirena
         # The start head of the closing half, when the opening half has
         # none, belongs to the whole link: `<` always, `x` or `o` when the
         # other end carries the same one.
-        def self.lifts_start_head?(open, close)
+        def lifts_start_head?(open, close)
           return false if open.match?(/\A[ox<]/)
 
           close.start_with?("<") ||
             (close.match?(/\A[ox]/) && close[-1] == close[0])
         end
-        private_class_method :lifts_start_head?
+        private :lifts_start_head?
 
-        def self.reject_unmatched_marker(open, close)
+        def reject_unmatched_marker(open, close)
           return if marker_closed?(open[0], close)
 
           raise Parser::ParseError,
@@ -972,7 +972,7 @@ module Sirena
         # own `<` also needs a head: mmdc refuses `A == t <==x B`,
         # `A == t <=== B` and `A == t x==> B`, and draws the solid and
         # dotted forms.
-        def self.marker_closed?(marker, close)
+        def marker_closed?(marker, close)
           return false if close.match?(/\A[ox<]=/) &&
                           close[-1] != head_for(close[0])
 
@@ -982,20 +982,20 @@ module Sirena
           else true
           end
         end
-        private_class_method :marker_closed?
+        private :marker_closed?
 
-        def self.head_for(start)
+        def head_for(start)
           start == "<" ? ">" : start
         end
-        private_class_method :head_for
-        private_class_method :reject_unmatched_marker
-        private_class_method :link_token
+        private :head_for
+        private :reject_unmatched_marker
+        private :link_token
 
         # A second mention of a node changes only what it actually says.
         # Treating an absent shape as `rect` and an absent label as the id
         # meant `A(keep)` followed by `A@{ shape: rect }` kept the round
         # shape and lost the label — mermaid does the opposite of both.
-        def self.add_or_update_node(diagram, node_data)
+        def add_or_update_node(diagram, node_data)
           return unless node_data
 
           existing = diagram.find_node(node_data[:node_id])
@@ -1007,7 +1007,7 @@ module Sirena
         end
 
         # Extract node data from parse tree
-        def self.extract_node_data(node_hash)
+        def extract_node_data(node_hash)
           return nil unless node_hash
 
           node_id = node_hash[:node_id].to_s
@@ -1028,7 +1028,7 @@ module Sirena
         # nil means the source said nothing, which is not the same as
         # saying `rect` or naming the node after itself. `create_node`
         # supplies the defaults, so only a real mention overwrites.
-        def self.bracket_shape(shape_data)
+        def bracket_shape(shape_data)
           return [nil, nil] unless shape_data
 
           delims = "#{shape_data[:open]}#{shape_data[:close]}"

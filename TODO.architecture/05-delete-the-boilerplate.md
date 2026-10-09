@@ -264,7 +264,7 @@ headings silently drop everything after the first block.
 - [ ] A — `user_journey`'s score check raises something other than `ParseError`
 - [ ] A — one builder calling convention: `block`, `flowchart` and `requirement`'s
       `self.apply` class methods are migrated to instance methods, not merely called
-      differently — `grep -rn "def self.apply" lib/sirena/parser/transforms/` returns
+      differently — `grep -rn "def self.apply" lib/sirena/parser/builders/` returns
       nothing
 - [ ] B — one `create_document` on `Renderer::Base`, no per-renderer copies
 - [ ] B — no renderer sets `@offset_x` / `@offset_y`

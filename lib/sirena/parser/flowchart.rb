@@ -31,7 +31,7 @@ module Sirena
         # A lone CR is folded before the grammar sees it; the shared
         # helper owns the parse and the failure message.
         source = normalize_line_ends(source)
-        Builders::Flowchart.apply(parse_tree(source))
+        Builders::Flowchart.new.apply(parse_tree(source))
       end
 
       private

@@ -108,7 +108,7 @@ module Sirena
           # newline to get there; `(?<=\n)` requires an actual newline
           # immediately before, without consuming it, so the string's own
           # start is never mistaken for one. Mirrors
-          # Builders::Flowchart.strip_metadata_comments (flowchart.rb),
+          # Builders::Flowchart#strip_metadata_comments (flowchart.rb),
           # the same rule for a node's `@{...}` metadata block -- including
           # its indentation class: mermaid's own comment-strip regex uses
           # JavaScript's `\s`, wider than ASCII space/tab (e.g. it matches a
