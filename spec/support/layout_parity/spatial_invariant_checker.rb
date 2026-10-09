@@ -70,18 +70,26 @@ module SpecSupport
         return unless overlap.all? { |amount| amount > OVERLAP_THRESHOLD }
 
         failures << evidence(
-          "peer-overlap", [first, second], expected: false, actual: true,
+          "peer-overlap",
+          [first, second],
+          expected: false,
+          actual: true,
           normalized: {
             intersection_width: overlap.first,
             intersection_height: overlap.last,
             threshold: OVERLAP_THRESHOLD,
-          }
+          },
         )
       end
 
       def containment_evidence(rule, relation, expected:, actual:)
-        evidence(rule, relation, expected: expected, actual: actual,
-                 normalized: nil)
+        evidence(
+          rule,
+          relation,
+          expected: expected,
+          actual: actual,
+          normalized: nil,
+        )
       end
 
       def evidence(rule, indexes, expected:, actual:, normalized:)
@@ -101,14 +109,30 @@ module SpecSupport
       end
 
       def intersection(first, second)
-        first_box = pairs.fetch(first).fetch(1).bbox
-        second_box = pairs.fetch(second).fetch(1).bbox
+        first_box = sirena_box(first)
+        second_box = sirena_box(second)
         [
-          [first_box.max_x, second_box.max_x].min -
-            [first_box.min_x, second_box.min_x].max,
-          [first_box.max_y, second_box.max_y].min -
-            [first_box.min_y, second_box.min_y].max,
+          horizontal_intersection(first_box, second_box),
+          vertical_intersection(first_box, second_box),
         ]
+      end
+
+      def sirena_box(index)
+        pairs.fetch(index).fetch(1).bbox
+      end
+
+      def horizontal_intersection(first_box, second_box)
+        axis_intersection(first_box.min_x, first_box.max_x,
+                          second_box.min_x, second_box.max_x)
+      end
+
+      def vertical_intersection(first_box, second_box)
+        axis_intersection(first_box.min_y, first_box.max_y,
+                          second_box.min_y, second_box.max_y)
+      end
+
+      def axis_intersection(first_min, first_max, second_min, second_max)
+        [first_max, second_max].min - [first_min, second_min].max
       end
 
       def build_subject_keys
