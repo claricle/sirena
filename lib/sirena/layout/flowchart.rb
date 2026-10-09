@@ -4,6 +4,7 @@ require_relative "base"
 require_relative "grid"
 require_relative "flowchart/edge_router"
 require_relative "../diagram/flowchart"
+require_relative "../diagram/flowchart_label_text"
 
 module Sirena
   module Layout
@@ -729,7 +730,8 @@ module Sirena
       end
 
       def transform_subgraph(box)
-        label = measure_text(box.title, font_size: layout_font_size)
+        title = display_text(box.title)
+        label = measure_text(title, font_size: layout_font_size)
 
         {
           id: box.id,
@@ -737,7 +739,7 @@ module Sirena
           height: 0,
           children: [],
           labels: [
-            { text: box.title, width: label[:width], height: label[:height] },
+            { text: title, width: label[:width], height: label[:height] },
           ],
           metadata: { cluster: true },
         }
@@ -752,7 +754,7 @@ module Sirena
           height: dims[:height],
           labels: [
             {
-              text: node.label,
+              text: display_text(node.label),
               width: dims[:label_width],
               height: dims[:label_height],
             },
@@ -780,14 +782,19 @@ module Sirena
         end
       end
 
+      def display_text(text)
+        Diagram::FlowchartLabelText.display(text)
+      end
+
       def edge_labels(edge)
         return [] if edge.label.nil? || edge.label.empty?
 
-        label_dims = measure_text(edge.label, font_size: edge_label_font_size)
+        text = display_text(edge.label)
+        label_dims = measure_text(text, font_size: edge_label_font_size)
 
         [
           {
-            text: edge.label,
+            text: text,
             width: label_dims[:width],
             height: label_dims[:height],
           },
@@ -796,7 +803,7 @@ module Sirena
 
       def calculate_dimensions(node)
         label_dims = measure_text(
-          node.label,
+          display_text(node.label),
           font_size: layout_font_size,
         )
 
