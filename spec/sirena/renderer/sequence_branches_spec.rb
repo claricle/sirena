@@ -3,9 +3,17 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Sequence do
-  let(:line_class) { Sirena::Layout::Sequence::Line }
-  let(:label_class) { Sirena::Layout::Sequence::Label }
-  let(:head_class) { Sirena::Layout::Sequence::Head }
+  let(:participant_xml) { described_class.new.render(scene([])).to_xml }
+  let(:message_xml) do
+    described_class.new.render(scene(messages_with_heads)).to_xml
+  end
+  let(:number_xml) do
+    message = Sirena::Layout::Sequence::Message.new(
+      id: "numbers", line_style: "solid", shaft: line(1, 2.5, 3, 4.25),
+      heads: [], label: label("n", 2, 3.5, 12.0)
+    )
+    described_class.new.render(scene([message])).to_xml
+  end
 
   def line(start_x, start_y, end_x, end_y)
     Sirena::Layout::Sequence::Line.new(
@@ -49,30 +57,19 @@ RSpec.describe Sirena::Renderer::Sequence do
   end
 
   def messages_with_heads
+    head_class = Sirena::Layout::Sequence::Head
     polygon = head_class.new(shape: "polygon", points: "220,100 212,96 212,104")
     open_head = head_class.new(shape: "open", lines: [line(220, 120, 212, 116)])
     [
       Sirena::Layout::Sequence::Message.new(
         id: "shaft", line_style: "dotted", shaft: line(80, 100, 220, 100),
-        heads: [polygon, open_head], label: label("hello", 150, 90, 12.5),
+        heads: [polygon, open_head], label: label("hello", 150, 90, 12.5)
       ),
       Sirena::Layout::Sequence::Message.new(
         id: "loop", line_style: "dotted",
-        loop_path: "M 80 140 C 136 140 136 160 80 160", heads: [],
+        loop_path: "M 80 140 C 136 140 136 160 80 160", heads: []
       ),
     ]
-  end
-
-  let(:participant_xml) { described_class.new.render(scene([])).to_xml }
-  let(:message_xml) do
-    described_class.new.render(scene(messages_with_heads)).to_xml
-  end
-  let(:number_xml) do
-    message = Sirena::Layout::Sequence::Message.new(
-      id: "numbers", line_style: "solid", shaft: line(1, 2.5, 3, 4.25),
-      heads: [], label: label("n", 2, 3.5, 12.0),
-    )
-    described_class.new.render(scene([message])).to_xml
   end
 
   it "renders participant boxes" do
@@ -113,7 +110,7 @@ RSpec.describe Sirena::Renderer::Sequence do
 
   it "preserves integral and fractional coordinates" do
     expect(number_xml).to include(
-      'x1="1.0"', 'y1="2.5"', 'x2="3.0"', 'y2="4.25"',
+      'x1="1.0"', 'y1="2.5"', 'x2="3.0"', 'y2="4.25"'
     )
   end
 end
