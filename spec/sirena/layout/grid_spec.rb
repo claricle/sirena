@@ -21,6 +21,12 @@ RSpec.describe Sirena::Layout::Grid do
   include LayoutGridSpecHelpers
 
   describe "a plain graph" do
+    it "leaves a graph without children unchanged" do
+      graph = { id: "root" }
+
+      expect(apply(graph)).to be(graph)
+    end
+
     it "lays three nodes across and wraps the fourth" do
       graph = apply({ children: %w[a b c d].map { |id| node(id) } })
       spots = graph[:children].map { |c| [c[:x], c[:y]] }
@@ -130,6 +136,21 @@ RSpec.describe Sirena::Layout::Grid do
 
       expect(box[:width]).to eq(label[:width] + (padding * 2))
       expect(box[:height]).to eq(label[:height] + (padding * 3))
+    end
+
+    it "packs a nested cluster before sizing its parent" do
+      inner = cluster("inner", [node("leaf")])
+      outer = cluster("outer", [inner])
+
+      apply({ children: [outer] })
+
+      expect(inner.values_at(:width, :height)).to eq([140, 124])
+    end
+
+    it "uses zero label dimensions when a cluster has no label" do
+      box = apply({ children: [cluster("s", [node("a")], label: nil)] })[:children].first
+
+      expect(box.values_at(:width, :height)).to eq([140, 110])
     end
   end
 end
