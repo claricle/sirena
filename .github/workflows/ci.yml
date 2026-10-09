@@ -175,7 +175,7 @@ jobs:
           bundler-cache: true
       - run: sudo apt-get install --yes --no-install-recommends graphviz
       - run: scripts/install_plantuml.sh
-      - run: bundle exec rspec spec/plantuml/toolchain_spec.rb
+      - run: bundle exec rspec spec/plantuml/toolchain_spec.rb --tag toolchain
 
   # Reserved full-lane slots, added to `needs` below:
   #   parity (14, waits on elkrb), scoreboard guard (02b)
