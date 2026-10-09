@@ -60,7 +60,7 @@ rows:
 - file: lib/sirena/layout/requirement.rb
   count: 3
 - file: lib/sirena/layout/sankey.rb
-  count: 5
+  count: 4
 - file: lib/sirena/layout/state_diagram.rb
   count: 2
 - file: lib/sirena/layout/timeline.rb

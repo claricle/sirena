@@ -39,8 +39,6 @@ rows:
   count: 2
 - file: lib/sirena/renderer/requirement.rb
   count: 8
-- file: lib/sirena/renderer/sankey.rb
-  count: 8
 - file: lib/sirena/renderer/sequence.rb
   count: 19
 - file: lib/sirena/renderer/state_diagram.rb
