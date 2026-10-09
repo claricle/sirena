@@ -36,6 +36,52 @@ module WorkflowHelpers
     job.fetch("steps").find { |step| step["name"] == name }
   end
 
+  def release_requirement_values(jobs)
+    release_job = jobs.fetch("release")
+    [Array(release_job["needs"]), release_job["uses"]]
+  end
+
+  def checked_main_values(jobs)
+    command = named_step(
+      jobs.fetch("release"),
+      "require the checked main head",
+    ).fetch("run")
+    fragments = [
+      "commits/main",
+      "check-runs?per_page=100",
+      "check_release_source.rb checked-main",
+    ]
+    fragments.map { |fragment| command.include?(fragment) }
+  end
+
+  def version_push_values(jobs)
+    release_job = jobs.fetch("release")
+    prepare = named_step(
+      release_job,
+      "prepare version-only release commit",
+    ).fetch("run")
+    push = named_step(release_job, "push version commit and tag").fetch("run")
+    checks = [
+      "check_release_source.rb write-version",
+      "check_release_source.rb version-only",
+    ]
+    [checks.all? { |fragment| prepare.include?(fragment) },
+     push.include?("git push --atomic")]
+  end
+
+  def published_gem_values(jobs)
+    release_job = jobs.fetch("release")
+    build = named_step(release_job, "build gem").fetch("run")
+    publish = named_step(release_job, "publish gem")
+    [
+      build,
+      publish.fetch("run").include?(
+        'gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
+      ),
+      publish.dig("env", "RUBYGEMS_API_KEY"),
+    ]
+  end
+
   def oracle_browser_scope(jobs)
     steps = jobs.fetch("oracle-toolchain").fetch("steps")
     %w[canary check].map do |command|
@@ -229,38 +275,19 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     end
 
     it "requires the changelog preflight before the repository-owned release" do
-      release_job = jobs.fetch("release")
-
-      expect([Array(release_job["needs"]), release_job["uses"]])
-        .to eq([["preflight"], nil])
+      expect(release_requirement_values(jobs)).to eq([["preflight"], nil])
     end
 
     it "requires the exact checked main head before preparing a release" do
-      command = named_step(jobs.fetch("release"), "require the checked main head").fetch("run")
-      required = ["commits/main", "check-runs?per_page=100", "check_release_source.rb checked-main"]
-
-      expect(required.all? { |fragment| command.include?(fragment) }).to be(true)
+      expect(checked_main_values(jobs)).to eq([true, true, true])
     end
 
     it "permits only the generated version change before an atomic main and tag push" do
-      release_job = jobs.fetch("release")
-      prepare = named_step(release_job, "prepare version-only release commit").fetch("run")
-      push = named_step(release_job, "push version commit and tag").fetch("run")
-      required = ["check_release_source.rb write-version", "check_release_source.rb version-only"]
-
-      expect([required.all? { |fragment| prepare.include?(fragment) }, push.include?("git push --atomic")])
-        .to eq([true, true])
+      expect(version_push_values(jobs)).to eq([true, true])
     end
 
     it "builds and publishes the gem without a reusable release workflow" do
-      release_job = jobs.fetch("release")
-      build = named_step(release_job, "build gem").fetch("run")
-      publish = named_step(release_job, "publish gem")
-      values = [build,
-                publish.fetch("run").include?('gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'),
-                publish.dig("env", "RUBYGEMS_API_KEY")]
-
-      expect(values).to eq(
+      expect(published_gem_values(jobs)).to eq(
         [
           'gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
           true,
