@@ -33,6 +33,11 @@ module ReleaseSourceCheckSpecHelpers
       version_source: version_source,
     )
   end
+
+  def changed_version_problems(target_version)
+    version_problems(changed_paths: [described_class::VERSION_PATH],
+                     requested: "patch", target_version: target_version)
+  end
 end
 
 RSpec.describe Sirena::ReleaseSourceCheck do
@@ -92,14 +97,9 @@ RSpec.describe Sirena::ReleaseSourceCheck do
     end
 
     it "rejects a version file that does not contain the target" do
-      paths = [described_class::VERSION_PATH]
-      problems = version_problems(
-        changed_paths: paths,
-        requested: "patch",
-        target_version: "0.2.1",
-      )
-      expect(problems)
-        .to include(/expected "0\.2\.1"/)
+      problems = changed_version_problems("0.2.1")
+
+      expect(problems).to include(/expected "0\.2\.1"/)
     end
 
     it "accepts no commit when skip publishes the current version" do
