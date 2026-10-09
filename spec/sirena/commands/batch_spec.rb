@@ -67,11 +67,11 @@ module BatchCommandRunner
   #   after #run, and everything the run printed to stdout. `locale` is
   #   the default external encoding for the run; the capture buffer is made
   #   before it changes, so the report's non-ASCII marks can still be written.
-  def batch_capture(input, output, locale: Encoding.default_external)
+  def batch_capture(input, output, locale: Encoding.default_external, **options)
     captured = StringIO.new
     original = $stdout
     $stdout = captured
-    command = Sirena::Commands::BatchCommand.new(input: input, output: output)
+    command = Sirena::Commands::BatchCommand.new(input: input, output: output, **options)
     with_default_external(locale) { command.run }
     [command, captured.string]
   ensure
@@ -84,8 +84,8 @@ module BatchCommandRunner
   end
 
   # @return [String] everything the run printed to stdout
-  def run_batch(input, output)
-    batch_capture(input, output).last
+  def run_batch(input, output, **options)
+    batch_capture(input, output, **options).last
   end
 
   # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
@@ -129,6 +129,60 @@ RSpec.describe Sirena::Commands::BatchCommand do
       report = run_batch(input, output)
 
       expect(report).to include("2-bomb.mmd: Diagram nests too deeply to parse.")
+    end
+  end
+
+  it "prints a failed render and its cause in verbose mode" do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "broken.mmd")
+      File.write(input, "graph TD\nA-->B\n")
+      failure = begin
+        begin
+          raise ArgumentError, "bad token"
+        rescue ArgumentError
+          raise "render failed"
+        end
+      rescue RuntimeError => e
+        e
+      end
+      allow(Sirena).to receive(:render).and_raise(failure)
+
+      report = run_batch(input, File.join(dir, "out"), verbose: true)
+
+      expect(report).to include("broken.mmd... ❌ RuntimeError", "   render failed",
+                                "   Caused by: ArgumentError: bad token")
+    end
+  end
+
+  it "omits the caused-by block when a verbose failure has no cause" do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "broken.mmd")
+      File.write(input, "graph TD\nA-->B\n")
+      allow(Sirena).to receive(:render).and_raise("render failed")
+
+      report = run_batch(input, File.join(dir, "out"), verbose: true)
+
+      expect(report).to include("broken.mmd... ❌ RuntimeError", "   render failed")
+      expect(report).not_to include("Caused by:")
+    end
+  end
+
+  it "lists only the first five errors when six renders fail" do
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "in")
+      Dir.mkdir(input)
+      6.times { |index| File.write(File.join(input, "#{index + 1}.mmd"), "failure #{index + 1}") }
+      allow(Sirena).to receive(:render) { |source, **| raise "failed #{source}" }
+
+      report = run_batch(input, File.join(dir, "out"))
+      errors = report.split("Errors:\n", 2).last
+
+      expected = 1.upto(5).map do |index|
+        "  #{index}.mmd: failed failure #{index}"
+      end
+      expect(errors).to include(*expected)
+      expect(errors).not_to include("  6.mmd: failed failure 6")
+      expect(errors).to include("  ... and 1 more errors")
     end
   end
 
