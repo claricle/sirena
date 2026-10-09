@@ -3,14 +3,18 @@
 require "spec_helper"
 
 RSpec.describe Sirena::DiagramRegistry do
+  def error_handlers
+    {
+      parser: Sirena::Parser::Error,
+      transform: Sirena::Layout::Error,
+      renderer: Sirena::Renderer::Error,
+      model: Sirena::Diagram::Error,
+    }
+  end
+
   describe ".get" do
     it "returns every handler for a known type" do
-      expect(described_class.get(:error)).to eq(
-        parser: Sirena::Parser::Error,
-        transform: Sirena::Layout::Error,
-        renderer: Sirena::Renderer::Error,
-        model: Sirena::Diagram::Error,
-      )
+      expect(described_class.get(:error)).to eq(error_handlers)
     end
 
     it "returns nil for an unknown type" do
