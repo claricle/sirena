@@ -10,9 +10,6 @@ module Sirena
       # @param scene [Layout::StateDiagram::Scene] final canvas geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        if scene.is_a?(Hash)
-          scene = Layout::StateDiagram.from_graph(scene, theme: theme)
-        end
         svg = create_document(scene)
         render_transitions(scene, svg)
         render_states(scene, svg)
@@ -36,7 +33,12 @@ module Sirena
       def render_state(state, svg)
         typed = typed_state(state)
         group = Svg::Group.new.tap { |item| item.id = "state-#{typed.id}" }
-        group.children << create_state_shape(typed, typed.shape_type)
+        shape = if state.is_a?(Layout::StateDiagram::Node)
+                  final_state_shape(typed)
+                else
+                  create_state_shape(state, typed.shape_type)
+                end
+        group.children << shape
         typed.labels.each_with_index do |label, index|
           group.children << create_state_label(typed, label, index)
         end
@@ -131,78 +133,32 @@ module Sirena
 
       def create_state_shape(state, state_type)
         typed = typed_state(state, state_type)
-        @current_state = typed
-        case state_type
-        when "start"
-          create_start_state(typed.x, typed.y, typed.width, typed.height)
-        when "end"
-          create_end_state(typed.x, typed.y, typed.width, typed.height)
-        when "choice"
-          create_choice_state(typed.x, typed.y, typed.width, typed.height)
-        when "fork", "join"
-          create_fork_join_state(typed.x, typed.y, typed.width, typed.height)
-        else
-          create_normal_state(typed.x, typed.y, typed.width, typed.height)
-        end
-      ensure
-        @current_state = nil
+        coordinates = compatibility_shape_values(
+          state, typed, state_type
+        )
+        compatibility_state_shape(state_type, coordinates)
       end
 
       def create_normal_state(x, y, width, height)
-        Svg::Rect.new.tap do |rect|
-          rect.x = x
-          rect.y = y
-          rect.width = width
-          rect.height = height
-          rect.rx = 10
-          rect.ry = 10
-          rect.fill = "#ffffff"
-          rect.stroke = "#000000"
-          rect.stroke_width = "2"
-        end
+        normal_state_shape(x, y, width, height)
       end
 
       def create_start_state(x, y, width, height)
-        state = current_state_or(x, y, width, height, "start")
-        Svg::Circle.new.tap do |circle|
-          circle.cx = state.center_x
-          circle.cy = state.center_y
-          circle.r = state.radius
-          circle.fill = "#000000"
-          circle.stroke = "none"
-        end
+        start_state_shape(compatibility_state([x, y, width, height], "start"))
       end
 
       def create_end_state(x, y, width, height)
-        state = current_state_or(x, y, width, height, "end")
-        Svg::Group.new.tap do |group|
-          group.children << state_circle(state, state.radius, "none", "2")
-          group.children << state_circle(
-            state, state.inner_radius, "#000000", nil
-          )
-        end
+        end_state_shape(compatibility_state([x, y, width, height], "end"))
       end
 
       def create_choice_state(x, y, width, height)
-        state = current_state_or(x, y, width, height, "choice")
-        Svg::Polygon.new.tap do |polygon|
-          polygon.points = state.shape_points
-          polygon.fill = "#ffffff"
-          polygon.stroke = "#000000"
-          polygon.stroke_width = "2"
-        end
+        state = compatibility_state([x, y, width, height], "choice")
+        choice_state_shape(state)
       end
 
       def create_fork_join_state(x, y, width, height)
-        state = current_state_or(x, y, width, height, "fork")
-        Svg::Rect.new.tap do |rect|
-          rect.x = state.x
-          rect.y = state.shape_y
-          rect.width = state.width
-          rect.height = state.shape_height
-          rect.fill = "#000000"
-          rect.stroke = "none"
-        end
+        state = compatibility_state([x, y, width, height], "fork")
+        fork_join_state_shape(state)
       end
 
       def create_state_label(state, label, index)
@@ -216,6 +172,79 @@ module Sirena
       end
 
       private
+
+      def compatibility_state_shape(state_type, arguments)
+        case state_type
+        when "start" then create_start_state(*arguments)
+        when "end" then create_end_state(*arguments)
+        when "choice" then create_choice_state(*arguments)
+        when "fork", "join" then create_fork_join_state(*arguments)
+        else create_normal_state(*arguments)
+        end
+      end
+
+      def final_state_shape(state)
+        case state.shape_type
+        when "start" then start_state_shape(state)
+        when "end" then end_state_shape(state)
+        when "choice" then choice_state_shape(state)
+        when "fork", "join" then fork_join_state_shape(state)
+        else normal_state_shape(state.x, state.y, state.width, state.height)
+        end
+      end
+
+      def normal_state_shape(x_position, y_position, width, height)
+        Svg::Rect.new.tap do |rect|
+          rect.x = x_position
+          rect.y = y_position
+          rect.width = width
+          rect.height = height
+          rect.rx = 10
+          rect.ry = 10
+          rect.fill = "#ffffff"
+          rect.stroke = "#000000"
+          rect.stroke_width = "2"
+        end
+      end
+
+      def start_state_shape(state)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = state.center_x
+          circle.cy = state.center_y
+          circle.r = state.radius
+          circle.fill = "#000000"
+          circle.stroke = "none"
+        end
+      end
+
+      def end_state_shape(state)
+        Svg::Group.new.tap do |group|
+          group.children << state_circle(state, state.radius, "none", "2")
+          group.children << state_circle(
+            state, state.inner_radius, "#000000", nil
+          )
+        end
+      end
+
+      def choice_state_shape(state)
+        Svg::Polygon.new.tap do |polygon|
+          polygon.points = state.shape_points
+          polygon.fill = "#ffffff"
+          polygon.stroke = "#000000"
+          polygon.stroke_width = "2"
+        end
+      end
+
+      def fork_join_state_shape(state)
+        Svg::Rect.new.tap do |rect|
+          rect.x = state.x
+          rect.y = state.shape_y
+          rect.width = state.width
+          rect.height = state.shape_height
+          rect.fill = "#000000"
+          rect.stroke = "none"
+        end
+      end
 
       def state_circle(state, radius, fill, stroke_width)
         Svg::Circle.new.tap do |circle|
@@ -275,9 +304,8 @@ module Sirena
         scene.edges.first
       end
 
-      def current_state_or(x_position, y_position, width, height, shape_type)
-        return @current_state if @current_state
-
+      def compatibility_state(coordinates, shape_type)
+        x_position, y_position, width, height = coordinates
         values = {
           x: x_position, y: y_position, width: width, height: height
         }
@@ -285,6 +313,15 @@ module Sirena
           shape_type: shape_type,
           **Layout::StateDiagram.shape_geometry(values, shape_type),
         )
+      end
+
+      def compatibility_shape_values(state, typed, shape_type)
+        unless state.is_a?(Hash)
+          return [typed.x, typed.y, typed.width, typed.height]
+        end
+
+        geometry = Layout::StateDiagram.shape_geometry(state, shape_type)
+        geometry.values_at(:x, :y, :width, :height)
       end
 
       def point(value)

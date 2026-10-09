@@ -65,9 +65,74 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     end
   end
 
+  def first_typed_scene
+    typed_scene(final_end_node, final_choice_node)
+  end
+
+  def final_end_node
+    Sirena::Layout::StateDiagram::Node.new(
+      id: "end", x: 0, y: 0, width: 100, height: 50,
+      state_type: "end", shape_type: "end",
+      center_x: 17, center_y: 19, radius: 7, inner_radius: 3
+    )
+  end
+
+  def final_choice_node
+    Sirena::Layout::StateDiagram::Node.new(
+      id: "choice", x: 0, y: 0, width: 100, height: 50,
+      state_type: "choice", shape_type: "choice",
+      shape_points: "1,2 3,4 5,6 7,8"
+    )
+  end
+
+  def second_typed_scene
+    typed_scene(final_start_node)
+  end
+
+  def final_start_node
+    Sirena::Layout::StateDiagram::Node.new(
+      id: "start", x: 0, y: 0, width: 100, height: 50,
+      state_type: "start", shape_type: "start",
+      center_x: 70, center_y: 80, radius: 4
+    )
+  end
+
+  def expected_final_geometry
+    [
+      [[17.0, 19.0, 7.0], [17.0, 19.0, 3.0]],
+      "1,2 3,4 5,6 7,8",
+      [70.0, 80.0, 4.0],
+      [],
+    ]
+  end
+
   def forbid_layout_geometry(method_name)
     allow(Sirena::Layout::StateDiagram).to receive(method_name)
       .and_raise("geometry recalculated")
+  end
+
+  def typed_scene(*children)
+    Sirena::Layout::StateDiagram::Scene.new(
+      id: "state_diagram", width: 100, height: 100,
+      view_box: "0 0 100 100", children: children, edges: []
+    )
+  end
+
+  def state_shape(document, id)
+    document.children.find { |child| child.id == "state-#{id}" }.children.first
+  end
+
+  def circle_geometry(circle)
+    [circle.cx, circle.cy, circle.r]
+  end
+
+  def final_geometry_observation(first_document, second_document)
+    ending = state_shape(first_document, "end")
+    choice = state_shape(first_document, "choice")
+    starting = state_shape(second_document, "start")
+    [ending.children.map { |circle| circle_geometry(circle) }, choice.points,
+     circle_geometry(starting),
+     renderer.instance_variables.grep(/current|center|radius|layout|offset/)]
   end
 
   describe "#render" do
@@ -261,7 +326,15 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       scene = Sirena::Layout::StateDiagram.from_graph(graph)
       forbid_layout_geometry(:shape_geometry)
       forbid_layout_geometry(:transition_label_geometry)
+      allow(renderer).to receive(:create_state_shape).and_raise("hook used")
       expect { renderer.render(scene) }.not_to raise_error
+    end
+
+    it "keeps final geometry stateless across nodes and consecutive renders" do
+      first_document = renderer.render(first_typed_scene)
+      second_document = renderer.render(second_typed_scene)
+      expect(final_geometry_observation(first_document, second_document))
+        .to eq(expected_final_geometry)
     end
 
     it "routes public rendering through every released geometry hook" do
