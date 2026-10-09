@@ -434,5 +434,33 @@ RSpec.describe Sirena::Parser::Requirement do
         expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
       end
     end
+
+    context "with comma lists" do
+      let(:header) do
+        "requirementDiagram\nrequirement r1:::cls1,cls2 {\nid: 1\n}\n" \
+          "requirement r2 {\nid: 2\n}\n"
+      end
+      let(:assign) { "class r1,r2 cls1,cls2" }
+      let(:class_def) { "classDef c fill:#f9f,stroke:#333" }
+
+      let(:cases) do
+        [
+          ["", :requirements, :classes, %w[cls1 cls2]],
+          ["style r1,r2 fill:#f9f", :styles, :target_ids, %w[r1 r2]],
+          [assign, :class_assignments, :target_ids, %w[r1 r2]],
+          [assign, :class_assignments, :class_names, %w[cls1 cls2]],
+          [class_def, :classes, :fill, "#f9f"],
+          [class_def, :classes, :stroke, "#333"],
+        ]
+      end
+
+      it "splits every comma list" do
+        cases.each do |line, collection, attribute, expected|
+          diagram = parser.parse("#{header}#{line}\n")
+          actual = diagram.public_send(collection).first.public_send(attribute)
+          expect(actual).to eq(expected), "#{line} #{attribute}"
+        end
+      end
+    end
   end
 end

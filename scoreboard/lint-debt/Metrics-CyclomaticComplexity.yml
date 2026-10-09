@@ -80,7 +80,7 @@ rows:
 - file: lib/sirena/parser/builders/quadrant.rb
   count: 4
 - file: lib/sirena/parser/builders/requirement.rb
-  count: 7
+  count: 6
 - file: lib/sirena/parser/builders/sequence.rb
   count: 4
 - file: lib/sirena/parser/builders/state_diagram.rb
