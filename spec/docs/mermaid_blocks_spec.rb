@@ -190,9 +190,9 @@ RSpec.describe DocMermaidSpec do
   end
 
   DocMermaidBlocks.diagrams.each do |diagram|
-    if DocMermaidSpec.expected(diagram)
-      it "#{diagram.file} #{diagram.key} still fails as #{DocMermaidSpec.expected(diagram).first}" do
-        expect { Sirena.render(diagram.source) }.to raise_error(DocMermaidSpec.expected(diagram).last)
+    if described_class.expected(diagram)
+      it "#{diagram.file} #{diagram.key} still fails as #{described_class.expected(diagram).first}" do
+        expect { Sirena.render(diagram.source) }.to raise_error(described_class.expected(diagram).last)
       end
     else
       it "#{diagram.file} #{diagram.key} renders an SVG document" do
