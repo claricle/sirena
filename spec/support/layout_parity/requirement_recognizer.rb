@@ -28,7 +28,9 @@ module SpecSupport
 
       def identify(extractor, group)
         id = group["id"]
-        return [:requirement, id[SIRENA_REQUIREMENT, 1]] if id.match?(SIRENA_REQUIREMENT)
+        if id.match?(SIRENA_REQUIREMENT)
+          return [:requirement, id[SIRENA_REQUIREMENT, 1]]
+        end
         return [:element, id[SIRENA_ELEMENT, 1]] if id.match?(SIRENA_ELEMENT)
         return unless group["class"].to_s.split.include?("node")
 
@@ -37,7 +39,8 @@ module SpecSupport
 
       def reference_kind(label, id)
         return [:requirement, id] if label.include?("<<Requirement>>")
-        return [:element, id] if label.include?("<<Element>>")
+
+        [:element, id] if label.include?("<<Element>>")
       end
     end
   end

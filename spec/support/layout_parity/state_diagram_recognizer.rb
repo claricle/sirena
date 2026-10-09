@@ -40,7 +40,9 @@ module SpecSupport
 
       def reference_state(group)
         classes = group["class"].to_s.split
-        return [:composite, group["id"], :id] if classes.include?("statediagram-cluster")
+        if classes.include?("statediagram-cluster")
+          return [:composite, group["id"], :id]
+        end
 
         key = group["id"][REFERENCE_STATE, 1]
         [:state, key, :id] if key && classes.include?("node")
