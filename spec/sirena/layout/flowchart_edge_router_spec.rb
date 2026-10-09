@@ -20,7 +20,9 @@ RSpec.describe Sirena::Layout::FlowchartEdgeRouter do
     { x: x_coordinate, y: y_coordinate }
   end
 
-  def expect_route(source, target, points:, label_segment:)
+  def expect_route(source, target, pairs, label_segment)
+    points = pairs.map { |pair| point(*pair) }
+
     expect(router.route(source, target)).to eq([points, label_segment])
   end
 
@@ -83,74 +85,36 @@ RSpec.describe Sirena::Layout::FlowchartEdgeRouter do
 
   describe "#route" do
     it "routes ordinary nodes from centre to centre" do
-      points = [point(50.0, 25.0), point(250.0, 25.0)]
-
-      expect_route(
-        box,
-        box(x_coordinate: 200),
-        points: points,
-        label_segment: [50.0, 25.0, 250.0, 25.0],
-      )
+      expect_route(box, box(x_coordinate: 200),
+                   [[50.0, 25.0], [250.0, 25.0]], [50.0, 25.0, 250.0, 25.0])
     end
 
     it "trims cluster routes to their facing sides" do
-      points = [point(100.0, 25.0), point(200.0, 25.0)]
-
-      expect_route(
-        box(cluster: true),
-        box(x_coordinate: 200, cluster: true),
-        points: points,
-        label_segment: [100.0, 25.0, 200.0, 25.0],
-      )
+      expect_route(box(cluster: true), box(x_coordinate: 200, cluster: true),
+                   [[100.0, 25.0], [200.0, 25.0]], [100.0, 25.0, 200.0, 25.0])
     end
 
     it "uses the internal detour segment for labels when clusters touch" do
-      points = [point(0.0, 45.0), point(0, 70),
-                point(200, 70), point(200.0, 45.0)]
-
-      expect_route(
-        box(cluster: true),
-        box(x_coordinate: 100, cluster: true),
-        points: points,
-        label_segment: [0, 70, 200, 70],
-      )
+      expect_route(box(cluster: true), box(x_coordinate: 100, cluster: true),
+                   [[0.0, 45.0], [0, 70], [200, 70], [200.0, 45.0]],
+                   [0, 70, 200, 70])
     end
 
     it "routes overlapping clusters outside both faces" do
-      source, target = overlapping_cluster_boxes
-      points = [point(0.0, 95.0), point(0, 145),
-                point(175, 145), point(175.0, 120.0)]
-
-      expect_route(
-        source,
-        target,
-        points: points,
-        label_segment: [0, 145, 175, 145],
-      )
+      expect_route(*overlapping_cluster_boxes,
+                   [[0.0, 95.0], [0, 145], [175, 145], [175.0, 120.0]],
+                   [0, 145, 175, 145])
     end
 
     it "uses opposite sides when one cluster encloses the other" do
-      source, target = nested_cluster_boxes
-      points = [point(200.0, 200.0), point(50.0, 50.0)]
-
-      expect_route(
-        source,
-        target,
-        points: points,
-        label_segment: [200.0, 200.0, 50.0, 50.0],
-      )
+      expect_route(*nested_cluster_boxes,
+                   [[200.0, 200.0], [50.0, 50.0]], [200.0, 200.0, 50.0, 50.0])
     end
 
     it "draws a visible loop for coincident cluster centres" do
-      points = [point(50.0, 0.0), point(120, 0),
-                point(120, 50), point(50.0, 50.0)]
-
-      expect_route(
-        box(cluster: true),
-        box(cluster: true),
-        points: points,
-        label_segment: [120, 0, 120, 50],
-      )
+      expect_route(box(cluster: true), box(cluster: true),
+                   [[50.0, 0.0], [120, 0], [120, 50], [50.0, 50.0]],
+                   [120, 0, 120, 50])
     end
 
     it "uses supplied bends to choose the rounded source entry" do
@@ -162,15 +126,9 @@ RSpec.describe Sirena::Layout::FlowchartEdgeRouter do
     end
 
     it "anchors diagonal routes on rounded cluster corners" do
-      source, target = diagonal_cluster_boxes
-      points = [point(98.54, 98.54), point(201.46, 201.46)]
-
-      expect_route(
-        source,
-        target,
-        points: points,
-        label_segment: [98.54, 98.54, 201.46, 201.46],
-      )
+      expect_route(*diagonal_cluster_boxes,
+                   [[98.54, 98.54], [201.46, 201.46]],
+                   [98.54, 98.54, 201.46, 201.46])
     end
   end
 end
