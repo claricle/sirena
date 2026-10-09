@@ -29,6 +29,18 @@ RSpec.describe Sirena::Renderer::Treemap do
     ).to_xml
   end
 
+  def parent_with_descendant
+    grandchild = base_cell.merge(label: "Grandchild", x: 20, y: 40)
+    child = base_cell.merge(
+      label: "Child",
+      value: nil,
+      x: 10,
+      y: 20,
+      children: [grandchild],
+    )
+    base_cell.merge(label: "Parent", value: nil, children: [child])
+  end
+
   it "falls back to the depth fill when a class defines only stroke" do
     cell = base_cell.merge(css_class: "outlined", depth: 1)
 
@@ -54,7 +66,8 @@ RSpec.describe Sirena::Renderer::Treemap do
   end
 
   it "renders a zero value for a leaf" do
-    expect(render_cell(base_cell.merge(value: 0))).to match(%r{<text[^>]*>0</text>})
+    zero_value = %r{<text[^>]*>0</text>}
+    expect(render_cell(base_cell.merge(value: 0))).to match(zero_value)
   end
 
   it "does not render a parent value" do
@@ -65,11 +78,7 @@ RSpec.describe Sirena::Renderer::Treemap do
   end
 
   it "renders descendants recursively" do
-    grandchild = base_cell.merge(label: "Grandchild", x: 20, y: 40)
-    child = base_cell.merge(label: "Child", value: nil, x: 10, y: 20, children: [grandchild])
-    parent = base_cell.merge(label: "Parent", value: nil, children: [child])
-
-    expect(render_cell(parent)).to include("Grandchild")
+    expect(render_cell(parent_with_descendant)).to include("Grandchild")
   end
 
   it "keeps a label at the truncation boundary" do
