@@ -14,8 +14,10 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
     from = endpoint({ x: 10, y: 10 }, { x: 0, y: 0, width: 10, height: 20 }, "R")
     to = endpoint({ x: 90, y: 10 }, { x: 90, y: 0, width: 10, height: 20 }, "L")
     points = [from[:point], to[:point]]
-    allow(router).to receive(:straight_clear?).and_return(false)
-    allow(router).to receive(:shortest_path).and_return(points)
+    allow(router).to receive_messages(
+      straight_clear?: false,
+      shortest_path: points,
+    )
 
     expect(router.route(from: from, to: to, obstacles: [])).to equal(points)
   end
@@ -39,8 +41,7 @@ RSpec.describe Sirena::Renderer::ArchitectureEdgeRouter do
   it "falls back to the direct segment after both searches fail" do
     from = endpoint({ x: 10, y: 10 }, { x: 0, y: 0, width: 10, height: 20 }, "R")
     to = endpoint({ x: 90, y: 10 }, { x: 90, y: 0, width: 10, height: 20 }, "L")
-    allow(router).to receive(:straight_clear?).and_return(false)
-    allow(router).to receive(:search_grid).and_return(nil)
+    allow(router).to receive_messages(straight_clear?: false, search_grid: nil)
 
     expect(router.route(from: from, to: to, obstacles: []))
       .to eq([from[:point], to[:point]])
