@@ -55,7 +55,7 @@ module Sirena
         return default_timeline_range if events.empty?
 
         # Extract numeric time values for positioning
-        time_values = events.map { |e| extract_numeric_time(e.time) }.compact
+        time_values = events.filter_map { |e| extract_numeric_time(e.time) }
 
         if time_values.empty?
           return default_timeline_range

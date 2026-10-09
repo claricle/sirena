@@ -180,7 +180,7 @@ module Sirena
       end
 
       def calculate_connections(diagram, blocks_layout)
-        diagram.connections.map do |conn|
+        diagram.connections.filter_map do |conn|
           from_block = blocks_layout[conn.from]
           to_block = blocks_layout[conn.to]
 
@@ -195,7 +195,7 @@ module Sirena
             to_y: to_block[:y],
             connection_type: conn.connection_type,
           }
-        end.compact
+        end
       end
 
       def calculate_total_width(blocks_layout, columns)

@@ -3,11 +3,7 @@ cop: Performance/MapCompact
 rows:
 - file: lib/sirena/layout/architecture.rb
   count: 1
-- file: lib/sirena/layout/block.rb
-  count: 1
 - file: lib/sirena/layout/requirement.rb
   count: 2
-- file: lib/sirena/layout/timeline.rb
-  count: 1
 - file: tasks/benchmark.rake
   count: 1
