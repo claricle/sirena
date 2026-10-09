@@ -59,7 +59,7 @@ RSpec.describe Sirena::Diagram::Quadrant do
 
   def point(label, x_position, y_position)
     Sirena::Diagram::QuadrantPoint.new(
-      label: label, x: x_position, y: y_position
+      label: label, x: x_position, y: y_position,
     )
   end
 

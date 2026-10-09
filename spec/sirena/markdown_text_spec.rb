@@ -684,7 +684,7 @@ RSpec.describe Sirena::MarkdownText do
     it "cuts the first overflowing line while preserving each run's style" do
       bold = described_class::Run.new(text: "abc", bold: true, italic: false)
       italic = described_class::Run.new(
-        text: "defgh", bold: false, italic: true
+        text: "defgh", bold: false, italic: true,
       )
 
       expect(described_class.truncate_runs([[bold, italic]], 7))

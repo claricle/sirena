@@ -45,7 +45,7 @@ end
 
 RSpec.describe PlantUmlReadmeExample do
   it "uses the supported CLI notation-loading path to render valid SVG" do
-    result = PlantUmlReadmeExample.render
+    result = described_class.render
     document = REXML::Document.new(result.svg)
     text = document.get_elements("//text").map(&:text)
     facts = [

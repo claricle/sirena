@@ -31,24 +31,24 @@ end
 RSpec.describe LicenseTruth do
   it "matches the gem metadata to the repository license" do
     facts = [
-      LicenseTruth.gem_license,
-      File.foreach(LicenseTruth::LICENSE).first.chomp,
+      described_class.gem_license,
+      File.foreach(described_class::LICENSE).first.chomp,
     ]
 
     expect(facts).to eq(["BSD-2-Clause", "BSD 2-Clause License"])
   end
 
   it "names BSD-2-Clause consistently in the public documentation" do
-    declarations = LicenseTruth.public_declarations
+    declarations = described_class.public_declarations
     identifiers = declarations.map do |source|
-      source.scan(LicenseTruth::IDENTIFIER)
+      source.scan(described_class::IDENTIFIER)
     end
 
-    expect(identifiers).to all(include(LicenseTruth::IDENTIFIER))
+    expect(identifiers).to all(include(described_class::IDENTIFIER))
   end
 
   it "does not publish the superseded MIT or BSD-3-Clause claims" do
-    source = LicenseTruth.public_declarations.join("\n")
+    source = described_class.public_declarations.join("\n")
 
     expect(source).not_to match(/MIT License|BSD-3(?: |-)Clause/i)
   end
