@@ -33,7 +33,18 @@ module ParseErrorFormatSources
   }.freeze
 end
 
+module ParseErrorFormatHelpers
+  def error_pattern(source, line)
+    shown = source.lines[line - 1].to_s.chomp
+    shown = Regexp.escape(shown.empty? ? "(end of input)" : shown)
+
+    /\AParse error at line #{line}, column \d+:\n#{shown}\n *\^\n/
+  end
+end
+
 RSpec.describe Sirena::Parser::Base, "#parse" do
+  include ParseErrorFormatHelpers
+
   it "covers every registered type" do
     expect(ParseErrorFormatSources::BROKEN.keys)
       .to match_array(Sirena::DiagramRegistry.types)
@@ -42,12 +53,9 @@ RSpec.describe Sirena::Parser::Base, "#parse" do
   ParseErrorFormatSources::BROKEN.each do |type, (source, line)|
     it "names the line, column, source line and caret for #{type}" do
       parser = Sirena::DiagramRegistry.get(type)[:parser].new
-      shown = source.lines[line - 1].to_s.chomp
-      shown = Regexp.escape(shown.empty? ? "(end of input)" : shown)
 
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError,
-        /\AParse error at line #{line}, column \d+:\n#{shown}\n *\^\n/,
+        Sirena::Parser::ParseError, error_pattern(source, line)
       )
     end
   end
