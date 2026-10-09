@@ -32,6 +32,37 @@ RSpec.describe Sirena::Layout::Radar do
         data.add_value("quality", 30)
       end
     end
+    let(:expected_axes) do
+      [
+        include(id: "speed", label: "Speed", angle_degrees: -90.0,
+                end_x: be_within(0.0001).of(0), end_y: -200.0,
+                label_y: -230.0, index: 0),
+        include(id: "quality", label: "Quality", angle_degrees: 90.0,
+                end_x: be_within(0.0001).of(0), end_y: 200.0,
+                label_y: 230.0, index: 1),
+      ]
+    end
+    let(:expected_curve) do
+      include(
+        id: "current",
+        label: "Current",
+        points: [
+          include(axis_id: "speed", value: 10.0, normalized: 0.0,
+                  x: be_within(0.0001).of(0), y: be_within(0.0001).of(0)),
+          include(axis_id: "quality", value: 30.0, normalized: 1.0,
+                  x: be_within(0.0001).of(0), y: 200.0),
+        ],
+      )
+    end
+    let(:expected_grid_circles) do
+      [
+        { radius: 40.0, value: 14.0, fraction: 0.2 },
+        { radius: 80.0, value: 18.0, fraction: 0.4 },
+        { radius: 120.0, value: 22.0, fraction: 0.6 },
+        { radius: 160.0, value: 26.0, fraction: 0.8 },
+        { radius: 200.0, value: 30.0, fraction: 1.0 },
+      ]
+    end
 
     it "infers the value range and publishes final dimensions" do
       expect(graph).to include(
@@ -41,43 +72,15 @@ RSpec.describe Sirena::Layout::Radar do
     end
 
     it "positions axes clockwise from the top" do
-      expect(graph[:axes]).to match(
-        [
-          include(id: "speed", label: "Speed", angle_degrees: -90.0,
-                  end_x: be_within(0.0001).of(0), end_y: -200.0,
-                  label_y: -230.0, index: 0),
-          include(id: "quality", label: "Quality", angle_degrees: 90.0,
-                  end_x: be_within(0.0001).of(0), end_y: 200.0,
-                  label_y: 230.0, index: 1),
-        ],
-      )
+      expect(graph[:axes]).to match(expected_axes)
     end
 
     it "normalizes curve points onto their axes" do
-      expect(graph[:curves]).to contain_exactly(
-        include(
-          id: "current",
-          label: "Current",
-          points: [
-            include(axis_id: "speed", value: 10.0, normalized: 0.0,
-                    x: be_within(0.0001).of(0), y: be_within(0.0001).of(0)),
-            include(axis_id: "quality", value: 30.0, normalized: 1.0,
-                    x: be_within(0.0001).of(0), y: 200.0),
-          ],
-        ),
-      )
+      expect(graph[:curves]).to contain_exactly(expected_curve)
     end
 
     it "creates five evenly spaced grid circles across the range" do
-      expect(graph[:grid_circles]).to eq(
-        [
-          { radius: 40.0, value: 14.0, fraction: 0.2 },
-          { radius: 80.0, value: 18.0, fraction: 0.4 },
-          { radius: 120.0, value: 22.0, fraction: 0.6 },
-          { radius: 160.0, value: 26.0, fraction: 0.8 },
-          { radius: 200.0, value: 30.0, fraction: 1.0 },
-        ],
-      )
+      expect(graph[:grid_circles]).to eq(expected_grid_circles)
     end
   end
 
