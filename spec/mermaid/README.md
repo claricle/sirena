@@ -39,13 +39,31 @@ Both key on the path `<type>/<file>.mmd`, so renaming a case changes its
 key in all three places.
 
 Cases that no sidecar, reference or byte-identical twin settles are judged by
-the local mmdc: `ruby scripts/corpus_verdicts.rb --oracle` writes
+the repository-pinned mmdc: `ruby scripts/corpus_verdicts.rb --oracle` writes
 `oracle-verdicts.yml` (keyed by source hash, with the mmdc and mermaid
 versions it ran under), then `--write` regenerates `corpus-verdicts.yml`
 from it. A rejection is recorded only when the same diagnostic, thrown from
 mermaid's own code, repeats on a second run; any other failure aborts and
-writes nothing. The toolchain is not pinned yet (TODO.foundation/02a), so the
-file records the versions but cannot reproduce them.
+writes nothing.
+
+## Pinned oracle toolchain
+
+Run `npm ci` before any command that asks Mermaid for a verdict or generates
+a reference. `package-lock.json` fixes the complete Node dependency tree;
+`config/mermaid-oracle.yml` records the exact Node, npm, mmdc, Mermaid,
+Puppeteer, Chromium and Noto Sans versions (plus font checksums). Every Ruby
+oracle entry point invokes `node_modules/.bin/mmdc` through
+`scripts/mermaid_toolchain.rb`; an `mmdc` elsewhere on `PATH` is ignored.
+
+Use `npm run oracle:check` (or `rake mermaid:oracle_check`) to detect drift.
+Use `npm run oracle:canary` (or `rake mermaid:oracle_canary`) to additionally
+launch the pinned Chromium and render a known-valid diagram. CI runs both.
+
+The fixture command `rake mermaid:generate_fixtures` uses the same entry
+point, Mermaid config and font stylesheet. Updating any pinned component is a
+reviewed toolchain change: update the lockfile and provenance together, prove
+the canary, then refresh verdicts and references in the separate regeneration
+change. This pinning change intentionally does not regenerate either artifact.
 
 ## Known duplicate directories
 

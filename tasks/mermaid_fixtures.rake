@@ -2,6 +2,7 @@ namespace :fixtures do
   desc "Generate reference SVGs using mermaid-js CLI"
   task :generate_from_mermaidjs do
     require "fileutils"
+    require_relative "../scripts/mermaid_toolchain"
 
     examples_dir = File.expand_path("../examples", __dir__)
     fixtures_dir = File.expand_path("../spec/fixtures", __dir__)
@@ -29,12 +30,12 @@ namespace :fixtures do
 
       FileUtils.mkdir_p(output_dir)
 
-      command = "mmdc -i #{input_path} -o #{output_path}"
       puts "  Generating #{diagram_type}/expected.svg..."
 
-      system(command)
-
-      if $?.success?
+      if system(
+        MermaidToolchain.environment,
+        *MermaidToolchain.command("-i", input_path, "-o", output_path),
+      )
         puts "    ✓ Generated #{output_path}"
       else
         puts "    ✗ Failed to generate #{output_path}"

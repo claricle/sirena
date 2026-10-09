@@ -48,7 +48,9 @@ module MermaidDiffSpecSupport
                   end
         capture = proc do
           Open3.capture3(
-            { "PATH" => "#{bin}:#{ENV.fetch('PATH')}" },
+            { "PATH" => "#{bin}:#{ENV.fetch('PATH')}",
+              "SIRENA_ALLOW_TEST_MMDC" => "1",
+              "SIRENA_MMDC_TEST_BIN" => File.join(bin, "mmdc") },
             *command,
           )
         end
@@ -332,12 +334,23 @@ module MermaidDiffSpecSupport
           File.write(File.join(dir, program), script)
           File.chmod(0o755, File.join(dir, program))
         end
-        with_path(dir, &block)
+        if program == "mmdc"
+          prefix_path(dir, &block)
+        else
+          with_path(dir, &block)
+        end
       end
     end
 
     def prefix_path(dir, &)
+      previous_allow = ENV["SIRENA_ALLOW_TEST_MMDC"]
+      previous_binary = ENV["SIRENA_MMDC_TEST_BIN"]
+      ENV["SIRENA_ALLOW_TEST_MMDC"] = "1"
+      ENV["SIRENA_MMDC_TEST_BIN"] = File.join(dir, "mmdc")
       with_path("#{dir}:#{ENV.fetch('PATH')}", &)
+    ensure
+      ENV["SIRENA_ALLOW_TEST_MMDC"] = previous_allow
+      ENV["SIRENA_MMDC_TEST_BIN"] = previous_binary
     end
 
     def with_path(path)

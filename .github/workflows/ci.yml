@@ -60,6 +60,23 @@ jobs:
           ruby-version: '3.3'
       - run: ruby scripts/check_workflow_pins.rb
 
+  oracle-toolchain:
+    name: oracle-toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: 22.23.1
+          cache: npm
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: npm ci
+      - run: npm run oracle:check
+      - run: npm run oracle:canary
+
   lint:
     # Its own job, not a step inside the unit matrix. Lint answers in under a
     # minute and should not wait on the full Ruby/OS matrix.
@@ -83,7 +100,7 @@ jobs:
   fast-lane:
     name: fast-lane
     if: ${{ always() }}
-    needs: [unit, pins, lint]
+    needs: [unit, pins, oracle-toolchain, lint]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

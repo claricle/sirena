@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "timeout"
+require_relative "mermaid_toolchain" unless defined?(MermaidToolchain)
 
 # Spawns mmdc the way its Chromium-backed process tree actually requires:
 # its own process group, a deadline, and a sweep for children that escape
@@ -33,7 +34,8 @@ module HardenedMmdc
   # close, even when the spawn itself raises.
   def run_mmdc(input, output)
     IO.pipe do |stdout_r, stdout_w|
-      pid = Process.spawn("mmdc", "-i", input, "-o", output,
+      pid = Process.spawn(MermaidToolchain.environment,
+                          *MermaidToolchain.command("-i", input, "-o", output),
                           out: stdout_w, err: stdout_w, pgroup: true)
       stdout_w.close
       # Appended to as bytes arrive, not returned once at the end: a drain
@@ -172,6 +174,7 @@ module HardenedMmdc
   # from reaching EOF. Measured with a wedged `ps` — the sweep came back in
   # 0.30s and the reader waited 21.29s for EOF.
   def capture(command, timeout)
+    command = MermaidToolchain.version_command if command == ["mmdc", "--version"]
     io = IO.popen(command, err: File::NULL, pgroup: true)
     begin
       Timeout.timeout(timeout) { io.read }
