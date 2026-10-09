@@ -15,7 +15,7 @@ RSpec.describe Sirena::Layout::Quadrant do
       dimensions: {
         width: 800, height: 600, margin: 80, chart_width: 640,
         chart_height: 440, chart_x: 80, chart_y: 80
-      }
+      },
     )
   end
 
@@ -30,7 +30,7 @@ RSpec.describe Sirena::Layout::Quadrant do
       q1: { x: 400.0, y: 80, width: 320.0, height: 220.0 },
       q2: { x: 80, y: 80, width: 320.0, height: 220.0 },
       q3: { x: 80, y: 300.0, width: 320.0, height: 220.0 },
-      q4: { x: 400.0, y: 300.0, width: 320.0, height: 220.0 }
+      q4: { x: 400.0, y: 300.0, width: 320.0, height: 220.0 },
     )
   end
 
@@ -39,7 +39,7 @@ RSpec.describe Sirena::Layout::Quadrant do
       Sirena::Diagram::Quadrant.new(
         points: [default_point, styled_point],
         x_axis_left: "low",
-        y_axis_top: "high"
+        y_axis_top: "high",
       )
     end
     let(:default_point) do
@@ -54,13 +54,13 @@ RSpec.describe Sirena::Layout::Quadrant do
 
     it "normalizes x and inverts y into SVG coordinates" do
       expect(graph[:points].map { |point| point.values_at(:svg_x, :svg_y) }).to eq(
-        [[240.0, 190.0], [720.0, 520.0]]
+        [[240.0, 190.0], [720.0, 520.0]],
       )
     end
 
     it "applies default and custom point geometry" do
       expect(graph[:points].map { |point| point.values_at(:radius, :stroke_width, :stroke_color) }).to eq(
-        [[6, 2, nil], [9.0, 4.0, "navy"]]
+        [[6, 2, nil], [9.0, 4.0, "navy"]],
       )
     end
 
