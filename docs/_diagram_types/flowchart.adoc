@@ -196,6 +196,8 @@ end
 
 === Examples
 
+include::examples/flowchart-examples.adoc[]
+
 ==== Basic flowchart
 
 .Simple top-to-bottom flowchart
