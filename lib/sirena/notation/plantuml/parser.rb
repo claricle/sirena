@@ -3,7 +3,10 @@
 require_relative "../../error"
 require_relative "../../error/diagram_type_error"
 require_relative "../../error/parse_error"
+require_relative "arrow"
 require_relative "diagram_builder"
+require_relative "directives"
+require_relative "junction"
 require_relative "member"
 require_relative "relation"
 require_relative "unsupported_construct_error"
@@ -29,31 +32,19 @@ module Sirena
         KINDS = { "class" => :class, "abstract class" => :abstract,
                   "interface" => :interface }.freeze
 
-        # glyph => the Relation kind and the side its marker sits on
-        ARROWS = {
-          "<|--" => { kind: :extension, head: :left },
-          "--|>" => { kind: :extension, head: :right },
-          "<|.." => { kind: :implementation, head: :left },
-          "..|>" => { kind: :implementation, head: :right },
-          "-->" => { kind: :association, head: :right },
-          "<--" => { kind: :association, head: :left },
-          "--" => { kind: :association, head: nil },
-          "o--" => { kind: :aggregation, head: :left },
-          "--o" => { kind: :aggregation, head: :right },
-          "*--" => { kind: :composition, head: :left },
-          "--*" => { kind: :composition, head: :right },
-        }.freeze
-
         # Every quantified piece is separated from the next by a character
         # it cannot also match, so no line backtracks more than linearly.
         STARTUML = /\A@startuml(?![A-Za-z0-9_])/
         CLASS_DECLARATION =
           /\A(abstract[ \t]+class|class|interface)[ \t]+(#{NAME})
            (?:[ \t]*(\{))?\z/xo
-        RELATION = /\A(#{NAME})[ \t]+(?:"([^"]+)"[ \t]+)?
-                    (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
-                    [ \t]+(?:"([^"]+)"[ \t]+)?(#{NAME})
+        END_TEXT = '(?:"([^"]+)"(?:/"([^"]+)")?|/"([^"]+)")'
+        RELATION = /\A(#{NAME})[ \t]+(?:#{END_TEXT}[ \t]+)?
+                    #{Arrow::PATTERN}
+                    [ \t]*(?:#{END_TEXT}[ \t]+)?(#{NAME})
                     (?:[ \t]*:[ \t]*(.+))?\z/xo
+        JUNCTION = /\A\((#{NAME})[ \t]*,[ \t]*(#{NAME})\)[ \t]*
+                    \.{1,2}[ \t]*(#{NAME})\z/xo
         METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]*\(([^()]*)\)
                   (?:[ \t]*:[ \t]*(.+))?\z/xo
         FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:[ \t]*:[ \t]*([^()]+))?\z/o
@@ -61,9 +52,9 @@ module Sirena
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
                             "Source must start with one of: @startuml"
 
-        private_constant :NAME, :VISIBILITY, :KINDS, :ARROWS, :STARTUML,
-                         :CLASS_DECLARATION, :RELATION, :METHOD, :FIELD,
-                         :LINE_END, :NOT_FOUND_MESSAGE
+        private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
+                         :CLASS_DECLARATION, :RELATION, :JUNCTION, :METHOD,
+                         :FIELD, :LINE_END, :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
         # @return [Diagram] the parsed diagram; the Diagram, its collections
@@ -125,18 +116,39 @@ module Sirena
           raise refusal(text, number, "second diagram") if STARTUML.match?(text)
 
           refuse_block_comment(text, number)
+          return record(builder, text) if Directives.match?(text)
+
           declaration_or_relation(builder, text, number)
+        end
+
+        def record(builder, text)
+          builder.directive(text)
+          :statements
         end
 
         def declaration_or_relation(builder, text, number)
           if (match = CLASS_DECLARATION.match(text))
             declare(builder, match, number, text)
-          elsif (match = RELATION.match(text))
-            builder.relate(relation_from(match), number, text)
+          elsif (match = JUNCTION.match(text))
+            junction = Junction.new(**junction_names(match))
+            builder.junction(junction, number, text)
             :statements
           else
-            raise refusal(text, number)
+            relation(builder, text, number)
           end
+        end
+
+        def junction_names(match)
+          { from: match[1], to: match[2], owner: match[3] }
+        end
+
+        def relation(builder, text, number)
+          match = RELATION.match(text)
+          arrow = match && Arrow.parse(match[5])
+          raise refusal(text, number) unless arrow
+
+          builder.relate(relation_from(match, arrow), number, text)
+          :statements
         end
 
         # PlantUML draws a welcome page, not a diagram, when nothing was
@@ -217,11 +229,14 @@ module Sirena
                                         text: text)
         end
 
-        def relation_from(match)
-          Relation.new(left: match[1], right: match[5],
-                       arrow: ARROWS.fetch(match[3]),
-                       multiplicities: { left: match[2], right: match[4] },
-                       label: match[6])
+        def relation_from(match, arrow)
+          Relation.new(left: match[1], right: match[9], arrow: arrow,
+                       ends: end_texts(match), label: match[10])
+        end
+
+        def end_texts(match)
+          { left: match[2], left_role: match[3] || match[4],
+            right: match[6], right_role: match[7] || match[8] }
         end
 
         # nil for anything the subset does not read. A modifier, separator or

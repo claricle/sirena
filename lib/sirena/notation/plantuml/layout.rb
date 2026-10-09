@@ -17,9 +17,10 @@ module Sirena
         MARKER_LENGTH = 12.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
+        FILLED_MARKERS = %i[association dependency composition].freeze
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP, :MIN_BOX_WIDTH,
                          :BOX_PADDING, :ROW_HEIGHT, :MARKER_LENGTH,
-                         :MARKER_HALF_WIDTH, :LABEL_OFFSET
+                         :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS
 
         def scene(diagram)
           specifications = diagram.classes.map do |klass|
@@ -36,7 +37,8 @@ module Sirena
         def build_scene(diagram, boxes, box_width)
           width = canvas_width(boxes, box_width)
           height = canvas_height(box_rows(boxes))
-          relations = build_relations(diagram.relations, boxes)
+          relations = build_relations(diagram.relations, boxes) +
+                      build_junctions(diagram, boxes)
           Scene.new(width: width, height: height, boxes: boxes,
                     relations: relations)
         end
@@ -186,11 +188,34 @@ module Sirena
         def relation_scene(relation, index, endpoints)
           marker = marker_geometry(relation, endpoints)
           path = relation_path(endpoints)
-          dashed = relation.kind == :implementation
+          dashed = %i[implementation dependency].include?(relation.kind)
           texts = relation_texts(relation, endpoints)
           Scene::Relation.new(id: "relation-#{index}", path: path,
                               dashed: dashed, marker_points: marker[:points],
                               marker_filled: marker[:filled], texts: texts)
+        end
+
+        # A dashed line from the association class to the middle of the
+        # relation it hangs on.
+        def build_junctions(diagram, boxes)
+          by_name = boxes.to_h { |box| [box.id, box] }
+          diagram.junctions.each_with_index.map do |junction, index|
+            junction_scene(junction, index, by_name)
+          end
+        end
+
+        def junction_scene(junction, index, by_name)
+          ends = [junction.from, junction.to].map { |n| by_name.fetch(n) }
+          middle = midpoint(*relation_endpoints(*ends).values_at(:left, :right))
+          owner = by_name.fetch(junction.owner)
+          edge = boundary_toward(owner, middle)
+          Scene::Relation.new(id: "junction-#{index}", dashed: true,
+                              path: "M #{point(edge)} L #{point(middle)}",
+                              marker_filled: false, texts: [])
+        end
+
+        def midpoint(first, second)
+          [(first[0] + second[0]) / 2, (first[1] + second[1]) / 2]
         end
 
         def relation_endpoints(left_box, right_box)
@@ -214,8 +239,12 @@ module Sirena
         end
 
         def boundary_point(box, target)
+          boundary_toward(box, box_centre(target))
+        end
+
+        def boundary_toward(box, destination)
           centre = box_centre(box)
-          delta = vector_between(centre, box_centre(target))
+          delta = vector_between(centre, destination)
           shift(centre, *delta, boundary_scale(box, delta))
         end
 
@@ -256,7 +285,7 @@ module Sirena
           other = endpoints.fetch(side == :left ? :right : :left)
           shape = marker_shape(relation.kind)
           points = marker_points(tip, other, shape)
-          filled = %i[association composition].include?(relation.kind)
+          filled = FILLED_MARKERS.include?(relation.kind)
           { points: points, filled: filled }
         end
 
@@ -310,9 +339,15 @@ module Sirena
           direction = unit_vector(left, right)
 
           [relation_label(relation.label, left, right),
-           multiplicity(relation.left_multiplicity, left, direction, 1),
-           multiplicity(relation.right_multiplicity, right, direction, -1)]
+           multiplicity(end_text(relation, :left), left, direction, 1),
+           multiplicity(end_text(relation, :right), right, direction, -1)]
             .compact
+        end
+
+        def end_text(relation, side)
+          parts = [relation.public_send(:"#{side}_multiplicity"),
+                   relation.public_send(:"#{side}_role")].compact
+          parts.join(" ") unless parts.empty?
         end
 
         def relation_label(content, left, right)

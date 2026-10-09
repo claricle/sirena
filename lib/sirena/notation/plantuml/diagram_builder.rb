@@ -29,6 +29,17 @@ module Sirena
           @bodies = {}
           @explicit = {}
           @relations = []
+          @junctions = []
+          @directives = []
+        end
+
+        def directive(text)
+          @directives << text
+        end
+
+        def junction(junction, number, text)
+          mention(junction.owner)
+          @junctions << [junction, number, text]
         end
 
         # @return [Array(String, Integer)] the class whose body was opened
@@ -70,12 +81,15 @@ module Sirena
         #   source as a sequence diagram
         def diagram
           refuse_sequence_diagram
+          @junctions.each { |entry| refuse_unrelated_junction(*entry) }
 
           classes = @kinds.map do |name, kind|
             body = @bodies.fetch(name).dup.freeze
             Klass.new(name: name, kind: kind, body: body)
           end
-          Diagram.new(classes: classes.freeze, relations: @relations.dup.freeze)
+          Diagram.new(classes: classes.freeze, relations: @relations.dup.freeze,
+                      junctions: @junctions.map(&:first).freeze,
+                      directives: @directives.dup.freeze)
         end
 
         private
@@ -86,6 +100,18 @@ module Sirena
           number, text = @sequence_arrow
           raise UnsupportedConstructError.new(
             construct: "sequence diagram", line: number, text: text,
+          )
+        end
+
+        # PlantUML joins the two classes itself when no relation was
+        # written; this notation has no relation to hang the class on.
+        def refuse_unrelated_junction(junction, number, text)
+          pair = [junction.from, junction.to].sort
+          return if @relations.any? { |r| [r.left, r.right].sort == pair }
+
+          raise UnsupportedConstructError.new(
+            construct: "association class without its relation",
+            line: number, text: text
           )
         end
 
@@ -108,7 +134,7 @@ module Sirena
           return true if relation.left_multiplicity
           return true if relation.right_multiplicity
 
-          relation.kind != :association || relation.head.nil?
+          !relation.plain?
         end
 
         def mention(name)
