@@ -43,6 +43,16 @@ RSpec.describe Sirena::Diagram::JourneyTask do
       expect(task.valid?).to be false
     end
 
+    it "returns false for a score below the supported range" do
+      task = described_class.new.tap do |t|
+        t.name = "Browse products"
+        t.score = 0
+        t.actors = ["Customer"]
+      end
+
+      expect(task.valid?).to be false
+    end
+
     it "returns true for task with an empty actor list" do
       # mmdc renders `Task: 5` and `Task: 5:` (corpus cases 004/008/012)
       # the same as a task with actors; `actors` defaults to `[]`.
@@ -79,6 +89,14 @@ RSpec.describe Sirena::Diagram::JourneyTask do
       end
 
       expect(task.score_color).to eq(:green)
+    end
+
+    it "returns yellow for a score outside the supported range" do
+      task = described_class.new.tap do |t|
+        t.score = 0
+      end
+
+      expect(task.score_color).to eq(:yellow)
     end
   end
 end
