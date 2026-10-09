@@ -75,15 +75,15 @@ RSpec.describe Sirena::Notation::PlantUML do
 
   describe "relation glyphs" do
     {
-      "A -down-> B" => [:association, :right],
-      "A <-up- B" => [:association, :left],
-      "A o--------- B" => [:aggregation, :left],
-      "A *.r. B" => [:composition, :left],
-      "A ..> B" => [:dependency, :right],
+      "A -down-> B" => %i[association right],
+      "A <-up- B" => %i[association left],
+      "A o--------- B" => %i[aggregation left],
+      "A *.r. B" => %i[composition left],
+      "A ..> B" => %i[dependency right],
       "A .. B" => [:dependency, nil],
-      "A -->B" => [:association, :right],
-      "A <|-l- B" => [:extension, :left],
-      "A ..|> B" => [:implementation, :right],
+      "A -->B" => %i[association right],
+      "A <|-l- B" => %i[extension left],
+      "A ..|> B" => %i[implementation right],
     }.each do |line, (kind, head)|
       it "reads #{line.inspect} as #{kind} with head #{head.inspect}" do
         relation = parse_corpus("class A\n#{line}").relations.first
@@ -130,7 +130,7 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "reads a method as its return type, name and parameters" do
       member = parse_corpus("class A {\nvoid run(int a)\n}")
-               .classes.first.body.first
+        .classes.first.body.first
 
       expect(member).to have_attributes(kind: :method, name: "run",
                                         type: "void", parameters: "int a")
@@ -154,7 +154,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       source = "class A\nnote top of A <<tag>>\none\ntwo\nendnote"
 
       expect(parse_corpus(source).notes.first).to have_attributes(
-        stereotype: "<<tag>>", lines: %w[one two]
+        stereotype: "<<tag>>", lines: %w[one two],
       )
     end
 
@@ -247,7 +247,7 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "records the pair and the owner" do
       expect(diagram.junctions.first).to have_attributes(
-        from: "A", to: "B", owner: "C"
+        from: "A", to: "B", owner: "C",
       )
     end
 
