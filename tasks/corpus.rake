@@ -49,8 +49,8 @@ module Sirena
       selected = type ? [type] : available
       unknown = selected - available
       unless unknown.empty?
-        raise "Unknown corpus type(s): #{unknown.join(', ')}. " \
-              "Available: #{available.join(', ')}"
+        raise ArgumentError, "Unknown corpus type(s): #{unknown.join(', ')}. " \
+                             "Available: #{available.join(', ')}"
       end
 
       selected.flat_map do |t|
@@ -195,7 +195,9 @@ module Sirena
       return nil if filter.nil? || filter.empty?
       return :valid if filter == "valid"
 
-      raise ArgumentError, "Unknown corpus filter #{filter.inspect}; the only filter is \"valid\""
+      raise ArgumentError,
+            "Unknown corpus filter #{filter.inspect}; " \
+            "the only filter is \"valid\""
     end
 
     # Parslet embeds object addresses in its error text
@@ -318,7 +320,7 @@ task :corpus, %i[type filter] do |_task, args|
   require "sirena"
   begin
     Sirena::Corpus.run(args[:type], args[:filter])
-  rescue ArgumentError, RuntimeError => e
+  rescue ArgumentError => e
     abort "corpus: #{e.message}"
   end
 end
