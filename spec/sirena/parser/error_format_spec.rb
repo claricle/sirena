@@ -2,10 +2,10 @@
 
 require "spec_helper"
 
-RSpec.describe "parse error format across every diagram type" do
+module ParseErrorFormatSources
   # Each source starts correctly and breaks on the line named in the second
   # column: [source, line of the break].
-  broken = {
+  BROKEN = {
     flowchart: ["graph TD\nA-->\n", 3],
     sequence: ["sequenceDiagram\n???\n", 2],
     class_diagram: ["classDiagram\n???\n", 2],
@@ -31,12 +31,14 @@ RSpec.describe "parse error format across every diagram type" do
     info: ["info\n???\n", 2],
     error: ["error\n???\n", 2],
   }
+end
 
+RSpec.describe Sirena::Parser::Base, "parse error format across every diagram type" do
   it "covers every registered type" do
-    expect(broken.keys).to match_array(Sirena::DiagramRegistry.types)
+    expect(ParseErrorFormatSources::BROKEN.keys).to match_array(Sirena::DiagramRegistry.types)
   end
 
-  broken.each do |type, (source, line)|
+  ParseErrorFormatSources::BROKEN.each do |type, (source, line)|
     it "names the line, column, source line and caret for #{type}" do
       parser = Sirena::DiagramRegistry.get(type)[:parser].new
       shown = source.lines[line - 1].to_s.chomp

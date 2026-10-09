@@ -170,7 +170,7 @@ module Sirena
               text.font_family = theme_typography(:font_family) || "Arial"
               text.font_size = font_size(scene_text.role)
               text.font_style = "italic" if scene_text.role == "kind"
-            text.font_weight = "bold" if scene_text.role == "fragment_tab"
+              text.font_weight = "bold" if scene_text.role == "fragment_tab"
             end
           end
 

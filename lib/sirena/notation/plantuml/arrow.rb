@@ -17,10 +17,10 @@ module Sirena
         # A bare `o` or `*` after the body only ends it before a space or a
         # quote; otherwise it starts the class name (`A --oB`).
         RIGHT_IN_LINE = '(?:\|>|>|(?:o|\*)(?=[ \t"]))'
-        BODY = '[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?'
+        BODY = "[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?"
 
         # Matches one glyph; embed it, then call {parse} on the match.
-        PATTERN = "(#{LEFT_MARKER}?#{BODY}#{RIGHT_IN_LINE}?)"
+        PATTERN = "(#{LEFT_MARKER}?#{BODY}#{RIGHT_IN_LINE}?)".freeze
 
         GLYPH = /\A(#{LEFT_MARKER})?(#{BODY})(#{RIGHT_MARKER})?\z/o
         PLAIN = /\A(?:-->|<--|->|<-)\z/
@@ -57,7 +57,7 @@ module Sirena
 
         def head_of(left, right)
           return :left if left
-          return :right if right
+          :right if right
         end
       end
     end

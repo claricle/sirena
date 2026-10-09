@@ -43,7 +43,7 @@ module Sirena
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
                        y: @top + @head_height + Walker::ROW)
-                  .run(@diagram.items)
+              .run(@diagram.items)
           end
 
           # Items such as a note left of the first participant stick out

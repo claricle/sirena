@@ -21,8 +21,12 @@ module Sirena
             @block = block
             @bottom = bottom
             @measure = measure
-            low, high = block[:low], block[:high]
-            low, high = centers.first, centers.last if low > high
+            low = block[:low]
+            high = block[:high]
+            if low > high
+              low = centers.first
+              high = centers.last
+            end
             pad = BASE_PAD + NEST_PAD * block[:depth]
             @x = low - pad
             @width = [high - low + 2 * pad, minimum_width].max
