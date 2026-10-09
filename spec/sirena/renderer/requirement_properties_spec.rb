@@ -24,12 +24,12 @@ RSpec.describe Sirena::Renderer::Requirement do
 
     it "prints only the header type and names, no property lines",
        :aggregate_failures do
-      expect(texts).to include("Requirement", "bare", "lone")
-      expect(texts.grep(/\A(ID|Risk|Verify|Type):/)).to be_empty
+      expect(texts).to include("&lt;&lt;Requirement&gt;&gt;", "bare", "lone")
+      expect(texts.grep(/\A(ID|Risk|Verification|Type):/)).to be_empty
     end
 
     it "labels the relationship with its type" do
-      expect(texts).to include("satisfies")
+      expect(texts).to include("&lt;&lt;satisfies&gt;&gt;")
     end
   end
 
@@ -51,7 +51,9 @@ RSpec.describe Sirena::Renderer::Requirement do
     end
 
     let(:body) do
-      chrome = /\A(ID|Risk|Verify|Type):|\A(Requirement|full|typed|verifies)\z/
+      chrome = Regexp.union(
+        /\A(ID|Risk|Verification|Type):/, /\A(&lt;&lt;\w+&gt;&gt;|full|typed)\z/
+      )
       texts.grep_v(chrome)
     end
     let(:full_text) do
@@ -62,11 +64,11 @@ RSpec.describe Sirena::Renderer::Requirement do
     it "wraps the text onto several lines without losing words",
        :aggregate_failures do
       expect(body.size).to be > 1
-      expect(body.join(" ")).to eq(full_text)
+      expect(body.join(" ")).to eq("Text: #{full_text}")
     end
 
     it "prints capitalised risk and verify lines and the element type" do
-      expect(texts).to include("ID: 1", "Risk: High", "Verify: Test",
+      expect(texts).to include("ID: 1", "Risk: High", "Verification: Test",
                                "Type: simulation")
     end
   end
