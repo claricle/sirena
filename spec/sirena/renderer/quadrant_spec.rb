@@ -180,11 +180,10 @@ RSpec.describe Sirena::Renderer::Quadrant do
       graph = transform.to_graph(diagram)
 
       # Check that point coordinates are transformed
-      point = graph[:points].first
-      expect(point[:svg_x]).to be > 0
-      expect(point[:svg_y]).to be > 0
-      expect(point[:x]).to eq(0.5)
-      expect(point[:y]).to eq(0.5)
+      point = graph.points.first
+      expect(point.x).to be > 0
+      expect(point.y).to be > 0
+      expect([point.x, point.y]).to eq([400.0, 300.0])
     end
   end
 end
