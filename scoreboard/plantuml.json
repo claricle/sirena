@@ -3,20 +3,20 @@
     "notation": "plantuml",
     "type": "class",
     "cases": 37,
-    "oracle_valid": null,
+    "oracle_valid": 35,
     "passing": 0,
     "pass_rate": 0.0,
-    "status": "no oracle yet (TODO.foundation/12 step 2); 0 passing is the honest start, not a measured failure rate",
+    "status": "0/35 oracle-valid cases pass; 2/37 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   },
   {
     "notation": "plantuml",
     "type": "sequence",
     "cases": 79,
-    "oracle_valid": null,
+    "oracle_valid": 77,
     "passing": 0,
     "pass_rate": 0.0,
-    "status": "no oracle yet (TODO.foundation/12 step 2); 0 passing is the honest start, not a measured failure rate",
+    "status": "0/77 oracle-valid cases pass; 2/79 cases are rejected by the pinned oracle",
     "provenance": "upstream-fixture"
   }
 ]

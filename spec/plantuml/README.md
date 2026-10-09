@@ -59,11 +59,12 @@ same file collapse into one case with `occurrences` counting them.
 ## Pin
 
 `pin.json` holds the upstream SHA (the extractor refuses any other
-checkout), PlantUML/Java/Graphviz versions as observed on the extracting
-machine, the jar checksum, and a checksum over the committed corpus
-(`corpus.manifest_sha256`). The observed toolchain is not yet a decision:
-the installed PlantUML (1.2026.6) is older than the upstream fixtures
-(1.2026.9beta4), so step 2 must pick the binary before any verdict exists.
+checkout), the pinned PlantUML/Java/Graphviz oracle toolchain, the jar
+checksum, and a checksum over the committed corpus
+(`corpus.manifest_sha256`). The pinned PlantUML (1.2026.6) is older than
+the upstream fixtures (1.2026.9beta4). The corpus still keeps all selected
+fixtures: the oracle rejected two class and two sequence cases, and those
+four cases stay recorded rather than disappearing from the source corpus.
 
 ## Regenerating
 
@@ -71,5 +72,14 @@ the installed PlantUML (1.2026.6) is older than the upstream fixtures
     git -C <dir> checkout <sha from pin.json>
     ruby scripts/extract_plantuml_tests.rb --upstream <dir>
 
-Scoreboard rows live in `scoreboard/plantuml.json`: 0 passing, with no
-oracle yet, so the denominator is unknown.
+The committed oracle verdicts were generated atomically with the Homebrew
+PlantUML wrapper's Java first on `PATH` so the probed Java version is the
+runtime that actually renders the diagrams:
+
+    PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:$PATH \
+      ruby scripts/plantuml_oracle.rb \
+      --write spec/plantuml/oracle-verdicts.yml spec/plantuml
+
+Scoreboard rows live in `scoreboard/plantuml.json`. The measured baseline is
+0/35 oracle-valid class cases and 0/77 oracle-valid sequence cases; the
+four oracle rejections are not in those denominators.
