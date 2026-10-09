@@ -12,13 +12,13 @@ RSpec.describe Sirena::Renderer::Kanban do
   let(:layout) do
     {
       columns: [column], cards: cards,
-      width: 200, height: 150,
+      width: 200, height: 150
     }
   end
   let(:column) do
     {
       id: "todo", title: "Todo", x: 0, y: 0,
-      width: 200, height: 150, header_height: 50, card_count: cards.size,
+      width: 200, height: 150, header_height: 50, card_count: cards.size
     }
   end
   let(:cards) { [] }
@@ -26,7 +26,7 @@ RSpec.describe Sirena::Renderer::Kanban do
   def card(metadata: {}, has_metadata: false)
     {
       id: "work", text: "Work", column_id: "todo", x: 10, y: 60,
-      width: 180, height: 80, metadata: metadata, has_metadata: has_metadata,
+      width: 180, height: 80, metadata: metadata, has_metadata: has_metadata
     }
   end
 
@@ -35,8 +35,9 @@ RSpec.describe Sirena::Renderer::Kanban do
   end
 
   def custom_theme
-    colors = Struct.new(:background, :primary, :secondary, :border, :text)
-                   .new("#101010", "#202020", "#303030", nil, nil)
+    colors = Struct.new(
+      :background, :primary, :secondary, :border, :text
+    ).new("#101010", "#202020", "#303030", nil, nil)
     typography = Struct.new(:font_size, :font_family).new(17, "Test Sans")
     Struct.new(:colors, :typography).new(colors, typography)
   end
@@ -60,7 +61,7 @@ RSpec.describe Sirena::Renderer::Kanban do
         metadata: { assigned: nil, ticket: "", story_points: 5 },
         has_metadata: true,
       )
-      texts = REXML::XPath.match(parsed, "//text").map(&:text).compact
+      texts = REXML::XPath.match(parsed, "//text").filter_map(&:text)
       metadata_texts = texts.grep(/Assigned|Ticket|Story_points|\A5\z/)
 
       expect(metadata_texts).to eq(["Story_points:", "5"])
@@ -73,7 +74,7 @@ RSpec.describe Sirena::Renderer::Kanban do
 
       expect(themed_xml).to include(
         'fill="#101010"', 'fill="#202020"', 'fill="#303030"',
-        'font-size="17"', 'font-family="Test Sans"',
+        'font-size="17"', 'font-family="Test Sans"'
       )
     end
 
@@ -84,7 +85,7 @@ RSpec.describe Sirena::Renderer::Kanban do
       expect(fallback).to include(
         'fill="#f3f4f6"', 'stroke="#d1d5db"',
         'fill="#3b82f6"', 'fill="#1f2937"',
-        'font-family="Arial, sans-serif"',
+        'font-family="Arial, sans-serif"'
       )
     end
 
