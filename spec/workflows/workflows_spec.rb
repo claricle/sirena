@@ -35,6 +35,16 @@ module WorkflowHelpers
   def delegated_values(job)
     [Array(job["needs"]), job.dig("with", "next_version")]
   end
+
+  def oracle_browser_scope(jobs)
+    steps = jobs.fetch("oracle-toolchain").fetch("steps")
+    %w[canary check].map do |command|
+      step = steps.find do |candidate|
+        candidate["run"] == "npm run oracle:#{command}"
+      end
+      step.fetch("env", nil)
+    end
+  end
 end
 
 # The subject is a set of YAML files, not a class.
@@ -181,6 +191,12 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       lint = jobs.fetch("lint")
       expect(lint["steps"].filter_map { |s| s["run"] }).to include("bundle exec rubocop")
       expect(jobs.fetch("fast-lane")["needs"]).to include("lint")
+    end
+
+    it "limits the Chromium workaround to the oracle canary step" do
+      expected = [{ "SIRENA_ORACLE_CI_CANARY_NO_SANDBOX" => "1" }, nil]
+
+      expect(oracle_browser_scope(jobs)).to eq(expected)
     end
 
     it "has no standalone lint workflow file any more" do

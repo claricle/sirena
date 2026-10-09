@@ -40,6 +40,21 @@ RSpec.describe MermaidToolchain do
       .to eq(expected_command)
   end
 
+  it "adds the no-sandbox config only for the requested CI canary" do
+    enable_ci_browser_config
+
+    expect(described_class.command)
+      .to include("--puppeteerConfigFile",
+                  described_class::CI_PUPPETEER_CONFIG_PATH)
+  end
+
+  it "configures Chromium's CI launch without a sandbox" do
+    config = JSON.parse(File.read(described_class::CI_PUPPETEER_CONFIG_PATH))
+
+    expect(config.fetch("args"))
+      .to contain_exactly("--no-sandbox", "--disable-setuid-sandbox")
+  end
+
   def expected_command
     [
       described_class::MMDC_PATH,
@@ -47,5 +62,12 @@ RSpec.describe MermaidToolchain do
       "--cssFile", described_class::CSS_PATH,
       "-i", "in.mmd", "-o", "out.svg",
     ]
+  end
+
+  def enable_ci_browser_config
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch)
+      .with(described_class::CI_CANARY_ENV, nil).and_return("1")
+    allow(described_class).to receive(:resolved_provenance).and_return(expected)
   end
 end
