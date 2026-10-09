@@ -5,10 +5,10 @@
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
 | Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml) | < 30 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`) | < 30 min |
 
-Reserved, not yet wired: snippet spec (16), corpus (02b), parity (14),
-conformance (04), fresh-resolution install (01). The scoreboard guard (02b)
+Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
+inside `unit` (`bundle exec rake` includes `corpus:check`). The scoreboard guard (02b)
 goes in BOTH lanes. `lint` (19b) is folded into the fast lane as an ordinary
 job hanging off `fast-lane`; there is no standalone `lint.yml` workflow, and
 no separate `lint / rubocop` required check.
