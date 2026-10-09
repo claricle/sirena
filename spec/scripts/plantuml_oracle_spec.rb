@@ -125,6 +125,25 @@ module PlantumlOracleSpecSupport
     }
   end
 
+  def recorded_source_verdicts(records)
+    records.to_h do |record|
+      id = record.fetch("id")
+      [id, [record.fetch("verdict"), record.fetch("source_sha256")]]
+    end
+  end
+
+  def expected_source_verdicts(sources)
+    sources.to_h do |id, source|
+      [id, [a_string_matching(/\A(?:valid|rejected)\z/),
+            Digest::SHA256.hexdigest(source)]]
+    end
+  end
+
+  def recorded_toolchains(document, records)
+    fields = document.fetch("toolchain").keys
+    [document.fetch("toolchain"), records.map { |record| record.slice(*fields) }]
+  end
+
   # The error `refresh` raises for this runner, or nil when it succeeds.
   def refresh_failure(cases, path, runner)
     PlantumlOracle.refresh(cases, path, runner: runner)
@@ -328,24 +347,17 @@ RSpec.describe PlantumlOracle do
 
     it "records only verdicts whose source hashes match the corpus" do
       sources = described_class.load_cases(corpus)
-      actual = records.to_h do |record|
-        id = record.fetch("id")
-        [id, [record.fetch("verdict"), record.fetch("source_sha256")]]
-      end
-      expected = sources.to_h do |id, source|
-        [id, [a_string_matching(/\A(?:valid|rejected)\z/),
-              Digest::SHA256.hexdigest(source)]]
-      end
 
-      expect(actual).to match(expected)
+      expect(recorded_source_verdicts(records))
+        .to match(expected_source_verdicts(sources))
     end
 
     it "carries the pinned toolchain in every verdict" do
       pin = JSON.parse(File.read(File.join(corpus, "pin.json")))
       toolchain = pin.dig("oracle", "toolchain")
 
-      expect(document.fetch("toolchain")).to eq(toolchain)
-      expect(records).to all include(toolchain)
+      expect(recorded_toolchains(document, records))
+        .to match([toolchain, all(eq(toolchain))])
     end
   end
 

@@ -29,6 +29,29 @@ module PlantumlExtractorSpecSupport
     end
     pairs.transpose
   end
+
+  def oracle_valid_counts(corpus)
+    YAML.load_file(File.join(corpus, "oracle-verdicts.yml"))
+      .fetch("verdicts")
+      .select { |record| record["verdict"] == "valid" }
+      .group_by { |record| record.fetch("id").split("/", 2).first }
+      .transform_values(&:size)
+  end
+
+  def scoreboard_counts(root)
+    JSON.parse(File.read(File.join(root, "scoreboard/plantuml.json")))
+      .to_h do |row|
+        [row["type"], [row["cases"], row["oracle_valid"], row["passing"]]]
+      end
+  end
+
+  def expected_scoreboard_counts(pin, valid)
+    counts = pin.dig("corpus", "cases")
+    {
+      "class" => [counts["class"], valid["class"], 0],
+      "sequence" => [counts["sequence"], valid["sequence"], 0],
+    }
+  end
 end
 
 RSpec.describe PlantumlExtractor do
@@ -162,20 +185,8 @@ RSpec.describe PlantumlExtractor do
     end
 
     it "has scoreboard rows with the measured oracle-valid denominators" do
-      rows = JSON.parse(File.read(File.join(root, "scoreboard/plantuml.json")))
-      counts = pin.dig("corpus", "cases")
-      verdicts = YAML.load_file(File.join(corpus, "oracle-verdicts.yml"))
-        .fetch("verdicts")
-      valid = verdicts.select { |record| record["verdict"] == "valid" }
-        .group_by { |record| record.fetch("id").split("/", 2).first }
-        .transform_values(&:size)
-
-      actual = rows.to_h do |row|
-        [row["type"], [row["cases"], row["oracle_valid"], row["passing"]]]
-      end
-      expect(actual).to eq("class" => [counts["class"], valid["class"], 0],
-                           "sequence" => [counts["sequence"],
-                                          valid["sequence"], 0])
+      expect(scoreboard_counts(root))
+        .to eq(expected_scoreboard_counts(pin, oracle_valid_counts(corpus)))
     end
   end
 end
