@@ -26,12 +26,12 @@ The pie chart implementation in Sirena follows the established Parslet architect
 
 The pie chart implementation consists of:
 
-* [`Diagram::Pie`](../lib/sirena/diagram/pie.rb) - Model classes for pie charts
-* [`Parser::Grammars::Pie`](../lib/sirena/parser/grammars/pie.rb) - Parslet grammar
-* [`Parser::Builders::Pie`](../lib/sirena/parser/builders/pie.rb) - Parse tree builder
-* [`Parser::Pie`](../lib/sirena/parser/pie.rb) - Main parser
-* [`Layout::Pie`](../lib/sirena/layout/pie.rb) - Graph layout
-* [`Renderer::Pie`](../lib/sirena/renderer/pie.rb) - SVG renderer
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/pie.rb[`Diagram::Pie`] - Model classes for pie charts
+* https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/pie.rb[`Parser::Grammars::Pie`] - Parslet grammar
+* https://github.com/claricle/sirena/blob/main/lib/sirena/parser/builders/pie.rb[`Parser::Builders::Pie`] - Parse tree builder
+* https://github.com/claricle/sirena/blob/main/lib/sirena/parser/pie.rb[`Parser::Pie`] - Main parser
+* https://github.com/claricle/sirena/blob/main/lib/sirena/layout/pie.rb[`Layout::Pie`] - Graph layout
+* https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/pie.rb[`Renderer::Pie`] - SVG renderer
 
 == Syntax
 
