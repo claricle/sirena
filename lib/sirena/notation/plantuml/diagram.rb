@@ -20,15 +20,15 @@ module Sirena
         # restyling lines the parser recorded without applying and `notes`
         # the Notes in source order. `packages` are the Packages in source
         # order; each class names its own.
-        def initialize(classes:, relations:, junctions: [].freeze,
-                       directives: [].freeze, notes: [].freeze,
-                       packages: [].freeze)
+        # @param recorded [Hash] optional `:junctions`, `:directives` and
+        #   `:notes`; each defaults to empty
+        def initialize(classes:, relations:, packages: [].freeze, **recorded)
           @classes = classes
           @relations = relations
-          @junctions = junctions
-          @directives = directives
-          @notes = notes
           @packages = packages
+          @junctions = recorded.fetch(:junctions, [].freeze)
+          @directives = recorded.fetch(:directives, [].freeze)
+          @notes = recorded.fetch(:notes, [].freeze)
           freeze
         end
 

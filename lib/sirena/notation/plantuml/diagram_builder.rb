@@ -61,15 +61,16 @@ module Sirena
           @scope = [package, number, text]
         end
 
-        # @return [Boolean] false when no package is open
-        def close_package
-          return false unless @scope
+        def package_open?
+          !@scope.nil?
+        end
 
+        # @raise [UnsupportedConstructError] when the package holds no class
+        def close_package
           package, number, text = @scope
           members = @extras.values.count { |e| e[:package] == package.id }
           refuse(text, number, "empty package") if members.zero?
           @scope = nil
-          true
         end
 
         # @return [Integer, nil] the line of the package still open
@@ -132,7 +133,7 @@ module Sirena
           @explicit[name] = true
           @class_evidence = true
           @extras[name] = entry.slice(:generics, :stereotypes, :tags)
-                               .merge(package: @scope&.first&.id)
+            .merge(package: @scope&.first&.id)
           @open = [name, number] if entry[:body]
         end
 
@@ -141,9 +142,7 @@ module Sirena
         end
 
         def relate(relation, number, text)
-          if @scope && [relation.left, relation.right].any? { |n| !@kinds[n] }
-            refuse(text, number, "class first mentioned in a package")
-          end
+          refuse_new_class_in_package(relation, number, text)
           mention(relation.left)
           mention(relation.right)
           @sequence_arrow ||= [number, text] if sequence_arrow?(relation, text)
@@ -175,9 +174,13 @@ module Sirena
         def visible(classes)
           hidden = classes.select { |klass| hidden?(klass) }.map(&:name)
           refuse_attachments_to(hidden)
+          assemble(classes.reject { |klass| hidden.include?(klass.name) },
+                   @relations.reject { |rel| touches?(rel, hidden) })
+        end
+
+        def assemble(classes, relations)
           Diagram.new(
-            classes: classes.reject { |k| hidden.include?(k.name) }.freeze,
-            relations: @relations.reject { |r| touches?(r, hidden) }.freeze,
+            classes: classes.freeze, relations: relations.freeze,
             junctions: @junctions.map(&:first).freeze,
             directives: @directives.dup.freeze, notes: @notes.dup.freeze,
             packages: @packages.dup.freeze
@@ -195,9 +198,9 @@ module Sirena
         # PlantUML's result for a note or association class on a hidden
         # class is not measured, so it is not drawn.
         def refuse_attachments_to(hidden)
-          owners = @junctions.map { |junction, *| junction.owner } +
-                   @notes.map(&:target)
-          return if (owners & hidden).empty?
+          attached = @junctions.map { |junction, *| junction.owner }
+          owners = attached + @notes.map(&:target)
+          return unless owners.intersect?(hidden)
 
           _tag, number, text = @hidden_tags.first
           raise UnsupportedConstructError.new(
@@ -229,7 +232,7 @@ module Sirena
 
         def refuse(text, number, construct)
           raise UnsupportedConstructError.new(
-            construct: construct, line: number, text: text
+            construct: construct, line: number, text: text,
           )
         end
 
@@ -240,6 +243,13 @@ module Sirena
           return if @extras.dig(name, :package) == @scope&.first&.id
 
           refuse(text, number, "class declared in more than one place")
+        end
+
+        def refuse_new_class_in_package(relation, number, text)
+          return unless @scope
+          return if [relation.left, relation.right].all? { |name| @kinds[name] }
+
+          refuse(text, number, "class first mentioned in a package")
         end
 
         def refuse_redeclaration(name, kind, number, text)

@@ -13,11 +13,7 @@ module Sirena
         private_constant :BOLD_ROLES
 
         def render(scene)
-          document = Svg::Document.new(
-            width: scene.width,
-            height: scene.height,
-            view_box: "0 0 #{scene.width} #{scene.height}",
-          )
+          document = blank_document(scene)
           scene.frames.each { |frame| render_frame(frame, document) }
           scene.relations.each do |relation|
             render_relation(relation, document)
@@ -28,30 +24,40 @@ module Sirena
 
         private
 
+        def blank_document(scene)
+          Svg::Document.new(
+            width: scene.width,
+            height: scene.height,
+            view_box: "0 0 #{scene.width} #{scene.height}",
+          )
+        end
+
         def render_frame(frame, document)
           group = Svg::Group.new(id: frame.id)
-          group << frame_rectangle(frame.x, frame.y, frame.width, frame.height)
-          group << frame_tab(frame) if frame.tab_width
-          group << package_icon(frame) if frame.icon
+          frame_shapes(frame).each { |shape| group << shape }
           frame.texts.each { |text| group << text_element(text) }
           document << group
         end
 
-        # A folder's tab sits on top of the body; a frame has none.
-        def frame_tab(frame)
-          frame_rectangle(frame.x, frame.y, frame.tab_width, 22.0)
+        def frame_shapes(frame)
+          [frame_body(frame),
+           (frame_tab(frame) if frame.tab_width),
+           (package_icon(frame) if frame.icon)].compact
         end
 
-        def frame_rectangle(x, y, width, height)
-          Svg::Rect.new.tap do |rectangle|
-            rectangle.x = x
-            rectangle.y = y
-            rectangle.width = width
-            rectangle.height = height
-            rectangle.fill = "none"
-            rectangle.stroke = node_stroke
-            rectangle.stroke_width = stroke_width
-          end
+        def frame_body(frame)
+          frame_rectangle(frame, frame.width, frame.height)
+        end
+
+        # A folder's tab sits on top of the body; a frame has none.
+        def frame_tab(frame)
+          frame_rectangle(frame, frame.tab_width, 22.0)
+        end
+
+        def frame_rectangle(frame, width, height)
+          Svg::Rect.new(x: frame.x, y: frame.y, width: width, height: height,
+                        fill: "none", stroke: node_stroke,
+                        stroke_width: stroke_width)
         end
 
         def package_icon(frame)
