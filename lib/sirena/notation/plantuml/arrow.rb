@@ -12,11 +12,11 @@ module Sirena
       module Arrow
         extend self
 
-        LEFT_MARKER = '(?:<\||<|o|\*)'
-        RIGHT_MARKER = '(?:\|>|>|o|\*)'
+        LEFT_MARKER = '(?:<\||<|o|\*|\+)'
+        RIGHT_MARKER = '(?:\|>|>|o|\*|\+)'
         # A bare `o` or `*` after the body only ends it before a space or a
         # quote; otherwise it starts the class name (`A --oB`).
-        RIGHT_IN_LINE = '(?:\|>|>|(?:o|\*)(?=[ \t"]))'
+        RIGHT_IN_LINE = '(?:\|>|>|(?:o|\*|\+)(?=[ \t"]))'
         BODY = "[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?"
 
         # Matches one glyph; embed it, then call {parse} on the match.
@@ -25,28 +25,38 @@ module Sirena
         GLYPH = /\A(#{LEFT_MARKER})?(#{BODY})(#{RIGHT_MARKER})?\z/o
         PLAIN = /\A(?:-->|<--|->|<-)\z/
         KINDS = { "|" => :extension, "o" => :aggregation,
-                  "*" => :composition }.freeze
+                  "*" => :composition, "+" => :nesting }.freeze
+        PLAIN_HEADS = %w[< >].freeze
         private_constant :LEFT_MARKER, :RIGHT_MARKER, :RIGHT_IN_LINE, :BODY,
-                         :GLYPH, :PLAIN, :KINDS
+                         :GLYPH, :PLAIN, :KINDS, :PLAIN_HEADS
 
-        # @return [Hash, nil] `:kind`, `:head` (:left, :right or nil) and
-        #   `:plain` (a bare association arrow, which a sequence diagram
-        #   also has); nil when the glyph has markers on both ends
+        # @return [Hash, nil] `:markers` (side to kind, left first), `:dashed`,
+        #   `:kind` and `:head` (:left, :right, or :both with a nil kind when
+        #   both ends carry a marker) and `:plain` (a bare association
+        #   arrow, which a sequence diagram also has); nil for `<->`, which
+        #   a sequence diagram also has and which is not drawn here
         def parse(glyph)
           match = GLYPH.match(glyph)
           left, body, right = match.captures
-          return if left && right
+          return if [left, right].all? { |end_| PLAIN_HEADS.include?(end_) }
 
-          marker = left || right
           dashed = body.include?(".")
-          { kind: kind_of(marker, dashed), head: head_of(left, right),
-            plain: PLAIN.match?(glyph) }
+          markers = { left: left, right: right }.compact
+            .transform_values { |marker| kind_of(marker, dashed) }
+          { markers: markers, dashed: dashed, head: head_of(markers),
+            kind: single_kind(markers, dashed), plain: PLAIN.match?(glyph) }
         end
 
         private
 
+        def single_kind(markers, dashed)
+          return line_kind(dashed) if markers.empty?
+
+          markers.values.first if markers.size == 1
+        end
+
         def kind_of(marker, dashed)
-          shape = marker.to_s.delete("<>")
+          shape = marker.delete("<>")
           return line_kind(dashed) if shape.empty?
           return dashed ? :implementation : :extension if shape == "|"
 
@@ -57,10 +67,10 @@ module Sirena
           dashed ? :dependency : :association
         end
 
-        def head_of(left, right)
-          return :left if left
+        def head_of(markers)
+          return :both if markers.size == 2
 
-          :right if right
+          markers.keys.first
         end
       end
     end

@@ -243,15 +243,15 @@ module Sirena
         def relation(builder, text, number)
           match = RELATION.match(text)
           arrow = match && Arrow.parse(match[6])
-          raise refusal(text, number, both_ends(match)) unless arrow
+          raise refusal(text, number, both_arrowheads(match)) unless arrow
 
           builder.relate(relation_from(match, arrow), number, text)
           :statements
         end
 
-        # A matched relation with no arrow carries a marker on each end.
-        def both_ends(match)
-          "relation marker on both ends" if match
+        # A matched relation with no arrow has an arrowhead on each end.
+        def both_arrowheads(match)
+          "relation <-> arrow" if match
         end
 
         # PlantUML draws a welcome page, not a diagram, when nothing was

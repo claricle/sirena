@@ -73,7 +73,7 @@ module Sirena
         def render_relation(relation, document)
           group = Svg::Group.new(id: relation.id)
           group << relation_line(relation)
-          group << relation_marker(relation) if relation.marker_points
+          relation_marker_elements(relation).each { |e| group << e }
           relation.texts.each { |text| group << text_element(text) }
           document << group
         end
@@ -88,10 +88,43 @@ module Sirena
           end
         end
 
-        def relation_marker(relation)
+        def relation_marker_elements(relation)
+          relation.markers.flat_map { |marker| marker_elements(marker) }
+        end
+
+        def marker_elements(marker)
+          return [relation_marker(marker)] unless marker.shape == "nesting"
+
+          [nesting_circle(marker), nesting_cross(marker)]
+        end
+
+        def nesting_circle(marker)
+          Svg::Circle.new.tap do |circle|
+            circle.cx = marker.cx
+            circle.cy = marker.cy
+            circle.r = marker.r
+            circle.fill = node_fill
+            edge_stroke(circle)
+          end
+        end
+
+        def edge_stroke(element)
+          element.stroke = edge_colour
+          element.stroke_width = stroke_width
+        end
+
+        def nesting_cross(marker)
+          Svg::Path.new.tap do |path|
+            path.d = marker.cross
+            path.fill = "none"
+            edge_stroke(path)
+          end
+        end
+
+        def relation_marker(marker)
           Svg::Polygon.new.tap do |polygon|
-            polygon.points = relation.marker_points
-            polygon.fill = relation.marker_filled ? edge_colour : node_fill
+            polygon.points = marker.points
+            polygon.fill = marker.filled ? edge_colour : node_fill
             polygon.stroke = edge_colour
             polygon.stroke_width = stroke_width
           end

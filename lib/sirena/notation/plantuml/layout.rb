@@ -18,10 +18,12 @@ module Sirena
         MARKER_LENGTH = 12.0
         MARKER_HALF_WIDTH = 7.0
         LABEL_OFFSET = 10.0
+        NESTING_RADIUS = 8.0
         FILLED_MARKERS = %i[association dependency composition].freeze
         private_constant :MARGIN, :COLUMN_GAP, :ROW_GAP, :MIN_BOX_WIDTH,
                          :BOX_PADDING, :ROW_HEIGHT, :MARKER_LENGTH,
-                         :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS
+                         :MARKER_HALF_WIDTH, :LABEL_OFFSET, :FILLED_MARKERS,
+                         :NESTING_RADIUS
 
         def scene(diagram)
           specifications = diagram.classes.map do |klass|
@@ -211,7 +213,7 @@ module Sirena
             edge = relation_endpoints(*ends)
             Scene::Relation.new(id: "note-link-#{index}", dashed: true,
                                 path: relation_path(edge),
-                                marker_filled: false, texts: [])
+                                texts: [], markers: [])
           end
         end
 
@@ -287,13 +289,10 @@ module Sirena
         end
 
         def relation_scene(relation, index, endpoints)
-          marker = marker_geometry(relation, endpoints)
-          path = relation_path(endpoints)
-          dashed = %i[implementation dependency].include?(relation.kind)
           texts = relation_texts(relation, endpoints)
-          Scene::Relation.new(id: "relation-#{index}", path: path,
-                              dashed: dashed, marker_points: marker[:points],
-                              marker_filled: marker[:filled], texts: texts)
+          Scene::Relation.new(id: "relation-#{index}", dashed: relation.dashed?,
+                              path: relation_path(endpoints), texts: texts,
+                              markers: marker_scenes(relation, endpoints))
         end
 
         # A dashed line from the association class to the middle of the
@@ -312,7 +311,7 @@ module Sirena
           edge = boundary_toward(owner, middle)
           Scene::Relation.new(id: "junction-#{index}", dashed: true,
                               path: "M #{point(edge)} L #{point(middle)}",
-                              marker_filled: false, texts: [])
+                              texts: [], markers: [])
         end
 
         def midpoint(first, second)
@@ -378,16 +377,35 @@ module Sirena
           "M #{point(left)} Q #{point(control)} #{point(right)}"
         end
 
-        def marker_geometry(relation, endpoints)
-          side = relation.head
-          return { points: nil, filled: false } unless side
+        def marker_scenes(relation, endpoints)
+          relation.markers.map do |side, kind|
+            tip = endpoints.fetch(side)
+            other = endpoints.fetch(side == :left ? :right : :left)
+            marker_scene(kind, tip, other)
+          end
+        end
 
-          tip = endpoints.fetch(side)
-          other = endpoints.fetch(side == :left ? :right : :left)
-          shape = marker_shape(relation.kind)
-          points = marker_points(tip, other, shape)
-          filled = FILLED_MARKERS.include?(relation.kind)
-          { points: points, filled: filled }
+        def marker_scene(kind, tip, other)
+          return nesting_scene(tip, other) if kind == :nesting
+
+          Scene::Marker.new(
+            shape: "polygon", filled: FILLED_MARKERS.include?(kind),
+            points: marker_points(tip, other, marker_shape(kind))
+          )
+        end
+
+        def nesting_scene(tip, other)
+          centre = shift(tip, *unit_vector(tip, other), NESTING_RADIUS)
+          Scene::Marker.new(shape: "nesting", filled: false, cx: centre[0],
+                            cy: centre[1], r: NESTING_RADIUS,
+                            cross: cross_path(centre))
+        end
+
+        def cross_path(centre)
+          x, y = centre
+          reach = NESTING_RADIUS
+          "M #{x - reach} #{y} L #{x + reach} #{y} " \
+            "M #{x} #{y - reach} L #{x} #{y + reach}"
         end
 
         def marker_shape(relation_kind)

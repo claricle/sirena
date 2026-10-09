@@ -7,16 +7,20 @@ module Sirena
       #
       # `left` and `right` are the class names on either side of the arrow.
       # `head` is the side the marker or arrowhead sits on, :left or :right,
-      # or nil for a plain `--`. `kind` is :extension, :implementation,
-      # :association, :dependency, :aggregation or :composition. The
+      # :both, or nil for a plain `--`. `kind` is :extension,
+      # :implementation, :association, :dependency, :aggregation,
+      # :composition or :nesting, and nil when `head` is :both; `markers`
+      # then maps each side to its kind. `dashed` is true for a dotted
+      # body. The
       # multiplicities, roles and the label are the quoted, `/"role"` and
       # `: text` parts, or nil.
       class Relation
-        attr_reader :left, :right, :kind, :head,
+        attr_reader :left, :right, :kind, :head, :markers,
                     :left_multiplicity, :right_multiplicity, :label,
                     :left_role, :right_role
 
-        # @param arrow [Hash] holds `:kind`, `:head` and `:plain`
+        # @param arrow [Hash] holds `:kind`, `:head`, `:markers`, `:dashed`
+        #   and `:plain`
         # @param ends [Hash] holds `:left`, `:right`, `:left_role` and
         #   `:right_role`, each a String or nil
         #
@@ -25,11 +29,16 @@ module Sirena
         def initialize(left:, right:, arrow:, ends:, label:)
           @left = left
           @right = right
-          @kind, @head, @plain = arrow.fetch_values(:kind, :head, :plain)
+          @kind, @head, @markers, @dashed, @plain =
+            arrow.fetch_values(:kind, :head, :markers, :dashed, :plain)
           @left_multiplicity, @right_multiplicity, @left_role, @right_role =
             ends.fetch_values(:left, :right, :left_role, :right_role)
           @label = label
           freeze
+        end
+
+        def dashed?
+          @dashed
         end
 
         # True for a bare `-->` or `<--` style arrow, which a sequence
