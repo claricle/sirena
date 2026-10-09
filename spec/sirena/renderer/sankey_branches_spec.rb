@@ -3,8 +3,10 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Sankey do
-  def label(text, x, y)
-    Sirena::Layout::Sankey::Label.new(text: text, x: x, y: y)
+  def label(text, x_position, y_position)
+    Sirena::Layout::Sankey::Label.new(
+      text: text, x: x_position, y: y_position,
+    )
   end
 
   def scene(title: nil, flows: [])
@@ -28,37 +30,55 @@ RSpec.describe Sirena::Renderer::Sankey do
     )
   end
 
-  it "renders title, labelled and unlabelled flows, and omits self-loops" do
+  let(:flow_xml) do
     flows = [
       flow(id: "labelled", label: label("4", 95, 40), colour_index: 1),
       flow(id: "plain", colour_index: 3),
       flow(id: "loop", self_loop: true),
     ]
-    xml = described_class.new(theme: Sirena::Theme.new)
+    described_class.new(theme: Sirena::Theme.new)
       .render(scene(title: label("Flows", 100, 15), flows: flows)).to_xml
-
-    expect(xml.scan("<path").size).to eq(2)
-    expect(xml).to include("Flows", ">4</text>", "#ED7D31", "#FFC000")
-    expect(xml).to include('fill="#2E86AB"', 'stroke="#1A5276"')
-    expect(xml).to include('font-family="Arial, sans-serif"')
   end
 
-  it "uses theme node colors and typography and omits an absent title" do
+  let(:themed_xml) do
     theme = Sirena::Theme.new(
       colors: Sirena::Theme::ColorPalette.new(
         node_fill: "#010203", node_stroke: "#040506",
-        label_text: "#070809"
+        label_text: "#070809",
       ),
       typography: Sirena::Theme::Typography.new(
         font_family: "Example Sans", font_size_small: 13,
-        font_size_large: 21
+        font_size_large: 21,
       ),
     )
-    xml = described_class.new(theme: theme)
-      .render(scene).to_xml
+    described_class.new(theme: theme).render(scene).to_xml
+  end
 
-    expect(xml).to include('fill="#010203"', 'stroke="#040506"')
-    expect(xml).to include('fill="#FFFFFF"', 'font-family="Example Sans"')
-    expect(xml).not_to include("Themed")
+  it "omits self-loop paths" do
+    expect(flow_xml.scan("<path").size).to eq(2)
+  end
+
+  it "renders the title, flow label, and palette colors" do
+    expect(flow_xml).to include("Flows", ">4</text>", "#ED7D31", "#FFC000")
+  end
+
+  it "uses default node colors" do
+    expect(flow_xml).to include('fill="#2E86AB"', 'stroke="#1A5276"')
+  end
+
+  it "uses default typography" do
+    expect(flow_xml).to include('font-family="Arial, sans-serif"')
+  end
+
+  it "uses theme node colors" do
+    expect(themed_xml).to include('fill="#010203"', 'stroke="#040506"')
+  end
+
+  it "uses theme typography" do
+    expect(themed_xml).to include('fill="#FFFFFF"', 'font-family="Example Sans"')
+  end
+
+  it "omits an absent title" do
+    expect(themed_xml).not_to include("Themed")
   end
 end
