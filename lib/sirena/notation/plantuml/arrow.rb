@@ -57,6 +57,7 @@ module Sirena
 
         def head_of(left, right)
           return :left if left
+
           :right if right
         end
       end

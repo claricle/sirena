@@ -63,8 +63,8 @@ module Sirena
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
-                           :LINE_END, :TARGET, :NOTE, :END_NOTE, :BLOCK, :BRANCH,
-                           :RETURN, :DIVIDER
+                           :LINE_END, :TARGET, :NOTE, :END_NOTE, :BLOCK,
+                           :BRANCH, :RETURN, :DIVIDER
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
