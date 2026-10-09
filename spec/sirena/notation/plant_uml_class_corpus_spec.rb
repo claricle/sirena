@@ -220,6 +220,16 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
+  describe "quoted class names" do
+    ['class "pkg.Name"', 'abstract class "A B"'].each do |line|
+      it "names #{line.inspect} as a quoted class name" do
+        expect { parse_corpus(line) }
+          .to raise_error(described_class::UnsupportedConstructError,
+                          /quoted class name/)
+      end
+    end
+  end
+
   describe "member modifiers" do
     let(:member) do
       parse_corpus("class A {\n#{line}\n}").classes.first.body.first

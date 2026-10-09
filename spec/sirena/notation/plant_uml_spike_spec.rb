@@ -341,7 +341,7 @@ RSpec.describe Sirena::Notation::PlantUML do
       "!include other.puml" => ["preprocessor directive", 3],
       "/' block comment '/" => ["block comment", 3],
       "class A extends B" => ["class declaration form", 3],
-      "class \"Long Name\" as L" => ["class declaration form", 3],
+      "class \"Long Name\" as L" => ["quoted class name", 3],
       "class A { +x : int }" => ["class declaration form", 3],
       "participant Alice" => ["participant", 3],
       "A-->B" => ["statement", 3],
