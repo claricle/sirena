@@ -20,7 +20,7 @@ RSpec.describe MermaidToolchain do
   it "accepts an exact resolved toolchain" do
     allow(described_class).to receive(:resolved_provenance).and_return(expected)
 
-    expect(described_class.check!).to be(true)
+    expect(described_class.verify_toolchain).to eq(expected)
   end
 
   it "fails when a resolved dependency drifts" do
@@ -28,17 +28,24 @@ RSpec.describe MermaidToolchain do
     changed["mermaid"] = "11.17.0"
     allow(described_class).to receive(:resolved_provenance).and_return(changed)
 
-    expect { described_class.check! }
+    expect { described_class.verify_toolchain }
       .to raise_error(described_class::DriftError,
                       /mermaid: expected "11\.16\.1", got "11\.17\.0"/)
   end
 
-  it "invokes the repository-local executable with the pinned config and font stylesheet" do
+  it "uses repository-local mmdc with pinned configuration" do
     allow(described_class).to receive(:resolved_provenance).and_return(expected)
 
-    expect(described_class.command("-i", "in.mmd", "-o", "out.svg")).to eq(
-      [described_class::MMDC_PATH, "--configFile", described_class::CONFIG_PATH,
-       "--cssFile", described_class::CSS_PATH, "-i", "in.mmd", "-o", "out.svg"],
-    )
+    expect(described_class.command("-i", "in.mmd", "-o", "out.svg"))
+      .to eq(expected_command)
+  end
+
+  def expected_command
+    [
+      described_class::MMDC_PATH,
+      "--configFile", described_class::CONFIG_PATH,
+      "--cssFile", described_class::CSS_PATH,
+      "-i", "in.mmd", "-o", "out.svg",
+    ]
   end
 end

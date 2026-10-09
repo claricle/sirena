@@ -17,7 +17,7 @@ namespace :mermaid do
     puts "Generating Mermaid.js fixtures for: #{diagram_type}"
     puts "=" * 60
 
-    MermaidToolchain.check!
+    MermaidToolchain.verify_toolchain
     mmdc_version, status = Open3.capture2e(*MermaidToolchain.version_command)
     raise "pinned mermaid-cli failed: #{mmdc_version}" unless status.success?
 

@@ -170,19 +170,23 @@ module CorpusOracle
   end
 
   def provenance
-    if MermaidToolchain.test_mode?
-      cli = cli_version
-      unless cli == EXPECTED_CLI
-        found = cli.empty? ? "missing or not answering" : cli
-        raise InfrastructureError, "mmdc is #{found}, not #{EXPECTED_CLI}"
-      end
-      return { "mmdc" => cli, "test_toolchain" => true }
-    end
+    return test_provenance if MermaidToolchain.test_mode?
 
-    MermaidToolchain.check!
+    MermaidToolchain.verify_toolchain
     MermaidToolchain.provenance
   rescue MermaidToolchain::DriftError => e
     raise InfrastructureError, e.message
+  end
+
+  def test_provenance
+    cli = cli_version
+    refuse_unexpected_cli(cli) unless cli == EXPECTED_CLI
+    { "mmdc" => cli, "test_toolchain" => true }
+  end
+
+  def refuse_unexpected_cli(cli)
+    found = cli.empty? ? "missing or not answering" : cli
+    raise InfrastructureError, "mmdc is #{found}, not #{EXPECTED_CLI}"
   end
 
   def cli_version
