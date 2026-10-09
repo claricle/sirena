@@ -683,7 +683,9 @@ RSpec.describe Sirena::MarkdownText do
 
     it "cuts the first overflowing line while preserving each run's style" do
       bold = described_class::Run.new(text: "abc", bold: true, italic: false)
-      italic = described_class::Run.new(text: "defgh", bold: false, italic: true)
+      italic = described_class::Run.new(
+        text: "defgh", bold: false, italic: true
+      )
 
       expect(described_class.truncate_runs([[bold, italic]], 7))
         .to eq([[bold, italic.with(text: "d...")]])
@@ -692,10 +694,11 @@ RSpec.describe Sirena::MarkdownText do
     it "drops a later line that exceeds the remaining budget" do
       lines = [[plain_run("one")], [plain_run("later")]]
 
-      expect(described_class.truncate_runs(lines, 4)).to eq([[plain_run("one")]])
+      expect(described_class.truncate_runs(lines, 4))
+        .to eq([[plain_run("one")]])
     end
 
-    it "uses only the ellipsis when the first line crosses a budget below three" do
+    it "uses an ellipsis when the first line crosses a tiny budget" do
       expect(described_class.truncate_runs([[plain_run("long")]], 2))
         .to eq([[plain_run("...")]])
     end

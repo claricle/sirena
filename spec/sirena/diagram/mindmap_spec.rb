@@ -10,9 +10,9 @@ RSpec.describe Sirena::Diagram::Mindmap do
     subject(:root) { described_class.new(id: "root", content: "Root") }
 
     it "defaults to a root leaf with empty collections" do
-      expect([root.level, root.shape, root.classes, root.children])
-        .to eq([0, "default", [], []])
-      expect([root.root?, root.leaf?]).to eq([true, true])
+      attributes = [root.level, root.shape, root.classes, root.children,
+                    root.root?, root.leaf?]
+      expect(attributes).to eq([0, "default", [], [], true, true])
     end
 
     it "attaches a child and derives its parent and level" do
@@ -20,10 +20,9 @@ RSpec.describe Sirena::Diagram::Mindmap do
 
       root.add_child(child)
 
-      expect(root.children).to eq([child])
-      expect(child.parent).to equal(root)
-      expect([child.level, child.root?, child.leaf?]).to eq([1, false, true])
-      expect(root.leaf?).to be(false)
+      attributes = [root.children, child.parent, child.level,
+                    child.root?, child.leaf?, root.leaf?]
+      expect(attributes).to eq([[child], root, 1, false, true, false])
     end
   end
 
@@ -34,11 +33,10 @@ RSpec.describe Sirena::Diagram::Mindmap do
     mindmap.add_node(root)
     mindmap.add_node(child)
 
-    expect(mindmap.nodes).to eq([root, child])
-    expect(mindmap.root).to equal(root)
+    expect([mindmap.nodes, mindmap.root]).to eq([[root, child], root])
   end
 
-  it "reports its diagram type and remains valid while validation is deferred" do
+  it "reports its type and remains valid while validation is deferred" do
     expect([mindmap.diagram_type, mindmap.valid?]).to eq([:mindmap, true])
   end
 end

@@ -148,7 +148,8 @@ RSpec.describe Sirena::Layout::Grid do
     end
 
     it "uses zero label dimensions when a cluster has no label" do
-      box = apply({ children: [cluster("s", [node("a")], label: nil)] })[:children].first
+      graph = { children: [cluster("s", [node("a")], label: nil)] }
+      box = apply(graph)[:children].first
 
       expect(box.values_at(:width, :height)).to eq([140, 110])
     end

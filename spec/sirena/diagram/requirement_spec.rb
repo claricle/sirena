@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram do
+RSpec.describe Sirena::Diagram::Requirement do
   describe Sirena::Diagram::RequirementElement do
     it "appends a class name" do
       element = described_class.new
@@ -47,15 +47,13 @@ RSpec.describe Sirena::Diagram do
     end
   end
 
-  describe Sirena::Diagram::Requirement do
-    subject(:diagram) { described_class.new }
+  subject(:diagram) { described_class.new }
 
-    it "identifies itself as a requirement diagram" do
-      expect(diagram.diagram_type).to eq(:requirement)
-    end
+  it "identifies itself as a requirement diagram" do
+    expect(diagram.diagram_type).to eq(:requirement)
+  end
 
-    it "is valid without top-level content" do
-      expect(diagram.valid?).to be(true)
-    end
+  it "is valid without top-level content" do
+    expect(diagram.valid?).to be(true)
   end
 end

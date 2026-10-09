@@ -139,11 +139,12 @@ RSpec.describe Sirena::Diagram::C4 do
       expect(diagram.find_element("zz")).to be_nil
     end
 
-    it "lists relationships and members by id", :aggregate_failures do
-      expect(diagram.relationships_from("a").map(&:to_id)).to eq(["b"])
-      expect(diagram.relationships_to("a").map(&:from_id)).to eq(["b"])
-      expect(diagram.elements_in_boundary("bd").map(&:id)).to eq(["b"])
-      expect(diagram.boundaries_in_boundary("bd").map(&:id)).to eq(["in"])
+    it "lists relationships and members by id" do
+      ids = [diagram.relationships_from("a").map(&:to_id),
+             diagram.relationships_to("a").map(&:from_id),
+             diagram.elements_in_boundary("bd").map(&:id),
+             diagram.boundaries_in_boundary("bd").map(&:id)]
+      expect(ids).to eq([["b"], ["b"], ["b"], ["in"]])
     end
   end
 

@@ -6,6 +6,9 @@ require "sirena/diagram/radar"
 RSpec.describe Sirena::Diagram::Radar do
   subject(:diagram) { described_class.new }
 
+  let(:axis) { Sirena::Diagram::RadarAxis.new("speed", "Speed") }
+  let(:curve) { Sirena::Diagram::RadarCurve.new("baseline", "Baseline") }
+
   it "starts empty and reports its model contract" do
     expect(
       [diagram.axes, diagram.curves, diagram.options,
@@ -14,13 +17,9 @@ RSpec.describe Sirena::Diagram::Radar do
   end
 
   it "stores numeric curve values by axis" do
-    axis = Sirena::Diagram::RadarAxis.new("speed", "Speed")
-    curve = Sirena::Diagram::RadarCurve.new("baseline", "Baseline")
     curve.add_value(axis.id, "7.5")
-
-    expect(
-      [axis.label, curve.label,
-       curve.value_for(axis.id), curve.value_for("missing")],
-    ).to eq(["Speed", "Baseline", 7.5, 0.0])
+    values = [axis.label, curve.label, curve.value_for(axis.id),
+              curve.value_for("missing")]
+    expect(values).to eq(["Speed", "Baseline", 7.5, 0.0])
   end
 end

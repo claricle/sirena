@@ -11,6 +11,10 @@ RSpec.describe Sirena::Diagram::StateDiagram do
   end
 
   describe "#valid?" do
+    let(:valid_state) do
+      Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
+    end
+
     it "returns true for valid state diagram with states" do
       diagram = described_class.new(direction: "TD")
       diagram.states << Sirena::Diagram::StateNode.new(
@@ -61,16 +65,16 @@ RSpec.describe Sirena::Diagram::StateDiagram do
     end
 
     it "returns true when the transition collection is absent" do
-      state = Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
-      diagram = described_class.new(states: [state], transitions: nil)
+      diagram = described_class.new(states: [valid_state], transitions: nil)
 
       expect(diagram.valid?).to be true
     end
 
     it "returns false when an embedded transition is invalid" do
-      state = Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
       transition = Sirena::Diagram::StateTransition.new(from_id: "idle")
-      diagram = described_class.new(states: [state], transitions: [transition])
+      diagram = described_class.new(
+        states: [valid_state], transitions: [transition]
+      )
 
       expect(diagram.valid?).to be false
     end
