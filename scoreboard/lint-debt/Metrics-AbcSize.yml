@@ -145,7 +145,7 @@ rows:
   count: 10
 - file: lib/sirena/renderer/class_diagram.rb
   count: 14
-- file: lib/sirena/renderer/edge_router.rb
+- file: lib/sirena/layout/flowchart/edge_router.rb
   count: 13
 - file: lib/sirena/renderer/er_diagram.rb
   count: 10
