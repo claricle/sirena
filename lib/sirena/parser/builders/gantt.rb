@@ -32,10 +32,6 @@ module Sirena
             end
           elsif tree.is_a?(Hash)
             process_item(diagram, tree)
-
-            if tree[:statements]
-              process_statements(diagram, tree[:statements])
-            end
           end
 
           # Apply click handlers to tasks
@@ -63,12 +59,6 @@ module Sirena
           process_section(diagram, item) if item.key?(:section)
           process_click(item) if item.key?(:click_id)
           process_task(diagram, item) if item.key?(:task_entry)
-        end
-
-        def process_statements(diagram, statements)
-          Array(statements).each do |stmt|
-            process_item(diagram, stmt) if stmt.is_a?(Hash)
-          end
         end
 
         def process_header(diagram, item)

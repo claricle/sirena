@@ -34,10 +34,6 @@ module Sirena
             process_title(diagram, tree) if tree.key?(:title)
             process_x_axis(diagram, tree) if tree.key?(:x_axis_left)
             process_y_axis(diagram, tree) if tree.key?(:y_axis_bottom)
-
-            if tree[:statements]
-              process_statements(diagram, tree[:statements])
-            end
           end
 
           diagram
@@ -80,18 +76,6 @@ module Sirena
             diagram.quadrant_3_label = label_text
           when "4"
             diagram.quadrant_4_label = label_text
-          end
-        end
-
-        def process_statements(diagram, statements)
-          Array(statements).each do |stmt|
-            next unless stmt.is_a?(Hash)
-
-            process_title(diagram, stmt) if stmt.key?(:title)
-            process_x_axis(diagram, stmt) if stmt.key?(:x_axis_left)
-            process_y_axis(diagram, stmt) if stmt.key?(:y_axis_bottom)
-            process_quadrant_label(diagram, stmt) if stmt.key?(:quadrant_label)
-            process_data_point(diagram, stmt) if stmt.key?(:data_point)
           end
         end
 

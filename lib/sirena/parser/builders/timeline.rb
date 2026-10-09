@@ -28,10 +28,6 @@ module Sirena
             end
           elsif tree.is_a?(Hash)
             process_item(diagram, tree)
-
-            if tree[:statements]
-              process_statements(diagram, tree[:statements])
-            end
           end
 
           diagram
@@ -50,12 +46,6 @@ module Sirena
           process_event(diagram, item) if item.key?(:event_entry)
           process_continuation(diagram, item) if item.key?(:continuation_entry)
           process_task(diagram, item) if item.key?(:task)
-        end
-
-        def process_statements(diagram, statements)
-          Array(statements).each do |stmt|
-            process_item(diagram, stmt) if stmt.is_a?(Hash)
-          end
         end
 
         def process_header(diagram, item)
