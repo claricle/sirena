@@ -385,8 +385,6 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     {
-      "{static} +count : int" => ["member modifier", 3],
-      "{abstract} +run()" => ["member modifier", 3],
       "-- " => ["member separator", 3],
       "==" => ["member separator", 3],
       ".." => ["member separator", 3],
@@ -404,12 +402,9 @@ RSpec.describe Sirena::Notation::PlantUML do
       "{classifier} x" => ["member modifier", 3],
       "x : int {STATIC}" => ["member modifier", 3],
       "x : int {Static}" => ["member modifier", 3],
-      "{Abstract} +run()" => ["member modifier", 3],
       "{CLASSIFIER} x" => ["member modifier", 3],
       "@startuml" => ["second diagram", 3],
       "@startuml_x" => ["member declaration", 3],
-      "{field} x" => ["member modifier", 3],
-      "{method} y()" => ["member modifier", 3],
       "x : int {field}" => ["member modifier", 3],
       "x : int {METHOD}" => ["member modifier", 3],
       "!define X +x" => ["preprocessor directive", 3],

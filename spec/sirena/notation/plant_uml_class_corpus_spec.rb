@@ -62,6 +62,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
     resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca
     resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
+    resources.vega.xmi.clazz.XMI0003_class--d50636ffecaf
     resources.vega.xmi.clazz.XMI0004_class--32636d47dbd7
   ]
 
@@ -139,6 +140,69 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "still refuses three words, which PlantUML reads differently" do
       expect { parse_corpus("class A {\nfinal int x\n}") }
         .to raise_error(described_class::UnsupportedConstructError)
+    end
+  end
+
+  describe "member modifiers" do
+    let(:member) do
+      parse_corpus("class A {\n#{line}\n}").classes.first.body.first
+    end
+
+    {
+      "{method}{abstract}{static} + run" =>
+        [:method, "run", %i[abstract static]],
+      "{static} count : int" => [:field, "count", [:static]],
+      "{abstract} run()" => [:method, "run", [:abstract]],
+      "{field} +x" => [:field, "x", []],
+    }.each do |text, (kind, name, modifiers)|
+      context "with #{text.inspect}" do
+        let(:line) { text }
+
+        it "reads the kind, name and modifiers" do
+          expect([member.kind, member.name, member.modifiers])
+            .to eq([kind, name, modifiers])
+        end
+      end
+    end
+
+    ["{field} run()", "{field}{method} x", "{static} int x",
+     "{classifier} x", "x {static}"].each do |text|
+      it "still refuses #{text.inspect}" do
+        expect { parse_corpus("class A {\n#{text}\n}") }
+          .to raise_error(described_class::UnsupportedConstructError)
+      end
+    end
+
+    context "when drawn" do
+      let(:svg) do
+        REXML::Document.new(Sirena.render(
+          wrap("class A {\n{abstract} a()\n{static} s\nplain\n}"),
+          notation: :plantuml
+        ))
+      end
+
+      it "sets an abstract member in italic and no other" do
+        styles = REXML::XPath.match(svg, "//text[@font-style='italic']")
+
+        expect(styles.map(&:text)).to eq(["a()"])
+      end
+
+      it "underlines a static member" do
+        lines = REXML::XPath.match(svg, "//g[@id='class-A']/line")
+
+        expect(lines.size).to eq(2)
+      end
+    end
+
+    it "draws a method written without parentheses without them" do
+      svg = Sirena.render(wrap("class A {\n{method} run\n}"),
+                          notation: :plantuml)
+
+      expect(svg).to include(">run<")
+    end
+
+    it "reads static class as a class" do
+      expect(parse_corpus("static class C").classes.first.kind).to eq(:class)
     end
   end
 

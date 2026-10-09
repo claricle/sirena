@@ -30,14 +30,15 @@ module Sirena
         VISIBILITY = { "+" => :public, "-" => :private, "#" => :protected,
                        "~" => :package }.freeze
         KINDS = { "class" => :class, "abstract class" => :abstract,
-                  "interface" => :interface }.freeze
+                  "interface" => :interface, "static class" => :class }.freeze
 
         # Every quantified piece is separated from the next by a character
         # it cannot also match, so no line backtracks more than linearly.
         STARTUML = /\A@startuml(?![A-Za-z0-9_])/
         STEREOTYPE = /<<[^<>]+>>/
         CLASS_DECLARATION =
-          /\A(abstract[ \t]+class|class|interface)[ \t]+(#{NAME})
+          /\A(abstract[ \t]+class|static[ \t]+class|class|interface)
+           [ \t]+(#{NAME})
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)(?:[ \t]*(\{))?\z/xo
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
@@ -56,6 +57,7 @@ module Sirena
         TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})\z/o
         TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})[ \t]*
                         \(([^()]*)\)\z/xo
+        MODIFIERS = /\A(?:\{(?:static|abstract|field|method)\}[ \t]*)+/i
         LINE_END = /\r\n|\r|\n/
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
                             "Source must start with one of: @startuml"
@@ -63,7 +65,7 @@ module Sirena
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
                          :STEREOTYPE, :CLASS_DECLARATION, :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
-                         :TYPED_FIELD, :TYPED_METHOD, :LINE_END,
+                         :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :LINE_END,
                          :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
@@ -319,9 +321,26 @@ module Sirena
         # stereotype is checked first because NAME alone would swallow `__`
         # and the type text would swallow a trailing `{static}`.
         def member_from(text)
+          prefix = MODIFIERS.match(text)
+          return modified_member(prefix[0], prefix.post_match) if prefix
           return if UnsupportedConstructs.member_construct(text)
 
           named_member(text) || typed_member(text)
+        end
+
+        # `{method}{abstract} + run`: the words in braces set the kind and the
+        # style, so only the two plain shapes are read after them.
+        def modified_member(prefix, rest)
+          words = prefix.scan(/\w+/).map(&:downcase)
+          member = named_member(rest)
+          return if member.nil? || UnsupportedConstructs.member_construct(rest)
+          return if words.include?("field") && contradicts_field?(words, member)
+
+          retype(member, words)
+        end
+
+        def contradicts_field?(words, member)
+          words.include?("method") || member.parameters
         end
 
         def named_member(text)
@@ -332,6 +351,14 @@ module Sirena
             Member.new(kind: :field, visibility: VISIBILITY[match[1]],
                        name: match[2], type: match[3], parameters: nil)
           end
+        end
+
+        def retype(member, words)
+          modifiers = (words & %w[abstract static]).map(&:to_sym).freeze
+          kind = words.include?("method") ? :method : member.kind
+          Member.new(kind: kind, visibility: member.visibility,
+                     name: member.name, type: member.type,
+                     parameters: member.parameters, modifiers: modifiers)
         end
 
         # `int x` and `void run(int a)`: the type comes first.

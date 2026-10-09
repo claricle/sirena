@@ -49,6 +49,7 @@ module Sirena
           member_rows = klass.body.map { |member| member_text(member) }
           title_rows = title_rows(klass)
           box_record(klass.name, title_rows, member_rows)
+            .merge(member_modifiers: klass.body.map(&:modifiers))
         end
 
         def note_specifications(notes)
@@ -101,7 +102,7 @@ module Sirena
 
         def member_text(member)
           text = "#{visibility_mark(member.visibility)}#{member.name}"
-          text += "(#{member.parameters})" if member.kind == :method
+          text += "(#{member.parameters})" if member.parameters
           text += " : #{member.type}" if member.type
           text
         end
@@ -192,7 +193,8 @@ module Sirena
           return [[], []] if item[:member_rows].empty?
 
           separator = member_separator(horizontal, cursor, width)
-          [member_texts(item, horizontal, cursor), [separator]]
+          [member_texts(item, horizontal, cursor),
+           [separator, *underlines(item, horizontal, cursor)]]
         end
 
         def member_separator(horizontal, cursor, width)
@@ -202,9 +204,21 @@ module Sirena
 
         def member_texts(item, horizontal, cursor)
           item[:member_rows].each_with_index.map do |content, index|
+            role = item[:member_modifiers][index].include?(:abstract)
             vertical = cursor + 6.0 + (index * ROW_HEIGHT)
             scene_text(content, horizontal + BOX_PADDING, vertical,
-                       "member", "start")
+                       role ? "member_abstract" : "member", "start")
+          end
+        end
+
+        # A static member is underlined, as PlantUML draws it.
+        def underlines(item, horizontal, cursor)
+          item[:member_rows].each_with_index.filter_map do |content, index|
+            next unless item[:member_modifiers][index].include?(:static)
+
+            vertical = cursor + 8.0 + (index * ROW_HEIGHT)
+            left = horizontal + BOX_PADDING
+            segment(left, vertical, left + measured_width(content), vertical)
           end
         end
 
