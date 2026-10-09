@@ -57,12 +57,12 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 |Not benchmarked
 
 |**Startup Time**
-|~2s (browser launch)
+|Measured in the linked dated Sirena report
 |Measured in the linked dated Sirena report
 |One Apple M2 run; see Performance Comparison below
 
 |**Memory Usage**
-|~200MB (Chrome)
+|Not benchmarked
 |Not benchmarked
 |The recorded Sirena run did not measure memory
 

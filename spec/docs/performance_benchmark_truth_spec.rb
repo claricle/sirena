@@ -19,6 +19,9 @@ module PerformanceBenchmarkTruthSpec
     /No recorded benchmark yet/i,
     /tasks .* do not currently run/i,
   ].freeze
+  UNATTRIBUTED_FIGURES = [
+    "~200MB", "~100MB", "~30MB", "~2s (browser)", "~1s (JVM)", "<50ms"
+  ].freeze
 
   def self.metadata(source)
     match = source.match(/\A---\n(?<yaml>.*?)^---\n/m)
@@ -56,5 +59,14 @@ RSpec.describe PerformanceBenchmarkTruthSpec do
     end
 
     expect(stale).to eq([])
+  end
+
+  it "removes timing and memory figures the recorded benchmark did not measure" do
+    pages = described_class::PAGES.map { |path| File.read(path) }.join("\n")
+    surviving = described_class::UNATTRIBUTED_FIGURES.select do |figure|
+      pages.include?(figure)
+    end
+
+    expect(surviving).to eq([])
   end
 end
