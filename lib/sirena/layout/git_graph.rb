@@ -154,7 +154,7 @@ module Sirena
           view_box: "0 0 #{width.to_f} #{height.to_f}",
           commits: typed_commits(graph, labels, shift),
           branches: typed_branches(graph, labels, shift),
-          connections: typed_connections(graph[:connections], shift),
+          connections: typed_connections(graph[:connections], shift)
         )
       end
 
@@ -196,7 +196,7 @@ module Sirena
         last_commits = graph[:commits].to_h { |commit| [commit[:branch], commit] }
         last_commits.map do |branch, commit|
           x, y, anchor = branch_label_position(commit[:x], commit[:y],
-                                                graph[:orientation])
+                                               graph[:orientation])
           { text: branch, x: x + PADDING, y: y + PADDING,
             text_anchor: anchor, kind: "branch", branch: branch }
         end
@@ -236,7 +236,7 @@ module Sirena
             parent_ids: commit[:parent_ids],
             labels: typed_labels(labels.select do |label|
               label[:kind] != "branch" && label[:owner_id] == commit[:id]
-            end, shift - PADDING),
+            end, shift - PADDING)
           )
         end
       end
@@ -279,7 +279,7 @@ module Sirena
             to_x: geometry[:to_x], to_y: geometry[:to_y],
             from_branch: geometry[:from_branch],
             to_branch: geometry[:to_branch], type: geometry[:type],
-            path: connection_path(geometry),
+            path: connection_path(geometry)
           )
         end
       end

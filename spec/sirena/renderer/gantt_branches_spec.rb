@@ -23,7 +23,7 @@ RSpec.describe Sirena::Renderer::Gantt do
   def scene(title: nil, timeline: nil, sections: [])
     Sirena::Layout::Gantt::Scene.new(
       width: 200, height: 100, view_box: "0 0 200 100",
-      title: title, timeline: timeline, sections: sections,
+      title: title, timeline: timeline, sections: sections
     )
   end
 
@@ -77,8 +77,8 @@ RSpec.describe Sirena::Renderer::Gantt do
         label: label(status), status: status,
         bar: Sirena::Layout::Gantt::Rect.new(
           x: 10, y: 10, width: 50, height: 24, corner_radius: 3,
-          kind: "task",
-        ),
+          kind: "task"
+        )
       )
     end
     tasks << Sirena::Layout::Gantt::Task.new(

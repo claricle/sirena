@@ -122,7 +122,7 @@ module Sirena
           width: width, height: height, view_box: "0 0 #{width} #{height}",
           title: title_geometry(graph[:title]),
           timeline: timeline_geometry(graph),
-          sections: section_geometry(graph[:sections]),
+          sections: section_geometry(graph[:sections])
         )
       end
 
@@ -176,7 +176,7 @@ module Sirena
             text: format_date(timeline[:start_date] + day, format),
             x: MARGIN_LEFT + ((day.to_f / days) * TIMELINE_WIDTH),
             y: MARGIN_TOP + TIMELINE_HEIGHT - 10,
-            text_anchor: "middle", font_size: small_font_size,
+            text_anchor: "middle", font_size: small_font_size
           )
         end
       end
@@ -227,13 +227,17 @@ module Sirena
         milestone = task[:milestone] || task[:width] < 10
         Task.new(
           label: label,
-          bar: milestone ? nil : Rect.new(x: x, y: y, width: task[:width],
-                                          height: TASK_BAR_HEIGHT,
-                                          corner_radius: 3, kind: "task"),
+          bar: if milestone
+                 nil
+               else
+                 Rect.new(x: x, y: y, width: task[:width],
+                          height: TASK_BAR_HEIGHT,
+                          corner_radius: 3, kind: "task")
+               end,
           milestone_points: milestone ? milestone_points(x, y) : nil,
           id_label: task_id_label(task, x, y),
           status: task_status(task),
-          start_date: task[:start_date], end_date: task[:end_date],
+          start_date: task[:start_date], end_date: task[:end_date]
         )
       end
 
