@@ -70,12 +70,11 @@ RSpec.describe Sirena::Diagram::Timeline do
     end
 
     it "reports events and tasks independently" do
-      expect([section.has_events?, section.has_tasks?]).to eq([false, false])
-
+      states = [[section.has_events?, section.has_tasks?]]
       section.events << Sirena::Diagram::TimelineEvent.new
       section.tasks << "Research"
-
-      expect([section.has_events?, section.has_tasks?]).to eq([true, true])
+      states << [section.has_events?, section.has_tasks?]
+      expect(states).to eq([[false, false], [true, true]])
     end
   end
 
@@ -119,27 +118,28 @@ RSpec.describe Sirena::Diagram::Timeline do
     end
 
     it "reports whether sections exist" do
-      expect(timeline.has_sections?).to be(false)
-
+      states = [timeline.has_sections?]
       timeline.sections << section
-
-      expect(timeline.has_sections?).to be(true)
+      states << timeline.has_sections?
+      expect(states).to eq([false, true])
     end
   end
 
   describe "#all_times" do
-    it "returns unique times in sorted order across all events" do
-      timeline.events.push(
-        event("2022", "Standalone later"),
-        event("2020", "Standalone earlier"),
-      )
-      section = Sirena::Diagram::TimelineSection.new("Middle")
-      section.events.push(
-        event("2021", "Section event"),
-        event("2020", "Duplicate time"),
-      )
-      timeline.sections << section
+    let(:middle_section) do
+      Sirena::Diagram::TimelineSection.new("Middle").tap do |section|
+        section.events.push(event("2021", "Section event"),
+                            event("2020", "Duplicate time"))
+      end
+    end
 
+    before do
+      timeline.events.push(event("2022", "Standalone later"),
+                           event("2020", "Standalone earlier"))
+      timeline.sections << middle_section
+    end
+
+    it "returns unique times in sorted order across all events" do
       expect(timeline.all_times).to eq(%w[2020 2021 2022])
     end
   end

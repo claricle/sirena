@@ -9,13 +9,10 @@ RSpec.describe Sirena::Diagram::GitGraph do
   describe Sirena::Diagram::GitGraph::Commit do
     it "uses normal non-merge defaults" do
       commit = described_class.new
+      attributes = [commit.type, commit.parent_ids,
+                    commit.is_merge, commit.is_cherry_pick]
 
-      expect([
-               commit.type,
-               commit.parent_ids,
-               commit.is_merge,
-               commit.is_cherry_pick,
-             ]).to eq(["NORMAL", [], false, false])
+      expect(attributes).to eq(["NORMAL", [], false, false])
     end
   end
 
@@ -32,7 +29,7 @@ RSpec.describe Sirena::Diagram::GitGraph do
       .to eq(["LR", [], []])
   end
 
-  it "reports its diagram type and remains valid while validation is deferred" do
+  it "reports its type and remains valid while validation is deferred" do
     expect([git_graph.diagram_type, git_graph.valid?]).to eq([:git_graph, true])
   end
 end

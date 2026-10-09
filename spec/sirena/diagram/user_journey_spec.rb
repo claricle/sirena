@@ -44,11 +44,9 @@ RSpec.describe Sirena::Diagram::JourneyTask do
     end
 
     it "returns false for a score below the supported range" do
-      task = described_class.new.tap do |t|
-        t.name = "Browse products"
-        t.score = 0
-        t.actors = ["Customer"]
-      end
+      task = described_class.new(
+        name: "Browse products", score: 0, actors: ["Customer"]
+      )
 
       expect(task.valid?).to be false
     end
@@ -92,9 +90,7 @@ RSpec.describe Sirena::Diagram::JourneyTask do
     end
 
     it "returns yellow for a score outside the supported range" do
-      task = described_class.new.tap do |t|
-        t.score = 0
-      end
+      task = described_class.new(score: 0)
 
       expect(task.score_color).to eq(:yellow)
     end

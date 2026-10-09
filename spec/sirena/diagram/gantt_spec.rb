@@ -14,10 +14,12 @@ RSpec.describe Sirena::Diagram::Gantt do
         .to eq([[], nil, nil])
     end
 
-    it "reports each supported status tag" do
+    it "starts without status flags" do
       expect([task.done?, task.active?, task.critical?, task.milestone?])
         .to eq([false, false, false, false])
+    end
 
+    it "reports each supported status tag" do
       task.tags = %w[done active crit milestone]
 
       expect([task.done?, task.active?, task.critical?, task.milestone?])
@@ -42,7 +44,7 @@ RSpec.describe Sirena::Diagram::Gantt do
     expect(gantt.inclusive_end_dates).to be(false)
   end
 
-  it "reports its diagram type and remains valid while validation is deferred" do
+  it "reports its type and remains valid while validation is deferred" do
     expect([gantt.diagram_type, gantt.valid?]).to eq([:gantt, true])
   end
 end

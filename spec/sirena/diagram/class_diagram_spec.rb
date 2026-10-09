@@ -57,7 +57,9 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       relationship = Sirena::Diagram::ClassRelationship.new(
         from_id: "Animal", to_id: "Animal", relationship_type: "",
       )
-      diagram = described_class.new(entities: [entity], relationships: [relationship])
+      diagram = described_class.new(
+        entities: [entity], relationships: [relationship]
+      )
 
       expect(diagram.valid?).to be false
     end
@@ -66,7 +68,9 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       relationship = Sirena::Diagram::ClassRelationship.new(
         from_id: "Missing", to_id: "Animal",
       )
-      diagram = described_class.new(entities: [entity], relationships: [relationship])
+      diagram = described_class.new(
+        entities: [entity], relationships: [relationship]
+      )
 
       expect(diagram.valid?).to be false
     end

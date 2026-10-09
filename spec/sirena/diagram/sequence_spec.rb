@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram do
+RSpec.describe Sirena::Diagram::Sequence do
   describe Sirena::Diagram::SequenceParticipant do
     subject(:participant) { described_class.new(id: "A", label: "Alice") }
 
@@ -211,8 +211,9 @@ RSpec.describe Sirena::Diagram do
 
     describe "query helpers" do
       it "reports its type and finds participants" do
-        expect([diagram.diagram_type, diagram.find_participant("A"),
-                diagram.find_participant("missing")]).to eq([:sequence, alice, nil])
+        values = [diagram.diagram_type, diagram.find_participant("A"),
+                  diagram.find_participant("missing")]
+        expect(values).to eq([:sequence, alice, nil])
       end
 
       it "filters messages by source and target" do
@@ -230,7 +231,8 @@ RSpec.describe Sirena::Diagram do
     it "defaults every collection to empty" do
       empty = described_class.new
 
-      expect([empty.participants, empty.messages, empty.activations, empty.notes])
+      expect([empty.participants, empty.messages,
+              empty.activations, empty.notes])
         .to eq([[], [], [], []])
     end
   end

@@ -77,19 +77,17 @@ RSpec.describe Sirena::Diagram::Pie do
   it "pairs each slice with its percentage" do
     pie.slices = [apples, oranges]
 
-    expect(pie.slices_with_percentages).to eq(
-      [
-        { slice: apples, percentage: 25.0 },
-        { slice: oranges, percentage: 75.0 },
-      ],
-    )
+    expected = [{ slice: apples, percentage: 25.0 },
+                { slice: oranges, percentage: 75.0 }]
+    expect(pie.slices_with_percentages).to eq(expected)
   end
 
   it "reports zero percentages when the slice total is zero" do
     zero = Sirena::Diagram::PieSlice.new(label: "Nothing", value: 0)
     pie.slices = [zero]
 
-    expect(pie.slices_with_percentages).to eq([{ slice: zero, percentage: 0.0 }])
+    expect(pie.slices_with_percentages)
+      .to eq([{ slice: zero, percentage: 0.0 }])
   end
 
   it "calculates a slice angle from the aggregate total" do

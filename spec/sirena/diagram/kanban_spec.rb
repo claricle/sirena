@@ -95,7 +95,8 @@ RSpec.describe Sirena::Diagram::KanbanColumn do
     end
 
     it "is valid when every column is valid" do
-      board.add_column(Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo"))
+      column = Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo")
+      board.add_column(column)
       expect(board.valid?).to be(true)
     end
   end
