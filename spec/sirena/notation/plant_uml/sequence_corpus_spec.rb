@@ -9,7 +9,7 @@ require "sirena/notation/plantuml"
 Sirena::Notation.send(:entries).delete(:plantuml)
 
 module PlantUmlSequenceCorpus
-  DIR = File.expand_path("../../../../plantuml/sequence", __dir__)
+  DIR = File.expand_path("../../../plantuml/sequence", __dir__)
 
   # The 12-hex suffix of every case of spec/plantuml/sequence the slice
   # renders today. A case joins this list when it renders; it never leaves it.
