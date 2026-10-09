@@ -240,11 +240,11 @@ module Sirena
                           stmt[:arrow][:arrow_type] || stmt[:arrow][:line_type]
                         end
 
-            if arrow_type
-              c.connection_type = ARROW_MAP[arrow_type.to_s] || "arrow"
-            else
-              c.connection_type = "arrow"
-            end
+            c.connection_type = if arrow_type
+                                  ARROW_MAP[arrow_type.to_s] || "arrow"
+                                else
+                                  "arrow"
+                                end
           end
         end
 

@@ -260,7 +260,7 @@ module Sirena
       # @return [Boolean] true if C4 diagram is valid
       def valid?
         return false unless %w[Context Container Component Dynamic
-                                Deployment].include?(level)
+                               Deployment].include?(level)
         return false unless elements.nil? || elements.all?(&:valid?)
         return false unless relationships.nil? ||
                             relationships.all?(&:valid?)

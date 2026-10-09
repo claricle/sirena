@@ -1,5 +1,0 @@
----
-cop: Layout/ArrayAlignment
-rows:
-- file: lib/sirena/diagram/c4.rb
-  count: 1

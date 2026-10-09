@@ -1,7 +1,5 @@
 ---
 cop: Style/CombinableLoops
 rows:
-- file: lib/sirena/layout/architecture.rb
-  count: 1
 - file: lib/sirena/layout/requirement.rb
   count: 1

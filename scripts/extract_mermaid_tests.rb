@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 # Comprehensive test extraction from mermaid-js repository
 # Extracts ALL Mermaid diagram test cases for sirena validation
 
@@ -10,7 +12,7 @@ require "fileutils"
 require "json"
 
 MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
-SIRENA_ROOT = File.expand_path("../..", __FILE__)
+SIRENA_ROOT = File.expand_path("..", __dir__)
 OUTPUT_DIR = "#{SIRENA_ROOT}/spec/mermaid"
 
 # All Mermaid diagram types discovered from packages/mermaid/src/diagrams/
@@ -472,7 +474,7 @@ class MermaidTestExtractor
     puts "Total test cases extracted: #{@test_cases.length}"
     puts "Files processed: #{@file_stats.length}"
     puts "\nBy diagram type (sorted by count):"
-    @stats.sort_by { |_,v| -v }.each do |type, count|
+    @stats.sort_by { |_, v| -v }.each do |type, count|
       puts "  #{sprintf('%-20s', type)}: #{sprintf('%4d', count)} tests"
     end
     puts "\nOutput directory: #{OUTPUT_DIR}"

@@ -136,11 +136,11 @@ module Sirena
             if stmt.key?(:commit)
               # commit[:options] contains the parsed options if any
               commit_data = stmt[:commit]
-              if commit_data.is_a?(Hash) && commit_data.key?(:options)
-                options = state.extract_options(commit_data[:options])
-              else
-                options = {}
-              end
+              options = if commit_data.is_a?(Hash) && commit_data.key?(:options)
+                          state.extract_options(commit_data[:options])
+                        else
+                          {}
+                        end
               state.add_commit(options)
             elsif stmt.key?(:branch)
               name = State.unquote(stmt[:branch][:name])
