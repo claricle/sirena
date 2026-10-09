@@ -21,11 +21,29 @@ RSpec.describe Sirena::Layout::Sankey do
     end
   end
 
-  it "builds the empty titled accessibility canvas" do
+  let(:empty_scene) do
     empty = diagram(nodes: [], flows: [], title: "Nothing yet")
-    scene = described_class.new.send(:scene, empty)
+    described_class.new.send(:scene, empty)
+  end
 
-    expect(scene).to have_attributes(
+  let(:acyclic_scene) do
+    subject = diagram(
+      nodes: [node("source"), node("middle", "Processor"), node("sink")],
+      flows: [flow("source", "middle", 10), flow("middle", "sink", 2.5)],
+    )
+    described_class.new.call(subject)
+  end
+
+  let(:cyclic_scene) do
+    subject = diagram(
+      nodes: [node("a"), node("b")],
+      flows: [flow("a", "b", 3), flow("b", "a", 1), flow("a", "a", 2)],
+    )
+    described_class.new.call(subject)
+  end
+
+  it "builds the empty accessibility canvas" do
+    expect(empty_scene).to have_attributes(
       width: 520.0,
       height: 460.0,
       view_box: "0 0 520 460",
@@ -34,44 +52,56 @@ RSpec.describe Sirena::Layout::Sankey do
       nodes: [],
       flows: [],
     )
-    expect(scene.title).to have_attributes(text: "Nothing yet", x: 260.0,
-                                           y: 40.0)
   end
 
-  it "assigns acyclic layers and proportional geometry" do
-    subject = diagram(
-      nodes: [node("source"), node("middle", "Processor"), node("sink")],
-      flows: [flow("source", "middle", 10), flow("middle", "sink", 2.5)],
+  it "positions the empty canvas title" do
+    expect(empty_scene.title).to have_attributes(
+      text: "Nothing yet", x: 260.0, y: 40.0,
     )
-    scene = described_class.new.call(subject)
+  end
 
-    expect(scene.nodes.map { |item| [item.id, item.layer, item.x] }).to eq(
+  it "assigns acyclic layers" do
+    expect(acyclic_scene.nodes.map { |item| [item.id, item.layer, item.x] }).to eq(
       [["source", 0, 60.0], ["middle", 1, 210.0], ["sink", 2, 360.0]],
     )
-    expect(scene.nodes[1]).to have_attributes(label: have_attributes(
-      text: "Processor",
-    ))
-    expect(scene.flows.map(&:width)).to eq([50.0, 14.0])
-    expect(scene.flows.map { |item| item.label.text }).to eq(["10", "2.5"])
-    expect(scene.flows).to all(have_attributes(path: start_with("M ")))
   end
 
-  it "keeps cycles and self-loops on the fallback layer" do
-    subject = diagram(
-      nodes: [node("a"), node("b")],
-      flows: [flow("a", "b", 3), flow("b", "a", 1), flow("a", "a", 2)],
-    )
-    scene = described_class.new.call(subject)
+  it "uses the explicit node label" do
+    expect(acyclic_scene.nodes[1]).to have_attributes(label: have_attributes(
+      text: "Processor",
+    ))
+  end
 
-    expect(scene.nodes.map { |item| [item.id, item.layer] })
+  it "scales flow widths" do
+    expect(acyclic_scene.flows.map(&:width)).to eq([50.0, 14.0])
+  end
+
+  it "formats flow labels" do
+    expect(acyclic_scene.flows.map { |item| item.label.text })
+      .to eq(["10", "2.5"])
+  end
+
+  it "builds flow paths" do
+    expect(acyclic_scene.flows).to all(have_attributes(path: start_with("M ")))
+  end
+
+  it "keeps cycles on the fallback layer" do
+    expect(cyclic_scene.nodes.map { |item| [item.id, item.layer] })
       .to eq([["a", 0], ["b", 0]])
-    expect(scene.flows.last).to have_attributes(
+  end
+
+  it "marks self-loops" do
+    expect(cyclic_scene.flows.last).to have_attributes(
       self_loop: true,
       path: nil,
       label: nil,
       colour_index: 2,
     )
-    expect(scene.flows.first).to have_attributes(self_loop: false,
-                                                 colour_index: 0)
+  end
+
+  it "marks non-loop flows" do
+    expect(cyclic_scene.flows.first).to have_attributes(
+      self_loop: false, colour_index: 0,
+    )
   end
 end
