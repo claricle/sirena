@@ -269,7 +269,7 @@ module Sirena
 
         def self.extract_class_names(class_data)
           # Shorthand arrives as a Parslet::Slice (":::a,b"), not a String.
-          Array(class_data.is_a?(Hash) ? class_data[:string] : class_data)
+          Array(class_data)
             .flat_map { |item| split_list(item.to_s.delete_prefix(":::")) }
         end
       end
