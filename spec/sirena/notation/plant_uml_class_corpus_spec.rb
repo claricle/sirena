@@ -19,6 +19,12 @@ module PlantUmlCorpusHelpers
     Sirena::Notation::PlantUML::Parser.new.parse(wrap(source))
   end
 
+  # The x, y, width and height of the first rect under the group.
+  def bounds(svg, group)
+    rect = REXML::XPath.first(svg, "//g[@id='#{group}']/rect")
+    %w[x y width height].to_h { |key| [key, rect.attributes[key].to_f] }
+  end
+
   def wrap(body)
     "@startuml\n#{body}\n@enduml\n"
   end
@@ -53,6 +59,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2903.reported_case--fd42e1abb616
     resources.vega.nonreg.group2903.two_association_classes--5589df921b7b
     resources.vega.nonreg.group2903.without_association_class--633626f844fa
+    resources.vega.nonreg.group2846.correct_code--c4f1bf12e099
     resources.vega.nonreg.group2904.all_visibilities--00480b0ff655
     resources.vega.nonreg.group2904.diamond_at_tail--bb82b36b91be
     resources.vega.nonreg.group2904.icon_size_zero--5d137d5deadd
@@ -351,6 +358,93 @@ RSpec.describe Sirena::Notation::PlantUML do
                           notation: :plantuml)
 
       expect(svg).not_to include("class-B")
+    end
+  end
+
+  describe "packages" do
+    let(:source) do
+      ["+package \"Hi\" as p <<Frame>> {", "class A", "}",
+       "package q {", "class B", "class C", "}", "class D", "A --> D"]
+        .join("\n")
+    end
+    let(:diagram) { parse_corpus(source) }
+
+    it "reads the id, title, shape and icon" do
+      expect(diagram.packages.first).to have_attributes(
+        id: "p", title: "Hi", shape: :frame, icon: true
+      )
+    end
+
+    it "reads a bare name as both id and title, drawn as a folder" do
+      expect(diagram.packages.last).to have_attributes(
+        id: "q", title: "q", shape: :folder, icon: false
+      )
+    end
+
+    it "gives each class the package it was declared in" do
+      expect(diagram.classes.map(&:package)).to eq(["p", "q", "q", nil])
+    end
+
+    {
+      "package p {\npackage q {\nclass A\n}\n}" => /nested package/,
+      "package p {\n}" => /empty package/,
+      "package p <<Cloud>> {\nclass A\n}" => /package stereotype/,
+      "package p {\nclass A\n}\npackage p {\nclass B\n}" => /twice/,
+      "A --> B\npackage p {\nclass A\n}" => /more than one place/,
+      "package p {\nA --> B\n}" => /first mentioned in a package/,
+    }.each do |text, message|
+      it "refuses #{text.inspect}" do
+        expect { parse_corpus(text) }
+          .to raise_error(described_class::UnsupportedConstructError, message)
+      end
+    end
+
+    it "refuses a package that is never closed" do
+      expect { parse_corpus("package p {\nclass A") }
+        .to raise_error(Sirena::Parser::ParseError, /never closed with }/)
+    end
+
+    context "when drawn" do
+      let(:svg) do
+        REXML::Document.new(Sirena.render(wrap(source), notation: :plantuml))
+      end
+
+      it "titles each package" do
+        titles = REXML::XPath.match(svg,
+                                    "//g[starts-with(@id,'package-')]/text")
+
+        expect(titles.map(&:text)).to eq(%w[Hi q])
+      end
+
+      it "draws the icon only for the + package" do
+        circles = REXML::XPath.match(svg, "//g[@id='package-p']/circle")
+
+        expect(circles.size).to eq(1)
+      end
+
+      it "gives a folder a tab and a frame none" do
+        counts = %w[p q].map do |id|
+          REXML::XPath.match(svg, "//g[@id='package-#{id}']/rect").size
+        end
+
+        expect(counts).to eq([1, 2])
+      end
+
+      it "encloses its own classes" do
+        frame = bounds(svg, "package-q")
+        box = bounds(svg, "class-C")
+
+        expect([box["x"] > frame["x"], box["y"] > frame["y"],
+                box["y"] + box["height"] < frame["y"] + frame["height"]])
+          .to eq([true] * 3)
+      end
+
+      it "keeps a class outside every package clear of the frames" do
+        frame = bounds(svg, "package-p")
+        box = bounds(svg, "class-D")
+
+        expect(box["y"] + box["height"]).to be < frame["y"]
+      end
     end
   end
 
