@@ -13,7 +13,7 @@
   <line stroke="#333333" stroke-width="2" x1="285.10634181698344" y1="157.96963389668596" x2="296.898491535366" y2="148.6989702192975"/>
   <line stroke="#333333" stroke-width="2" x1="285.10634181698344" y1="157.96963389668596" x2="300.0" y2="159.75259377494012"/>
   <line stroke="#333333" stroke-width="2" x1="285.10634181698344" y1="157.96963389668596" x2="294.3770054943719" y2="169.76178361506854"/>
-  <text fill="#000000" x="260.0" y="149.9640861931365" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+  <text fill="#000000" x="260.0" y="149.9640861931365" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">writes</text>
 </g>
 <g id="rel-USER_to_COMMENT">
   <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="150.0" stroke-dasharray="5,5"/>
@@ -22,7 +22,7 @@
   <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.9298822032113" y2="139.2651926153136"/>
   <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="550.0" y2="150.0"/>
   <line stroke="#333333" stroke-width="2" x1="535.0068823128192" y1="149.54566310038845" x2="545.2873527978941" y2="160.4686629907805"/>
-  <text fill="#000000" x="385.0" y="140.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">writes</text>
+  <text fill="#000000" x="385.0" y="140.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">writes</text>
 </g>
 <g id="rel-POST_to_COMMENT">
   <line stroke="#333333" stroke-width="2" x1="471.2" y1="163.1355252606255" x2="550.0" y2="156.81635926222935" stroke-dasharray="5,5"/>
@@ -31,14 +31,14 @@
   <line stroke="#333333" stroke-width="2" x1="535.047999846597" y1="158.0153969649882" x2="544.7728128568514" y2="146.59488857369553"/>
   <line stroke="#333333" stroke-width="2" x1="535.047999846597" y1="158.0153969649882" x2="550.0" y2="156.81635926222935"/>
   <line stroke="#333333" stroke-width="2" x1="535.047999846597" y1="158.0153969649882" x2="546.4685082378896" y2="167.74020997524264"/>
-  <text fill="#000000" x="510.6" y="154.97594226142743" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">has</text>
+  <text fill="#000000" x="510.6" y="154.97594226142743" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">has</text>
 </g>
 <g id="rel-POST_to_CATEGORY">
   <line stroke="#333333" stroke-width="2" x1="300.0" y1="217.82122905027933" x2="220.0" y2="262.5139664804469" stroke-dasharray="5,5"/>
   <circle fill="none" stroke="#333333" stroke-width="2" cx="293.8889680809752" cy="221.2352133625837" r="5.0"/>
   <line stroke="#333333" stroke-width="2" x1="296.58601568769564" y1="211.71019713125455" x2="303.41398431230436" y2="223.9322609693041"/>
   <line stroke="#333333" stroke-width="2" x1="223.41398431230436" y1="268.62499839947174" x2="216.58601568769564" y2="256.4029345614221"/>
-  <text fill="#000000" x="260.0" y="235.16759776536313" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">belongs_to</text>
+  <text fill="#000000" x="260.0" y="235.16759776536313" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">belongs_to</text>
 </g>
 <g id="rel-POST_to_TAG">
   <line stroke="#333333" stroke-width="2" x1="385.04615384615386" y1="290.0" x2="385.2307692307692" y2="250.0" stroke-dasharray="5,5"/>
@@ -48,7 +48,7 @@
   <line stroke="#333333" stroke-width="2" x1="385.1615391988958" y1="264.9998402392388" x2="374.6040034740147" y2="254.34439846435876"/>
   <line stroke="#333333" stroke-width="2" x1="385.1615391988958" y1="264.9998402392388" x2="385.2307692307692" y2="250.0"/>
   <line stroke="#333333" stroke-width="2" x1="385.1615391988958" y1="264.9998402392388" x2="395.81698097377586" y2="254.44230451435763"/>
-  <text fill="#000000" x="385.13846153846157" y="265.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">tagged_with</text>
+  <text fill="#000000" x="385.13846153846157" y="265.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">tagged_with</text>
 </g>
 <g id="rel-USER_to_LIKE">
   <line stroke="#333333" stroke-width="2" x1="220.0" y1="140.0" x2="550.0" y2="320.0" stroke-dasharray="5,5"/>
@@ -57,7 +57,7 @@
   <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="551.2220489298533" y2="308.5847231799181"/>
   <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="550.0" y2="320.0"/>
   <line stroke="#333333" stroke-width="2" x1="536.8315664062842" y1="312.8172180397914" x2="541.0640612661574" y2="327.20770056336045"/>
-  <text fill="#000000" x="385.0" y="225.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">gives</text>
+  <text fill="#000000" x="385.0" y="225.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">gives</text>
 </g>
 <g id="rel-POST_to_LIKE">
   <line stroke="#333333" stroke-width="2" x1="471.2" y1="221.4835605453087" x2="550.0" y2="268.87730553327987" stroke-dasharray="5,5"/>
@@ -66,7 +66,7 @@
   <line stroke="#333333" stroke-width="2" x1="537.1457991940673" y1="261.1462304695673" x2="551.7017873540893" y2="257.52363351637206"/>
   <line stroke="#333333" stroke-width="2" x1="537.1457991940673" y1="261.1462304695673" x2="550.0" y2="268.87730553327987"/>
   <line stroke="#333333" stroke-width="2" x1="537.1457991940673" y1="261.1462304695673" x2="540.7683961472626" y2="275.70221862958925"/>
-  <text fill="#000000" x="510.6" y="240.1804330392943" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+  <text fill="#000000" x="510.6" y="240.1804330392943" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">receives</text>
 </g>
 <g id="rel-COMMENT_to_LIKE">
   <line stroke="#333333" stroke-width="2" x1="635.0" y1="250.0" x2="635.0" y2="250.0" stroke-dasharray="5,5"/>
@@ -75,7 +75,7 @@
   <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="260.6066017177982"/>
   <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="635.0" y2="250.0"/>
   <line stroke="#333333" stroke-width="2" x1="650.0" y1="250.0" x2="639.3933982822018" y2="239.3933982822018"/>
-  <text fill="#000000" x="635.0" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">receives</text>
+  <text fill="#000000" x="635.0" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">receives</text>
 </g>
 <g id="entity-USER">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="180.0"/>

@@ -18,13 +18,13 @@ RSpec.describe "ErDiagram Integration" do
       expect(diagram.valid?).to be true
 
       # Transform
-      graph = transform.to_graph(diagram)
-      expect(graph).to be_a(Hash)
-      expect(graph[:children].length).to eq(2)
-      expect(graph[:edges].length).to eq(1)
+      scene = transform.call(diagram)
+      expect(scene).to be_a(Sirena::Layout::ErDiagram::Scene)
+      expect(scene.children.length).to eq(2)
+      expect(scene.edges.length).to eq(1)
 
       # Render
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.children).not_to be_empty
     end

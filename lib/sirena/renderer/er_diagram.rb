@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/er_diagram"
 
 module Sirena
   module Renderer
@@ -15,213 +16,105 @@ module Sirena
     #   renderer = ErDiagram.new
     #   svg = renderer.render(laid_out_graph)
     class ErDiagram < Base
-      # Font size for entity names
-      ENTITY_NAME_FONT_SIZE = 16
-
-      # Font size for attributes
-      ATTRIBUTE_FONT_SIZE = 12
-
-      # Line height for text
-      LINE_HEIGHT = 18
-
-      # Padding within entity boxes
-      BOX_PADDING = 10
-
-      # Cardinality symbol size
-      CARDINALITY_SIZE = 15
-
-      # Padding around a diagram that has something in it.
-      DIAGRAM_PADDING = 20
-
-      # Padding mermaid puts around an ER diagram that holds nothing: 8px on
-      # each side of a zero-size content box, so the canvas comes out 16x16.
-      # Measured from spec/fixtures_mermaid/er/061_spec_mermaidapi_spec_60.svg,
-      # whose source is the bare `erDiagram` keyword. Sirena keeps its own
-      # "0 0" viewBox origin, which every non-empty ER reference in that
-      # directory uses; only the extent is copied.
-      EMPTY_DIAGRAM_PADDING = 8
-
-      # Renders a laid-out graph to SVG.
+      # Renders final ER geometry to SVG. Hash input remains accepted as a
+      # compatibility boundary and is converted before rendering.
       #
-      # @param graph [Hash] laid-out graph with node positions
+      # @param scene [Layout::ErDiagram::Scene, Hash]
       # @return [Svg::Document] the rendered SVG document
-      def render(graph)
-        svg = create_document(graph, padding: padding_for(graph))
+      def render(scene)
+        return render_graph(scene) if scene.is_a?(Hash)
 
-        # Render edges first (so they appear under nodes)
-        render_relationships(graph, svg) if graph[:edges]
-
-        # Render entity boxes
-        render_entities(graph, svg) if graph[:children]
+        svg = document(scene)
+        emit_relationships(scene.edges, svg)
+        emit_entities(scene.children, scene.class_defs, svg)
 
         svg
       end
 
       protected
 
-      # Padding for this graph. An empty ER diagram gets mermaid's 8px, so
-      # the whole canvas is 16x16; anything else gets the normal 20px.
-      def padding_for(graph)
-        empty_er_graph?(graph) ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
+      def render_graph(graph)
+        svg = create_document(
+          graph, padding: Layout::ErDiagram.diagram_padding(graph)
+        )
+        render_relationships(graph, svg) if graph[:edges]
+        render_entities(graph, svg) if graph[:children]
+        svg
       end
 
-      # An empty ER diagram is one that carries BOTH collection keys and holds
-      # nothing in either. Key presence is tested separately from the values
-      # because a default-valued Hash (`Hash.new([])`) holds no key at all yet
-      # answers `[]` to a lookup, so a value test by itself would call it
-      # empty and shrink it. Values are compared with `== []` rather than
-      # asked `empty?`, so a non-collection value is false here rather than
-      # raising.
-      #
-      # Every other shape is sized by calculate_width/calculate_height from
-      # what the lookups return rather than from key presence.
-      def empty_er_graph?(graph)
-        graph.key?(:children) && graph.key?(:edges) &&
-          graph[:children] == [] && graph[:edges] == []
-      end
-
-      def calculate_width(graph)
-        return 0 if empty_er_graph?(graph)
-        return 800 unless graph[:children]
-
-        max_x = graph[:children].map do |node|
-          (node[:x] || 0) + (node[:width] || 150)
-        end.max || 800
-
-        max_x + 40
-      end
-
-      def calculate_height(graph)
-        return 0 if empty_er_graph?(graph)
-        return 600 unless graph[:children]
-
-        max_y = graph[:children].map do |node|
-          (node[:y] || 0) + (node[:height] || 100)
-        end.max || 600
-
-        max_y + 40
-      end
-
-      def render_entities(graph, svg)
-        class_defs = graph[:class_defs] || {}
-        graph[:children].each do |node|
-          render_entity(node, svg, class_defs)
+      def document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = scene.width
+          svg.height = scene.height
+          svg.view_box = scene.view_box
         end
       end
 
-      def render_entity(node, svg, class_defs)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 150
-        height = node[:height] || 100
+      def emit_entities(nodes, class_defs, svg)
+        nodes.each { |node| emit_entity(node, class_defs, svg) }
+      end
 
-        metadata = node[:metadata] || {}
+      def emit_entity(node, class_defs, svg)
         styles = entity_styles(node, class_defs)
-        attributed = !metadata[:attributes].to_a.empty?
-
-        # Create group for the entity
-        group = Svg::Group.new.tap do |g|
-          g.id = "entity-#{node[:id]}"
-        end
-
-        # Render outer box
-        box = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = width
-          r.height = height
-          r.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
-          r.stroke = box_property(styles, "stroke", attributed) || "#333333"
-          r.stroke_width = box_property(styles, "stroke-width", attributed) || "2"
-        end
-        group.children << box
-
-        # Render entity content
-        render_entity_content(node, metadata, group, styles)
-
+        group = Svg::Group.new.tap { |item| item.id = "entity-#{node.id}" }
+        group.children << entity_box(node, styles)
+        emit_entity_content(node, group, styles)
         svg << group
       end
 
-      def render_entity_content(node, metadata, group, styles)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 150
+      def entity_box(node, styles)
+        attributed = node.attributes.any?
+        Svg::Rect.new.tap do |rect|
+          rect.x = node.x
+          rect.y = node.y
+          rect.width = node.width
+          rect.height = node.height
+          rect.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
+          rect.stroke = box_property(styles, "stroke", attributed) || "#333333"
+          rect.stroke_width = box_property(styles, "stroke-width", attributed) || "2"
+        end
+      end
 
-        current_y = y + BOX_PADDING + ENTITY_NAME_FONT_SIZE
-        # Exact-case lookup, not `box_style` — verified against mermaid's
-        # own bundle (isLabelStyle in handDrawnShapeStyles.ts): only a
-        # literal lowercase "color" key is routed to the label; any other
-        # case (`COLOR`, `Color`) is a box style instead, matched
-        # case-insensitively there. Folding this lookup would route an
-        # uppercase COLOR onto the entity name.
+      def emit_entity_content(node, group, styles)
+        emit_entity_header(node, group, styles)
+        node.attributes.each { |attribute| emit_attribute(attribute, styles, group) }
+      end
+
+      def emit_entity_header(node, group, styles)
         name_color = styles["color"] || "#000000"
-
-        # Render entity name
-        name = metadata[:name] || node[:id]
+        label = node.labels.first
         text = Svg::Text.new.tap do |t|
-          t.x = x + width / 2
-          t.y = current_y
-          t.content = name
+          t.x = label.x
+          t.y = label.y
+          t.content = label.text
           t.fill = name_color
           t.font_family = "Arial, sans-serif"
-          t.font_size = ENTITY_NAME_FONT_SIZE.to_s
+          t.font_size = font_size_value(label.font_size)
           t.text_anchor = "middle"
           t.font_weight = "bold"
         end
         group.children << text
-
-        # Add separator after name
-        current_y += LINE_HEIGHT
         separator = Svg::Line.new.tap do |l|
-          l.x1 = x
-          l.y1 = current_y
-          l.x2 = x + width
-          l.y2 = current_y
+          l.x1 = node.separator.x1
+          l.y1 = node.separator.y1
+          l.x2 = node.separator.x2
+          l.y2 = node.separator.y2
           l.stroke = "#333333"
           l.stroke_width = "1"
         end
         group.children << separator
-
-        # Render attributes
-        attributes = metadata[:attributes] || []
-        current_y += BOX_PADDING
-        attributes.each do |attr|
-          current_y = render_attribute(x, current_y, styles, attr, group)
-        end
       end
 
-      def render_attribute(x, y, styles, attribute, group)
-        # Build attribute text with key type marker
-        parts = []
-        parts << attribute[:key_type] if attribute[:key_type] &&
-                                         !attribute[:key_type].empty?
-        # The type column precedes the name, as in mmdc.
-        parts << attribute[:attribute_type] if attribute[:attribute_type] &&
-                                               !attribute[:attribute_type]
-                                               .empty?
-        parts << attribute[:name]
-        # mmdc renders the trailing quoted comment (e.g. `"NN"`) in its own
-        # attribute-comment column, after type -- verified against
-        # spec/mermaid/unknown/079_platform_yari2_78.svg. Sirena draws one
-        # joined line rather than mermaid's separate columns, so it is
-        # appended last on that line instead of losing it.
-        parts << attribute[:note] if attribute[:note] && !attribute[:note].empty?
-
-        attr_text = parts.join(" ")
-
+      def emit_attribute(attribute, styles, group)
         text = Svg::Text.new.tap do |t|
-          t.x = x + BOX_PADDING
-          t.y = y + ATTRIBUTE_FONT_SIZE
-          t.content = attr_text
-          # Exact-case lookup — see the comment on the same lookup in
-          # render_entity_content.
+          t.x = attribute.x
+          t.y = attribute.y
+          t.content = attribute.text
           t.fill = styles["color"] || "#000000"
           t.font_family = "monospace"
-          t.font_size = ATTRIBUTE_FONT_SIZE.to_s
+          t.font_size = font_size_value(attribute.font_size)
         end
         group.children << text
-
-        y + LINE_HEIGHT
       end
 
       # Every entity carries an implicit `default` class ahead of whatever
@@ -256,14 +149,13 @@ module Sirena
       # exact key updates its value in place (keeping its first position,
       # same as `Map#set` on an existing key) and a new key is appended.
       def entity_styles(node, class_defs)
-        assigned = (node[:metadata] || {})[:classes] || []
-        classes = [DEFAULT_CLASS, *assigned]
+        classes = [DEFAULT_CLASS, *node.classes]
 
         classes.each_with_object({}) do |class_name, styles|
-          declaration = class_defs[class_name]
+          declaration = class_defs.find { |item| item.name == class_name }
           next unless declaration
 
-          apply_chunks(class_chunks(declaration), styles)
+          apply_chunks(class_chunks(declaration.declaration), styles)
         end
       end
 
@@ -624,6 +516,140 @@ module Sirena
         end
       end
 
+      def emit_relationships(edges, svg)
+        edges.each { |edge| emit_relationship(edge, svg) }
+      end
+
+      def emit_relationship(edge, svg)
+        section = edge.sections.first
+        group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
+        group.children << relationship_line(section, edge.relationship_type)
+        emit_marker(edge.source_marker, group)
+        emit_marker(edge.target_marker, group)
+        group.children << relationship_text(edge.labels.first) if edge.labels.any?
+        svg << group
+      end
+
+      def relationship_line(section, relationship_type)
+        Svg::Line.new.tap do |line|
+          line.x1 = section.start_point.x
+          line.y1 = section.start_point.y
+          line.x2 = section.end_point.x
+          line.y2 = section.end_point.y
+          line.stroke = "#333333"
+          line.stroke_width = "2"
+          line.stroke_dasharray = "5,5" if relationship_type == "non-identifying"
+        end
+      end
+
+      def emit_marker(marker, group)
+        if marker.circle_first
+          marker.circles.each { |geometry| group.children << marker_circle(geometry) }
+        end
+        marker.lines.each { |geometry| group.children << marker_line(geometry) }
+        return if marker.circle_first
+
+        marker.circles.each { |geometry| group.children << marker_circle(geometry) }
+      end
+
+      def marker_line(geometry)
+        Svg::Line.new.tap do |line|
+          line.x1 = geometry.x1
+          line.y1 = geometry.y1
+          line.x2 = geometry.x2
+          line.y2 = geometry.y2
+          line.stroke = "#333333"
+          line.stroke_width = "2"
+        end
+      end
+
+      def marker_circle(geometry)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = geometry.cx
+          circle.cy = geometry.cy
+          circle.r = geometry.radius
+          circle.fill = "none"
+          circle.stroke = "#333333"
+          circle.stroke_width = "2"
+        end
+      end
+
+      def relationship_text(label)
+        Svg::Text.new.tap do |text|
+          text.x = label.x
+          text.y = label.y
+          text.content = label.text
+          text.fill = "#000000"
+          text.font_family = "Arial, sans-serif"
+          text.font_size = font_size_value(label.font_size)
+          text.text_anchor = "middle"
+        end
+      end
+
+      def font_size_value(font_size)
+        font_size.to_i == font_size ? font_size.to_i.to_s : font_size.to_s
+      end
+
+      # Released protected hooks. Normal rendering does not use these; each
+      # delegates geometry recovery to Layout before emitting SVG.
+      def calculate_width(graph)
+        Layout::ErDiagram.content_width(graph)
+      end
+
+      def calculate_height(graph)
+        Layout::ErDiagram.content_height(graph)
+      end
+
+      def render_entities(graph, svg)
+        previous = @compatibility_class_defs
+        @compatibility_class_defs = Layout::ErDiagram.from_graph(
+          graph, theme: theme
+        ).class_defs
+        graph[:children].each { |node| render_entity(node, svg) }
+      ensure
+        @compatibility_class_defs = previous
+      end
+
+      def render_entity(node, svg)
+        entity = Layout::ErDiagram.entity_from_hash(node, theme: theme)
+        styles = entity_styles(entity, @compatibility_class_defs || [])
+        group = Svg::Group.new.tap { |item| item.id = "entity-#{entity.id}" }
+        group.children << entity_box(entity, styles)
+        with_compatibility_styles(styles) do
+          render_entity_content(node, node[:metadata] || {}, group)
+        end
+        svg << group
+      end
+
+      def with_compatibility_styles(styles)
+        previous = @compatibility_styles
+        @compatibility_styles = styles
+        yield
+      ensure
+        @compatibility_styles = previous
+      end
+
+      def render_entity_content(node, metadata, group)
+        entity = Layout::ErDiagram.entity_from_hash(
+          node.merge(metadata: metadata), theme: theme
+        )
+        emit_entity_header(entity, group, @compatibility_styles || {})
+        current_y = entity.separator.y1 + Layout::ErDiagram::ENTITY_PADDING
+        (metadata[:attributes] || []).each do |attribute|
+          current_y = render_attribute(
+            entity.x, current_y, entity.width, attribute, group
+          )
+        end
+      end
+
+      def render_attribute(x, y, _width, attribute, group)
+        row = Layout::ErDiagram.attribute_row(
+          x, y, attribute, theme: theme
+        )
+        emit_attribute(row, @compatibility_styles || {}, group)
+        y + Layout::ErDiagram::TEXT_LINE_HEIGHT
+      end
+
       def render_relationships(graph, svg)
         graph[:edges].each do |edge|
           render_relationship(edge, graph, svg)
@@ -633,108 +659,41 @@ module Sirena
       def render_relationship(edge, graph, svg)
         source = find_node(graph, edge[:sources]&.first)
         target = find_node(graph, edge[:targets]&.first)
-
         return unless source && target
 
         metadata = edge[:metadata] || {}
-
-        # Create group for the relationship
-        group = Svg::Group.new.tap do |g|
-          g.id = "rel-#{edge[:id]}"
-        end
-
-        # Calculate connection points
-        source_point = calculate_connection_point(source, target)
-        target_point = calculate_connection_point(target, source)
-
-        # Render the line
-        rel_type = metadata[:relationship_type] || "non-identifying"
+        from = calculate_connection_point(source, target)
+        to = calculate_connection_point(target, source)
+        group = Svg::Group.new.tap { |item| item.id = "rel-#{edge[:id]}" }
         render_relationship_line(
-          source_point,
-          target_point,
-          rel_type,
-          group,
+          from, to, metadata[:relationship_type] || "non-identifying", group
         )
-
-        # Render cardinality markers
-        card_from = metadata[:cardinality_from]
-        card_to = metadata[:cardinality_to]
-
-        if card_from
+        if metadata[:cardinality_from]
           render_cardinality(
-            source_point,
-            target_point,
-            card_from,
-            :source,
-            group,
+            from, to, metadata[:cardinality_from], :source, group
           )
         end
-        if card_to
+        if metadata[:cardinality_to]
           render_cardinality(
-            target_point,
-            source_point,
-            card_to,
-            :target,
-            group,
+            to, from, metadata[:cardinality_to], :target, group
           )
         end
-
-        # Render label if present
-        render_relationship_label(edge, source_point, target_point, group)
-
+        render_relationship_label(edge, from, to, group)
         svg << group
       end
 
       def find_node(graph, node_id)
-        return nil unless graph[:children] && node_id
-
-        graph[:children].find { |n| n[:id] == node_id }
+        Layout::ErDiagram.find_node(graph, node_id)
       end
 
       def calculate_connection_point(from_node, to_node)
-        from_cx = (from_node[:x] || 0) + (from_node[:width] || 150) / 2
-        from_cy = (from_node[:y] || 0) + (from_node[:height] || 100) / 2
-        to_cx = (to_node[:x] || 0) + (to_node[:width] || 150) / 2
-        to_cy = (to_node[:y] || 0) + (to_node[:height] || 100) / 2
-
-        # Determine which edge of the box to connect to
-        from_x = from_node[:x] || 0
-        from_y = from_node[:y] || 0
-        from_w = from_node[:width] || 150
-        from_h = from_node[:height] || 100
-
-        # Calculate intersection with box edge
-        dx = to_cx - from_cx
-        dy = to_cy - from_cy
-
-        # Handle edge cases
-        return { x: from_cx, y: from_cy } if dx.abs < 0.001 && dy.abs < 0.001
-
-        # Find intersection point
-        if dx.abs > dy.abs
-          # Connect left/right edge
-          x = dx.positive? ? from_x + from_w : from_x
-          y = dy.abs < 0.001 ? from_cy : from_cy + (dy / dx) * (x - from_cx)
-        else
-          # Connect top/bottom edge
-          y = dy.positive? ? from_y + from_h : from_y
-          x = dx.abs < 0.001 ? from_cx : from_cx + (dx / dy) * (y - from_cy)
-        end
-
-        { x: x, y: y }
+        point = Layout::ErDiagram.connection_point(from_node, to_node)
+        { x: point.x, y: point.y }
       end
 
       def render_relationship_line(from, to, rel_type, group)
-        line = Svg::Line.new.tap do |l|
-          l.x1 = from[:x]
-          l.y1 = from[:y]
-          l.x2 = to[:x]
-          l.y2 = to[:y]
-          l.stroke = "#333333"
-          l.stroke_width = "2"
-          l.stroke_dasharray = "5,5" if rel_type == "non-identifying"
-        end
-        group.children << line
+        section = Layout::ErDiagram.section(from, to)
+        group.children << relationship_line(section, rel_type)
       end
 
       def render_cardinality(point, opposite_point, cardinality, _side, group)
@@ -751,119 +710,40 @@ module Sirena
       end
 
       def render_one_marker(point, opposite_point, group)
-        # Single perpendicular line (|)
-        dx = opposite_point[:x] - point[:x]
-        dy = opposite_point[:y] - point[:y]
-        angle = Math.atan2(dy, dx)
-
-        # Perpendicular angle
-        perp_angle = angle + Math::PI / 2
-
-        # Calculate perpendicular line endpoints
-        half_size = CARDINALITY_SIZE / 2
-        x1 = point[:x] + half_size * Math.cos(perp_angle)
-        y1 = point[:y] + half_size * Math.sin(perp_angle)
-        x2 = point[:x] - half_size * Math.cos(perp_angle)
-        y2 = point[:y] - half_size * Math.sin(perp_angle)
-
-        line = Svg::Line.new.tap do |l|
-          l.x1 = x1
-          l.y1 = y1
-          l.x2 = x2
-          l.y2 = y2
-          l.stroke = "#333333"
-          l.stroke_width = "2"
-        end
-        group.children << line
+        marker = Layout::ErDiagram.one_marker(point, opposite_point)
+        emit_marker(marker, group)
       end
 
       def render_zero_or_more_marker(point, opposite_point, group)
-        # Circle + crow's foot (o<)
         render_circle_marker(point, opposite_point, group)
         render_crows_foot(point, opposite_point, group)
       end
 
       def render_one_or_more_marker(point, opposite_point, group)
-        # Line + crow's foot (|<)
         render_one_marker(point, opposite_point, group)
         render_crows_foot(point, opposite_point, group)
       end
 
       def render_zero_or_one_marker(point, opposite_point, group)
-        # Circle + line (o|)
         render_circle_marker(point, opposite_point, group)
         render_one_marker(point, opposite_point, group)
       end
 
       def render_circle_marker(point, opposite_point, group)
-        dx = opposite_point[:x] - point[:x]
-        dy = opposite_point[:y] - point[:y]
-        angle = Math.atan2(dy, dx)
-
-        # Offset the circle along the line
-        offset = CARDINALITY_SIZE / 2
-        cx = point[:x] + offset * Math.cos(angle)
-        cy = point[:y] + offset * Math.sin(angle)
-
-        circle = Svg::Circle.new.tap do |c|
-          c.cx = cx
-          c.cy = cy
-          c.r = CARDINALITY_SIZE / 3
-          c.fill = "none"
-          c.stroke = "#333333"
-          c.stroke_width = "2"
-        end
-        group.children << circle
+        marker = Layout::ErDiagram.circle_marker(point, opposite_point)
+        emit_marker(marker, group)
       end
 
       def render_crows_foot(point, opposite_point, group)
-        # Three lines forming crow's foot (< shape)
-        dx = opposite_point[:x] - point[:x]
-        dy = opposite_point[:y] - point[:y]
-        angle = Math.atan2(dy, dx)
-
-        # Offset the crow's foot along the line
-        offset = CARDINALITY_SIZE
-        base_x = point[:x] + offset * Math.cos(angle)
-        base_y = point[:y] + offset * Math.sin(angle)
-
-        # Create three lines at angles
-        angles = [-Math::PI / 4, 0, Math::PI / 4]
-        angles.each do |angle_offset|
-          line_angle = angle + Math::PI + angle_offset
-          end_x = base_x + CARDINALITY_SIZE * Math.cos(line_angle)
-          end_y = base_y + CARDINALITY_SIZE * Math.sin(line_angle)
-
-          line = Svg::Line.new.tap do |l|
-            l.x1 = base_x
-            l.y1 = base_y
-            l.x2 = end_x
-            l.y2 = end_y
-            l.stroke = "#333333"
-            l.stroke_width = "2"
-          end
-          group.children << line
-        end
+        marker = Layout::ErDiagram.crows_marker(point, opposite_point)
+        emit_marker(marker, group)
       end
 
       def render_relationship_label(edge, from, to, group)
-        labels = edge[:labels] || []
-        main_label = labels.find { |l| !l[:position] }
-        return unless main_label
-
-        mid_x = (from[:x] + to[:x]) / 2
-        mid_y = (from[:y] + to[:y]) / 2
-
-        text = Svg::Text.new.tap do |t|
-          t.x = mid_x
-          t.y = mid_y - 5
-          t.content = main_label[:text]
-          t.fill = "#000000"
-          t.font_family = "Arial, sans-serif"
-          t.font_size = "11"
-          t.text_anchor = "middle"
-        end
-        group.children << text
+        label = Layout::ErDiagram.edge_label(
+          edge, from, to, theme: theme
+        )
+        group.children << relationship_text(label) if label
       end
     end
   end

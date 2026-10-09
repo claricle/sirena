@@ -257,6 +257,141 @@ RSpec.describe Sirena::Renderer::ErDiagram do
 
       label_texts = texts.map { |t| Array(t.content).join }
       expect(label_texts).to include("places")
+      expect(texts.find { |text| Array(text.content).join == "places" }.font_size)
+        .to eq("12")
+    end
+
+    it "emits every text role at its injected theme size" do
+      theme = Sirena::Theme::Registry.get(:high_contrast)
+      renderer.theme = theme
+      scene = Sirena::Layout::ErDiagram.from_graph(graph, theme: theme)
+      texts = renderer.render(scene).children.flat_map(&:children)
+        .grep(Sirena::Svg::Text)
+      sizes = texts.to_h do |text|
+        [ErDiagramSpecHelpers.svg_text_content(text), text.font_size]
+      end
+
+      expect(sizes.slice("CUSTOMER", "PK int id", "places"))
+        .to eq("CUSTOMER" => "18", "PK int id" => "14", "places" => "14")
+    end
+
+    it "preserves the released protected hook names and arities" do
+      expected = {
+        calculate_width: 1, calculate_height: 1, render_entities: 2,
+        render_entity: 2, render_entity_content: 3, render_attribute: 5,
+        render_relationships: 2, render_relationship: 3, find_node: 2,
+        calculate_connection_point: 2, render_relationship_line: 4,
+        render_cardinality: 5, render_one_marker: 3,
+        render_zero_or_more_marker: 3, render_one_or_more_marker: 3,
+        render_zero_or_one_marker: 3, render_circle_marker: 3,
+        render_crows_foot: 3, render_relationship_label: 4
+      }
+
+      actual = expected.keys.to_h do |name|
+        [name, renderer.method(name).arity]
+      end
+
+      expect(actual).to eq(expected)
+    end
+
+    it "keeps the released graph rendering hooks observable" do
+      scene = Sirena::Layout::ErDiagram.from_graph(graph)
+      compatibility_svg = renderer.send(:document, scene)
+      renderer.send(:render_relationships, graph, compatibility_svg)
+      renderer.send(:render_entities, graph, compatibility_svg)
+      texts = compatibility_svg.children.flat_map(&:children)
+        .grep(Sirena::Svg::Text)
+      contents = texts.map { |text| ErDiagramSpecHelpers.svg_text_content(text) }
+
+      expect(contents).to include("places", "PK int id", "string name")
+      expect(compatibility_svg.children.map(&:id))
+        .to eq(%w[rel-CUSTOMER_to_ORDER entity-CUSTOMER entity-ORDER])
+      expect(compatibility_svg.to_xml).to eq(renderer.render(scene).to_xml)
+    end
+
+    it "dispatches public Hash rendering through the released hooks" do
+      calls = Hash.new(0)
+      tracking_renderer = Class.new(described_class) do
+        protected
+
+        %i[
+          calculate_width calculate_height render_entities render_entity
+          render_entity_content render_attribute render_relationships
+          render_relationship calculate_connection_point
+          render_relationship_line render_cardinality render_relationship_label
+        ].each do |name|
+          define_method(name) do |*arguments|
+            calls[name] += 1
+            super(*arguments)
+          end
+        end
+      end.new
+
+      tracking_renderer.render(graph)
+
+      expect(calls).to eq(
+        calculate_width: 1, calculate_height: 1,
+        render_relationships: 1, render_relationship: 1,
+        calculate_connection_point: 2,
+        render_relationship_line: 1, render_cardinality: 2,
+        render_relationship_label: 1, render_entities: 1, render_entity: 2,
+        render_entity_content: 2, render_attribute: 3
+      )
+    end
+
+    it "keeps the released entity hooks observable" do
+      node = graph[:children].first
+      entity_svg = Sirena::Svg::Document.new
+      renderer.send(:render_entity, node, entity_svg)
+      content_group = Sirena::Svg::Group.new
+      renderer.send(:render_entity_content, node, node[:metadata], content_group)
+      attribute_group = Sirena::Svg::Group.new
+      next_y = renderer.send(
+        :render_attribute, 10, 20, 180,
+        node[:metadata][:attributes].first, attribute_group
+      )
+
+      expect([entity_svg.children.length, content_group.children.length,
+              attribute_group.children.length, next_y])
+        .to eq([1, 4, 1, 38])
+    end
+
+    it "keeps the released relationship geometry hooks observable" do
+      from = { x: 0, y: 0, width: 100, height: 50 }
+      to = { x: 200, y: 0, width: 100, height: 50 }
+      point = { x: 100, y: 25 }
+      opposite = { x: 200, y: 25 }
+      edge = { labels: [{ text: "places" }] }
+      groups = Array.new(9) { Sirena::Svg::Group.new }
+
+      renderer.send(:render_relationship_line, point, opposite,
+                    "non-identifying", groups[0])
+      renderer.send(:render_cardinality, point, opposite, "one", nil, groups[1])
+      renderer.send(:render_one_marker, point, opposite, groups[2])
+      renderer.send(:render_zero_or_more_marker, point, opposite, groups[3])
+      renderer.send(:render_one_or_more_marker, point, opposite, groups[4])
+      renderer.send(:render_zero_or_one_marker, point, opposite, groups[5])
+      renderer.send(:render_circle_marker, point, opposite, groups[6])
+      renderer.send(:render_crows_foot, point, opposite, groups[7])
+      renderer.send(:render_relationship_label, edge, point, opposite, groups[8])
+
+      expect(renderer.send(:calculate_connection_point, from, to))
+        .to eq(x: 100, y: 25)
+      expect(groups.map { |group| group.children.length })
+        .to eq([1, 1, 1, 4, 4, 2, 1, 3, 1])
+      expect(groups.last.children.first.font_size).to eq("12")
+    end
+
+    it "keeps released lookup and extent hooks observable" do
+      expect(renderer.send(:find_node, graph, "ORDER")[:id]).to eq("ORDER")
+      expect(renderer.send(:find_node, graph, nil)).to be_nil
+      expect([renderer.send(:calculate_width, graph),
+              renderer.send(:calculate_height, graph)]).to eq([470, 170])
+      expect([renderer.send(:calculate_width, children: [], edges: []),
+              renderer.send(:calculate_height, children: [], edges: [])])
+        .to eq([0, 0])
+      expect([renderer.send(:calculate_width, children: []),
+              renderer.send(:calculate_height, children: [])]).to eq([840, 640])
     end
 
     context "with a graph that has no entities and no relationships" do
