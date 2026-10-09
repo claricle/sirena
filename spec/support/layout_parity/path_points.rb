@@ -46,10 +46,18 @@ module SpecSupport
       private
 
       def next_command(previous)
-        command = @tokens.first.match?(LETTER) ? @tokens.shift : previous
-        raise ArgumentError, "path data starts without a command" unless command
+        return @tokens.shift if @tokens.first.match?(LETTER)
+        raise ArgumentError, "path data starts without a command" unless previous
 
-        command
+        repeatable!(previous)
+      end
+
+      # Closepath takes no arguments (SVG 2 path grammar), so a number after
+      # it can never be consumed; refusing it keeps the loop finite.
+      def repeatable!(command)
+        return command unless command.casecmp?("z")
+
+        raise ArgumentError, "numbers after #{command}: no command to repeat"
       end
 
       def take_arguments(command)
