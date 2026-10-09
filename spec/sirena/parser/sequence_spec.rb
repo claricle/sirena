@@ -766,7 +766,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = "sequenceDiagram\ncreate participant \nA->>B: m\n"
 
       expect { parser.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Failed to match sequence/)
+        .to raise_error(Sirena::Parser::ParseError, /Input should not start with DECLARATION_STOP/)
     end
 
     it "rejects create glued to participant with no space" do
@@ -797,7 +797,7 @@ RSpec.describe Sirena::Parser::Sequence do
       source = "sequenceDiagram\ndestroy \nA->>B: m\n"
 
       expect { parser.parse(source) }
-        .to raise_error(Sirena::Parser::ParseError, /Failed to match sequence/)
+        .to raise_error(Sirena::Parser::ParseError, /Input should not start with DECLARATION_STOP/)
     end
 
     # Each row is `[source, expected participant ids, expected message

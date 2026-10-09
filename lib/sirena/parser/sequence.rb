@@ -25,27 +25,8 @@ module Sirena
     #   parser = Sequence.new
     #   diagram = parser.parse("sequenceDiagram\nAlice->>Bob: Hello")
     class Sequence < Base
-      # Parses sequence diagram source into a Sequence diagram model.
-      #
-      # @param source [String] the Mermaid sequence diagram source
-      # @return [Diagram::Sequence] the parsed sequence diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Sequence.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Sequence.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Sequence
+      builder Builders::Sequence
     end
   end
 end

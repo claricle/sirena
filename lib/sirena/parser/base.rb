@@ -8,33 +8,61 @@ module Sirena
   module Parser
     # Abstract base class for diagram parsers.
     #
-    # This class defines the interface that all diagram-specific parsers
-    # must implement. Parsers are responsible for converting source code
-    # into a typed diagram model using Parslet grammars.
+    # A parser is normally just a declaration of its grammar and builder:
     #
-    # @example Define a custom parser
-    #   class Flowchart < Parser::Base
-    #     def parse(source)
-    #       grammar = Grammars::Flowchart.new
-    #       tree = grammar.parse(source)
-    #       transform = Builders::Flowchart.new
-    #       transform.apply(tree)
-    #     end
+    # @example Declare a parser
+    #   class Pie < Parser::Base
+    #     grammar Grammars::Pie
+    #     builder Builders::Pie
     #   end
     #
-    # @abstract Subclass and implement #parse
+    # The default #parse runs the grammar through #parse_with_grammar, so a
+    # syntax error is a ParseError carrying line, column, the source line and
+    # a caret, then hands the tree to a new builder's #apply. A parser with
+    # real per-type logic overrides #parse instead.
+    #
+    # @abstract Declare grammar and builder, or override #parse
     class Base
+      class << self
+        # Declares (with an argument) or reads (without) the grammar class.
+        # A subclass inherits its parent's declaration.
+        #
+        # @param klass [Class, nil] a Parslet grammar class
+        # @return [Class, nil] the declared grammar class
+        def grammar(klass = nil)
+          @grammar = klass if klass
+          @grammar || (superclass.grammar if superclass.respond_to?(:grammar))
+        end
+
+        # Declares (with an argument) or reads (without) the builder class,
+        # whose instances respond to #apply(tree).
+        #
+        # @param klass [Class, nil] a builder class
+        # @return [Class, nil] the declared builder class
+        def builder(klass = nil)
+          @builder = klass if klass
+          @builder || (superclass.builder if superclass.respond_to?(:builder))
+        end
+      end
+
       # Parses Mermaid source code into a diagram model.
       #
-      # This method should be overridden by subclasses to implement
-      # diagram-specific parsing logic using Parslet grammars.
+      # Subclasses that declare both a grammar and a builder get this for
+      # free; any other subclass must override it.
       #
       # @param source [String] the Mermaid source code to parse
       # @return [Diagram::Base] the parsed diagram model
-      # @raise [NotImplementedError] if not implemented by subclass
+      # @raise [ParseError] if the source does not match the grammar
+      # @raise [NotImplementedError] if nothing is declared or overridden
       def parse(source)
-        raise NotImplementedError,
-              "#{self.class} must implement #parse(source)"
+        unless self.class.grammar && self.class.builder
+          raise NotImplementedError,
+                "#{self.class} must declare grammar and builder " \
+                "or implement #parse(source)"
+        end
+
+        tree = parse_with_grammar(self.class.grammar.new, source)
+        self.class.builder.new.apply(tree)
       end
 
       private
@@ -59,6 +87,16 @@ module Sirena
       rescue Parslet::ParseFailed => e
         cause = reporter.deepest_cause || e.parse_failure_cause
         raise ParseError, format_parse_error(cause, source)
+      end
+
+      # The message every parser gets unless it defines its own: the guarded
+      # shape, with a fallback if positioning itself fails.
+      #
+      # @param cause [Parslet::Cause] the failure to describe
+      # @param source [String] the source that was parsed
+      # @return [String] the positioned, multi-line error message
+      def format_parse_error(cause, source)
+        format_parse_error_guarded(cause, source)
       end
 
       # Renders a failure's text without its position.
@@ -132,7 +170,7 @@ module Sirena
         "#{line.to_s[0, column - 1].to_s.gsub(/[^\t]/, ' ')}^"
       end
 
-      # Used by block, flowchart and requirement: also checks `line_num`
+      # The default #format_parse_error: also checks `line_num`
       # is positive, and falls back to the non-contextual message if
       # formatting itself raises. #format_parse_error_unguarded (used by
       # class_diagram and state_diagram) has neither — keep them separate;

@@ -23,27 +23,8 @@ module Sirena
     #   parser = Error.new
     #   diagram = parser.parse("Error Diagrams")
     class Error < Base
-      # Parses error diagram source into an Error diagram model.
-      #
-      # @param source [String] the Mermaid error diagram source
-      # @return [Diagram::Error] the parsed error diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Error.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Error.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Error
+      builder Builders::Error
     end
   end
 end

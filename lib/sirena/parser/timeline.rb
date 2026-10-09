@@ -31,27 +31,8 @@ module Sirena
     #       2005 : YouTube
     #   TIMELINE
     class Timeline < Base
-      # Parses timeline diagram source into a Timeline diagram model.
-      #
-      # @param source [String] the Mermaid timeline diagram source
-      # @return [Diagram::Timeline] the parsed timeline diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Timeline.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Timeline.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Timeline
+      builder Builders::Timeline
     end
   end
 end

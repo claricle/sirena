@@ -19,22 +19,8 @@ module Sirena
     #   parser = ErDiagram.new
     #   diagram = parser.parse("erDiagram\nCUSTOMER ||--o{ ORDER : places")
     class ErDiagram < Base
-      # Parses ER diagram source into an ErDiagram model.
-      #
-      # @param source [String] the Mermaid ER diagram source
-      # @return [Diagram::ErDiagram] the parsed ER diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::ErDiagram.new
-        transform = Builders::ErDiagram.new
-
-        tree = grammar.parse(source)
-        diagram = transform.apply(tree)
-
-        diagram
-      rescue Parslet::ParseFailed => e
-        raise ParseError, e.parse_failure_cause.ascii_tree
-      end
+      grammar Grammars::ErDiagram
+      builder Builders::ErDiagram
     end
   end
 end
