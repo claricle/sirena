@@ -31,7 +31,7 @@ RSpec.describe Sirena::Diagram do
       it "rejects an empty #{attribute}" do
         attributes = valid_relationship_attributes.merge(
           relationship_type: "identifying",
-          attribute => ""
+          attribute => "",
         )
 
         expect(described_class.new(**attributes)).not_to be_valid
