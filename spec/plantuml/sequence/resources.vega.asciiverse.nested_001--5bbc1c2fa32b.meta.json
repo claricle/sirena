@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.nested_001--5bbc1c2fa32b",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/nested_001.puml",
+  "test": "nested_001",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "5bbc1c2fa32b99ecf821b84400005bd1af1c1739e2b98f822131b44e41fa7a7f",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.svg-sprites.svgStyleFontWeightRoboto--a13609de5404",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/svg-sprites/svgStyleFontWeightRoboto.puml",
+  "test": "svgStyleFontWeightRoboto",
+  "origin": "resource",
+  "line_number": 1,
+  "source_sha256": "a13609de5404c9dd46c169f2e635cfd0fce93bee742f03a0a04ef3f924d7cfae",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

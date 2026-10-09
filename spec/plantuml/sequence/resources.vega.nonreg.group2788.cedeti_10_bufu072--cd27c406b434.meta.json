@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.cedeti_10_bufu072--cd27c406b434",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/cedeti_10_bufu072.puml",
+  "test": "cedeti_10_bufu072",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "cd27c406b4343306bd42a9cb87cc02657b5c2a835f7ed89e5729bdc2343bf1c4",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.note_across_group.reported--4965c575d64a",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/note_across_group/reported.puml",
+  "test": "reported",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "4965c575d64a82a599f6b0bce9583a46951f6bebfdb20d924348e393b29e8819",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

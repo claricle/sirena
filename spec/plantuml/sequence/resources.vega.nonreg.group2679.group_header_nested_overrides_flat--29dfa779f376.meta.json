@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2679.group_header_nested_overrides_flat--29dfa779f376",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2679/group_header_nested_overrides_flat.puml",
+  "test": "group_header_nested_overrides_flat",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "29dfa779f3764ee9d70cb7091879bcf683491076a360ab3792e012de539aa592",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

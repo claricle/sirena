@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2814.reversed_order--0dac1bb4078f",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2814/reversed_order.puml",
+  "test": "reversed_order",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "0dac1bb4078fd48b9122f400f5cbe69f0d7b25db1f889bf515f5878edecc661a",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

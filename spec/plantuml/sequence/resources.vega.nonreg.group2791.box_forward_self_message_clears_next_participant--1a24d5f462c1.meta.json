@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.box_forward_self_message_clears_next_participant--1a24d5f462c1",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/box_forward_self_message_clears_next_participant.puml",
+  "test": "box_forward_self_message_clears_next_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "1a24d5f462c1223a758a1810dae16f166f7816d2f91d84ad7292bc13c25e4398",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

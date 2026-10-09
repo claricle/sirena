@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2903.nodesep_ranksep--7c073f601760",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2903/nodesep_ranksep.puml",
+  "test": "nodesep_ranksep",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "7c073f6017606da2cbf3360f645e02f751e944616ae323a31d197d6d4e2f00e6",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.tikz.tikz-scale-nested-scale--2539f518bd84",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/tikz/tikz-scale-nested-scale.puml",
+  "test": "tikz-scale-nested-scale",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "2539f518bd84f4736f00b59d2046094fbabcba9cdf3e7288487fcb578e6a99be",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.altpar_005--f0cf331472b7",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/altpar_005.puml",
+  "test": "altpar_005",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "f0cf331472b74cf77ba67eb0b650b28696d8b5a01e64ca5fb56a4fb4252cc46f",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

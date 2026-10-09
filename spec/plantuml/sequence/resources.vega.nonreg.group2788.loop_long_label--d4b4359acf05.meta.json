@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.loop_long_label--d4b4359acf05",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/loop_long_label.puml",
+  "test": "loop_long_label",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "d4b4359acf0509d524601c2cdc713060980b0c483d14f32378457dbb092bb36b",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,8 @@
+@startuml
+box "Box A"
+  participant a
+endbox
+
+a->a : long long long long long msg
+a->c
+@enduml

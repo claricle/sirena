@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2679.group_header_legacy_flat--5bcc726e80b1",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2679/group_header_legacy_flat.puml",
+  "test": "group_header_legacy_flat",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "5bcc726e80b10590236c194559558cb98a0b5dda6a0ae0b14044e4fc6cacfe45",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

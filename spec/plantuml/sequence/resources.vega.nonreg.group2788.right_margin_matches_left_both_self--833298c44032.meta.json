@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.right_margin_matches_left_both_self--833298c44032",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/right_margin_matches_left_both_self.puml",
+  "test": "right_margin_matches_left_both_self",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "833298c4403237fd2339c8df89bc379bd8dcb793f661f8a2f05ad928d3b55c94",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.timeline_002--f985a9b8f0de",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/timeline_002.puml",
+  "test": "timeline_002",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "f985a9b8f0de64910e2a3b9e132e940f7b31d5854b30a8270482db9cd981815e",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

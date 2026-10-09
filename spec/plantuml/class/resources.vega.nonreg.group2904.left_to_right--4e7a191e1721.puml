@@ -1,0 +1,7 @@
+@startuml
+!pragma layout smetana
+left to right direction
+class Company
+class Person
+Company "1"/"-employer" o-------- "0..*"/"+employees" Person
+@enduml

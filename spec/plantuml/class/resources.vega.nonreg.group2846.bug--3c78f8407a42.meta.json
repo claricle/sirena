@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2846.bug--3c78f8407a42",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2846/bug.puml",
+  "test": "bug",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "3c78f8407a423935838724aedb59b3192de8a65b34b626fe8da3973afee86c7f",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

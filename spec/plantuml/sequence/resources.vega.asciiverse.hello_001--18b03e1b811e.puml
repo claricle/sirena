@@ -1,0 +1,4 @@
+@startuml
+alice->bob: this is a test
+return ok
+@enduml

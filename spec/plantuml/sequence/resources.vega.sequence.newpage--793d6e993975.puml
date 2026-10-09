@@ -1,0 +1,5 @@
+@startuml
+Alice -> Bob : hello1
+newpage
+Alice -> Bob : hello2
+@enduml

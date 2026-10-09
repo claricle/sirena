@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.layout_003--3d52db0edecd",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/layout_003.puml",
+  "test": "layout_003",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "3d52db0edecd909ea7dccb3c771404010e60e0213526134a871bf00ded80a2d0",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

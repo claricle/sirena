@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.simple.A0005--f83e486078d0",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/simple/A0005.puml",
+  "test": "A0005",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "f83e486078d08b9479b6588cd3e5a7742f845fe0b2bf422f11b9b9326d5f0c40",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

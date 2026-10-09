@@ -1,0 +1,9 @@
+@startuml
+x -> x: start
+group test
+a -> b: 1
+== a separator that is quite wide ==
+c -> c: 2
+end
+d -> d: next
+@enduml

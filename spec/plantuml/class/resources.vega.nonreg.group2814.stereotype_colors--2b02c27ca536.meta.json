@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2814.stereotype_colors--2b02c27ca536",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2814/stereotype_colors.puml",
+  "test": "stereotype_colors",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "2b02c27ca5367a58abc92dfe23966472294e30e0a017e37e4fef53670f40cd10",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

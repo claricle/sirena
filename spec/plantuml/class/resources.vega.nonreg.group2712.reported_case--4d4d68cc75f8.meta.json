@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2712.reported_case--4d4d68cc75f8",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2712/reported_case.puml",
+  "test": "reported_case",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "4d4d68cc75f855e962dc42385664fdbb7e7b27617c4338eed7d48260f53d3e57",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

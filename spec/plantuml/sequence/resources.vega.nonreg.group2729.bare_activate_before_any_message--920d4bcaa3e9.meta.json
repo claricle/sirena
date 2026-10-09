@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2729.bare_activate_before_any_message--920d4bcaa3e9",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2729/bare_activate_before_any_message.puml",
+  "test": "bare_activate_before_any_message",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "920d4bcaa3e93b598dc10042644e59eb91cba52dac19aca58b7427a81acb7759",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

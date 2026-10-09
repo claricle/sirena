@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.activation--d783321e2c62",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/activation.puml",
+  "test": "activation",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "d783321e2c62330850a41f8d243a838c7f1844dd7c4f00f88ac840c1813fd1ec",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

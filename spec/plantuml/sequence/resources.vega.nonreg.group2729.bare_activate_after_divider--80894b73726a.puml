@@ -1,0 +1,13 @@
+@startuml
+participant "App" as App
+actor "OEM" as OEM
+
+== Process A ==
+App -> OEM: Inform OEM
+activate OEM
+deactivate OEM
+
+== Process B ==
+activate OEM
+deactivate OEM
+@enduml

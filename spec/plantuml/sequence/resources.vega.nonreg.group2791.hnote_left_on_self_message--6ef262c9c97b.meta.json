@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.hnote_left_on_self_message--6ef262c9c97b",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/hnote_left_on_self_message.puml",
+  "test": "hnote_left_on_self_message",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "6ef262c9c97b99c75cfca10e88a35970c652d4173d66d9db740b11e00813051c",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}
