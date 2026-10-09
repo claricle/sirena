@@ -18,6 +18,29 @@ module ClassDiagramLayoutSpecHelpers
       [line.x1, line.y1, line.x2, line.y2]
     end
   end
+
+  def routed_graph
+    nodes = %w[A B].each_with_index.map do |id, index|
+      { id: id, x: index * 200, y: 0, width: 100, height: 50,
+        metadata: { name: id } }
+    end
+    section = {
+      start_point: { x: 100, y: 25 }, end_point: { x: 200, y: 25 },
+      bend_points: [{ x: 150, y: 80 }]
+    }
+    { children: nodes,
+      edges: [{ id: "A_to_B", sources: ["A"], targets: ["B"],
+                sections: [section] }] }
+  end
+
+  def routed_scene_summary(scene)
+    edge = scene.edges.first
+    [
+      scene.children.flat_map(&:labels).map(&:text),
+      [edge.source, edge.target],
+      edge.sections.map { |section| section.bend_points.map(&:y) },
+    ]
+  end
 end
 
 RSpec.describe Sirena::Layout::ClassDiagram do
@@ -66,13 +89,20 @@ RSpec.describe Sirena::Layout::ClassDiagram do
     edge = scene.edges.first
     section = edge.sections.first
 
-    expect([edge.sources, edge.targets]).to eq([["Animal"], ["Dog"]])
+    expect([edge.source, edge.target]).to eq(%w[Animal Dog])
     expect([section.start_point.x, section.start_point.y])
       .to eq([190.0, 22.0])
     expect([section.end_point.x, section.end_point.y])
       .to eq([300.0, 151.0])
     expect(edge.labels.map(&:text)).to eq(["knows"])
     expect(edge.markers.map(&:fill)).to eq(["#000000"])
+  end
+
+  it "preserves canonical labels and every routed section coordinate" do
+    routed = described_class.from_graph(routed_graph)
+
+    expect(routed_scene_summary(routed))
+      .to eq([%w[A B], %w[A B], [[80.0]]])
   end
 
   it "runs Grid once inside layout and not in Engine" do
