@@ -44,11 +44,11 @@ RSpec.describe Sirena::Renderer::Sankey do
     theme = Sirena::Theme.new(
       colors: Sirena::Theme::ColorPalette.new(
         node_fill: "#010203", node_stroke: "#040506",
-        label_text: "#070809",
+        label_text: "#070809"
       ),
       typography: Sirena::Theme::Typography.new(
         font_family: "Example Sans", font_size_small: 13,
-        font_size_large: 21,
+        font_size_large: 21
       ),
     )
     described_class.new(theme: theme).render(scene).to_xml
