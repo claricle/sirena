@@ -25,6 +25,14 @@ module PlantUmlCorpusHelpers
     %w[x y width height].to_h { |key| [key, rect.attributes[key].to_f] }
   end
 
+  def rendered_document(body)
+    REXML::Document.new(Sirena.render(wrap(body), notation: :plantuml))
+  end
+
+  def group_ids(document)
+    REXML::XPath.match(document, "//g/@id").map(&:value)
+  end
+
   def wrap(body)
     "@startuml\n#{body}\n@enduml\n"
   end
@@ -445,6 +453,29 @@ RSpec.describe Sirena::Notation::PlantUML do
 
         expect(box["y"] + box["height"]).to be < frame["y"]
       end
+    end
+  end
+
+  describe "a package whose classes are all hidden" do
+    let(:source) do
+      ["package p {", "class A $x", "}", "package q {", "class C", "}",
+       "class B", "hide $x"].join("\n")
+    end
+    let(:svg) { rendered_document(source) }
+
+    it "draws no frame for it" do
+      expect(group_ids(svg)).not_to include("package-p")
+    end
+
+    it "still draws the other package and the loose class" do
+      expect(group_ids(svg)).to include("package-q", "class-C", "class-B")
+    end
+
+    it "leaves no room for the missing frame" do
+      without = rendered_document("package q {\nclass C\n}\nclass B")
+
+      expect(svg.root.attributes["height"])
+        .to eq(without.root.attributes["height"])
     end
   end
 

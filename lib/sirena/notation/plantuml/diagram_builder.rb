@@ -183,8 +183,14 @@ module Sirena
             classes: classes.freeze, relations: relations.freeze,
             junctions: @junctions.map(&:first).freeze,
             directives: @directives.dup.freeze, notes: @notes.dup.freeze,
-            packages: @packages.dup.freeze
+            packages: occupied_packages(classes).freeze
           )
+        end
+
+        # A package whose every class is hidden draws no frame.
+        def occupied_packages(classes)
+          named = classes.filter_map(&:package)
+          @packages.select { |package| named.include?(package.id) }
         end
 
         def hidden?(klass)
