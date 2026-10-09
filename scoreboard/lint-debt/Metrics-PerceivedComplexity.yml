@@ -95,8 +95,6 @@ rows:
   count: 3
 - file: lib/sirena/renderer/er_diagram.rb
   count: 1
-- file: lib/sirena/renderer/git_graph.rb
-  count: 1
 - file: lib/sirena/renderer/kanban.rb
   count: 1
 - file: lib/sirena/renderer/markdown_text.rb
@@ -111,8 +109,6 @@ rows:
   count: 1
 - file: lib/sirena/renderer/user_journey.rb
   count: 3
-- file: lib/sirena/renderer/xy_chart.rb
-  count: 2
 - file: lib/sirena/source.rb
   count: 1
 - file: lib/sirena/svg/style.rb

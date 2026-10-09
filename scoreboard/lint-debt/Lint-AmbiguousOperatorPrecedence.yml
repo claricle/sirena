@@ -63,22 +63,16 @@ rows:
   count: 11
 - file: lib/sirena/renderer/class_diagram.rb
   count: 2
-- file: lib/sirena/renderer/gantt.rb
-  count: 1
-- file: lib/sirena/renderer/git_graph.rb
-  count: 2
 - file: lib/sirena/renderer/kanban.rb
   count: 1
 - file: lib/sirena/renderer/mindmap.rb
-  count: 33
+  count: 3
 - file: lib/sirena/renderer/pie.rb
   count: 6
 - file: lib/sirena/renderer/requirement.rb
   count: 11
 - file: lib/sirena/renderer/user_journey.rb
   count: 14
-- file: lib/sirena/renderer/xy_chart.rb
-  count: 4
 - file: scripts/extract_mermaid_tests.rb
   count: 2
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb

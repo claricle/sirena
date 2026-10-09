@@ -23,16 +23,10 @@ rows:
   count: 8
 - file: lib/sirena/renderer/er_diagram.rb
   count: 2
-- file: lib/sirena/renderer/gantt.rb
-  count: 4
-- file: lib/sirena/renderer/git_graph.rb
-  count: 4
 - file: lib/sirena/renderer/kanban.rb
   count: 7
 - file: lib/sirena/renderer/markdown_text.rb
   count: 2
-- file: lib/sirena/renderer/mindmap.rb
-  count: 16
 - file: lib/sirena/renderer/pie.rb
   count: 2
 - file: lib/sirena/renderer/quadrant.rb

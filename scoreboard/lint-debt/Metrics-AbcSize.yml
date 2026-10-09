@@ -152,9 +152,9 @@ rows:
 - file: lib/sirena/renderer/flowchart.rb
   count: 6
 - file: lib/sirena/renderer/gantt.rb
-  count: 8
+  count: 3
 - file: lib/sirena/renderer/git_graph.rb
-  count: 7
+  count: 2
 - file: lib/sirena/renderer/info.rb
   count: 2
 - file: lib/sirena/renderer/kanban.rb
@@ -162,7 +162,7 @@ rows:
 - file: lib/sirena/renderer/markdown_text.rb
   count: 1
 - file: lib/sirena/renderer/mindmap.rb
-  count: 9
+  count: 5
 - file: lib/sirena/renderer/packet.rb
   count: 4
 - file: lib/sirena/renderer/pie.rb
@@ -186,7 +186,7 @@ rows:
 - file: lib/sirena/renderer/user_journey.rb
   count: 7
 - file: lib/sirena/renderer/xy_chart.rb
-  count: 8
+  count: 6
 - file: lib/sirena/source.rb
   count: 1
 - file: lib/sirena/source/frontmatter.rb
