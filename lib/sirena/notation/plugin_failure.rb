@@ -14,9 +14,22 @@ module Sirena
     module PluginFailure
       # Out of memory, signals (Interrupt included), exit, and the exception
       # `Timeout.timeout` unwinds a host's block with.
-      PASSTHROUGH = [
-        NoMemoryError, SignalException, SystemExit, Timeout::ExitException
-      ].freeze
+      #
+      # @param timeout [Module] the Timeout module to read the unwinding
+      #   class from
+      # @return [Array<Class>]
+      def self.passthrough_for(timeout)
+        # Timeout::ExitException appeared after Ruby 3.2's bundled timeout;
+        # there the unwinding exception is Timeout::Error itself.
+        unwinding = if timeout.const_defined?(:ExitException)
+                      timeout::ExitException
+                    else
+                      timeout::Error
+                    end
+        [NoMemoryError, SignalException, SystemExit, unwinding].freeze
+      end
+
+      PASSTHROUGH = passthrough_for(Timeout)
       private_constant :PASSTHROUGH
 
       # @param error [Exception]
