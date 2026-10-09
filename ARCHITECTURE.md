@@ -202,7 +202,7 @@ end
 class Sirena::Parser::Flowchart < Sirena::Parser::Base
   def parse(source)
     source = normalize_line_ends(source)
-    Builders::Flowchart.apply(parse_with_grammar(Grammars::Flowchart.new, source))
+    Builders::Flowchart.new.apply(parse_with_grammar(Grammars::Flowchart.new, source))
   end
 end
 ```

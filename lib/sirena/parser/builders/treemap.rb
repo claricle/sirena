@@ -76,87 +76,74 @@ module Sirena
           result
         end
 
-        class << self
-          # Runs the Parslet transform pass, then builds the typed
-          # Diagram::Treemap from its intermediate statement list.
-          #
-          # This is the method Treemap calls — it is the single
-          # entry point that turns a raw parse tree into the diagram
-          # model.
-          #
-          # @param tree [Hash, Array] the raw Parslet parse tree
-          # @return [Diagram::Treemap] the built diagram
-          def apply_diagram(tree)
-            build_diagram(new.apply(tree))
+        # Builds Treemap from the intermediate statement list. #apply
+        # cannot be overridden to do this: Parslet's transform recurses
+        # through it, so it would run on every subtree.
+        #
+        # @param data [Hash] the `{type: :treemap, statements: [...]}`
+        #   hash produced by this class's Parslet rules
+        # @return [Diagram::Treemap] the built diagram
+        def build_diagram(data)
+          diagram = Diagram::Treemap.new
+
+          statements = data[:statements] || []
+          nodes = []
+
+          statements.each do |stmt|
+            case stmt[:type]
+            when :title
+              diagram.title = stmt[:value]
+            when :acc_title
+              # Accessibility title: parsed, not yet stored on the model.
+            when :acc_descr
+              # Accessibility description: parsed, not yet stored on the model.
+            when :class_def
+              diagram.add_class_def(stmt[:name], stmt[:styles])
+            when :node
+              nodes << stmt
+            end
           end
 
-          private
+          build_hierarchy(diagram, nodes)
 
-          # Builds Treemap from the intermediate statement list.
-          #
-          # @param data [Hash] the `{type: :treemap, statements: [...]}`
-          #   hash produced by this class's Parslet rules
-          # @return [Diagram::Treemap] the built diagram
-          def build_diagram(data)
-            diagram = Diagram::Treemap.new
+          diagram
+        end
 
-            statements = data[:statements] || []
-            nodes = []
+        private
 
-            statements.each do |stmt|
-              case stmt[:type]
-              when :title
-                diagram.title = stmt[:value]
-              when :acc_title
-                # Accessibility title: parsed, not yet stored on the model.
-              when :acc_descr
-                # Accessibility description: parsed, not yet stored on the model.
-              when :class_def
-                diagram.add_class_def(stmt[:name], stmt[:styles])
-              when :node
-                nodes << stmt
-              end
+        # Builds the hierarchical node tree from the flat, indented
+        # node list the parse tree produces.
+        #
+        # @param diagram [Diagram::Treemap] diagram to populate
+        # @param nodes [Array<Hash>] flat node statements, in source
+        #   order, each carrying its indentation level
+        # @return [void]
+        def build_hierarchy(diagram, nodes)
+          return if nodes.empty?
+
+          # Stack to track the current parent at each indentation level
+          # Format: [[indent_level, node], ...]
+          stack = []
+
+          nodes.each do |node_data|
+            indent = node_data[:indent] || 0
+            label = node_data[:label]
+            value = node_data[:value]
+            css_class = node_data[:css_class]
+
+            node = Diagram::TreemapNode.new(label, value)
+            node.css_class = css_class if css_class
+
+            stack.pop while stack.any? && stack.last[0] >= indent
+
+            if stack.empty?
+              diagram.add_root_node(node)
+            else
+              parent = stack.last[1]
+              parent.add_child(node)
             end
 
-            build_hierarchy(diagram, nodes)
-
-            diagram
-          end
-
-          # Builds the hierarchical node tree from the flat, indented
-          # node list the parse tree produces.
-          #
-          # @param diagram [Diagram::Treemap] diagram to populate
-          # @param nodes [Array<Hash>] flat node statements, in source
-          #   order, each carrying its indentation level
-          # @return [void]
-          def build_hierarchy(diagram, nodes)
-            return if nodes.empty?
-
-            # Stack to track the current parent at each indentation level
-            # Format: [[indent_level, node], ...]
-            stack = []
-
-            nodes.each do |node_data|
-              indent = node_data[:indent] || 0
-              label = node_data[:label]
-              value = node_data[:value]
-              css_class = node_data[:css_class]
-
-              node = Diagram::TreemapNode.new(label, value)
-              node.css_class = css_class if css_class
-
-              stack.pop while stack.any? && stack.last[0] >= indent
-
-              if stack.empty?
-                diagram.add_root_node(node)
-              else
-                parent = stack.last[1]
-                parent.add_child(node)
-              end
-
-              stack.push([indent, node])
-            end
+            stack.push([indent, node])
           end
         end
       end
