@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "timeout"
 
 RSpec.describe Sirena::ErrorReport do
   describe ".cause_diagnostics" do
@@ -42,6 +43,29 @@ RSpec.describe Sirena::ErrorReport do
       report = described_class.cause_diagnostics(error)
 
       expect(report.scan(/^Caused by: (\w+)/).flatten).to eq(%w[TypeError ArgumentError])
+    end
+
+    it "stops when an error names itself as its cause" do
+      error = RuntimeError.new("self-referential")
+      allow(error).to receive(:cause).and_return(error)
+
+      report = Timeout.timeout(1) { described_class.cause_diagnostics(error) }
+
+      expect(report).to eq("")
+    end
+
+    it "reports each cause once when the chain contains a cycle" do
+      outer = RuntimeError.new("outer")
+      middle = TypeError.new("middle")
+      inner = ArgumentError.new("inner")
+      allow(outer).to receive(:cause).and_return(middle)
+      allow(middle).to receive(:cause).and_return(inner)
+      allow(inner).to receive(:cause).and_return(middle)
+
+      report = Timeout.timeout(1) { described_class.cause_diagnostics(outer) }
+
+      expect(report.scan(/^Caused by: (.+)$/).flatten)
+        .to eq(["TypeError: middle", "ArgumentError: inner"])
     end
 
     it "survives a cause whose backtrace is nil" do
