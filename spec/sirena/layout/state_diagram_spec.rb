@@ -15,8 +15,10 @@ RSpec.describe Sirena::Layout::StateDiagram do
       edges: [
         { id: "bent", sources: ["a"], targets: ["b"],
           sections: [{ startPoint: { x: 110, y: 45 },
-                       endPoint: { x: 210, y: 45 },
-                       bendPoints: [{ x: 160, y: 80 }] }] },
+                       endPoint: { x: 160, y: 80 },
+                       bendPoints: [{ x: 135, y: 60 }] },
+                     { startPoint: { x: 160, y: 80 },
+                       endPoint: { x: 210, y: 45 } }] },
         { id: "straight", sources: ["a"], targets: ["b"] },
       ],
     }
@@ -276,7 +278,8 @@ RSpec.describe Sirena::Layout::StateDiagram do
     it "preserves final section points and missing edge geometry" do
       scene = described_class.from_graph(section_graph)
       expect(edge_geometry(scene)).to eq(
-        ["M 110 45 L 160 80 L 210 45", [160.0, 80.0], "M 60 45 L 260 45"],
+        ["M 110 45 L 135 60 L 160 80 M 160 80 L 210 45",
+         [135.0, 60.0], "M 60 45 L 260 45"],
       )
     end
 

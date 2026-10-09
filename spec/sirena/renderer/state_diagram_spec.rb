@@ -118,6 +118,24 @@ RSpec.describe Sirena::Renderer::StateDiagram do
     )
   end
 
+  def routed_typed_scene
+    point = Sirena::Layout::StateDiagram::Point
+    section = Sirena::Layout::StateDiagram::Section
+    edge = Sirena::Layout::StateDiagram::Edge.new(
+      id: "route", source: "start", target: "end",
+      sections: [
+        section.new(start_point: point.new(x: 10, y: 10),
+                    end_point: point.new(x: 20, y: 20)),
+        section.new(start_point: point.new(x: 20, y: 20),
+                    end_point: point.new(x: 30, y: 10)),
+      ]
+    )
+    typed_scene(final_start_node, final_end_node).tap do |scene|
+      scene.view_box = "5 6 70 80"
+      scene.edges = [edge]
+    end
+  end
+
   def state_shape(document, id)
     document.children.find { |child| child.id == "state-#{id}" }.children.first
   end
@@ -328,6 +346,21 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       forbid_layout_geometry(:transition_label_geometry)
       allow(renderer).to receive(:create_state_shape).and_raise("hook used")
       expect { renderer.render(scene) }.not_to raise_error
+    end
+
+    it "uses the final typed canvas view box" do
+      document = renderer.render(routed_typed_scene)
+
+      expect([document.width, document.height, document.view_box])
+        .to eq([100.0, 100.0, "5 6 70 80"])
+    end
+
+    it "serializes every final transition section" do
+      document = renderer.render(routed_typed_scene)
+      path = document.children.find { |item| item.id == "transition-route" }
+
+      expect(path.children.first.d)
+        .to eq("M 10 10 L 20 20 M 20 20 L 30 10")
     end
 
     it "keeps final geometry stateless across nodes and consecutive renders" do
