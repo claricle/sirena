@@ -95,11 +95,11 @@ module Sirena
     class Sankey < Base
       # Collection of explicitly defined nodes (optional)
       attribute :nodes, SankeyNode, collection: true,
-                default: -> { [] }
+                                    default: -> { [] }
 
       # Collection of flows between nodes
       attribute :flows, SankeyFlow, collection: true,
-                default: -> { [] }
+                                    default: -> { [] }
 
       # Accessibility title (for screen readers)
       attribute :acc_title, :string

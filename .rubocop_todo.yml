@@ -30,12 +30,6 @@ Layout/EmptyLineAfterGuardClause:
     - 'lib/sirena/parser/builders/sequence.rb'
     - 'tasks/benchmark.rake'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Layout/EmptyLines:
-  Exclude:
-    - 'lib/sirena.rb'
-
 # Offense count: 11
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyleAlignWith.
@@ -63,7 +57,7 @@ Layout/ExtraSpacing:
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
-# Offense count: 6
+# Offense count: 4
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowMultipleStyles, EnforcedHashRocketStyle, EnforcedColonStyle, EnforcedLastArgumentHashStyle.
 # SupportedHashRocketStyles: key, separator, table
@@ -72,7 +66,6 @@ Layout/FirstHashElementIndentation:
 Layout/HashAlignment:
   Exclude:
     - 'lib/sirena/diagram/c4.rb'
-    - 'lib/sirena/diagram/sankey.rb'
     - 'lib/sirena/diagram/timeline.rb'
 
 # Offense count: 4
