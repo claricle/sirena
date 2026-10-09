@@ -67,11 +67,11 @@ module BatchCommandRunner
   #   after #run, and everything the run printed to stdout. `locale` is
   #   the default external encoding for the run; the capture buffer is made
   #   before it changes, so the report's non-ASCII marks can still be written.
-  def batch_capture(input, output, locale: Encoding.default_external, **options)
+  def batch_capture(input, output, locale: Encoding.default_external, **)
     captured = StringIO.new
     original = $stdout
     $stdout = captured
-    command = Sirena::Commands::BatchCommand.new(input: input, output: output, **options)
+    command = Sirena::Commands::BatchCommand.new(input: input, output: output, **)
     with_default_external(locale) { command.run }
     [command, captured.string]
   ensure
@@ -84,8 +84,8 @@ module BatchCommandRunner
   end
 
   # @return [String] everything the run printed to stdout
-  def run_batch(input, output, **options)
-    batch_capture(input, output, **options).last
+  def run_batch(input, output, **)
+    batch_capture(input, output, **).last
   end
 
   # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
