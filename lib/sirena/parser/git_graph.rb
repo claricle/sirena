@@ -39,21 +39,9 @@ module Sirena
       # @return [Diagram::GitGraph] the parsed git graph diagram
       # @raise [ParseError] if syntax is invalid
       def parse(source)
-        grammar = Grammars::GitGraph.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::GitGraph.new
-        result = transform.apply(parse_tree.slice(:statements))
-
-        # Create the diagram model
-        create_diagram(result, parse_tree.fetch(:direction, "LR").to_s)
+        tree = parse_with_grammar(Grammars::GitGraph.new, source)
+        result = Builders::GitGraph.new.apply(tree.slice(:statements))
+        create_diagram(result, tree.fetch(:direction, "LR").to_s)
       end
 
       private

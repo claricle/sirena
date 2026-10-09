@@ -3,9 +3,9 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::Builders::Requirement do
-  let(:diagram) { described_class.apply(tree) }
+  let(:diagram) { described_class.new.apply(tree) }
 
-  describe ".apply" do
+  describe "#apply" do
     context "with a single hash instead of an array" do
       let(:tree) { { req_type: "requirement", req_name: "solo" } }
 
@@ -164,18 +164,18 @@ RSpec.describe Sirena::Parser::Builders::Requirement do
     end
   end
 
-  describe ".extract_class_names" do
+  describe "#extract_class_names" do
     it "splits a string on commas and strips" do
-      expect(described_class.extract_class_names(" a , b ")).to eq(%w[a b])
+      expect(described_class.new.extract_class_names(" a , b ")).to eq(%w[a b])
     end
 
     it "drops the ::: prefix of the Parslet::Slice the grammar produces" do
       slice = Parslet::Slice.new(Parslet::Position.new(":::a, b", 0), ":::a, b")
-      expect(described_class.extract_class_names(slice)).to eq(%w[a b])
+      expect(described_class.new.extract_class_names(slice)).to eq(%w[a b])
     end
 
     it "returns nothing for other types" do
-      expect(described_class.extract_class_names(nil)).to eq([])
+      expect(described_class.new.extract_class_names(nil)).to eq([])
     end
   end
 end

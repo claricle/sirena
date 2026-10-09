@@ -26,28 +26,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Packet < Base
-      # Parses packet diagram source into a Packet model.
-      #
-      # @param source [String] the Mermaid packet diagram source
-      # @return [Diagram::Packet] the parsed packet diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Packet.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to intermediate representation
-        transform = Builders::Packet.new
-        result = transform.apply(parse_tree)
-
-        # Create the diagram model
-        create_diagram(result)
-      end
+      grammar Grammars::Packet
+      builder Builders::Packet
 
       private
 

@@ -29,28 +29,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Mindmap < Base
-      # Parses mindmap diagram source into a Mindmap model.
-      #
-      # @param source [String] the Mermaid mindmap diagram source
-      # @return [Diagram::Mindmap] the parsed mindmap diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Mindmap.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Mindmap.new
-        result = transform.apply(parse_tree)
-
-        # Create the diagram model
-        create_diagram(result)
-      end
+      grammar Grammars::Mindmap
+      builder Builders::Mindmap
 
       private
 

@@ -29,6 +29,9 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Kanban < Base
+      grammar Grammars::Kanban
+      builder Builders::Kanban
+
       # Parses kanban diagram source into a Kanban model.
       #
       # @param source [String] the Mermaid kanban diagram source
@@ -41,21 +44,7 @@ module Sirena
                 "kanban source must be a String, got #{source.class}"
         end
 
-        grammar = Grammars::Kanban.new
-
-        begin
-          parse_tree = grammar.parse(readable_source(source))
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Kanban.new
-        result = transform.apply(parse_tree)
-
-        # Create the diagram model
-        create_diagram(result)
+        super(readable_source(source))
       end
 
       private

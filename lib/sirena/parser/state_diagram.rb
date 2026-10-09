@@ -20,21 +20,8 @@ module Sirena
     #   parser = StateDiagram.new
     #   diagram = parser.parse("stateDiagram-v2\n[*]-->Idle\nIdle-->Active")
     class StateDiagram < Base
-      # Parses state diagram source into a StateDiagram model.
-      #
-      # @param source [String] the Mermaid state diagram source
-      # @return [Diagram::StateDiagram] the parsed state diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        tree = parse_with_grammar(Grammars::StateDiagram.new, source)
-        Builders::StateDiagram.new.apply(tree)
-      end
-
-      private
-
-      def format_parse_error(cause, source)
-        format_parse_error_unguarded(cause, source)
-      end
+      grammar Grammars::StateDiagram
+      builder Builders::StateDiagram
     end
   end
 end
