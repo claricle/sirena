@@ -504,14 +504,19 @@ RSpec.describe CorpusOracle do
     end
 
     it "records the complete verified toolchain" do
-      allow(MermaidToolchain).to receive_messages(check!: true, provenance: pinned)
+      allow(MermaidToolchain).to receive_messages(
+        verify_toolchain: pinned,
+        provenance: pinned,
+      )
 
       expect(described_class.provenance).to eq(pinned)
     end
 
     it "turns toolchain drift into an infrastructure failure" do
-      allow(MermaidToolchain).to receive(:check!)
-        .and_raise(MermaidToolchain::DriftError, "mermaid: expected 11.16.1, got 11.17.0")
+      allow(MermaidToolchain).to receive(:verify_toolchain).and_raise(
+        MermaidToolchain::DriftError,
+        "mermaid: expected 11.16.1, got 11.17.0",
+      )
 
       expect { described_class.provenance }
         .to raise_error(described_class::InfrastructureError, /11\.17\.0/)

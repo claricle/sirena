@@ -15,10 +15,13 @@ module MermaidToolchain
   CONFIG_PATH = File.join(ROOT, "config", "mermaid-oracle.json")
   CSS_PATH = File.join(ROOT, "config", "mermaid-oracle.css")
   FONTCONFIG_PATH = File.join(ROOT, "config", "mermaid-fonts.conf")
-  MMDC_PATH = File.join(ROOT, "node_modules", ".bin", Gem.win_platform? ? "mmdc.cmd" : "mmdc")
+  MMDC_NAME = Gem.win_platform? ? "mmdc.cmd" : "mmdc"
+  MMDC_PATH = File.join(ROOT, "node_modules", ".bin", MMDC_NAME)
   PACKAGE_ROOT = File.join(ROOT, "node_modules")
   FONT_ROOT = File.join(PACKAGE_ROOT, "@fontsource", "noto-sans", "files")
-  REVISION_PATH = File.join(PACKAGE_ROOT, "puppeteer-core", "lib", "cjs", "puppeteer", "revisions.js")
+  REVISION_PATH = File.join(
+    PACKAGE_ROOT, "puppeteer-core", "lib", "cjs", "puppeteer", "revisions.js"
+  )
 
   class DriftError < StandardError; end
 
@@ -28,29 +31,24 @@ module MermaidToolchain
     YAML.safe_load_file(PROVENANCE_PATH)
   end
 
-  # Command entry point: success returns true; drift raises instead of
-  # returning false. The bang communicates that failure aborts the operation.
-  # rubocop:disable Naming/PredicateMethod
-  def check!
-    expected = provenance
+  def verify_toolchain
     observed = resolved_provenance
-    drift = flatten(expected).filter_map do |key, value|
-      actual = flatten(observed)[key]
-      "#{key}: expected #{value.inspect}, got #{actual.inspect}" unless actual == value
-    end
-    raise DriftError, "Mermaid oracle toolchain drift:\n  #{drift.join("\n  ")}" unless drift.empty?
+    drift = provenance_drift(flatten(provenance), flatten(observed))
+    raise DriftError, drift_message(drift) unless drift.empty?
 
-    true
+    observed
   end
-  # rubocop:enable Naming/PredicateMethod
 
   def command(*arguments)
     if test_binary
       return [test_binary, *arguments]
     end
 
-    check_once!
-    [MMDC_PATH, "--configFile", CONFIG_PATH, "--cssFile", CSS_PATH, *arguments]
+    verify_once
+    [
+      MMDC_PATH, "--configFile", CONFIG_PATH,
+      "--cssFile", CSS_PATH, *arguments,
+    ]
   end
 
   def test_mode?
@@ -60,7 +58,7 @@ module MermaidToolchain
   def version_command
     return [test_binary, "--version"] if test_binary
 
-    check_once!
+    verify_once
     [MMDC_PATH, "--version"]
   end
 
@@ -68,25 +66,13 @@ module MermaidToolchain
     { "FONTCONFIG_FILE" => FONTCONFIG_PATH }
   end
 
-  # Like check!, this is an imperative command whose failure raises.
-  # rubocop:disable Naming/PredicateMethod
-  def canary!
-    check!
+  def render_canary
+    verify_toolchain
     require "tmpdir"
     require_relative "hardened_mmdc"
 
-    Dir.mktmpdir("mermaid-oracle-canary") do |dir|
-      input = File.join(dir, "canary.mmd")
-      output = File.join(dir, "canary.svg")
-      File.write(input, "flowchart LR\n  A --> B\n")
-      status, diagnostic = HardenedMmdc.run_mmdc(input, output)
-      svg = File.read(output) if File.file?(output)
-      valid = status&.success? && svg&.include?("<svg") && svg.include?("Noto Sans")
-      raise DriftError, "Mermaid oracle canary failed: #{diagnostic}" unless valid
-    end
-    true
+    Dir.mktmpdir("mermaid-oracle-canary") { |dir| render_canary_in(dir) }
   end
-  # rubocop:enable Naming/PredicateMethod
 
   def resolved_provenance
     {
@@ -96,13 +82,7 @@ module MermaidToolchain
       "mermaid" => package_version("mermaid"),
       "puppeteer" => package_version("puppeteer"),
       "chromium" => chromium_revision,
-      "font" => {
-        "package" => "@fontsource/noto-sans",
-        "version" => package_version("@fontsource/noto-sans"),
-        "integrity" => lock_integrity("@fontsource/noto-sans"),
-        "family" => "Noto Sans",
-        "files" => font_hashes,
-      },
+      "font" => resolved_font_provenance,
     }
   end
 
@@ -123,7 +103,7 @@ module MermaidToolchain
   def chromium_revision
     source = File.read(REVISION_PATH)
     source[/["']chrome-headless-shell["']:\s*["']([^"']+)/, 1] ||
-      raise(DriftError, "cannot read Chromium revision from #{REVISION_PATH}")
+      raise(DriftError, "cannot read Chromium revision")
   rescue Errno::ENOENT
     raise DriftError, "missing #{REVISION_PATH}; run npm ci"
   end
@@ -131,7 +111,7 @@ module MermaidToolchain
   def font_hashes
     provenance.fetch("font").fetch("files").keys.to_h do |name|
       path = File.join(FONT_ROOT, name)
-      raise DriftError, "missing pinned font #{path}; run npm ci" unless File.file?(path)
+      raise DriftError, "missing pinned font #{path}" unless File.file?(path)
 
       [name, Digest::SHA256.file(path).hexdigest]
     end
@@ -139,9 +119,9 @@ module MermaidToolchain
 
   def version_of(program, argument)
     output, status = Open3.capture2e(program, argument)
-    raise DriftError, "#{program} #{argument} failed: #{output.strip}" unless status.success?
+    return output.strip if status.success?
 
-    output.strip
+    raise DriftError, "#{program} #{argument} failed: #{output.strip}"
   rescue Errno::ENOENT
     raise DriftError, "#{program} is missing"
   end
@@ -164,23 +144,66 @@ module MermaidToolchain
     ENV.fetch("SIRENA_MMDC_TEST_BIN", nil)
   end
 
-  def check_once!
+  def verify_once
     return if @checked
 
-    check!
-    @checked = true
+    verify_toolchain
+    @checked = :verified
   end
 
-  private_class_method :package_version, :lock_integrity, :chromium_revision, :font_hashes,
-                       :version_of, :flatten, :test_binary, :check_once!
+  def provenance_drift(expected, observed)
+    expected.filter_map do |key, value|
+      next if observed[key] == value
+
+      "#{key}: expected #{value.inspect}, got #{observed[key].inspect}"
+    end
+  end
+
+  def drift_message(drift)
+    "Mermaid oracle toolchain drift:\n  #{drift.join("\n  ")}"
+  end
+
+  def resolved_font_provenance
+    package = "@fontsource/noto-sans"
+    {
+      "package" => package,
+      "version" => package_version(package),
+      "integrity" => lock_integrity(package),
+      "family" => "Noto Sans",
+      "files" => font_hashes,
+    }
+  end
+
+  def render_canary_in(dir)
+    input = File.join(dir, "canary.mmd")
+    output = File.join(dir, "canary.svg")
+    File.write(input, "flowchart LR\n  A --> B\n")
+    status, diagnostic = HardenedMmdc.run_mmdc(input, output)
+    verify_canary(status, output, diagnostic)
+  end
+
+  def verify_canary(status, output, diagnostic)
+    svg = File.read(output) if File.file?(output)
+    return svg if status&.success? && svg&.include?("<svg") &&
+                  svg.include?("Noto Sans")
+
+    raise DriftError, "Mermaid oracle canary failed: #{diagnostic}"
+  end
+
+  private_class_method :package_version, :lock_integrity,
+                       :chromium_revision, :font_hashes, :version_of,
+                       :flatten, :test_binary, :verify_once,
+                       :provenance_drift, :drift_message,
+                       :resolved_font_provenance, :render_canary_in,
+                       :verify_canary
 end
 
 if $PROGRAM_NAME == __FILE__
   if ARGV == ["--check"]
-    MermaidToolchain.check!
+    MermaidToolchain.verify_toolchain
     puts "Mermaid oracle toolchain matches #{MermaidToolchain::PROVENANCE_PATH}"
   elsif ARGV == ["--canary"]
-    MermaidToolchain.canary!
+    MermaidToolchain.render_canary
     puts "Mermaid oracle canary rendered with the pinned toolchain"
   else
     abort "usage: ruby scripts/mermaid_toolchain.rb --check|--canary"

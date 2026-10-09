@@ -174,8 +174,7 @@ module HardenedMmdc
   # from reaching EOF. Measured with a wedged `ps` — the sweep came back in
   # 0.30s and the reader waited 21.29s for EOF.
   def capture(command, timeout)
-    command = MermaidToolchain.version_command if command == ["mmdc", "--version"]
-    io = IO.popen(command, err: File::NULL, pgroup: true)
+    io = IO.popen(capture_command(command), err: File::NULL, pgroup: true)
     begin
       Timeout.timeout(timeout) { io.read }
     ensure
@@ -187,12 +186,18 @@ module HardenedMmdc
     end
   end
 
+  def capture_command(command)
+    return command unless command == ["mmdc", "--version"]
+
+    MermaidToolchain.version_command
+  end
+
   # Only run_mmdc and capture are the public entry points the other scripts
   # call. Everything else is an implementation detail of those two — matching
   # the privacy these methods had before the extraction, when they were
   # unqualified top-level defs reachable only via `.send` (per the ORIGINAL
   # top-level scoping in mermaid_diff.rb, before this module existed).
   private_class_method :wait_with_deadline, :kill_group, :status_unless_killed,
-                       :kill_group_id, :kill_each, :descendants_of, :subtree_of, :drain_into,
-                       :monotonic
+                       :kill_group_id, :kill_each, :descendants_of, :subtree_of,
+                       :drain_into, :monotonic, :capture_command
 end
