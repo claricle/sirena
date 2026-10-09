@@ -78,9 +78,9 @@ module SpecSupport
         keys.each do |key|
           reference_group = reference_groups.fetch(key, [])
           sirena_group = sirena_groups.fetch(key, [])
-          pairs = reference_group.zip(sirena_group).first(common_count(
-            reference_group, sirena_group
-          ))
+          pairs = reference_group.zip(sirena_group).first(
+            common_count(reference_group, sirena_group),
+          )
           result[:pairs].concat(pairs)
           result[:ambiguous_count] += pairs.length if ambiguous?(
             reference_group, sirena_group

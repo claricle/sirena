@@ -68,40 +68,44 @@ RSpec.describe SpecSupport::LayoutParity::ElementMatcher do
 
     expect(pair_keys(result)).to eq([["same", "same"]])
     expect(result[:ambiguous_count]).to eq(1)
-    expect(result[:failures]).to eq([
-      {
-        type: :missing,
-        group: [:node, nil, "same"],
-        match_by: :id,
-        count: 1,
-        reference_count: 2,
-        sirena_count: 1,
-      },
-    ])
+    expect(result[:failures]).to eq(
+      [
+        {
+          type: :missing,
+          group: [:node, nil, "same"],
+          match_by: :id,
+          count: 1,
+          reference_count: 2,
+          sirena_count: 1,
+        },
+      ],
+    )
   end
 
   it "reports missing and extra groups in their respective directions" do
     result = match([element("common"), element("missing")],
                    [element("common"), element("extra")])
 
-    expect(result[:failures]).to eq([
-      {
-        type: :missing,
-        group: [:node, nil, "missing"],
-        match_by: :id,
-        count: 1,
-        reference_count: 1,
-        sirena_count: 0,
-      },
-      {
-        type: :extra,
-        group: [:node, nil, "extra"],
-        match_by: :id,
-        count: 1,
-        reference_count: 0,
-        sirena_count: 1,
-      },
-    ])
+    expect(result[:failures]).to eq(
+      [
+        {
+          type: :missing,
+          group: [:node, nil, "missing"],
+          match_by: :id,
+          count: 1,
+          reference_count: 1,
+          sirena_count: 0,
+        },
+        {
+          type: :extra,
+          group: [:node, nil, "extra"],
+          match_by: :id,
+          count: 1,
+          reference_count: 0,
+          sirena_count: 1,
+        },
+      ],
+    )
   end
 
   it "never matches equal keys across element kinds" do
