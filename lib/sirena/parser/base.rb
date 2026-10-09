@@ -55,17 +55,20 @@ module Sirena
       # @raise [ParseError] if the source does not match the grammar
       # @raise [NotImplementedError] if nothing is declared or overridden
       def parse(source)
-        unless self.class.grammar && self.class.builder
-          raise NotImplementedError,
-                "#{self.class} must declare grammar and builder " \
-                "or implement #parse(source)"
-        end
-
+        require_declarations
         tree = parse_with_grammar(self.class.grammar.new, source)
         create_diagram(self.class.builder.new.apply(tree))
       end
 
       private
+
+      def require_declarations
+        return if self.class.grammar && self.class.builder
+
+        raise NotImplementedError,
+              "#{self.class} must declare grammar and builder " \
+              "or implement #parse(source)"
+      end
 
       # Hook for a parser whose builder returns intermediate data rather
       # than the diagram. The default passes the builder's result through.
