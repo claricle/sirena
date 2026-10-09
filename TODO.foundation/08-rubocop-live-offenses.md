@@ -1,11 +1,18 @@
 # 08 — Lint: zero live offenses, enforced
 
+Status (2026-10-10): **complete.** PR #24 established zero live RuboCop
+offenses and the CI lint entry point. The four RuboCop gems are version-pinned
+in `Gemfile`, `.rubocop.yml` inherits from an immutable commit URL, and the dead
+`scripts/rename_to_sirena.rb` plus its three exclusions are absent. The initial
+suppressed-debt movement was recorded as 189 → 186; subsequent item 09 work
+continues to shrink the machine-readable debt from that baseline.
+
 Can start: now. Small. Blocks: 09.
 
-## Facts
+## Historical starting point
 
-109 live offenses, 104 of them autocorrectable, on top of the parked
-todo (measured 2026-08-11 with `bundle exec rubocop`). `rake.yml`
+The starting measurement was 109 live offenses, 104 of them autocorrectable,
+on top of the parked todo (measured 2026-08-11 with `bundle exec rubocop`). `rake.yml`
 delegates to metanorma/ci's `generic-rake`, so whether rubocop runs in
 CI today is inherited and unaudited — step 1 settles it.
 
@@ -32,6 +39,8 @@ CI today is inherited and unaudited — step 1 settles it.
    whichever lands second rebases.
 
 ## Done when
+
+Complete; the criteria below remain the executable contract.
 
 `bundle exec rubocop` exits 0; it runs in 19a's reserved fast-lane slot;
 the lint toolchain is pinned; `scripts/rename_to_sirena.rb` and its

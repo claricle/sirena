@@ -1,5 +1,16 @@
 # 02 — Corpus oracle, provenance, and the scoreboard
 
+Status (2026-10-10): **02a complete; 02b in progress.** PR #203 landed the
+hermetic Mermaid oracle toolchain on `main` at `17690dde`. The repository now
+owns the exact npm tree, Mermaid/Puppeteer/Chromium/font provenance, browser
+configuration, and a single `MermaidToolchain` command path. The fixture,
+corpus-oracle, and comparison paths use that command path; even
+`mermaid_diff.rb`'s legacy `mmdc --version` request is translated by
+`HardenedMmdc.capture_command` to `MermaidToolchain.version_command`, so it does
+not consult ambient `mmdc`. Drift and canary specs plus CI's
+`oracle-toolchain` job lock the result. Reference regeneration remains 02b work
+as designed below.
+
 Split into two stages. **02a** pins the oracle toolchain; **02b** builds
 the harness, the scoreboard and the ratchet. 02b is large enough to
 land as several PRs — the rename, the regeneration, the harness — but
@@ -158,6 +169,10 @@ the rename, under this pin.
 ## Done when
 
 **02a**
+
+Complete. Evidence: `package.json`, `package-lock.json`,
+`config/mermaid-oracle.yml`, `scripts/mermaid_toolchain.rb`, the hardened mmdc
+adapter, drift/canary specs, and the CI `oracle-toolchain` job.
 
 - The toolchain manifest/lockfile (or container digest) is committed and
   every oracle/fixture path uses it.

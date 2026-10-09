@@ -1,5 +1,13 @@
 # 10 — Notation registry (two-level), fast-tracked
 
+Status (2026-10-10): **10a complete; 10b in progress.** The owner-approved
+Reading A contract is committed in `TODO.foundation/10a-notation-contract.md`.
+It makes one unambiguous choice for API placement, identifiers, precedence,
+mismatch/unknown errors, stdin, built-in discovery, external discovery, CLI
+behavior, and the interim IR boundary. The three-part 10b implementation is
+tracked separately below; this status does not claim its checksum-manifest or
+implementation gates are complete.
+
 Can start: after 01. Blocks: 16, 12. The corpus tracks (06/07) run
 CONCURRENTLY — no dependency — with one coordination rule: this
 refactor lands as a fast-tracked PR and burndown PRs rebase onto it.
@@ -95,6 +103,9 @@ decided by whoever types fastest. The split is what makes it real.
 **10a** — the contract document is committed and owner-approved, and
 answers every question above with a single unambiguous choice. No
 "either/or" survives into 10b.
+
+Complete: `TODO.foundation/10a-notation-contract.md` is marked approved and
+records the owner decision for every listed contract question.
 
 **10b** — a truth-table spec covers the precedence rules (explicit vs
 path hint vs sniff, including all three disagreeing), the mismatch

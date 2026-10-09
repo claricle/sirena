@@ -1,5 +1,14 @@
 # 19 — CI topology, runtime budget, external pins
 
+Status (2026-10-10): **repository-side 19a core landed; 19a and 19b remain
+open.** Current `main` owns its workflow YAML, has stable `fast-lane` and
+`full-lane` aggregators, pins external actions, and documents the extension
+contract with a worked example. Still required for 19a closeout: the complete
+event/baseline seed matrix, recorded owner branch protection with strictness or
+merge queue, and removal of the transitive release workflow dependency (PR
+#222 is the in-flight repository-owned replacement). 19b still owns final gate
+consolidation and measured cold/warm lane timings.
+
 Split into two PRs, because six wave-1 items (01, 02, 08, 11, 15 and 19
 itself) all need to touch CI and only one of them can own the files.
 
