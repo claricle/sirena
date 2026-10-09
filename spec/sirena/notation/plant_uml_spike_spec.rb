@@ -2,8 +2,14 @@
 
 require "spec_helper"
 require "open3"
+require "rexml/document"
 require "yaml"
 require "sirena/notation/plantuml"
+
+# Requiring an external notation registers it. Restore the suite's baseline
+# here, then register inside the isolated context for each example so this
+# spec cannot change another spec's notation inventory through load order.
+Sirena::Notation.send(:entries).delete(:plantuml)
 
 # Reads the committed case set under spec/plantuml_spike/ and summarises a
 # parsed diagram the way expected.yml writes it. The arrow glyphs are spelled
@@ -140,8 +146,12 @@ end
 RSpec.describe Sirena::Notation::PlantUML do
   include PlantUmlSpikeHelpers
 
+  include_context "with an isolated notation registry"
+
   let(:plantuml) { described_class }
   let(:unsupported_error) { plantuml::UnsupportedConstructError }
+
+  before { Sirena::Notation.register(plantuml) }
 
   describe "the notation's public surface" do
     it "identifies as :plantuml" do
@@ -219,6 +229,61 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "parses every case to exactly its expected summary" do
       expect(case_mismatches).to eq([])
+    end
+
+    it "renders every case through explicit and extension resolution" do
+      failures = spike_cases.filter_map do |path|
+        source = File.read(path)
+        explicit = Sirena.render(source, notation: :plantuml)
+        inferred = Sirena.render(source, path: path)
+        document = REXML::Document.new(explicit)
+        diagram = parse_plantuml(source)
+        texts = REXML::XPath.match(document, "//text").map(&:text)
+        expected_texts = diagram.classes.flat_map do |klass|
+          [klass.name, *klass.body.map { |member| member_line(member) }]
+        end
+        expected_texts.concat(diagram.relations.flat_map do |relation|
+          [relation.label, relation.left_multiplicity,
+           relation.right_multiplicity].compact
+        end)
+        relation_paths = REXML::XPath.match(
+          document, "//g[starts-with(@id, 'relation-')]/path"
+        )
+
+        next if explicit == inferred &&
+          (expected_texts - texts).empty? &&
+          relation_paths.size == diagram.relations.size
+
+        case_name(path)
+      rescue REXML::ParseException
+        case_name(path)
+      end
+
+      expect(failures).to eq([])
+    end
+  end
+
+  describe "the public notation pipeline" do
+    it "is registered through the public registry" do
+      expect(Sirena::Notation.fetch(:plantuml)).to equal(plantuml)
+    end
+
+    it "returns a frozen Parsed naming its local layout and renderer" do
+      parsed = plantuml.parse(case_source("01-empty-class"))
+
+      expect(parsed).to be_frozen.and have_attributes(
+        type: :class_diagram,
+        diagram: an_instance_of(plantuml::Diagram),
+        transform: plantuml::Layout,
+        renderer: plantuml::Renderer,
+      )
+    end
+
+    it "propagates unsupported constructs instead of partially rendering" do
+      source = wrap("class A", "enum Color")
+
+      expect { Sirena.render(source, notation: :plantuml) }
+        .to raise_error(unsupported_error, /enum is not yet supported/)
     end
   end
 
@@ -749,6 +814,14 @@ RSpec.describe Sirena::Notation::PlantUML do
              '"@startuml\nclass A\n@enduml\n").classes.size'
 
       expect(ruby_output(code)).to eq([true, "1\n"])
+    end
+
+    it "registers and renders when required on its own" do
+      code = 'require "sirena/notation/plantuml"; ' \
+             'puts Sirena.render("@startuml\\nclass A\\n@enduml\\n", ' \
+             'notation: :plantuml).start_with?("<svg")'
+
+      expect(ruby_output(code)).to eq([true, "true\n"])
     end
 
     it "raises the engine's and the parser's errors when required on its own" do
