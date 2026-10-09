@@ -6,21 +6,26 @@ require "rbconfig"
 
 RSpec.describe Sirena::Theme do
   describe "sub-model load order" do
-    it "rejects loading sub-models before their parent class" do
-      sub_models = %w[
+    let(:sub_models) do
+      %w[
         color_palette
         typography
         shape_styles
         spacing_config
         effect_styles
       ]
-      failures = sub_models.filter_map do |name|
+    end
+
+    let(:standalone_load_violations) do
+      sub_models.filter_map do |name|
         path = File.expand_path("../../lib/sirena/theme/#{name}.rb", __dir__)
         _, stderr, status = Open3.capture3(RbConfig.ruby, path)
         name if status.success? || !stderr.include?("Sirena::Theme")
       end
+    end
 
-      expect(failures).to be_empty
+    it "rejects loading sub-models before their parent class" do
+      expect(standalone_load_violations).to be_empty
     end
   end
 
