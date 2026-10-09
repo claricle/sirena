@@ -225,23 +225,14 @@ Naming/PredicateMethod:
   Exclude:
     - 'lib/sirena/layout/gantt.rb'
 
-# Offense count: 8
+# Offense count: 6
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Performance/MapCompact:
   Exclude:
     - 'lib/sirena/layout/architecture.rb'
-    - 'lib/sirena/layout/block.rb'
     - 'lib/sirena/layout/requirement.rb'
-    - 'lib/sirena/layout/timeline.rb'
     - 'tasks/benchmark.rake'
     - 'spec/sirena/renderer/git_graph_spec.rb'
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowRegexpMatch.
-Performance/RedundantEqualityComparisonBlock:
-  Exclude:
-    - 'lib/sirena/parser/xy_chart.rb'
 
 # Offense count: 9
 # Configuration parameters: IgnoredMetadata.
