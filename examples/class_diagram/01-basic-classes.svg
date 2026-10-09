@@ -33,9 +33,9 @@
 </g>
 <g id="rel-Owner_to_Animal">
   <line stroke="#000000" stroke-width="2" x1="366.4863157894737" y1="450.0" x2="197.80842105263156" y2="214.0"/>
-  <text fill="#000000" x="282.14736842105265" y="327.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11">owns</text>
-  <text fill="#000000" x="371.4863157894737" y="445.0" font-family="Arial, sans-serif" font-size="10">1</text>
-  <text fill="#000000" x="192.80842105263156" y="209.0" text-anchor="end" font-family="Arial, sans-serif" font-size="10">*</text>
+  <text fill="#000000" x="282.14736842105265" y="327.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12">owns</text>
+  <text fill="#000000" x="371.4863157894737" y="445.0" font-family="Arial, sans-serif" font-size="12">1</text>
+  <text fill="#000000" x="192.80842105263156" y="209.0" text-anchor="end" font-family="Arial, sans-serif" font-size="12">*</text>
 </g>
 <g id="class-Animal">
   <rect fill="#ffffff" stroke="#000000" stroke-width="2" x="50.0" y="50.0" width="178.4" height="164.0" rx="3.0" ry="3.0"/>

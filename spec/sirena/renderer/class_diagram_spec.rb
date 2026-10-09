@@ -8,13 +8,20 @@ require "rexml/document"
 module ClassDiagramSpecHelpers
   module_function
 
-  def rendered_document(source)
-    svg = Sirena::Engine.new.render("classDiagram\n  #{source}\n")
+  def rendered_document(source, options = {})
+    svg = Sirena::Engine.new.render("classDiagram\n  #{source}\n", options)
     REXML::Document.new(svg)
   end
 
   def relationship_group(doc, edge_id)
     REXML::XPath.first(doc, "//*[@id='rel-#{edge_id}']")
+  end
+
+  def font_size(document, text)
+    node = REXML::XPath.match(document, "//text").find do |item|
+      item.texts.map(&:value).join == text
+    end
+    node.attributes["font-size"]
   end
 
   def node_rect(doc, node_id)
@@ -139,9 +146,10 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
         ],
       }
     end
+    let(:scene) { Sirena::Layout::ClassDiagram.from_graph(graph) }
 
     it "renders graph to SVG document" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
@@ -149,14 +157,14 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "includes class boxes in SVG" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
       expect(groups.length).to be > 0
     end
 
     it "renders class boxes as rectangles" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -166,7 +174,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders class names as text elements" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -179,7 +187,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders attributes with visibility symbols" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -191,7 +199,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders methods with visibility symbols" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -203,7 +211,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders compartment separators" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -213,7 +221,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders relationships" do
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.select do |c|
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("rel-")
@@ -224,7 +232,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
     it "renders stereotypes when present" do
       graph[:children][0][:metadata][:stereotype] = "interface"
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
 
       groups = svg.children.grep(Sirena::Svg::Group)
 
@@ -233,6 +241,78 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
       stereotype_texts = texts.map { |t| Array(t.content).join }.grep(/«.*»/)
       expect(stereotype_texts).not_to be_empty
       expect(stereotype_texts.first).to include("interface")
+    end
+
+    it "keeps unchanged default output byte-equivalent to the legacy graph" do
+      expect(renderer.render(scene).to_xml).to eq(renderer.render(graph).to_xml)
+    end
+
+    it "renders the empty Scene at the legacy canvas size without elements" do
+      empty = Sirena::Layout::ClassDiagram.from_graph(
+        { id: "class_diagram", children: [], edges: [] },
+      )
+      svg = renderer.render(empty)
+
+      expect([svg.width, svg.height, svg.view_box, svg.children.map(&:id)])
+        .to eq([880.0, 680.0, "0 0 880 680", ["defs"]])
+    end
+  end
+
+  describe "theme font sizes" do
+    let(:source) do
+      "class A <<interface>>\nA \"1\" -- \"many\" B : owns"
+    end
+
+    it "migrates stereotypes, labels, and cardinalities to default small" do
+      document = ClassDiagramSpecHelpers.rendered_document(source)
+
+      sizes = %w[«interface» owns 1 many].map do |text|
+        ClassDiagramSpecHelpers.font_size(document, text)
+      end
+      expect(sizes)
+        .to all(eq("12"))
+    end
+
+    it "emits high-contrast large and small sizes from its own Scene" do
+      document = ClassDiagramSpecHelpers.rendered_document(
+        source, theme: :high_contrast
+      )
+
+      sizes = %w[«interface» owns 1 many].map do |text|
+        ClassDiagramSpecHelpers.font_size(document, text)
+      end
+      expect([ClassDiagramSpecHelpers.font_size(document, "A"), sizes])
+        .to eq(["18", %w[14 14 14 14]])
+    end
+  end
+
+  describe "released protected hooks" do
+    it "preserves their names and arities" do
+      expected = {
+        calculate_width: 1, calculate_height: 1, add_markers: 1,
+        add_inheritance_marker: 1, add_composition_marker: 1,
+        add_aggregation_marker: 1, render_classes: 2, render_class: 2,
+        render_class_content: 3, render_stereotype: 5,
+        render_class_name: 5, render_attributes: 5, render_methods: 5,
+        visibility_symbol: 1, render_relationships: 2,
+        render_relationship: 3, find_node: 2,
+        calculate_connection_point: 2, render_relationship_line: 4,
+        render_relationship_marker: 4, render_triangle_marker: 4,
+        render_diamond_marker: 4, render_relationship_labels: 4
+      }
+
+      expect(expected.to_h { |name, _| [name, renderer.method(name).arity] })
+        .to eq(expected)
+      expect(expected.keys)
+        .to all(satisfy { |name| described_class.protected_method_defined?(name) })
+    end
+
+    it "delegates legacy connection geometry to Layout" do
+      from = { x: 0, y: 0, width: 100, height: 50 }
+      to = { x: 200, y: 0, width: 100, height: 50 }
+
+      expect(renderer.send(:calculate_connection_point, from, to))
+        .to eq(Sirena::Layout::ClassDiagram.connection_point(from, to))
     end
   end
 
