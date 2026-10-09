@@ -114,4 +114,33 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       expect(xml).not_to include("transition-n")
     end
   end
+
+  describe "released compatibility hooks" do
+    it "keeps each protected method's name and arity" do
+      expected_arities = {
+        calculate_width: 1, calculate_height: 1, render_states: 2,
+        render_state: 2, create_state_shape: 2, create_normal_state: 4,
+        create_start_state: 4, create_end_state: 4,
+        create_choice_state: 4, create_fork_join_state: 4,
+        create_state_label: 3, render_transitions: 2,
+        render_transition: 3, find_state: 2,
+        calculate_transition_path: 3, create_path_with_bends: 5,
+        create_transition_label: 3
+      }
+
+      actual_arities = expected_arities.to_h do |name, _arity|
+        [name, described_class.instance_method(name).arity]
+      end
+
+      expect(actual_arities).to eq(expected_arities)
+    end
+
+    it "delegates bend-path geometry to the layout helper" do
+      path = renderer.send(
+        :create_path_with_bends, 1, 2, 7, 8, [{ x: 3, y: 4 }]
+      )
+
+      expect(path).to eq("M 1 2 L 3 4 L 7 8")
+    end
+  end
 end

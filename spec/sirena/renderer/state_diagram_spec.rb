@@ -4,6 +4,53 @@ require "spec_helper"
 
 RSpec.describe Sirena::Renderer::StateDiagram do
   let(:renderer) { described_class.new }
+  let(:hook_renderer_class) do
+    Class.new(described_class) do
+      attr_reader :hook_calls
+
+      def initialize(...)
+        super
+        @hook_calls = Hash.new(0)
+      end
+
+      protected
+
+      def calculate_width(graph)
+        @hook_calls[:calculate_width] += 1
+        super
+      end
+
+      def calculate_height(graph)
+        @hook_calls[:calculate_height] += 1
+        super
+      end
+
+      def create_state_shape(state, state_type)
+        @hook_calls[:create_state_shape] += 1
+        super
+      end
+
+      def create_normal_state(x, y, width, height)
+        @hook_calls[:create_normal_state] += 1
+        super
+      end
+
+      def calculate_transition_path(source, target, transition)
+        @hook_calls[:calculate_transition_path] += 1
+        super
+      end
+
+      def create_path_with_bends(sx, sy, tx, ty, bend_points)
+        @hook_calls[:create_path_with_bends] += 1
+        super
+      end
+
+      def create_transition_label(source, target, label)
+        @hook_calls[:create_transition_label] += 1
+        super
+      end
+    end
+  end
 
   describe "#render" do
     let(:graph) do
@@ -35,6 +82,7 @@ RSpec.describe Sirena::Renderer::StateDiagram do
             sources: ["idle"],
             targets: ["active"],
             labels: [{ text: "start", width: 40, height: 14 }],
+            sections: [{ bendPoints: [{ x: 155, y: 90 }] }],
             metadata: { trigger: "start" },
           },
         ],
@@ -157,13 +205,13 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       state_group = svg.children.find { |child| child.id == "state-A" }
       rectangle = state_group.children.grep(Sirena::Svg::Rect).first
       texts = state_group.children.grep(Sirena::Svg::Text)
-      labels = rendered_graph[:children].first[:labels]
+      labels = rendered_graph.children.first.labels
 
       expect(texts.length).to eq(labels.length)
-      expect(texts.map { |t| Array(t.content).join }).to eq(labels.map { |label| label[:text] })
+      expect(texts.map { |t| Array(t.content).join }).to eq(labels.map(&:text))
 
       text_bounds = texts.zip(labels).map do |text, label|
-        [text.y - (label[:height] / 2), text.y + (label[:height] / 2)]
+        [text.y - (label.height / 2), text.y + (label.height / 2)]
       end
       expect(text_bounds.flatten.min).to be >= rectangle.y
       expect(text_bounds.flatten.max).to be <= rectangle.y + rectangle.height
@@ -189,6 +237,40 @@ RSpec.describe Sirena::Renderer::StateDiagram do
       end
 
       expect(texts).not_to be_empty
+    end
+
+    it "serializes a typed Scene without recalculating geometry" do
+      scene = Sirena::Layout::StateDiagram.from_graph(graph)
+      allow(Sirena::Layout::StateDiagram).to receive(:shape_geometry)
+        .and_raise("renderer recalculated state geometry")
+      allow(Sirena::Layout::StateDiagram).to receive(:transition_label_geometry)
+        .and_raise("renderer recalculated label geometry")
+
+      expect { renderer.render(scene) }.not_to raise_error
+    end
+
+    it "routes public rendering through every released geometry hook" do
+      hook_renderer = hook_renderer_class.new
+
+      hook_renderer.render(graph)
+
+      expect(hook_renderer.hook_calls).to eq(
+        calculate_width: 1,
+        calculate_height: 1,
+        create_state_shape: 2,
+        create_normal_state: 2,
+        calculate_transition_path: 1,
+        create_path_with_bends: 1,
+        create_transition_label: 1,
+      )
+    end
+
+    it "emits the font sizes already resolved by the themed layout" do
+      theme = Sirena::Theme::Registry.get(:high_contrast)
+      scene = Sirena::Layout::StateDiagram.from_graph(graph, theme: theme)
+      svg = described_class.new(theme: theme).render(scene).to_xml
+
+      expect(svg).to include('font-size="16"').and include('font-size="14"')
     end
   end
 end
