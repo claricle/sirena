@@ -9,6 +9,9 @@ module SpecSupport
     # bbox: mermaid draws an attribute-less placeholder rect in it.
     class FlowchartRecognizer
       LABEL_CLASSES = %w[label cluster-label].freeze
+      REFERENCE_NODE = /\Aflowchart-(.+)-\d+\z/
+      SIRENA_NODE = /\Anode-(.+)\z/
+      SIRENA_CLUSTER = /\Acluster-(.+)\z/
 
       def container_kinds
         [:cluster]
@@ -20,7 +23,10 @@ module SpecSupport
           next unless kind
 
           box = extractor.bbox(g, exclude: LABEL_CLASSES)
-          Element.new(kind: kind, key: key, bbox: box, label: extractor.label(g)) if box
+          next unless box
+
+          Element.new(kind: kind, key: key, bbox: box,
+                      label: extractor.label(g))
         end
       end
 
@@ -29,14 +35,21 @@ module SpecSupport
       def identify(group)
         id = group["id"]
         classes = group["class"].to_s.split
-        if classes.include?("node") && (m = id.match(/\Aflowchart-(.+)-\d+\z/))
-          [:node, m[1]]
-        elsif classes.include?("cluster")
-          [:cluster, id]
-        elsif (m = id.match(/\Anode-(.+)\z/))
-          [:node, m[1]]
-        elsif (m = id.match(/\Acluster-(.+)\z/))
-          [:cluster, m[1]]
+        reference_kind(id, classes) || sirena_kind(id)
+      end
+
+      def reference_kind(id, classes)
+        key = id[REFERENCE_NODE, 1] if classes.include?("node")
+        return [:node, key] if key
+
+        [:cluster, id] if classes.include?("cluster")
+      end
+
+      def sirena_kind(id)
+        if (key = id[SIRENA_NODE, 1])
+          [:node, key]
+        elsif (key = id[SIRENA_CLUSTER, 1])
+          [:cluster, key]
         end
       end
     end

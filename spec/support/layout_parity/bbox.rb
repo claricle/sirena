@@ -21,11 +21,16 @@ module SpecSupport
         new(xs.min, ys.min, xs.max, ys.max)
       end
 
+      def self.from_extent(origin_x, origin_y, width, height)
+        new(origin_x, origin_y, origin_x + width, origin_y + height)
+      end
+
       def self.union(boxes)
         boxes = boxes.compact
         return nil if boxes.empty?
 
-        new(boxes.map(&:min_x).min, boxes.map(&:min_y).min, boxes.map(&:max_x).max, boxes.map(&:max_y).max)
+        new(boxes.map(&:min_x).min, boxes.map(&:min_y).min,
+            boxes.map(&:max_x).max, boxes.map(&:max_y).max)
       end
 
       def width
@@ -48,6 +53,11 @@ module SpecSupport
       def contain?(other, tolerance: 1e-6)
         other.min_x >= min_x - tolerance && other.min_y >= min_y - tolerance &&
           other.max_x <= max_x + tolerance && other.max_y <= max_y + tolerance
+      end
+
+      # True when other lies inside self and is strictly smaller.
+      def enclose?(other)
+        contain?(other) && area > other.area
       end
 
       def to_a

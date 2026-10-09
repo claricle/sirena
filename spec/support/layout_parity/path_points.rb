@@ -4,11 +4,25 @@ module SpecSupport
   module LayoutParity
     # Flattens an SVG path `d` into points in local space. Lines contribute
     # their end points; cubic, quadratic and arc segments are sampled
-    # (STEPS per segment), so a curve's bbox is a close approximation, not exact.
-    # Glued arc flags ("a1 1 0 01 2 3") are not supported.
+    # (STEPS per segment), so a curve's bbox is a close approximation, not
+    # exact. Glued arc flags ("a1 1 0 01 2 3") are not supported.
     class PathPoints
       STEPS = 32
-      ARITY = { "m" => 2, "l" => 2, "h" => 1, "v" => 1, "c" => 6, "s" => 4, "q" => 4, "t" => 2, "a" => 7, "z" => 0 }.freeze
+      # command letter => [argument count, handler]
+      COMMANDS = {
+        "m" => [2, :move_to],
+        "l" => [2, :line_segment],
+        "h" => [1, :horizontal_segment],
+        "v" => [1, :vertical_segment],
+        "c" => [6, :cubic_segment],
+        "s" => [4, :smooth_cubic_segment],
+        "q" => [4, :quad_segment],
+        "t" => [2, :smooth_quad_segment],
+        "a" => [7, :arc_segment],
+        "z" => [0, :close_segment],
+      }.freeze
+      CURVES = %w[c s q t].freeze
+      LETTER = /\A[a-zA-Z]\z/
 
       TOKEN = /[a-zA-Z]|#{Matrix::NUMBER}/
 
@@ -20,134 +34,150 @@ module SpecSupport
       end
 
       def points
-        cmd = nil
+        command = nil
         until @tokens.empty?
-          cmd = @tokens.shift if @tokens.first.match?(/\A[a-zA-Z]\z/)
-          raise ArgumentError, "path data starts without a command" unless cmd
-
-          arity = ARITY.fetch(cmd.downcase) { raise ArgumentError, "unsupported path command: #{cmd}" }
-          args = @tokens.shift(arity).map(&:to_f)
-          raise ArgumentError, "short path arguments for #{cmd}" if args.size < arity
-
-          run(cmd, args)
-          cmd = (cmd == "M" ? "L" : "l") if cmd.downcase == "m"
-          break if arity.zero? && @tokens.empty?
+          command = next_command(command)
+          run(command, take_arguments(command))
+          command = following(command)
         end
         @points
       end
 
       private
 
-      def run(cmd, args)
-        rel = cmd == cmd.downcase
-        ox = rel ? @x : 0.0
-        oy = rel ? @y : 0.0
-        case cmd.downcase
-        when "m" then move(args[0] + ox, args[1] + oy)
-        when "l" then line_to(args[0] + ox, args[1] + oy)
-        when "h" then line_to(args[0] + ox, @y)
-        when "v" then line_to(@x, args[0] + oy)
-        when "c" then cubic(args.each_slice(2).map { |px, py| [px + ox, py + oy] })
-        when "s" then cubic([reflect(:cubic), *args.each_slice(2).map { |px, py| [px + ox, py + oy] }])
-        when "q" then quad(args.each_slice(2).map { |px, py| [px + ox, py + oy] })
-        when "t" then quad([reflect(:quad), [args[0] + ox, args[1] + oy]])
-        when "a" then arc(args, ox, oy)
-        when "z" then close
+      def next_command(previous)
+        command = @tokens.first.match?(LETTER) ? @tokens.shift : previous
+        raise ArgumentError, "path data starts without a command" unless command
+
+        command
+      end
+
+      def take_arguments(command)
+        arity, = COMMANDS.fetch(command.downcase) do
+          raise ArgumentError, "unsupported path command: #{command}"
         end
-        @ctrl = nil unless %w[c s q t].include?(cmd.downcase)
+        args = @tokens.shift(arity).map(&:to_f)
+        return args if args.size >= arity
+
+        raise ArgumentError, "short path arguments for #{command}"
       end
 
-      def move(x, y)
-        @x = @sx = x
-        @y = @sy = y
-        @points << [x, y]
+      # Extra coordinate pairs after a moveto are implicit linetos.
+      def following(command)
+        return command unless command.downcase == "m"
+
+        command == "M" ? "L" : "l"
       end
 
-      def line_to(x, y)
-        @x = x
-        @y = y
-        @points << [x, y]
+      def run(command, args)
+        kind = command.downcase
+        origin = command == kind ? [@x, @y] : [0.0, 0.0]
+        send(COMMANDS.fetch(kind).last, args, origin)
+        @ctrl = nil unless CURVES.include?(kind)
       end
 
-      def close
+      def pairs(args, origin)
+        args.each_slice(2).map do |px, py|
+          [px + origin[0], py + origin[1]]
+        end
+      end
+
+      def move_to(args, origin)
+        target = pairs(args, origin).first
+        @sx, @sy = target
+        line_to(target)
+      end
+
+      def line_segment(args, origin)
+        line_to(pairs(args, origin).first)
+      end
+
+      def horizontal_segment(args, origin)
+        line_to([args[0] + origin[0], @y])
+      end
+
+      def vertical_segment(args, origin)
+        line_to([@x, args[0] + origin[1]])
+      end
+
+      def cubic_segment(args, origin)
+        curve(pairs(args, origin))
+      end
+
+      def smooth_cubic_segment(args, origin)
+        curve([reflect, *pairs(args, origin)])
+      end
+
+      def quad_segment(args, origin)
+        curve(pairs(args, origin))
+      end
+
+      def smooth_quad_segment(args, origin)
+        curve([reflect, pairs(args, origin).first])
+      end
+
+      def close_segment(_args, _origin)
         @x = @sx
         @y = @sy
       end
 
-      def reflect(_kind)
-        c = @ctrl
-        c ? [(2 * @x) - c[0], (2 * @y) - c[1]] : [@x, @y]
+      def line_to(point)
+        @x, @y = point
+        @points << point
       end
 
-      def cubic(pts)
-        p0 = [@x, @y]
-        p1, p2, p3 = pts
-        sample { |t| bezier([p0, p1, p2, p3], t) }
-        @ctrl = p2
-        line_to(*p3)
+      def reflect
+        return [@x, @y] unless @ctrl
+
+        [(2 * @x) - @ctrl[0], (2 * @y) - @ctrl[1]]
       end
 
-      def quad(pts)
-        p0 = [@x, @y]
-        p1, p2 = pts
-        sample { |t| bezier([p0, p1, p2], t) }
-        @ctrl = p1
-        line_to(*p2)
+      # Samples a cubic (three control points) or quadratic (two) Bezier from
+      # the current point to the last control point.
+      def curve(controls)
+        start = [@x, @y]
+        sample { |fraction| bezier([start, *controls], fraction) }
+        @ctrl = controls[-2]
+        line_to(controls.last)
       end
 
       def sample
         (1...STEPS).each { |i| @points << yield(i.to_f / STEPS) }
       end
 
-      def bezier(pts, t)
-        pts = pts.each_cons(2).map { |(ax, ay), (bx, by)| [ax + ((bx - ax) * t), ay + ((by - ay) * t)] } while pts.size > 1
-        pts.first
+      def bezier(controls, fraction)
+        while controls.size > 1
+          controls = controls.each_cons(2).map do |from, to|
+            lerp(from, to, fraction)
+          end
+        end
+        controls.first
       end
 
-      def arc(args, ox, oy)
-        rx, ry, phi, large, sweep, ex, ey = args
-        ex += ox
-        ey += oy
-        rx = rx.abs
-        ry = ry.abs
-        if rx.zero? || ry.zero? || (ex == @x && ey == @y)
-          return line_to(ex, ey)
+      def lerp(from, to, fraction)
+        from.zip(to).map do |start, finish|
+          start + ((finish - start) * fraction)
         end
-
-        arc_points([rx, ry], phi * Math::PI / 180, large != 0, sweep != 0, ex, ey)
-        line_to(ex, ey)
       end
 
-      # SVG 1.1 appendix F.6.5: endpoint to center parameterization.
-      def arc_points(radii, phi, large, sweep, ex, ey)
-        rx, ry = radii
-        cp = Math.cos(phi)
-        sp = Math.sin(phi)
-        dx = (@x - ex) / 2
-        dy = (@y - ey) / 2
-        x1 = (cp * dx) + (sp * dy)
-        y1 = (-sp * dx) + (cp * dy)
-        lam = ((x1**2) / (rx**2)) + ((y1**2) / (ry**2))
-        if lam > 1
-          rx *= Math.sqrt(lam)
-          ry *= Math.sqrt(lam)
-        end
-        num = ((rx**2) * (ry**2)) - ((rx**2) * (y1**2)) - ((ry**2) * (x1**2))
-        den = ((rx**2) * (y1**2)) + ((ry**2) * (x1**2))
-        coef = Math.sqrt([num / den, 0].max) * (large == sweep ? -1 : 1)
-        cx1 = coef * rx * y1 / ry
-        cy1 = -coef * ry * x1 / rx
-        cx = (cp * cx1) - (sp * cy1) + ((@x + ex) / 2)
-        cy = (sp * cx1) + (cp * cy1) + ((@y + ey) / 2)
-        th1 = Math.atan2((y1 - cy1) / ry, (x1 - cx1) / rx)
-        th2 = Math.atan2((-y1 - cy1) / ry, (-x1 - cx1) / rx)
-        dth = th2 - th1
-        dth += 2 * Math::PI if sweep && dth.negative?
-        dth -= 2 * Math::PI if !sweep && dth.positive?
-        sample do |t|
-          a = th1 + (dth * t)
-          [cx + (cp * rx * Math.cos(a)) - (sp * ry * Math.sin(a)), cy + (sp * rx * Math.cos(a)) + (cp * ry * Math.sin(a))]
-        end
+      def arc_segment(args, origin)
+        target = [args[5] + origin[0], args[6] + origin[1]]
+        sample_arc(args, target) unless flat_arc?(args, target)
+        line_to(target)
+      end
+
+      # A zero radius or a zero-length arc is a straight line (SVG F.6.2).
+      def flat_arc?(args, target)
+        args.first(2).any?(&:zero?) || target == [@x, @y]
+      end
+
+      def sample_arc(args, target)
+        rotation, large, sweep = args[2, 3]
+        arc = ArcPoints.new(start: [@x, @y], target: target,
+                            radii: args.first(2).map(&:abs),
+                            rotation: rotation,
+                            flags: [large != 0, sweep != 0])
+        sample { |fraction| arc.at(fraction) }
       end
     end
   end

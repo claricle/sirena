@@ -43,15 +43,17 @@ module SpecSupport
         round(num("cx"), num("cy"), num("rx"), num("ry"))
       end
 
-      def round(cx, cy, rx, ry)
+      def round(center_x, center_y, radius_x, radius_y)
         Array.new(ROUND_STEPS) do |i|
           a = 2 * Math::PI * i / ROUND_STEPS
-          [cx + (rx * Math.cos(a)), cy + (ry * Math.sin(a))]
+          [center_x + (radius_x * Math.cos(a)),
+           center_y + (radius_y * Math.sin(a))]
         end
       end
 
       def polygon_points
-        @node["points"].to_s.scan(Matrix::NUMBER).map(&:to_f).each_slice(2).select { |s| s.size == 2 }
+        numbers = @node["points"].to_s.scan(Matrix::NUMBER).map(&:to_f)
+        numbers.each_slice(2).select { |pair| pair.size == 2 }
       end
       alias polyline_points polygon_points
 

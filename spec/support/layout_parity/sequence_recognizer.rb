@@ -6,6 +6,8 @@ module SpecSupport
     # rect[name] with class actor-top or actor-bottom. Sirena draws one
     # g id="participant-<id>" with no class, read as participant-top.
     class SequenceRecognizer
+      REFERENCE_CLASSES = %w[actor-top actor-bottom].freeze
+
       def container_kinds
         []
       end
@@ -18,10 +20,11 @@ module SpecSupport
 
       def reference(extractor, doc)
         doc.xpath("//rect[@name]").filter_map do |rect|
-          position = (rect["class"].to_s.split & %w[actor-top actor-bottom]).first
+          position = (rect["class"].to_s.split & REFERENCE_CLASSES).first
           next unless position
 
-          Element.new(kind: :"participant-#{position.delete_prefix('actor-')}", key: rect["name"],
+          kind = :"participant-#{position.delete_prefix('actor-')}"
+          Element.new(kind: kind, key: rect["name"],
                       bbox: extractor.bbox(rect), label: rect["name"])
         end
       end
@@ -31,7 +34,8 @@ module SpecSupport
           box = extractor.bbox(g)
           next unless box
 
-          Element.new(kind: :"participant-top", key: g["id"].delete_prefix("participant-"),
+          key = g["id"].delete_prefix("participant-")
+          Element.new(kind: :"participant-top", key: key,
                       bbox: box, label: extractor.label(g))
         end
       end

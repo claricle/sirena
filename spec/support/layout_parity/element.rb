@@ -9,18 +9,22 @@ module SpecSupport
     class Element
       attr_reader :kind, :key, :identity, :parent, :bbox, :label
 
-      def initialize(kind:, key:, bbox:, label: nil, identity: :id, parent: nil)
+      def initialize(kind:, key:, bbox:, label: nil, identity: :id)
         @kind = kind
         @key = key
         @identity = identity
         @bbox = bbox
         @label = label
-        @parent = parent
+        @parent = nil
       end
 
       def with_parent(parent_key)
-        self.class.new(kind: kind, key: key, bbox: bbox, label: label, identity: identity, parent: parent_key)
+        dup.tap { |copy| copy.parent = parent_key }
       end
+
+      protected
+
+      attr_writer :parent
     end
   end
 end
