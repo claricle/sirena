@@ -125,11 +125,11 @@ module Sirena
           text.font_family = font_family(role)
           text.font_size = font_size(role)
           text.font_weight = "bold" if role == "class_name"
-          text.font_style = "italic" if role == "kind"
+          text.font_style = "italic" if %w[kind member_abstract].include?(role)
         end
 
         def font_family(role)
-          return "monospace" if role == "member"
+          return "monospace" if role.start_with?("member")
 
           theme_typography(:font_family) || "Arial, sans-serif"
         end
