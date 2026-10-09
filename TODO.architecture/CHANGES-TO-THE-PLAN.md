@@ -315,6 +315,23 @@ Item 01 (lutaml 0.8 migration) appears already landed: the gemspec is
   Scene classes   lutaml-model, matching the Diagram layer
 ```
 
+### 2026-10-09 — Batch typed Scene conversions
+
+The owner overrides only item 04's one-conversion-per-PR packaging rule.
+After `flowchart` and `sankey`, the remaining conversions may ship in
+these ordered batches:
+
+1. `class_diagram`, `sequence`, `state_diagram`, `er_diagram`
+2. `mindmap`, `xy_chart`, `git_graph`, `gantt`
+3. `timeline`, `kanban`, `quadrant`, `radar`, `block`
+4. `architecture`, `c4`, `requirement`, `packet`, `treemap`
+5. `user_journey`, `pie`, `info`, `error`
+
+Types remain in the listed order within and across batches. This changes
+PR packaging only: the fixed quality bars, branches from current `main`,
+main-to-main PRs, no-stacked-PR rule, changed-spec local verification,
+and full GitHub Actions run remain unchanged.
+
 ---
 
 ## Target architecture
