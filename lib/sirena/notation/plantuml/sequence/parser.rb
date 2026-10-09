@@ -11,6 +11,7 @@ require_relative "note"
 require_relative "outline"
 require_relative "participant"
 require_relative "refusals"
+require_relative "style"
 
 module Sirena
   module Notation
@@ -41,7 +42,11 @@ module Sirena
                        aqua|fuchsia|pink|brown|black|white)(?!\w)/xi
 
           DECLARATION = /\A(#{KINDS.join('|')})[ \t]+(#{QUOTED}|#{NAME})
-                         (?:[ \t]+as[ \t]+(#{NAME}))?\z/xio
+                         (?:[ \t]+as[ \t]+(#{NAME}))?
+                         (?:[ \t]+<<[ \t]*([^<>\n]+?)[ \t]*>>)?\z/xio
+          SKINPARAM_WIDTH = /\Askinparam[ \t]+MinClassWidth[ \t]+(\d+)\z/i
+          STYLE_OPEN = /\A<style>\z/i
+          STYLE_CLOSE = /\A<\/style>\z/i
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
                      (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
                      [ \t]*(#{QUOTED}|#{NAME})[ \t]*
@@ -78,7 +83,8 @@ module Sirena
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
-                           :DESTROY, :COLOUR
+                           :DESTROY, :COLOUR, :SKINPARAM_WIDTH, :STYLE_OPEN,
+                           :STYLE_CLOSE
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -87,11 +93,7 @@ module Sirena
           # @raise [Sirena::Parser::ParseError] when the source is not valid
           #   UTF-8 or @enduml is missing
           def parse(source)
-            @participants = {}
-            @outline = Outline.new
-            @boxes = []
-            @open_box = nil
-            @pending_note = nil
+            start_empty
             phase = :before
             lines_of(source).each_with_index do |line, index|
               phase = step(phase, line.strip, index + 1)
@@ -100,6 +102,16 @@ module Sirena
           end
 
           private
+
+          def start_empty
+            @participants = {}
+            @outline = Outline.new
+            @boxes = []
+            @open_box = nil
+            @pending_note = nil
+            @pending_style = nil
+            @min_head_width = nil
+          end
 
           def lines_of(source)
             text = source.dup.force_encoding(Encoding::UTF_8)
@@ -138,6 +150,7 @@ module Sirena
 
           def statement(text, number)
             return collect_note(text) if @pending_note
+            return collect_style(text) if @pending_style
             return end_of_diagram(text, number) if text == "@enduml"
             return :statements if PRAGMA.match?(text)
 
@@ -146,13 +159,47 @@ module Sirena
           end
 
           def read(text, number)
-            if (match = DECLARATION.match(text))
+            if (match = DECLARATION.match(text)) && plain_stereotype?(match)
               declare(match)
             elsif (match = BOX.match(text))
               open_box(match, text, number)
             else
+              read_setting(text, number)
+            end
+          end
+
+          def read_setting(text, number)
+            if (match = SKINPARAM_WIDTH.match(text))
+              @min_head_width = match[1].to_i
+            elsif STYLE_OPEN.match?(text)
+              @pending_style = { line: number, text: text, lines: [] }
+            else
               read_structure(text, number)
             end
+          end
+
+          # A stereotype is drawn above the label, where the other kinds
+          # already draw their name.
+          def plain_stereotype?(match)
+            match[4].nil? || match[1].casecmp?("participant")
+          end
+
+          def collect_style(text)
+            if STYLE_CLOSE.match?(text)
+              close_style
+            else
+              @pending_style[:lines] << text
+            end
+            :statements
+          end
+
+          def close_style
+            style = @pending_style
+            @pending_style = nil
+            width = Style.minimum_width(style[:lines].join("\n"))
+            raise refusal(style[:text], style[:line]) unless width
+
+            @min_head_width = width
           end
 
           def read_structure(text, number)
@@ -262,6 +309,7 @@ module Sirena
             id = match[3] || display
             @participants[id] ||= Participant.new(
               id: id, label: display, kind: match[1].downcase.to_sym,
+              stereotype: match[4]
             )
             @open_box[:members] << id if @open_box
           end
@@ -322,7 +370,8 @@ module Sirena
           def diagram
             check_boxes
             Diagram.new(participants: @participants.values.freeze,
-                        items: @outline.items.freeze, boxes: @boxes.freeze)
+                        items: @outline.items.freeze, boxes: @boxes.freeze,
+                        min_head_width: @min_head_width)
           end
 
           def unclosed_block

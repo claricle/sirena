@@ -127,6 +127,81 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "stereotypes" do
+    it "reads <<text>> after a participant declaration" do
+      participant = parse('participant "C" as C <<st>>').participants.first
+
+      expect([participant.id, participant.stereotype]).to eq(%w[C st])
+    end
+
+    it "leaves the stereotype nil when none is written" do
+      expect(parse("participant C").participants.first.stereotype).to be_nil
+    end
+
+    it "refuses a stereotype on an actor, which has a figure to draw" do
+      expect { parse("actor C <<st>>") }.to raise_error(unsupported, /actor/)
+    end
+  end
+
+  describe "minimum participant width" do
+    let(:style) do
+      lambda do |body|
+        ["<style>", "sequenceDiagram {", "participant {", body, "}", "}",
+         "</style>"]
+      end
+    end
+
+    it "reads skinparam MinClassWidth" do
+      expect(parse("skinparam MinClassWidth 100", "A -> B").min_head_width)
+        .to eq(100)
+    end
+
+    it "reads MinimumWidth in a style block" do
+      lines = style.call("MinimumWidth 90")
+
+      expect(parse(*lines, "A -> B").min_head_width).to eq(90)
+    end
+
+    it "accepts HorizontalAlignment center beside it" do
+      lines = style.call("MinimumWidth 90\nHorizontalAlignment center")
+
+      expect(parse(*lines, "A -> B").min_head_width).to eq(90)
+    end
+
+    it "is nil when the source asks for none" do
+      expect(parse("A -> B").min_head_width).to be_nil
+    end
+
+    [
+      "MinimumWidth 90\nHorizontalAlignment right",
+      "MinimumWidth 90\nFontColor red",
+      "FontColor red",
+      "MinimumWidth wide",
+    ].each do |body|
+      it "refuses the style block holding #{body.inspect}" do
+        expect { parse(*style.call(body), "A -> B") }
+          .to raise_error(unsupported, /style block/)
+      end
+    end
+
+    it "refuses a style block for another element" do
+      other = ["<style>", "note {", "FontColor red", "}", "</style>"]
+
+      expect { parse(*other, "A -> B") }
+        .to raise_error(unsupported, /style block/)
+    end
+
+    it "does not read @enduml inside a style block that never closes" do
+      expect { parse("<style>", "A -> B") }
+        .to raise_error(Sirena::Parser::ParseError, /@enduml/)
+    end
+
+    it "refuses another skinparam by name" do
+      expect { parse("skinparam MinClassWidth", "A -> B") }
+        .to raise_error(unsupported, /skinparam/)
+    end
+  end
+
   describe "participants" do
     {
       "participant" => :participant, "actor" => :actor,
@@ -248,7 +323,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "newpage" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
       "A ->x B" => "message arrow", "A -[#red]> B" => "message arrow",
-      "participant A <<x>>" => "participant", "title T" => "title"
+      "title T" => "title"
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
         expect(refusal_of("A -> B", line)).to have_attributes(construct: name)
