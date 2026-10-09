@@ -1,3 +1,9 @@
+---
+layout: default
+title: C4 Diagram Support
+parent: Diagram Types
+---
+
 = C4 Diagram Support
 :toc:
 :toclevels: 3

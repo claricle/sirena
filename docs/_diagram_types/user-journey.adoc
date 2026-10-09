@@ -1,3 +1,9 @@
+---
+layout: default
+title: User journey diagrams
+parent: Diagram Types
+---
+
 = User journey diagrams
 :toc:
 :toclevels: 3

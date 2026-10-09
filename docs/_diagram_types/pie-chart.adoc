@@ -1,3 +1,9 @@
+---
+layout: default
+title: Pie Chart Diagrams
+parent: Diagram Types
+---
+
 = Pie Chart Diagrams
 :toc:
 :toclevels: 3

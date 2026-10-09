@@ -1,3 +1,9 @@
+---
+layout: default
+title: Error Diagram
+parent: Diagram Types
+---
+
 = Error Diagram
 :toc:
 :toclevels: 3

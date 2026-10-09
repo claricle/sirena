@@ -1,3 +1,9 @@
+---
+layout: default
+title: State diagrams
+parent: Diagram Types
+---
+
 = State diagrams
 :toc:
 :toclevels: 3

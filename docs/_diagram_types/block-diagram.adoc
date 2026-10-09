@@ -1,3 +1,9 @@
+---
+layout: default
+title: Block Diagrams
+parent: Diagram Types
+---
+
 = Block Diagrams
 :toc:
 :toclevels: 3

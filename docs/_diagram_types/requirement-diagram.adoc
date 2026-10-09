@@ -1,3 +1,9 @@
+---
+layout: default
+title: Requirement Diagrams
+parent: Diagram Types
+---
+
 = Requirement Diagrams
 :toc:
 :toclevels: 3

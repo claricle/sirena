@@ -1,3 +1,9 @@
+---
+layout: default
+title: Entity relationship diagrams
+parent: Diagram Types
+---
+
 = Entity relationship diagrams
 :toc:
 :toclevels: 3

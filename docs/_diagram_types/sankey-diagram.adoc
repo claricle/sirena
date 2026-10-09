@@ -1,3 +1,9 @@
+---
+layout: default
+title: Sankey diagrams
+parent: Diagram Types
+---
+
 = Sankey diagrams
 :toc:
 :toclevels: 3

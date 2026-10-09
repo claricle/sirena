@@ -1,3 +1,9 @@
+---
+layout: default
+title: Timeline diagrams
+parent: Diagram Types
+---
+
 = Timeline diagrams
 :toc:
 :toclevels: 3

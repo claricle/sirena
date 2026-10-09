@@ -1,3 +1,9 @@
+---
+layout: default
+title: XY Chart Diagrams
+parent: Diagram Types
+---
+
 = XY Chart Diagrams
 :toc:
 :toclevels: 3
