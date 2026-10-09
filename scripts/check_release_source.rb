@@ -32,7 +32,7 @@ module Sirena
       problems = []
       problems << "release commit changes #{paths.inspect}; expected #{expected.inspect}" unless paths == expected
 
-      actual = version_source[/VERSION = ['\"]([^'\"]+)['\"]/, 1]
+      actual = version_source[/VERSION = ['"]([^'"]+)['"]/, 1]
       problems << "#{VERSION_PATH} contains #{actual.inspect}; expected #{target_version.inspect}" unless actual == target_version
       problems
     end
@@ -55,7 +55,7 @@ if __FILE__ == $PROGRAM_NAME
 
                payload = JSON.parse(File.read(checks_path))
                Sirena::ReleaseSourceCheck.checked_main_problems(
-                 source_sha: source_sha, main_sha: main_sha, check_runs: payload.fetch("check_runs")
+                 source_sha: source_sha, main_sha: main_sha, check_runs: payload.fetch("check_runs"),
                )
              when "version-only"
                target, requested, paths_path, version_path = ARGV
@@ -65,7 +65,7 @@ if __FILE__ == $PROGRAM_NAME
                  changed_paths: File.readlines(paths_path, chomp: true),
                  requested: requested,
                  target_version: target,
-                 version_source: File.read(version_path || Sirena::ReleaseSourceCheck::VERSION_PATH)
+                 version_source: File.read(version_path || Sirena::ReleaseSourceCheck::VERSION_PATH),
                )
              when "write-version"
                target, version_path = ARGV
