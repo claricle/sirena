@@ -9,19 +9,24 @@ require "sirena/parser/gantt"
 RSpec.describe Sirena::Renderer::Gantt do
   let(:renderer) { described_class.new }
 
+  let(:typed_diagram) do
+    Sirena::Parser::Gantt.new.parse(<<~GANTT)
+      gantt
+        section Planning
+        Task 1 :a1, 2024-01-01, 30d
+    GANTT
+  end
+
+  let(:typed_scene_state) do
+    scene = Sirena::Layout::Gantt.new.call(typed_diagram)
+    [scene.class, scene.sections.first.tasks.first.start_date,
+     typed_diagram.sections.first.tasks.first.calculated_start]
+  end
+
   describe "#render" do
-    it "returns a typed Scene without storing calculated dates on the diagram" do
-      diagram = Sirena::Parser::Gantt.new.parse(<<~GANTT)
-        gantt
-          section Planning
-          Task 1 :a1, 2024-01-01, 30d
-      GANTT
-
-      scene = Sirena::Layout::Gantt.new.call(diagram)
-
-      expect(scene).to be_a(Sirena::Layout::Gantt::Scene)
-      expect(scene.sections.first.tasks.first.start_date).to eq(Date.new(2024, 1, 1))
-      expect(diagram.sections.first.tasks.first.calculated_start).to be_nil
+    it "returns a typed Scene without mutating diagram dates" do
+      expected = [Sirena::Layout::Gantt::Scene, Date.new(2024, 1, 1), nil]
+      expect(typed_scene_state).to eq(expected)
     end
 
     it "renders a simple Gantt chart to SVG" do
