@@ -7,8 +7,8 @@ RSpec.describe SpecSupport::LayoutParity::GeometryComparator do
   let(:element_class) { SpecSupport::LayoutParity::Element }
   let(:figure_class) { SpecSupport::LayoutParity::Figure }
 
-  def box(x, y, width, height)
-    box_class.from_extent(x, y, width, height)
+  def box(left, top, width, height)
+    box_class.from_extent(left, top, width, height)
   end
 
   def element(key, extent)
@@ -50,26 +50,38 @@ RSpec.describe SpecSupport::LayoutParity::GeometryComparator do
       .to eq([0.5, 0.5, 2.0])
   end
 
-  it "reports maxima and their keys rather than means" do
-    pairs = [pair("near", box(0, 0, 10, 10), box(0, 0, 11, 10)),
-             pair("far", box(20, 0, 10, 10), box(20, 0, 20, 10))]
-    result = compare(pairs, ambiguous_count: 3)
+  context "with unequal width errors" do
+    let(:pairs) do
+      [pair("near", box(0, 0, 10, 10), box(0, 0, 11, 10)),
+       pair("far", box(20, 0, 10, 10), box(20, 0, 20, 10))]
+    end
 
-    expect(result[:worst_e_w]).to eq(1.0)
-    expect(result[:worst_keys][:e_w]).to eq([:node, nil, "far"])
-    expect(result.values_at(:matched, :ambiguous)).to eq([2, 3])
+    it "reports maxima and their keys rather than means" do
+      result = compare(pairs, ambiguous_count: 3)
+
+      summary = [result[:worst_e_w], result[:worst_keys][:e_w],
+                 *result.values_at(:matched, :ambiguous)]
+      expect(summary).to eq([1.0, [:node, nil, "far"], 2, 3])
+    end
   end
 
-  it "keeps the five worst pairs with their evidence boxes" do
-    pairs = (1..6).map do |number|
-      pair(number.to_s, box(number * 20, 0, 10, 10),
-           box(number * 20, 0, number * 10, 10))
+  context "with six increasingly distorted pairs" do
+    let(:pairs) do
+      (1..6).map do |number|
+        pair(number.to_s, box(number * 20, 0, 10, 10),
+             box(number * 20, 0, number * 10, 10))
+      end
     end
-    top_five = compare(pairs)[:top5]
+    let(:top_five) { compare(pairs)[:top5] }
 
-    expect(top_five.map { |row| row[:key].last }).to eq(%w[6 5 4 3 2])
-    expect(top_five.first.values_at(:bbox_reference, :bbox_sirena))
-      .to eq([[120.0, 0.0, 130.0, 10.0], [120.0, 0.0, 180.0, 10.0]])
+    it "keeps the five worst pairs" do
+      expect(top_five.map { |row| row[:key].last }).to eq(%w[6 5 4 3 2])
+    end
+
+    it "keeps evidence boxes for each pair" do
+      expect(top_five.first.values_at(:bbox_reference, :bbox_sirena))
+        .to eq([[120.0, 0.0, 130.0, 10.0], [120.0, 0.0, 180.0, 10.0]])
+    end
   end
 
   it "skips a dimension only when both sides are zero" do
@@ -82,11 +94,11 @@ RSpec.describe SpecSupport::LayoutParity::GeometryComparator do
   it "fails one-sided collapses" do
     result = compare([pair("collapsed", box(0, 0, 10, 10), box(0, 0, 0, 10))])
 
-    expect(result[:worst_e_w]).to eq(1.0)
-    expect(result[:worst_e_a]).to eq(Float::INFINITY)
+    expect(result.values_at(:worst_e_w, :worst_e_a))
+      .to eq([1.0, Float::INFINITY])
   end
 
-  it "uses the root extent for a degenerate matched frame without translating" do
+  it "uses the root extent for a degenerate matched frame" do
     result = compare([pair("anchor", box(10, 10, 0, 0),
                            box(13, 14, 0, 0))],
                      root_box: box(0, 0, 30, 40))
