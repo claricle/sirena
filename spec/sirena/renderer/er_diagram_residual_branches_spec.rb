@@ -2,13 +2,13 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::ErDiagram, "legacy relationship branches" do
+RSpec.describe Sirena::Renderer::ErDiagram, "#render legacy relationship branches" do
   let(:renderer) { described_class.new }
   let(:nodes) do
     %w[A B].map.with_index do |id, index|
       {
         id: id, x: index * 200, y: 0, width: 120, height: 60,
-        metadata: { name: id, attributes: [] },
+        metadata: { name: id, attributes: [] }
       }
     end
   end
@@ -23,7 +23,7 @@ RSpec.describe Sirena::Renderer::ErDiagram, "legacy relationship branches" do
     [
       {
         id: "plain", sources: ["A"], targets: ["B"],
-        metadata: { relationship_type: "identifying" },
+        metadata: { relationship_type: "identifying" }
       },
       {
         id: "source-only", sources: ["A"], targets: ["B"],
@@ -31,14 +31,14 @@ RSpec.describe Sirena::Renderer::ErDiagram, "legacy relationship branches" do
         metadata: {
           relationship_type: "identifying",
           cardinality_from: "one_or_more",
-        },
+        }
       },
       {
         id: "target-only", sources: ["A"], targets: ["B"],
         metadata: {
           relationship_type: "identifying",
           cardinality_to: "zero_or_one",
-        },
+        }
       },
     ]
   end
