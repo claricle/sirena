@@ -8,6 +8,7 @@ require_relative "diagram_builder"
 require_relative "directives"
 require_relative "junction"
 require_relative "member"
+require_relative "package"
 require_relative "relation"
 require_relative "unsupported_construct_error"
 require_relative "unsupported_constructs"
@@ -41,6 +42,9 @@ module Sirena
            [ \t]+(#{NAME})
            (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
            ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
+        PACKAGE = /\A(\+)?package[ \t]+
+                   (?:"([^"]+)"[ \t]+as[ \t]+(#{NAME})|(#{NAME}))
+                   (?:[ \t]*<<([^<>]+)>>)?[ \t]*\{\z/xio
         HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
@@ -65,8 +69,8 @@ module Sirena
                             "Source must start with one of: @startuml"
 
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
-                         :STEREOTYPE, :CLASS_DECLARATION, :HIDE_TAG, :NOTE,
-                         :END_NOTE,
+                         :STEREOTYPE, :CLASS_DECLARATION, :HIDE_TAG, :PACKAGE,
+                         :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :LINE_END,
                          :NOT_FOUND_MESSAGE
@@ -137,9 +141,29 @@ module Sirena
 
           refuse_block_comment(text, number)
           return hide_tag(builder, text, number) if HIDE_TAG.match?(text)
+          return open_package(builder, text, number) if PACKAGE.match?(text)
+          return :statements if text == "}" && builder.close_package
           return record(builder, text) if Directives.match?(text)
 
           declaration_or_relation(builder, text, number)
+        end
+
+        def open_package(builder, text, number)
+          match = PACKAGE.match(text)
+          shape = package_shape(match[5])
+          raise refusal(text, number, "package stereotype") unless shape
+
+          builder.open_package(
+            Package.new(id: match[3] || match[4], title: match[2] || match[4],
+                        shape: shape, icon: !match[1].nil?), number, text
+          )
+          :statements
+        end
+
+        def package_shape(stereotype)
+          return :folder unless stereotype
+
+          :frame if stereotype.casecmp?("frame")
         end
 
         def hide_tag(builder, text, number)
@@ -220,6 +244,7 @@ module Sirena
         # declared or related.
         def end_of_diagram(builder, text, number)
           raise refusal(text, number, "empty diagram") if builder.empty?
+          raise unclosed_package(builder) if builder.open_package_line
 
           :after
         end
@@ -302,6 +327,13 @@ module Sirena
           Sirena::Parser::ParseError.new(
             "Parse error: the note opened on line " \
             "#{builder.open_note_line} is never closed with end note",
+          )
+        end
+
+        def unclosed_package(builder)
+          Sirena::Parser::ParseError.new(
+            "Parse error: the package opened on line " \
+            "#{builder.open_package_line} is never closed with }",
           )
         end
 

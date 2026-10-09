@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../layout/base"
+require_relative "package_frames"
 require_relative "scene"
 
 module Sirena
@@ -28,7 +29,7 @@ module Sirena
           end
           specifications += note_specifications(diagram.notes)
           box_width = widest_box(specifications)
-          boxes = position_boxes(specifications, box_width)
+          boxes = position_boxes(rows_by_package(specifications), box_width)
 
           build_scene(diagram, boxes, box_width)
         end
@@ -37,19 +38,24 @@ module Sirena
 
         def build_scene(diagram, boxes, box_width)
           width = canvas_width(boxes, box_width)
-          height = canvas_height(box_rows(boxes))
+          height = canvas_height(box_rows(boxes)) +
+                   (diagram.packages.size * (PackageFrames::OPEN +
+                                              PackageFrames::CLOSE))
           relations = build_relations(diagram.relations, boxes) +
             build_junctions(diagram, boxes) +
             build_note_links(diagram.notes, boxes)
+          frames = PackageFrames.new(diagram, method(:measured_width))
+                                .call(boxes)
           Scene.new(width: width, height: height, boxes: boxes,
-                    relations: relations)
+                    relations: relations, frames: frames)
         end
 
         def box_specification(klass)
           member_rows = klass.body.map { |member| member_text(member) }
           title_rows = title_rows(klass)
           box_record(klass.name, title_rows, member_rows)
-            .merge(member_modifiers: klass.body.map(&:modifiers))
+            .merge(member_modifiers: klass.body.map(&:modifiers),
+                   package: klass.package)
         end
 
         def note_specifications(notes)
@@ -112,31 +118,54 @@ module Sirena
             .fetch(visibility, "")
         end
 
-        def position_boxes(specifications, box_width)
+        # Classes outside any package first, then each package's classes,
+        # every group padded to whole rows so a row holds one group only.
+        def rows_by_package(specifications)
           columns = column_count(specifications)
-          row_tops = row_tops(specifications, columns)
-
-          specifications.each_with_index.map do |item, index|
-            build_box(item, index, columns, row_tops, box_width)
+          loose, packaged = specifications.partition { |i| !i[:package] }
+          groups = [loose, *packaged.group_by { |i| i[:package] }.values]
+          groups.reject(&:empty?).flat_map do |group|
+            group.each_slice(columns).map { |row| pad(row, columns) }
           end
         end
 
-        def row_tops(specifications, columns)
-          heights = specifications.each_slice(columns).map do |row|
-            row.map { |item| item[:height] }.max
+        def pad(row, columns)
+          row + [nil] * (columns - row.size)
+        end
+
+        def position_boxes(rows, box_width)
+          tops = row_tops(rows)
+          rows.each_with_index.flat_map do |row, row_index|
+            row.each_with_index.filter_map do |item, column|
+              build_box(item, column, tops[row_index], box_width) if item
+            end
           end
-          heights.each_with_object([MARGIN]) do |height, tops|
-            tops << (tops.last + height + ROW_GAP)
+        end
+
+        def row_tops(rows)
+          packages = rows.map { |row| row.compact.first[:package] }
+          heights = rows.map { |row| row.compact.map { |i| i[:height] }.max }
+          tops = [MARGIN + frame_space(nil, packages.first)]
+          heights.each_with_index do |height, index|
+            space = frame_space(packages[index], packages[index + 1])
+            tops << (tops.last + height + ROW_GAP + space)
           end
+          tops
+        end
+
+        def frame_space(above, below)
+          return 0.0 if above == below
+
+          (above ? PackageFrames::CLOSE : 0.0) +
+            (below ? PackageFrames::OPEN : 0.0)
         end
 
         def column_count(items)
-          items.size > 1 ? 2 : 1
+          items.compact.size > 1 ? 2 : 1
         end
 
-        def build_box(item, index, columns, row_tops, box_width)
-          x = MARGIN + ((index % columns) * (box_width + COLUMN_GAP))
-          y = row_tops[index / columns]
+        def build_box(item, column, y, box_width)
+          x = MARGIN + (column * (box_width + COLUMN_GAP))
           texts, separators = box_contents(item, x, y, box_width)
 
           Scene::Box.new(
@@ -449,7 +478,7 @@ module Sirena
         end
 
         def box_rows(boxes)
-          boxes.each_slice(column_count(boxes)).to_a
+          boxes.group_by(&:y).values
         end
 
         def canvas_height(rows)

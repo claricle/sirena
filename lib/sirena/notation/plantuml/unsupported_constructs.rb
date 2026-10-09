@@ -45,6 +45,7 @@ module Sirena
         STATEMENT_RULES = [
           [KEYWORD, nil],
           *GLOBAL_RULES,
+          [/\A[+\-#~]package\b/i, "package"],
           [/\A(?:left to right|top to bottom) direction\z/i,
            "layout direction"],
           [/\A(?:abstract|class|interface|static[ \t]+class)\b(?=.*<<)/i,

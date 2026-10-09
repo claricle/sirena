@@ -37,6 +37,17 @@ module Sirena
           attribute :fill, :string
         end
 
+        class Frame < Lutaml::Model::Serializable
+          attribute :id, :string
+          attribute :x, :float
+          attribute :y, :float
+          attribute :width, :float
+          attribute :height, :float
+          attribute :tab_width, :float
+          attribute :icon, :boolean
+          attribute :texts, Text, collection: true
+        end
+
         class Relation < Lutaml::Model::Serializable
           attribute :id, :string
           attribute :path, :string
@@ -46,6 +57,7 @@ module Sirena
           attribute :texts, Text, collection: true
         end
 
+        attribute :frames, Frame, collection: true
         attribute :boxes, Box, collection: true
         attribute :relations, Relation, collection: true
       end

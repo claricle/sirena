@@ -9,12 +9,16 @@ module Sirena
     module PlantUML
       # Draws a PlantUML Scene without changing any of its geometry.
       class Renderer < Sirena::Renderer::Base
+        BOLD_ROLES = %w[class_name package_title].freeze
+        private_constant :BOLD_ROLES
+
         def render(scene)
           document = Svg::Document.new(
             width: scene.width,
             height: scene.height,
             view_box: "0 0 #{scene.width} #{scene.height}",
           )
+          scene.frames.each { |frame| render_frame(frame, document) }
           scene.relations.each do |relation|
             render_relation(relation, document)
           end
@@ -23,6 +27,42 @@ module Sirena
         end
 
         private
+
+        def render_frame(frame, document)
+          group = Svg::Group.new(id: frame.id)
+          group << frame_rectangle(frame.x, frame.y, frame.width, frame.height)
+          group << frame_tab(frame) if frame.tab_width
+          group << package_icon(frame) if frame.icon
+          frame.texts.each { |text| group << text_element(text) }
+          document << group
+        end
+
+        # A folder's tab sits on top of the body; a frame has none.
+        def frame_tab(frame)
+          frame_rectangle(frame.x, frame.y, frame.tab_width, 22.0)
+        end
+
+        def frame_rectangle(x, y, width, height)
+          Svg::Rect.new.tap do |rectangle|
+            rectangle.x = x
+            rectangle.y = y
+            rectangle.width = width
+            rectangle.height = height
+            rectangle.fill = "none"
+            rectangle.stroke = node_stroke
+            rectangle.stroke_width = stroke_width
+          end
+        end
+
+        def package_icon(frame)
+          Svg::Circle.new.tap do |circle|
+            circle.cx = frame.x + 12.0
+            circle.cy = frame.y + 11.0
+            circle.r = 3.0
+            circle.fill = "#84be84"
+            circle.stroke = "#038048"
+          end
+        end
 
         def render_relation(relation, document)
           group = Svg::Group.new(id: relation.id)
@@ -124,7 +164,7 @@ module Sirena
           text.fill = text_colour
           text.font_family = font_family(role)
           text.font_size = font_size(role)
-          text.font_weight = "bold" if role == "class_name"
+          text.font_weight = "bold" if BOLD_ROLES.include?(role)
           text.font_style = "italic" if %w[kind member_abstract].include?(role)
         end
 

@@ -4,6 +4,7 @@ require_relative "diagram"
 require_relative "klass"
 require_relative "member"
 require_relative "note"
+require_relative "package"
 require_relative "relation"
 require_relative "unsupported_construct_error"
 
@@ -35,6 +36,7 @@ module Sirena
           @extras = {}
           @notes = []
           @hidden_tags = []
+          @packages = []
         end
 
         def directive(text)
@@ -45,6 +47,34 @@ module Sirena
         # class is declared before or after the line.
         def hide_tag(tag, number, text)
           @hidden_tags << [tag, number, text]
+        end
+
+        # Opens a package; the classes declared until {#close_package} are
+        # in it.
+        def open_package(package, number, text)
+          refuse(text, number, "nested package") if @scope
+          if @packages.any? { |known| known.id == package.id }
+            refuse(text, number, "package declared twice")
+          end
+
+          @packages << package
+          @scope = [package, number, text]
+        end
+
+        # @return [Boolean] false when no package is open
+        def close_package
+          return false unless @scope
+
+          package, number, text = @scope
+          members = @extras.values.count { |e| e[:package] == package.id }
+          refuse(text, number, "empty package") if members.zero?
+          @scope = nil
+          true
+        end
+
+        # @return [Integer, nil] the line of the package still open
+        def open_package_line
+          @scope && @scope[1]
         end
 
         def junction(junction, number, text)
@@ -95,12 +125,14 @@ module Sirena
         # `entry` holds :name, :kind, :body, :generics and :stereotypes.
         def declare(entry, number, text)
           name, kind = entry.values_at(:name, :kind)
+          refuse_package_clash(name, number, text)
           mention(name)
           refuse_redeclaration(name, kind, number, text)
           @kinds[name] = kind
           @explicit[name] = true
           @class_evidence = true
           @extras[name] = entry.slice(:generics, :stereotypes, :tags)
+                               .merge(package: @scope&.first&.id)
           @open = [name, number] if entry[:body]
         end
 
@@ -109,6 +141,9 @@ module Sirena
         end
 
         def relate(relation, number, text)
+          if @scope && [relation.left, relation.right].any? { |n| !@kinds[n] }
+            refuse(text, number, "class first mentioned in a package")
+          end
           mention(relation.left)
           mention(relation.right)
           @sequence_arrow ||= [number, text] if sequence_arrow?(relation, text)
@@ -144,7 +179,8 @@ module Sirena
             classes: classes.reject { |k| hidden.include?(k.name) }.freeze,
             relations: @relations.reject { |r| touches?(r, hidden) }.freeze,
             junctions: @junctions.map(&:first).freeze,
-            directives: @directives.dup.freeze, notes: @notes.dup.freeze
+            directives: @directives.dup.freeze, notes: @notes.dup.freeze,
+            packages: @packages.dup.freeze
           )
         end
 
@@ -189,6 +225,21 @@ module Sirena
             construct: "association class without its relation",
             line: number, text: text
           )
+        end
+
+        def refuse(text, number, construct)
+          raise UnsupportedConstructError.new(
+            construct: construct, line: number, text: text
+          )
+        end
+
+        # A class lives in one place; a name met outside its package would
+        # be a second class to PlantUML.
+        def refuse_package_clash(name, number, text)
+          return unless @kinds.key?(name)
+          return if @extras.dig(name, :package) == @scope&.first&.id
+
+          refuse(text, number, "class declared in more than one place")
         end
 
         def refuse_redeclaration(name, kind, number, text)
