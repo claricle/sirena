@@ -4,7 +4,7 @@ require "spec_helper"
 
 # Parser.for, Layout.for and Renderer.for: three cases each, and every layer
 # raises its own error class when a known type's class does not resolve.
-RSpec.describe "the per-layer lookups" do
+RSpec.describe Sirena::Notation::Mermaid, "per-layer lookups" do
   let(:row) { Sirena::Notation::Mermaid::TYPES.fetch(:pie) }
 
   {

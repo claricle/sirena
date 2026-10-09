@@ -37,8 +37,13 @@ module PlantumlOracleSpecSupport
   end
 
   def alive_runner(extra = {})
-    runner_for({ good => valid_run, bad => rejected_run }.merge(PlantumlOracle::CANARY_VALID => valid_run,
-                                                                 PlantumlOracle::CANARY_INVALID => rejected_run).merge(extra))
+    runs = {
+      good => valid_run,
+      bad => rejected_run,
+      PlantumlOracle::CANARY_VALID => valid_run,
+      PlantumlOracle::CANARY_INVALID => rejected_run,
+    }
+    runner_for(runs.merge(extra))
   end
 end
 
@@ -51,8 +56,8 @@ RSpec.describe PlantumlOracle do
 
   describe "classification" do
     {
-      "rendered diagram, exit 0" => [:valid, ->(s) { s.valid_run }],
-      "error image, exit 200 (invalid seed)" => [:rejected, ->(s) { s.rejected_run }],
+      "rendered diagram, exit 0" => [:valid, lambda(&:valid_run)],
+      "error image, exit 200 (invalid seed)" => [:rejected, lambda(&:rejected_run)],
       "error image that exits 0" => [:rejected, ->(s) { s.run_of(stdout: s.error_svg) }],
       "diagram image with exit 200" => [:infrastructure, ->(s) { s.run_of(status: 200, stdout: s.diagram_svg) }],
       "exit 0, empty stdout" => [:infrastructure, ->(s) { s.run_of(stdout: "") }],
@@ -62,10 +67,9 @@ RSpec.describe PlantumlOracle do
       "killed by a signal" => [:infrastructure, ->(s) { s.run_of(status: nil) }],
       "binary missing (seeded infrastructure failure)" => [:infrastructure, ->(s) { s.run_of(status: nil, spawn_error: "No such file or directory - plantuml") }],
       "java missing" => [:infrastructure, ->(s) { s.run_of(status: 127, stderr: "java: command not found") }],
-      "graphviz missing, error image exits 200" => [:infrastructure,
-                                                     ->(s) { s.run_of(status: 200, stdout: s.error_svg, stderr: "java.io.IOException: Cannot run program \"dot\"") }],
+      "graphviz missing, error image exits 200" => [:infrastructure, ->(s) { s.run_of(status: 200, stdout: s.error_svg, stderr: "java.io.IOException: Cannot run program \"dot\"") }],
       "out of memory" => [:infrastructure, ->(s) { s.run_of(status: 200, stderr: "java.lang.OutOfMemoryError: Java heap space") }],
-      "timeout" => [:infrastructure, ->(s) { s.run_of(status: nil, timed_out: true) }]
+      "timeout" => [:infrastructure, ->(s) { s.run_of(status: nil, timed_out: true) }],
     }.each do |name, (state, build)|
       it "#{name} is #{state}" do
         expect(judge_with(build.call(self)).state).to eq(state)
@@ -84,10 +88,11 @@ RSpec.describe PlantumlOracle do
   describe "the real runner" do
     before { skip("POSIX-only") if Gem.win_platform? }
 
-    it "kills a process that outlives the timeout instead of hanging, children included" do
-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      run = Timeout.timeout(20) { PlantumlOracle::Runner.call(["sh", "-c", "sleep 30 & wait"], "", 1) }
-      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    it "kills a process that outlives the timeout instead of hanging, children included", :speed do
+      run = nil
+      elapsed = wall_time do
+        run = Timeout.timeout(20) { PlantumlOracle::Runner.call(["sh", "-c", "sleep 30 & wait"], "", 1) }
+      end
 
       expect([run.timed_out, elapsed < 10]).to eq([true, true])
     end

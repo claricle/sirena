@@ -151,11 +151,11 @@ module PlantumlOracle
   # Raises CanaryFailure unless the oracle is alive in both directions: it
   # renders a good source and refuses a bad one. A refresh may not start
   # without this.
-  def canary!(**options)
-    good = judge(CANARY_VALID, **options)
+  def canary!(**)
+    good = judge(CANARY_VALID, **)
     raise CanaryFailure, "valid canary came back #{good.state}: #{good.reason}" unless good.state == :valid
 
-    bad = judge(CANARY_INVALID, **options)
+    bad = judge(CANARY_INVALID, **)
     raise CanaryFailure, "invalid canary came back #{bad.state}: #{bad.reason}" unless bad.state == :rejected
   end
 
@@ -165,7 +165,7 @@ module PlantumlOracle
     {
       "plantuml" => probe(runner, [binary, "--version"], /PlantUML version\s+(\S.*)/),
       "java" => probe(runner, ["java", "-version"], /version "([^"]+)"/),
-      "graphviz" => probe(runner, ["dot", "-V"], /graphviz version\s+(\S+)/)
+      "graphviz" => probe(runner, ["dot", "-V"], /graphviz version\s+(\S+)/),
     }
   end
 
@@ -188,7 +188,7 @@ module PlantumlOracle
       "java" => versions["java"],
       "graphviz" => versions["graphviz"],
       "command" => command.join(" "),
-      "contract" => CONTRACT_VERSION
+      "contract" => CONTRACT_VERSION,
     }
   end
 
