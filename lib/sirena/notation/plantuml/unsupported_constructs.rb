@@ -50,6 +50,8 @@ module Sirena
            "layout direction"],
           [/\A(?:abstract|class|interface|static[ \t]+class)\b(?=.*<<)/i,
            "stereotype"],
+          [/\A(?:abstract[ \t]+class|class|interface|static[ \t]+class)
+             [ \t]+"/ix, "quoted class name"],
           [/\A(?:abstract|class|interface|static[ \t]+class)\b/i,
            "class declaration form"],
           [/\.\.>|<\.\./, "dependency arrow"],
