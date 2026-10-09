@@ -17,10 +17,10 @@ module CliSpecHelpers
     -> { described_class.start(["render", "unused.mmd"]) }
   end
 
-  def capture_stdout(&block)
+  def capture_stdout
     original_stdout = $stdout
     $stdout = StringIO.new
-    block.call
+    yield
     $stdout.string
   ensure
     $stdout = original_stdout

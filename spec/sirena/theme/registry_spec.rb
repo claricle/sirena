@@ -64,6 +64,17 @@ RSpec.describe Sirena::Theme::Registry do
   end
 
   describe ".load_builtin_themes" do
+    it "does nothing when the built-in directory is missing" do
+      result = begin
+        allow(Dir).to receive(:exist?).and_return(false)
+        described_class.load_builtin_themes
+      ensure
+        allow(Dir).to receive(:exist?).and_call_original
+      end
+
+      expect(result).to be_nil
+    end
+
     it "loads built-in themes" do
       described_class.load_builtin_themes
 

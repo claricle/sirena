@@ -256,13 +256,6 @@ Performance/MapCompact:
     - 'tasks/benchmark.rake'
     - 'spec/sirena/renderer/git_graph_spec.rb'
 
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Performance/RedundantBlockCall:
-  Exclude:
-    - 'lib/sirena/renderer/c4.rb'
-    - 'spec/sirena/cli_spec.rb'
-
 # Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowRegexpMatch.
@@ -348,21 +341,6 @@ RSpec/SpecFilePathFormat:
 Style/CaseLikeIf:
   Exclude:
     - 'lib/sirena/parser/builders/requirement.rb'
-
-# Offense count: 6
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle, EnforcedStyleForClasses, EnforcedStyleForModules.
-# SupportedStyles: nested, compact
-# SupportedStylesForClasses: ~, nested, compact
-# SupportedStylesForModules: ~, nested, compact
-Style/ClassAndModuleChildren:
-  Exclude:
-    - 'lib/sirena/theme/color_palette.rb'
-    - 'lib/sirena/theme/effect_styles.rb'
-    - 'lib/sirena/theme/registry.rb'
-    - 'lib/sirena/theme/shape_styles.rb'
-    - 'lib/sirena/theme/spacing_config.rb'
-    - 'lib/sirena/theme/typography.rb'
 
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).

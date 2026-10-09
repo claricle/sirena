@@ -97,7 +97,7 @@ module Sirena
 
       def traverse_children(children, &block)
         children.each do |child|
-          block.call(child)
+          yield child
           traverse_children(child[:children], &block) if child[:children]
         end
       end
