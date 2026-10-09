@@ -47,7 +47,9 @@ module SpecSupport
 
       def next_command(previous)
         return @tokens.shift if @tokens.first.match?(LETTER)
-        raise ArgumentError, "path data starts without a command" unless previous
+        unless previous
+          raise ArgumentError, "path data starts without a command"
+        end
 
         repeatable!(previous)
       end

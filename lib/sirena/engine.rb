@@ -42,17 +42,14 @@ module Sirena
     #   date.
     # @param notation [Symbol, String, nil] the notation to read sources
     #   with; nil lets each render pick one from its path and source
-    # @param layout_engine [Symbol] :grid (default) or :elk, which lays
-    #   flowcharts out with elkrb and raises for any other diagram type
     # @param logger [Logger, nil] destination for diagnostics. A host
     #   embedding Sirena and reading stdout as pure SVG cannot tolerate log
     #   lines landing on the same stream, so the default logs to $stderr
     #   instead; pass one in to redirect or format diagnostics your own way.
     # @raise [PipelineError] if `notation` is invalid or not registered
     def initialize(verbose: false, theme: nil, today: nil, logger: nil,
-                   notation: nil, layout_engine: :grid)
+                   notation: nil)
       @verbose = verbose
-      @layout_engine = checked_layout_engine(layout_engine)
       @notation_id = registered_id(notation)
       @theme = load_theme(theme)
       @today = today
@@ -82,6 +79,8 @@ module Sirena
     # @option options [Symbol, String, nil] :notation notation override
     # @option options [String, nil] :path where the source came from; its
     #   extension picks the notation when none is given
+    # @option options [Symbol] :layout_engine :grid (default) or :elk, which
+    #   lays flowcharts out with elkrb and raises for any other diagram type
     # @return [String] SVG XML string
     # @raise [PipelineError] if `notation` is invalid or not registered
     # @raise [DiagramTypeError] if diagram type cannot be detected
@@ -100,6 +99,8 @@ module Sirena
       # rake tasks that call it get the wall clock no matter what they pass,
       # silently — examples:generate rewrote its committed gantt SVG daily.
       today = options.key?(:today) ? options[:today] : @today
+      layout_engine =
+        checked_layout_engine(options.fetch(:layout_engine, :grid))
 
       log "Starting render pipeline..."
 
@@ -114,7 +115,8 @@ module Sirena
       )
       parsed = parse_source(notation, source)
 
-      graph = transform_diagram(parsed.diagram, parsed.transform, today, theme)
+      graph = transform_diagram(parsed.diagram, parsed.transform, today, theme,
+                                layout_engine)
       laid_out_graph = layout_graph(graph)
       svg_document = render_svg(laid_out_graph, parsed.renderer, theme)
 
@@ -203,11 +205,13 @@ module Sirena
     # @param transform_class [Class] layout class
     # @param today [Date, nil] reference date, or nil for the real date
     # @param theme [Theme] theme the layout may size text with
+    # @param layout_engine [Symbol] :grid or :elk
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
-    def transform_diagram(diagram, transform_class, today, theme)
+    def transform_diagram(diagram, transform_class, today, theme,
+                          layout_engine = :grid)
       log "Transforming diagram to graph..."
       layout = transform_class.new
-      choose_placement(layout)
+      choose_placement(layout, layout_engine)
       result = layout.call(diagram, theme: theme, today: today)
       log "Transform complete"
       result
@@ -219,14 +223,14 @@ module Sirena
       raise PipelineError, "Unknown layout_engine: #{name.inspect}"
     end
 
-    def choose_placement(layout)
-      return if @layout_engine == :grid
+    def choose_placement(layout, layout_engine)
+      return if layout_engine == :grid
 
       unless layout.respond_to?(:placement=)
         raise Layout::LayoutError,
               "layout_engine :elk is not available for #{layout.class}"
       end
-      layout.placement = @layout_engine
+      layout.placement = layout_engine
     end
 
     # Computes layout for the layout result.
