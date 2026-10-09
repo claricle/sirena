@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.ref_over--f0cb24bd16e0",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/ref_over.puml",
+  "test": "ref_over",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "f0cb24bd16e0a405e2ea7086d0f08415e43469cab8e972b9d58f187f93f33f4e",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

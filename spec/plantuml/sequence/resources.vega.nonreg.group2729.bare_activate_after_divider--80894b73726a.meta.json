@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2729.bare_activate_after_divider--80894b73726a",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2729/bare_activate_after_divider.puml",
+  "test": "bare_activate_after_divider",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "80894b73726a92b9d740fb119afe63064a30d11d2826ef000f19f4d3cec9a460",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

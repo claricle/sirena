@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.note_across_group.two_notes_across--9edd3c67e417",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/note_across_group/two_notes_across.puml",
+  "test": "two_notes_across",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "9edd3c67e417959fcdd294d7aed9fedaed7eb9b387d4e660499c90fb681587f6",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

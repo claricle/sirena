@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2903.left_to_right--8310bfc61aae",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2903/left_to_right.puml",
+  "test": "left_to_right",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "8310bfc61aae134bc00e6a466a106032eb068486d6e48215d1c8377d799f5519",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

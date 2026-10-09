@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2846.correct_code--c4f1bf12e099",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2846/correct_code.puml",
+  "test": "correct_code",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "c4f1bf12e09942a9f6b5f2de2e02292ee24c14d8962be832adce8c97947f289c",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

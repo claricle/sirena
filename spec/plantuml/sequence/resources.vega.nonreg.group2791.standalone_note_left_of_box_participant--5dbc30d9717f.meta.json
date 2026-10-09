@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.standalone_note_left_of_box_participant--5dbc30d9717f",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/standalone_note_left_of_box_participant.puml",
+  "test": "standalone_note_left_of_box_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "5dbc30d9717f67614f80b13aaeaba17d6c15e8fa290f9fd5c536679c178bcab2",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

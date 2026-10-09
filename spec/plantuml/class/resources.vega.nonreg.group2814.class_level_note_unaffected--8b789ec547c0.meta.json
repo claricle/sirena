@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2814.class_level_note_unaffected--8b789ec547c0",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2814/class_level_note_unaffected.puml",
+  "test": "class_level_note_unaffected",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "8b789ec547c09f36a01e7ad12b8294ca36400d2079a2b5d9040bf250ef944bf9",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

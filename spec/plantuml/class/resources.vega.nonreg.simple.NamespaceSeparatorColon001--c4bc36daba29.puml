@@ -1,0 +1,9 @@
+@startuml
+set namespaceSeparator :
+
+class "lib:class" {
+{field} field
+{static} {method} +method()
+}
+
+@enduml

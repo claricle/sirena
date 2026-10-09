@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.xmi.clazz.XMI0004_class--32636d47dbd7",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/xmi/clazz/XMI0004_class.puml",
+  "test": "XMI0004_class",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "32636d47dbd770240b307bfff3209a9865b5e5d5d7442802da33c48dd8146e7b",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

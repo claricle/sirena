@@ -1,0 +1,12 @@
+{
+  "id": "java.nonreg.simple.TeozTimelineIssues_0004_Test--bea0f11e448b",
+  "type": "sequence",
+  "upstream_path": "src/test/java/nonreg/simple/TeozTimelineIssues_0004_Test.java",
+  "test": "TeozTimelineIssues_0004_Test",
+  "origin": "java-text-block",
+  "line_number": 2,
+  "source_sha256": "bea0f11e448bde8770f9f8d5a24c165d6b1811501e1ba5e41428691bb14c37c2",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

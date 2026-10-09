@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.note_across_group.participant_declared_after_group--fb338498bd7e",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/note_across_group/participant_declared_after_group.puml",
+  "test": "participant_declared_after_group",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "fb338498bd7ec2d3e55dec39df112e9e34e1e65738017514d2da5e16e92e8b3e",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

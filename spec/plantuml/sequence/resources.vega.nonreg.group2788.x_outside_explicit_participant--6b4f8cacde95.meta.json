@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.x_outside_explicit_participant--6b4f8cacde95",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/x_outside_explicit_participant.puml",
+  "test": "x_outside_explicit_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "6b4f8cacde95685c4fede621ebe1b917cb63b9ebea96793c81ba401c2ace0834",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

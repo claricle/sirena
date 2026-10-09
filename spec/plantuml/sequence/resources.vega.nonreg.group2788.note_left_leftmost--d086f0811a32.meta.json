@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.note_left_leftmost--d086f0811a32",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/note_left_leftmost.puml",
+  "test": "note_left_leftmost",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "d086f0811a321d3457ad8869c183945cbe2d7449e8fe4038c4e228ca4f7bfd12",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

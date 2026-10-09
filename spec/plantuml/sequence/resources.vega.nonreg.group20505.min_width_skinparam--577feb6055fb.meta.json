@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group20505.min_width_skinparam--577feb6055fb",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group20505/min_width_skinparam.puml",
+  "test": "min_width_skinparam",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "577feb6055fb47eb13d25f3b18395763a53d471867c0182086653311bb82d4a7",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

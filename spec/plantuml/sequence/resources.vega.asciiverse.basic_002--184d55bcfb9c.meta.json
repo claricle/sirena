@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.basic_002--184d55bcfb9c",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/basic_002.puml",
+  "test": "basic_002",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "184d55bcfb9c20e2bc786b5bcb8d2b52d0896e99cdf55c3c071710d8f7dc7c4d",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

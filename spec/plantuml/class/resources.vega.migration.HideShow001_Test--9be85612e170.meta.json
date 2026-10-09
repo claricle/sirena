@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.migration.HideShow001_Test--9be85612e170",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/migration/HideShow001_Test.puml",
+  "test": "HideShow001_Test",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "9be85612e170251ef164a1660f40406528943c50dc6a2ed6605b188c168cceb5",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

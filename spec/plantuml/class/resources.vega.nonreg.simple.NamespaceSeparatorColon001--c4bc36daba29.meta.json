@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.simple.NamespaceSeparatorColon001--c4bc36daba29",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/simple/NamespaceSeparatorColon001.puml",
+  "test": "NamespaceSeparatorColon001",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "c4bc36daba294917b324a9bed18677dd06606f5ad4ab1727f650347a3ec32c36",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

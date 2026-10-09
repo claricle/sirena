@@ -1,0 +1,11 @@
+@startuml
+participant a
+participant b
+participant c
+participant d
+group test
+a -> b: 1
+c -> c: 2
+end
+d -> d: next
+@enduml

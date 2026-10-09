@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2729.destroy_after_divider--559333843e38",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2729/destroy_after_divider.puml",
+  "test": "destroy_after_divider",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "559333843e38d32b131d4885a7bd25987e88c1e61387effb327f32322b08f883",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.leftmsg_003--990470abe6d9",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/leftmsg_003.puml",
+  "test": "leftmsg_003",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "990470abe6d99d5c949bdbdf87a5055bbff5fc5cea8e8931bfdf400eac9f6a37",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2904.role_tail_only--c95e6006dcac",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2904/role_tail_only.puml",
+  "test": "role_tail_only",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "c95e6006dcac8cca52ef3e0d0816e9617cd0e321c0f2ee149687af9ffc664d4f",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

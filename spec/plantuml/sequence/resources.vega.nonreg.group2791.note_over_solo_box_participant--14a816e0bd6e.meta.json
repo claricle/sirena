@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.note_over_solo_box_participant--14a816e0bd6e",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/note_over_solo_box_participant.puml",
+  "test": "note_over_solo_box_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "14a816e0bd6e9095c658e53d4a803b9c95ae23d05edbbd4ed2686be621d41a62",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

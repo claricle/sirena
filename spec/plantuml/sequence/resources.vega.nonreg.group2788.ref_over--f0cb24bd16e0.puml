@@ -1,0 +1,8 @@
+@startuml
+x -> x: start
+group test
+a -> b: 1
+ref over b, c: a reference spanning b and c
+end
+d -> d: next
+@enduml

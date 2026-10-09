@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.self_001--da4311bd2115",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/self_001.puml",
+  "test": "self_001",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "da4311bd21159ef36a602b03c4a808091c50a08000a43979176c7f2feab1bf47",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

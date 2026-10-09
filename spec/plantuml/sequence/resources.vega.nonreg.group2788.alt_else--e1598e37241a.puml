@@ -1,0 +1,9 @@
+@startuml
+x -> x: start
+alt cond
+a -> b: 1
+else other
+c -> c: 2
+end
+d -> d: next
+@enduml

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2814.field_and_method_note--dad15be25c38",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2814/field_and_method_note.puml",
+  "test": "field_and_method_note",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "dad15be25c38f258238a944a40e7090694d129faf907670e5b4846f9e47eb2d3",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}
