@@ -165,4 +165,23 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(divider.texts.first.content).to eq("Phase")
     end
   end
+
+  describe "activation bars" do
+    it "spans from the activating arrow to the deactivating one" do
+      bar = scene_of("A -> B ++", "B -> A --").bars.first
+
+      expect(bar.height).to eq(40.0)
+    end
+
+    it "closes a bar still open at the end of the diagram" do
+      expect(scene_of("A -> B", "activate B").bars.size).to eq(1)
+    end
+
+    it "shifts a nested bar right of the outer one" do
+      scene = scene_of("A -> B ++", "A -> B ++", "B -> A --", "B -> A --")
+      xs = scene.bars.map(&:x)
+
+      expect(xs.uniq.size).to eq(2)
+    end
+  end
 end

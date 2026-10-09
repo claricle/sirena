@@ -21,6 +21,8 @@ module PlantUmlSequenceCorpus
     1a2e8a0dbc73 0742b0602928 9efe4ddda292 b0355d4c2434 9d48b2180ff0
     5dbc30d9717f f121a37a9290 9617d3aa3c9f fb338498bd7e 4965c575d64a
     9edd3c67e417 671c16bf124d 8f71f44c46ac b74549f2f6be
+    3d52db0edecd 54dfdd51ac5d 62b7d8792525 7624adcaae49 80894b73726a
+    846af1d12917 920d4bcaa3e9 d783321e2c62
   ].freeze
 
   def case_named(suffix)
@@ -35,6 +37,10 @@ module PlantUmlSequenceCorpus
     Dir.glob(File.join(DIR, "*.puml")).reject do |path|
       RENDERED.any? { |suffix| path.end_with?("--#{suffix}.puml") }
     end
+  end
+
+  def rect_count(svg)
+    REXML::XPath.match(REXML::Document.new(svg), "//rect").size
   end
 
   def refusal(path)
@@ -66,6 +72,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     svg = Sirena.render(source_of(name), notation: :plantuml)
 
     expect(REXML::XPath.match(REXML::Document.new(svg), "//line").size).to eq(2)
+  end
+
+  it "draws the activation bar of a rendered case" do
+    source = source_of("7624adcaae49")
+    counts = [source, source.gsub(/^(de)?activate .*\n/, "")].map do |text|
+      rect_count(Sirena.render(text, notation: :plantuml))
+    end
+
+    expect(counts.first - counts.last).to eq(1)
   end
 
   it "refuses every other case instead of rendering part of it" do
