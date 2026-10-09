@@ -323,6 +323,9 @@ RSpec.describe Sirena::Renderer::Sequence do
     let(:source) do
       "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: hello\n"
     end
+    let(:decorated_digest) do
+      "c275d92a7bc0aec7a7b1deffcbd3fa399b16b96c381975792a47a7555928919f"
+    end
 
     it "emits the font sizes resolved by the injected theme" do
       xml = Sirena.render(source, theme: "high_contrast")
@@ -339,79 +342,104 @@ RSpec.describe Sirena::Renderer::Sequence do
                   "deactivate A\n"
 
       expect(Digest::SHA256.hexdigest(Sirena.render(decorated)))
-        .to eq("c275d92a7bc0aec7a7b1deffcbd3fa399b16b96c381975792a47a7555928919f")
+        .to eq(decorated_digest)
     end
 
-    it "preserves the released protected hook names and arities" do
-      expected = {
-        calculate_width: 1, calculate_height: 1,
-        calculate_participant_positions: 1, render_participants: 3,
-        render_participant: 3, render_participant_box: 4, render_actor: 4,
-        render_lifelines: 3, render_messages: 3, render_message: 4,
-        render_arrow: 6, render_filled_arrowhead: 5,
-        render_open_arrowhead: 5, render_cross: 3,
-        render_message_label: 5, render_notes: 3
-      }
-      actual = expected.to_h do |name, _arity|
-        method = described_class.instance_method(name)
-        [name, [described_class.protected_method_defined?(name), method.arity]]
+    describe "released protected hooks" do
+      let(:expected_hook_arities) do
+        {
+          calculate_width: 1, calculate_height: 1,
+          calculate_participant_positions: 1, render_participants: 3,
+          render_participant: 3, render_participant_box: 4, render_actor: 4,
+          render_lifelines: 3, render_messages: 3, render_message: 4,
+          render_arrow: 6, render_filled_arrowhead: 5,
+          render_open_arrowhead: 5, render_cross: 3,
+          render_message_label: 5, render_notes: 3
+        }
+      end
+      let(:actual_hook_arities) do
+        expected_hook_arities.to_h do |name, _arity|
+          method = described_class.instance_method(name)
+          protected = described_class.protected_method_defined?(name)
+          [name, [protected, method.arity]]
+        end
       end
 
-      expect(actual).to eq(expected.transform_values { |arity| [true, arity] })
+      it "preserves names and arities" do
+        expected = expected_hook_arities.transform_values do |arity|
+          [true, arity]
+        end
+
+        expect(actual_hook_arities).to eq(expected)
+      end
     end
 
-    it "keeps the graph-based compatibility hooks observable" do
-      graph = Sirena::Layout::Sequence.new.build_graph(
-        Sirena::Parser::Sequence.new.parse(source),
-      )
-      renderer = described_class.new
-      positions = renderer.send(
-        :calculate_participant_positions, graph[:children]
-      )
-      svg = renderer.send(:create_document, graph)
-      renderer.send(:render_lifelines, positions, 1, svg)
-      renderer.send(:render_messages, graph, positions, svg)
-      renderer.send(:render_participants, graph[:children], positions, svg)
+    describe "graph-based compatibility" do
+      subject(:compatibility_xml) do
+        graph = Sirena::Layout::Sequence.new.build_graph(
+          Sirena::Parser::Sequence.new.parse(source),
+        )
+        renderer = described_class.new
+        positions = renderer.send(
+          :calculate_participant_positions, graph[:children]
+        )
+        svg = renderer.send(:create_document, graph)
+        renderer.send(:render_lifelines, positions, 1, svg)
+        renderer.send(:render_messages, graph, positions, svg)
+        renderer.send(:render_participants, graph[:children], positions, svg)
+        svg.to_xml
+      end
 
-      expect(svg.to_xml).to eq(Sirena.render(source))
+      it "keeps the hooks observable" do
+        expect(compatibility_xml).to eq(Sirena.render(source))
+      end
     end
 
-    it "routes public rendering through released override hooks" do
-      subclass = Class.new(described_class) do
-        attr_reader :calls
+    describe "subclass overrides" do
+      subject(:hook_evidence) do
+        scene = Sirena::Layout::Sequence.new.call(
+          Sirena::Parser::Sequence.new.parse(source),
+        )
+        renderer = hook_renderer_class.new
+        svg = renderer.render(scene)
+        [renderer.calls, svg.width, scene.width]
+      end
 
-        def initialize(...)
-          super
-          @calls = []
-        end
+      let(:hook_renderer_class) do
+        Class.new(described_class) do
+          attr_reader :calls
 
-        protected
+          def initialize(...)
+            super
+            @calls = []
+          end
 
-        def calculate_width(graph)
-          @calls << :calculate_width
-          super + 7
-        end
+          protected
 
-        def render_messages(graph, positions, svg)
-          @calls << :render_messages
-          super
-        end
+          def calculate_width(graph)
+            @calls << :calculate_width
+            super + 7
+          end
 
-        def render_participants(participants, positions, svg)
-          @calls << :render_participants
-          super
+          def render_messages(graph, positions, svg)
+            @calls << :render_messages
+            super
+          end
+
+          def render_participants(participants, positions, svg)
+            @calls << :render_participants
+            super
+          end
         end
       end
-      scene = Sirena::Layout::Sequence.new.call(
-        Sirena::Parser::Sequence.new.parse(source),
-      )
-      renderer = subclass.new
 
-      svg = renderer.render(scene)
+      it "routes public rendering through the released chain" do
+        calls, width, scene_width = hook_evidence
 
-      expect([renderer.calls, svg.width])
-        .to eq([%i[calculate_width render_messages render_participants],
-                scene.width + 7])
+        expect([calls, width])
+          .to eq([%i[calculate_width render_messages render_participants],
+                  scene_width + 7])
+      end
     end
 
     it "keeps the released actor hook independent of participant data" do
