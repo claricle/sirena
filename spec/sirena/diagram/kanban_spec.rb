@@ -20,4 +20,83 @@ RSpec.describe Sirena::Diagram::KanbanColumn do
         .to contain_exactly(:id, :title, :icon, :classes, :cards)
     end
   end
+
+  describe Sirena::Diagram::KanbanCard do
+    subject(:card) { described_class.new(id: "card", text: "Do the work") }
+
+    it "is valid with an identifier and text" do
+      expect(card.valid?).to be(true)
+    end
+
+    it "is invalid with a nil identifier" do
+      card.id = nil
+      expect(card.valid?).to be(false)
+    end
+
+    it "is invalid with an empty identifier" do
+      card.id = ""
+      expect(card.valid?).to be(false)
+    end
+
+    it "is invalid with nil text" do
+      card.text = nil
+      expect(card.valid?).to be(false)
+    end
+
+    it "is invalid with empty text" do
+      card.text = ""
+      expect(card.valid?).to be(false)
+    end
+  end
+
+  describe Sirena::Diagram::KanbanColumn do
+    subject(:column) { described_class.new(id: "todo", title: "Todo") }
+
+    it "is valid with an identifier and title" do
+      expect(column.valid?).to be(true)
+    end
+
+    it "is invalid with a nil identifier" do
+      column.id = nil
+      expect(column.valid?).to be(false)
+    end
+
+    it "is invalid with an empty identifier" do
+      column.id = ""
+      expect(column.valid?).to be(false)
+    end
+
+    it "is invalid with a nil title" do
+      column.title = nil
+      expect(column.valid?).to be(false)
+    end
+
+    it "is invalid with an empty title" do
+      column.title = ""
+      expect(column.valid?).to be(false)
+    end
+
+    it "is invalid when a child card is invalid" do
+      column.add_card(Sirena::Diagram::KanbanCard.new(id: "card", text: ""))
+      expect(column.valid?).to be(false)
+    end
+  end
+
+  describe Sirena::Diagram::Kanban do
+    subject(:board) { described_class.new }
+
+    it "is valid when empty" do
+      expect(board.valid?).to be(true)
+    end
+
+    it "is invalid when a column is invalid" do
+      board.add_column(Sirena::Diagram::KanbanColumn.new(id: "", title: "Todo"))
+      expect(board.valid?).to be(false)
+    end
+
+    it "is valid when every column is valid" do
+      board.add_column(Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo"))
+      expect(board.valid?).to be(true)
+    end
+  end
 end
