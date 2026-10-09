@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../diagram/generic_text"
 
 module Sirena
   module Renderer
@@ -213,7 +214,7 @@ module Sirena
         text = Svg::Text.new.tap do |t|
           t.x = x + width / 2
           t.y = y
-          t.content = "<<#{stereotype}>>"
+          t.content = "«#{stereotype}»"
           t.fill = "#000000"
           t.font_family = "Arial, sans-serif"
           t.font_size = STEREOTYPE_FONT_SIZE.to_s
@@ -227,7 +228,7 @@ module Sirena
         text = Svg::Text.new.tap do |t|
           t.x = x + width / 2
           t.y = y
-          t.content = name
+          t.content = Diagram::GenericText.display(name)
           t.fill = "#000000"
           t.font_family = "Arial, sans-serif"
           t.font_size = CLASS_NAME_FONT_SIZE.to_s
@@ -242,15 +243,10 @@ module Sirena
         current_y = y
 
         attributes.each do |attr|
-          visibility = visibility_symbol(attr[:visibility])
-          attr_text = "#{visibility} #{attr[:name]}"
-          attr_text += ": #{attr[:type]}" if attr[:type] &&
-                                             !attr[:type].empty?
-
           text = Svg::Text.new.tap do |t|
             t.x = x + BOX_PADDING
             t.y = current_y
-            t.content = attr_text
+            t.content = attr[:text]
             t.fill = "#000000"
             t.font_family = "monospace"
             t.font_size = MEMBER_FONT_SIZE.to_s
@@ -266,15 +262,10 @@ module Sirena
         current_y = y
 
         methods.each do |method|
-          visibility = visibility_symbol(method[:visibility])
-          method_text = "#{visibility} #{method[:name]}"
-          method_text += "(#{method[:parameters]})" if method[:parameters]
-          method_text += ": #{method[:return_type]}" if method[:return_type]
-
           text = Svg::Text.new.tap do |t|
             t.x = x + BOX_PADDING
             t.y = current_y
-            t.content = method_text
+            t.content = method[:text]
             t.fill = "#000000"
             t.font_family = "monospace"
             t.font_size = MEMBER_FONT_SIZE.to_s
@@ -284,16 +275,6 @@ module Sirena
         end
 
         current_y
-      end
-
-      def visibility_symbol(visibility)
-        case visibility
-        when "public" then "+"
-        when "private" then "-"
-        when "protected" then "#"
-        when "package" then "~"
-        else "+"
-        end
       end
 
       def render_relationships(graph, svg)

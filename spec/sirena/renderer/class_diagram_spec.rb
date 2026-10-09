@@ -102,11 +102,12 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
               name: "Animal",
               stereotype: nil,
               attributes: [
-                { name: "age", type: "int", visibility: "protected" },
+                { name: "age", type: "int", visibility: "protected",
+                  text: "#age: int" },
               ],
               methods: [
                 { name: "breathe", parameters: nil, return_type: nil,
-                  visibility: "public" },
+                  visibility: "public", text: "+breathe" },
               ],
             },
           },
@@ -123,7 +124,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
               attributes: [],
               methods: [
                 { name: "bark", parameters: nil, return_type: nil,
-                  visibility: "public" },
+                  visibility: "public", text: "+bark" },
               ],
             },
           },
@@ -229,7 +230,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      stereotype_texts = texts.map { |t| Array(t.content).join }.grep(/<<.*>>/)
+      stereotype_texts = texts.map { |t| Array(t.content).join }.grep(/«.*»/)
       expect(stereotype_texts).not_to be_empty
       expect(stereotype_texts.first).to include("interface")
     end

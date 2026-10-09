@@ -167,12 +167,12 @@ module Sirena
         parts << attribute.key_type if attribute.key_type &&
                                        !attribute.key_type.empty?
 
-        # Add attribute name
-        parts << attribute.name
-
-        # Add type if present
+        # Add type if present; it precedes the name, as in mmdc
         parts << attribute.attribute_type if attribute.attribute_type &&
                                              !attribute.attribute_type.empty?
+
+        # Add attribute name
+        parts << attribute.name
 
         # Add the trailing quoted comment if present, so the box is sized
         # wide enough for it -- otherwise the renderer would draw text past

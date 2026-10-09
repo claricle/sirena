@@ -192,10 +192,10 @@ RSpec.describe Sirena::Layout::ClassDiagram do
   describe "member row text" do
     name = "i" * 40
     {
-      "a zero-argument method" => ["+#{name}()", "+ #{name}()"],
+      "a zero-argument method" => ["+#{name}()", "+#{name}()"],
       "a method with a return type" =>
-        ["+#{name}() String", "+ #{name}(): String"],
-      "an attribute with a type" => ["+String #{name}", "+ #{name}: String"],
+        ["+#{name}() String", "+#{name}() : String"],
+      "an attribute with a type" => ["+String #{name}", "+String #{name}"],
     }.each do |label, (row, drawn)|
       context "with #{label}" do
         let(:source) { "classDiagram\nclass N {\n  #{row}\n}\n" }
