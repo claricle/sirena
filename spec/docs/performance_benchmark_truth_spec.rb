@@ -3,7 +3,7 @@
 require "spec_helper"
 require "yaml"
 
-module PerformanceBenchmarkTruthSpec
+module PerformanceBenchmarkTruth
   ROOT = File.expand_path("../..", __dir__)
   REPORT = File.join(ROOT, "docs/PERFORMANCE_BENCHMARK.adoc")
   PAGES = %w[
@@ -22,51 +22,70 @@ module PerformanceBenchmarkTruthSpec
   UNATTRIBUTED_FIGURES = [
     "~200MB", "~100MB", "~30MB", "~2s (browser)", "~1s (JVM)", "<50ms"
   ].freeze
+  EXPECTED_METADATA = {
+    "layout" => "default",
+    "title" => "Performance Benchmark",
+    "permalink" => "/performance-benchmark/",
+  }.freeze
 
   def self.metadata(source)
     match = source.match(/\A---\n(?<yaml>.*?)^---\n/m)
     match && YAML.safe_load(match[:yaml])
   end
+
+  def self.report
+    File.read(REPORT)
+  end
+
+  def self.missing_links
+    PAGES.reject { |path| File.read(path).include?("performance-benchmark/") }
+  end
+
+  def self.stale_claims
+    PAGES.product(STALE_CLAIMS).filter_map do |path, claim|
+      File.basename(path) if File.read(path).match?(claim)
+    end
+  end
+
+  def self.surviving_unattributed_figures
+    pages = PAGES.map { |path| File.read(path) }.join("\n")
+    UNATTRIBUTED_FIGURES.select { |figure| pages.include?(figure) }
+  end
 end
 
-RSpec.describe PerformanceBenchmarkTruthSpec do
-  it "publishes the dated benchmark report at the route used by the docs" do
-    report = File.read(described_class::REPORT)
+RSpec.describe PerformanceBenchmarkTruth do
+  it "publishes the benchmark report at the route used by the docs" do
+    expect(described_class.metadata(described_class.report))
+      .to include(described_class::EXPECTED_METADATA)
+  end
 
-    expect(described_class.metadata(report)).to include(
-      "layout" => "default",
-      "title" => "Performance Benchmark",
-      "permalink" => "/performance-benchmark/",
+  it "dates the recorded benchmark run" do
+    expect(described_class.report).to include("*Benchmark Date:* 2026-09-24")
+  end
+
+  it "documents both runnable benchmark tasks" do
+    expect(described_class.report).to include(
+      "bundle exec rake benchmark:compare",
+      "bundle exec rake benchmark:quick"
     )
-    expect(report).to include("*Benchmark Date:* 2026-09-24")
-    expect(report).to include("bundle exec rake benchmark:compare")
-    expect(report).to include("bundle exec rake benchmark:quick")
-    expect(report).to include("single-machine measurements from one run")
-    expect(report).to include("Memory usage was not measured in this run")
+  end
+
+  it "scopes the results to their measured evidence" do
+    expect(described_class.report).to include(
+      "single-machine measurements from one run",
+      "Memory usage was not measured in this run"
+    )
   end
 
   it "links every corrected user page to the scoped report" do
-    missing_links = described_class::PAGES.reject do |path|
-      File.read(path).include?("performance-benchmark/")
-    end
-
-    expect(missing_links).to eq([])
+    expect(described_class.missing_links).to eq([])
   end
 
-  it "removes the obsolete claims that the report and runnable tasks do not exist" do
-    stale = described_class::PAGES.product(described_class::STALE_CLAIMS).filter_map do |path, claim|
-      File.basename(path) if File.read(path).match?(claim)
-    end
-
-    expect(stale).to eq([])
+  it "removes claims that the report and runnable tasks do not exist" do
+    expect(described_class.stale_claims).to eq([])
   end
 
-  it "removes timing and memory figures the recorded benchmark did not measure" do
-    pages = described_class::PAGES.map { |path| File.read(path) }.join("\n")
-    surviving = described_class::UNATTRIBUTED_FIGURES.select do |figure|
-      pages.include?(figure)
-    end
-
-    expect(surviving).to eq([])
+  it "removes figures the recorded benchmark did not measure" do
+    expect(described_class.surviving_unattributed_figures).to eq([])
   end
 end

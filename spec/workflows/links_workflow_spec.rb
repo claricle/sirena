@@ -3,7 +3,7 @@
 require "spec_helper"
 require "yaml"
 
-module LinksWorkflowSpec
+module LinksWorkflow
   ROOT = File.expand_path("../..", __dir__)
   CONFIG = File.join(ROOT, "docs/lychee.toml")
   SEED_DIR = File.join(ROOT, "docs/_lychee_seeds")
@@ -34,66 +34,86 @@ module LinksWorkflowSpec
   def self.step(name)
     steps.find { |candidate| candidate["name"] == name }
   end
-end
 
-RSpec.describe LinksWorkflowSpec do
-  it "rejects 403 and 429 while checking fragments and retaining 503" do
-    config = File.read(described_class::CONFIG)
-    facts = [
+  def self.config_facts
+    config = File.read(CONFIG)
+    [
       config.include?("accept = [200, 204, 301, 302, 307, 308, 503]"),
       config.include?("include_fragments = true"),
       !config.include?("check_anchors"),
       !config.include?("follow_redirects"),
     ]
-
-    expect(facts).to eq([true, true, true, true])
   end
 
-  it "keeps four isolated fixtures with their intended broken targets" do
-    targets = described_class::SEEDS.to_h do |name, expected|
-      source = File.read(File.join(described_class::SEED_DIR, name))
+  def self.seed_targets
+    SEEDS.to_h do |name, expected|
+      source = File.read(File.join(SEED_DIR, name))
       [name, source.include?(%[href="#{expected}"])]
     end
-
-    expect(targets).to eq(described_class::SEEDS.transform_values { true })
   end
 
-  it "runs every seed as an expected failure and asserts its outcome" do
-    seed_steps = described_class.steps.select { |step| step["id"]&.start_with?("seed_") }
-    assertion = described_class.step("Assert seeded failures")
-    all_fail = seed_steps.all? do |step|
-      step["continue-on-error"] == true && step.dig("with", "fail") == true
-    end
-    status_proofs = %w[403 429].all? do |status|
-      assertion["run"].include?("grep -Eq '(^|[^0-9])#{status}([^0-9]|$)' link-seed-#{status}.md")
-    end
-    facts = [
-      seed_steps.map { |step| step["id"] }.sort,
-      all_fail,
-      assertion["if"],
-      assertion["env"],
-      status_proofs,
-    ]
-
-    expect(facts).to eq(
-      [
-        %w[seed_403 seed_429 seed_fragment seed_relative],
-        true,
-        "always()",
-        described_class::OUTCOMES,
-        true,
-      ],
-    )
+  def self.seed_steps
+    steps.select { |candidate| candidate["id"]&.start_with?("seed_") }
   end
 
-  it "still runs the ordinary built-site link check as a hard failure" do
-    ordinary = described_class.step("Link Checker")
-    facts = [
+  def self.seed_failures_enabled?
+    seed_steps.all? do |seed_step|
+      seed_step["continue-on-error"] == true &&
+        seed_step.dig("with", "fail") == true
+    end
+  end
+
+  def self.status_proof?(status)
+    pattern = "grep -Eq '(^|[^0-9])#{status}([^0-9]|$)' " \
+              "link-seed-#{status}.md"
+    step("Assert seeded failures")["run"].include?(pattern)
+  end
+
+  def self.ordinary_check_facts
+    ordinary = step("Link Checker")
+    [
       ordinary["continue-on-error"],
       ordinary.dig("with", "fail"),
       ordinary.dig("with", "args").include?("'docs/_site/**/*.html'"),
     ]
+  end
+end
 
-    expect(facts).to eq([nil, true, true])
+RSpec.describe LinksWorkflow do
+  it "rejects 403 and 429 while checking fragments and retaining 503" do
+    expect(described_class.config_facts).to eq([true, true, true, true])
+  end
+
+  it "keeps four isolated fixtures with their intended broken targets" do
+    expected = described_class::SEEDS.transform_values { true }
+
+    expect(described_class.seed_targets).to eq(expected)
+  end
+
+  it "runs all four isolated seeds" do
+    ids = described_class.seed_steps.map { |step| step["id"] }.sort
+
+    expect(ids).to eq(%w[seed_403 seed_429 seed_fragment seed_relative])
+  end
+
+  it "configures every seed as an expected failure" do
+    expect(described_class.seed_failures_enabled?).to be(true)
+  end
+
+  it "asserts every seeded outcome even after expected failures" do
+    assertion = described_class.step("Assert seeded failures")
+    facts = [assertion["if"], assertion["env"]]
+
+    expect(facts).to eq(["always()", described_class::OUTCOMES])
+  end
+
+  %w[403 429].each do |status|
+    it "proves the seeded #{status} response" do
+      expect(described_class.status_proof?(status)).to be(true)
+    end
+  end
+
+  it "still runs the ordinary built-site link check as a hard failure" do
+    expect(described_class.ordinary_check_facts).to eq([nil, true, true])
   end
 end
