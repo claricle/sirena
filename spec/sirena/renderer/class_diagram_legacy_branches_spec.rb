@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::ClassDiagram, "legacy graph branches" do
+RSpec.describe Sirena::Renderer::ClassDiagram, "#render legacy graph branches" do
   let(:renderer) { described_class.new }
   let(:nodes) do
     [
@@ -23,7 +23,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram, "legacy graph branches" do
           { text: "owns" },
           { text: "one", position: "source" },
           { text: "many", position: "target" },
-        ],
+        ]
       },
     ]
   end
@@ -40,7 +40,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram, "legacy graph branches" do
     edges = relationship_types.map do |type|
       {
         id: type, sources: ["A"], targets: ["B"],
-        metadata: { relationship_type: type },
+        metadata: { relationship_type: type }
       }
     end
     svg = render_graph(children: nodes, edges: edges)
@@ -48,8 +48,8 @@ RSpec.describe Sirena::Renderer::ClassDiagram, "legacy graph branches" do
       group = relationship(svg, type)
       line = group.children.grep(Sirena::Svg::Line).first
       polygon = group.children.grep(Sirena::Svg::Polygon).first
-      [type, [line.stroke_dasharray, polygon&.points&.split&.length,
-              polygon&.fill]]
+      point_count = polygon ? polygon.points.split.length : nil
+      [type, [line.stroke_dasharray, point_count, polygon&.fill]]
     end
   end
 
