@@ -70,7 +70,7 @@ module Sirena
 
         def close_note
           head, _number, lines = @note
-          @notes << Note.new(**head, lines: lines.freeze)
+          @notes << Note.new(head, lines: lines.freeze)
           @note = nil
         end
 
@@ -117,18 +117,22 @@ module Sirena
           refuse_sequence_diagram
           @junctions.each { |entry| refuse_unrelated_junction(*entry) }
 
-          classes = @kinds.map do |name, kind|
-            body = @bodies.fetch(name).dup.freeze
-            Klass.new(name: name, kind: kind, body: body,
-                      **@extras.fetch(name, {}))
-          end
-          Diagram.new(classes: classes.freeze, relations: @relations.dup.freeze,
+          Diagram.new(classes: build_classes.freeze,
+                      relations: @relations.dup.freeze,
                       junctions: @junctions.map(&:first).freeze,
                       directives: @directives.dup.freeze,
                       notes: @notes.dup.freeze)
         end
 
         private
+
+        def build_classes
+          @kinds.map do |name, kind|
+            body = @bodies.fetch(name).dup.freeze
+            Klass.new(name: name, kind: kind, body: body,
+                      **@extras.fetch(name, {}))
+          end
+        end
 
         def refuse_sequence_diagram
           return unless @sequence_arrow && !@class_evidence

@@ -26,22 +26,19 @@ module Sirena
 
           attr_reader :arrows, :notes, :fragments, :dividers, :left, :right, :y
 
+          # @param lifelines [Hash{String => Float}] centre of each
+          #   participant's lifeline, in participant order
           # @param measure [#call] text width in pixels
           # @param bounds [Array<Float>] left and right edge of the heads
-          def initialize(centers:, ids:, measure:, font_size:, bounds:, y:)
-            @centers = centers
-            @ids = ids
+          # @param start_y [Float] where the first row goes
+          def initialize(lifelines:, measure:, font_size:, bounds:, start_y:)
+            @ids = lifelines.keys
+            @centers = lifelines.values
             @measure = measure
             @font_size = font_size
             @bounds = bounds
-            @y = y
-            @arrows = []
-            @notes = []
-            @fragments = []
-            @dividers = []
-            @blocks = []
-            @left = Float::INFINITY
-            @right = -Float::INFINITY
+            @y = start_y
+            start_empty
           end
 
           def run(items)
@@ -54,6 +51,16 @@ module Sirena
           end
 
           private
+
+          def start_empty
+            @arrows = []
+            @notes = []
+            @fragments = []
+            @dividers = []
+            @blocks = []
+            @left = Float::INFINITY
+            @right = -Float::INFINITY
+          end
 
           def visit(item, previous)
             case item
@@ -68,9 +75,13 @@ module Sirena
             @last_y = @y
             from, to = [message.from, message.to].map { |id| centre(id) }
             @arrows << arrow_record(message, arrow_for(message, from, to))
-            low, high = [from, to].minmax
-            touch(low, high + (message.self_message? ? reach(message) : 0))
+            touch(*extent(message, from, to))
             @y += message.self_message? ? ROW * 1.5 : ROW
+          end
+
+          def extent(message, from, to)
+            low, high = [from, to].minmax
+            [low, high + (message.self_message? ? reach(message) : 0)]
           end
 
           def arrow_for(message, from, to)
@@ -125,8 +136,8 @@ module Sirena
             [text(message.label, x, y, "message_label", anchor)]
           end
 
-          def text(content, x, y, role, anchor = "middle")
-            PlantUML::Scene::Text.new(content: content, x: x, y: y,
+          def text(content, at_x, at_y, role, anchor = "middle")
+            PlantUML::Scene::Text.new(content: content, x: at_x, y: at_y,
                                       role: role, anchor: anchor)
           end
 
@@ -140,15 +151,18 @@ module Sirena
           end
 
           def note(note, previous)
-            span = NoteGeometry.span(note, previous, @ids)
-            natural = NoteGeometry.natural_width(note, @measure)
-            x, width = NoteGeometry.box(note, span.map { |i| @centers[i] },
-                                        natural)
+            x, width = note_box(note, previous)
             height = NoteGeometry.height(note, @font_size)
             top = note.attached? ? @last_y - height + 10 : @y - 20
             @notes << note_record(note, [x, top, width, height])
             touch(x, x + width)
             @y = [@y, top + height + 22].max
+          end
+
+          def note_box(note, previous)
+            span = NoteGeometry.span(note, previous, @ids)
+            natural = NoteGeometry.natural_width(note, @measure)
+            NoteGeometry.box(note, span.map { |i| @centers[i] }, natural)
           end
 
           def note_record(note, box)
@@ -160,11 +174,11 @@ module Sirena
             )
           end
 
-          def note_texts(note, x, top)
+          def note_texts(note, left, top)
             step = NoteGeometry.line_height(@font_size)
             note.lines.each_with_index.map do |line, index|
               baseline = top + 7 + (index * step) + @font_size
-              text(line, x, baseline, "note", "start")
+              text(line, left, baseline, "note", "start")
             end
           end
 
@@ -224,8 +238,9 @@ module Sirena
             label.empty? ? [] : [text(label, middle, @y + 5, "divider")]
           end
 
-          def segment(left, right, y)
-            PlantUML::Scene::Segment.new(x1: left, y1: y, x2: right, y2: y)
+          def segment(left, right, at_y)
+            PlantUML::Scene::Segment.new(x1: left, y1: at_y,
+                                         x2: right, y2: at_y)
           end
         end
       end

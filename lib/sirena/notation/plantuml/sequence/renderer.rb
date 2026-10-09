@@ -10,125 +10,116 @@ module Sirena
       module Sequence
         # Draws a sequence Scene without changing its geometry.
         class Renderer < Sirena::Renderer::Base
+          # Back to front: the scene collection and the method drawing each
+          # of its items.
+          LAYERS = [
+            %i[frames frame_group], %i[lifelines lifeline],
+            %i[fragments fragment_group], %i[dividers divider_group],
+            %i[arrows arrow_group], %i[notes note_group],
+            %i[heads head_group]
+          ].freeze
+          private_constant :LAYERS
+
           def render(scene)
-            document = Svg::Document.new(
-              width: scene.width, height: scene.height,
-              view_box: "0 0 #{scene.width} #{scene.height}"
-            )
-            scene.frames.each { |frame| document << frame_group(frame) }
-            scene.lifelines.each { |line| document << lifeline(line) }
-            scene.fragments.each { |item| document << fragment_group(item) }
-            scene.dividers.each { |item| document << divider_group(item) }
-            scene.arrows.each { |arrow| document << arrow_group(arrow) }
-            scene.notes.each { |item| document << note_group(item) }
-            scene.heads.each { |head| document << head_group(head) }
+            document = blank_document(scene)
+            LAYERS.each do |collection, drawer|
+              items = scene.public_send(collection)
+              items.each { |item| document << send(drawer, item) }
+            end
             document
           end
 
           private
 
+          def blank_document(scene)
+            Svg::Document.new(
+              width: scene.width, height: scene.height,
+              view_box: "0 0 #{scene.width} #{scene.height}"
+            )
+          end
+
+          # Assigns every attribute that is not nil.
+          def element(type, **attributes)
+            type.new.tap do |node|
+              attributes.each do |name, value|
+                node.public_send(:"#{name}=", value) unless value.nil?
+              end
+            end
+          end
+
+          def group(id, children, texts)
+            Svg::Group.new(id: id).tap do |group|
+              children.each { |child| group << child }
+              texts.each { |text| group << text_element(text) }
+            end
+          end
+
           def frame_group(frame)
-            group = Svg::Group.new(id: "box-#{frame.x}")
-            group << frame_rectangle(frame)
-            frame.texts.each { |text| group << text_element(text) }
-            group
+            group("box-#{frame.x}", [frame_rectangle(frame)], frame.texts)
           end
 
           def frame_rectangle(frame)
-            Svg::Rect.new.tap do |rect|
-              rect.x = frame.x
-              rect.y = frame.y
-              rect.width = frame.width
-              rect.height = frame.height
-              rect.fill = "none"
-              rect.stroke = node_stroke
-              rect.stroke_width = "1"
-            end
+            element(Svg::Rect, x: frame.x, y: frame.y, width: frame.width,
+                               height: frame.height, fill: "none",
+                               stroke: node_stroke, stroke_width: "1")
           end
 
           def lifeline(segment)
-            Svg::Line.new.tap do |line|
-              line.x1 = segment.x1
-              line.y1 = segment.y1
-              line.x2 = segment.x2
-              line.y2 = segment.y2
-              line.stroke = node_stroke
-              line.stroke_width = "1"
-              line.stroke_dasharray = "5,5"
-            end
+            element(Svg::Line, x1: segment.x1, y1: segment.y1,
+                               x2: segment.x2, y2: segment.y2,
+                               stroke: node_stroke, stroke_width: "1",
+                               stroke_dasharray: "5,5")
           end
 
           def arrow_group(arrow)
-            group = Svg::Group.new(id: arrow.id)
-            group << arrow_path(arrow)
-            group << arrow_head(arrow)
-            arrow.texts.each { |text| group << text_element(text) }
-            group
+            group(arrow.id, [arrow_path(arrow), arrow_head(arrow)],
+                  arrow.texts)
           end
 
           def arrow_path(arrow)
-            Svg::Path.new.tap do |path|
-              path.d = arrow.path
-              path.fill = "none"
-              path.stroke = edge_colour
-              path.stroke_width = stroke_width
-              path.stroke_dasharray = "6,4" if arrow.dashed
-            end
+            element(Svg::Path, d: arrow.path, fill: "none",
+                               stroke: edge_colour, stroke_width: stroke_width,
+                               stroke_dasharray: arrow.dashed ? "6,4" : nil)
           end
 
           def arrow_head(arrow)
-            Svg::Polygon.new.tap do |polygon|
-              polygon.points = arrow.marker_points
-              polygon.fill = arrow.marker_filled ? edge_colour : node_fill
-              polygon.stroke = edge_colour
-              polygon.stroke_width = stroke_width
-            end
+            fill = arrow.marker_filled ? edge_colour : node_fill
+            element(Svg::Polygon, points: arrow.marker_points, fill: fill,
+                                  stroke: edge_colour,
+                                  stroke_width: stroke_width)
           end
 
           def fragment_group(fragment)
-            group = Svg::Group.new(id: "fragment-#{fragment.x}-#{fragment.y}")
-            group << frame_rectangle(fragment)
-            group << outlined_path(fragment.tab_path, node_fill)
-            fragment.separators.each { |line| group << dashed(line) }
-            fragment.texts.each { |text| group << text_element(text) }
-            group
+            children = [frame_rectangle(fragment),
+                        outlined_path(fragment.tab_path, node_fill),
+                        *fragment.separators.map { |line| dashed(line) }]
+            group("fragment-#{fragment.x}-#{fragment.y}", children,
+                  fragment.texts)
           end
 
           def note_group(note)
-            group = Svg::Group.new(id: "note-#{note.path.hash.abs}")
-            group << outlined_path(note.path, note_fill)
-            group << outlined_path(note.fold_path, note_fill) if note.fold_path
-            note.texts.each { |text| group << text_element(text) }
-            group
+            children = [outlined_path(note.path, note_fill)]
+            if note.fold_path
+              children << outlined_path(note.fold_path, note_fill)
+            end
+            group("note-#{note.path.hash.abs}", children, note.texts)
           end
 
           def divider_group(divider)
-            group = Svg::Group.new(id: "divider-#{divider.y}")
-            divider.lines.each { |line| group << solid(line) }
-            group << divider_label(divider) unless divider.texts.empty?
-            divider.texts.each { |text| group << text_element(text) }
-            group
+            children = divider.lines.map { |line| solid(line) }
+            children << divider_label(divider) unless divider.texts.empty?
+            group("divider-#{divider.y}", children, divider.texts)
           end
 
           def divider_label(divider)
-            Svg::Rect.new.tap do |rect|
-              rect.x = divider.x
-              rect.y = divider.y
-              rect.width = divider.width
-              rect.height = divider.height
-              rect.fill = node_fill
-              rect.stroke = node_stroke
-              rect.stroke_width = "1"
-            end
+            element(Svg::Rect, x: divider.x, y: divider.y, width: divider.width,
+                               height: divider.height, fill: node_fill,
+                               stroke: node_stroke, stroke_width: "1")
           end
 
           def outlined_path(data, fill)
-            Svg::Path.new.tap do |path|
-              path.d = data
-              path.fill = fill
-              path.stroke = node_stroke
-              path.stroke_width = "1"
-            end
+            element(Svg::Path, d: data, fill: fill, stroke: node_stroke,
+                               stroke_width: "1")
           end
 
           def solid(segment)
@@ -140,38 +131,37 @@ module Sirena
           end
 
           def head_group(head)
-            group = Svg::Group.new(id: "participant-#{head.id}-#{head.y}")
-            group << head_rectangle(head)
-            head.texts.each { |text| group << text_element(text) }
-            group
+            group("participant-#{head.id}-#{head.y}", [head_rectangle(head)],
+                  head.texts)
           end
 
           def head_rectangle(head)
-            Svg::Rect.new.tap do |rect|
-              rect.x = head.x
-              rect.y = head.y
-              rect.width = head.width
-              rect.height = head.height
-              rect.rx = 3
-              rect.ry = 3
-              rect.fill = node_fill
-              rect.stroke = node_stroke
-              rect.stroke_width = stroke_width
-            end
+            element(Svg::Rect, x: head.x, y: head.y, width: head.width,
+                               height: head.height, rx: 3, ry: 3,
+                               fill: node_fill, stroke: node_stroke,
+                               stroke_width: stroke_width)
           end
 
           def text_element(scene_text)
-            Svg::Text.new.tap do |text|
-              text.x = scene_text.x
-              text.y = scene_text.y
-              text.content = scene_text.content
-              text.text_anchor = scene_text.anchor
-              text.fill = text_colour
-              text.font_family = theme_typography(:font_family) || "Arial"
-              text.font_size = font_size(scene_text.role)
-              text.font_style = "italic" if scene_text.role == "kind"
-              text.font_weight = "bold" if scene_text.role == "fragment_tab"
-            end
+            element(Svg::Text, x: scene_text.x, y: scene_text.y,
+                               content: scene_text.content,
+                               text_anchor: scene_text.anchor,
+                               fill: text_colour, font_family: font_family,
+                               font_size: font_size(scene_text.role),
+                               font_style: text_style(scene_text.role),
+                               font_weight: text_weight(scene_text.role))
+          end
+
+          def font_family
+            theme_typography(:font_family) || "Arial"
+          end
+
+          def text_style(role)
+            "italic" if role == "kind"
+          end
+
+          def text_weight(role)
+            "bold" if role == "fragment_tab"
           end
 
           def font_size(role)

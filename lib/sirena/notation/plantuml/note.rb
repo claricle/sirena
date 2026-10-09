@@ -10,12 +10,14 @@ module Sirena
       class Note
         attr_reader :side, :target, :member, :color, :stereotype, :lines
 
-        def initialize(side:, target:, member:, color:, stereotype:, lines:)
-          @side = side
-          @target = target
-          @member = member
-          @color = color
-          @stereotype = stereotype
+        # @param head [Hash] `:side`, `:target`, `:member`, `:color` and
+        #   `:stereotype`, all required
+        def initialize(head, lines:)
+          @side = head.fetch(:side)
+          @target = head.fetch(:target)
+          @member = head.fetch(:member)
+          @color = head.fetch(:color)
+          @stereotype = head.fetch(:stereotype)
           @lines = lines
           freeze
         end
