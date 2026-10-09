@@ -4,6 +4,16 @@ require "spec_helper"
 require "timeout"
 
 RSpec.describe Sirena::ErrorReport do
+  def cyclic_error_chain
+    outer = RuntimeError.new("outer")
+    middle = TypeError.new("middle")
+    inner = ArgumentError.new("inner")
+    allow(outer).to receive(:cause).and_return(middle)
+    allow(middle).to receive(:cause).and_return(inner)
+    allow(inner).to receive(:cause).and_return(middle)
+    outer
+  end
+
   describe ".cause_diagnostics" do
     it "is empty for an error with no cause" do
       expect(described_class.cause_diagnostics(RuntimeError.new("lonely"))).to eq("")
@@ -55,14 +65,7 @@ RSpec.describe Sirena::ErrorReport do
     end
 
     it "reports each cause once when the chain contains a cycle" do
-      outer = RuntimeError.new("outer")
-      middle = TypeError.new("middle")
-      inner = ArgumentError.new("inner")
-      allow(outer).to receive(:cause).and_return(middle)
-      allow(middle).to receive(:cause).and_return(inner)
-      allow(inner).to receive(:cause).and_return(middle)
-
-      report = Timeout.timeout(1) { described_class.cause_diagnostics(outer) }
+      report = Timeout.timeout(1) { described_class.cause_diagnostics(cyclic_error_chain) }
 
       expect(report.scan(/^Caused by: (.+)$/).flatten)
         .to eq(["TypeError: middle", "ArgumentError: inner"])
