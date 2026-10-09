@@ -17,13 +17,12 @@ RSpec.describe "ClassDiagram Integration" do
       expect(diagram.valid?).to be true
 
       # Transform
-      graph = transform.to_graph(diagram)
-      expect(graph).to be_a(Hash)
-      expect(graph[:children].length).to eq(2)
-      expect(graph[:edges].length).to eq(1)
+      scene = transform.call(diagram)
+      expect(scene).to be_a(Sirena::Layout::ClassDiagram::Scene)
+      expect(scene.children.length).to eq(2)
+      expect(scene.edges.length).to eq(1)
 
-      # Render (without elkrb layout, just with graph structure)
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.children).not_to be_empty
     end
@@ -45,8 +44,8 @@ RSpec.describe "ClassDiagram Integration" do
       expect(diagram.composition_relationships.length).to eq(1)
       expect(diagram.aggregation_relationships.length).to eq(1)
 
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+      scene = transform.call(diagram)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
     end
@@ -77,8 +76,8 @@ RSpec.describe "ClassDiagram Integration" do
       expect(dog).not_to be_nil
       expect(dog.class_methods.length).to eq(1)
 
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+      scene = transform.call(diagram)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
     end
@@ -103,20 +102,21 @@ RSpec.describe "ClassDiagram Integration" do
       shape = diagram.find_entity("Shape")
       expect(shape.abstract?).to be true
 
-      graph = transform.to_graph(diagram)
-      svg = renderer.render(graph)
+      scene = transform.call(diagram)
+      svg = renderer.render(scene)
 
       expect(svg).to be_a(Sirena::Svg::Document)
     end
 
-    it "handles different directions" do
+    it "converts an LR diagram to a positioned Scene" do
       source = "classDiagram LR\nAnimal <|-- Dog"
 
       diagram = parser.parse(source)
       expect(diagram.direction).to eq("LR")
 
-      graph = transform.to_graph(diagram)
-      expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
+      scene = transform.call(diagram)
+      expect([scene.class, scene.children.map(&:x)])
+        .to eq([Sirena::Layout::ClassDiagram::Scene, [50.0, 300.0]])
     end
 
     it "handles cardinality labels" do
@@ -129,9 +129,13 @@ RSpec.describe "ClassDiagram Integration" do
       expect(rel.target_cardinality).to eq("0..*")
       expect(rel.label).to eq("enrolls in")
 
-      graph = transform.to_graph(diagram)
-      edge = graph[:edges].first
-      expect(edge[:labels].length).to be > 0
+      scene = transform.call(diagram)
+      edge = scene.edges.first
+      expect(edge.labels.map(&:text))
+        .to contain_exactly("enrolls in", "1", "0..*")
+      anchors = edge.labels.to_h { |label| [label.text, label.text_anchor] }
+      expect(anchors).to eq("enrolls in" => "middle", "1" => nil,
+                            "0..*" => "end")
     end
   end
 

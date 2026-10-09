@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/generic_text"
+require_relative "../layout/class_diagram"
 
 module Sirena
   module Renderer
@@ -32,8 +33,8 @@ module Sirena
       BOX_PADDING = 10
 
       # Arrow/marker dimensions
-      ARROW_SIZE = 10
-      DIAMOND_SIZE = 12
+      ARROW_SIZE = Layout::ClassDiagram::ARROW_SIZE
+      DIAMOND_SIZE = Layout::ClassDiagram::DIAMOND_SIZE
 
       # Dependency marker (dart) dimensions, matching mermaid's own
       # `M 5,7 L9,13 L1,7 L9,1 Z`: a CONCAVE dart, not a convex kite --
@@ -41,18 +42,22 @@ module Sirena
       # a reflex notch midway between the tip and the back edge. Building
       # this as a convex 4-point shape collapses the notch onto the back
       # edge and silently degenerates to a triangle -- keep the notch
-      # derived as the midpoint of tip and back (see render_dart_marker),
+      # derived as the midpoint of tip and back in the layout's dart geometry,
       # never a separate offset. DART_NEAR/DART_FAR set the tip-close/
       # back-far asymmetry; DART_WIDTH is the half-width of the back edge.
-      DART_NEAR = 3
-      DART_FAR = 14
-      DART_WIDTH = 5
+      DART_NEAR = Layout::ClassDiagram::DART_NEAR
+      DART_FAR = Layout::ClassDiagram::DART_FAR
+      DART_WIDTH = Layout::ClassDiagram::DART_WIDTH
 
-      # Renders a laid-out graph to SVG.
+      # Renders final class-diagram geometry to SVG. Hash support remains for
+      # released callers; Engine always supplies the typed Scene.
       #
-      # @param graph [Hash] laid-out graph with node positions
+      # @param graph [Layout::ClassDiagram::Scene, Hash] final geometry or a
+      #   released legacy graph
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
+        return render_scene(graph) if graph.is_a?(Layout::ClassDiagram::Scene)
+
         svg = create_document(graph)
 
         # Add marker definitions
@@ -67,7 +72,109 @@ module Sirena
         svg
       end
 
+      def render_scene(scene)
+        svg = scene_document(scene)
+        add_markers(svg)
+        scene.edges.each { |edge| render_scene_edge(edge, svg) }
+        scene.children.each { |node| render_scene_node(node, svg) }
+        svg
+      end
+
       protected
+
+      def scene_document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = svg_number(scene.width)
+          svg.height = svg_number(scene.height)
+          svg.view_box = scene.view_box
+        end
+      end
+
+      def render_scene_node(node, svg)
+        group = Svg::Group.new.tap { |item| item.id = "class-#{node.id}" }
+        group.children << scene_node_box(node)
+        group.children << scene_text(node.stereotype) if node.stereotype
+        group.children << scene_text(node.name)
+        group.children << scene_separator(node.separators.first)
+        node.attributes.each { |label| group.children << scene_text(label) }
+        if node.separators.length > 1
+          group.children << scene_separator(node.separators.last)
+        end
+        node.method_rows.each { |label| group.children << scene_text(label) }
+        svg << group
+      end
+
+      def scene_node_box(node)
+        Svg::Rect.new.tap do |rect|
+          rect.x = svg_number(node.x)
+          rect.y = svg_number(node.y)
+          rect.width = svg_number(node.width)
+          rect.height = svg_number(node.height)
+          rect.fill = "#ffffff"
+          rect.stroke = "#000000"
+          rect.stroke_width = "2"
+          rect.rx = 3
+          rect.ry = 3
+        end
+      end
+
+      def scene_separator(separator)
+        Svg::Line.new.tap do |line|
+          line.x1 = svg_number(separator.x1)
+          line.y1 = svg_number(separator.y1)
+          line.x2 = svg_number(separator.x2)
+          line.y2 = svg_number(separator.y2)
+          line.stroke = "#000000"
+          line.stroke_width = "1"
+        end
+      end
+
+      def scene_text(label)
+        Svg::Text.new.tap do |text|
+          text.x = svg_number(label.x)
+          text.y = svg_number(label.y)
+          text.content = label.text
+          text.fill = "#000000"
+          text.font_family = label.font_family
+          text.font_size = svg_number(label.font_size).to_s
+          text.text_anchor = label.text_anchor
+          text.font_weight = label.font_weight
+        end
+      end
+
+      def render_scene_edge(edge, svg)
+        section = edge.sections.first
+        group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
+        group.children << scene_edge_line(section, edge.dashed)
+        edge.markers.each { |marker| group.children << scene_marker(marker) }
+        edge.labels.each { |label| group.children << scene_text(label) }
+        svg << group
+      end
+
+      def scene_edge_line(section, dashed)
+        Svg::Line.new.tap do |line|
+          line.x1 = svg_number(section.start_point.x)
+          line.y1 = svg_number(section.start_point.y)
+          line.x2 = svg_number(section.end_point.x)
+          line.y2 = svg_number(section.end_point.y)
+          line.stroke = "#000000"
+          line.stroke_width = "2"
+          line.stroke_dasharray = "5,5" if dashed
+        end
+      end
+
+      def scene_marker(marker)
+        Svg::Polygon.new.tap do |polygon|
+          polygon.points = marker.points
+          polygon.fill = marker.fill
+          polygon.stroke = "#000000"
+          polygon.stroke_width = "2"
+        end
+      end
+
+      def svg_number(value)
+        value.to_i == value ? value.to_i : value
+      end
 
       def calculate_width(graph)
         return 800 unless graph[:children]
@@ -277,6 +384,16 @@ module Sirena
         current_y
       end
 
+      # Released protected hook retained for callers that format legacy rows.
+      def visibility_symbol(visibility)
+        {
+          "public" => "+",
+          "private" => "-",
+          "protected" => "#",
+          "package" => "~",
+        }.fetch(visibility, "+")
+      end
+
       def render_relationships(graph, svg)
         graph[:edges].each do |edge|
           render_relationship(edge, graph, svg)
@@ -327,39 +444,7 @@ module Sirena
       end
 
       def calculate_connection_point(from_node, to_node)
-        from_cx = (from_node[:x] || 0) + (from_node[:width] || 150) / 2
-        from_cy = (from_node[:y] || 0) + (from_node[:height] || 100) / 2
-        to_cx = (to_node[:x] || 0) + (to_node[:width] || 150) / 2
-        to_cy = (to_node[:y] || 0) + (to_node[:height] || 100) / 2
-
-        # Determine which edge of the box to connect to
-        from_x = from_node[:x] || 0
-        from_y = from_node[:y] || 0
-        from_w = from_node[:width] || 150
-        from_h = from_node[:height] || 100
-
-        # Calculate intersection with box edge
-        dx = to_cx - from_cx
-        dy = to_cy - from_cy
-
-        # Handle edge cases
-        if dx.abs < 0.001 && dy.abs < 0.001
-          # Same position - use center
-          return { x: from_cx, y: from_cy }
-        end
-
-        # Find intersection point
-        if dx.abs > dy.abs
-          # Connect left/right edge
-          x = dx.positive? ? from_x + from_w : from_x
-          y = dy.abs < 0.001 ? from_cy : from_cy + (dy / dx) * (x - from_cx)
-        else
-          # Connect top/bottom edge
-          y = dy.positive? ? from_y + from_h : from_y
-          x = dx.abs < 0.001 ? from_cx : from_cx + (dx / dy) * (y - from_cy)
-        end
-
-        { x: x, y: y }
+        Layout::ClassDiagram.connection_point(from_node, to_node)
       end
 
       def render_relationship_line(from, to, rel_type, group)
@@ -427,29 +512,8 @@ module Sirena
       end
 
       def render_triangle_marker(from, to, filled, group)
-        dx = to[:x] - from[:x]
-        dy = to[:y] - from[:y]
-        angle = Math.atan2(dy, dx)
-
-        # Triangle points
-        tip_x = to[:x]
-        tip_y = to[:y]
-        base_length = ARROW_SIZE
-        base1_x = tip_x - base_length * Math.cos(angle + Math::PI / 6)
-        base1_y = tip_y - base_length * Math.sin(angle + Math::PI / 6)
-        base2_x = tip_x - base_length * Math.cos(angle - Math::PI / 6)
-        base2_y = tip_y - base_length * Math.sin(angle - Math::PI / 6)
-
-        points = "#{tip_x},#{tip_y} #{base1_x},#{base1_y} " \
-                 "#{base2_x},#{base2_y}"
-
-        polygon = Svg::Polygon.new.tap do |p|
-          p.points = points
-          p.fill = filled ? "#000000" : "#ffffff"
-          p.stroke = "#000000"
-          p.stroke_width = "2"
-        end
-        group.children << polygon
+        marker = Layout::ClassDiagram.triangle_marker(from, to, filled)
+        group.children << scene_marker(marker)
       end
 
       # A filled dart anchored at `from`, sitting entirely on the `to` side
@@ -460,63 +524,13 @@ module Sirena
       # vertex on the tip-to-back axis, midway between them -- see
       # DART_NEAR/DART_FAR/DART_WIDTH.
       def render_dart_marker(from, to, group)
-        dx = to[:x] - from[:x]
-        dy = to[:y] - from[:y]
-        angle = Math.atan2(dy, dx)
-
-        tip_x = from[:x] + DART_NEAR * Math.cos(angle)
-        tip_y = from[:y] + DART_NEAR * Math.sin(angle)
-        back_x = from[:x] + DART_FAR * Math.cos(angle)
-        back_y = from[:y] + DART_FAR * Math.sin(angle)
-        notch_x = (tip_x + back_x) / 2
-        notch_y = (tip_y + back_y) / 2
-        side1_x = back_x + DART_WIDTH * Math.cos(angle + Math::PI / 2)
-        side1_y = back_y + DART_WIDTH * Math.sin(angle + Math::PI / 2)
-        side2_x = back_x + DART_WIDTH * Math.cos(angle - Math::PI / 2)
-        side2_y = back_y + DART_WIDTH * Math.sin(angle - Math::PI / 2)
-
-        points = "#{tip_x},#{tip_y} #{side1_x},#{side1_y} " \
-                 "#{notch_x},#{notch_y} #{side2_x},#{side2_y}"
-
-        polygon = Svg::Polygon.new.tap do |p|
-          p.points = points
-          p.fill = "#000000"
-          p.stroke = "#000000"
-          p.stroke_width = "2"
-        end
-        group.children << polygon
+        marker = Layout::ClassDiagram.dart_marker(from, to)
+        group.children << scene_marker(marker)
       end
 
       def render_diamond_marker(from, to, filled, group)
-        dx = to[:x] - from[:x]
-        dy = to[:y] - from[:y]
-        angle = Math.atan2(dy, dx)
-
-        # Diamond center at connection point
-        cx = from[:x]
-        cy = from[:y]
-        size = DIAMOND_SIZE
-
-        # Diamond points
-        tip_x = cx + size * Math.cos(angle)
-        tip_y = cy + size * Math.sin(angle)
-        left_x = cx + size / 2 * Math.cos(angle + Math::PI / 2)
-        left_y = cy + size / 2 * Math.sin(angle + Math::PI / 2)
-        back_x = cx - size * Math.cos(angle)
-        back_y = cy - size * Math.sin(angle)
-        right_x = cx + size / 2 * Math.cos(angle - Math::PI / 2)
-        right_y = cy + size / 2 * Math.sin(angle - Math::PI / 2)
-
-        points = "#{tip_x},#{tip_y} #{left_x},#{left_y} " \
-                 "#{back_x},#{back_y} #{right_x},#{right_y}"
-
-        polygon = Svg::Polygon.new.tap do |p|
-          p.points = points
-          p.fill = filled ? "#000000" : "#ffffff"
-          p.stroke = "#000000"
-          p.stroke_width = "2"
-        end
-        group.children << polygon
+        marker = Layout::ClassDiagram.diamond_marker(from, to, filled)
+        group.children << scene_marker(marker)
       end
 
       def render_relationship_labels(edge, from, to, group)
