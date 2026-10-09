@@ -11,11 +11,11 @@ RSpec.describe Sirena::Renderer::Sankey do
     node = Sirena::Layout::Sankey::Node.new(
       id: "a", layer: 0, x: 10, y: 20, width: 30, height: 40,
       corner_radius: 3, label: label("Node A", 25, 45), inflow: 0,
-      outflow: 4,
+      outflow: 4
     )
     Sirena::Layout::Sankey::Scene.new(
       id: "sankey", width: 200, height: 120, view_box: "0 0 200 120",
-      title: title, nodes: [node], flows: flows,
+      title: title, nodes: [node], flows: flows
     )
   end
 
@@ -24,7 +24,7 @@ RSpec.describe Sirena::Renderer::Sankey do
       id: id, source: "a", target: "b", value: 4, width: 20,
       source_x: 40, source_y: 40, target_x: 150, target_y: 40,
       path: "M 40 30 L 150 30 L 150 50 L 40 50 Z", label: label,
-      colour_index: colour_index, self_loop: self_loop,
+      colour_index: colour_index, self_loop: self_loop
     )
   end
 
@@ -47,11 +47,11 @@ RSpec.describe Sirena::Renderer::Sankey do
     theme = Sirena::Theme.new(
       colors: Sirena::Theme::ColorPalette.new(
         node_fill: "#010203", node_stroke: "#040506",
-        label_text: "#070809",
+        label_text: "#070809"
       ),
       typography: Sirena::Theme::Typography.new(
         font_family: "Example Sans", font_size_small: 13,
-        font_size_large: 21,
+        font_size_large: 21
       ),
     )
     xml = described_class.new(theme: theme)

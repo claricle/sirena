@@ -48,11 +48,11 @@ RSpec.describe Sirena::Renderer::Requirement do
     relationships = [
       {
         source: "part", target: "need", type: "satisfies",
-        from_x: 300, from_y: 120, to_x: 100, to_y: 140,
+        from_x: 300, from_y: 120, to_x: 100, to_y: 140
       },
       {
         source: nil, target: nil,
-        from_x: 20, from_y: 160, to_x: 180, to_y: 160,
+        from_x: 20, from_y: 160, to_x: 180, to_y: 160
       },
     ]
     xml = renderer.render(width: 400, height: 200,
