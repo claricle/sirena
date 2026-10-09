@@ -49,5 +49,6 @@
   <text fill="#000" x="95.0" y="54.9" text-anchor="middle" font-size="14" font-weight="bold">webapp</text>
   <text fill="#000" x="95.0" y="37.85" text-anchor="middle" font-size="11">&lt;&lt;Element&gt;&gt;</text>
   <text fill="#666" x="95.0" y="73.85" text-anchor="middle" font-size="11">Type: application</text>
+  <text fill="#666" x="95.0" y="89.85" text-anchor="middle" font-size="11">Doc Ref: /docs/webapp</text>
 </g>
 </svg>

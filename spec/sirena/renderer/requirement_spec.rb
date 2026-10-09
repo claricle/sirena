@@ -183,7 +183,7 @@ RSpec.describe Sirena::Renderer::Requirement do
              risk: "high", verifymethod: "test", classes: [])
     end
     let(:element) do
-      double(name: "e", type: "simulation", docref: nil, classes: [])
+      double(name: "e", type: "simulation", docref: "test_ref", classes: [])
     end
     let(:layout) do
       box = { x: 100, y: 100, width: 180, height: 140, level: 1 }
@@ -207,6 +207,30 @@ RSpec.describe Sirena::Renderer::Requirement do
         "&lt;&lt;satisfies&gt;&gt;", "&lt;&lt;Requirement&gt;&gt;",
         "&lt;&lt;Element&gt;&gt;", "Text: the test text.", "Verification: Test"
       )
+    end
+
+    it "draws the element Doc Ref line after the Type line" do
+      pair = ["Type: simulation", "Doc Ref: test_ref"]
+      expect(texts.each_cons(2)).to include(pair)
+    end
+
+    it "omits the Doc Ref line when the element has none" do
+      allow(element).to receive(:docref).and_return(nil)
+      expect(texts.grep(/Doc Ref/)).to be_empty
+    end
+
+    {
+      "requirement" => "Requirement",
+      "functionalRequirement" => "Functional Requirement",
+      "interfaceRequirement" => "Interface Requirement",
+      "performanceRequirement" => "Performance Requirement",
+      "physicalRequirement" => "Physical Requirement",
+      "designConstraint" => "Design Constraint",
+    }.each do |type, label|
+      it "labels a #{type} header <<#{label}>> as mermaid does" do
+        allow(requirement).to receive(:type).and_return(type)
+        expect(texts).to include("&lt;&lt;#{label}&gt;&gt;")
+      end
     end
   end
 
