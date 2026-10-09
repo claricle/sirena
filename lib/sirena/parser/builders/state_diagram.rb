@@ -195,17 +195,6 @@ module Sirena
           end
         end
 
-        def ensure_start_or_end_state
-          # Check if we already have a start state, if not create one
-          # Otherwise create an end state
-          start_state = @diagram.start_state
-          if start_state
-            ensure_end_state
-          else
-            ensure_start_state
-          end
-        end
-
         def ensure_start_state
           start_state = @diagram.start_state
           return start_state.id if start_state
