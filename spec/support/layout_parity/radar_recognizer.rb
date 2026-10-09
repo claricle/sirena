@@ -29,13 +29,15 @@ module SpecSupport
       end
 
       def candidate_elements(extractor, doc)
-        axes = doc.xpath("//text[@font-size='14.0' and @font-weight]")
+        axes = doc.xpath("//text[number(@font-size) = 14 and @font-weight]")
         axis_elements = axes.filter_map do |text|
           labeled_element(extractor, text, text.text, :radar_axis)
         end
         curve_nodes = doc.xpath("//polygon")
-        legends = doc.xpath("//text[@font-size='12.0' and not(@font-weight)]")
-        titles = doc.xpath("//text[@font-size='16.0' and @font-weight]")
+        legends = doc.xpath(
+          "//text[number(@font-size) = 12 and not(@font-weight)]",
+        )
+        titles = doc.xpath("//text[number(@font-size) = 16 and @font-weight]")
         axis_elements + curve_elements(extractor, curve_nodes, legends) +
           title_elements(extractor, titles)
       end
