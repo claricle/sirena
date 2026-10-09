@@ -247,12 +247,12 @@ Additional icon prefixes (for future extension):
 
 Architecture diagrams use a 7-file Parslet architecture:
 
-. **Model** ([`lib/sirena/diagram/architecture.rb`](lib/sirena/diagram/architecture.rb)) - Lutaml::Model classes for diagram structure
-. **Grammar** ([`lib/sirena/parser/grammars/architecture.rb`](lib/sirena/parser/grammars/architecture.rb)) - Parslet grammar for syntax parsing
-. **Builder** ([`lib/sirena/parser/builders/architecture.rb`](lib/sirena/parser/builders/architecture.rb)) - Converts parse tree to model
-. **Parser** ([`lib/sirena/parser/architecture.rb`](lib/sirena/parser/architecture.rb)) - Orchestrates parsing pipeline
-. **Layout** ([`lib/sirena/layout/architecture.rb`](lib/sirena/layout/architecture.rb)) - Positions elements spatially
-. **Renderer** ([`lib/sirena/renderer/architecture.rb`](lib/sirena/renderer/architecture.rb)) - Generates SVG output
+. **Model** (https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/architecture.rb[`lib/sirena/diagram/architecture.rb`]) - Lutaml::Model classes for diagram structure
+. **Grammar** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/architecture.rb[`lib/sirena/parser/grammars/architecture.rb`]) - Parslet grammar for syntax parsing
+. **Builder** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/builders/architecture.rb[`lib/sirena/parser/builders/architecture.rb`]) - Converts parse tree to model
+. **Parser** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/architecture.rb[`lib/sirena/parser/architecture.rb`]) - Orchestrates parsing pipeline
+. **Layout** (https://github.com/claricle/sirena/blob/main/lib/sirena/layout/architecture.rb[`lib/sirena/layout/architecture.rb`]) - Positions elements spatially
+. **Renderer** (https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/architecture.rb[`lib/sirena/renderer/architecture.rb`]) - Generates SVG output
 . **Tests** - Parser and renderer test suites
 
 The implementation follows MECE principles with clear separation of concerns between parsing, transformation, layout, and rendering stages.

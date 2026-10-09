@@ -208,7 +208,7 @@ C4Component
 
 === Basic Relationship
 
-Use [`Rel()`](lib/sirena/diagram/c4.rb:100) to show a directional relationship:
+Use https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/c4.rb#L100[`Rel()`] to show a directional relationship:
 
 [source,mermaid]
 ----
@@ -351,7 +351,7 @@ C4Container
 
 == Layout Configuration
 
-Configure diagram layout using [`UpdateLayoutConfig()`](lib/sirena/parser/grammars/c4.rb:64):
+Configure diagram layout using https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/c4.rb#L64[`UpdateLayoutConfig()`]:
 
 [source,mermaid]
 ----
@@ -484,19 +484,19 @@ C4Container
 
 C4 diagrams are implemented using the standard 7-file Parslet architecture:
 
-1. [`Diagram::C4`](lib/sirena/diagram/c4.rb:224) - Data model with elements, boundaries, relationships
-2. [`Parser::Grammars::C4`](lib/sirena/parser/grammars/c4.rb:13) - Parslet grammar for C4 syntax
-3. [`Parser::Builders::C4`](lib/sirena/parser/builders/c4.rb:13) - Parse tree to diagram model builder
-4. [`Parser::C4`](lib/sirena/parser/c4.rb:29) - Main parser class
-5. [`Layout::C4`](lib/sirena/layout/c4.rb:17) - Diagram to graph layout
-6. [`Renderer::C4`](lib/sirena/renderer/c4.rb:16) - SVG renderer
+1. https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/c4.rb#L224[`Diagram::C4`] - Data model with elements, boundaries, relationships
+2. https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/c4.rb#L13[`Parser::Grammars::C4`] - Parslet grammar for C4 syntax
+3. https://github.com/claricle/sirena/blob/main/lib/sirena/parser/builders/c4.rb#L13[`Parser::Builders::C4`] - Parse tree to diagram model builder
+4. https://github.com/claricle/sirena/blob/main/lib/sirena/parser/c4.rb#L29[`Parser::C4`] - Main parser class
+5. https://github.com/claricle/sirena/blob/main/lib/sirena/layout/c4.rb#L17[`Layout::C4`] - Diagram to graph layout
+6. https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/c4.rb#L16[`Renderer::C4`] - SVG renderer
 7. Layout - Fallback grid positioning (`lib/sirena/engine.rb:359-365`); `elkrb` is a declared dependency but is not called
 
 === Rendering Pipeline
 
 The C4 rendering pipeline:
 
-1. **Parse** - Convert Mermaid source to [`C4`](lib/sirena/diagram/c4.rb:224) model
+1. **Parse** - Convert Mermaid source to https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/c4.rb#L224[`C4`] model
 2. **Graph** - Convert to graph structure with positions
 3. **Layout** - Calculate positions for elements and boundaries
 4. **Render** - Generate SVG with C4 styling

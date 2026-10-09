@@ -20,37 +20,37 @@ The quadrant chart implementation in Sirena follows the established 7-file Parsl
 
 The quadrant chart implementation consists of seven main components:
 
-. **Diagram Model** ([`lib/sirena/diagram/quadrant.rb`](lib/sirena/diagram/quadrant.rb:1))
+. **Diagram Model** (https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L1[`lib/sirena/diagram/quadrant.rb`])
   * `QuadrantChart` - Main diagram model
   * `QuadrantPoint` - Individual data point with coordinates and styling
 
-. **Parslet Grammar** ([`lib/sirena/parser/grammars/quadrant.rb`](lib/sirena/parser/grammars/quadrant.rb:1))
+. **Parslet Grammar** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/quadrant.rb#L1[`lib/sirena/parser/grammars/quadrant.rb`])
   * Parses `quadrantChart` keyword
   * Axis definitions with labels
   * Quadrant labels (quadrant-1 through quadrant-4)
   * Data points with [x, y] coordinates
   * Point styling (radius, color, stroke)
 
-. **Builder** ([`lib/sirena/parser/builders/quadrant.rb`](lib/sirena/parser/builders/quadrant.rb:1))
+. **Builder** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/builders/quadrant.rb#L1[`lib/sirena/parser/builders/quadrant.rb`])
   * Converts parse tree to QuadrantChart model
   * Extracts title, axes, quadrant labels, and points
 
-. **Parser** ([`lib/sirena/parser/quadrant.rb`](lib/sirena/parser/quadrant.rb:1))
+. **Parser** (https://github.com/claricle/sirena/blob/main/lib/sirena/parser/quadrant.rb#L1[`lib/sirena/parser/quadrant.rb`])
   * Orchestrates grammar and builder
   * Provides error handling
 
-. **Layout** ([`lib/sirena/layout/quadrant.rb`](lib/sirena/layout/quadrant.rb:1))
+. **Layout** (https://github.com/claricle/sirena/blob/main/lib/sirena/layout/quadrant.rb#L1[`lib/sirena/layout/quadrant.rb`])
   * Calculates 2x2 grid layout
   * Converts normalized coordinates (0-1) to SVG coordinates
   * Positions points in 2D space
 
-. **Renderer** ([`lib/sirena/renderer/quadrant.rb`](lib/sirena/renderer/quadrant.rb:1))
+. **Renderer** (https://github.com/claricle/sirena/blob/main/lib/sirena/renderer/quadrant.rb#L1[`lib/sirena/renderer/quadrant.rb`])
   * Draws quadrant grid with colored backgrounds
   * Renders center axes
   * Adds axis labels and quadrant names
   * Renders data points as circles with labels
 
-. **Tests** ([`spec/sirena/parser/quadrant_spec.rb`](spec/sirena/parser/quadrant_spec.rb:1))
+. **Tests** (https://github.com/claricle/sirena/blob/main/spec/sirena/parser/quadrant_spec.rb#L1[`spec/sirena/parser/quadrant_spec.rb`])
   * Parser tests with 17 examples
   * 10 fixture files from Mermaid test suite
 
@@ -313,22 +313,22 @@ Default quadrant colors (can be overridden in theme):
 
 === Model Architecture
 
-The [`QuadrantChart`](lib/sirena/diagram/quadrant.rb:81) class inherits from [`Diagram::Base`](lib/sirena/diagram/base.rb:1) and uses Lutaml::Model for serialization.
+The https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L81[`QuadrantChart`] class inherits from https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/base.rb#L1[`Diagram::Base`] and uses Lutaml::Model for serialization.
 
 Key methods:
 
-* [`diagram_type`](lib/sirena/diagram/quadrant.rb:112) - Returns `:quadrant`
-* [`valid?`](lib/sirena/diagram/quadrant.rb:123) - Validates all points
-* [`points_by_quadrant`](lib/sirena/diagram/quadrant.rb:134) - Groups points by quadrant
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L112[`diagram_type`] - Returns `:quadrant`
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L123[`valid?`] - Validates all points
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L134[`points_by_quadrant`] - Groups points by quadrant
 
-The [`QuadrantPoint`](lib/sirena/diagram/quadrant.rb:12) class provides:
+The https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L12[`QuadrantPoint`] class provides:
 
-* [`valid?`](lib/sirena/diagram/quadrant.rb:37) - Ensures coordinates are in [0,1] range
-* [`quadrant`](lib/sirena/diagram/quadrant.rb:53) - Determines which quadrant (1-4) the point is in
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L37[`valid?`] - Ensures coordinates are in [0,1] range
+* https://github.com/claricle/sirena/blob/main/lib/sirena/diagram/quadrant.rb#L53[`quadrant`] - Determines which quadrant (1-4) the point is in
 
 === Grammar Rules
 
-The Parslet grammar in [`lib/sirena/parser/grammars/quadrant.rb`](lib/sirena/parser/grammars/quadrant.rb:1) handles:
+The Parslet grammar in https://github.com/claricle/sirena/blob/main/lib/sirena/parser/grammars/quadrant.rb#L1[`lib/sirena/parser/grammars/quadrant.rb`] handles:
 
 * Optional title declarations
 * X-axis and Y-axis with quoted or unquoted labels
