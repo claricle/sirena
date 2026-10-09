@@ -129,7 +129,9 @@ module Sirena
           rect.rx = participant.corner_radius
           rect.ry = participant.corner_radius
         end
-        group.children << participant_label(participant.label) if participant.label
+        if participant.label
+          group.children << participant_label(participant.label)
+        end
       end
 
       def participant_label(label)
@@ -295,7 +297,8 @@ module Sirena
       end
 
       def message_line(span, style, ends)
-        sequence_layout.send(:message_line, span, style, ends).then do |geometry|
+        line = sequence_layout.send(:message_line, span, style, ends)
+        line.then do |geometry|
           svg_line(
             geometry, stroke_width: "2",
                       dash: style[:line] == "dotted" ? "5,5" : nil
@@ -322,8 +325,9 @@ module Sirena
         )
       end
 
-      def render_open_arrowhead(x1, _y1, x2, y2, group)
-        sequence_layout.send(:open_head, x1, x2, y2).each do |geometry|
+      def render_open_arrowhead(start_x, _start_y, end_x, end_y, group)
+        lines = sequence_layout.send(:open_head, start_x, end_x, end_y)
+        lines.each do |geometry|
           group.children << head_line(geometry)
         end
       end

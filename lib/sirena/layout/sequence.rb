@@ -206,8 +206,10 @@ module Sirena
         return 800 unless participants
         return 0 if participants.empty?
 
-        participants.sum { |participant| participant_width_value(participant) } +
-          (participants.length * PARTICIPANT_MARGIN) + 80
+        total_width = participants.sum do |participant|
+          participant_width_value(participant)
+        end
+        total_width + (participants.length * PARTICIPANT_MARGIN) + 80
       end
 
       def canvas_height(participants, message_count)
@@ -253,11 +255,14 @@ module Sirena
         )
       end
 
-      def typed_participant_at(participant, x, y)
+      def typed_participant_at(participant, horizontal, vertical)
         width = participant[:width] || PARTICIPANT_WIDTH
         typed_participant(
           participant,
-          { x: x, y: y, center_x: x + (width / 2) },
+          {
+            x: horizontal, y: vertical,
+            center_x: horizontal + (width / 2)
+          },
         )
       end
 
@@ -353,7 +358,7 @@ module Sirena
         }
       end
 
-      def typed_message_label(edge, source_x, target_x, y)
+      def typed_message_label(edge, source_x, target_x, vertical)
         text = edge.dig(:metadata, :message_text)
         return if text.nil? || text.empty?
 
@@ -362,22 +367,22 @@ module Sirena
         Label.new(
           text: text, width: source_label[:width],
           height: source_label[:height], x: (source_x + target_x) / 2,
-          y: y - offset, font_size: message_font_size
+          y: vertical - offset, font_size: message_font_size
         )
       end
 
-      def compatibility_label(source_x, target_x, y, text)
+      def compatibility_label(source_x, target_x, vertical, text)
         edge = {
           labels: [{}],
           metadata: { message_text: text },
         }
-        typed_message_label(edge, source_x, target_x, y)
+        typed_message_label(edge, source_x, target_x, vertical)
       end
 
-      def arrow_geometry(x1, y1, x2, y2, style)
-        return self_arrow_geometry(x1, y1, style) if x1 == x2
+      def arrow_geometry(start_x, start_y, end_x, end_y, style)
+        return self_arrow_geometry(start_x, start_y, style) if start_x == end_x
 
-        span = { x1: x1, y1: y1, x2: x2, y2: y2 }
+        span = { x1: start_x, y1: start_y, x2: end_x, y2: end_y }
         ends = head_ends(style)
         {
           shaft: message_line(span, style, ends),
@@ -385,18 +390,21 @@ module Sirena
         }
       end
 
-      def self_arrow_geometry(x, y, style)
-        top = y - (SELF_LOOP_HEIGHT / 2)
-        bottom = y + (SELF_LOOP_HEIGHT / 2)
-        reach = x + SELF_LOOP_WIDTH
+      def self_arrow_geometry(horizontal, vertical, style)
+        top = vertical - (SELF_LOOP_HEIGHT / 2)
+        bottom = vertical + (SELF_LOOP_HEIGHT / 2)
+        reach = horizontal + SELF_LOOP_WIDTH
         heads = head_ends(style).map do |which|
           edge_y = which == :source ? top : bottom
-          span = { x1: x + ARROW_SIZE, y1: edge_y, x2: x, y2: edge_y }
+          span = {
+            x1: horizontal + ARROW_SIZE, y1: edge_y,
+            x2: horizontal, y2: edge_y
+          }
           head_geometry(:target, span, style)
         end
         {
-          loop_path: "M #{x},#{top} C #{reach},#{top} " \
-                     "#{reach},#{bottom} #{x},#{bottom}",
+          loop_path: "M #{horizontal},#{top} C #{reach},#{top} " \
+                     "#{reach},#{bottom} #{horizontal},#{bottom}",
           heads: heads,
         }
       end
@@ -481,12 +489,16 @@ module Sirena
         ]
       end
 
-      def cross_head(x, y)
+      def cross_head(horizontal, vertical)
         size = ARROW_SIZE / 2
         Head.new(
           shape: "cross",
-          lines: [line(x - size, y - size, x + size, y + size),
-                  line(x - size, y + size, x + size, y - size)],
+          lines: [
+            line(horizontal - size, vertical - size,
+                 horizontal + size, vertical + size),
+            line(horizontal - size, vertical + size,
+                 horizontal + size, vertical - size),
+          ],
         )
       end
 
@@ -498,8 +510,8 @@ module Sirena
         Head.new(shape: "line", lines: [geometry])
       end
 
-      def line(x1, y1, x2, y2)
-        Line.new(x1: x1, y1: y1, x2: x2, y2: y2)
+      def line(start_x, start_y, end_x, end_y)
+        Line.new(x1: start_x, y1: start_y, x2: end_x, y2: end_y)
       end
     end
   end
