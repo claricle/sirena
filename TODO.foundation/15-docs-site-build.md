@@ -11,9 +11,10 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
   on published pages); "cannot build" was the wrong mechanism.]
 - 23 of 25 `_diagram_types/*.adoc` lack YAML front matter (incl. the
   orphaned `examples/` page) — Jekyll skips them entirely.
-- `docs/Gemfile`: no pins, no tracked lockfile, `theme:` AND `remote_theme:`
-  both set, `jekyll-remote-theme` plugin absent (theme silently never
-  loads).
+- `docs/Gemfile` exactly pins all seven direct dependencies, and
+  `docs/_config.yml` selects only `theme: just-the-docs`. The owner ruled
+  in PR #111 that Sirena commits no lockfiles, including
+  `docs/Gemfile.lock`; exact docs Gemfile pins satisfy this criterion.
 - Two link styles; `.html` suffixes 404 under `permalink: pretty`;
   markdown-syntax links inside AsciiDoc render literally; source-path
   links 404; `docs/assets/` missing.
@@ -27,9 +28,9 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
   `lib/tasks/examples.rake:108`, which emits no front matter, and
   `examples:build` always calls it. Hand-adding front matter there gets
   overwritten on the next build.
-- `docs/Gemfile.lock` exists on disk but is git-ignored, and lists only
-  `arm64-darwin` — docs CI runs Ubuntu, and the dependency set has
-  native gems. Committing it as-is does not make CI reproducible.
+- A machine-local `docs/Gemfile.lock` may exist, but `Gemfile.lock` is
+  intentionally git-ignored for this library. It is not a project
+  artifact and must not be committed or used as CI evidence.
 
 ## Do
 
@@ -50,12 +51,11 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 
    Whichever is chosen, the Done manifest below counts the RESULTING
    page set, not a fixed 25. Hand-editing a generated file is not a fix.
-4. Fix `docs/Gemfile`: pin versions, resolve the `theme:` /
-   `remote_theme:` conflict, and commit a lockfile that CI can actually
-   use — regenerate it on Linux or add the supported platforms, then
-   prove `bundle install` leaves it unchanged in CI. Lift the ignore
-   with a narrow `!/docs/Gemfile.lock` exception; do NOT unignore the
-   root library lockfile.
+4. Keep every direct dependency in `docs/Gemfile` exactly pinned and keep
+   one selected theme in `_config.yml`. Preserve the owner's PR #111
+   no-lockfile ruling: do not commit `docs/Gemfile.lock` or add an ignore
+   exception for it. Docs CI installs from the exact pins under the docs
+   bundle.
 5. One link mechanism compatible with pretty permalinks; convert
    markdown-style links to AsciiDoc.
 6. Point lychee at the real config (`--config docs/lychee.toml`, or run
@@ -76,7 +76,8 @@ Can start: now. Pairs with 11 (this is mechanics; 11 is truth).
 - The selected theme's layout and assets are present in `_site`.
 - lychee runs against the real config, and two seeded failures prove it
   bites: one broken relative link, one broken fragment.
-- Gemfile pinned, lockfile committed and CI-complete.
+- Every direct docs dependency is exactly pinned, docs CI installs that
+  bundle, and no lockfile is committed, per the owner's PR #111 ruling.
 - lychee no longer accepts 403/429 silently — a seeded link of each
   kind fails the run.
 - The owner has made the docs build a required status check, and that
