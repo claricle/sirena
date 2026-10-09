@@ -5,17 +5,20 @@ require_relative "doc_snippets"
 # Extracts the diagrams shown in the `[source,mermaid]` blocks of the docs.
 #
 # A block that shows a "Good" and a "Less clear" version side by side holds
-# several diagrams; each one is rendered on its own, so a block is split at a
-# blank line followed by a `%%` comment when what follows starts a new diagram.
+# several diagrams; each one is rendered on its own, so a block is split at
+# a blank line followed by a `%%` comment when what follows starts a new
+# diagram.
 module DocMermaidBlocks
   Diagram = Struct.new(:file, :key, :source)
 
   DOCS = File.expand_path("../../docs", __dir__)
 
-  HEADER = /\A(?:C4\w+|classDiagram\S*|erDiagram|graph|flowchart\S*|gantt|gitGraph|kanban|mindmap|
-    packet(?:-beta)?|pie|quadrantChart|radar(?:-beta)?|sankey(?:-beta)?|sequenceDiagram|
-    stateDiagram\S*|timeline|treemap\S*|journey|xychart\S*|requirementDiagram|block\S*|
+  HEADER = /\A(?:C4\w+|classDiagram\S*|erDiagram|graph|flowchart\S*|gantt|
+    gitGraph|kanban|mindmap|packet(?:-beta)?|pie|quadrantChart|
+    radar(?:-beta)?|sankey(?:-beta)?|sequenceDiagram|stateDiagram\S*|
+    timeline|treemap\S*|journey|xychart\S*|requirementDiagram|block\S*|
     architecture\S*|info|error)\b/x
+  MARKER = /\A\[source,\s*mermaid\]\z/
 
   module_function
 
@@ -26,7 +29,9 @@ module DocMermaidBlocks
   # Marker lines the independent count looks for, so a block the extractor
   # fails to see shows up as a count mismatch.
   def marker_count
-    files.sum { |f| File.foreach(f).count { |l| l.chomp.match?(/\A\[source,\s*mermaid\]\z/) } }
+    files.sum do |f|
+      File.foreach(f).count { |l| l.chomp.match?(MARKER) }
+    end
   end
 
   def block_count
@@ -41,18 +46,28 @@ module DocMermaidBlocks
     lines = File.read(file).lines(chomp: true)
     relative = file.delete_prefix("#{File.dirname(DOCS)}/")
     seen = Hash.new(0)
-    DocSnippets.blocks(file).select { |b| b.lang == "mermaid" }.flat_map do |block|
+    mermaid_blocks(file).flat_map do |block|
       heading = heading_before(lines, block.line)
-      seen[heading] += 1
-      split(block.body).each_with_index.map do |source, part|
-        suffix = ".#{part + 1}" if part.positive? || split(block.body).size > 1
-        Diagram.new(relative, "#{heading} ##{seen[heading]}#{suffix}", source)
-      end
+      key = "#{heading} ##{seen[heading] += 1}"
+      block_diagrams(relative, key, block.body)
+    end
+  end
+
+  def mermaid_blocks(file)
+    DocSnippets.blocks(file).select { |b| b.lang == "mermaid" }
+  end
+
+  def block_diagrams(relative, key, body)
+    parts = split(body)
+    parts.each_with_index.map do |source, part|
+      suffix = ".#{part + 1}" if part.positive? || parts.size > 1
+      Diagram.new(relative, "#{key}#{suffix}", source)
     end
   end
 
   def heading_before(lines, marker_line)
-    lines.first(marker_line).reverse.find { |l| l.match?(/\A=+ /) }.to_s.sub(/\A=+ /, "")
+    heading = lines.first(marker_line).reverse.find { |l| l.match?(/\A=+ /) }
+    heading.to_s.sub(/\A=+ /, "")
   end
 
   def split(body)
@@ -66,7 +81,8 @@ module DocMermaidBlocks
   end
 
   def header?(chunk)
-    first = chunk.lines.map(&:strip).find { |l| !l.empty? && !l.start_with?("%%") }
+    first = chunk.lines.map(&:strip)
+      .find { |l| !l.empty? && !l.start_with?("%%") }
     first.to_s.match?(HEADER)
   end
 end
