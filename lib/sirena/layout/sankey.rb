@@ -5,203 +5,332 @@ require_relative "../diagram/sankey"
 
 module Sirena
   module Layout
-    # Sankey transformer for converting Sankey models to renderable structure.
-    #
-    # Handles layer assignment, node positioning, flow path calculation,
-    # and flow width proportional to values.
-    #
-    # @example Transform a Sankey diagram
-    #   transform = Sankey.new
-    #   data = transform.to_graph(sankey_diagram)
+    # Computes final canvas geometry for Sankey diagrams.
     class Sankey < Base
-      # Node height and spacing
       NODE_HEIGHT = 40
       NODE_SPACING = 30
       LAYER_SPACING = 150
       MIN_NODE_WIDTH = 20
       MAX_NODE_WIDTH = 40
 
-      # Converts a Sankey diagram to a layout structure with calculated positions.
-      #
-      # @param diagram [Diagram::Sankey] the sankey diagram to transform
-      # @return [Hash] data structure for rendering
-      def build_graph(diagram)
+      MARGIN_LEFT = 60
+      MARGIN_TOP = 100
+      MARGIN_RIGHT = 60
+      MARGIN_BOTTOM = 60
+      EXTRA_WIDTH = 100
+      EMPTY_WIDTH = 400
+      EMPTY_HEIGHT = 300
+      TITLE_Y = 40
+      NODE_LABEL_BASELINE_OFFSET = 5
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :layer, :integer
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :corner_radius, :float
+        attribute :label, Label
+        attribute :inflow, :float
+        attribute :outflow, :float
+      end
+
+      class Flow < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :value, :float
+        attribute :width, :float
+        attribute :source_x, :float
+        attribute :source_y, :float
+        attribute :target_x, :float
+        attribute :target_y, :float
+        attribute :path, :string
+        attribute :label, Label
+        attribute :colour_index, :integer
+        attribute :self_loop, :boolean, default: false
+      end
+
+      class Scene < Layout::Scene
+        attribute :id, :string
+        attribute :view_box, :string
+        attribute :title, Label
+        attribute :acc_title, :string
+        attribute :acc_description, :string
+        attribute :nodes, Node, collection: true, default: -> { [] }
+        attribute :flows, Flow, collection: true, default: -> { [] }
+      end
+
+      def scene(diagram)
         @diagram = diagram
         @node_layers = {}
         @node_positions = {}
 
-        # Assign nodes to layers (left to right)
         assign_layers
-
-        # Calculate vertical positions within layers
         calculate_positions
 
-        # Build transformation result
-        {
+        width = canvas_width
+        height = canvas_height
+        Scene.new(
           id: "sankey",
-          title: diagram.title,
+          width: width,
+          height: height,
+          view_box: "0 0 #{width} #{height}",
+          title: title_geometry(width),
           acc_title: diagram.acc_title,
           acc_description: diagram.acc_description,
-          nodes: transform_nodes,
-          flows: transform_flows,
-          metadata: {
-            node_count: diagram.nodes.length,
-            flow_count: diagram.flows.length,
-            total_flow: diagram.total_flow,
-            max_flow: diagram.max_flow,
-            layer_count: @node_layers.values.max.to_i + 1,
-          },
-        }
+          nodes: typed_nodes,
+          flows: typed_flows,
+        )
       end
 
       private
 
       def assign_layers
-        # Use topological sorting to assign layers
-        # Source nodes (no inflow) start at layer 0
-        # Each subsequent layer is one step from previous
-
         visited = Set.new
-        node_ids = @diagram.all_node_ids
-
-        # Start with source nodes at layer 0
         source_nodes = @diagram.source_nodes
+
         source_nodes.each do |node_id|
           @node_layers[node_id] = 0
           visited.add(node_id)
         end
 
-        # BFS to assign layers
         queue = source_nodes.dup
-        while !queue.empty?
+        until queue.empty?
           current_id = queue.shift
           current_layer = @node_layers[current_id]
 
-          # Process all flows from this node
           @diagram.flows_from(current_id).each do |flow|
             target_id = flow.target
             next if visited.include?(target_id)
 
-            # Assign target to next layer
-            target_layer = current_layer + 1
             @node_layers[target_id] = [
               @node_layers[target_id] || 0,
-              target_layer,
+              current_layer + 1,
             ].max
+            next if queue.include?(target_id)
 
-            unless queue.include?(target_id)
-              queue << target_id
-              visited.add(target_id)
-            end
+            queue << target_id
+            visited.add(target_id)
           end
         end
 
-        # Handle any nodes not reachable from sources (cycles, isolated nodes)
-        node_ids.each do |node_id|
-          unless @node_layers.key?(node_id)
-            @node_layers[node_id] = 0
-          end
+        @diagram.all_node_ids.each do |node_id|
+          @node_layers[node_id] = 0 unless @node_layers.key?(node_id)
         end
       end
 
       def calculate_positions
-        # Group nodes by layer
-        layers = Hash.new { |h, k| h[k] = [] }
-        @node_layers.each do |node_id, layer|
-          layers[layer] << node_id
-        end
+        layers = Hash.new { |items, layer| items[layer] = [] }
+        @node_layers.each { |node_id, layer| layers[layer] << node_id }
 
-        # Calculate vertical positions for each layer
-        layers.each do |layer_num, node_ids|
-          # Sort nodes by total flow magnitude for better layout
+        layers.each do |layer, node_ids|
           sorted_nodes = node_ids.sort_by do |id|
             -(@diagram.total_inflow(id) + @diagram.total_outflow(id))
           end
 
-          # Position nodes vertically with spacing
-          y_offset = 0
-          sorted_nodes.each do |node_id|
-            x = layer_num * LAYER_SPACING
-            y = y_offset
-
+          sorted_nodes.each_with_index do |node_id, index|
             @node_positions[node_id] = {
-              x: x,
-              y: y,
+              x: layer * LAYER_SPACING,
+              y: index * (NODE_HEIGHT + NODE_SPACING),
               width: calculate_node_width(node_id),
               height: NODE_HEIGHT,
             }
-
-            y_offset += NODE_HEIGHT + NODE_SPACING
           end
         end
       end
 
       def calculate_node_width(node_id)
-        # Node width proportional to flow through it
         total_flow = @diagram.total_inflow(node_id) +
                      @diagram.total_outflow(node_id)
+        return MIN_NODE_WIDTH unless scalable_flow?(total_flow)
 
-        if total_flow > 0 && @diagram.max_flow > 0
-          ratio = total_flow / (@diagram.max_flow * 2)
-          width = MIN_NODE_WIDTH + (ratio * (MAX_NODE_WIDTH - MIN_NODE_WIDTH))
-          width.round
-        else
-          MIN_NODE_WIDTH
-        end
+        ratio = total_flow / (@diagram.max_flow * 2)
+        width = MIN_NODE_WIDTH + (ratio * (MAX_NODE_WIDTH - MIN_NODE_WIDTH))
+        width.round
       end
 
-      def transform_nodes
-        @diagram.nodes.map do |node|
-          position = @node_positions[node.id] || { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT }
+      def canvas_width
+        return empty_canvas_width if @node_positions.empty?
 
-          {
+        right_edge = @node_positions.values.map do |position|
+          position[:x] + position[:width]
+        end.max
+        MARGIN_LEFT + right_edge + MARGIN_RIGHT + EXTRA_WIDTH
+      end
+
+      def canvas_height
+        return empty_canvas_height if @node_positions.empty?
+
+        bottom_edge = @node_positions.values.map do |position|
+          position[:y] + position[:height]
+        end.max
+        MARGIN_TOP + bottom_edge + MARGIN_BOTTOM
+      end
+
+      def title_geometry(width)
+        return unless @diagram.title
+
+        Label.new(text: @diagram.title, x: width.to_i / 2, y: TITLE_Y)
+      end
+
+      def typed_nodes
+        @diagram.nodes.map do |node|
+          position = @node_positions.fetch(
+            node.id,
+            { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
+          )
+          x = MARGIN_LEFT + position[:x]
+          y = MARGIN_TOP + position[:y]
+          width = position[:width]
+          height = position[:height]
+
+          Node.new(
             id: node.id,
-            label: node.display_label,
             layer: @node_layers[node.id] || 0,
-            x: position[:x],
-            y: position[:y],
-            width: position[:width],
-            height: position[:height],
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            corner_radius: 3,
+            label: Label.new(
+              text: node.display_label,
+              x: x + (width / 2),
+              y: y + (height / 2) + NODE_LABEL_BASELINE_OFFSET,
+            ),
             inflow: @diagram.total_inflow(node.id),
             outflow: @diagram.total_outflow(node.id),
-          }
+          )
         end
       end
 
-      def transform_flows
+      def typed_flows
+        colour_index = 0
         @diagram.flows.map.with_index do |flow, index|
-          source_pos = @node_positions[flow.source]
-          target_pos = @node_positions[flow.target]
+          geometry = flow_geometry(flow)
+          current_colour = colour_index
+          colour_index += 1 unless flow.self_loop?
 
-          # Calculate flow width proportional to value
-          flow_width = calculate_flow_width(flow.value)
-
-          {
+          Flow.new(
             id: "flow_#{index}",
             source: flow.source,
             target: flow.target,
             value: flow.value,
-            label: flow.label,
-            width: flow_width,
-            source_x: source_pos ? source_pos[:x] + source_pos[:width] : 0,
-            source_y: source_pos ? source_pos[:y] + (source_pos[:height] / 2.0) : 0,
-            target_x: target_pos ? target_pos[:x] : LAYER_SPACING,
-            target_y: target_pos ? target_pos[:y] + (target_pos[:height] / 2.0) : 0,
+            width: geometry[:width],
+            source_x: geometry[:source_x],
+            source_y: geometry[:source_y],
+            target_x: geometry[:target_x],
+            target_y: geometry[:target_y],
+            path: flow.self_loop? ? nil : flow_path(geometry),
+            label: flow.self_loop? ? nil : flow_label(flow, geometry),
+            colour_index: current_colour,
             self_loop: flow.self_loop?,
-          }
+          )
         end
       end
 
+      def flow_geometry(flow)
+        source = @node_positions[flow.source]
+        target = @node_positions[flow.target]
+        {
+          width: calculate_flow_width(flow.value),
+          source_x: MARGIN_LEFT + source_edge(source),
+          source_y: MARGIN_TOP + vertical_center(source),
+          target_x: MARGIN_LEFT + target_edge(target),
+          target_y: MARGIN_TOP + vertical_center(target),
+        }
+      end
+
       def calculate_flow_width(value)
-        # Flow width proportional to value
         return 1 if @diagram.max_flow.zero?
 
-        ratio = value / @diagram.max_flow
-        min_width = 2
-        max_width = 50
+        width = 2 + ((value / @diagram.max_flow) * 48)
+        [width.round, 2].max
+      end
 
-        width = min_width + (ratio * (max_width - min_width))
-        [width.round, min_width].max
+      def flow_path(geometry)
+        source_top, target_top, source_bottom, target_bottom =
+          flow_edges(geometry)
+
+        [
+          "M #{geometry[:source_x]} #{source_top}",
+          curve_command(geometry, source_top, target_top),
+          "L #{geometry[:target_x]} #{target_bottom}",
+          curve_command(geometry, target_bottom, source_bottom, reverse: true),
+          "Z",
+        ].join(" ")
+      end
+
+      def flow_edges(geometry)
+        half_width = geometry[:width] / 2.0
+        [
+          geometry[:source_y] - half_width,
+          geometry[:target_y] - half_width,
+          geometry[:source_y] + half_width,
+          geometry[:target_y] + half_width,
+        ]
+      end
+
+      def curve_command(geometry, source_y, target_y, reverse: false)
+        offset = (geometry[:target_x] - geometry[:source_x]) * 0.5
+        source_control = geometry[:source_x] + offset
+        target_control = geometry[:target_x] - offset
+        controls = [source_control, target_control]
+        controls.reverse! if reverse
+        end_x = reverse ? geometry[:source_x] : geometry[:target_x]
+
+        [
+          "C #{controls[0]} #{source_y},",
+          "#{controls[1]} #{target_y},",
+          "#{end_x} #{target_y}",
+        ].join(" ")
+      end
+
+      def scalable_flow?(total_flow)
+        total_flow.positive? && @diagram.max_flow.positive?
+      end
+
+      def empty_canvas_width
+        MARGIN_LEFT + MARGIN_RIGHT + EMPTY_WIDTH
+      end
+
+      def empty_canvas_height
+        MARGIN_TOP + MARGIN_BOTTOM + EMPTY_HEIGHT
+      end
+
+      def source_edge(position)
+        position ? position[:x] + position[:width] : 0
+      end
+
+      def target_edge(position)
+        position ? position[:x] : LAYER_SPACING
+      end
+
+      def vertical_center(position)
+        position ? position[:y] + (position[:height] / 2.0) : 0
+      end
+
+      def flow_label(flow, geometry)
+        return unless flow.value.positive?
+
+        Label.new(
+          text: format_flow_value(flow.value),
+          x: (geometry[:source_x] + geometry[:target_x]) / 2.0,
+          y: (geometry[:source_y] + geometry[:target_y]) / 2.0,
+        )
+      end
+
+      def format_flow_value(value)
+        return value.to_i.to_s if value == value.to_i
+
+        format("%.2f", value).gsub(/\.?0+$/, "")
       end
     end
   end
