@@ -5,16 +5,16 @@ require "thor"
 module Sirena
   # Command-line interface for sirena.
   #
-  # Provides commands for rendering Mermaid diagrams to SVG and
+  # Provides commands for rendering diagrams to SVG and
   # managing diagram types.
   class Cli < Thor
     def self.exit_on_failure?
       true
     end
 
-    desc "render [FILE]", "Render a Mermaid diagram to SVG"
+    desc "render [FILE]", "Render a diagram to SVG"
     long_desc <<~DESC
-      Renders a Mermaid diagram from FILE or stdin to SVG format.
+      Renders a diagram from FILE or stdin to SVG format.
 
       If FILE is not provided or is "-", reads from stdin.
       Output is written to stdout by default, or to the file specified
@@ -27,6 +27,8 @@ module Sirena
         sirena render diagram.mmd --theme /path/to/custom-theme.yml
         cat diagram.mmd | sirena render
         sirena render --verbose diagram.mmd
+        sirena render --notation mermaid diagram.txt
+        sirena render --require ./my_notation.rb diagram.my
     DESC
     method_option :output,
                   aliases: "-o",
@@ -47,6 +49,16 @@ module Sirena
                   type: :boolean,
                   default: false,
                   desc: "Enable verbose output"
+    method_option :notation,
+                  type: :string,
+                  desc: "Notation to use (default: detected from the " \
+                        "file extension, then the source)"
+    method_option :require,
+                  aliases: "-r",
+                  type: :string,
+                  repeatable: true,
+                  desc: "Load a notation file before rendering " \
+                        "(repeatable, like ruby -r)"
     def render(file = "-")
       require_relative "commands/render"
       Commands::RenderCommand.new(file, options).run
@@ -66,7 +78,13 @@ module Sirena
 
       Examples:
         sirena types
+        sirena types --require ./my_notation.rb
     DESC
+    method_option :require,
+                  aliases: "-r",
+                  type: :string,
+                  repeatable: true,
+                  desc: "Load a notation file first (repeatable, like ruby -r)"
     def types
       require_relative "commands/types"
       Commands::TypesCommand.new(options).run
@@ -74,17 +92,19 @@ module Sirena
       handle_error(e)
     end
 
-    desc "batch", "Batch render multiple Mermaid diagrams"
+    desc "batch", "Batch render multiple diagrams"
     long_desc <<~DESC
-      Renders all Mermaid diagrams in a directory to SVG format.
+      Renders all diagrams in a directory to SVG format.
 
-      Recursively finds all .mmd files in the input directory and
-      generates corresponding SVG files in the output directory.
+      Recursively finds every file with a registered notation's extension
+      (or only --notation's) in the input directory and generates
+      corresponding SVG files in the output directory.
 
       Examples:
         sirena batch --input docs/diagrams --output docs/images
         sirena batch -i diagrams -o output --theme dark
         sirena batch -i docs -o output -v
+        sirena batch -i docs -o output --notation mermaid
     DESC
     method_option :input,
                   aliases: "-i",
@@ -105,6 +125,16 @@ module Sirena
                   type: :boolean,
                   default: false,
                   desc: "Enable verbose output"
+    method_option :notation,
+                  type: :string,
+                  desc: "Notation to use (default: detected from the " \
+                        "file extension, then the source)"
+    method_option :require,
+                  aliases: "-r",
+                  type: :string,
+                  repeatable: true,
+                  desc: "Load a notation file before rendering " \
+                        "(repeatable, like ruby -r)"
     def batch
       require_relative "commands/batch"
       command = Commands::BatchCommand.new(options)

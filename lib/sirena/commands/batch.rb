@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require_relative "notation_loader"
 
 module Sirena
   module Commands
-    # Batch command for rendering multiple Mermaid diagrams.
+    # Batch command for rendering multiple diagrams.
     #
-    # Processes entire directories of .mmd files and generates
+    # Processes entire directories of diagram files and generates
     # corresponding SVG output files.
     class BatchCommand
       attr_reader :options
@@ -30,10 +31,11 @@ module Sirena
         puts "Theme:  #{options[:theme] || 'default'}"
         puts
 
-        files = find_mermaid_files(input_path)
+        NotationLoader.load_all(options[:require])
+        files = find_diagram_files(input_path)
 
         if files.empty?
-          puts "No .mmd files found in: #{input_path}"
+          puts "No diagram files found in: #{input_path}"
           return
         end
 
@@ -63,14 +65,32 @@ module Sirena
 
       private
 
-      def find_mermaid_files(path)
+      def find_diagram_files(path)
         if File.directory?(path)
-          Dir.glob(File.join(path, "**", "*.mmd"))
+          extensions = batch_extensions
+          Dir.glob(File.join(path, "**", "*")).select do |file|
+            File.file?(file) && extensions.include?(File.extname(file).downcase)
+          end
         elsif File.file?(path)
           [path]
         else
           []
         end
+      end
+
+      # Every registered notation's extensions, or only `--notation`'s.
+      def batch_extensions
+        return Notation.extensions unless options[:notation]
+
+        Notation.fetch(options[:notation]).extensions
+      end
+
+      # Only a registered extension is swapped; any other name is kept.
+      def output_name(relative)
+        extension = File.extname(relative)
+        return relative unless Notation.extensions.include?(extension.downcase)
+
+        "#{relative.delete_suffix(extension)}.svg"
       end
 
       # `-i` names either a directory or a single file (`find_mermaid_files`
@@ -86,7 +106,7 @@ module Sirena
 
       def process_file(file, input_base, output_base, current, total)
         relative = relative_path_for(file, input_base)
-        output_file = File.join(output_base, relative.sub(/\.mmd$/, ".svg"))
+        output_file = File.join(output_base, output_name(relative))
 
         print "[#{current}/#{total}] #{relative}... "
 
@@ -96,7 +116,9 @@ module Sirena
           source = File.binread(file)
           svg = Sirena.render(source,
                              theme: options[:theme],
-                             verbose: options[:verbose])
+                             verbose: options[:verbose],
+                             path: file,
+                             notation: options[:notation])
 
           FileUtils.mkdir_p(File.dirname(output_file))
           File.binwrite(output_file, svg)
