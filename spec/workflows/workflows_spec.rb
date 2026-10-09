@@ -131,9 +131,19 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       end
     end
 
-    it "wires lint into the fast lane, with no other gate slot filled yet" do
+    it "wires lint into the fast lane, with parity and a standalone corpus job still unfilled" do
       expect(jobs.keys).to include("lint")
-      expect(jobs.keys).not_to include("corpus", "parity", "conformance", "fresh-resolution")
+      expect(jobs.keys).not_to include("corpus", "parity")
+    end
+
+    it "wires conformance and fresh-resolution into the full lane" do
+      expect(jobs.fetch("full-lane")["needs"]).to include("conformance", "fresh-resolution")
+    end
+
+    it "runs fresh-resolution without a bundler cache, so the lockfile-free resolution is real" do
+      steps = jobs.fetch("fresh-resolution")["steps"]
+      expect(steps.filter_map { |s| s.dig("with", "bundler-cache") }).to be_empty
+      expect(steps.filter_map { |s| s["run"] }).to eq(["bundle install", "bundle exec rake"])
     end
 
     it "runs rubocop as the lint job, hung off fast-lane" do
