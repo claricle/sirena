@@ -39,8 +39,6 @@ rows:
   count: 3
 - file: lib/sirena/layout/requirement.rb
   count: 6
-- file: lib/sirena/layout/sankey.rb
-  count: 4
 - file: lib/sirena/layout/timeline.rb
   count: 3
 - file: lib/sirena/layout/treemap.rb
@@ -149,8 +147,6 @@ rows:
   count: 2
 - file: lib/sirena/renderer/requirement.rb
   count: 8
-- file: lib/sirena/renderer/sankey.rb
-  count: 1
 - file: lib/sirena/renderer/sequence.rb
   count: 1
 - file: lib/sirena/renderer/timeline.rb
