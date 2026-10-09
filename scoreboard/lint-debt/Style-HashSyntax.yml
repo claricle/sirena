@@ -1,5 +1,0 @@
----
-cop: Style/HashSyntax
-rows:
-- file: tasks/examples.rake
-  count: 1

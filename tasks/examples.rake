@@ -161,7 +161,7 @@ namespace :examples do
   end
 
   desc "Generate all examples and copy to docs"
-  task :build => %i[generate generate_docs copy_to_docs]
+  task build: %i[generate generate_docs copy_to_docs]
 
   desc "Create example template for a diagram type"
   task :create, [:type, :name] do |_t, args|

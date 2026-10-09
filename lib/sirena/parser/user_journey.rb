@@ -225,7 +225,7 @@ module Sirena
       end
 
       def validate_score!(score)
-        return if score >= 1 && score <= 5
+        return if score.between?(1, 5)
 
         raise ParseError, "Score must be between 1 and 5, got #{score}"
       end

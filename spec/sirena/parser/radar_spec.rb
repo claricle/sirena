@@ -145,7 +145,7 @@ RSpec.describe Sirena::Parser::Radar do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.options[:show_legend]).to eq(false)
+        expect(diagram.options[:show_legend]).to be(false)
       end
 
       it "parses graticule option" do
@@ -182,7 +182,7 @@ RSpec.describe Sirena::Parser::Radar do
 
         diagram = parser.parse(source)
         expect(diagram.options[:ticks]).to eq(10)
-        expect(diagram.options[:show_legend]).to eq(false)
+        expect(diagram.options[:show_legend]).to be(false)
         expect(diagram.options[:graticule]).to eq("polygon")
         expect(diagram.options[:min]).to eq(1.0)
         expect(diagram.options[:max]).to eq(10.0)

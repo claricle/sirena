@@ -1,5 +1,0 @@
----
-cop: Style/StringLiterals
-rows:
-- file: docs/Gemfile
-  count: 15

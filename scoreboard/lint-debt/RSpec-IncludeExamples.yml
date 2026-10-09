@@ -1,5 +1,0 @@
----
-cop: RSpec/IncludeExamples
-rows:
-- file: spec/fixtures_spec.rb
-  count: 8

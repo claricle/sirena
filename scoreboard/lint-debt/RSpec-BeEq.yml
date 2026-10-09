@@ -1,5 +1,0 @@
----
-cop: RSpec/BeEq
-rows:
-- file: spec/sirena/parser/radar_spec.rb
-  count: 2

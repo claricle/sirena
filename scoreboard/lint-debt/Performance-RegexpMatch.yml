@@ -1,5 +1,0 @@
----
-cop: Performance/RegexpMatch
-rows:
-- file: scripts/extract_mermaid_tests.rb
-  count: 1
