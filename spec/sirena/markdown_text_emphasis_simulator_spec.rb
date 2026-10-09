@@ -84,6 +84,42 @@ RSpec.describe Sirena::MarkdownText do
     end
   end
 
+  describe ".try_em_strong" do
+    it "rejects a punctuation opener after a word" do
+      expect(simulator.try_em_strong("*(a)*", 0, "a")).to be_nil
+    end
+
+    it "rejects a tight closer after the same marker" do
+      expect(simulator.try_em_strong("*a*b", 0, "*")).to be_nil
+    end
+  end
+
+  describe ".append_text" do
+    let(:tokens) { [{ type: :text, text: +"a" }] }
+
+    it "ignores empty fragments" do
+      simulator.append_text(tokens, "")
+      expect(tokens).to eq([{ type: :text, text: "a" }])
+    end
+
+    it "joins adjacent text fragments" do
+      simulator.append_text(tokens, "b")
+      expect(tokens).to eq([{ type: :text, text: "ab" }])
+    end
+  end
+
+  describe ".coalesce_runs" do
+    let(:plain_a) { described_class::Run.new(text: "a", bold: false, italic: false) }
+    let(:plain_b) { described_class::Run.new(text: "b", bold: false, italic: false) }
+    let(:bold_c) { described_class::Run.new(text: "c", bold: true, italic: false) }
+
+    it "joins adjacent runs only while their emphasis is the same" do
+      expect(simulator.coalesce_runs([plain_a, plain_b, bold_c])).to eq([
+        plain_a.with(text: "ab"), bold_c,
+      ])
+    end
+  end
+
   describe ".simulate" do
     {
       "**bold**" => [["bold", true, false]],
@@ -110,6 +146,9 @@ RSpec.describe Sirena::MarkdownText do
       "!*a*!" => [["!", false, false], ["a", false, true], ["!", false, false]],
       "*a*b*c*" => [["a", false, true], ["b", false, false],
                     ["c", false, true]],
+      "**a*b**" => [["a*b", true, false]],
+      "***a*b***" => [["a", true, true], ["b", true, false],
+                       ["*", false, false]],
       "__a*b__" => [["a*b", true, false]],
       "**a_b**" => [["a_b", true, false]],
       "_**_**" => [["_", false, false], ["_", true, false]],
