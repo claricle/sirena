@@ -63,7 +63,8 @@ RSpec.describe Sirena::Renderer::Requirement do
   end
 
   it "falls back for an unknown requirement type" do
-    expect(fallback_xml).to include("&lt;&lt;customNeed&gt;&gt;", 'stroke="#666"')
+    expect(fallback_xml)
+      .to include("&lt;&lt;customNeed&gt;&gt;", 'stroke="#666"')
   end
 
   it "title-cases an unknown risk" do

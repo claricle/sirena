@@ -42,8 +42,8 @@ RSpec.describe Sirena::Layout::Sankey do
     described_class.new.call(subject)
   end
 
-  it "builds the empty accessibility canvas" do
-    expect(empty_scene).to have_attributes(
+  let(:empty_canvas) do
+    {
       width: 520.0,
       height: 460.0,
       view_box: "0 0 520 460",
@@ -51,7 +51,14 @@ RSpec.describe Sirena::Layout::Sankey do
       acc_description: "How values move",
       nodes: [],
       flows: [],
-    )
+    }
+  end
+  let(:self_loop_attributes) do
+    { self_loop: true, path: nil, label: nil, colour_index: 2 }
+  end
+
+  it "builds the empty accessibility canvas" do
+    expect(empty_scene).to have_attributes(empty_canvas)
   end
 
   it "positions the empty canvas title" do
@@ -61,9 +68,10 @@ RSpec.describe Sirena::Layout::Sankey do
   end
 
   it "assigns acyclic layers" do
-    expect(acyclic_scene.nodes.map { |item| [item.id, item.layer, item.x] }).to eq(
-      [["source", 0, 60.0], ["middle", 1, 210.0], ["sink", 2, 360.0]],
-    )
+    layers = acyclic_scene.nodes.map { |item| [item.id, item.layer, item.x] }
+
+    expect(layers)
+      .to eq([["source", 0, 60.0], ["middle", 1, 210.0], ["sink", 2, 360.0]])
   end
 
   it "uses the explicit node label" do
@@ -91,12 +99,7 @@ RSpec.describe Sirena::Layout::Sankey do
   end
 
   it "marks self-loops" do
-    expect(cyclic_scene.flows.last).to have_attributes(
-      self_loop: true,
-      path: nil,
-      label: nil,
-      colour_index: 2,
-    )
+    expect(cyclic_scene.flows.last).to have_attributes(self_loop_attributes)
   end
 
   it "marks non-loop flows" do
