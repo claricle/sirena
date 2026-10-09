@@ -77,11 +77,7 @@ module Sirena
           sections: transform_sections(diagram, timeline_range),
           events: transform_events(diagram.events, timeline_range),
           timeline: timeline_range,
-          metadata: {
-            section_count: diagram.sections.length,
-            total_events: all_events.length,
-            has_sections: diagram.has_sections?,
-          },
+          metadata: timeline_metadata(diagram, all_events),
         }
       end
 
@@ -124,91 +120,135 @@ module Sirena
 
       def simple_track(graph)
         Track.new(
-          axis: axis(MARGIN_TOP), entries: event_entries(graph[:events], MARGIN_TOP, 0),
-          range_labels: range_labels(graph[:timeline], MARGIN_TOP)
+          axis: axis(MARGIN_TOP),
+          entries: event_entries(graph[:events], MARGIN_TOP, 0),
+          range_labels: range_labels(graph[:timeline], MARGIN_TOP),
         )
       end
 
       def section_track(section, timeline, index)
         header_y = MARGIN_TOP + (index * (SECTION_HEIGHT + SECTION_SPACING))
         axis_y = header_y + SECTION_HEIGHT
-        entries = if section[:has_events]
-                    event_entries(section[:events], axis_y, index)
-                  elsif section[:has_tasks]
-                    task_entries(section[:tasks], axis_y, index)
-                  else
-                    []
-                  end
 
         Track.new(
-          header: label(section[:name], MARGIN_LEFT, header_y,
-                        font_size(:font_size_normal, 14), style: "section",
-                                                          weight: "bold", section_index: index),
-          axis: axis(axis_y), entries: entries,
+          header: section_header(section, header_y, index),
+          axis: axis(axis_y), entries: section_entries(section, axis_y, index),
           range_labels: index.zero? ? range_labels(timeline, axis_y) : []
         )
       end
 
-      def axis(y)
+      def section_header(section, y_position, section_index)
+        label(
+          section[:name], MARGIN_LEFT, y_position,
+          font_size(:font_size_normal, 14), style: "section",
+                                            weight: "bold", section_index: section_index
+        )
+      end
+
+      def section_entries(section, y_position, section_index)
+        if section[:has_events]
+          return event_entries(section[:events], y_position, section_index)
+        end
+        if section[:has_tasks]
+          return task_entries(section[:tasks], y_position, section_index)
+        end
+
+        []
+      end
+
+      def axis(y_position)
         Axis.new(
-          x: MARGIN_LEFT, y: y, width: TIMELINE_WIDTH,
+          x: MARGIN_LEFT, y: y_position, width: TIMELINE_WIDTH,
           height: TIMELINE_HEIGHT, corner_radius: TIMELINE_HEIGHT / 2.0
         )
       end
 
-      def event_entries(events, y, section_index)
+      def event_entries(events, y_position, section_index)
         events.map do |event|
-          x = event_x(event[:x_position])
-          labels = event[:descriptions].map.with_index do |description, index|
-            label(description.to_s.strip, x,
-                  y + EVENT_LABEL_OFFSET_Y + (index * 16),
-                  font_size(:font_size_small, 11), style: "event",
-                                                   anchor: "middle")
-          end
-          labels << label(event[:time].to_s, x, y - 15,
-                          font_size(:font_size_small, 10), style: "muted",
-                                                           anchor: "middle", weight: "bold")
-          Entry.new(marker: marker(x, y, section_index), labels: labels)
+          event_entry(event, y_position, section_index)
         end
       end
 
-      def task_entries(tasks, y, section_index)
+      def event_entry(event, y_position, section_index)
+        x_position = event_x(event[:x_position])
+        Entry.new(
+          marker: marker(x_position, y_position, section_index),
+          labels: event_labels(event, x_position, y_position),
+        )
+      end
+
+      def event_labels(event, x_position, y_position)
+        descriptions = event[:descriptions].map.with_index do |description, index|
+          event_description(description, x_position, y_position, index)
+        end
+        descriptions << event_time_label(event, x_position, y_position)
+      end
+
+      def event_description(description, x_position, y_position, index)
+        label(
+          description.to_s.strip, x_position,
+          y_position + EVENT_LABEL_OFFSET_Y + (index * 16),
+          font_size(:font_size_small, 11), style: "event", anchor: "middle"
+        )
+      end
+
+      def event_time_label(event, x_position, y_position)
+        label(
+          event[:time].to_s, x_position, y_position - 15,
+          font_size(:font_size_small, 10), style: "muted",
+                                           anchor: "middle", weight: "bold"
+        )
+      end
+
+      def task_entries(tasks, y_position, section_index)
         return [] if tasks.empty?
 
         spacing = TIMELINE_WIDTH / (tasks.length + 1).to_f
         tasks.map.with_index do |task, index|
-          x = MARGIN_LEFT + (spacing * (index + 1))
-          task_label = label(task.to_s, x, y + EVENT_LABEL_OFFSET_Y,
-                             font_size(:font_size_small, 11), style: "event",
-                                                              anchor: "middle")
-          Entry.new(marker: marker(x, y, section_index), labels: [task_label])
+          task_entry(task, index, spacing, y_position, section_index)
         end
       end
 
-      def marker(x, y, section_index)
+      def task_entry(task, index, spacing, y_position, section_index)
+        x_position = MARGIN_LEFT + (spacing * (index + 1))
+        task_label = label(
+          task.to_s, x_position, y_position + EVENT_LABEL_OFFSET_Y,
+          font_size(:font_size_small, 11), style: "event", anchor: "middle"
+        )
+        Entry.new(
+          marker: marker(x_position, y_position, section_index),
+          labels: [task_label],
+        )
+      end
+
+      def marker(x_position, y_position, section_index)
         Marker.new(
-          x: x, y: y + (TIMELINE_HEIGHT / 2.0),
+          x: x_position, y: y_position + (TIMELINE_HEIGHT / 2.0),
           radius: EVENT_MARKER_RADIUS, section_index: section_index
         )
       end
 
-      def range_labels(timeline, y)
+      def range_labels(timeline, y_position)
         return [] unless timeline
 
-        min = timeline[:min]
-        max = timeline[:max]
-        middle = ((min + max) / 2.0).round
-        label_y = y + TIMELINE_HEIGHT + 20
-        [[min, MARGIN_LEFT], [max, MARGIN_LEFT + TIMELINE_WIDTH],
-         [middle, MARGIN_LEFT + (TIMELINE_WIDTH / 2)]].map do |text, x|
-          label(text.to_s, x, label_y, font_size(:font_size_small, 10),
+        range_label_positions(timeline).map do |text, x_position|
+          label(text.to_s, x_position, y_position + TIMELINE_HEIGHT + 20,
+                font_size(:font_size_small, 10),
                 style: "muted", anchor: "middle")
         end
       end
 
-      def label(text, x, y, size, **options)
+      def range_label_positions(timeline)
+        minimum = timeline[:min]
+        maximum = timeline[:max]
+        middle = ((minimum + maximum) / 2.0).round
+        [[minimum, MARGIN_LEFT], [maximum, MARGIN_LEFT + TIMELINE_WIDTH],
+         [middle, MARGIN_LEFT + (TIMELINE_WIDTH / 2)]]
+      end
+
+      def label(text, x_position, y_position, size, **options)
         Label.new(
-          text: text, x: x, y: y, font_size: size,
+          text: text, x: x_position, y: y_position, font_size: size,
           text_anchor: options[:anchor], font_weight: options[:weight],
           style: options.fetch(:style), section_index: options[:section_index]
         )
@@ -224,7 +264,9 @@ module Sirena
       end
 
       def collect_all_events(diagram)
-        diagram.sections.each_with_object(diagram.events.dup) do |section, events|
+        diagram.sections.each_with_object(
+          diagram.events.dup,
+        ) do |section, events|
           events.concat(section.events)
         end
       end
@@ -232,16 +274,33 @@ module Sirena
       def calculate_timeline_range(events)
         return default_timeline_range if events.empty?
 
-        time_values = events.filter_map { |event| extract_numeric_time(event.time) }
+        time_values = numeric_times(events)
         return default_timeline_range if time_values.empty?
 
-        min_time = time_values.min
-        max_time = time_values.max
-        padding = [((max_time - min_time) * 0.1).ceil, 1].max
+        padded_timeline_range(time_values.min, time_values.max)
+      end
+
+      def numeric_times(events)
+        events.filter_map do |event|
+          extract_numeric_time(event.time)
+        end
+      end
+
+      def padded_timeline_range(min_time, max_time)
+        span = max_time - min_time
+        padding = [(span * 0.1).ceil, 1].max
         {
           min: min_time - padding,
           max: max_time + padding,
-          span: (max_time - min_time) + (2 * padding),
+          span: span + (2 * padding),
+        }
+      end
+
+      def timeline_metadata(diagram, all_events)
+        {
+          section_count: diagram.sections.length,
+          total_events: all_events.length,
+          has_sections: diagram.has_sections?,
         }
       end
 
@@ -284,7 +343,8 @@ module Sirena
         return 0 unless numeric_time
         return 50.0 unless timeline_range[:span].positive?
 
-        ((numeric_time - timeline_range[:min]).to_f / timeline_range[:span]) * 100.0
+        offset = numeric_time - timeline_range[:min]
+        (offset.to_f / timeline_range[:span]) * 100.0
       end
     end
   end

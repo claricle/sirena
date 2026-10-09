@@ -95,15 +95,9 @@ rows:
   count: 3
 - file: lib/sirena/renderer/er_diagram.rb
   count: 1
-- file: lib/sirena/renderer/kanban.rb
-  count: 1
 - file: lib/sirena/renderer/markdown_text.rb
   count: 1
 - file: lib/sirena/renderer/packet.rb
-  count: 1
-- file: lib/sirena/renderer/quadrant.rb
-  count: 1
-- file: lib/sirena/renderer/timeline.rb
   count: 1
 - file: lib/sirena/renderer/treemap.rb
   count: 1

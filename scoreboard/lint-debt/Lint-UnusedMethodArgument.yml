@@ -5,8 +5,6 @@ rows:
   count: 2
 - file: lib/sirena/layout/git_graph.rb
   count: 3
-- file: lib/sirena/layout/kanban.rb
-  count: 1
 - file: lib/sirena/layout/mindmap.rb
   count: 1
 - file: lib/sirena/layout/packet.rb

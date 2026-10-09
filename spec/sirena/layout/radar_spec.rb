@@ -9,15 +9,19 @@ RSpec.describe Sirena::Layout::Radar do
 
   let(:diagram) { Sirena::Diagram::Radar.new }
 
-  it "returns the compact empty-axis canvas" do
-    expect(
+  context "without axes" do
+    subject(:empty_scene_geometry) do
       [graph.class, graph.axes, graph.curves, graph.grid_circles,
        graph.center_x, graph.center_y, graph.radius, graph.width, graph.height,
-       graph.min_value, graph.max_value, graph.view_box],
-    ).to eq(
-      [described_class::Scene, [], [], [], 80.0, 80.0, 200.0, 160.0,
-       160.0, 0.0, 0.0, "0 0 160 160"],
-    )
+       graph.min_value, graph.max_value, graph.view_box]
+    end
+
+    it "returns the compact empty-axis canvas" do
+      expected = [described_class::Scene, [], [], [], 80.0, 80.0, 200.0,
+                  160.0, 160.0, 0.0, 0.0, "0 0 160 160"]
+
+      expect(empty_scene_geometry).to eq(expected)
+    end
   end
 
   context "with axes and a curve" do
@@ -45,34 +49,45 @@ RSpec.describe Sirena::Layout::Radar do
                "0 0 560 560"])
     end
 
-    it "positions axes clockwise from the top" do
-      speed, quality = graph.axes
+    context "with positioned axes" do
+      subject(:axis_evidence) do
+        speed, quality = graph.axes
+        actual = [[speed.id, speed.angle, speed.line.x1, speed.line.y1,
+                   speed.line.x2.round(4), speed.line.y2,
+                   speed.label.x.round(4), speed.label.y,
+                   speed.label.text_anchor, speed.label.dominant_baseline],
+                  [quality.id, quality.angle, quality.line.x2.round(4),
+                   quality.line.y2, quality.label.x.round(4), quality.label.y]]
+        expected = [["speed", -90.0, 280.0, 280.0, 280.0, 80.0, 280.0,
+                     50.0, "end", "middle"],
+                    ["quality", 90.0, 280.0, 480.0, 280.0, 510.0]]
 
-      expect(
-        [[speed.id, speed.angle, speed.line.x1, speed.line.y1,
-          speed.line.x2.round(4), speed.line.y2, speed.label.x.round(4),
-          speed.label.y, speed.label.text_anchor, speed.label.dominant_baseline],
-         [quality.id, quality.angle, quality.line.x2.round(4), quality.line.y2,
-          quality.label.x.round(4), quality.label.y]],
-      ).to eq(
-        [["speed", -90.0, 280.0, 280.0, 280.0, 80.0, 280.0, 50.0,
-          "end", "middle"],
-         ["quality", 90.0, 280.0, 480.0, 280.0, 510.0]],
-      )
-    end
-
-    it "normalizes curve points onto their axes" do
-      curve = graph.curves.first
-      points = curve.points.map do |point|
-        [point.axis_id, point.value, point.normalized,
-         point.x.round(4), point.y.round(4)]
+        [actual, expected]
       end
 
-      expect([curve.id, curve.label, points]).to eq(
-        ["current", "Current",
-         [["speed", 10.0, 0.0, 280.0, 280.0],
-          ["quality", 30.0, 1.0, 280.0, 480.0]]],
-      )
+      it "positions axes clockwise from the top" do
+        expect(axis_evidence.first).to eq(axis_evidence.last)
+      end
+    end
+
+    context "with normalized curve points" do
+      subject(:curve_geometry) do
+        rendered_curve = graph.curves.first
+        points = rendered_curve.points.map do |point|
+          [point.axis_id, point.value, point.normalized,
+           point.x.round(4), point.y.round(4)]
+        end
+
+        [rendered_curve.id, rendered_curve.label, points]
+      end
+
+      it "normalizes points onto their axes" do
+        expect(curve_geometry).to eq(
+          ["current", "Current",
+           [["speed", 10.0, 0.0, 280.0, 280.0],
+            ["quality", 30.0, 1.0, 280.0, 480.0]]],
+        )
+      end
     end
 
     it "creates five evenly spaced grid circles across the range" do
@@ -81,17 +96,22 @@ RSpec.describe Sirena::Layout::Radar do
       )
     end
 
-    it "stores themed label and legend geometry in the scene" do
-      contrast = described_class.new.call(
-        diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
-      )
-
-      expect(
+    context "with a larger theme" do
+      subject(:themed_geometry) do
+        contrast = described_class.new.call(
+          diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
+        )
         [contrast.axes.first.label.font_size,
          contrast.legend.first.marker.x, contrast.legend.first.marker.y,
          contrast.legend.first.label.x, contrast.legend.first.label.y,
-         contrast.legend.first.label.font_size],
-      ).to eq([16.0, 20.0, 520.0, 35.0, 524.0, 14.0])
+         contrast.legend.first.label.font_size]
+      end
+
+      it "stores label and legend geometry in the scene" do
+        expect(themed_geometry).to eq(
+          [16.0, 20.0, 520.0, 35.0, 524.0, 14.0],
+        )
+      end
     end
   end
 

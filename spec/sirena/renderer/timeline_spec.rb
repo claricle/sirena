@@ -11,19 +11,21 @@ RSpec.describe Sirena::Renderer::Timeline do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:scene) { Sirena::Layout::Timeline.new.call(diagram, theme: theme) }
   let(:document) { described_class.new(theme: theme).render(scene) }
-
-  it "renders the scene's final canvas and coordinates verbatim" do
+  let(:rendered_scene_evidence) do
     xml = document.to_xml
     entry = scene.tracks.first.entries.first
+    snippets = [%(cx="#{entry.marker.x}"), %(cy="#{entry.marker.y}"),
+                %(x="#{entry.labels.first.x}"), %(y="#{entry.labels.first.y}"),
+                ">Shipped</text>"]
 
-    expect([document.width, document.height, document.view_box]).to eq(
-      [scene.width, scene.height, scene.view_box],
-    )
-    expect(xml).to include(
-      %(cx="#{entry.marker.x}"), %(cy="#{entry.marker.y}"),
-      %(x="#{entry.labels.first.x}"), %(y="#{entry.labels.first.y}"),
-      ">Shipped</text>"
-    )
+    [[document.width, document.height, document.view_box],
+     snippets.map { |snippet| xml.include?(snippet) }]
+  end
+
+  it "renders the scene's final canvas and coordinates verbatim" do
+    expected = [[scene.width, scene.height, scene.view_box], [true] * 5]
+
+    expect(rendered_scene_evidence).to eq(expected)
   end
 
   it "does not retain positional state between renders" do

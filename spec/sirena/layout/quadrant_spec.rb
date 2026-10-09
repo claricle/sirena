@@ -35,6 +35,15 @@ RSpec.describe Sirena::Layout::Quadrant do
   end
 
   context "with points" do
+    subject(:themed_point_geometry) do
+      contrast = described_class.new.call(
+        diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
+      )
+      point = contrast.points.first
+      [point.label.x, point.label.y, point.label.font_size,
+       contrast.axis_labels.first.font_size]
+    end
+
     let(:diagram) do
       Sirena::Diagram::Quadrant.new(
         points: [default_point, styled_point],
@@ -71,15 +80,7 @@ RSpec.describe Sirena::Layout::Quadrant do
     end
 
     it "stores final point-label geometry and themed font sizes" do
-      contrast = described_class.new.call(
-        diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
-      )
-      point = contrast.points.first
-
-      expect(
-        [point.label.x, point.label.y, point.label.font_size,
-         contrast.axis_labels.first.font_size],
-      ).to eq([250.0, 180.0, 14.0, 14.0])
+      expect(themed_point_geometry).to eq([250.0, 180.0, 14.0, 14.0])
     end
   end
 

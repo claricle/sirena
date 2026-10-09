@@ -79,14 +79,26 @@ module Sirena
         graph = build_graph(diagram)
         dims = graph[:dimensions]
         Scene.new(
+          **canvas_attributes(graph, dims),
+          **scene_data(graph, dims),
+        )
+      end
+
+      def canvas_attributes(graph, dims)
+        {
           id: graph[:id], width: dims[:width], height: dims[:height],
-          view_box: "0 0 #{dims[:width]} #{dims[:height]}",
+          view_box: "0 0 #{dims[:width]} #{dims[:height]}"
+        }
+      end
+
+      def scene_data(graph, dims)
+        {
           title: title_label(graph[:title], dims),
-          quadrants: typed_quadrants(graph[:quadrants]), axes: axis_lines(dims),
-          axis_labels: axis_labels(graph[:axes], dims),
+          quadrants: typed_quadrants(graph[:quadrants]),
+          axes: axis_lines(dims), axis_labels: axis_labels(graph[:axes], dims),
           quadrant_labels: quadrant_labels(graph[:quadrants]),
           points: typed_points(graph[:points])
-        )
+        }
       end
 
       def dimensions(margin, chart_width, chart_height)
@@ -99,7 +111,8 @@ module Sirena
 
       def axes(diagram)
         {
-          x_left: diagram.x_axis_left || "", x_right: diagram.x_axis_right || "",
+          x_left: diagram.x_axis_left || "",
+          x_right: diagram.x_axis_right || "",
           y_bottom: diagram.y_axis_bottom || "", y_top: diagram.y_axis_top || ""
         }
       end
@@ -118,7 +131,7 @@ module Sirena
       def title_label(title, dims)
         return unless title
 
-        label(title, dims[:width] / 2.0, 30,
+        label(title, [dims[:width] / 2.0, 30],
               font_size(:font_size_large, 18), "title",
               anchor: "middle", weight: "bold")
       end
@@ -134,11 +147,22 @@ module Sirena
         center_x = dims[:chart_x] + (dims[:chart_width] / 2.0)
         center_y = dims[:chart_y] + (dims[:chart_height] / 2.0)
         [
-          Line.new(x1: center_x, y1: dims[:chart_y], x2: center_x,
-                   y2: dims[:chart_y] + dims[:chart_height]),
-          Line.new(x1: dims[:chart_x], y1: center_y,
-                   x2: dims[:chart_x] + dims[:chart_width], y2: center_y),
+          vertical_axis(dims, center_x), horizontal_axis(dims, center_y)
         ]
+      end
+
+      def vertical_axis(dims, center_x)
+        Line.new(
+          x1: center_x, y1: dims[:chart_y], x2: center_x,
+          y2: dims[:chart_y] + dims[:chart_height]
+        )
+      end
+
+      def horizontal_axis(dims, center_y)
+        Line.new(
+          x1: dims[:chart_x], y1: center_y,
+          x2: dims[:chart_x] + dims[:chart_width], y2: center_y
+        )
       end
 
       def axis_labels(axes, dims)
@@ -146,13 +170,13 @@ module Sirena
         bottom = dims[:chart_y] + dims[:chart_height]
         right = dims[:chart_x] + dims[:chart_width]
         [
-          label(axes[:x_left], dims[:chart_x] - 10, bottom + 30, size,
+          label(axes[:x_left], [dims[:chart_x] - 10, bottom + 30], size,
                 "axis", anchor: "end"),
-          label(axes[:x_right], right + 10, bottom + 30, size,
+          label(axes[:x_right], [right + 10, bottom + 30], size,
                 "axis", anchor: "start"),
-          label(axes[:y_bottom], dims[:chart_x] - 30, bottom + 10, size,
+          label(axes[:y_bottom], [dims[:chart_x] - 30, bottom + 10], size,
                 "axis", anchor: "middle"),
-          label(axes[:y_top], dims[:chart_x] - 30, dims[:chart_y] - 10, size,
+          label(axes[:y_top], [dims[:chart_x] - 30, dims[:chart_y] - 10], size,
                 "axis", anchor: "middle"),
         ]
       end
@@ -163,30 +187,39 @@ module Sirena
 
           bounds = quadrant[:bounds]
           label(
-            quadrant[:label], bounds[:x] + (bounds[:width] / 2.0),
-            bounds[:y] + 20, font_size(:font_size_normal, 14), "quadrant",
+            quadrant[:label],
+            [bounds[:x] + (bounds[:width] / 2.0), bounds[:y] + 20],
+            font_size(:font_size_normal, 14), "quadrant",
             anchor: "middle", weight: "bold"
           )
         end
       end
 
       def typed_points(points)
-        points.map do |point|
-          Point.new(
-            id: point[:id], x: point[:svg_x], y: point[:svg_y],
-            radius: point[:radius], quadrant: point[:quadrant],
-            color: point[:color], stroke_color: point[:stroke_color],
-            stroke_width: point[:stroke_width],
-            label: label(point[:label], point[:svg_x] + 10,
-                         point[:svg_y] - 10, font_size(:font_size_small, 11),
-                         "point", anchor: "start")
-          )
-        end
+        points.map { |point| typed_point(point) }
       end
 
-      def label(text, x, y, size, style, **options)
+      def typed_point(point)
+        Point.new(
+          id: point[:id], x: point[:svg_x], y: point[:svg_y],
+          radius: point[:radius], quadrant: point[:quadrant],
+          color: point[:color], stroke_color: point[:stroke_color],
+          stroke_width: point[:stroke_width], label: point_label(point)
+        )
+      end
+
+      def point_label(point)
+        position = [point[:svg_x] + 10, point[:svg_y] - 10]
+        label(
+          point[:label], position, font_size(:font_size_small, 11),
+          "point", anchor: "start"
+        )
+      end
+
+      def label(text, position, size, style, **options)
         Label.new(
-          text: text, x: x, y: y, font_size: size, style: style,
+          text: text, x: position[0], y: position[1],
+          font_size: size, style: style,
           text_anchor: options[:anchor], font_weight: options[:weight]
         )
       end

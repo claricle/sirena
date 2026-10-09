@@ -91,7 +91,7 @@ Layout/IndentationWidth:
 Layout/LineEndStringConcatenationIndentation:
   Enabled: false
 
-# Offense count: 230
+# Offense count: 217
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: Max, AllowHeredoc, AllowURI, AllowQualifiedName, URISchemes, AllowRBSInlineAnnotation, AllowCopDirectives, AllowedPatterns, SplitStrings.
 # URISchemes: http, https
@@ -109,7 +109,7 @@ Layout/MultilineMethodCallIndentation:
     - 'lib/sirena/renderer/gantt.rb'
     - 'tasks/generate_mermaid_fixtures.rake'
 
-# Offense count: 90
+# Offense count: 84
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: EnforcedStyle, IndentationWidth.
 # SupportedStyles: aligned, indented
@@ -126,17 +126,17 @@ Layout/SpaceAroundOperators:
     - 'lib/sirena/renderer/requirement.rb'
     - 'scripts/extract_mermaid_tests.rb'
 
-# Offense count: 267
+# Offense count: 264
 # This cop supports safe autocorrection (--autocorrect).
 Lint/AmbiguousOperatorPrecedence:
   Enabled: false
 
-# Offense count: 21
+# Offense count: 20
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
 Lint/DuplicateBranch:
   Enabled: false
 
-# Offense count: 11
+# Offense count: 10
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods, NotImplementedExceptions.
 # NotImplementedExceptions: NotImplementedError
@@ -145,7 +145,6 @@ Lint/UnusedMethodArgument:
     - 'lib/sirena/renderer/packet.rb'
     - 'lib/sirena/layout/block.rb'
     - 'lib/sirena/layout/git_graph.rb'
-    - 'lib/sirena/layout/kanban.rb'
     - 'lib/sirena/layout/mindmap.rb'
     - 'lib/sirena/layout/packet.rb'
     - 'lib/sirena/layout/requirement.rb'
@@ -159,7 +158,7 @@ Lint/UselessAssignment:
     - 'tasks/examples.rake'
     - 'tasks/generate_mermaid_fixtures.rake'
 
-# Offense count: 330
+# Offense count: 317
 # Configuration parameters: AllowedMethods, AllowedPatterns, CountRepeatedAttributes, Max.
 Metrics/AbcSize:
   Enabled: false
@@ -170,12 +169,12 @@ Metrics/AbcSize:
 Metrics/BlockLength:
   Max: 358
 
-# Offense count: 133
+# Offense count: 131
 # Configuration parameters: AllowedMethods, AllowedPatterns, Max.
 Metrics/CyclomaticComplexity:
   Enabled: false
 
-# Offense count: 428
+# Offense count: 395
 # Configuration parameters: CountComments, CountAsOne, AllowedMethods, AllowedPatterns.
 Metrics/MethodLength:
   Max: 107
@@ -185,12 +184,12 @@ Metrics/MethodLength:
 Metrics/ParameterLists:
   Max: 6
 
-# Offense count: 113
+# Offense count: 110
 # Configuration parameters: AllowedMethods, AllowedPatterns, Max.
 Metrics/PerceivedComplexity:
   Enabled: false
 
-# Offense count: 137
+# Offense count: 119
 # Configuration parameters: MinNameLength, AllowNamesEndingInNumbers, AllowedNames, ForbiddenNames.
 # AllowedNames: as, at, by, cc, db, id, if, in, io, ip, of, on, os, pp, to
 Naming/MethodParameterName:
@@ -250,7 +249,7 @@ RSpec/MultipleDescribes:
 RSpec/MultipleExpectations:
   Max: 20
 
-# Offense count: 39
+# Offense count: 35
 # Configuration parameters: CustomTransform, IgnoreMethods, IgnoreMetadata, InflectorPath, EnforcedInflector.
 # SupportedInflectors: default, active_support
 RSpec/SpecFilePathFormat:

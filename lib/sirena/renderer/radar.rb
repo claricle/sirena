@@ -21,7 +21,9 @@ module Sirena
       #   positioned-Hash input
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        scene = Layout::Radar.from_graph(scene, theme: theme) unless scene.is_a?(Layout::Radar::Scene)
+        unless scene.is_a?(Layout::Radar::Scene)
+          scene = Layout::Radar.from_graph(scene, theme: theme)
+        end
         svg = document(scene)
         scene.grid_circles.each { |circle| svg << grid_circle(circle) }
         scene.axes.each { |axis| render_axis(axis, svg) }
@@ -105,10 +107,13 @@ module Sirena
           text.x = label.x
           text.y = label.y
           text.text_anchor = label.text_anchor
-          text.dominant_baseline = label.dominant_baseline if label.dominant_baseline
+          if label.dominant_baseline
+            text.dominant_baseline = label.dominant_baseline
+          end
           text.fill = theme_color(:label_text) || "#000000"
           text.font_size = number_string(label.font_size)
-          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          text.font_family =
+            theme_typography(:font_family) || "Arial, sans-serif"
           text.font_weight = label.font_weight if label.font_weight
           text.content = label.text
         end

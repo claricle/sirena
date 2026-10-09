@@ -74,7 +74,10 @@ module Sirena
         columns = position_columns(diagram.columns)
         cards = position_cards(columns)
         bounds = calculate_bounds(columns)
-        { columns: columns, cards: cards, width: bounds[:width], height: bounds[:height] }
+        {
+          columns: columns, cards: cards,
+          width: bounds[:width], height: bounds[:height]
+        }
       end
 
       private
@@ -94,91 +97,129 @@ module Sirena
       end
 
       def typed_column(column)
-        x = column[:x] + CANVAS_PADDING
-        y = column[:y] + CANVAS_PADDING
-        header_size = font_size(:font_size_normal, 14)
-        title_lines = Sirena::MarkdownText.parse_lines(column[:title])
+        position = canvas_position(column)
 
         Column.new(
           id: column[:id],
-          background: box(x, y, column[:width], column[:height], 8, "column"),
-          header: box(x, y, column[:width], column[:header_height], 8, "header"),
-          title: label(
-            column[:title], x + (column[:width] / 2.0),
-            header_text_baseline(y, column[:header_height], title_lines.length,
-                                 header_size),
-            header_size, "header", anchor: "middle", weight: "bold"
-          ),
-          badge: badge_box(column, x, y),
-          badge_label: badge_label(column, x, y),
+          background: column_background(column, position),
+          header: column_header(column, position),
+          title: column_title(column, position),
+          badge: badge_box(column, position),
+          badge_label: badge_label(column, position),
         )
       end
 
-      def badge_box(column, x, y)
-        return unless column[:card_count].positive?
-
-        box(x + column[:width] - 25, y + 15, 20, 20, 10, "badge")
+      def column_background(column, position)
+        box(
+          position, column[:width], column[:height],
+          radius: 8, style: "column"
+        )
       end
 
-      def badge_label(column, x, y)
+      def column_header(column, position)
+        box(
+          position, column[:width], column[:header_height],
+          radius: 8, style: "header"
+        )
+      end
+
+      def column_title(column, position)
+        font_size = font_size(:font_size_normal, 14)
+        line_count = Sirena::MarkdownText.parse_lines(column[:title]).length
+        title_position = [
+          position[0] + (column[:width] / 2.0),
+          header_text_baseline(position[1], column[:header_height],
+                               line_count, font_size),
+        ]
+        label(
+          column[:title], title_position, font_size, "header",
+          anchor: "middle", weight: "bold"
+        )
+      end
+
+      def badge_box(column, position)
         return unless column[:card_count].positive?
 
+        badge_position = [position[0] + column[:width] - 25, position[1] + 15]
+        box(badge_position, 20, 20, radius: 10, style: "badge")
+      end
+
+      def badge_label(column, position)
+        return unless column[:card_count].positive?
+
+        badge_position = [position[0] + column[:width] - 15, position[1] + 29]
         label(
-          column[:card_count].to_s, x + column[:width] - 15, y + 29,
-          font_size(:font_size_small, 11), "badge", anchor: "middle",
-                                                    weight: "bold"
+          column[:card_count].to_s, badge_position,
+          font_size(:font_size_small, 11), "badge",
+          anchor: "middle", weight: "bold"
         )
       end
 
       def typed_card(card)
-        x = card[:x] + CANVAS_PADDING
-        y = card[:y] + CANVAS_PADDING
-        lines = rendered_lines(card[:text])
+        position = canvas_position(card)
         Card.new(
           id: card[:id], column_id: card[:column_id],
-          background: box(x, y, card[:width], card[:height], 6, "card"),
-          label: label(card[:text], x + 10, y + 25,
-                       font_size(:font_size_normal, 13), "card"),
-          metadata: metadata_labels(card, x, y, lines.length)
+          background: box(
+            position, card[:width], card[:height], radius: 6, style: "card"
+          ),
+          label: card_label(card, position),
+          metadata: metadata_labels(card, position)
         )
       end
 
-      def metadata_labels(card, x, y, label_line_count)
+      def card_label(card, position)
+        label_position = [position[0] + 10, position[1] + 25]
+        label(
+          card[:text], label_position, font_size(:font_size_normal, 13), "card"
+        )
+      end
+
+      def metadata_labels(card, position)
         return [] unless card[:has_metadata]
 
-        start_y = y + 50 + ([label_line_count - 1, 0].max * line_height)
+        line_count = rendered_lines(card[:text]).length
+        start_y = position[1] + 50 + ([line_count - 1, 0].max * line_height)
         card[:metadata].each_with_index.flat_map do |(key, value), index|
-          next [] if value.nil? || value.to_s.empty?
-
-          current_y = start_y + (index * line_height)
-          [
-            label("#{format_metadata_key(key)}:", x + 10, current_y,
-                  font_size(:font_size_small, 10), "metadata_label"),
-            label(value.to_s, x + 70, current_y,
-                  font_size(:font_size_small, 10), "metadata_value",
-                  weight: "bold"),
-          ]
+          metadata_label_pair(key, value, position[0], start_y, index)
         end
       end
 
-      def box(x, y, width, height, radius, style)
+      def metadata_label_pair(key, value, x_position, start_y, index)
+        return [] if value.nil? || value.to_s.empty?
+
+        y_position = start_y + (index * line_height)
+        size = font_size(:font_size_small, 10)
+        [
+          label("#{format_metadata_key(key)}:", [x_position + 10, y_position],
+                size, "metadata_label"),
+          label(value.to_s, [x_position + 70, y_position], size,
+                "metadata_value", weight: "bold"),
+        ]
+      end
+
+      def box(position, width, height, radius:, style:)
         Box.new(
-          x: x, y: y, width: width, height: height,
+          x: position[0], y: position[1], width: width, height: height,
           corner_radius: radius, style: style
         )
       end
 
-      def label(text, x, y, size, style, **options)
+      def label(text, position, size, style, **options)
         Label.new(
-          text: text, x: x, y: y, font_size: size, style: style,
+          text: text, x: position[0], y: position[1],
+          font_size: size, style: style,
           text_anchor: options[:anchor], font_weight: options[:weight]
         )
       end
 
-      def header_text_baseline(y, height, line_count, font_size)
+      def header_text_baseline(y_position, height, line_count, font_size)
         rendered_line_height = font_size * 1.2
-        y + (height / 2.0) + 5 -
+        y_position + (height / 2.0) + 5 -
           ((line_count - 1) * rendered_line_height / 2.0)
+      end
+
+      def canvas_position(item)
+        [item[:x] + CANVAS_PADDING, item[:y] + CANVAS_PADDING]
       end
 
       def empty_graph
@@ -201,21 +242,28 @@ module Sirena
 
       def position_cards(columns)
         columns.flat_map do |column_data|
-          column = column_data[:original]
-          current_y = column_data[:header_height] + COLUMN_PADDING
-          column.cards.map do |card|
-            height = calculate_card_height(card)
-            positioned = {
-              id: card.id, text: card.text, column_id: column.id,
-              x: column_data[:x] + COLUMN_PADDING, y: current_y,
-              width: COLUMN_WIDTH - (COLUMN_PADDING * 2), height: height,
-              metadata: card.metadata, has_metadata: card.has_metadata?,
-              original: card
-            }
-            current_y += height + CARD_VERTICAL_SPACING
-            positioned
-          end
+          positioned_cards(column_data)
         end
+      end
+
+      def positioned_cards(column_data)
+        current_y = column_data[:header_height] + COLUMN_PADDING
+        column_data[:original].cards.map do |card|
+          positioned = positioned_card(card, column_data, current_y)
+          current_y += positioned[:height] + CARD_VERTICAL_SPACING
+          positioned
+        end
+      end
+
+      def positioned_card(card, column_data, y_position)
+        {
+          id: card.id, text: card.text,
+          column_id: column_data[:original].id,
+          x: column_data[:x] + COLUMN_PADDING, y: y_position,
+          width: COLUMN_WIDTH - (COLUMN_PADDING * 2),
+          height: calculate_card_height(card), metadata: card.metadata,
+          has_metadata: card.has_metadata?, original: card
+        }
       end
 
       def calculate_header_height(column)
@@ -244,7 +292,8 @@ module Sirena
       end
 
       def line_height
-        font_size(:font_size_small, 12) * (typography_value(:line_height) || 1.5)
+        multiplier = typography_value(:line_height) || 1.5
+        font_size(:font_size_small, 12) * multiplier
       end
 
       def font_size(name, fallback)

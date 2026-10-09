@@ -35,12 +35,10 @@ rows:
   count: 11
 - file: lib/sirena/layout/info.rb
   count: 2
-- file: lib/sirena/layout/kanban.rb
-  count: 3
 - file: lib/sirena/layout/requirement.rb
   count: 6
 - file: lib/sirena/layout/timeline.rb
-  count: 3
+  count: 2
 - file: lib/sirena/layout/treemap.rb
   count: 1
 - file: lib/sirena/markdown_text.rb
@@ -131,20 +129,14 @@ rows:
   count: 3
 - file: lib/sirena/renderer/gantt.rb
   count: 1
-- file: lib/sirena/renderer/kanban.rb
-  count: 4
 - file: lib/sirena/renderer/markdown_text.rb
   count: 4
 - file: lib/sirena/renderer/packet.rb
   count: 2
 - file: lib/sirena/renderer/pie.rb
   count: 1
-- file: lib/sirena/renderer/radar.rb
-  count: 2
 - file: lib/sirena/renderer/requirement.rb
   count: 7
-- file: lib/sirena/renderer/timeline.rb
-  count: 3
 - file: lib/sirena/renderer/treemap.rb
   count: 1
 - file: lib/sirena/renderer/user_journey.rb
