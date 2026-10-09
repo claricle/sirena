@@ -135,7 +135,13 @@ module Sirena
               declare(match)
             elsif (match = BOX.match(text))
               open_box(match, text, number)
-            elsif END_BOX.match?(text) && @open_box
+            else
+              read_structure(text, number)
+            end
+          end
+
+          def read_structure(text, number)
+            if END_BOX.match?(text) && @open_box
               close_box
             elsif @open_box || !timeline(text)
               raise refusal(text, number)
@@ -169,13 +175,16 @@ module Sirena
           end
 
           def note(match)
-            pending = { shape: match[1].downcase.to_sym,
-                        side: match[2].downcase.to_sym,
-                        targets: targets_of(match[3]), lines: [] }
+            pending = pending_note_from(match)
             return false if hanging?(pending) && !@outline.after_message?
 
             @pending_note = pending
             match[4] ? collect_note(match[4].strip, inline: true) : true
+          end
+
+          def pending_note_from(match)
+            { shape: match[1].downcase.to_sym, side: match[2].downcase.to_sym,
+              targets: targets_of(match[3]), lines: [] }
           end
 
           def targets_of(list)

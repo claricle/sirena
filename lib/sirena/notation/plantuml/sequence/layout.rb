@@ -37,13 +37,16 @@ module Sirena
           private
 
           def walk
-            bounds = [@centers.first - (@widths.first / 2),
-                      @centers.last + (@widths.last / 2)]
-            Walker.new(centers: @centers, ids: ids, bounds: bounds,
+            Walker.new(lifelines: ids.zip(@centers).to_h, bounds: head_bounds,
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
-                       y: @top + @head_height + Walker::ROW)
+                       start_y: @top + @head_height + Walker::ROW)
               .run(@diagram.items)
+          end
+
+          def head_bounds
+            [@centers.first - (@widths.first / 2),
+             @centers.last + (@widths.last / 2)]
           end
 
           # Items such as a note left of the first participant stick out
@@ -55,13 +58,19 @@ module Sirena
           end
 
           def build(widths)
-            heads = place_heads(widths, @top) + place_heads(widths, @flow.y)
             Scene.new(width: canvas_width(widths),
                       height: @flow.y + @head_height + MARGIN,
-                      frames: frames(widths), heads: heads,
-                      lifelines: lifelines, arrows: @flow.arrows,
-                      fragments: @flow.fragments, notes: @flow.notes,
-                      dividers: @flow.dividers)
+                      frames: frames(widths), heads: heads(widths),
+                      lifelines: lifelines, **flow_items)
+          end
+
+          def heads(widths)
+            place_heads(widths, @top) + place_heads(widths, @flow.y)
+          end
+
+          def flow_items
+            { arrows: @flow.arrows, fragments: @flow.fragments,
+              notes: @flow.notes, dividers: @flow.dividers }
           end
 
           def head_height
@@ -99,10 +108,14 @@ module Sirena
           # every label must fit on the span it crosses.
           def required_gaps(widths)
             gaps = widths.each_cons(2).map { |a, b| ((a + b) / 2) + MIN_GAP }
+            widen_for_items(gaps)
+            gaps
+          end
+
+          def widen_for_items(gaps)
             @diagram.messages.each { |m| widen(gaps, m) }
             @diagram.boxes.each { |box| widen_box(gaps, box) }
             each_note { |note, span| widen_note(gaps, note, span) }
-            gaps
           end
 
           def each_note
@@ -128,7 +141,8 @@ module Sirena
 
           def widen_over(gaps, between, index, need)
             if between.empty?
-              [index - 1, index].each { |i| raise_gap(gaps, i, (need / 2) + 12) }
+              share = (need / 2) + 12
+              [index - 1, index].each { |i| raise_gap(gaps, i, share) }
             else
               share = (need - 20) / between.size
               between.each { |i| raise_gap(gaps, i, share) }
@@ -140,10 +154,18 @@ module Sirena
           end
 
           def widen_box(gaps, box)
-            places = box.members.map { |id| ids.index(id) }.sort
-            span = (places.first...places.last).to_a
+            span = member_span(box)
             need = title_width(box) / span.size
-            span.each { |i| gaps[i] = [gaps[i], need].max }
+            span.each { |i| raise_gap(gaps, i, need) }
+          end
+
+          def member_indexes(box)
+            box.members.map { |id| ids.index(id) }
+          end
+
+          def member_span(box)
+            places = member_indexes(box).sort
+            (places.first...places.last).to_a
           end
 
           def ids
@@ -152,10 +174,14 @@ module Sirena
 
           def widen(gaps, message)
             low, high = indexes(message).sort
-            need = label_width(message) + (2 * HEAD_PADDING)
-            need += SELF_WIDTH if low == high
             span = (low...[high, low + 1].max).select { |i| i < gaps.size }
-            span.each { |i| gaps[i] = [gaps[i], need / span.size].max }
+            need = message_room(message, low == high)
+            span.each { |i| raise_gap(gaps, i, need / span.size) }
+          end
+
+          def message_room(message, self_message)
+            room = label_width(message) + (2 * HEAD_PADDING)
+            self_message ? room + SELF_WIDTH : room
           end
 
           def indexes(message)
@@ -183,26 +209,27 @@ module Sirena
             SELF_WIDTH + 6 + labels.map { |m| label_width(m) }.max
           end
 
-          def place_heads(widths, y)
+          def place_heads(widths, top)
             @diagram.participants.each_with_index.map do |participant, index|
-              head(participant, @centers[index], widths[index], y)
+              head(participant, @centers[index], widths[index], top)
             end
           end
 
-          def head(participant, centre, width, y)
+          def head(participant, centre, width, top)
             Scene::Head.new(
               id: participant.id, kind: participant.kind.to_s,
-              x: centre - (width / 2), y: y, width: width, height: @head_height,
-              texts: head_texts(participant, centre, y)
+              x: centre - (width / 2), y: top, width: width,
+              height: @head_height,
+              texts: head_texts(participant, centre, top)
             )
           end
 
-          def head_texts(participant, centre, y)
-            label = text(participant.label, centre, y + @head_height - 12,
+          def head_texts(participant, centre, top)
+            label = text(participant.label, centre, top + @head_height - 12,
                          "participant")
             return [label] if participant.kind == :participant
 
-            [text(participant.kind.to_s, centre, y + 14, "kind"), label]
+            [text(participant.kind.to_s, centre, top + 14, "kind"), label]
           end
 
           def frames(widths)
@@ -210,14 +237,18 @@ module Sirena
           end
 
           def frame(box, widths)
-            first, last = box.members.map { |id| ids.index(id) }.minmax
-            left = @centers[first] - (widths[first] / 2) - BOX_PADDING
-            right = @centers[last] + (widths[last] / 2) + BOX_PADDING
+            left, right = frame_edges(box, widths)
             Scene::Frame.new(
               x: left, y: MARGIN, width: right - left,
               height: @flow.y + @head_height + BOX_PADDING - MARGIN,
               texts: [text(box.title, (left + right) / 2, MARGIN + 17, "box")]
             )
+          end
+
+          def frame_edges(box, widths)
+            first, last = member_indexes(box).minmax
+            [@centers[first] - (widths[first] / 2) - BOX_PADDING,
+             @centers[last] + (widths[last] / 2) + BOX_PADDING]
           end
 
           def lifelines
@@ -229,8 +260,8 @@ module Sirena
             end
           end
 
-          def text(content, x, y, role, anchor = "middle")
-            PlantUML::Scene::Text.new(content: content, x: x, y: y,
+          def text(content, at_x, at_y, role, anchor = "middle")
+            PlantUML::Scene::Text.new(content: content, x: at_x, y: at_y,
                                       role: role, anchor: anchor)
           end
 

@@ -21,12 +21,7 @@ module Sirena
             @block = block
             @bottom = bottom
             @measure = measure
-            low = block[:low]
-            high = block[:high]
-            if low > high
-              low = centers.first
-              high = centers.last
-            end
+            low, high = extent(block, centers)
             pad = BASE_PAD + (NEST_PAD * block[:depth])
             @x = low - pad
             @width = [high - low + (2 * pad), minimum_width].max
@@ -41,6 +36,13 @@ module Sirena
           end
 
           private
+
+          # A block no item touched spans the whole diagram.
+          def extent(block, centers)
+            return [centers.first, centers.last] if block[:low] > block[:high]
+
+            [block[:low], block[:high]]
+          end
 
           def group?
             @block[:keyword] == "group"
@@ -84,12 +86,15 @@ module Sirena
 
           def texts
             top = @block[:top] + 14
-            list = [text(tab_text, x + TAB_PAD, top, "fragment_tab")]
-            if bracket(guard)
-              list << text(bracket(guard), x + tab_width + TAB_PAD, top,
-                           "fragment_guard")
-            end
-            list + branch_texts
+            [text(tab_text, x + TAB_PAD, top, "fragment_tab"),
+             *guard_texts(top), *branch_texts]
+          end
+
+          def guard_texts(top)
+            label = bracket(guard)
+            return [] unless label
+
+            [text(label, x + tab_width + TAB_PAD, top, "fragment_guard")]
           end
 
           def branch_texts

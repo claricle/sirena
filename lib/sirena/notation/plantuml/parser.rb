@@ -104,6 +104,10 @@ module Sirena
           refuse_continuation(phase, text, number)
           return phase if text.start_with?("'") && phase != :note
 
+          read_line(phase, builder, text, number)
+        end
+
+        def read_line(phase, builder, text, number)
           case phase
           when :before then before(text, number)
           when :statements then statement(builder, text, number)
@@ -141,9 +145,7 @@ module Sirena
           if (match = CLASS_DECLARATION.match(text))
             declare(builder, match, number, text)
           elsif (match = JUNCTION.match(text))
-            junction = Junction.new(**junction_names(match))
-            builder.junction(junction, number, text)
-            :statements
+            junction(builder, match, number, text)
           elsif (match = NOTE.match(text))
             note(builder, match, number, text)
           else
@@ -180,6 +182,11 @@ module Sirena
           :note
         end
 
+        def junction(builder, match, number, text)
+          builder.junction(Junction.new(**junction_names(match)), number, text)
+          :statements
+        end
+
         def junction_names(match)
           { from: match[1], to: match[2], owner: match[3] }
         end
@@ -202,12 +209,19 @@ module Sirena
         end
 
         def declare(builder, match, number, text)
-          tags = match[4].scan(STEREOTYPE).map { |tag| tag[2..-3] }.freeze
-          entry = { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
-                    body: !match[5].nil?, generics: match[3],
-                    stereotypes: tags }
+          entry = declaration_entry(match)
           builder.declare(entry, number, text)
           entry[:body] ? :body : :statements
+        end
+
+        def declaration_entry(match)
+          { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
+            body: !match[5].nil?, generics: match[3],
+            stereotypes: stereotypes_of(match[4]) }
+        end
+
+        def stereotypes_of(text)
+          text.scan(STEREOTYPE).map { |tag| tag[2..-3] }.freeze
         end
 
         def body_line(builder, text, number)
@@ -307,14 +321,16 @@ module Sirena
         def member_from(text)
           return if UnsupportedConstructs.member_construct(text)
 
+          named_member(text) || typed_member(text)
+        end
+
+        def named_member(text)
           if (match = METHOD.match(text))
             Member.new(kind: :method, visibility: VISIBILITY[match[1]],
                        name: match[2], type: match[4], parameters: match[3])
           elsif (match = FIELD.match(text))
             Member.new(kind: :field, visibility: VISIBILITY[match[1]],
                        name: match[2], type: match[3], parameters: nil)
-          else
-            typed_member(text)
           end
         end
 

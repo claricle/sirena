@@ -46,12 +46,14 @@ module Sirena
         private
 
         def kind_of(marker, dashed)
-          return dashed ? :dependency : :association unless marker
-
-          shape = marker.delete("<>")
-          return KINDS.fetch(shape) unless shape.empty? || shape == "|"
+          shape = marker.to_s.delete("<>")
+          return line_kind(dashed) if shape.empty?
           return dashed ? :implementation : :extension if shape == "|"
 
+          KINDS.fetch(shape)
+        end
+
+        def line_kind(dashed)
           dashed ? :dependency : :association
         end
 
