@@ -68,13 +68,23 @@ only from `release.yml`'s manual dispatch and must pass its changelog preflight.
 The Ruby/OS matrix is hard-coded in `unit`; it was previously fetched from
 metanorma's `ruby-matrix.json` (identical today).
 
-## Cimas
+## Repository-owned release
 
 `release.yml` is detached from Cimas; no generator is tracked here, so this
-YAML is authoritative. Its manual entrypoint first runs
-`scripts/check_changelog.rb` with the requested version, then delegates only
-if that prerequisite succeeds. It pins `rubygems-release.yml` by SHA, but that
-workflow itself calls mutable refs (@main, @v3, @v2.1.0): `gh-rubygems-setup-action`,
-`version-advisory-action`, `gem-idempotent-push-guard-action`,
-`peter-evans/repository-dispatch@v3`, `rubygems/configure-rubygems-credentials`).
-Those transitive refs are NOT pinned; item 17 owns vendoring that workflow.
+YAML is authoritative. It contains the complete release implementation and
+does not call an external reusable workflow or install a release helper. Its
+only external actions are checkout and Ruby setup, both pinned to immutable
+commit SHAs.
+
+The manual entrypoint first runs `scripts/check_changelog.rb` with the
+requested version. The publishing job then verifies that the workflow source
+is the current `main` head and that the latest `fast-lane` and `full-lane`
+checks for that exact SHA succeeded. It generates a commit that may change
+only `lib/sirena/version.rb`, verifies the requested version through
+`scripts/check_release_source.rb`, builds the gem, atomically pushes the
+version commit and tag, and publishes with the repository's RubyGems API key.
+
+The remaining owner action is to grant the release workflow's identity a
+narrow bypass on the protected `main` ruleset. Until that bypass is applied,
+the repository-owned release intentionally cannot push its generated version
+commit.
