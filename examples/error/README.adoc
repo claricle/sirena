@@ -16,10 +16,7 @@ Error diagrams display error messages and alerts in a standardized format within
 
 [source,mermaid]
 ----
-error
-    title Error Message
-    Error: Something went wrong
-    Details: Additional context
+error Error Message
 ----
 
 == Examples

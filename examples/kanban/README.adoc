@@ -17,13 +17,13 @@ Kanban boards visualize workflow status, showing tasks moving through different 
 [source,mermaid]
 ----
 kanban
-    Todo
-        Task 1
-        Task 2
-    In Progress
-        Task 3
-    Done
-        Task 4
+    todo[Todo]
+        task1[Task 1]
+        task2[Task 2]
+    doing[In Progress]
+        task3[Task 3]
+    done[Done]
+        task4[Task 4]
 ----
 
 == Examples
