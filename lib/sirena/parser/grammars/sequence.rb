@@ -762,6 +762,7 @@ module Sirena
           loop_structure |
             alt_structure |
             opt_structure |
+            rect_structure |
             par_structure |
             critical_structure |
             break_structure
@@ -781,7 +782,7 @@ module Sirena
         # scan: mermaid's real lexer tokenizes all of them — `loop`, `alt`,
         # `else`, `opt`, `par`, `and`, `critical`, `option`, `break`, `box`
         # — through one shared state whose label rule stops at `;`. `rect`
-        # has no rule in this grammar at all.
+        # is a separate rule, see `rect_structure`.
         rule(:alt_structure) do
           str("alt") >> space? >>
             text_run.as(:alt_label) >> content_boundary >>
@@ -810,6 +811,18 @@ module Sirena
             text_run.as(:opt_label) >> content_boundary >>
             ws? >>
             statements.as(:opt_statements) >>
+            ws? >>
+            str("end") >> line_end
+        end
+
+        # `rect <colour>` highlights the statements it wraps. The colour is
+        # parsed like any block label and dropped, as for `opt`, `loop` and
+        # the other frames: only the statements inside are kept.
+        rule(:rect_structure) do
+          str("rect") >> match["a-zA-Z0-9_"].absent? >> space? >>
+            text_run.as(:rect_label) >> content_boundary >>
+            ws? >>
+            statements.as(:rect_statements) >>
             ws? >>
             str("end") >> line_end
         end

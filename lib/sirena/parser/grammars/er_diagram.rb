@@ -48,13 +48,25 @@ module Sirena
 
         # Entity with attribute block
         rule(:entity_definition) do
-          identifier.as(:entity_id) >>
+          entity_name.as(:entity_id) >>
             (str(":::") >> class_name_list.as(:entity_classes)).maybe >>
             space? >>
             lbrace >> ws? >>
             attributes.maybe.as(:attributes) >>
             ws? >> rbrace >>
             line_end
+        end
+
+        # An entity name as mermaid's lexer reads it: a double-quoted run
+        # (quotes dropped by the builder), a number (`1`, `1.5`), or a word
+        # that may contain `-`, so `ORDER-ITEM` is one entity. Digit-led
+        # words such as `2abc` are not names in a relationship; mermaid
+        # rejects them there, and so does this rule.
+        rule(:entity_name) do
+          (str('"') >> GreedyRun.new('[^"]', min: 1) >> str('"')) |
+            (match["0-9"].repeat(1) >> str(".") >> match["0-9"].repeat(1)) |
+            match["0-9"].repeat(1) |
+            (match["a-zA-Z_"] >> match["a-zA-Z0-9_\\-"].repeat)
         end
 
         # Relationship between entities
@@ -64,11 +76,11 @@ module Sirena
         # `:entity_classes` drops the from-end silently, warning only on
         # stderr. A7 in the parser spec is the guard.
         rule(:relationship) do
-          identifier.as(:from_id) >>
+          entity_name.as(:from_id) >>
             (str(":::") >> class_name_list.as(:from_classes)).maybe >>
             space? >>
             relationship_pattern.as(:pattern) >> space? >>
-            identifier.as(:to_id) >>
+            entity_name.as(:to_id) >>
             (str(":::") >> class_name_list.as(:to_classes)).maybe >>
             space? >>
             relationship_label.maybe.as(:label) >>
@@ -77,7 +89,7 @@ module Sirena
 
         # Stand-alone entity (no body, no relationship)
         rule(:entity_declaration) do
-          identifier.as(:entity_id) >>
+          entity_name.as(:entity_id) >>
             (str(":::") >> class_name_list.as(:entity_classes)).maybe >>
             line_end
         end
