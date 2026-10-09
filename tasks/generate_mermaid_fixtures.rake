@@ -6,6 +6,8 @@
 # rubocop:disable Style/OneClassPerFile
 require "fileutils"
 require "json"
+require "open3"
+require_relative "../scripts/mermaid_toolchain"
 
 namespace :mermaid do
   desc "Generate SVG fixtures from mermaid-js for comparison and testing"
@@ -15,19 +17,11 @@ namespace :mermaid do
     puts "Generating Mermaid.js fixtures for: #{diagram_type}"
     puts "=" * 60
 
-    # Check if mermaid-cli (mmdc) is installed
-    unless system("which mmdc > /dev/null 2>&1")
-      puts "\n❌ ERROR: mermaid-cli not found!"
-      puts "\nPlease install mermaid-cli:"
-      puts "  npm install -g @mermaid-js/mermaid-cli"
-      puts "\nOr using yarn:"
-      puts "  yarn global add @mermaid-js/mermaid-cli"
-      exit 1
-    end
+    MermaidToolchain.check!
+    mmdc_version, status = Open3.capture2e(*MermaidToolchain.version_command)
+    raise "pinned mermaid-cli failed: #{mmdc_version}" unless status.success?
 
-    # Get mermaid-cli version
-    mmdc_version = `mmdc --version`.strip
-    puts "✅ Found mermaid-cli: #{mmdc_version}"
+    puts "✅ Found pinned mermaid-cli: #{mmdc_version.strip}"
     puts
 
     generator = MermaidFixtureGenerator.new
@@ -233,11 +227,11 @@ class MermaidFixtureGenerator
   private
 
   def generate_svg_with_error(input_file, output_file)
-    # Use mermaid-cli to generate SVG, capture stderr for errors
-    require "open3"
-
-    cmd = "mmdc -i '#{input_file}' -o '#{output_file}' -b transparent"
-    stdout, stderr, status = Open3.capture3(cmd)
+    stdout, stderr, status = Open3.capture3(
+      MermaidToolchain.environment,
+      *MermaidToolchain.command("-i", input_file, "-o", output_file,
+                                "-b", "transparent"),
+    )
 
     if status.success?
       [true, nil]

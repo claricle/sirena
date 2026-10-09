@@ -485,6 +485,8 @@ RSpec.describe MermaidDiff do
         .grep(/\A(?:BUNDLE|BUNDLER|RUBY)/)
         .to_h { |key| [key, nil] }
       environment["PATH"] = "/nonexistent"
+      environment["SIRENA_ALLOW_TEST_MMDC"] = "1"
+      environment["SIRENA_MMDC_TEST_BIN"] = "/nonexistent/mmdc"
       stdout, stderr, status = Open3.capture3(
         environment,
         RbConfig.ruby,

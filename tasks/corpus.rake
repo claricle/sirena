@@ -340,3 +340,19 @@ namespace :corpus do
     Sirena::Corpus.check!
   end
 end
+
+namespace :mermaid do
+  desc "Fail if the installed Mermaid oracle differs from its provenance"
+  task :oracle_check do
+    require_relative "../scripts/mermaid_toolchain"
+    MermaidToolchain.check!
+    puts "Mermaid oracle toolchain matches the committed provenance"
+  end
+
+  desc "Render a known-valid diagram with the pinned Mermaid oracle"
+  task :oracle_canary do
+    require_relative "../scripts/mermaid_toolchain"
+    MermaidToolchain.canary!
+    puts "Mermaid oracle canary rendered"
+  end
+end

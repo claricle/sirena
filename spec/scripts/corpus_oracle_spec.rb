@@ -152,7 +152,7 @@ module CorpusOracleSpecSupport
   OracleRun = Struct.new(:out, :err, :status, :written, :verdicts)
 
   SANDBOX_SCRIPTS = %w[corpus_verdicts corpus_oracle hardened_mmdc
-                       mmdc_oracle].freeze
+                       mmdc_oracle mermaid_toolchain].freeze
 
   # The script resolves every path from its own location, so a copy of it
   # beside a three-case corpus can never touch the committed data.
@@ -181,7 +181,10 @@ module CorpusOracleSpecSupport
 
   def run_oracle(*args, mmdc:, seed: nil)
     run_script("--oracle", *args, seed: seed) do |dir|
-      { "PATH" => "#{fake_mmdc(dir, mmdc)}:#{ENV.fetch('PATH')}" }
+      bin = fake_mmdc(dir, mmdc)
+      { "PATH" => "#{bin}:#{ENV.fetch('PATH')}",
+        "SIRENA_ALLOW_TEST_MMDC" => "1",
+        "SIRENA_MMDC_TEST_BIN" => File.join(bin, "mmdc") }
     end
   end
 
@@ -494,50 +497,25 @@ RSpec.describe CorpusOracle do
   end
 
   describe ".provenance" do
-    let(:install) { File.join(dir, "install") }
-    let(:on_path) { File.join(dir, "on_path") }
-
-    before do
-      FileUtils.mkdir_p(on_path)
-      allow(ENV).to receive(:fetch).and_call_original
-      allow(ENV).to receive(:fetch).with("PATH").and_return(on_path)
-      allow(HardenedMmdc).to receive(:capture)
-        .and_return("#{described_class::EXPECTED_CLI}\n")
+    let(:pinned) do
+      { "node" => "22.23.1", "npm" => "10.9.8", "mmdc" => "11.12.0",
+        "mermaid" => "11.16.1", "puppeteer" => "23.11.1",
+        "chromium" => "131.0.6778.204", "font" => { "family" => "Noto Sans" } }
     end
 
-    it "names the mmdc and the mermaid it bundles" do
-      skip("the harness is POSIX-only") if Gem.win_platform?
-      install_mmdc(install, on_path: on_path,
-                            manifest: '{"version":"11.4.2"}')
+    it "records the complete verified toolchain" do
+      allow(MermaidToolchain).to receive(:check!).and_return(true)
+      allow(MermaidToolchain).to receive(:provenance).and_return(pinned)
 
-      expect(described_class.provenance)
-        .to include("mmdc" => "11.12.0", "mermaid" => "11.4.2")
+      expect(described_class.provenance).to eq(pinned)
     end
 
-    it "notes that the toolchain is not pinned" do
-      expect(described_class.provenance)
-        .to include("note" => a_string_matching(/not pinned/))
-    end
+    it "turns toolchain drift into an infrastructure failure" do
+      allow(MermaidToolchain).to receive(:check!)
+        .and_raise(MermaidToolchain::DriftError, "mermaid: expected 11.16.1, got 11.17.0")
 
-    it "records the mermaid version as unknown when mmdc is not on PATH" do
-      expect(described_class.provenance).to include("mermaid" => "unknown")
-    end
-
-    it "records the mermaid version as unknown without a bundled copy" do
-      install_mmdc(install, on_path: on_path)
-
-      expect(described_class.provenance).to include("mermaid" => "unknown")
-    end
-
-    [Errno::ENOENT, Timeout::Error].each do |failure|
-      it "refuses when asking mmdc its version raises #{failure}" do
-        allow(HardenedMmdc).to receive(:capture).and_raise(failure)
-
-        expect { described_class.provenance }.to raise_error(
-          described_class::InfrastructureError,
-          "mmdc is missing or not answering, not 11.12.0",
-        )
-      end
+      expect { described_class.provenance }
+        .to raise_error(described_class::InfrastructureError, /11\.17\.0/)
     end
   end
 

@@ -1,0 +1,14 @@
+node: 22.23.1
+npm: 10.9.8
+mmdc: 11.12.0
+mermaid: 11.16.1
+puppeteer: 23.11.1
+chromium: 131.0.6778.204
+font:
+  package: "@fontsource/noto-sans"
+  version: 5.3.0
+  integrity: "sha512-fBCog2PY7DiVVTEEqtI/Qdinx/knobHYfoGpjFXdfBX5RoJaBp1Prw2G75p0OIsdlMZg3cLo0c+YbIUYOxnQJw=="
+  family: "Noto Sans"
+  files:
+    noto-sans-latin-400-normal.woff2: 09aee8065d25508f23a4c3d92cd777ac869c52d93fd868a88f025d888a7937d6
+    noto-sans-latin-700-normal.woff2: e77bfe1db912f687b0319b60de158cfada67f89c8ee4f8e2bd6020f970accbfb

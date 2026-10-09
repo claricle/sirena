@@ -7,6 +7,7 @@ require "tmpdir"
 require "yaml"
 require_relative "hardened_mmdc"
 require_relative "mmdc_oracle"
+require_relative "mermaid_toolchain"
 
 # Settles corpus cases that no sidecar, reference or twin speaks for, by
 # asking the local mmdc and committing the answer to
@@ -20,8 +21,8 @@ require_relative "mmdc_oracle"
 module CorpusOracle
   PATH = File.expand_path("../spec/mermaid/oracle-verdicts.yml", __dir__)
 
-  # The only mmdc these verdicts are valid for. The toolchain is not pinned
-  # yet (TODO.foundation/02a), so a different CLI answers a different question.
+  # The CLI version remains part of the on-disk compatibility check. New
+  # refreshes additionally carry MermaidToolchain's complete provenance.
   EXPECTED_CLI = "11.12.0"
 
   class InfrastructureError < StandardError; end
@@ -169,36 +170,24 @@ module CorpusOracle
   end
 
   def provenance
-    cli = cli_version
-    unless cli == EXPECTED_CLI
-      found = cli.empty? ? "missing or not answering" : cli
-      raise InfrastructureError, "mmdc is #{found}, not #{EXPECTED_CLI}"
+    if MermaidToolchain.test_mode?
+      cli = cli_version
+      unless cli == EXPECTED_CLI
+        found = cli.empty? ? "missing or not answering" : cli
+        raise InfrastructureError, "mmdc is #{found}, not #{EXPECTED_CLI}"
+      end
+      return { "mmdc" => cli, "test_toolchain" => true }
     end
 
-    { "mmdc" => cli, "mermaid" => mermaid_version,
-      "note" => "toolchain not pinned (TODO.foundation/02a)" }
+    MermaidToolchain.check!
+    MermaidToolchain.provenance
+  rescue MermaidToolchain::DriftError => e
+    raise InfrastructureError, e.message
   end
 
   def cli_version
-    HardenedMmdc.capture(["mmdc", "--version"], 120).strip
+    HardenedMmdc.capture(MermaidToolchain.version_command, 120).strip
   rescue SystemCallError, Timeout::Error
     ""
-  end
-
-  # mermaid-cli keeps its own copy of mermaid next to its sources.
-  def mermaid_version
-    bin = mmdc_on_path
-    return "unknown" unless bin
-
-    manifest = File.join(File.dirname(File.realpath(bin)), "..",
-                         "node_modules", "mermaid", "package.json")
-    return "unknown" unless File.exist?(manifest)
-
-    JSON.parse(File.read(manifest))["version"]
-  end
-
-  def mmdc_on_path
-    dirs = ENV.fetch("PATH").split(File::PATH_SEPARATOR)
-    dirs.map { |dir| File.join(dir, "mmdc") }.find { |f| File.executable?(f) }
   end
 end

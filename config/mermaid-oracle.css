@@ -1,0 +1,7 @@
+svg,
+svg text,
+svg .label,
+svg .nodeLabel,
+svg .edgeLabel {
+  font-family: "Noto Sans", sans-serif !important;
+}
