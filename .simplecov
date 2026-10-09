@@ -59,5 +59,5 @@ SimpleCov.configure do
   # so re-measure across several seeds before raising either number off one
   # run. Floors only rise; the next rungs are branch 90, then branch 97
   # (TODO.foundation/03-coverage-gate.md, "Bars").
-  minimum_coverage line: 97.00, branch: 80.00
+  minimum_coverage line: 97.00, branch: 89.00
 end
