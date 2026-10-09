@@ -9,8 +9,6 @@ rows:
   count: 1
 - file: lib/sirena/layout/c4.rb
   count: 1
-- file: lib/sirena/layout/class_diagram.rb
-  count: 1
 - file: lib/sirena/layout/flowchart.rb
   count: 2
 - file: lib/sirena/layout/gantt.rb

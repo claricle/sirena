@@ -128,7 +128,7 @@ rows:
 - file: lib/sirena/renderer/class_diagram.rb
   count: 6
 - file: lib/sirena/renderer/er_diagram.rb
-  count: 6
+  count: 3
 - file: lib/sirena/renderer/flowchart.rb
   count: 3
 - file: lib/sirena/renderer/gantt.rb
@@ -147,8 +147,6 @@ rows:
   count: 2
 - file: lib/sirena/renderer/requirement.rb
   count: 7
-- file: lib/sirena/renderer/sequence.rb
-  count: 1
 - file: lib/sirena/renderer/timeline.rb
   count: 3
 - file: lib/sirena/renderer/treemap.rb
@@ -277,8 +275,6 @@ rows:
   count: 10
 - file: spec/sirena/layout/block_spec.rb
   count: 2
-- file: spec/sirena/layout/er_diagram_spec.rb
-  count: 1
 - file: spec/sirena/layout/flowchart_spec.rb
   count: 1
 - file: spec/sirena/layout/grid_spec.rb
@@ -364,9 +360,9 @@ rows:
 - file: spec/sirena/renderer/base_spec.rb
   count: 16
 - file: spec/sirena/renderer/class_diagram_spec.rb
-  count: 18
+  count: 17
 - file: spec/sirena/renderer/er_diagram_spec.rb
-  count: 25
+  count: 27
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 9
 - file: spec/sirena/renderer/flowchart_link_spec.rb
@@ -387,8 +383,6 @@ rows:
   count: 7
 - file: spec/sirena/renderer/sequence_spec.rb
   count: 13
-- file: spec/sirena/renderer/state_diagram_spec.rb
-  count: 1
 - file: spec/sirena/renderer/xy_chart_spec.rb
   count: 1
 - file: spec/sirena/source_spec.rb

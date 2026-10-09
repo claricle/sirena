@@ -7,6 +7,8 @@ rows:
   count: 8
 - file: lib/sirena/layout/block.rb
   count: 3
+- file: lib/sirena/layout/class_diagram.rb
+  count: 3
 - file: lib/sirena/layout/git_graph.rb
   count: 1
 - file: lib/sirena/layout/mindmap.rb
@@ -62,9 +64,7 @@ rows:
 - file: lib/sirena/renderer/c4.rb
   count: 11
 - file: lib/sirena/renderer/class_diagram.rb
-  count: 40
-- file: lib/sirena/renderer/er_diagram.rb
-  count: 18
+  count: 2
 - file: lib/sirena/renderer/gantt.rb
   count: 1
 - file: lib/sirena/renderer/git_graph.rb
@@ -77,10 +77,6 @@ rows:
   count: 6
 - file: lib/sirena/renderer/requirement.rb
   count: 13
-- file: lib/sirena/renderer/sequence.rb
-  count: 11
-- file: lib/sirena/renderer/state_diagram.rb
-  count: 17
 - file: lib/sirena/renderer/user_journey.rb
   count: 14
 - file: lib/sirena/renderer/xy_chart.rb

@@ -3,7 +3,5 @@ cop: Layout/MultilineMethodCallIndentation
 rows:
 - file: lib/sirena/diagram/class_diagram.rb
   count: 4
-- file: lib/sirena/renderer/er_diagram.rb
-  count: 1
 - file: tasks/generate_mermaid_fixtures.rake
   count: 2
