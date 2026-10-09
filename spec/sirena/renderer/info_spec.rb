@@ -9,14 +9,7 @@ RSpec.describe Sirena::Renderer::Info do
   let(:show_info) { false }
 
   it "renders the default message on the fixed info canvas" do
-    box = svg.children.grep(Sirena::Svg::Rect).first
-    label = svg.children.grep(Sirena::Svg::Text).first
-
-    expect(
-      [svg.width, svg.height, svg.view_box, box_geometry(box), text_geometry(label)],
-    ).to eq(
-      [500.0, 200.0, "0 0 500 200", [50.0, 50.0, 400.0, 100.0, 8.0], [250.0, 105.0, "Info"]],
-    )
+    expect(rendered_geometry).to eq(expected_geometry)
   end
 
   it "renders the enabled showInfo message" do
@@ -32,5 +25,18 @@ RSpec.describe Sirena::Renderer::Info do
 
   def text_geometry(label)
     [label.x, label.y, Array(label.content).join]
+  end
+
+  def rendered_geometry
+    box = svg.children.grep(Sirena::Svg::Rect).first
+    label = svg.children.grep(Sirena::Svg::Text).first
+    [svg.width, svg.height, svg.view_box,
+     box_geometry(box), text_geometry(label)]
+  end
+
+  def expected_geometry
+    [500.0, 200.0, "0 0 500 200",
+     [50.0, 50.0, 400.0, 100.0, 8.0],
+     [250.0, 105.0, "Info"]]
   end
 end

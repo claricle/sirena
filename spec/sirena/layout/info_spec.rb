@@ -9,24 +9,35 @@ RSpec.describe Sirena::Layout::Info do
   let(:diagram) { Sirena::Diagram::Info.new }
 
   it "defaults the identifier and showInfo state" do
-    expect(graph).to eq(
+    expect(graph).to eq(default_graph)
+  end
+
+  it "preserves an explicit identifier, title, and enabled showInfo state" do
+    populate_diagram
+    expect(graph).to eq(populated_graph)
+  end
+
+  def default_graph
+    {
       id: "info",
       title: nil,
       show_info: false,
       metadata: { diagram_type: :info },
-    )
+    }
   end
 
-  it "preserves an explicit identifier, title, and enabled showInfo state" do
+  def populate_diagram
     diagram.id = "status"
     diagram.title = "System status"
     diagram.show_info = true
+  end
 
-    expect(graph).to eq(
+  def populated_graph
+    {
       id: "status",
       title: "System status",
       show_info: true,
       metadata: { diagram_type: :info },
-    )
+    }
   end
 end

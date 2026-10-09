@@ -25,23 +25,29 @@ RSpec.describe Sirena::Renderer::Pie do
 
   it "renders small and large arcs with percentage labels" do
     graph.merge!(slices: slices, show_data: true)
-    paths = svg.children.grep(Sirena::Svg::Path)
-    labels = svg.children.grep(Sirena::Svg::Text)
-
-    expect([paths.map(&:d), labels.map { |label| text(label) }]).to match(
-      [
-        [include("A 150 150 0 1 1"), include("A 150 150 0 0 1")],
-        ["Large: 75.0%", "Small: 25.0%"],
-      ],
-    )
+    expect(rendered_arcs).to match(expected_arcs)
   end
 
   it "keeps labels free of values when showData is disabled" do
     graph.merge!(slices: slices, show_data: false)
 
-    expect(svg.children.grep(Sirena::Svg::Text).map { |label| text(label) }).to eq(
-      ["Large", "Small"],
-    )
+    expect(rendered_labels).to eq(["Large", "Small"])
+  end
+
+  def rendered_arcs
+    paths = svg.children.grep(Sirena::Svg::Path)
+    [paths.map(&:d), rendered_labels]
+  end
+
+  def expected_arcs
+    [
+      [include("A 150 150 0 1 1"), include("A 150 150 0 0 1")],
+      ["Large: 75.0%", "Small: 25.0%"],
+    ]
+  end
+
+  def rendered_labels
+    svg.children.grep(Sirena::Svg::Text).map { |label| text(label) }
   end
 
   def slices
