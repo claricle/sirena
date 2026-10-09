@@ -71,7 +71,7 @@ RSpec.describe Sirena::Layout::Quadrant do
 
     it "preserves supplied axes while defaulting omitted labels" do
       expect(graph[:axes]).to eq(
-        x_left: "low", x_right: "", y_bottom: "", y_top: "high"
+        x_left: "low", x_right: "", y_bottom: "", y_top: "high",
       )
     end
   end
