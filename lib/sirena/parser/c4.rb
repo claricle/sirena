@@ -27,27 +27,8 @@ module Sirena
     #   parser = C4.new
     #   diagram = parser.parse("C4Context\ntitle My System\nPerson(user, \"User\")")
     class C4 < Base
-      # Parses C4 diagram source into a C4 diagram model.
-      #
-      # @param source [String] the Mermaid C4 diagram source
-      # @return [Diagram::C4] the parsed C4 diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::C4.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::C4.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::C4
+      builder Builders::C4
     end
   end
 end

@@ -38,27 +38,8 @@ module Sirena
     #     Process,Output,70
     #   SANKEY
     class Sankey < Base
-      # Parses Sankey diagram source into a Sankey model.
-      #
-      # @param source [String] the Mermaid Sankey diagram source
-      # @return [Diagram::Sankey] the parsed Sankey diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Sankey.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Sankey.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Sankey
+      builder Builders::Sankey
     end
   end
 end

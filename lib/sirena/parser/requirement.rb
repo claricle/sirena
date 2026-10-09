@@ -39,15 +39,6 @@ module Sirena
         raise ParseError, "Parse error: source encoding #{source.encoding} " \
                           "cannot be read as a requirement diagram (#{e.message})"
       end
-
-      # Formats a Parslet parse error with context.
-      #
-      # @param cause [Parslet::Cause] the deepest failure
-      # @param source [String] the source that failed to parse
-      # @return [String] formatted error message
-      def format_parse_error(cause, source)
-        format_parse_error_guarded(cause, source)
-      end
     end
   end
 end
