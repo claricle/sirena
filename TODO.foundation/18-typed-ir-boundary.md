@@ -47,8 +47,9 @@ more than one, and the first match wins.
 1. **pre-positioned** — the *notation's grammar* fully determines layout,
    for every valid document, with no layout engine involved. Block is the
    clear case: the author's `columns` fixes the grid
-   (`transform/block.rb:46`). Block also emits `from`/`to` connectivity
-   (`transform/block.rb:188`), which is exactly why this test runs first.
+   (`lib/sirena/layout/block.rb:43-109`). Block also emits `from`/`to`
+   connectivity (`lib/sirena/layout/block.rb:182-198`), which is exactly why
+   this test runs first.
 
    Ask it of the notation, not of one file. Every Sirena transform happens
    to emit final coordinates today, so "is the output positioned" would
@@ -59,17 +60,19 @@ more than one, and the first match wins.
 2. **graph-shaped** — the transform emits edges whose **endpoints identify
    nodes**, by whatever spelling. Sankey is the obvious case: it emits
    `nodes:` and `flows:` carrying literal `source:`/`target:`
-   (`transform/sankey.rb:184`). It looks like a chart and is a graph.
+   (`lib/sirena/layout/sankey.rb:214-230`). It looks like a chart and is a
+   graph.
 
    Architecture is the case that shows why the test is about recoverable
    identity rather than key names: it emits `edge:` plus `from_x/from_y/
-   to_x/to_y` (`transform/architecture.rb:232-238`) and no `source`/`target`
-   key anywhere, yet the endpoints are recoverable from the embedded edge
-   model. It is graph-shaped. Containment on its own does not qualify.
+   to_x/to_y` (`lib/sirena/layout/architecture.rb:296-317`) and no
+   `source`/`target` key anywhere, yet the endpoints are recoverable from the
+   embedded edge model. It is graph-shaped. Containment on its own does not
+   qualify.
 3. **data-shaped** — everything else: values, or placed content carrying no
-   connectivity. Pie is the clear case (`PieTransform` at `pie.rb:17` emits
-   no node boxes). This is the residual category, so every type lands
-   somewhere.
+   connectivity. Pie is the clear case (`Layout::Pie#build_graph` at
+   `lib/sirena/layout/pie.rb:26-54` emits no node boxes). This is the residual
+   category, so every type lands somewhere.
 
 Those examples are illustrative, not an exhaustive roster. Apply the tests
 to any type, including notations not yet written — that is the point of a
@@ -94,22 +97,23 @@ the foundation close with the architecture issue #2 asks for half-built.
 
 ## Do
 
-1. Collect the evidence: item 14's emit/accept survey plus item 16's
-   PlantUML class shapes. Write the comparison down — what is common,
-   what is notation-specific, what is layout-specific.
-2. Define the IR's three shapes from that comparison, using the
-   notation-neutrality rule above as the test for every field.
-3. Decide per Mermaid type which shape it maps to, and record it.
+1. [x] Collect the evidence: item 14's emit/accept survey plus item 16's
+   PlantUML class shapes. The comparison of common, notation-private, and
+   layout-owned fields is recorded in `docs/ir-type-map.md`.
+2. [x] Define the IR's three shapes from that comparison, using the
+   notation-neutrality rule above as the test for every field. The same record
+   settles notation adapters before layout and makes layout own all geometry.
+3. [x] Decide per Mermaid type which shape it maps to, and record it.
    **Persist it** as `docs/ir-type-map.md` — one row per type: the shape,
    the transform, and the evidence line. A type whose mapping is unclear is
    resolved before implementation, not by whoever reaches it first. The
    categories above are illustrated rather than enumerated precisely so
    that this file, not the prose, carries the per-type rulings.
-4. Migrate Mermaid's transforms onto the IR one type at a time, corpus
+4. [ ] Migrate Mermaid's layout adapters onto the IR one type at a time, corpus
    pass set unchanged at each step.
-5. Migrate the PlantUML class spike onto it — the proof the IR is not
+5. [ ] Migrate the PlantUML class spike onto it — the proof the IR is not
    Mermaid-shaped.
-6. Update item 10's boundary spec. The boundary moves: transform output
+6. [ ] Update item 10's boundary spec. The boundary moves: adapter output
    is no longer private per plugin, because the IR is deliberately
    shared. What stays private is each notation's PARSE output before it
    becomes IR.
@@ -140,6 +144,6 @@ the foundation close with the architecture issue #2 asks for half-built.
 
 ## Files
 
-`lib/sirena/ir/**` (new), `lib/sirena/transform/*`,
+`lib/sirena/ir/**` (new), `lib/sirena/layout/*`,
 `lib/sirena/notation/**`, `spec/sirena/ir/**` (new),
 `docs/ir-type-map.md` (new), and item 10's boundary spec.
