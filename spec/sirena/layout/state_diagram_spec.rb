@@ -4,6 +4,42 @@ require "spec_helper"
 
 RSpec.describe Sirena::Layout::StateDiagram do
   let(:transform) { described_class.new }
+  let(:high_contrast) { Sirena::Theme::Registry.get(:high_contrast) }
+  let(:section_graph) do
+    {
+      id: "s",
+      children: [
+        { id: "a", x: 10, y: 20, width: 100, height: 50 },
+        { id: "b", x: 210, y: 20, width: 100, height: 50 },
+      ],
+      edges: [
+        { id: "bent", sources: ["a"], targets: ["b"],
+          sections: [{ startPoint: { x: 110, y: 45 },
+                       endPoint: { x: 210, y: 45 },
+                       bendPoints: [{ x: 160, y: 80 }] }] },
+        { id: "straight", sources: ["a"], targets: ["b"] },
+      ],
+    }
+  end
+
+  def final_state_for(child)
+    graph = { id: "s", children: [child], edges: [] }
+    described_class.from_graph(graph).children.first
+  end
+
+  def edge_geometry(scene)
+    bent, straight = scene.edges
+    bend = bent.sections.first.bend_points.first
+    [bent.path, [bend.x, bend.y], straight.path]
+  end
+
+  def theme_geometry(scene, default_scene)
+    state = scene.children.first
+    default_state = default_scene.children.first
+    edge_label = scene.edges.first.labels.first
+    [state.labels.map(&:font_size), edge_label.font_size,
+     state.width > default_state.width]
+  end
 
   describe "#to_graph" do
     let(:diagram) do
@@ -91,17 +127,10 @@ RSpec.describe Sirena::Layout::StateDiagram do
     end
 
     it "provides both final radii for an end state" do
-      graph = {
-        id: "s",
-        children: [
-          { id: "end", x: 10, y: 20, width: 30, height: 30,
-            metadata: { state_type: "end" } },
-        ],
-        edges: [],
-      }
-
-      state = described_class.from_graph(graph).children.first
-
+      state = final_state_for(
+        id: "end", x: 10, y: 20, width: 30, height: 30,
+        metadata: { state_type: "end" }
+      )
       expect([state.radius, state.inner_radius]).to eq([15.0, 10.0])
     end
 
@@ -245,42 +274,18 @@ RSpec.describe Sirena::Layout::StateDiagram do
     end
 
     it "preserves final section points and missing edge geometry" do
-      graph = {
-        id: "s",
-        children: [
-          { id: "a", x: 10, y: 20, width: 100, height: 50 },
-          { id: "b", x: 210, y: 20, width: 100, height: 50 },
-        ],
-        edges: [
-          { id: "bent", sources: ["a"], targets: ["b"],
-            sections: [{ startPoint: { x: 110, y: 45 },
-                         endPoint: { x: 210, y: 45 },
-                         bendPoints: [{ x: 160, y: 80 }] }] },
-          { id: "straight", sources: ["a"], targets: ["b"] },
-        ],
-      }
-
-      scene = described_class.from_graph(graph)
-      bent, straight = scene.edges
-
-      expect(bent.path).to eq("M 110 45 L 160 80 L 210 45")
-      expect(bent.sections.first.bend_points.first)
-        .to have_attributes(x: 160.0, y: 80.0)
-      expect(straight.path).to eq("M 60 45 L 260 45")
+      scene = described_class.from_graph(section_graph)
+      expect(edge_geometry(scene)).to eq(
+        ["M 110 45 L 160 80 L 210 45", [160.0, 80.0], "M 60 45 L 260 45"],
+      )
     end
 
     it "uses one theme size for measurement and final text geometry" do
       source = "stateDiagram-v2\nA : description\nA --> B : go\n"
       diagram = Sirena::Parser::StateDiagram.new.parse(source)
-
-      scene = transform.call(
-        diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
-      )
-
-      expect(scene.children.first.labels.map(&:font_size)).to eq([16.0])
-      expect(scene.edges.first.labels.first.font_size).to eq(14.0)
+      scene = transform.call(diagram, theme: high_contrast)
       default_scene = described_class.new.to_graph(diagram)
-      expect(scene.children.first.width).to be > default_scene.children.first.width
+      expect(theme_geometry(scene, default_scene)).to eq([[16.0], 14.0, true])
     end
   end
 end

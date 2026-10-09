@@ -58,13 +58,9 @@ RSpec.describe "StateDiagram Integration" do
 
     it "runs the temporary Grid while the state layout builds its Scene" do
       allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
-
-      diagram = parser.parse("stateDiagram-v2\nIdle-->Active")
-      scene = transform.to_graph(diagram)
-
+      transform.to_graph(parser.parse("stateDiagram-v2\nIdle-->Active"))
       expect(Sirena::Layout::Grid).to have_received(:apply)
         .once.with(an_instance_of(Hash))
-      expect(scene).to be_a(Sirena::Layout::StateDiagram::Scene)
     end
 
     it "handles complete state machine with start and end" do

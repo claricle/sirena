@@ -5,6 +5,19 @@ require "spec_helper"
 RSpec.describe Sirena::Renderer::StateDiagram do
   subject(:renderer) { described_class.new }
 
+  let(:released_hook_arities) do
+    {
+      calculate_width: 1, calculate_height: 1, render_states: 2,
+      render_state: 2, create_state_shape: 2, create_normal_state: 4,
+      create_start_state: 4, create_end_state: 4,
+      create_choice_state: 4, create_fork_join_state: 4,
+      create_state_label: 3, render_transitions: 2,
+      render_transition: 3, find_state: 2,
+      calculate_transition_path: 3, create_path_with_bends: 5,
+      create_transition_label: 3
+    }
+  end
+
   def xml_for(graph)
     renderer.render(graph).to_xml
   end
@@ -117,22 +130,11 @@ RSpec.describe Sirena::Renderer::StateDiagram do
 
   describe "released compatibility hooks" do
     it "keeps each protected method's name and arity" do
-      expected_arities = {
-        calculate_width: 1, calculate_height: 1, render_states: 2,
-        render_state: 2, create_state_shape: 2, create_normal_state: 4,
-        create_start_state: 4, create_end_state: 4,
-        create_choice_state: 4, create_fork_join_state: 4,
-        create_state_label: 3, render_transitions: 2,
-        render_transition: 3, find_state: 2,
-        calculate_transition_path: 3, create_path_with_bends: 5,
-        create_transition_label: 3
-      }
-
-      actual_arities = expected_arities.to_h do |name, _arity|
+      actual_arities = released_hook_arities.to_h do |name, _arity|
         [name, described_class.instance_method(name).arity]
       end
 
-      expect(actual_arities).to eq(expected_arities)
+      expect(actual_arities).to eq(released_hook_arities)
     end
 
     it "delegates bend-path geometry to the layout helper" do
