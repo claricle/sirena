@@ -3,6 +3,7 @@
 require_relative "diagram"
 require_relative "klass"
 require_relative "member"
+require_relative "note"
 require_relative "relation"
 require_relative "unsupported_construct_error"
 
@@ -31,6 +32,8 @@ module Sirena
           @relations = []
           @junctions = []
           @directives = []
+          @extras = {}
+          @notes = []
         end
 
         def directive(text)
@@ -48,19 +51,50 @@ module Sirena
           @open
         end
 
+        # Opens a note; its text arrives through {#add_note_line}.
+        # @raise [Sirena::Parser::ParseError] when the class is unknown, as
+        #   PlantUML refuses a note on a class not yet mentioned
+        def open_note(head, number, lines = [])
+          unless @kinds.key?(head[:target])
+            raise Sirena::Parser::ParseError,
+                  "Parse error: line #{number} puts a note on " \
+                  "#{head[:target]}, which is not declared before it"
+          end
+
+          @note = [head, number, lines]
+        end
+
+        def add_note_line(text)
+          @note.last << text
+        end
+
+        def close_note
+          head, _number, lines = @note
+          @notes << Note.new(**head, lines: lines.freeze)
+          @note = nil
+        end
+
+        # @return [Integer, nil] the line the unclosed note was opened on
+        def open_note_line
+          @note && @note[1]
+        end
+
         # @return [Boolean] true until a class is declared or mentioned
         def empty?
           @kinds.empty?
         end
 
-        # Declares a class and, when `body` is true, opens its body.
-        def declare(name, kind, number, text, body:)
+        # Declares a class and, when `entry[:body]` is true, opens its body.
+        # `entry` holds :name, :kind, :body, :generics and :stereotypes.
+        def declare(entry, number, text)
+          name, kind = entry.values_at(:name, :kind)
           mention(name)
           refuse_redeclaration(name, kind, number, text)
           @kinds[name] = kind
           @explicit[name] = true
           @class_evidence = true
-          @open = [name, number] if body
+          @extras[name] = entry.slice(:generics, :stereotypes)
+          @open = [name, number] if entry[:body]
         end
 
         def add_member(member)
@@ -85,11 +119,13 @@ module Sirena
 
           classes = @kinds.map do |name, kind|
             body = @bodies.fetch(name).dup.freeze
-            Klass.new(name: name, kind: kind, body: body)
+            Klass.new(name: name, kind: kind, body: body,
+                      **@extras.fetch(name, {}))
           end
           Diagram.new(classes: classes.freeze, relations: @relations.dup.freeze,
                       junctions: @junctions.map(&:first).freeze,
-                      directives: @directives.dup.freeze)
+                      directives: @directives.dup.freeze,
+                      notes: @notes.dup.freeze)
         end
 
         private

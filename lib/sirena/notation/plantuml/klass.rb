@@ -5,14 +5,18 @@ module Sirena
     module PlantUML
       # A class, abstract class or interface and the Members of its
       # body, in the order they were written. `kind` is :class, :abstract or
-      # :interface.
+      # :interface; `stereotypes` holds the text of each `<<...>>` and
+      # `generics` the text of `<...>` after the name, or nil.
       class Klass
-        attr_reader :name, :kind, :body
+        attr_reader :name, :kind, :body, :stereotypes, :generics
 
-        def initialize(name:, kind:, body:)
+        def initialize(name:, kind:, body:, stereotypes: [].freeze,
+                       generics: nil)
           @name = name
           @kind = kind
           @body = body
+          @stereotypes = stereotypes
+          @generics = generics
           freeze
         end
       end

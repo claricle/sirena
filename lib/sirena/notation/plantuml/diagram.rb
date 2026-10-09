@@ -13,16 +13,18 @@ module Sirena
       # such as `\n` and creole or HTML markup inside that text; this stage
       # does not, so whatever draws the text must interpret or refuse them.
       class Diagram
-        attr_reader :classes, :relations, :junctions, :directives
+        attr_reader :classes, :relations, :junctions, :directives, :notes
 
-        # `junctions` are the association classes and `directives` the
-        # restyling lines the parser recorded without applying.
+        # `junctions` are the association classes, `directives` the
+        # restyling lines the parser recorded without applying and `notes`
+        # the Notes in source order.
         def initialize(classes:, relations:, junctions: [].freeze,
-                       directives: [].freeze)
+                       directives: [].freeze, notes: [].freeze)
           @classes = classes
           @relations = relations
           @junctions = junctions
           @directives = directives
+          @notes = notes
           freeze
         end
 

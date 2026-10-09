@@ -52,17 +52,22 @@ module Sirena
         end
 
         def render_box(box, document)
-          group = Svg::Group.new(id: "class-#{box.id}")
+          group = Svg::Group.new(id: box_id(box))
           group << box_rectangle(box)
           box.separators.each { |separator| group << separator_line(separator) }
           box.texts.each { |text| group << text_element(text) }
           document << group
         end
 
+        def box_id(box)
+          box.kind == "note" ? box.id : "class-#{box.id}"
+        end
+
         def box_rectangle(box)
           Svg::Rect.new.tap do |rectangle|
             apply_box_geometry(rectangle, box)
             apply_box_style(rectangle)
+            rectangle.fill = note_fill(box) if box.kind == "note"
           end
         end
 
@@ -79,6 +84,15 @@ module Sirena
           rectangle.fill = node_fill
           rectangle.stroke = node_stroke
           rectangle.stroke_width = stroke_width
+        end
+
+        # `#yellow` is a colour name and `#FFAA00` a hex value.
+        def note_fill(box)
+          colour = box.fill&.delete_prefix("#")
+          return "#fbfb77" unless colour
+          return "##{colour}" if colour.match?(/\A\h{3}(?:\h{3})?\z/)
+
+          colour
         end
 
         def separator_line(segment)

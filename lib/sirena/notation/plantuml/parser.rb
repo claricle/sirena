@@ -35,10 +35,15 @@ module Sirena
         # Every quantified piece is separated from the next by a character
         # it cannot also match, so no line backtracks more than linearly.
         STARTUML = /\A@startuml(?![A-Za-z0-9_])/
+        STEREOTYPE = /<<[^<>]+>>/
         CLASS_DECLARATION =
           /\A(abstract[ \t]+class|class|interface)[ \t]+(#{NAME})
-           (?:[ \t]*(\{))?\z/xo
-        END_TEXT = '(?:"([^"]+)"(?:/"([^"]+)")?|/"([^"]+)")'
+           (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)(?:[ \t]*(\{))?\z/xo
+        NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
+                (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
+                (?:[ \t]*(#{STEREOTYPE}))?(?:[ \t]*:[ \t]*(.+))?\z/xio
+        END_NOTE = /\Aend[ \t]?note\z/i
+        END_TEXT = '(?:"([^"]+)"(?:/"([^"]+)")?|/"([^"]+)"|(\[[^\]]+\]))'
         RELATION = /\A(#{NAME})[ \t]+(?:#{END_TEXT}[ \t]+)?
                     #{Arrow::PATTERN}
                     [ \t]*(?:#{END_TEXT}[ \t]+)?(#{NAME})
@@ -48,13 +53,18 @@ module Sirena
         METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]*\(([^()]*)\)
                   (?:[ \t]*:[ \t]*(.+))?\z/xo
         FIELD = /\A([+\-#~])?[ \t]*(#{NAME})(?:[ \t]*:[ \t]*([^()]+))?\z/o
+        TYPED_FIELD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})\z/o
+        TYPED_METHOD = /\A([+\-#~])?[ \t]*(#{NAME})[ \t]+(#{NAME})[ \t]*
+                        \(([^()]*)\)\z/xo
         LINE_END = /\r\n|\r|\n/
         NOT_FOUND_MESSAGE = "Unable to detect diagram type from source. " \
                             "Source must start with one of: @startuml"
 
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
-                         :CLASS_DECLARATION, :RELATION, :JUNCTION, :METHOD,
-                         :FIELD, :LINE_END, :NOT_FOUND_MESSAGE
+                         :STEREOTYPE, :CLASS_DECLARATION, :NOTE, :END_NOTE,
+                         :RELATION, :JUNCTION, :METHOD, :FIELD,
+                         :TYPED_FIELD, :TYPED_METHOD, :LINE_END,
+                         :NOT_FOUND_MESSAGE
 
         # @param source [String] PlantUML source
         # @return [Diagram] the parsed diagram; the Diagram, its collections
@@ -92,12 +102,13 @@ module Sirena
           return phase if text.empty?
 
           refuse_continuation(phase, text, number)
-          return phase if text.start_with?("'")
+          return phase if text.start_with?("'") && phase != :note
 
           case phase
           when :before then before(text, number)
           when :statements then statement(builder, text, number)
           when :body then body_line(builder, text, number)
+          when :note then note_line(builder, text, number)
           else after(text, number)
           end
         end
@@ -133,9 +144,40 @@ module Sirena
             junction = Junction.new(**junction_names(match))
             builder.junction(junction, number, text)
             :statements
+          elsif (match = NOTE.match(text))
+            note(builder, match, number, text)
           else
             relation(builder, text, number)
           end
+        end
+
+        # A note with `: text` is one line; without it the text follows up
+        # to `end note`. PlantUML refuses `::member` with inline text.
+        def note(builder, match, number, text)
+          head = note_head(match)
+          inline = match[6]
+          raise refusal(text, number) if inline && head[:member]
+
+          builder.open_note(head, number, [*inline])
+          return :note unless inline
+
+          builder.close_note
+          :statements
+        end
+
+        def note_head(match)
+          { side: match[1].downcase.to_sym, target: match[2],
+            member: match[3], color: match[4], stereotype: match[5] }
+        end
+
+        def note_line(builder, text, number)
+          if END_NOTE.match?(text)
+            builder.close_note
+            return :statements
+          end
+          refuse_note_text(builder, text, number)
+          builder.add_note_line(text)
+          :note
         end
 
         def junction_names(match)
@@ -144,7 +186,7 @@ module Sirena
 
         def relation(builder, text, number)
           match = RELATION.match(text)
-          arrow = match && Arrow.parse(match[5])
+          arrow = match && Arrow.parse(match[6])
           raise refusal(text, number) unless arrow
 
           builder.relate(relation_from(match, arrow), number, text)
@@ -160,9 +202,12 @@ module Sirena
         end
 
         def declare(builder, match, number, text)
-          kind = KINDS.fetch(match[1].split.join(" "))
-          builder.declare(match[2], kind, number, text, body: !match[3].nil?)
-          match[3] ? :body : :statements
+          tags = match[4].scan(STEREOTYPE).map { |tag| tag[2..-3] }.freeze
+          entry = { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
+                    body: !match[5].nil?, generics: match[3],
+                    stereotypes: tags }
+          builder.declare(entry, number, text)
+          entry[:body] ? :body : :statements
         end
 
         def body_line(builder, text, number)
@@ -190,7 +235,7 @@ module Sirena
           return unless text.end_with?("\\")
 
           case phase
-          when :statements, :body
+          when :statements, :body, :note
             raise refusal(text, number, "line continuation")
           end
         end
@@ -206,10 +251,27 @@ module Sirena
           when :before then raise Engine::DiagramTypeError, NOT_FOUND_MESSAGE
           when :after then builder.diagram
           when :body then raise unclosed_body(builder)
+          when :note then raise unclosed_note(builder)
           else
             raise Sirena::Parser::ParseError,
                   "Parse error: missing @enduml before the end of the source"
           end
+        end
+
+        def refuse_note_text(builder, text, number)
+          raise unclosed_note(builder) if text == "@enduml"
+          if text.start_with?("'")
+            raise refusal(text, number, "comment in a note")
+          end
+
+          refuse_block_comment(text, number)
+        end
+
+        def unclosed_note(builder)
+          Sirena::Parser::ParseError.new(
+            "Parse error: the note opened on line " \
+            "#{builder.open_note_line} is never closed with end note",
+          )
         end
 
         def unclosed_body(builder)
@@ -230,13 +292,13 @@ module Sirena
         end
 
         def relation_from(match, arrow)
-          Relation.new(left: match[1], right: match[9], arrow: arrow,
-                       ends: end_texts(match), label: match[10])
+          Relation.new(left: match[1], right: match[11], arrow: arrow,
+                       ends: end_texts(match), label: match[12])
         end
 
         def end_texts(match)
-          { left: match[2], left_role: match[3] || match[4],
-            right: match[6], right_role: match[7] || match[8] }
+          { left: match[2] || match[5], left_role: match[3] || match[4],
+            right: match[7] || match[10], right_role: match[8] || match[9] }
         end
 
         # nil for anything the subset does not read. A modifier, separator or
@@ -251,6 +313,19 @@ module Sirena
           elsif (match = FIELD.match(text))
             Member.new(kind: :field, visibility: VISIBILITY[match[1]],
                        name: match[2], type: match[3], parameters: nil)
+          else
+            typed_member(text)
+          end
+        end
+
+        # `int x` and `void run(int a)`: the type comes first.
+        def typed_member(text)
+          if (match = TYPED_METHOD.match(text))
+            Member.new(kind: :method, visibility: VISIBILITY[match[1]],
+                       name: match[3], type: match[2], parameters: match[4])
+          elsif (match = TYPED_FIELD.match(text))
+            Member.new(kind: :field, visibility: VISIBILITY[match[1]],
+                       name: match[3], type: match[2], parameters: nil)
           end
         end
       end
