@@ -49,8 +49,8 @@ module Sirena
       selected = type ? [type] : available
       unknown = selected - available
       unless unknown.empty?
-        raise "Unknown corpus type(s): #{unknown.join(', ')}. " \
-              "Available: #{available.join(', ')}"
+        raise ArgumentError, "Unknown corpus type(s): #{unknown.join(', ')}. " \
+                             "Available: #{available.join(', ')}"
       end
 
       selected.flat_map do |t|
@@ -167,27 +167,61 @@ module Sirena
 
     # `rake corpus` (no type): renders the WHOLE corpus and writes the
     # committed scoreboard. `rake 'corpus[type]'`: a scoped diagnostic view
-    # -- prints each failure's case, stage and first error line for that
-    # type only, and never touches the committed file. Writing a partial
-    # file here would make corpus:check read every OTHER type's absence as
-    # every one of its cases regressing.
-    def run(type)
+    # -- prints each failure's case, stage, oracle verdict and first error
+    # line for that type only, and never touches the committed file. Writing
+    # a partial file here would make corpus:check read every OTHER type's
+    # absence as every one of its cases regressing. `rake 'corpus[type,valid]'`
+    # lists only the failures the oracle says are real mermaid, the ones
+    # worth fixing.
+    def run(type, filter = nil)
+      scope = failure_scope(filter)
       paths = cases(type)
       results = run_cases(paths)
       rows = rows_for_scoreboard(results, verdicts)
 
       if type
         print_summary(rows, label: "corpus[#{type}]")
-        puts
-        rows.reject { |row| row["pass"] }.each do |row|
-          message = results[row["case"]][:message]
-          puts format("  %-55s stage=%-8s %-32s %s", row["case"],
-                      row["stage"], row["exception_class"], message)
-        end
+        print_failures(rows, results, only_valid: scope == :valid)
       else
         write_scoreboard(rows)
         print_summary(rows, label: "corpus")
         puts "wrote #{SCOREBOARD_PATH}"
+      end
+    end
+
+    # The only filter on offer is "valid"; anything else is a typo that would
+    # otherwise silently list everything.
+    def failure_scope(filter)
+      return nil if filter.nil? || filter.empty?
+      return :valid if filter == "valid"
+
+      raise ArgumentError,
+            "Unknown corpus filter #{filter.inspect}; " \
+            "the only filter is \"valid\""
+    end
+
+    # Parslet embeds object addresses in its error text
+    # (`#<Parslet::Position:0x0000...>`), so the same failure differs on every
+    # run and cannot be compared or grepped. Keep the class, drop the address.
+    def tidy_message(message)
+      message.gsub(/(#<[\w:]+):0x\h+>/, '\1>')
+    end
+
+    # One line per failing case, widest column first so the error text, the
+    # only variable-width field, ends the line. Sorted by stage, then path,
+    # so cases that break the same way sit together.
+    def print_failures(rows, results, only_valid:)
+      failing = rows.reject { |row| row["pass"] }
+      failing = failing.select { |row| row["verdict"] == "valid" } if only_valid
+      puts
+      puts(only_valid ? "failing (valid cases only):" : "failing:")
+      return puts("  none") if failing.empty?
+
+      width = failing.map { |row| row["case"].size }.max
+      failing.sort_by { |row| [row["stage"], row["case"]] }.each do |row|
+        message = tidy_message(results[row["case"]][:message])
+        puts format("  %-#{width}s  %-8s  %-8s  %s", row["case"],
+                    row["stage"], row["verdict"], message)
       end
     end
 
@@ -280,10 +314,15 @@ module Sirena
 end
 
 desc "Render the spec/mermaid corpus; writes scoreboard/corpus.json. " \
-     "Scope to one type with corpus[type] (diagnostic only, does not write)."
-task :corpus, [:type] do |_task, args|
+     "Scope to one type with corpus[type] (diagnostic only, does not write); " \
+     "corpus[type,valid] lists only failures the oracle calls valid."
+task :corpus, %i[type filter] do |_task, args|
   require "sirena"
-  Sirena::Corpus.run(args[:type])
+  begin
+    Sirena::Corpus.run(args[:type], args[:filter])
+  rescue ArgumentError => e
+    abort "corpus: #{e.message}"
+  end
 end
 
 namespace :corpus do
