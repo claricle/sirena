@@ -1596,11 +1596,19 @@
     "status": "conformant"
   },
   {
+    "case": "er/001_rendering_erdiagram_spec_er_0.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "er/002_platform_yari2_er_1.mmd",
     "status": "conformant"
   },
   {
     "case": "er/003_example_er_2.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "er/057_parser_should_handle_complex_diagram_with_special_entity_names_56.mmd",
     "status": "conformant"
   },
   {
@@ -1628,11 +1636,19 @@
     "status": "conformant"
   },
   {
+    "case": "er_diagram/037_parser_should_handle_complex_diagram_with_special_entity_names_36.mmd",
+    "status": "conformant"
+  },
+  {
     "case": "er_diagram/038_parser_should_handle_attributes_with_numbers_in_names__but_not_starting__37.mmd",
     "status": "conformant"
   },
   {
     "case": "er_diagram/042_parser_should_handle_an_accessibility_title__accdescr__41.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "er_diagram/056_parser_should_handle_complex_diagram_with_special_entity_names_55.mmd",
     "status": "conformant"
   },
   {
@@ -4897,6 +4913,10 @@
   },
   {
     "case": "unknown/081_parser_should_parse_diagram_with_direction_80.mmd",
+    "status": "conformant"
+  },
+  {
+    "case": "unknown/083_parser_should_draw_background_rect_82.mmd",
     "status": "conformant"
   },
   {

@@ -80,7 +80,7 @@ module Sirena
         # a nil `:attributes`, so routing on `:entity_id` alone is what keeps
         # `CAR:::x {}` from losing its classes. A5 pins that.
         def process_entity_definition(diagram, stmt)
-          entity_id = stmt[:entity_id].to_s
+          entity_id = unquote(stmt[:entity_id])
           entity = find_or_create_entity(diagram, entity_id)
 
           add_entity_classes(entity, stmt[:entity_classes])
@@ -104,8 +104,8 @@ module Sirena
         end
 
         def process_relationship(diagram, stmt)
-          from_id = stmt[:from_id].to_s
-          to_id = stmt[:to_id].to_s
+          from_id = unquote(stmt[:from_id])
+          to_id = unquote(stmt[:to_id])
           pattern = stmt[:pattern]
 
           # Ensure entities exist
@@ -142,6 +142,10 @@ module Sirena
           end
 
           diagram.relationships << relationship
+        end
+
+        def unquote(slice)
+          slice.to_s.delete_prefix('"').delete_suffix('"')
         end
 
         def find_or_create_entity(diagram, entity_id)

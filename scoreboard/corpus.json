@@ -3103,9 +3103,7 @@
   {
     "case": "er/001_rendering_erdiagram_spec_er_0.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er/002_platform_yari2_er_1.mmd",
@@ -3491,9 +3489,7 @@
   {
     "case": "er/057_parser_should_handle_complex_diagram_with_special_entity_names_56.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er/058_parser_should_handle_attributes_with_numbers_in_names_but_not_starting__57.mmd",
@@ -4011,9 +4007,7 @@
   {
     "case": "er_diagram/037_parser_should_handle_complex_diagram_with_special_entity_names_36.mmd",
     "verdict": "invalid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er_diagram/038_parser_should_be_possible_to_apply_multiple_separately_defined_styles_37.mmd",
@@ -4196,9 +4190,7 @@
   {
     "case": "er_diagram/056_parser_should_handle_complex_diagram_with_special_entity_names_55.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "er_diagram/057_parser_should_handle_attributes_with_numbers_in_names_but_not_starting__56.mmd",
@@ -11251,9 +11243,7 @@
   {
     "case": "unknown/083_parser_should_draw_background_rect_82.mmd",
     "verdict": "valid",
-    "pass": false,
-    "stage": "parse",
-    "exception_class": "Sirena::Parser::ParseError"
+    "pass": true
   },
   {
     "case": "unknown/084_parser_super_simple_83.mmd",

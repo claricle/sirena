@@ -122,6 +122,8 @@ module Sirena
             process_alt(diagram, stmt)
           elsif stmt[:opt_label]
             process_opt(diagram, stmt)
+          elsif stmt[:rect_label]
+            process_rect(diagram, stmt)
           elsif stmt[:par_label]
             process_par(diagram, stmt)
           elsif stmt[:critical_label]
@@ -369,6 +371,12 @@ module Sirena
           # Process opt statements
           if stmt[:opt_statements]
             process_statements(diagram, stmt[:opt_statements])
+          end
+        end
+
+        def process_rect(diagram, stmt)
+          if stmt[:rect_statements]
+            process_statements(diagram, stmt[:rect_statements])
           end
         end
 
