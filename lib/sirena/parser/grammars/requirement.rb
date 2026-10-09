@@ -213,7 +213,8 @@ module Sirena
         rule(:class_definition_statement) do
           str("classDef").as(:classdef_keyword) >> space >>
             identifier.as(:class_name) >>
-            (space >> class_property).repeat(1).as(:class_props) >>
+            (space >> class_property >> (comma >> class_property).repeat)
+              .as(:class_props) >>
             line_end
         end
 

@@ -177,7 +177,7 @@ module Sirena
               targets = [targets] unless targets.is_a?(Array)
 
               targets.each do |target|
-                style.add_target(target.to_s)
+                split_list(target).each { |t| style.add_target(t) }
               end
             end
 
@@ -247,7 +247,7 @@ module Sirena
               targets = [targets] unless targets.is_a?(Array)
 
               targets.each do |target|
-                assignment.add_target(target.to_s)
+                split_list(target).each { |t| assignment.add_target(t) }
               end
             end
 
@@ -257,34 +257,20 @@ module Sirena
               names = [names] unless names.is_a?(Array)
 
               names.each do |name|
-                assignment.add_class(name.to_s)
+                split_list(name).each { |n| assignment.add_class(n) }
               end
             end
           end
         end
 
+        def self.split_list(value)
+          value.to_s.split(",").map(&:strip).reject(&:empty?)
+        end
+
         def self.extract_class_names(class_data)
-          # Extract class names from shorthand syntax
-          classes = []
-
-          if class_data.is_a?(String)
-            classes = class_data.split(",").map(&:strip)
-          elsif class_data.is_a?(Array)
-            class_data.each do |item|
-              if item.is_a?(String)
-                classes << item.strip
-              elsif item.is_a?(Hash) && item[:string]
-                classes << item[:string].to_s.strip
-              else
-                classes << item.to_s.strip
-              end
-            end
-          elsif class_data.is_a?(Hash)
-            # Could be a single identifier or complex structure
-            classes << class_data.to_s.strip
-          end
-
-          classes
+          # Shorthand arrives as a Parslet::Slice (":::a,b"), not a String.
+          Array(class_data.is_a?(Hash) ? class_data[:string] : class_data)
+            .flat_map { |item| split_list(item.to_s.delete_prefix(":::")) }
         end
       end
     end
