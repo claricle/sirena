@@ -23,27 +23,8 @@ module Sirena
     #   parser = Pie.new
     #   diagram = parser.parse("pie\n  \"Apples\" : 42\n  \"Oranges\" : 58")
     class Pie < Base
-      # Parses pie chart diagram source into a Pie diagram model.
-      #
-      # @param source [String] the Mermaid pie chart diagram source
-      # @return [Diagram::Pie] the parsed pie chart diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Pie.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Pie.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Pie
+      builder Builders::Pie
     end
   end
 end

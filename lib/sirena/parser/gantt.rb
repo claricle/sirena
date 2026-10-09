@@ -34,27 +34,8 @@ module Sirena
     #       Task 2 :after a1, 20d
     #   GANTT
     class Gantt < Base
-      # Parses Gantt chart diagram source into a Gantt diagram model.
-      #
-      # @param source [String] the Mermaid Gantt chart diagram source
-      # @return [Diagram::Gantt] the parsed Gantt chart diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Gantt.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Gantt.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Gantt
+      builder Builders::Gantt
     end
   end
 end

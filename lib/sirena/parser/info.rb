@@ -23,27 +23,8 @@ module Sirena
     #   parser = Info.new
     #   diagram = parser.parse("info showInfo")
     class Info < Base
-      # Parses info diagram source into an Info diagram model.
-      #
-      # @param source [String] the Mermaid info diagram source
-      # @return [Diagram::Info] the parsed info diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Info.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Info.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Info
+      builder Builders::Info
     end
   end
 end

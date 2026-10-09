@@ -31,27 +31,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Quadrant < Base
-      # Parses quadrant chart diagram source into a Quadrant model.
-      #
-      # @param source [String] the Mermaid quadrant chart diagram source
-      # @return [Diagram::Quadrant] the parsed quadrant chart diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Quadrant.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to diagram model
-        transform = Builders::Quadrant.new
-        diagram = transform.apply(parse_tree)
-
-        diagram
-      end
+      grammar Grammars::Quadrant
+      builder Builders::Quadrant
     end
   end
 end
