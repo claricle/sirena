@@ -411,14 +411,14 @@ class MermaidTestExtractor
 
     # Try each diagram type pattern
     DIAGRAM_TYPES.each do |type, pattern|
-      return type if source.strip =~ pattern
+      return type if pattern.match?(source.strip)
     end
 
     :unknown
   end
 
   def sanitize_test_name(name)
-    name.gsub(/[^a-zA-Z0-9_-]/, "_").gsub(/_+/, "_")
+    name.gsub(/[^a-zA-Z0-9_-]/, "_").squeeze("_")
   end
 
   def add_test(name:, type:, source:, file:, line:, metadata: {})

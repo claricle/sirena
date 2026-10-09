@@ -67,35 +67,35 @@ RSpec.describe "Reference SVG Fixtures" do
   end
 
   describe "Flowchart diagrams" do
-    include_examples "validates against reference fixture", "flowchart", 0.28
+    it_behaves_like "validates against reference fixture", "flowchart", 0.28
   end
 
   describe "Sequence diagrams" do
-    include_examples "validates against reference fixture", "sequence", 0.25
+    it_behaves_like "validates against reference fixture", "sequence", 0.25
   end
 
   describe "Class diagrams" do
-    include_examples "validates against reference fixture", "class_diagram", 0.26
+    it_behaves_like "validates against reference fixture", "class_diagram", 0.26
   end
 
   describe "State diagrams" do
-    include_examples "validates against reference fixture", "state_diagram", 0.024
+    it_behaves_like "validates against reference fixture", "state_diagram", 0.024
   end
 
   describe "ER diagrams" do
-    include_examples "validates against reference fixture", "er_diagram", 0.11
+    it_behaves_like "validates against reference fixture", "er_diagram", 0.11
   end
 
   describe "User journey diagrams" do
-    include_examples "validates against reference fixture", "user_journey", 0.47
+    it_behaves_like "validates against reference fixture", "user_journey", 0.47
   end
 
   describe "XY Chart diagrams" do
-    include_examples "validates against reference fixture", "xy_chart", 1.48
+    it_behaves_like "validates against reference fixture", "xy_chart", 1.48
   end
 
   describe "Sankey diagrams" do
-    include_examples "validates against reference fixture", "sankey", 1.0
+    it_behaves_like "validates against reference fixture", "sankey", 1.0
   end
 
   describe "Length band" do
