@@ -27,12 +27,16 @@ RSpec.describe Sirena::Layout::Pie do
   end
 
   def populate_diagram
+    diagram.slices = [slice("Small", 1), slice("Large", 3)]
     diagram.id = "share"
     diagram.title = "Market share"
     diagram.show_data = true
+    populate_accessibility
+  end
+
+  def populate_accessibility
     diagram.acc_title = "Share by product"
     diagram.acc_description = "One quarter and three quarters"
-    diagram.slices = [slice("Small", 1), slice("Large", 3)]
   end
 
   def populated_graph

@@ -28,10 +28,13 @@ RSpec.describe Sirena::Renderer::Info do
   end
 
   def rendered_geometry
-    box = svg.children.grep(Sirena::Svg::Rect).first
-    label = svg.children.grep(Sirena::Svg::Text).first
     [svg.width, svg.height, svg.view_box,
-     box_geometry(box), text_geometry(label)]
+     box_geometry(first_child(Sirena::Svg::Rect)),
+     text_geometry(first_child(Sirena::Svg::Text))]
+  end
+
+  def first_child(type)
+    svg.children.grep(type).first
   end
 
   def expected_geometry

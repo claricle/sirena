@@ -20,11 +20,15 @@ RSpec.describe Sirena::Renderer::Error do
   end
 
   def rendered_geometry
-    box, mark = svg.children.grep(Sirena::Svg::Rect)
-    ring, dot = svg.children.grep(Sirena::Svg::Circle)
-    label = svg.children.grep(Sirena::Svg::Text).first
+    box, mark = children_of(Sirena::Svg::Rect)
+    ring, dot = children_of(Sirena::Svg::Circle)
     [document_geometry, box_geometry(box), circle_geometry(ring),
-     mark_geometry(mark), circle_geometry(dot), text_geometry(label)]
+     mark_geometry(mark), circle_geometry(dot),
+     text_geometry(children_of(Sirena::Svg::Text).first)]
+  end
+
+  def children_of(type)
+    svg.children.grep(type)
   end
 
   def expected_geometry
