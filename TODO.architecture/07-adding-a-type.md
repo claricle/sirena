@@ -135,20 +135,19 @@ that.
 
 ## Done when
 
-- [ ] `rake type:new[demo]` produces a type that passes the shared
+- [x] `rake type:new[demo]` produces a type that passes the shared
       examples with no hand-editing
-- [ ] a spec asserts the file count: adding `demo` touched 8 defining
-      files, ignoring specs
+- [x] a spec asserts the file count: adding `demo` touched 8 defining
+      files, ignoring specs (`spec/sirena/type_generator_spec.rb`)
 - [ ] `rake type:new[demo]` leaves the suite **green**, including item
       06's `TYPES`-to-fixture parity — no hand-edited row
-- [ ] `docs/adding-a-diagram-type.md` exists, and someone who has not
+- [x] `docs/adding-a-diagram-type.md` exists, and someone who has not
       read this plan can follow it end to end
-- [ ] `rake 'corpus[<type>,failing]'` (or the chosen equivalent) RUNS and
-      exits 0 — measured, not assumed. The unquoted `--failing` form in an
-      earlier draft does neither
-- [ ] its output names, for each failing case, the path, the stage and the
-      first line of the error. "Good enough to work from" is not a
-      criterion — this list is
+- [x] `rake 'corpus[<type>]'` (every failing case) and
+      `rake 'corpus[<type>,valid]'` (oracle-valid only) RUN and exit 0.
+      The second argument is the shape chosen; `failing` is not a filter
+- [x] its output names, for each failing case, the path, the stage and the
+      first line of the error
 
 ## Do not
 
