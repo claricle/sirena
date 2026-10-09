@@ -82,7 +82,7 @@ module Sirena
             bit_number = (row * bits_per_row) + bit_in_row
 
             x = padding + (bit_in_row * cell_width) + (cell_width / 2)
-            y = padding + @title_offset + (layout[:header_height] / 2) + \
+            y = padding + @title_offset + (layout[:header_height] / 2) +
                 (row * layout[:cell_height])
 
             text = Svg::Text.new.tap do |t|

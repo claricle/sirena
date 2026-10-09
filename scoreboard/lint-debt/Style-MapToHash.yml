@@ -1,5 +1,0 @@
----
-cop: Style/MapToHash
-rows:
-- file: tasks/benchmark.rake
-  count: 1

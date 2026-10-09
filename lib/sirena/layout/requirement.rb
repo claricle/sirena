@@ -178,7 +178,7 @@ module Sirena
       def calculate_requirement_dimensions(requirement)
         # Calculate based on text content
         text = requirement.text || ""
-        text_lines = text.length > 0 ? ((text.length / 25.0).ceil) : 1
+        text_lines = text.empty? ? 1 : ((text.length / 25.0).ceil)
 
         width = DEFAULT_REQ_WIDTH
         height = DEFAULT_REQ_HEIGHT + (text_lines - 1) * 20

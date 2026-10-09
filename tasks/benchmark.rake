@@ -329,12 +329,12 @@ class PerformanceBenchmarker
 
   def benchmark_sirena_only
     {
-      single: SAMPLE_DIAGRAMS.map do |type, source|
+      single: SAMPLE_DIAGRAMS.to_h do |type, source|
         time = Benchmark.realtime do
           10.times { Sirena.render(source) }
         end
         [type, { sirena_time: time / 10, mermaid_time: nil }]
-      end.to_h,
+      end,
     }
   end
 

@@ -385,7 +385,7 @@ module Sirena
           end
 
           # Process statements (remaining elements)
-          statements = tree[1..-1] || []
+          statements = tree[1..] || []
 
           # Made here and passed down, so it belongs to this parse alone.
           # Nothing outside can reach it, and it is let go — with every
