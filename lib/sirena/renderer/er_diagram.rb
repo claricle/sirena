@@ -25,8 +25,8 @@ module Sirena
         return render_graph(scene) if scene.is_a?(Hash)
 
         svg = document(scene)
-        emit_relationships(scene.edges, svg)
-        emit_entities(scene.children, scene.class_defs, svg)
+        render_relationships(scene, svg)
+        render_entities(scene, svg)
 
         svg
       end
@@ -531,9 +531,10 @@ module Sirena
       end
 
       def emit_relationship(edge, svg)
-        section = edge.sections.first
         group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
-        group.children << relationship_line(section, edge.relationship_type)
+        edge.sections.each do |section|
+          group.children << relationship_shape(section, edge.relationship_type)
+        end
         emit_marker(edge.source_marker, group)
         emit_marker(edge.target_marker, group)
         if edge.labels.any?
@@ -542,17 +543,47 @@ module Sirena
         svg << group
       end
 
+      def relationship_shape(section, relationship_type)
+        return relationship_line(section, relationship_type) if
+          section.bend_points.empty?
+
+        relationship_path(section, relationship_type)
+      end
+
       def relationship_line(section, relationship_type)
         Svg::Line.new.tap do |line|
           line.x1 = section.start_point.x
           line.y1 = section.start_point.y
           line.x2 = section.end_point.x
           line.y2 = section.end_point.y
-          line.stroke = "#333333"
-          line.stroke_width = "2"
-          if relationship_type == "non-identifying"
-            line.stroke_dasharray = "5,5"
-          end
+          relationship_stroke(line, relationship_type)
+        end
+      end
+
+      def relationship_path(section, relationship_type)
+        Svg::Path.new.tap do |path|
+          path.d = relationship_path_data(section)
+          path.fill = "none"
+          relationship_stroke(path, relationship_type)
+        end
+      end
+
+      def relationship_path_data(section)
+        points = [section.start_point, *section.bend_points, section.end_point]
+        first = points.shift
+        (["M #{point_pair(first)}"] +
+          points.map { |point| "L #{point_pair(point)}" }).join(" ")
+      end
+
+      def point_pair(point)
+        "#{point.x} #{point.y}"
+      end
+
+      def relationship_stroke(shape, relationship_type)
+        shape.stroke = "#333333"
+        shape.stroke_width = "2"
+        if relationship_type == "non-identifying"
+          shape.stroke_dasharray = "5,5"
         end
       end
 
@@ -604,8 +635,8 @@ module Sirena
         font_size.to_i == font_size ? font_size.to_i.to_s : font_size.to_s
       end
 
-      # Released protected hooks. Normal rendering does not use these; each
-      # delegates geometry recovery to Layout before emitting SVG.
+      # Released protected hooks. Hash compatibility delegates geometry
+      # recovery to Layout; typed scenes already carry final geometry.
       def calculate_width(graph)
         Layout::ErDiagram.content_width(graph)
       end
@@ -615,6 +646,14 @@ module Sirena
       end
 
       def render_entities(graph, svg)
+        if graph.is_a?(Layout::ErDiagram::Scene)
+          return emit_entities(graph.children, graph.class_defs, svg)
+        end
+
+        render_graph_entities(graph, svg)
+      end
+
+      def render_graph_entities(graph, svg)
         previous = @compatibility_class_defs
         @compatibility_class_defs = Layout::ErDiagram.from_graph(
           graph, theme: theme
@@ -665,6 +704,10 @@ module Sirena
       end
 
       def render_relationships(graph, svg)
+        if graph.is_a?(Layout::ErDiagram::Scene)
+          return emit_relationships(graph.edges, svg)
+        end
+
         graph[:edges].each do |edge|
           render_relationship(edge, graph, svg)
         end

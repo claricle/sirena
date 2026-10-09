@@ -26,6 +26,28 @@ module ErDiagramSpecHelpers
     [1, 1, 1, 4, 4, 2, 1, 3, 1],
     "12",
   ].freeze
+  ROUTED_SECTIONS = [
+    {
+      startPoint: { x: 30, y: 200 },
+      bendPoints: [{ x: 80, y: 200 }],
+      endPoint: { x: 120, y: 220 },
+    },
+    {
+      start_point: { x: 120, y: 220 },
+      bend_points: [],
+      end_point: { x: 330, y: 220 },
+    },
+  ].freeze
+  ROUTED_SNAPSHOT = [
+    [
+      [[30.0, 200.0], [[80.0, 200.0]], [120.0, 220.0]],
+      [[120.0, 220.0], [], [330.0, 220.0]],
+    ],
+    [Sirena::Svg::Path, "M 30.0 200.0 L 80.0 200.0 L 120.0 220.0"],
+    [Sirena::Svg::Line, 120.0, 220.0, 330.0, 220.0],
+    [30.0, 207.0, 30.0, 193.0],
+    [323.0, 220.0],
+  ].freeze
 
   module_function
 
@@ -39,6 +61,11 @@ module ErDiagramSpecHelpers
   def rect_for(svg, entity_id)
     svg.children.find { |c| c.id == "entity-#{entity_id}" }
       .children.grep(Sirena::Svg::Rect).first
+  end
+
+  def entity_elements(svg, element_class)
+    svg.children.select { |child| child.id&.start_with?("entity-") }
+      .flat_map(&:children).grep(element_class)
   end
 
   # `#content` is a `collection: true` attribute (see `Svg::Text#simple_body`);
@@ -65,6 +92,38 @@ module ErDiagramSpecHelpers
     tracker = hook_tracking_renderer(renderer_class, calls)
     tracker.render(graph)
     calls
+  end
+
+  def routed_snapshot(renderer, graph)
+    graph[:edges].first[:sections] = ROUTED_SECTIONS
+    scene = Sirena::Layout::ErDiagram.from_graph(graph)
+    edge = scene.edges.first
+    first, second = renderer.render(scene).children.first.children.first(2)
+    [section_snapshot(edge), *shape_snapshot(first, second),
+     *marker_snapshot(edge)]
+  end
+
+  def section_snapshot(edge)
+    edge.sections.map do |section|
+      [point_snapshot(section.start_point),
+       section.bend_points.map { |point| point_snapshot(point) },
+       point_snapshot(section.end_point)]
+    end
+  end
+
+  def point_snapshot(point)
+    [point.x, point.y]
+  end
+
+  def shape_snapshot(first, second)
+    [[first.class, first.d],
+     [second.class, second.x1, second.y1, second.x2, second.y2]]
+  end
+
+  def marker_snapshot(edge)
+    line = edge.source_marker.lines.first
+    circle = edge.target_marker.circles.first
+    [[line.x1, line.y1, line.x2, line.y2], [circle.cx, circle.cy]]
   end
 
   def hook_arities(renderer)
@@ -219,32 +278,18 @@ RSpec.describe Sirena::Renderer::ErDiagram do
     end
 
     it "renders entity boxes as rectangles" do
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-
-      rects = groups.flat_map(&:children).grep(Sirena::Svg::Rect)
-
-      expect(rects).not_to be_empty
+      rects = ErDiagramSpecHelpers.entity_elements(
+        renderer.render(graph), Sirena::Svg::Rect
+      )
       expect(rects.length).to be >= 2
     end
 
     it "renders entity names as text elements" do
-      svg = renderer.render(graph)
-
-      groups = svg.children.select do |c|
-        c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
-      end
-
-      texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-
-      expect(texts).not_to be_empty
-      # `content` is `collection: true`, so read it through Array(...).
-      entity_names = texts.map { |t| Array(t.content).join }
-      expect(entity_names).to include("CUSTOMER")
-      expect(entity_names).to include("ORDER")
+      texts = ErDiagramSpecHelpers.entity_elements(
+        renderer.render(graph), Sirena::Svg::Text
+      )
+      names = texts.map { |text| svg_text_content(text) }
+      expect(names).to include("CUSTOMER", "ORDER")
     end
 
     it "renders attributes with key type markers" do
@@ -274,7 +319,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       end
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
 
-      expect(texts.map { |t| svg_text_content(t) }).to include(a_string_matching(/\bNN\b/))
+      expect(texts.map { |t| svg_text_content(t) })
+        .to include(a_string_matching(/\bNN\b/))
     end
 
     # Keep this: it is the only check that the `attribute[:note] &&` half of
@@ -288,7 +334,8 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         c.is_a?(Sirena::Svg::Group) && c.id&.start_with?("entity-")
       end
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
-      attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?("id") }
+      attr_line = texts.map { |t| svg_text_content(t) }
+        .find { |text| text.include?("id") }
 
       expect(attr_line).to eq("PK int id")
     end
@@ -344,6 +391,17 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       lines = rel_groups.flat_map(&:children).grep(Sirena::Svg::Line)
 
       expect(lines).not_to be_empty
+    end
+
+    it "preserves and renders every routed section" do
+      expect(ErDiagramSpecHelpers.routed_snapshot(renderer, graph))
+        .to eq(ErDiagramSpecHelpers::ROUTED_SNAPSHOT)
+    end
+
+    it "does not synthesize a route for supplied empty sections" do
+      graph[:edges].first[:sections] = []
+      scene = Sirena::Layout::ErDiagram.from_graph(graph)
+      expect(scene.edges.first.sections).to eq([])
     end
 
     it "renders cardinality markers" do
@@ -408,6 +466,13 @@ RSpec.describe Sirena::Renderer::ErDiagram do
         render_relationship_label: 1, render_entities: 1, render_entity: 2,
         render_entity_content: 2, render_attribute: 3
       )
+    end
+
+    it "dispatches typed Scene rendering through the released hooks" do
+      scene = Sirena::Layout::ErDiagram.from_graph(graph)
+
+      expect(ErDiagramSpecHelpers.public_hook_calls(described_class, scene))
+        .to eq(render_relationships: 1, render_entities: 1)
     end
 
     it "keeps the released entity hooks observable" do
