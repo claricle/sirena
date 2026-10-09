@@ -86,7 +86,7 @@ rows:
 - file: lib/sirena/parser/builders/c4.rb
   count: 9
 - file: lib/sirena/parser/builders/class_diagram.rb
-  count: 8
+  count: 7
 - file: lib/sirena/parser/builders/er_diagram.rb
   count: 7
 - file: lib/sirena/parser/builders/error.rb

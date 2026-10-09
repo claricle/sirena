@@ -81,67 +81,67 @@
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="180.0"/>
   <text fill="#000000" x="135.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">USER</text>
   <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="220.0" y2="94.0"/>
-  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">UK username string</text>
-  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK email string</text>
-  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">password_hash string</text>
-  <text fill="#000000" x="60.0" y="188.0" font-family="monospace" font-size="12">created_at datetime</text>
-  <text fill="#000000" x="60.0" y="206.0" font-family="monospace" font-size="12">updated_at datetime</text>
-  <text fill="#000000" x="60.0" y="224.0" font-family="monospace" font-size="12">is_active boolean</text>
+  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">UK string username</text>
+  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK string email</text>
+  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">string password_hash</text>
+  <text fill="#000000" x="60.0" y="188.0" font-family="monospace" font-size="12">datetime created_at</text>
+  <text fill="#000000" x="60.0" y="206.0" font-family="monospace" font-size="12">datetime updated_at</text>
+  <text fill="#000000" x="60.0" y="224.0" font-family="monospace" font-size="12">boolean is_active</text>
 </g>
 <g id="entity-POST">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="171.2" height="240.0"/>
   <text fill="#000000" x="385.6" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">POST</text>
   <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="471.2" y2="94.0"/>
-  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK user_id int</text>
-  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">FK category_id int</text>
-  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">title string</text>
-  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">content text</text>
-  <text fill="#000000" x="310.0" y="206.0" font-family="monospace" font-size="12">UK slug string</text>
-  <text fill="#000000" x="310.0" y="224.0" font-family="monospace" font-size="12">published_at datetime</text>
-  <text fill="#000000" x="310.0" y="242.0" font-family="monospace" font-size="12">created_at datetime</text>
-  <text fill="#000000" x="310.0" y="260.0" font-family="monospace" font-size="12">updated_at datetime</text>
-  <text fill="#000000" x="310.0" y="278.0" font-family="monospace" font-size="12">view_count int</text>
+  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK int user_id</text>
+  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">FK int category_id</text>
+  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">string title</text>
+  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">text content</text>
+  <text fill="#000000" x="310.0" y="206.0" font-family="monospace" font-size="12">UK string slug</text>
+  <text fill="#000000" x="310.0" y="224.0" font-family="monospace" font-size="12">datetime published_at</text>
+  <text fill="#000000" x="310.0" y="242.0" font-family="monospace" font-size="12">datetime created_at</text>
+  <text fill="#000000" x="310.0" y="260.0" font-family="monospace" font-size="12">datetime updated_at</text>
+  <text fill="#000000" x="310.0" y="278.0" font-family="monospace" font-size="12">int view_count</text>
 </g>
 <g id="entity-COMMENT">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="170.0" height="200.0"/>
   <text fill="#000000" x="635.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">COMMENT</text>
   <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="720.0" y2="94.0"/>
-  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK post_id int</text>
-  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK user_id int</text>
-  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">FK parent_id int</text>
-  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">content text</text>
-  <text fill="#000000" x="560.0" y="206.0" font-family="monospace" font-size="12">created_at datetime</text>
-  <text fill="#000000" x="560.0" y="224.0" font-family="monospace" font-size="12">updated_at datetime</text>
-  <text fill="#000000" x="560.0" y="242.0" font-family="monospace" font-size="12">is_approved boolean</text>
+  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK int post_id</text>
+  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK int user_id</text>
+  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">FK int parent_id</text>
+  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">text content</text>
+  <text fill="#000000" x="560.0" y="206.0" font-family="monospace" font-size="12">datetime created_at</text>
+  <text fill="#000000" x="560.0" y="224.0" font-family="monospace" font-size="12">datetime updated_at</text>
+  <text fill="#000000" x="560.0" y="242.0" font-family="monospace" font-size="12">boolean is_approved</text>
 </g>
 <g id="entity-CATEGORY">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="250.0" width="170.0" height="120.0"/>
   <text fill="#000000" x="135.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CATEGORY</text>
   <line stroke="#333333" stroke-width="1" x1="50.0" y1="294.0" x2="220.0" y2="294.0"/>
-  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">UK name string</text>
-  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK slug string</text>
-  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">description text</text>
+  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">UK string name</text>
+  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK string slug</text>
+  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">text description</text>
 </g>
 <g id="entity-TAG">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="250.0" width="170.0" height="100.0"/>
   <text fill="#000000" x="385.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">TAG</text>
   <line stroke="#333333" stroke-width="1" x1="300.0" y1="294.0" x2="470.0" y2="294.0"/>
-  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">UK name string</text>
-  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">UK slug string</text>
+  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">UK string name</text>
+  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">UK string slug</text>
 </g>
 <g id="entity-LIKE">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="170.0" height="140.0"/>
   <text fill="#000000" x="635.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">LIKE</text>
   <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="720.0" y2="294.0"/>
-  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK id int</text>
-  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">FK user_id int</text>
-  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">FK post_id int</text>
-  <text fill="#000000" x="560.0" y="370.0" font-family="monospace" font-size="12">FK comment_id int</text>
-  <text fill="#000000" x="560.0" y="388.0" font-family="monospace" font-size="12">created_at datetime</text>
+  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK int id</text>
+  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">FK int user_id</text>
+  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">FK int post_id</text>
+  <text fill="#000000" x="560.0" y="370.0" font-family="monospace" font-size="12">FK int comment_id</text>
+  <text fill="#000000" x="560.0" y="388.0" font-family="monospace" font-size="12">datetime created_at</text>
 </g>
 </svg>

@@ -246,19 +246,12 @@ module Sirena
 
       # The text the renderer draws for an attribute row.
       def format_attribute(attribute)
-        text = "#{attribute.visibility_symbol} #{attribute.name}"
-        text += ": #{attribute.type}" if attribute.type &&
-                                         !attribute.type.empty?
-        text
+        attribute.display_text
       end
 
-      # The text the renderer draws for a method row; an empty parameter
-      # list still draws "()".
+      # The text the renderer draws for a method row.
       def format_method(method)
-        text = "#{method.visibility_symbol} #{method.name}"
-        text += "(#{method.parameters})" if method.parameters
-        text += ": #{method.return_type}" if method.return_type
-        text
+        method.display_text
       end
 
       def attribute_to_hash(attribute)
@@ -266,6 +259,7 @@ module Sirena
           name: attribute.name,
           type: attribute.type,
           visibility: attribute.visibility,
+          text: attribute.display_text,
         }
       end
 
@@ -275,6 +269,7 @@ module Sirena
           parameters: method.parameters,
           return_type: method.return_type,
           visibility: method.visibility,
+          text: method.display_text,
         }
       end
 

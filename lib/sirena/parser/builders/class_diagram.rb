@@ -90,8 +90,10 @@ module Sirena
         # Transform parse tree into Class diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
+        # @param source [String] the text the tree was parsed from
         # @return [Diagram::ClassDiagram] the Class diagram model
-        def apply(tree)
+        def apply(tree, source)
+          @source = source
           @diagram = Diagram::ClassDiagram.new
           # Classes given an explicit label, so a later generic on the same id
           # does not append to it.
@@ -258,10 +260,32 @@ module Sirena
 
         def add_structured_member(entity, item)
           visibility = parse_visibility(item[:visibility])
-          if item[:member][:method_name]
-            add_method_to_entity(entity, item[:member], visibility)
+          member = item[:member]
+          source_text = member_source(item.slice(:visibility, :member))
+          if member[:method_name]
+            add_method_to_entity(entity, member, visibility, source_text)
           else
-            add_attribute_to_entity(entity, item[:member], visibility)
+            add_attribute_to_entity(entity, member, visibility, source_text)
+          end
+        end
+
+        # The member as written, read back from the slices the grammar
+        # captured: from the first to the end of the last.
+        def member_source(item)
+          slices = []
+          collect_slices(item, slices)
+          return nil if slices.empty?
+
+          first = slices.min_by(&:offset)
+          last = slices.max_by { |slice| slice.offset + slice.size }
+          @source[first.offset...(last.offset + last.size)]
+        end
+
+        def collect_slices(node, slices)
+          case node
+          when Hash then node.each_value { |v| collect_slices(v, slices) }
+          when Array then node.each { |v| collect_slices(v, slices) }
+          when Parslet::Slice then slices << node
           end
         end
 
@@ -270,18 +294,24 @@ module Sirena
         # `name(...) type`. The `*` and `$` marks it allows after an
         # attribute or method have no place in the model and are dropped.
         def add_raw_member(entity, text)
-          text = text.strip
-          visible = text.match(/\A(?<symbol>[-+#~])\s*(?<rest>\S.*)\z/m)
-          visibility = visible ? VISIBILITY_SYMBOLS.fetch(visible[:symbol]) : "public"
-          text = visible[:rest] if visible
+          source_text = text.strip
+          visibility, text = split_visibility(source_text)
           call = text.match(RAW_METHOD)
           if call && !call[:name].strip.empty?
-            entity.class_methods << raw_method(call, visibility)
+            entity.class_methods << raw_method(call, visibility, source_text)
           elsif text.include?(")")
             raise Parser::ParseError, "Cannot read #{text.inspect} as a class member."
           else
-            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ""), visibility: visibility)
+            entity.attributes << Diagram::ClassAttribute.new(name: text.sub(/\s*[*$]\z/, ""), visibility: visibility, text: source_text)
           end
+        end
+
+        # A leading mark names the visibility; the rest is the member.
+        def split_visibility(text)
+          visible = text.match(/\A(?<symbol>[-+#~])\s*(?<rest>\S.*)\z/m)
+          return ["public", text] unless visible
+
+          [VISIBILITY_SYMBOLS.fetch(visible[:symbol]), visible[:rest]]
         end
 
         # The `*` (abstract) and `$` (static) mmdc allows after a method have
@@ -289,16 +319,16 @@ module Sirena
         # classifier when it touches the closing `)` directly; a space
         # before it (`foo() $bar`) means `$bar` is the return type text, not
         # a marked-then-typed method.
-        def raw_method(call, visibility)
+        def raw_method(call, visibility, source_text)
           return_type = call[:rest].sub(/\A[*$]?\s*/, "").sub(/\s*[*$]\z/, "")
           Diagram::ClassMethod.new(
             name: call[:name].strip, parameters: call[:params],
             return_type: return_type.empty? ? nil : return_type,
-            visibility: visibility
+            visibility: visibility, text: source_text
           )
         end
 
-        def add_method_to_entity(entity, method_data, visibility)
+        def add_method_to_entity(entity, method_data, visibility, source_text)
           method_name = extract_text(method_data[:method_name])
           parameters = method_data[:parameters] ? extract_text(method_data[:parameters]) : ""
           return_type = nil
@@ -312,22 +342,19 @@ module Sirena
             m.parameters = parameters
             m.return_type = return_type
             m.visibility = visibility
+            m.text = source_text
           end
 
           entity.class_methods << method
         end
 
-        def add_attribute_to_entity(entity, attr_data, visibility)
-          attr_name = extract_text(attr_data[:attr_name])
+        def add_attribute_to_entity(entity, attr_data, visibility, source_text)
           attr_type = attr_data[:type] ? extract_text(attr_data[:type]) : nil
 
-          attribute = Diagram::ClassAttribute.new.tap do |attr|
-            attr.name = attr_name
-            attr.type = attr_type
-            attr.visibility = visibility
-          end
-
-          entity.attributes << attribute
+          entity.attributes << Diagram::ClassAttribute.new(
+            name: extract_text(attr_data[:attr_name]), type: attr_type,
+            visibility: visibility, text: source_text
+          )
         end
 
         def process_relationship(stmt)

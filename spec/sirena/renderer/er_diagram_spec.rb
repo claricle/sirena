@@ -174,7 +174,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
       attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?("id") }
 
-      expect(attr_line).to eq("PK id int")
+      expect(attr_line).to eq("PK int id")
     end
 
     # Keep this: it is the only check that the `!attribute[:note].empty?`
@@ -192,7 +192,7 @@ RSpec.describe Sirena::Renderer::ErDiagram do
       texts = groups.flat_map(&:children).grep(Sirena::Svg::Text)
       attr_line = texts.map { |t| svg_text_content(t) }.find { |t| t.include?("id") }
 
-      expect(attr_line).to eq("PK id int")
+      expect(attr_line).to eq("PK int id")
     end
 
     it "renders entity separators" do

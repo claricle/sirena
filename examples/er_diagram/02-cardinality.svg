@@ -62,65 +62,65 @@
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="50.0" width="170.0" height="120.0"/>
   <text fill="#000000" x="135.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CUSTOMER</text>
   <line stroke="#333333" stroke-width="1" x1="50.0" y1="94.0" x2="220.0" y2="94.0"/>
-  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK customer_id int</text>
-  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">name string</text>
-  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK email string</text>
-  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">phone string</text>
+  <text fill="#000000" x="60.0" y="116.0" font-family="monospace" font-size="12">PK int customer_id</text>
+  <text fill="#000000" x="60.0" y="134.0" font-family="monospace" font-size="12">string name</text>
+  <text fill="#000000" x="60.0" y="152.0" font-family="monospace" font-size="12">UK string email</text>
+  <text fill="#000000" x="60.0" y="170.0" font-family="monospace" font-size="12">string phone</text>
 </g>
 <g id="entity-ORDER">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="50.0" width="170.0" height="140.0"/>
   <text fill="#000000" x="385.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">ORDER</text>
   <line stroke="#333333" stroke-width="1" x1="300.0" y1="94.0" x2="470.0" y2="94.0"/>
-  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK order_id int</text>
-  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK customer_id int</text>
-  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">order_date date</text>
-  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">total_amount decimal</text>
-  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">status string</text>
+  <text fill="#000000" x="310.0" y="116.0" font-family="monospace" font-size="12">PK int order_id</text>
+  <text fill="#000000" x="310.0" y="134.0" font-family="monospace" font-size="12">FK int customer_id</text>
+  <text fill="#000000" x="310.0" y="152.0" font-family="monospace" font-size="12">date order_date</text>
+  <text fill="#000000" x="310.0" y="170.0" font-family="monospace" font-size="12">decimal total_amount</text>
+  <text fill="#000000" x="310.0" y="188.0" font-family="monospace" font-size="12">string status</text>
 </g>
 <g id="entity-ORDER_ITEM">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="50.0" width="170.0" height="140.0"/>
   <text fill="#000000" x="635.0" y="76.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">ORDER_ITEM</text>
   <line stroke="#333333" stroke-width="1" x1="550.0" y1="94.0" x2="720.0" y2="94.0"/>
-  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK order_item_id int</text>
-  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK order_id int</text>
-  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK product_id int</text>
-  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">quantity int</text>
-  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">unit_price decimal</text>
+  <text fill="#000000" x="560.0" y="116.0" font-family="monospace" font-size="12">PK int order_item_id</text>
+  <text fill="#000000" x="560.0" y="134.0" font-family="monospace" font-size="12">FK int order_id</text>
+  <text fill="#000000" x="560.0" y="152.0" font-family="monospace" font-size="12">FK int product_id</text>
+  <text fill="#000000" x="560.0" y="170.0" font-family="monospace" font-size="12">int quantity</text>
+  <text fill="#000000" x="560.0" y="188.0" font-family="monospace" font-size="12">decimal unit_price</text>
 </g>
 <g id="entity-PRODUCT">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="250.0" width="170.0" height="140.0"/>
   <text fill="#000000" x="135.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">PRODUCT</text>
   <line stroke="#333333" stroke-width="1" x1="50.0" y1="294.0" x2="220.0" y2="294.0"/>
-  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK product_id int</text>
-  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">name string</text>
-  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK sku string</text>
-  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">price decimal</text>
-  <text fill="#000000" x="60.0" y="388.0" font-family="monospace" font-size="12">FK category_id int</text>
+  <text fill="#000000" x="60.0" y="316.0" font-family="monospace" font-size="12">PK int product_id</text>
+  <text fill="#000000" x="60.0" y="334.0" font-family="monospace" font-size="12">string name</text>
+  <text fill="#000000" x="60.0" y="352.0" font-family="monospace" font-size="12">UK string sku</text>
+  <text fill="#000000" x="60.0" y="370.0" font-family="monospace" font-size="12">decimal price</text>
+  <text fill="#000000" x="60.0" y="388.0" font-family="monospace" font-size="12">FK int category_id</text>
 </g>
 <g id="entity-INVENTORY">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="300.0" y="250.0" width="170.0" height="140.0"/>
   <text fill="#000000" x="385.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">INVENTORY</text>
   <line stroke="#333333" stroke-width="1" x1="300.0" y1="294.0" x2="470.0" y2="294.0"/>
-  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK inventory_id int</text>
-  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">FK product_id int</text>
-  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">FK warehouse_id int</text>
-  <text fill="#000000" x="310.0" y="370.0" font-family="monospace" font-size="12">quantity int</text>
-  <text fill="#000000" x="310.0" y="388.0" font-family="monospace" font-size="12">last_updated date</text>
+  <text fill="#000000" x="310.0" y="316.0" font-family="monospace" font-size="12">PK int inventory_id</text>
+  <text fill="#000000" x="310.0" y="334.0" font-family="monospace" font-size="12">FK int product_id</text>
+  <text fill="#000000" x="310.0" y="352.0" font-family="monospace" font-size="12">FK int warehouse_id</text>
+  <text fill="#000000" x="310.0" y="370.0" font-family="monospace" font-size="12">int quantity</text>
+  <text fill="#000000" x="310.0" y="388.0" font-family="monospace" font-size="12">date last_updated</text>
 </g>
 <g id="entity-CATEGORY">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="550.0" y="250.0" width="170.0" height="100.0"/>
   <text fill="#000000" x="635.0" y="276.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">CATEGORY</text>
   <line stroke="#333333" stroke-width="1" x1="550.0" y1="294.0" x2="720.0" y2="294.0"/>
-  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK category_id int</text>
-  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">name string</text>
-  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">description string</text>
+  <text fill="#000000" x="560.0" y="316.0" font-family="monospace" font-size="12">PK int category_id</text>
+  <text fill="#000000" x="560.0" y="334.0" font-family="monospace" font-size="12">string name</text>
+  <text fill="#000000" x="560.0" y="352.0" font-family="monospace" font-size="12">string description</text>
 </g>
 <g id="entity-WAREHOUSE">
   <rect fill="#f9f9f9" stroke="#333333" stroke-width="2" x="50.0" y="450.0" width="170.0" height="100.0"/>
   <text fill="#000000" x="135.0" y="476.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold">WAREHOUSE</text>
   <line stroke="#333333" stroke-width="1" x1="50.0" y1="494.0" x2="220.0" y2="494.0"/>
-  <text fill="#000000" x="60.0" y="516.0" font-family="monospace" font-size="12">PK warehouse_id int</text>
-  <text fill="#000000" x="60.0" y="534.0" font-family="monospace" font-size="12">name string</text>
-  <text fill="#000000" x="60.0" y="552.0" font-family="monospace" font-size="12">location string</text>
+  <text fill="#000000" x="60.0" y="516.0" font-family="monospace" font-size="12">PK int warehouse_id</text>
+  <text fill="#000000" x="60.0" y="534.0" font-family="monospace" font-size="12">string name</text>
+  <text fill="#000000" x="60.0" y="552.0" font-family="monospace" font-size="12">string location</text>
 </g>
 </svg>

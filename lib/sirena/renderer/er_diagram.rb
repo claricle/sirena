@@ -195,10 +195,11 @@ module Sirena
         parts = []
         parts << attribute[:key_type] if attribute[:key_type] &&
                                          !attribute[:key_type].empty?
-        parts << attribute[:name]
+        # The type column precedes the name, as in mmdc.
         parts << attribute[:attribute_type] if attribute[:attribute_type] &&
                                                !attribute[:attribute_type]
                                                .empty?
+        parts << attribute[:name]
         # mmdc renders the trailing quoted comment (e.g. `"NN"`) in its own
         # attribute-comment column, after type -- verified against
         # spec/mermaid/unknown/079_platform_yari2_78.svg. Sirena draws one

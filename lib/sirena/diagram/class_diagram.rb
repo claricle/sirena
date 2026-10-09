@@ -2,6 +2,7 @@
 
 require "lutaml/model"
 require_relative "base"
+require_relative "generic_text"
 
 module Sirena
   module Diagram
@@ -20,10 +21,23 @@ module Sirena
       # :package (~)
       attribute :visibility, :string
 
+      # The member as written in the source, when it came from a parser
+      attribute :text, :string
+
       # Initialize with default visibility
       def initialize(*args)
         super
         self.visibility ||= "public"
+      end
+
+      # The text a row draws: the source text as written, with generics shown
+      # as `<T>` and the `*`/`$` classifier mark left off.
+      #
+      # @return [String] the row text
+      def display_text
+        return fallback_text unless text
+
+        GenericText.display_member(text.sub(/\s*[*$]\z/, "").gsub(/\s+/, " "))
       end
 
       # Validates the attribute has required fields.
@@ -45,6 +59,14 @@ module Sirena
         else "+"
         end
       end
+
+      private
+
+      def fallback_text
+        row = "#{visibility_symbol} #{name}"
+        row += ": #{type}" if type && !type.empty?
+        row
+      end
     end
 
     # Represents a class method in a UML class diagram.
@@ -65,10 +87,26 @@ module Sirena
       # :package (~)
       attribute :visibility, :string
 
+      # The member as written in the source, when it came from a parser
+      attribute :text, :string
+
       # Initialize with default visibility
       def initialize(*args)
         super
         self.visibility ||= "public"
+      end
+
+      # The text a row draws: the source up to the `(` as written, then the
+      # parameters, then ` : ` and the return type, generics shown as `<T>`.
+      #
+      # @return [String] the row text
+      def display_text
+        return fallback_text unless text
+
+        head = text[/\A[^(]*/].gsub(/\s+/, " ").rstrip
+        row = "#{head}(#{parameters})"
+        row += " : #{return_type}" if return_type
+        GenericText.display_member(row)
       end
 
       # Validates the method has required fields.
@@ -99,6 +137,15 @@ module Sirena
         sig += "(#{parameters})" if parameters && !parameters.empty?
         sig += " #{return_type}" if return_type && !return_type.empty?
         sig
+      end
+
+      private
+
+      def fallback_text
+        row = "#{visibility_symbol} #{name}"
+        row += "(#{parameters})" if parameters
+        row += ": #{return_type}" if return_type
+        row
       end
     end
 

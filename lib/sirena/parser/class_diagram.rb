@@ -29,7 +29,7 @@ module Sirena
       # @raise [ParseError] if syntax is invalid
       def parse(source)
         tree = parse_grammar(source)
-        Builders::ClassDiagram.new.apply(tree)
+        Builders::ClassDiagram.new.apply(tree, source)
       end
 
       private
