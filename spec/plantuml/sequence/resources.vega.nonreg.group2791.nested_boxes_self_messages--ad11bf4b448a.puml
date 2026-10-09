@@ -1,0 +1,13 @@
+@startuml
+box "component"
+  box "sub1"
+    participant a
+  endbox
+  box "sub2"
+    participant b
+  endbox
+end box
+a->b : msg
+a->a :
+b<-b
+@enduml

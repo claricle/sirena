@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.box_between_external_participants--7d1d5500d228",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/box_between_external_participants.puml",
+  "test": "box_between_external_participants",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "7d1d5500d2285170c7657610675b78c8d46bc7f903f3bd784d936051a9ac3945",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

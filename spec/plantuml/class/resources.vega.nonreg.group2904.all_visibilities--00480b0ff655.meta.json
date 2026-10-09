@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2904.all_visibilities--00480b0ff655",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2904/all_visibilities.puml",
+  "test": "all_visibilities",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "00480b0ff655747e918d31b293c04c54cd6fe774537d411dd00f906e642a1e84",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

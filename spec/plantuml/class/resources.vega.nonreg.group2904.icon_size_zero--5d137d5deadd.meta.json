@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2904.icon_size_zero--5d137d5deadd",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2904/icon_size_zero.puml",
+  "test": "icon_size_zero",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "5d137d5deadd5bedfb38fb379ae88b891ec25f3f657ed48ff3c92c70ebc6b3a0",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.nested_boxes_self_messages--ad11bf4b448a",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/nested_boxes_self_messages.puml",
+  "test": "nested_boxes_self_messages",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "ad11bf4b448a6a4520a76e8668487b7e25237ba67fe20cfebef1383a67242703",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

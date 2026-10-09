@@ -1,0 +1,10 @@
+@startuml
+box "Box A"
+  participant a
+endbox
+
+alt condition
+  a<-a : msg
+  note left: a very very very very long note inside alt at box edge
+end
+@enduml

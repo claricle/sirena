@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2883.mixed_same_and_different_participant_parallel_notes--f602d00329ee",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2883/mixed_same_and_different_participant_parallel_notes.puml",
+  "test": "mixed_same_and_different_participant_parallel_notes",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "f602d00329ee15e83262c5635bfcefd23f30dd1a476783418d4424fcd558c744",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

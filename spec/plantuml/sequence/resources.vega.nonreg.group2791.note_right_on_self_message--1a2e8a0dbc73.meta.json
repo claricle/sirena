@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.note_right_on_self_message--1a2e8a0dbc73",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/note_right_on_self_message.puml",
+  "test": "note_right_on_self_message",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "1a2e8a0dbc73ec96701784a5b67ea4041027f9aaa1653df55718cb867f613d9f",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

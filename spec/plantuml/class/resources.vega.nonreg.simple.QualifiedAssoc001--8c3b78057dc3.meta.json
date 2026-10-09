@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/simple/QualifiedAssoc001.puml",
+  "test": "QualifiedAssoc001",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "8c3b78057dc31adceac43c87a47bdd89ffd241df4d995bf6e4c4afc3c9ac6b25",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

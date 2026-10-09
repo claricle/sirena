@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.lirasa_26_tazo607--2018ad068c81",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/lirasa_26_tazo607.puml",
+  "test": "lirasa_26_tazo607",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "2018ad068c818aaf340a814fa24801fee737cbf14dcf64930edf3c9482a17ee1",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group20505.min_width_default--24072f84b995",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group20505/min_width_default.puml",
+  "test": "min_width_default",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "24072f84b9951e752b158181e940a25a7c089f2cce359c2797858306ef224124",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

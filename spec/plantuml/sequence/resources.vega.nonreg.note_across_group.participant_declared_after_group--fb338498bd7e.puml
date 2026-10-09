@@ -1,0 +1,11 @@
+@startuml
+participant User as user
+participant WF as wf
+
+alt
+note across: note1
+wf -> user: msg1
+end
+
+I -> user: msg2
+@enduml

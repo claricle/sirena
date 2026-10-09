@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2729.message_before_activate_after_divider--62b7d8792525",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2729/message_before_activate_after_divider.puml",
+  "test": "message_before_activate_after_divider",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "62b7d8792525fca5ee216f49ca40c8393be658dd0ddd2b14f09210a363b30082",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

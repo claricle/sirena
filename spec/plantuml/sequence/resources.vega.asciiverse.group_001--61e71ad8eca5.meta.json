@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.asciiverse.group_001--61e71ad8eca5",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/asciiverse/group_001.puml",
+  "test": "group_001",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "61e71ad8eca5a657f5cc380ff8c8ad2095e3dd609927460d05c94a0f29e46e44",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

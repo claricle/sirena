@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2904.diamond_at_tail--bb82b36b91be",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2904/diamond_at_tail.puml",
+  "test": "diamond_at_tail",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "bb82b36b91be53992ec242110ce0205dc21f4af55334944b165a27d5ac692706",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

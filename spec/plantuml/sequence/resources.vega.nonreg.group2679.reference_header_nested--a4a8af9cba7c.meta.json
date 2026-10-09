@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2679.reference_header_nested--a4a8af9cba7c",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2679/reference_header_nested.puml",
+  "test": "reference_header_nested",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "a4a8af9cba7c67e632d1d6d3afc3afc61524f8144dfe464fe4f79e72941fe040",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

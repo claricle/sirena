@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.box_reverse_self_message_clears_previous_participant--c797d0cd3eab",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/box_reverse_self_message_clears_previous_participant.puml",
+  "test": "box_reverse_self_message_clears_previous_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "c797d0cd3eabb4c232fdbbe7049a805a76a47383e3f3617742e0f91096eedf73",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

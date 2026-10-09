@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.note_on_self_message_inside_group_at_box_edge--41e5a7ff94cb",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/note_on_self_message_inside_group_at_box_edge.puml",
+  "test": "note_on_self_message_inside_group_at_box_edge",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "41e5a7ff94cbae7511b71663219059531bbc40b22bde962d02f3137ef0204b64",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

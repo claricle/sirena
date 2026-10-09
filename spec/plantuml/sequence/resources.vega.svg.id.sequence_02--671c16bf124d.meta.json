@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.svg.id.sequence_02--671c16bf124d",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/svg/id/sequence_02.puml",
+  "test": "sequence_02",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "671c16bf124d014c37f814ece60c0c314459d81b30fd411c1c89e79ff48384e2",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

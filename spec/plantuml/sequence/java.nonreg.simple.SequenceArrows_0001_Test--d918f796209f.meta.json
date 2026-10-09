@@ -1,0 +1,12 @@
+{
+  "id": "java.nonreg.simple.SequenceArrows_0001_Test--d918f796209f",
+  "type": "sequence",
+  "upstream_path": "src/test/java/nonreg/simple/SequenceArrows_0001_Test.java",
+  "test": "SequenceArrows_0001_Test",
+  "origin": "java-text-block",
+  "line_number": 2,
+  "source_sha256": "d918f796209f0dd40d102bb69943c83879d28144fe9287b6d309eaa6526c8918",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

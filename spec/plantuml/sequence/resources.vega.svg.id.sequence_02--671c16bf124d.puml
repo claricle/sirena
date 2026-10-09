@@ -1,0 +1,6 @@
+@startuml
+a -> b
+return
+a -> b : request
+return response
+@enduml

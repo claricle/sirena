@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2846.dollar_sign_code--64ad77e9de1f",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2846/dollar_sign_code.puml",
+  "test": "dollar_sign_code",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "64ad77e9de1f402285aa2cfaf3fbce56ae4ea1958bbd498c397b447f09d86327",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

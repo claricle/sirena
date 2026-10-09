@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2904.role_without_visibility--6318bda823a1",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2904/role_without_visibility.puml",
+  "test": "role_without_visibility",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "6318bda823a1cd3be526868ab7ab93e4855ce5121b5d6e5ef2207d02f18953a8",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

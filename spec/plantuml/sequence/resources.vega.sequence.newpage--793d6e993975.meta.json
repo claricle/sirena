@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.sequence.newpage--793d6e993975",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/sequence/newpage.puml",
+  "test": "newpage",
+  "origin": "resource",
+  "line_number": 12,
+  "source_sha256": "793d6e9939758a2a378c184a7a19255a48eab859c9b5e7667b844962309aad78",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

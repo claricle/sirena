@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.divider--3e3df0d464c3",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/divider.puml",
+  "test": "divider",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "3e3df0d464c325f95e04b332b3fab30bb77611dff24689fbc55a80f886a81314",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

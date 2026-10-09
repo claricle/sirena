@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.warnings.note_top_on_ref--1f75ab64bf5e",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/warnings/note_top_on_ref.puml",
+  "test": "note_top_on_ref",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "1f75ab64bf5e06395c7a8a179c6a871191f04ceb3f4b678efd5993c854fc59cd",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

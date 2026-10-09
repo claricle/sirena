@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2814.three_members--15d11a71125a",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2814/three_members.puml",
+  "test": "three_members",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "15d11a71125a14ec3c3061e3056fff5a81e8eb9e03f435179b89b9f96daa8f75",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

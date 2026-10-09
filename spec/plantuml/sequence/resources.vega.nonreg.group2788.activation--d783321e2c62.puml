@@ -1,0 +1,10 @@
+@startuml
+x -> x: start
+group test
+a -> b: 1
+activate c
+c -> c: 2
+deactivate c
+end
+d -> d: next
+@enduml

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2712.left_direction--817e051688df",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2712/left_direction.puml",
+  "test": "left_direction",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "817e051688dfc5f329d4050e3ffd3b794ce17f9873607f92791d788b6726de78",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.self_message_solo--9d48b2180ff0",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/self_message_solo.puml",
+  "test": "self_message_solo",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "9d48b2180ff0d80504ecf687d587ae2e02f9135985b0d1550f801e64d3cc03f2",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

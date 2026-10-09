@@ -1,0 +1,8 @@
+@startuml
+box "Box A"
+  participant a
+endbox
+
+a->a : msg
+hnote left: a very very very very long hnote text here
+@enduml

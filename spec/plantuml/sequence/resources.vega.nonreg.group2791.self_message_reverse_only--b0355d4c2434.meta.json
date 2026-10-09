@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.self_message_reverse_only--b0355d4c2434",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/self_message_reverse_only.puml",
+  "test": "self_message_reverse_only",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "b0355d4c2434c30812951c6226d7a211f7eee51ac6f5dd33376dab41189da767",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

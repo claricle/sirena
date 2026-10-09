@@ -1,0 +1,5 @@
+@startuml
++package uid as "Hello" <<Frame>> {
+  class World
+}
+@enduml

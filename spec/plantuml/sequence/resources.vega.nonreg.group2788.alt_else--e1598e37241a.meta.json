@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2788.alt_else--e1598e37241a",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2788/alt_else.puml",
+  "test": "alt_else",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "e1598e37241a82f3b3900de28b51882419fc441524cea0dc8620d48c7961cb7a",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

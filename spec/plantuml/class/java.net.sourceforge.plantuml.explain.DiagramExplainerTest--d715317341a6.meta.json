@@ -1,0 +1,12 @@
+{
+  "id": "java.net.sourceforge.plantuml.explain.DiagramExplainerTest--d715317341a6",
+  "type": "class",
+  "upstream_path": "src/test/java/net/sourceforge/plantuml/explain/DiagramExplainerTest.java",
+  "test": "DiagramExplainerTest",
+  "origin": "java-text-block",
+  "line_number": 2,
+  "source_sha256": "d715317341a61645537913aacdbfe3fe1ac2e564b0a025d3f1e9dedbe35f18bb",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 9
+}

@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2903.two_association_classes--5589df921b7b",
+  "type": "class",
+  "upstream_path": "src/test/resources/vega/nonreg/group2903/two_association_classes.puml",
+  "test": "two_association_classes",
+  "origin": "resource",
+  "line_number": 4,
+  "source_sha256": "5589df921b7bc348ed771e532f1a4949c7eff63ca020a0bec158329cb08e9cce",
+  "uses_preprocessor": true,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

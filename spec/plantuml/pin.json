@@ -1,0 +1,27 @@
+{
+  "upstream": {
+    "repository": "https://github.com/plantuml/plantuml.git",
+    "sha": "57a3d28484b643d4fd92ed788da983ac29d8866b",
+    "commit_date": "2026-10-06T21:39:54+02:00",
+    "version_in_gradle_properties": "1.2026.9beta4",
+    "tree_sha_src_test_resources": "839a4f9276a8b46fd4fc219f1b56624afb288844",
+    "tree_sha_src_test_java": "d2d2379092f2755ef60f562c51cd79c630012c0b"
+  },
+  "toolchain_observed": {
+    "note": "Observed on the extracting machine 2026-10-09. Step 2 (oracle) and step 3 (CI) own the pinned binary; the installed binary is OLDER than the upstream fixtures (1.2026.6 vs 1.2026.9beta4), so fixtures may use syntax it rejects. Decide before generating verdicts.",
+    "plantuml": "1.2026.6 (6287b33, 2026-06-08)",
+    "plantuml_jar_sha256": "89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690",
+    "java_used_by_plantuml_wrapper": "openjdk 26.0.2 2026-07-21 (/opt/homebrew/opt/openjdk/bin/java)",
+    "java_on_path": "java 21.0.2 2024-01-16 LTS (/usr/bin/java)",
+    "graphviz": "dot 15.1.1 (20260805.0921)"
+  },
+  "selection_rule": "see spec/plantuml/README.md",
+  "provenance": "upstream-fixture: none of these cases is a real-world file; see spec/plantuml/README.md",
+  "corpus": {
+    "cases": {
+      "class": 37,
+      "sequence": 79
+    },
+    "manifest_sha256": "1ad072b88fb211367b5d12eb5d18d239bce84113b3bab6b7de45a319a22ccc69"
+  }
+}

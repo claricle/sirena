@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2791.self_message_leftmost_participant--9efe4ddda292",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2791/self_message_leftmost_participant.puml",
+  "test": "self_message_leftmost_participant",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "9efe4ddda292bc5472cb87e1b11804393f7923ce2c16f702fc74a1b748174107",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}

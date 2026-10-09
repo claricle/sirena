@@ -1,0 +1,12 @@
+{
+  "id": "resources.vega.nonreg.group2729.bare_activate_two_participants_after_divider--54dfdd51ac5d",
+  "type": "sequence",
+  "upstream_path": "src/test/resources/vega/nonreg/group2729/bare_activate_two_participants_after_divider.puml",
+  "test": "bare_activate_two_participants_after_divider",
+  "origin": "resource",
+  "line_number": 5,
+  "source_sha256": "54dfdd51ac5db86b617561b8a88996a7ddb85e31c945e509620e6cf84421a1fb",
+  "uses_preprocessor": false,
+  "provenance": "upstream-fixture",
+  "occurrences": 1
+}
