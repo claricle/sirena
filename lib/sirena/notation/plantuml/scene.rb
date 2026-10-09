@@ -48,12 +48,24 @@ module Sirena
           attribute :texts, Text, collection: true
         end
 
+        # An arrowhead or diamond (`points`), or the circled plus of a
+        # nested class (`shape` "nesting", centred on `cx`, `cy`, its plus
+        # sign the path `cross`).
+        class Marker < Lutaml::Model::Serializable
+          attribute :shape, :string
+          attribute :points, :string
+          attribute :filled, :boolean
+          attribute :cx, :float
+          attribute :cy, :float
+          attribute :r, :float
+          attribute :cross, :string
+        end
+
         class Relation < Lutaml::Model::Serializable
           attribute :id, :string
           attribute :path, :string
           attribute :dashed, :boolean
-          attribute :marker_points, :string
-          attribute :marker_filled, :boolean
+          attribute :markers, Marker, collection: true
           attribute :texts, Text, collection: true
         end
 

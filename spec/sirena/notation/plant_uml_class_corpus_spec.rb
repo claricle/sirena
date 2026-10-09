@@ -25,6 +25,18 @@ module PlantUmlCorpusHelpers
     %w[x y width height].to_h { |key| [key, rect.attributes[key].to_f] }
   end
 
+  def circle_centre(group)
+    %w[cx cy].map { |name| group.elements["circle"].attributes[name].to_f }
+  end
+
+  # The middle of each bar of the plus sign: the path runs left, right,
+  # then top, bottom.
+  def cross_bar_centres(group)
+    d = group.get_elements("path").last.attributes["d"]
+    left, y, right, _, x, top, _, bottom = d.scan(/[\d.]+/).map(&:to_f)
+    [[(left + right) / 2, y], [x, (top + bottom) / 2]]
+  end
+
   def rendered_document(body)
     REXML::Document.new(Sirena.render(wrap(body), notation: :plantuml))
   end
@@ -75,6 +87,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2904.role_tail_only--c95e6006dcac
     resources.vega.nonreg.group2904.role_without_visibility--6318bda823a1
     resources.vega.nonreg.group2917.smetana_hide_class--cda3c6a5e269
+    resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3
     resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
     resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca
     resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
@@ -125,10 +138,57 @@ RSpec.describe Sirena::Notation::PlantUML do
                                           left_role: "-r")
     end
 
-    it "names a marker on both ends, which it does not draw" do
-      expect { parse_corpus("class A\nA <|--|> B") }
-        .to raise_error(described_class::UnsupportedConstructError,
-                        /relation marker on both ends/)
+    {
+      "A <|-u-> B" => { left: :extension, right: :association },
+      "A *.r.> B" => { left: :composition, right: :dependency },
+      "A +-l-> B" => { left: :nesting, right: :association },
+      "A o--|> B" => { left: :aggregation, right: :extension },
+      "A --+ B" => { right: :nesting },
+    }.each do |line, markers|
+      it "reads the markers of #{line.inspect}" do
+        relation = parse_corpus("class A\n#{line}").relations.first
+
+        expect(relation.markers).to eq(markers)
+      end
+    end
+
+    it "reads a dotted body as dashed whatever the markers" do
+      relations = parse_corpus("A *.r.> B\nA *--> C").relations
+
+      expect(relations.map(&:dashed?)).to eq([true, false])
+    end
+
+    ["A <-> B", "A <--> B"].each do |line|
+      it "still refuses #{line.inspect}, which a sequence diagram also has" do
+        expect { parse_corpus("class A\n#{line}") }
+          .to raise_error(described_class::UnsupportedConstructError,
+                          /<-> arrow/)
+      end
+    end
+
+    context "when drawn with a marker on each end" do
+      let(:svg) do
+        rendered_document("class A\nclass B\nA <|--> B\nA *.. B\nA +-- B")
+      end
+
+      it "puts one polygon at each end of the line" do
+        polygons = REXML::XPath.match(svg, "//g[@id='relation-0']/polygon")
+
+        expect(polygons.map { |p| p.attributes["fill"] })
+          .to eq(["#ffffff", "#000000"])
+      end
+
+      it "dashes a dotted line that ends in a diamond" do
+        path = REXML::XPath.first(svg, "//g[@id='relation-1']/path")
+
+        expect(path.attributes["stroke-dasharray"]).to eq("6,4")
+      end
+
+      it "draws a nested class as a circle with a cross through its centre" do
+        group = REXML::XPath.first(svg, "//g[@id='relation-2']")
+
+        expect(cross_bar_centres(group)).to eq([circle_centre(group)] * 2)
+      end
     end
 
     it "reads a trailing o as part of the class name, not a marker" do
