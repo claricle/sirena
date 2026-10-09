@@ -59,19 +59,21 @@ Explicit now in `unit`: checkout, `ruby/setup-ruby` with bundler cache,
 `bundle exec rake` over the matrix from its `ruby-matrix.json` (3.3, 3.4,
 4.0 experimental; macos, ubuntu, windows). Not carried over: Java 17 setup
 (nothing here uses it), recursive submodules (there are none), the
-metanorma tool installers, private fonts. Its `tests-passed` and
-`do-release` repository dispatches moved to the `cascade` job, and now fire
-only on push events (generic-rake also fired on pull requests). `cascade`
-needs only `fast-lane` (the `unit` matrix, pins, lint), matching the old
-gate on the test matrix; `links` and the rest of `full-lane` do not gate it,
-so an external-link outage cannot suppress a release. The Ruby/OS matrix is
-hard-coded in `unit`; it was previously fetched from metanorma's
-`ruby-matrix.json` (identical today).
+metanorma tool installers, private fonts. Its `tests-passed` repository
+dispatch moved to the `cascade` job and now fires only on push events
+(generic-rake also fired on pull requests). `cascade` needs only `fast-lane`
+(the `unit` matrix, pins, lint), matching the old gate on the test matrix.
+The old tag-triggered `do-release` dispatch was removed: releases now start
+only from `release.yml`'s manual dispatch and must pass its changelog preflight.
+The Ruby/OS matrix is hard-coded in `unit`; it was previously fetched from
+metanorma's `ruby-matrix.json` (identical today).
 
 ## Cimas
 
 `release.yml` is detached from Cimas; no generator is tracked here, so this
-YAML is authoritative. It pins `rubygems-release.yml` by SHA, but that
+YAML is authoritative. Its manual entrypoint first runs
+`scripts/check_changelog.rb` with the requested version, then delegates only
+if that prerequisite succeeds. It pins `rubygems-release.yml` by SHA, but that
 workflow itself calls mutable refs (@main, @v3, @v2.1.0): `gh-rubygems-setup-action`,
 `version-advisory-action`, `gem-idempotent-push-guard-action`,
 `peter-evans/repository-dispatch@v3`, `rubygems/configure-rubygems-credentials`).

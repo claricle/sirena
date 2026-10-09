@@ -45,9 +45,9 @@ plugin shape becomes public only when this file lists it.
    `next_version`. The bot bumps `lib/sirena/version.rb`, tags and pushes the
    gem.
 4. The changelog preflight (`scripts/check_changelog.rb <next_version>`) must
-   pass before the delegated release job starts. The script is committed; wiring
-   it into `release.yml` waits for item 19a's decision on that file (see
-   "Open" below).
+   pass before the delegated release job starts. It is a prerequisite job in
+   `release.yml`, so a missing or empty release section stops the workflow
+   before any publishing logic runs.
 
 ## How a release reaches protected `main`
 
@@ -71,31 +71,18 @@ Conditions of the bypass:
 Applying the bypass is a repository setting only the owner can make, and 19a
 owns the protection settings. It is not applied yet.
 
-## `repository_dispatch` (`do-release`)
+## Release entrypoint
 
-`release.yml` accepts `repository_dispatch` with `types: [do-release]`. Facts
-measured against `metanorma/ci` `rubygems-release.yml` at
-`875ae77e781264728ec8447c11b23d3335b68d6d`:
-
-- **What it does:** on that event the reusable workflow skips preflight and the
-  bump step, then publishes the gem for whatever version is in `version.rb` at
-  the default branch head. If that version is already on RubyGems the
-  idempotent push guard skips the push.
-- **Who may fire it:** anyone whose token can call
-  `POST /repos/{owner}/{repo}/dispatches` (repository write access), plus the
-  workflow token of this repo's own CI on a `v*` tag push (the `cascade` job
-  of item 19a's `ci.yml`).
-- **Authorization it requires:** nothing beyond that write access; the
-  dispatch carries no approval step and runs no changelog preflight.
-
-So a `do-release` publishes without the changelog check. Until the preflight is
-wired to cover that event too, treat `do-release` as maintainer-only, and
-prefer removing the trigger once `cascade` no longer needs it.
+`release.yml` accepts only `workflow_dispatch`, initiated by a maintainer with
+the requested `next_version`. The former `repository_dispatch` (`do-release`)
+entrypoint was removed because it could reach delegated publishing logic
+without the local changelog preflight. CI still sends the independent
+`tests-passed` notification after its fast lane; tag pushes do not start a
+release.
 
 ## Open
 
-- Wiring the changelog preflight job into `release.yml` and deciding whether to
-  drop `repository_dispatch`: blocked on the 19a branch (`p2/ci-lane-19a`),
-  which edits `release.yml` and `ci.yml`.
+- Vendoring the delegated release workflow so its transitive action references
+  are pinned remains separate work in item 17.
 - Applying the branch-protection bypass: owner action.
 - Both pre-item-12 cuts: blocked on items 01 and 10/16 landing.
