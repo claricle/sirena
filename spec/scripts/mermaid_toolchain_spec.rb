@@ -11,6 +11,7 @@ RSpec.describe MermaidToolchain do
                   "integrity" => "sha512-font", "family" => "Noto Sans",
                   "files" => { "regular.woff2" => "abc" } } }
   end
+  let(:changed) { expected.merge("mermaid" => "11.17.0") }
 
   before do
     described_class.instance_variable_set(:@checked, nil)
@@ -24,8 +25,6 @@ RSpec.describe MermaidToolchain do
   end
 
   it "fails when a resolved dependency drifts" do
-    changed = Marshal.load(Marshal.dump(expected))
-    changed["mermaid"] = "11.17.0"
     allow(described_class).to receive(:resolved_provenance).and_return(changed)
 
     expect { described_class.verify_toolchain }
@@ -66,8 +65,16 @@ RSpec.describe MermaidToolchain do
 
   def enable_ci_browser_config
     allow(ENV).to receive(:fetch).and_call_original
+    stub_ci_canary
+    stub_resolved_provenance
+  end
+
+  def stub_ci_canary
     allow(ENV).to receive(:fetch)
       .with(described_class::CI_CANARY_ENV, nil).and_return("1")
+  end
+
+  def stub_resolved_provenance
     allow(described_class).to receive(:resolved_provenance).and_return(expected)
   end
 end

@@ -196,10 +196,16 @@ module MermaidToolchain
 
   def verify_canary(status, output, diagnostic)
     svg = File.read(output) if File.file?(output)
-    return svg if status&.success? && svg&.include?("<svg") &&
-                  svg.include?("Noto Sans")
+    return svg if valid_canary?(status, svg)
 
     raise DriftError, "Mermaid oracle canary failed: #{diagnostic}"
+  end
+
+  def valid_canary?(status, svg)
+    return false unless status&.success?
+    return false unless svg
+
+    svg.include?("<svg") && svg.include?("Noto Sans")
   end
 
   private_class_method :package_version, :lock_integrity,
@@ -208,7 +214,7 @@ module MermaidToolchain
                        :ci_canary_browser_arguments,
                        :provenance_drift, :drift_message,
                        :resolved_font_provenance, :render_canary_in,
-                       :verify_canary
+                       :verify_canary, :valid_canary?
 end
 
 if $PROGRAM_NAME == __FILE__
