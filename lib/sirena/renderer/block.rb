@@ -74,13 +74,11 @@ module Sirena
           # Only render shape and label for non-compound blocks that aren't children
           unless block_info[:parent_id]
             # Render block shape
-            shape_element = create_block_shape(block_info)
-            group.children << shape_element if shape_element
+            group.children << create_block_shape(block_info)
 
             # Render block label
             if block.label && !block.label.empty?
-              text_element = create_block_label(block_info)
-              group.children << text_element if text_element
+              group.children << create_block_label(block_info)
             end
           end
         end
@@ -102,8 +100,7 @@ module Sirena
 
         # Render block label
         if block.label && !block.label.empty?
-          text_element = create_block_label(block_info)
-          group.children << text_element if text_element
+          group.children << create_block_label(block_info)
         end
 
         group
