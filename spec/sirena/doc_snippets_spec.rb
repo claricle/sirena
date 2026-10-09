@@ -24,20 +24,22 @@ RSpec.describe DocSnippets do
   end
 
   it "writes output.svg from the programmatic example" do
-    block = described_class.blocks.find { |b| b.lang == "ruby" && b.body.include?("Sirena.render") }
+    block = described_class.block_containing("Sirena.render(mermaid_code)")
 
     expect(described_class.run(block)).to include("output.svg")
   end
 
   it "writes output.svg from the render command" do
-    block = described_class.blocks.find { |b| b.body.start_with?("sirena render") }
+    block = described_class.block_containing("sirena render")
 
     expect(described_class.run(block)).to include("output.svg")
   end
 
   it "writes the batch outputs into output_dir" do
-    block = described_class.blocks.find { |b| b.body.start_with?("sirena batch") }
+    block = described_class.block_containing("sirena batch")
 
-    expect(described_class.run(block).grep(%r{\Aoutput_dir/.*\.svg\z})).not_to be_empty
+    files = described_class.run(block)
+
+    expect(files.grep(%r{\Aoutput_dir/.*\.svg\z})).not_to be_empty
   end
 end
