@@ -21,12 +21,14 @@ RSpec.describe Sirena::JsNumber do
     it "uses JavaScript exponential thresholds" do
       values = [1e-6, 1e-7, 1e20, 1e21]
 
-      expect(values.map { |value| described_class.stringify(value) }).to eq([
-        "0.000001",
-        "1e-7",
-        "100000000000000000000",
-        "1e+21",
-      ])
+      expect(values.map { |value| described_class.stringify(value) }).to eq(
+        [
+          "0.000001",
+          "1e-7",
+          "100000000000000000000",
+          "1e+21",
+        ],
+      )
     end
 
     it "rounds integers through their JavaScript double representation" do
