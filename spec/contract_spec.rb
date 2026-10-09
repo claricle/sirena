@@ -67,18 +67,9 @@ RSpec.describe Sirena::Notation::Mermaid do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
-  # Gaps are measured per type; each runs as `pending`, so fixing one turns
-  # it red until the entry is removed.
-  known_gaps = {
-    sankey: { empty_input: "a header-only sankey raises LayoutError" },
-    user_journey: { theme_output: "no built-in theme changes the SVG" },
-    c4: { theme_output: "no built-in theme changes the SVG" },
-    error: { theme_output: "no built-in theme changes the SVG" },
-  }
-
   described_class::TYPES.each_key do |type|
     describe type.inspect do
-      it_behaves_like "a diagram type", type, known_gaps.fetch(type, {})
+      it_behaves_like "a diagram type", type, DiagramTypeGaps.for(type)
     end
   end
 
