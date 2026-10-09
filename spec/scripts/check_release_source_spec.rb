@@ -14,7 +14,7 @@ RSpec.describe Sirena::ReleaseSourceCheck do
   describe ".checked_main_problems" do
     it "accepts the checked main head" do
       problems = described_class.checked_main_problems(
-        source_sha: sha, main_sha: sha, check_runs: successful_checks
+        source_sha: sha, main_sha: sha, check_runs: successful_checks,
       )
 
       expect(problems).to eq([])
@@ -22,7 +22,7 @@ RSpec.describe Sirena::ReleaseSourceCheck do
 
     it "rejects a dispatch from a non-main commit" do
       problems = described_class.checked_main_problems(
-        source_sha: "b" * 40, main_sha: sha, check_runs: successful_checks
+        source_sha: "b" * 40, main_sha: sha, check_runs: successful_checks,
       )
 
       expect(problems).to include(/not main head/)
@@ -32,7 +32,7 @@ RSpec.describe Sirena::ReleaseSourceCheck do
       failed = successful_checks.map(&:dup)
       failed.last["conclusion"] = "failure"
       problems = described_class.checked_main_problems(
-        source_sha: sha, main_sha: sha, check_runs: failed
+        source_sha: sha, main_sha: sha, check_runs: failed,
       )
 
       expect(problems).to include(/no successful full-lane check/)
@@ -41,7 +41,7 @@ RSpec.describe Sirena::ReleaseSourceCheck do
     it "ignores a successful check belonging to another commit" do
       wrong_commit = successful_checks.map { |check| check.merge("head_sha" => "b" * 40) }
       problems = described_class.checked_main_problems(
-        source_sha: sha, main_sha: sha, check_runs: wrong_commit
+        source_sha: sha, main_sha: sha, check_runs: wrong_commit,
       )
 
       expect(problems).to include(/no successful fast-lane check/, /no successful full-lane check/)
@@ -86,12 +86,12 @@ RSpec.describe Sirena::ReleaseSourceCheck do
         target_version: "0.2.1", version_source: version_source
       )
 
-      expect(problems).to include(/expected \"0\.2\.1\"/)
+      expect(problems).to include(/expected "0\.2\.1"/)
     end
 
     it "accepts no commit when skip publishes the current version" do
       problems = described_class.version_change_problems(
-        changed_paths: [], requested: "skip", target_version: "0.2.0", version_source: version_source
+        changed_paths: [], requested: "skip", target_version: "0.2.0", version_source: version_source,
       )
 
       expect(problems).to eq([])
