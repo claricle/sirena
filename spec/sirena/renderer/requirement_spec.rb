@@ -230,7 +230,7 @@ RSpec.describe Sirena::Renderer::Requirement do
       rendered = labels.keys.map do |type|
         allow(requirement).to receive(:type).and_return(type)
         renderer.render(layout).to_xml.scan(%r{>([^<>]+)</text>}).flatten
-                .find { |t| t.include?("&lt;&lt;") && !t.match?(/Element|satisfies/) }
+          .find { |t| t.include?("&lt;&lt;") && !t.match?(/Element|satisfies/) }
       end
       expect(rendered).to eq(labels.values.map { |l| "&lt;&lt;#{l}&gt;&gt;" })
     end
