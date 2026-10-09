@@ -22,8 +22,9 @@ Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts M
 === No Browser Dependency
 * No headless browser launch required
 * Suitable for serverless environments
-* No committed, reproducible benchmark yet backs a specific speed or memory
-  claim (see the comparison page)
+* A dated Apple M2 comparison run and its reproduction commands are published in
+  the link:performance-benchmark/[Performance Benchmark report]; memory was not
+  measured, and the report does not generalize one machine's timings
 
 === Comprehensive Diagram Support
 * 24 diagram types registered (compatibility varies by type; see the compatibility page)

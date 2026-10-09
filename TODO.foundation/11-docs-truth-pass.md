@@ -24,12 +24,11 @@ the other three are wrong and this is package metadata, not prose. Docs also pro
 unbuilt features (plugins, caching, Rails/Jekyll/Sinatra integration,
 error-code taxonomy, 38 absent pages).
 
-On benchmarks, be precise: a harness DOES exist
-(`lib/tasks/benchmark.rake:7`, tasks `benchmark:compare` and
-`benchmark:quick`). It is nonfunctional —
-neither the task nor the `Rakefile` requires Sirena before calling
-`Sirena.render`. The true claim is "no recorded, reproducible run
-substantiates the published figures, and the harness is broken."
+On benchmarks, be precise: the harness lives in `tasks/benchmark.rake`,
+requires Sirena, and the `benchmark:compare` and `benchmark:quick` tasks run.
+The dated Apple M2 run in `docs/PERFORMANCE_BENCHMARK.adoc` is a scoped
+measurement, not a machine-independent performance or memory claim (memory
+was not measured).
 
 ## Do
 
@@ -66,10 +65,10 @@ substantiates the published figures, and the harness is broken."
    every docs build, or require `rake <generate> && git diff
    --exit-code` on every scoreboard-changing PR. "Live" without a gate
    goes stale the first time someone forgets.
-3. Benchmarks: repair `benchmark.rake` (it needs `require 'sirena'`) and
-   record one reproducible run, or delete the tasks and every
-   performance claim with them. Pick one — a broken advertised command
-   is worse than no command.
+3. Benchmarks (completed): `benchmark.rake` requires `sirena`; both advertised
+   tasks run; the dated report records the method, environment, results, and
+   reproduction commands. User-facing pages link to it without generalizing
+   its single-machine measurements.
 4. Executable snippets: every README/docs code example runs in a
    doc-snippet spec. Item 12 also needs this harness for its runnable
    README examples — if 12 gets there first it ships a standalone

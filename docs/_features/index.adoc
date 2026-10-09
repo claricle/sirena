@@ -104,10 +104,9 @@ No caching layer or plugin system exists yet.
 * **No Browser** - No Puppeteer/headless Chrome
 * **Native Ruby** - First-class Ruby integration
 
-No committed, reproducible benchmark exists yet to back a speed or memory multiplier
-against mermaid-cli, so none is claimed here (the Compatibility Comparison page
-still carries unverified multipliers of its own -- not linked from here for that
-reason).
+A dated Apple M2 comparison run and the commands used to reproduce it are published
+in the link:../performance-benchmark/[Performance Benchmark report]. It did not
+measure memory and does not establish a machine-independent speed multiplier.
 
 == Extensibility
 

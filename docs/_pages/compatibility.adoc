@@ -58,13 +58,13 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 |**Startup Time**
 |~2s (browser launch)
-|Not benchmarked
-|No committed reproducible measurement exists; see Performance Comparison below
+|Measured in the linked dated Sirena report
+|One Apple M2 run; see Performance Comparison below
 
 |**Memory Usage**
 |~200MB (Chrome)
 |Not benchmarked
-|No committed reproducible measurement exists; see Performance Comparison below
+|The recorded Sirena run did not measure memory
 
 |**Interactive Features**
 |Supported
@@ -280,13 +280,13 @@ graph TD
 
 === Performance Comparison
 
-No committed, reproducible benchmark run exists yet. The `benchmark:compare`
-and `benchmark:quick` rake tasks in `tasks/benchmark.rake` are meant to
-produce one but do not currently run (neither the task nor the `Rakefile`
-requires `sirena` before calling `Sirena.render`). Until that is fixed and a
-run recorded, no specific timing, memory, or "Nx faster" figures are
-published here. Sirena has no browser or Node.js dependency, which is a
-structural difference, not a measured one.
+The `benchmark:compare` and `benchmark:quick` rake tasks run against
+`Sirena.render`. One dated Apple M2 comparison with mermaid-cli, its method,
+and reproduction commands is published in the
+link:../performance-benchmark/[Performance Benchmark report]. That report did
+not measure memory, and one machine's result is not a general performance
+guarantee. Sirena's lack of a browser or Node.js dependency remains a
+structural difference, not itself a timing measurement.
 
 === Migration Benefits
 
@@ -302,8 +302,8 @@ structural difference, not a measured one.
 **No Browser Dependency**
 
 * No headless browser or Node.js runtime to run
-* No recorded benchmark yet backs a specific speed or memory figure (see
-  Performance Comparison above)
+* The recorded benchmark is scoped to one machine and contains no memory
+  measurement (see Performance Comparison above)
 
 **Ruby Ecosystem**
 

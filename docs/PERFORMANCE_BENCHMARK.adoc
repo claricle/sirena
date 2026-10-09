@@ -1,3 +1,11 @@
+---
+layout: default
+title: Performance Benchmark
+nav_order: 7
+description: "Reproduce Sirena's dated Mermaid CLI comparison run"
+permalink: /performance-benchmark/
+---
+
 = Sirena Performance Benchmark Report
 :toc:
 :toclevels: 2
