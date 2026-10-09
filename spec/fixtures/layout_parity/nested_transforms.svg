@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+  <g transform="translate(10, 20)">
+    <g transform="scale(2)">
+      <g class="node" id="flowchart-a-0">
+        <rect x="5" y="5" width="10" height="5"/>
+      </g>
+    </g>
+    <g class="node" id="flowchart-b-1" transform="rotate(90)">
+      <rect x="0" y="0" width="10" height="4"/>
+    </g>
+    <g class="node" id="flowchart-c-2" transform="matrix(1 0 0 2 5 0)">
+      <circle cx="10" cy="10" r="5"/>
+    </g>
+  </g>
+</svg>

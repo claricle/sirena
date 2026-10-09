@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <g class="root" transform="translate(5, 5)">
+    <g class="cluster" id="outer"><rect x="0" y="0" width="200" height="150"/></g>
+    <g class="cluster" id="inner"><rect x="10" y="10" width="100" height="100"/></g>
+    <g class="node" id="flowchart-deep-0" transform="translate(50, 50)"><rect x="-10" y="-10" width="20" height="20"/></g>
+    <g class="node" id="flowchart-mid-1" transform="translate(150, 80)"><rect x="-10" y="-10" width="20" height="20"/></g>
+    <g class="node" id="flowchart-free-2" transform="translate(250, 180)"><rect x="-10" y="-10" width="20" height="20"/></g>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g transform="translate(10, 10)">
+    <g class="node" id="flowchart-t-0">
+      <text x="5" y="6" dx="1" dy="2"><tspan x="5" dy="3">hi</tspan></text>
+    </g>
+    <g class="node" id="flowchart-u-1">
+      <text><tspan x="7" y="8">there</tspan></text>
+    </g>
+  </g>
+</svg>
