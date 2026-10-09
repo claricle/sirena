@@ -4,7 +4,7 @@ require "spec_helper"
 require "timeout"
 
 RSpec.describe Sirena::ErrorReport do
-  def cyclic_error_chain
+  let(:cyclic_error_chain) do
     outer = RuntimeError.new("outer")
     middle = TypeError.new("middle")
     inner = ArgumentError.new("inner")
@@ -65,7 +65,8 @@ RSpec.describe Sirena::ErrorReport do
     end
 
     it "reports each cause once when the chain contains a cycle" do
-      report = Timeout.timeout(1) { described_class.cause_diagnostics(cyclic_error_chain) }
+      diagnostics = described_class.method(:cause_diagnostics)
+      report = Timeout.timeout(1) { diagnostics.call(cyclic_error_chain) }
 
       expect(report.scan(/^Caused by: (.+)$/).flatten)
         .to eq(["TypeError: middle", "ArgumentError: inner"])
