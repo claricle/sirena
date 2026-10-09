@@ -8,7 +8,6 @@ module Sirena
     module Grammars
       # Grammar for parsing Mermaid xychart-beta syntax
       class XyChart < Common
-
         rule(:diagram_type) { str("xychart-beta") >> space? }
 
         # Common line patterns

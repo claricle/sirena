@@ -24,7 +24,6 @@ module Sirena
     #
     # @abstract Subclass and implement #parse
     class Base
-
       # Parses Mermaid source code into a diagram model.
       #
       # This method should be overridden by subclasses to implement
