@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "yaml"
 require_relative "../../scripts/extract_plantuml_tests"
 
 module PlantumlExtractorSpecSupport
@@ -160,13 +161,21 @@ RSpec.describe PlantumlExtractor do
       expect(readme).to include("NOT real-world files")
     end
 
-    it "has scoreboard rows for class and sequence at 0 passing" do
+    it "has scoreboard rows with the measured oracle-valid denominators" do
       rows = JSON.parse(File.read(File.join(root, "scoreboard/plantuml.json")))
       counts = pin.dig("corpus", "cases")
+      verdicts = YAML.load_file(File.join(corpus, "oracle-verdicts.yml"))
+        .fetch("verdicts")
+      valid = verdicts.select { |record| record["verdict"] == "valid" }
+        .group_by { |record| record.fetch("id").split("/", 2).first }
+        .transform_values(&:size)
 
-      expect(rows.to_h { |r| [r["type"], [r["cases"], r["passing"]]] })
-        .to eq("class" => [counts["class"], 0],
-               "sequence" => [counts["sequence"], 0])
+      actual = rows.to_h do |row|
+        [row["type"], [row["cases"], row["oracle_valid"], row["passing"]]]
+      end
+      expect(actual).to eq("class" => [counts["class"], valid["class"], 0],
+                           "sequence" => [counts["sequence"],
+                                          valid["sequence"], 0])
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "json"
 require "tmpdir"
 require "yaml"
 require "timeout"
@@ -308,6 +309,43 @@ RSpec.describe PlantumlOracle do
 
         expect(File.read(path)).to eq(prior)
       end
+    end
+  end
+
+  describe "the committed verdicts" do
+    let(:root) { File.expand_path("../..", __dir__) }
+    let(:corpus) { File.join(root, "spec/plantuml") }
+    let(:document) do
+      YAML.load_file(File.join(corpus, "oracle-verdicts.yml"))
+    end
+    let(:records) { document.fetch("verdicts") }
+
+    it "covers every corpus case exactly once in case-id order" do
+      case_ids = described_class.load_cases(corpus).keys.sort
+
+      expect(records.map { |record| record.fetch("id") }).to eq(case_ids)
+    end
+
+    it "records only verdicts whose source hashes match the corpus" do
+      sources = described_class.load_cases(corpus)
+      actual = records.to_h do |record|
+        id = record.fetch("id")
+        [id, [record.fetch("verdict"), record.fetch("source_sha256")]]
+      end
+      expected = sources.to_h do |id, source|
+        [id, [a_string_matching(/\A(?:valid|rejected)\z/),
+              Digest::SHA256.hexdigest(source)]]
+      end
+
+      expect(actual).to match(expected)
+    end
+
+    it "carries the pinned toolchain in every verdict" do
+      pin = JSON.parse(File.read(File.join(corpus, "pin.json")))
+      toolchain = pin.dig("oracle", "toolchain")
+
+      expect(document.fetch("toolchain")).to eq(toolchain)
+      expect(records).to all include(toolchain)
     end
   end
 

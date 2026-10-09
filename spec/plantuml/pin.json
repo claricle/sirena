@@ -8,12 +8,32 @@
     "tree_sha_src_test_java": "d2d2379092f2755ef60f562c51cd79c630012c0b"
   },
   "toolchain_observed": {
-    "note": "Observed on the extracting machine 2026-10-09. Step 2 (oracle) and step 3 (CI) own the pinned binary; the installed binary is OLDER than the upstream fixtures (1.2026.6 vs 1.2026.9beta4), so fixtures may use syntax it rejects. Decide before generating verdicts.",
+    "note": "Pinned for the oracle refresh on 2026-10-09. PlantUML 1.2026.6 is older than the upstream fixtures (1.2026.9beta4); those fixtures remain in the corpus and oracle rejections stay outside the denominator.",
     "plantuml": "1.2026.6 (6287b33, 2026-06-08)",
     "plantuml_jar_sha256": "89948f14c93756c7a3fb7b69078ff37e8489fd79dd430c582b931e2f65358690",
     "java_used_by_plantuml_wrapper": "openjdk 26.0.2 2026-07-21 (/opt/homebrew/opt/openjdk/bin/java)",
-    "java_on_path": "java 21.0.2 2024-01-16 LTS (/usr/bin/java)",
     "graphviz": "dot 15.1.1 (20260805.0921)"
+  },
+  "oracle": {
+    "command": "plantuml --svg --pipe --charset UTF-8",
+    "path_prefix": "/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin",
+    "contract": 1,
+    "verdicts_file": "oracle-verdicts.yml",
+    "toolchain": {
+      "plantuml": "1.2026.6 / 6287b33 [2026-06-08 16:02:56 UTC]",
+      "java": "26.0.2",
+      "graphviz": "15.1.1"
+    },
+    "verdicts": {
+      "class": {
+        "valid": 35,
+        "rejected": 2
+      },
+      "sequence": {
+        "valid": 77,
+        "rejected": 2
+      }
+    }
   },
   "selection_rule": "see spec/plantuml/README.md",
   "provenance": "upstream-fixture: none of these cases is a real-world file; see spec/plantuml/README.md",
