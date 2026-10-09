@@ -5,157 +5,214 @@ require_relative "../diagram/quadrant"
 
 module Sirena
   module Layout
-    # Quadrant chart transformer for converting quadrant models to
-    # renderable structure.
-    #
-    # Like pie charts, quadrant charts have a fixed layout structure
-    # (2x2 grid). This transformer validates the diagram and prepares
-    # the data with computed SVG coordinates for rendering.
-    #
-    # @example Transform a quadrant chart
-    #   transform = Quadrant.new
-    #   data = transform.to_graph(quadrant_diagram)
+    # Builds final quadrant-chart geometry.
     class Quadrant < Base
-      # Default dimensions for quadrant chart
       DEFAULT_WIDTH = 800
       DEFAULT_HEIGHT = 600
       DEFAULT_MARGIN = 80
 
-      # Converts a quadrant diagram to a renderable data structure.
-      #
-      # @param diagram [Diagram::Quadrant] the quadrant diagram
-      # @return [Hash] data structure for rendering with SVG coordinates
+      class Rect < Lutaml::Model::Serializable
+        attribute :number, :integer
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+      end
+
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :text_anchor, :string
+        attribute :font_weight, :string
+        attribute :style, :string
+      end
+
+      class Point < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :radius, :float
+        attribute :quadrant, :integer
+        attribute :color, :string
+        attribute :stroke_color, :string
+        attribute :stroke_width, :float
+        attribute :label, Label
+      end
+
+      class Scene < Layout::Scene
+        attribute :id, :string
+        attribute :view_box, :string
+        attribute :title, Label
+        attribute :quadrants, Rect, collection: true, default: -> { [] }
+        attribute :axes, Line, collection: true, default: -> { [] }
+        attribute :axis_labels, Label, collection: true, default: -> { [] }
+        attribute :quadrant_labels, Label, collection: true, default: -> { [] }
+        attribute :points, Point, collection: true, default: -> { [] }
+      end
+
+      # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        # Calculate dimensions
-        width = DEFAULT_WIDTH
-        height = DEFAULT_HEIGHT
         margin = DEFAULT_MARGIN
-
-        # Chart area (excluding margins)
-        chart_width = width - (margin * 2)
-        chart_height = height - (margin * 2)
-
+        chart_width = DEFAULT_WIDTH - (margin * 2)
+        chart_height = DEFAULT_HEIGHT - (margin * 2)
         {
-          id: diagram.id || "quadrant",
-          title: diagram.title,
-          dimensions: {
-            width: width,
-            height: height,
-            margin: margin,
-            chart_width: chart_width,
-            chart_height: chart_height,
-            chart_x: margin,
-            chart_y: margin,
-          },
-          axes: {
-            x_left: diagram.x_axis_left || "",
-            x_right: diagram.x_axis_right || "",
-            y_bottom: diagram.y_axis_bottom || "",
-            y_top: diagram.y_axis_top || "",
-          },
-          quadrants: {
-            q1: {
-              label: diagram.quadrant_1_label,
-              number: 1,
-              bounds: calculate_quadrant_bounds(1, margin, chart_width,
-                                                chart_height),
-            },
-            q2: {
-              label: diagram.quadrant_2_label,
-              number: 2,
-              bounds: calculate_quadrant_bounds(2, margin, chart_width,
-                                                chart_height),
-            },
-            q3: {
-              label: diagram.quadrant_3_label,
-              number: 3,
-              bounds: calculate_quadrant_bounds(3, margin, chart_width,
-                                                chart_height),
-            },
-            q4: {
-              label: diagram.quadrant_4_label,
-              number: 4,
-              bounds: calculate_quadrant_bounds(4, margin, chart_width,
-                                                chart_height),
-            },
-          },
-          points: transform_points(diagram, margin, chart_width, chart_height),
+          id: diagram.id || "quadrant", title: diagram.title,
+          dimensions: dimensions(margin, chart_width, chart_height),
+          axes: axes(diagram),
+          quadrants: quadrants(diagram, margin, chart_width, chart_height),
+          points: transform_points(diagram, margin, chart_width, chart_height)
         }
       end
 
       private
 
-      # Calculate bounds for a specific quadrant.
-      #
-      # @param quadrant [Integer] quadrant number (1-4)
-      # @param margin [Float] chart margin
-      # @param chart_width [Float] width of chart area
-      # @param chart_height [Float] height of chart area
-      # @return [Hash] bounds with x, y, width, height
-      def calculate_quadrant_bounds(quadrant, margin, chart_width,
-                                     chart_height)
-        half_width = chart_width / 2.0
-        half_height = chart_height / 2.0
+      def scene(diagram)
+        graph = build_graph(diagram)
+        dims = graph[:dimensions]
+        Scene.new(
+          id: graph[:id], width: dims[:width], height: dims[:height],
+          view_box: "0 0 #{dims[:width]} #{dims[:height]}",
+          title: title_label(graph[:title], dims),
+          quadrants: typed_quadrants(graph[:quadrants]), axes: axis_lines(dims),
+          axis_labels: axis_labels(graph[:axes], dims),
+          quadrant_labels: quadrant_labels(graph[:quadrants]),
+          points: typed_points(graph[:points])
+        )
+      end
 
-        case quadrant
-        when 1 # Top-right
-          {
-            x: margin + half_width,
-            y: margin,
-            width: half_width,
-            height: half_height,
-          }
-        when 2 # Top-left
-          {
-            x: margin,
-            y: margin,
-            width: half_width,
-            height: half_height,
-          }
-        when 3 # Bottom-left
-          {
-            x: margin,
-            y: margin + half_height,
-            width: half_width,
-            height: half_height,
-          }
-        when 4 # Bottom-right
-          {
-            x: margin + half_width,
-            y: margin + half_height,
-            width: half_width,
-            height: half_height,
-          }
+      def dimensions(margin, chart_width, chart_height)
+        {
+          width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT, margin: margin,
+          chart_width: chart_width, chart_height: chart_height,
+          chart_x: margin, chart_y: margin
+        }
+      end
+
+      def axes(diagram)
+        {
+          x_left: diagram.x_axis_left || "", x_right: diagram.x_axis_right || "",
+          y_bottom: diagram.y_axis_bottom || "", y_top: diagram.y_axis_top || ""
+        }
+      end
+
+      def quadrants(diagram, margin, width, height)
+        labels = [diagram.quadrant_1_label, diagram.quadrant_2_label,
+                  diagram.quadrant_3_label, diagram.quadrant_4_label]
+        (1..4).to_h do |number|
+          [:"q#{number}", {
+            label: labels[number - 1], number: number,
+            bounds: calculate_quadrant_bounds(number, margin, width, height)
+          }]
         end
       end
 
-      # Transform points with calculated SVG coordinates.
-      #
-      # @param diagram [Diagram::Quadrant] the diagram
-      # @param margin [Float] chart margin
-      # @param chart_width [Float] width of chart area
-      # @param chart_height [Float] height of chart area
-      # @return [Array<Hash>] points with SVG coordinates
-      def transform_points(diagram, margin, chart_width, chart_height)
-        diagram.points.map.with_index do |point, index|
-          # Convert normalized coordinates (0-1) to SVG coordinates
-          # Note: Y-axis is inverted in SVG (0 at top)
-          svg_x = margin + (point.x * chart_width)
-          svg_y = margin + ((1.0 - point.y) * chart_height)
+      def title_label(title, dims)
+        return unless title
 
+        label(title, dims[:width] / 2.0, 30,
+              font_size(:font_size_large, 18), "title",
+              anchor: "middle", weight: "bold")
+      end
+
+      def typed_quadrants(quadrants)
+        quadrants.values.map do |quadrant|
+          bounds = quadrant[:bounds]
+          Rect.new(number: quadrant[:number], **bounds)
+        end
+      end
+
+      def axis_lines(dims)
+        center_x = dims[:chart_x] + (dims[:chart_width] / 2.0)
+        center_y = dims[:chart_y] + (dims[:chart_height] / 2.0)
+        [
+          Line.new(x1: center_x, y1: dims[:chart_y], x2: center_x,
+                   y2: dims[:chart_y] + dims[:chart_height]),
+          Line.new(x1: dims[:chart_x], y1: center_y,
+                   x2: dims[:chart_x] + dims[:chart_width], y2: center_y),
+        ]
+      end
+
+      def axis_labels(axes, dims)
+        size = font_size(:font_size_small, 12)
+        bottom = dims[:chart_y] + dims[:chart_height]
+        right = dims[:chart_x] + dims[:chart_width]
+        [
+          label(axes[:x_left], dims[:chart_x] - 10, bottom + 30, size,
+                "axis", anchor: "end"),
+          label(axes[:x_right], right + 10, bottom + 30, size,
+                "axis", anchor: "start"),
+          label(axes[:y_bottom], dims[:chart_x] - 30, bottom + 10, size,
+                "axis", anchor: "middle"),
+          label(axes[:y_top], dims[:chart_x] - 30, dims[:chart_y] - 10, size,
+                "axis", anchor: "middle"),
+        ]
+      end
+
+      def quadrant_labels(quadrants)
+        quadrants.values.filter_map do |quadrant|
+          next unless quadrant[:label]
+
+          bounds = quadrant[:bounds]
+          label(
+            quadrant[:label], bounds[:x] + (bounds[:width] / 2.0),
+            bounds[:y] + 20, font_size(:font_size_normal, 14), "quadrant",
+            anchor: "middle", weight: "bold"
+          )
+        end
+      end
+
+      def typed_points(points)
+        points.map do |point|
+          Point.new(
+            id: point[:id], x: point[:svg_x], y: point[:svg_y],
+            radius: point[:radius], quadrant: point[:quadrant],
+            color: point[:color], stroke_color: point[:stroke_color],
+            stroke_width: point[:stroke_width],
+            label: label(point[:label], point[:svg_x] + 10,
+                         point[:svg_y] - 10, font_size(:font_size_small, 11),
+                         "point", anchor: "start")
+          )
+        end
+      end
+
+      def label(text, x, y, size, style, **options)
+        Label.new(
+          text: text, x: x, y: y, font_size: size, style: style,
+          text_anchor: options[:anchor], font_weight: options[:weight]
+        )
+      end
+
+      def font_size(name, fallback)
+        value = theme.typography&.public_send(name)
+        value&.positive? ? value : fallback
+      end
+
+      def calculate_quadrant_bounds(number, margin, width, height)
+        half_width = width / 2.0
+        half_height = height / 2.0
+        x = [1, 4].include?(number) ? margin + half_width : margin
+        y = [3, 4].include?(number) ? margin + half_height : margin
+        { x: x, y: y, width: half_width, height: half_height }
+      end
+
+      def transform_points(diagram, margin, width, height)
+        diagram.points.map.with_index do |point, index|
           {
-            id: "point_#{index}",
-            label: point.label,
-            x: point.x,
-            y: point.y,
-            svg_x: svg_x,
-            svg_y: svg_y,
-            quadrant: point.quadrant,
-            radius: point.radius || 6,
-            color: point.color,
-            stroke_color: point.stroke_color,
-            stroke_width: point.stroke_width || 2,
-            index: index,
+            id: "point_#{index}", label: point.label,
+            svg_x: margin + (point.x * width),
+            svg_y: margin + ((1.0 - point.y) * height),
+            quadrant: point.quadrant, radius: point.radius || 6,
+            color: point.color, stroke_color: point.stroke_color,
+            stroke_width: point.stroke_width || 2
           }
         end
       end
