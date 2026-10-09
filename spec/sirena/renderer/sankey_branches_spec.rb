@@ -75,7 +75,8 @@ RSpec.describe Sirena::Renderer::Sankey do
   end
 
   it "uses theme typography" do
-    expect(themed_xml).to include('fill="#FFFFFF"', 'font-family="Example Sans"')
+    expect(themed_xml)
+      .to include('fill="#FFFFFF"', 'font-family="Example Sans"')
   end
 
   it "omits an absent title" do
