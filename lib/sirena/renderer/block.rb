@@ -41,7 +41,7 @@ module Sirena
 
       def render_blocks(layout, svg)
         # Render all blocks (including children)
-        layout[:blocks].each do |_block_id, block_info|
+        layout[:blocks].each_value do |block_info|
           render_block(block_info, svg, layout)
         end
       end

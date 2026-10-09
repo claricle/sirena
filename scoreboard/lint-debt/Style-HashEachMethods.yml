@@ -3,11 +3,5 @@ cop: Style/HashEachMethods
 rows:
 - file: lib/sirena/layout/requirement.rb
   count: 1
-- file: lib/sirena/renderer/architecture.rb
-  count: 3
-- file: lib/sirena/renderer/block.rb
-  count: 1
-- file: lib/sirena/renderer/quadrant.rb
-  count: 2
 - file: lib/sirena/renderer/requirement.rb
   count: 2

@@ -11,19 +11,6 @@ Gemspec/RequiredRubyVersion:
   Exclude:
     - 'sirena.gemspec'
 
-# Offense count: 16
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: EnforcedStyle, IndentationWidth.
-# SupportedStyles: with_first_argument, with_fixed_indentation
-Layout/ArgumentAlignment:
-  Exclude:
-    - 'lib/sirena/commands/batch.rb'
-    - 'lib/sirena/parser/builders/c4.rb'
-    - 'lib/sirena/renderer/timeline.rb'
-    - 'lib/sirena/layout/c4.rb'
-    - 'lib/sirena/layout/treemap.rb'
-    - 'spec/sirena/theme_spec.rb'
-
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
 Layout/ElseAlignment:
@@ -310,15 +297,12 @@ Style/ConditionalAssignment:
 Style/FormatStringToken:
   EnforcedStyle: unannotated
 
-# Offense count: 8
+# Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowedReceivers.
 # AllowedReceivers: Thread.current
 Style/HashEachMethods:
   Exclude:
-    - 'lib/sirena/renderer/architecture.rb'
-    - 'lib/sirena/renderer/block.rb'
-    - 'lib/sirena/renderer/quadrant.rb'
     - 'lib/sirena/renderer/requirement.rb'
     - 'lib/sirena/layout/requirement.rb'
 

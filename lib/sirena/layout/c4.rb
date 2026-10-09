@@ -126,7 +126,7 @@ module Sirena
 
         # Main label
         label_dims = measure_text(element.label,
-                                   font_size: DEFAULT_FONT_SIZE + 2)
+                                  font_size: DEFAULT_FONT_SIZE + 2)
         labels << {
           text: element.label,
           width: label_dims[:width],
@@ -136,7 +136,7 @@ module Sirena
         # Description (if present)
         if element.description && !element.description.empty?
           desc_dims = measure_text(element.description,
-                                    font_size: DEFAULT_FONT_SIZE - 2)
+                                   font_size: DEFAULT_FONT_SIZE - 2)
           labels << {
             text: element.description,
             width: desc_dims[:width],
@@ -147,7 +147,7 @@ module Sirena
         # Technology (if present)
         if element.technology && !element.technology.empty?
           tech_dims = measure_text(element.technology,
-                                    font_size: DEFAULT_FONT_SIZE - 2)
+                                   font_size: DEFAULT_FONT_SIZE - 2)
           labels << {
             text: "[#{element.technology}]",
             width: tech_dims[:width],
@@ -192,7 +192,7 @@ module Sirena
 
           if rel.technology && !rel.technology.empty?
             tech_dims = measure_text("[#{rel.technology}]",
-                                      font_size: DEFAULT_FONT_SIZE - 2)
+                                     font_size: DEFAULT_FONT_SIZE - 2)
             labels << {
               text: "[#{rel.technology}]",
               width: tech_dims[:width],
