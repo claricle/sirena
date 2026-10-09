@@ -141,6 +141,59 @@ module PlantUmlSpikeHelpers
     out, status = Open3.capture2e(RbConfig.ruby, "-Ilib", "-e", code)
     [status.success?, out]
   end
+
+  def rendering_failures
+    spike_cases.filter_map { |path| rendering_failure(path) }
+  end
+
+  def rendering_failure(path)
+    source = File.read(path)
+    explicit = Sirena.render(source, notation: :plantuml)
+    inferred = Sirena.render(source, path: path)
+    document = REXML::Document.new(explicit)
+    diagram = parse_plantuml(source)
+
+    case_name(path) unless rendering_matches?(explicit, inferred, document,
+                                              diagram)
+  rescue REXML::ParseException
+    case_name(path)
+  end
+
+  def rendering_matches?(explicit, inferred, document, diagram)
+    explicit == inferred && preserved_text?(document, diagram) &&
+      rendered_relation_count(document) == diagram.relations.size
+  end
+
+  def preserved_text?(document, diagram)
+    texts = REXML::XPath.match(document, "//text").map(&:text)
+    (expected_render_texts(diagram) - texts).empty?
+  end
+
+  def expected_render_texts(diagram)
+    class_texts = diagram.classes.flat_map do |klass|
+      [klass.name, *klass.body.map { |member| member_line(member) }]
+    end
+    relation_texts = diagram.relations.flat_map do |relation|
+      [relation.label, relation.left_multiplicity,
+       relation.right_multiplicity].compact
+    end
+    class_texts + relation_texts
+  end
+
+  def rendered_relation_count(document)
+    REXML::XPath.match(
+      document, "//g[starts-with(@id, 'relation-')]/path"
+    ).size
+  end
+
+  def pipeline_attributes(notation)
+    have_attributes(
+      type: :class_diagram,
+      diagram: an_instance_of(notation::Diagram),
+      transform: notation::Layout,
+      renderer: notation::Renderer,
+    )
+  end
 end
 
 RSpec.describe Sirena::Notation::PlantUML do
@@ -232,34 +285,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     it "renders every case through explicit and extension resolution" do
-      failures = spike_cases.filter_map do |path|
-        source = File.read(path)
-        explicit = Sirena.render(source, notation: :plantuml)
-        inferred = Sirena.render(source, path: path)
-        document = REXML::Document.new(explicit)
-        diagram = parse_plantuml(source)
-        texts = REXML::XPath.match(document, "//text").map(&:text)
-        expected_texts = diagram.classes.flat_map do |klass|
-          [klass.name, *klass.body.map { |member| member_line(member) }]
-        end
-        expected_texts.concat(diagram.relations.flat_map do |relation|
-          [relation.label, relation.left_multiplicity,
-           relation.right_multiplicity].compact
-        end)
-        relation_paths = REXML::XPath.match(
-          document, "//g[starts-with(@id, 'relation-')]/path"
-        )
-
-        next if explicit == inferred &&
-          (expected_texts - texts).empty? &&
-          relation_paths.size == diagram.relations.size
-
-        case_name(path)
-      rescue REXML::ParseException
-        case_name(path)
-      end
-
-      expect(failures).to eq([])
+      expect(rendering_failures).to eq([])
     end
   end
 
@@ -271,12 +297,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     it "returns a frozen Parsed naming its local layout and renderer" do
       parsed = plantuml.parse(case_source("01-empty-class"))
 
-      expect(parsed).to be_frozen.and have_attributes(
-        type: :class_diagram,
-        diagram: an_instance_of(plantuml::Diagram),
-        transform: plantuml::Layout,
-        renderer: plantuml::Renderer,
-      )
+      expect(parsed).to be_frozen.and pipeline_attributes(plantuml)
     end
 
     it "propagates unsupported constructs instead of partially rendering" do

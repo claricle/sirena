@@ -22,36 +22,50 @@ module Sirena
                          :MARKER_HALF_WIDTH, :LABEL_OFFSET
 
         def scene(diagram)
-          specifications = diagram.classes.map { |klass| box_specification(klass) }
-          box_width = [MIN_BOX_WIDTH, *specifications.map { |item| item[:width] }].max
+          specifications = diagram.classes.map do |klass|
+            box_specification(klass)
+          end
+          box_width = widest_box(specifications)
           boxes = position_boxes(specifications, box_width)
-          rows = boxes.each_slice(column_count(boxes)).to_a
 
-          Scene.new(
-            width: canvas_width(boxes, box_width),
-            height: canvas_height(rows),
-            boxes: boxes,
-            relations: build_relations(diagram.relations, boxes),
-          )
+          build_scene(diagram, boxes, box_width)
         end
 
         private
 
+        def build_scene(diagram, boxes, box_width)
+          width = canvas_width(boxes, box_width)
+          height = canvas_height(box_rows(boxes))
+          relations = build_relations(diagram.relations, boxes)
+          Scene.new(width: width, height: height, boxes: boxes,
+                    relations: relations)
+        end
+
         def box_specification(klass)
           member_rows = klass.body.map { |member| member_text(member) }
           title_rows = title_rows(klass)
-          rows = title_rows + member_rows
-          measured = rows.map { |text| measured_width(text) }
-          height = (BOX_PADDING * 2) + (rows.size * ROW_HEIGHT)
-          height += 6.0 unless member_rows.empty?
+          box_record(klass.name, title_rows, member_rows)
+        end
 
-          {
-            id: klass.name,
-            width: [MIN_BOX_WIDTH, measured.max.to_f + (BOX_PADDING * 2)].max,
-            height: height,
-            title_rows: title_rows,
-            member_rows: member_rows,
-          }
+        def box_record(name, title_rows, member_rows)
+          rows = title_rows + member_rows
+
+          specification = { id: name }
+          specification[:width] = measured_box_width(rows)
+          specification[:height] = box_height(rows, member_rows)
+          specification[:title_rows] = title_rows
+          specification[:member_rows] = member_rows
+          specification
+        end
+
+        def measured_box_width(rows)
+          measured = rows.map { |text| measured_width(text) }
+          [MIN_BOX_WIDTH, measured.max.to_f + (BOX_PADDING * 2)].max
+        end
+
+        def box_height(rows, member_rows)
+          height = (BOX_PADDING * 2) + (rows.size * ROW_HEIGHT)
+          member_rows.empty? ? height : height + 6.0
         end
 
         def title_rows(klass)
@@ -82,15 +96,19 @@ module Sirena
 
         def position_boxes(specifications, box_width)
           columns = column_count(specifications)
-          row_heights = specifications.each_slice(columns).map do |row|
-            row.map { |item| item[:height] }.max
-          end
-          row_tops = row_heights.each_with_object([MARGIN]) do |height, tops|
-            tops << tops.last + height + ROW_GAP
-          end
+          row_tops = row_tops(specifications, columns)
 
           specifications.each_with_index.map do |item, index|
             build_box(item, index, columns, row_tops, box_width)
+          end
+        end
+
+        def row_tops(specifications, columns)
+          heights = specifications.each_slice(columns).map do |row|
+            row.map { |item| item[:height] }.max
+          end
+          heights.each_with_object([MARGIN]) do |height, tops|
+            tops << (tops.last + height + ROW_GAP)
           end
         end
 
@@ -109,27 +127,45 @@ module Sirena
           )
         end
 
-        def box_contents(item, x, y, width)
-          cursor = y + BOX_PADDING + font_size
+        def box_contents(item, horizontal, vertical, width)
+          texts, cursor = title_texts(item, horizontal, vertical, width)
+          members, separators = member_contents(
+            item, horizontal, cursor, width
+          )
+          [texts + members, separators]
+        end
+
+        def title_texts(item, horizontal, vertical, width)
+          cursor = vertical + BOX_PADDING + font_size
           texts = item[:title_rows].each_with_index.map do |content, index|
             role = index == item[:title_rows].size - 1 ? "class_name" : "kind"
-            text = scene_text(content, x + (width / 2), cursor, role, "middle")
+            text = scene_text(
+              content, horizontal + (width / 2), cursor, role, "middle"
+            )
             cursor += ROW_HEIGHT
             text
           end
+          [texts, cursor]
+        end
 
-          separators = []
-          unless item[:member_rows].empty?
-            separator_y = cursor - (ROW_HEIGHT / 2)
-            separators << segment(x, separator_y, x + width, separator_y)
-            cursor += 6.0
-            texts.concat(item[:member_rows].map do |content|
-              text = scene_text(content, x + BOX_PADDING, cursor, "member", "start")
-              cursor += ROW_HEIGHT
-              text
-            end)
+        def member_contents(item, horizontal, cursor, width)
+          return [[], []] if item[:member_rows].empty?
+
+          separator = member_separator(horizontal, cursor, width)
+          [member_texts(item, horizontal, cursor), [separator]]
+        end
+
+        def member_separator(horizontal, cursor, width)
+          vertical = cursor - (ROW_HEIGHT / 2)
+          segment(horizontal, vertical, horizontal + width, vertical)
+        end
+
+        def member_texts(item, horizontal, cursor)
+          item[:member_rows].each_with_index.map do |content, index|
+            vertical = cursor + 6.0 + (index * ROW_HEIGHT)
+            scene_text(content, horizontal + BOX_PADDING, vertical,
+                       "member", "start")
           end
-          [texts, separators]
         end
 
         def build_relations(relations, boxes)
@@ -143,16 +179,18 @@ module Sirena
           left_box = by_name.fetch(relation.left)
           right_box = by_name.fetch(relation.right)
           endpoints = relation_endpoints(left_box, right_box)
-          marker = marker_geometry(relation, endpoints)
 
-          Scene::Relation.new(
-            id: "relation-#{index}",
-            path: relation_path(endpoints),
-            dashed: relation.kind == :implementation,
-            marker_points: marker[:points],
-            marker_filled: marker[:filled],
-            texts: relation_texts(relation, endpoints),
-          )
+          relation_scene(relation, index, endpoints)
+        end
+
+        def relation_scene(relation, index, endpoints)
+          marker = marker_geometry(relation, endpoints)
+          path = relation_path(endpoints)
+          dashed = relation.kind == :implementation
+          texts = relation_texts(relation, endpoints)
+          Scene::Relation.new(id: "relation-#{index}", path: path,
+                              dashed: dashed, marker_points: marker[:points],
+                              marker_filled: marker[:filled], texts: texts)
         end
 
         def relation_endpoints(left_box, right_box)
@@ -165,22 +203,36 @@ module Sirena
         end
 
         def self_relation_endpoints(box)
-          {
-            left: [box.x + box.width, box.y + (box.height * 0.35)],
-            right: [box.x + box.width, box.y + (box.height * 0.7)],
-            control: [box.x + box.width + 54.0, box.y + (box.height / 2)],
-          }
+          endpoints = { left: right_edge_point(box, 0.35) }
+          endpoints[:right] = right_edge_point(box, 0.7)
+          endpoints[:control] = right_edge_point(box, 0.5, offset: 54.0)
+          endpoints
+        end
+
+        def right_edge_point(box, height_ratio, offset: 0.0)
+          [box.x + box.width + offset, box.y + (box.height * height_ratio)]
         end
 
         def boundary_point(box, target)
           centre = box_centre(box)
-          other = box_centre(target)
-          dx = other[0] - centre[0]
-          dy = other[1] - centre[1]
-          scale_x = (box.width / 2) / dx.abs unless dx.zero?
-          scale_y = (box.height / 2) / dy.abs unless dy.zero?
-          scale = [scale_x, scale_y].compact.min
-          [centre[0] + (dx * scale), centre[1] + (dy * scale)]
+          delta = vector_between(centre, box_centre(target))
+          shift(centre, *delta, boundary_scale(box, delta))
+        end
+
+        def vector_between(from, to)
+          [to[0] - from[0], to[1] - from[1]]
+        end
+
+        def boundary_scale(box, delta)
+          horizontal = axis_scale(box.width, delta[0])
+          vertical = axis_scale(box.height, delta[1])
+          [horizontal, vertical].compact.min
+        end
+
+        def axis_scale(size, delta)
+          return if delta.zero?
+
+          (size / 2) / delta.abs
         end
 
         def box_centre(box)
@@ -202,71 +254,97 @@ module Sirena
 
           tip = endpoints.fetch(side)
           other = endpoints.fetch(side == :left ? :right : :left)
-          shape = %i[aggregation composition].include?(relation.kind) ? :diamond : :triangle
+          shape = marker_shape(relation.kind)
           points = marker_points(tip, other, shape)
           filled = %i[association composition].include?(relation.kind)
           { points: points, filled: filled }
         end
 
+        def marker_shape(relation_kind)
+          return :diamond if %i[aggregation composition].include?(relation_kind)
+
+          :triangle
+        end
+
         def marker_points(tip, other, shape)
-          ux, uy = unit_vector(other, tip)
-          perpendicular = [-uy, ux]
-          base = shift(tip, ux, uy, -MARKER_LENGTH)
-          left = shift(base, *perpendicular, MARKER_HALF_WIDTH)
-          right = shift(base, *perpendicular, -MARKER_HALF_WIDTH)
+          direction = unit_vector(other, tip)
+          base = shift(tip, *direction, -MARKER_LENGTH)
+          left = marker_side(base, direction, MARKER_HALF_WIDTH)
+          right = marker_side(base, direction, -MARKER_HALF_WIDTH)
           points = [tip, left]
-          points << shift(tip, ux, uy, -(MARKER_LENGTH * 2)) if shape == :diamond
+          points << diamond_back(tip, direction) if shape == :diamond
           points << right
-          points.map { |coordinate| point(coordinate, separator: ",") }.join(" ")
+          formatted_points(points)
+        end
+
+        def marker_side(base, direction, distance)
+          shift(base, -direction[1], direction[0], distance)
+        end
+
+        def diamond_back(tip, direction)
+          shift(tip, *direction, -(MARKER_LENGTH * 2))
+        end
+
+        def formatted_points(points)
+          points.map do |coordinate|
+            point(coordinate, separator: ",")
+          end.join(" ")
         end
 
         def unit_vector(from, to)
-          dx = to[0] - from[0]
-          dy = to[1] - from[1]
-          length = Math.hypot(dx, dy)
+          delta_horizontal, delta_vertical = vector_between(from, to)
+          length = Math.hypot(delta_horizontal, delta_vertical)
           return [1.0, 0.0] if length.zero?
 
-          [dx / length, dy / length]
+          [delta_horizontal / length, delta_vertical / length]
         end
 
-        def shift(origin, ux, uy, distance)
-          [origin[0] + (ux * distance), origin[1] + (uy * distance)]
+        def shift(origin, direction_horizontal, direction_vertical, distance)
+          [origin[0] + (direction_horizontal * distance),
+           origin[1] + (direction_vertical * distance)]
         end
 
         def relation_texts(relation, endpoints)
           left = endpoints.fetch(:left)
           right = endpoints.fetch(:right)
-          ux, uy = unit_vector(left, right)
-          texts = []
-          texts << relation_label(relation.label, left, right) if relation.label
-          if relation.left_multiplicity
-            texts << multiplicity(relation.left_multiplicity, left, ux, uy, 1)
-          end
-          if relation.right_multiplicity
-            texts << multiplicity(relation.right_multiplicity, right, ux, uy, -1)
-          end
-          texts
+          direction = unit_vector(left, right)
+
+          [relation_label(relation.label, left, right),
+           multiplicity(relation.left_multiplicity, left, direction, 1),
+           multiplicity(relation.right_multiplicity, right, direction, -1)]
+            .compact
         end
 
         def relation_label(content, left, right)
-          x = (left[0] + right[0]) / 2
-          y = ((left[1] + right[1]) / 2) - LABEL_OFFSET
-          scene_text(content, x, y, "relation_label", "middle")
+          return unless content
+
+          horizontal = (left[0] + right[0]) / 2
+          vertical = ((left[1] + right[1]) / 2) - LABEL_OFFSET
+          scene_text(
+            content, horizontal, vertical, "relation_label", "middle"
+          )
         end
 
-        def multiplicity(content, endpoint, ux, uy, direction)
-          along = shift(endpoint, ux, uy, 18.0 * direction)
-          offset = shift(along, -uy, ux, -LABEL_OFFSET)
+        def multiplicity(content, endpoint, vector, direction)
+          return unless content
+
+          along = shift(endpoint, *vector, 18.0 * direction)
+          offset = shift(along, -vector[1], vector[0], -LABEL_OFFSET)
           scene_text(content, offset[0], offset[1], "multiplicity", "middle")
         end
 
-        def scene_text(content, x, y, role, anchor)
-          Scene::Text.new(content: content, x: x, y: y, role: role,
+        def scene_text(content, horizontal, vertical, role, anchor)
+          Scene::Text.new(content: content, x: horizontal, y: vertical,
+                          role: role,
                           anchor: anchor)
         end
 
-        def segment(x1, y1, x2, y2)
-          Scene::Segment.new(x1: x1, y1: y1, x2: x2, y2: y2)
+        def segment(from_horizontal, from_vertical,
+                    to_horizontal, to_vertical)
+          Scene::Segment.new(
+            x1: from_horizontal, y1: from_vertical,
+            x2: to_horizontal, y2: to_vertical
+          )
         end
 
         def point(coordinates, separator: " ")
@@ -276,6 +354,15 @@ module Sirena
         def canvas_width(boxes, box_width)
           (MARGIN * 2) + (column_count(boxes) * box_width) +
             ((column_count(boxes) - 1) * COLUMN_GAP)
+        end
+
+        def widest_box(specifications)
+          widths = specifications.map { |item| item[:width] }
+          [MIN_BOX_WIDTH, *widths].max
+        end
+
+        def box_rows(boxes)
+          boxes.each_slice(column_count(boxes)).to_a
         end
 
         def canvas_height(rows)
