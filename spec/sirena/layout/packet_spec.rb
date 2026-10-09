@@ -39,21 +39,23 @@ RSpec.describe Sirena::Layout::Packet do
   end
 
   context "with a field crossing a row boundary" do
+    let(:expected_segments) do
+      [
+        include(label: "boundary", bit_start: 30, bit_end: 31, row: 0,
+                start_col: 30, end_col: 31, x: 940, y: 70, width: 60,
+                is_continuation: false, is_final: false),
+        include(label: "boundary", bit_start: 32, bit_end: 34, row: 1,
+                start_col: 0, end_col: 2, x: 40, y: 110, width: 90,
+                is_continuation: true, is_final: true),
+      ]
+    end
+
     before do
       packet.add_field(Sirena::Diagram::PacketField.new(30, 34, "boundary"))
     end
 
     it "splits the field into labeled segments with exact bit ranges" do
-      expect(graph[:fields]).to match(
-        [
-          include(label: "boundary", bit_start: 30, bit_end: 31, row: 0,
-                  start_col: 30, end_col: 31, x: 940, y: 70, width: 60,
-                  is_continuation: false, is_final: false),
-          include(label: "boundary", bit_start: 32, bit_end: 34, row: 1,
-                  start_col: 0, end_col: 2, x: 40, y: 110, width: 90,
-                  is_continuation: true, is_final: true),
-        ],
-      )
+      expect(graph[:fields]).to match(expected_segments)
     end
 
     it "sizes the untitled two-row canvas" do
