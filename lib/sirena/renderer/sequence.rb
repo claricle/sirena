@@ -23,18 +23,44 @@ module Sirena
       }.freeze
       FLUSH_HEADS = %w[cross open stick_top stick_bottom].freeze
 
-      # @param scene [Layout::Sequence::Scene] final canvas geometry
+      # @param diagram [Layout::Sequence::Scene, Hash] final geometry or graph
       # @return [Svg::Document] rendered SVG document
-      def render(scene)
-        svg = create_document(scene)
-        positions = calculate_participant_positions(scene.participants)
-        render_lifelines(positions, scene.messages.length, svg)
-        render_messages(scene, positions, svg)
-        render_participants(scene.participants, positions, svg)
-        svg
+      def render(diagram)
+        return render_scene(diagram) if diagram.is_a?(Layout::Sequence::Scene)
+
+        render_graph(diagram)
       end
 
       protected
+
+      def render_scene(scene)
+        svg = document(scene)
+        scene.lifelines.each { |lifeline| draw_lifeline(lifeline, svg) }
+        scene.messages.each { |message| draw_message(message, svg) }
+        scene.participants.each do |participant|
+          draw_participant(participant, svg)
+        end
+        svg
+      end
+
+      def render_graph(graph)
+        svg = create_document(graph)
+        metadata = graph[:metadata] || {}
+        positions = calculate_participant_positions(graph[:children])
+        render_lifelines(positions, metadata[:message_count] || 0, svg)
+        render_messages(graph, positions, svg) if graph[:edges]
+        render_participants(graph[:children], positions, svg)
+        render_notes(metadata[:notes], positions, svg) if metadata[:notes]
+        svg
+      end
+
+      def document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = scene.width
+          svg.height = scene.height
+          svg.view_box = scene.view_box
+        end
+      end
 
       def create_document(graph, padding: 20, overflow: nil)
         width = calculate_width(graph) + (padding * 2)
@@ -177,8 +203,8 @@ module Sirena
         value.to_i == value ? value.to_i.to_s : value.to_s
       end
 
-      # Compatibility shims for the protected v0.1 renderer surface. Typed
-      # geometry passes through the same hook chain as legacy graph data.
+      # Compatibility shims for the protected v0.1 renderer surface. Hash
+      # rendering uses this chain; typed scenes already contain final geometry.
 
       def calculate_width(graph)
         if graph.is_a?(Layout::Sequence::Scene)

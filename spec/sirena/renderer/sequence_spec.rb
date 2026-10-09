@@ -375,34 +375,13 @@ RSpec.describe Sirena::Renderer::Sequence do
     end
 
     describe "graph-based compatibility" do
-      subject(:compatibility_xml) do
+      subject(:hook_evidence) do
         graph = Sirena::Layout::Sequence.new.build_graph(
           Sirena::Parser::Sequence.new.parse(source),
         )
-        renderer = described_class.new
-        positions = renderer.send(
-          :calculate_participant_positions, graph[:children]
-        )
-        svg = renderer.send(:create_document, graph)
-        renderer.send(:render_lifelines, positions, 1, svg)
-        renderer.send(:render_messages, graph, positions, svg)
-        renderer.send(:render_participants, graph[:children], positions, svg)
-        svg.to_xml
-      end
-
-      it "keeps the hooks observable" do
-        expect(compatibility_xml).to eq(Sirena.render(source))
-      end
-    end
-
-    describe "subclass overrides" do
-      subject(:hook_evidence) do
-        scene = Sirena::Layout::Sequence.new.call(
-          Sirena::Parser::Sequence.new.parse(source),
-        )
         renderer = hook_renderer_class.new
-        svg = renderer.render(scene)
-        [renderer.calls, svg.width, scene.width]
+        svg = renderer.render(graph)
+        [renderer.calls, svg.width]
       end
 
       let(:hook_renderer_class) do
@@ -421,6 +400,21 @@ RSpec.describe Sirena::Renderer::Sequence do
             super + 7
           end
 
+          def calculate_height(graph)
+            @calls << :calculate_height
+            super
+          end
+
+          def calculate_participant_positions(participants)
+            @calls << :calculate_participant_positions
+            super
+          end
+
+          def render_lifelines(positions, message_count, svg)
+            @calls << :render_lifelines
+            super
+          end
+
           def render_messages(graph, positions, svg)
             @calls << :render_messages
             super
@@ -430,15 +424,99 @@ RSpec.describe Sirena::Renderer::Sequence do
             @calls << :render_participants
             super
           end
+
+          def render_notes(notes, positions, svg)
+            @calls << :render_notes
+            super
+          end
         end
       end
+      let(:expected_hook_evidence) do
+        [
+          %i[
+            calculate_width calculate_height calculate_participant_positions
+            render_lifelines render_messages render_participants render_notes
+          ],
+          407.0,
+        ]
+      end
 
-      it "routes public rendering through the released chain" do
-        calls, width, scene_width = hook_evidence
+      it "keeps public Hash rendering on the released hook chain" do
+        expect(hook_evidence).to eq(expected_hook_evidence)
+      end
+    end
 
-        expect([calls, width])
-          .to eq([%i[calculate_width render_messages render_participants],
-                  scene_width + 7])
+    describe "typed final geometry" do
+      subject(:rendered_geometry) do
+        scene = Sirena::Layout::Sequence.new.call(
+          Sirena::Parser::Sequence.new.parse(source),
+        )
+        scene.width = 777
+        scene.height = 333
+        scene.view_box = "0 0 777 333"
+        scene.participants.first.x = 888
+        scene.participants.first.width = 321
+        scene.participants.first.label.x = 889
+        scene.lifelines.first.x1 = 999
+        scene.lifelines.first.x2 = 999
+        scene.messages.first.shaft.x1 = 666
+        scene.messages.first.label.x = 667
+
+        svg = typed_guard_renderer_class.new.render(scene)
+        lifeline = svg.children.grep(Sirena::Svg::Line).first
+        message = svg.children.grep(Sirena::Svg::Group)
+          .find { |group| group.id == "message-0" }
+        participant = svg.children.grep(Sirena::Svg::Group)
+          .find { |group| group.id == "participant-A" }
+        shaft = message.children.grep(Sirena::Svg::Line).first
+        message_label = message.children.grep(Sirena::Svg::Text).first
+        box = participant.children.grep(Sirena::Svg::Rect).first
+        participant_label = participant.children.grep(Sirena::Svg::Text).first
+        [
+          svg.width, svg.height, svg.view_box,
+          box.x, box.width, participant_label.x,
+          lifeline.x1, lifeline.x2,
+          shaft.x1, message_label.x
+        ]
+      end
+
+      let(:typed_guard_renderer_class) do
+        Class.new(described_class) do
+          protected
+
+          def calculate_width(_graph)
+            raise "typed rendering recovered width"
+          end
+
+          def calculate_height(_graph)
+            raise "typed rendering recovered height"
+          end
+
+          def calculate_participant_positions(_participants)
+            raise "typed rendering recovered participant positions"
+          end
+
+          def render_lifelines(_positions, _message_count, _svg)
+            raise "typed rendering recovered lifelines"
+          end
+
+          def render_messages(_graph, _positions, _svg)
+            raise "typed rendering recovered messages"
+          end
+
+          def render_participants(_participants, _positions, _svg)
+            raise "typed rendering recovered participants"
+          end
+        end
+      end
+      let(:expected_rendered_geometry) do
+        [777.0, 333.0, "0 0 777 333",
+         888.0, 321.0, 889.0, 999.0, 999.0, 666.0, 667.0]
+      end
+
+      it "serializes stored canvas, participant, lifeline, " \
+         "and message values" do
+        expect(rendered_geometry).to eq(expected_rendered_geometry)
       end
     end
 
