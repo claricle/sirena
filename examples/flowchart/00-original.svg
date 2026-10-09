@@ -68,7 +68,7 @@
   <text fill="#000000" x="357.798" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Receive Input</text>
 </g>
 <g id="node-Validate">
-  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="606.967,50 663.934,77.0 606.967,104.0 550,77.0"/>
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="606.967,50.0 663.934,77.0 606.967,104.0 550.0,77.0"/>
   <text fill="#000000" x="606.967" y="81.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Valid Input?</text>
 </g>
 <g id="node-Process">
@@ -88,7 +88,7 @@
   <text fill="#000000" x="117.143" y="471.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Generate Output</text>
 </g>
 <g id="node-Save">
-  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="379.53499999999997,450 459.07,477.0 379.53499999999997,504.0 300,477.0"/>
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="379.53499999999997,450.0 459.07,477.0 379.53499999999997,504.0 300.0,477.0"/>
   <text fill="#000000" x="379.53499999999997" y="481.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Save to Database?</text>
 </g>
 <g id="node-DB">

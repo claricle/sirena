@@ -17,7 +17,7 @@ module VerboseOrderHelper
     parsing + [
       "Parse complete: Sirena::Diagram::Flowchart",
       "Transforming diagram to graph...", "Transform complete",
-      "Computing layout...", "Layout complete (using fallback positioning)",
+      "Computing layout...", "Layout complete",
       "Rendering to SVG...", "SVG render complete"
     ]
   end

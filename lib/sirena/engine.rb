@@ -218,7 +218,10 @@ module Sirena
     # @return [Layout::Scene, Hash] what the renderer takes
     def layout_graph(result)
       log "Computing layout..."
-      return result unless result.is_a?(Layout::Legacy)
+      unless result.is_a?(Layout::Legacy)
+        log "Layout complete"
+        return result
+      end
 
       graph = Layout::Grid.apply(result.payload)
 
