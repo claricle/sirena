@@ -20,7 +20,7 @@ module DocMermaidBlocks
   module_function
 
   def files
-    Dir.glob(File.join(DOCS, "**/*.adoc")).sort
+    Dir.glob(File.join(DOCS, "**/*.adoc"))
   end
 
   # Marker lines the independent count looks for, so a block the extractor
