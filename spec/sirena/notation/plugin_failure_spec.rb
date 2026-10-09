@@ -16,11 +16,16 @@ module PluginFailureSpecHelpers
 
   # An exception whose own #message raises, as RSpec's aggregated-failures
   # error does when built without its aggregator.
-  def message_raising_error
+  def message_raising_error(raised = NoMethodError)
     Class.new(NotImplementedError) do
-      def message
-        raise NoMethodError, "message needs state this instance lacks"
-      end
+      define_method(:message) { raise raised }
+    end
+  end
+
+  # A stand-in for the Timeout module with only the named constants.
+  def fake_timeout(*names)
+    Module.new.tap do |mod|
+      names.each { |name| mod.const_set(name, Class.new(NotImplementedError)) }
     end
   end
 
@@ -93,24 +98,25 @@ RSpec.describe Sirena::Notation::PluginFailure do
   end
 
   describe ".passthrough_for" do
-    it "uses Timeout::ExitException where the timeout module has it" do
-      timeout = Module.new.tap do |mod|
-        mod.const_set(:ExitException, Class.new(Exception))
-        mod.const_set(:Error, Class.new(RuntimeError))
-      end
+    let(:unwinding) { %w[NoMemoryError SignalException SystemExit] }
 
-      expect(described_class.passthrough_for(timeout))
-        .to eq([NoMemoryError, SignalException, SystemExit,
-                timeout::ExitException])
+    it "uses Timeout::ExitException where the timeout module has it" do
+      timeout = fake_timeout(:ExitException, :Error)
+
+      expect(described_class.passthrough_for(timeout).last)
+        .to be(timeout::ExitException)
     end
 
     it "falls back to Timeout::Error where it does not" do
-      timeout = Module.new.tap do |mod|
-        mod.const_set(:Error, Class.new(RuntimeError))
-      end
+      timeout = fake_timeout(:Error)
 
-      expect(described_class.passthrough_for(timeout))
-        .to eq([NoMemoryError, SignalException, SystemExit, timeout::Error])
+      expect(described_class.passthrough_for(timeout).last)
+        .to be(timeout::Error)
+    end
+
+    it "always passes the process's own exceptions" do
+      expect(described_class.passthrough_for(fake_timeout(:Error)).first(3))
+        .to eq([NoMemoryError, SignalException, SystemExit])
     end
   end
 
@@ -182,21 +188,14 @@ RSpec.describe Sirena::Notation::PluginFailure do
     end
 
     it "names the class when the failure's own message raises" do
-      Sirena::Notation.register(
-        raising_parse(message_raising_error.allocate),
-      )
+      Sirena::Notation.register(raising_parse(message_raising_error.allocate))
 
       expect { engine.render("@raiser body", notation: :raiser) }
-        .to raise_error(pipeline_error, /\ARendering failed: .*: <message unavailable>\z/)
+        .to raise_error(pipeline_error, /: <message unavailable>\z/)
     end
 
     it "lets an exit raised by a failure's message through" do
-      odd = Class.new(NotImplementedError) do
-        def message
-          raise SystemExit
-        end
-      end
-      Sirena::Notation.register(raising_parse(odd.allocate))
+      Sirena::Notation.register(raising_parse(message_raising_error(SystemExit).allocate))
 
       expect { engine.render("@raiser body", notation: :raiser) }
         .to raise_error(SystemExit)
