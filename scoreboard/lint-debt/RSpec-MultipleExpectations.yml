@@ -180,7 +180,7 @@ rows:
 - file: spec/sirena/renderer/class_diagram_spec.rb
   count: 10
 - file: spec/sirena/renderer/er_diagram_spec.rb
-  count: 15
+  count: 13
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 24
 - file: spec/sirena/renderer/flowchart_link_spec.rb
