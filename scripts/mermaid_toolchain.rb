@@ -14,6 +14,10 @@ module MermaidToolchain
   PROVENANCE_PATH = File.join(ROOT, "config", "mermaid-oracle.yml")
   CONFIG_PATH = File.join(ROOT, "config", "mermaid-oracle.json")
   CSS_PATH = File.join(ROOT, "config", "mermaid-oracle.css")
+  CI_PUPPETEER_CONFIG_PATH = File.join(
+    ROOT, "config", "mermaid-puppeteer-ci.json"
+  )
+  CI_CANARY_ENV = "SIRENA_ORACLE_CI_CANARY_NO_SANDBOX"
   FONTCONFIG_PATH = File.join(ROOT, "config", "mermaid-fonts.conf")
   MMDC_NAME = Gem.win_platform? ? "mmdc.cmd" : "mmdc"
   MMDC_PATH = File.join(ROOT, "node_modules", ".bin", MMDC_NAME)
@@ -47,7 +51,9 @@ module MermaidToolchain
     verify_once
     [
       MMDC_PATH, "--configFile", CONFIG_PATH,
-      "--cssFile", CSS_PATH, *arguments,
+      "--cssFile", CSS_PATH,
+      *ci_canary_browser_arguments,
+      *arguments,
     ]
   end
 
@@ -144,6 +150,12 @@ module MermaidToolchain
     ENV.fetch("SIRENA_MMDC_TEST_BIN", nil)
   end
 
+  def ci_canary_browser_arguments
+    return [] unless ENV.fetch(CI_CANARY_ENV, nil) == "1"
+
+    ["--puppeteerConfigFile", CI_PUPPETEER_CONFIG_PATH]
+  end
+
   def verify_once
     return if @checked
 
@@ -193,6 +205,7 @@ module MermaidToolchain
   private_class_method :package_version, :lock_integrity,
                        :chromium_revision, :font_hashes, :version_of,
                        :flatten, :test_binary, :verify_once,
+                       :ci_canary_browser_arguments,
                        :provenance_drift, :drift_message,
                        :resolved_font_provenance, :render_canary_in,
                        :verify_canary

@@ -76,6 +76,10 @@ jobs:
       - run: npm ci
       - run: npm run oracle:check
       - run: npm run oracle:canary
+        # GitHub's AppArmor policy blocks Chromium's user-namespace sandbox.
+        # Keep this explicit opt-out on the canary step, never the whole job.
+        env:
+          SIRENA_ORACLE_CI_CANARY_NO_SANDBOX: '1'
 
   lint:
     # Its own job, not a step inside the unit matrix. Lint answers in under a
