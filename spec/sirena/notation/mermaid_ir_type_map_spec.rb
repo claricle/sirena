@@ -2,9 +2,9 @@
 
 require "spec_helper"
 
-RSpec.describe "typed IR map" do
+RSpec.describe Sirena::Notation::Mermaid do
   def map_path
-    File.expand_path("../../docs/ir-type-map.md", __dir__)
+    File.expand_path("../../../docs/ir-type-map.md", __dir__)
   end
 
   def row_pattern
@@ -19,6 +19,10 @@ RSpec.describe "typed IR map" do
       match = row_pattern.match(line)
       match&.named_captures
     end
+  end
+
+  def implementation_path(row)
+    File.expand_path("../../../#{row.fetch('path')}", __dir__)
   end
 
   it "maps every registered Mermaid type exactly once" do
@@ -37,7 +41,7 @@ RSpec.describe "typed IR map" do
   end
 
   it "points every row at an existing implementation" do
-    paths = rows.map { |row| File.expand_path("../../#{row.fetch('path')}", __dir__) }
+    paths = rows.map { |row| implementation_path(row) }
 
     expect(paths).to all(satisfy { |path| File.file?(path) })
   end
