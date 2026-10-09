@@ -37,6 +37,34 @@ RSpec.describe Sirena::Diagram::C4 do
       expect(diagram.valid?).to be(false)
     end
 
+    it "rejects elements with a missing or empty id" do
+      elements = [
+        Sirena::Diagram::C4Element.new(label: "A", element_type: "System"),
+        Sirena::Diagram::C4Element.new(id: "", label: "A",
+                                       element_type: "System"),
+      ]
+      expect(elements.map(&:valid?)).to eq([false, false])
+    end
+
+    it "rejects relationships with a missing or empty source" do
+      relationships = [relationship(nil, "a"), relationship("", "a")]
+      expect(relationships.map(&:valid?)).to eq([false, false])
+    end
+
+    it "rejects boundaries with a missing or empty id" do
+      boundaries = [
+        boundary_class.new(label: "A"),
+        boundary_class.new(id: "", label: "A"),
+      ]
+      expect(boundaries.map(&:valid?)).to eq([false, false])
+    end
+
+    it "accepts nil relationships and boundaries" do
+      diagram = described_class.new(elements: [element("a")],
+                                    relationships: nil, boundaries: nil)
+      expect(diagram.valid?).to be(true)
+    end
+
     context "with an invalid element, relationship or boundary" do
       let(:bad_element) do
         described_class.new(elements: [element("a", label: "")])
