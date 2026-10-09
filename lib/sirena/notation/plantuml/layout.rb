@@ -105,7 +105,7 @@ module Sirena
 
           Scene::Box.new(
             id: item[:id], x: x, y: y, width: box_width,
-            height: item[:height], texts: texts, separators: separators,
+            height: item[:height], texts: texts, separators: separators
           )
         end
 
@@ -147,7 +147,7 @@ module Sirena
 
           Scene::Relation.new(
             id: "relation-#{index}",
-            path: relation_path(left_box, endpoints),
+            path: relation_path(endpoints),
             dashed: relation.kind == :implementation,
             marker_points: marker[:points],
             marker_filled: marker[:filled],
@@ -187,7 +187,7 @@ module Sirena
           [box.x + (box.width / 2), box.y + (box.height / 2)]
         end
 
-        def relation_path(box, endpoints)
+        def relation_path(endpoints)
           left = endpoints.fetch(:left)
           right = endpoints.fetch(:right)
           return "M #{point(left)} L #{point(right)}" unless endpoints[:control]
