@@ -167,7 +167,7 @@ module Sirena
             colour_level: source.level,
             sections: [Section.new(start_point: start_point,
                                    end_point: end_point,
-                                   bend_points: bends)],
+                                   bend_points: bends)]
           )
         end
       end

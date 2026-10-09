@@ -229,6 +229,7 @@ module Sirena
       def render_node_text(node, svg)
         label = node.labels.first
         return unless label&.text
+
         text = Svg::Text.new.tap do |t|
           t.x = label.x
           t.y = label.y

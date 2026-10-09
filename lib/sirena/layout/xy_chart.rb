@@ -135,7 +135,7 @@ module Sirena
           lines: grid_lines(graph) + axis_lines(graph),
           labels: axis_labels(graph),
           series: typed_series(graph),
-          legends: legends(graph),
+          legends: legends(graph)
         )
       end
 
@@ -148,7 +148,7 @@ module Sirena
       end
 
       def grid_lines(graph)
-        lines = GRID_LINES.times.map do |index|
+        lines = Array.new(GRID_LINES) do |index|
           y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
           Line.new(x1: graph[:plot_x], y1: y,
                    x2: graph[:plot_x] + graph[:plot_width], y2: y,
@@ -185,7 +185,7 @@ module Sirena
             text: axis[:label], x: graph[:plot_x] + (graph[:plot_width] / 2),
             y: graph[:plot_y] + graph[:plot_height] + 60,
             text_anchor: "middle", font_size: normal_font_size,
-            font_weight: "bold",
+            font_weight: "bold"
           )
         end
         return labels unless axis[:type] == :categorical
@@ -206,10 +206,10 @@ module Sirena
           labels << Label.new(
             text: axis[:label], x: 20, y: centre_y,
             text_anchor: "middle", font_size: normal_font_size,
-            font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})",
+            font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})"
           )
         end
-        labels + GRID_LINES.times.map do |index|
+        labels + Array.new(GRID_LINES) do |index|
           y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
           value = axis[:max] - (index * (axis[:max] - axis[:min]) / GRID_LINES)
           Label.new(text: value.round(1).to_s, x: graph[:plot_x] - 10,
@@ -229,7 +229,7 @@ module Sirena
             chart_type: dataset[:chart_type], colour_index: index,
             polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
             points: dataset[:chart_type] == :bar ? [] : points,
-            bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : [],
+            bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : []
           )
         end
       end
@@ -258,7 +258,7 @@ module Sirena
             colour_index: index,
             label: Label.new(text: dataset[:label], x: graph[:width] - 130,
                              y: y + 4, text_anchor: "start",
-                             font_size: small_font_size),
+                             font_size: small_font_size)
           )
         end
       end
