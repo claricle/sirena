@@ -243,6 +243,20 @@ module Sirena
           group.children << type_text
         end
 
+        # Add doc reference if present
+        if element.docref
+          docref_text = Svg::Text.new.tap do |text|
+            text.x = x + width / 2
+            text.y = y + height / 2 + 26
+            text.content = "Doc Ref: #{element.docref}"
+            text.fill = theme_color(:text_color) || "#666"
+            text.font_size = "11"
+            text.text_anchor = "middle"
+            text.dominant_baseline = "middle"
+          end
+          group.children << docref_text
+        end
+
         svg << group
       end
 
