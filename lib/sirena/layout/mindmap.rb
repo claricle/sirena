@@ -109,67 +109,96 @@ module Sirena
       def scene(diagram)
         graph = build_graph(diagram)
         nodes = typed_nodes(graph[:nodes])
-        width = graph[:width] + (PADDING * 2)
-        height = graph[:height] + (PADDING * 2)
-
+        width, height = canvas_dimensions(graph)
         Scene.new(
-          width: width,
-          height: height,
+          width: width, height: height,
           view_box: "0 0 #{width.to_f} #{height.to_f}",
           children: nodes,
           edges: typed_edges(graph[:connections], nodes),
         )
       end
 
-      def typed_nodes(nodes)
-        nodes.map do |node|
-          center_x = node[:x] + PADDING
-          top_y = node[:y] + PADDING
-          width = node[:width]
-          height = node[:height]
-          radius = [width, height].max / 2
-          label_y = node[:shape] == "circle" ? top_y + radius : top_y + (height / 2)
+      def canvas_dimensions(graph)
+        [graph[:width] + (PADDING * 2), graph[:height] + (PADDING * 2)]
+      end
 
-          Node.new(
-            id: node[:id],
-            x: center_x - (width / 2),
-            y: top_y,
-            width: width,
-            height: height,
-            center_x: center_x,
-            center_y: top_y + radius,
-            radius: radius,
-            level: node[:level],
-            shape: node[:shape],
-            shape_points: hexagon_points(center_x, top_y, width, height),
-            shape_path: cloud_path(center_x, top_y, width, height),
-            labels: [Label.new(text: node[:content], x: center_x, y: label_y + 5)],
-          )
-        end
+      def typed_nodes(nodes)
+        nodes.map { |node| typed_node(node) }
+      end
+
+      def typed_node(node)
+        geometry = node_geometry(node)
+        Node.new(
+          id: node[:id], level: node[:level], shape: node[:shape],
+          **geometry, **node_shape_geometry(geometry),
+          labels: [node_label(node, geometry)],
+        )
+      end
+
+      def node_shape_geometry(geometry)
+        coordinates = {
+          center_x: geometry[:center_x], top_y: geometry[:y],
+          width: geometry[:width], height: geometry[:height],
+        }
+        { shape_points: hexagon_points(**coordinates),
+          shape_path: cloud_path(**coordinates) }
+      end
+
+      def node_geometry(node)
+        width = node[:width]
+        height = node[:height]
+        center_x = node[:x] + PADDING
+        top_y = node[:y] + PADDING
+        radius = [width, height].max / 2
+        { x: center_x - (width / 2), y: top_y, width: width, height: height,
+          center_x: center_x, center_y: top_y + radius, radius: radius }
+      end
+
+      def node_label(node, geometry)
+        center_y = geometry[:y] + (geometry[:height] / 2)
+        center_y = geometry[:y] + geometry[:radius] if node[:shape] == "circle"
+        Label.new(text: node[:content], x: geometry[:center_x], y: center_y + 5)
       end
 
       def typed_edges(connections, nodes)
         nodes_by_id = nodes.to_h { |node| [node.id, node] }
         connections.filter_map.with_index do |connection, index|
-          source = nodes_by_id[connection[:from]]
-          target = nodes_by_id[connection[:to]]
-          next unless source && target
-
-          start_point = Point.new(x: source.center_x,
-                                  y: source.y + (source.height / 2))
-          end_point = Point.new(x: target.center_x, y: target.y)
-          control_y = start_point.y + ((end_point.y - start_point.y) / 2)
-          bends = [Point.new(x: start_point.x, y: control_y),
-                   Point.new(x: end_point.x, y: control_y)]
-          Edge.new(
-            id: "edge_#{index}", source: source.id, target: target.id,
-            path: bezier_path(start_point, bends, end_point),
-            colour_level: source.level,
-            sections: [Section.new(start_point: start_point,
-                                   end_point: end_point,
-                                   bend_points: bends)]
-          )
+          typed_edge(connection, nodes_by_id, index)
         end
+      end
+
+      def typed_edge(connection, nodes, index)
+        source = nodes[connection[:from]]
+        target = nodes[connection[:to]]
+        return unless source && target
+
+        start_point, end_point = edge_points(source, target)
+        bends = edge_bends(start_point, end_point)
+        Edge.new(**edge_attributes(source, target, [start_point, end_point],
+                                   bends, index))
+      end
+
+      def edge_points(source, target)
+        start_point = Point.new(
+          x: source.center_x, y: source.y + (source.height / 2),
+        )
+        [start_point, Point.new(x: target.center_x, y: target.y)]
+      end
+
+      def edge_bends(start_point, end_point)
+        control_y = start_point.y + ((end_point.y - start_point.y) / 2)
+        [Point.new(x: start_point.x, y: control_y),
+         Point.new(x: end_point.x, y: control_y)]
+      end
+
+      def edge_attributes(source, target, points, bends, index)
+        start_point, end_point = points
+        section = Section.new(
+          start_point: start_point, end_point: end_point, bend_points: bends,
+        )
+        { id: "edge_#{index}", source: source.id, target: target.id,
+          path: bezier_path(start_point, bends, end_point),
+          colour_level: source.level, sections: [section] }
       end
 
       def bezier_path(start_point, bends, end_point)
@@ -179,32 +208,44 @@ module Sirena
           "#{end_point.x} #{end_point.y}"
       end
 
-      def hexagon_points(x, y, width, height)
+      def hexagon_points(center_x:, top_y:, width:, height:)
         offset = width * 0.2
-        [[x - (width / 2) + offset, y],
-         [x + (width / 2) - offset, y],
-         [x + (width / 2), y + (height / 2)],
-         [x + (width / 2) - offset, y + height],
-         [x - (width / 2) + offset, y + height],
-         [x - (width / 2), y + (height / 2)]]
+        left = center_x - (width / 2)
+        right = center_x + (width / 2)
+        middle_y = top_y + (height / 2)
+        bottom_y = top_y + height
+        [[left + offset, top_y], [right - offset, top_y], [right, middle_y],
+         [right - offset, bottom_y], [left + offset, bottom_y],
+         [left, middle_y]]
           .map { |point| point.join(",") }.join(" ")
       end
 
-      def cloud_path(x, y, width, height)
+      def cloud_path(center_x:, top_y:, width:, height:)
+        left, inner_left, near_left, near_right, inner_right, right =
+          cloud_x_positions(center_x, width)
+        top, high, upper, shoulder, lower, bottom =
+          cloud_y_positions(top_y, height)
+        [
+          "M #{left} #{lower} Q #{left} #{shoulder}, #{inner_left} #{upper} ",
+          "Q #{inner_left} #{top}, #{near_left} #{high} ",
+          "Q #{center_x} #{top}, #{near_right} #{high} ",
+          "Q #{inner_right} #{top}, #{inner_right} #{upper} ",
+          "Q #{right} #{shoulder}, #{right} #{lower} ",
+          "Q #{right} #{bottom}, #{center_x} #{bottom} ",
+          "Q #{left} #{bottom}, #{left} #{lower} Z",
+        ].join
+      end
+
+      def cloud_x_positions(center_x, width)
         half_width = width / 2
-        "M #{x - half_width} #{y + height * 0.6} " \
-          "Q #{x - half_width} #{y + height * 0.3}, " \
-          "#{x - half_width * 0.6} #{y + height * 0.2} " \
-          "Q #{x - half_width * 0.6} #{y}, " \
-          "#{x - half_width * 0.2} #{y + height * 0.1} " \
-          "Q #{x} #{y}, #{x + half_width * 0.2} #{y + height * 0.1} " \
-          "Q #{x + half_width * 0.6} #{y}, " \
-          "#{x + half_width * 0.6} #{y + height * 0.2} " \
-          "Q #{x + half_width} #{y + height * 0.3}, " \
-          "#{x + half_width} #{y + height * 0.6} " \
-          "Q #{x + half_width} #{y + height}, #{x} #{y + height} " \
-          "Q #{x - half_width} #{y + height}, " \
-          "#{x - half_width} #{y + height * 0.6} Z"
+        [center_x - half_width, center_x - (half_width * 0.6),
+         center_x - (half_width * 0.2), center_x + (half_width * 0.2),
+         center_x + (half_width * 0.6), center_x + half_width]
+      end
+
+      def cloud_y_positions(top_y, height)
+        [top_y, top_y + (height * 0.1), top_y + (height * 0.2),
+         top_y + (height * 0.3), top_y + (height * 0.6), top_y + height]
       end
 
       def empty_graph

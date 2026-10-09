@@ -148,29 +148,51 @@ module Sirena
       end
 
       def grid_lines(graph)
-        lines = Array.new(GRID_LINES) do |index|
-          y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
-          Line.new(x1: graph[:plot_x], y1: y,
-                   x2: graph[:plot_x] + graph[:plot_width], y2: y,
-                   kind: "grid")
-        end
-        return lines unless graph.dig(:x_axis, :type) == :categorical
+        horizontal_grid_lines(graph) + vertical_grid_lines(graph)
+      end
 
-        lines + (graph.dig(:x_axis, :positions) || []).map do |position|
+      def horizontal_grid_lines(graph)
+        Array.new(GRID_LINES) do |index|
+          y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
+          Line.new(
+            x1: graph[:plot_x], y1: y,
+            x2: graph[:plot_x] + graph[:plot_width], y2: y, kind: "grid",
+          )
+        end
+      end
+
+      def vertical_grid_lines(graph)
+        return [] unless graph.dig(:x_axis, :type) == :categorical
+
+        (graph.dig(:x_axis, :positions) || []).map do |position|
           x = graph[:plot_x] + position[:position]
-          Line.new(x1: x, y1: graph[:plot_y], x2: x,
-                   y2: graph[:plot_y] + graph[:plot_height], kind: "grid")
+          Line.new(
+            x1: x, y1: graph[:plot_y], x2: x,
+            y2: graph[:plot_y] + graph[:plot_height], kind: "grid",
+          )
         end
       end
 
       def axis_lines(graph)
-        x = graph[:plot_x]
-        y = graph[:plot_y]
-        width = graph[:plot_width]
-        height = graph[:plot_height]
-        [Line.new(x1: x, y1: y + height, x2: x + width, y2: y + height,
-                  kind: "axis"),
-         Line.new(x1: x, y1: y, x2: x, y2: y + height, kind: "axis")]
+        [horizontal_axis_line(graph), vertical_axis_line(graph)]
+      end
+
+      def horizontal_axis_line(graph)
+        x_coordinate = graph[:plot_x]
+        y_coordinate = graph[:plot_y] + graph[:plot_height]
+        Line.new(
+          x1: x_coordinate, y1: y_coordinate,
+          x2: x_coordinate + graph[:plot_width], y2: y_coordinate, kind: "axis",
+        )
+      end
+
+      def vertical_axis_line(graph)
+        x_coordinate = graph[:plot_x]
+        y_coordinate = graph[:plot_y]
+        Line.new(
+          x1: x_coordinate, y1: y_coordinate, x2: x_coordinate,
+          y2: y_coordinate + graph[:plot_height], kind: "axis",
+        )
       end
 
       def axis_labels(graph)
@@ -179,18 +201,24 @@ module Sirena
 
       def x_axis_labels(graph)
         axis = graph[:x_axis]
-        labels = []
-        if axis[:label]
-          labels << Label.new(
-            text: axis[:label], x: graph[:plot_x] + (graph[:plot_width] / 2),
-            y: graph[:plot_y] + graph[:plot_height] + 60,
-            text_anchor: "middle", font_size: normal_font_size,
-            font_weight: "bold"
-          )
-        end
-        return labels unless axis[:type] == :categorical
+        [x_axis_title(graph, axis), *x_tick_labels(graph, axis)].compact
+      end
 
-        labels + (axis[:positions] || []).map do |position|
+      def x_axis_title(graph, axis)
+        return unless axis[:label]
+
+        Label.new(
+          text: axis[:label], x: graph[:plot_x] + (graph[:plot_width] / 2),
+          y: graph[:plot_y] + graph[:plot_height] + 60,
+          text_anchor: "middle", font_size: normal_font_size,
+          font_weight: "bold",
+        )
+      end
+
+      def x_tick_labels(graph, axis)
+        return [] unless axis[:type] == :categorical
+
+        (axis[:positions] || []).map do |position|
           Label.new(text: position[:label],
                     x: graph[:plot_x] + position[:position],
                     y: graph[:plot_y] + graph[:plot_height] + 20,
@@ -200,16 +228,22 @@ module Sirena
 
       def y_axis_labels(graph)
         axis = graph[:y_axis]
-        labels = []
-        if axis[:label]
-          centre_y = graph[:plot_y] + (graph[:plot_height] / 2)
-          labels << Label.new(
-            text: axis[:label], x: 20, y: centre_y,
-            text_anchor: "middle", font_size: normal_font_size,
-            font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})"
-          )
-        end
-        labels + Array.new(GRID_LINES) do |index|
+        [y_axis_title(graph, axis), *y_tick_labels(graph, axis)].compact
+      end
+
+      def y_axis_title(graph, axis)
+        return unless axis[:label]
+
+        centre_y = graph[:plot_y] + (graph[:plot_height] / 2)
+        Label.new(
+          text: axis[:label], x: 20, y: centre_y,
+          text_anchor: "middle", font_size: normal_font_size,
+          font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})",
+        )
+      end
+
+      def y_tick_labels(graph, axis)
+        Array.new(GRID_LINES) do |index|
           y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
           value = axis[:max] - (index * (axis[:max] - axis[:min]) / GRID_LINES)
           Label.new(text: value.round(1).to_s, x: graph[:plot_x] - 10,
@@ -220,16 +254,26 @@ module Sirena
 
       def typed_series(graph)
         graph[:datasets].map.with_index do |dataset, index|
-          points = dataset[:points].map do |point|
-            Point.new(x: graph[:plot_x] + point[:x],
-                      y: graph[:plot_y] + point[:y], radius: 4)
-          end
-          Series.new(
-            id: dataset[:id], label: dataset[:label],
-            chart_type: dataset[:chart_type], colour_index: index,
-            polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
-            points: dataset[:chart_type] == :bar ? [] : points,
-            bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : []
+          typed_dataset(graph, dataset, index)
+        end
+      end
+
+      def typed_dataset(graph, dataset, index)
+        points = dataset_points(graph, dataset)
+        Series.new(
+          id: dataset[:id], label: dataset[:label],
+          chart_type: dataset[:chart_type], colour_index: index,
+          polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
+          points: dataset[:chart_type] == :bar ? [] : points,
+          bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : [],
+        )
+      end
+
+      def dataset_points(graph, dataset)
+        dataset[:points].map do |point|
+          Point.new(
+            x: graph[:plot_x] + point[:x],
+            y: graph[:plot_y] + point[:y], radius: 4,
           )
         end
       end
@@ -252,15 +296,20 @@ module Sirena
 
       def legends(graph)
         graph[:datasets].map.with_index do |dataset, index|
-          y = 60 + (index * 25)
-          Legend.new(
-            x: graph[:width] - 150, y: y - 8, width: 15, height: 15,
-            colour_index: index,
-            label: Label.new(text: dataset[:label], x: graph[:width] - 130,
-                             y: y + 4, text_anchor: "start",
-                             font_size: small_font_size)
-          )
+          legend(graph, dataset, index)
         end
+      end
+
+      def legend(graph, dataset, index)
+        y = 60 + (index * 25)
+        Legend.new(
+          x: graph[:width] - 150, y: y - 8, width: 15, height: 15,
+          colour_index: index,
+          label: Label.new(
+            text: dataset[:label], x: graph[:width] - 130,
+            y: y + 4, text_anchor: "start", font_size: small_font_size,
+          ),
+        )
       end
 
       def large_font_size

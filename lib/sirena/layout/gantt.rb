@@ -127,17 +127,21 @@ module Sirena
       end
 
       def calculation_copy(diagram)
-        diagram.dup.tap do |copy|
-          copy.sections = diagram.sections.map do |section|
-            section.dup.tap do |section_copy|
-              section_copy.tasks = section.tasks.map do |task|
-                task.dup.tap do |task_copy|
-                  task_copy.calculated_start = nil
-                  task_copy.calculated_end = nil
-                end
-              end
-            end
-          end
+        copy = diagram.dup
+        copy.sections = diagram.sections.map { |section| section_copy(section) }
+        copy
+      end
+
+      def section_copy(section)
+        copy = section.dup
+        copy.tasks = section.tasks.map { |task| task_copy(task) }
+        copy
+      end
+
+      def task_copy(task)
+        task.dup.tap do |copy|
+          copy.calculated_start = nil
+          copy.calculated_end = nil
         end
       end
 
@@ -194,68 +198,108 @@ module Sirena
       end
 
       def section_geometry(sections)
-        current_y = MARGIN_TOP + TIMELINE_HEIGHT
+        next_y = MARGIN_TOP + TIMELINE_HEIGHT
         sections.map do |section|
-          header_y = current_y
-          current_y += SECTION_HEIGHT
-          tasks = section[:tasks].map do |task|
-            geometry = task_geometry(task, current_y)
-            current_y += ROW_HEIGHT
-            geometry
-          end
-          Section.new(
-            background: Rect.new(x: 0, y: header_y,
-                                 width: MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT,
-                                 height: SECTION_HEIGHT, kind: "section"),
-            label: Label.new(text: section[:name], x: 10,
-                             y: header_y + (SECTION_HEIGHT / 2),
-                             font_size: normal_font_size,
-                             font_weight: "bold",
-                             dominant_baseline: "middle"),
-            tasks: tasks,
-          )
+          result = typed_section(section, next_y)
+          next_y += SECTION_HEIGHT + (section[:tasks].length * ROW_HEIGHT)
+          result
         end
       end
 
-      def task_geometry(task, row_y)
-        label = Label.new(text: task[:description], x: 10,
-                          y: row_y + (ROW_HEIGHT / 2),
-                          font_size: small_font_size,
-                          dominant_baseline: "middle")
-        x = MARGIN_LEFT + task[:start_x]
-        y = row_y + ((ROW_HEIGHT - TASK_BAR_HEIGHT) / 2)
-        milestone = task[:milestone] || task[:width] < 10
-        Task.new(
-          label: label,
-          bar: if milestone
-                 nil
-               else
-                 Rect.new(x: x, y: y, width: task[:width],
-                          height: TASK_BAR_HEIGHT,
-                          corner_radius: 3, kind: "task")
-               end,
-          milestone_points: milestone ? milestone_points(x, y) : nil,
-          id_label: task_id_label(task, x, y),
-          status: task_status(task),
-          start_date: task[:start_date], end_date: task[:end_date]
+      def typed_section(section, header_y)
+        task_y = header_y + SECTION_HEIGHT
+        Section.new(
+          background: section_background(header_y),
+          label: section_label(section[:name], header_y),
+          tasks: typed_tasks(section[:tasks], task_y),
         )
       end
 
-      def milestone_points(x, y)
-        center_y = y + (TASK_BAR_HEIGHT / 2)
+      def section_background(header_y)
+        Rect.new(
+          x: 0, y: header_y,
+          width: MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT,
+          height: SECTION_HEIGHT, kind: "section",
+        )
+      end
+
+      def section_label(name, header_y)
+        Label.new(
+          text: name, x: 10, y: header_y + (SECTION_HEIGHT / 2),
+          font_size: normal_font_size, font_weight: "bold",
+          dominant_baseline: "middle",
+        )
+      end
+
+      def typed_tasks(tasks, first_y)
+        tasks.map.with_index do |task, index|
+          task_geometry(task, first_y + (index * ROW_HEIGHT))
+        end
+      end
+
+      def task_geometry(task, row_position)
+        x_coordinate, y_coordinate = task_position(task, row_position)
+        Task.new(
+          label: task_label(task, row_position),
+          bar: task_bar(task, x_coordinate, y_coordinate),
+          milestone_points: task_milestone(task, x_coordinate, y_coordinate),
+          id_label: task_id_label(task, x_coordinate, y_coordinate),
+          status: task_status(task),
+          start_date: task[:start_date], end_date: task[:end_date],
+        )
+      end
+
+      def task_position(task, row_position)
+        x_coordinate = MARGIN_LEFT + task[:start_x]
+        y_coordinate = row_position + ((ROW_HEIGHT - TASK_BAR_HEIGHT) / 2)
+        [x_coordinate, y_coordinate]
+      end
+
+      def task_label(task, row_position)
+        Label.new(
+          text: task[:description], x: 10,
+          y: row_position + (ROW_HEIGHT / 2),
+          font_size: small_font_size, dominant_baseline: "middle",
+        )
+      end
+
+      def task_bar(task, x_coordinate, y_coordinate)
+        return if milestone?(task)
+
+        Rect.new(
+          x: x_coordinate, y: y_coordinate, width: task[:width],
+          height: TASK_BAR_HEIGHT, corner_radius: 3, kind: "task",
+        )
+      end
+
+      def task_milestone(task, x_coordinate, y_coordinate)
+        return unless milestone?(task)
+
+        milestone_points(x_coordinate, y_coordinate)
+      end
+
+      def milestone?(task)
+        task[:milestone] || task[:width] < 10
+      end
+
+      def milestone_points(x_coordinate, y_coordinate)
+        center_y = y_coordinate + (TASK_BAR_HEIGHT / 2)
         size = 12
-        [[x, center_y], [x + size, center_y - size],
-         [x + (size * 2), center_y], [x + size, center_y + size]]
+        [[x_coordinate, center_y],
+         [x_coordinate + size, center_y - size],
+         [x_coordinate + (size * 2), center_y],
+         [x_coordinate + size, center_y + size]]
           .map { |point| point.join(",") }.join(" ")
       end
 
-      def task_id_label(task, x, y)
+      def task_id_label(task, x_coordinate, y_coordinate)
         return unless task[:id] && task[:width] > 40
 
-        Label.new(text: task[:id], x: x + (task[:width] / 2),
-                  y: y + (TASK_BAR_HEIGHT / 2), text_anchor: "middle",
-                  font_size: small_font_size,
-                  dominant_baseline: "middle")
+        Label.new(
+          text: task[:id], x: x_coordinate + (task[:width] / 2),
+          y: y_coordinate + (TASK_BAR_HEIGHT / 2), text_anchor: "middle",
+          font_size: small_font_size, dominant_baseline: "middle",
+        )
       end
 
       def task_status(task)

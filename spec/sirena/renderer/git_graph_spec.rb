@@ -26,37 +26,58 @@ RSpec.describe Sirena::Renderer::GitGraph do
   end
   let(:scene) { scene_for(source) }
 
+  def scene_types
+    [
+      scene.class,
+      scene.commits.map(&:class).uniq,
+      scene.connections.map(&:class).uniq,
+      scene.view_box,
+    ]
+  end
+
+  def expected_scene_types
+    [
+      Sirena::Layout::GitGraph::Scene,
+      [Sirena::Layout::GitGraph::Commit],
+      [Sirena::Layout::GitGraph::Connection],
+      "0 0 #{scene.width} #{scene.height}",
+    ]
+  end
+
+  def coordinates
+    values = scene.commits.flat_map { |commit| [commit.x, commit.y] }
+    values.concat(scene.connections.flat_map do |connection|
+      [connection.from_x, connection.from_y, connection.to_x, connection.to_y]
+    end)
+    values.concat(scene.commits.flat_map do |commit|
+      commit.labels.flat_map { |label| [label.x, label.y] }
+    end)
+    values.concat(scene.branches.filter_map do |branch|
+      [branch.label.x, branch.label.y] if branch.label
+    end.flatten)
+  end
+
+  def render_summary
+    svg = renderer.render(scene)
+    merge = svg.children.grep(Sirena::Svg::Path).find do |path|
+      path.stroke_dasharray == "5,3"
+    end
+    [
+      svg.children.grep(Sirena::Svg::Circle).length,
+      merge.nil?, svg.children.grep(Sirena::Svg::Text).empty?,
+    ]
+  end
+
   it "returns typed final canvas geometry" do
-    expect(scene).to be_a(Sirena::Layout::GitGraph::Scene)
-    expect(scene.commits).to all(be_a(Sirena::Layout::GitGraph::Commit))
-    expect(scene.connections).to all(be_a(Sirena::Layout::GitGraph::Connection))
-    expect(scene.view_box).to eq("0 0 #{scene.width} #{scene.height}")
+    expect(scene_types).to eq(expected_scene_types)
   end
 
   it "includes framing in commits, connections, and every label" do
-    coordinates = scene.commits.flat_map { |commit| [commit.x, commit.y] }
-    coordinates.concat(scene.connections.flat_map do |connection|
-      [connection.from_x, connection.from_y, connection.to_x, connection.to_y]
-    end)
-    coordinates.concat(scene.commits.flat_map do |commit|
-      commit.labels.flat_map { |label| [label.x, label.y] }
-    end)
-    coordinates.concat(scene.branches.filter_map do |branch|
-      [branch.label.x, branch.label.y] if branch.label
-    end.flatten)
-
     expect(coordinates).to all(be >= 0)
   end
 
   it "renders commit circles, merge links, and labels" do
-    svg = renderer.render(scene)
-
-    expect(svg.children.grep(Sirena::Svg::Circle).length).to eq(scene.commits.length)
-    merge = svg.children.grep(Sirena::Svg::Path).find do |path|
-      path.stroke_dasharray == "5,3"
-    end
-    expect(merge).not_to be_nil
-    expect(svg.children.grep(Sirena::Svg::Text)).not_to be_empty
+    expect(render_summary).to eq([scene.commits.length, false, false])
   end
 
   it "renders cherry-pick links as dotted paths" do

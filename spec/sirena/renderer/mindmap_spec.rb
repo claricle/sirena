@@ -21,30 +21,34 @@ RSpec.describe Sirena::Renderer::Mindmap do
   let(:scene) { Sirena::Layout::Mindmap.new.call(diagram) }
 
   it "returns typed final canvas geometry" do
-    expect(scene).to be_a(Sirena::Layout::Mindmap::Scene)
-    expect(scene.children).to all(be_a(Sirena::Layout::Mindmap::Node))
-    expect(scene.edges).to all(be_a(Sirena::Layout::Mindmap::Edge))
-    expect(scene.view_box).to eq("0 0 #{scene.width} #{scene.height}")
+    actual = [scene.class, scene.children.map(&:class).uniq,
+              scene.edges.map(&:class).uniq, scene.view_box]
+    expected = [Sirena::Layout::Mindmap::Scene,
+                [Sirena::Layout::Mindmap::Node],
+                [Sirena::Layout::Mindmap::Edge],
+                "0 0 #{scene.width} #{scene.height}"]
+    expect(actual).to eq(expected)
   end
 
   it "includes framing in every node, link, and label coordinate" do
     root = scene.children.first
     link = scene.edges.first
 
-    expect([root.x, root.y, root.labels.first.x, root.labels.first.y])
-      .to all(be >= Sirena::Layout::Mindmap::PADDING)
-    expect(link.sections.first.start_point.x).to eq(root.center_x)
-    expect(link.path).to include(root.center_x.to_s)
+    coordinates = [root.x, root.y, root.labels.first.x, root.labels.first.y]
+    padding = Sirena::Layout::Mindmap::PADDING
+    framing = coordinates.all? { |value| value >= padding }
+    start_aligned = link.sections.first.start_point.x == root.center_x
+    expect([framing, start_aligned, link.path.include?(root.center_x.to_s)])
+      .to eq([true, true, true])
   end
 
   it "renders all node shapes, labels, and links" do
     svg = renderer.render(scene)
 
-    expect(svg.children.grep(Sirena::Svg::Circle).length).to eq(1)
-    expect(svg.children.grep(Sirena::Svg::Rect).length).to eq(1)
-    expect(svg.children.grep(Sirena::Svg::Polygon).length).to eq(1)
-    expect(svg.children.grep(Sirena::Svg::Path).length).to eq(4)
-    expect(svg.children.grep(Sirena::Svg::Text).length).to eq(4)
+    types = [Sirena::Svg::Circle, Sirena::Svg::Rect, Sirena::Svg::Polygon,
+             Sirena::Svg::Path, Sirena::Svg::Text]
+    expect(types.map { |type| svg.children.grep(type).length })
+      .to eq([1, 1, 1, 4, 4])
   end
 
   it "uses the Scene dimensions without renderer offsets" do

@@ -87,10 +87,8 @@ RSpec.describe "Git Graph Integration" do
       layout = transform.to_graph(diagram)
 
       # Find commits on different branches
-      main_commits = layout.commits.select { |commit| commit.branch == "main" }
-      develop_commits = layout.commits.select do |commit|
-        commit.branch == "develop"
-      end
+      main_commits = layout.commits.select { _1.branch == "main" }
+      develop_commits = layout.commits.select { _1.branch == "develop" }
 
       main_lanes = main_commits.map(&:lane).uniq
       develop_lanes = develop_commits.map(&:lane).uniq

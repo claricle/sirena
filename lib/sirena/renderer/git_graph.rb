@@ -44,7 +44,9 @@ module Sirena
 
       def connection_element(connection, branch_colours)
         colour = connection_colour(connection, branch_colours)
-        return normal_connection(connection, colour) if connection.type == :normal
+        if connection.type == :normal
+          return normal_connection(connection, colour)
+        end
 
         Svg::Path.new.tap do |path|
           path.d = connection.path
@@ -68,7 +70,9 @@ module Sirena
       end
 
       def connection_colour(connection, branch_colours)
-        return theme_color(:edge_stroke) || "#999999" if connection.type == :cherry_pick
+        if connection.type == :cherry_pick
+          return theme_color(:edge_stroke) || "#999999"
+        end
 
         branch_colours[connection.from_branch] ||
           branch_colours[connection.to_branch] ||
