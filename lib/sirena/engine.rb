@@ -42,14 +42,17 @@ module Sirena
     #   date.
     # @param notation [Symbol, String, nil] the notation to read sources
     #   with; nil lets each render pick one from its path and source
+    # @param layout_engine [Symbol] :grid (default) or :elk, which lays
+    #   flowcharts out with elkrb and raises for any other diagram type
     # @param logger [Logger, nil] destination for diagnostics. A host
     #   embedding Sirena and reading stdout as pure SVG cannot tolerate log
     #   lines landing on the same stream, so the default logs to $stderr
     #   instead; pass one in to redirect or format diagnostics your own way.
     # @raise [PipelineError] if `notation` is invalid or not registered
     def initialize(verbose: false, theme: nil, today: nil, logger: nil,
-                   notation: nil)
+                   notation: nil, layout_engine: :grid)
       @verbose = verbose
+      @layout_engine = checked_layout_engine(layout_engine)
       @notation_id = registered_id(notation)
       @theme = load_theme(theme)
       @today = today
@@ -203,9 +206,27 @@ module Sirena
     # @return [Layout::Scene, Layout::Legacy] a Scene, or a wrapped graph
     def transform_diagram(diagram, transform_class, today, theme)
       log "Transforming diagram to graph..."
-      result = transform_class.new.call(diagram, theme: theme, today: today)
+      layout = transform_class.new
+      choose_placement(layout)
+      result = layout.call(diagram, theme: theme, today: today)
       log "Transform complete"
       result
+    end
+
+    def checked_layout_engine(name)
+      return name if %i[grid elk].include?(name)
+
+      raise PipelineError, "Unknown layout_engine: #{name.inspect}"
+    end
+
+    def choose_placement(layout)
+      return if @layout_engine == :grid
+
+      unless layout.respond_to?(:placement=)
+        raise Layout::LayoutError,
+              "layout_engine :elk is not available for #{layout.class}"
+      end
+      layout.placement = @layout_engine
     end
 
     # Computes layout for the layout result.
