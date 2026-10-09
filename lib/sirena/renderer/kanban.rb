@@ -26,6 +26,14 @@ module Sirena
 
       protected
 
+      # Preserves the released protected extension point for callers that
+      # still construct a document from the positioned Hash layout.
+      def create_document_from_layout(layout)
+        build_document_from_layout(
+          layout, padding: Layout::Kanban::CANVAS_PADDING
+        )
+      end
+
       def document(scene)
         Svg::Document.new.tap do |svg|
           svg.width = scene.width
