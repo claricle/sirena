@@ -83,6 +83,5 @@ runtime that actually renders the diagrams:
 Scoreboard rows live in `scoreboard/plantuml.json`. `bundle exec rake plantuml`
 measures them: a case passes when the committed oracle verdict is `valid` and
 Sirena renders it to well-formed SVG. `bundle exec rake plantuml:check` fails
-CI when the committed file differs from a fresh measurement. The measured
-baseline is 31/35 oracle-valid class cases and 40/77 oracle-valid sequence
-cases; the four oracle rejections are not in those denominators.
+CI when the committed file differs from a fresh measurement. The current
+counts live in that file; oracle-rejected cases are not in its denominators.
