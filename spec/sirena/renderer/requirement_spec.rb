@@ -177,6 +177,39 @@ RSpec.describe Sirena::Renderer::Requirement do
     end
   end
 
+  describe "label text" do
+    let(:requirement) do
+      double(name: "r", type: "requirement", id: "1", text: "the test text.",
+             risk: "high", verifymethod: "test", classes: [])
+    end
+    let(:element) do
+      double(name: "e", type: "simulation", docref: nil, classes: [])
+    end
+    let(:layout) do
+      box = { x: 100, y: 100, width: 180, height: 140, level: 1 }
+      {
+        requirements: { "r" => { requirement: requirement, **box } },
+        elements: { "e" => { element: element, **box } },
+        relationships: [
+          { source: "e", target: "r", type: "satisfies",
+            from_x: 175, from_y: 380, to_x: 190, to_y: 240 },
+        ],
+        width: 500,
+        height: 500,
+      }
+    end
+    let(:texts) do
+      renderer.render(layout).to_xml.scan(%r{>([^<>]+)</text>}).flatten
+    end
+
+    it "draws the text as mermaid does" do
+      expect(texts).to include(
+        "&lt;&lt;satisfies&gt;&gt;", "&lt;&lt;Requirement&gt;&gt;",
+        "&lt;&lt;Element&gt;&gt;", "Text: the test text.", "Verification: Test"
+      )
+    end
+  end
+
   describe "risk level colors" do
     it "uses correct colors for risk levels" do
       expect(described_class::RISK_COLORS["high"]).to eq("#ff6b6b")
@@ -188,8 +221,8 @@ RSpec.describe Sirena::Renderer::Requirement do
   describe "requirement type labels" do
     it "provides labels for all requirement types" do
       expect(described_class::REQUIREMENT_TYPE_LABELS["requirement"]).to eq("Requirement")
-      expect(described_class::REQUIREMENT_TYPE_LABELS["functionalRequirement"]).to eq("Functional Req")
-      expect(described_class::REQUIREMENT_TYPE_LABELS["performanceRequirement"]).to eq("Performance Req")
+      expect(described_class::REQUIREMENT_TYPE_LABELS["functionalRequirement"]).to eq("Functional Requirement")
+      expect(described_class::REQUIREMENT_TYPE_LABELS["performanceRequirement"]).to eq("Performance Requirement")
     end
   end
 end

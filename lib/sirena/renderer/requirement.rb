@@ -24,10 +24,10 @@ module Sirena
       # Requirement type labels
       REQUIREMENT_TYPE_LABELS = {
         "requirement" => "Requirement",
-        "functionalRequirement" => "Functional Req",
-        "interfaceRequirement" => "Interface Req",
-        "performanceRequirement" => "Performance Req",
-        "physicalRequirement" => "Physical Req",
+        "functionalRequirement" => "Functional Requirement",
+        "interfaceRequirement" => "Interface Requirement",
+        "performanceRequirement" => "Performance Requirement",
+        "physicalRequirement" => "Physical Requirement",
         "designConstraint" => "Design Constraint",
       }.freeze
 
@@ -99,7 +99,7 @@ module Sirena
 
         # Text
         if requirement.text
-          text_lines = wrap_text(requirement.text, width - 20, 12)
+          text_lines = wrap_text("Text: #{requirement.text}", width - 20, 12)
           text_lines.each do |line|
             text_element = create_property_text(x + 10, text_y, line)
             group.children << text_element
@@ -119,7 +119,8 @@ module Sirena
 
         # Verify method
         if requirement.verifymethod
-          verify_text = create_property_text(x + 10, text_y, "Verify: #{requirement.verifymethod.capitalize}")
+          verify = "Verification: #{requirement.verifymethod.capitalize}"
+          verify_text = create_property_text(x + 10, text_y, verify)
           group.children << verify_text
         end
 
@@ -159,7 +160,7 @@ module Sirena
         type_text = Svg::Text.new.tap do |text|
           text.x = x + 10
           text.y = y + height / 2
-          text.content = type_label
+          text.content = "<<#{type_label}>>"
           text.fill = theme_color(:text_color) || "#000"
           text.font_size = "12"
           text.font_weight = "bold"
@@ -216,6 +217,17 @@ module Sirena
           text.dominant_baseline = "middle"
         end
         group.children << name_text
+
+        stereotype = Svg::Text.new.tap do |text|
+          text.x = x + (width / 2)
+          text.y = y + (height / 2) - 26
+          text.content = "<<Element>>"
+          text.fill = theme_color(:text_color) || "#000"
+          text.font_size = "11"
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
+        end
+        group.children << stereotype
 
         # Add type if present
         if element.type
@@ -289,7 +301,7 @@ module Sirena
           mid_y = (rel_info[:from_y] + rel_info[:to_y]) / 2
 
           label_bg = Svg::Rect.new.tap do |rect|
-            label_width = rel_info[:type].length * 7
+            label_width = (rel_info[:type].length + 4) * 7
             rect.x = mid_x - label_width / 2
             rect.y = mid_y - 10
             rect.width = label_width
@@ -304,7 +316,7 @@ module Sirena
           label = Svg::Text.new.tap do |text|
             text.x = mid_x
             text.y = mid_y
-            text.content = rel_info[:type]
+            text.content = "<<#{rel_info[:type]}>>"
             text.fill = theme_color(:text_color) || "#000"
             text.font_size = "10"
             text.text_anchor = "middle"
