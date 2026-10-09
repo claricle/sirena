@@ -47,7 +47,7 @@ RSpec.describe FlowchartExamplesIncludeSpec do
 
     expect(expanded).to include(
       "==== Example 1: Basic Flowchart",
-      "Start([Start]) --> Process[Process Data]"
+      "Start([Start]) --> Process[Process Data]",
     )
   end
 end

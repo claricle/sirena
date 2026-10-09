@@ -685,10 +685,8 @@ RSpec.describe Sirena::MarkdownText do
       bold = described_class::Run.new(text: "abc", bold: true, italic: false)
       italic = described_class::Run.new(text: "defgh", bold: false, italic: true)
 
-      expect(described_class.truncate_runs([[bold, italic]], 7)).to eq([[
-        bold,
-        italic.with(text: "d..."),
-      ]])
+      expect(described_class.truncate_runs([[bold, italic]], 7))
+        .to eq([[bold, italic.with(text: "d...")]])
     end
 
     it "drops a later line that exceeds the remaining budget" do

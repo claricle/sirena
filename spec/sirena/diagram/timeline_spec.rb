@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/diagram/timeline"
 
 RSpec.describe Sirena::Diagram::Timeline do
+  subject(:timeline) { described_class.new }
+
   describe Sirena::Diagram::TimelineEvent do
     subject(:event) do
       described_class.new(time: "2020", descriptions: ["First event"])
@@ -83,8 +85,6 @@ RSpec.describe Sirena::Diagram::Timeline do
       descriptions: [description],
     )
   end
-
-  subject(:timeline) { described_class.new }
 
   it "is valid when empty and reports its diagram type" do
     expect([timeline.valid?, timeline.diagram_type]).to eq([true, :timeline])

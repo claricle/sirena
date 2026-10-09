@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/diagram/git_graph"
 
 RSpec.describe Sirena::Diagram::GitGraph do
+  subject(:git_graph) { described_class.new }
+
   describe Sirena::Diagram::GitGraph::Commit do
     it "uses normal non-merge defaults" do
       commit = described_class.new
@@ -24,8 +26,6 @@ RSpec.describe Sirena::Diagram::GitGraph do
       expect([branch.name, branch.order]).to eq(["main", 1])
     end
   end
-
-  subject(:git_graph) { described_class.new }
 
   it "starts left-to-right with empty graph collections" do
     expect([git_graph.orientation, git_graph.commits, git_graph.branches])

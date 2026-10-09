@@ -114,9 +114,8 @@ RSpec.describe Sirena::MarkdownText do
     let(:bold_c) { described_class::Run.new(text: "c", bold: true, italic: false) }
 
     it "joins adjacent runs only while their emphasis is the same" do
-      expect(simulator.coalesce_runs([plain_a, plain_b, bold_c])).to eq([
-        plain_a.with(text: "ab"), bold_c,
-      ])
+      expect(simulator.coalesce_runs([plain_a, plain_b, bold_c]))
+        .to eq([plain_a.with(text: "ab"), bold_c])
     end
   end
 
@@ -147,8 +146,7 @@ RSpec.describe Sirena::MarkdownText do
       "*a*b*c*" => [["a", false, true], ["b", false, false],
                     ["c", false, true]],
       "**a*b**" => [["a*b", true, false]],
-      "***a*b***" => [["a", true, true], ["b", true, false],
-                       ["*", false, false]],
+      "***a*b***" => [["a", true, true], ["b", true, false], ["*", false, false]],
       "__a*b__" => [["a*b", true, false]],
       "**a_b**" => [["a_b", true, false]],
       "_**_**" => [["_", false, false], ["_", true, false]],
