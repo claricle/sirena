@@ -10,9 +10,13 @@ RSpec.describe Sirena::Layout::Radar do
   let(:diagram) { Sirena::Diagram::Radar.new }
 
   it "returns the compact empty-axis canvas" do
-    expect(graph).to eq(
-      axes: [], curves: [], grid_circles: [], center_x: 80, center_y: 80,
-      radius: 200, width: 160, height: 160, min_value: 0, max_value: 0
+    expect(
+      [graph.class, graph.axes, graph.curves, graph.grid_circles,
+       graph.center_x, graph.center_y, graph.radius, graph.width, graph.height,
+       graph.min_value, graph.max_value, graph.view_box],
+    ).to eq(
+      [described_class::Scene, [], [], [], 80.0, 80.0, 200.0, 160.0,
+       160.0, 0.0, 0.0, "0 0 160 160"],
     )
   end
 
@@ -32,55 +36,62 @@ RSpec.describe Sirena::Layout::Radar do
         data.add_value("quality", 30)
       end
     end
-    let(:expected_axes) do
-      [
-        include(id: "speed", label: "Speed", angle_degrees: -90.0,
-                end_x: be_within(0.0001).of(0), end_y: -200.0,
-                label_y: -230.0, index: 0),
-        include(id: "quality", label: "Quality", angle_degrees: 90.0,
-                end_x: be_within(0.0001).of(0), end_y: 200.0,
-                label_y: 230.0, index: 1),
-      ]
-    end
-    let(:expected_curve) do
-      include(
-        id: "current",
-        label: "Current",
-        points: [
-          include(axis_id: "speed", value: 10.0, normalized: 0.0,
-                  x: be_within(0.0001).of(0), y: be_within(0.0001).of(0)),
-          include(axis_id: "quality", value: 30.0, normalized: 1.0,
-                  x: be_within(0.0001).of(0), y: 200.0),
-        ],
-      )
-    end
-    let(:expected_grid_circles) do
-      [
-        { radius: 40.0, value: 14.0, fraction: 0.2 },
-        { radius: 80.0, value: 18.0, fraction: 0.4 },
-        { radius: 120.0, value: 22.0, fraction: 0.6 },
-        { radius: 160.0, value: 26.0, fraction: 0.8 },
-        { radius: 200.0, value: 30.0, fraction: 1.0 },
-      ]
-    end
 
     it "infers the value range and publishes final dimensions" do
-      expect(graph).to include(
-        min_value: 10.0, max_value: 30.0, center_x: 280, center_y: 280,
-        radius: 200, width: 560, height: 560
-      )
+      expect(
+        [graph.min_value, graph.max_value, graph.center_x, graph.center_y,
+         graph.radius, graph.width, graph.height, graph.view_box],
+      ).to eq([10.0, 30.0, 280.0, 280.0, 200.0, 560.0, 560.0,
+               "0 0 560 560"])
     end
 
     it "positions axes clockwise from the top" do
-      expect(graph[:axes]).to match(expected_axes)
+      speed, quality = graph.axes
+
+      expect(
+        [[speed.id, speed.angle, speed.line.x1, speed.line.y1,
+          speed.line.x2.round(4), speed.line.y2, speed.label.x.round(4),
+          speed.label.y, speed.label.text_anchor, speed.label.dominant_baseline],
+         [quality.id, quality.angle, quality.line.x2.round(4), quality.line.y2,
+          quality.label.x.round(4), quality.label.y]],
+      ).to eq(
+        [["speed", -90.0, 280.0, 280.0, 280.0, 80.0, 280.0, 50.0,
+          "end", "middle"],
+         ["quality", 90.0, 280.0, 480.0, 280.0, 510.0]],
+      )
     end
 
     it "normalizes curve points onto their axes" do
-      expect(graph[:curves]).to contain_exactly(expected_curve)
+      curve = graph.curves.first
+      points = curve.points.map do |point|
+        [point.axis_id, point.value, point.normalized,
+         point.x.round(4), point.y.round(4)]
+      end
+
+      expect([curve.id, curve.label, points]).to eq(
+        ["current", "Current",
+         [["speed", 10.0, 0.0, 280.0, 280.0],
+          ["quality", 30.0, 1.0, 280.0, 480.0]]],
+      )
     end
 
     it "creates five evenly spaced grid circles across the range" do
-      expect(graph[:grid_circles]).to eq(expected_grid_circles)
+      expect(graph.grid_circles.map(&:radius)).to eq(
+        [40.0, 80.0, 120.0, 160.0, 200.0],
+      )
+    end
+
+    it "stores themed label and legend geometry in the scene" do
+      contrast = described_class.new.call(
+        diagram, theme: Sirena::Theme::Registry.get(:high_contrast)
+      )
+
+      expect(
+        [contrast.axes.first.label.font_size,
+         contrast.legend.first.marker.x, contrast.legend.first.marker.y,
+         contrast.legend.first.label.x, contrast.legend.first.label.y,
+         contrast.legend.first.label.font_size],
+      ).to eq([16.0, 20.0, 520.0, 35.0, 524.0, 14.0])
     end
   end
 
@@ -93,7 +104,7 @@ RSpec.describe Sirena::Layout::Radar do
     end
 
     it "uses the configured minimum and maximum" do
-      expect(graph.values_at(:min_value, :max_value)).to eq([-10, 10])
+      expect([graph.min_value, graph.max_value]).to eq([-10.0, 10.0])
     end
   end
 
@@ -107,6 +118,7 @@ RSpec.describe Sirena::Layout::Radar do
     radar = Sirena::Diagram::Radar.new
     radar.axes = [Sirena::Diagram::RadarAxis.new("axis")]
     radar.options = { min: min, max: max }
-    described_class.new.to_graph(radar).values_at(:min_value, :max_value)
+    result = described_class.new.to_graph(radar)
+    [result.min_value, result.max_value]
   end
 end
