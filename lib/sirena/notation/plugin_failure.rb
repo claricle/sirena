@@ -21,7 +21,7 @@ module Sirena
       def self.passthrough_for(timeout)
         # Timeout::ExitException appeared after Ruby 3.2's bundled timeout;
         # there the unwinding exception is Timeout::Error itself.
-        unwinding = if timeout.const_defined?(:ExitException)
+        unwinding = if timeout.const_defined?(:ExitException, false)
                       timeout::ExitException
                     else
                       timeout::Error
