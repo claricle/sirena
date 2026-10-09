@@ -17,7 +17,10 @@ module Sirena
             )
             scene.frames.each { |frame| document << frame_group(frame) }
             scene.lifelines.each { |line| document << lifeline(line) }
+            scene.fragments.each { |item| document << fragment_group(item) }
+            scene.dividers.each { |item| document << divider_group(item) }
             scene.arrows.each { |arrow| document << arrow_group(arrow) }
+            scene.notes.each { |item| document << note_group(item) }
             scene.heads.each { |head| document << head_group(head) }
             document
           end
@@ -82,6 +85,60 @@ module Sirena
             end
           end
 
+          def fragment_group(fragment)
+            group = Svg::Group.new(id: "fragment-#{fragment.x}-#{fragment.y}")
+            group << frame_rectangle(fragment)
+            group << outlined_path(fragment.tab_path, node_fill)
+            fragment.separators.each { |line| group << dashed(line) }
+            fragment.texts.each { |text| group << text_element(text) }
+            group
+          end
+
+          def note_group(note)
+            group = Svg::Group.new(id: "note-#{note.path.hash.abs}")
+            group << outlined_path(note.path, note_fill)
+            group << outlined_path(note.fold_path, note_fill) if note.fold_path
+            note.texts.each { |text| group << text_element(text) }
+            group
+          end
+
+          def divider_group(divider)
+            group = Svg::Group.new(id: "divider-#{divider.y}")
+            divider.lines.each { |line| group << solid(line) }
+            group << divider_label(divider) unless divider.texts.empty?
+            divider.texts.each { |text| group << text_element(text) }
+            group
+          end
+
+          def divider_label(divider)
+            Svg::Rect.new.tap do |rect|
+              rect.x = divider.x
+              rect.y = divider.y
+              rect.width = divider.width
+              rect.height = divider.height
+              rect.fill = node_fill
+              rect.stroke = node_stroke
+              rect.stroke_width = "1"
+            end
+          end
+
+          def outlined_path(data, fill)
+            Svg::Path.new.tap do |path|
+              path.d = data
+              path.fill = fill
+              path.stroke = node_stroke
+              path.stroke_width = "1"
+            end
+          end
+
+          def solid(segment)
+            lifeline(segment).tap { |line| line.stroke_dasharray = nil }
+          end
+
+          def dashed(segment)
+            lifeline(segment).tap { |line| line.stroke_dasharray = "5,3" }
+          end
+
           def head_group(head)
             group = Svg::Group.new(id: "participant-#{head.id}-#{head.y}")
             group << head_rectangle(head)
@@ -113,6 +170,7 @@ module Sirena
               text.font_family = theme_typography(:font_family) || "Arial"
               text.font_size = font_size(scene_text.role)
               text.font_style = "italic" if scene_text.role == "kind"
+            text.font_weight = "bold" if scene_text.role == "fragment_tab"
             end
           end
 
@@ -121,6 +179,10 @@ module Sirena
             return (normal.to_f * 0.85).to_s if role == "kind"
 
             normal.to_s
+          end
+
+          def note_fill
+            theme_color(:note_fill) || "#fefecd"
           end
 
           def node_fill

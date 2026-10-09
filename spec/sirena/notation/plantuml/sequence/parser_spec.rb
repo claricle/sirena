@@ -142,12 +142,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
   describe "constructs outside the slice" do
     {
-      "note over A: hi" => "note", "alt ok" => "alt",
-      "activate A" => "activate", "== part ==" => "divider",
+      "activate A" => "activate", "newpage" => "newpage",
       "!pragma teoz true" => "preprocessor directive",
       "A ->x B" => "message arrow", "A -[#red]> B" => "message arrow",
-      "participant A <<x>>" => "participant", "return ok" => "return",
-      "title T" => "title"
+      "participant A <<x>>" => "participant", "title T" => "title"
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
         expect { parse("A -> B", line) }
@@ -161,8 +159,132 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     it "reports the line of the refusal" do
-      expect { parse("A -> B", "note over A: hi") }
+      expect { parse("A -> B", "activate A") }
         .to raise_error(unsupported) { |e| expect(e.line).to eq(3) }
+    end
+  end
+
+  describe "notes" do
+    def note_of(*lines)
+      parse("A -> B", *lines).items.last
+    end
+
+    it "reads a one-line note over a participant" do
+      note = note_of("note over A: hi")
+
+      expect([note.side, note.targets, note.text]).to eq([:over, ["A"], "hi"])
+    end
+
+    it "reads a note over two participants" do
+      expect(note_of("note over A, B: hi").targets).to eq(%w[A B])
+    end
+
+    it "joins the lines of a block note and keeps its comment-like lines" do
+      note = note_of("note right of B", "one", "' two", "end note")
+
+      expect(note.text).to eq("one\n' two")
+    end
+
+    it "reads hnote and rnote shapes" do
+      shapes = %w[hnote rnote].map do |word|
+        note_of("#{word} left of A: x").shape
+      end
+
+      expect(shapes).to eq(%i[hnote rnote])
+    end
+
+    it "reads a note across all participants" do
+      expect(note_of("note across: x").side).to eq(:across)
+    end
+
+    it "ignores a colour after the side" do
+      expect(note_of("note right #red: x").text).to eq("x")
+    end
+
+    it "attaches a note without a target to the message before it" do
+      expect(note_of("note left: x")).to be_attached
+    end
+
+    it "refuses a note without a target that follows no message" do
+      expect { parse("participant A", "note left: x") }
+        .to raise_error(unsupported, /note/)
+    end
+
+    it "reads @enduml inside an open note as note text" do
+      expect { parse("A -> B", "note left of A", "text") }
+        .to raise_error(Sirena::Parser::ParseError, /missing @enduml/)
+    end
+
+    it "splits the characters backslash-n into lines" do
+      expect(note_of("note over A: a\\nb").lines).to eq(%w[a b])
+    end
+  end
+
+  describe "blocks" do
+    def phases(*lines)
+      fragment = Sirena::Notation::PlantUML::Sequence::Fragment
+      parse("A -> B", *lines).items.grep(fragment)
+        .map { |f| [f.phase, f.keyword, f.label] }
+    end
+
+    it "reads alt, else and end with their guards" do
+      expect(phases("alt ok", "else bad", "end"))
+        .to eq([[:open, "alt", "ok"], [:else, "alt", "bad"],
+                [:close, "alt", nil]])
+    end
+
+    it "reads every block keyword" do
+      words = %w[opt loop par critical break group]
+
+      expect(words.map { |w| phases(w, "end").first[1] }).to eq(words)
+    end
+
+    it "drops the colour of a group" do
+      expect(phases("group #ffa Setup", "end").first[2]).to eq("Setup")
+    end
+
+    it "nests blocks" do
+      expect(phases("alt", "loop", "end", "end").map(&:first))
+        .to eq(%i[open open close close])
+    end
+
+    it "refuses an end with nothing open" do
+      expect { parse("A -> B", "end") }.to raise_error(unsupported, /end/)
+    end
+
+    it "refuses an else outside a block" do
+      expect { parse("A -> B", "else") }.to raise_error(unsupported, /else/)
+    end
+
+    it "refuses a block that is never closed" do
+      expect { parse("A -> B", "alt x") }
+        .to raise_error(Sirena::Parser::ParseError, /block is never closed/)
+    end
+  end
+
+  describe "return and dividers" do
+    it "answers the last call with a dashed message the other way" do
+      reply = parse("A -> B", "return ok").messages.last
+
+      expect([reply.from, reply.to, reply.dashed, reply.label])
+        .to eq(["B", "A", true, "ok"])
+    end
+
+    it "answers nested calls in reverse order" do
+      senders = parse("A -> B", "B -> C", "return", "return").messages.last(2)
+
+      expect(senders.map(&:from)).to eq(%w[C B])
+    end
+
+    it "refuses a return with nothing to answer" do
+      expect { parse("A --> B", "return") }
+        .to raise_error(unsupported, /return/)
+    end
+
+    it "reads a divider with its text" do
+      divider = parse("A -> B", "== Phase ==").items.last
+
+      expect(divider.label).to eq("Phase")
     end
   end
 end

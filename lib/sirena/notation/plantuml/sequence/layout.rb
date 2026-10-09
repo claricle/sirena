@@ -1,53 +1,67 @@
 # frozen_string_literal: true
 
 require_relative "../../../layout/base"
+require_relative "note"
+require_relative "note_geometry"
 require_relative "scene"
+require_relative "walker"
 
 module Sirena
   module Notation
     module PlantUML
       module Sequence
-        # Places participant heads in one row, messages down the page in
+        # Places participant heads in one row, the items down the page in
         # source order, and the same heads again at the foot of the lifelines.
         class Layout < Sirena::Layout::Base
           MARGIN = 20.0
           HEAD_PADDING = 12.0
           MIN_HEAD_WIDTH = 80.0
           MIN_GAP = 30.0
-          ROW_HEIGHT = 40.0
-          SELF_WIDTH = 36.0
-          SELF_HEIGHT = 20.0
-          ARROW_LENGTH = 10.0
-          ARROW_HALF_WIDTH = 4.0
           BOX_PADDING = 8.0
           BOX_TITLE_HEIGHT = 26.0
+          SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
-                           :ROW_HEIGHT, :SELF_WIDTH, :SELF_HEIGHT,
-                           :ARROW_LENGTH, :ARROW_HALF_WIDTH, :BOX_PADDING,
-                           :BOX_TITLE_HEIGHT
+                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT
 
           def scene(diagram)
             @diagram = diagram
-            widths = diagram.participants.map { |p| head_width(p) }
-            @centers = centers(widths)
+            @widths = diagram.participants.map { |p| head_width(p) }
+            @centers = centers(@widths)
             @head_height = head_height
             @top = MARGIN + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
-            @foot_y = @top + @head_height + ROW_HEIGHT * (rows + 1)
-            build(widths)
+            @flow = walk
+            recentre if @flow.left < MARGIN
+            build(@widths)
           end
 
           private
 
-          def build(widths)
-            heads = place_heads(widths, @top) + place_heads(widths, @foot_y)
-            Scene.new(width: canvas_width(widths),
-                      height: @foot_y + @head_height + MARGIN,
-                      frames: frames(widths), heads: heads,
-                      lifelines: lifelines, arrows: arrows)
+          def walk
+            bounds = [@centers.first - @widths.first / 2,
+                      @centers.last + @widths.last / 2]
+            Walker.new(centers: @centers, ids: ids, bounds: bounds,
+                       measure: ->(text) { text_width(text) },
+                       font_size: font_size,
+                       y: @top + @head_height + Walker::ROW)
+                  .run(@diagram.items)
           end
 
-          def rows
-            @diagram.messages.sum { |m| m.self_message? ? 1.5 : 1 }
+          # Items such as a note left of the first participant stick out
+          # past the margin; move everything right instead of clipping.
+          def recentre
+            shift = MARGIN - @flow.left
+            @centers = @centers.map { |centre| centre + shift }
+            @flow = walk
+          end
+
+          def build(widths)
+            heads = place_heads(widths, @top) + place_heads(widths, @flow.y)
+            Scene.new(width: canvas_width(widths),
+                      height: @flow.y + @head_height + MARGIN,
+                      frames: frames(widths), heads: heads,
+                      lifelines: lifelines, arrows: @flow.arrows,
+                      fragments: @flow.fragments, notes: @flow.notes,
+                      dividers: @flow.dividers)
           end
 
           def head_height
@@ -87,7 +101,42 @@ module Sirena
             gaps = widths.each_cons(2).map { |a, b| (a + b) / 2 + MIN_GAP }
             @diagram.messages.each { |m| widen(gaps, m) }
             @diagram.boxes.each { |box| widen_box(gaps, box) }
+            each_note { |note, span| widen_note(gaps, note, span) }
             gaps
+          end
+
+          def each_note
+            previous = nil
+            @diagram.items.each do |item|
+              if item.is_a?(Note)
+                yield item, NoteGeometry.span(item, previous, ids)
+              end
+              previous = item
+            end
+          end
+
+          # Room beside a note so it does not cover a neighbour's lifeline.
+          def widen_note(gaps, note, span)
+            need = NoteGeometry.natural_width(note, method(:text_width))
+            low, high = span
+            case note.side
+            when :left then raise_gap(gaps, low - 1, need + 12)
+            when :right then raise_gap(gaps, high, need + 12)
+            else widen_over(gaps, (low...high).to_a, low, need)
+            end
+          end
+
+          def widen_over(gaps, between, index, need)
+            if between.empty?
+              [index - 1, index].each { |i| raise_gap(gaps, i, need / 2 + 12) }
+            else
+              share = (need - 20) / between.size
+              between.each { |i| raise_gap(gaps, i, share) }
+            end
+          end
+
+          def raise_gap(gaps, index, need)
+            gaps[index] = [gaps[index], need].max if index >= 0 && gaps[index]
           end
 
           def widen_box(gaps, box)
@@ -122,7 +171,7 @@ module Sirena
           def canvas_width(widths)
             right = @centers.last + widths.last / 2
             self_room = self_reach(@diagram.participants.size - 1)
-            [right, @centers.last + self_room].max + MARGIN
+            [right, @centers.last + self_room, @flow.right].max + MARGIN
           end
 
           def self_reach(index)
@@ -166,7 +215,7 @@ module Sirena
             right = @centers[last] + widths[last] / 2 + BOX_PADDING
             Scene::Frame.new(
               x: left, y: MARGIN, width: right - left,
-              height: @foot_y + @head_height + BOX_PADDING - MARGIN,
+              height: @flow.y + @head_height + BOX_PADDING - MARGIN,
               texts: [text(box.title, (left + right) / 2, MARGIN + 17, "box")]
             )
           end
@@ -175,73 +224,9 @@ module Sirena
             @centers.map do |centre|
               PlantUML::Scene::Segment.new(
                 x1: centre, y1: @top + @head_height,
-                x2: centre, y2: @foot_y
+                x2: centre, y2: @flow.y
               )
             end
-          end
-
-          def arrows
-            y = @top + @head_height + ROW_HEIGHT
-            @diagram.messages.each_with_index.map do |message, index|
-              arrow = message_arrow(message, index, y)
-              y += message.self_message? ? ROW_HEIGHT * 1.5 : ROW_HEIGHT
-              arrow
-            end
-          end
-
-          def message_arrow(message, index, y)
-            from, to = indexes(message).map { |i| @centers[i] }
-            geometry = if message.self_message?
-                         self_geometry(from, y)
-                       else
-                         straight_geometry(from, to, y)
-                       end
-            arrow_record(message, index, geometry)
-          end
-
-          def straight_geometry(from, to, y)
-            sign = to >= from ? 1 : -1
-            { path: "M #{from} #{y} L #{to} #{y}",
-              tip: [to, y], dx: -sign,
-              label: text_geometry((from + to) / 2, y - 6, "middle") }
-          end
-
-          def self_geometry(centre, y)
-            right = centre + SELF_WIDTH
-            bottom = y + SELF_HEIGHT
-            { path: "M #{centre} #{y} L #{right} #{y} L #{right} #{bottom} " \
-                    "L #{centre} #{bottom}",
-              tip: [centre, bottom], dx: 1,
-              label: text_geometry(right + 6, y + 12, "start") }
-          end
-
-          def text_geometry(x, y, anchor)
-            [x, y, anchor]
-          end
-
-          def arrow_record(message, index, geometry)
-            Scene::Arrow.new(
-              id: "message-#{index + 1}", path: geometry[:path],
-              dashed: message.dashed,
-              marker_points: head_points(geometry[:tip], geometry[:dx]),
-              marker_filled: message.head == :filled,
-              texts: label_texts(message, geometry[:label])
-            )
-          end
-
-          def head_points(tip, direction)
-            x, y = tip
-            back = x + direction * ARROW_LENGTH
-            [[x, y], [back, y - ARROW_HALF_WIDTH],
-             [back, y + ARROW_HALF_WIDTH]].map { |px, py| "#{px},#{py}" }
-              .join(" ")
-          end
-
-          def label_texts(message, geometry)
-            return [] unless message.label && !message.label.empty?
-
-            x, y, anchor = geometry
-            [text(message.label, x, y, "message_label", anchor)]
           end
 
           def text(content, x, y, role, anchor = "middle")
@@ -251,6 +236,10 @@ module Sirena
 
           def font_size
             theme.typography.font_size_normal.to_f
+          end
+
+          def text_width(string)
+            measure_text(string, font_size: font_size)[:width]
           end
         end
       end

@@ -7,6 +7,8 @@ require_relative "../unsupported_construct_error"
 require_relative "box"
 require_relative "diagram"
 require_relative "message"
+require_relative "note"
+require_relative "outline"
 require_relative "participant"
 require_relative "refusals"
 
@@ -14,9 +16,10 @@ module Sirena
   module Notation
     module PlantUML
       module Sequence
-        # Reads the PlantUML sequence subset: participant declarations and
-        # plain messages. A line outside it raises {UnsupportedConstructError};
-        # never return a diagram with a line skipped.
+        # Reads the PlantUML sequence subset: participant declarations,
+        # messages, notes, `return`, dividers and alt/loop/group blocks. A
+        # line outside it raises {UnsupportedConstructError}; never return a
+        # diagram with a line skipped.
         class Parser
           NAME = /[A-Za-z_][A-Za-z0-9_]*/
           QUOTED = /"[^"\n]+"/
@@ -38,13 +41,30 @@ module Sirena
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
                      (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
                      [ \t]*(#{QUOTED}|#{NAME})[ \t]*(?::[ \t]*(.*))?\z/xo
+          TARGET = /(?:#{QUOTED}|#{NAME})/
+          NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across)
+                  (?:[ \t]+of)?
+                  (?:[ \t]+(#{TARGET}(?:[ \t]*,[ \t]*#{TARGET})*))?
+                  (?:[ \t]+\#\w+)?[ \t]*(?::[ \t]*(.*))?\z/xio
+          END_NOTE = /\Aend[ \t]*[hr]?note\z/i
+          BLOCK = /\A(alt|opt|loop|par|critical|break|group)
+                   (?:[ \t]+(?:\#\w+[ \t]*)?(.*))?\z/xi
+          BRANCH = /\Aelse(?:[ \t]+(.*))?\z/i
+          RETURN = /\Areturn(?:[ \t]+(.*))?\z/i
+          DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
           BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
           LINE_END = /\r\n|\r|\n/
 
-          private_constant :NAME, :QUOTED, :KINDS, :ARROWS, :DECLARATION,
-                           :MESSAGE, :BOX, :END_BOX, :STARTUML, :LINE_END
+          TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
+                      [BRANCH, :branch], [RETURN, :reply],
+                      [DIVIDER, :divider]].freeze
+
+          private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
+                           :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
+                           :LINE_END, :TARGET, :NOTE, :END_NOTE, :BLOCK, :BRANCH,
+                           :RETURN, :DIVIDER
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -54,9 +74,10 @@ module Sirena
           #   UTF-8 or @enduml is missing
           def parse(source)
             @participants = {}
-            @messages = []
+            @outline = Outline.new
             @boxes = []
             @open_box = nil
+            @pending_note = nil
             phase = :before
             lines_of(source).each_with_index do |line, index|
               phase = step(phase, line.strip, index + 1)
@@ -77,13 +98,19 @@ module Sirena
           end
 
           def step(phase, text, number)
-            return phase if text.empty? || text.start_with?("'")
+            return phase if skippable?(text)
 
             case phase
             when :before then before(text, number)
             when :statements then statement(text, number)
             else raise refusal(text, number, "content after @enduml")
             end
+          end
+
+          def skippable?(text)
+            return false if @pending_note
+
+            text.empty? || text.start_with?("'")
           end
 
           def before(text, number)
@@ -96,6 +123,7 @@ module Sirena
           end
 
           def statement(text, number)
+            return collect_note(text) if @pending_note
             return end_of_diagram(text, number) if text == "@enduml"
 
             read(text, number)
@@ -109,11 +137,70 @@ module Sirena
               open_box(match, text, number)
             elsif END_BOX.match?(text) && @open_box
               close_box
-            elsif (match = MESSAGE.match(text)) && !@open_box
-              message(match)
-            else
+            elsif @open_box || !timeline(text)
               raise refusal(text, number)
             end
+          end
+
+          # Reads one line that belongs in the item sequence; false when it
+          # is not one, or when it is out of place.
+          def timeline(text)
+            TIMELINE.each do |pattern, reader|
+              match = pattern.match(text)
+              return send(reader, match) if match
+            end
+            text.casecmp?("end") && @outline.close_block
+          end
+
+          def block(match)
+            @outline.open_block(match[1].downcase, match[2].to_s.strip)
+          end
+
+          def branch(match)
+            @outline.branch(match[1])
+          end
+
+          def reply(match)
+            @outline.reply(match[1])
+          end
+
+          def divider(match)
+            @outline.divider(match[1])
+          end
+
+          def note(match)
+            pending = { shape: match[1].downcase.to_sym,
+                        side: match[2].downcase.to_sym,
+                        targets: targets_of(match[3]), lines: [] }
+            return false if hanging?(pending) && !@outline.after_message?
+
+            @pending_note = pending
+            match[4] ? collect_note(match[4].strip, inline: true) : true
+          end
+
+          def targets_of(list)
+            list.to_s.split(",").map { |target| mention(target.strip) }
+          end
+
+          def hanging?(pending)
+            pending[:targets].empty? && %i[left right].include?(pending[:side])
+          end
+
+          def collect_note(text, inline: false)
+            if inline || END_NOTE.match?(text)
+              finish_note(inline ? text : @pending_note[:lines].join("\n"))
+            else
+              @pending_note[:lines] << text
+            end
+            :statements
+          end
+
+          def finish_note(text)
+            pending = @pending_note
+            @pending_note = nil
+            @outline.note(Note.new(shape: pending[:shape],
+                                   side: pending[:side],
+                                   targets: pending[:targets], text: text))
           end
 
           def open_box(match, text, number)
@@ -130,6 +217,7 @@ module Sirena
           def end_of_diagram(text, number)
             raise refusal(text, number, "empty diagram") if @participants.empty?
             raise unclosed_box if @open_box
+            raise unclosed_block if @outline.open_block?
 
             :after
           end
@@ -147,9 +235,9 @@ module Sirena
             from, to = [match[1], match[3]].map { |name| mention(name) }
             arrow = ARROWS.fetch(match[2])
             from, to = to, from if arrow[:reversed]
-            @messages << Message.new(from: from, to: to, label: match[4],
-                                     head: arrow[:head],
-                                     dashed: arrow[:dashed])
+            @outline.message(Message.new(from: from, to: to, label: match[4],
+                                         head: arrow[:head],
+                                         dashed: arrow[:dashed]))
           end
 
           def mention(name)
@@ -177,7 +265,13 @@ module Sirena
           def diagram
             check_boxes
             Diagram.new(participants: @participants.values.freeze,
-                        messages: @messages.freeze, boxes: @boxes.freeze)
+                        items: @outline.items.freeze, boxes: @boxes.freeze)
+          end
+
+          def unclosed_block
+            Sirena::Parser::ParseError.new(
+              "Parse error: a block is never closed with end",
+            )
           end
 
           def unclosed_box

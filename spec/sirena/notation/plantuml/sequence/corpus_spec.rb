@@ -11,30 +11,34 @@ Sirena::Notation.send(:entries).delete(:plantuml)
 module PlantUmlSequenceCorpus
   DIR = File.expand_path("../../../../plantuml/sequence", __dir__)
 
-  # Every case of spec/plantuml/sequence the slice renders today. A case
-  # joins this list when it renders; it never leaves it.
-  GROUP = "resources.vega.nonreg.group2791."
+  # The 12-hex suffix of every case of spec/plantuml/sequence the slice
+  # renders today. A case joins this list when it renders; it never leaves it.
   RENDERED = %w[
-    box_between_external_participants--7d1d5500d228
-    box_forward_self_message_clears_next_participant--1a24d5f462c1
-    box_reverse_self_message_clears_previous_participant--c797d0cd3eab
-    self_message_leftmost_of_multi--0742b0602928
-    self_message_leftmost_participant--9efe4ddda292
-    self_message_reverse_only--b0355d4c2434
-    self_message_solo--9d48b2180ff0
-  ].map { |tail| "#{GROUP}#{tail}" }.freeze
+    61e71ad8eca5 18b03e1b811e 5bbc1c2fa32b da4311bd2115 e1598e37241a
+    cd27c406b434 3e3df0d464c3 ebbf246498ea d4b4359acf05 d086f0811a32
+    833298c44032 6b4f8cacde95 7d1d5500d228 1a24d5f462c1 c797d0cd3eab
+    6ef262c9c97b a4059b3b3ee9 459b540cd94b 41e5a7ff94cb 14a816e0bd6e
+    1a2e8a0dbc73 0742b0602928 9efe4ddda292 b0355d4c2434 9d48b2180ff0
+    5dbc30d9717f f121a37a9290 9617d3aa3c9f fb338498bd7e 4965c575d64a
+    9edd3c67e417 671c16bf124d
+  ].freeze
 
-  def source_of(name)
-    File.read(File.join(DIR, "#{name}.puml"))
+  def case_named(suffix)
+    Dir.glob(File.join(DIR, "*--#{suffix}.puml")).first
+  end
+
+  def source_of(suffix)
+    File.read(case_named(suffix))
   end
 
   def unread_cases
-    Dir.glob(File.join(DIR, "*.puml")).map { |p| File.basename(p, ".puml") }
-      .sort - RENDERED
+    Dir.glob(File.join(DIR, "*.puml")).reject do |path|
+      RENDERED.any? { |suffix| path.end_with?("--#{suffix}.puml") }
+    end
   end
 
-  def refusal(name)
-    Sirena.render(source_of(name), notation: :plantuml)
+  def refusal(path)
+    Sirena.render(File.read(path), notation: :plantuml)
     nil
   rescue Sirena::Notation::PlantUML::UnsupportedConstructError,
          Sirena::Parser::ParseError => e
@@ -50,7 +54,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
   before { Sirena::Notation.register(Sirena::Notation::PlantUML) }
 
   PlantUmlSequenceCorpus::RENDERED.each do |name|
-    it "renders well-formed SVG for #{name.split('.').last}" do
+    it "renders well-formed SVG for case #{name}" do
       svg = Sirena.render(source_of(name), notation: :plantuml)
 
       expect(REXML::Document.new(svg).root.name).to eq("svg")
@@ -58,7 +62,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
   end
 
   it "draws one lifeline per declared participant in a rendered case" do
-    name = PlantUmlSequenceCorpus::RENDERED.fetch(3)
+    name = "0742b0602928"
     svg = Sirena.render(source_of(name), notation: :plantuml)
 
     expect(REXML::XPath.match(REXML::Document.new(svg), "//line").size).to eq(2)
