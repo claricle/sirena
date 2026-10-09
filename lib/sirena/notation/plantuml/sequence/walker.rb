@@ -2,6 +2,7 @@
 
 require_relative "activation"
 require_relative "bar_tracker"
+require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
@@ -25,8 +26,10 @@ module Sirena
           ARROW_LENGTH = 10.0
           ARROW_HALF_WIDTH = 4.0
           TAB_HEIGHT = 20.0
+          CROSS_HALF = 9.0
 
-          attr_reader :arrows, :notes, :fragments, :dividers, :left, :right, :y
+          attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
+                      :right, :y
 
           # @param lifelines [Hash{String => Float}] centre of each
           #   participant's lifeline, in participant order
@@ -65,6 +68,7 @@ module Sirena
             @notes = []
             @fragments = []
             @dividers = []
+            @crosses = []
             @tracker = BarTracker.new(method(:centre))
             @blocks = []
             @left = Float::INFINITY
@@ -72,13 +76,14 @@ module Sirena
           end
 
           def anchoring?(item)
-            [Message, Activation].any? { |kind| item.is_a?(kind) }
+            [Message, Activation, Destroy].any? { |kind| item.is_a?(kind) }
           end
 
           def visit(item, previous)
             case item
             when Message then message(item)
             when Activation then activation(item)
+            when Destroy then destroy(item)
             when Note then note(item, previous)
             when Fragment then fragment(item)
             else divider(item)
@@ -86,6 +91,7 @@ module Sirena
           end
 
           def message(message)
+            @self_drop = message.self_message? ? SELF_HEIGHT : 0.0
             @last_y = @mark_y = @y
             from, to = [message.from, message.to].map { |id| centre(id) }
             @arrows << arrow_record(message, arrow_for(message, from, to))
@@ -102,6 +108,24 @@ module Sirena
           # between the rows on either side of the line.
           def activation(item)
             @tracker.apply(item, @mark_y || (@y - 20))
+          end
+
+          # The cross sits at the end of the arrow it follows, or else
+          # between the rows on either side of the line.
+          def destroy(item)
+            middle = @mark_y ? @mark_y + @self_drop : @y - 20
+            x = centre(item.participant)
+            touch(x - CROSS_HALF, x + CROSS_HALF)
+            [-CROSS_HALF, CROSS_HALF].each do |slant|
+              @crosses << cross_stroke(x, middle, slant)
+            end
+          end
+
+          def cross_stroke(centre_x, middle, slant)
+            PlantUML::Scene::Segment.new(
+              x1: centre_x - CROSS_HALF, y1: middle - slant,
+              x2: centre_x + CROSS_HALF, y2: middle + slant
+            )
           end
 
           def arrow_for(message, from, to)

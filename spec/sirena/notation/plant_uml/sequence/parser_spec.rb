@@ -19,6 +19,10 @@ module PlantUmlSequenceHelpers
     e
   end
 
+  def activations(diagram)
+    diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Activation)
+  end
+
   def message_of(arrow)
     parse("A #{arrow} B : hi").messages.first
   end
@@ -70,9 +74,56 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
         .to raise_error(unsupported, /deactivate/)
     end
 
-    it "refuses a coloured activation" do
-      expect { parse("A -> B", "activate B #red") }
-        .to raise_error(unsupported, /activate/)
+    it "reads the colour of an activation, hex or named" do
+      diagram = parse("A -> B", "activate B #red", "activate B #ff8800")
+      colours = activations(diagram).map(&:color)
+
+      expect(colours).to eq(["red", "#ff8800"])
+    end
+
+    it "gives the colour on a message line to the bar ++ opens" do
+      diagram = parse("A -> B ++ #green : hi", "B -> A --++ #blue")
+      colours = activations(diagram).map { |a| [a.phase, a.color] }
+
+      expect(colours).to eq([[:on, "green"], [:off, nil], [:on, "blue"]])
+    end
+
+    {
+      "A -> B ++ #notacolour" => /message arrow/,
+      "A -> B #red" => /message arrow/,
+      "A -> B -- #red" => /message arrow/,
+    }.each do |line, message|
+      it "refuses #{line.inspect}, which colours no bar" do
+        expect { parse("A -> B ++", line) }
+          .to raise_error(unsupported, message)
+      end
+    end
+
+    it "refuses a colour on deactivate" do
+      expect { parse("A -> B ++", "deactivate B #red") }
+        .to raise_error(unsupported, /deactivate/)
+    end
+  end
+
+  describe "destroy" do
+    let(:destroyed) do
+      lambda do |diagram|
+        diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Destroy)
+          .map(&:participant)
+      end
+    end
+
+    it "reads destroy X" do
+      expect(destroyed.call(parse("A -> B", "destroy B"))).to eq(["B"])
+    end
+
+    it "reads !! as destroying the receiver of the message" do
+      expect(destroyed.call(parse("A -> B !!", "B <- A !!"))).to eq(%w[B B])
+    end
+
+    it "refuses destroy with no participant" do
+      expect { parse("A -> B", "destroy") }
+        .to raise_error(unsupported, /destroy/)
     end
   end
 

@@ -177,11 +177,46 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(scene_of("A -> B", "activate B").bars.size).to eq(1)
     end
 
+    it "fills a bar with the colour it was opened with" do
+      bar = scene_of("A -> B ++ #red", "B -> A --").bars.first
+
+      expect(bar.fill).to eq("red")
+    end
+
     it "shifts a nested bar right of the outer one" do
       scene = scene_of("A -> B ++", "A -> B ++", "B -> A --", "B -> A --")
       xs = scene.bars.map(&:x)
 
       expect(xs.uniq.size).to eq(2)
+    end
+  end
+
+  describe "destroy" do
+    let(:cross) { scene_of("A -> B !!").crosses }
+
+    it "draws two strokes crossing on the lifeline of the receiver" do
+      lifeline_x = scene_of("A -> B !!").lifelines.last.x1
+
+      middles = cross.map { |line| (line.x1 + line.x2) / 2 }
+
+      expect(middles).to all(eq(lifeline_x))
+    end
+
+    it "draws two strokes whose ends are opposite corners" do
+      expect(cross.map { |line| line.y1 < line.y2 }.sort_by(&:to_s))
+        .to eq([false, true])
+    end
+
+    it "draws no stroke without destroy" do
+      expect(scene_of("A -> B").crosses).to be_empty
+    end
+
+    it "sits level with the arrow it follows" do
+      scene = scene_of("A -> B", "destroy B")
+      arrow_y = scene.arrows.first.path[/L [\d.]+ ([\d.]+)/, 1].to_f
+
+      expect(scene.crosses.map { |line| (line.y1 + line.y2) / 2 })
+        .to all(eq(arrow_y))
     end
   end
 end

@@ -23,6 +23,7 @@ module PlantUmlSequenceCorpus
     9edd3c67e417 671c16bf124d 8f71f44c46ac b74549f2f6be
     3d52db0edecd 54dfdd51ac5d 62b7d8792525 7624adcaae49 80894b73726a
     846af1d12917 920d4bcaa3e9 d783321e2c62
+    559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
   ].freeze
 
   def case_named(suffix)
@@ -40,7 +41,11 @@ module PlantUmlSequenceCorpus
   end
 
   def rect_count(svg)
-    REXML::XPath.match(REXML::Document.new(svg), "//rect").size
+    matches(svg, "//rect").size
+  end
+
+  def matches(svg, xpath)
+    REXML::XPath.match(REXML::Document.new(svg), xpath)
   end
 
   def refusal(path)
@@ -81,6 +86,22 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     end
 
     expect(counts.first - counts.last).to eq(1)
+  end
+
+  it "draws a cross for a destroyed participant of a rendered case" do
+    source = source_of("184d55bcfb9c")
+    counts = [source, source.sub(/^destroy .*\n/, "")].map do |text|
+      matches(Sirena.render(text, notation: :plantuml), "//line").size
+    end
+
+    expect(counts.first - counts.last).to eq(2)
+  end
+
+  it "fills the bar of a rendered case with its colour" do
+    svg = Sirena.render(source_of("2dd4eecfa67b"), notation: :plantuml)
+    fills = matches(svg, "//rect/@fill").map(&:value)
+
+    expect(fills).to include("red", "green")
   end
 
   it "refuses every other case instead of rendering part of it" do

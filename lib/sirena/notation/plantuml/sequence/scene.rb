@@ -55,6 +55,7 @@ module Sirena
           end
 
           class Bar < Lutaml::Model::Serializable
+            attribute :fill, :string
             attribute :x, :float
             attribute :y, :float
             attribute :width, :float
@@ -75,6 +76,7 @@ module Sirena
           attribute :notes, Note, collection: true
           attribute :dividers, Divider, collection: true
           attribute :bars, Bar, collection: true
+          attribute :crosses, PlantUML::Scene::Segment, collection: true
           attribute :heads, Head, collection: true
           attribute :lifelines, PlantUML::Scene::Segment, collection: true
           attribute :arrows, Arrow, collection: true

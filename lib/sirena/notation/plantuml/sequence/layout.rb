@@ -71,7 +71,7 @@ module Sirena
           def flow_items
             { arrows: @flow.arrows, fragments: @flow.fragments,
               notes: @flow.notes, dividers: @flow.dividers,
-              bars: @flow.bars }
+              bars: @flow.bars, crosses: @flow.crosses }
           end
 
           def head_height
