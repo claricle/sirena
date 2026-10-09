@@ -15,17 +15,20 @@ RSpec.describe Sirena::Parser::Base do
                               "pie\n???"],
       Sirena::Parser::Quadrant => ["quadrantChart\n  title T", Sirena::Diagram::Quadrant,
                                    "quadrantChart\n???"],
-      Sirena::Parser::Sequence => ["sequenceDiagram\nAlice->>Bob: Hello", Sirena::Diagram::Sequence,
+      Sirena::Parser::Sequence => ["sequenceDiagram\nAlice->>Bob: Hello",
+                                   Sirena::Diagram::Sequence,
                                    "sequenceDiagram\n???"],
       Sirena::Parser::Gantt => ["gantt\n  title T", Sirena::Diagram::Gantt,
                                 "gantt\n???"],
       Sirena::Parser::Sankey => ["sankey-beta\nA,B,10", Sirena::Diagram::Sankey,
                                  "sankey-beta\n???"],
-      Sirena::Parser::Timeline => ["timeline\n  title T\n  2002 : LinkedIn", Sirena::Diagram::Timeline,
+      Sirena::Parser::Timeline => ["timeline\n  title T\n  2002 : LinkedIn",
+                                   Sirena::Diagram::Timeline,
                                    "timeline\n:"],
       Sirena::Parser::Error => ["error", Sirena::Diagram::Error,
                                 "error\n???"],
-      Sirena::Parser::ErDiagram => ["erDiagram\nCUSTOMER ||--o{ ORDER : places", Sirena::Diagram::ErDiagram,
+      Sirena::Parser::ErDiagram => ["erDiagram\nCUSTOMER ||--o{ ORDER : places",
+                                    Sirena::Diagram::ErDiagram,
                                     "erDiagram\n???"],
     }
 
@@ -36,10 +39,10 @@ RSpec.describe Sirena::Parser::Base do
         end
 
         it "reports a syntax error with line, column and the source line" do
-          source_line = invalid.lines[1]
+          source_line = Regexp.escape(invalid.lines[1])
           expect { parser_class.new.parse(invalid) }.to raise_error(
             Sirena::Parser::ParseError,
-            /\AParse error at line 2, column \d+:\n#{Regexp.escape(source_line)}\n/,
+            /\AParse error at line 2, column \d+:\n#{source_line}\n/,
           )
         end
       end
