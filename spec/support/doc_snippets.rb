@@ -7,7 +7,7 @@ require "tmpdir"
 
 # Extracts the `[source,...]` blocks of an AsciiDoc file and runs them.
 module DocSnippets
-  Block = Struct.new(:line, :lang, :body)
+  Block = Struct.new(:path, :line, :lang, :body)
 
   # Blocks that are not executed, each with the reason. Keyed by the
   # first line of the block body.
@@ -17,9 +17,35 @@ module DocSnippets
     "gem install sirena" => "installs the published gem",
     "Mermaid Syntax Input (String)" => "ASCII-art pipeline diagram",
     "Sirena (Root Module)" => "ASCII-art component tree",
+    "git clone https://github.com/claricle/sirena.git" => "clones the repository",
+    %(echo 'export PATH="$HOME/.gem/ruby/X.X.0/bin:$PATH"' >> ~/.bashrc) =>
+      "edits the reader's shell profile",
+    "gem install sirena --user-install" => "installs the published gem",
+    "sirena render [FILE]" => "usage synopsis with a placeholder",
+    "sirena batch [OPTIONS]" => "usage synopsis with a placeholder",
+    "sirena types [OPTIONS]" => "usage synopsis with a placeholder",
+    "sirena render --notation mermaid diagram.txt" =>
+      "needs ./my_notation.rb, a notation file the reader writes",
+    "sirena batch -i diagrams -o output" =>
+      "needs ./my_notation.rb, a notation file the reader writes",
+    "# Run Mermaid.js compatibility tests" =>
+      "rake task and mermaid-cli comparison, not the sirena CLI",
   }.freeze
 
-  README = File.expand_path("../../README.adoc", __dir__)
+  ROOT = File.expand_path("../..", __dir__)
+
+  README = File.join(ROOT, "README.adoc")
+
+  GUIDES = [
+    "docs/_guides/cli-reference.adoc",
+    "docs/_guides/installation.adoc",
+    "docs/_guides/quick-start.adoc",
+    "docs/_pages/compatibility.adoc",
+    "docs/index.adoc",
+  ].map { |f| File.join(ROOT, f) }.freeze
+
+  # Languages whose blocks are commands or code to run.
+  RUNNABLE = %w[ruby shell bash].freeze
 
   SOURCE_MARKER = /\A\[source(?:,(\w+))?\]\z/
 
@@ -29,27 +55,31 @@ module DocSnippets
 
   def blocks(path = README)
     lines = File.read(path).lines(chomp: true)
-    lines.each_index.filter_map { |index| block_at(lines, index) }
+    lines.each_index.filter_map { |index| block_at(path, lines, index) }
   end
 
-  def block_at(lines, index)
+  def block_at(path, lines, index)
     marker = SOURCE_MARKER.match(lines[index])
     return unless marker && lines[index + 1] == "----"
 
     body = lines[(index + 2)..].take_while { |l| l != "----" }
-    Block.new(index + 1, marker[1], body.join("\n"))
+    Block.new(path, index + 1, marker[1], body.join("\n"))
   end
 
-  def block_containing(text)
-    blocks.find { |b| b.body.include?(text) }
+  def block_containing(text, path = README)
+    blocks(path).find { |b| b.body.include?(text) }
   end
 
-  def skipped_keys_without_block
-    SKIPPED.keys - blocks.map { |b| b.body.lines.first.to_s.strip }
+  def skipped_keys_without_block(paths = [README, *GUIDES])
+    SKIPPED.keys - paths.flat_map { |p| blocks(p) }.map { |b| first_line(b) }
+  end
+
+  def first_line(block)
+    block.body.lines.first.to_s.strip
   end
 
   def skip_reason(block)
-    SKIPPED[block.body.lines.first.to_s.strip]
+    SKIPPED[first_line(block)]
   end
 
   # Runs one block in a scratch directory holding the files the
@@ -57,31 +87,53 @@ module DocSnippets
   def run(block)
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
-        File.write("diagram.mmd", DIAGRAM)
-        Dir.mkdir("input_dir")
-        File.write("input_dir/one.mmd", DIAGRAM)
+        write_fixtures
         run_in_cwd(block)
         Dir.glob("**/*").select { |f| File.file?(f) }
       end
     end
   end
 
+  # The files the docs' examples refer to.
+  def write_fixtures
+    %w[input_dir diagrams].each do |dir|
+      Dir.mkdir(dir)
+      File.write("#{dir}/one.mmd", DIAGRAM)
+    end
+    %w[diagram.mmd my-first-diagram.mmd diagram.txt].each do |f|
+      File.write(f, DIAGRAM)
+    end
+  end
+
   def run_in_cwd(block)
     case block.lang
     when "ruby"
-      TOPLEVEL_BINDING.dup.eval(block.body, "README.adoc", block.line)
-    when "shell" then block.body.each_line { |l| shell(l) }
+      TOPLEVEL_BINDING.dup.eval(block.body, File.basename(block.path), block.line)
+    when "shell", "bash" then block.body.each_line { |l| shell(l) }
     else raise ArgumentError, "unhandled block language: #{block.lang.inspect}"
     end
   end
 
   def shell(line)
+    return if line.strip.empty? || line.lstrip.start_with?("#")
+
+    piped = line.match(/\Acat (\S+) \| (.*)/m)
+    return with_stdin(File.read(piped[1])) { shell(piped[2]) } if piped
+
     command, *args = Shellwords.split(line)
     unless command == "sirena"
       raise ArgumentError, "only the sirena CLI is run, got #{line.inspect}"
     end
 
     with_quiet_stdout { Sirena::Cli.start(args) }
+  end
+
+  def with_stdin(text)
+    saved = $stdin
+    $stdin = StringIO.new(text)
+    yield
+  ensure
+    $stdin = saved
   end
 
   def with_quiet_stdout
