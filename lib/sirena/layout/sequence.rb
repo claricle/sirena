@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/sequence"
+require_relative "../diagram/sequence_text"
 
 module Sirena
   module Layout
@@ -88,23 +89,28 @@ module Sirena
               head_style: message.head_style,
               head_side: message.head_side,
               message_index: index,
-              message_text: message.message_text,
+              message_text: shown_text(message),
             },
           }
         end
       end
 
+      def shown_text(message)
+        Diagram::SequenceText.display(message.message_text.to_s)
+      end
+
       def message_labels(message)
         return [] if message.message_text.nil? || message.message_text.empty?
 
+        shown = shown_text(message)
         label_dims = measure_text(
-          message.message_text,
+          shown,
           font_size: DEFAULT_FONT_SIZE,
         )
 
         [
           {
-            text: message.message_text,
+            text: shown,
             width: label_dims[:width],
             height: label_dims[:height],
           },
