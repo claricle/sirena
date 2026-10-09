@@ -4,26 +4,27 @@ require "spec_helper"
 
 RSpec.describe Sirena::Diagram::SequenceText do
   describe ".display" do
-    {
-      "wrap:hello" => "hello",
-      "nowrap:hello" => "hello",
-      "  wrap:  hello" => "hello",
-      "NoWrAp:hello" => "hello",
-      "hello wrap:world" => "hello wrap:world",
-    }.each do |input, expected|
-      it "shows #{input.inspect} as #{expected.inspect}" do
-        expect(described_class.display(input)).to eq(expected)
+    it "removes a leading wrap directive case-insensitively" do
+      cases = {
+        "wrap:hello" => "hello",
+        "nowrap:hello" => "hello",
+        "  wrap:  hello" => "hello",
+        "NoWrAp:hello" => "hello",
+        "hello wrap:world" => "hello wrap:world",
+      }
+
+      actual = cases.keys.to_h do |input|
+        [input, described_class.display(input)]
       end
+
+      expect(actual).to eq(cases)
     end
 
-    {
-      "one<br>two" => "one two",
-      "one<br/>two" => "one two",
-      "one<BR />two" => "one two",
-    }.each do |input, expected|
-      it "normalizes the break in #{input.inspect}" do
-        expect(described_class.display(input)).to eq(expected)
-      end
+    it "normalizes supported HTML break spellings" do
+      inputs = ["one<br>two", "one<br/>two", "one<BR />two"]
+      actual = inputs.map { |input| described_class.display(input) }
+
+      expect(actual).to eq(["one two"] * 3)
     end
 
     it "decodes a numeric entity" do
