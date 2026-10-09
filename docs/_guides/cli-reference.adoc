@@ -45,7 +45,7 @@ does not exist. Use `sirena help render` instead.
 
 === render
 
-Render one Mermaid diagram as SVG.
+Render one diagram as SVG.
 
 [source,shell]
 ----
@@ -55,8 +55,9 @@ sirena render [FILE]
 ==== Argument
 
 `FILE`::
-  Optional Mermaid input file. When omitted, or when `FILE` is `-`, Sirena
-  reads Mermaid source from standard input.
+  Optional diagram input file. When omitted, or when `FILE` is `-`, Sirena
+  reads source from standard input. For a file, Sirena tries its registered
+  extension before inspecting the source to select a notation.
 
 ==== Options
 
@@ -73,6 +74,14 @@ sirena render [FILE]
 `--verbose`, `-v`::
   Enable verbose output. It defaults to false. On an error, verbose mode also
   prints the backtrace.
+
+`--notation NOTATION`::
+  Use the named registered notation instead of detecting one from the file
+  extension and then the source.
+
+`--require PATH`, `-r PATH`::
+  Load a notation file before rendering. This option is repeatable. Each file
+  must register its notation with Sirena.
 
 ==== Examples
 
@@ -99,9 +108,17 @@ sirena render diagram.mmd -f svg -t dark -o diagram.svg
 sirena render diagram.mmd -t high_contrast -o diagram.svg
 ----
 
+Select a notation explicitly, or load one supplied by another file:
+
+[source,shell]
+----
+sirena render --notation mermaid diagram.txt
+sirena render --require ./my_notation.rb diagram.my
+----
+
 === batch
 
-Render Mermaid files in a directory.
+Render diagram files in a directory.
 
 [source,shell]
 ----
@@ -125,10 +142,20 @@ sirena batch [OPTIONS]
 `--verbose`, `-v`::
   Enable verbose output. It defaults to false.
 
-When the input is a directory, Sirena recursively matches `**/*.mmd` and writes
-an `.svg` file under the output directory with the same relative path. The glob
-excludes dotfiles and does not descend into hidden subdirectories of the
-selected input directory.
+`--notation NOTATION`::
+  Restrict directory discovery and rendering to the named registered
+  notation. Without this option, all registered notation extensions are
+  included.
+
+`--require PATH`, `-r PATH`::
+  Load a notation file before discovering inputs. This option is repeatable.
+
+When the input is a directory, Sirena recursively finds regular files whose
+case-insensitive extensions belong to the selected notation, or to any
+registered notation when `--notation` is omitted. It writes an `.svg` file
+under the output directory with the same relative path. Discovery excludes
+dotfiles and does not descend into hidden subdirectories of the selected input
+directory.
 
 For example:
 
@@ -136,15 +163,19 @@ For example:
 ----
 sirena batch -i diagrams -o output
 sirena batch -i diagrams -o output -t dark
+sirena batch -i diagrams -o output --notation mermaid
+sirena batch -i diagrams -o output -r ./my_notation.rb
 ----
 
 Batch status is reported in its summary. Current edge-case behavior is:
 
-* A nonexistent input path finds zero files, prints `No .mmd files found`,
-  and exits 0 -- this counts as success (nothing failed), the same as an
-  input directory with no `.mmd` files in it.
-* A direct `.mmd` file input renders that one file into the output
-  directory, same as any other file the batch finds.
+* A nonexistent input path finds zero files, prints
+  `No diagram files found in: PATH`, and exits 0 -- this counts as success
+  (nothing failed), the same as an input directory with no registered diagram
+  files in it.
+* A direct file input renders that one file into the output directory even if
+  its extension is not registered. A registered extension is replaced by
+  `.svg`; an unregistered extension is retained.
 * A file that fails to render does not stop later files. The summary
   records successes and failures, and the command exits 1 if any file
   failed, 0 if every file succeeded (including a run that found none).
@@ -155,38 +186,45 @@ List the diagram types registered by the current executable:
 
 [source,shell]
 ----
-sirena types
+sirena types [OPTIONS]
 ----
 
-Output begins with `Supported diagram types:` followed by these identifiers,
-one per line:
+Output begins with `Supported diagram types:`. It then groups identifiers under
+each registered notation. The built-in registration is:
 
 ----
-flowchart
-sequence
-class_diagram
-state_diagram
-er_diagram
-user_journey
-pie
-gantt
-timeline
-quadrant
-git_graph
-mindmap
-kanban
-radar
-block
-requirement
-xychart
-architecture
-sankey
-packet
-treemap
-c4
-info
-error
+mermaid:
+  flowchart
+  sequence
+  class_diagram
+  state_diagram
+  er_diagram
+  user_journey
+  pie
+  gantt
+  timeline
+  quadrant
+  git_graph
+  mindmap
+  kanban
+  radar
+  block
+  requirement
+  xychart
+  architecture
+  sankey
+  packet
+  treemap
+  c4
+  info
+  error
 ----
+
+==== Options
+
+`--require PATH`, `-r PATH`::
+  Load a notation file before listing. This option is repeatable. Each
+  additional notation is printed as another group.
 
 === version
 
