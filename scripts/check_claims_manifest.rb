@@ -126,10 +126,10 @@ module Sirena
       warn "claims manifest check failed: #{e.message}"
       false
     else
-      report_problems(found)
+      report_problems?(found)
     end
 
-    def report_problems(found)
+    def report_problems?(found)
       return report_clean? if found.empty?
 
       warn(*found.map { |problem| "claims manifest check failed: #{problem}" })
