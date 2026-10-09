@@ -3,7 +3,7 @@
 require "spec_helper"
 require "yaml"
 
-module DiagramFrontMatterSpec
+module DiagramFrontMatter
   ROOT = File.expand_path("../..", __dir__)
   PAGE_DIR = File.join(ROOT, "docs/_diagram_types")
   PAGES = Dir[File.join(PAGE_DIR, "*.adoc")]
@@ -25,22 +25,24 @@ module DiagramFrontMatterSpec
     heading = source.each_line.find { |line| line.match?(/\A={1,2} /) }
     heading.sub(/\A={1,2} /, "").strip
   end
-end
 
-RSpec.describe DiagramFrontMatterSpec do
-  it "publishes every top-level diagram page with accurate front matter" do
-    failures = described_class::PAGES.filter_map do |path|
+  def self.failures
+    PAGES.filter_map do |path|
       source = File.read(path)
-      metadata = described_class.metadata(source)
-      title = metadata&.fetch("title", "").to_s.strip
-      fields_match = described_class::EXPECTED.all? do |key, value|
-        metadata&.fetch(key, nil) == value
+      page_metadata = metadata(source)
+      page_title = page_metadata&.fetch("title", "").to_s.strip
+      fields_match = EXPECTED.all? do |key, value|
+        page_metadata&.fetch(key, nil) == value
       end
-      next if fields_match && title.casecmp?(described_class.title(source))
+      next if fields_match && page_title.casecmp?(title(source))
 
       File.basename(path)
     end
+  end
+end
 
-    expect(failures).to eq([])
+RSpec.describe DiagramFrontMatter do
+  it "publishes every top-level diagram page with accurate front matter" do
+    expect(described_class.failures).to eq([])
   end
 end

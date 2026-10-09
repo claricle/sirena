@@ -2,10 +2,12 @@
 
 require "spec_helper"
 
-module FlowchartExamplesIncludeSpec
+module FlowchartExamplesInclude
   ROOT = File.expand_path("../..", __dir__)
   HOST = File.join(ROOT, "docs/_diagram_types/flowchart.adoc")
-  INCLUDE = File.join(ROOT, "docs/_diagram_types/examples/flowchart-examples.adoc")
+  INCLUDE = File.join(
+    ROOT, "docs/_diagram_types/examples/flowchart-examples.adoc"
+  )
   DIRECTIVE = /^(?<line>include::(?<target>[^\[]+)\[\])$/
 
   module_function
@@ -31,7 +33,7 @@ module FlowchartExamplesIncludeSpec
   end
 end
 
-RSpec.describe FlowchartExamplesIncludeSpec do
+RSpec.describe FlowchartExamplesInclude do
   it "keeps the generated examples as a front-matter-free include" do
     expect(described_class.include_source).not_to match(/\A---\R.*?^---\R/m)
   end
@@ -39,7 +41,9 @@ RSpec.describe FlowchartExamplesIncludeSpec do
   it "resolves the flowchart include to the tracked generated source" do
     resolved = described_class.resolved_include
 
-    expect([resolved, File.file?(resolved)]).to eq([described_class::INCLUDE, true])
+    facts = [resolved, File.file?(resolved)]
+
+    expect(facts).to eq([described_class::INCLUDE, true])
   end
 
   it "expands the generated example into the flowchart page" do

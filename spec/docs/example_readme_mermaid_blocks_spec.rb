@@ -7,6 +7,7 @@ module ExampleReadmeMermaidBlocks
   READMES = Dir.glob(File.join(ROOT, "examples/*/README.adoc")).freeze
   MARKER = /\A\[source,\s*mermaid\][[:space:]]*\z/
   INCLUDE = /\Ainclude::(.+\.mmd)\[\]\z/
+  MISSING_INCLUDE = /README\.adoc:12: missing Mermaid include missing\.mmd/
 
   module_function
 
@@ -16,7 +17,9 @@ module ExampleReadmeMermaidBlocks
   end
 
   def marker_count
-    READMES.sum { |readme| File.foreach(readme).count { |line| line.match?(MARKER) } }
+    READMES.sum do |readme|
+      File.foreach(readme).count { |line| line.match?(MARKER) }
+    end
   end
 
   def source(block)
@@ -26,25 +29,35 @@ module ExampleReadmeMermaidBlocks
     target = File.expand_path(include_path, File.dirname(block.path))
     return File.read(target) if File.file?(target)
 
-    raise IOError, "#{block.path}:#{block.line}: missing Mermaid include #{include_path}"
+    message = "#{block.path}:#{block.line}: " \
+              "missing Mermaid include #{include_path}"
+    raise IOError, message
   end
 
   def label(block)
     "#{block.path.delete_prefix("#{ROOT}/")}:#{block.line}"
   end
+
+  def missing_include_block
+    path = File.join(ROOT, "examples/error/README.adoc")
+    DocSnippets::Block.new(
+      path, 12, "mermaid", "include::missing.mmd[]"
+    )
+  end
 end
 
 RSpec.describe ExampleReadmeMermaidBlocks do
   it "extracts all 67 Mermaid source markers" do
-    expect([described_class.marker_count, described_class.blocks.size]).to eq([67, 67])
+    counts = [described_class.marker_count, described_class.blocks.size]
+
+    expect(counts).to eq([67, 67])
   end
 
   it "reports a missing relative include with its source location" do
-    path = File.join(described_class::ROOT, "examples/error/README.adoc")
-    block = DocSnippets::Block.new(path, 12, "mermaid", "include::missing.mmd[]")
+    block = described_class.missing_include_block
 
     expect { described_class.source(block) }
-      .to raise_error(IOError, /README\.adoc:12: missing Mermaid include missing\.mmd/)
+      .to raise_error(IOError, described_class::MISSING_INCLUDE)
   end
 
   described_class.blocks.each do |block|
