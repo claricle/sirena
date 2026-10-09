@@ -9,6 +9,21 @@ RSpec.describe Sirena::Renderer::Radar do
   let(:theme) { Sirena::Theme::Registry.get(:default) }
   let(:renderer) { described_class.new(theme: theme) }
 
+  describe "model fallbacks" do
+    it "uses identifiers when axis and curve labels are nil" do
+      axis = Sirena::Diagram::RadarAxis.new("speed")
+      curve = Sirena::Diagram::RadarCurve.new("baseline")
+
+      expect([axis.label, curve.label]).to eq(%w[speed baseline])
+    end
+
+    it "returns zero for a missing curve axis" do
+      curve = Sirena::Diagram::RadarCurve.new("baseline")
+
+      expect(curve.value_for("missing")).to eq(0.0)
+    end
+  end
+
   describe "#render" do
     context "with a simple radar chart" do
       let(:layout) do
