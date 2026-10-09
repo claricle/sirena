@@ -502,6 +502,11 @@ RSpec.describe CorpusOracle do
         "mermaid" => "11.16.1", "puppeteer" => "23.11.1",
         "chromium" => "131.0.6778.204", "font" => { "family" => "Noto Sans" } }
     end
+    let(:toolchain_drift) do
+      MermaidToolchain::DriftError.new(
+        "mermaid: expected 11.16.1, got 11.17.0",
+      )
+    end
 
     it "records the complete verified toolchain" do
       allow(MermaidToolchain).to receive_messages(
@@ -513,10 +518,8 @@ RSpec.describe CorpusOracle do
     end
 
     it "turns toolchain drift into an infrastructure failure" do
-      allow(MermaidToolchain).to receive(:verify_toolchain).and_raise(
-        MermaidToolchain::DriftError,
-        "mermaid: expected 11.16.1, got 11.17.0",
-      )
+      allow(MermaidToolchain).to receive(:verify_toolchain)
+        .and_raise(toolchain_drift)
 
       expect { described_class.provenance }
         .to raise_error(described_class::InfrastructureError, /11\.17\.0/)
