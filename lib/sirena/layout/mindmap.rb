@@ -114,7 +114,7 @@ module Sirena
           width: width, height: height,
           view_box: "0 0 #{width.to_f} #{height.to_f}",
           children: nodes,
-          edges: typed_edges(graph[:connections], nodes),
+          edges: typed_edges(graph[:connections], nodes)
         )
       end
 
@@ -131,14 +131,14 @@ module Sirena
         Node.new(
           id: node[:id], level: node[:level], shape: node[:shape],
           **geometry, **node_shape_geometry(geometry),
-          labels: [node_label(node, geometry)],
+          labels: [node_label(node, geometry)]
         )
       end
 
       def node_shape_geometry(geometry)
         coordinates = {
           center_x: geometry[:center_x], top_y: geometry[:y],
-          width: geometry[:width], height: geometry[:height],
+          width: geometry[:width], height: geometry[:height]
         }
         { shape_points: hexagon_points(**coordinates),
           shape_path: cloud_path(**coordinates) }
@@ -209,6 +209,11 @@ module Sirena
       end
 
       def hexagon_points(center_x:, top_y:, width:, height:)
+        hexagon_vertices(center_x, top_y, width, height)
+          .map { |point| point.join(",") }.join(" ")
+      end
+
+      def hexagon_vertices(center_x, top_y, width, height)
         offset = width * 0.2
         left = center_x - (width / 2)
         right = center_x + (width / 2)
@@ -217,7 +222,6 @@ module Sirena
         [[left + offset, top_y], [right - offset, top_y], [right, middle_y],
          [right - offset, bottom_y], [left + offset, bottom_y],
          [left, middle_y]]
-          .map { |point| point.join(",") }.join(" ")
       end
 
       def cloud_path(center_x:, top_y:, width:, height:)

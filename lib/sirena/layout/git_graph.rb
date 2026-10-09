@@ -149,7 +149,7 @@ module Sirena
           view_box: "0 0 #{width.to_f} #{height.to_f}",
           commits: typed_commits(graph, labels, shift),
           branches: typed_branches(graph, labels, shift),
-          connections: typed_connections(graph[:connections], shift),
+          connections: typed_connections(graph[:connections], shift)
         )
       end
 
@@ -217,7 +217,7 @@ module Sirena
 
       def branch_label(branch, commit, orientation)
         x_coordinate, y_coordinate, anchor = branch_label_position(
-          commit[:x], commit[:y], orientation,
+          commit[:x], commit[:y], orientation
         )
         { text: branch, x: x_coordinate + PADDING,
           y: y_coordinate + PADDING, text_anchor: anchor,
@@ -242,7 +242,7 @@ module Sirena
 
       def label_span(label)
         width = measure_text(
-          label[:text], font_size: small_font_size,
+          label[:text], font_size: small_font_size
         )[:width] * LABEL_HEADROOM
         share = { "start" => 0.0, "middle" => 0.5, "end" => 1.0 }
           .fetch(label[:text_anchor])
@@ -263,8 +263,8 @@ module Sirena
           lane: commit[:lane], type: commit[:type],
           parent_ids: commit[:parent_ids],
           labels: typed_labels(
-            commit_labels_for(labels, commit), shift - PADDING,
-          ),
+            commit_labels_for(labels, commit), shift - PADDING
+          )
         )
       end
 
@@ -286,7 +286,7 @@ module Sirena
         end
         Branch.new(
           name: branch[:name], lane: branch[:lane], color: branch[:color],
-          label: typed_label(geometry, shift - PADDING),
+          label: typed_label(geometry, shift - PADDING)
         )
       end
 
@@ -325,7 +325,7 @@ module Sirena
           to_x: geometry[:to_x], to_y: geometry[:to_y],
           from_branch: geometry[:from_branch],
           to_branch: geometry[:to_branch], type: geometry[:type],
-          path: connection_path(geometry),
+          path: connection_path(geometry)
         )
       end
 

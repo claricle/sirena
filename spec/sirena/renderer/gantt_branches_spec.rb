@@ -7,6 +7,39 @@ RSpec.describe Sirena::Renderer::Gantt do
   subject(:renderer) { described_class.new }
 
   let(:layout) { Sirena::Layout::Gantt.new }
+  let(:plain_section) do
+    task = Sirena::Layout::Gantt::Task.new(
+      label: label("d"), status: "default",
+    )
+    Sirena::Layout::Gantt::Section.new(
+      background: background("section"), label: label("S"), tasks: [task],
+    )
+  end
+  let(:empty_timeline) do
+    Sirena::Layout::Gantt::Timeline.new(
+      background: background("timeline"), labels: [], grid_lines: [],
+    )
+  end
+  let(:bar_tasks) do
+    %w[critical done active default].map do |status|
+      Sirena::Layout::Gantt::Task.new(
+        label: label(status), status: status,
+        bar: Sirena::Layout::Gantt::Rect.new(
+          x: 10, y: 10, width: 50, height: 24, corner_radius: 3, kind: "task",
+        )
+      )
+    end
+  end
+  let(:coloured_section) do
+    tasks = bar_tasks + [
+      Sirena::Layout::Gantt::Task.new(
+        label: label("none"), status: "default",
+      ),
+    ]
+    Sirena::Layout::Gantt::Section.new(
+      background: background("section"), label: label("S"), tasks: tasks,
+    )
+  end
 
   def label(text)
     Sirena::Layout::Gantt::Label.new(
@@ -36,43 +69,6 @@ RSpec.describe Sirena::Renderer::Gantt do
       :date_labels,
       { total_days: 10, start_date: Date.new(2024, 1, 1) },
       format,
-    )
-  end
-
-  let(:plain_section) do
-    task = Sirena::Layout::Gantt::Task.new(
-      label: label("d"), status: "default",
-    )
-    Sirena::Layout::Gantt::Section.new(
-      background: background("section"), label: label("S"), tasks: [task],
-    )
-  end
-
-  let(:empty_timeline) do
-    Sirena::Layout::Gantt::Timeline.new(
-      background: background("timeline"), labels: [], grid_lines: [],
-    )
-  end
-
-  let(:bar_tasks) do
-    %w[critical done active default].map do |status|
-      Sirena::Layout::Gantt::Task.new(
-        label: label(status), status: status,
-        bar: Sirena::Layout::Gantt::Rect.new(
-          x: 10, y: 10, width: 50, height: 24, corner_radius: 3, kind: "task",
-        ),
-      )
-    end
-  end
-
-  let(:coloured_section) do
-    tasks = bar_tasks + [
-      Sirena::Layout::Gantt::Task.new(
-        label: label("none"), status: "default",
-      ),
-    ]
-    Sirena::Layout::Gantt::Section.new(
-      background: background("section"), label: label("S"), tasks: tasks,
     )
   end
 

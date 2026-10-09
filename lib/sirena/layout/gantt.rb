@@ -176,13 +176,17 @@ module Sirena
         return [] if days <= 0
 
         (0..days).step(label_interval(days)).map do |day|
-          Label.new(
-            text: format_date(timeline[:start_date] + day, format),
-            x: MARGIN_LEFT + ((day.to_f / days) * TIMELINE_WIDTH),
-            y: MARGIN_TOP + TIMELINE_HEIGHT - 10,
-            text_anchor: "middle", font_size: small_font_size
-          )
+          date_label(timeline[:start_date] + day, day.to_f / days, format)
         end
+      end
+
+      def date_label(date, position, format)
+        Label.new(
+          text: format_date(date, format),
+          x: MARGIN_LEFT + (position * TIMELINE_WIDTH),
+          y: MARGIN_TOP + TIMELINE_HEIGHT - 10,
+          text_anchor: "middle", font_size: small_font_size
+        )
       end
 
       def timeline_grid_lines(timeline, sections)
@@ -191,10 +195,14 @@ module Sirena
 
         rows = sections.sum { |section| section[:tasks].length + 1 }
         (0..days).step(label_interval(days)).map do |day|
-          x = MARGIN_LEFT + ((day.to_f / days) * TIMELINE_WIDTH)
-          Line.new(x1: x, y1: MARGIN_TOP + TIMELINE_HEIGHT, x2: x,
-                   y2: MARGIN_TOP + TIMELINE_HEIGHT + (rows * ROW_HEIGHT))
+          timeline_grid_line(day.to_f / days, rows)
         end
+      end
+
+      def timeline_grid_line(position, rows)
+        x = MARGIN_LEFT + (position * TIMELINE_WIDTH)
+        y = MARGIN_TOP + TIMELINE_HEIGHT
+        Line.new(x1: x, y1: y, x2: x, y2: y + (rows * ROW_HEIGHT))
       end
 
       def section_geometry(sections)
@@ -219,7 +227,7 @@ module Sirena
         Rect.new(
           x: 0, y: header_y,
           width: MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT,
-          height: SECTION_HEIGHT, kind: "section",
+          height: SECTION_HEIGHT, kind: "section"
         )
       end
 
@@ -227,7 +235,7 @@ module Sirena
         Label.new(
           text: name, x: 10, y: header_y + (SECTION_HEIGHT / 2),
           font_size: normal_font_size, font_weight: "bold",
-          dominant_baseline: "middle",
+          dominant_baseline: "middle"
         )
       end
 
@@ -245,7 +253,7 @@ module Sirena
           milestone_points: task_milestone(task, x_coordinate, y_coordinate),
           id_label: task_id_label(task, x_coordinate, y_coordinate),
           status: task_status(task),
-          start_date: task[:start_date], end_date: task[:end_date],
+          start_date: task[:start_date], end_date: task[:end_date]
         )
       end
 
@@ -259,7 +267,7 @@ module Sirena
         Label.new(
           text: task[:description], x: 10,
           y: row_position + (ROW_HEIGHT / 2),
-          font_size: small_font_size, dominant_baseline: "middle",
+          font_size: small_font_size, dominant_baseline: "middle"
         )
       end
 
@@ -268,7 +276,7 @@ module Sirena
 
         Rect.new(
           x: x_coordinate, y: y_coordinate, width: task[:width],
-          height: TASK_BAR_HEIGHT, corner_radius: 3, kind: "task",
+          height: TASK_BAR_HEIGHT, corner_radius: 3, kind: "task"
         )
       end
 
@@ -298,7 +306,7 @@ module Sirena
         Label.new(
           text: task[:id], x: x_coordinate + (task[:width] / 2),
           y: y_coordinate + (TASK_BAR_HEIGHT / 2), text_anchor: "middle",
-          font_size: small_font_size, dominant_baseline: "middle",
+          font_size: small_font_size, dominant_baseline: "middle"
         )
       end
 

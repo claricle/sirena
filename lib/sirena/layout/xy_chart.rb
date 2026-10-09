@@ -156,7 +156,7 @@ module Sirena
           y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
           Line.new(
             x1: graph[:plot_x], y1: y,
-            x2: graph[:plot_x] + graph[:plot_width], y2: y, kind: "grid",
+            x2: graph[:plot_x] + graph[:plot_width], y2: y, kind: "grid"
           )
         end
       end
@@ -168,7 +168,7 @@ module Sirena
           x = graph[:plot_x] + position[:position]
           Line.new(
             x1: x, y1: graph[:plot_y], x2: x,
-            y2: graph[:plot_y] + graph[:plot_height], kind: "grid",
+            y2: graph[:plot_y] + graph[:plot_height], kind: "grid"
           )
         end
       end
@@ -182,7 +182,7 @@ module Sirena
         y_coordinate = graph[:plot_y] + graph[:plot_height]
         Line.new(
           x1: x_coordinate, y1: y_coordinate,
-          x2: x_coordinate + graph[:plot_width], y2: y_coordinate, kind: "axis",
+          x2: x_coordinate + graph[:plot_width], y2: y_coordinate, kind: "axis"
         )
       end
 
@@ -191,7 +191,7 @@ module Sirena
         y_coordinate = graph[:plot_y]
         Line.new(
           x1: x_coordinate, y1: y_coordinate, x2: x_coordinate,
-          y2: y_coordinate + graph[:plot_height], kind: "axis",
+          y2: y_coordinate + graph[:plot_height], kind: "axis"
         )
       end
 
@@ -211,7 +211,7 @@ module Sirena
           text: axis[:label], x: graph[:plot_x] + (graph[:plot_width] / 2),
           y: graph[:plot_y] + graph[:plot_height] + 60,
           text_anchor: "middle", font_size: normal_font_size,
-          font_weight: "bold",
+          font_weight: "bold"
         )
       end
 
@@ -238,18 +238,29 @@ module Sirena
         Label.new(
           text: axis[:label], x: 20, y: centre_y,
           text_anchor: "middle", font_size: normal_font_size,
-          font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})",
+          font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})"
         )
       end
 
       def y_tick_labels(graph, axis)
         Array.new(GRID_LINES) do |index|
-          y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
-          value = axis[:max] - (index * (axis[:max] - axis[:min]) / GRID_LINES)
-          Label.new(text: value.round(1).to_s, x: graph[:plot_x] - 10,
-                    y: y + 4, text_anchor: "end",
-                    font_size: small_font_size)
+          y_tick_label(graph, axis, index)
         end
+      end
+
+      def y_tick_label(graph, axis, index)
+        Label.new(text: y_tick_value(axis, index), x: graph[:plot_x] - 10,
+                  y: y_tick_position(graph, index) + 4,
+                  text_anchor: "end", font_size: small_font_size)
+      end
+
+      def y_tick_position(graph, index)
+        graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
+      end
+
+      def y_tick_value(axis, index)
+        range = axis[:max] - axis[:min]
+        (axis[:max] - (index * range / GRID_LINES)).round(1).to_s
       end
 
       def typed_series(graph)
@@ -265,7 +276,7 @@ module Sirena
           chart_type: dataset[:chart_type], colour_index: index,
           polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
           points: dataset[:chart_type] == :bar ? [] : points,
-          bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : [],
+          bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : []
         )
       end
 
@@ -273,7 +284,7 @@ module Sirena
         dataset[:points].map do |point|
           Point.new(
             x: graph[:plot_x] + point[:x],
-            y: graph[:plot_y] + point[:y], radius: 4,
+            y: graph[:plot_y] + point[:y], radius: 4
           )
         end
       end
@@ -281,10 +292,14 @@ module Sirena
       def bars(graph, dataset)
         width = bar_width(graph)
         dataset[:points].map do |point|
-          Bar.new(x: graph[:plot_x] + point[:x] - (width / 2),
-                  y: graph[:plot_y] + point[:y], width: width,
-                  height: graph[:plot_height] - point[:y])
+          bar(graph, point, width)
         end
+      end
+
+      def bar(graph, point, width)
+        Bar.new(x: graph[:plot_x] + point[:x] - (width / 2),
+                y: graph[:plot_y] + point[:y], width: width,
+                height: graph[:plot_height] - point[:y])
       end
 
       def bar_width(graph)
@@ -307,8 +322,8 @@ module Sirena
           colour_index: index,
           label: Label.new(
             text: dataset[:label], x: graph[:width] - 130,
-            y: y + 4, text_anchor: "start", font_size: small_font_size,
-          ),
+            y: y + 4, text_anchor: "start", font_size: small_font_size
+          )
         )
       end
 
