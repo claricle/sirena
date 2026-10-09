@@ -41,11 +41,11 @@ module Sirena
       NODE_OUTLINES = {
         "rounded" => "rounded", "stadium" => "rounded",
         "circle" => "circle", "double_circle" => "circle",
-        "rhombus" => "rhombus", "hexagon" => "hexagon",
+        "rhombus" => "rhombus", "hexagon" => "hexagon"
       }.freeze
 
       EDGE_HEADS = {
-        "arrow" => "arrow", "cross" => "cross", "circle" => "circle",
+        "arrow" => "arrow", "cross" => "cross", "circle" => "circle"
       }.freeze
       ARROW_LENGTH = 8.0
       ARROW_HALF_WIDTH = 4.0
@@ -262,7 +262,7 @@ module Sirena
           corner_radius: corner_radius(kind, width, height),
           cluster: is_cluster,
           container: node.key?(:children),
-          children: typed_children(node[:children] || [], x - dx, y - dy, dx, dy),
+          children: typed_children(node[:children] || [], x - dx, y - dy, dx, dy)
         )
       end
 
@@ -271,7 +271,7 @@ module Sirena
           Label.new(
             text: label[:text], width: label[:width], height: label[:height],
             x: cluster ? x + (width.to_i / 2) : x + (width / 2.0),
-            y: cluster ? y + CLUSTER_TITLE_BASELINE : y + (height / 2.0),
+            y: cluster ? y + CLUSTER_TITLE_BASELINE : y + (height / 2.0)
           )
         end
       end
@@ -292,7 +292,7 @@ module Sirena
         end
       end
 
-      def corner_radius(kind, width, height)
+      def corner_radius(kind, _width, height)
         return CLUSTER_CORNER if kind == "cluster"
         return height / 2.0 if kind == "rounded"
 
@@ -313,7 +313,7 @@ module Sirena
             labels: typed_edge_labels(edge, source, target, bends, label_route),
             arrow_type: type,
             path: edge_path(route, bends),
-            heads: typed_heads(route, bends, source, target, type),
+            heads: typed_heads(route, bends, source, target, type)
           )
         end
       end
@@ -572,8 +572,11 @@ module Sirena
         other = which == :target ? :source : :target
         approach = which == :target ? bends.last : bends.first
         from_x, from_y = approach ? approach.values_at(:x, :y) : route_end(route, other)
-        tip_x, tip_y = cluster?(node) ? route_end(route, which) :
-          node_boundary(node, from_x, from_y)
+        tip_x, tip_y = if cluster?(node)
+                         route_end(route, which)
+                       else
+                         node_boundary(node, from_x, from_y)
+                       end
         { tip_x: tip_x, tip_y: tip_y, from_x: from_x, from_y: from_y }
       end
 

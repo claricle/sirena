@@ -160,7 +160,7 @@ RSpec.describe Sirena::Layout::Flowchart do
               { id: "A", x: 5, y: 7, width: 30, height: 20,
                 labels: [{ text: "A" }], metadata: { shape: "rect" } },
             ] },
-        ],
+        ]
       }
 
       scene = described_class.from_graph(graph)
