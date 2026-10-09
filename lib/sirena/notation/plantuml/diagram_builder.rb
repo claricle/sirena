@@ -34,10 +34,17 @@ module Sirena
           @directives = []
           @extras = {}
           @notes = []
+          @hidden_tags = []
         end
 
         def directive(text)
           @directives << text
+        end
+
+        # `hide $tag` removes every class carrying the tag, whether the
+        # class is declared before or after the line.
+        def hide_tag(tag, number, text)
+          @hidden_tags << [tag, number, text]
         end
 
         def junction(junction, number, text)
@@ -93,7 +100,7 @@ module Sirena
           @kinds[name] = kind
           @explicit[name] = true
           @class_evidence = true
-          @extras[name] = entry.slice(:generics, :stereotypes)
+          @extras[name] = entry.slice(:generics, :stereotypes, :tags)
           @open = [name, number] if entry[:body]
         end
 
@@ -117,11 +124,7 @@ module Sirena
           refuse_sequence_diagram
           @junctions.each { |entry| refuse_unrelated_junction(*entry) }
 
-          Diagram.new(classes: build_classes.freeze,
-                      relations: @relations.dup.freeze,
-                      junctions: @junctions.map(&:first).freeze,
-                      directives: @directives.dup.freeze,
-                      notes: @notes.dup.freeze)
+          visible(build_classes)
         end
 
         private
@@ -132,6 +135,39 @@ module Sirena
             Klass.new(name: name, kind: kind, body: body,
                       **@extras.fetch(name, {}))
           end
+        end
+
+        def visible(classes)
+          hidden = classes.select { |klass| hidden?(klass) }.map(&:name)
+          refuse_attachments_to(hidden)
+          Diagram.new(
+            classes: classes.reject { |k| hidden.include?(k.name) }.freeze,
+            relations: @relations.reject { |r| touches?(r, hidden) }.freeze,
+            junctions: @junctions.map(&:first).freeze,
+            directives: @directives.dup.freeze, notes: @notes.dup.freeze
+          )
+        end
+
+        def hidden?(klass)
+          @hidden_tags.any? { |tag, *| klass.tags.include?(tag) }
+        end
+
+        def touches?(relation, names)
+          names.include?(relation.left) || names.include?(relation.right)
+        end
+
+        # PlantUML's result for a note or association class on a hidden
+        # class is not measured, so it is not drawn.
+        def refuse_attachments_to(hidden)
+          owners = @junctions.map { |junction, *| junction.owner } +
+                   @notes.map(&:target)
+          return if (owners & hidden).empty?
+
+          _tag, number, text = @hidden_tags.first
+          raise UnsupportedConstructError.new(
+            construct: "hide of a class with a note or association class",
+            line: number, text: text
+          )
         end
 
         def refuse_sequence_diagram

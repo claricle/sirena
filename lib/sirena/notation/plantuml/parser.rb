@@ -39,7 +39,9 @@ module Sirena
         CLASS_DECLARATION =
           /\A(abstract[ \t]+class|static[ \t]+class|class|interface)
            [ \t]+(#{NAME})
-           (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)(?:[ \t]*(\{))?\z/xo
+           (?:<([^<>]+)>)?((?:[ \t]*#{STEREOTYPE})*)
+           ((?:[ \t]+\$#{NAME})*)(?:[ \t]*(\{))?\z/xo
+        HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
                 (?:[ \t]*(#{STEREOTYPE}))?(?:[ \t]*:[ \t]*(.+))?\z/xio
@@ -63,7 +65,8 @@ module Sirena
                             "Source must start with one of: @startuml"
 
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
-                         :STEREOTYPE, :CLASS_DECLARATION, :NOTE, :END_NOTE,
+                         :STEREOTYPE, :CLASS_DECLARATION, :HIDE_TAG, :NOTE,
+                         :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :LINE_END,
                          :NOT_FOUND_MESSAGE
@@ -133,9 +136,15 @@ module Sirena
           raise refusal(text, number, "second diagram") if STARTUML.match?(text)
 
           refuse_block_comment(text, number)
+          return hide_tag(builder, text, number) if HIDE_TAG.match?(text)
           return record(builder, text) if Directives.match?(text)
 
           declaration_or_relation(builder, text, number)
+        end
+
+        def hide_tag(builder, text, number)
+          builder.hide_tag(HIDE_TAG.match(text)[1], number, text)
+          :statements
         end
 
         def record(builder, text)
@@ -218,8 +227,9 @@ module Sirena
 
         def declaration_entry(match)
           { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
-            body: !match[5].nil?, generics: match[3],
-            stereotypes: stereotypes_of(match[4]) }
+            body: !match[6].nil?, generics: match[3],
+            stereotypes: stereotypes_of(match[4]),
+            tags: match[5].scan(/\w+/).freeze }
         end
 
         def stereotypes_of(text)
