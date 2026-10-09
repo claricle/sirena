@@ -16,13 +16,34 @@ module WorkflowHelpers
   def result(name, outcome)
     { name => { "result" => outcome, "outputs" => {} } }
   end
+
+  def cascade_values(steps)
+    [steps.map { |step| step["name"] },
+     steps.map { |step| step["run"] }.join.include?("do-release")]
+  end
+
+  def changelog_step(jobs)
+    jobs.fetch("preflight").fetch("steps").find do |candidate|
+      candidate["run"]&.include?("scripts/check_changelog.rb")
+    end
+  end
+
+  def changelog_values(step)
+    [step["run"], step.dig("env", "NEXT_VERSION")]
+  end
+
+  def delegated_values(job)
+    [Array(job["needs"]), job.dig("with", "next_version")]
+  end
 end
 
 # The subject is a set of YAML files, not a class.
 RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   let(:root) { File.expand_path("../..", __dir__) }
   let(:ci) { YAML.safe_load_file(File.join(root, ".github/workflows/ci.yml")) }
-  let(:release) { YAML.safe_load_file(File.join(root, ".github/workflows/release.yml")) }
+  let(:release) do
+    YAML.safe_load_file(File.join(root, ".github/workflows/release.yml"))
+  end
   let(:aggregators) { %w[fast-lane full-lane] }
 
   let(:workflow_files) { Dir[File.join(root, ".github/workflows/*.yml")] }
@@ -169,8 +190,7 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     it "keeps tests-passed without a tag-triggered release cascade" do
       steps = jobs.fetch("cascade").fetch("steps")
 
-      expect(steps.map { |step| step["name"] }).to eq(["Dispatch tests-passed"])
-      expect(steps.map { |step| step["run"] }.join).not_to include("do-release")
+      expect(cascade_values(steps)).to eq([["Dispatch tests-passed"], false])
     end
   end
 
@@ -186,19 +206,17 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     end
 
     it "checks the changelog against the requested version" do
-      step = jobs.fetch("preflight").fetch("steps").find do |candidate|
-        candidate["run"]&.include?("scripts/check_changelog.rb")
-      end
+      expected = ['ruby scripts/check_changelog.rb "$NEXT_VERSION"',
+                  "${{ inputs.next_version }}"]
 
-      expect(step["run"]).to eq('ruby scripts/check_changelog.rb "$NEXT_VERSION"')
-      expect(step.dig("env", "NEXT_VERSION")).to eq("${{ inputs.next_version }}")
+      expect(changelog_values(changelog_step(jobs))).to eq(expected)
     end
 
     it "requires the changelog preflight before delegating the release" do
       delegated = jobs.fetch("release")
 
-      expect(Array(delegated["needs"])).to eq(["preflight"])
-      expect(delegated.dig("with", "next_version")).to eq("${{ inputs.next_version }}")
+      expect(delegated_values(delegated))
+        .to eq([["preflight"], "${{ inputs.next_version }}"])
     end
   end
 end
