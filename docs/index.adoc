@@ -35,9 +35,6 @@ Welcome to Sirena, a pure Ruby Mermaid diagram rendering library that converts M
 
 [source,ruby]
 ----
-# Installation
-gem install sirena
-
 # Basic usage
 require 'sirena'
 
