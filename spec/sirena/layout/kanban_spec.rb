@@ -22,8 +22,8 @@ RSpec.describe Sirena::Layout::Kanban do
 
       graph = transform.to_graph(diagram)
 
-      plain_height = graph[:cards].find { |c| c[:id] == "plain" }[:height]
-      broken_height = graph[:cards].find { |c| c[:id] == "broken" }[:height]
+      plain_height = graph.cards.find { |card| card.id == "plain" }.background.height
+      broken_height = graph.cards.find { |card| card.id == "broken" }.background.height
 
       expect(broken_height - plain_height).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
@@ -47,8 +47,10 @@ RSpec.describe Sirena::Layout::Kanban do
 
       graph = transform.to_graph(diagram)
 
-      plain_height = graph[:cards].find { |c| c[:id] == "plain" }[:height]
-      over_budget_height = graph[:cards].find { |c| c[:id] == "over_budget" }[:height]
+      plain_height = graph.cards.find { |card| card.id == "plain" }.background.height
+      over_budget_height = graph.cards.find do |card|
+        card.id == "over_budget"
+      end.background.height
 
       expect(over_budget_height - plain_height).to eq(described_class::EXTRA_LINE_HEIGHT)
     end
@@ -76,13 +78,15 @@ RSpec.describe Sirena::Layout::Kanban do
 
       graph = transform.to_graph(diagram)
 
-      plain_column = graph[:columns].find { |c| c[:id] == "plain" }
-      broken_column = graph[:columns].find { |c| c[:id] == "broken" }
-      plain_card = graph[:cards].find { |c| c[:column_id] == "plain" }
-      broken_card = graph[:cards].find { |c| c[:column_id] == "broken" }
+      plain_column = graph.columns.find { |column| column.id == "plain" }
+      broken_column = graph.columns.find { |column| column.id == "broken" }
+      plain_card = graph.cards.find { |card| card.column_id == "plain" }
+      broken_card = graph.cards.find { |card| card.column_id == "broken" }
 
-      expect(broken_column[:height] - plain_column[:height]).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
-      expect(broken_card[:y] - plain_card[:y]).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
+      expect(broken_column.background.height - plain_column.background.height)
+        .to eq(2 * described_class::EXTRA_LINE_HEIGHT)
+      expect(broken_card.background.y - plain_card.background.y)
+        .to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
   end
 

@@ -1,319 +1,125 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/kanban"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
-require_relative "../svg/group"
-require_relative "../svg/line"
 require_relative "markdown_text"
 
 module Sirena
   module Renderer
-    # Renders a Kanban board layout to SVG.
-    #
-    # The renderer converts the positioned layout structure from
-    # Layout::Kanban into an SVG visualization showing:
-    # - Columns with headers
-    # - Cards stacked vertically within columns
-    # - Card metadata (assigned, ticket, priority, etc.)
-    # - Professional kanban board styling
-    #
-    # @example Render a kanban board
-    #   renderer = Renderer::Kanban.new(theme: my_theme)
-    #   svg = renderer.render(layout)
+    # Emits SVG from final, typed Kanban geometry.
     class Kanban < Base
-      # Height of one extra rendered line — a card's own hard line break, or
-      # a metadata row. Mirrors Layout::Kanban::EXTRA_LINE_HEIGHT: this
-      # renderer positions elements below a label whose height that constant
-      # already accounts for, so the two must agree.
-      EXTRA_LINE_HEIGHT = 18
-      private_constant :EXTRA_LINE_HEIGHT
-
-      # Renders the layout structure to SVG.
-      #
-      # @param layout [Hash] layout data from Layout::Kanban
+      # @param scene [Layout::Kanban::Scene, Hash] final geometry or released
+      #   positioned-Hash input
       # @return [Svg::Document] rendered SVG document
-      def render(layout)
-        svg = create_document_from_layout(layout)
-
-        # Render columns then cards
-        render_columns(layout, svg)
-        render_cards(layout, svg)
-
+      def render(scene)
+        unless scene.is_a?(Layout::Kanban::Scene)
+          scene = Layout::Kanban.from_graph(scene, theme: theme)
+        end
+        svg = document(scene)
+        scene.columns.each { |column| render_column(column, svg) }
+        scene.cards.each { |card| render_card(card, svg) }
         svg
       end
 
       protected
 
-      # Creates an SVG document with 40px of padding on every side, so an
-      # external override of this method (a protected extension point since
-      # the 0.1.0 release) keeps working with one argument.
-      #
-      # @param layout [Hash] layout data
-      # @return [Svg::Document] new SVG document
-      def create_document_from_layout(layout)
-        build_document_from_layout(layout, padding: 40)
-      end
-
-      # Renders all columns
-      #
-      # @param layout [Hash] layout data
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
-      def render_columns(layout, svg)
-        layout[:columns].each do |column|
-          render_column(column, svg)
+      def document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = scene.width
+          svg.height = scene.height
+          svg.view_box = scene.view_box
         end
       end
 
-      # Renders a single column with header
-      #
-      # @param column [Hash] column data
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
       def render_column(column, svg)
-        x = column[:x] + @offset_x
-        y = column[:y] + @offset_y
+        svg << box_element(column.background)
+        svg << box_element(column.header)
+        svg << label_element(column.title)
+        return unless column.badge
 
-        # Column background
-        column_bg = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = column[:width]
-          r.height = column[:height]
-          r.rx = 8
-          r.ry = 8
-          r.fill = theme_color(:background) || "#f3f4f6"
-          r.stroke = theme_color(:border) || "#d1d5db"
-          r.stroke_width = "1"
-        end
-
-        svg.add_element(column_bg)
-
-        # Column header
-        render_column_header(column, x, y, svg)
+        svg << box_element(column.badge)
+        svg << label_element(column.badge_label)
       end
 
-      # Renders column header
-      #
-      # @param column [Hash] column data
-      # @param x [Numeric] X position
-      # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
-      def render_column_header(column, x, y, svg)
-        header_height = column[:header_height]
-
-        # Header background
-        header_bg = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = column[:width]
-          r.height = header_height
-          r.rx = 8
-          r.ry = 8
-          r.fill = theme_color(:primary) || "#3b82f6"
-        end
-
-        svg.add_element(header_bg)
-
-        # Header text
-        header_x = x + column[:width] / 2
-        lines = Sirena::MarkdownText.parse_lines(column[:title])
-        font_size = theme_typography(:font_size) || 14
-
-        header_text = Svg::Text.new.tap do |t|
-          t.x = header_x
-          t.y = header_text_baseline(y, header_height, lines.length, font_size)
-          t.text_anchor = "middle"
-          t.fill = "#ffffff"
-          t.font_size = font_size.to_s
-          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-          t.font_weight = "bold"
-        end
-
-        MarkdownText.assign_markdown_text(header_text, lines, x: header_x, base_font_weight: "bold")
-
-        svg.add_element(header_text)
-
-        # Card count badge (optional)
-        if column[:card_count] > 0
-          badge_x = x + column[:width] - 25
-          badge_y = y + 15
-
-          badge_circle = Svg::Rect.new.tap do |r|
-            r.x = badge_x
-            r.y = badge_y
-            r.width = 20
-            r.height = 20
-            r.rx = 10
-            r.ry = 10
-            r.fill = "#ffffff"
-            r.opacity = "0.3"
-          end
-
-          svg.add_element(badge_circle)
-
-          badge_text = Svg::Text.new.tap do |t|
-            t.x = badge_x + 10
-            t.y = badge_y + 14
-            t.text_anchor = "middle"
-            t.fill = "#ffffff"
-            t.font_size = "11"
-            t.font_weight = "bold"
-            t.content = column[:card_count].to_s
-          end
-
-          svg.add_element(badge_text)
-        end
-      end
-
-      # Centers the whole multi-line text BLOCK, not just its first
-      # baseline: a flat `y + header_height / 2 + 5` only centers a SINGLE
-      # line, sliding later lines past the header rect's bottom edge.
-      # Shifting the FIRST baseline up by half the block's added height
-      # keeps it centered on the same point as the single-line fudge.
-      # @param y [Numeric] header rect's top edge
-      # @param header_height [Numeric] header rect's own height
-      # @param line_count [Integer] lines `Sirena::MarkdownText.parse_lines` produced
-      # @param font_size [Numeric] header text's own font size, in px
-      # @return [Numeric] the first line's baseline `y`
-      # @api private
-      def header_text_baseline(y, header_height, line_count, font_size)
-        line_height = font_size * 1.2
-        y + (header_height / 2) + 5 - ((line_count - 1) * line_height / 2)
-      end
-
-      # Renders all cards
-      #
-      # @param layout [Hash] layout data
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
-      def render_cards(layout, svg)
-        layout[:cards].each do |card|
-          render_card(card, svg)
-        end
-      end
-
-      # Renders a single card
-      #
-      # @param card [Hash] card data
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
       def render_card(card, svg)
-        x = card[:x] + @offset_x
-        y = card[:y] + @offset_y
+        svg << box_element(card.background)
+        svg << label_element(card.label)
+        card.metadata.each { |label| svg << label_element(label) }
+      end
 
-        # Card background
-        card_bg = Svg::Rect.new.tap do |r|
-          r.x = x
-          r.y = y
-          r.width = card[:width]
-          r.height = card[:height]
-          r.rx = 6
-          r.ry = 6
-          r.fill = "#ffffff"
-          r.stroke = theme_color(:border) || "#d1d5db"
-          r.stroke_width = "1"
-        end
-
-        svg.add_element(card_bg)
-
-        # Card text
-        label_line_count = render_card_text(card, x, y, svg)
-
-        # Metadata if present
-        if card[:has_metadata]
-          render_card_metadata(card, x, y, label_line_count, svg)
+      def box_element(box)
+        Svg::Rect.new.tap do |rect|
+          rect.x = box.x
+          rect.y = box.y
+          rect.width = box.width
+          rect.height = box.height
+          rect.rx = box.corner_radius
+          rect.ry = box.corner_radius
+          apply_box_style(rect, box.style)
         end
       end
 
-      # Renders card text
-      #
-      # @param card [Hash] card data
-      # @param x [Numeric] X position
-      # @param y [Numeric] Y position
-      # @param svg [Svg::Document] SVG document
-      # @return [Integer] number of lines the label actually rendered, after
-      #   markdown parsing and truncation — what `render_card_metadata` needs
-      #   to start below the label rather than at a fixed offset
-      def render_card_text(card, x, y, svg)
-        text_y = y + 25
-        text_x = x + 10
-        lines = Sirena::MarkdownText.truncate_runs(
-          Sirena::MarkdownText.parse_lines(card[:text]), Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET
-        )
-
-        text = Svg::Text.new.tap do |t|
-          t.x = text_x
-          t.y = text_y
-          t.fill = theme_color(:text) || "#1f2937"
-          t.font_size = (theme_typography(:font_size) || 13).to_s
-          t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-        end
-
-        MarkdownText.assign_markdown_text(text, lines, x: text_x)
-
-        svg.add_element(text)
-
-        lines.length
-      end
-
-      # Renders card metadata
-      #
-      # @param card [Hash] card data
-      # @param x [Numeric] X position
-      # @param y [Numeric] Y position
-      # @param label_line_count [Integer] lines the card's own label actually
-      #   rendered, from `render_card_text` — metadata starts below all of
-      #   them rather than at the single-line offset a multi-line label would
-      #   overlap
-      # @param svg [Svg::Document] SVG document
-      # @return [void]
-      def render_card_metadata(card, x, y, label_line_count, svg)
-        extra_label_lines = [label_line_count - 1, 0].max
-        metadata_y = y + 50 + (extra_label_lines * EXTRA_LINE_HEIGHT)
-        line_height = EXTRA_LINE_HEIGHT
-
-        card[:metadata].each_with_index do |(key, value), index|
-          next if value.nil? || value.to_s.empty?
-
-          current_y = metadata_y + (index * line_height)
-
-          # Metadata label
-          label = Svg::Text.new.tap do |t|
-            t.x = x + 10
-            t.y = current_y
-            t.fill = theme_color(:secondary) || "#6b7280"
-            t.font_size = "10"
-            t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-            t.content = "#{format_metadata_key(key)}:"
-          end
-
-          svg.add_element(label)
-
-          # Metadata value
-          value_text = Svg::Text.new.tap do |t|
-            t.x = x + 70
-            t.y = current_y
-            t.fill = theme_color(:text) || "#1f2937"
-            t.font_size = "10"
-            t.font_family = theme_typography(:font_family) || "Arial, sans-serif"
-            t.font_weight = "bold"
-            t.content = value.to_s
-          end
-
-          svg.add_element(value_text)
+      def apply_box_style(rect, style)
+        case style
+        when "column"
+          rect.fill = theme_color(:background) || "#f3f4f6"
+          rect.stroke = theme_color(:border) || "#d1d5db"
+          rect.stroke_width = "1"
+        when "header"
+          rect.fill = theme_color(:primary) || "#3b82f6"
+        when "badge"
+          rect.fill = "#ffffff"
+          rect.opacity = "0.3"
+        when "card"
+          rect.fill = "#ffffff"
+          rect.stroke = theme_color(:border) || "#d1d5db"
+          rect.stroke_width = "1"
         end
       end
 
-      # Formats metadata key for display
-      #
-      # @param key [Symbol, String] metadata key
-      # @return [String] formatted key
-      def format_metadata_key(key)
-        key.to_s.capitalize
+      def label_element(label)
+        Svg::Text.new.tap do |text|
+          text.x = label.x
+          text.y = label.y
+          text.fill = label_color(label.style)
+          text.font_size = number_string(label.font_size)
+          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          text.text_anchor = label.text_anchor if label.text_anchor
+          text.font_weight = label.font_weight if label.font_weight
+          assign_content(text, label)
+        end
+      end
+
+      def assign_content(text, label)
+        if label.style == "header"
+          MarkdownText.assign_markdown_text(
+            text, Sirena::MarkdownText.parse_lines(label.text),
+            x: label.x, base_font_weight: "bold"
+          )
+        elsif label.style == "card"
+          lines = Sirena::MarkdownText.truncate_runs(
+            Sirena::MarkdownText.parse_lines(label.text),
+            Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET,
+          )
+          MarkdownText.assign_markdown_text(text, lines, x: label.x)
+        else
+          text.content = label.text
+        end
+      end
+
+      def label_color(style)
+        case style
+        when "header", "badge" then "#ffffff"
+        when "metadata_label" then theme_color(:secondary) || "#6b7280"
+        else theme_color(:text) || "#1f2937"
+        end
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end
   end

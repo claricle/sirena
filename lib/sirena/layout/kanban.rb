@@ -5,222 +5,269 @@ require_relative "../markdown_text"
 
 module Sirena
   module Layout
-    # Transforms a Kanban diagram into a positioned layout structure.
-    #
-    # The layout algorithm handles:
-    # - Columns positioned horizontally
-    # - Cards stacked vertically within columns
-    # - Proper spacing and sizing
-    #
-    # @example Transform a kanban board
-    #   transform = Layout::Kanban.new
-    #   layout = transform.to_graph(diagram)
+    # Builds final-canvas Kanban board geometry.
     class Kanban < Base
-      # Horizontal spacing between columns
       COLUMN_HORIZONTAL_SPACING = 60
-
-      # Vertical spacing between cards
       CARD_VERTICAL_SPACING = 15
-
-      # Column dimensions
       COLUMN_WIDTH = 200
       COLUMN_HEADER_HEIGHT = 50
       COLUMN_PADDING = 10
-
-      # Card dimensions
       CARD_HEIGHT = 80
       CARD_PADDING = 10
-
-      # Height of one extra rendered line below a card's first line — a
-      # metadata row, or a markdown hard line break in the card text.
       EXTRA_LINE_HEIGHT = 18
+      CANVAS_PADDING = 40
 
-      # Transforms the diagram into a layout structure.
-      #
-      # @param diagram [Diagram::Kanban] the kanban diagram
-      # @return [Hash] layout data with columns, cards, and dimensions
+      class Box < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :corner_radius, :float
+        attribute :style, :string
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :text_anchor, :string
+        attribute :font_weight, :string
+        attribute :style, :string
+      end
+
+      class Column < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :background, Box
+        attribute :header, Box
+        attribute :title, Label
+        attribute :badge, Box
+        attribute :badge_label, Label
+      end
+
+      class Card < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :column_id, :string
+        attribute :background, Box
+        attribute :label, Label
+        attribute :metadata, Label, collection: true, default: -> { [] }
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :columns, Column, collection: true, default: -> { [] }
+        attribute :cards, Card, collection: true, default: -> { [] }
+      end
+
+      # Builds a Scene from the released positioned-Hash surface. Hash access
+      # remains in Layout; Renderer receives typed final geometry only.
+      def self.from_graph(graph, theme: nil)
+        layout = new
+        layout.theme = theme if theme
+        layout.send(:scene_from_graph, graph)
+      end
+
+      # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        # diagram.columns.nil? is treated as "no columns" here to match
-        # Diagram::Kanban#valid?, which accepts nil as equivalent to empty.
         return empty_graph if diagram.columns.nil? || diagram.columns.empty?
 
-        # Position columns horizontally
-        positioned_columns = position_columns(diagram.columns)
-
-        # Position cards within each column
-        positioned_cards = position_cards(positioned_columns)
-
-        # Calculate overall bounds
-        bounds = calculate_bounds(positioned_columns, positioned_cards)
-
-        {
-          columns: positioned_columns,
-          cards: positioned_cards,
-          width: bounds[:width],
-          height: bounds[:height],
-        }
+        columns = position_columns(diagram.columns)
+        cards = position_cards(columns)
+        bounds = calculate_bounds(columns)
+        { columns: columns, cards: cards, width: bounds[:width], height: bounds[:height] }
       end
 
       private
 
-      def empty_graph
-        {
-          columns: [],
-          cards: [],
-          width: 0,
-          height: 0,
-        }
+      def scene(diagram)
+        scene_from_graph(build_graph(diagram))
       end
 
-      # Positions columns horizontally
-      #
-      # @param columns [Array<Diagram::KanbanColumn>] columns to position
-      # @return [Array<Hash>] positioned columns
+      def scene_from_graph(graph)
+        width = graph.fetch(:width) + (CANVAS_PADDING * 2)
+        height = graph.fetch(:height) + (CANVAS_PADDING * 2)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          columns: graph.fetch(:columns).map { |column| typed_column(column) },
+          cards: graph.fetch(:cards).map { |card| typed_card(card) }
+        )
+      end
+
+      def typed_column(column)
+        x = column[:x] + CANVAS_PADDING
+        y = column[:y] + CANVAS_PADDING
+        header_size = font_size(:font_size_normal, 14)
+        title_lines = Sirena::MarkdownText.parse_lines(column[:title])
+
+        Column.new(
+          id: column[:id],
+          background: box(x, y, column[:width], column[:height], 8, "column"),
+          header: box(x, y, column[:width], column[:header_height], 8, "header"),
+          title: label(
+            column[:title], x + (column[:width] / 2.0),
+            header_text_baseline(y, column[:header_height], title_lines.length,
+                                 header_size),
+            header_size, "header", anchor: "middle", weight: "bold"
+          ),
+          badge: badge_box(column, x, y),
+          badge_label: badge_label(column, x, y),
+        )
+      end
+
+      def badge_box(column, x, y)
+        return unless column[:card_count].positive?
+
+        box(x + column[:width] - 25, y + 15, 20, 20, 10, "badge")
+      end
+
+      def badge_label(column, x, y)
+        return unless column[:card_count].positive?
+
+        label(
+          column[:card_count].to_s, x + column[:width] - 15, y + 29,
+          font_size(:font_size_small, 11), "badge", anchor: "middle",
+                                                    weight: "bold"
+        )
+      end
+
+      def typed_card(card)
+        x = card[:x] + CANVAS_PADDING
+        y = card[:y] + CANVAS_PADDING
+        lines = rendered_lines(card[:text])
+        Card.new(
+          id: card[:id], column_id: card[:column_id],
+          background: box(x, y, card[:width], card[:height], 6, "card"),
+          label: label(card[:text], x + 10, y + 25,
+                       font_size(:font_size_normal, 13), "card"),
+          metadata: metadata_labels(card, x, y, lines.length)
+        )
+      end
+
+      def metadata_labels(card, x, y, label_line_count)
+        return [] unless card[:has_metadata]
+
+        start_y = y + 50 + ([label_line_count - 1, 0].max * line_height)
+        card[:metadata].each_with_index.flat_map do |(key, value), index|
+          next [] if value.nil? || value.to_s.empty?
+
+          current_y = start_y + (index * line_height)
+          [
+            label("#{format_metadata_key(key)}:", x + 10, current_y,
+                  font_size(:font_size_small, 10), "metadata_label"),
+            label(value.to_s, x + 70, current_y,
+                  font_size(:font_size_small, 10), "metadata_value",
+                  weight: "bold"),
+          ]
+        end
+      end
+
+      def box(x, y, width, height, radius, style)
+        Box.new(
+          x: x, y: y, width: width, height: height,
+          corner_radius: radius, style: style
+        )
+      end
+
+      def label(text, x, y, size, style, **options)
+        Label.new(
+          text: text, x: x, y: y, font_size: size, style: style,
+          text_anchor: options[:anchor], font_weight: options[:weight]
+        )
+      end
+
+      def header_text_baseline(y, height, line_count, font_size)
+        rendered_line_height = font_size * 1.2
+        y + (height / 2.0) + 5 -
+          ((line_count - 1) * rendered_line_height / 2.0)
+      end
+
+      def empty_graph
+        { columns: [], cards: [], width: 0, height: 0 }
+      end
+
       def position_columns(columns)
-        positioned = []
-        current_x = 0
-
-        columns.each do |column|
+        columns.map.with_index do |column, index|
           header_height = calculate_header_height(column)
-
-          positioned << {
-            id: column.id,
-            title: column.title,
-            x: current_x,
-            y: 0,
+          {
+            id: column.id, title: column.title,
+            x: index * (COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING), y: 0,
             width: COLUMN_WIDTH,
             height: calculate_column_height(column, header_height),
-            header_height: header_height,
-            card_count: column.cards.size,
-            original: column,
+            header_height: header_height, card_count: column.cards.size,
+            original: column
           }
-
-          current_x += COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING
         end
-
-        positioned
       end
 
-      # Positions cards within their columns
-      #
-      # @param positioned_columns [Array<Hash>] positioned columns
-      # @return [Array<Hash>] positioned cards
-      def position_cards(positioned_columns)
-        cards = []
-
-        positioned_columns.each do |column_data|
+      def position_cards(columns)
+        columns.flat_map do |column_data|
           column = column_data[:original]
-          column_x = column_data[:x]
           current_y = column_data[:header_height] + COLUMN_PADDING
-
-          column.cards.each do |card|
-            card_height = calculate_card_height(card)
-
-            cards << {
-              id: card.id,
-              text: card.text,
-              column_id: column.id,
-              x: column_x + COLUMN_PADDING,
-              y: current_y,
-              width: COLUMN_WIDTH - (COLUMN_PADDING * 2),
-              height: card_height,
-              metadata: card.metadata,
-              has_metadata: card.has_metadata?,
-              original: card,
+          column.cards.map do |card|
+            height = calculate_card_height(card)
+            positioned = {
+              id: card.id, text: card.text, column_id: column.id,
+              x: column_data[:x] + COLUMN_PADDING, y: current_y,
+              width: COLUMN_WIDTH - (COLUMN_PADDING * 2), height: height,
+              metadata: card.metadata, has_metadata: card.has_metadata?,
+              original: card
             }
-
-            current_y += card_height + CARD_VERTICAL_SPACING
+            current_y += height + CARD_VERTICAL_SPACING
+            positioned
           end
         end
-
-        cards
       end
 
-      # Calculates the header height for a column, growing past
-      # `COLUMN_HEADER_HEIGHT` for each hard line break embedded in the
-      # column title (from a markdown newline, rendered as an extra
-      # `<tspan>` line by Sirena::MarkdownText#parse_lines) — the same
-      # `count("\n")` approach `calculate_card_height` already uses for
-      # card text, for the same reason: this layer only needs how many
-      # extra lines there are, not what's on them.
-      #
-      # @param column [Diagram::KanbanColumn] column
-      # @return [Numeric] header height
       def calculate_header_height(column)
-        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * EXTRA_LINE_HEIGHT)
+        COLUMN_HEADER_HEIGHT + (column.title.to_s.count("\n") * line_height)
       end
 
-      # Calculates the height needed for a column
-      #
-      # @param column [Diagram::KanbanColumn] column
-      # @param header_height [Numeric] this column's own header height, from
-      #   `calculate_header_height`
-      # @return [Numeric] column height
       def calculate_column_height(column, header_height)
         return header_height + COLUMN_PADDING if column.cards.empty?
 
-        # Header + padding + sum of card heights + spacing between cards
-        total_card_height = column.cards.sum { |card| calculate_card_height(card) }
-        total_spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
-        bottom_padding = COLUMN_PADDING
-
-        header_height + COLUMN_PADDING +
-          total_card_height + total_spacing + bottom_padding
+        card_height = column.cards.sum { |card| calculate_card_height(card) }
+        spacing = (column.cards.size - 1) * CARD_VERTICAL_SPACING
+        header_height + COLUMN_PADDING + card_height + spacing + COLUMN_PADDING
       end
 
-      # Calculates the height needed for a card
-      #
-      # Grows for metadata rows and extra rendered lines in the card's own
-      # text. Line count must come from `rendered_line_count` (mirrors
-      # `Renderer::Kanban#render_card_text`'s own parse+truncate), never a
-      # raw `text.count("\n")` — once text crosses
-      # `Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET` the renderer drops
-      # whole lines, so a raw count sizes for lines that never render.
-      # Reuses EXTRA_LINE_HEIGHT, not a second constant, for the card's own
-      # font size (13px * 1.2em/line): Transform has no renderer font size
-      # to base one on.
-      #
-      # @param card [Diagram::KanbanCard] card
-      # @return [Numeric] card height
       def calculate_card_height(card)
-        base_height = CARD_HEIGHT
-        base_height += card.metadata.size * EXTRA_LINE_HEIGHT if card.has_metadata?
-        base_height += (rendered_line_count(card.text) - 1) * EXTRA_LINE_HEIGHT
-        base_height
+        height = CARD_HEIGHT
+        height += card.metadata.size * line_height if card.has_metadata?
+        height + ((rendered_lines(card.text).length - 1) * line_height)
       end
 
-      # The number of lines `card.text` actually renders as, after the same
-      # markdown parsing and character-budget truncation
-      # `Renderer::Kanban#render_card_text` applies. Always at least 1: an
-      # empty or all-dropped body still occupies the card's first line, the
-      # same as `count("\n") == 0` did before this method replaced it.
-      #
-      # @param text [String, nil]
-      # @return [Integer]
-      # @api private
-      def rendered_line_count(text)
-        lines = Sirena::MarkdownText.truncate_runs(
+      def rendered_lines(text)
+        Sirena::MarkdownText.truncate_runs(
           Sirena::MarkdownText.parse_lines(text),
           Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET,
         )
-        [lines.length, 1].max
       end
 
-      # Calculates the bounding box for the entire board
-      #
-      # @param columns [Array<Hash>] positioned columns
-      # @param cards [Array<Hash>] positioned cards
-      # @return [Hash] width and height
-      def calculate_bounds(columns, cards)
+      def line_height
+        font_size(:font_size_small, 12) * (typography_value(:line_height) || 1.5)
+      end
+
+      def font_size(name, fallback)
+        value = typography_value(name) || typography_value(:font_size)
+        value&.positive? ? value : fallback
+      end
+
+      def typography_value(name)
+        typography = theme.typography
+        typography.public_send(name) if typography.respond_to?(name)
+      end
+
+      def calculate_bounds(columns)
         return { width: 0, height: 0 } if columns.empty?
 
-        max_x = columns.map { |c| c[:x] + c[:width] }.max
-        max_y = columns.map { |c| c[:height] }.max
-
         {
-          width: max_x,
-          height: max_y,
+          width: columns.map { |column| column[:x] + column[:width] }.max,
+          height: columns.map { |column| column[:height] }.max,
         }
+      end
+
+      def format_metadata_key(key)
+        key.to_s.capitalize
       end
     end
   end
