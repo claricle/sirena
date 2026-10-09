@@ -14,14 +14,15 @@ module Sirena
       class Member
         attr_reader :kind, :visibility, :name, :type, :parameters, :modifiers
 
-        def initialize(kind:, visibility:, name:, type:, parameters:,
-                       modifiers: [].freeze)
+        # @param detail [Hash] optional `:parameters`, nil by default, and
+        #   `:modifiers`, empty by default
+        def initialize(kind:, visibility:, name:, type:, **detail)
           @kind = kind
           @visibility = visibility
           @name = name
           @type = type
-          @parameters = parameters
-          @modifiers = modifiers
+          @parameters = detail[:parameters]
+          @modifiers = detail.fetch(:modifiers, [].freeze)
           freeze
         end
       end

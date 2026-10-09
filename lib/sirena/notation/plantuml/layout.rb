@@ -37,17 +37,25 @@ module Sirena
         private
 
         def build_scene(diagram, boxes, box_width)
-          width = canvas_width(boxes, box_width)
-          height = canvas_height(box_rows(boxes)) +
-                   (diagram.packages.size * (PackageFrames::OPEN +
-                                              PackageFrames::CLOSE))
-          relations = build_relations(diagram.relations, boxes) +
+          Scene.new(width: canvas_width(boxes, box_width),
+                    height: scene_height(diagram, boxes), boxes: boxes,
+                    relations: scene_relations(diagram, boxes),
+                    frames: scene_frames(diagram, boxes))
+        end
+
+        def scene_height(diagram, boxes)
+          room = PackageFrames::OPEN + PackageFrames::CLOSE
+          canvas_height(box_rows(boxes)) + (diagram.packages.size * room)
+        end
+
+        def scene_frames(diagram, boxes)
+          PackageFrames.new(diagram, method(:measured_width)).call(boxes)
+        end
+
+        def scene_relations(diagram, boxes)
+          build_relations(diagram.relations, boxes) +
             build_junctions(diagram, boxes) +
             build_note_links(diagram.notes, boxes)
-          frames = PackageFrames.new(diagram, method(:measured_width))
-                                .call(boxes)
-          Scene.new(width: width, height: height, boxes: boxes,
-                    relations: relations, frames: frames)
         end
 
         def box_specification(klass)
@@ -122,15 +130,19 @@ module Sirena
         # every group padded to whole rows so a row holds one group only.
         def rows_by_package(specifications)
           columns = column_count(specifications)
-          loose, packaged = specifications.partition { |i| !i[:package] }
-          groups = [loose, *packaged.group_by { |i| i[:package] }.values]
-          groups.reject(&:empty?).flat_map do |group|
+          package_groups(specifications).flat_map do |group|
             group.each_slice(columns).map { |row| pad(row, columns) }
           end
         end
 
+        def package_groups(specifications)
+          loose, packaged = specifications.partition { |i| !i[:package] }
+          [loose, *packaged.group_by { |i| i[:package] }.values]
+            .reject(&:empty?)
+        end
+
         def pad(row, columns)
-          row + [nil] * (columns - row.size)
+          row + Array.new(columns - row.size)
         end
 
         def position_boxes(rows, box_width)
@@ -144,13 +156,21 @@ module Sirena
 
         def row_tops(rows)
           packages = rows.map { |row| row.compact.first[:package] }
-          heights = rows.map { |row| row.compact.map { |i| i[:height] }.max }
-          tops = [MARGIN + frame_space(nil, packages.first)]
-          heights.each_with_index do |height, index|
-            space = frame_space(packages[index], packages[index + 1])
-            tops << (tops.last + height + ROW_GAP + space)
+          first = [MARGIN + frame_space(nil, packages.first)]
+          row_steps(rows, packages).each_with_object(first) do |step, tops|
+            tops << (tops.last + step)
           end
-          tops
+        end
+
+        def row_steps(rows, packages)
+          row_heights(rows).each_with_index.map do |height, index|
+            space = frame_space(packages[index], packages[index + 1])
+            height + ROW_GAP + space
+          end
+        end
+
+        def row_heights(rows)
+          rows.map { |row| row.compact.map { |item| item[:height] }.max }
         end
 
         def frame_space(above, below)
@@ -164,12 +184,12 @@ module Sirena
           items.compact.size > 1 ? 2 : 1
         end
 
-        def build_box(item, column, y, box_width)
+        def build_box(item, column, top, box_width)
           x = MARGIN + (column * (box_width + COLUMN_GAP))
-          texts, separators = box_contents(item, x, y, box_width)
+          texts, separators = box_contents(item, x, top, box_width)
 
           Scene::Box.new(
-            id: item[:id], x: x, y: y, width: box_width,
+            id: item[:id], x: x, y: top, width: box_width,
             height: item[:height], texts: texts, separators: separators,
             kind: item[:note] ? "note" : "class", fill: item[:note]&.color
           )

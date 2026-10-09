@@ -29,8 +29,8 @@ module Sirena
         # @return [Array<Scene::Frame>]
         def call(boxes)
           @diagram.packages.map do |package|
-            names = @diagram.classes.select { |k| k.package == package.id }
-                            .map(&:name)
+            members = @diagram.classes.select { |k| k.package == package.id }
+            names = members.map(&:name)
             frame(package, boxes.select { |box| names.include?(box.id) })
           end
         end
@@ -38,11 +38,19 @@ module Sirena
         private
 
         def frame(package, boxes)
-          left = boxes.map(&:x).min - SIDE
-          top = boxes.map(&:y).min - OPEN + 6.0
-          right = boxes.map { |box| box.x + box.width }.max + SIDE
-          bottom = boxes.map { |box| box.y + box.height }.max + 12.0
+          left, right = horizontal_bounds(boxes)
+          top, bottom = vertical_bounds(boxes)
           build(package, [left, top, right - left, bottom - top])
+        end
+
+        def horizontal_bounds(boxes)
+          [boxes.map(&:x).min - SIDE,
+           boxes.map { |box| box.x + box.width }.max + SIDE]
+        end
+
+        def vertical_bounds(boxes)
+          [boxes.map(&:y).min - OPEN + 6.0,
+           boxes.map { |box| box.y + box.height }.max + 12.0]
         end
 
         def build(package, (left, top, width, height))

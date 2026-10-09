@@ -13,15 +13,16 @@ module Sirena
         attr_reader :name, :kind, :body, :stereotypes, :generics, :tags,
                     :package
 
-        def initialize(name:, kind:, body:, stereotypes: [].freeze,
-                       generics: nil, tags: [].freeze, package: nil)
+        # @param header [Hash] optional `:stereotypes`, `:generics` and
+        #   `:tags`; each defaults to empty
+        def initialize(name:, kind:, body:, package: nil, **header)
           @name = name
           @kind = kind
           @body = body
-          @stereotypes = stereotypes
-          @generics = generics
-          @tags = tags
           @package = package
+          @stereotypes = header.fetch(:stereotypes, [].freeze)
+          @generics = header[:generics]
+          @tags = header.fetch(:tags, [].freeze)
           freeze
         end
       end

@@ -140,12 +140,26 @@ module Sirena
           raise refusal(text, number, "second diagram") if STARTUML.match?(text)
 
           refuse_block_comment(text, number)
-          return hide_tag(builder, text, number) if HIDE_TAG.match?(text)
-          return open_package(builder, text, number) if PACKAGE.match?(text)
-          return :statements if text == "}" && builder.close_package
           return record(builder, text) if Directives.match?(text)
 
-          declaration_or_relation(builder, text, number)
+          block_line(builder, text, number) ||
+            declaration_or_relation(builder, text, number)
+        end
+
+        # nil unless the line hides a tag or opens or closes a package.
+        def block_line(builder, text, number)
+          if HIDE_TAG.match?(text)
+            hide_tag(builder, text, number)
+          elsif PACKAGE.match?(text)
+            open_package(builder, text, number)
+          elsif text == "}" && builder.package_open?
+            close_package(builder)
+          end
+        end
+
+        def close_package(builder)
+          builder.close_package
+          :statements
         end
 
         def open_package(builder, text, number)

@@ -183,11 +183,11 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
 
     context "when drawn" do
+      let(:source) do
+        wrap("class A {\n{abstract} a()\n{static} s\nplain\n}")
+      end
       let(:svg) do
-        REXML::Document.new(Sirena.render(
-          wrap("class A {\n{abstract} a()\n{static} s\nplain\n}"),
-          notation: :plantuml
-        ))
+        REXML::Document.new(Sirena.render(source, notation: :plantuml))
       end
 
       it "sets an abstract member in italic and no other" do
@@ -371,13 +371,13 @@ RSpec.describe Sirena::Notation::PlantUML do
 
     it "reads the id, title, shape and icon" do
       expect(diagram.packages.first).to have_attributes(
-        id: "p", title: "Hi", shape: :frame, icon: true
+        id: "p", title: "Hi", shape: :frame, icon: true,
       )
     end
 
     it "reads a bare name as both id and title, drawn as a folder" do
       expect(diagram.packages.last).to have_attributes(
-        id: "q", title: "q", shape: :folder, icon: false
+        id: "q", title: "q", shape: :folder, icon: false,
       )
     end
 
