@@ -182,7 +182,7 @@ module Sirena
             # Extract items from the body structure
             body_items = body_array.flat_map do |item|
               if item.is_a?(Hash) && item[:item]
-                [item[:item]]
+                [item[:item]].flatten
               else
                 []
               end
@@ -237,9 +237,9 @@ module Sirena
             @current_boundary = boundary.id
 
             # Convert body to array and extract items
-            body_items = Array(stmt[:body]).flat_map do |item|
+            body_items = [stmt[:body]].flatten.flat_map do |item|
               if item.is_a?(Hash) && item[:item]
-                [item[:item]]
+                [item[:item]].flatten
               else
                 []
               end

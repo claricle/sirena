@@ -286,6 +286,15 @@ RSpec.describe Sirena::Parser::C4 do
       expect(rels[0].to_id).to eq("email")
     end
 
+    it "parses $link and $tags on nested boundaries" do
+      source = "C4Context\nBoundary(o, \"O\") {\nBoundary(m, \"M\") {\n" \
+               "Boundary(b, \"B\", $link=\"https://x\", $tags=\"t\") " \
+               "{\n}\n}\n}\n"
+      inner = parser.parse(source).boundaries.find { |b| b.id == "b" }
+
+      expect([inner.link, inner.tags]).to eq(["https://x", "t"])
+    end
+
     it "raises error on invalid syntax" do
       source = "invalid c4 syntax"
 
