@@ -210,7 +210,8 @@ RSpec.describe Sirena::Renderer::Requirement do
     end
 
     it "draws the element Doc Ref line after the Type line" do
-      expect(texts.each_cons(2)).to include(["Type: simulation", "Doc Ref: test_ref"])
+      pair = ["Type: simulation", "Doc Ref: test_ref"]
+      expect(texts.each_cons(2)).to include(pair)
     end
 
     it "omits the Doc Ref line when the element has none" do
@@ -218,21 +219,18 @@ RSpec.describe Sirena::Renderer::Requirement do
       expect(texts.grep(/Doc Ref/)).to be_empty
     end
 
-    it "labels every requirement type header as mermaid does" do
-      labels = {
-        "requirement" => "Requirement",
-        "functionalRequirement" => "Functional Requirement",
-        "interfaceRequirement" => "Interface Requirement",
-        "performanceRequirement" => "Performance Requirement",
-        "physicalRequirement" => "Physical Requirement",
-        "designConstraint" => "Design Constraint",
-      }
-      rendered = labels.keys.map do |type|
+    {
+      "requirement" => "Requirement",
+      "functionalRequirement" => "Functional Requirement",
+      "interfaceRequirement" => "Interface Requirement",
+      "performanceRequirement" => "Performance Requirement",
+      "physicalRequirement" => "Physical Requirement",
+      "designConstraint" => "Design Constraint",
+    }.each do |type, label|
+      it "labels a #{type} header <<#{label}>> as mermaid does" do
         allow(requirement).to receive(:type).and_return(type)
-        renderer.render(layout).to_xml.scan(%r{>([^<>]+)</text>}).flatten
-          .find { |t| t.include?("&lt;&lt;") && !t.match?(/Element|satisfies/) }
+        expect(texts).to include("&lt;&lt;#{label}&gt;&gt;")
       end
-      expect(rendered).to eq(labels.values.map { |l| "&lt;&lt;#{l}&gt;&gt;" })
     end
   end
 

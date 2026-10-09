@@ -229,35 +229,30 @@ module Sirena
         end
         group.children << stereotype
 
-        # Add type if present
+        center_x = x + (width / 2)
+        center_y = y + (height / 2)
         if element.type
-          type_text = Svg::Text.new.tap do |text|
-            text.x = x + width / 2
-            text.y = y + height / 2 + 10
-            text.content = "Type: #{element.type}"
-            text.fill = theme_color(:text_color) || "#666"
-            text.font_size = "11"
-            text.text_anchor = "middle"
-            text.dominant_baseline = "middle"
-          end
-          group.children << type_text
+          group.children << detail_text("Type: #{element.type}",
+                                        center_x, center_y + 10)
         end
-
-        # Add doc reference if present
         if element.docref
-          docref_text = Svg::Text.new.tap do |text|
-            text.x = x + width / 2
-            text.y = y + height / 2 + 26
-            text.content = "Doc Ref: #{element.docref}"
-            text.fill = theme_color(:text_color) || "#666"
-            text.font_size = "11"
-            text.text_anchor = "middle"
-            text.dominant_baseline = "middle"
-          end
-          group.children << docref_text
+          group.children << detail_text("Doc Ref: #{element.docref}",
+                                        center_x, center_y + 26)
         end
 
         svg << group
+      end
+
+      def detail_text(content, center_x, center_y)
+        Svg::Text.new.tap do |text|
+          text.x = center_x
+          text.y = center_y
+          text.content = content
+          text.fill = theme_color(:text_color) || "#666"
+          text.font_size = "11"
+          text.text_anchor = "middle"
+          text.dominant_baseline = "middle"
+        end
       end
 
       def create_hexagon(x, y, width, height)
