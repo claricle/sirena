@@ -54,6 +54,7 @@ module Sirena
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
           BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
+          PRAGMA = /\A!pragma[ \t]+(?:teoz|svginteractive)[ \t]+true\z/i
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
           LINE_END = /\r\n|\r|\n/
 
@@ -63,7 +64,7 @@ module Sirena
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
-                           :LINE_END, :TARGET, :NOTE, :END_NOTE, :BLOCK,
+                           :LINE_END, :PRAGMA, :TARGET, :NOTE, :END_NOTE, :BLOCK,
                            :BRANCH, :RETURN, :DIVIDER
 
           # @param source [String] PlantUML source
@@ -131,7 +132,9 @@ module Sirena
           end
 
           def read(text, number)
-            if (match = DECLARATION.match(text))
+            if PRAGMA.match?(text)
+              nil
+            elsif (match = DECLARATION.match(text))
               declare(match)
             elsif (match = BOX.match(text))
               open_box(match, text, number)

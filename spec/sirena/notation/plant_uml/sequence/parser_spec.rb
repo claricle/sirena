@@ -31,6 +31,19 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     Sirena::Notation::PlantUML::UnsupportedConstructError
   end
 
+  describe "pragmas" do
+    it "accepts !pragma teoz true and keeps the messages" do
+      diagram = parse("!pragma teoz true", "A -> B : hi")
+
+      expect(diagram.messages.size).to eq(1)
+    end
+
+    it "still refuses another pragma by name" do
+      expect { parse("!pragma layout smetana", "A -> B") }
+        .to raise_error(unsupported, /preprocessor directive/)
+    end
+  end
+
   describe "participants" do
     {
       "participant" => :participant, "actor" => :actor,
@@ -150,7 +163,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
   describe "constructs outside the slice" do
     {
       "activate A" => "activate", "newpage" => "newpage",
-      "!pragma teoz true" => "preprocessor directive",
+      "!pragma layout smetana" => "preprocessor directive",
       "A ->x B" => "message arrow", "A -[#red]> B" => "message arrow",
       "participant A <<x>>" => "participant", "title T" => "title"
     }.each do |line, name|
