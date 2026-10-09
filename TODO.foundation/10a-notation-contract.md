@@ -1,6 +1,8 @@
 # 10a — Notation contract
 
-Status: approved (Reading A). 10b lands in three PRs. Part 1 moves Mermaid detection,
+Status (reconciled 2026-10-10): **complete and owner-approved (Reading A).**
+This is the finished 10a artifact; 10b remains a separate implementation item
+and lands in three PRs. Part 1 moves Mermaid detection,
 parsing and the type table into `Notation::Mermaid`; `Engine` still calls it directly.
 Part 2a adds `Notation.register`/`resolve`, the `notation:` and `path:` options and
 the library-side section 8 gates (truth table, conformance, fake notation).

@@ -1,13 +1,18 @@
 # 04 — XML correctness and the svg_conform gate
 
+Status (2026-10-10): **complete.** `scoreboard/conformance.json` contains
+1,261 per-case rows, all `conformant`, with no failing status. CI exercises the
+gate under the documented `:metanorma` profile.
+
 Can start: after 01 (needs lutaml-model 0.8 in-bundle). **Completion
 after 02** — the per-case conformance rows and the scoreboard column
 don't exist before it. Blocks: 12; with item 14's comparator, blocks
 16's completion.
 
-## Facts
+## Historical starting point
 
-**Sirena does not escape XML at all.** `lib/sirena/svg/text.rb:48`
+At plan creation, **Sirena did not escape XML at all.**
+`lib/sirena/svg/text.rb:48`
 interpolates content straight into `<text>…</text>`, and
 `lib/sirena/svg/element.rb:39` interpolates every attribute value the
 same way. There is no escape helper anywhere under `lib/sirena/svg/`.
@@ -60,6 +65,23 @@ since the gate is written against that exact API.
    lax profile.
 
 ## Done when
+
+Completion evidence on `main`:
+
+- `Sirena::Svg::CONFORMANCE_PROFILE` is `:metanorma`, with the choice and the
+  stricter-profile tradeoff documented beside it.
+- `lib/sirena/svg/escaping.rb` is the single text/attribute boundary;
+  `escaping_spec.rb` and `escaping_boundary_spec.rb` cover markup injection,
+  ampersands, both quote classes, attribute-name injection, and forbidden XML
+  code points.
+- `spec/svg_conformance_spec.rb` validates fixture, corpus-pass, and checked-in
+  example output. The scoreboard records 1,261/1,261 conformant rows.
+- `sirena.gemspec` now allowlists `lib`, `exe`, and top-level package metadata,
+  so `examples/` SVGs are not shipped; the on-disk examples remain checked by
+  the conformance spec.
+- `corpus_sweep_malformed_xml_spec.rb` proves SVG-shaped malformed XML is a
+  failure, and `no_runtime_remediation_spec.rb` proves runtime code never calls
+  svg_conform remediation.
 
 - Chosen profile documented with the reason.
 - The named XSS corpus case renders parseable SVG with no injected
