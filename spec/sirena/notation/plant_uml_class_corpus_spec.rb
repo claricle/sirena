@@ -223,11 +223,13 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   describe "directives" do
-    it "records each restyling line in order and applies none" do
-      source = "!pragma layout smetana\nhide empty members\n" \
-               "skinparam nodesep 60\nleft to right direction\nclass A"
+    let(:restyled_source) do
+      "!pragma layout smetana\nhide empty members\n" \
+        "skinparam nodesep 60\nleft to right direction\nclass A"
+    end
 
-      expect(parse_corpus(source).directives).to eq(
+    it "records each restyling line in order and applies none" do
+      expect(parse_corpus(restyled_source).directives).to eq(
         ["!pragma layout smetana", "hide empty members",
          "skinparam nodesep 60", "left to right direction"],
       )

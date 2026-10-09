@@ -12,6 +12,13 @@ module PlantUmlSequenceHelpers
     Sirena::Notation::PlantUML::Sequence::Parser.new.parse(wrap(*lines))
   end
 
+  def refusal_of(*lines)
+    parse(*lines)
+    nil
+  rescue Sirena::Notation::PlantUML::UnsupportedConstructError => e
+    e
+  end
+
   def message_of(arrow)
     parse("A #{arrow} B : hi").messages.first
   end
@@ -148,8 +155,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       "participant A <<x>>" => "participant", "title T" => "title"
     }.each do |line, name|
       it "refuses #{line.inspect} as #{name}" do
-        expect { parse("A -> B", line) }
-          .to raise_error(unsupported) { |e| expect(e.construct).to eq(name) }
+        expect(refusal_of("A -> B", line)).to have_attributes(construct: name)
       end
     end
 
@@ -159,8 +165,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     it "reports the line of the refusal" do
-      expect { parse("A -> B", "activate A") }
-        .to raise_error(unsupported) { |e| expect(e.line).to eq(3) }
+      expect(refusal_of("A -> B", "activate A"))
+        .to have_attributes(line: 3)
     end
   end
 
