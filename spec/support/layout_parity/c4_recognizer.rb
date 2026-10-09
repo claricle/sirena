@@ -1,0 +1,69 @@
+# frozen_string_literal: true
+
+module SpecSupport
+  module LayoutParity
+    # C4 boundaries and elements keyed by their visible semantic labels.
+    class C4Recognizer
+      def container_kinds
+        [:c4_boundary]
+      end
+
+      def elements(extractor, doc)
+        boundaries(extractor, doc) + logical_elements(extractor, doc)
+      end
+
+      private
+
+      def boundaries(extractor, doc)
+        boundary_rects(doc).filter_map do |rect|
+          group = rect.ancestors("g").first
+          next unless group
+
+          label = group.xpath(".//text").first&.text
+          labeled_element(extractor, rect, label, :c4_boundary)
+        end
+      end
+
+      def boundary_rects(doc)
+        doc.xpath("//rect[@stroke-dasharray]")
+      end
+
+      def logical_elements(extractor, doc)
+        reference = nodes_with_class(doc, "person-man")
+        if reference.any?
+          return reference.filter_map do |node|
+            reference_element(extractor, node)
+          end
+        end
+
+        candidate_elements(extractor, doc)
+      end
+
+      def reference_element(extractor, node)
+        label = node.xpath(".//text")[1]&.text
+        labeled_element(extractor, node, label, :c4_element)
+      end
+
+      def candidate_elements(extractor, doc)
+        doc.xpath("//g[starts-with(@id, 'element-')]").filter_map do |node|
+          label = node.xpath(".//text").first&.text
+          labeled_element(extractor, node, label, :c4_element)
+        end
+      end
+
+      def labeled_element(extractor, node, raw_label, kind)
+        label = raw_label.to_s.gsub(/\s+/, " ").strip
+        box = extractor.bbox(node)
+        return unless box && !label.empty?
+
+        Element.new(kind: kind, key: label, bbox: box,
+                    label: label, identity: :label)
+      end
+
+      def nodes_with_class(node, class_name)
+        matcher = "contains(concat(' ', @class, ' '), ' #{class_name} ')"
+        node.xpath("//g[#{matcher}]")
+      end
+    end
+  end
+end
