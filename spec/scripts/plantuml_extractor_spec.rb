@@ -41,15 +41,26 @@ module PlantumlExtractorSpecSupport
   def scoreboard_counts(root)
     JSON.parse(File.read(File.join(root, "scoreboard/plantuml.json")))
       .to_h do |row|
-        [row["type"], [row["cases"], row["oracle_valid"], row["passing"]]]
+        [row["type"], [row["cases"], row["oracle_valid"]]]
       end
+  end
+
+  # `rake plantuml:check` owns the measured `passing`; this only holds the
+  # row to being a rate of the denominator beside it.
+  def inconsistent_rates(root)
+    JSON.parse(File.read(File.join(root, "scoreboard/plantuml.json")))
+      .reject do |row|
+        row["passing"].between?(0, row["oracle_valid"]) &&
+          row["pass_rate"] == row["passing"].fdiv(row["oracle_valid"]).round(4)
+      end
+      .map { |row| row["type"] }
   end
 
   def expected_scoreboard_counts(pin, valid)
     counts = pin.dig("corpus", "cases")
     {
-      "class" => [counts["class"], valid["class"], 0],
-      "sequence" => [counts["sequence"], valid["sequence"], 0],
+      "class" => [counts["class"], valid["class"]],
+      "sequence" => [counts["sequence"], valid["sequence"]],
     }
   end
 end
@@ -187,6 +198,10 @@ RSpec.describe PlantumlExtractor do
     it "has scoreboard rows with the measured oracle-valid denominators" do
       expect(scoreboard_counts(root))
         .to eq(expected_scoreboard_counts(pin, oracle_valid_counts(corpus)))
+    end
+
+    it "has a pass_rate that is passing over oracle_valid in every row" do
+      expect(inconsistent_rates(root)).to be_empty
     end
   end
 end
