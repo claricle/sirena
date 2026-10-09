@@ -102,15 +102,15 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 
 |**Memory Usage**
 |Not benchmarked
-|~200MB (with browser)
-|~100MB
-|~30MB
+|Not measured in the linked report
+|Not measured in the linked report
+|Not measured in the linked report
 
 |**Startup Time**
 |Measured in the linked dated Sirena report
-|~2s (browser)
-|~1s (JVM)
-|<50ms
+|Measured in the linked dated Sirena report
+|Not measured in the linked report
+|Not measured in the linked report
 |===
 
 === Detailed Comparison
@@ -161,8 +161,8 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 
 * Requires Node.js for CLI
 * Requires Puppeteer/Chrome for server rendering
-* Higher memory usage (~200MB with browser)
-* Slower startup (~2 seconds per diagram)
+* Server-rendering memory was not measured in the linked report
+* Startup was measured only in the linked, single-machine report
 * Complex deployment (browser dependencies)
 * CSS-based theming (more complex)
 
