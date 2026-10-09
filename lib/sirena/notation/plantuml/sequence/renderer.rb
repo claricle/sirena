@@ -14,6 +14,7 @@ module Sirena
           # of its items.
           LAYERS = [
             %i[frames frame_group], %i[lifelines lifeline],
+            %i[bars activation_bar],
             %i[fragments fragment_group], %i[dividers divider_group],
             %i[arrows arrow_group], %i[notes note_group],
             %i[heads head_group]
@@ -62,6 +63,10 @@ module Sirena
             element(Svg::Rect, x: frame.x, y: frame.y, width: frame.width,
                                height: frame.height, fill: "none",
                                stroke: node_stroke, stroke_width: "1")
+          end
+
+          def activation_bar(bar)
+            frame_rectangle(bar).tap { |rect| rect.fill = node_fill }
           end
 
           def lifeline(segment)

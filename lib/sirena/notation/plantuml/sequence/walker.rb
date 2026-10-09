@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "activation"
+require_relative "bar_tracker"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
@@ -44,10 +46,16 @@ module Sirena
           def run(items)
             previous = nil
             items.each do |item|
+              @mark_y = nil unless anchoring?(item)
               visit(item, previous)
               previous = item
             end
+            @tracker.finish(@y - 20)
             self
+          end
+
+          def bars
+            @tracker.bars
           end
 
           private
@@ -57,14 +65,20 @@ module Sirena
             @notes = []
             @fragments = []
             @dividers = []
+            @tracker = BarTracker.new(method(:centre))
             @blocks = []
             @left = Float::INFINITY
             @right = -Float::INFINITY
           end
 
+          def anchoring?(item)
+            [Message, Activation].any? { |kind| item.is_a?(kind) }
+          end
+
           def visit(item, previous)
             case item
             when Message then message(item)
+            when Activation then activation(item)
             when Note then note(item, previous)
             when Fragment then fragment(item)
             else divider(item)
@@ -72,7 +86,7 @@ module Sirena
           end
 
           def message(message)
-            @last_y = @y
+            @last_y = @mark_y = @y
             from, to = [message.from, message.to].map { |id| centre(id) }
             @arrows << arrow_record(message, arrow_for(message, from, to))
             touch(*extent(message, from, to))
@@ -82,6 +96,12 @@ module Sirena
           def extent(message, from, to)
             low, high = [from, to].minmax
             [low, high + (message.self_message? ? reach(message) : 0)]
+          end
+
+          # A bar starts or ends at the arrow it is written on, or else
+          # between the rows on either side of the line.
+          def activation(item)
+            @tracker.apply(item, @mark_y || (@y - 20))
           end
 
           def arrow_for(message, from, to)

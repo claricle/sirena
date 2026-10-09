@@ -54,6 +54,13 @@ module Sirena
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 
+          class Bar < Lutaml::Model::Serializable
+            attribute :x, :float
+            attribute :y, :float
+            attribute :width, :float
+            attribute :height, :float
+          end
+
           class Divider < Lutaml::Model::Serializable
             attribute :lines, PlantUML::Scene::Segment, collection: true
             attribute :x, :float
@@ -67,6 +74,7 @@ module Sirena
           attribute :fragments, Fragment, collection: true
           attribute :notes, Note, collection: true
           attribute :dividers, Divider, collection: true
+          attribute :bars, Bar, collection: true
           attribute :heads, Head, collection: true
           attribute :lifelines, PlantUML::Scene::Segment, collection: true
           attribute :arrows, Arrow, collection: true

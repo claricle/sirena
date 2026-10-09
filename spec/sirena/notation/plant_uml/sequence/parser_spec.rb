@@ -44,6 +44,38 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "activation" do
+    let(:phases) do
+      ->(diagram) { diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Activation).map(&:phase) }
+    end
+
+    it "reads activate and deactivate" do
+      diagram = parse("A -> B", "activate B", "deactivate B")
+
+      expect(phases.call(diagram)).to eq(%i[on off])
+    end
+
+    it "reads ++ as activating the receiver" do
+      expect(phases.call(parse("A -> B ++"))).to eq([:on])
+    end
+
+    it "reads --++ as deactivating then activating" do
+      diagram = parse("A -> B ++", "B -> A --++")
+
+      expect(phases.call(diagram)).to eq(%i[on off on])
+    end
+
+    it "refuses a deactivate that closes nothing" do
+      expect { parse("A -> B", "deactivate B") }
+        .to raise_error(unsupported, /deactivate/)
+    end
+
+    it "refuses a coloured activation" do
+      expect { parse("A -> B", "activate B #red") }
+        .to raise_error(unsupported, /activate/)
+    end
+  end
+
   describe "participants" do
     {
       "participant" => :participant, "actor" => :actor,
@@ -162,7 +194,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
   describe "constructs outside the slice" do
     {
-      "activate A" => "activate", "newpage" => "newpage",
+      "newpage" => "newpage",
       "!pragma layout smetana" => "preprocessor directive",
       "A ->x B" => "message arrow", "A -[#red]> B" => "message arrow",
       "participant A <<x>>" => "participant", "title T" => "title"
@@ -178,7 +210,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     it "reports the line of the refusal" do
-      expect(refusal_of("A -> B", "activate A"))
+      expect(refusal_of("A -> B", "newpage"))
         .to have_attributes(line: 3)
     end
   end

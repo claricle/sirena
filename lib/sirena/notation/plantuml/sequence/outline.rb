@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "activation"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
@@ -19,11 +20,28 @@ module Sirena
             @items = []
             @calls = []
             @blocks = []
+            @depth = Hash.new(0)
           end
 
-          def message(message)
+          # `marks` are the activation changes written on the same line, as
+          # [phase, id] pairs.
+          def message(message, marks = [])
+            return false unless marks.all? { |phase, id| allowed?(phase, id) }
+
             @calls << message unless message.dashed
             @items << message
+            marks.each { |phase, id| activation(phase, id) }
+          end
+
+          def activation(phase, id)
+            return false unless allowed?(phase, id)
+
+            @depth[id] += phase == :on ? 1 : -1
+            @items << Activation.new(participant: id, phase: phase)
+          end
+
+          def allowed?(phase, id)
+            phase == :on || @depth[id].positive?
           end
 
           def reply(label)

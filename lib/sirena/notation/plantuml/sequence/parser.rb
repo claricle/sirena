@@ -40,7 +40,11 @@ module Sirena
                          (?:[ \t]+as[ \t]+(#{NAME}))?\z/xio
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
                      (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
-                     [ \t]*(#{QUOTED}|#{NAME})[ \t]*(?::[ \t]*(.*))?\z/xo
+                     [ \t]*(#{QUOTED}|#{NAME})[ \t]*(--\+\+|\+\+--|\+\+|--)?
+                     [ \t]*(?::[ \t]*(.*))?\z/xo
+          ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})\z/io
+          MARKS = { "++" => [:on], "--" => [:off],
+                    "--++" => %i[off on], "++--" => %i[on off] }.freeze
           TARGET = /(?:#{QUOTED}|#{NAME})/
           NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across)
                   (?:[ \t]+of)?
@@ -59,13 +63,13 @@ module Sirena
           LINE_END = /\r\n|\r|\n/
 
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
-                      [BRANCH, :branch], [RETURN, :reply],
-                      [DIVIDER, :divider]].freeze
+                      [BRANCH, :branch], [ACTIVATION, :activation],
+                      [RETURN, :reply], [DIVIDER, :divider]].freeze
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
-                           :LINE_END, :PRAGMA, :TARGET, :NOTE, :END_NOTE, :BLOCK,
-                           :BRANCH, :RETURN, :DIVIDER
+                           :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
+                           :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -126,15 +130,14 @@ module Sirena
           def statement(text, number)
             return collect_note(text) if @pending_note
             return end_of_diagram(text, number) if text == "@enduml"
+            return :statements if PRAGMA.match?(text)
 
             read(text, number)
             :statements
           end
 
           def read(text, number)
-            if PRAGMA.match?(text)
-              nil
-            elsif (match = DECLARATION.match(text))
+            if (match = DECLARATION.match(text))
               declare(match)
             elsif (match = BOX.match(text))
               open_box(match, text, number)
@@ -171,6 +174,11 @@ module Sirena
 
           def reply(match)
             @outline.reply(match[1])
+          end
+
+          def activation(match)
+            phase = match[1].casecmp?("activate") ? :on : :off
+            @outline.activation(phase, mention(match[2]))
           end
 
           def divider(match)
@@ -244,12 +252,23 @@ module Sirena
           end
 
           def message(match)
+            message = build_message(match)
+            @outline.message(message, marks(match[4], message))
+          end
+
+          def build_message(match)
             from, to = [match[1], match[3]].map { |name| mention(name) }
             arrow = ARROWS.fetch(match[2])
             from, to = to, from if arrow[:reversed]
-            @outline.message(Message.new(from: from, to: to, label: match[4],
-                                         head: arrow[:head],
-                                         dashed: arrow[:dashed]))
+            Message.new(from: from, to: to, label: match[5],
+                        head: arrow[:head], dashed: arrow[:dashed])
+          end
+
+          # `--` deactivates the sender and `++` activates the receiver.
+          def marks(suffix, message)
+            MARKS.fetch(suffix, []).map do |phase|
+              [phase, phase == :on ? message.to : message.from]
+            end
           end
 
           def mention(name)
