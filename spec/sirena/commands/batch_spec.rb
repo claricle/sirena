@@ -71,7 +71,9 @@ module BatchCommandRunner
     captured = StringIO.new
     original = $stdout
     $stdout = captured
-    command = Sirena::Commands::BatchCommand.new(input: input, output: output, **)
+    command = Sirena::Commands::BatchCommand.new(
+      input: input, output: output, **
+    )
     with_default_external(locale) { command.run }
     [command, captured.string]
   ensure
@@ -86,6 +88,57 @@ module BatchCommandRunner
   # @return [String] everything the run printed to stdout
   def run_batch(input, output, **)
     batch_capture(input, output, **).last
+  end
+
+  def verbose_report(failure)
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "broken.mmd")
+      File.write(input, "graph TD\nA-->B\n")
+      allow(Sirena).to receive(:render).and_raise(failure)
+      run_batch(input, File.join(dir, "out"), verbose: true)
+    end
+  end
+
+  def failure_with_cause
+    raise "render failed", cause: ArgumentError.new("bad token")
+  rescue RuntimeError => error
+    error
+  end
+
+  def failing_report
+    Dir.mktmpdir do |dir|
+      input = File.join(dir, "in")
+      Dir.mkdir(input)
+      1.upto(6) do |number|
+        File.write(File.join(input, "#{number}.mmd"), "failure #{number}")
+      end
+      allow(Sirena).to receive(:render) do |source, **|
+        raise "failed #{source}"
+      end
+      run_batch(input, File.join(dir, "out"))
+    end
+  end
+
+  def verbose_failure_lines
+    ["broken.mmd... ❌ RuntimeError", "   render failed",
+     "   Caused by: ArgumentError: bad token"]
+  end
+
+  def cause_free_failure_facts
+    report = verbose_report(RuntimeError.new("render failed"))
+    [report.include?(verbose_failure_lines[0]),
+     report.include?(verbose_failure_lines[1]),
+     !report.include?("Caused by:")]
+  end
+
+  def truncation_facts
+    errors = failing_report.split("Errors:\n", 2).last
+    listed = 1.upto(5).map do |number|
+      "  #{number}.mmd: failed failure #{number}"
+    end
+    [listed.all? { |error| errors.include?(error) },
+     !errors.include?("  6.mmd: failed failure 6"),
+     errors.include?("  ... and 1 more errors")]
   end
 
   # Realistic per-class messages, matching the ones exhaustion_errors_spec.rb
@@ -133,57 +186,16 @@ RSpec.describe Sirena::Commands::BatchCommand do
   end
 
   it "prints a failed render and its cause in verbose mode" do
-    Dir.mktmpdir do |dir|
-      input = File.join(dir, "broken.mmd")
-      File.write(input, "graph TD\nA-->B\n")
-      failure = begin
-        begin
-          raise ArgumentError, "bad token"
-        rescue ArgumentError
-          raise "render failed"
-        end
-      rescue RuntimeError => e
-        e
-      end
-      allow(Sirena).to receive(:render).and_raise(failure)
-
-      report = run_batch(input, File.join(dir, "out"), verbose: true)
-
-      expect(report).to include("broken.mmd... ❌ RuntimeError", "   render failed",
-                                "   Caused by: ArgumentError: bad token")
-    end
+    expect(verbose_report(failure_with_cause))
+      .to include(*verbose_failure_lines)
   end
 
   it "omits the caused-by block when a verbose failure has no cause" do
-    Dir.mktmpdir do |dir|
-      input = File.join(dir, "broken.mmd")
-      File.write(input, "graph TD\nA-->B\n")
-      allow(Sirena).to receive(:render).and_raise("render failed")
-
-      report = run_batch(input, File.join(dir, "out"), verbose: true)
-
-      expect(report).to include("broken.mmd... ❌ RuntimeError", "   render failed")
-      expect(report).not_to include("Caused by:")
-    end
+    expect(cause_free_failure_facts).to eq([true, true, true])
   end
 
   it "lists only the first five errors when six renders fail" do
-    Dir.mktmpdir do |dir|
-      input = File.join(dir, "in")
-      Dir.mkdir(input)
-      6.times { |index| File.write(File.join(input, "#{index + 1}.mmd"), "failure #{index + 1}") }
-      allow(Sirena).to receive(:render) { |source, **| raise "failed #{source}" }
-
-      report = run_batch(input, File.join(dir, "out"))
-      errors = report.split("Errors:\n", 2).last
-
-      expected = 1.upto(5).map do |index|
-        "  #{index}.mmd: failed failure #{index}"
-      end
-      expect(errors).to include(*expected)
-      expect(errors).not_to include("  6.mmd: failed failure 6")
-      expect(errors).to include("  ... and 1 more errors")
-    end
+    expect(truncation_facts).to eq([true, true, true])
   end
 
   # Exhaustion can arrive from OUTSIDE the engine's boundary: reading the
