@@ -4,20 +4,22 @@ require "spec_helper"
 
 RSpec.describe Sirena::Diagram::SequenceText do
   describe ".display" do
-    it "removes a leading wrap directive case-insensitively" do
-      cases = {
+    let(:wrap_cases) do
+      {
         "wrap:hello" => "hello",
         "nowrap:hello" => "hello",
         "  wrap:  hello" => "hello",
         "NoWrAp:hello" => "hello",
         "hello wrap:world" => "hello wrap:world",
       }
+    end
 
-      actual = cases.keys.to_h do |input|
+    it "removes a leading wrap directive case-insensitively" do
+      actual = wrap_cases.keys.to_h do |input|
         [input, described_class.display(input)]
       end
 
-      expect(actual).to eq(cases)
+      expect(actual).to eq(wrap_cases)
     end
 
     it "normalizes supported HTML break spellings" do

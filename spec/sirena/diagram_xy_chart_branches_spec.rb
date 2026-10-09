@@ -17,7 +17,8 @@ RSpec.describe Sirena::Diagram do
     it "adds a dataset" do
       dataset = Sirena::Diagram::XYDataset.new("sales")
 
-      expect { chart.add_dataset(dataset) }.to change(chart.datasets, :count).by(1)
+      expect { chart.add_dataset(dataset) }
+        .to change(chart.datasets, :count).by(1)
     end
 
     it "identifies itself as an xy chart" do
