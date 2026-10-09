@@ -3,188 +3,129 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::ErDiagram do
-  let(:transform) { described_class.new }
+  let(:layout) { described_class.new }
+  let(:diagram) do
+    Sirena::Diagram::ErDiagram.new.tap do |value|
+      customer = Sirena::Diagram::ErEntity.new(id: "CUSTOMER", name: "CUSTOMER")
+      customer.attributes << Sirena::Diagram::ErAttribute.new(
+        name: "id", attribute_type: "int", key_type: "PK",
+      )
+      customer.attributes << Sirena::Diagram::ErAttribute.new(
+        name: "name", attribute_type: "string",
+      )
+      value.entities << customer
+      value.entities << Sirena::Diagram::ErEntity.new(id: "ORDER", name: "ORDER")
+      value.relationships << Sirena::Diagram::ErRelationship.new(
+        from_id: "CUSTOMER", to_id: "ORDER",
+        relationship_type: "non-identifying",
+        cardinality_from: "one", cardinality_to: "zero_or_more",
+        label: "places"
+      )
+    end
+  end
 
-  describe "#to_graph" do
-    let(:diagram) do
-      Sirena::Diagram::ErDiagram.new.tap do |d|
-        d.entities << Sirena::Diagram::ErEntity.new(
-          id: "CUSTOMER",
-          name: "CUSTOMER",
-        ).tap do |entity|
-          entity.attributes << Sirena::Diagram::ErAttribute.new(
-            name: "id",
-            attribute_type: "int",
-            key_type: "PK",
-          )
-          entity.attributes << Sirena::Diagram::ErAttribute.new(
-            name: "name",
-            attribute_type: "string",
-          )
-        end
-        d.entities << Sirena::Diagram::ErEntity.new(
-          id: "ORDER",
-          name: "ORDER",
-        )
-        d.relationships << Sirena::Diagram::ErRelationship.new(
-          from_id: "CUSTOMER",
-          to_id: "ORDER",
-          relationship_type: "non-identifying",
-          cardinality_from: "one",
-          cardinality_to: "zero_or_more",
-          label: "places",
-        )
-      end
+  describe "#call" do
+    it "returns final typed scene geometry" do
+      scene = layout.call(diagram)
+
+      expect(scene).to be_a(described_class::Scene)
+      expect(scene.children).to all(be_a(described_class::Node))
+      expect(scene.edges).to all(be_a(described_class::Edge))
+      expect([scene.width, scene.height, scene.view_box])
+        .to eq([550.0, 210.0, "0 0 550 210"])
     end
 
-    it "converts diagram to graph structure" do
-      graph = transform.to_graph(diagram)
+    it "places entities and their text in final canvas coordinates" do
+      customer = layout.call(diagram).children.find { |node| node.id == "CUSTOMER" }
 
-      expect(graph).to be_a(Hash)
-      expect(graph[:id]).to eq("er_diagram")
-      expect(graph[:children]).to be_an(Array)
-      expect(graph[:edges]).to be_an(Array)
-      expect(graph[:layoutOptions]).to be_a(Hash)
+      expect([customer.x, customer.y, customer.width, customer.height])
+        .to eq([50.0, 50.0, 170.0, 80.0])
+      expect([customer.labels.first.x, customer.labels.first.y])
+        .to eq([135.0, 76.0])
+      expect(customer.attributes.map(&:text)).to eq(["PK int id", "string name"])
+      expect(customer.attributes.map { |row| [row.x, row.y] })
+        .to eq([[60.0, 116.0], [60.0, 134.0]])
     end
 
-    it "creates entities with dimensions" do
-      graph = transform.to_graph(diagram)
+    it "includes canonical relationship sections and markers" do
+      edge = layout.call(diagram).edges.first
+      section = edge.sections.first
 
-      expect(graph[:children].length).to eq(2)
-
-      customer = graph[:children].find { |n| n[:id] == "CUSTOMER" }
-      expect(customer).not_to be_nil
-      expect(customer[:width]).to be > 0
-      expect(customer[:height]).to be > 0
-      expect(customer[:metadata][:name]).to eq("CUSTOMER")
-      expect(customer[:metadata][:attributes]).to be_an(Array)
+      expect([edge.source, edge.target]).to eq(%w[CUSTOMER ORDER])
+      expect(section.start_point).to be_a(described_class::Point)
+      expect(section.end_point).to be_a(described_class::Point)
+      expect(section.bend_points).to eq([])
+      expect(edge.source_marker.lines.length).to eq(1)
+      expect(edge.target_marker.circles.length).to eq(1)
+      expect(edge.target_marker.lines.length).to eq(3)
     end
 
-    it "includes attributes metadata" do
-      graph = transform.to_graph(diagram)
-
-      customer = graph[:children].find { |n| n[:id] == "CUSTOMER" }
-      attributes = customer[:metadata][:attributes]
-
-      expect(attributes.length).to eq(2)
-      expect(attributes.first[:name]).to eq("id")
-      expect(attributes.first[:attribute_type]).to eq("int")
-      expect(attributes.first[:key_type]).to eq("PK")
-    end
-
-    # The renderer only sees what this layer hands it -- a note dropped
-    # here never reaches the SVG even though the parser and model both
-    # carry it.
-    it "includes the attribute note in the metadata" do
+    it "preserves attributes and their optional note" do
       diagram.entities.first.attributes.first.note = "NN"
+      attribute = layout.call(diagram).children.first.attributes.first
 
-      graph = transform.to_graph(diagram)
-
-      customer = graph[:children].find { |n| n[:id] == "CUSTOMER" }
-      attributes = customer[:metadata][:attributes]
-
-      expect(attributes.first[:note]).to eq("NN")
+      expect([attribute.name, attribute.attribute_type, attribute.key_type])
+        .to eq(%w[id int PK])
+      expect([attribute.note, attribute.text]).to eq(["NN", "PK int id NN"])
     end
 
     it "widens the entity box to fit a long attribute note" do
-      graph = transform.to_graph(diagram)
-      narrow_width = graph[:children].find { |n| n[:id] == "CUSTOMER" }[:width]
-
+      narrow = layout.call(diagram).children.first.width
       diagram.entities.first.attributes.first.note =
         "a much longer note than the name alone"
-      wider_graph = transform.to_graph(diagram)
-      wide_width = wider_graph[:children].find { |n| n[:id] == "CUSTOMER" }[:width]
 
-      expect(wide_width).to be > narrow_width
+      expect(layout.call(diagram).children.first.width).to be > narrow
     end
 
-    it "creates relationships with metadata" do
-      graph = transform.to_graph(diagram)
+    it "uses monospace theme sizing for attribute width" do
+      name = "i" * 40
+      entity = Sirena::Diagram::ErEntity.new(id: "NARROW", name: "N")
+      entity.attributes << Sirena::Diagram::ErAttribute.new(name: name)
+      narrow = Sirena::Diagram::ErDiagram.new.tap { |value| value.entities << entity }
+      node = layout.call(narrow).children.first
+      font_size = Sirena::Theme::Registry.get(:default).typography.font_size_small
+      drawn = Sirena::TextMeasurement.measure(
+        name, font_size: font_size, monospace: true
+      )[:width] + 20
 
-      expect(graph[:edges].length).to eq(1)
-
-      edge = graph[:edges].first
-      expect(edge[:sources]).to eq(["CUSTOMER"])
-      expect(edge[:targets]).to eq(["ORDER"])
-      expect(edge[:metadata][:relationship_type]).to eq("non-identifying")
-      expect(edge[:metadata][:cardinality_from]).to eq("one")
-      expect(edge[:metadata][:cardinality_to]).to eq("zero_or_more")
+      expect(node.width).to be_within(0.01).of(drawn)
     end
 
-    it "includes relationship label" do
-      graph = transform.to_graph(diagram)
+    it "sizes and positions text from the injected theme" do
+      diagram.entities.first.name = "W" * 40
+      ordinary = layout.call(diagram, theme: Sirena::Theme::Registry.get(:default))
+      contrast = layout.call(diagram, theme: Sirena::Theme::Registry.get(:high_contrast))
 
-      edge = graph[:edges].first
-      labels = edge[:labels]
-
-      expect(labels).to be_an(Array)
-      label = labels.find { |l| l[:text] == "places" }
-      expect(label).not_to be_nil
+      expect(contrast.children.first.labels.first.font_size)
+        .to eq(Sirena::Theme::Registry.get(:high_contrast).typography.font_size_large)
+      expect(contrast.children.first.width).not_to eq(ordinary.children.first.width)
     end
 
-    it "sets layout options for ER diagrams" do
-      graph = transform.to_graph(diagram)
+    it "preserves assigned classes and declarations in source order" do
+      diagram.entities.first.classes.push("first", "second", "first")
+      diagram.add_class_def("first", "fill:red")
+      diagram.add_class_def("second", "stroke:blue")
+      scene = layout.call(diagram)
 
-      options = graph[:layoutOptions]
-      expect(options["elk.algorithm"]).to eq("layered")
-      expect(options["elk.direction"]).to eq("RIGHT")
+      expect(scene.children.first.classes).to eq(%w[first second first])
+      expect(scene.class_defs.map { |item| [item.name, item.declaration] })
+        .to eq([["first", "fill:red"], ["second", "stroke:blue"]])
     end
 
-    it "raises error for an entity missing its name" do
-      invalid_diagram = Sirena::Diagram::ErDiagram.new.tap do |d|
-        d.entities << Sirena::Diagram::ErEntity.new(id: "CUSTOMER")
+    it "returns the mermaid-compatible empty canvas" do
+      scene = layout.call(Sirena::Diagram::ErDiagram.new)
+
+      expect([scene.width, scene.height, scene.view_box])
+        .to eq([16.0, 16.0, "0 0 16 16"])
+      expect([scene.children, scene.edges]).to eq([[], []])
+    end
+
+    it "raises for an entity missing its name" do
+      invalid = Sirena::Diagram::ErDiagram.new.tap do |value|
+        value.entities << Sirena::Diagram::ErEntity.new(id: "CUSTOMER")
       end
 
-      expect do
-        transform.to_graph(invalid_diagram)
-      end.to raise_error(Sirena::Layout::LayoutError)
-    end
-
-    it "converts an empty diagram to an empty graph" do
-      graph = transform.to_graph(Sirena::Diagram::ErDiagram.new)
-
-      expect(graph[:id]).to eq("er_diagram")
-      expect(graph[:children]).to eq([])
-      expect(graph[:edges]).to eq([])
-    end
-
-    # Narrow glyphs: the monospace width (0.6 em each) and the proportional
-    # width (about 0.22 em each) differ by a factor of nearly three, so a
-    # box sized with the wrong family cannot pass.
-    describe "attribute width" do
-      let(:name) { "i" * 40 }
-      let(:narrow_diagram) do
-        entity = Sirena::Diagram::ErEntity.new(id: "NARROW", name: "N")
-        entity.attributes << Sirena::Diagram::ErAttribute.new(name: name)
-        Sirena::Diagram::ErDiagram.new.tap { |d| d.entities << entity }
-      end
-
-      it "sizes the box in the monospace width the renderer draws" do
-        node = transform.to_graph(narrow_diagram)[:children].first
-        drawn = Sirena::TextMeasurement.measure(
-          name, font_size: 12, monospace: true
-        )[:width] + 20
-
-        expect(node[:width]).to be_within(0.01).of(drawn)
-      end
-    end
-
-    it "puts assigned classes on the node metadata (B1)" do
-      diagram.entities.first.classes << "someclass"
-      graph = transform.to_graph(diagram)
-
-      customer = graph[:children].find { |n| n[:id] == "CUSTOMER" }
-      expect(customer[:metadata][:classes]).to eq(%w[someclass])
-    end
-
-    it "carries declared classes as a name -> styles map (B2)" do
-      diagram.add_class_def("someclass", "fill:#f96")
-      diagram.add_class_def("anotherclass", "color:blue")
-      graph = transform.to_graph(diagram)
-
-      expect(graph[:class_defs]).to eq(
-        "someclass" => "fill:#f96", "anotherclass" => "color:blue",
-      )
+      expect { layout.call(invalid) }.to raise_error(Sirena::Layout::LayoutError)
     end
   end
 end
