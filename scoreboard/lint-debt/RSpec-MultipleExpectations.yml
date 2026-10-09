@@ -64,7 +64,7 @@ rows:
 - file: spec/sirena/layout/architecture_spec.rb
   count: 12
 - file: spec/sirena/layout/base_call_spec.rb
-  count: 4
+  count: 5
 - file: spec/sirena/layout/block_spec.rb
   count: 1
 - file: spec/sirena/layout/class_diagram_spec.rb

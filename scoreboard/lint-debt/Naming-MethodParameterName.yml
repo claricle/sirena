@@ -1,6 +1,10 @@
 ---
 cop: Naming/MethodParameterName
 rows:
+- file: lib/sirena/layout/flowchart.rb
+  count: 34
+- file: lib/sirena/layout/flowchart/edge_router.rb
+  count: 4
 - file: lib/sirena/layout/grid.rb
   count: 2
 - file: lib/sirena/layout/mindmap.rb
@@ -17,12 +21,8 @@ rows:
   count: 10
 - file: lib/sirena/renderer/class_diagram.rb
   count: 8
-- file: lib/sirena/layout/flowchart/edge_router.rb
-  count: 4
 - file: lib/sirena/renderer/er_diagram.rb
   count: 2
-- file: lib/sirena/renderer/flowchart.rb
-  count: 42
 - file: lib/sirena/renderer/gantt.rb
   count: 4
 - file: lib/sirena/renderer/git_graph.rb

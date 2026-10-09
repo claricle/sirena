@@ -12,7 +12,7 @@ rows:
 - file: spec/integration/er_diagram_integration_spec.rb
   count: 15
 - file: spec/integration/flowchart_integration_spec.rb
-  count: 3
+  count: 4
 - file: spec/integration/git_graph_integration_spec.rb
   count: 7
 - file: spec/integration/requirement_integration_spec.rb
@@ -74,7 +74,7 @@ rows:
 - file: spec/sirena/layout/er_diagram_spec.rb
   count: 8
 - file: spec/sirena/layout/flowchart_spec.rb
-  count: 10
+  count: 11
 - file: spec/sirena/layout/grid_spec.rb
   count: 1
 - file: spec/sirena/layout/kanban_spec.rb

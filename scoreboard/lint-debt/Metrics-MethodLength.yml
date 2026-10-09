@@ -32,7 +32,9 @@ rows:
 - file: lib/sirena/layout/er_diagram.rb
   count: 7
 - file: lib/sirena/layout/flowchart.rb
-  count: 6
+  count: 15
+- file: lib/sirena/layout/flowchart/edge_router.rb
+  count: 3
 - file: lib/sirena/layout/gantt.rb
   count: 7
 - file: lib/sirena/layout/git_graph.rb
@@ -163,14 +165,10 @@ rows:
   count: 12
 - file: lib/sirena/renderer/class_diagram.rb
   count: 14
-- file: lib/sirena/layout/flowchart/edge_router.rb
-  count: 3
 - file: lib/sirena/renderer/er_diagram.rb
   count: 9
 - file: lib/sirena/renderer/error.rb
   count: 3
-- file: lib/sirena/renderer/flowchart.rb
-  count: 11
 - file: lib/sirena/renderer/gantt.rb
   count: 7
 - file: lib/sirena/renderer/git_graph.rb

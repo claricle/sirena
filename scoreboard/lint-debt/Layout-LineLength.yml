@@ -28,7 +28,9 @@ rows:
 - file: lib/sirena/layout/error.rb
   count: 1
 - file: lib/sirena/layout/flowchart.rb
-  count: 3
+  count: 11
+- file: lib/sirena/layout/flowchart/edge_router.rb
+  count: 10
 - file: lib/sirena/layout/gantt.rb
   count: 11
 - file: lib/sirena/layout/info.rb
@@ -127,12 +129,10 @@ rows:
   count: 1
 - file: lib/sirena/renderer/class_diagram.rb
   count: 6
-- file: lib/sirena/layout/flowchart/edge_router.rb
-  count: 9
 - file: lib/sirena/renderer/er_diagram.rb
   count: 6
 - file: lib/sirena/renderer/flowchart.rb
-  count: 12
+  count: 3
 - file: lib/sirena/renderer/gantt.rb
   count: 3
 - file: lib/sirena/renderer/git_graph.rb
@@ -278,7 +278,7 @@ rows:
 - file: spec/sirena/layout/architecture_spec.rb
   count: 52
 - file: spec/sirena/layout/base_call_spec.rb
-  count: 9
+  count: 10
 - file: spec/sirena/layout/block_spec.rb
   count: 2
 - file: spec/sirena/layout/er_diagram_spec.rb
