@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "the typed IR map" do
+RSpec.describe Sirena::Notation::Mermaid do
   def map_path
     File.expand_path("../../docs/ir-type-map.md", __dir__)
   end
