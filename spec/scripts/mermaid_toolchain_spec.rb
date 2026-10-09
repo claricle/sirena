@@ -60,7 +60,7 @@ RSpec.describe MermaidToolchain do
       described_class::MMDC_PATH,
       "--configFile", described_class::CONFIG_PATH,
       "--cssFile", described_class::CSS_PATH,
-      "-i", "in.mmd", "-o", "out.svg",
+      "-i", "in.mmd", "-o", "out.svg"
     ]
   end
 
