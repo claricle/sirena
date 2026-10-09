@@ -30,23 +30,24 @@ module ParseErrorFormatSources
     c4: ["C4Context\n???\n", 2],
     info: ["info\n???\n", 2],
     error: ["error\n???\n", 2],
-  }
+  }.freeze
 end
 
-RSpec.describe Sirena::Parser::Base, "parse error format across every diagram type" do
+RSpec.describe Sirena::Parser::Base, "#parse" do
   it "covers every registered type" do
-    expect(ParseErrorFormatSources::BROKEN.keys).to match_array(Sirena::DiagramRegistry.types)
+    expect(ParseErrorFormatSources::BROKEN.keys)
+      .to match_array(Sirena::DiagramRegistry.types)
   end
 
   ParseErrorFormatSources::BROKEN.each do |type, (source, line)|
     it "names the line, column, source line and caret for #{type}" do
       parser = Sirena::DiagramRegistry.get(type)[:parser].new
       shown = source.lines[line - 1].to_s.chomp
-      shown = "(end of input)" if shown.empty?
+      shown = Regexp.escape(shown.empty? ? "(end of input)" : shown)
 
       expect { parser.parse(source) }.to raise_error(
         Sirena::Parser::ParseError,
-        /\AParse error at line #{line}, column \d+:\n#{Regexp.escape(shown)}\n *\^\n/,
+        /\AParse error at line #{line}, column \d+:\n#{shown}\n *\^\n/,
       )
     end
   end

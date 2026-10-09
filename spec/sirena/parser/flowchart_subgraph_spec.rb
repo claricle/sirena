@@ -636,7 +636,8 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "builds a fresh builder for every parse" do
-      allow(Sirena::Parser::Builders::Flowchart).to receive(:new).and_call_original
+      allow(Sirena::Parser::Builders::Flowchart)
+        .to receive(:new).and_call_original
       2.times { described_class.new.parse("graph TD\nA-->B\n") }
 
       expect(Sirena::Parser::Builders::Flowchart).to have_received(:new).twice
