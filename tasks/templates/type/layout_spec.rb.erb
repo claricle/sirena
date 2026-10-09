@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Layout::<%= klass %> do
+  let(:diagram) { Sirena::Diagram::<%= klass %>.new(items: %w[a b]) }
+
+  it "returns a Scene" do
+    expect(described_class.new.call(diagram))
+      .to be_a(described_class::Scene)
+  end
+
+  it "gives each item a row below the previous one" do
+    ys = described_class.new.call(diagram).rows.map(&:y)
+
+    expect(ys).to eq(ys.sort.uniq)
+  end
+end

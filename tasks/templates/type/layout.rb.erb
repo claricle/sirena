@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+require_relative "base"
+require_relative "../diagram/<%= type %>"
+
+module Sirena
+  module Layout
+    # Stacks the items of a <%= keyword %> diagram top to bottom.
+    class <%= klass %> < Base
+      ROW_HEIGHT = 30
+      PADDING = 20
+      WIDTH = 300
+
+      class Row < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :rows, Row, collection: true, default: -> { [] }
+      end
+
+      # @param diagram [Diagram::<%= klass %>]
+      # @return [Scene]
+      def scene(diagram)
+        height = (PADDING * 2) + (diagram.items.length * ROW_HEIGHT)
+        Scene.new(
+          width: WIDTH,
+          height: height,
+          view_box: "0 0 #{WIDTH} #{height}",
+          rows: rows_for(diagram),
+        )
+      end
+
+      private
+
+      def rows_for(diagram)
+        diagram.items.each_with_index.map do |text, index|
+          Row.new(text: text, x: PADDING,
+                  y: PADDING + (index * ROW_HEIGHT) + (ROW_HEIGHT / 2))
+        end
+      end
+    end
+  end
+end

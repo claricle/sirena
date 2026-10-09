@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+require_relative "../../diagram/<%= type %>"
+
+module Sirena
+  module Parser
+    module Builders
+      # Builds a Diagram::<%= klass %> from the Grammars::<%= klass %> tree.
+      class <%= klass %>
+        # @param tree [Hash] Parslet parse tree
+        # @return [Diagram::<%= klass %>]
+        def apply(tree)
+          Diagram::<%= klass %>.new(items: items_in(tree))
+        end
+
+        private
+
+        # Blank lines come back as strings among the item hashes, and an
+        # empty repetition as a string instead of an empty array.
+        def items_in(tree)
+          Array(tree[:items]).grep(Hash).map { |e| e[:text].to_s.strip }
+        end
+      end
+    end
+  end
+end
