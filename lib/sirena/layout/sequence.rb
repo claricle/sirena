@@ -94,30 +94,42 @@ module Sirena
           children: transform_participants(diagram),
           edges: transform_messages(diagram),
           layoutOptions: layout_options(diagram),
-          metadata: {
-            participants: diagram.participants.map(&:id),
-            message_count: diagram.messages.length,
-            notes: diagram.notes,
-          },
+          metadata: graph_metadata(diagram),
         }
       end
 
       private
 
+      def graph_metadata(diagram)
+        {
+          participants: diagram.participants.map(&:id),
+          message_count: diagram.messages.length,
+          notes: diagram.notes,
+        }
+      end
+
       def scene(diagram)
         graph = build_graph(diagram)
-        positions = participant_positions(graph[:children])
+        build_scene(graph, participant_positions(graph[:children]))
+      end
+
+      def build_scene(graph, positions)
+        children = graph[:children]
         message_count = graph.dig(:metadata, :message_count) || 0
-        width = canvas_width(graph[:children]) + 40
-        height = canvas_height(graph[:children], message_count) + 40
+        width, height = scene_dimensions(children, message_count)
 
         Scene.new(
           id: graph[:id], width: width, height: height,
           view_box: "0 0 #{width} #{height}",
-          participants: typed_participants(graph[:children], positions),
+          participants: typed_participants(children, positions),
           lifelines: lifeline_geometry(positions, message_count),
           messages: typed_messages(graph[:edges], positions)
         )
+      end
+
+      def scene_dimensions(participants, message_count)
+        [canvas_width(participants) + 40,
+         canvas_height(participants, message_count) + 40]
       end
 
       def transform_participants(diagram)
@@ -308,6 +320,12 @@ module Sirena
         [
           line(center, body_top, center, body_bottom),
           line(center - 10, body_top + 7, center + 10, body_top + 7),
+          *actor_leg_lines(center, body_bottom),
+        ]
+      end
+
+      def actor_leg_lines(center, body_bottom)
+        [
           line(center, body_bottom, center - 8, body_bottom + 10),
           line(center, body_bottom, center + 8, body_bottom + 10),
         ]
@@ -331,21 +349,38 @@ module Sirena
       end
 
       def typed_message(edge, positions, index)
-        source = positions[edge[:sources]&.first]
-        target = positions[edge[:targets]&.first]
+        source, target = message_endpoints(edge, positions)
         return unless source && target
 
-        y = PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT +
+        vertical = message_vertical(index)
+        build_typed_message(edge, index, source, target, vertical)
+      end
+
+      def message_endpoints(edge, positions)
+        [positions[edge[:sources]&.first],
+         positions[edge[:targets]&.first]]
+      end
+
+      def message_vertical(index)
+        PARTICIPANT_MARGIN + PARTICIPANT_HEIGHT +
           ((index + 1) * MESSAGE_SPACING)
+      end
+
+      def build_typed_message(edge, index, source, target, vertical)
         style = message_style(edge)
-        arrow = arrow_geometry(source[:center_x], y, target[:center_x], y,
-                               style)
+        arrow = message_arrow(source, target, vertical, style)
         Message.new(
           id: "message-#{index}", line_style: style[:line],
           shaft: arrow[:shaft], loop_path: arrow[:loop_path],
           heads: arrow[:heads],
           label: typed_message_label(edge, source[:center_x],
-                                     target[:center_x], y)
+                                     target[:center_x], vertical)
+        )
+      end
+
+      def message_arrow(source, target, vertical, style)
+        arrow_geometry(
+          source[:center_x], vertical, target[:center_x], vertical, style
         )
       end
 
@@ -363,12 +398,21 @@ module Sirena
         return if text.nil? || text.empty?
 
         source_label = edge[:labels]&.first || {}
-        offset = source_x == target_x ? (SELF_LOOP_HEIGHT / 2) + 10 : 10
         Label.new(
           text: text, width: source_label[:width],
-          height: source_label[:height], x: (source_x + target_x) / 2,
-          y: vertical - offset, font_size: message_font_size
+          height: source_label[:height],
+          x: midpoint(source_x, target_x),
+          y: vertical - message_label_offset(source_x, target_x),
+          font_size: message_font_size
         )
+      end
+
+      def midpoint(source_x, target_x)
+        (source_x + target_x) / 2
+      end
+
+      def message_label_offset(source_x, target_x)
+        source_x == target_x ? (SELF_LOOP_HEIGHT / 2) + 10 : 10
       end
 
       def compatibility_label(source_x, target_x, vertical, text)
@@ -427,20 +471,37 @@ module Sirena
       def head_geometry(which, span, style)
         tip_x, tip_y, from_x = head_coordinates(which, span)
         side = tip_x <=> from_x
+        build_head(style[:head], from_x, tip_x, tip_y, side)
+      end
 
-        case style[:head]
+      def build_head(shape, from_x, tip_x, tip_y, side)
+        case shape
         when "cross" then cross_head(tip_x, tip_y)
         when "open" then polygon_head(chevron_points(from_x, tip_x, tip_y))
-        when "half_bottom"
-          polygon_head(half_head_points(from_x, tip_x, tip_y, side))
-        when "half_top"
-          polygon_head(half_head_points(from_x, tip_x, tip_y, -side))
-        when "stick_bottom"
-          line_head(stick_head_line(from_x, tip_x, tip_y, side))
-        when "stick_top"
-          line_head(stick_head_line(from_x, tip_x, tip_y, -side))
+        when "half_bottom", "half_top"
+          build_half_head(shape, from_x, tip_x, tip_y, side)
+        when "stick_bottom", "stick_top"
+          build_stick_head(shape, from_x, tip_x, tip_y, side)
         else polygon_head(filled_head_points(from_x, tip_x, tip_y))
         end
+      end
+
+      def build_half_head(shape, from_x, tip_x, tip_y, side)
+        points = half_head_points(
+          from_x, tip_x, tip_y, oriented_side(shape, side)
+        )
+        polygon_head(points)
+      end
+
+      def build_stick_head(shape, from_x, tip_x, tip_y, side)
+        geometry = stick_head_line(
+          from_x, tip_x, tip_y, oriented_side(shape, side)
+        )
+        line_head(geometry)
+      end
+
+      def oriented_side(shape, side)
+        shape.end_with?("bottom") ? side : -side
       end
 
       def head_coordinates(which, span)
