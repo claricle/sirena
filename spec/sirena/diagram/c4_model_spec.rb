@@ -38,11 +38,11 @@ RSpec.describe Sirena::Diagram::C4 do
     end
 
     it "rejects elements with a missing or empty id" do
-      elements = [
-        Sirena::Diagram::C4Element.new(label: "A", element_type: "System"),
-        Sirena::Diagram::C4Element.new(id: "", label: "A",
-                                       element_type: "System"),
-      ]
+      missing = Sirena::Diagram::C4Element.new(label: "A",
+                                               element_type: "System")
+      empty = element("")
+      elements = [missing, empty]
+
       expect(elements.map(&:valid?)).to eq([false, false])
     end
 

@@ -11,6 +11,40 @@ module ArchitectureMermaidBlocks
 
   Block = Data.define(:line, :source)
 
+  class Extractor
+    def initialize(source)
+      @source = source
+      @blocks = []
+      @current = nil
+    end
+
+    def call
+      @source.lines.each_with_index { |line, index| consume(line, index) }
+      raise "unclosed Mermaid fence" if @current
+
+      @blocks
+    end
+
+    private
+
+    def consume(line, index)
+      if @current
+        consume_block_line(line)
+      elsif line.match?(OPENING_FENCE)
+        @current = Block.new(line: index + 1, source: +"")
+      end
+    end
+
+    def consume_block_line(line)
+      if line.match?(CLOSING_FENCE)
+        @blocks << @current
+        @current = nil
+      else
+        @current.source << line
+      end
+    end
+  end
+
   module_function
 
   def content
@@ -22,29 +56,7 @@ module ArchitectureMermaidBlocks
   end
 
   def blocks(source = content)
-    extracted = []
-    current = nil
-
-    source.lines.each_with_index do |line, index|
-      if current
-        close_or_append(extracted, current, line)
-        current = nil if line.match?(CLOSING_FENCE)
-      elsif line.match?(OPENING_FENCE)
-        current = Block.new(line: index + 1, source: +"")
-      end
-    end
-
-    raise "unclosed Mermaid fence" if current
-
-    extracted
-  end
-
-  def close_or_append(extracted, current, line)
-    if line.match?(CLOSING_FENCE)
-      extracted << current
-    else
-      current.source << line
-    end
+    Extractor.new(source).call
   end
 
   def section(title, level:)
@@ -62,6 +74,13 @@ module ArchitectureMermaidBlocks
   def label(block)
     "ARCHITECTURE.md:#{block.line}"
   end
+
+  def required_sections
+    [
+      section("Processing Pipeline", level: 2),
+      section("Registry Pattern (Notation::Mermaid)", level: 3),
+    ]
+  end
 end
 
 RSpec.describe ArchitectureMermaidBlocks do
@@ -75,12 +94,9 @@ RSpec.describe ArchitectureMermaidBlocks do
   end
 
   it "keeps diagrams in the pipeline and registry sections" do
-    sections = [
-      described_class.section("Processing Pipeline", level: 2),
-      described_class.section("Registry Pattern (Notation::Mermaid)", level: 3),
-    ]
-
-    expect(sections.map { |section| described_class.blocks(section).size })
+    expect(described_class.required_sections.map do |section|
+      described_class.blocks(section).size
+    end)
       .to eq([1, 1])
   end
 

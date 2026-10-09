@@ -9,6 +9,13 @@ RSpec.describe Sirena::Diagram::Quadrant do
     end
 
     describe "#valid?" do
+      def validities(*coordinates)
+        coordinates.map do |x_position, y_position|
+          described_class.new(label: "Point", x: x_position,
+                              y: y_position).valid?
+        end
+      end
+
       it "accepts coordinates at both inclusive boundaries" do
         points = [described_class.new(label: "Origin", x: 0.0, y: 0.0),
                   described_class.new(label: "Limit", x: 1.0, y: 1.0)]
@@ -28,13 +35,9 @@ RSpec.describe Sirena::Diagram::Quadrant do
       end
 
       it "rejects coordinates outside the normalized range" do
-        points = [
-          described_class.new(label: "Left", x: -0.01, y: 0.5),
-          described_class.new(label: "Right", x: 1.01, y: 0.5),
-          described_class.new(label: "Below", x: 0.5, y: -0.01),
-          described_class.new(label: "Above", x: 0.5, y: 1.01),
-        ]
-        expect(points.map(&:valid?)).to eq([false, false, false, false])
+        outside = [[-0.01, 0.5], [1.01, 0.5], [0.5, -0.01], [0.5, 1.01]]
+
+        expect(validities(*outside)).to eq([false, false, false, false])
       end
     end
 

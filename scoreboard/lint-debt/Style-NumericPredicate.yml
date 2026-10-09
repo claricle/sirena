@@ -11,8 +11,6 @@ rows:
   count: 2
 - file: lib/sirena/layout/radar.rb
   count: 1
-- file: lib/sirena/layout/requirement.rb
-  count: 1
 - file: lib/sirena/layout/timeline.rb
   count: 1
 - file: lib/sirena/layout/xy_chart.rb

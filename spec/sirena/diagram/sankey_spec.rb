@@ -49,12 +49,14 @@ RSpec.describe Sirena::Diagram::Sankey do
   end
 
   it "requires at least one valid flow" do
-    states = [diagram.valid?]
-    diagram.flows << Sirena::Diagram::SankeyFlow.new("source", "sink", 0)
-    states << diagram.valid?
-    diagram.flows = [first_flow]
-    states << diagram.valid?
+    states = [diagram.valid?, valid_after_flow(0), valid_after_flow(4)]
+
     expect(states).to eq([false, false, true])
+  end
+
+  def valid_after_flow(value)
+    diagram.flows = [Sirena::Diagram::SankeyFlow.new("source", "sink", value)]
+    diagram.valid?
   end
 
   it "combines unique flow and explicit node identifiers" do
