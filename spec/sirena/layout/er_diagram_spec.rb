@@ -14,7 +14,9 @@ RSpec.describe Sirena::Layout::ErDiagram do
         name: "name", attribute_type: "string",
       )
       value.entities << customer
-      value.entities << Sirena::Diagram::ErEntity.new(id: "ORDER", name: "ORDER")
+      value.entities << Sirena::Diagram::ErEntity.new(
+        id: "ORDER", name: "ORDER",
+      )
       value.relationships << Sirena::Diagram::ErRelationship.new(
         from_id: "CUSTOMER", to_id: "ORDER",
         relationship_type: "non-identifying",
@@ -36,13 +38,16 @@ RSpec.describe Sirena::Layout::ErDiagram do
     end
 
     it "places entities and their text in final canvas coordinates" do
-      customer = layout.call(diagram).children.find { |node| node.id == "CUSTOMER" }
+      customer = layout.call(diagram).children.find do |node|
+        node.id == "CUSTOMER"
+      end
 
       expect([customer.x, customer.y, customer.width, customer.height])
         .to eq([50.0, 50.0, 170.0, 80.0])
       expect([customer.labels.first.x, customer.labels.first.y])
         .to eq([135.0, 76.0])
-      expect(customer.attributes.map(&:text)).to eq(["PK int id", "string name"])
+      expect(customer.attributes.map(&:text))
+        .to eq(["PK int id", "string name"])
       expect(customer.attributes.map { |row| [row.x, row.y] })
         .to eq([[60.0, 116.0], [60.0, 134.0]])
     end
@@ -98,7 +103,8 @@ RSpec.describe Sirena::Layout::ErDiagram do
 
       expect(contrast.children.first.labels.first.font_size)
         .to eq(Sirena::Theme::Registry.get(:high_contrast).typography.font_size_large)
-      expect(contrast.children.first.width).not_to eq(ordinary.children.first.width)
+      expect(contrast.children.first.width)
+        .not_to eq(ordinary.children.first.width)
     end
 
     it "preserves assigned classes and declarations in source order" do

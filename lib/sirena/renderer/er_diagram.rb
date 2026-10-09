@@ -71,13 +71,16 @@ module Sirena
           rect.height = node.height
           rect.fill = box_property(styles, "fill", attributed) || "#f9f9f9"
           rect.stroke = box_property(styles, "stroke", attributed) || "#333333"
-          rect.stroke_width = box_property(styles, "stroke-width", attributed) || "2"
+          rect.stroke_width =
+            box_property(styles, "stroke-width", attributed) || "2"
         end
       end
 
       def emit_entity_content(node, group, styles)
         emit_entity_header(node, group, styles)
-        node.attributes.each { |attribute| emit_attribute(attribute, styles, group) }
+        node.attributes.each do |attribute|
+          emit_attribute(attribute, styles, group)
+        end
       end
 
       def emit_entity_header(node, group, styles)
@@ -106,14 +109,14 @@ module Sirena
       end
 
       def emit_attribute(attribute, styles, group)
-        text = Svg::Text.new.tap do |t|
-          t.x = attribute.x
-          t.y = attribute.y
-          t.content = attribute.text
-          t.fill = styles["color"] || "#000000"
-          t.font_family = "monospace"
-          t.font_size = font_size_value(attribute.font_size)
-        end
+        text = Svg::Text.new(
+          x: attribute.x,
+          y: attribute.y,
+          content: attribute.text,
+          fill: styles["color"] || "#000000",
+          font_family: "monospace",
+          font_size: font_size_value(attribute.font_size),
+        )
         group.children << text
       end
 
@@ -183,7 +186,8 @@ module Sirena
       # That rename is CASE-SENSITIVE, which is why the exemption below is
       # too. Executing mermaid's own db API for these declarations returns
       #
-      #   textStyles: ["bgFill:currentcolor", "FILL:currentcolor", "stroke:currentcolor"]
+      #   textStyles: ["bgFill:currentcolor", "FILL:currentcolor",
+      #                "stroke:currentcolor"]
       #
       # — lowercase `fill` rewritten, `FILL` left alone to collide as before.
       # Folding the key here would exempt `FILL` as well and change a
@@ -388,7 +392,9 @@ module Sirena
       # @return [String, nil] the winning ambient colour, or nil if none
       #   was validly declared
       def ambient_color(styles)
-        values = styles.select { |key, _| key != "color" && key.downcase == "color" }.values
+        values = styles.select do |key, _value|
+          key != "color" && key.downcase == "color"
+        end.values
         values.filter_map { |value| present(value) }
           .reverse_each.find { |value| css_color?(value) }
       end
@@ -512,7 +518,11 @@ module Sirena
           present(styles[property])
         else
           value = box_style(styles, property)
-          COLOR_PROPERTIES.include?(property) ? resolve_current_color(value, styles) : value
+          if COLOR_PROPERTIES.include?(property)
+            resolve_current_color(value, styles)
+          else
+            value
+          end
         end
       end
 
@@ -526,7 +536,9 @@ module Sirena
         group.children << relationship_line(section, edge.relationship_type)
         emit_marker(edge.source_marker, group)
         emit_marker(edge.target_marker, group)
-        group.children << relationship_text(edge.labels.first) if edge.labels.any?
+        if edge.labels.any?
+          group.children << relationship_text(edge.labels.first)
+        end
         svg << group
       end
 
@@ -538,7 +550,9 @@ module Sirena
           line.y2 = section.end_point.y
           line.stroke = "#333333"
           line.stroke_width = "2"
-          line.stroke_dasharray = "5,5" if relationship_type == "non-identifying"
+          if relationship_type == "non-identifying"
+            line.stroke_dasharray = "5,5"
+          end
         end
       end
 
@@ -575,15 +589,15 @@ module Sirena
       end
 
       def relationship_text(label)
-        Svg::Text.new.tap do |text|
-          text.x = label.x
-          text.y = label.y
-          text.content = label.text
-          text.fill = "#000000"
-          text.font_family = "Arial, sans-serif"
-          text.font_size = font_size_value(label.font_size)
-          text.text_anchor = "middle"
-        end
+        Svg::Text.new(
+          x: label.x,
+          y: label.y,
+          content: label.text,
+          fill: "#000000",
+          font_family: "Arial, sans-serif",
+          font_size: font_size_value(label.font_size),
+          text_anchor: "middle",
+        )
       end
 
       def font_size_value(font_size)
