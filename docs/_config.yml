@@ -9,7 +9,6 @@ baseurl: /sirena
 
 # Theme
 theme: just-the-docs
-remote_theme: just-the-docs/just-the-docs
 
 # AsciiDoc support
 asciidoc: {}
