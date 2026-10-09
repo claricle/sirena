@@ -28,7 +28,7 @@ module SpecSupport
       end
 
       def candidate_elements(extractor, doc)
-        labels = doc.xpath("//text[@font-size='14.0' and @font-weight]")
+        labels = doc.xpath("//text[number(@font-size) = 14 and @font-weight]")
         regions = doc.xpath("//rect").zip(labels).filter_map do |rect, label|
           element(extractor, rect, normalized(label), :quadrant_region)
         end

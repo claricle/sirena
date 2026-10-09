@@ -104,8 +104,18 @@ module SpecSupport
         return [] if markers.empty?
 
         orientation = orientation(markers)
-        doc.xpath("//text").filter_map do |text|
+        labels = doc.xpath("//text").filter_map do |text|
           sirena_label(extractor, text, markers, orientation)
+        end
+        deduplicate_branch_labels(labels)
+      end
+
+      def deduplicate_branch_labels(labels)
+        seen = {}
+        labels.reject do |label|
+          next false unless label.kind == :branch_label
+
+          seen.key?(label.key).tap { seen[label.key] = true }
         end
       end
 
