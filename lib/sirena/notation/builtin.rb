@@ -26,10 +26,11 @@ Sirena::Theme::Registry.load_builtin_themes
 # Parser, layout and renderer files are named after the type's class
 # (`XyChart` -> `xy_chart.rb`); the lookups in Parser.for and friends find
 # the classes these files define.
+layers = %w[parser layout renderer]
 Sirena::Notation::Mermaid::TYPES.each do |type, row|
   name = row[:name] || type.to_s.split("_").map(&:capitalize).join
   file = name.gsub(/([a-z\d])([A-Z])/, '\\1_\\2').downcase
-  %w[parser layout renderer].each { |layer| require_relative "../#{layer}/#{file}" }
+  layers.each { |layer| require_relative "../#{layer}/#{file}" }
 end
 
 Sirena::Notation.register(Sirena::Notation::Mermaid)

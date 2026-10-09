@@ -29,11 +29,11 @@ module PlantumlExtractor
   # only on an explicit declaration, because PlantUML itself infers the type
   # and a bare `A -> B : hi` is valid in several diagram types.
   module Selection
-    CLASS_MARKER = /^\s*(?:abstract\s+class|abstract|class|interface|enum|annotation|protocol|struct|exception|metaclass|stereotype|circle|diamond)\s+["\w<]/.freeze
-    SEQUENCE_MARKER = /^\s*(?:participant|actor|boundary|control|collections|queue)\s+["\w]|^\s*(?:activate|deactivate|autonumber|ref\s+over|return)\b|^\s*(?:alt|loop|opt|par|critical|break)\b.*$|^\s*==[^=].*==\s*$|^\s*newpage\b/.freeze
+    CLASS_MARKER = /^\s*(?:abstract\s+class|abstract|class|interface|enum|annotation|protocol|struct|exception|metaclass|stereotype|circle|diamond)\s+["\w<]/
+    SEQUENCE_MARKER = /^\s*(?:participant|actor|boundary|control|collections|queue)\s+["\w]|^\s*(?:activate|deactivate|autonumber|ref\s+over|return)\b|^\s*(?:alt|loop|opt|par|critical|break)\b.*$|^\s*==[^=].*==\s*$|^\s*newpage\b/
     # Declarations that make the block belong to another diagram type or to
     # no UML type at all; any of these disqualifies it.
-    OTHER_MARKER = /^\s*(?:usecase|component|node|cloud|artifact|folder|frame|rectangle|state|start|stop|partition|mainframe|salt|gantt|mindmap|wbs|json|yaml|nwdiag|ditaa|ebnf|regex|chen|ER|map|object)\b|^\s*:.*;\s*$|^\s*@start(?!uml)/.freeze
+    OTHER_MARKER = /^\s*(?:usecase|component|node|cloud|artifact|folder|frame|rectangle|state|start|stop|partition|mainframe|salt|gantt|mindmap|wbs|json|yaml|nwdiag|ditaa|ebnf|regex|chen|ER|map|object)\b|^\s*:.*;\s*$|^\s*@start(?!uml)/
     # `entity` and `database` are not markers: use-case, deployment and
     # entity diagrams share them. `actor` is a marker only when no OTHER_MARKER
     # line is present.
@@ -70,7 +70,7 @@ module PlantumlExtractor
     # of source hash>. The test identity is appended only when it adds
     # something the path does not already say.
     def call(path:, test:, source:)
-      base = path.sub(%r{\Asrc/test/}, "").sub(%r{\.[^./]+\z}, "").tr("/", ".")
+      base = path.delete_prefix("src/test/").sub(%r{\.[^./]+\z}, "").tr("/", ".")
       slug = base.end_with?(".#{test}") || base == test ? base : "#{base}.#{test}"
       slug = slug.gsub(/[^A-Za-z0-9_.-]/, "_").gsub(/\.{2,}/, ".")
       "#{slug}--#{source_hash(source)[0, 12]}"
@@ -81,7 +81,7 @@ module PlantumlExtractor
 
   # Pulls @startuml..@enduml blocks out of upstream files.
   module Blocks
-    BLOCK = /^[ \t]*@startuml\b[^\n]*\n.*?^[ \t]*@enduml\b[^\n]*$/m.freeze
+    BLOCK = /^[ \t]*@startuml\b[^\n]*\n.*?^[ \t]*@enduml\b[^\n]*$/m
 
     module_function
 
@@ -159,7 +159,7 @@ module PlantumlExtractor
           cases[id][:meta][:occurrences] += 1
           next
         end
-        cases[id] = { type: type, source: CaseId.normalize(block.source) + "\n", meta: meta(block, id, type) }
+        cases[id] = { type: type, source: "#{CaseId.normalize(block.source)}\n", meta: meta(block, id, type) }
       end
       cases
     end

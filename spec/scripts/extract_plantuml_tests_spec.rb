@@ -7,6 +7,9 @@ RSpec.describe PlantumlExtractor do
   let(:root) { File.expand_path("../..", __dir__) }
   let(:corpus) { File.join(root, "spec/plantuml") }
 
+  let(:diagram_a) { "@startuml\nclass Foo\nFoo --> Bar\n@enduml" }
+  let(:diagram_b) { "@startuml\nparticipant A\nA -> B : hi\n@enduml" }
+
   def block(text, path: "src/test/resources/a/b.puml")
     described_class::Blocks.from_resource(path, text, test: File.basename(path, ".puml"))
   end
@@ -14,9 +17,6 @@ RSpec.describe PlantumlExtractor do
   def ids_for(blocks)
     described_class::Cases.build(blocks).keys
   end
-
-  let(:diagram_a) { "@startuml\nclass Foo\nFoo --> Bar\n@enduml" }
-  let(:diagram_b) { "@startuml\nparticipant A\nA -> B : hi\n@enduml" }
 
   describe "case IDs" do
     it "keeps every existing ID when a fixture is inserted upstream before, after and beside it" do

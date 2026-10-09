@@ -69,28 +69,26 @@ RSpec.describe Sirena::Notation::Mermaid do
 
   described_class::TYPES.each_key do |type|
     describe type.inspect do
-      let(:parser) { Sirena::Parser.for(type) }
-      let(:layout) { Sirena::Layout.for(type) }
-      let(:renderer) { Sirena::Renderer.for(type) }
       let(:model) { described_class.layer_class(Sirena::Diagram, type, Sirena::Error) }
-      let(:fixture_path) { File.join(fixture_dir, "#{type}.mmd") }
-      let(:source) { File.read(fixture_path) }
-      let(:diagram) { parser.parse(source) }
+      let(:diagram) do
+        source = File.read(File.join(fixture_dir, "#{type}.mmd"))
+        Sirena::Parser.for(type).parse(source)
+      end
 
       it "has a canonical fixture that parses" do
-        expect(File).to exist(fixture_path)
+        expect(File).to exist(File.join(fixture_dir, "#{type}.mmd"))
       end
 
       it "resolves a parser inheriting Parser::Base" do
-        expect(parser).to be_a(Sirena::Parser::Base)
+        expect(Sirena::Parser.for(type)).to be_a(Sirena::Parser::Base)
       end
 
       it "resolves a layout inheriting Layout::Base" do
-        expect(layout).to be_a(Sirena::Layout::Base)
+        expect(Sirena::Layout.for(type)).to be_a(Sirena::Layout::Base)
       end
 
       it "resolves a renderer inheriting Renderer::Base" do
-        expect(renderer).to be_a(Sirena::Renderer::Base)
+        expect(Sirena::Renderer.for(type)).to be_a(Sirena::Renderer::Base)
       end
 
       it "resolves a model inheriting Diagram::Base" do

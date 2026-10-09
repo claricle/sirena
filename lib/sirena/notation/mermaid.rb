@@ -284,6 +284,7 @@ module Sirena
       end
 
       def parse_diagram(type, body, title, logger)
+        logger&.debug("Retrieved handlers for #{type}")
         logger&.debug("Parsing diagram...")
         diagram = Parser.for(type).parse(body)
         logger&.debug("Parse complete: #{diagram.class.name}")
