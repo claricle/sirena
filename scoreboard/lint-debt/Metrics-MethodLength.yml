@@ -153,8 +153,6 @@ rows:
   count: 3
 - file: lib/sirena/renderer/gantt.rb
   count: 1
-- file: lib/sirena/renderer/git_graph.rb
-  count: 1
 - file: lib/sirena/renderer/info.rb
   count: 2
 - file: lib/sirena/renderer/kanban.rb

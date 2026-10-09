@@ -131,8 +131,6 @@ rows:
   count: 3
 - file: lib/sirena/renderer/gantt.rb
   count: 1
-- file: lib/sirena/renderer/git_graph.rb
-  count: 1
 - file: lib/sirena/renderer/kanban.rb
   count: 4
 - file: lib/sirena/renderer/markdown_text.rb
@@ -381,8 +379,6 @@ rows:
   count: 7
 - file: spec/sirena/renderer/sequence_spec.rb
   count: 13
-- file: spec/sirena/renderer/xy_chart_spec.rb
-  count: 1
 - file: spec/sirena/source_spec.rb
   count: 7
 - file: spec/sirena/svg/arrowhead_spec.rb
