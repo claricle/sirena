@@ -76,45 +76,144 @@ Sirena maintains syntax compatibility with Mermaid.js while providing a pure Rub
 
 Pass rates below are measured per type against the valid-verdict corpus cases
 in `scoreboard/corpus.json` (`bundle exec ruby scripts/corpus_sweep.rb` then
-`scripts/corpus_verdicts.rb`, 2026-09-22). None of the 24 registered types has
+`scripts/corpus_verdicts.rb`). None of the 24 registered types has
 complete parity with Mermaid.js; "All features"-style claims for any
 individual type are not supported by this measurement and have been removed
 rather than asserted without evidence.
 
-* **Architecture** (`architecture-beta`) - 19/19 (100%)
-* **Block** (`block-beta`) - 6/6 (100%)
-* **C4** (all 5 subtypes) - 11/11 (100%)
-* **Class Diagram** (`classDiagram`) - 155/162 (95.7%)
-* **ER Diagram** (`erDiagram`) - 5/5 (100%)
-* **Flowchart** (`graph`, `flowchart`) - 204/218 (93.6%)
-* **Gantt Chart** (`gantt`) - 18/21 (85.7%)
-* **Git Graph** (`gitGraph`) - 6/6 (100%)
-* **Info Diagram** (`info`) - 11/11 (100%)
-* **Kanban** (`kanban`) - 29/39 (74.4%)
-* **Mindmap** (`mindmap`) - 43/45 (95.6%)
-* **Packet Diagram** (`packet`) - 4/4 (100%)
-* **Pie Chart** (`pie`) - 40/40 (100%)
-* **Quadrant Chart** (`quadrantChart`) - 9/9 (100%)
-* **Radar Chart** (`radar`) - 14/14 (100%)
-* **Requirement Diagram** (`requirementDiagram`) - 23/24 (95.8%)
-* **Sequence Diagram** (`sequenceDiagram`) - 99/107 (92.5%)
-* **State Diagram** (`stateDiagram-v2`) - 30/30 (100%)
-* **Timeline** (`timeline`) - 16/16 (100%)
-* **Treemap** (`treemap`) - 9/9 (100%)
-* **User Journey** (`journey`) - 18/27 (66.7%)
-* **XY Chart** (`xychart-beta`) - 1/1 (100%)
-* **Error Diagram** (`error`) - Mermaid-defined (the diagram Mermaid.js
-  itself renders when its own parsing fails); 4 cases in
-  `spec/mermaid/error/`, extracted from mermaid-js's own
-  `rendering/errorDiagram.spec.js` and `diagram-orchestration.spec.ts` test
-  files, all with oracle verdict `unknown` (not confirmed by mmdc), so no
-  pass rate is reported here
-* **Sankey** (`sankey-beta`) - registered, not covered by a per-type row above; see `scoreboard/corpus.json` directly
+// BEGIN GENERATED: rake docs:compatibility
+Generated from `scoreboard/corpus.json`. Counts cover only corpus
+cases that mmdc itself accepts (oracle verdict `valid`); extraction
+artifacts and cases mmdc rejects are excluded from the denominator.
 
-These counts are hand-transcribed from a single measurement run and will go
-stale as the corpus burndown continues; regenerating this table from the
-scoreboard on every build is tracked in `TODO.foundation/11-docs-truth-pass.md`
-step 2 and is not yet done.
+[cols="3,3,2,2"]
+|===
+|Type |Syntax |Passing |Rate
+
+|Architecture
+|`architecture-beta`
+|19/19
+|100.0%
+
+|Block
+|`block-beta`
+|6/6
+|100.0%
+
+|C4
+|`C4 (all 5 subtypes)`
+|11/11
+|100.0%
+
+|Class Diagram
+|`classDiagram`
+|305/305
+|100.0%
+
+|ER Diagram
+|`erDiagram`
+|14/14
+|100.0%
+
+|Error Diagram
+|`error`
+|3/3
+|100.0%
+
+|Flowchart
+|`graph, flowchart`
+|218/218
+|100.0%
+
+|Gantt Chart
+|`gantt`
+|22/22
+|100.0%
+
+|Git Graph
+|`gitGraph`
+|128/128
+|100.0%
+
+|Info Diagram
+|`info`
+|11/11
+|100.0%
+
+|Kanban
+|`kanban`
+|39/39
+|100.0%
+
+|Mindmap
+|`mindmap`
+|45/45
+|100.0%
+
+|Packet Diagram
+|`packet`
+|4/4
+|100.0%
+
+|Pie Chart
+|`pie`
+|40/40
+|100.0%
+
+|Quadrant Chart
+|`quadrantChart`
+|9/9
+|100.0%
+
+|Radar Chart
+|`radar`
+|14/14
+|100.0%
+
+|Requirement Diagram
+|`requirementDiagram`
+|24/24
+|100.0%
+
+|Sankey
+|`sankey-beta`
+|0/0
+|n/a
+
+|Sequence Diagram
+|`sequenceDiagram`
+|107/107
+|100.0%
+
+|State Diagram
+|`stateDiagram-v2`
+|52/52
+|100.0%
+
+|Timeline
+|`timeline`
+|16/16
+|100.0%
+
+|Treemap
+|`treemap`
+|9/9
+|100.0%
+
+|User Journey
+|`journey`
+|27/27
+|100.0%
+
+|XY Chart
+|`xychart-beta`
+|1/1
+|100.0%
+
+|===
+// END GENERATED
+
+Regenerate with `bundle exec rake docs:compatibility`; `spec/tasks/compatibility_spec.rb` fails when this table and `scoreboard/corpus.json` disagree.
 
 ==== Not Supported
 
