@@ -1,3 +1,9 @@
+---
+layout: default
+title: Info Diagram
+parent: Diagram Types
+---
+
 = Info Diagram
 :toc:
 :toclevels: 3

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Git graph diagrams
+parent: Diagram Types
+---
+
 = Git graph diagrams
 :toc:
 :toclevels: 3

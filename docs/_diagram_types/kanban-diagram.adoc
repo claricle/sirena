@@ -1,3 +1,9 @@
+---
+layout: default
+title: Kanban Board Diagrams
+parent: Diagram Types
+---
+
 = Kanban Board Diagrams
 :toc:
 :toclevels: 3

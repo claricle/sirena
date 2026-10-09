@@ -1,3 +1,9 @@
+---
+layout: default
+title: Mindmap diagrams
+parent: Diagram Types
+---
+
 = Mindmap diagrams
 :toc:
 :toclevels: 3

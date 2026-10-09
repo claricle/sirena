@@ -1,3 +1,9 @@
+---
+layout: default
+title: Quadrant Chart
+parent: Diagram Types
+---
+
 = Quadrant Chart
 :toc:
 :toclevels: 3

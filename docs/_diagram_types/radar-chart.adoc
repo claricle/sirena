@@ -1,3 +1,9 @@
+---
+layout: default
+title: Radar chart diagrams
+parent: Diagram Types
+---
+
 = Radar chart diagrams
 :toc:
 :toclevels: 3

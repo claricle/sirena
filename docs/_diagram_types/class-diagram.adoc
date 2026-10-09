@@ -1,3 +1,9 @@
+---
+layout: default
+title: Class diagrams
+parent: Diagram Types
+---
+
 = Class diagrams
 :toc:
 :toclevels: 3

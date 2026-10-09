@@ -1,3 +1,9 @@
+---
+layout: default
+title: Sequence diagrams
+parent: Diagram Types
+---
+
 = Sequence diagrams
 :toc:
 :toclevels: 3

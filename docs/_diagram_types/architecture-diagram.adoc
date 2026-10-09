@@ -1,3 +1,9 @@
+---
+layout: default
+title: Architecture Diagram
+parent: Diagram Types
+---
+
 = Architecture Diagram
 :toc:
 :toclevels: 3

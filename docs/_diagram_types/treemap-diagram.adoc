@@ -1,3 +1,9 @@
+---
+layout: default
+title: Treemap diagrams
+parent: Diagram Types
+---
+
 = Treemap diagrams
 :toc:
 :toclevels: 3

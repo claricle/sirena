@@ -1,3 +1,9 @@
+---
+layout: default
+title: Packet diagrams
+parent: Diagram Types
+---
+
 = Packet diagrams
 :toc:
 :toclevels: 3
