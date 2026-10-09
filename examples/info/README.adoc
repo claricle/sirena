@@ -16,9 +16,7 @@ Info diagrams display informational messages and notices in a standardized forma
 
 [source,mermaid]
 ----
-info
-    title Information
-    showInfo
+info showInfo
 ----
 
 == Examples

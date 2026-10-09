@@ -48,7 +48,7 @@ module DocSnippets
   # Languages whose blocks are commands or code to run.
   RUNNABLE = %w[ruby shell bash].freeze
 
-  SOURCE_MARKER = /\A\[source(?:,(\w+))?\]\z/
+  SOURCE_MARKER = /\A\[source(?:,(\w+))?\]\s*\z/
 
   DIAGRAM = "graph TD\n  A[Start] --> B[Process]\n  B --> C[End]\n"
 

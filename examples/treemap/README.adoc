@@ -16,10 +16,10 @@ Treemap diagrams display hierarchical data as nested rectangles, with size repre
 
 [source,mermaid]
 ----
-treemap
-    Root
-        Child1: 40
-        Child2: 60
+treemap-beta
+    "Root"
+        "Child1": 40
+        "Child2": 60
 ----
 
 == Examples
