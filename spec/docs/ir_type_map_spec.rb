@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Notation::Mermaid do
+RSpec.describe "typed IR map" do
   def map_path
     File.expand_path("../../docs/ir-type-map.md", __dir__)
   end
@@ -25,7 +25,9 @@ RSpec.describe Sirena::Notation::Mermaid do
     mapped_types = rows.map { |row| row.fetch("type").to_sym }
     registered_types = Sirena::Notation::Mermaid::TYPES.keys
 
-    expect(mapped_types.tally).to eq(registered_types.to_h { |type| [type, 1] })
+    expected_types = registered_types.to_h { |type| [type, 1] }
+
+    expect(mapped_types.tally).to eq(expected_types)
   end
 
   it "uses only the three settled shapes" do
