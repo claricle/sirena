@@ -4,225 +4,268 @@ require_relative "base"
 
 module Sirena
   module Layout
-    # Transforms a Radar diagram into a positioned layout structure.
-    #
-    # The layout algorithm handles:
-    # - Radial axis positioning (360° / num_axes)
-    # - Data point plotting on each axis
-    # - Value normalization and scaling
-    # - Polar to cartesian coordinate conversion
-    # - Polygon formation for each dataset
-    #
-    # @example Transform a radar chart
-    #   transform = Layout::Radar.new
-    #   layout = transform.to_graph(diagram)
+    # Builds final-canvas radar-chart geometry.
     class Radar < Base
-      # Default radius of the chart
       DEFAULT_RADIUS = 200
-
-      # Padding around the chart
       PADDING = 80
-
-      # Label distance from the chart center
       LABEL_OFFSET = 30
-
-      # Number of grid circles to draw
       GRID_CIRCLES = 5
 
-      # Transforms the diagram into a layout structure.
-      #
-      # @param diagram [Diagram::Radar] the radar chart diagram
-      # @return [Hash] layout data with axes, curves, and dimensions
+      class Circle < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :radius, :float
+      end
+
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :font_size, :float
+        attribute :text_anchor, :string
+        attribute :dominant_baseline, :string
+        attribute :font_weight, :string
+      end
+
+      class Axis < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :angle, :float
+        attribute :line, Line
+        attribute :label, Label
+      end
+
+      class Point < Lutaml::Model::Serializable
+        attribute :axis_id, :string
+        attribute :value, :float
+        attribute :normalized, :float
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Curve < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :label, :string
+        attribute :polygon_points, :string
+        attribute :points, Point, collection: true, default: -> { [] }
+        attribute :color_index, :integer
+      end
+
+      class Legend < Lutaml::Model::Serializable
+        attribute :marker, Circle
+        attribute :label, Label
+        attribute :color_index, :integer
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :center_x, :float
+        attribute :center_y, :float
+        attribute :radius, :float
+        attribute :min_value, :float
+        attribute :max_value, :float
+        attribute :grid_circles, Circle, collection: true, default: -> { [] }
+        attribute :axes, Axis, collection: true, default: -> { [] }
+        attribute :curves, Curve, collection: true, default: -> { [] }
+        attribute :legend, Legend, collection: true, default: -> { [] }
+      end
+
+      # Converts the released positioned-Hash surface to a typed Scene.
+      def self.from_graph(graph, theme: nil)
+        layout = new
+        layout.theme = theme if theme
+        layout.send(:scene_from_graph, graph)
+      end
+
+      # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        num_axes = diagram.axes.length
-        return empty_layout if num_axes == 0
+        return empty_layout if diagram.axes.empty?
 
-        # Calculate value range
         min_value, max_value = calculate_value_range(diagram)
-
-        # Position axes radially
-        positioned_axes = position_axes(diagram.axes, num_axes)
-
-        # Position data points for each curve
-        positioned_curves = position_curves(
-          diagram.curves,
-          positioned_axes,
-          min_value,
-          max_value,
-        )
-
-        # Calculate grid circles for reference
-        grid_circles = calculate_grid_circles(min_value, max_value)
-
+        axes = position_axes(diagram.axes)
         {
-          axes: positioned_axes,
-          curves: positioned_curves,
-          grid_circles: grid_circles,
-          center_x: DEFAULT_RADIUS + PADDING,
-          center_y: DEFAULT_RADIUS + PADDING,
-          radius: DEFAULT_RADIUS,
-          width: (DEFAULT_RADIUS + PADDING) * 2,
+          axes: axes,
+          curves: position_curves(diagram.curves, axes, min_value, max_value),
+          grid_circles: calculate_grid_circles(min_value, max_value),
+          center_x: DEFAULT_RADIUS + PADDING, center_y: DEFAULT_RADIUS + PADDING,
+          radius: DEFAULT_RADIUS, width: (DEFAULT_RADIUS + PADDING) * 2,
           height: (DEFAULT_RADIUS + PADDING) * 2,
-          min_value: min_value,
-          max_value: max_value,
+          min_value: min_value, max_value: max_value, options: diagram.options
         }
       end
 
       private
 
-      # Returns an empty layout structure.
-      #
-      # @return [Hash] empty layout
+      def scene(diagram)
+        scene_from_graph(build_graph(diagram))
+      end
+
+      def scene_from_graph(graph)
+        center_x = graph.fetch(:center_x)
+        center_y = graph.fetch(:center_y)
+        width = graph.fetch(:width)
+        height = graph.fetch(:height)
+        curves = typed_curves(graph.fetch(:curves), center_x, center_y)
+        Scene.new(
+          width: width, height: height, view_box: "0 0 #{width} #{height}",
+          center_x: center_x, center_y: center_y, radius: graph.fetch(:radius),
+          min_value: graph.fetch(:min_value), max_value: graph.fetch(:max_value),
+          grid_circles: typed_grid(graph.fetch(:grid_circles), center_x, center_y),
+          axes: typed_axes(graph.fetch(:axes), center_x, center_y), curves: curves,
+          legend: legend(graph, curves)
+        )
+      end
+
+      def typed_grid(circles, center_x, center_y)
+        circles.map do |circle|
+          Circle.new(x: center_x, y: center_y, radius: circle[:radius])
+        end
+      end
+
+      def typed_axes(axes, center_x, center_y)
+        axes.map do |axis|
+          angle = axis[:angle_degrees]
+          Axis.new(
+            id: axis[:id], angle: angle,
+            line: Line.new(
+              x1: center_x, y1: center_y,
+              x2: center_x + axis[:end_x], y2: center_y + axis[:end_y]
+            ),
+            label: Label.new(
+              text: axis[:label], x: center_x + axis[:label_x],
+              y: center_y + axis[:label_y],
+              font_size: font_size(:font_size_normal, 12),
+              text_anchor: text_anchor(angle),
+              dominant_baseline: dominant_baseline(angle), font_weight: "bold"
+            )
+          )
+        end
+      end
+
+      def typed_curves(curves, center_x, center_y)
+        curves.map.with_index do |curve, index|
+          points = curve[:points].map do |point|
+            Point.new(
+              axis_id: point[:axis_id], value: point[:value],
+              normalized: point[:normalized], x: center_x + point[:x],
+              y: center_y + point[:y]
+            )
+          end
+          Curve.new(
+            id: curve[:id], label: curve[:label], points: points,
+            polygon_points: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
+            color_index: index
+          )
+        end
+      end
+
+      def legend(graph, curves)
+        return [] if graph.dig(:options, :show_legend) == false
+
+        curves.map.with_index do |curve, index|
+          y = graph.fetch(:height) - 40 + (index * 20)
+          Legend.new(
+            marker: Circle.new(x: 20, y: y, radius: 5),
+            label: Label.new(
+              text: curve.label, x: 35, y: y + 4,
+              font_size: font_size(:font_size_small, 10), text_anchor: "start"
+            ),
+            color_index: index,
+          )
+        end
+      end
+
+      def text_anchor(angle)
+        normalized = angle % 360
+        return "start" if normalized > 45 && normalized < 135
+        return "end" if normalized > 225 && normalized < 315
+
+        "middle"
+      end
+
+      def dominant_baseline(angle)
+        normalized = angle % 360
+        return "hanging" if normalized > 135 && normalized < 225
+        return "auto" if normalized < 45 || normalized > 315
+
+        "middle"
+      end
+
+      def font_size(name, fallback)
+        value = theme.typography&.public_send(name)
+        value&.positive? ? value : fallback
+      end
+
       def empty_layout
         {
-          axes: [],
-          curves: [],
-          grid_circles: [],
-          center_x: PADDING,
-          center_y: PADDING,
-          radius: DEFAULT_RADIUS,
-          width: PADDING * 2,
-          height: PADDING * 2,
-          min_value: 0,
-          max_value: 0,
+          axes: [], curves: [], grid_circles: [], center_x: PADDING,
+          center_y: PADDING, radius: DEFAULT_RADIUS, width: PADDING * 2,
+          height: PADDING * 2, min_value: 0, max_value: 0, options: {}
         }
       end
 
-      # Calculates the value range from all curves.
-      #
-      # @param diagram [Diagram::Radar] diagram
-      # @return [Array<Numeric, Numeric>] min and max values
       def calculate_value_range(diagram)
-        all_values = diagram.curves.flat_map { |c| c.values.values }
-
-        # Use configured min/max if available
-        min_value = diagram.options[:min] || all_values.min || 0
-        max_value = diagram.options[:max] || all_values.max || 100
-
-        # Ensure max > min
+        values = diagram.curves.flat_map { |curve| curve.values.values }
+        min_value = diagram.options[:min] || values.min || 0
+        max_value = diagram.options[:max] || values.max || 100
         max_value = min_value + 1 if max_value <= min_value
-
         [min_value, max_value]
       end
 
-      # Positions axes radially around the center.
-      #
-      # @param axes [Array<Diagram::RadarAxis>] axes
-      # @param num_axes [Integer] number of axes
-      # @return [Array<Hash>] positioned axes
-      def position_axes(axes, num_axes)
-        positioned = []
-        angle_step = 360.0 / num_axes
-
-        axes.each_with_index do |axis, idx|
-          # Calculate angle (start at top, go clockwise)
-          angle_degrees = idx * angle_step - 90 # -90 to start at top
-          angle_radians = angle_degrees * Math::PI / 180.0
-
-          # Calculate end point of axis line
-          end_x = Math.cos(angle_radians) * DEFAULT_RADIUS
-          end_y = Math.sin(angle_radians) * DEFAULT_RADIUS
-
-          # Calculate label position (beyond the end point)
-          label_radius = DEFAULT_RADIUS + LABEL_OFFSET
-          label_x = Math.cos(angle_radians) * label_radius
-          label_y = Math.sin(angle_radians) * label_radius
-
-          positioned << {
-            id: axis.id,
-            label: axis.label,
-            angle_degrees: angle_degrees,
-            angle_radians: angle_radians,
-            end_x: end_x,
-            end_y: end_y,
-            label_x: label_x,
-            label_y: label_y,
-            index: idx,
+      def position_axes(axes)
+        step = 360.0 / axes.length
+        axes.map.with_index do |axis, index|
+          angle = (index * step) - 90
+          radians = angle * Math::PI / 180.0
+          {
+            id: axis.id, label: axis.label, angle_degrees: angle,
+            angle_radians: radians, end_x: Math.cos(radians) * DEFAULT_RADIUS,
+            end_y: Math.sin(radians) * DEFAULT_RADIUS,
+            label_x: Math.cos(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
+            label_y: Math.sin(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
+            index: index
           }
         end
-
-        positioned
       end
 
-      # Positions data points for all curves.
-      #
-      # @param curves [Array<Diagram::RadarCurve>] curves
-      # @param positioned_axes [Array<Hash>] positioned axes
-      # @param min_value [Numeric] minimum value
-      # @param max_value [Numeric] maximum value
-      # @return [Array<Hash>] positioned curves with points
-      def position_curves(curves, positioned_axes, min_value, max_value)
-        positioned = []
-
-        curves.each do |curve|
-          points = []
-
-          positioned_axes.each do |axis|
+      def position_curves(curves, axes, min_value, max_value)
+        curves.map do |curve|
+          points = axes.map do |axis|
             value = curve.value_for(axis[:id])
-
-            # Normalize value to 0-1 range
             normalized = normalize_value(value, min_value, max_value)
-
-            # Calculate radius for this value
             radius = normalized * DEFAULT_RADIUS
-
-            # Convert to cartesian coordinates
-            x = Math.cos(axis[:angle_radians]) * radius
-            y = Math.sin(axis[:angle_radians]) * radius
-
-            points << {
-              axis_id: axis[:id],
-              value: value,
-              normalized: normalized,
-              x: x,
-              y: y,
-              angle: axis[:angle_radians],
+            {
+              axis_id: axis[:id], value: value, normalized: normalized,
+              x: Math.cos(axis[:angle_radians]) * radius,
+              y: Math.sin(axis[:angle_radians]) * radius,
+              angle: axis[:angle_radians]
             }
           end
-
-          positioned << {
-            id: curve.id,
-            label: curve.label,
-            points: points,
-          }
+          { id: curve.id, label: curve.label, points: points }
         end
-
-        positioned
       end
 
-      # Normalizes a value to the 0-1 range.
-      #
-      # @param value [Numeric] value to normalize
-      # @param min_value [Numeric] minimum value
-      # @param max_value [Numeric] maximum value
-      # @return [Numeric] normalized value
       def normalize_value(value, min_value, max_value)
         return 0 if max_value == min_value
 
         ((value - min_value).to_f / (max_value - min_value)).clamp(0, 1)
       end
 
-      # Calculates grid circle positions.
-      #
-      # @param min_value [Numeric] minimum value
-      # @param max_value [Numeric] maximum value
-      # @return [Array<Hash>] grid circles with radius and label
       def calculate_grid_circles(min_value, max_value)
-        circles = []
-
-        GRID_CIRCLES.times do |i|
-          fraction = (i + 1).to_f / GRID_CIRCLES
-          radius = DEFAULT_RADIUS * fraction
-          value = min_value + (max_value - min_value) * fraction
-
-          circles << {
-            radius: radius,
-            value: value,
+        Array.new(GRID_CIRCLES) do |index|
+          fraction = (index + 1).to_f / GRID_CIRCLES
+          {
+            radius: DEFAULT_RADIUS * fraction,
+            value: min_value + ((max_value - min_value) * fraction),
             fraction: fraction,
           }
         end
-
-        circles
       end
     end
   end
