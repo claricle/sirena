@@ -82,6 +82,13 @@ module WorkflowHelpers
     ]
   end
 
+  def expected_published_gem_values
+    command =
+      'gem build sirena.gemspec --output ' \
+      '"$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'
+    [command, true, "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}"]
+  end
+
   def oracle_browser_scope(jobs)
     steps = jobs.fetch("oracle-toolchain").fetch("steps")
     %w[canary check].map do |command|
@@ -282,18 +289,13 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       expect(checked_main_values(jobs)).to eq([true, true, true])
     end
 
-    it "permits only the generated version change before an atomic main and tag push" do
+    it "permits only a version change before an atomic push" do
       expect(version_push_values(jobs)).to eq([true, true])
     end
 
     it "builds and publishes the gem without a reusable release workflow" do
-      expect(published_gem_values(jobs)).to eq(
-        [
-          'gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
-          true,
-          "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}",
-        ],
-      )
+      expect(published_gem_values(jobs))
+        .to eq(expected_published_gem_values)
     end
   end
 end

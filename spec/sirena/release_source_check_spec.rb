@@ -5,7 +5,8 @@ require_relative "../../scripts/check_release_source"
 # Concise builders for release-source examples.
 module ReleaseSourceCheckSpecHelpers
   def successful_checks(sha)
-    Sirena::ReleaseSourceCheck::REQUIRED_CHECKS.each_with_index.map do |name, index|
+    checks = Sirena::ReleaseSourceCheck::REQUIRED_CHECKS
+    checks.each_with_index.map do |name, index|
       {
         "id" => index + 1,
         "name" => name,
@@ -52,7 +53,8 @@ RSpec.describe Sirena::ReleaseSourceCheck do
       failed = successful_checks(sha).map(&:dup)
       failed.last["conclusion"] = "failure"
 
-      expect(checked_main(check_runs: failed)).to include(/no successful full-lane check/)
+      problems = checked_main(check_runs: failed)
+      expect(problems).to include(/no successful full-lane check/)
     end
 
     it "ignores a successful check belonging to another commit" do
@@ -68,7 +70,8 @@ RSpec.describe Sirena::ReleaseSourceCheck do
       latest_failure = stale_success.merge("id" => 9, "conclusion" => "failure")
       checks = [stale_success, latest_failure, successful_checks(sha).last]
 
-      expect(checked_main(check_runs: checks)).to include(/no successful fast-lane check/)
+      problems = checked_main(check_runs: checks)
+      expect(problems).to include(/no successful fast-lane check/)
     end
   end
 
@@ -77,7 +80,8 @@ RSpec.describe Sirena::ReleaseSourceCheck do
 
     it "accepts an exact version-only bump" do
       paths = [described_class::VERSION_PATH]
-      expect(version_problems(changed_paths: paths, requested: "minor")).to eq([])
+      problems = version_problems(changed_paths: paths, requested: "minor")
+      expect(problems).to eq([])
     end
 
     it "rejects any additional changed path" do
@@ -89,7 +93,12 @@ RSpec.describe Sirena::ReleaseSourceCheck do
 
     it "rejects a version file that does not contain the target" do
       paths = [described_class::VERSION_PATH]
-      expect(version_problems(changed_paths: paths, requested: "patch", target_version: "0.2.1"))
+      problems = version_problems(
+        changed_paths: paths,
+        requested: "patch",
+        target_version: "0.2.1",
+      )
+      expect(problems)
         .to include(/expected "0\.2\.1"/)
     end
 
