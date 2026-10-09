@@ -26,21 +26,13 @@ module Sirena
       problems
     end
 
-    def version_change_problems(changed_paths:, requested:, target_version:, version_source:)
-      paths = changed_paths.reject(&:empty?).uniq.sort
-      expected = requested == "skip" ? [] : [VERSION_PATH]
-      problems = []
-      unless paths == expected
-        problems << "release commit changes #{paths.inspect}; " \
-                    "expected #{expected.inspect}"
-      end
-
-      actual = version_source[/VERSION = ['"]([^'"]+)['"]/, 1]
-      unless actual == target_version
-        problems << "#{VERSION_PATH} contains #{actual.inspect}; " \
-                    "expected #{target_version.inspect}"
-      end
-      problems
+    def version_change_problems(
+      changed_paths:, requested:, target_version:, version_source:
+    )
+      [
+        changed_path_problem(changed_paths, requested),
+        version_source_problem(version_source, target_version),
+      ].compact
     end
 
     def replace_version(source, target_version)
@@ -62,7 +54,24 @@ module Sirena
         .select { |run| run.values_at("name", "head_sha") == [name, main_sha] }
         .max_by { |run| run.fetch("id", 0) }
     end
-    private_class_method :latest_check, :successful_check?
+
+    def changed_path_problem(changed_paths, requested)
+      paths = changed_paths.reject(&:empty?).uniq.sort
+      expected = requested == "skip" ? [] : [VERSION_PATH]
+      return if paths == expected
+
+      "release commit changes #{paths.inspect}; expected #{expected.inspect}"
+    end
+
+    def version_source_problem(version_source, target_version)
+      actual = version_source[/VERSION = ['"]([^'"]+)['"]/, 1]
+      return if actual == target_version
+
+      "#{VERSION_PATH} contains #{actual.inspect}; " \
+        "expected #{target_version.inspect}"
+    end
+    private_class_method :changed_path_problem, :latest_check,
+                         :successful_check?, :version_source_problem
 
     # Parses the small command-line interface separately from the checks.
     class CLI
@@ -74,6 +83,9 @@ module Sirena
         "TARGET REQUESTED PATHS_FILE [VERSION_FILE]"
       WRITE_VERSION_USAGE =
         "usage: check_release_source.rb write-version TARGET [VERSION_FILE]"
+      USAGE =
+        "usage: check_release_source.rb " \
+        "checked-main|version-only|write-version ..."
 
       def initialize(arguments)
         @arguments = arguments.dup
@@ -83,7 +95,7 @@ module Sirena
         problems = problems_for(@arguments.shift)
         return puts("release source OK") if problems.empty?
 
-        warn(*problems.map { |problem| "release source check failed: #{problem}" })
+        warn(*problems.map { |problem| failure_message(problem) })
         exit 1
       end
 
@@ -94,8 +106,12 @@ module Sirena
         when "checked-main" then checked_main_problems
         when "version-only" then version_change_problems
         when "write-version" then write_version
-        else abort "usage: check_release_source.rb checked-main|version-only|write-version ..."
+        else abort USAGE
         end
+      end
+
+      def failure_message(problem)
+        "release source check failed: #{problem}"
       end
 
       def checked_main_problems
@@ -114,11 +130,12 @@ module Sirena
         target, requested, paths_path, version_path = @arguments
         abort VERSION_ONLY_USAGE unless paths_path
 
+        path = version_path || ReleaseSourceCheck::VERSION_PATH
         ReleaseSourceCheck.version_change_problems(
           changed_paths: File.readlines(paths_path, chomp: true),
           requested: requested,
           target_version: target,
-          version_source: File.read(version_path || ReleaseSourceCheck::VERSION_PATH),
+          version_source: File.read(path),
         )
       end
 
