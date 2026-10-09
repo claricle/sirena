@@ -29,28 +29,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class XyChart < Base
-      # Parses XY chart diagram source into an XyChart model.
-      #
-      # @param source [String] the Mermaid XY chart diagram source
-      # @return [Diagram::XyChart] the parsed XY chart
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::XyChart.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to intermediate representation
-        transform = Builders::XyChart.new
-        result = transform.apply(parse_tree)
-
-        # Create the diagram model
-        create_diagram(result)
-      end
+      grammar Grammars::XyChart
+      builder Builders::XyChart
 
       private
 

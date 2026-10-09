@@ -26,7 +26,7 @@ module Sirena
         }.freeze
 
         # Process parsed diagram
-        def self.apply(tree, diagram = nil)
+        def apply(tree, diagram = nil)
           diagram ||= Diagram::Requirement.new
 
           # The tree is an array of statement hashes
@@ -40,7 +40,7 @@ module Sirena
           diagram
         end
 
-        def self.process_statements(diagram, statements)
+        def process_statements(diagram, statements)
           statements.each do |stmt|
             next unless stmt.is_a?(Hash)
 
@@ -83,13 +83,13 @@ module Sirena
         # is the literal text "[]", not "". Route every acc_title/acc_descr
         # value through this so an empty directive value becomes "",
         # matching Mermaid.
-        def self.acc_value(captured)
+        def acc_value(captured)
           return "" if captured.is_a?(Array) && captured.empty?
 
           captured.to_s.gsub(JS_WHITESPACE_AT_EDGE, "")
         end
 
-        def self.create_requirement(stmt)
+        def create_requirement(stmt)
           Diagram::RequirementNode.new.tap do |req|
             req.name = stmt[:req_name].to_s
             req.type = stmt[:req_type].to_s
@@ -126,7 +126,7 @@ module Sirena
           end
         end
 
-        def self.create_element(stmt)
+        def create_element(stmt)
           Diagram::RequirementElement.new.tap do |elem|
             elem.name = stmt[:elem_name].to_s
 
@@ -158,7 +158,7 @@ module Sirena
           end
         end
 
-        def self.create_relationship(stmt)
+        def create_relationship(stmt)
           Diagram::RequirementRelationship.new.tap do |rel|
             rel.source = stmt[:rel_source].to_s
             rel.target = stmt[:rel_target].to_s
@@ -169,7 +169,7 @@ module Sirena
           end
         end
 
-        def self.create_style(stmt)
+        def create_style(stmt)
           Diagram::RequirementStyle.new.tap do |style|
             # Process targets
             if stmt[:style_targets]
@@ -208,7 +208,7 @@ module Sirena
           end
         end
 
-        def self.create_class_definition(stmt)
+        def create_class_definition(stmt)
           Diagram::RequirementClass.new.tap do |klass|
             klass.name = stmt[:class_name].to_s
 
@@ -239,7 +239,7 @@ module Sirena
           end
         end
 
-        def self.create_class_assignment(stmt)
+        def create_class_assignment(stmt)
           Diagram::RequirementClassAssignment.new.tap do |assignment|
             # Process targets
             if stmt[:class_targets]
@@ -263,11 +263,11 @@ module Sirena
           end
         end
 
-        def self.split_list(value)
+        def split_list(value)
           value.to_s.split(",").map(&:strip).reject(&:empty?)
         end
 
-        def self.extract_class_names(class_data)
+        def extract_class_names(class_data)
           # Shorthand arrives as a Parslet::Slice (":::a,b"), not a String.
           Array(class_data)
             .flat_map { |item| split_list(item.to_s.delete_prefix(":::")) }

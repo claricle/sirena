@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::Builders::Block do
-  subject(:diagram) { described_class.apply(tree) }
+  subject(:diagram) { described_class.new.apply(tree) }
 
   describe "tree normalisation" do
     context "with a single hash instead of an array" do
@@ -110,7 +110,7 @@ RSpec.describe Sirena::Parser::Builders::Block do
     end
 
     it "labels shapeless blocks with their id" do
-      plain = described_class.apply([{ block_id: "plain" }])
+      plain = described_class.new.apply([{ block_id: "plain" }])
       expect(plain.blocks.first.label).to eq("plain")
     end
   end

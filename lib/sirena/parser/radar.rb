@@ -28,28 +28,8 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Radar < Base
-      # Parses radar diagram source into a Radar model.
-      #
-      # @param source [String] the Mermaid radar diagram source
-      # @return [Diagram::Radar] the parsed radar chart
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        grammar = Grammars::Radar.new
-
-        begin
-          parse_tree = grammar.parse(source)
-        rescue Parslet::ParseFailed => e
-          raise ParseError, "Syntax error at #{e.parse_failure_cause.pos}: " \
-                           "#{e.parse_failure_cause}"
-        end
-
-        # Transform parse tree to intermediate representation
-        transform = Builders::Radar.new
-        result = transform.apply(parse_tree)
-
-        # Create the diagram model
-        create_diagram(result)
-      end
+      grammar Grammars::Radar
+      builder Builders::Radar
 
       private
 

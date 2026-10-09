@@ -62,10 +62,19 @@ module Sirena
         end
 
         tree = parse_with_grammar(self.class.grammar.new, source)
-        self.class.builder.new.apply(tree)
+        create_diagram(self.class.builder.new.apply(tree))
       end
 
       private
+
+      # Hook for a parser whose builder returns intermediate data rather
+      # than the diagram. The default passes the builder's result through.
+      #
+      # @param result [Object] what the builder returned
+      # @return [Diagram::Base] the diagram model
+      def create_diagram(result)
+        result
+      end
 
       # Runs a grammar, raising ParseError with a positioned message.
       #
@@ -80,23 +89,25 @@ module Sirena
       # @param source [String] the source to parse
       # @return [Hash, Array] the parse tree — a Hash for a single
       #   captured node, an Array once a grammar repeats one
-      # @raise [ParseError] with the failure position and context
+      # @raise [ParseError] with the failure position and context, or when
+      #   the source's encoding cannot be read by the grammar
       def parse_with_grammar(grammar, source)
         reporter = Parslet::ErrorReporter::Deepest.new
         grammar.parse(source, reporter: reporter)
       rescue Parslet::ParseFailed => e
         cause = reporter.deepest_cause || e.parse_failure_cause
         raise ParseError, format_parse_error(cause, source)
+      rescue EncodingError, ArgumentError => e
+        raise ParseError, encoding_message(source, e)
       end
 
-      # The message every parser gets unless it defines its own: the guarded
-      # shape, with a fallback if positioning itself fails.
-      #
-      # @param cause [Parslet::Cause] the failure to describe
-      # @param source [String] the source that was parsed
-      # @return [String] the positioned, multi-line error message
-      def format_parse_error(cause, source)
-        format_parse_error_guarded(cause, source)
+      # A grammar's Unicode rules refuse a binary-tagged string holding
+      # non-ASCII bytes (EncodingError), and a UTF-8-tagged string with
+      # invalid bytes fails in Parslet's StringScanner (ArgumentError)
+      # before any rule runs.
+      def encoding_message(source, error)
+        "Parse error: source encoding #{source.encoding} cannot be read " \
+          "as #{self.class.name.split('::').last} source (#{error.message})"
       end
 
       # Renders a failure's text without its position.
@@ -170,18 +181,13 @@ module Sirena
         "#{line.to_s[0, column - 1].to_s.gsub(/[^\t]/, ' ')}^"
       end
 
-      # The default #format_parse_error: also checks `line_num`
-      # is positive, and falls back to the non-contextual message if
-      # formatting itself raises. #format_parse_error_unguarded (used by
-      # class_diagram and state_diagram) has neither — keep them separate;
-      # merging would change those two's behaviour. architecture keeps its
-      # own separate implementation; do not fold it in, its message shape
-      # differs (two lines of context, no rescue).
+      # The one parse-error message: line, column, the source line and a
+      # caret, with a fallback if positioning itself raises.
       #
       # @param cause [Parslet::Cause] the failure to describe
       # @param source [String] the source that was parsed
       # @return [String] the positioned, multi-line error message
-      def format_parse_error_guarded(cause, source)
+      def format_parse_error(cause, source)
         lines = source.lines("\n")
         line_num, col_num = failure_position(cause, source)
 
@@ -197,29 +203,6 @@ module Sirena
         context.join("\n")
       rescue StandardError
         fallback_message(cause)
-      end
-
-      # The shape class_diagram and state_diagram use: no positivity check,
-      # no rescue fallback. See #format_parse_error_guarded for why this
-      # stays a second, distinct method rather than being unified with it.
-      #
-      # @param cause [Parslet::Cause] the failure to describe
-      # @param source [String] the source that was parsed
-      # @return [String] the positioned, multi-line error message
-      def format_parse_error_unguarded(cause, source)
-        lines = source.lines("\n")
-        line_num, col_num = failure_position(cause, source)
-
-        context = if line_num <= lines.length
-                    lines[line_num - 1].chomp("\n")
-                  else
-                    "(end of input)"
-                  end
-
-        "Parse error at line #{line_num}, column #{col_num}:\n" \
-          "#{context}\n" \
-          "#{caret_for(lines[line_num - 1], col_num)}\n" \
-          "#{failure_message(cause)}"
       end
     end
   end

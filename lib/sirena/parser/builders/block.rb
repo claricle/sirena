@@ -70,7 +70,7 @@ module Sirena
         # would re-issue "compound-1" and the later block would overwrite the
         # earlier one. No caller ever passed a diagram, so the parameter only
         # exposed that hazard.
-        def self.apply(tree)
+        def apply(tree)
           diagram = Diagram::Block.new
 
           # Tree is an array of statement hashes
@@ -92,7 +92,7 @@ module Sirena
           diagram
         end
 
-        def self.process_statements(diagram, statements, parent_block = nil)
+        def process_statements(diagram, statements, parent_block = nil)
           statements.each_with_index do |stmt, index|
             next unless stmt.is_a?(Hash)
 
@@ -157,19 +157,19 @@ module Sirena
         # namespace: identifier_char is [a-zA-Z0-9_], so no bare block id can
         # ever spell "compound-1". An underscore could, and the collision
         # silently dropped the generated block's children from the SVG.
-        def self.anonymous_id(kind, parent_block, index)
+        def anonymous_id(kind, parent_block, index)
           prefix = parent_block ? "#{parent_block.id}-" : ""
           "#{prefix}#{kind}-#{index}"
         end
 
-        def self.create_space_block(parent_block, index)
+        def create_space_block(parent_block, index)
           Diagram::BlockNode.new.tap do |b|
             b.id = anonymous_id("space", parent_block, index)
             b.block_type = "space"
           end
         end
 
-        def self.create_arrow_block(stmt)
+        def create_arrow_block(stmt)
           Diagram::BlockNode.new.tap do |b|
             b.id = stmt[:arrow_id].to_s
             b.block_type = "arrow"
@@ -178,7 +178,7 @@ module Sirena
           end
         end
 
-        def self.create_compound_block(stmt, parent_block, index)
+        def create_compound_block(stmt, parent_block, index)
           Diagram::BlockNode.new.tap do |b|
             b.id = if stmt[:compound_id]
                      stmt[:compound_id].to_s
@@ -189,7 +189,7 @@ module Sirena
           end
         end
 
-        def self.create_block(stmt)
+        def create_block(stmt)
           Diagram::BlockNode.new.tap do |b|
             b.id = stmt[:block_id].to_s
 
@@ -231,7 +231,7 @@ module Sirena
           end
         end
 
-        def self.create_connection(stmt)
+        def create_connection(stmt)
           Diagram::BlockConnection.new.tap do |c|
             c.from = stmt[:from].to_s
             c.to = stmt[:to].to_s
@@ -248,7 +248,7 @@ module Sirena
           end
         end
 
-        def self.create_style(stmt)
+        def create_style(stmt)
           Diagram::BlockStyle.new.tap do |s|
             s.block_id = stmt[:style_target].to_s
 

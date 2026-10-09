@@ -23,15 +23,8 @@ module Sirena
     #   parser = Block.new
     #   diagram = parser.parse("block-beta\n  columns 2\n  A\n  B")
     class Block < Base
-      # Parses block diagram source into a Block model.
-      #
-      # @param source [String] the Mermaid block diagram source
-      # @return [Diagram::Block] the parsed block diagram
-      # @raise [ParseError] if syntax is invalid
-      def parse(source)
-        tree = parse_with_grammar(Grammars::Block.new, source)
-        Builders::Block.apply(tree)
-      end
+      grammar Grammars::Block
+      builder Builders::Block
     end
   end
 end

@@ -139,7 +139,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       end
     end
 
-    it "raises ParseError for score out of range" do
+    it "raises ScoreError for score out of range" do
       source = <<~MERMAID
         journey
           section Test
@@ -147,7 +147,7 @@ RSpec.describe Sirena::Parser::UserJourney do
       MERMAID
 
       expect { parser.parse(source) }.to raise_error(
-        Sirena::Parser::ParseError,
+        Sirena::Parser::ScoreError,
         /Score must be between 1 and 5/,
       )
     end

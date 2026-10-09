@@ -2,6 +2,7 @@
 
 require "parslet"
 require_relative "base"
+require_relative "../error/score_error"
 require_relative "../diagram/user_journey"
 
 module Sirena
@@ -151,12 +152,8 @@ module Sirena
     # User Journey diagram parser using Parslet
     class UserJourney < Base
       def parse(source)
-        grammar = UserJourneyGrammar.new
-
-        tree = grammar.parse(source)
+        tree = parse_with_grammar(UserJourneyGrammar.new, source)
         build_diagram_from_tree(tree)
-      rescue Parslet::ParseFailed => e
-        raise ParseError, "Parse error: #{e.parse_failure_cause.ascii_tree}"
       rescue EncodingError, ArgumentError => e
         # Two distinct routes land here, both re-raised the same way. (1) The
         # accessibility rules' \uXXXX-escaped regexps carry a fixed encoding,
@@ -227,7 +224,7 @@ module Sirena
       def validate_score!(score)
         return if score.between?(1, 5)
 
-        raise ParseError, "Score must be between 1 and 5, got #{score}"
+        raise ScoreError, "Score must be between 1 and 5, got #{score}"
       end
     end
   end
