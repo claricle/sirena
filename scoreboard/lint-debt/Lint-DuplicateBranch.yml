@@ -25,9 +25,5 @@ rows:
   count: 1
 - file: lib/sirena/renderer/c4.rb
   count: 1
-- file: lib/sirena/renderer/git_graph.rb
-  count: 1
 - file: lib/sirena/renderer/quadrant.rb
-  count: 1
-- file: lib/sirena/renderer/xy_chart.rb
   count: 1

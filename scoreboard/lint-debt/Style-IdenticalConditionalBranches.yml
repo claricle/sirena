@@ -3,5 +3,3 @@ cop: Style/IdenticalConditionalBranches
 rows:
 - file: lib/sirena/layout/requirement.rb
   count: 2
-- file: lib/sirena/renderer/git_graph.rb
-  count: 2

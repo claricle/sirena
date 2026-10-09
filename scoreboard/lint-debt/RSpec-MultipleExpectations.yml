@@ -190,7 +190,7 @@ rows:
 - file: spec/sirena/renderer/gantt_spec.rb
   count: 7
 - file: spec/sirena/renderer/git_graph_spec.rb
-  count: 5
+  count: 2
 - file: spec/sirena/renderer/kanban_spec.rb
   count: 15
 - file: spec/sirena/renderer/markdown_text_spec.rb
