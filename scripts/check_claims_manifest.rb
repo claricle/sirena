@@ -54,19 +54,26 @@ module Sirena
 
     def validate_keys!(row, context)
       missing = REQUIRED_KEYS - row.keys
-      raise ArgumentError, "#{context} missing #{missing.join(', ')}" if missing.any?
+      return validate_unexpected_keys!(row, context) if missing.empty?
 
+      message = "#{context} missing #{missing.join(', ')}"
+      raise ArgumentError, message
+    end
+
+    def validate_unexpected_keys!(row, context)
       unexpected = row.keys - REQUIRED_KEYS
       return if unexpected.empty?
 
-      raise ArgumentError, "#{context} has unknown keys #{unexpected.join(', ')}"
+      message = "#{context} has unknown keys #{unexpected.join(', ')}"
+      raise ArgumentError, message
     end
 
     def validate_strings!(row, context)
       invalid = STRING_KEYS.reject { |key| present_string?(row[key]) }
       return if invalid.empty?
 
-      raise ArgumentError, "#{context} #{invalid.join(', ')} must be non-empty strings"
+      message = "#{context} #{invalid.join(', ')} must be non-empty strings"
+      raise ArgumentError, message
     end
 
     def present_string?(value)
