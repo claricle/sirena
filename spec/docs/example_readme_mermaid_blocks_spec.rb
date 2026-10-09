@@ -4,7 +4,7 @@ require "spec_helper"
 
 module ExampleReadmeMermaidBlocks
   ROOT = File.expand_path("../..", __dir__)
-  READMES = Dir.glob(File.join(ROOT, "examples/*/README.adoc")).sort.freeze
+  READMES = Dir.glob(File.join(ROOT, "examples/*/README.adoc")).freeze
   MARKER = /\A\[source,\s*mermaid\][[:space:]]*\z/
   INCLUDE = /\Ainclude::(.+\.mmd)\[\]\z/
 

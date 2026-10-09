@@ -75,13 +75,15 @@ RSpec.describe LinksWorkflowSpec do
       status_proofs,
     ]
 
-    expect(facts).to eq([
-      %w[seed_403 seed_429 seed_fragment seed_relative],
-      true,
-      "always()",
-      described_class::OUTCOMES,
-      true,
-    ])
+    expect(facts).to eq(
+      [
+        %w[seed_403 seed_429 seed_fragment seed_relative],
+        true,
+        "always()",
+        described_class::OUTCOMES,
+        true,
+      ],
+    )
   end
 
   it "still runs the ordinary built-site link check as a hard failure" do
