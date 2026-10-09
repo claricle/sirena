@@ -38,6 +38,58 @@ module Sirena
         #16a34a #0891b2 #4f46e5 #c026d3 #dc2626
       ].freeze
 
+      PADDING = 40
+      LABEL_HEADROOM = 1.2
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :text_anchor, :string
+        attribute :kind, :string
+        attribute :branch, :string
+        attribute :font_size, :float
+      end
+
+      class Commit < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :branch, :string
+        attribute :lane, :integer
+        attribute :type, :string
+        attribute :parent_ids, :string, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+      end
+
+      class Branch < Lutaml::Model::Serializable
+        attribute :name, :string
+        attribute :lane, :integer
+        attribute :color, :string
+        attribute :label, Label
+      end
+
+      class Connection < Lutaml::Model::Serializable
+        attribute :source, :string
+        attribute :target, :string
+        attribute :from_x, :float
+        attribute :from_y, :float
+        attribute :to_x, :float
+        attribute :to_y, :float
+        attribute :from_branch, :string
+        attribute :to_branch, :string
+        attribute :type, :symbol
+        attribute :path, :string
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :commits, Commit, collection: true, default: -> { [] }
+        attribute :branches, Branch, collection: true, default: -> { [] }
+        attribute :connections, Connection, collection: true,
+                                            default: -> { [] }
+      end
+
       # Transforms the diagram into a layout structure.
       #
       # @param diagram [Diagram::GitGraph] the git graph diagram
@@ -87,6 +139,172 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        labels = label_hashes(graph)
+        base_width = graph[:width] + (PADDING * 2)
+        spill_left, spill_right = label_spill(labels, base_width)
+        shift = PADDING + spill_left
+        width = base_width + spill_left + spill_right
+        height = graph[:height] + (PADDING * 2)
+
+        Scene.new(
+          width: width, height: height,
+          view_box: "0 0 #{width.to_f} #{height.to_f}",
+          commits: typed_commits(graph, labels, shift),
+          branches: typed_branches(graph, labels, shift),
+          connections: typed_connections(graph[:connections], shift),
+        )
+      end
+
+      def label_hashes(graph)
+        commit_labels(graph) + branch_labels(graph)
+      end
+
+      def commit_labels(graph)
+        graph[:commits].flat_map do |commit|
+          labels = []
+          if commit[:id] && !commit[:id].start_with?("commit_")
+            labels << positioned_label(commit[:id], commit, graph[:orientation], "id")
+          end
+          if commit[:tag]
+            labels << positioned_label(commit[:tag], commit, graph[:orientation], "tag")
+          end
+          labels
+        end
+      end
+
+      def positioned_label(text, commit, orientation, kind)
+        x, y, anchor = label_position(commit[:x], commit[:y], orientation, kind)
+        { text: text, x: x + PADDING, y: y + PADDING,
+          text_anchor: anchor, kind: kind, branch: commit[:branch],
+          owner_id: commit[:id] }
+      end
+
+      def label_position(x, y, orientation, kind)
+        if %w[TB BT].include?(orientation)
+          kind == "tag" ? [x - 14, y + 4, "end"] : [x + 14, y + 4, "start"]
+        elsif kind == "tag"
+          [x, y - 15, "middle"]
+        else
+          [x, y + 20, "middle"]
+        end
+      end
+
+      def branch_labels(graph)
+        last_commits = graph[:commits].to_h { |commit| [commit[:branch], commit] }
+        last_commits.map do |branch, commit|
+          x, y, anchor = branch_label_position(commit[:x], commit[:y],
+                                                graph[:orientation])
+          { text: branch, x: x + PADDING, y: y + PADDING,
+            text_anchor: anchor, kind: "branch", branch: branch }
+        end
+      end
+
+      def branch_label_position(x, y, orientation)
+        case orientation
+        when "TB" then [x, y + 24, "middle"]
+        when "BT" then [x, y - 16, "middle"]
+        else [x + 15, y + 4, "start"]
+        end
+      end
+
+      def label_spill(labels, width)
+        return [0, 0] if labels.empty?
+
+        spans = labels.map { |label| label_span(label) }
+        lefts, rights = spans.transpose
+        [[-lefts.min, 0].max, [rights.max - width, 0].max]
+      end
+
+      def label_span(label)
+        width = measure_text(label[:text], font_size: small_font_size)[:width] *
+          LABEL_HEADROOM
+        share = { "start" => 0.0, "middle" => 0.5, "end" => 1.0 }
+          .fetch(label[:text_anchor])
+        left = label[:x] - (width * share)
+        [left, left + width]
+      end
+
+      def typed_commits(graph, labels, shift)
+        graph[:commits].map do |commit|
+          Commit.new(
+            id: commit[:id], x: commit[:x] + shift,
+            y: commit[:y] + PADDING, branch: commit[:branch],
+            lane: commit[:lane], type: commit[:type],
+            parent_ids: commit[:parent_ids],
+            labels: typed_labels(labels.select do |label|
+              label[:kind] != "branch" && label[:owner_id] == commit[:id]
+            end, shift - PADDING),
+          )
+        end
+      end
+
+      def typed_branches(graph, labels, shift)
+        graph[:branches].map do |branch|
+          geometry = labels.find do |label|
+            label[:kind] == "branch" && label[:branch] == branch[:name]
+          end
+          Branch.new(name: branch[:name], lane: branch[:lane],
+                     color: branch[:color],
+                     label: typed_label(geometry, shift - PADDING))
+        end
+      end
+
+      def typed_labels(labels, extra_shift)
+        labels.map { |label| typed_label(label, extra_shift) }
+      end
+
+      def typed_label(label, extra_shift)
+        return unless label
+
+        Label.new(text: label[:text], x: label[:x] + extra_shift,
+                  y: label[:y], text_anchor: label[:text_anchor],
+                  kind: label[:kind], branch: label[:branch],
+                  font_size: small_font_size)
+      end
+
+      def typed_connections(connections, shift)
+        connections.map do |connection|
+          geometry = connection.merge(
+            from_x: connection[:from_x] + shift,
+            from_y: connection[:from_y] + PADDING,
+            to_x: connection[:to_x] + shift,
+            to_y: connection[:to_y] + PADDING,
+          )
+          Connection.new(
+            source: geometry[:from], target: geometry[:to],
+            from_x: geometry[:from_x], from_y: geometry[:from_y],
+            to_x: geometry[:to_x], to_y: geometry[:to_y],
+            from_branch: geometry[:from_branch],
+            to_branch: geometry[:to_branch], type: geometry[:type],
+            path: connection_path(geometry),
+          )
+        end
+      end
+
+      def connection_path(connection)
+        return straight_path(connection) unless connection[:type] == :merge
+        return straight_path(connection) if connection[:from_y] == connection[:to_y]
+
+        control_x = connection[:from_x] +
+                    ((connection[:to_x] - connection[:from_x]) * 0.5)
+        "M #{connection[:from_x]} #{connection[:from_y]} " \
+          "C #{control_x} #{connection[:from_y]}, " \
+          "#{control_x} #{connection[:to_y]}, " \
+          "#{connection[:to_x]} #{connection[:to_y]}"
+      end
+
+      def straight_path(connection)
+        "M #{connection[:from_x]} #{connection[:from_y]} " \
+          "L #{connection[:to_x]} #{connection[:to_y]}"
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small ||
+          Theme::Registry.get(:default).typography.font_size_small
+      end
 
       # Builds a lookup hash of commits by ID.
       #
@@ -192,8 +410,6 @@ module Sirena
             merge_branch: commit.merge_branch,
             is_cherry_pick: commit.is_cherry_pick || false,
             cherry_pick_parent: commit.cherry_pick_parent,
-            # Store original commit for reference
-            original: commit,
           }
         end
 

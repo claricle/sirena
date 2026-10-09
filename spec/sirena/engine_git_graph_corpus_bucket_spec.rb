@@ -326,7 +326,7 @@ RSpec.describe Sirena::Engine do
       source = commit_chain("TB", %w[a b])
 
       expect(number(render_svg(source).root, "width"))
-        .to eq(layout_for(source)[:width] + 80)
+        .to eq(layout_for(source).width)
     end
   end
 
@@ -374,7 +374,7 @@ RSpec.describe Sirena::Engine do
     it "keeps the origin of its own viewBox when a label spills left" do
       doc = subclass.new.render(spilling)
 
-      expect(doc.view_box).to eq("-5 -5 #{doc.width} #{doc.height}")
+      expect(doc.view_box).to eq("-5 -5 999 888")
     end
 
     context "with a subclass that adds no labels" do
@@ -387,7 +387,7 @@ RSpec.describe Sirena::Engine do
       end
 
       it "draws a layout whose subclass adds no labels" do
-        expect(silent.new.render(layout).width).to eq(layout[:width] + 80)
+        expect(silent.new.render(layout).width).to eq(layout.width)
       end
     end
 
@@ -438,9 +438,10 @@ RSpec.describe Sirena::Engine do
     context "when a label spills only to the right" do
       it "widens the box" do
         right_only = layout_for(long_branch("LR", "b" * 60))
+        short = layout_for(long_branch("LR", "b"))
 
         expect(subclass.new.render(right_only).width)
-          .to be > right_only[:width] + 80
+          .to be > short.width
       end
 
       it "sees render_labels once" do

@@ -1,218 +1,57 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sirena/renderer/xy_chart"
+require "sirena/parser/xy_chart"
 require "sirena/layout/xy_chart"
-require "sirena/diagram/xy_chart"
+require "sirena/renderer/xy_chart"
 
 RSpec.describe Sirena::Renderer::XyChart do
-  let(:theme) { Sirena::Theme::Registry.get(:default) }
-  let(:renderer) { described_class.new(theme: theme) }
+  subject(:renderer) { described_class.new }
 
-  describe "#render" do
-    context "with a simple XY chart" do
-      let(:layout) do
-        {
-          width: 800,
-          height: 500,
-          plot_x: 100,
-          plot_y: 80,
-          plot_width: 640,
-          plot_height: 340,
-          title: "Sales Revenue",
-          x_axis: {
-            label: "Month",
-            type: :categorical,
-            positions: [
-              { label: "jan", position: 106.67, index: 0 },
-              { label: "feb", position: 320.0, index: 1 },
-              { label: "mar", position: 533.33, index: 2 },
-            ],
-            min: 0,
-            max: 2,
-            width: 640,
-          },
-          y_axis: {
-            label: "Revenue ($)",
-            min: 0,
-            max: 100,
-            height: 340,
-            scale: 3.4,
-          },
-          datasets: [
-            {
-              id: "dataset_0",
-              label: "Line",
-              chart_type: :line,
-              points: [
-                { x: 106.67, y: 306.0, value: 10.0, index: 0 },
-                { x: 320.0, y: 272.0, value: 20.0, index: 1 },
-                { x: 533.33, y: 238.0, value: 30.0, index: 2 },
-              ],
-            },
-          ],
-        }
-      end
+  let(:source) do
+    <<~MERMAID
+      xychart-beta
+        title "Sales Revenue"
+        x-axis "Month" [jan, feb, mar]
+        y-axis "Revenue" 0 --> 100
+        line [10, 20, 30]
+        bar [15, 25, 35]
+    MERMAID
+  end
+  let(:diagram) { Sirena::Parser::XyChart.new.parse(source) }
+  let(:scene) { Sirena::Layout::XyChart.new.call(diagram) }
 
-      it "renders an SVG document" do
-        svg = renderer.render(layout)
-        expect(svg).to be_a(Sirena::Svg::Document)
-      end
+  it "returns typed final chart geometry" do
+    expect(scene).to be_a(Sirena::Layout::XyChart::Scene)
+    expect(scene.series).to all(be_a(Sirena::Layout::XyChart::Series))
+    expect(scene.lines).to all(be_a(Sirena::Layout::XyChart::Line))
+    expect(scene.view_box).to eq("0 0 800 500")
+  end
 
-      it "sets proper document dimensions" do
-        svg = renderer.render(layout)
-        expect(svg.width).to eq(layout[:width])
-        expect(svg.height).to eq(layout[:height])
-      end
+  it "positions line points and bars in canvas coordinates" do
+    line, bar = scene.series
 
-      it "includes title" do
-        svg = renderer.render(layout)
-        texts = svg.children.grep(Sirena::Svg::Text)
-        # `content` is `collection: true`, so read it through Array(...).
-        title_text = texts.find { |t| Array(t.content).join == "Sales Revenue" }
-        expect(title_text).not_to be_nil
-      end
+    expect(line.points.map(&:x)).to all(be >= Sirena::Layout::XyChart::MARGIN_LEFT)
+    expect(line.polyline).to include("#{line.points.first.x},#{line.points.first.y}")
+    expect(bar.bars.map(&:x)).to all(be >= Sirena::Layout::XyChart::MARGIN_LEFT)
+  end
 
-      it "includes axis lines" do
-        svg = renderer.render(layout)
-        lines = svg.children.grep(Sirena::Svg::Line)
-        # Grid lines + X-axis + Y-axis
-        expect(lines.length).to be >= 2
-      end
-
-      it "includes line chart" do
-        svg = renderer.render(layout)
-        polylines = svg.children.grep(Sirena::Svg::Polyline)
-        expect(polylines.length).to eq(1)
-      end
-
-      it "includes data point markers" do
-        svg = renderer.render(layout)
-        circles = svg.children.grep(Sirena::Svg::Circle)
-        expect(circles.length).to eq(3)
-      end
+  it "renders axes, both series, labels, and legends" do
+    svg = renderer.render(scene)
+    texts = svg.children.grep(Sirena::Svg::Text).map do |text|
+      Array(text.content).join
     end
 
-    context "with bar chart" do
-      let(:layout) do
-        {
-          width: 800,
-          height: 500,
-          plot_x: 100,
-          plot_y: 80,
-          plot_width: 640,
-          plot_height: 340,
-          title: nil,
-          x_axis: {
-            label: nil,
-            type: :categorical,
-            positions: [
-              { label: "A", position: 106.67, index: 0 },
-              { label: "B", position: 320.0, index: 1 },
-            ],
-            min: 0,
-            max: 1,
-            width: 640,
-          },
-          y_axis: {
-            label: nil,
-            min: 0,
-            max: 100,
-            height: 340,
-            scale: 3.4,
-          },
-          datasets: [
-            {
-              id: "dataset_0",
-              label: "Bar",
-              chart_type: :bar,
-              points: [
-                { x: 106.67, y: 272.0, value: 20.0, index: 0 },
-                { x: 320.0, y: 238.0, value: 30.0, index: 1 },
-              ],
-            },
-          ],
-        }
-      end
+    expect(svg.children.grep(Sirena::Svg::Polyline).length).to eq(1)
+    expect(svg.children.grep(Sirena::Svg::Circle).length).to eq(3)
+    expect(svg.children.grep(Sirena::Svg::Rect).length).to be >= 5
+    expect(texts).to include("Sales Revenue", "Month", "Revenue", "Line", "Bar")
+  end
 
-      it "renders bars" do
-        svg = renderer.render(layout)
-        rects = svg.children.grep(Sirena::Svg::Rect)
-        # Bars + potentially legend boxes
-        expect(rects.length).to be >= 2
-      end
-    end
+  it "uses Scene canvas dimensions verbatim" do
+    svg = renderer.render(scene)
 
-    context "with multiple datasets" do
-      let(:layout) do
-        {
-          width: 800,
-          height: 500,
-          plot_x: 100,
-          plot_y: 80,
-          plot_width: 640,
-          plot_height: 340,
-          title: "Sales Data",
-          x_axis: {
-            label: nil,
-            type: :categorical,
-            positions: [
-              { label: "Q1", position: 160.0, index: 0 },
-              { label: "Q2", position: 480.0, index: 1 },
-            ],
-            min: 0,
-            max: 1,
-            width: 640,
-          },
-          y_axis: {
-            label: nil,
-            min: 0,
-            max: 100,
-            height: 340,
-            scale: 3.4,
-          },
-          datasets: [
-            {
-              id: "dataset_0",
-              label: "Series A",
-              chart_type: :line,
-              points: [
-                { x: 160.0, y: 272.0, value: 20.0, index: 0 },
-                { x: 480.0, y: 238.0, value: 30.0, index: 1 },
-              ],
-            },
-            {
-              id: "dataset_1",
-              label: "Series B",
-              chart_type: :line,
-              points: [
-                { x: 160.0, y: 306.0, value: 10.0, index: 0 },
-                { x: 480.0, y: 204.0, value: 40.0, index: 1 },
-              ],
-            },
-          ],
-        }
-      end
-
-      it "renders multiple datasets" do
-        svg = renderer.render(layout)
-        polylines = svg.children.grep(Sirena::Svg::Polyline)
-        expect(polylines.length).to eq(2)
-      end
-
-      it "applies different colors to different datasets" do
-        svg = renderer.render(layout)
-        polylines = svg.children.grep(Sirena::Svg::Polyline)
-        colors = polylines.map(&:stroke).uniq
-        expect(colors.length).to eq(2)
-      end
-
-      it "includes legend" do
-        svg = renderer.render(layout)
-        texts = svg.children.grep(Sirena::Svg::Text)
-        legend_texts = texts.select { |t| Array(t.content).join == "Series A" || Array(t.content).join == "Series B" }
-        expect(legend_texts.length).to eq(2)
-      end
-    end
+    expect([svg.width, svg.height, svg.view_box])
+      .to eq([scene.width, scene.height, scene.view_box])
   end
 end

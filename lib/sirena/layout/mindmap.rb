@@ -16,6 +16,8 @@ module Sirena
     #   transform = Layout::Mindmap.new
     #   layout = transform.to_graph(diagram)
     class Mindmap < Base
+      PADDING = 40
+
       # Horizontal spacing between sibling nodes
       NODE_HORIZONTAL_SPACING = 120
 
@@ -28,6 +30,54 @@ module Sirena
 
       # Padding for root node
       ROOT_PADDING = 20
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :center_x, :float
+        attribute :center_y, :float
+        attribute :radius, :float
+        attribute :level, :integer
+        attribute :shape, :string
+        attribute :shape_points, :string
+        attribute :shape_path, :string
+        attribute :labels, Label, collection: true, default: -> { [] }
+      end
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :start_point, Point
+        attribute :end_point, Point
+        attribute :bend_points, Point, collection: true, default: -> { [] }
+      end
+
+      class Edge < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :path, :string
+        attribute :colour_level, :integer
+        attribute :sections, Section, collection: true, default: -> { [] }
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+        attribute :edges, Edge, collection: true, default: -> { [] }
+      end
 
       # Transforms the diagram into a layout structure.
       #
@@ -55,6 +105,107 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        nodes = typed_nodes(graph[:nodes])
+        width = graph[:width] + (PADDING * 2)
+        height = graph[:height] + (PADDING * 2)
+
+        Scene.new(
+          width: width,
+          height: height,
+          view_box: "0 0 #{width.to_f} #{height.to_f}",
+          children: nodes,
+          edges: typed_edges(graph[:connections], nodes),
+        )
+      end
+
+      def typed_nodes(nodes)
+        nodes.map do |node|
+          center_x = node[:x] + PADDING
+          top_y = node[:y] + PADDING
+          width = node[:width]
+          height = node[:height]
+          radius = [width, height].max / 2
+          label_y = node[:shape] == "circle" ? top_y + radius : top_y + (height / 2)
+
+          Node.new(
+            id: node[:id],
+            x: center_x - (width / 2),
+            y: top_y,
+            width: width,
+            height: height,
+            center_x: center_x,
+            center_y: top_y + radius,
+            radius: radius,
+            level: node[:level],
+            shape: node[:shape],
+            shape_points: hexagon_points(center_x, top_y, width, height),
+            shape_path: cloud_path(center_x, top_y, width, height),
+            labels: [Label.new(text: node[:content], x: center_x, y: label_y + 5)],
+          )
+        end
+      end
+
+      def typed_edges(connections, nodes)
+        nodes_by_id = nodes.to_h { |node| [node.id, node] }
+        connections.filter_map.with_index do |connection, index|
+          source = nodes_by_id[connection[:from]]
+          target = nodes_by_id[connection[:to]]
+          next unless source && target
+
+          start_point = Point.new(x: source.center_x,
+                                  y: source.y + (source.height / 2))
+          end_point = Point.new(x: target.center_x, y: target.y)
+          control_y = start_point.y + ((end_point.y - start_point.y) / 2)
+          bends = [Point.new(x: start_point.x, y: control_y),
+                   Point.new(x: end_point.x, y: control_y)]
+          Edge.new(
+            id: "edge_#{index}", source: source.id, target: target.id,
+            path: bezier_path(start_point, bends, end_point),
+            colour_level: source.level,
+            sections: [Section.new(start_point: start_point,
+                                   end_point: end_point,
+                                   bend_points: bends)],
+          )
+        end
+      end
+
+      def bezier_path(start_point, bends, end_point)
+        "M #{start_point.x} #{start_point.y} " \
+          "C #{bends[0].x} #{bends[0].y}, " \
+          "#{bends[1].x} #{bends[1].y}, " \
+          "#{end_point.x} #{end_point.y}"
+      end
+
+      def hexagon_points(x, y, width, height)
+        offset = width * 0.2
+        [[x - (width / 2) + offset, y],
+         [x + (width / 2) - offset, y],
+         [x + (width / 2), y + (height / 2)],
+         [x + (width / 2) - offset, y + height],
+         [x - (width / 2) + offset, y + height],
+         [x - (width / 2), y + (height / 2)]]
+          .map { |point| point.join(",") }.join(" ")
+      end
+
+      def cloud_path(x, y, width, height)
+        half_width = width / 2
+        "M #{x - half_width} #{y + height * 0.6} " \
+          "Q #{x - half_width} #{y + height * 0.3}, " \
+          "#{x - half_width * 0.6} #{y + height * 0.2} " \
+          "Q #{x - half_width * 0.6} #{y}, " \
+          "#{x - half_width * 0.2} #{y + height * 0.1} " \
+          "Q #{x} #{y}, #{x + half_width * 0.2} #{y + height * 0.1} " \
+          "Q #{x + half_width * 0.6} #{y}, " \
+          "#{x + half_width * 0.6} #{y + height * 0.2} " \
+          "Q #{x + half_width} #{y + height * 0.3}, " \
+          "#{x + half_width} #{y + height * 0.6} " \
+          "Q #{x + half_width} #{y + height}, #{x} #{y + height} " \
+          "Q #{x - half_width} #{y + height}, " \
+          "#{x - half_width} #{y + height * 0.6} Z"
+      end
 
       def empty_graph
         {
@@ -93,7 +244,6 @@ module Sirena
           shape: root.shape,
           icon: root.icon,
           classes: root.classes,
-          original: root,
         }
 
         # Position children recursively
@@ -147,7 +297,6 @@ module Sirena
             icon: child.icon,
             classes: child.classes,
             parent_id: parent.id,
-            original: child,
           }
 
           # Recursively position grandchildren
@@ -169,9 +318,8 @@ module Sirena
       # @param node [Diagram::Mindmap::MindmapNode] node
       # @return [Numeric] estimated width
       def estimate_node_width(node)
-        # Base width on content length
-        content_length = node.content.to_s.length
-        base_width = [content_length * 8 + 20, DEFAULT_NODE_WIDTH].max
+        measured = measure_text(node.content.to_s, font_size: node_font_size)
+        base_width = [measured[:width] + 20, DEFAULT_NODE_WIDTH].max
 
         # Adjust for shape
         case node.shape
@@ -180,6 +328,11 @@ module Sirena
         else
           base_width
         end
+      end
+
+      def node_font_size
+        theme.typography&.font_size_small ||
+          Theme::Registry.get(:default).typography.font_size_small
       end
 
       # Estimates the height of a node

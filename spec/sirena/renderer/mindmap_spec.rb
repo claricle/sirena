@@ -1,319 +1,56 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "sirena/renderer/mindmap"
+require "sirena/parser/mindmap"
 require "sirena/layout/mindmap"
-require "sirena/diagram/mindmap"
+require "sirena/renderer/mindmap"
 
 RSpec.describe Sirena::Renderer::Mindmap do
-  let(:theme) { Sirena::Theme::Registry.get(:default) }
-  let(:renderer) { described_class.new(theme: theme) }
+  subject(:renderer) { described_class.new }
 
-  describe "#render" do
-    context "with a simple mindmap" do
-      let(:layout) do
-        {
-          nodes: [
-            {
-              id: "node-0",
-              content: "Root",
-              x: 200,
-              y: 20,
-              width: 100,
-              height: 40,
-              level: 0,
-              shape: "default",
-              icon: nil,
-              classes: [],
-            },
-            {
-              id: "node-1",
-              content: "Child 1",
-              x: 150,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "default",
-              icon: nil,
-              classes: [],
-              parent_id: "node-0",
-            },
-            {
-              id: "node-2",
-              content: "Child 2",
-              x: 250,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "default",
-              icon: nil,
-              classes: [],
-              parent_id: "node-0",
-            },
-          ],
-          connections: [
-            {
-              from: "node-0",
-              to: "node-1",
-              type: :parent_child,
-            },
-            {
-              from: "node-0",
-              to: "node-2",
-              type: :parent_child,
-            },
-          ],
-          width: 400,
-          height: 200,
-          root: {
-            id: "node-0",
-            content: "Root",
-            x: 200,
-            y: 20,
-            width: 100,
-            height: 40,
-            level: 0,
-            shape: "default",
-          },
-        }
-      end
+  let(:source) do
+    <<~MERMAID
+      mindmap
+        root((Root))
+          square[Square]
+          cloud)Cloud(
+          hex{{Hex}}
+    MERMAID
+  end
+  let(:diagram) { Sirena::Parser::Mindmap.new.parse(source) }
+  let(:scene) { Sirena::Layout::Mindmap.new.call(diagram) }
 
-      it "renders an SVG document" do
-        svg = renderer.render(layout)
-        expect(svg).to be_a(Sirena::Svg::Document)
-      end
+  it "returns typed final canvas geometry" do
+    expect(scene).to be_a(Sirena::Layout::Mindmap::Scene)
+    expect(scene.children).to all(be_a(Sirena::Layout::Mindmap::Node))
+    expect(scene.edges).to all(be_a(Sirena::Layout::Mindmap::Edge))
+    expect(scene.view_box).to eq("0 0 #{scene.width} #{scene.height}")
+  end
 
-      it "sets proper document dimensions" do
-        svg = renderer.render(layout)
-        expect(svg.width).to be > layout[:width]
-        expect(svg.height).to be > layout[:height]
-      end
+  it "includes framing in every node, link, and label coordinate" do
+    root = scene.children.first
+    link = scene.edges.first
 
-      it "includes nodes as shapes" do
-        svg = renderer.render(layout)
-        shapes = svg.children.select do |e|
-          e.is_a?(Sirena::Svg::Rect) ||
-            e.is_a?(Sirena::Svg::Circle) ||
-            e.is_a?(Sirena::Svg::Polygon)
-        end
-        expect(shapes.length).to be >= layout[:nodes].length
-      end
+    expect([root.x, root.y, root.labels.first.x, root.labels.first.y])
+      .to all(be >= Sirena::Layout::Mindmap::PADDING)
+    expect(link.sections.first.start_point.x).to eq(root.center_x)
+    expect(link.path).to include(root.center_x.to_s)
+  end
 
-      it "includes text labels for nodes" do
-        svg = renderer.render(layout)
-        texts = svg.children.grep(Sirena::Svg::Text)
-        expect(texts.length).to eq(layout[:nodes].length)
-      end
+  it "renders all node shapes, labels, and links" do
+    svg = renderer.render(scene)
 
-      it "includes connection paths" do
-        svg = renderer.render(layout)
-        paths = svg.children.grep(Sirena::Svg::Path)
-        expect(paths.length).to eq(layout[:connections].length)
-      end
-    end
+    expect(svg.children.grep(Sirena::Svg::Circle).length).to eq(1)
+    expect(svg.children.grep(Sirena::Svg::Rect).length).to eq(1)
+    expect(svg.children.grep(Sirena::Svg::Polygon).length).to eq(1)
+    expect(svg.children.grep(Sirena::Svg::Path).length).to eq(4)
+    expect(svg.children.grep(Sirena::Svg::Text).length).to eq(4)
+  end
 
-    context "with different node shapes" do
-      let(:layout) do
-        {
-          nodes: [
-            {
-              id: "node-0",
-              content: "Circle",
-              x: 200,
-              y: 20,
-              width: 80,
-              height: 80,
-              level: 0,
-              shape: "circle",
-              icon: nil,
-              classes: [],
-            },
-            {
-              id: "node-1",
-              content: "Square",
-              x: 100,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "square",
-              icon: nil,
-              classes: [],
-            },
-            {
-              id: "node-2",
-              content: "Hexagon",
-              x: 300,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "hexagon",
-              icon: nil,
-              classes: [],
-            },
-          ],
-          connections: [],
-          width: 400,
-          height: 200,
-          root: nil,
-        }
-      end
+  it "uses the Scene dimensions without renderer offsets" do
+    svg = renderer.render(scene)
 
-      it "renders circle nodes" do
-        svg = renderer.render(layout)
-        circles = svg.children.grep(Sirena::Svg::Circle)
-        expect(circles.length).to be >= 1
-      end
-
-      it "renders square nodes" do
-        svg = renderer.render(layout)
-        rects = svg.children.grep(Sirena::Svg::Rect)
-        expect(rects.length).to be >= 1
-      end
-
-      it "renders hexagon nodes" do
-        svg = renderer.render(layout)
-        polygons = svg.children.grep(Sirena::Svg::Polygon)
-        expect(polygons.length).to be >= 1
-      end
-    end
-
-    context "with cloud and bang shapes" do
-      let(:layout) do
-        {
-          nodes: [
-            {
-              id: "node-0",
-              content: "Cloud",
-              x: 200,
-              y: 20,
-              width: 100,
-              height: 60,
-              level: 0,
-              shape: "cloud",
-              icon: nil,
-              classes: [],
-            },
-            {
-              id: "node-1",
-              content: "Bang",
-              x: 200,
-              y: 140,
-              width: 100,
-              height: 60,
-              level: 1,
-              shape: "bang",
-              icon: nil,
-              classes: [],
-            },
-          ],
-          connections: [],
-          width: 300,
-          height: 220,
-          root: nil,
-        }
-      end
-
-      it "renders cloud shapes using paths" do
-        svg = renderer.render(layout)
-        paths = svg.children.grep(Sirena::Svg::Path)
-        expect(paths.length).to be >= 1
-      end
-
-      it "renders bang shapes using paths" do
-        svg = renderer.render(layout)
-        paths = svg.children.grep(Sirena::Svg::Path)
-        expect(paths.length).to be >= 1
-      end
-    end
-
-    context "with multi-level hierarchy" do
-      let(:layout) do
-        {
-          nodes: [
-            {
-              id: "node-0",
-              content: "Root",
-              x: 250,
-              y: 20,
-              width: 100,
-              height: 40,
-              level: 0,
-              shape: "circle",
-              icon: nil,
-              classes: [],
-            },
-            {
-              id: "node-1",
-              content: "Level 1 - A",
-              x: 150,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "default",
-              icon: nil,
-              classes: [],
-              parent_id: "node-0",
-            },
-            {
-              id: "node-2",
-              content: "Level 1 - B",
-              x: 350,
-              y: 140,
-              width: 100,
-              height: 40,
-              level: 1,
-              shape: "default",
-              icon: nil,
-              classes: [],
-              parent_id: "node-0",
-            },
-            {
-              id: "node-3",
-              content: "Level 2",
-              x: 150,
-              y: 260,
-              width: 100,
-              height: 40,
-              level: 2,
-              shape: "square",
-              icon: nil,
-              classes: [],
-              parent_id: "node-1",
-            },
-          ],
-          connections: [
-            { from: "node-0", to: "node-1", type: :parent_child },
-            { from: "node-0", to: "node-2", type: :parent_child },
-            { from: "node-1", to: "node-3", type: :parent_child },
-          ],
-          width: 500,
-          height: 320,
-          root: nil,
-        }
-      end
-
-      it "applies different colors based on level" do
-        svg = renderer.render(layout)
-        # Level 0 should be one color, level 1 another, level 2 another
-        shapes = svg.children.select do |e|
-          e.is_a?(Sirena::Svg::Rect) ||
-            e.is_a?(Sirena::Svg::Circle) ||
-            e.is_a?(Sirena::Svg::Polygon)
-        end
-        stroke_colors = shapes.map(&:stroke).uniq
-        expect(stroke_colors.length).to be >= 2
-      end
-
-      it "renders all levels" do
-        svg = renderer.render(layout)
-        texts = svg.children.grep(Sirena::Svg::Text)
-        expect(texts.length).to eq(4)
-      end
-    end
+    expect([svg.width, svg.height, svg.view_box])
+      .to eq([scene.width, scene.height, scene.view_box])
   end
 end

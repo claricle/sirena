@@ -26,6 +26,68 @@ module Sirena
       MARGIN_BOTTOM = 80
       MARGIN_LEFT = 100
 
+      GRID_LINES = 5
+      BAR_WIDTH_RATIO = 0.6
+
+      class Line < Lutaml::Model::Serializable
+        attribute :x1, :float
+        attribute :y1, :float
+        attribute :x2, :float
+        attribute :y2, :float
+        attribute :kind, :string
+      end
+
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :text_anchor, :string
+        attribute :font_size, :float
+        attribute :font_weight, :string
+        attribute :transform, :string
+      end
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :radius, :float
+      end
+
+      class Bar < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+      end
+
+      class Series < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :label, :string
+        attribute :chart_type, :symbol
+        attribute :colour_index, :integer
+        attribute :polyline, :string
+        attribute :points, Point, collection: true, default: -> { [] }
+        attribute :bars, Bar, collection: true, default: -> { [] }
+      end
+
+      class Legend < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :colour_index, :integer
+        attribute :label, Label
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :title, Label
+        attribute :lines, Line, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :series, Series, collection: true, default: -> { [] }
+        attribute :legends, Legend, collection: true, default: -> { [] }
+      end
+
       # Transforms the diagram into a layout structure.
       #
       # @param diagram [Diagram::XyChart] the XY chart diagram
@@ -63,6 +125,158 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        Scene.new(
+          width: graph[:width], height: graph[:height],
+          view_box: "0 0 #{graph[:width]} #{graph[:height]}",
+          title: title_label(graph),
+          lines: grid_lines(graph) + axis_lines(graph),
+          labels: axis_labels(graph),
+          series: typed_series(graph),
+          legends: legends(graph),
+        )
+      end
+
+      def title_label(graph)
+        return unless graph[:title]
+
+        Label.new(text: graph[:title], x: graph[:width] / 2, y: 30,
+                  text_anchor: "middle", font_size: large_font_size,
+                  font_weight: "bold")
+      end
+
+      def grid_lines(graph)
+        lines = GRID_LINES.times.map do |index|
+          y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
+          Line.new(x1: graph[:plot_x], y1: y,
+                   x2: graph[:plot_x] + graph[:plot_width], y2: y,
+                   kind: "grid")
+        end
+        return lines unless graph.dig(:x_axis, :type) == :categorical
+
+        lines + (graph.dig(:x_axis, :positions) || []).map do |position|
+          x = graph[:plot_x] + position[:position]
+          Line.new(x1: x, y1: graph[:plot_y], x2: x,
+                   y2: graph[:plot_y] + graph[:plot_height], kind: "grid")
+        end
+      end
+
+      def axis_lines(graph)
+        x = graph[:plot_x]
+        y = graph[:plot_y]
+        width = graph[:plot_width]
+        height = graph[:plot_height]
+        [Line.new(x1: x, y1: y + height, x2: x + width, y2: y + height,
+                  kind: "axis"),
+         Line.new(x1: x, y1: y, x2: x, y2: y + height, kind: "axis")]
+      end
+
+      def axis_labels(graph)
+        x_axis_labels(graph) + y_axis_labels(graph)
+      end
+
+      def x_axis_labels(graph)
+        axis = graph[:x_axis]
+        labels = []
+        if axis[:label]
+          labels << Label.new(
+            text: axis[:label], x: graph[:plot_x] + (graph[:plot_width] / 2),
+            y: graph[:plot_y] + graph[:plot_height] + 60,
+            text_anchor: "middle", font_size: normal_font_size,
+            font_weight: "bold",
+          )
+        end
+        return labels unless axis[:type] == :categorical
+
+        labels + (axis[:positions] || []).map do |position|
+          Label.new(text: position[:label],
+                    x: graph[:plot_x] + position[:position],
+                    y: graph[:plot_y] + graph[:plot_height] + 20,
+                    text_anchor: "middle", font_size: small_font_size)
+        end
+      end
+
+      def y_axis_labels(graph)
+        axis = graph[:y_axis]
+        labels = []
+        if axis[:label]
+          centre_y = graph[:plot_y] + (graph[:plot_height] / 2)
+          labels << Label.new(
+            text: axis[:label], x: 20, y: centre_y,
+            text_anchor: "middle", font_size: normal_font_size,
+            font_weight: "bold", transform: "rotate(-90, 20, #{centre_y})",
+          )
+        end
+        labels + GRID_LINES.times.map do |index|
+          y = graph[:plot_y] + (index * graph[:plot_height] / GRID_LINES)
+          value = axis[:max] - (index * (axis[:max] - axis[:min]) / GRID_LINES)
+          Label.new(text: value.round(1).to_s, x: graph[:plot_x] - 10,
+                    y: y + 4, text_anchor: "end",
+                    font_size: small_font_size)
+        end
+      end
+
+      def typed_series(graph)
+        graph[:datasets].map.with_index do |dataset, index|
+          points = dataset[:points].map do |point|
+            Point.new(x: graph[:plot_x] + point[:x],
+                      y: graph[:plot_y] + point[:y], radius: 4)
+          end
+          Series.new(
+            id: dataset[:id], label: dataset[:label],
+            chart_type: dataset[:chart_type], colour_index: index,
+            polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
+            points: dataset[:chart_type] == :bar ? [] : points,
+            bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : [],
+          )
+        end
+      end
+
+      def bars(graph, dataset)
+        width = bar_width(graph)
+        dataset[:points].map do |point|
+          Bar.new(x: graph[:plot_x] + point[:x] - (width / 2),
+                  y: graph[:plot_y] + point[:y], width: width,
+                  height: graph[:plot_height] - point[:y])
+        end
+      end
+
+      def bar_width(graph)
+        axis = graph[:x_axis]
+        return 20 unless axis[:type] == :categorical && axis[:positions]
+
+        (graph[:plot_width] / axis[:positions].length) * BAR_WIDTH_RATIO
+      end
+
+      def legends(graph)
+        graph[:datasets].map.with_index do |dataset, index|
+          y = 60 + (index * 25)
+          Legend.new(
+            x: graph[:width] - 150, y: y - 8, width: 15, height: 15,
+            colour_index: index,
+            label: Label.new(text: dataset[:label], x: graph[:width] - 130,
+                             y: y + 4, text_anchor: "start",
+                             font_size: small_font_size),
+          )
+        end
+      end
+
+      def large_font_size
+        theme.typography&.font_size_large ||
+          Theme::Registry.get(:default).typography.font_size_large
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal ||
+          Theme::Registry.get(:default).typography.font_size_normal
+      end
+
+      def small_font_size
+        theme.typography&.font_size_small ||
+          Theme::Registry.get(:default).typography.font_size_small
+      end
 
       # Positions the X-axis.
       #

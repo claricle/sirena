@@ -232,9 +232,7 @@ RSpec.describe Sirena::Renderer::Base do
   # Asserting the delegation itself does go red -- reverting the diff removes
   # the build_document_from_layout call entirely, not just its padding value.
   describe "padded subclasses delegate create_document_from_layout" do
-    {
-      Sirena::Renderer::GitGraph => 40, Sirena::Renderer::Kanban => 40, Sirena::Renderer::Mindmap => 40
-    }.each do |renderer_klass, padding|
+    { Sirena::Renderer::Kanban => 40 }.each do |renderer_klass, padding|
       it "calls build_document_from_layout with padding #{padding} for #{renderer_klass}" do
         instance = renderer_klass.new
         layout = { width: 100, height: 50 }
