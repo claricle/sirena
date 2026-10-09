@@ -69,7 +69,8 @@ module Sirena
           circle.cy = point.y
           circle.r = point.radius
           circle.fill = point.color || point_color(point.quadrant)
-          circle.stroke = point.stroke_color || theme_color(:node_stroke) || "#ffffff"
+          circle.stroke =
+            point.stroke_color || theme_color(:node_stroke) || "#ffffff"
           circle.stroke_width = number_string(point.stroke_width)
           circle.id = point.id
         end
@@ -82,7 +83,8 @@ module Sirena
           text.y = label.y
           text.content = label.text
           text.fill = label_color(label.style)
-          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          text.font_family =
+            theme_typography(:font_family) || "Arial, sans-serif"
           text.font_size = number_string(label.font_size)
           text.text_anchor = label.text_anchor if label.text_anchor
           text.font_weight = label.font_weight if label.font_weight

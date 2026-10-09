@@ -86,7 +86,8 @@ module Sirena
           text.y = label.y
           text.fill = label_color(label.style)
           text.font_size = number_string(label.font_size)
-          text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+          text.font_family =
+            theme_typography(:font_family) || "Arial, sans-serif"
           text.text_anchor = label.text_anchor if label.text_anchor
           text.font_weight = label.font_weight if label.font_weight
           assign_content(text, label)

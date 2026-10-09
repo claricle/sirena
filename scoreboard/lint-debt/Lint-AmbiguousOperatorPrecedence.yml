@@ -13,8 +13,6 @@ rows:
   count: 2
 - file: lib/sirena/layout/packet.rb
   count: 2
-- file: lib/sirena/layout/radar.rb
-  count: 2
 - file: lib/sirena/layout/requirement.rb
   count: 3
 - file: lib/sirena/layout/treemap.rb
@@ -63,8 +61,6 @@ rows:
   count: 11
 - file: lib/sirena/renderer/class_diagram.rb
   count: 2
-- file: lib/sirena/renderer/kanban.rb
-  count: 1
 - file: lib/sirena/renderer/mindmap.rb
   count: 3
 - file: lib/sirena/renderer/pie.rb

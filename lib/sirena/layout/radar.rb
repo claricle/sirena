@@ -89,15 +89,9 @@ module Sirena
 
         min_value, max_value = calculate_value_range(diagram)
         axes = position_axes(diagram.axes)
-        {
-          axes: axes,
-          curves: position_curves(diagram.curves, axes, min_value, max_value),
-          grid_circles: calculate_grid_circles(min_value, max_value),
-          center_x: DEFAULT_RADIUS + PADDING, center_y: DEFAULT_RADIUS + PADDING,
-          radius: DEFAULT_RADIUS, width: (DEFAULT_RADIUS + PADDING) * 2,
-          height: (DEFAULT_RADIUS + PADDING) * 2,
-          min_value: min_value, max_value: max_value, options: diagram.options
-        }
+        radar_dimensions(min_value, max_value).merge(
+          radar_data(diagram, axes, min_value, max_value),
+        )
       end
 
       private
@@ -107,19 +101,33 @@ module Sirena
       end
 
       def scene_from_graph(graph)
-        center_x = graph.fetch(:center_x)
-        center_y = graph.fetch(:center_y)
+        curves = typed_curves(
+          graph.fetch(:curves), graph.fetch(:center_x), graph.fetch(:center_y)
+        )
+        Scene.new(**scene_dimensions(graph), **scene_data(graph, curves))
+      end
+
+      def scene_dimensions(graph)
         width = graph.fetch(:width)
         height = graph.fetch(:height)
-        curves = typed_curves(graph.fetch(:curves), center_x, center_y)
-        Scene.new(
+        {
           width: width, height: height, view_box: "0 0 #{width} #{height}",
-          center_x: center_x, center_y: center_y, radius: graph.fetch(:radius),
-          min_value: graph.fetch(:min_value), max_value: graph.fetch(:max_value),
-          grid_circles: typed_grid(graph.fetch(:grid_circles), center_x, center_y),
-          axes: typed_axes(graph.fetch(:axes), center_x, center_y), curves: curves,
-          legend: legend(graph, curves)
-        )
+          center_x: graph.fetch(:center_x), center_y: graph.fetch(:center_y),
+          radius: graph.fetch(:radius), min_value: graph.fetch(:min_value),
+          max_value: graph.fetch(:max_value)
+        }
+      end
+
+      def scene_data(graph, curves)
+        center_x = graph.fetch(:center_x)
+        center_y = graph.fetch(:center_y)
+        {
+          grid_circles: typed_grid(
+            graph.fetch(:grid_circles), center_x, center_y
+          ),
+          axes: typed_axes(graph.fetch(:axes), center_x, center_y),
+          curves: curves, legend: legend(graph, curves)
+        }
       end
 
       def typed_grid(circles, center_x, center_y)
@@ -129,56 +137,81 @@ module Sirena
       end
 
       def typed_axes(axes, center_x, center_y)
-        axes.map do |axis|
-          angle = axis[:angle_degrees]
-          Axis.new(
-            id: axis[:id], angle: angle,
-            line: Line.new(
-              x1: center_x, y1: center_y,
-              x2: center_x + axis[:end_x], y2: center_y + axis[:end_y]
-            ),
-            label: Label.new(
-              text: axis[:label], x: center_x + axis[:label_x],
-              y: center_y + axis[:label_y],
-              font_size: font_size(:font_size_normal, 12),
-              text_anchor: text_anchor(angle),
-              dominant_baseline: dominant_baseline(angle), font_weight: "bold"
-            )
-          )
-        end
+        axes.map { |axis| typed_axis(axis, center_x, center_y) }
+      end
+
+      def typed_axis(axis, center_x, center_y)
+        angle = axis[:angle_degrees]
+        Axis.new(
+          id: axis[:id], angle: angle,
+          line: axis_line(axis, center_x, center_y),
+          label: axis_label(axis, angle, center_x, center_y)
+        )
+      end
+
+      def axis_line(axis, center_x, center_y)
+        Line.new(
+          x1: center_x, y1: center_y,
+          x2: center_x + axis[:end_x], y2: center_y + axis[:end_y]
+        )
+      end
+
+      def axis_label(axis, angle, center_x, center_y)
+        Label.new(
+          text: axis[:label], x: center_x + axis[:label_x],
+          y: center_y + axis[:label_y],
+          font_size: font_size(:font_size_normal, 12),
+          text_anchor: text_anchor(angle),
+          dominant_baseline: dominant_baseline(angle), font_weight: "bold"
+        )
       end
 
       def typed_curves(curves, center_x, center_y)
         curves.map.with_index do |curve, index|
-          points = curve[:points].map do |point|
-            Point.new(
-              axis_id: point[:axis_id], value: point[:value],
-              normalized: point[:normalized], x: center_x + point[:x],
-              y: center_y + point[:y]
-            )
-          end
-          Curve.new(
-            id: curve[:id], label: curve[:label], points: points,
-            polygon_points: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
-            color_index: index
-          )
+          typed_curve(curve, index, center_x, center_y)
         end
+      end
+
+      def typed_curve(curve, index, center_x, center_y)
+        points = curve[:points].map do |point|
+          typed_point(point, center_x, center_y)
+        end
+        Curve.new(
+          id: curve[:id], label: curve[:label], points: points,
+          polygon_points: polygon_points(points), color_index: index
+        )
+      end
+
+      def typed_point(point, center_x, center_y)
+        Point.new(
+          axis_id: point[:axis_id], value: point[:value],
+          normalized: point[:normalized], x: center_x + point[:x],
+          y: center_y + point[:y]
+        )
+      end
+
+      def polygon_points(points)
+        points.map { |point| "#{point.x},#{point.y}" }.join(" ")
       end
 
       def legend(graph, curves)
         return [] if graph.dig(:options, :show_legend) == false
 
         curves.map.with_index do |curve, index|
-          y = graph.fetch(:height) - 40 + (index * 20)
-          Legend.new(
-            marker: Circle.new(x: 20, y: y, radius: 5),
-            label: Label.new(
-              text: curve.label, x: 35, y: y + 4,
-              font_size: font_size(:font_size_small, 10), text_anchor: "start"
-            ),
-            color_index: index,
-          )
+          legend_entry(curve, index, graph.fetch(:height))
         end
+      end
+
+      def legend_entry(curve, index, height)
+        y_position = height - 40 + (index * 20)
+        Legend.new(
+          marker: Circle.new(x: 20, y: y_position, radius: 5),
+          label: Label.new(
+            text: curve.label, x: 35, y: y_position + 4,
+            font_size: font_size(:font_size_small, 10), text_anchor: "start"
+          ),
+          color_index: index,
+        )
       end
 
       def text_anchor(angle)
@@ -210,6 +243,24 @@ module Sirena
         }
       end
 
+      def radar_dimensions(min_value, max_value)
+        center = DEFAULT_RADIUS + PADDING
+        {
+          center_x: center, center_y: center, radius: DEFAULT_RADIUS,
+          width: center * 2, height: center * 2,
+          min_value: min_value, max_value: max_value
+        }
+      end
+
+      def radar_data(diagram, axes, min_value, max_value)
+        {
+          axes: axes,
+          curves: position_curves(diagram.curves, axes, min_value, max_value),
+          grid_circles: calculate_grid_circles(min_value, max_value),
+          options: diagram.options,
+        }
+      end
+
       def calculate_value_range(diagram)
         values = diagram.curves.flat_map { |curve| curve.values.values }
         min_value = diagram.options[:min] || values.min || 0
@@ -221,34 +272,46 @@ module Sirena
       def position_axes(axes)
         step = 360.0 / axes.length
         axes.map.with_index do |axis, index|
-          angle = (index * step) - 90
-          radians = angle * Math::PI / 180.0
-          {
-            id: axis.id, label: axis.label, angle_degrees: angle,
-            angle_radians: radians, end_x: Math.cos(radians) * DEFAULT_RADIUS,
-            end_y: Math.sin(radians) * DEFAULT_RADIUS,
-            label_x: Math.cos(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
-            label_y: Math.sin(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
-            index: index
-          }
+          positioned_axis(axis, index, step)
         end
+      end
+
+      def positioned_axis(axis, index, step)
+        angle = (index * step) - 90
+        radians = angle * Math::PI / 180.0
+        {
+          id: axis.id, label: axis.label, angle_degrees: angle,
+          angle_radians: radians, end_x: Math.cos(radians) * DEFAULT_RADIUS,
+          end_y: Math.sin(radians) * DEFAULT_RADIUS,
+          label_x: Math.cos(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
+          label_y: Math.sin(radians) * (DEFAULT_RADIUS + LABEL_OFFSET),
+          index: index
+        }
       end
 
       def position_curves(curves, axes, min_value, max_value)
         curves.map do |curve|
-          points = axes.map do |axis|
-            value = curve.value_for(axis[:id])
-            normalized = normalize_value(value, min_value, max_value)
-            radius = normalized * DEFAULT_RADIUS
-            {
-              axis_id: axis[:id], value: value, normalized: normalized,
-              x: Math.cos(axis[:angle_radians]) * radius,
-              y: Math.sin(axis[:angle_radians]) * radius,
-              angle: axis[:angle_radians]
-            }
-          end
-          { id: curve.id, label: curve.label, points: points }
+          positioned_curve(curve, axes, min_value, max_value)
         end
+      end
+
+      def positioned_curve(curve, axes, min_value, max_value)
+        points = axes.map do |axis|
+          positioned_point(curve, axis, min_value, max_value)
+        end
+        { id: curve.id, label: curve.label, points: points }
+      end
+
+      def positioned_point(curve, axis, min_value, max_value)
+        value = curve.value_for(axis[:id])
+        normalized = normalize_value(value, min_value, max_value)
+        radius = normalized * DEFAULT_RADIUS
+        {
+          axis_id: axis[:id], value: value, normalized: normalized,
+          x: Math.cos(axis[:angle_radians]) * radius,
+          y: Math.sin(axis[:angle_radians]) * radius,
+          angle: axis[:angle_radians]
+        }
       end
 
       def normalize_value(value, min_value, max_value)

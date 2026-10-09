@@ -42,17 +42,13 @@ rows:
 - file: lib/sirena/layout/grid.rb
   count: 2
 - file: lib/sirena/layout/kanban.rb
-  count: 3
+  count: 1
 - file: lib/sirena/layout/mindmap.rb
   count: 3
 - file: lib/sirena/layout/packet.rb
   count: 5
 - file: lib/sirena/layout/pie.rb
   count: 2
-- file: lib/sirena/layout/quadrant.rb
-  count: 3
-- file: lib/sirena/layout/radar.rb
-  count: 5
 - file: lib/sirena/layout/requirement.rb
   count: 3
 - file: lib/sirena/layout/sankey.rb
@@ -62,7 +58,7 @@ rows:
 - file: lib/sirena/layout/state_diagram.rb
   count: 6
 - file: lib/sirena/layout/timeline.rb
-  count: 2
+  count: 1
 - file: lib/sirena/layout/treemap.rb
   count: 2
 - file: lib/sirena/layout/user_journey.rb
@@ -156,7 +152,7 @@ rows:
 - file: lib/sirena/renderer/info.rb
   count: 2
 - file: lib/sirena/renderer/kanban.rb
-  count: 5
+  count: 3
 - file: lib/sirena/renderer/markdown_text.rb
   count: 1
 - file: lib/sirena/renderer/mindmap.rb
@@ -166,9 +162,9 @@ rows:
 - file: lib/sirena/renderer/pie.rb
   count: 5
 - file: lib/sirena/renderer/quadrant.rb
-  count: 10
+  count: 2
 - file: lib/sirena/renderer/radar.rb
-  count: 5
+  count: 1
 - file: lib/sirena/renderer/requirement.rb
   count: 7
 - file: lib/sirena/renderer/sankey.rb
@@ -178,7 +174,7 @@ rows:
 - file: lib/sirena/renderer/state_diagram.rb
   count: 5
 - file: lib/sirena/renderer/timeline.rb
-  count: 9
+  count: 1
 - file: lib/sirena/renderer/treemap.rb
   count: 3
 - file: lib/sirena/renderer/user_journey.rb
