@@ -168,7 +168,7 @@ module DocMermaidSpec
   end
 end
 
-RSpec.describe "docs mermaid blocks" do
+RSpec.describe DocMermaidSpec do
   let(:diagrams) { DocMermaidBlocks.diagrams }
 
   it "extracts every [source,mermaid] block on the docs pages" do
@@ -190,11 +190,9 @@ RSpec.describe "docs mermaid blocks" do
   end
 
   DocMermaidBlocks.diagrams.each do |diagram|
-    expected = DocMermaidSpec.expected(diagram)
-
-    if expected
-      it "#{diagram.file} #{diagram.key} still fails as #{expected.first}" do
-        expect { Sirena.render(diagram.source) }.to raise_error(expected.last)
+    if DocMermaidSpec.expected(diagram)
+      it "#{diagram.file} #{diagram.key} still fails as #{DocMermaidSpec.expected(diagram).first}" do
+        expect { Sirena.render(diagram.source) }.to raise_error(DocMermaidSpec.expected(diagram).last)
       end
     else
       it "#{diagram.file} #{diagram.key} renders an SVG document" do
