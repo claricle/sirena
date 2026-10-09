@@ -7,7 +7,6 @@ module Sirena
     module Grammars
       # Parslet grammar for Git Graph diagrams
       class GitGraph < Common
-
         rule(:diagram) do
           ws? >>
             header >>

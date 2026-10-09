@@ -8,7 +8,6 @@ module Sirena
     module Grammars
       # Grammar for parsing Mermaid packet-beta diagram syntax
       class Packet < Common
-
         rule(:diagram_type) { str("packet-beta") >> space? }
 
         rule(:text) { match['^\n'].repeat(1) }

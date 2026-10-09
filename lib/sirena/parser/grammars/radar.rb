@@ -8,7 +8,6 @@ module Sirena
     module Grammars
       # Grammar for parsing Mermaid radar-beta chart syntax
       class Radar < Common
-
         rule(:diagram_type) { str("radar-beta") >> space? }
 
         rule(:title_line) do
