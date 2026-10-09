@@ -59,6 +59,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2904.left_to_right--4e7a191e1721
     resources.vega.nonreg.group2904.role_tail_only--c95e6006dcac
     resources.vega.nonreg.group2904.role_without_visibility--6318bda823a1
+    resources.vega.nonreg.group2917.smetana_hide_class--cda3c6a5e269
     resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
     resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca
     resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
@@ -305,6 +306,50 @@ RSpec.describe Sirena::Notation::PlantUML do
         expect { parse_corpus("#{line}\nclass A") }
           .to raise_error(described_class::UnsupportedConstructError)
       end
+    end
+  end
+
+  describe "tags and hide" do
+    let(:diagram) do
+      parse_corpus("class A\nclass B $x $y\nB --> A\nA --> C\nhide $y")
+    end
+
+    it "reads each tag after the class header" do
+      expect(parse_corpus("class B<T> <<s>> $x $y {\n}").classes.first.tags)
+        .to eq(%w[x y])
+    end
+
+    it "removes a class carrying the tag, declared before the hide line" do
+      expect(diagram.classes.map(&:name)).to eq(%w[A C])
+    end
+
+    it "removes the relations that touch it and keeps the rest" do
+      expect(diagram.relations.map(&:right)).to eq(%w[C])
+    end
+
+    it "removes a class tagged after the hide line" do
+      source = "hide $x\nclass B $x\nclass A"
+
+      expect(parse_corpus(source).classes.map(&:name)).to eq(%w[A])
+    end
+
+    it "does nothing for a tag no class carries" do
+      expect(parse_corpus("class A\nhide $z").classes.size).to eq(1)
+    end
+
+    it "refuses to hide a class that has a note" do
+      source = "class A $x\nnote right of A : hi\nhide $x"
+
+      expect { parse_corpus(source) }
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /hide of a class with a note/)
+    end
+
+    it "draws no box for the hidden class" do
+      svg = Sirena.render(wrap("class A\nclass B $x\nA --> B\nhide $x"),
+                          notation: :plantuml)
+
+      expect(svg).not_to include("class-B")
     end
   end
 
