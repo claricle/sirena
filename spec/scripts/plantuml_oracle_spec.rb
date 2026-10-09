@@ -141,7 +141,8 @@ module PlantumlOracleSpecSupport
 
   def recorded_toolchains(document, records)
     fields = document.fetch("toolchain").keys
-    [document.fetch("toolchain"), records.map { |record| record.slice(*fields) }]
+    records = records.map { |record| record.slice(*fields) }
+    [document.fetch("toolchain"), records]
   end
 
   # The error `refresh` raises for this runner, or nil when it succeeds.
