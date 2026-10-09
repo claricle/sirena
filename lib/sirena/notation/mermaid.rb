@@ -123,10 +123,10 @@ module Sirena
           keyword: "treemap or treemap-beta",
         },
         c4: {
-          pattern: /\A\s*(C4Context|C4Container|C4Component|C4Dynamic|C4Deployment|
-            C4\s+diagram)/ix,
-          keyword: "C4Context, C4Container, C4Component, C4Dynamic, C4Deployment, " \
-              "or a C4 diagram",
+          pattern: /\A\s*(C4Context|C4Container|C4Component|C4Dynamic|
+            C4Deployment|C4\s+diagram)/ix,
+          keyword: "C4Context, C4Container, C4Component, C4Dynamic, " \
+                   "C4Deployment, or a C4 diagram",
         },
         info: {
           pattern: /\A\s*info/i,
@@ -139,10 +139,12 @@ module Sirena
       }.freeze
 
       # @deprecated Read {TYPES}; kept because specs and callers use these.
-      DIAGRAM_TYPE_PATTERNS = TYPES.transform_values { |row| row[:pattern] }.freeze
+      DIAGRAM_TYPE_PATTERNS =
+        TYPES.transform_values { |row| row[:pattern] }.freeze
 
       # @deprecated Read {TYPES}.
-      DIAGRAM_TYPE_KEYWORDS = TYPES.transform_values { |row| row[:keyword] }.freeze
+      DIAGRAM_TYPE_KEYWORDS =
+        TYPES.transform_values { |row| row[:keyword] }.freeze
 
       # An empty preamble item — a bare `%%`, or a `%%{...}%%` with no
       # directive header — is not universally invalid. Every type was probed

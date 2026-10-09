@@ -211,17 +211,25 @@ module Sirena
     # only variable-width field, ends the line. Sorted by stage, then path,
     # so cases that break the same way sit together.
     def print_failures(rows, results, only_valid:)
-      failing = rows.reject { |row| row["pass"] }
-      failing = failing.select { |row| row["verdict"] == "valid" } if only_valid
+      failing = failing_rows(rows, only_valid)
       puts
       puts(only_valid ? "failing (valid cases only):" : "failing:")
       return puts("  none") if failing.empty?
 
+      failure_lines(failing, results).each { |line| puts line }
+    end
+
+    def failing_rows(rows, only_valid)
+      failing = rows.reject { |row| row["pass"] }
+      only_valid ? failing.select { |row| row["verdict"] == "valid" } : failing
+    end
+
+    def failure_lines(failing, results)
       width = failing.map { |row| row["case"].size }.max
-      failing.sort_by { |row| [row["stage"], row["case"]] }.each do |row|
+      failing.sort_by { |row| [row["stage"], row["case"]] }.map do |row|
         message = tidy_message(results[row["case"]][:message])
-        puts format("  %-#{width}s  %-8s  %-8s  %s", row["case"],
-                    row["stage"], row["verdict"], message)
+        format("  %-#{width}s  %-8s  %-8s  %s", row["case"],
+               row["stage"], row["verdict"], message)
       end
     end
 

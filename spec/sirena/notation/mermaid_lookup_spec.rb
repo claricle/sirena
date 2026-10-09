@@ -5,7 +5,10 @@ require "spec_helper"
 # Parser.for, Layout.for and Renderer.for: three cases each, and every layer
 # raises its own error class when a known type's class does not resolve.
 RSpec.describe Sirena::Notation::Mermaid do
-  let(:row) { Sirena::Notation::Mermaid::TYPES.fetch(:pie) }
+  let(:types_with_misnamed_pie) do
+    types = Sirena::Notation::Mermaid::TYPES
+    types.merge(pie: types.fetch(:pie).merge(name: "NoSuchClass"))
+  end
 
   {
     Sirena::Parser => [Sirena::Parser::Pie, Sirena::Parser::ParseError],
@@ -27,12 +30,7 @@ RSpec.describe Sirena::Notation::Mermaid do
       end
 
       it "raises #{layer_error} for a known type whose class is missing" do
-        stub_const(
-          "Sirena::Notation::Mermaid::TYPES",
-          Sirena::Notation::Mermaid::TYPES.merge(
-            pie: row.merge(name: "NoSuchClass"),
-          ),
-        )
+        stub_const("Sirena::Notation::Mermaid::TYPES", types_with_misnamed_pie)
 
         expect { layer.for(:pie) }.to raise_error(layer_error, /NoSuchClass/)
       end
@@ -51,12 +49,7 @@ RSpec.describe Sirena::Notation::Mermaid do
 
   # A misnamed layout must fail the render, not draw an unlaid-out diagram.
   it "fails a render whose layout constant does not resolve" do
-    stub_const(
-      "Sirena::Notation::Mermaid::TYPES",
-      Sirena::Notation::Mermaid::TYPES.merge(
-        pie: row.merge(name: "NoSuchClass"),
-      ),
-    )
+    stub_const("Sirena::Notation::Mermaid::TYPES", types_with_misnamed_pie)
 
     expect { Sirena.render("pie\n\"a\": 1") }
       .to raise_error(Sirena::Parser::ParseError, /NoSuchClass/)

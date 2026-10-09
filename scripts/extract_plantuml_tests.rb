@@ -9,8 +9,9 @@
 #
 # The checkout must be at the commit named in spec/plantuml/pin.json; the
 # script refuses any other commit so the committed corpus stays reproducible.
-# The selection rule and case-ID scheme are documented in spec/plantuml/README.md
-# and implemented by PlantumlExtractor::Selection and PlantumlExtractor::CaseId.
+# The selection rule and case-ID scheme are documented in
+# spec/plantuml/README.md and implemented by PlantumlExtractor::Selection and
+# PlantumlExtractor::CaseId.
 require "digest"
 require "fileutils"
 require "json"
@@ -29,11 +30,28 @@ module PlantumlExtractor
   # only on an explicit declaration, because PlantUML itself infers the type
   # and a bare `A -> B : hi` is valid in several diagram types.
   module Selection
-    CLASS_MARKER = /^\s*(?:abstract\s+class|abstract|class|interface|enum|annotation|protocol|struct|exception|metaclass|stereotype|circle|diamond)\s+["\w<]/
-    SEQUENCE_MARKER = /^\s*(?:participant|actor|boundary|control|collections|queue)\s+["\w]|^\s*(?:activate|deactivate|autonumber|ref\s+over|return)\b|^\s*(?:alt|loop|opt|par|critical|break)\b.*$|^\s*==[^=].*==\s*$|^\s*newpage\b/
+    CLASS_MARKER = %r{
+      ^\s*
+      (?:abstract\s+class|abstract|class|interface|enum|annotation|protocol|
+         struct|exception|metaclass|stereotype|circle|diamond)
+      \s+["\w<]
+    }x
+    SEQUENCE_MARKER = %r{
+      ^\s*(?:participant|actor|boundary|control|collections|queue)\s+["\w]
+      |^\s*(?:activate|deactivate|autonumber|ref\s+over|return)\b
+      |^\s*(?:alt|loop|opt|par|critical|break)\b.*$
+      |^\s*==[^=].*==\s*$
+      |^\s*newpage\b
+    }x
     # Declarations that make the block belong to another diagram type or to
     # no UML type at all; any of these disqualifies it.
-    OTHER_MARKER = /^\s*(?:usecase|component|node|cloud|artifact|folder|frame|rectangle|state|start|stop|partition|mainframe|salt|gantt|mindmap|wbs|json|yaml|nwdiag|ditaa|ebnf|regex|chen|ER|map|object)\b|^\s*:.*;\s*$|^\s*@start(?!uml)/
+    OTHER_MARKER = %r{
+      ^\s*(?:usecase|component|node|cloud|artifact|folder|frame|rectangle|
+             state|start|stop|partition|mainframe|salt|gantt|mindmap|wbs|
+             json|yaml|nwdiag|ditaa|ebnf|regex|chen|ER|map|object)\b
+      |^\s*:.*;\s*$
+      |^\s*@start(?!uml)
+    }x
     # `entity` and `database` are not markers: use-case, deployment and
     # entity diagrams share them. `actor` is a marker only when no OTHER_MARKER
     # line is present.
@@ -70,8 +88,10 @@ module PlantumlExtractor
     # of source hash>. The test identity is appended only when it adds
     # something the path does not already say.
     def call(path:, test:, source:)
-      base = path.delete_prefix("src/test/").sub(%r{\.[^./]+\z}, "").tr("/", ".")
-      slug = base.end_with?(".#{test}") || base == test ? base : "#{base}.#{test}"
+      stem = path.delete_prefix("src/test/").sub(%r{\.[^./]+\z}, "")
+      base = stem.tr("/", ".")
+      repeats = base.end_with?(".#{test}") || base == test
+      slug = repeats ? base : "#{base}.#{test}"
       slug = slug.gsub(/[^A-Za-z0-9_.-]/, "_").gsub(/\.{2,}/, ".")
       "#{slug}--#{source_hash(source)[0, 12]}"
     end
@@ -82,6 +102,7 @@ module PlantumlExtractor
   # Pulls @startuml..@enduml blocks out of upstream files.
   module Blocks
     BLOCK = /^[ \t]*@startuml\b[^\n]*\n.*?^[ \t]*@enduml\b[^\n]*$/m
+    INDENT_BEFORE_MARKER = /^[ \t]+(?=@(?:start|end)uml)/
 
     module_function
 
@@ -104,7 +125,7 @@ module PlantumlExtractor
         match = Regexp.last_match
         line = text[0...match.begin(0)].count("\n") + 1
         blocks << Block.new(path: path, test: test, origin: origin,
-                            source: match[0].gsub(/^[ \t]+(?=@(?:start|end)uml)/, ""),
+                            source: match[0].gsub(INDENT_BEFORE_MARKER, ""),
                             line: line)
       end
       blocks
@@ -136,7 +157,8 @@ module PlantumlExtractor
     end
 
     def files(glob)
-      Dir.glob(File.join(@root, glob)).map { |f| f.delete_prefix("#{@root}/") }.sort
+      Dir.glob(File.join(@root, glob))
+        .map { |f| f.delete_prefix("#{@root}/") }.sort
     end
 
     def read(rel)
@@ -149,33 +171,46 @@ module PlantumlExtractor
     module_function
 
     def build(blocks)
-      cases = {}
-      blocks.each do |block|
-        type = Selection.type_of(block.source)
-        next unless TYPES.include?(type)
+      blocks.each_with_object({}) { |block, cases| add(cases, block) }
+    end
 
-        id = CaseId.call(path: block.path, test: block.test, source: block.source)
-        if cases.key?(id)
-          cases[id][:meta][:occurrences] += 1
-          next
-        end
-        cases[id] = { type: type, source: "#{CaseId.normalize(block.source)}\n", meta: meta(block, id, type) }
+    def add(cases, block)
+      type = Selection.type_of(block.source)
+      return unless TYPES.include?(type)
+
+      id = CaseId.call(path: block.path, test: block.test, source: block.source)
+      if cases.key?(id)
+        cases[id][:meta][:occurrences] += 1
+      else
+        cases[id] = entry(block, id, type)
       end
-      cases
+    end
+
+    def entry(block, id, type)
+      source = "#{CaseId.normalize(block.source)}\n"
+      { type: type, source: source, meta: meta(block, id, type) }
     end
 
     def meta(block, id, type)
+      { id: id, type: type }.merge(
+        where_from(block), what_it_is(block),
+        provenance: "upstream-fixture", occurrences: 1
+      )
+    end
+
+    def where_from(block)
       {
-        id: id,
-        type: type,
         upstream_path: block.path,
         test: block.test,
         origin: block.origin,
         line_number: block.line,
+      }
+    end
+
+    def what_it_is(block)
+      {
         source_sha256: CaseId.source_hash(block.source),
         uses_preprocessor: block.source.match?(/^\s*!/),
-        provenance: "upstream-fixture",
-        occurrences: 1,
       }
     end
   end
@@ -189,13 +224,15 @@ module PlantumlExtractor
         dir = File.join(out_dir, kase[:type])
         FileUtils.mkdir_p(dir)
         File.write(File.join(dir, "#{id}.puml"), kase[:source])
-        File.write(File.join(dir, "#{id}.meta.json"), "#{JSON.pretty_generate(kase[:meta])}\n")
+        meta = "#{JSON.pretty_generate(kase[:meta])}\n"
+        File.write(File.join(dir, "#{id}.meta.json"), meta)
       end
     end
 
     def clear(out_dir)
       TYPES.each do |type|
-        Dir.glob(File.join(out_dir, type, "*.{puml,meta.json}")).each { |f| File.delete(f) }
+        Dir.glob(File.join(out_dir, type, "*.{puml,meta.json}"))
+          .each { |f| File.delete(f) }
       end
     end
   end
@@ -218,7 +255,9 @@ module PlantumlExtractor
     end
 
     def counts(out_dir)
-      TYPES.to_h { |type| [type, Dir.glob(File.join(out_dir, type, "*.puml")).size] }
+      TYPES.to_h do |type|
+        [type, Dir.glob(File.join(out_dir, type, "*.puml")).size]
+      end
     end
   end
 
@@ -231,11 +270,7 @@ module PlantumlExtractor
 
   def self.run(upstream:, out_dir:, pin_path:)
     pin = JSON.parse(File.read(pin_path))
-    actual = head_sha(upstream)
-    unless actual == pin.dig("upstream", "sha")
-      raise "upstream checkout is at #{actual}, pin.json says #{pin.dig('upstream', 'sha')}"
-    end
-
+    verify_pin!(pin, upstream)
     cases = Cases.build(Walker.new(upstream).blocks)
     Writer.clear(out_dir)
     Writer.write(cases, out_dir)
@@ -243,15 +278,29 @@ module PlantumlExtractor
     Manifest.counts(out_dir)
   end
 
+  def self.verify_pin!(pin, upstream)
+    actual = head_sha(upstream)
+    pinned = pin.dig("upstream", "sha")
+    return if actual == pinned
+
+    raise "upstream checkout is at #{actual}, pin.json says #{pinned}"
+  end
+
   def self.update_pin(pin, pin_path, out_dir)
-    pin["corpus"] = { "cases" => Manifest.counts(out_dir), "manifest_sha256" => Manifest.digest(out_dir) }
+    pin["corpus"] = {
+      "cases" => Manifest.counts(out_dir),
+      "manifest_sha256" => Manifest.digest(out_dir),
+    }
     File.write(pin_path, "#{JSON.pretty_generate(pin)}\n")
   end
 end
 
 if $PROGRAM_NAME == __FILE__
   root = File.expand_path("..", __dir__)
-  opts = { out_dir: File.join(root, "spec/plantuml"), pin_path: File.join(root, "spec/plantuml/pin.json") }
+  opts = {
+    out_dir: File.join(root, "spec/plantuml"),
+    pin_path: File.join(root, "spec/plantuml/pin.json"),
+  }
   OptionParser.new do |o|
     o.on("--upstream DIR") { |v| opts[:upstream] = v }
     o.on("--out DIR") { |v| opts[:out_dir] = v }
