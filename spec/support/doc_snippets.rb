@@ -21,20 +21,27 @@ module DocSnippets
 
   README = File.expand_path("../../README.adoc", __dir__)
 
+  SOURCE_MARKER = /\A\[source(?:,(\w+))?\]\z/
+
   DIAGRAM = "graph TD\n  A[Start] --> B[Process]\n  B --> C[End]\n"
 
   module_function
 
   def blocks(path = README)
-    found = []
     lines = File.read(path).lines(chomp: true)
-    lines.each_with_index do |line, index|
-      next unless (m = line.match(/\A\[source(?:,(\w+))?\]\z/)) && lines[index + 1] == "----"
+    lines.each_index.filter_map { |index| block_at(lines, index) }
+  end
 
-      body = lines[(index + 2)..].take_while { |l| l != "----" }
-      found << Block.new(index + 1, m[1], body.join("\n"))
-    end
-    found
+  def block_at(lines, index)
+    marker = SOURCE_MARKER.match(lines[index])
+    return unless marker && lines[index + 1] == "----"
+
+    body = lines[(index + 2)..].take_while { |l| l != "----" }
+    Block.new(index + 1, marker[1], body.join("\n"))
+  end
+
+  def block_containing(text)
+    blocks.find { |b| b.body.include?(text) }
   end
 
   def skipped_keys_without_block
@@ -61,7 +68,8 @@ module DocSnippets
 
   def run_in_cwd(block)
     case block.lang
-    when "ruby" then TOPLEVEL_BINDING.dup.eval(block.body, "README.adoc", block.line)
+    when "ruby"
+      TOPLEVEL_BINDING.dup.eval(block.body, "README.adoc", block.line)
     when "shell" then block.body.each_line { |l| shell(l) }
     else raise ArgumentError, "unhandled block language: #{block.lang.inspect}"
     end
@@ -69,7 +77,9 @@ module DocSnippets
 
   def shell(line)
     command, *args = Shellwords.split(line)
-    raise ArgumentError, "only the sirena CLI is run, got #{line.inspect}" unless command == "sirena"
+    unless command == "sirena"
+      raise ArgumentError, "only the sirena CLI is run, got #{line.inspect}"
+    end
 
     with_quiet_stdout { Sirena::Cli.start(args) }
   end
