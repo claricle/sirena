@@ -22,7 +22,7 @@ RSpec.describe Sirena::Layout::Base do
       layout.measure_text("code", font_size: 13, width: 30, height: 20, monospace: true)
 
       expect(Sirena::TextMeasurement).to have_received(:measure).with(
-        "code", font_size: 13, width: 30, height: 20, monospace: true,
+        "code", font_size: 13, width: 30, height: 20, monospace: true
       )
     end
 
@@ -45,11 +45,13 @@ RSpec.describe Sirena::Layout::Base do
         layout.build_elk_options(algorithm: algorithm)
       end
 
-      expect(options).to all(include(
+      force_defaults = include(
         "elk.spacing.nodeNode" => 75.0,
         "elk.spacing.edgeNode" => 30,
         "elk.spacing.edgeEdge" => 30,
-      ))
+      )
+
+      expect(options).to all(force_defaults)
     end
 
     it "leaves non-layered non-force algorithms free of unrelated defaults" do

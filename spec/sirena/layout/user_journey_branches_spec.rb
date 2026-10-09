@@ -19,7 +19,7 @@ RSpec.describe Sirena::Layout::UserJourney do
     it "uses the fallback id and complete metadata for an empty journey" do
       expect(graph).to include(
         id: "user_journey", children: [], edges: [],
-        metadata: { title: nil, sections: [] },
+        metadata: { title: nil, sections: [] }
       )
     end
 
@@ -42,7 +42,7 @@ RSpec.describe Sirena::Layout::UserJourney do
         children: [hash_including(id: "task_0"), hash_including(id: "task_1")],
         edges: [hash_including(sources: ["task_0"], targets: ["task_1"])],
         metadata: hash_including(sections: %w[Find Buy]),
-        id: "user_journey", layoutOptions: kind_of(Hash),
+        id: "user_journey", layoutOptions: kind_of(Hash)
       )
     end
 
@@ -56,8 +56,8 @@ RSpec.describe Sirena::Layout::UserJourney do
                  hash_including(text: "Buyer, Bank", position: :bottom)],
         metadata: {
           name: "Pay", score: 3, score_color: :yellow,
-          actors: ["Buyer", "Bank"], section_name: "Buy", section_index: 0,
-        },
+          actors: ["Buyer", "Bank"], section_name: "Buy", section_index: 0
+        }
       )
     end
 
@@ -65,8 +65,9 @@ RSpec.describe Sirena::Layout::UserJourney do
       long_name = "A task name long enough to exceed the minimum width"
       diagram.sections << section("Work", [task("A", 4), task(long_name, 4)])
       widths = graph[:children].map { |node| node[:width] }
+      short_width, long_width = widths
 
-      expect(widths).to satisfy { |short, long| short == 140 && long > short }
+      expect([short_width, long_width > short_width]).to eq([140, true])
     end
 
     it "sets the complete horizontal journey layout policy" do

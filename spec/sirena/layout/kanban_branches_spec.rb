@@ -24,7 +24,7 @@ RSpec.describe Sirena::Layout::Kanban do
 
       expect(graph).to match(
         columns: [hash_including(x: 0), hash_including(x: 260)],
-        cards: [], width: 460, height: 60,
+        cards: [], width: 460, height: 60
       )
     end
 
@@ -43,7 +43,7 @@ RSpec.describe Sirena::Layout::Kanban do
       expect(graph).to match(
         columns: [hash_including(height: 204)],
         cards: [hash_including(height: 134, has_metadata: true)],
-        width: 200, height: 204,
+        width: 200, height: 204
       )
     end
 
@@ -55,7 +55,7 @@ RSpec.describe Sirena::Layout::Kanban do
       expect(graph).to match(
         columns: [hash_including(height: 245), hash_including(height: 150)],
         cards: [hash_including(y: 60), hash_including(y: 155), hash_including(y: 60)],
-        width: 460, height: 245,
+        width: 460, height: 245
       )
     end
   end
