@@ -23,10 +23,12 @@ components.
 
 ## Processing Pipeline
 
-`Engine#render` (`lib/sirena/engine.rb`) runs a fixed pipeline. Layout
-currently uses a built-in fallback grid (`Layout::Grid`); elkrb is a
-declared dependency but is not called yet (see the TODO in
-`Engine#layout_graph`).
+`Engine#render` (`lib/sirena/engine.rb`) runs a fixed pipeline with a
+temporary hybrid layout boundary. Converted layouts return a typed
+`Layout::Scene` containing final canvas geometry. Layouts that have not yet
+been converted return a Hash wrapped in `Layout::Legacy`; only that branch
+passes through the built-in fallback grid (`Layout::Grid`). elkrb is a
+declared dependency but is not called from `lib/`.
 
 ```mermaid
 flowchart TD
@@ -40,8 +42,8 @@ flowchart TD
     Other --> Trans
     Model --> Trans["parsed.transform.new.call(diagram, theme:, today:)"]
     Trans --> Layout["Engine.layout_graph"]
-    Layout -->|"Layout::Legacy"| Grid["Layout::Grid.apply: grid positions"]
-    Layout -->|"any other result"| Rend
+    Layout -->|"Layout::Legacy"| Grid["unwrap, then Layout::Grid.apply"]
+    Layout -->|"Layout::Scene: final geometry"| Rend
     Grid --> Rend["Renderer#render"]
     Rend --> Svg["Svg::Document model"]
     Svg --> Xml["to_xml: SVG string"]
@@ -77,10 +79,12 @@ Sirena (Root Module)
     │     ├── Base (Abstract)
     │     └── one model per registered type (24; see lib/sirena/notation/builtin.rb)
     │
-    ├── Layout (Model Conversion)
+    ├── Layout (Model to final geometry)
     │     │
-    │     ├── Base (Abstract)
-    │     └── one layout per registered type
+    │     ├── Base (validation and Scene/Legacy dispatch)
+    │     ├── Scene (typed final canvas geometry)
+    │     ├── Legacy (temporary Hash wrapper)
+    │     └── one layout strategy per registered type
     │
     ├── Renderer (SVG Generation)
     │     │
@@ -138,7 +142,7 @@ define the grammar and transform inline in the parser file):
              │
              ▼ Intermediate tree (Hash/Array)
 ┌─────────────────────────────────────────────┐
-│  Layer 2: Builder (10 of 23 Parslet)       │
+│  Layer 2: Builder (where separate)         │
 │  ──────────────────────────────────────     │
 │  • Converts intermediate tree to models    │
 │  • Maps patterns to Diagram objects        │
@@ -227,55 +231,55 @@ Mermaid Source
    (Lutaml::Model, most types)
 ```
 
-The parser produces typed diagram models that fully represent the diagram
-structure. Each diagram type has its own Grammar, Builder, and Parser classes
-following the consistent 3-layer pattern.
+The parser produces typed diagram models that represent the diagram
+structure. Every built-in type has a parser and Parslet grammar; most use a
+separate Builder class, while a few keep their transform beside the parser.
 
-### 2. Graph Build Phase
+### 2. Transform Phase
 
 ```
 Diagram Model
       │
       ▼
-Layout::Base#to_graph  (validates, then build_graph)
+Layout::Base#call (validates once)
       │
-      ├── Build nodes and edges as an ELK-shaped Hash
-      ├── Apply text measurement for dimensions
-      └── Set layout options
-      │
-      ▼
-  Graph (Hash)
+      ├── converted: scene(diagram) ──► Layout::Scene
+      │                                  (final geometry)
+      └── legacy: build_graph(diagram) ──► Layout::Legacy
+                                         (wrapped Hash)
 ```
 
-`Layout::Base#to_graph` delegates to `#call`, which raises
-`LayoutError` for an invalid diagram and otherwise calls the
-subclass's `#build_graph`. The graph is a plain Hash in the shape elkrb
-takes; it is not an `Elkrb::Graph` object. Heterogeneous per type: some
-layouts emit pre-positioned structures.
+`Layout::Base#call` raises `LayoutError` for an invalid diagram, injects the
+theme and reference date for that call, and dispatches by the subclass
+contract. A subclass defining `#scene` returns a typed `Layout::Scene` with
+final positions. A subclass defining only `#build_graph` has its Hash wrapped
+in `Layout::Legacy`. `#to_graph` is a compatibility helper for layout specs:
+it delegates to `#call` and unwraps a legacy result, but the Engine calls
+`#call` directly.
 
 ### 3. Layout Phase
 
 ```
-Graph (Hash)
+Layout::Base#call result
       │
-      ▼
-Layout::Grid.apply
+      ├── Layout::Scene ──► pass through unchanged
       │
-      └── Place children on a fixed-column grid
-      │
-      ▼
-Laid Out Graph
-(with x, y coordinates)
+      └── Layout::Legacy ──► unwrap Hash ──► Layout::Grid.apply
+                                                   │
+                                                   └── add grid positions
 ```
 
-`Engine#layout_graph` calls `Layout::Grid.apply`. elkrb is a declared
-dependency but is not called from `lib/`; replacing the fallback with
-elkrb is a TODO in `Engine#layout_graph`.
+`Engine#layout_graph` calls `Layout::Grid.apply` only for a
+`Layout::Legacy`. A `Layout::Scene` is already positioned and reaches its
+renderer unchanged. This branch is the migration boundary: converted types
+keep intermediate Hashes inside their layout when they need them, while
+unconverted types retain the legacy Hash contract until they move to a
+Scene. elkrb is declared but is not called from `lib/`.
 
 ### 4. Rendering Phase
 
 ```
-Laid Out Graph
+Layout::Scene or laid-out legacy Hash
       │
       ▼
 Renderer.render
@@ -297,8 +301,10 @@ SVG.to_xml
   SVG String
 ```
 
-The renderer converts positioned graph elements into `Svg` model objects;
-the XML string comes from their hand-written `to_xml` methods.
+The renderer converts final Scene geometry or a positioned legacy Hash into
+`Svg` model objects; the XML string comes from their hand-written `to_xml`
+methods. Converted renderers serialize Scene coordinates rather than
+recomputing layout.
 
 ## Class Responsibility Matrix
 
@@ -310,8 +316,8 @@ the XML string comes from their hand-written `to_xml` methods.
 | `Parser::*` | Orchestrate Grammar+Builder | Grammars, Builders |
 | `Diagram::Base` | Abstract diagram model | Lutaml::Model (most types) |
 | `Diagram::*` | Specific diagram structures | Diagram::Base |
-| `Layout::Base` | Abstract graph converter | TextMeasurement |
-| `Layout::*` | Diagram-specific conversion | Layout::Base, TextMeasurement |
+| `Layout::Base` | Validate and dispatch to the Scene or legacy contract | Layout::Scene, Layout::Legacy |
+| `Layout::*` | Produce final typed geometry or a temporary legacy Hash | Layout::Base, TextMeasurement |
 | `Renderer::Base` | Abstract SVG renderer | Svg |
 | `Renderer::*` | Diagram-specific rendering | Renderer::Base, Svg |
 | `Svg::*` | SVG graphic primitives | Lutaml::Model |
@@ -331,17 +337,22 @@ class Diagram::NewType < Diagram::Base
   # ... diagram-specific attributes
 end
 
-# 2. Implement transform
+# 2. Implement a typed final-geometry transform
 class Layout::NewType < Layout::Base
-  def build_graph(diagram)
-    # Convert diagram to a graph Hash
+  class Scene < Layout::Scene
+    attribute :title, :string
+  end
+
+  def scene(diagram)
+    # Measure and position every element here.
+    Scene.new(width: 800, height: 600, title: diagram.title)
   end
 end
 
 # 3. Implement renderer
 class Renderer::NewType < Renderer::Base
-  def render(graph)
-    # Convert graph to SVG
+  def render(scene)
+    # Serialize the Scene's final geometry to SVG.
   end
 end
 
@@ -506,8 +517,10 @@ sirena/
 │       │   └── (one model per registered type)
 │       ├── layout/
 │       │   ├── base.rb
+│       │   ├── scene.rb
+│       │   ├── legacy.rb
 │       │   ├── grid.rb
-│       │   └── (diagram-specific graph layouts)
+│       │   └── (diagram-specific layouts)
 │       ├── renderer/
 │       │   ├── base.rb
 │       │   └── (diagram-specific renderers)
@@ -545,7 +558,6 @@ sequenceDiagram
     participant N as Notation::Mermaid
     participant P as Parser
     participant T as Layout
-    participant L as Layout::Grid
     participant D as Renderer
     U->>E: Sirena.render(source)
     E->>R: resolve(explicit:, path:, source:)
@@ -555,11 +567,10 @@ sequenceDiagram
     N->>P: parse(body)
     P-->>N: Diagram::Flowchart
     N-->>E: Parsed: diagram, transform, renderer
-    E->>T: to_graph(diagram)
-    T-->>E: graph Hash
-    E->>L: apply(graph)
-    L-->>E: graph with positions
-    E->>D: render(graph)
+    E->>T: call(diagram, theme:, today:)
+    T-->>E: Layout::Flowchart::Scene
+    E->>E: layout_graph passes Scene through
+    E->>D: render(scene)
     D-->>E: Svg::Document
     E-->>U: Svg::Document#to_xml string
 ```
@@ -579,15 +590,18 @@ sequenceDiagram
    - Builder converts intermediate tree to Diagram model
    - Returns typed Diagram model (Lutaml::Model for most types)
 
-3. **Layout converts to graph**
-   - Analyzes diagram structure
-   - Builds nodes and edges as a graph Hash
-   - Applies TextMeasurement for node dimensions
-   - Sets layout options
+3. **Layout validates and transforms**
+   - `Layout::Base#call` validates the diagram once
+   - A converted layout measures and positions elements, then returns a
+     typed `Layout::Scene`
+   - A legacy layout returns its graph Hash inside `Layout::Legacy`
 
-4. **Layout positions the graph**
-   - `Layout::Grid` places children on a grid
-   - elkrb is not called yet
+4. **Engine applies the migration boundary**
+   - A Scene passes through unchanged because it already carries final
+     geometry
+   - A Legacy result is unwrapped and its Hash is positioned by
+     `Layout::Grid`
+   - elkrb is not called from `lib/`
 
 5. **Renderer generates SVG**
    - Creates Svg::Document root
@@ -654,14 +668,19 @@ implementing a common interface.
 
 ```ruby
 class Layout::Base
+  def call(diagram, theme: nil, today: nil)
+    # Validate, then return Scene or Legacy.
+  end
+
   def build_graph(diagram)
+    # Temporary legacy subclass contract.
     raise NotImplementedError
   end
 end
 
 class Layout::Flowchart < Layout::Base
-  def build_graph(diagram)
-    # Flowchart-specific conversion
+  def scene(diagram)
+    # Flowchart-specific final geometry.
   end
 end
 ```
@@ -682,20 +701,23 @@ end
 
 ### Template Method Pattern (Base Classes)
 
-Base classes fix the entry point and guards; subclasses fill in the type
-specific part. `Layout::Base#call` validates the diagram, then calls the
-subclass's `#build_graph`. `Renderer::Base#render` is the abstract entry
-point that each renderer implements.
+Base classes fix the entry point and guards; subclasses fill in the
+type-specific part. `Layout::Base#call` validates the diagram, then calls
+`#scene` for a converted layout or wraps `#build_graph` for a legacy layout.
+Subclasses must not override `#call`, because that would bypass the shared
+validity guard and result contract. `Renderer::Base#render` is the abstract
+entry point that each renderer implements.
 
 ## Dependencies and Their Roles
 
 Declared in `sirena.gemspec`:
 
 - **plurimath-parslet (~> 3.0)**: Parslet fork used to build all diagram grammars
-- **lutaml-model (= 0.8.31)**: Serialization framework for the models
-- **elkrb**: Declared, not yet called from `lib/` (layout is `Layout::Grid`)
+- **lutaml-model (~> 0.8.0)**: Serialization framework for diagram, Scene,
+  theme, and SVG models
+- **elkrb (~> 1.0)**: Declared for the planned layout integration, but not
+  called from `lib/`
 - **kramdown (~> 2.5)**: Markdown label text
-- **moxml**: declared, not referenced from `lib/`
 - **thor**: CLI framework
 
 ## Integration with Metanorma
