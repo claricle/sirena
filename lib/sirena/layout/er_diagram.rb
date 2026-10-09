@@ -116,30 +116,10 @@ module Sirena
       end
 
       def self.connection_point(from_node, to_node)
-        from_x = value(from_node, :x, 0)
-        from_y = value(from_node, :y, 0)
-        from_width = value(from_node, :width, 150)
-        from_height = value(from_node, :height, 100)
-        from_cx = from_x + (from_width / 2)
-        from_cy = from_y + (from_height / 2)
-        to_cx = value(to_node, :x, 0) + (value(to_node, :width, 150) / 2)
-        to_cy = value(to_node, :y, 0) + (value(to_node, :height, 100) / 2)
-        dx = to_cx - from_cx
-        dy = to_cy - from_cy
-
-        if dx.abs < 0.001 && dy.abs < 0.001
-          return Point.new(x: from_cx, y: from_cy)
-        end
-
-        if dx.abs > dy.abs
-          x = dx.positive? ? from_x + from_width : from_x
-          y = dy.abs < 0.001 ? from_cy : from_cy + ((dy / dx) * (x - from_cx))
-        else
-          y = dy.positive? ? from_y + from_height : from_y
-          x = dx.abs < 0.001 ? from_cx : from_cx + ((dx / dy) * (y - from_cy))
-        end
-
-        Point.new(x: x, y: y)
+        bounds = node_bounds(from_node)
+        from = center(bounds)
+        to = center(node_bounds(to_node))
+        boundary_point(bounds, from, to)
       end
 
       def self.marker(point, opposite, cardinality)
@@ -252,94 +232,193 @@ module Sirena
 
       def scene_from_graph(graph)
         width, height = scene_dimensions(graph)
-        children = typed_nodes(graph[:children] || [])
-
         Scene.new(
           id: graph[:id] || "er_diagram",
           width: width,
           height: height,
           view_box: "0 0 #{width} #{height}",
-          children: children,
+          children: typed_nodes(graph[:children] || []),
           edges: typed_edges(graph[:edges] || [], graph[:children] || []),
           class_defs: typed_class_defs(graph[:class_defs] || {}),
         )
       end
 
       def typed_nodes(nodes)
-        nodes.map do |node|
-          x = node[:x] || 0
-          y = node[:y] || 0
-          width = node[:width] || 150
-          height = node[:height] || 100
-          metadata = node[:metadata] || {}
-          font_size = large_text_size
-          name = metadata[:name] || node[:id]
-          name_y = y + ENTITY_PADDING + font_size
-          separator_y = name_y + TEXT_LINE_HEIGHT
+        nodes.map { |node| typed_node(node) }
+      end
 
-          Node.new(
-            id: node[:id], x: x, y: y, width: width, height: height,
-            labels: [
-              positioned_label(name, x + (width / 2), name_y, font_size),
-            ],
-            shape: "rect", name: name, classes: metadata[:classes] || [],
-            attributes: typed_attributes(
-              metadata[:attributes] || [], x, separator_y
-            ),
-            separator: Line.new(x1: x, y1: separator_y,
-                                x2: x + width, y2: separator_y)
-          )
-        end
+      def typed_node(node)
+        geometry = node_geometry(node)
+        metadata = node[:metadata] || {}
+        Node.new(**typed_node_values(node, metadata, geometry))
+      end
+
+      def node_geometry(node)
+        {
+          x: node[:x] || 0, y: node[:y] || 0,
+          width: node[:width] || 150, height: node[:height] || 100
+        }
+      end
+
+      def typed_node_values(node, metadata, geometry)
+        label = node_label(node, metadata, geometry)
+        separator = node_separator(label, geometry)
+        {
+          id: node[:id], **geometry, labels: [label], shape: "rect",
+          name: label.text, classes: metadata[:classes] || [],
+          attributes: typed_attributes(
+            metadata[:attributes] || [], geometry[:x], separator.y1
+          ),
+          separator: separator
+        }
+      end
+
+      def node_label(node, metadata, geometry)
+        name = metadata[:name] || node[:id]
+        y = geometry[:y] + ENTITY_PADDING + large_text_size
+        positioned_label(
+          name, geometry[:x] + (geometry[:width] / 2), y, large_text_size
+        )
+      end
+
+      def node_separator(label, geometry)
+        y = label.y + TEXT_LINE_HEIGHT
+        Line.new(x1: geometry[:x], y1: y,
+                 x2: geometry[:x] + geometry[:width], y2: y)
       end
 
       def typed_attributes(attributes, x_coordinate, separator_y)
-        current_y = separator_y + ENTITY_PADDING
-        attributes.map do |attribute|
-          row = AttributeRow.new(
-            name: attribute[:name], attribute_type: attribute[:attribute_type],
-            key_type: attribute[:key_type], note: attribute[:note],
-            text: format_attribute(attribute),
-            x: x_coordinate + ENTITY_PADDING,
-            y: current_y + small_text_size, font_size: small_text_size
-          )
-          current_y += TEXT_LINE_HEIGHT
-          row
+        attributes.each_with_index.map do |attribute, index|
+          typed_attribute(attribute, x_coordinate, separator_y, index)
         end
+      end
+
+      def typed_attribute(attribute, x_coordinate, separator_y, index)
+        AttributeRow.new(
+          name: attribute[:name], attribute_type: attribute[:attribute_type],
+          key_type: attribute[:key_type], note: attribute[:note],
+          text: format_attribute(attribute),
+          x: x_coordinate + ENTITY_PADDING,
+          y: separator_y + ENTITY_PADDING + small_text_size +
+            (index * TEXT_LINE_HEIGHT),
+          font_size: small_text_size
+        )
       end
 
       def typed_edges(edges, nodes)
         nodes_by_id = nodes.to_h { |node| [node[:id], node] }
-        edges.filter_map do |edge|
-          source = nodes_by_id[edge[:sources]&.first]
-          target = nodes_by_id[edge[:targets]&.first]
-          next unless source && target
+        edges.filter_map { |edge| typed_edge_for(edge, nodes_by_id) }
+      end
 
-          typed_edge(edge, source, target)
-        end
+      def typed_edge_for(edge, nodes_by_id)
+        source = nodes_by_id[edge[:sources]&.first]
+        target = nodes_by_id[edge[:targets]&.first]
+        typed_edge(edge, source, target) if source && target
       end
 
       def typed_edge(edge, source, target)
-        from = self.class.connection_point(source, target)
-        to = self.class.connection_point(target, source)
-        metadata = edge[:metadata] || {}
-        label = (edge[:labels] || []).find { |item| !item[:position] }
-
+        sections = typed_sections(edge, source, target)
         Edge.new(
           id: edge[:id], source: source[:id], target: target[:id],
-          sections: [Section.new(start_point: from, end_point: to)],
-          labels: typed_relationship_labels(label, from, to),
-          relationship_type: metadata[:relationship_type] || "non-identifying",
-          cardinality_from: metadata[:cardinality_from],
-          cardinality_to: metadata[:cardinality_to],
-          source_marker: self.class.marker(
-            from, to, metadata[:cardinality_from]
-          ),
-          target_marker: self.class.marker(to, from, metadata[:cardinality_to])
+          sections: sections, **typed_edge_details(edge, sections)
         )
       end
 
+      def typed_edge_details(edge, sections)
+        metadata = edge[:metadata] || {}
+        {
+          labels: typed_edge_labels(edge, sections),
+          relationship_type: metadata[:relationship_type] || "non-identifying",
+          cardinality_from: metadata[:cardinality_from],
+          cardinality_to: metadata[:cardinality_to],
+          **typed_marker_values(sections, metadata),
+        }
+      end
+
+      def typed_edge_labels(edge, sections)
+        label = (edge[:labels] || []).find { |item| !item[:position] }
+        typed_relationship_labels(label, *section_endpoints(sections))
+      end
+
+      def typed_marker_values(sections, metadata)
+        source, target = typed_markers(sections, metadata)
+        { source_marker: source, target_marker: target }
+      end
+
+      def typed_sections(edge, source, target)
+        sections, supplied = supplied_value(edge, :sections)
+        return default_sections(source, target) unless supplied
+
+        Array(sections).map { |section| typed_section(section) }
+      end
+
+      def default_sections(source, target)
+        from = self.class.connection_point(source, target)
+        to = self.class.connection_point(target, source)
+        [Section.new(start_point: from, end_point: to)]
+      end
+
+      def typed_section(section)
+        return section if section.is_a?(Section)
+
+        Section.new(
+          start_point: typed_section_point(section, :start_point, :startPoint),
+          end_point: typed_section_point(section, :end_point, :endPoint),
+          bend_points: typed_bend_points(section),
+        )
+      end
+
+      def typed_section_point(section, snake_key, camel_key)
+        self.class.point(hash_value(section, snake_key, camel_key))
+      end
+
+      def typed_bend_points(section)
+        points = hash_value(section, :bend_points, :bendPoints)
+        Array(points).map { |point| self.class.point(point) }
+      end
+
+      def section_endpoints(sections)
+        return [nil, nil] if sections.empty?
+
+        [sections.first.start_point, sections.last.end_point]
+      end
+
+      def typed_markers(sections, metadata)
+        return [Marker.new, Marker.new] if sections.empty?
+
+        [
+          typed_source_marker(sections.first, metadata[:cardinality_from]),
+          typed_target_marker(sections.last, metadata[:cardinality_to]),
+        ]
+      end
+
+      def typed_source_marker(section, cardinality)
+        opposite = section.bend_points.first || section.end_point
+        self.class.marker(section.start_point, opposite, cardinality)
+      end
+
+      def typed_target_marker(section, cardinality)
+        opposite = section.bend_points.last || section.start_point
+        self.class.marker(section.end_point, opposite, cardinality)
+      end
+
+      def supplied_value(hash, key)
+        return [hash[key], true] if hash.key?(key)
+        return [hash[key.to_s], true] if hash.key?(key.to_s)
+
+        [nil, false]
+      end
+
+      def hash_value(hash, *keys)
+        keys.each do |key|
+          return hash[key] if hash.key?(key)
+          return hash[key.to_s] if hash.key?(key.to_s)
+        end
+        nil
+      end
+
       def typed_relationship_labels(label, from, to)
-        return [] unless label
+        return [] unless label && from && to
 
         [self.class.relationship_label(label[:text], from, to, small_text_size)]
       end
@@ -462,22 +541,20 @@ module Sirena
       end
 
       def content_width(graph)
-        return 0 if empty_graph?(graph)
-        return 800 unless graph[:children]
-
-        maximum = graph[:children].map do |node|
-          (node[:x] || 0) + (node[:width] || 150)
-        end.max || 800
-        maximum + 40
+        content_extent(graph, :x, :width, 150, 800)
       end
 
       def content_height(graph)
+        content_extent(graph, :y, :height, 100, 600)
+      end
+
+      def content_extent(graph, coordinate, dimension, default_size, fallback)
         return 0 if empty_graph?(graph)
-        return 600 unless graph[:children]
+        return fallback unless graph[:children]
 
         maximum = graph[:children].map do |node|
-          (node[:y] || 0) + (node[:height] || 100)
-        end.max || 600
+          (node[coordinate] || 0) + (node[dimension] || default_size)
+        end.max || fallback
         maximum + 40
       end
 
@@ -520,6 +597,55 @@ module Sirena
           result.nil? ? default : result
         end
 
+        def node_bounds(node)
+          {
+            x: value(node, :x, 0), y: value(node, :y, 0),
+            width: value(node, :width, 150),
+            height: value(node, :height, 100)
+          }
+        end
+
+        def center(bounds)
+          {
+            x: bounds[:x] + (bounds[:width] / 2),
+            y: bounds[:y] + (bounds[:height] / 2),
+          }
+        end
+
+        def boundary_point(bounds, from, to)
+          dx = to[:x] - from[:x]
+          dy = to[:y] - from[:y]
+          return point(from) if coincident?(dx, dy)
+
+          return horizontal_boundary(bounds, from, dx, dy) if dx.abs > dy.abs
+
+          vertical_boundary(bounds, from, dx, dy)
+        end
+
+        def coincident?(delta_x, delta_y)
+          delta_x.abs < 0.001 && delta_y.abs < 0.001
+        end
+
+        def horizontal_boundary(bounds, from, delta_x, delta_y)
+          x = delta_x.positive? ? bounds[:x] + bounds[:width] : bounds[:x]
+          y = if delta_y.abs < 0.001
+                from[:y]
+              else
+                from[:y] + ((delta_y / delta_x) * (x - from[:x]))
+              end
+          Point.new(x: x, y: y)
+        end
+
+        def vertical_boundary(bounds, from, delta_x, delta_y)
+          y = delta_y.positive? ? bounds[:y] + bounds[:height] : bounds[:y]
+          x = if delta_x.abs < 0.001
+                from[:x]
+              else
+                from[:x] + ((delta_x / delta_y) * (y - from[:y]))
+              end
+          Point.new(x: x, y: y)
+        end
+
         def one_lines(point, opposite)
           angle = Math.atan2(opposite.y - point.y, opposite.x - point.x)
           perpendicular = angle + (Math::PI / 2)
@@ -533,13 +659,24 @@ module Sirena
         end
 
         def circle(point, opposite)
-          angle = Math.atan2(opposite.y - point.y, opposite.x - point.x)
-          offset = CARDINALITY_SIZE / 2
+          center = offset_point(point, opposite, CARDINALITY_SIZE / 2)
           Circle.new(
-            cx: point.x + (offset * Math.cos(angle)),
-            cy: point.y + (offset * Math.sin(angle)),
+            cx: center.x,
+            cy: center.y,
             radius: CARDINALITY_SIZE / 3,
           )
+        end
+
+        def offset_point(point, opposite, distance)
+          angle = direction(point, opposite)
+          Point.new(
+            x: point.x + (distance * Math.cos(angle)),
+            y: point.y + (distance * Math.sin(angle)),
+          )
+        end
+
+        def direction(point, opposite)
+          Math.atan2(opposite.y - point.y, opposite.x - point.x)
         end
 
         def crows_foot(point, opposite)
