@@ -14,6 +14,16 @@ module PluginFailureSpecHelpers
     Sirena::Notation.register(raising(:extensions, error))
   end
 
+  # An exception whose own #message raises, as RSpec's aggregated-failures
+  # error does when built without its aggregator.
+  def message_raising_error
+    Class.new(NotImplementedError) do
+      def message
+        raise NoMethodError, "message needs state this instance lacks"
+      end
+    end
+  end
+
   def raising_inspect(error)
     Object.new.tap do |odd|
       odd.define_singleton_method(:inspect) { raise error }
@@ -79,7 +89,29 @@ RSpec.describe Sirena::Notation::PluginFailure do
   it "sees the hierarchy: the roots, the usual, and the four that pass" do
     expect(ExceptionFamily.all)
       .to include(Exception, StandardError, ScriptError, SystemStackError,
-                  CGI::InvalidEncoding, *ExceptionFamily::PASSTHROUGH)
+                  NotImplementedError, *ExceptionFamily::PASSTHROUGH)
+  end
+
+  describe ".passthrough_for" do
+    it "uses Timeout::ExitException where the timeout module has it" do
+      timeout = Module.new.tap do |mod|
+        mod.const_set(:ExitException, Class.new(Exception))
+        mod.const_set(:Error, Class.new(RuntimeError))
+      end
+
+      expect(described_class.passthrough_for(timeout))
+        .to eq([NoMemoryError, SignalException, SystemExit,
+                timeout::ExitException])
+    end
+
+    it "falls back to Timeout::Error where it does not" do
+      timeout = Module.new.tap do |mod|
+        mod.const_set(:Error, Class.new(RuntimeError))
+      end
+
+      expect(described_class.passthrough_for(timeout))
+        .to eq([NoMemoryError, SignalException, SystemExit, timeout::Error])
+    end
   end
 
   describe ".===" do
@@ -110,7 +142,7 @@ RSpec.describe Sirena::Notation::PluginFailure do
     end
 
     it "names the member whose getter raised a direct Exception" do
-      expect { register_with_bad_extensions(CGI::InvalidEncoding) }
+      expect { register_with_bad_extensions(NotImplementedError) }
         .to raise_error(registration_error,
                         "Notation raiser: extensions is malformed")
     end
@@ -149,18 +181,39 @@ RSpec.describe Sirena::Notation::PluginFailure do
       end
     end
 
+    it "names the class when the failure's own message raises" do
+      Sirena::Notation.register(
+        raising_parse(message_raising_error.allocate),
+      )
+
+      expect { engine.render("@raiser body", notation: :raiser) }
+        .to raise_error(pipeline_error, /\ARendering failed: .*: <message unavailable>\z/)
+    end
+
+    it "lets an exit raised by a failure's message through" do
+      odd = Class.new(NotImplementedError) do
+        def message
+          raise SystemExit
+        end
+      end
+      Sirena::Notation.register(raising_parse(odd.allocate))
+
+      expect { engine.render("@raiser body", notation: :raiser) }
+        .to raise_error(SystemExit)
+    end
+
     it "wraps a direct Exception from the claims? that picks the notation" do
-      Sirena::Notation.register(raising_claims(CGI::InvalidEncoding))
+      Sirena::Notation.register(raising_claims(NotImplementedError))
 
       expect { engine.render("@raiser body") }
-        .to raise_error(pipeline_error, /CGI::InvalidEncoding/)
+        .to raise_error(pipeline_error, /NotImplementedError/)
     end
 
     it "wraps a direct Exception from the renderer a notation returns" do
-      Sirena::Notation.register(raising_renderer(CGI::InvalidEncoding))
+      Sirena::Notation.register(raising_renderer(NotImplementedError))
 
       expect { engine.render("@raiser body", notation: :raiser) }
-        .to raise_error(pipeline_error, /CGI::InvalidEncoding/)
+        .to raise_error(pipeline_error, /NotImplementedError/)
     end
   end
 end

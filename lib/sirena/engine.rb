@@ -149,10 +149,19 @@ module Sirena
       # never exit, a signal or a host's timeout. `e` becomes `cause`
       # automatically because we are still inside the rescue; never
       # stringify a backtrace into the message.
-      raise PipelineError, "Rendering failed: #{e.class}: #{e.message}"
+      raise PipelineError, "Rendering failed: #{describe_failure(e)}"
     end
 
     private
+
+    # "Class: message", for an exception whose own #message may raise (an
+    # RSpec::Expectations::MultipleExpectationsNotMetError built without its
+    # aggregator does).
+    def describe_failure(error)
+      "#{error.class}: #{error.message}"
+    rescue Notation::PluginFailure
+      "#{error.class}: <message unavailable>"
+    end
 
     # A notation that wants the engine's progress lines declares a `logger:`
     # keyword; one that does not is called with the source alone.
