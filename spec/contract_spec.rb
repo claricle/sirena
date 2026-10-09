@@ -67,53 +67,18 @@ RSpec.describe Sirena::Notation::Mermaid do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
+  # Gaps are measured per type; each runs as `pending`, so fixing one turns
+  # it red until the entry is removed.
+  known_gaps = {
+    sankey: { empty_input: "a header-only sankey raises LayoutError" },
+    user_journey: { theme_output: "no built-in theme changes the SVG" },
+    c4: { theme_output: "no built-in theme changes the SVG" },
+    error: { theme_output: "no built-in theme changes the SVG" },
+  }
+
   described_class::TYPES.each_key do |type|
     describe type.inspect do
-      let(:model) { described_class.layer_class(Sirena::Diagram, type, Sirena::Error) }
-      let(:diagram) do
-        source = File.read(File.join(fixture_dir, "#{type}.mmd"))
-        Sirena::Parser.for(type).parse(source)
-      end
-
-      it "has a canonical fixture that parses" do
-        expect(File).to exist(File.join(fixture_dir, "#{type}.mmd"))
-      end
-
-      it "resolves a parser inheriting Parser::Base" do
-        expect(Sirena::Parser.for(type)).to be_a(Sirena::Parser::Base)
-      end
-
-      it "resolves a layout inheriting Layout::Base" do
-        expect(Sirena::Layout.for(type)).to be_a(Sirena::Layout::Base)
-      end
-
-      it "resolves a renderer inheriting Renderer::Base" do
-        expect(Sirena::Renderer.for(type)).to be_a(Sirena::Renderer::Base)
-      end
-
-      it "resolves a model inheriting Diagram::Base" do
-        expect(model.ancestors).to include(Sirena::Diagram::Base)
-      end
-
-      it "returns diagram_type as the registered symbol" do
-        expect(diagram.diagram_type).to eq(type)
-      end
-
-      # respond_to?(:valid?) alone is not enough: six models responded only
-      # because they inherited Diagram::Base#valid?, which raises
-      # NotImplementedError when actually invoked. Always call it and check
-      # the return value's type, not merely that the call didn't raise —
-      # `def valid?; :maybe; end` must fail this and only this assertion
-      # catches it.
-      it "answers valid? with an actual boolean" do
-        expect(diagram.valid?).to be(true).or be(false)
-      end
-
-      # The parsed fixture's class is the convention-resolved model, not a
-      # component that happens to share the name (Diagram::Block was one).
-      it "has the parser return an instance of the convention-resolved model" do
-        expect(diagram.class).to be(model)
-      end
+      it_behaves_like "a diagram type", type, known_gaps.fetch(type, {})
     end
   end
 
