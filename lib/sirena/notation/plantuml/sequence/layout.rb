@@ -19,9 +19,11 @@ module Sirena
           MIN_GAP = 30.0
           BOX_PADDING = 8.0
           BOX_TITLE_HEIGHT = 26.0
+          MIN_WIDTH_PADDING = 14.0
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
-                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT
+                           :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
+                           :MIN_WIDTH_PADDING
 
           def scene(diagram)
             @diagram = diagram
@@ -75,14 +77,23 @@ module Sirena
           end
 
           def head_height
-            plain = @diagram.participants.all? { |p| p.kind == :participant }
+            plain = @diagram.participants.all? do |p|
+              p.kind == :participant && p.stereotype.nil?
+            end
             plain ? 36.0 : 56.0
           end
 
           def head_width(participant)
             text = measure_text(participant.label, font_size: font_size)
             [MIN_HEAD_WIDTH, text[:width] + (2 * HEAD_PADDING),
-             boxed_title_width(participant)].max
+             boxed_title_width(participant), requested_width].max
+          end
+
+          # PlantUML draws a head 14 wider than the minimum it is given.
+          def requested_width
+            return 0.0 unless @diagram.min_head_width
+
+            @diagram.min_head_width + MIN_WIDTH_PADDING
           end
 
           # A box round one participant is as wide as that head, so the head
@@ -228,9 +239,17 @@ module Sirena
           def head_texts(participant, centre, top)
             label = text(participant.label, centre, top + @head_height - 12,
                          "participant")
-            return [label] if participant.kind == :participant
+            name = above_label(participant)
+            return [label] unless name
 
-            [text(participant.kind.to_s, centre, top + 14, "kind"), label]
+            [text(name, centre, top + 14, "kind"), label]
+          end
+
+          def above_label(participant)
+            return "«#{participant.stereotype}»" if participant.stereotype
+            return if participant.kind == :participant
+
+            participant.kind.to_s
           end
 
           def frames(widths)

@@ -219,4 +219,28 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
         .to all(eq(arrow_y))
     end
   end
+
+  describe "participant heads" do
+    it "makes every head at least the requested minimum plus 14 wide" do
+      heads = top_heads(scene_of("skinparam MinClassWidth 100", "A -> B"))
+
+      expect(heads.map(&:width)).to all(be >= 114.0)
+    end
+
+    it "keeps the default width when nothing is requested" do
+      expect(top_heads(scene_of("A -> B")).map(&:width)).to all(be < 114.0)
+    end
+
+    it "writes the stereotype above the label" do
+      head = top_heads(scene_of("participant C <<st>>", "C -> D")).first
+
+      expect(head.texts.map(&:content)).to eq(["«st»", "C"])
+    end
+
+    it "makes the heads taller for a stereotype" do
+      head = top_heads(scene_of("participant C <<st>>", "C -> D")).first
+
+      expect(head.height).to eq(56.0)
+    end
+  end
 end

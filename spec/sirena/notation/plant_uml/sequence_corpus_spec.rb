@@ -24,6 +24,7 @@ module PlantUmlSequenceCorpus
     3d52db0edecd 54dfdd51ac5d 62b7d8792525 7624adcaae49 80894b73726a
     846af1d12917 920d4bcaa3e9 d783321e2c62
     559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
+    0385427ea4be 24072f84b995 577feb6055fb
   ].freeze
 
   def case_named(suffix)
@@ -95,6 +96,15 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     end
 
     expect(counts.first - counts.last).to eq(2)
+  end
+
+  it "widens the heads of a case that sets a minimum width" do
+    widths = %w[24072f84b995 577feb6055fb].map do |name|
+      svg = Sirena.render(source_of(name), notation: :plantuml)
+      matches(svg, "//rect/@width").map { |w| w.value.to_f }.max
+    end
+
+    expect(widths).to all(be >= 114.0)
   end
 
   it "fills the bar of a rendered case with its colour" do

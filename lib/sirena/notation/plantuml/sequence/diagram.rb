@@ -11,12 +11,16 @@ module Sirena
         # source order and the boxes around neighbouring participants.
         # Private to this notation.
         class Diagram
-          attr_reader :participants, :items, :boxes
+          attr_reader :participants, :items, :boxes, :min_head_width
 
-          def initialize(participants:, items:, boxes: [].freeze)
+          # @param min_head_width [Integer, nil] the narrowest participant head
+          #   the source asked for
+          def initialize(participants:, items:, boxes: [].freeze,
+                         min_head_width: nil)
             @participants = participants
             @items = items
             @boxes = boxes
+            @min_head_width = min_head_width
             freeze
           end
 
