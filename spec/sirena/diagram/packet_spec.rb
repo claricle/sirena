@@ -20,25 +20,25 @@ RSpec.describe Sirena::Diagram::Packet do
       )
     end
   end
-end
 
-RSpec.describe Sirena::Diagram::PacketField do
-  subject(:field) { described_class.new("30", "34", "boundary") }
+  describe Sirena::Diagram::PacketField do
+    subject(:field) { described_class.new("30", "34", "boundary") }
 
-  it "coerces bit positions and reports its inclusive size" do
-    expect([field.bit_start, field.bit_end, field.size]).to eq([30, 34, 5])
-  end
+    it "coerces bit positions and reports its inclusive size" do
+      expect([field.bit_start, field.bit_end, field.size]).to eq([30, 34, 5])
+    end
 
-  it "reports default row placement and spanning" do
-    expect([field.start_row, field.end_row, field.spans_rows?]).to eq([0, 1, true])
-  end
+    it "reports default row placement and spanning" do
+      expect([field.start_row, field.end_row, field.spans_rows?]).to eq([0, 1, true])
+    end
 
-  it "reports row placement for a custom row width" do
-    expect([field.start_row(16), field.end_row(16), field.spans_rows?(16)]).to eq([1, 2, true])
-  end
+    it "reports row placement for a custom row width" do
+      expect([field.start_row(16), field.end_row(16), field.spans_rows?(16)]).to eq([1, 2, true])
+    end
 
-  it "reports positions within default and custom rows" do
-    expect([field.start_bit_in_row, field.end_bit_in_row,
-            field.start_bit_in_row(16), field.end_bit_in_row(16)]).to eq([30, 2, 14, 2])
+    it "reports positions within default and custom rows" do
+      expect([field.start_bit_in_row, field.end_bit_in_row,
+              field.start_bit_in_row(16), field.end_bit_in_row(16)]).to eq([30, 2, 14, 2])
+    end
   end
 end

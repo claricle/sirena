@@ -49,7 +49,7 @@ RSpec.describe Sirena::Layout::Radar do
           include(id: "quality", label: "Quality", angle_degrees: 90.0,
                   end_x: be_within(0.0001).of(0), end_y: 200.0,
                   label_y: 230.0, index: 1),
-        ]
+        ],
       )
     end
 
@@ -63,8 +63,8 @@ RSpec.describe Sirena::Layout::Radar do
                     x: be_within(0.0001).of(0), y: be_within(0.0001).of(0)),
             include(axis_id: "quality", value: 30.0, normalized: 1.0,
                     x: be_within(0.0001).of(0), y: 200.0),
-          ]
-        )
+          ],
+        ),
       )
     end
 
@@ -76,7 +76,7 @@ RSpec.describe Sirena::Layout::Radar do
           { radius: 120.0, value: 22.0, fraction: 0.6 },
           { radius: 160.0, value: 26.0, fraction: 0.8 },
           { radius: 200.0, value: 30.0, fraction: 1.0 },
-        ]
+        ],
       )
     end
   end

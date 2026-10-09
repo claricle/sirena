@@ -33,7 +33,7 @@ RSpec.describe Sirena::Layout::Packet do
     it "positions a single-row field from its inclusive bit range" do
       expect(graph[:fields]).to contain_exactly(
         include(label: "flags", bit_start: 4, bit_end: 7, x: 160, y: 70,
-                width: 120, height: 40, row: 0, start_col: 4, end_col: 7)
+                width: 120, height: 40, row: 0, start_col: 4, end_col: 7),
       )
     end
   end
@@ -52,7 +52,7 @@ RSpec.describe Sirena::Layout::Packet do
           include(label: "boundary", bit_start: 32, bit_end: 34, row: 1,
                   start_col: 0, end_col: 2, x: 40, y: 110, width: 90,
                   is_continuation: true, is_final: true),
-        ]
+        ],
       )
     end
 
