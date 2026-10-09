@@ -2,43 +2,43 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Diagram::SankeyNode do
-  it "uses the identifier when the label is blank" do
-    node = described_class.new("source", "")
-
-    expect(node.display_label).to eq("source")
-  end
-
-  it "requires a nonempty identifier" do
-    expect(described_class.new("source")).to be_valid
-    expect(described_class.new(nil)).not_to be_valid
-    expect(described_class.new("")).not_to be_valid
-  end
-end
-
-RSpec.describe Sirena::Diagram::SankeyFlow do
-  it "coerces the value and accepts a positive flow" do
-    flow = described_class.new("source", "target", "2.5")
-
-    expect(flow.value).to eq(2.5)
-    expect(flow).to be_valid
-  end
-
-  it "rejects missing endpoints and nonpositive values" do
-    expect(described_class.new(nil, "target", 1)).not_to be_valid
-    expect(described_class.new("", "target", 1)).not_to be_valid
-    expect(described_class.new("source", nil, 1)).not_to be_valid
-    expect(described_class.new("source", "", 1)).not_to be_valid
-    expect(described_class.new("source", "target", 0)).not_to be_valid
-  end
-
-  it "identifies self-loops" do
-    expect(described_class.new("same", "same", 1)).to be_self_loop
-    expect(described_class.new("source", "target", 1)).not_to be_self_loop
-  end
-end
-
 RSpec.describe Sirena::Diagram::Sankey do
+  describe Sirena::Diagram::SankeyNode do
+    it "uses the identifier when the label is blank" do
+      node = described_class.new("source", "")
+
+      expect(node.display_label).to eq("source")
+    end
+
+    it "requires a nonempty identifier" do
+      expect(described_class.new("source")).to be_valid
+      expect(described_class.new(nil)).not_to be_valid
+      expect(described_class.new("")).not_to be_valid
+    end
+  end
+
+  describe Sirena::Diagram::SankeyFlow do
+    it "coerces the value and accepts a positive flow" do
+      flow = described_class.new("source", "target", "2.5")
+
+      expect(flow.value).to eq(2.5)
+      expect(flow).to be_valid
+    end
+
+    it "rejects missing endpoints and nonpositive values" do
+      expect(described_class.new(nil, "target", 1)).not_to be_valid
+      expect(described_class.new("", "target", 1)).not_to be_valid
+      expect(described_class.new("source", nil, 1)).not_to be_valid
+      expect(described_class.new("source", "", 1)).not_to be_valid
+      expect(described_class.new("source", "target", 0)).not_to be_valid
+    end
+
+    it "identifies self-loops" do
+      expect(described_class.new("same", "same", 1)).to be_self_loop
+      expect(described_class.new("source", "target", 1)).not_to be_self_loop
+    end
+  end
+
   subject(:diagram) { described_class.new }
 
   let(:first_flow) { Sirena::Diagram::SankeyFlow.new("source", "middle", 4) }

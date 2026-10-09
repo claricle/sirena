@@ -69,6 +69,7 @@ jobs:
             --no-progress
             --config docs/lychee.toml
             --base docs/_lychee_seeds
+            --include '^file://${{ github.workspace }}/docs/_lychee_seeds/'
             'docs/_lychee_seeds/broken-relative-link.html'
           fail: true
           output: link-seed-relative.md
@@ -84,6 +85,7 @@ jobs:
             --no-progress
             --config docs/lychee.toml
             --base docs/_lychee_seeds
+            --include '^file://${{ github.workspace }}/docs/_lychee_seeds/'
             'docs/_lychee_seeds/broken-fragment.html'
           fail: true
           output: link-seed-fragment.md

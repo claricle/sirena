@@ -72,7 +72,7 @@ module BatchCommandRunner
     original = $stdout
     $stdout = captured
     command = Sirena::Commands::BatchCommand.new(
-      input: input, output: output, **
+      input: input, output: output, **,
     )
     with_default_external(locale) { command.run }
     [command, captured.string]
@@ -101,8 +101,8 @@ module BatchCommandRunner
 
   def failure_with_cause
     raise "render failed", cause: ArgumentError.new("bad token")
-  rescue RuntimeError => error
-    error
+  rescue RuntimeError => e
+    e
   end
 
   def failing_report
