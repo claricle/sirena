@@ -504,8 +504,7 @@ RSpec.describe CorpusOracle do
     end
 
     it "records the complete verified toolchain" do
-      allow(MermaidToolchain).to receive(:check!).and_return(true)
-      allow(MermaidToolchain).to receive(:provenance).and_return(pinned)
+      allow(MermaidToolchain).to receive_messages(check!: true, provenance: pinned)
 
       expect(described_class.provenance).to eq(pinned)
     end

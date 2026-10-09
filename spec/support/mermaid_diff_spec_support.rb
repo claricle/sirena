@@ -343,8 +343,8 @@ module MermaidDiffSpecSupport
     end
 
     def prefix_path(dir, &)
-      previous_allow = ENV["SIRENA_ALLOW_TEST_MMDC"]
-      previous_binary = ENV["SIRENA_MMDC_TEST_BIN"]
+      previous_allow = ENV.fetch("SIRENA_ALLOW_TEST_MMDC", nil)
+      previous_binary = ENV.fetch("SIRENA_MMDC_TEST_BIN", nil)
       ENV["SIRENA_ALLOW_TEST_MMDC"] = "1"
       ENV["SIRENA_MMDC_TEST_BIN"] = File.join(dir, "mmdc")
       with_path("#{dir}:#{ENV.fetch('PATH')}", &)

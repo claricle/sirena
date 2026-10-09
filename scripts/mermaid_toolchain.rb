@@ -25,9 +25,12 @@ module MermaidToolchain
   module_function
 
   def provenance
-    YAML.safe_load(File.read(PROVENANCE_PATH))
+    YAML.safe_load_file(PROVENANCE_PATH)
   end
 
+  # Command entry point: success returns true; drift raises instead of
+  # returning false. The bang communicates that failure aborts the operation.
+  # rubocop:disable Naming/PredicateMethod
   def check!
     expected = provenance
     observed = resolved_provenance
@@ -39,6 +42,7 @@ module MermaidToolchain
 
     true
   end
+  # rubocop:enable Naming/PredicateMethod
 
   def command(*arguments)
     if test_binary
@@ -64,6 +68,8 @@ module MermaidToolchain
     { "FONTCONFIG_FILE" => FONTCONFIG_PATH }
   end
 
+  # Like check!, this is an imperative command whose failure raises.
+  # rubocop:disable Naming/PredicateMethod
   def canary!
     check!
     require "tmpdir"
@@ -80,6 +86,7 @@ module MermaidToolchain
     end
     true
   end
+  # rubocop:enable Naming/PredicateMethod
 
   def resolved_provenance
     {
@@ -154,7 +161,7 @@ module MermaidToolchain
   def test_binary
     return unless ENV["SIRENA_ALLOW_TEST_MMDC"] == "1"
 
-    ENV["SIRENA_MMDC_TEST_BIN"]
+    ENV.fetch("SIRENA_MMDC_TEST_BIN", nil)
   end
 
   def check_once!
