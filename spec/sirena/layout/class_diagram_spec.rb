@@ -41,6 +41,16 @@ module ClassDiagramLayoutSpecHelpers
       edge.sections.map { |section| section.bend_points.map(&:y) },
     ]
   end
+
+  def multi_section_marker_graph
+    graph = routed_graph
+    graph[:edges].first[:metadata] = { relationship_type: "inheritance" }
+    graph[:edges].first[:sections] = [
+      { start_point: { x: 100, y: 25 }, end_point: { x: 150, y: 75 } },
+      { start_point: { x: 150, y: 75 }, end_point: { x: 200, y: 25 } },
+    ]
+    graph
+  end
 end
 
 RSpec.describe Sirena::Layout::ClassDiagram do
@@ -103,6 +113,15 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
     expect(routed_scene_summary(routed))
       .to eq([%w[A B], %w[A B], [[80.0]]])
+  end
+
+  it "orients routed markers from their adjacent terminal section" do
+    edge = described_class.from_graph(multi_section_marker_graph).edges.first
+    expected = described_class.triangle_marker(
+      { x: 150, y: 75 }, { x: 200, y: 25 }, true
+    )
+
+    expect(edge.markers.first.points).to eq(expected.points)
   end
 
   it "runs Grid once inside layout and not in Engine" do
