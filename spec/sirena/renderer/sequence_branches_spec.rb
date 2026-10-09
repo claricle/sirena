@@ -14,14 +14,14 @@ RSpec.describe Sirena::Renderer::Sequence do
   def label(text, x, y, font_size)
     Sirena::Layout::Sequence::Label.new(
       text: text, width: 20, height: 10, x: x, y: y,
-      font_size: font_size,
+      font_size: font_size
     )
   end
 
   def box(label: nil)
     Sirena::Layout::Sequence::Participant.new(
       id: "box", actor_type: "participant", x: 20, y: 20,
-      width: 120, height: 40, corner_radius: 5, label: label,
+      width: 120, height: 40, corner_radius: 5, label: label
     )
   end
 
@@ -32,7 +32,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       actor_head: Sirena::Layout::Sequence::Circle.new(
         x: 230, y: 30, radius: 8,
       ),
-      actor_lines: [line(230, 38, 230, 55), line(220, 45, 240, 45)],
+      actor_lines: [line(230, 38, 230, 55), line(220, 45, 240, 45)]
     )
   end
 
@@ -41,7 +41,7 @@ RSpec.describe Sirena::Renderer::Sequence do
       id: "sequence", width: 360, height: 240,
       view_box: "0 0 360 240",
       participants: [box(label: label("Box", 80, 40, 14.0)), box, actor],
-      lifelines: [line(80, 60, 80, 200)], messages: messages,
+      lifelines: [line(80, 60, 80, 200)], messages: messages
     )
   end
 
@@ -60,11 +60,11 @@ RSpec.describe Sirena::Renderer::Sequence do
     messages = [
       Sirena::Layout::Sequence::Message.new(
         id: "shaft", line_style: "dotted", shaft: line(80, 100, 220, 100),
-        heads: [polygon, open_head], label: label("hello", 150, 90, 12.5),
+        heads: [polygon, open_head], label: label("hello", 150, 90, 12.5)
       ),
       Sirena::Layout::Sequence::Message.new(
         id: "loop", line_style: "dotted",
-        loop_path: "M 80 140 C 136 140 136 160 80 160", heads: [],
+        loop_path: "M 80 140 C 136 140 136 160 80 160", heads: []
       ),
     ]
     xml = described_class.new.render(scene(messages)).to_xml
@@ -78,7 +78,7 @@ RSpec.describe Sirena::Renderer::Sequence do
   it "formats integral and fractional coordinates without losing precision" do
     message = Sirena::Layout::Sequence::Message.new(
       id: "numbers", line_style: "solid", shaft: line(1, 2.5, 3, 4.25),
-      heads: [], label: label("n", 2, 3.5, 12.0),
+      heads: [], label: label("n", 2, 3.5, 12.0)
     )
     xml = described_class.new.render(scene([message])).to_xml
 
