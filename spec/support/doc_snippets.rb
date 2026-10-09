@@ -17,7 +17,8 @@ module DocSnippets
     "gem install sirena" => "installs the published gem",
     "Mermaid Syntax Input (String)" => "ASCII-art pipeline diagram",
     "Sirena (Root Module)" => "ASCII-art component tree",
-    "git clone https://github.com/claricle/sirena.git" => "clones the repository",
+    "git clone https://github.com/claricle/sirena.git" =>
+      "clones the repository",
     %(echo 'export PATH="$HOME/.gem/ruby/X.X.0/bin:$PATH"' >> ~/.bashrc) =>
       "edits the reader's shell profile",
     "gem install sirena --user-install" => "installs the published gem",
@@ -108,7 +109,8 @@ module DocSnippets
   def run_in_cwd(block)
     case block.lang
     when "ruby"
-      TOPLEVEL_BINDING.dup.eval(block.body, File.basename(block.path), block.line)
+      TOPLEVEL_BINDING.dup.eval(block.body, File.basename(block.path),
+                                block.line)
     when "shell", "bash" then block.body.each_line { |l| shell(l) }
     else raise ArgumentError, "unhandled block language: #{block.lang.inspect}"
     end
@@ -120,12 +122,14 @@ module DocSnippets
     piped = line.match(/\Acat (\S+) \| (.*)/m)
     return with_stdin(File.read(piped[1])) { shell(piped[2]) } if piped
 
-    command, *args = Shellwords.split(line)
-    unless command == "sirena"
-      raise ArgumentError, "only the sirena CLI is run, got #{line.inspect}"
-    end
+    with_quiet_stdout { Sirena::Cli.start(sirena_args(line)) }
+  end
 
-    with_quiet_stdout { Sirena::Cli.start(args) }
+  def sirena_args(line)
+    command, *args = Shellwords.split(line)
+    return args if command == "sirena"
+
+    raise ArgumentError, "only the sirena CLI is run, got #{line.inspect}"
   end
 
   def with_stdin(text)
