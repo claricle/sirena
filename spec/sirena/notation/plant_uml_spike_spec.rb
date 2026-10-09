@@ -215,8 +215,9 @@ RSpec.describe Sirena::Notation::PlantUML do
       expect(plantuml.extensions).to eq([".puml"]).and be_frozen
     end
 
-    it "lists class_diagram as its only type" do
-      expect(plantuml.types).to eq([:class_diagram]).and be_frozen
+    it "lists the class and sequence diagram types" do
+      expect(plantuml.types)
+        .to eq(%i[class_diagram sequence_diagram]).and be_frozen
     end
   end
 
