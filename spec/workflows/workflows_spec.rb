@@ -94,7 +94,9 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   end
 
   describe "ci.yml topology" do
-    let(:jobs) { ci.fetch("jobs") }
+    def jobs
+      ci.fetch("jobs")
+    end
 
     it "runs on pull requests, merge queue, push, dispatch and a nightly schedule" do
       triggers = ci["on"] || ci[true]
@@ -173,7 +175,9 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   end
 
   describe "release.yml preflight" do
-    let(:jobs) { release.fetch("jobs") }
+    def jobs
+      release.fetch("jobs")
+    end
 
     it "accepts only a manual workflow dispatch" do
       triggers = release["on"] || release[true]
