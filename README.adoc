@@ -141,6 +141,22 @@ Render a single Mermaid diagram to SVG:
 sirena render diagram.mmd -o output.svg
 ----
 
+Create a PlantUML class diagram in `diagram.puml`:
+
+----
+@startuml
+class User
+class Account
+User --> Account : owns
+@enduml
+----
+
+Then render it by loading the bundled notation:
+
+----
+sirena render --require sirena/notation/plantuml diagram.puml -o output.svg
+----
+
 Render all Mermaid files in a directory:
 
 [source,shell]
