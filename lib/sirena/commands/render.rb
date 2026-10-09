@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "notation_loader"
+
 module Sirena
   module Commands
-    # Command to render Mermaid diagrams to SVG.
+    # Command to render diagrams to SVG.
     class RenderCommand
       attr_reader :file, :options
 
@@ -21,17 +23,21 @@ module Sirena
       def run
         validate_format!
 
-        source = read_input
-        engine = Engine.new(
-          verbose: options[:verbose],
-          theme: options[:theme],
-        )
-        svg = engine.render(source)
-
-        write_output(svg)
+        NotationLoader.load_all(options[:require])
+        write_output(render_source(read_input))
       end
 
       private
+
+      def render_source(source)
+        engine = Engine.new(verbose: options[:verbose], theme: options[:theme])
+        engine.render(source, path: path_hint, notation: options[:notation])
+      end
+
+      # The extension is a notation hint, so only a real file offers one.
+      def path_hint
+        file unless file == "-" || file.nil?
+      end
 
       # Validates the output format option.
       #
