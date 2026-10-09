@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+require_relative "../../sirena"
 require_relative "plantuml/parser"
+require_relative "plantuml/layout"
+require_relative "plantuml/renderer"
 
 module Sirena
   module Notation
@@ -48,6 +51,22 @@ module Sirena
       def claims?(source)
         source.is_a?(String) && source.b.match?(OPENER)
       end
+
+      # Parses one class diagram and names the PlantUML-local back half of
+      # the rendering pipeline. Nothing in Engine knows this notation exists.
+      #
+      # @param source [String] PlantUML source
+      # @return [Notation::Parsed]
+      def parse(source)
+        Notation::Parsed.new(
+          type: :class_diagram,
+          diagram: Parser.new.parse(source),
+          transform: Layout,
+          renderer: Renderer,
+        )
+      end
     end
   end
 end
+
+Sirena::Notation.register(Sirena::Notation::PlantUML)

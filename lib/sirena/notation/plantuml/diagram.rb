@@ -20,6 +20,17 @@ module Sirena
           @relations = relations
           freeze
         end
+
+        # The parser refuses an empty wrapper, so every completed Diagram is
+        # valid. Keeping the predicate here lets the shared Layout::Base own
+        # the pipeline's validity guard for this notation too.
+        def valid?
+          !classes.empty?
+        end
+
+        def diagram_type
+          :class_diagram
+        end
       end
     end
   end
