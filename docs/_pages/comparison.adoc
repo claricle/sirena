@@ -107,7 +107,7 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 |~30MB
 
 |**Startup Time**
-|Not benchmarked
+|Measured in the linked dated Sirena report
 |~2s (browser)
 |~1s (JVM)
 |<50ms
@@ -122,8 +122,8 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 * Pure Ruby - no Node.js or Java dependencies
 * Callable directly from Rails, Jekyll, and other Ruby applications (no
   dedicated integration layer built yet)
-* No committed benchmark yet backs a specific speed or memory multiplier
-  against Mermaid.js (see Performance Benchmarks below)
+* A dated Apple M2 run against mermaid-cli is published with reproduction
+  commands and scope limits (see Performance Benchmarks below)
 * YAML-based theme system (easier than CSS)
 * Mermaid.js syntax compatibility
 * Built-in batch processor
@@ -233,14 +233,12 @@ Sirena is a pure Ruby implementation of Mermaid-compatible diagram rendering, op
 
 === Performance Benchmarks
 
-No committed, reproducible benchmark run exists for Sirena. The
-`benchmark:compare` and `benchmark:quick` rake tasks in
-`tasks/benchmark.rake` are meant to produce one but do not currently run
-(neither the task nor the `Rakefile` requires `sirena` before calling
-`Sirena.render`). Until that is fixed and a run recorded, this page does not
-publish specific timing, memory, or output-size figures for Sirena, and
-makes no claim about how it compares on those axes to Mermaid.js, PlantUML,
-or Graphviz.
+The `benchmark:compare` and `benchmark:quick` rake tasks run against
+`Sirena.render`. One dated Apple M2 comparison with mermaid-cli, its method,
+and reproduction commands is published in the
+link:../performance-benchmark/[Performance Benchmark report]. That report did
+not measure memory, and one machine's result is not a general performance
+guarantee or a comparison with PlantUML or Graphviz.
 
 === Migration Paths
 
@@ -254,8 +252,8 @@ or Graphviz.
 . Change rendering calls from JavaScript to Ruby
 . Adapt themes from CSS to YAML
 . Remove click event handlers (not supported)
-. Test batch rendering against your own workload (no published benchmark
-  substitutes for this)
+. Test batch rendering against your own workload (the single published run
+  does not substitute for this)
 
 See our comprehensive *Migration from Mermaid.js Guide* (planned).
 
@@ -414,4 +412,4 @@ Each tool has its strengths and ideal use cases:
 * **PlantUML** dominates formal UML documentation
 * **Graphviz** provides the most powerful graph layout algorithms
 
-Choose based on your tech stack, rendering requirements, and diagram complexity. For Ruby applications needing server-side Mermaid-compatible rendering without a Node.js or Java runtime, Sirena is a fit; see "Performance Benchmarks" above for why no performance claim is made here.
+Choose based on your tech stack, rendering requirements, and diagram complexity. For Ruby applications needing server-side Mermaid-compatible rendering without a Node.js or Java runtime, Sirena is a fit; see "Performance Benchmarks" above for the scoped measurement and its limits.
