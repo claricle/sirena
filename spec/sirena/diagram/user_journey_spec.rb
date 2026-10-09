@@ -45,7 +45,7 @@ RSpec.describe Sirena::Diagram::JourneyTask do
 
     it "returns false for a score below the supported range" do
       task = described_class.new(
-        name: "Browse products", score: 0, actors: ["Customer"]
+        name: "Browse products", score: 0, actors: ["Customer"],
       )
 
       expect(task.valid?).to be false

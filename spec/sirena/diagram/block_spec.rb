@@ -3,6 +3,8 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::Block do
+  subject(:diagram) { described_class.new }
+
   describe Sirena::Diagram::BlockConnection do
     it "distinguishes arrow and line connections" do
       arrow = described_class.new(connection_type: "arrow")
@@ -12,8 +14,6 @@ RSpec.describe Sirena::Diagram::Block do
       expect(predicates).to eq([[true, false], [false, true]])
     end
   end
-
-  subject(:diagram) { described_class.new }
 
   describe "#add_style" do
     it "appends the exact style object" do

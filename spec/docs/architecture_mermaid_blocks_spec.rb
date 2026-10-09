@@ -49,7 +49,7 @@ module ArchitectureMermaidBlocks
 
   def section(title, level:)
     lines = content.lines
-    heading = "#{"#" * level} #{title}"
+    heading = "#{'#' * level} #{title}"
     start = lines.index { |line| line.chomp == heading }
     raise "missing section: #{title}" unless start
 

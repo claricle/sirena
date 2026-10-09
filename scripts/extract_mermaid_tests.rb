@@ -13,7 +13,7 @@ require "json"
 
 MERMAID_JS_ROOT = "/Users/mulgogi/src/external/mermaid-js"
 SIRENA_ROOT = File.expand_path("..", __dir__)
-OUTPUT_DIR = "#{SIRENA_ROOT}/spec/mermaid"
+OUTPUT_DIR = "#{SIRENA_ROOT}/spec/mermaid".freeze
 
 # All Mermaid diagram types discovered from packages/mermaid/src/diagrams/
 DIAGRAM_TYPES = {

@@ -66,14 +66,14 @@ RSpec.describe PerformanceBenchmarkTruth do
   it "documents both runnable benchmark tasks" do
     expect(described_class.report).to include(
       "bundle exec rake benchmark:compare",
-      "bundle exec rake benchmark:quick"
+      "bundle exec rake benchmark:quick",
     )
   end
 
   it "scopes the results to their measured evidence" do
     expect(described_class.report).to include(
       "single-machine measurements from one run",
-      "Memory usage was not measured in this run"
+      "Memory usage was not measured in this run",
     )
   end
 

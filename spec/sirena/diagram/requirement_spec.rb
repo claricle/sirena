@@ -3,6 +3,8 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::Requirement do
+  subject(:diagram) { described_class.new }
+
   describe Sirena::Diagram::RequirementElement do
     it "appends a class name" do
       element = described_class.new
@@ -46,8 +48,6 @@ RSpec.describe Sirena::Diagram::Requirement do
       expect(requirement_class.properties).to eq(["fill:red"])
     end
   end
-
-  subject(:diagram) { described_class.new }
 
   it "identifies itself as a requirement diagram" do
     expect(diagram.diagram_type).to eq(:requirement)

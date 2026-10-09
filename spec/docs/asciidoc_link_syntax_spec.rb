@@ -13,10 +13,10 @@ module AsciidocLinkSyntax
   PAGES = EXPECTED_SOURCE_LINK_COUNTS.keys.to_h do |name|
     [name, File.join(ROOT, "docs/_diagram_types", name)]
   end.freeze
-  MARKDOWN_SOURCE_LINK = %r{\[[^\]]+\]\((?:\.\./)?(?:lib|spec)/[^\)]+\)}
+  MARKDOWN_SOURCE_LINK = %r{\[[^\]]+\]\((?:\.\./)?(?:lib|spec)/[^)]+\)}
   SOURCE_URL = Regexp.new(
     "https://github\\.com/claricle/sirena/blob/main/" \
-    "(?:lib|spec)/[^\\s\\[]+\\[[^\\]]+\\]"
+    "(?:lib|spec)/[^\\s\\[]+\\[[^\\]]+\\]",
   )
 
   def self.markdown_source_links
