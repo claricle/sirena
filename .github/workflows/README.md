@@ -5,7 +5,7 @@
 | Lane | Aggregator (required check) | Contents today | Budget |
 |---|---|---|---|
 | Fast | `fast-lane` | `unit` (`bundle exec rake` on Ruby 3.3/3.4/4.0-experimental x ubuntu/macos/windows), `pins`, `lint` (`bundle exec rubocop` and `bundle exec rake lint:debt:check`) | < 10 min |
-| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`) | < 30 min |
+| Full | `full-lane` | `docs-build` (build_deploy.yml), `links` (links.yml), `conformance` (`rake conformance:check`), `fresh-resolution` (no lockfile, `bundle exec rake`), `plantuml-toolchain` (pinned PlantUML jar + Java 21 + Graphviz, `spec/plantuml/toolchain_spec.rb`) | < 30 min |
 
 Reserved, not yet wired: snippet spec (16), parity (14). Corpus (02b) runs
 inside `unit` (`bundle exec rake` includes `corpus:check`). The scoreboard guard (02b)
@@ -29,7 +29,7 @@ NOT YET APPLIED.
 2. Add its id to the `needs:` of the aggregator for its lane. A job in `ci.yml` that no aggregator needs fails `spec/workflows/workflows_spec.rb`.
 3. Never rename `fast-lane` / `full-lane`.
 4. Oracle and comparison specs FAIL, not skip, when their binary is missing in CI. Skip loudly only locally.
-5. Provision your own toolchain inside your job (02a: oracle, 12: PlantUML/Java/Graphviz).
+5. Provision your own toolchain inside your job (02a: oracle, 12: PlantUML/Java/Graphviz). The PlantUML jar version and sha256 live in `spec/plantuml/pin.json`; `scripts/install_plantuml.sh` reads them and refuses a checksum mismatch. Graphviz comes from apt and is NOT version-pinned; the spec only checks that `dot` runs.
 
 Worked example, a conformance job for the full lane:
 

@@ -157,6 +157,26 @@ jobs:
       - run: bundle install
       - run: bundle exec rake
 
+  plantuml-toolchain:
+    # Pinned PlantUML jar (spec/plantuml/pin.json), Java and Graphviz for the
+    # oracle and comparison specs. The spec fails here if any is missing.
+    name: plantuml-toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3  # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: sudo apt-get install --yes --no-install-recommends graphviz
+      - run: scripts/install_plantuml.sh
+      - run: bundle exec rspec spec/plantuml/toolchain_spec.rb
+
   # Reserved full-lane slots, added to `needs` below:
   #   parity (14, waits on elkrb), scoreboard guard (02b)
   # The corpus slot (02b) is filled by `unit`: its `bundle exec rake` runs
@@ -165,7 +185,7 @@ jobs:
   full-lane:
     name: full-lane
     if: ${{ always() }}
-    needs: [docs-build, links, conformance, fresh-resolution]
+    needs: [docs-build, links, conformance, fresh-resolution, plantuml-toolchain]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
