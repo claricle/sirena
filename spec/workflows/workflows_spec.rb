@@ -136,14 +136,21 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       expect(jobs.keys).not_to include("corpus", "parity")
     end
 
-    it "wires conformance and fresh-resolution into the full lane" do
-      expect(jobs.fetch("full-lane")["needs"]).to include("conformance", "fresh-resolution")
+    it "gates the full lane on conformance and fresh-resolution" do
+      needs = jobs.fetch("full-lane")["needs"]
+      expect(needs).to include("conformance", "fresh-resolution")
     end
 
-    it "runs fresh-resolution without a bundler cache, so the lockfile-free resolution is real" do
+    it "gives fresh-resolution no bundler cache" do
       steps = jobs.fetch("fresh-resolution")["steps"]
-      expect(steps.filter_map { |s| s.dig("with", "bundler-cache") }).to be_empty
-      expect(steps.filter_map { |s| s["run"] }).to eq(["bundle install", "bundle exec rake"])
+      expect(steps.filter_map { |s| s.dig("with", "bundler-cache") })
+        .to be_empty
+    end
+
+    it "installs fresh in fresh-resolution, then runs the suite" do
+      steps = jobs.fetch("fresh-resolution")["steps"]
+      expect(steps.filter_map { |s| s["run"] })
+        .to eq(["bundle install", "bundle exec rake"])
     end
 
     it "runs rubocop as the lint job, hung off fast-lane" do
