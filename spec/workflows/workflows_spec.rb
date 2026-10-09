@@ -32,8 +32,8 @@ module WorkflowHelpers
     [step["run"], step.dig("env", "NEXT_VERSION")]
   end
 
-  def delegated_values(job)
-    [Array(job["needs"]), job.dig("with", "next_version")]
+  def named_step(job, name)
+    job.fetch("steps").find { |step| step["name"] == name }
   end
 
   def oracle_browser_scope(jobs)
@@ -210,7 +210,7 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
     end
   end
 
-  describe "release.yml preflight" do
+  describe "release.yml ownership" do
     def jobs
       release.fetch("jobs")
     end
@@ -228,11 +228,43 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
       expect(changelog_values(changelog_step(jobs))).to eq(expected)
     end
 
-    it "requires the changelog preflight before delegating the release" do
-      delegated = jobs.fetch("release")
+    it "requires the changelog preflight before the repository-owned release" do
+      release_job = jobs.fetch("release")
 
-      expect(delegated_values(delegated))
-        .to eq([["preflight"], "${{ inputs.next_version }}"])
+      expect([Array(release_job["needs"]), release_job["uses"]])
+        .to eq([["preflight"], nil])
+    end
+
+    it "requires the exact checked main head before preparing a release" do
+      command = named_step(jobs.fetch("release"), "require the checked main head").fetch("run")
+      required = ["commits/main", "check-runs?per_page=100", "check_release_source.rb checked-main"]
+
+      expect(required.all? { |fragment| command.include?(fragment) }).to be(true)
+    end
+
+    it "permits only the generated version change before an atomic main and tag push" do
+      release_job = jobs.fetch("release")
+      prepare = named_step(release_job, "prepare version-only release commit").fetch("run")
+      push = named_step(release_job, "push version commit and tag").fetch("run")
+      required = ["check_release_source.rb write-version", "check_release_source.rb version-only"]
+
+      expect([required.all? { |fragment| prepare.include?(fragment) }, push.include?("git push --atomic")])
+        .to eq([true, true])
+    end
+
+    it "builds and publishes the gem without a reusable release workflow" do
+      release_job = jobs.fetch("release")
+      build = named_step(release_job, "build gem").fetch("run")
+      publish = named_step(release_job, "publish gem")
+      values = [build,
+                publish.fetch("run").include?('gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'),
+                publish.dig("env", "RUBYGEMS_API_KEY")]
+
+      expect(values).to eq([
+        'gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
+        true,
+        "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}",
+      ])
     end
   end
 end
