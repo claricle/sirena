@@ -48,6 +48,10 @@ module Sirena
           return normal_connection(connection, colour)
         end
 
+        path_connection(connection, colour)
+      end
+
+      def path_connection(connection, colour)
         Svg::Path.new.tap do |path|
           path.d = connection.path
           path.stroke = colour
@@ -84,14 +88,18 @@ module Sirena
           [branch.name, branch.color]
         end
         scene.commits.each do |commit|
-          svg << Svg::Circle.new.tap do |circle|
-            circle.cx = commit.x
-            circle.cy = commit.y
-            circle.r = 8
-            circle.fill = commit_fill(commit, branch_colours)
-            circle.stroke = commit_stroke(commit, branch_colours)
-            circle.stroke_width = "2"
-          end
+          svg << commit_circle(commit, branch_colours)
+        end
+      end
+
+      def commit_circle(commit, branch_colours)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = commit.x
+          circle.cy = commit.y
+          circle.r = 8
+          circle.fill = commit_fill(commit, branch_colours)
+          circle.stroke = commit_stroke(commit, branch_colours)
+          circle.stroke_width = "2"
         end
       end
 

@@ -10,6 +10,10 @@ RSpec.describe "Git Graph Integration" do
   let(:transform) { Sirena::Layout::GitGraph.new }
   let(:renderer) { Sirena::Renderer::GitGraph.new }
 
+  def tagged?(commit)
+    commit.labels.any? { |label| label.kind == "tag" }
+  end
+
   describe "simple linear git graph" do
     let(:source) do
       <<~MERMAID
@@ -160,9 +164,7 @@ RSpec.describe "Git Graph Integration" do
       diagram = parser.parse(source)
       layout = transform.to_graph(diagram)
 
-      tagged_commits = layout.commits.select do |commit|
-        commit.labels.any? { |label| label.kind == "tag" }
-      end
+      tagged_commits = layout.commits.select { |commit| tagged?(commit) }
       expect(tagged_commits.length).to eq(2)
     end
   end

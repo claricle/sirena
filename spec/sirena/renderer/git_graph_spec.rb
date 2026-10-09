@@ -25,6 +25,17 @@ RSpec.describe Sirena::Renderer::GitGraph do
     MERMAID
   end
   let(:scene) { scene_for(source) }
+  let(:cherry_source) do
+    <<~MERMAID
+      gitGraph
+        commit id: "c1"
+        branch develop
+        checkout develop
+        commit id: "c2"
+        checkout main
+        cherry-pick id: "c2"
+    MERMAID
+  end
 
   def scene_types
     [
@@ -45,16 +56,29 @@ RSpec.describe Sirena::Renderer::GitGraph do
   end
 
   def coordinates
-    values = scene.commits.flat_map { |commit| [commit.x, commit.y] }
-    values.concat(scene.connections.flat_map do |connection|
+    commit_coordinates + connection_coordinates + label_coordinates
+  end
+
+  def commit_coordinates
+    scene.commits.flat_map { |commit| [commit.x, commit.y] }
+  end
+
+  def connection_coordinates
+    scene.connections.flat_map do |connection|
       [connection.from_x, connection.from_y, connection.to_x, connection.to_y]
-    end)
-    values.concat(scene.commits.flat_map do |commit|
+    end
+  end
+
+  def label_coordinates
+    scene.commits.flat_map do |commit|
       commit.labels.flat_map { |label| [label.x, label.y] }
-    end)
-    values.concat(scene.branches.filter_map do |branch|
+    end + branch_label_coordinates
+  end
+
+  def branch_label_coordinates
+    scene.branches.filter_map do |branch|
       [branch.label.x, branch.label.y] if branch.label
-    end.flatten)
+    end.flatten
   end
 
   def render_summary
@@ -64,7 +88,7 @@ RSpec.describe Sirena::Renderer::GitGraph do
     end
     [
       svg.children.grep(Sirena::Svg::Circle).length,
-      merge.nil?, svg.children.grep(Sirena::Svg::Text).empty?,
+      merge.nil?, svg.children.grep(Sirena::Svg::Text).empty?
     ]
   end
 
@@ -81,17 +105,8 @@ RSpec.describe Sirena::Renderer::GitGraph do
   end
 
   it "renders cherry-pick links as dotted paths" do
-    cherry = scene_for(<<~MERMAID)
-      gitGraph
-        commit id: "c1"
-        branch develop
-        checkout develop
-        commit id: "c2"
-        checkout main
-        cherry-pick id: "c2"
-    MERMAID
-
-    paths = renderer.render(cherry).children.grep(Sirena::Svg::Path)
+    paths = renderer.render(scene_for(cherry_source))
+      .children.grep(Sirena::Svg::Path)
     expect(paths.map(&:stroke_dasharray)).to include("2,4")
   end
 

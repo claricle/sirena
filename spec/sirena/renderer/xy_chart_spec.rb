@@ -28,23 +28,36 @@ RSpec.describe Sirena::Renderer::XyChart do
 
   def position_summary
     line, bar = scene.series
-    minimum = Sirena::Layout::XyChart::MARGIN_LEFT
+    [*line_position_summary(line), bar.bars.map(&:x).min >= minimum_x]
+  end
+
+  def line_position_summary(line)
     first_point = "#{line.points.first.x},#{line.points.first.y}"
-    [line.points.map(&:x).min >= minimum,
-     bar.bars.map(&:x).min >= minimum,
+    [line.points.map(&:x).min >= minimum_x,
      line.polyline.include?(first_point)]
+  end
+
+  def minimum_x
+    Sirena::Layout::XyChart::MARGIN_LEFT
   end
 
   def render_summary
     svg = renderer.render(scene)
+    counts = rendered_counts(svg)
+    [counts[0], counts[1], counts[2] >= 5, expected_labels?(svg)]
+  end
+
+  def rendered_counts(svg)
+    [Sirena::Svg::Polyline, Sirena::Svg::Circle, Sirena::Svg::Rect]
+      .map { |type| svg.children.grep(type).length }
+  end
+
+  def expected_labels?(svg)
     texts = svg.children.grep(Sirena::Svg::Text).map do |text|
       Array(text.content).join
     end
-    counts = [Sirena::Svg::Polyline, Sirena::Svg::Circle, Sirena::Svg::Rect]
-      .map { |type| svg.children.grep(type).length }
     labels = ["Sales Revenue", "Month", "Revenue", "Line", "Bar"]
-    [counts[0], counts[1], counts[2] >= 5,
-     labels.all? { |label| texts.include?(label) }]
+    labels.all? { |label| texts.include?(label) }
   end
 
   it "returns typed final chart geometry" do
