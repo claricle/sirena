@@ -1,5 +1,23 @@
 # 05 — Diagram type detection fixes
 
+Status (reconciled 2026-10-10): **complete.** The current corpus scoreboard
+records all 37 oracle-valid cases in `unknown/` as passing. Its other 48 rows
+are classified, not unresolved: 44 extraction artifacts and four
+oracle-invalid sources. The only detection-stage failures are those artifacts
+plus the oracle-invalid `unknown/055`; no oracle-valid case fails detection.
+
+The implementation also carries the required evidence. `Source.split` removes
+frontmatter, directives and comments before `Notation::Mermaid.detect_type`
+runs, with the preamble behavior covered in `source_spec.rb`,
+`engine_preamble_spec.rb` and the directive/comment cases in `engine_spec.rb`.
+The pattern changes that moved scoreboard rows are locked to corpus cases:
+bare `gantt` and `pie` use `gantt/023`, `gantt/025` and `pie/025`, and
+`flowchart-elk` uses `unknown/012`, alongside negative boundary examples. The
+additional direction-glyph boundary has direct mmdc-parity examples because no
+corpus row exercised it. Detection order, including the short `info` and
+`error` prefixes, remains explicit in `Notation::Mermaid::TYPES` rather than
+being inferred from directory names.
+
 Can start: after 02 (needs the failure list). Completion also needs 03a
 — this item changes behavior, so its PRs need the changed-line gate.
 Small; unblocks corpus cases across many types.
@@ -33,11 +51,18 @@ list must confirm case by case rather than assume.
 
 ## Done when
 
-- `DiagramTypeError` failures = oracle-invalid cases only.
-- Zero oracle-valid `unknown/` cases remain unresolved — each is either
-  passing or carries an oracle rejection. (Baseline: 85 cases, of which
-  9 pass, 71 fail detection and 5 fail later in the pipeline.)
-- Scoreboard updated; every pattern change carries a corpus-case spec.
+Complete. `DiagramTypeError` is absent from every oracle-valid scoreboard row;
+the remaining detection failures are outside the valid denominator (extraction
+artifacts, plus one pinned-oracle rejection). Zero oracle-valid `unknown/`
+cases remain unresolved: 37/37 pass. The scoreboard records every row, and the
+corpus-driven pattern changes carry the corpus-case specs named in the status
+above; the extra boundary-only change carries direct parity specs.
+
+The original baseline remains historically useful: 85 cases, of which nine
+passed, 71 failed detection and five failed later in the pipeline. Artifact
+classification was added after that baseline, so completion distinguishes
+artifacts from pinned-oracle rejections instead of relabeling damaged extracted
+text as valid Mermaid.
 
 ## Files
 

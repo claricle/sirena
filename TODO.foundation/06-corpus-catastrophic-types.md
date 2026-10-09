@@ -1,5 +1,12 @@
 # 06 — Corpus burndown: flowchart, state, er, treemap
 
+Status (reconciled 2026-10-10): **complete.** Across flowchart, state,
+state_diagram, er, er_diagram and treemap, `scoreboard/corpus.json` records
+293 oracle-valid cases and all 293 pass. The other 443 rows are classified as
+415 extraction artifacts and 28 pinned-oracle rejections; none has an unknown
+verdict. The enforced branch floor is already 89% in `.simplecov`, stronger
+than this item's 70% acceptance floor.
+
 Can start: after 02. Completion also needs 03a (changed-line gate) and
 raises the branch floor 55 → 70.
 
@@ -48,14 +55,21 @@ against the full 1,997.
 
 ## Done when
 
-Each type at 100% of oracle-valid; every non-pass scoreboard row for
-these types carries an oracle-invalid verdict; the branch floor is
-raised 55 → 70 in the same PR that closes this item.
+Complete. Each owned type is at 100% of oracle-valid (293/293 in aggregate),
+and every non-pass is classified as an extraction artifact or pinned-oracle
+rejection. The current 89% branch floor exceeds the required 70% floor.
+
+This is a reconciliation after the implementation and coverage work landed,
+not a claim that the historical PR sequence followed the plan's proposed
+55 → 70 choreography. The repository moved through stronger accumulated
+coverage floors before this plan card was closed; this closeout records the
+current enforced result and neither replays nor lowers a floor.
 
 The 70 → 80 raise is shared with item 07's 07a–07c sub-tracks and
 follows the same second-finisher rule: if this item closes FIRST it
 records the handoff in its PR body; if it closes SECOND it performs the
-raise. Item 07 carries the mirror of this criterion.
+raise. That historical handoff is now superseded by the enforced 89% floor;
+item 07 still carries its separate 90% joint handoff with item 14.
 
 ## Files
 

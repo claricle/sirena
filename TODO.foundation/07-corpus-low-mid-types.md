@@ -1,5 +1,19 @@
 # 07 — Corpus burndown: class and all remaining types
 
+Status (reconciled 2026-10-10): **corpus target met; card remains open.** The
+scoreboard records 831 oracle-valid cases across the types owned by 07a–07f,
+and all 831 pass. Their other rows are fully classified (172 invalid and 173
+artifacts; no unknown verdicts).
+
+Three explicit acceptance artifacts are still missing. First, none of the six
+sub-tracks records the required singleton-capture grep-audit result (including
+an explicit zero-hit result), so the audits for 07a, 07b, 07c, 07d, 07e and
+07f remain open. Second, `DiagramTypeGaps::BY_TYPE` still creates pending
+contract examples for sankey empty input and theme output for user_journey, c4
+and error, so the suite-wide zero-pending criterion is not yet true. Third,
+item 07 must complete the joint item-14 handoff to the 90% branch floor; the
+current enforced floor is 89%.
+
 Can start: after 02. Same target, method, and parallelism rules as item
 06 — including the serialized shared-grammar track for anything touching
 `grammars/common.rb`. Completion also needs 03a. Shares two
@@ -45,10 +59,17 @@ Every sub-track records its singleton-capture grep audit result,
 including an explicit "zero hits" where that is the answer — an audit
 with no artifact is indistinguishable from one nobody ran.
 
+**Still open:** there is currently no recorded audit artifact for any of
+07a–07f. The passing corpus does not substitute for this structural audit.
+
 Every canonical corpus type that has oracle-valid cases sits at 100% on
 the scoreboard — quantified over the CORPUS, not over registrations, so
 an unregistered type is a failure, not an escape. Zero pending examples
 suite-wide.
+
+The corpus half is satisfied for this item's types: 831/831 oracle-valid cases
+pass. The zero-pending half is not: the four contract gaps listed in the status
+still call `pending`.
 
 Floor raises are acceptance criteria of this item, not side effects.
 Both are second-finisher rules, because the tracks run concurrently:
@@ -56,6 +77,11 @@ Both are second-finisher rules, because the tracks run concurrently:
 80 → 90 when the later of item 07 and item 14 completes. The first
 finisher records the handoff in its PR body and closes; the second
 performs the raise.
+
+The repository already enforces 89%, which supersedes the earlier 70% and 80%
+rungs without satisfying the final handoff. Item 07 remains responsible with
+item 14 for landing an enforced floor of at least 90%; this reconciliation
+does not round 89 up or claim that handoff occurred.
 
 This item OWNS the types in 07a–07f. The all-types statement above can
 only be evaluated once item 06 has closed flowchart/state/er/treemap and
