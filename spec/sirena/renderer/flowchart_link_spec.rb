@@ -794,11 +794,8 @@ RSpec.describe Sirena::Renderer::Flowchart do
         xml = Sirena.render(
           "flowchart #{direction}\nsubgraph s\nA[abcdefghij]\nend\ns -->|again| s\n",
         )
-        # The cluster title and the node label both set `dominant-baseline`;
-        # the edge label is the one text element that does not, which is
-        # what picks it out of the three the diagram draws.
         tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-          .find { |t| !t.include?("dominant-baseline") }
+          .find { |t| t.include?(">again<") }
         x = tag[/\bx="([^"]*)"/, 1].to_f
         y = tag[/\by="([^"]*)"/, 1].to_f
         font_size = tag[/font-size="([^"]*)"/, 1].to_f
@@ -908,7 +905,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         "flowchart LR\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{'i' * 30}| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| !t.include?("dominant-baseline") }
+        .find { |t| t.include?(">#{'i' * 30}<") }
       anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
       real_half_width = 86.21875 / 2.0
       view_box_width = xml[/viewBox="0 0 ([\d.]+) /, 1].to_f
@@ -936,7 +933,7 @@ RSpec.describe Sirena::Renderer::Flowchart do
         "flowchart RL\nsubgraph s\nA[abcdefghij]\nend\ns -->|#{"\u{4E2D}" * 80}| s\n",
       )
       tag = xml.scan(%r{<text\b[^>]*>[^<]*</text>})
-        .find { |t| !t.include?("dominant-baseline") }
+        .find { |t| t.include?(">#{"\u{4E2D}" * 80}<") }
       anchor_x = tag[/\bx="([^"]*)"/, 1].to_f
       real_half_width = 986.40625 / 2.0
 
