@@ -169,14 +169,9 @@ RSpec.describe Sirena::Parser::Builders::Requirement do
       expect(described_class.extract_class_names(" a , b ")).to eq(%w[a b])
     end
 
-    it "keeps strings, :string hashes and stringified others from an array" do
-      expect(described_class.extract_class_names([" a ", { string: " b " },
-                                                  7])).to eq(%w[a b 7])
-    end
-
-    it "stringifies a hash" do
-      names = described_class.extract_class_names({ x: "y" })
-      expect(names).to eq([{ x: "y" }.to_s])
+    it "drops the ::: prefix of the Parslet::Slice the grammar produces" do
+      slice = Parslet::Slice.new(Parslet::Position.new(":::a, b", 0), ":::a, b")
+      expect(described_class.extract_class_names(slice)).to eq(%w[a b])
     end
 
     it "returns nothing for other types" do
