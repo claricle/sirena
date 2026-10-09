@@ -17,6 +17,8 @@ module Sirena
         "browser" => "⊞",
       }.freeze
 
+      UNKNOWN_ICON_GLYPH = "?"
+
       # Renders a positioned layout to SVG. Routes every edge around
       # whatever else is in the diagram (services, junctions, groups it
       # doesn't belong to) rather than drawing a straight line through it,
@@ -367,8 +369,8 @@ module Sirena
         # Extract base icon name (remove prefixes like "logos:" or "fa:")
         base_name = icon_name.split(":").last
 
-        # Map to glyph or use first letter as fallback
-        ICON_GLYPHS[base_name] || base_name[0].upcase
+        # mermaid draws "?" for an icon it has no pack for
+        ICON_GLYPHS.fetch(base_name, UNKNOWN_ICON_GLYPH)
       end
 
       def calculate_width(layout)
