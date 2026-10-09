@@ -83,7 +83,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       head = top_heads(scene).first
 
       expect(scene.notes.first.path[/M (\S+)/, 1].to_f)
-        .to be < head.x + head.width / 2
+        .to be < head.x + (head.width / 2)
     end
 
     it "keeps a left note of the first participant inside the canvas" do
@@ -96,7 +96,7 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       scene = scene_of("B -> A", "note right: x")
       head = top_heads(scene).last
 
-      expect(scene.notes.first.texts.first.x).to be > head.x + head.width / 2
+      expect(scene.notes.first.texts.first.x).to be > head.x + (head.width / 2)
     end
 
     it "gives a hnote no fold and a note one" do

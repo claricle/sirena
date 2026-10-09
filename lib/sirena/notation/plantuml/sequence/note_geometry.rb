@@ -15,7 +15,7 @@ module Sirena
 
           # Width the text needs, without regard to the participants.
           def natural_width(note, measure)
-            note.lines.map { |line| measure.call(line) }.max + 2 * PAD
+            note.lines.map { |line| measure.call(line) }.max + (2 * PAD)
           end
 
           def line_height(font_size)
@@ -23,7 +23,7 @@ module Sirena
           end
 
           def height(note, font_size)
-            note.lines.size * line_height(font_size) + 14
+            (note.lines.size * line_height(font_size)) + 14
           end
 
           # @return [Array<Integer>] first and last participant index the
@@ -42,8 +42,8 @@ module Sirena
             when :left then [low - OFFSET - natural, natural]
             when :right then [high + OFFSET, natural]
             else
-              width = [natural, high - low + 2 * OVER_MARGIN].max
-              [(low + high) / 2 - width / 2, width]
+              width = [natural, high - low + (2 * OVER_MARGIN)].max
+              [((low + high) / 2) - (width / 2), width]
             end
           end
 

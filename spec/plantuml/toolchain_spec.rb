@@ -4,7 +4,7 @@ require "json"
 
 # Tagged :toolchain, so it runs only with `--tag toolchain` (the
 # plantuml-toolchain CI job). Other jobs have no PlantUML installed.
-RSpec.describe ToolchainProbe, toolchain: true do
+RSpec.describe ToolchainProbe, :toolchain do
   include described_class
 
   let(:pin) do

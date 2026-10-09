@@ -27,9 +27,9 @@ module Sirena
               low = centers.first
               high = centers.last
             end
-            pad = BASE_PAD + NEST_PAD * block[:depth]
+            pad = BASE_PAD + (NEST_PAD * block[:depth])
             @x = low - pad
-            @width = [high - low + 2 * pad, minimum_width].max
+            @width = [high - low + (2 * pad), minimum_width].max
           end
 
           def scene
@@ -61,12 +61,12 @@ module Sirena
           end
 
           def tab_width
-            @measure.call(tab_text) + 2 * TAB_PAD
+            @measure.call(tab_text) + (2 * TAB_PAD)
           end
 
           def minimum_width
             guard_width = @measure.call(bracket(guard).to_s)
-            tab_width + guard_width + 3 * TAB_PAD
+            tab_width + guard_width + (3 * TAB_PAD)
           end
 
           def tab_path

@@ -112,7 +112,7 @@ module Sirena
 
           def head_points(tip, direction)
             x, y = tip
-            back = x + direction * ARROW_LENGTH
+            back = x + (direction * ARROW_LENGTH)
             [[x, y], [back, y - ARROW_HALF_WIDTH],
              [back, y + ARROW_HALF_WIDTH]].map { |px, py| "#{px},#{py}" }
               .join(" ")
@@ -163,7 +163,7 @@ module Sirena
           def note_texts(note, x, top)
             step = NoteGeometry.line_height(@font_size)
             note.lines.each_with_index.map do |line, index|
-              baseline = top + 7 + index * step + @font_size
+              baseline = top + 7 + (index * step) + @font_size
               text(line, x, baseline, "note", "start")
             end
           end
@@ -215,7 +215,7 @@ module Sirena
             middle = (left + right) / 2
             Scene::Divider.new(
               lines: [-2, 2].map { |dy| segment(left, right, @y + dy) },
-              x: middle - width / 2, y: @y - 10, width: width, height: 20.0,
+              x: middle - (width / 2), y: @y - 10, width: width, height: 20.0,
               texts: divider_texts(label, middle)
             )
           end
