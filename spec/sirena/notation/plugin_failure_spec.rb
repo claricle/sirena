@@ -114,6 +114,14 @@ RSpec.describe Sirena::Notation::PluginFailure do
         .to be(timeout::Error)
     end
 
+    it "ignores a top-level ExitException that is not the timeout module's" do
+      stub_const("ExitException", Class.new(NotImplementedError))
+      timeout = fake_timeout(:Error)
+
+      expect(described_class.passthrough_for(timeout).last)
+        .to be(timeout::Error)
+    end
+
     it "always passes the process's own exceptions" do
       expect(described_class.passthrough_for(fake_timeout(:Error)).first(3))
         .to eq([NoMemoryError, SignalException, SystemExit])
