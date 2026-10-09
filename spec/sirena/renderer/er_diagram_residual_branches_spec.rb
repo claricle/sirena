@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::ErDiagram, "#render legacy relationship branches" do
+RSpec.describe Sirena::Renderer::ErDiagram do
   let(:renderer) { described_class.new }
   let(:nodes) do
     %w[A B].map.with_index do |id, index|
@@ -51,17 +51,20 @@ RSpec.describe Sirena::Renderer::ErDiagram, "#render legacy relationship branche
     svg.children.find { |child| child.id == "rel-#{edge_id}" }
   end
 
-  def adornment_snapshot
-    svg = render_edges(adornment_edges)
-    adornment_edges.to_h do |edge|
-      group = relationship(svg, edge[:id])
-      [edge[:id], [group.children.grep(Sirena::Svg::Line).length,
-                   group.children.grep(Sirena::Svg::Circle).length,
-                   group.children.grep(Sirena::Svg::Text).length]]
+  def shape_counts(group)
+    [Sirena::Svg::Line, Sirena::Svg::Circle, Sirena::Svg::Text].map do |type|
+      group.children.grep(type).length
     end
   end
 
-  it "rejects absent endpoints and defaults a retained relationship to dashed" do
+  def adornment_snapshot
+    svg = render_edges(adornment_edges)
+    adornment_edges.to_h do |edge|
+      [edge[:id], shape_counts(relationship(svg, edge[:id]))]
+    end
+  end
+
+  it "rejects absent endpoints and defaults a kept relationship to dashed" do
     svg = render_edges(endpoint_edges)
     groups = svg.children.select { |child| child.id&.start_with?("rel-") }
     line = groups.first.children.grep(Sirena::Svg::Line).first

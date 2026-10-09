@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
+RSpec.describe Sirena::Renderer::Flowchart do
   def label(text, x_coordinate, y_coordinate)
     Sirena::Layout::Flowchart::Label.new(
       text: text,
@@ -25,6 +25,10 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
     )
   end
 
+  def default_theme
+    Sirena::Theme::Registry.get(:default)
+  end
+
   def scene(children:, edges: [])
     Sirena::Layout::Flowchart::Scene.new(
       id: "scene",
@@ -36,7 +40,7 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
     )
   end
 
-  def render(children:, edges: [], theme: Sirena::Theme::Registry.get(:default))
+  def render(children:, edges: [], theme: default_theme)
     renderer = described_class.new(theme: theme)
     renderer.render(scene(children: children, edges: edges))
   end
@@ -62,7 +66,8 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
   end
 
   def shape_nodes
-    %w[rect rounded circle rhombus hexagon mystery].map.with_index do |kind, index|
+    kinds = %w[rect rounded circle rhombus hexagon mystery]
+    kinds.map.with_index do |kind, index|
       rectangle_node(
         kind,
         shape_kind: kind,
@@ -83,7 +88,9 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
         shape: "arrow",
         points: "0,0 1,1 2,0",
       ),
-      Sirena::Layout::Flowchart::Head.new(shape: "circle", x: 4, y: 5, radius: 2),
+      Sirena::Layout::Flowchart::Head.new(
+        shape: "circle", x: 4, y: 5, radius: 2,
+      ),
       Sirena::Layout::Flowchart::Head.new(shape: "cross", lines: [line]),
     ]
   end
@@ -115,32 +122,33 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
     ]
   end
 
+  def edge_group(svg, name)
+    svg.children.find { |child| child.id == "edge-#{name}" }
+  end
+
+  def first_path(group)
+    group.children.grep(Sirena::Svg::Path).first
+  end
+
   def edge_style_snapshot
     svg = render(children: [], edges: styled_edges, theme: Sirena::Theme.new)
-    thick = svg.children.find { |child| child.id == "edge-thick" }
-    dotted = svg.children.find { |child| child.id == "edge-dotted" }
-    hidden = svg.children.find { |child| child.id == "edge-hidden" }
-    thick_path = thick.children.grep(Sirena::Svg::Path).first
-    dotted_path = dotted.children.grep(Sirena::Svg::Path).first
-    [thick_path.stroke_width, dotted_path.stroke_dasharray,
+    thick, dotted, hidden = %w[thick dotted hidden].map do |name|
+      edge_group(svg, name)
+    end
+    [first_path(thick).stroke_width, first_path(dotted).stroke_dasharray,
      thick.children.map(&:class), hidden.children.first.stroke]
   end
 
-  it "recurses through labeled and unlabeled containers without drawing them as nodes" do
-    svg = render(children: container_tree)
-
-    expect(svg.children.map(&:id))
-      .to eq(%w[cluster-outer cluster-inner node-leaf])
-  end
-
-  it "dispatches every node outline while omitting an absent label" do
+  def node_outline_snapshot
     svg = render(children: shape_nodes)
     groups = svg.children.select { |child| child.id&.start_with?("node-") }
-    snapshot = groups.map do |group|
+    groups.map do |group|
       [group.id, group.children.first.class, group.children.length]
     end
+  end
 
-    expected = [
+  def expected_outlines
+    [
       ["node-rect", Sirena::Svg::Rect, 1],
       ["node-rounded", Sirena::Svg::Rect, 2],
       ["node-circle", Sirena::Svg::Circle, 2],
@@ -148,15 +156,27 @@ RSpec.describe Sirena::Renderer::Flowchart, "#render typed Scene branches" do
       ["node-hexagon", Sirena::Svg::Polygon, 2],
       ["node-mystery", Sirena::Svg::Rect, 2],
     ]
+  end
 
-    expect(snapshot).to eq(expected)
+  def expected_edge_style
+    ["3.5", "2",
+     [Sirena::Svg::Path, Sirena::Svg::Polygon, Sirena::Svg::Circle,
+      Sirena::Svg::Line, Sirena::Svg::Text],
+     "none"]
+  end
+
+  it "recurses through containers without drawing them as nodes" do
+    svg = render(children: container_tree)
+
+    expect(svg.children.map(&:id))
+      .to eq(%w[cluster-outer cluster-inner node-leaf])
+  end
+
+  it "dispatches every node outline while omitting an absent label" do
+    expect(node_outline_snapshot).to eq(expected_outlines)
   end
 
   it "applies path styles and dispatches heads with theme fallbacks" do
-    expect(edge_style_snapshot)
-      .to eq(["3.5", "2",
-              [Sirena::Svg::Path, Sirena::Svg::Polygon,
-               Sirena::Svg::Circle, Sirena::Svg::Line, Sirena::Svg::Text],
-              "none"])
+    expect(edge_style_snapshot).to eq(expected_edge_style)
   end
 end
