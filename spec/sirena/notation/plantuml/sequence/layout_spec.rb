@@ -76,4 +76,93 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
     expect([scene.frames.size, scene.heads.first.y]).to eq([1, 46.0])
   end
+
+  describe "notes" do
+    it "centres a note over one participant on its lifeline" do
+      scene = scene_of("A -> B", "note over A: hi")
+      head = top_heads(scene).first
+
+      expect(scene.notes.first.path[/M (\S+)/, 1].to_f)
+        .to be < head.x + head.width / 2
+    end
+
+    it "keeps a left note of the first participant inside the canvas" do
+      scene = scene_of("A -> B", "note left of A: a long long long note")
+
+      expect(scene.notes.first.path[/M (\S+)/, 1].to_f).to be >= 20.0
+    end
+
+    it "hangs a right note beside the rightmost end of its message" do
+      scene = scene_of("B -> A", "note right: x")
+      head = top_heads(scene).last
+
+      expect(scene.notes.first.texts.first.x).to be > head.x + head.width / 2
+    end
+
+    it "gives a hnote no fold and a note one" do
+      folds = %w[note hnote].map do |word|
+        scene_of("A -> B", "#{word} over A: x").notes.first.fold_path
+      end
+
+      expect(folds.map(&:nil?)).to eq([false, true])
+    end
+
+    it "makes a two-line note taller than a one-line note" do
+      heights = [%w[note over A: a], %w[note over A: a\\nb]].map do |words|
+        scene_of("A -> B", words.join(" ")).height
+      end
+
+      expect(heights.last).to be > heights.first
+    end
+  end
+
+  describe "blocks" do
+    it "frames a block around the messages inside it" do
+      scene = scene_of("A -> B", "alt ok", "B -> C", "end")
+
+      expect(scene.fragments.size).to eq(1)
+    end
+
+    it "spans only the participants used inside the block" do
+      scene = scene_of("A -> B", "B -> C", "alt ok", "B -> C", "end")
+      first = top_heads(scene).first
+
+      expect(scene.fragments.first.x).to be > first.x + first.width
+    end
+
+    it "draws one dashed line per else" do
+      scene = scene_of("alt a", "A -> B", "else b", "B -> A", "end")
+
+      expect(scene.fragments.first.separators.size).to eq(1)
+    end
+
+    it "keeps an inner block inside its outer block" do
+      scene = scene_of("alt a", "loop b", "A -> B", "end", "end")
+      inner, outer = scene.fragments
+
+      expect(inner.x).to be > outer.x
+    end
+
+    it "lengthens the canvas for every block row" do
+      plain = scene_of("A -> B").height
+      framed = scene_of("alt a", "A -> B", "end").height
+
+      expect(framed).to be > plain
+    end
+  end
+
+  describe "dividers" do
+    it "draws a divider across every lifeline" do
+      divider = scene_of("A -> B", "== x ==").dividers.first
+      xs = divider.lines.first.then { |line| [line.x1, line.x2] }
+
+      expect(xs.last - xs.first).to be > 100
+    end
+
+    it "labels the divider" do
+      divider = scene_of("A -> B", "== Phase ==").dividers.first
+
+      expect(divider.texts.first.content).to eq("Phase")
+    end
+  end
 end

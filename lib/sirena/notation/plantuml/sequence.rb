@@ -7,8 +7,9 @@ require_relative "sequence/renderer"
 module Sirena
   module Notation
     module PlantUML
-      # The PlantUML sequence diagram, as far as participants and plain
-      # messages. Dispatched to from {PlantUML.parse}.
+      # The PlantUML sequence diagram, as far as participants, messages,
+      # notes, return, dividers and alt/loop/group blocks. Dispatched to from
+      # {PlantUML.parse}.
       module Sequence
         extend self
 
