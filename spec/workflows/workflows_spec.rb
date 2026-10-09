@@ -260,11 +260,13 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
                 publish.fetch("run").include?('gem push "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'),
                 publish.dig("env", "RUBYGEMS_API_KEY")]
 
-      expect(values).to eq([
-        'gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
-        true,
-        "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}",
-      ])
+      expect(values).to eq(
+        [
+          'gem build sirena.gemspec --output "$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"',
+          true,
+          "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}",
+        ],
+      )
     end
   end
 end
