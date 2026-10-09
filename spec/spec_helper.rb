@@ -30,6 +30,8 @@ RSpec.configure do |config|
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
   config.filter_run_when_matching :focus
+  # Needs PlantUML, Java and Graphviz; run with `--tag toolchain`.
+  config.filter_run_excluding toolchain: true
   if ENV["COVERAGE"] == "true"
     config.filter_run_excluding corpus: true
     # Belt-and-suspenders: a CLI `--tag corpus` (e.g. `rake spec:corpus_runner`
