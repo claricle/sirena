@@ -17,22 +17,22 @@ module Sirena
     TYPES_FILE = "lib/sirena/notation/mermaid.rb"
     NAME_FORMAT = /\A[a-z][a-z0-9_]*\z/
 
-    # Template => path under the root; %<type>s is the snake_case name.
+    # Template => path under the root; %s is the snake_case name.
     DEFINING_FILES = {
-      "parser.rb.erb" => "lib/sirena/parser/%<type>s.rb",
-      "grammar.rb.erb" => "lib/sirena/parser/grammars/%<type>s.rb",
-      "builder.rb.erb" => "lib/sirena/parser/builders/%<type>s.rb",
-      "diagram.rb.erb" => "lib/sirena/diagram/%<type>s.rb",
-      "layout.rb.erb" => "lib/sirena/layout/%<type>s.rb",
-      "renderer.rb.erb" => "lib/sirena/renderer/%<type>s.rb",
-      "fixture.mmd.erb" => "spec/fixtures/contract/%<type>s.mmd",
+      "parser.rb.erb" => "lib/sirena/parser/%s.rb",
+      "grammar.rb.erb" => "lib/sirena/parser/grammars/%s.rb",
+      "builder.rb.erb" => "lib/sirena/parser/builders/%s.rb",
+      "diagram.rb.erb" => "lib/sirena/diagram/%s.rb",
+      "layout.rb.erb" => "lib/sirena/layout/%s.rb",
+      "renderer.rb.erb" => "lib/sirena/renderer/%s.rb",
+      "fixture.mmd.erb" => "spec/fixtures/contract/%s.mmd",
     }.freeze
 
     SPEC_FILES = {
-      "parser_spec.rb.erb" => "spec/sirena/parser/%<type>s_spec.rb",
-      "diagram_spec.rb.erb" => "spec/sirena/diagram/%<type>s_spec.rb",
-      "layout_spec.rb.erb" => "spec/sirena/layout/%<type>s_spec.rb",
-      "renderer_spec.rb.erb" => "spec/sirena/renderer/%<type>s_spec.rb",
+      "parser_spec.rb.erb" => "spec/sirena/parser/%s_spec.rb",
+      "diagram_spec.rb.erb" => "spec/sirena/diagram/%s_spec.rb",
+      "layout_spec.rb.erb" => "spec/sirena/layout/%s_spec.rb",
+      "renderer_spec.rb.erb" => "spec/sirena/renderer/%s_spec.rb",
     }.freeze
 
     ROW_ANCHOR = "\n      }.freeze\n"
@@ -94,7 +94,7 @@ module Sirena
     end
 
     def targets(files)
-      files.values.map { |pattern| format(pattern, type: @type) }
+      files.values.map { |pattern| format(pattern, @type) }
     end
 
     def reject_existing_files
@@ -131,7 +131,7 @@ module Sirena
     # Renders everything first, so a template error leaves nothing behind.
     def write_files(files)
       rendered = files.to_h do |template, pattern|
-        [format(pattern, type: @type), render(template)]
+        [format(pattern, @type), render(template)]
       end
       rendered.each do |relative, content|
         absolute = File.join(@root, relative)
