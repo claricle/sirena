@@ -24,6 +24,21 @@ module ClassDiagramSpecHelpers
     node.attributes["font-size"]
   end
 
+  def font_sizes(document, labels)
+    labels.map { |label| font_size(document, label) }
+  end
+
+  def method_arities(object, names)
+    names.to_h { |name| [name, object.method(name).arity] }
+  end
+
+  def theme_font_sizes(document)
+    [
+      font_size(document, "A"),
+      font_sizes(document, %w[«interface» owns 1 many]),
+    ]
+  end
+
   def node_rect(doc, node_id)
     REXML::XPath.first(doc, "//*[@id='class-#{node_id}']/rect")
   end
@@ -48,7 +63,10 @@ module ClassDiagramSpecHelpers
   # coordinate threshold, so this holds under whatever the fallback grid
   # layout actually placed the two nodes at.
   def nearer_endpoint(points, line)
-    centroid = [points.sum { |p| p[0] } / points.length, points.sum { |p| p[1] } / points.length]
+    centroid = [
+      points.sum { |point| point[0] } / points.length,
+      points.sum { |point| point[1] } / points.length,
+    ]
     start_pt = [line.attributes["x1"].to_f, line.attributes["y1"].to_f]
     end_pt = [line.attributes["x2"].to_f, line.attributes["y2"].to_f]
     dist_start = Math.hypot(centroid[0] - start_pt[0], centroid[1] - start_pt[1])
@@ -147,6 +165,11 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
       }
     end
     let(:scene) { Sirena::Layout::ClassDiagram.from_graph(graph) }
+    let(:empty_scene) do
+      Sirena::Layout::ClassDiagram.from_graph(
+        { id: "class_diagram", children: [], edges: [] },
+      )
+    end
 
     it "renders graph to SVG document" do
       svg = renderer.render(scene)
@@ -248,10 +271,7 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     end
 
     it "renders the empty Scene at the legacy canvas size without elements" do
-      empty = Sirena::Layout::ClassDiagram.from_graph(
-        { id: "class_diagram", children: [], edges: [] },
-      )
-      svg = renderer.render(empty)
+      svg = renderer.render(empty_scene)
 
       expect([svg.width, svg.height, svg.view_box, svg.children.map(&:id)])
         .to eq([880.0, 680.0, "0 0 880 680", ["defs"]])
@@ -262,33 +282,30 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
     let(:source) do
       "class A <<interface>>\nA \"1\" -- \"many\" B : owns"
     end
+    let(:high_contrast_document) do
+      ClassDiagramSpecHelpers.rendered_document(
+        source, theme: :high_contrast
+      )
+    end
 
     it "migrates stereotypes, labels, and cardinalities to default small" do
       document = ClassDiagramSpecHelpers.rendered_document(source)
+      sizes = ClassDiagramSpecHelpers.font_sizes(
+        document, %w[«interface» owns 1 many]
+      )
 
-      sizes = %w[«interface» owns 1 many].map do |text|
-        ClassDiagramSpecHelpers.font_size(document, text)
-      end
-      expect(sizes)
-        .to all(eq("12"))
+      expect(sizes).to all(eq("12"))
     end
 
     it "emits high-contrast large and small sizes from its own Scene" do
-      document = ClassDiagramSpecHelpers.rendered_document(
-        source, theme: :high_contrast
-      )
-
-      sizes = %w[«interface» owns 1 many].map do |text|
-        ClassDiagramSpecHelpers.font_size(document, text)
-      end
-      expect([ClassDiagramSpecHelpers.font_size(document, "A"), sizes])
+      expect(ClassDiagramSpecHelpers.theme_font_sizes(high_contrast_document))
         .to eq(["18", %w[14 14 14 14]])
     end
   end
 
   describe "released protected hooks" do
-    it "preserves their names and arities" do
-      expected = {
+    let(:released_hooks) do
+      {
         calculate_width: 1, calculate_height: 1, add_markers: 1,
         add_inheritance_marker: 1, add_composition_marker: 1,
         add_aggregation_marker: 1, render_classes: 2, render_class: 2,
@@ -300,11 +317,20 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
         render_relationship_marker: 4, render_triangle_marker: 4,
         render_diamond_marker: 4, render_relationship_labels: 4
       }
+    end
 
-      expect(expected.to_h { |name, _| [name, renderer.method(name).arity] })
-        .to eq(expected)
-      expect(expected.keys)
-        .to all(satisfy { |name| described_class.protected_method_defined?(name) })
+    it "preserves their names and arities" do
+      arities = ClassDiagramSpecHelpers.method_arities(
+        renderer, released_hooks.keys
+      )
+
+      expect(arities).to eq(released_hooks)
+    end
+
+    it "keeps them protected" do
+      expect(released_hooks.keys).to all(
+        satisfy { |name| described_class.protected_method_defined?(name) },
+      )
     end
 
     it "delegates legacy connection geometry to Layout" do

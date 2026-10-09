@@ -109,9 +109,7 @@ RSpec.describe "ClassDiagram Integration" do
     end
 
     it "converts an LR diagram to a positioned Scene" do
-      source = "classDiagram LR\nAnimal <|-- Dog"
-
-      diagram = parser.parse(source)
+      diagram = parser.parse("classDiagram LR\nAnimal <|-- Dog")
       expect(diagram.direction).to eq("LR")
 
       scene = transform.call(diagram)

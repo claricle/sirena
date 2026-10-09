@@ -105,41 +105,36 @@ module Sirena
       end
 
       def scene_node_box(node)
-        Svg::Rect.new.tap do |rect|
-          rect.x = svg_number(node.x)
-          rect.y = svg_number(node.y)
-          rect.width = svg_number(node.width)
-          rect.height = svg_number(node.height)
-          rect.fill = "#ffffff"
-          rect.stroke = "#000000"
-          rect.stroke_width = "2"
-          rect.rx = 3
-          rect.ry = 3
-        end
+        Svg::Rect.new(
+          x: svg_number(node.x), y: svg_number(node.y),
+          width: svg_number(node.width), height: svg_number(node.height),
+          fill: "#ffffff", stroke: "#000000", stroke_width: "2",
+          rx: 3, ry: 3
+        )
       end
 
       def scene_separator(separator)
-        Svg::Line.new.tap do |line|
-          line.x1 = svg_number(separator.x1)
-          line.y1 = svg_number(separator.y1)
-          line.x2 = svg_number(separator.x2)
-          line.y2 = svg_number(separator.y2)
-          line.stroke = "#000000"
-          line.stroke_width = "1"
-        end
+        Svg::Line.new(
+          x1: svg_number(separator.x1),
+          y1: svg_number(separator.y1),
+          x2: svg_number(separator.x2),
+          y2: svg_number(separator.y2),
+          stroke: "#000000",
+          stroke_width: "1",
+        )
       end
 
       def scene_text(label)
-        Svg::Text.new.tap do |text|
-          text.x = svg_number(label.x)
-          text.y = svg_number(label.y)
-          text.content = label.text
-          text.fill = "#000000"
-          text.font_family = label.font_family
-          text.font_size = svg_number(label.font_size).to_s
-          text.text_anchor = label.text_anchor
-          text.font_weight = label.font_weight
-        end
+        Svg::Text.new(
+          x: svg_number(label.x),
+          y: svg_number(label.y),
+          content: label.text,
+          fill: "#000000",
+          font_family: label.font_family,
+          font_size: svg_number(label.font_size).to_s,
+          text_anchor: label.text_anchor,
+          font_weight: label.font_weight,
+        )
       end
 
       def render_scene_edge(edge, svg)
@@ -152,15 +147,15 @@ module Sirena
       end
 
       def scene_edge_line(section, dashed)
-        Svg::Line.new.tap do |line|
-          line.x1 = svg_number(section.start_point.x)
-          line.y1 = svg_number(section.start_point.y)
-          line.x2 = svg_number(section.end_point.x)
-          line.y2 = svg_number(section.end_point.y)
-          line.stroke = "#000000"
-          line.stroke_width = "2"
-          line.stroke_dasharray = "5,5" if dashed
-        end
+        Svg::Line.new(
+          x1: svg_number(section.start_point.x),
+          y1: svg_number(section.start_point.y),
+          x2: svg_number(section.end_point.x),
+          y2: svg_number(section.end_point.y),
+          stroke: "#000000",
+          stroke_width: "2",
+          stroke_dasharray: dashed ? "5,5" : nil,
+        )
       end
 
       def scene_marker(marker)

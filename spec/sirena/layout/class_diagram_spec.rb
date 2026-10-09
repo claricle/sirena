@@ -12,6 +12,12 @@ module ClassDiagramLayoutSpecHelpers
   def parsed(source)
     Sirena::Parser::ClassDiagram.new.parse(source)
   end
+
+  def separator_coordinates(node)
+    node.separators.map do |line|
+      [line.x1, line.y1, line.x2, line.y2]
+    end
+  end
 end
 
 RSpec.describe Sirena::Layout::ClassDiagram do
@@ -52,7 +58,7 @@ RSpec.describe Sirena::Layout::ClassDiagram do
 
     expect(animal.attributes.map(&:text)).to eq(["#int age"])
     expect(animal.method_rows.map(&:text)).to eq(["+breathe()"])
-    expect(animal.separators.map { |line| [line.x1, line.y1, line.x2, line.y2] })
+    expect(separator_coordinates(animal))
       .to eq([[50.0, 83.0, 190.0, 83.0], [50.0, 116.0, 190.0, 116.0]])
   end
 
@@ -128,10 +134,13 @@ RSpec.describe Sirena::Layout::ClassDiagram do
       "a typed attribute" => "+String #{'i' * 40}",
     }.each do |label, row|
       it "sizes #{label} from the monospace text drawn" do
-        member_scene = layout.call(parsed("classDiagram\nclass N {\n  #{row}\n}\n"))
+        member_scene = layout.call(
+          parsed("classDiagram\nclass N {\n  #{row}\n}\n"),
+        )
         expected = measured(row, 12, monospace: true) + 20
 
-        expect(member_scene.children.first.width).to be_within(0.01).of(expected)
+        expect(member_scene.children.first.width)
+          .to be_within(0.01).of(expected)
       end
     end
   end

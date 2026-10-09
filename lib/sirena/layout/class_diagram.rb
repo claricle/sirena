@@ -151,7 +151,9 @@ module Sirena
             metadata: {
               name: entity.name,
               stereotype: entity.stereotype,
-              attributes: entity.attributes.map { |item| attribute_to_hash(item) },
+              attributes: entity.attributes.map do |item|
+                attribute_to_hash(item)
+              end,
               methods: entity.class_methods.map { |item| method_to_hash(item) },
             },
           }
@@ -177,8 +179,12 @@ module Sirena
 
       def calculate_entity_dimensions(entity)
         widths = [MIN_CLASS_WIDTH, name_block_width(entity)]
-        widths.concat(entity.attributes.map { |item| member_width(item.display_text) })
-        widths.concat(entity.class_methods.map { |item| member_width(item.display_text) })
+        widths.concat(
+          entity.attributes.map { |item| member_width(item.display_text) },
+        )
+        widths.concat(
+          entity.class_methods.map { |item| member_width(item.display_text) },
+        )
         compartments = 1 + present_compartments(entity)
         lines = (entity.stereotype ? 2 : 1) + entity.attributes.length +
                 entity.class_methods.length
@@ -191,7 +197,8 @@ module Sirena
       end
 
       def present_compartments(entity)
-        [entity.attributes, entity.class_methods].count { |items| !items.empty? }
+        [entity.attributes, entity.class_methods]
+          .count { |items| !items.empty? }
       end
 
       def member_width(text)
@@ -208,9 +215,17 @@ module Sirena
       end
 
       def entity_labels(entity)
-        text = entity.stereotype ? "<<#{entity.stereotype}>>\n#{entity.name}" : entity.name
+        text = if entity.stereotype
+                 "<<#{entity.stereotype}>>\n#{entity.name}"
+               else
+                 entity.name
+               end
         dimensions = measure_text(text, font_size: name_font_size)
-        [{ text: text, width: name_block_width(entity), height: dimensions[:height] }]
+        [{
+          text: text,
+          width: name_block_width(entity),
+          height: dimensions[:height],
+        }]
       end
 
       def relationship_labels(relationship)
@@ -225,7 +240,12 @@ module Sirena
         return if text.nil? || text.empty?
 
         dimensions = measure_text(text, font_size: small_font_size)
-        { text: text, width: dimensions[:width], height: dimensions[:height], position: position }
+        {
+          text: text,
+          width: dimensions[:width],
+          height: dimensions[:height],
+          position: position,
+        }
       end
 
       def attribute_to_hash(attribute)
@@ -248,59 +268,90 @@ module Sirena
       end
 
       def typed_node(node)
-        x = node[:x] || 0
-        y = node[:y] || 0
-        width = node[:width] || 150
-        height = node[:height] || 100
-        rows = node_rows(x, y, width, node[:id], node[:metadata] || {})
+        x_coord, y_coord, width, height = box_values(node)
+        rows = node_rows(
+          x_coord, y_coord, width, node[:id], node[:metadata] || {}
+        )
 
         Node.new(
-          id: node[:id], x: x, y: y, width: width, height: height,
+          id: node[:id], x: x_coord, y: y_coord,
+          width: width, height: height,
           name: rows[:name], stereotype: rows[:stereotype],
           attributes: rows[:attributes], method_rows: rows[:methods],
-          separators: rows[:separator_ys].map do |separator_y|
-            Separator.new(x1: x, y1: separator_y,
-                          x2: x + width, y2: separator_y)
-          end
+          separators: typed_separators(
+            x_coord, width, rows[:separator_ys]
+          )
         )
       end
 
-      def node_rows(x, y, width, id, metadata)
-        cursor = y + COMPARTMENT_PADDING
-        stereotype, cursor = stereotype_row(x, cursor, width, metadata[:stereotype])
-        name = label(Diagram::GenericText.display(metadata[:name] || id),
-                     x + (width / 2), cursor, name_font_size,
-                     family: "Arial, sans-serif", weight: "bold", anchor: "middle")
-        cursor += RENDER_LINE_HEIGHT
-        separator_ys = [cursor + 5]
-        cursor = separator_ys.last + 10
-        attributes, cursor = member_rows(metadata[:attributes] || [], x, cursor)
-        unless attributes.empty?
-          separator_ys << cursor + 5
-          cursor = separator_ys.last + 10
+      def typed_separators(x_coord, width, positions)
+        positions.map do |y_coord|
+          Separator.new(
+            x1: x_coord, y1: y_coord,
+            x2: x_coord + width, y2: y_coord
+          )
         end
-        methods, = member_rows(metadata[:methods] || [], x, cursor)
+      end
+
+      def node_rows(x_coord, y_coord, width, id, metadata)
+        cursor = y_coord + COMPARTMENT_PADDING
+        stereotype, cursor = stereotype_row(
+          x_coord, cursor, width, metadata[:stereotype]
+        )
+        name, cursor = name_row(
+          metadata[:name] || id, x_coord, cursor, width
+        )
+        attributes, cursor, separator_ys = attribute_rows(
+          metadata[:attributes] || [], x_coord, cursor
+        )
+        methods, = member_rows(
+          metadata[:methods] || [], x_coord, cursor
+        )
         {
           name: name, stereotype: stereotype, attributes: attributes,
           methods: methods, separator_ys: separator_ys
         }
       end
 
-      def stereotype_row(x, y, width, stereotype)
-        return [nil, y] if stereotype.nil? || stereotype.empty?
-
-        row = label("«#{stereotype}»", x + (width / 2), y, small_font_size,
-                    family: "Arial, sans-serif", anchor: "middle")
-        [row, y + RENDER_LINE_HEIGHT]
+      def name_row(name, x_coord, y_coord, width)
+        row = label(
+          Diagram::GenericText.display(name), x_coord + (width / 2),
+          y_coord, name_font_size,
+          family: "Arial, sans-serif",
+          weight: "bold",
+          anchor: "middle"
+        )
+        [row, y_coord + RENDER_LINE_HEIGHT]
       end
 
-      def member_rows(items, x, y)
+      def attribute_rows(items, x_coord, y_coord)
+        separator_ys = [y_coord + 5]
+        rows, cursor = member_rows(
+          items, x_coord, separator_ys.last + 10
+        )
+        return [rows, cursor, separator_ys] if rows.empty?
+
+        separator_ys << cursor + 5
+        [rows, separator_ys.last + 10, separator_ys]
+      end
+
+      def stereotype_row(x_coord, y_coord, width, stereotype)
+        return [nil, y_coord] if stereotype.nil? || stereotype.empty?
+
+        row = label(
+          "«#{stereotype}»", x_coord + (width / 2), y_coord,
+          small_font_size, family: "Arial, sans-serif", anchor: "middle"
+        )
+        [row, y_coord + RENDER_LINE_HEIGHT]
+      end
+
+      def member_rows(items, x_coord, y_coord)
         rows = items.map.with_index do |item, index|
-          label(item[:text], x + COMPARTMENT_PADDING,
-                y + (index * RENDER_LINE_HEIGHT), small_font_size,
+          label(item[:text], x_coord + COMPARTMENT_PADDING,
+                y_coord + (index * RENDER_LINE_HEIGHT), small_font_size,
                 family: "monospace")
         end
-        [rows, y + (items.length * RENDER_LINE_HEIGHT)]
+        [rows, y_coord + (items.length * RENDER_LINE_HEIGHT)]
       end
 
       def typed_edges(edges, nodes)
@@ -316,6 +367,20 @@ module Sirena
         from = connection_point(source, target)
         to = connection_point(target, source)
         metadata = edge[:metadata] || {}
+        markers, dashed = edge_style(from, to, metadata)
+
+        Edge.new(
+          id: edge[:id], sources: edge[:sources], targets: edge[:targets],
+          sections: [Section.new(
+            start_point: point(from), end_point: point(to),
+          )],
+          markers: markers,
+          labels: positioned_labels(edge[:labels], from, to),
+          dashed: dashed
+        )
+      end
+
+      def edge_style(from, to, metadata)
         type = metadata[:relationship_type] || "association"
         mixed = metadata[:start_marker] || metadata[:end_marker]
         markers = if mixed
@@ -323,30 +388,38 @@ module Sirena
                   else
                     relationship_markers(from, to, type)
                   end
-
-        Edge.new(
-          id: edge[:id], sources: edge[:sources], targets: edge[:targets],
-          sections: [Section.new(start_point: point(from), end_point: point(to))],
-          markers: markers, labels: positioned_labels(edge[:labels], from, to),
-          dashed: mixed ? metadata[:dashed] : type == "dependency"
-        )
+        [markers, mixed ? metadata[:dashed] : type == "dependency"]
       end
 
       def connection_point(from_node, to_node)
         from_x, from_y, from_width, from_height = box_values(from_node)
         to_x, to_y, to_width, to_height = box_values(to_node)
-        from_center = { x: from_x + (from_width / 2), y: from_y + (from_height / 2) }
-        to_center = { x: to_x + (to_width / 2), y: to_y + (to_height / 2) }
+        from_center = {
+          x: from_x + (from_width / 2),
+          y: from_y + (from_height / 2),
+        }
+        to_center = {
+          x: to_x + (to_width / 2),
+          y: to_y + (to_height / 2),
+        }
         dx = to_center[:x] - from_center[:x]
         dy = to_center[:y] - from_center[:y]
         return from_center if dx.abs < 0.001 && dy.abs < 0.001
 
         if dx.abs > dy.abs
           x = dx.positive? ? from_x + from_width : from_x
-          y = dy.abs < 0.001 ? from_center[:y] : from_center[:y] + (dy / dx) * (x - from_center[:x])
+          y = if dy.abs < 0.001
+                from_center[:y]
+              else
+                from_center[:y] + (dy / dx) * (x - from_center[:x])
+              end
         else
           y = dy.positive? ? from_y + from_height : from_y
-          x = dx.abs < 0.001 ? from_center[:x] : from_center[:x] + (dx / dy) * (y - from_center[:y])
+          x = if dx.abs < 0.001
+                from_center[:x]
+              else
+                from_center[:x] + (dx / dy) * (y - from_center[:y])
+              end
         end
         { x: x, y: y }
       end
@@ -354,7 +427,12 @@ module Sirena
       def box_values(node)
         return [node.x, node.y, node.width, node.height] if node.is_a?(Node)
 
-        [node[:x] || 0, node[:y] || 0, node[:width] || 150, node[:height] || 100]
+        [
+          node[:x] || 0,
+          node[:y] || 0,
+          node[:width] || 150,
+          node[:height] || 100,
+        ]
       end
 
       def mixed_markers(from, to, metadata)
@@ -384,41 +462,74 @@ module Sirena
       end
 
       def triangle_marker(from, to, filled)
-        angle = Math.atan2(to[:y] - from[:y], to[:x] - from[:x])
-        first = marker_point(to[:x], to[:y], -ARROW_SIZE,
-                             angle + (Math::PI / 6))
-        second = marker_point(to[:x], to[:y], -ARROW_SIZE,
-                              angle - (Math::PI / 6))
-        marker([[to[:x], to[:y]], first, second], filled)
+        to_x, to_y = coordinates(to)
+        angle = marker_angle(from, to)
+        first = marker_point(
+          to_x, to_y, -ARROW_SIZE, angle + (Math::PI / 6)
+        )
+        second = marker_point(
+          to_x, to_y, -ARROW_SIZE, angle - (Math::PI / 6)
+        )
+        marker([[to_x, to_y], first, second], filled)
       end
 
       def dart_marker(from, to)
-        angle = Math.atan2(to[:y] - from[:y], to[:x] - from[:x])
-        tip = marker_point(from[:x], from[:y], DART_NEAR, angle)
-        back = marker_point(from[:x], from[:y], DART_FAR, angle)
-        notch = [(tip[0] + back[0]) / 2, (tip[1] + back[1]) / 2]
-        first = marker_point(back[0], back[1], DART_WIDTH,
-                             angle + (Math::PI / 2))
-        second = marker_point(back[0], back[1], DART_WIDTH,
-                              angle - (Math::PI / 2))
-        marker([tip, first, notch, second], true)
+        from_x, from_y = coordinates(from)
+        angle = marker_angle(from, to)
+        tip = marker_point(from_x, from_y, DART_NEAR, angle)
+        back = marker_point(from_x, from_y, DART_FAR, angle)
+        first, second = dart_wings(back, angle)
+        marker([tip, first, midpoint(tip, back), second], true)
       end
 
       def diamond_marker(from, to, filled)
-        angle = Math.atan2(to[:y] - from[:y], to[:x] - from[:x])
+        from_x, from_y = coordinates(from)
+        angle = marker_angle(from, to)
         points = [
-          marker_point(from[:x], from[:y], DIAMOND_SIZE, angle),
-          marker_point(from[:x], from[:y], DIAMOND_SIZE / 2,
+          marker_point(from_x, from_y, DIAMOND_SIZE, angle),
+          marker_point(from_x, from_y, DIAMOND_SIZE / 2,
                        angle + (Math::PI / 2)),
-          marker_point(from[:x], from[:y], -DIAMOND_SIZE, angle),
-          marker_point(from[:x], from[:y], DIAMOND_SIZE / 2,
+          marker_point(from_x, from_y, -DIAMOND_SIZE, angle),
+          marker_point(from_x, from_y, DIAMOND_SIZE / 2,
                        angle - (Math::PI / 2)),
         ]
         marker(points, filled)
       end
 
-      def marker_point(x, y, distance, angle)
-        [x + (distance * Math.cos(angle)), y + (distance * Math.sin(angle))]
+      def marker_angle(from, to)
+        from_x, from_y = coordinates(from)
+        to_x, to_y = coordinates(to)
+        Math.atan2(to_y - from_y, to_x - from_x)
+      end
+
+      def coordinates(point)
+        [point[:x], point[:y]]
+      end
+
+      def dart_wings(back, angle)
+        back_x, back_y = back
+        [
+          marker_point(
+            back_x, back_y, DART_WIDTH, angle + (Math::PI / 2)
+          ),
+          marker_point(
+            back_x, back_y, DART_WIDTH, angle - (Math::PI / 2)
+          ),
+        ]
+      end
+
+      def midpoint(first, second)
+        [
+          (first[0] + second[0]) / 2,
+          (first[1] + second[1]) / 2,
+        ]
+      end
+
+      def marker_point(x_coord, y_coord, distance, angle)
+        [
+          x_coord + (distance * Math.cos(angle)),
+          y_coord + (distance * Math.sin(angle)),
+        ]
       end
 
       def marker(points, filled)
@@ -443,8 +554,8 @@ module Sirena
         end
       end
 
-      def label(text, x, y, font_size, style = {})
-        Label.new(text: text, x: x, y: y, font_size: font_size,
+      def label(text, x_coord, y_coord, font_size, style = {})
+        Label.new(text: text, x: x_coord, y: y_coord, font_size: font_size,
                   font_family: style[:family], font_weight: style[:weight],
                   text_anchor: style[:anchor])
       end
@@ -462,7 +573,9 @@ module Sirena
       def content_height(children)
         return 640 if children.empty?
 
-        children.map { |node| (node[:y] || 0) + (node[:height] || 100) }.max + 40
+        children.map do |node|
+          (node[:y] || 0) + (node[:height] || 100)
+        end.max + 40
       end
 
       def name_font_size
