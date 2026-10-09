@@ -21,7 +21,7 @@ RSpec.describe SpecSupport::LayoutParity::SvgFigureExtractor do
     {
       "translate then scale" => ["a", [20.0, 30.0, 40.0, 40.0]],
       "rotate(90) under a translate" => ["b", [6.0, 20.0, 10.0, 30.0]],
-      "matrix on a circle" => ["c", [20.0, 30.0, 30.0, 50.0]]
+      "matrix on a circle" => ["c", [20.0, 30.0, 30.0, 50.0]],
     }.each do |name, (key, expected)|
       it "composes #{name}" do
         expect(box_of(figure_of("nested_transforms.svg", flowchart), key)).to eq(expected)
@@ -51,7 +51,7 @@ RSpec.describe SpecSupport::LayoutParity::SvgFigureExtractor do
 
     {
       "no viewBox falls back to width and height" => ['width="30" height="20"', [0.0, 0.0, 30.0, 20.0]],
-      "percentage sizes leave the root user space unmapped" => ['width="100%" height="100%"', nil]
+      "percentage sizes leave the root user space unmapped" => ['width="100%" height="100%"', nil],
     }.each do |name, (attrs, expected)|
       it name do
         svg = %(<svg xmlns="http://www.w3.org/2000/svg" #{attrs}></svg>)

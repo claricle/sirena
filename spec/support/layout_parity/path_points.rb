@@ -10,8 +10,10 @@ module SpecSupport
       STEPS = 32
       ARITY = { "m" => 2, "l" => 2, "h" => 1, "v" => 1, "c" => 6, "s" => 4, "q" => 4, "t" => 2, "a" => 7, "z" => 0 }.freeze
 
+      TOKEN = /[a-zA-Z]|#{Matrix::NUMBER}/
+
       def initialize(path_data)
-        @tokens = path_data.to_s.scan(/[a-zA-Z]|#{Matrix::NUMBER}/)
+        @tokens = path_data.to_s.scan(TOKEN)
         @points = []
         @x = @y = @sx = @sy = 0.0
         @ctrl = nil
@@ -112,12 +114,13 @@ module SpecSupport
           return line_to(ex, ey)
         end
 
-        arc_points(rx, ry, phi * Math::PI / 180, large != 0, sweep != 0, ex, ey)
+        arc_points([rx, ry], phi * Math::PI / 180, large != 0, sweep != 0, ex, ey)
         line_to(ex, ey)
       end
 
       # SVG 1.1 appendix F.6.5: endpoint to center parameterization.
-      def arc_points(rx, ry, phi, large, sweep, ex, ey)
+      def arc_points(radii, phi, large, sweep, ex, ey)
+        rx, ry = radii
         cp = Math.cos(phi)
         sp = Math.sin(phi)
         dx = (@x - ex) / 2

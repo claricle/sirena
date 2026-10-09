@@ -14,6 +14,8 @@ module SpecSupport
     class SvgFigureExtractor
       SKIPPED = %w[defs marker symbol clipPath mask pattern style script title desc metadata foreignObject].freeze
       SPACE = /\s+/
+      MAX_WIDTH = /max-width:\s*(#{Matrix::NUMBER})/
+      LEADING_NUMBER = /\A\s*(#{Matrix::NUMBER})(?![a-z%])/
 
       def initialize(recognizer)
         @recognizer = recognizer
@@ -27,7 +29,7 @@ module SpecSupport
 
         @ctm = {}
         root_box = self.class.root_box(root)
-        walk(root, Matrix.new, [root_box&.width, root_box&.height])
+        walk(root, Matrix.identity, [root_box&.width, root_box&.height])
         figure(root, root_box)
       end
 
@@ -74,7 +76,7 @@ module SpecSupport
         found = @recognizer.elements(self, @doc)
         containers = found.select { |e| @recognizer.container_kinds.include?(e.kind) }
         elements = found.map { |e| e.with_parent(parent_key(e, containers)) }
-        max_width = root["style"].to_s[/max-width:\s*(#{Matrix::NUMBER})/, 1]&.to_f
+        max_width = root["style"].to_s[MAX_WIDTH, 1]&.to_f
         Figure.new(elements: elements, root_box: root_box, max_width: max_width)
       end
 
@@ -134,7 +136,7 @@ module SpecSupport
 
       # Descendants-or-self, not entering skipped tags or excluded classes.
       def collect(node, exclude)
-        return [] if SKIPPED.include?(node.name) || (node["class"].to_s.split & exclude).any?
+        return [] if SKIPPED.include?(node.name) || node["class"].to_s.split.intersect?(exclude)
 
         [node] + node.element_children.flat_map { |c| collect(c, exclude) }
       end
@@ -147,7 +149,7 @@ module SpecSupport
       # x/y on the text, else on its first positioned tspan, plus dx/dy of the
       # text and that tspan. Non-numeric units (em) count as 0: no font metrics.
       def anchor_box(text)
-        tspan = text.element_children.find { |c| c.name == "tspan" && (c.attribute_nodes.map(&:name) & %w[x y dx dy]).any? }
+        tspan = text.element_children.find { |c| c.name == "tspan" && c.attribute_nodes.map(&:name).intersect?(%w[x y dx dy]) }
         pick = ->(name) { text[name] || tspan&.[](name) }
         x = first_number(pick.call("x")) + first_number(text["dx"]) + first_number(tspan&.[]("dx"))
         y = first_number(pick.call("y")) + first_number(text["dy"]) + first_number(tspan&.[]("dy"))
@@ -155,7 +157,7 @@ module SpecSupport
       end
 
       def first_number(text)
-        text.to_s[/\A\s*(#{Matrix::NUMBER})(?![a-z%])/, 1].to_f
+        text.to_s[LEADING_NUMBER, 1].to_f
       end
 
       def flatten(node)

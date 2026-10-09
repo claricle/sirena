@@ -8,7 +8,11 @@ module SpecSupport
 
       attr_reader :a, :b, :c, :d, :e, :f
 
-      def initialize(a = 1.0, b = 0.0, c = 0.0, d = 1.0, e = 0.0, f = 0.0)
+      def self.identity
+        new(1, 0, 0, 1, 0, 0)
+      end
+
+      def initialize(a, b, c, d, e, f)
         @a = a.to_f
         @b = b.to_f
         @c = c.to_f
@@ -34,7 +38,7 @@ module SpecSupport
       # Parses an SVG transform list. Only translate, scale, rotate and matrix
       # exist in the contract; anything else raises rather than being ignored.
       def self.parse(text)
-        text.to_s.scan(/(\w+)\s*\(([^)]*)\)/).reduce(new) do |total, (name, args)|
+        text.to_s.scan(/(\w+)\s*\(([^)]*)\)/).reduce(identity) do |total, (name, args)|
           total * from_function(name, args.scan(NUMBER).map(&:to_f))
         end
       end

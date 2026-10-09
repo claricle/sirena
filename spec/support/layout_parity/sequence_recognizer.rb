@@ -29,8 +29,10 @@ module SpecSupport
       def sirena(extractor, doc)
         doc.xpath("//g[starts-with(@id, 'participant-')]").filter_map do |g|
           box = extractor.bbox(g)
+          next unless box
+
           Element.new(kind: :"participant-top", key: g["id"].delete_prefix("participant-"),
-                      bbox: box, label: extractor.label(g)) if box
+                      bbox: box, label: extractor.label(g))
         end
       end
     end
