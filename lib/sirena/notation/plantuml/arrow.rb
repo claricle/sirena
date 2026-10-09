@@ -1,0 +1,65 @@
+# frozen_string_literal: true
+
+module Sirena
+  module Notation
+    module PlantUML
+      # Reads a relation glyph such as `<|--`, `o-down-`, `*.r.>` or `..>`.
+      #
+      # A glyph is an optional marker, a body of dashes or dots (a dot makes
+      # the line dashed) that may carry a direction word between two runs,
+      # and an optional marker. Direction words only steer PlantUML's own
+      # layout, so they are accepted and dropped.
+      module Arrow
+        extend self
+
+        LEFT_MARKER = '(?:<\||<|o|\*)'
+        RIGHT_MARKER = '(?:\|>|>|o|\*)'
+        # A bare `o` or `*` after the body only ends it before a space or a
+        # quote; otherwise it starts the class name (`A --oB`).
+        RIGHT_IN_LINE = '(?:\|>|>|(?:o|\*)(?=[ \t"]))'
+        BODY = '[-.]+(?:(?:up|down|left|right|u|d|l|r)[-.]+)?'
+
+        # Matches one glyph; embed it, then call {parse} on the match.
+        PATTERN = "(#{LEFT_MARKER}?#{BODY}#{RIGHT_IN_LINE}?)"
+
+        GLYPH = /\A(#{LEFT_MARKER})?(#{BODY})(#{RIGHT_MARKER})?\z/o
+        PLAIN = /\A(?:-->|<--|->|<-)\z/
+        KINDS = { "|" => :extension, "o" => :aggregation,
+                  "*" => :composition }.freeze
+        private_constant :LEFT_MARKER, :RIGHT_MARKER, :RIGHT_IN_LINE, :BODY,
+                         :GLYPH, :PLAIN, :KINDS
+
+        # @return [Hash, nil] `:kind`, `:head` (:left, :right or nil) and
+        #   `:plain` (a bare association arrow, which a sequence diagram
+        #   also has); nil when the glyph has markers on both ends
+        def parse(glyph)
+          match = GLYPH.match(glyph)
+          left, body, right = match.captures
+          return if left && right
+
+          marker = left || right
+          dashed = body.include?(".")
+          { kind: kind_of(marker, dashed), head: head_of(left, right),
+            plain: PLAIN.match?(glyph) }
+        end
+
+        private
+
+        def kind_of(marker, dashed)
+          return dashed ? :dependency : :association unless marker
+
+          shape = marker.delete("<>")
+          return KINDS.fetch(shape) unless shape.empty? || shape == "|"
+          return dashed ? :implementation : :extension if shape == "|"
+
+          dashed ? :dependency : :association
+        end
+
+        def head_of(left, right)
+          return :left if left
+          return :right if right
+        end
+      end
+    end
+  end
+end
