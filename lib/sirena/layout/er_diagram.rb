@@ -78,7 +78,8 @@ module Sirena
         attribute :children, Node, collection: true, default: -> { [] }
         attribute :name, :string
         attribute :classes, :string, collection: true, default: -> { [] }
-        attribute :attributes, AttributeRow, collection: true, default: -> { [] }
+        attribute :attributes, AttributeRow,
+                  collection: true, default: -> { [] }
         attribute :separator, Line
       end
 
@@ -126,7 +127,9 @@ module Sirena
         dx = to_cx - from_cx
         dy = to_cy - from_cy
 
-        return Point.new(x: from_cx, y: from_cy) if dx.abs < 0.001 && dy.abs < 0.001
+        if dx.abs < 0.001 && dy.abs < 0.001
+          return Point.new(x: from_cx, y: from_cy)
+        end
 
         if dx.abs > dy.abs
           x = dx.positive? ? from_x + from_width : from_x
@@ -145,7 +148,9 @@ module Sirena
         one = %w[one one_or_more zero_or_one]
         many = %w[zero_or_more one_or_more]
         lines.concat(one_lines(point, opposite)) if one.include?(cardinality)
-        circles << circle(point, opposite) if %w[zero_or_more zero_or_one].include?(cardinality)
+        if %w[zero_or_more zero_or_one].include?(cardinality)
+          circles << circle(point, opposite)
+        end
         lines.concat(crows_foot(point, opposite)) if many.include?(cardinality)
         Marker.new(lines: lines, circles: circles,
                    circle_first: cardinality&.start_with?("zero_"))
@@ -188,13 +193,15 @@ module Sirena
         from_graph({ children: [node], edges: [] }, theme: theme).children.first
       end
 
-      def self.attribute_row(x, y, attribute, theme: nil)
+      def self.attribute_row(x_coordinate, y_coordinate, attribute, theme: nil)
         layout = new
         layout.theme = theme if theme
         font_size = layout.send(:small_text_size)
         AttributeRow.new(
           text: layout.send(:format_attribute, attribute),
-          x: x + ENTITY_PADDING, y: y + font_size, font_size: font_size
+          x: x_coordinate + ENTITY_PADDING,
+          y: y_coordinate + font_size,
+          font_size: font_size,
         )
       end
 
@@ -244,9 +251,7 @@ module Sirena
       end
 
       def scene_from_graph(graph)
-        padding = empty_graph?(graph) ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
-        width = content_width(graph) + (padding * 2)
-        height = content_height(graph) + (padding * 2)
+        width, height = scene_dimensions(graph)
         children = typed_nodes(graph[:children] || [])
 
         Scene.new(
@@ -274,22 +279,27 @@ module Sirena
 
           Node.new(
             id: node[:id], x: x, y: y, width: width, height: height,
-            labels: [positioned_label(name, x + (width / 2), name_y, font_size)],
+            labels: [
+              positioned_label(name, x + (width / 2), name_y, font_size),
+            ],
             shape: "rect", name: name, classes: metadata[:classes] || [],
-            attributes: typed_attributes(metadata[:attributes] || [], x, separator_y),
+            attributes: typed_attributes(
+              metadata[:attributes] || [], x, separator_y
+            ),
             separator: Line.new(x1: x, y1: separator_y,
                                 x2: x + width, y2: separator_y)
           )
         end
       end
 
-      def typed_attributes(attributes, x, separator_y)
+      def typed_attributes(attributes, x_coordinate, separator_y)
         current_y = separator_y + ENTITY_PADDING
         attributes.map do |attribute|
           row = AttributeRow.new(
             name: attribute[:name], attribute_type: attribute[:attribute_type],
             key_type: attribute[:key_type], note: attribute[:note],
-            text: format_attribute(attribute), x: x + ENTITY_PADDING,
+            text: format_attribute(attribute),
+            x: x_coordinate + ENTITY_PADDING,
             y: current_y + small_text_size, font_size: small_text_size
           )
           current_y += TEXT_LINE_HEIGHT
@@ -298,11 +308,10 @@ module Sirena
       end
 
       def typed_edges(edges, nodes)
+        nodes_by_id = nodes.to_h { |node| [node[:id], node] }
         edges.filter_map do |edge|
-          source_id = edge[:sources]&.first
-          target_id = edge[:targets]&.first
-          source = nodes.find { |node| node[:id] == source_id }
-          target = nodes.find { |node| node[:id] == target_id }
+          source = nodes_by_id[edge[:sources]&.first]
+          target = nodes_by_id[edge[:targets]&.first]
           next unless source && target
 
           typed_edge(edge, source, target)
@@ -322,7 +331,9 @@ module Sirena
           relationship_type: metadata[:relationship_type] || "non-identifying",
           cardinality_from: metadata[:cardinality_from],
           cardinality_to: metadata[:cardinality_to],
-          source_marker: self.class.marker(from, to, metadata[:cardinality_from]),
+          source_marker: self.class.marker(
+            from, to, metadata[:cardinality_from]
+          ),
           target_marker: self.class.marker(to, from, metadata[:cardinality_to])
         )
       end
@@ -339,10 +350,12 @@ module Sirena
         end
       end
 
-      def positioned_label(text, x, y, font_size)
+      def positioned_label(text, x_coordinate, y_coordinate, font_size)
         dimensions = measure_text(text, font_size: font_size)
         Label.new(text: text, width: dimensions[:width],
-                  height: dimensions[:height], x: x, y: y,
+                  height: dimensions[:height],
+                  x: x_coordinate,
+                  y: y_coordinate,
                   font_size: font_size)
       end
 
@@ -350,12 +363,17 @@ module Sirena
         diagram.entities.map do |entity|
           dimensions = calculate_entity_dimensions(entity)
           {
-            id: entity.id, width: dimensions[:width], height: dimensions[:height],
+            id: entity.id,
+            width: dimensions[:width],
+            height: dimensions[:height],
             labels: entity_labels(entity),
             metadata: {
-              name: entity.name, classes: entity.classes,
-              attributes: entity.attributes.map { |item| attribute_to_hash(item) }
-            }
+              name: entity.name,
+              classes: entity.classes,
+              attributes: entity.attributes.map do |item|
+                attribute_to_hash(item)
+              end,
+            },
           }
         end
       end
@@ -376,15 +394,9 @@ module Sirena
       end
 
       def calculate_entity_dimensions(entity)
-        widths = [MIN_ENTITY_WIDTH, measured_width(entity.name, large_text_size)]
-        entity.attributes.each do |attribute|
-          widths << measured_width(format_attribute(attribute),
-                                   small_text_size, monospace: true)
-        end
         {
-          width: widths.max + (ENTITY_PADDING * 2),
-          height: ((1 + entity.attributes.length) * LINE_HEIGHT) +
-            (ENTITY_PADDING * 2),
+          width: entity_width(entity),
+          height: entity_height(entity),
         }
       end
 
@@ -409,15 +421,10 @@ module Sirena
       end
 
       def format_attribute(attribute)
-        parts = []
-        key_type = value(attribute, :key_type)
-        attribute_type = value(attribute, :attribute_type)
-        note = value(attribute, :note)
-        parts << key_type if key_type && !key_type.empty?
-        parts << attribute_type if attribute_type && !attribute_type.empty?
-        parts << value(attribute, :name)
-        parts << note if note && !note.empty?
-        parts.join(" ")
+        %i[key_type attribute_type name note]
+          .filter_map { |key| value(attribute, key) }
+          .reject(&:empty?)
+          .join(" ")
       end
 
       def attribute_to_hash(attribute)
@@ -430,6 +437,28 @@ module Sirena
       def empty_graph?(graph)
         graph.key?(:children) && graph.key?(:edges) &&
           graph[:children] == [] && graph[:edges] == []
+      end
+
+      def scene_dimensions(graph)
+        padding = empty_graph?(graph) ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
+        [content_width(graph), content_height(graph)].map do |extent|
+          extent + (padding * 2)
+        end
+      end
+
+      def entity_width(entity)
+        widths = entity.attributes.map do |attribute|
+          measured_width(format_attribute(attribute),
+                         small_text_size, monospace: true)
+        end
+        widths.push(MIN_ENTITY_WIDTH,
+                    measured_width(entity.name, large_text_size)).max +
+          (ENTITY_PADDING * 2)
+      end
+
+      def entity_height(entity)
+        ((1 + entity.attributes.length) * LINE_HEIGHT) +
+          (ENTITY_PADDING * 2)
       end
 
       def content_width(graph)
