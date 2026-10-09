@@ -110,9 +110,10 @@ RSpec.describe Sirena::Notation::PlantUML do
                                           left_role: "-r")
     end
 
-    it "does not read a marker on both ends" do
+    it "names a marker on both ends, which it does not draw" do
       expect { parse_corpus("class A\nA <|--|> B") }
-        .to raise_error(described_class::UnsupportedConstructError)
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /relation marker on both ends/)
     end
 
     it "reads a trailing o as part of the class name, not a marker" do
