@@ -1,8 +1,29 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "open3"
+require "rbconfig"
 
 RSpec.describe Sirena::Theme do
+  describe "sub-model load order" do
+    it "rejects loading sub-models before their parent class" do
+      sub_models = %w[
+        color_palette
+        typography
+        shape_styles
+        spacing_config
+        effect_styles
+      ]
+      failures = sub_models.filter_map do |name|
+        path = File.expand_path("../../lib/sirena/theme/#{name}.rb", __dir__)
+        _, stderr, status = Open3.capture3(RbConfig.ruby, path)
+        name if status.success? || !stderr.include?("Sirena::Theme")
+      end
+
+      expect(failures).to be_empty
+    end
+  end
+
   describe ".load" do
     it "loads theme from YAML file" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
@@ -98,6 +119,12 @@ RSpec.describe Sirena::Theme do
 
       expect(merged.name).to eq("test")
       expect(merged.colors).to eq(base_theme.colors)
+    end
+
+    it "uses override values when the base value is nil" do
+      base = described_class.new(name: "base")
+
+      expect(base.merge(override_theme).colors).to eq(override_theme.colors)
     end
   end
 end
