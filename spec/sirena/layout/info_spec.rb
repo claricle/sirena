@@ -1,0 +1,32 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+require "sirena/layout/info"
+
+RSpec.describe Sirena::Layout::Info do
+  subject(:graph) { described_class.new.to_graph(diagram) }
+
+  let(:diagram) { Sirena::Diagram::Info.new }
+
+  it "defaults the identifier and showInfo state" do
+    expect(graph).to eq(
+      id: "info",
+      title: nil,
+      show_info: false,
+      metadata: { diagram_type: :info },
+    )
+  end
+
+  it "preserves an explicit identifier, title, and enabled showInfo state" do
+    diagram.id = "status"
+    diagram.title = "System status"
+    diagram.show_info = true
+
+    expect(graph).to eq(
+      id: "status",
+      title: "System status",
+      show_info: true,
+      metadata: { diagram_type: :info },
+    )
+  end
+end
