@@ -26,7 +26,9 @@ rows:
 - file: lib/sirena/layout/class_diagram.rb
   count: 1
 - file: lib/sirena/layout/flowchart.rb
-  count: 1
+  count: 3
+- file: lib/sirena/layout/flowchart/edge_router.rb
+  count: 5
 - file: lib/sirena/layout/gantt.rb
   count: 4
 - file: lib/sirena/layout/git_graph.rb
@@ -91,12 +93,8 @@ rows:
   count: 2
 - file: lib/sirena/renderer/class_diagram.rb
   count: 4
-- file: lib/sirena/layout/flowchart/edge_router.rb
-  count: 5
 - file: lib/sirena/renderer/er_diagram.rb
   count: 5
-- file: lib/sirena/renderer/flowchart.rb
-  count: 1
 - file: lib/sirena/renderer/git_graph.rb
   count: 1
 - file: lib/sirena/renderer/kanban.rb
