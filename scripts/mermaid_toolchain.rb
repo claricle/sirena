@@ -53,7 +53,7 @@ module MermaidToolchain
       MMDC_PATH, "--configFile", CONFIG_PATH,
       "--cssFile", CSS_PATH,
       *ci_canary_browser_arguments,
-      *arguments,
+      *arguments
     ]
   end
 
