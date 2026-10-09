@@ -1,105 +1,149 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/state_diagram"
 
 module Sirena
   module Renderer
-    # State diagram renderer for converting graphs to SVG.
-    #
-    # Converts a laid-out graph structure (with computed positions) into
-    # SVG using the Svg builder classes. Handles different state types,
-    # transition routing, and label positioning.
-    #
-    # @example Render a state diagram
-    #   renderer = StateDiagram.new
-    #   svg = renderer.render(laid_out_graph)
+    # Emits SVG from final, typed state-diagram geometry.
     class StateDiagram < Base
-      # Renders a laid-out graph to SVG.
-      #
-      # @param graph [Hash] laid-out graph with state positions
-      # @return [Svg::Document] the rendered SVG document
-      def render(graph)
-        svg = create_document(graph)
-
-        # Render transitions first (so they appear under states)
-        render_transitions(graph, svg) if graph[:edges]
-
-        # Render states
-        render_states(graph, svg) if graph[:children]
-
+      # @param scene [Layout::StateDiagram::Scene] final canvas geometry
+      # @return [Svg::Document] rendered SVG document
+      def render(scene)
+        scene = Layout::StateDiagram.from_graph(scene, theme: theme) if scene.is_a?(Hash)
+        svg = create_document(scene)
+        render_transitions(scene, svg)
+        render_states(scene, svg)
         svg
       end
 
       protected
 
       def calculate_width(graph)
-        return 800 unless graph[:children]
-
-        max_x = graph[:children].map do |state|
-          (state[:x] || 0) + (state[:width] || 100)
-        end.max || 800
-
-        max_x + 60 # Add padding
+        Layout::StateDiagram.renderer_extent(graph, :width)
       end
 
       def calculate_height(graph)
-        return 600 unless graph[:children]
-
-        max_y = graph[:children].map do |state|
-          (state[:y] || 0) + (state[:height] || 50)
-        end.max || 600
-
-        max_y + 60 # Add padding
+        Layout::StateDiagram.renderer_extent(graph, :height)
       end
 
       def render_states(graph, svg)
-        graph[:children].each do |state|
-          render_state(state, svg)
-        end
+        children_for(graph).each { |state| render_state(state, svg) }
       end
 
       def render_state(state, svg)
-        state_type = state.dig(:metadata, :shape_type) ||
-                     state.dig(:metadata, :state_type) || "normal"
-
-        # Create group for state and its label
-        group = Svg::Group.new.tap do |g|
-          g.id = "state-#{state[:id]}"
+        typed = typed_state(state)
+        group = Svg::Group.new.tap { |item| item.id = "state-#{typed.id}" }
+        group.children << create_state_shape(typed, typed.shape_type)
+        typed.labels.each_with_index do |label, index|
+          group.children << create_state_label(typed, label, index)
         end
-
-        # Render state shape based on type
-        shape_element = create_state_shape(state, state_type)
-        group.children << shape_element if shape_element
-
-        # Render state label
-        if state[:labels] && !state[:labels].empty?
-          state[:labels].each_with_index do |label, index|
-            text_element = create_state_label(state, label, index)
-            group.children << text_element if text_element
-          end
-        end
-
         svg << group
       end
 
-      def create_state_shape(state, state_type)
-        x = state[:x] || 0
-        y = state[:y] || 0
-        width = state[:width] || 100
-        height = state[:height] || 50
+      def render_transitions(graph, svg)
+        edges_for(graph).each do |transition|
+          render_transition(transition, graph, svg)
+        end
+      end
 
+      def render_transition(transition, graph, svg)
+        edge = typed_transition(transition, graph)
+        return unless edge
+
+        source = find_state(graph, edge.source)
+        target = find_state(graph, edge.target)
+
+        group = Svg::Group.new.tap { |item| item.id = "transition-#{edge.id}" }
+        group.children << Svg::Path.new.tap do |path|
+          path.d = calculate_transition_path(source, target, edge)
+          path.fill = "none"
+          path.stroke = "#000000"
+          path.stroke_width = "2"
+          path.marker_end = "url(#arrowhead)"
+        end
+        if edge.labels.any?
+          group.children << create_transition_label(
+            source, target, edge.labels.first
+          )
+        end
+        svg << group
+      end
+
+      def transition_label(label)
+        Svg::Text.new.tap do |text|
+          text.x = label.x
+          text.y = label.y
+          text.content = label.text
+          text.fill = "#000000"
+          text.font_family = "Arial, sans-serif"
+          text.font_size = formatted_number(label.font_size)
+          text.text_anchor = "middle"
+        end
+      end
+
+      def find_state(graph, state_id)
+        return unless state_id
+
+        children_for(graph).find do |state|
+          if state.is_a?(Layout::StateDiagram::Node)
+            state.id == state_id
+          else
+            state[:id] == state_id
+          end
+        end
+      end
+
+      def calculate_transition_path(source, target, transition)
+        if transition.is_a?(Layout::StateDiagram::Edge)
+          section = transition.sections.first
+          return create_path_with_bends(
+            section.start_point.x, section.start_point.y,
+            section.end_point.x, section.end_point.y, section.bend_points
+          )
+        end
+
+        source_point = point(Layout::StateDiagram.center(source))
+        target_point = point(Layout::StateDiagram.center(target))
+        bends = transition.dig(:sections, 0, :bendPoints) || []
+        create_path_with_bends(
+          source_point.x, source_point.y, target_point.x, target_point.y, bends
+        )
+      end
+
+      def create_path_with_bends(sx, sy, tx, ty, bend_points)
+        Layout::StateDiagram.path_data(
+          point(x: sx, y: sy), point(x: tx, y: ty),
+          bend_points.map { |item| point(item) }
+        )
+      end
+
+      def create_transition_label(source, target, label)
+        return transition_label(label) if label.is_a?(Layout::StateDiagram::Label)
+
+        geometry = Layout::StateDiagram.transition_label_geometry(
+          source, target, label, small_font_size
+        )
+        transition_label(Layout::StateDiagram::Label.new(**geometry))
+      end
+
+      def create_state_shape(state, state_type)
+        typed = typed_state(state, state_type)
+        @current_state = typed
         case state_type
         when "start"
-          create_start_state(x, y, width, height)
+          create_start_state(typed.x, typed.y, typed.width, typed.height)
         when "end"
-          create_end_state(x, y, width, height)
+          create_end_state(typed.x, typed.y, typed.width, typed.height)
         when "choice"
-          create_choice_state(x, y, width, height)
+          create_choice_state(typed.x, typed.y, typed.width, typed.height)
         when "fork", "join"
-          create_fork_join_state(x, y, width, height)
+          create_fork_join_state(typed.x, typed.y, typed.width, typed.height)
         else
-          create_normal_state(x, y, width, height)
+          create_normal_state(typed.x, typed.y, typed.width, typed.height)
         end
+      ensure
+        @current_state = nil
       end
 
       def create_normal_state(x, y, width, height)
@@ -117,66 +161,30 @@ module Sirena
       end
 
       def create_start_state(x, y, width, height)
-        # Start state is a filled circle
-        cx = x + width / 2
-        cy = y + height / 2
-        r = [width, height].min / 2
-
+        state = current_state_or(x, y, width, height, "start")
         Svg::Circle.new.tap do |circle|
-          circle.cx = cx
-          circle.cy = cy
-          circle.r = r
+          circle.cx = state.center_x
+          circle.cy = state.center_y
+          circle.r = state.radius
           circle.fill = "#000000"
           circle.stroke = "none"
         end
       end
 
       def create_end_state(x, y, width, height)
-        # End state is a double circle (outer hollow, inner filled)
-        cx = x + width / 2
-        cy = y + height / 2
-        r = [width, height].min / 2
-
-        group = Svg::Group.new
-
-        # Outer circle
-        outer = Svg::Circle.new.tap do |circle|
-          circle.cx = cx
-          circle.cy = cy
-          circle.r = r
-          circle.fill = "none"
-          circle.stroke = "#000000"
-          circle.stroke_width = "2"
+        state = current_state_or(x, y, width, height, "end")
+        Svg::Group.new.tap do |group|
+          group.children << state_circle(state, state.radius, "none", "2")
+          group.children << state_circle(
+            state, state.inner_radius, "#000000", nil
+          )
         end
-        group.children << outer
-
-        # Inner filled circle
-        inner = Svg::Circle.new.tap do |circle|
-          circle.cx = cx
-          circle.cy = cy
-          circle.r = r - 5
-          circle.fill = "#000000"
-          circle.stroke = "none"
-        end
-        group.children << inner
-
-        group
       end
 
       def create_choice_state(x, y, width, height)
-        # Choice state is a diamond
-        cx = x + width / 2
-        cy = y + height / 2
-
-        points = [
-          "#{cx},#{y}",
-          "#{x + width},#{cy}",
-          "#{cx},#{y + height}",
-          "#{x},#{cy}",
-        ].join(" ")
-
+        state = current_state_or(x, y, width, height, "choice")
         Svg::Polygon.new.tap do |polygon|
-          polygon.points = points
+          polygon.points = state.shape_points
           polygon.fill = "#ffffff"
           polygon.stroke = "#000000"
           polygon.stroke_width = "2"
@@ -184,142 +192,126 @@ module Sirena
       end
 
       def create_fork_join_state(x, y, width, height)
-        # Fork/Join is a thick horizontal bar
+        state = current_state_or(x, y, width, height, "fork")
         Svg::Rect.new.tap do |rect|
-          rect.x = x
-          rect.y = y + height / 2 - 5
-          rect.width = width
-          rect.height = 10
+          rect.x = state.x
+          rect.y = state.shape_y
+          rect.width = state.width
+          rect.height = state.shape_height
           rect.fill = "#000000"
           rect.stroke = "none"
         end
       end
 
       def create_state_label(state, label, index)
-        x = state[:x] || 0
-        y = state[:y] || 0
-        width = state[:width] || 100
-        height = state[:height] || 50
+        return state_label(label) if label.is_a?(Layout::StateDiagram::Label)
 
-        # Center the complete label stack in the state.
-        text_x = x + width / 2
-        label_count = state[:labels].length
-        stack_offset = (label_count - 1) * 10
-        text_y = y + height / 2 - stack_offset + (index * 20)
+        geometry = Layout::StateDiagram.label_geometry(
+          state, label, index,
+          { normal: normal_font_size, small: small_font_size }
+        )
+        state_label(Layout::StateDiagram::Label.new(**geometry))
+      end
 
-        font_size = index.zero? ? "14" : "12"
+      private
 
+      def state_circle(state, radius, fill, stroke_width)
+        Svg::Circle.new.tap do |circle|
+          circle.cx = state.center_x
+          circle.cy = state.center_y
+          circle.r = radius
+          circle.fill = fill
+          circle.stroke = fill == "none" ? "#000000" : "none"
+          circle.stroke_width = stroke_width
+        end
+      end
+
+      def state_label(label)
         Svg::Text.new.tap do |text|
-          text.x = text_x
-          text.y = text_y
-          text.content = label[:text]
+          text.x = label.x
+          text.y = label.y
+          text.content = label.text
           text.fill = "#000000"
           text.font_family = "Arial, sans-serif"
-          text.font_size = font_size
+          text.font_size = formatted_number(label.font_size)
           text.text_anchor = "middle"
           text.dominant_baseline = "middle"
         end
       end
 
-      def render_transitions(graph, svg)
-        graph[:edges].each do |transition|
-          render_transition(transition, graph, svg)
+      def typed_state(state, shape_type = nil)
+        return state if state.is_a?(Layout::StateDiagram::Node)
+
+        resolved_type = shape_type || state.dig(:metadata, :shape_type) ||
+          state.dig(:metadata, :state_type) || "normal"
+        geometry = Layout::StateDiagram.shape_geometry(state, resolved_type)
+        labels = (state[:labels] || []).each_with_index.map do |label, index|
+          values = Layout::StateDiagram.label_geometry(
+            state, label, index,
+            { normal: normal_font_size, small: small_font_size }
+          )
+          Layout::StateDiagram::Label.new(**values)
         end
+        Layout::StateDiagram::Node.new(
+          id: state[:id], state_type: state.dig(:metadata, :state_type),
+          shape_type: resolved_type, labels: labels, **geometry
+        )
       end
 
-      def render_transition(transition, graph, svg)
+      def typed_transition(transition, graph)
+        return transition if transition.is_a?(Layout::StateDiagram::Edge)
+
         source = find_state(graph, transition[:sources]&.first)
         target = find_state(graph, transition[:targets]&.first)
-
         return unless source && target
 
-        # Calculate transition path
-        path_data = calculate_transition_path(source, target, transition)
-
-        # Create path element
-        path = Svg::Path.new.tap do |p|
-          p.d = path_data
-          p.fill = "none"
-          p.stroke = "#000000"
-          p.stroke_width = "2"
-          p.marker_end = "url(#arrowhead)"
-        end
-
-        # Create group for transition and label
-        group = Svg::Group.new.tap do |g|
-          g.id = "transition-#{transition[:id]}"
-        end
-
-        group.children << path
-
-        # Render transition label if present
-        if transition[:labels] && !transition[:labels].empty?
-          label = transition[:labels].first
-          text = create_transition_label(source, target, label)
-          group.children << text if text
-        end
-
-        svg << group
+        scene = Layout::StateDiagram.from_graph(
+          { id: "state_diagram", children: [source, target],
+            edges: [transition] },
+          theme: theme,
+        )
+        scene.edges.first
       end
 
-      def find_state(graph, state_id)
-        return nil unless graph[:children] && state_id
+      def current_state_or(x, y, width, height, shape_type)
+        return @current_state if @current_state
 
-        graph[:children].find { |s| s[:id] == state_id }
+        values = { x: x, y: y, width: width, height: height }
+        Layout::StateDiagram::Node.new(
+          shape_type: shape_type,
+          **Layout::StateDiagram.shape_geometry(values, shape_type),
+        )
       end
 
-      def calculate_transition_path(source, target, transition)
-        # Calculate center points
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
+      def point(value)
+        return value if value.is_a?(Layout::StateDiagram::Point)
 
-        # Use sections if available (from elkrb layout)
-        if transition[:sections] && !transition[:sections].empty?
-          section = transition[:sections].first
-          if section[:bendPoints] && !section[:bendPoints].empty?
-            return create_path_with_bends(
-              sx, sy, tx, ty,
-              section[:bendPoints]
-            )
-          end
-        end
-
-        # Simple straight line path
-        "M #{sx} #{sy} L #{tx} #{ty}"
+        Layout::StateDiagram::Point.new(x: value[:x], y: value[:y])
       end
 
-      def create_path_with_bends(sx, sy, tx, ty, bend_points)
-        path_parts = ["M #{sx} #{sy}"]
+      def children_for(graph)
+        return graph.children if graph.is_a?(Layout::StateDiagram::Scene)
 
-        bend_points.each do |point|
-          path_parts << "L #{point[:x]} #{point[:y]}"
-        end
-
-        path_parts << "L #{tx} #{ty}"
-        path_parts.join(" ")
+        graph[:children] || []
       end
 
-      def create_transition_label(source, target, label)
-        # Position label at midpoint of transition
-        sx = (source[:x] || 0) + (source[:width] || 100) / 2
-        sy = (source[:y] || 0) + (source[:height] || 50) / 2
-        tx = (target[:x] || 0) + (target[:width] || 100) / 2
-        ty = (target[:y] || 0) + (target[:height] || 50) / 2
+      def edges_for(graph)
+        return graph.edges if graph.is_a?(Layout::StateDiagram::Scene)
 
-        mid_x = (sx + tx) / 2
-        mid_y = (sy + ty) / 2
+        graph[:edges] || []
+      end
 
-        Svg::Text.new.tap do |text|
-          text.x = mid_x
-          text.y = mid_y - 8 # Offset slightly above line
-          text.content = label[:text]
-          text.fill = "#000000"
-          text.font_family = "Arial, sans-serif"
-          text.font_size = "12"
-          text.text_anchor = "middle"
-        end
+      def normal_font_size
+        theme_typography(:font_size_normal) || Layout::StateDiagram::DEFAULT_FONT_SIZE
+      end
+
+      def small_font_size
+        theme_typography(:font_size_small) ||
+          Layout::StateDiagram::DEFAULT_SMALL_FONT_SIZE
+      end
+
+      def formatted_number(number)
+        number.to_i == number ? number.to_i.to_s : number.to_s
       end
     end
   end

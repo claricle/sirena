@@ -46,15 +46,25 @@ RSpec.describe "StateDiagram Integration" do
       expect(diagram.valid?).to be true
 
       # Transform
-      graph = transform.to_graph(diagram)
-      expect(graph).to be_a(Hash)
-      expect(graph[:children].length).to eq(2)
-      expect(graph[:edges].length).to eq(1)
+      scene = transform.to_graph(diagram)
+      expect(scene).to be_a(Sirena::Layout::StateDiagram::Scene)
+      expect(scene.children.length).to eq(2)
+      expect(scene.edges.length).to eq(1)
 
-      # Render (without elkrb layout, just with graph structure)
-      svg = renderer.render(graph)
+      svg = renderer.render(scene)
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.children).not_to be_empty
+    end
+
+    it "runs the temporary Grid while the state layout builds its Scene" do
+      allow(Sirena::Layout::Grid).to receive(:apply).and_call_original
+
+      diagram = parser.parse("stateDiagram-v2\nIdle-->Active")
+      scene = transform.to_graph(diagram)
+
+      expect(Sirena::Layout::Grid).to have_received(:apply)
+        .once.with(an_instance_of(Hash))
+      expect(scene).to be_a(Sirena::Layout::StateDiagram::Scene)
     end
 
     it "handles complete state machine with start and end" do
@@ -147,7 +157,7 @@ RSpec.describe "StateDiagram Integration" do
       diagram = parser.parse(source)
       expect(diagram.direction).to eq("LR")
 
-      graph = transform.to_graph(diagram)
+      graph = transform.send(:build_graph, diagram)
       expect(graph[:layoutOptions]["elk.direction"]).to eq("RIGHT")
     end
 
