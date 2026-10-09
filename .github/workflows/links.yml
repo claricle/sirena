@@ -59,6 +59,79 @@ jobs:
           ls -la _site/
         working-directory: docs
 
+      - name: Seed broken relative link
+        id: seed_relative
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --config docs/lychee.toml
+            --base docs/_lychee_seeds
+            'docs/_lychee_seeds/broken-relative-link.html'
+          fail: true
+          output: link-seed-relative.md
+          format: markdown
+
+      - name: Seed broken fragment
+        id: seed_fragment
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --config docs/lychee.toml
+            --base docs/_lychee_seeds
+            'docs/_lychee_seeds/broken-fragment.html'
+          fail: true
+          output: link-seed-fragment.md
+          format: markdown
+
+      - name: Seed HTTP 403
+        id: seed_403
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --config docs/lychee.toml
+            'docs/_lychee_seeds/seeded-403.html'
+          fail: true
+          output: link-seed-403.md
+          format: markdown
+
+      - name: Seed HTTP 429
+        id: seed_429
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --config docs/lychee.toml
+            'docs/_lychee_seeds/seeded-429.html'
+          fail: true
+          output: link-seed-429.md
+          format: markdown
+
+      - name: Assert seeded failures
+        if: always()
+        env:
+          RELATIVE_OUTCOME: ${{ steps.seed_relative.outcome }}
+          FRAGMENT_OUTCOME: ${{ steps.seed_fragment.outcome }}
+          STATUS_403_OUTCOME: ${{ steps.seed_403.outcome }}
+          STATUS_429_OUTCOME: ${{ steps.seed_429.outcome }}
+        run: |
+          test "$RELATIVE_OUTCOME" = failure
+          test "$FRAGMENT_OUTCOME" = failure
+          test "$STATUS_403_OUTCOME" = failure
+          test "$STATUS_429_OUTCOME" = failure
+          grep -Eq '(^|[^0-9])403([^0-9]|$)' link-seed-403.md
+          grep -Eq '(^|[^0-9])429([^0-9]|$)' link-seed-429.md
+
       - name: Link Checker
         uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621  # v1
         with:
@@ -81,5 +154,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: link-check-results
-          path: link-check-results.md
+          path: |
+            link-check-results.md
+            link-seed-*.md
           retention-days: 30
