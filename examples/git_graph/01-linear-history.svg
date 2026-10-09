@@ -23,5 +23,6 @@
 <text fill="#000000" x="440.0" y="180.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">Fix critical bug</text>
 <text fill="#000000" x="520.0" y="180.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12.0">commit-6</text>
 <text fill="#2563eb" x="535.0" y="164.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">main</text>
+<text fill="#7c3aed" x="535.0" y="164.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">main</text>
 <text fill="#db2777" x="295.0" y="224.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12.0" font-weight="bold">develop</text>
 </svg>
