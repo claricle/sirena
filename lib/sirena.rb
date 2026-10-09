@@ -37,4 +37,5 @@ module Sirena
     Engine.new.render(source, options)
   end
 end
+
 require_relative "sirena/notation/builtin"
