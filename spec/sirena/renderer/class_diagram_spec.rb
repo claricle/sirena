@@ -106,6 +106,35 @@ module ClassDiagramSpecHelpers
 
     points.combination(3).all? { |triple| signed_area2(*triple) != 0 }
   end
+
+  def rendered_bent_route(renderer, scene)
+    scene.edges.first.sections = [bent_section]
+    group = renderer.render(scene).children.find do |item|
+      item.id&.start_with?("rel-")
+    end
+    group.children.grep(Sirena::Svg::Path).first.d
+  end
+
+  def bent_section
+    section = Sirena::Layout::ClassDiagram::Section
+    point = Sirena::Layout::ClassDiagram::Point
+    section.new(
+      start_point: point.new(x: 100, y: 25),
+      end_point: point.new(x: 200, y: 25),
+      bend_points: [point.new(x: 150, y: 80)],
+    )
+  end
+
+  def record_collection_hooks(renderer, calls)
+    hooks = Module.new
+    %i[render_relationships render_classes].each do |name|
+      hooks.define_method(name) do |*args|
+        calls << name
+        super(*args)
+      end
+    end
+    renderer.singleton_class.prepend(hooks)
+  end
 end
 
 RSpec.describe Sirena::Renderer::ClassDiagram do
@@ -177,6 +206,19 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
       expect(svg).to be_a(Sirena::Svg::Document)
       expect(svg.width).to be > 0
       expect(svg.height).to be > 0
+    end
+
+    it "serializes routed Scene bends without recalculating them" do
+      expect(ClassDiagramSpecHelpers.rendered_bent_route(renderer, scene))
+        .to eq("M 100 25 L 150 80 L 200 25")
+    end
+
+    it "routes typed Scenes through the released collection hooks" do
+      calls = []
+      ClassDiagramSpecHelpers.record_collection_hooks(renderer, calls)
+      renderer.render(scene)
+
+      expect(calls).to eq(%i[render_relationships render_classes])
     end
 
     it "includes class boxes in SVG" do

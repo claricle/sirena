@@ -75,8 +75,8 @@ module Sirena
       def render_scene(scene)
         svg = scene_document(scene)
         add_markers(svg)
-        scene.edges.each { |edge| render_scene_edge(edge, svg) }
-        scene.children.each { |node| render_scene_node(node, svg) }
+        render_relationships(scene, svg)
+        render_classes(scene, svg)
         svg
       end
 
@@ -138,12 +138,30 @@ module Sirena
       end
 
       def render_scene_edge(edge, svg)
-        section = edge.sections.first
         group = Svg::Group.new.tap { |item| item.id = "rel-#{edge.id}" }
-        group.children << scene_edge_line(section, edge.dashed)
+        edge.sections.each do |section|
+          group.children << scene_edge_section(section, edge.dashed)
+        end
         edge.markers.each { |marker| group.children << scene_marker(marker) }
         edge.labels.each { |label| group.children << scene_text(label) }
         svg << group
+      end
+
+      def scene_edge_section(section, dashed)
+        return scene_edge_line(section, dashed) if section.bend_points.empty?
+
+        Svg::Path.new(
+          d: section_path(section), fill: "none", stroke: "#000000",
+          stroke_width: "2", stroke_dasharray: dashed ? "5,5" : nil
+        )
+      end
+
+      def section_path(section)
+        points = [section.start_point, *section.bend_points, section.end_point]
+        points.map.with_index do |point, index|
+          command = index.zero? ? "M" : "L"
+          "#{command} #{svg_number(point.x)} #{svg_number(point.y)}"
+        end.join(" ")
       end
 
       def scene_edge_line(section, dashed)
@@ -221,6 +239,11 @@ module Sirena
       end
 
       def render_classes(graph, svg)
+        if graph.is_a?(Layout::ClassDiagram::Scene)
+          graph.children.each { |node| render_scene_node(node, svg) }
+          return
+        end
+
         graph[:children].each do |node|
           render_class(node, svg)
         end
@@ -390,6 +413,11 @@ module Sirena
       end
 
       def render_relationships(graph, svg)
+        if graph.is_a?(Layout::ClassDiagram::Scene)
+          graph.edges.each { |edge| render_scene_edge(edge, svg) }
+          return
+        end
+
         graph[:edges].each do |edge|
           render_relationship(edge, graph, svg)
         end

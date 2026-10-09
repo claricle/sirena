@@ -62,6 +62,7 @@ module Sirena
         attribute :y, :float
         attribute :width, :float
         attribute :height, :float
+        attribute :labels, Label, collection: true, default: -> { [] }
         attribute :name, Label
         attribute :stereotype, Label
         attribute :attributes, Label, collection: true, default: -> { [] }
@@ -71,8 +72,8 @@ module Sirena
 
       class Edge < Lutaml::Model::Serializable
         attribute :id, :string
-        attribute :sources, :string, collection: true, default: -> { [] }
-        attribute :targets, :string, collection: true, default: -> { [] }
+        attribute :source, :string
+        attribute :target, :string
         attribute :sections, Section, collection: true, default: -> { [] }
         attribute :markers, Marker, collection: true, default: -> { [] }
         attribute :labels, Label, collection: true, default: -> { [] }
@@ -127,8 +128,7 @@ module Sirena
 
       def scene_from_graph(graph)
         children = graph[:children] || []
-        width = content_width(children) + (DIAGRAM_PADDING * 2)
-        height = content_height(children) + (DIAGRAM_PADDING * 2)
+        width, height = scene_dimensions(children)
 
         Scene.new(
           id: graph[:id] || "class_diagram",
@@ -138,6 +138,12 @@ module Sirena
           children: children.map { |node| typed_node(node) },
           edges: typed_edges(graph[:edges] || [], children),
         )
+      end
+
+      def scene_dimensions(children)
+        [content_width(children), content_height(children)].map do |value|
+          value + (DIAGRAM_PADDING * 2)
+        end
       end
 
       def transform_entities(diagram)
@@ -268,20 +274,28 @@ module Sirena
       end
 
       def typed_node(node)
-        x_coord, y_coord, width, height = box_values(node)
+        dimensions = box_values(node)
         rows = node_rows(
-          x_coord, y_coord, width, node[:id], node[:metadata] || {}
+          *dimensions.first(3), node[:id], node[:metadata] || {}
         )
+        build_typed_node(node[:id], dimensions, rows)
+      end
 
+      def build_typed_node(id, dimensions, rows)
+        x_coord, y_coord, width, height = dimensions
         Node.new(
-          id: node[:id], x: x_coord, y: y_coord,
+          id: id, x: x_coord, y: y_coord,
           width: width, height: height,
+          labels: node_labels(rows),
           name: rows[:name], stereotype: rows[:stereotype],
           attributes: rows[:attributes], method_rows: rows[:methods],
-          separators: typed_separators(
-            x_coord, width, rows[:separator_ys]
-          )
+          separators: typed_separators(x_coord, width, rows[:separator_ys])
         )
+      end
+
+      def node_labels(rows)
+        [rows[:stereotype], rows[:name], *rows[:attributes], *rows[:methods]]
+          .compact
       end
 
       def typed_separators(x_coord, width, positions)
@@ -331,7 +345,7 @@ module Sirena
         )
         return [rows, cursor, separator_ys] if rows.empty?
 
-        separator_ys << cursor + 5
+        separator_ys << (cursor + 5)
         [rows, separator_ys.last + 10, separator_ys]
       end
 
@@ -364,20 +378,64 @@ module Sirena
       end
 
       def typed_edge(edge, source, target)
-        from = connection_point(source, target)
-        to = connection_point(target, source)
-        metadata = edge[:metadata] || {}
-        markers, dashed = edge_style(from, to, metadata)
+        sections = typed_sections(edge, source, target)
+        from, to = section_endpoints(sections)
+        markers, dashed = typed_edge_style(edge, from, to)
 
         Edge.new(
-          id: edge[:id], sources: edge[:sources], targets: edge[:targets],
-          sections: [Section.new(
-            start_point: point(from), end_point: point(to),
-          )],
+          id: edge[:id], source: source[:id], target: target[:id],
+          sections: sections,
           markers: markers,
           labels: positioned_labels(edge[:labels], from, to),
           dashed: dashed
         )
+      end
+
+      def typed_sections(edge, source, target)
+        sections = edge[:sections] || []
+        unless sections.empty?
+          return sections.map { |section| typed_section(section) }
+        end
+
+        [Section.new(
+          start_point: point(connection_point(source, target)),
+          end_point: point(connection_point(target, source)),
+        )]
+      end
+
+      def typed_section(section)
+        Section.new(
+          start_point: point(
+            section_coordinate(section, :start_point, :startPoint),
+          ),
+          end_point: point(section_coordinate(section, :end_point, :endPoint)),
+          bend_points: Array(
+            section_coordinate(section, :bend_points, :bendPoints),
+          ).map { |coordinates| point(coordinates) },
+        )
+      end
+
+      def section_coordinate(section, snake_case, camel_case)
+        section[snake_case] || section[camel_case] || section[camel_case.to_s]
+      end
+
+      def coordinate_hash(value)
+        { x: normalized_coordinate(value.x), y: normalized_coordinate(value.y) }
+      end
+
+      def section_endpoints(sections)
+        [
+          coordinate_hash(sections.first.start_point),
+          coordinate_hash(sections.last.end_point),
+        ]
+      end
+
+      def normalized_coordinate(value)
+        value.to_i == value ? value.to_i : value
+      end
+
+      def typed_edge_style(edge, from, to)
+        edge_style(from, to, edge[:metadata] || {})
       end
 
       def edge_style(from, to, metadata)
@@ -411,14 +469,14 @@ module Sirena
           y = if dy.abs < 0.001
                 from_center[:y]
               else
-                from_center[:y] + (dy / dx) * (x - from_center[:x])
+                from_center[:y] + ((dy / dx) * (x - from_center[:x]))
               end
         else
           y = dy.positive? ? from_y + from_height : from_y
           x = if dx.abs < 0.001
                 from_center[:x]
               else
-                from_center[:x] + (dx / dy) * (y - from_center[:y])
+                from_center[:x] + ((dx / dy) * (y - from_center[:y]))
               end
         end
         { x: x, y: y }
