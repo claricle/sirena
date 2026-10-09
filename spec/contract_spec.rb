@@ -2,35 +2,21 @@
 
 require "spec_helper"
 
-# :xychart is the one registered symbol this split-and-capitalize formula
-# cannot derive: it is public API (documented, printed by `sirena types`)
-# and keeps its original spelling with no underscore, while the internal
-# parser/layout/renderer/model classes keep the camelCase hump from their
-# `xy_chart` file name. Every other registered type's class name already
-# equals its derived camel_key — checked by running this against the live
-# registry, 2026-09-22.
-module ContractSpecHelpers
-  def irregular_camel_key(type)
-    { xychart: "XyChart" }[type]
-  end
-end
-
-# The contract every registered diagram type must honor, checked against
-# DiagramRegistry — the single source of which class serves a type — so the
-# invariant grows with the registry instead of with a hand-kept list living
+# The contract every diagram type must honor, checked against
+# Notation::Mermaid::TYPES -- the only place a type is declared -- so the
+# invariant grows with the table instead of with a hand-kept list living
 # apart from it. See TODO.architecture/01-safety-net.md Part A.
-RSpec.describe Sirena::DiagramRegistry do
-  include ContractSpecHelpers
+RSpec.describe Sirena::Notation::Mermaid do
+  let(:types) { described_class::TYPES.keys }
+  let(:fixture_dir) { File.join(__dir__, "fixtures", "contract") }
 
-  # Registry/pattern set parity. Without this, a type missing from the
-  # registry is invisible to every assertion below (they all iterate
-  # DiagramRegistry.types), while Engine can still detect and reject it with
-  # its own error. Comparing against Engine::DIAGRAM_TYPE_PATTERNS.keys — a
-  # list that does NOT shrink when a registry row is deleted — is what makes
-  # deleting a row turn this file red.
-  it "registers exactly the types Engine can detect" do
-    expect(described_class.types.sort)
-      .to eq(Sirena::Engine::DIAGRAM_TYPE_PATTERNS.keys.sort)
+  # An iteration over TYPES cannot notice a deleted row: the row's examples
+  # just stop existing. The fixture basenames are the inventory kept outside
+  # the table, so a row deleted from either side turns this red.
+  it "has exactly one canonical fixture per TYPES row, and no other" do
+    basenames = Dir.children(fixture_dir).map { |f| File.basename(f, ".mmd") }
+
+    expect(types.map(&:to_s).sort).to eq(basenames.sort)
   end
 
   # R2 (RULES.md): an abstract method not walked by a spec is decoration.
@@ -64,8 +50,8 @@ RSpec.describe Sirena::DiagramRegistry do
   # of the proxy question (does this source file contain a matching line).
   it "has no registered transform overriding the guarded entry point" do
     guard_methods = %i[call to_graph]
-    offenders = described_class.types.filter_map do |type|
-      transform_class = described_class.get(type)[:transform]
+    offenders = types.filter_map do |type|
+      transform_class = Sirena::Layout.for(type).class
       owners = guard_methods.filter_map do |method_name|
         owner = transform_class.instance_method(method_name).owner
         "#{method_name} owned by #{owner}" unless owner == Sirena::Layout::Base
@@ -81,38 +67,34 @@ RSpec.describe Sirena::DiagramRegistry do
     expect(Sirena::Parser.const_defined?(:TreemapParser, false)).to be(false)
   end
 
-  described_class.types.each do |type|
+  described_class::TYPES.each_key do |type|
     describe type.inspect do
-      let(:handlers) { described_class.get(type) }
-      let(:camel_key) do
-        irregular_camel_key(type) || type.to_s.split("_").map(&:capitalize).join
-      end
-      let(:fixture_path) do
-        File.join(__dir__, "fixtures", "contract", "#{type}.mmd")
-      end
+      let(:parser) { Sirena::Parser.for(type) }
+      let(:layout) { Sirena::Layout.for(type) }
+      let(:renderer) { Sirena::Renderer.for(type) }
+      let(:model) { described_class.layer_class(Sirena::Diagram, type, Sirena::Error) }
+      let(:fixture_path) { File.join(fixture_dir, "#{type}.mmd") }
       let(:source) { File.read(fixture_path) }
-      let(:diagram) { handlers[:parser].new.parse(source) }
+      let(:diagram) { parser.parse(source) }
 
       it "has a canonical fixture that parses" do
         expect(File).to exist(fixture_path)
       end
 
-      it "registers a parser inheriting Parser::Base" do
-        expect(handlers[:parser].ancestors).to include(Sirena::Parser::Base)
+      it "resolves a parser inheriting Parser::Base" do
+        expect(parser).to be_a(Sirena::Parser::Base)
       end
 
-      it "registers a transform inheriting Layout::Base" do
-        expect(handlers[:transform].ancestors)
-          .to include(Sirena::Layout::Base)
+      it "resolves a layout inheriting Layout::Base" do
+        expect(layout).to be_a(Sirena::Layout::Base)
       end
 
-      it "registers a renderer inheriting Renderer::Base" do
-        expect(handlers[:renderer].ancestors)
-          .to include(Sirena::Renderer::Base)
+      it "resolves a renderer inheriting Renderer::Base" do
+        expect(renderer).to be_a(Sirena::Renderer::Base)
       end
 
-      it "registers a model inheriting Diagram::Base" do
-        expect(handlers[:model].ancestors).to include(Sirena::Diagram::Base)
+      it "resolves a model inheriting Diagram::Base" do
+        expect(model.ancestors).to include(Sirena::Diagram::Base)
       end
 
       it "returns diagram_type as the registered symbol" do
@@ -129,22 +111,10 @@ RSpec.describe Sirena::DiagramRegistry do
         expect(diagram.valid?).to be(true).or be(false)
       end
 
-      it "has the parser return an instance of the registered model" do
-        expect(diagram).to be_a(handlers[:model])
-      end
-
-      # The registered model is the type's top-level model, not a component
-      # that happens to share the name (Diagram::Block was one).
-      it "has Diagram::<CamelKey> be the class the parser returns" do
-        expect(Sirena::Diagram.const_get(camel_key)).to be(diagram.class)
-      end
-
-      it "names parser, layout and renderer Sirena::<Layer>::<CamelKey>" do
-        names = handlers.values_at(:parser, :transform, :renderer).map(&:name)
-
-        expect(names).to eq(
-          %W[Sirena::Parser::#{camel_key} Sirena::Layout::#{camel_key} Sirena::Renderer::#{camel_key}],
-        )
+      # The parsed fixture's class is the convention-resolved model, not a
+      # component that happens to share the name (Diagram::Block was one).
+      it "has the parser return an instance of the convention-resolved model" do
+        expect(diagram.class).to be(model)
       end
     end
   end
@@ -158,8 +128,7 @@ RSpec.describe Sirena::DiagramRegistry do
   # A hand-built invalid model can't be reached through real Mermaid text for
   # most types (the grammars don't produce semantically-invalid-but-
   # syntactically-valid trees easily), so the parser step alone is stubbed —
-  # transform, renderer and model stay the real registered classes, and the
-  # registration is restored immediately after.
+  # layout, renderer and model stay the real classes.
   #
   # Deliberately :kanban, not :pie. Pie's transform already called
   # `diagram.valid?` on its own before this change, so a pie-based version of
@@ -169,7 +138,6 @@ RSpec.describe Sirena::DiagramRegistry do
   # mechanism.
   describe "an invalid model driven through Engine" do
     it "raises rather than silently producing SVG" do
-      original = described_class.get(:kanban)
       invalid_diagram = Sirena::Diagram::Kanban.new.tap do |kanban|
         kanban.columns = [Sirena::Diagram::KanbanColumn.new(id: nil, title: nil)]
       end
@@ -177,14 +145,11 @@ RSpec.describe Sirena::DiagramRegistry do
         define_method(:parse) { |_source| invalid_diagram }
       end
 
-      begin
-        described_class.register(:kanban, **original, parser: stub_parser)
+      allow(Sirena::Parser).to receive(:for).with(:kanban)
+        .and_return(stub_parser.new)
 
-        expect { Sirena::Engine.new.render("kanban\n") }
-          .to raise_error(Sirena::Layout::LayoutError, /Invalid diagram/)
-      ensure
-        described_class.register(:kanban, **original)
-      end
+      expect { Sirena::Engine.new.render("kanban\n") }
+        .to raise_error(Sirena::Layout::LayoutError, /Invalid diagram/)
     end
   end
 
