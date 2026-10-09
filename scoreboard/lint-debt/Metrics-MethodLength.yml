@@ -28,9 +28,9 @@ rows:
 - file: lib/sirena/layout/c4.rb
   count: 7
 - file: lib/sirena/layout/class_diagram.rb
-  count: 10
+  count: 7
 - file: lib/sirena/layout/er_diagram.rb
-  count: 10
+  count: 5
 - file: lib/sirena/layout/flowchart.rb
   count: 15
 - file: lib/sirena/layout/flowchart/edge_router.rb
@@ -58,7 +58,7 @@ rows:
 - file: lib/sirena/layout/sankey.rb
   count: 5
 - file: lib/sirena/layout/sequence.rb
-  count: 8
+  count: 4
 - file: lib/sirena/layout/state_diagram.rb
   count: 6
 - file: lib/sirena/layout/timeline.rb
@@ -166,7 +166,7 @@ rows:
 - file: lib/sirena/renderer/class_diagram.rb
   count: 11
 - file: lib/sirena/renderer/er_diagram.rb
-  count: 4
+  count: 3
 - file: lib/sirena/renderer/error.rb
   count: 3
 - file: lib/sirena/renderer/gantt.rb
