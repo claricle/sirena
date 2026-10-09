@@ -9,6 +9,10 @@ RSpec.describe Sirena::Renderer::Treemap do
   let(:transform) { Sirena::Layout::Treemap.new }
   let(:renderer) { described_class.new }
 
+  def add_children(parent, children)
+    children.each { |args| parent.add_child(Sirena::Diagram::TreemapNode.new(*args)) }
+  end
+
   describe "#render" do
     context "with basic treemap" do
       it "renders simple treemap with one node" do
@@ -154,14 +158,13 @@ RSpec.describe Sirena::Renderer::Treemap do
 
       it "skips valueless and negative children" do
         root = Sirena::Diagram::TreemapNode.new("Root")
-        root.add_child(Sirena::Diagram::TreemapNode.new("Positive", 10))
-        root.add_child(Sirena::Diagram::TreemapNode.new("Valueless"))
-        root.add_child(Sirena::Diagram::TreemapNode.new("Negative", -2))
+        add_children(root, [["Positive", 10], ["Valueless"], ["Negative", -2]])
         diagram.add_root_node(root)
 
         layout = transform.to_graph(diagram)
+        labels = layout[:cells].first[:children].map { |cell| cell[:label] }
 
-        expect(layout[:cells].first[:children].map { |cell| cell[:label] }).to eq(["Positive"])
+        expect(labels).to eq(["Positive"])
       end
     end
 
