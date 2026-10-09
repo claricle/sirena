@@ -2,10 +2,15 @@
 
 require "spec_helper"
 require "tmpdir"
-require_relative "../../../tasks/support/type_generator"
+require_relative "../../tasks/support/type_generator"
 
 module TypeGeneratorSpecHelpers
-  REPO = File.expand_path("../../..", __dir__)
+  REPO = File.expand_path("../..", __dir__)
+  DEMO_ROW = '        demo: {
+          pattern: /\\A\\s*demo(\\s|\\z)/i,
+          keyword: "demo",
+        },
+'
 
   def written_paths(root)
     Dir.glob("**/*", base: root).select { |p| File.file?(File.join(root, p)) }
@@ -13,6 +18,12 @@ module TypeGeneratorSpecHelpers
 
   def defining(paths)
     paths.reject { |path| path.start_with?("spec/sirena/") }
+  end
+
+  def suppress_refusal
+    yield
+  rescue Sirena::TypeGenerator::Error
+    nil
   end
 end
 
@@ -53,13 +64,8 @@ RSpec.describe Sirena::TypeGenerator do
     end
 
     it "adds a row that detects the keyword" do
-      row = '        demo: {
-          pattern: /\\A\\s*demo(\\s|\\z)/i,
-          keyword: "demo",
-        },
-'
-
-      expect(File.read(table_path)).to include(row)
+      expect(File.read(table_path))
+        .to include(TypeGeneratorSpecHelpers::DEMO_ROW)
     end
 
     it "leaves the table valid Ruby" do
@@ -95,23 +101,26 @@ RSpec.describe Sirena::TypeGenerator do
 
       it "writes nothing for #{label}" do
         before = written_paths(root)
-        begin
-          generate(name)
-        rescue described_class::Error
-          nil
-        end
-
+        suppress_refusal { generate(name) }
         expect(written_paths(root)).to eq(before)
       end
     end
 
-    it "refuses to overwrite an existing file and leaves the table alone" do
-      FileUtils.mkdir_p(File.join(root, "lib/sirena/layout"))
-      File.write(File.join(root, "lib/sirena/layout/demo.rb"), "mine")
-      before_table = File.read(table_path)
+    context "when a target file already exists" do
+      before do
+        FileUtils.mkdir_p(File.join(root, "lib/sirena/layout"))
+        File.write(File.join(root, "lib/sirena/layout/demo.rb"), "mine")
+      end
 
-      expect { generate("demo") }.to raise_error(described_class::Error)
-      expect(File.read(table_path)).to eq(before_table)
+      it "refuses to overwrite it" do
+        expect { generate("demo") }.to raise_error(described_class::Error)
+      end
+
+      it "leaves the table alone" do
+        before_table = File.read(table_path)
+        suppress_refusal { generate("demo") }
+        expect(File.read(table_path)).to eq(before_table)
+      end
     end
   end
 end

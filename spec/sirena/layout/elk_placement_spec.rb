@@ -53,20 +53,20 @@ RSpec.describe Sirena::Layout::ElkPlacement do
     end
   end
 
-  describe "Engine with layout_engine: :elk" do
+  describe "Engine#render with layout_engine: :elk" do
     it "renders a flowchart whose coordinates differ from the grid's" do
-      elk = Sirena::Engine.new(layout_engine: :elk).render(source)
+      elk = Sirena::Engine.new.render(source, layout_engine: :elk)
       expect(elk).not_to eq(Sirena::Engine.new.render(source))
     end
 
     it "raises for a diagram type without an elk placement" do
-      engine = Sirena::Engine.new(layout_engine: :elk)
-      expect { engine.render("pie\n \"a\" : 1\n") }
+      pie = "pie\n \"a\" : 1\n"
+      expect { Sirena::Engine.new.render(pie, layout_engine: :elk) }
         .to raise_error(Sirena::Layout::LayoutError, /not available/)
     end
 
     it "rejects an unknown engine name" do
-      expect { Sirena::Engine.new(layout_engine: :dagre) }
+      expect { Sirena::Engine.new.render(source, layout_engine: :dagre) }
         .to raise_error(Sirena::Engine::PipelineError, /layout_engine/)
     end
   end

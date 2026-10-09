@@ -16,6 +16,14 @@ module PathPointsSpecHelpers
     :refused
   end
 
+  def self.stuck(paths)
+    paths.reject do |data|
+      outcome(data)
+    rescue Timeout::Error
+      false
+    end
+  end
+
   def self.random_paths(count)
     random = Random.new(42)
     Array.new(count) do
@@ -43,11 +51,7 @@ RSpec.describe SpecSupport::LayoutParity::PathPoints do
   end
 
   it "terminates on every random token string" do
-    stuck = PathPointsSpecHelpers.random_paths(2000).reject do |data|
-      outcome(data)
-    rescue Timeout::Error
-      false
-    end
-    expect(stuck).to eq([])
+    paths = PathPointsSpecHelpers.random_paths(2000)
+    expect(PathPointsSpecHelpers.stuck(paths)).to eq([])
   end
 end
