@@ -58,14 +58,14 @@ RSpec.describe Sirena::Layout::Pie do
   def small_slice
     {
       id: "slice_0", label: "Small", value: 1.0,
-      percentage: 25.0, angle: 90.0, index: 0,
+      percentage: 25.0, angle: 90.0, index: 0
     }
   end
 
   def large_slice
     {
       id: "slice_1", label: "Large", value: 3.0,
-      percentage: 75.0, angle: 270.0, index: 1,
+      percentage: 75.0, angle: 270.0, index: 1
     }
   end
 end
