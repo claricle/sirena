@@ -28,7 +28,7 @@
   <text fill="#000000" x="343.406" y="71.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rounded</text>
 </g>
 <g id="node-C">
-  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="599.953,50 649.906,77.0 599.953,104.0 550,77.0"/>
+  <polygon fill="#ffffff" stroke="#000000" stroke-width="2.0" points="599.953,50.0 649.906,77.0 599.953,104.0 550.0,77.0"/>
   <text fill="#000000" x="599.953" y="81.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14.0">Rhombus</text>
 </g>
 <g id="node-D">
