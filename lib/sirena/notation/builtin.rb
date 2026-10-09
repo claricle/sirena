@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 # Internal manifest: loads every built-in component of the Mermaid
-# diagram types in Notation::Mermaid::TYPES. Not public API; its contents may change in any release.
+# diagram types in Notation::Mermaid::TYPES. Not public API; its contents
+# may change in any release.
 
 # Load modules in dependency order
 require_relative "../js_number"

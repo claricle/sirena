@@ -14,7 +14,7 @@ rows:
 - file: scripts/sequence_fuzz.rb
   count: 6
 - file: tasks/corpus.rake
-  count: 11
+  count: 7
 - file: tasks/examples.rake
   count: 2
 - file: tasks/generate_mermaid_fixtures.rake

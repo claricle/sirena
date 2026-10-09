@@ -74,7 +74,7 @@ rows:
 - file: lib/sirena/renderer/pie.rb
   count: 6
 - file: lib/sirena/renderer/requirement.rb
-  count: 13
+  count: 11
 - file: lib/sirena/renderer/user_journey.rb
   count: 14
 - file: lib/sirena/renderer/xy_chart.rb

@@ -115,8 +115,9 @@ RSpec.describe Sirena::Corpus do
   describe ".tidy_message" do
     it "drops the object address Parslet embeds, keeping the class" do
       raw = "Syntax error at #<Parslet::Position:0x0000000126150ca8>: Failed"
+      tidy = "Syntax error at #<Parslet::Position>: Failed"
 
-      expect(described_class.tidy_message(raw)).to eq("Syntax error at #<Parslet::Position>: Failed")
+      expect(described_class.tidy_message(raw)).to eq(tidy)
     end
 
     it "leaves a message without an address alone" do
@@ -126,7 +127,9 @@ RSpec.describe Sirena::Corpus do
 
   describe ".failure_scope" do
     it "reads no filter, or an empty one, as everything" do
-      expect([described_class.failure_scope(nil), described_class.failure_scope("")]).to eq([nil, nil])
+      scopes = [nil, ""].map { |filter| described_class.failure_scope(filter) }
+
+      expect(scopes).to eq([nil, nil])
     end
 
     it "reads valid as the valid-only scope" do
@@ -134,7 +137,8 @@ RSpec.describe Sirena::Corpus do
     end
 
     it "rejects a typo rather than silently listing everything" do
-      expect { described_class.failure_scope("vaild") }.to raise_error(ArgumentError, /vaild/)
+      expect { described_class.failure_scope("vaild") }
+        .to raise_error(ArgumentError, /vaild/)
     end
   end
 
@@ -142,42 +146,59 @@ RSpec.describe Sirena::Corpus do
     let(:results) do
       {
         "t/ok.mmd" => { pass: true },
-        "t/real.mmd" => { pass: false, stage: "render", exception_class: "E", message: "boom at #<X:0xab12>" },
-        "t/junk.mmd" => { pass: false, stage: "parse", exception_class: "E", message: "bad syntax" },
+        "t/real.mmd" => { pass: false, stage: "render", exception_class: "E",
+                          message: "boom at #<X:0xab12>" },
+        "t/junk.mmd" => { pass: false, stage: "parse", exception_class: "E",
+                          message: "bad syntax" },
       }
     end
-    let(:verdicts) { { "t/ok.mmd" => "valid", "t/real.mmd" => "valid", "t/junk.mmd" => "artifact" } }
+    let(:verdicts) do
+      { "t/ok.mmd" => "valid", "t/real.mmd" => "valid",
+        "t/junk.mmd" => "artifact" }
+    end
 
     before do
-      allow(described_class).to receive_messages(cases: results.keys, run_cases: results, verdicts: verdicts)
+      allow(described_class).to receive_messages(
+        cases: results.keys, run_cases: results, verdicts: verdicts,
+      )
       allow(described_class).to receive(:write_scoreboard)
     end
 
-    it "prints path, stage, verdict and the tidied first error line for each failure, grouped by stage" do
-      expect { described_class.run("t") }.to output(
-        /t\/junk\.mmd\s+parse\s+artifact\s+bad syntax\n\s+t\/real\.mmd\s+render\s+valid\s+boom at #<X>\n/,
-      ).to_stdout
+    it "prints path, stage, verdict and the tidied error, grouped by stage" do
+      grouped = Regexp.new(
+        'junk\.mmd\s+parse\s+artifact\s+bad syntax\n' \
+        '\s+t/real\.mmd\s+render\s+valid\s+boom at #<X>\n',
+      )
+
+      expect { described_class.run("t") }.to output(grouped).to_stdout
     end
 
     it "does not print passing cases among the failures" do
       expect { described_class.run("t") }.not_to output(/t\/ok\.mmd/).to_stdout
     end
 
-    it "lists only evidence-valid failures when the filter is valid" do
+    it "lists evidence-valid failures when the filter is valid" do
       expect { described_class.run("t", "valid") }
         .to output(/t\/real\.mmd/).to_stdout
+    end
+
+    it "leaves out artifact failures when the filter is valid" do
       expect { described_class.run("t", "valid") }
         .not_to output(/t\/junk\.mmd/).to_stdout
     end
 
     it "says none when the filter leaves nothing to list" do
-      allow(described_class).to receive(:verdicts).and_return(results.keys.to_h { |k| [k, "artifact"] })
+      artifacts = results.keys.to_h { |path| [path, "artifact"] }
+      allow(described_class).to receive(:verdicts).and_return(artifacts)
 
-      expect { described_class.run("t", "valid") }.to output(/failing \(valid cases only\):\n  none/).to_stdout
+      expect { described_class.run("t", "valid") }
+        .to output(/failing \(valid cases only\):\n  none/).to_stdout
     end
 
     it "never writes the scoreboard for a scoped run" do
-      expect { described_class.run("t") }.to output.to_stdout
+      allow(described_class).to receive(:puts)
+      described_class.run("t")
+
       expect(described_class).not_to have_received(:write_scoreboard)
     end
   end
