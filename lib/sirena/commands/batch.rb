@@ -115,10 +115,10 @@ module Sirena
           # read would apply the locale's encodings before `Source` sees it.
           source = File.binread(file)
           svg = Sirena.render(source,
-                             theme: options[:theme],
-                             verbose: options[:verbose],
-                             path: file,
-                             notation: options[:notation])
+                              theme: options[:theme],
+                              verbose: options[:verbose],
+                              path: file,
+                              notation: options[:notation])
 
           FileUtils.mkdir_p(File.dirname(output_file))
           File.binwrite(output_file, svg)

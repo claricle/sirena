@@ -32,7 +32,7 @@ module Sirena
 
         diagram.root_nodes.each do |node|
           cell = layout_node(node, x, y, width - 2 * PADDING,
-                            height - y_offset - PADDING, total_value)
+                             height - y_offset - PADDING, total_value)
           cells << cell if cell
           y += cell[:height] + PADDING if cell
         end

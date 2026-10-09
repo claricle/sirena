@@ -88,7 +88,7 @@ module Sirena
         quadrants = graph[:quadrants]
 
         # Render each quadrant background
-        quadrants.each do |_key, quadrant|
+        quadrants.each_value do |quadrant|
           bounds = quadrant[:bounds]
           color = get_quadrant_color(quadrant[:number])
 
@@ -194,7 +194,7 @@ module Sirena
       def render_quadrant_labels(graph, svg)
         quadrants = graph[:quadrants]
 
-        quadrants.each do |_key, quadrant|
+        quadrants.each_value do |quadrant|
           next unless quadrant[:label]
 
           bounds = quadrant[:bounds]

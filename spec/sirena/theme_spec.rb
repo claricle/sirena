@@ -32,7 +32,7 @@ RSpec.describe Sirena::Theme do
   describe ".load" do
     it "loads theme from YAML file" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme).to be_a(described_class)
@@ -42,7 +42,7 @@ RSpec.describe Sirena::Theme do
 
     it "loads colors from YAML" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme.colors).to be_a(Sirena::Theme::ColorPalette)
@@ -52,7 +52,7 @@ RSpec.describe Sirena::Theme do
 
     it "loads typography from YAML" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme.typography).to be_a(Sirena::Theme::Typography)
@@ -62,7 +62,7 @@ RSpec.describe Sirena::Theme do
 
     it "loads shapes from YAML" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme.shapes).to be_a(Sirena::Theme::ShapeStyles)
@@ -71,7 +71,7 @@ RSpec.describe Sirena::Theme do
 
     it "loads spacing from YAML" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme.spacing).to be_a(Sirena::Theme::SpacingConfig)
@@ -80,7 +80,7 @@ RSpec.describe Sirena::Theme do
 
     it "loads effects from YAML" do
       theme_path = File.join(__dir__, "..", "..", "lib", "sirena",
-                              "theme", "builtin", "default.yml")
+                             "theme", "builtin", "default.yml")
       theme = described_class.load(theme_path)
 
       expect(theme.effects).to be_a(Sirena::Theme::EffectStyles)

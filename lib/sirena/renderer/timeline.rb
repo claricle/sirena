@@ -274,12 +274,12 @@ module Sirena
         # Render min and max labels
         render_time_label(min_time.to_s, MARGIN_LEFT, y + TIMELINE_HEIGHT + 20, svg)
         render_time_label(max_time.to_s, MARGIN_LEFT + TIMELINE_WIDTH,
-                         y + TIMELINE_HEIGHT + 20, svg)
+                          y + TIMELINE_HEIGHT + 20, svg)
 
         # Optional: render mid-point
         mid_time = ((min_time + max_time) / 2.0).round
         render_time_label(mid_time.to_s, MARGIN_LEFT + (TIMELINE_WIDTH / 2),
-                         y + TIMELINE_HEIGHT + 20, svg)
+                          y + TIMELINE_HEIGHT + 20, svg)
       end
 
       def render_time_label(label, x, y, svg)

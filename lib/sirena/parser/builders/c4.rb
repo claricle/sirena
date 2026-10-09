@@ -196,7 +196,7 @@ module Sirena
               if nested_item[:boundary_type]
                 # Nested boundary
                 nested_boundary_id = process_nested_boundary(diagram,
-                                                              nested_item)
+                                                             nested_item)
                 boundary.boundary_ids << nested_boundary_id if
                   nested_boundary_id
               elsif nested_item[:element_type]
@@ -252,7 +252,7 @@ module Sirena
             merged_body.each do |nested_item|
               if nested_item[:boundary_type]
                 nested_boundary_id = process_nested_boundary(diagram,
-                                                              nested_item)
+                                                             nested_item)
                 boundary.boundary_ids << nested_boundary_id if
                   nested_boundary_id
               elsif nested_item[:element_type]
