@@ -133,4 +133,34 @@ RSpec.describe Sirena::Parser::Packet do
       end
     end
   end
+
+  describe "packet geometry" do
+    it "reports one row for an empty diagram" do
+      diagram = Sirena::Diagram::Packet.new
+
+      expect([diagram.max_bit_position, diagram.row_count]).to eq([0, 1])
+    end
+
+    it "reports extents from the furthest field" do
+      diagram = Sirena::Diagram::Packet.new
+      diagram.add_field(Sirena::Diagram::PacketField.new(0, 31, "first"))
+      diagram.add_field(Sirena::Diagram::PacketField.new(32, 47, "second"))
+
+      expect([diagram.max_bit_position, diagram.row_count]).to eq([47, 2])
+    end
+
+    it "reports geometry for a field spanning two rows" do
+      field = Sirena::Diagram::PacketField.new(28, 35, "split")
+
+      geometry = [field.size, field.start_row, field.end_row, field.spans_rows?,
+                  field.start_bit_in_row, field.end_bit_in_row]
+      expect(geometry).to eq([8, 0, 1, true, 28, 3])
+    end
+
+    it "reports a field contained within one row" do
+      field = Sirena::Diagram::PacketField.new(8, 15, "whole")
+
+      expect(field.spans_rows?).to be(false)
+    end
+  end
 end
