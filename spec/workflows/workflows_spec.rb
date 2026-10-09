@@ -84,7 +84,7 @@ module WorkflowHelpers
 
   def expected_published_gem_values
     command =
-      'gem build sirena.gemspec --output ' \
+      "gem build sirena.gemspec --output " \
       '"$RUNNER_TEMP/sirena-$TARGET_VERSION.gem"'
     [command, true, "${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}"]
   end
