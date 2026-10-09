@@ -11,6 +11,10 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
   end
 
   describe "#valid?" do
+    let(:entity) do
+      Sirena::Diagram::ClassEntity.new(id: "Animal", name: "Animal")
+    end
+
     it "returns true for valid diagram with entities" do
       diagram = described_class.new(direction: "TB")
       diagram.entities << Sirena::Diagram::ClassEntity.new(
@@ -39,6 +43,38 @@ RSpec.describe Sirena::Diagram::ClassDiagram do
       )
 
       expect(diagram.valid?).to be false
+    end
+
+    it "returns false when an entity is invalid" do
+      diagram = described_class.new(
+        entities: [Sirena::Diagram::ClassEntity.new(name: "Animal")],
+      )
+
+      expect(diagram.valid?).to be false
+    end
+
+    it "returns false when a relationship is invalid" do
+      relationship = Sirena::Diagram::ClassRelationship.new(
+        from_id: "Animal", to_id: "Animal", relationship_type: "",
+      )
+      diagram = described_class.new(entities: [entity], relationships: [relationship])
+
+      expect(diagram.valid?).to be false
+    end
+
+    it "returns false when a relationship source is missing" do
+      relationship = Sirena::Diagram::ClassRelationship.new(
+        from_id: "Missing", to_id: "Animal",
+      )
+      diagram = described_class.new(entities: [entity], relationships: [relationship])
+
+      expect(diagram.valid?).to be false
+    end
+
+    it "accepts an explicitly absent relationship collection" do
+      diagram = described_class.new(entities: [entity], relationships: nil)
+
+      expect(diagram.valid?).to be true
     end
   end
 
