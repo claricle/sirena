@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+  <g class="node" id="flowchart-icon-0">
+    <svg x="10" y="10" width="100" height="50" viewBox="0 0 50 25">
+      <rect x="0" y="0" width="10" height="5"/>
+    </svg>
+  </g>
+  <g class="node" id="flowchart-slice-1">
+    <svg x="0" y="0" width="100" height="100" viewBox="0 0 50 25" preserveAspectRatio="xMinYMin slice">
+      <rect x="0" y="0" width="10" height="5"/>
+    </svg>
+  </g>
+</svg>
