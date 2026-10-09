@@ -36,14 +36,21 @@ module Sirena
             "<<--" => { head: :open, dashed: true, reversed: true },
           }.freeze
 
+          COLOUR = /\#(\h{6}|\h{3}|red|green|blue|yellow|orange|purple|gray|
+                       grey|cyan|magenta|lime|navy|teal|olive|maroon|silver|
+                       aqua|fuchsia|pink|brown|black|white)(?!\w)/xi
+
           DECLARATION = /\A(#{KINDS.join('|')})[ \t]+(#{QUOTED}|#{NAME})
                          (?:[ \t]+as[ \t]+(#{NAME}))?\z/xio
           MESSAGE = /\A(#{QUOTED}|#{NAME})[ \t]*
                      (#{Regexp.union(ARROWS.keys.sort_by { |g| -g.length })})
-                     [ \t]*(#{QUOTED}|#{NAME})[ \t]*(--\+\+|\+\+--|\+\+|--)?
+                     [ \t]*(#{QUOTED}|#{NAME})[ \t]*
+                     (--\+\+|\+\+--|\+\+|--|!!)?[ \t]*(#{COLOUR})?
                      [ \t]*(?::[ \t]*(.*))?\z/xo
-          ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})\z/io
-          MARKS = { "++" => [:on], "--" => [:off],
+          ACTIVATION = /\A(activate|deactivate)[ \t]+(#{QUOTED}|#{NAME})
+                        (?:[ \t]+(#{COLOUR}))?\z/xio
+          DESTROY = /\Adestroy[ \t]+(#{QUOTED}|#{NAME})\z/io
+          MARKS = { "++" => [:on], "--" => [:off], "!!" => [:destroy],
                     "--++" => %i[off on], "++--" => %i[on off] }.freeze
           TARGET = /(?:#{QUOTED}|#{NAME})/
           NOTE = /\A(note|hnote|rnote)[ \t]+(left|right|over|across)
@@ -64,12 +71,14 @@ module Sirena
 
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [BRANCH, :branch], [ACTIVATION, :activation],
-                      [RETURN, :reply], [DIVIDER, :divider]].freeze
+                      [RETURN, :reply], [DIVIDER, :divider],
+                      [DESTROY, :destroy]].freeze
 
           private_constant :TIMELINE, :NAME, :QUOTED, :KINDS, :ARROWS,
                            :DECLARATION, :MESSAGE, :BOX, :END_BOX, :STARTUML,
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
-                           :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER
+                           :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
+                           :DESTROY, :COLOUR
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -178,7 +187,13 @@ module Sirena
 
           def activation(match)
             phase = match[1].casecmp?("activate") ? :on : :off
-            @outline.activation(phase, mention(match[2]))
+            return false if match[3] && phase == :off
+
+            @outline.activation(phase, mention(match[2]), colour(match[4]))
+          end
+
+          def destroy(match)
+            @outline.destroy(mention(match[1]))
           end
 
           def divider(match)
@@ -253,22 +268,33 @@ module Sirena
 
           def message(match)
             message = build_message(match)
-            @outline.message(message, marks(match[4], message))
+            marks = marks(match[4], message, colour(match[6]))
+            return false if match[5] && marks.none? { |phase,| phase == :on }
+
+            @outline.message(message, marks)
           end
 
           def build_message(match)
             from, to = [match[1], match[3]].map { |name| mention(name) }
             arrow = ARROWS.fetch(match[2])
             from, to = to, from if arrow[:reversed]
-            Message.new(from: from, to: to, label: match[5],
+            Message.new(from: from, to: to, label: match[7],
                         head: arrow[:head], dashed: arrow[:dashed])
           end
 
-          # `--` deactivates the sender and `++` activates the receiver.
-          def marks(suffix, message)
+          # `--` deactivates the sender, `++` activates the receiver and `!!`
+          # destroys it; a colour is the fill of the bar `++` opens.
+          def marks(suffix, message, colour)
             MARKS.fetch(suffix, []).map do |phase|
-              [phase, phase == :on ? message.to : message.from]
+              [phase, phase == :off ? message.from : message.to,
+               phase == :on ? colour : nil]
             end
+          end
+
+          def colour(token)
+            return unless token
+
+            token.match?(/\A\h+\z/) ? "##{token}" : token.downcase
           end
 
           def mention(name)

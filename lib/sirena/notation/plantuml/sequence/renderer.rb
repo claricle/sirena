@@ -14,7 +14,7 @@ module Sirena
           # of its items.
           LAYERS = [
             %i[frames frame_group], %i[lifelines lifeline],
-            %i[bars activation_bar],
+            %i[bars activation_bar], %i[crosses cross_line],
             %i[fragments fragment_group], %i[dividers divider_group],
             %i[arrows arrow_group], %i[notes note_group],
             %i[heads head_group]
@@ -66,7 +66,12 @@ module Sirena
           end
 
           def activation_bar(bar)
-            frame_rectangle(bar).tap { |rect| rect.fill = node_fill }
+            fill = bar.fill || node_fill
+            frame_rectangle(bar).tap { |rect| rect.fill = fill }
+          end
+
+          def cross_line(segment)
+            solid(segment).tap { |line| line.stroke = edge_colour }
           end
 
           def lifeline(segment)

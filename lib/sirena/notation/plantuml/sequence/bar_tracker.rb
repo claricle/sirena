@@ -24,23 +24,23 @@ module Sirena
           # @param at [Float] the y where the bar starts or ends
           def apply(activation, at)
             id = activation.participant
-            return @open[id] << at if activation.on?
+            return @open[id] << [at, activation.color] if activation.on?
 
-            emit(id, @open[id].pop, at)
+            emit(id, *@open[id].pop, at)
           end
 
           def finish(bottom)
             @open.each do |id, tops|
-              emit(id, tops.pop, bottom) until tops.empty?
+              emit(id, *tops.pop, bottom) until tops.empty?
             end
           end
 
           private
 
-          def emit(id, top, bottom)
+          def emit(id, top, color, bottom)
             shift = @open[id].size * (WIDTH / 2)
             @bars << Scene::Bar.new(x: (@centre.call(id) - (WIDTH / 2)) + shift,
-                                    y: top, width: WIDTH,
+                                    y: top, width: WIDTH, fill: color,
                                     height: [bottom - top, 0.0].max)
           end
         end
