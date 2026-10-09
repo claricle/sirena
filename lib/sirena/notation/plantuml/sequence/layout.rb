@@ -37,8 +37,8 @@ module Sirena
           private
 
           def walk
-            bounds = [@centers.first - @widths.first / 2,
-                      @centers.last + @widths.last / 2]
+            bounds = [@centers.first - (@widths.first / 2),
+                      @centers.last + (@widths.last / 2)]
             Walker.new(centers: @centers, ids: ids, bounds: bounds,
                        measure: ->(text) { text_width(text) },
                        font_size: font_size,
@@ -71,7 +71,7 @@ module Sirena
 
           def head_width(participant)
             text = measure_text(participant.label, font_size: font_size)
-            [MIN_HEAD_WIDTH, text[:width] + 2 * HEAD_PADDING,
+            [MIN_HEAD_WIDTH, text[:width] + (2 * HEAD_PADDING),
              boxed_title_width(participant)].max
           end
 
@@ -88,7 +88,7 @@ module Sirena
 
           def centers(widths)
             gaps = required_gaps(widths)
-            x = MARGIN + widths.first / 2
+            x = MARGIN + (widths.first / 2)
             widths.each_index.map do |index|
               x += gaps[index - 1] if index.positive?
               x
@@ -98,7 +98,7 @@ module Sirena
           # Distance between neighbouring centres: heads must not overlap and
           # every label must fit on the span it crosses.
           def required_gaps(widths)
-            gaps = widths.each_cons(2).map { |a, b| (a + b) / 2 + MIN_GAP }
+            gaps = widths.each_cons(2).map { |a, b| ((a + b) / 2) + MIN_GAP }
             @diagram.messages.each { |m| widen(gaps, m) }
             @diagram.boxes.each { |box| widen_box(gaps, box) }
             each_note { |note, span| widen_note(gaps, note, span) }
@@ -128,7 +128,7 @@ module Sirena
 
           def widen_over(gaps, between, index, need)
             if between.empty?
-              [index - 1, index].each { |i| raise_gap(gaps, i, need / 2 + 12) }
+              [index - 1, index].each { |i| raise_gap(gaps, i, (need / 2) + 12) }
             else
               share = (need - 20) / between.size
               between.each { |i| raise_gap(gaps, i, share) }
@@ -152,7 +152,7 @@ module Sirena
 
           def widen(gaps, message)
             low, high = indexes(message).sort
-            need = label_width(message) + 2 * HEAD_PADDING
+            need = label_width(message) + (2 * HEAD_PADDING)
             need += SELF_WIDTH if low == high
             span = (low...[high, low + 1].max).select { |i| i < gaps.size }
             span.each { |i| gaps[i] = [gaps[i], need / span.size].max }
@@ -169,7 +169,7 @@ module Sirena
           end
 
           def canvas_width(widths)
-            right = @centers.last + widths.last / 2
+            right = @centers.last + (widths.last / 2)
             self_room = self_reach(@diagram.participants.size - 1)
             [right, @centers.last + self_room, @flow.right].max + MARGIN
           end
@@ -192,7 +192,7 @@ module Sirena
           def head(participant, centre, width, y)
             Scene::Head.new(
               id: participant.id, kind: participant.kind.to_s,
-              x: centre - width / 2, y: y, width: width, height: @head_height,
+              x: centre - (width / 2), y: y, width: width, height: @head_height,
               texts: head_texts(participant, centre, y)
             )
           end
@@ -211,8 +211,8 @@ module Sirena
 
           def frame(box, widths)
             first, last = box.members.map { |id| ids.index(id) }.minmax
-            left = @centers[first] - widths[first] / 2 - BOX_PADDING
-            right = @centers[last] + widths[last] / 2 + BOX_PADDING
+            left = @centers[first] - (widths[first] / 2) - BOX_PADDING
+            right = @centers[last] + (widths[last] / 2) + BOX_PADDING
             Scene::Frame.new(
               x: left, y: MARGIN, width: right - left,
               height: @flow.y + @head_height + BOX_PADDING - MARGIN,

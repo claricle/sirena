@@ -39,8 +39,8 @@ module Sirena
           width = canvas_width(boxes, box_width)
           height = canvas_height(box_rows(boxes))
           relations = build_relations(diagram.relations, boxes) +
-                      build_junctions(diagram, boxes) +
-                      build_note_links(diagram.notes, boxes)
+            build_junctions(diagram, boxes) +
+            build_note_links(diagram.notes, boxes)
           Scene.new(width: width, height: height, boxes: boxes,
                     relations: relations)
         end
