@@ -51,6 +51,29 @@ RSpec.describe Sirena::Diagram::StateDiagram do
 
       expect(diagram.valid?).to be false
     end
+
+    it "returns false when an embedded state is invalid" do
+      diagram = described_class.new(
+        states: [Sirena::Diagram::StateNode.new(state_type: "normal")],
+      )
+
+      expect(diagram.valid?).to be false
+    end
+
+    it "returns true when the transition collection is absent" do
+      state = Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
+      diagram = described_class.new(states: [state], transitions: nil)
+
+      expect(diagram.valid?).to be true
+    end
+
+    it "returns false when an embedded transition is invalid" do
+      state = Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
+      transition = Sirena::Diagram::StateTransition.new(from_id: "idle")
+      diagram = described_class.new(states: [state], transitions: [transition])
+
+      expect(diagram.valid?).to be false
+    end
   end
 
   describe "#find_state" do
@@ -324,6 +347,16 @@ RSpec.describe Sirena::Diagram::StateTransition do
       )
 
       expect(transition.label).to eq("start [ready]")
+    end
+
+    it "returns a guard when no trigger is present" do
+      transition = described_class.new(
+        from_id: "idle",
+        to_id: "active",
+        guard_condition: "ready",
+      )
+
+      expect(transition.label).to eq("[ready]")
     end
 
     it "returns empty string when neither trigger nor guard" do
