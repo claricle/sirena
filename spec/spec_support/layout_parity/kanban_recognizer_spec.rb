@@ -13,43 +13,48 @@ RSpec.describe SpecSupport::LayoutParity::KanbanRecognizer do
     end
   end
 
-  it "recognizes sections and repeated cards by their shared labels" do
-    source = <<~MERMAID
+  def simple_source
+    <<~MERMAID
       kanban
         todo[Todo]
           docs[Write docs]
           docs[Ship docs]
     MERMAID
-    sirena = Sirena.render(source)
-
-    expect(recognized(sirena)).to eq(
-      [
-        [:section, "Todo", nil, :label],
-        [:card, "Write docs", "Todo", :label],
-        [:card, "Ship docs", "Todo", :label],
-      ],
-    )
-    expect(recognizer.container_kinds).to eq([:section])
   end
 
-  it "keeps a real reference's full label so truncation remains visible" do
+  def simple_result
+    [recognized(Sirena.render(simple_source)), recognizer.container_kinds]
+  end
+
+  def expected_simple_result
+    [[[:section, "Todo", nil, :label],
+      [:card, "Write docs", "Todo", :label],
+      [:card, "Ship docs", "Todo", :label]], [:section]]
+  end
+
+  def real_labels
     name = "001_rendering_kanban_spec_kanban_0"
     reference = reference_svg("kanban/#{name}.svg")
     sirena = Sirena.render(corpus_source("kanban/#{name}.mmd"))
+    [reference, sirena].map do |svg|
+      recognized(svg).map { |item| item.first(2) }
+    end
+  end
 
-    expect(recognized(reference).map { |item| item.first(2) }).to eq(
-      [
-        [:section, "Todo"],
-        [:card, "Create Documentation"],
-        [:card, "Create Blog about the new diagram"],
-      ],
-    )
-    expect(recognized(sirena).map { |item| item.first(2) }).to eq(
-      [
-        [:section, "Todo"],
-        [:card, "Create Documentation"],
-        [:card, "Create Blog about the ..."],
-      ],
-    )
+  def expected_real_labels
+    [[[:section, "Todo"],
+      [:card, "Create Documentation"],
+      [:card, "Create Blog about the new diagram"]],
+     [[:section, "Todo"],
+      [:card, "Create Documentation"],
+      [:card, "Create Blog about the ..."]]]
+  end
+
+  it "recognizes sections and repeated cards by their shared labels" do
+    expect(simple_result).to eq(expected_simple_result)
+  end
+
+  it "keeps a real reference's full label so truncation remains visible" do
+    expect(real_labels).to eq(expected_real_labels)
   end
 end

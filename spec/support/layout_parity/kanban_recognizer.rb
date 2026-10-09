@@ -49,7 +49,9 @@ module SpecSupport
 
       def maximal(rects)
         rects.reject do |rect|
-          rects.any? { |other| other != rect && other[:box].enclose?(rect[:box]) }
+          rects.any? do |other|
+            other != rect && other[:box].enclose?(rect[:box])
+          end
         end
       end
 
@@ -59,11 +61,15 @@ module SpecSupport
         return [] unless header
 
         title = nearest_label(extractor, doc, header[:box])
-        cards = children.reject { |child| child == header }.filter_map do |card|
+        cards = card_elements(extractor, doc, children, header)
+        [logical_element(:section, title, section[:box]), *cards].compact
+      end
+
+      def card_elements(extractor, doc, children, header)
+        children.reject { |child| child == header }.filter_map do |card|
           label = first_label(extractor, doc, card[:box])
           logical_element(:card, label, card[:box]) if label
         end
-        [logical_element(:section, title, section[:box]), *cards].compact
       end
 
       def direct_children(parent, rects)
@@ -95,10 +101,16 @@ module SpecSupport
 
       def labels_in(extractor, doc, box)
         doc.xpath("//text").filter_map do |text|
-          anchor = extractor.bbox(text)
-          label = text.text.gsub(/\s+/, " ").strip
-          { box: anchor, label: label } if anchor && box.contain?(anchor) && !label.empty?
+          label_entry(extractor, text, box)
         end
+      end
+
+      def label_entry(extractor, text, box)
+        anchor = extractor.bbox(text)
+        return unless anchor && box.contain?(anchor)
+
+        label = text.text.gsub(/\s+/, " ").strip
+        { box: anchor, label: label } unless label.empty?
       end
 
       def distance(left, right)
