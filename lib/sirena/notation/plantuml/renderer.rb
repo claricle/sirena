@@ -15,7 +15,9 @@ module Sirena
             height: scene.height,
             view_box: "0 0 #{scene.width} #{scene.height}",
           )
-          scene.relations.each { |relation| render_relation(relation, document) }
+          scene.relations.each do |relation|
+            render_relation(relation, document)
+          end
           scene.boxes.each { |box| render_box(box, document) }
           document
         end
@@ -59,16 +61,24 @@ module Sirena
 
         def box_rectangle(box)
           Svg::Rect.new.tap do |rectangle|
-            rectangle.x = box.x
-            rectangle.y = box.y
-            rectangle.width = box.width
-            rectangle.height = box.height
-            rectangle.rx = 3
-            rectangle.ry = 3
-            rectangle.fill = node_fill
-            rectangle.stroke = node_stroke
-            rectangle.stroke_width = stroke_width
+            apply_box_geometry(rectangle, box)
+            apply_box_style(rectangle)
           end
+        end
+
+        def apply_box_geometry(rectangle, box)
+          rectangle.x = box.x
+          rectangle.y = box.y
+          rectangle.width = box.width
+          rectangle.height = box.height
+          rectangle.rx = 3
+          rectangle.ry = 3
+        end
+
+        def apply_box_style(rectangle)
+          rectangle.fill = node_fill
+          rectangle.stroke = node_stroke
+          rectangle.stroke_width = stroke_width
         end
 
         def separator_line(segment)
@@ -84,16 +94,24 @@ module Sirena
 
         def text_element(scene_text)
           Svg::Text.new.tap do |text|
-            text.x = scene_text.x
-            text.y = scene_text.y
-            text.content = scene_text.content
-            text.text_anchor = scene_text.anchor
-            text.fill = text_colour
-            text.font_family = font_family(scene_text.role)
-            text.font_size = font_size(scene_text.role)
-            text.font_weight = "bold" if scene_text.role == "class_name"
-            text.font_style = "italic" if scene_text.role == "kind"
+            apply_text_geometry(text, scene_text)
+            apply_text_style(text, scene_text.role)
           end
+        end
+
+        def apply_text_geometry(text, scene_text)
+          text.x = scene_text.x
+          text.y = scene_text.y
+          text.content = scene_text.content
+          text.text_anchor = scene_text.anchor
+        end
+
+        def apply_text_style(text, role)
+          text.fill = text_colour
+          text.font_family = font_family(role)
+          text.font_size = font_size(role)
+          text.font_weight = "bold" if role == "class_name"
+          text.font_style = "italic" if role == "kind"
         end
 
         def font_family(role)
@@ -105,7 +123,9 @@ module Sirena
         def font_size(role)
           normal = theme_typography(:font_size_normal) || 14
           return (normal.to_f * 0.85).to_s if role == "kind"
-          return (normal.to_f * 0.9).to_s if %w[multiplicity relation_label].include?(role)
+
+          small_roles = %w[multiplicity relation_label]
+          return (normal.to_f * 0.9).to_s if small_roles.include?(role)
 
           normal.to_s
         end
