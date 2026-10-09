@@ -12,17 +12,29 @@ on:
     inputs:
       next_version:
         description: |
-          Next release version. Possible values: x.y.z, major, minor, patch or pre|rc|etc
+          Next release version. Possible values: x.y.z, major, minor, patch or skip
         required: true
         default: "skip"
-  repository_dispatch:
-    types: [do-release]
 
 jobs:
+  preflight:
+    name: changelog preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073  # v1
+        with:
+          ruby-version: '3.3'
+      - run: ruby scripts/check_changelog.rb "$NEXT_VERSION"
+        env:
+          NEXT_VERSION: ${{ inputs.next_version }}
+
   release:
+    needs: [preflight]
     uses: metanorma/ci/.github/workflows/rubygems-release.yml@875ae77e781264728ec8447c11b23d3335b68d6d  # main
     with:
-      next_version: ${{ github.event.inputs.next_version }}
+      next_version: ${{ inputs.next_version }}
     secrets:
       rubygems-api-key: ${{ secrets.CLARICLE_CI_RUBYGEMS_API_KEY }}
       pat_token: ${{ secrets.GITHUB_TOKEN }}

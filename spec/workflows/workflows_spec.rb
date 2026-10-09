@@ -22,6 +22,7 @@ end
 RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
   let(:root) { File.expand_path("../..", __dir__) }
   let(:ci) { YAML.safe_load_file(File.join(root, ".github/workflows/ci.yml")) }
+  let(:release) { YAML.safe_load_file(File.join(root, ".github/workflows/release.yml")) }
   let(:aggregators) { %w[fast-lane full-lane] }
 
   let(:workflow_files) { Dir[File.join(root, ".github/workflows/*.yml")] }
@@ -161,6 +162,39 @@ RSpec.describe "CI workflows" do # rubocop:disable RSpec/DescribeClass
 
     it "has no standalone lint workflow file any more" do
       expect(workflow_files.map { |f| File.basename(f) }).not_to include("lint.yml")
+    end
+
+    it "keeps tests-passed without a tag-triggered release cascade" do
+      steps = jobs.fetch("cascade").fetch("steps")
+
+      expect(steps.map { |step| step["name"] }).to eq(["Dispatch tests-passed"])
+      expect(steps.map { |step| step["run"] }.join).not_to include("do-release")
+    end
+  end
+
+  describe "release.yml preflight" do
+    let(:jobs) { release.fetch("jobs") }
+
+    it "accepts only a manual workflow dispatch" do
+      triggers = release["on"] || release[true]
+
+      expect(triggers.keys).to eq(["workflow_dispatch"])
+    end
+
+    it "checks the changelog against the requested version" do
+      step = jobs.fetch("preflight").fetch("steps").find do |candidate|
+        candidate["run"]&.include?("scripts/check_changelog.rb")
+      end
+
+      expect(step["run"]).to eq('ruby scripts/check_changelog.rb "$NEXT_VERSION"')
+      expect(step.dig("env", "NEXT_VERSION")).to eq("${{ inputs.next_version }}")
+    end
+
+    it "requires the changelog preflight before delegating the release" do
+      delegated = jobs.fetch("release")
+
+      expect(Array(delegated["needs"])).to eq(["preflight"])
+      expect(delegated.dig("with", "next_version")).to eq("${{ inputs.next_version }}")
     end
   end
 end
