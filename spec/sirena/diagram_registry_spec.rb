@@ -9,7 +9,7 @@ RSpec.describe Sirena::DiagramRegistry do
         parser: Sirena::Parser::Error,
         transform: Sirena::Layout::Error,
         renderer: Sirena::Renderer::Error,
-        model: Sirena::Diagram::Error
+        model: Sirena::Diagram::Error,
       )
     end
 
@@ -26,10 +26,12 @@ RSpec.describe Sirena::DiagramRegistry do
 
   describe ".registered?" do
     it "reports known and unknown types" do
-      expect([
+      values = [
         described_class.registered?(:flowchart),
         described_class.registered?(:missing),
-      ]).to eq([true, false])
+      ]
+
+      expect(values).to eq([true, false])
     end
   end
 
