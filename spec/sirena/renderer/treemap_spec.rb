@@ -141,6 +141,28 @@ RSpec.describe Sirena::Renderer::Treemap do
 
         expect(svg).to include("123.7")
       end
+
+      it "skips nonpositive root nodes" do
+        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Positive", 10))
+        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Zero", 0))
+        diagram.add_root_node(Sirena::Diagram::TreemapNode.new("Negative", -2))
+
+        layout = transform.to_graph(diagram)
+
+        expect(layout[:cells].map { |cell| cell[:label] }).to eq(["Positive"])
+      end
+
+      it "skips valueless and negative children" do
+        root = Sirena::Diagram::TreemapNode.new("Root")
+        root.add_child(Sirena::Diagram::TreemapNode.new("Positive", 10))
+        root.add_child(Sirena::Diagram::TreemapNode.new("Valueless"))
+        root.add_child(Sirena::Diagram::TreemapNode.new("Negative", -2))
+        diagram.add_root_node(root)
+
+        layout = transform.to_graph(diagram)
+
+        expect(layout[:cells].first[:children].map { |cell| cell[:label] }).to eq(["Positive"])
+      end
     end
 
     context "with empty diagram" do
