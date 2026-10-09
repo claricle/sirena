@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+require_relative "base"
+require_relative "grammars/<%= type %>"
+require_relative "builders/<%= type %>"
+require_relative "../diagram/<%= type %>"
+
+module Sirena
+  module Parser
+    # Parser for <%= keyword %> diagrams.
+    class <%= klass %> < Base
+      grammar Grammars::<%= klass %>
+      builder Builders::<%= klass %>
+    end
+  end
+end

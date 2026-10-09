@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+require "lutaml/model"
+require_relative "base"
+
+module Sirena
+  module Diagram
+    # A <%= keyword %> diagram: an ordered list of items.
+    class <%= klass %> < Base
+      attribute :items, :string, collection: true, default: -> { [] }
+
+      # @return [Symbol] :<%= type %>
+      def diagram_type
+        :<%= type %>
+      end
+
+      # An empty diagram is valid: the bare keyword parses to one.
+      #
+      # @return [Boolean]
+      def valid?
+        items.none?(&:empty?)
+      end
+    end
+  end
+end

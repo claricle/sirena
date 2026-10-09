@@ -1,0 +1,22 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Parser::<%= klass %> do
+  subject(:parser) { described_class.new }
+
+  it "reads one item per indented line" do
+    diagram = parser.parse("<%= keyword %>\n  first\n  second\n")
+
+    expect(diagram.items).to eq(%w[first second])
+  end
+
+  it "reads a bare keyword as an empty diagram" do
+    expect(parser.parse("<%= keyword %>\n").items).to eq([])
+  end
+
+  it "refuses an unindented line" do
+    expect { parser.parse("<%= keyword %>\nfirst\n") }
+      .to raise_error(Sirena::Parser::ParseError)
+  end
+end

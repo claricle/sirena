@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Diagram::<%= klass %> do
+  it "reports its registered type" do
+    expect(described_class.new.diagram_type).to eq(:<%= type %>)
+  end
+
+  it "is valid when empty" do
+    expect(described_class.new.valid?).to be(true)
+  end
+
+  it "is invalid with a blank item" do
+    expect(described_class.new(items: [""]).valid?).to be(false)
+  end
+end

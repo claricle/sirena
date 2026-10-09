@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Renderer::<%= klass %> do
+  it "renders every item as text" do
+    svg = Sirena::Engine.new.render("<%= keyword %>\n  first\n  second\n")
+
+    expect(svg).to include("first", "second")
+  end
+end

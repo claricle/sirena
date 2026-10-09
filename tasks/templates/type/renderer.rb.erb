@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+require_relative "base"
+require_relative "../layout/<%= type %>"
+require_relative "../svg/document"
+require_relative "../svg/text"
+
+module Sirena
+  module Renderer
+    # Draws a Layout::<%= klass %>::Scene as one text line per row.
+    class <%= klass %> < Base
+      # @param scene [Layout::<%= klass %>::Scene]
+      # @return [Svg::Document]
+      def render(scene)
+        svg = Svg::Document.new.tap do |doc|
+          doc.width = scene.width
+          doc.height = scene.height
+          doc.view_box = scene.view_box
+        end
+        scene.rows.each { |row| svg << row_text(row) }
+        svg
+      end
+
+      private
+
+      def row_text(row)
+        Svg::Text.new.tap do |text|
+          text.x = row.x
+          text.y = row.y
+          text.content = row.text
+          text.fill = theme_color(:label_text) || "#000000"
+          text.font_family =
+            theme_typography(:font_family) || "Arial, sans-serif"
+          text.font_size = (theme_typography(:font_size_normal) || 14).to_s
+        end
+      end
+    end
+  end
+end

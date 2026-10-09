@@ -1,0 +1,31 @@
+# frozen_string_literal: true
+
+require_relative "common"
+
+module Sirena
+  module Parser
+    module Grammars
+      # Grammar for <%= keyword %> diagrams: the keyword, then one item per
+      # indented line.
+      class <%= klass %> < Common
+        root(:diagram)
+
+        rule(:diagram) do
+          ws? >> header >> line_end >> items.as(:items) >> ws?
+        end
+
+        rule(:header) { <%= keyword_rule %> }
+
+        rule(:items) { (item | blank_line).repeat }
+
+        rule(:blank_line) { space? >> comment.maybe >> newline }
+
+        rule(:item) do
+          space.repeat(1) >> text.as(:text) >> line_end
+        end
+
+        rule(:text) { (line_end.absent? >> any).repeat(1) }
+      end
+    end
+  end
+end
