@@ -168,12 +168,15 @@ module DocMermaidSpec
   end
 end
 
-RSpec.describe DocMermaidSpec do
-  let(:diagrams) { DocMermaidBlocks.diagrams }
+RSpec.describe DocMermaidBlocks do
+  let(:diagrams) { described_class.diagrams }
+  let(:expected_failures) { DocMermaidSpec::EXPECTED_FAILURES }
+  let(:listed) do
+    expected_failures.flat_map { |f, e| e.keys.map { |k| [f, k] } }
+  end
 
   it "extracts every [source,mermaid] block on the docs pages" do
-    extracted = DocMermaidBlocks.block_count
-    expect(extracted).to eq(DocMermaidBlocks.marker_count)
+    expect(described_class.block_count).to eq(described_class.marker_count)
   end
 
   it "gives every diagram a unique key within its page" do
@@ -182,21 +185,23 @@ RSpec.describe DocMermaidSpec do
   end
 
   it "lists only diagrams that exist, with a known reason" do
-    listed = DocMermaidSpec::EXPECTED_FAILURES.flat_map { |f, e| e.keys.map { |k| [f, k] } }
     existing = diagrams.map { |d| [d.file, d.key] }
-    expect(listed - existing).to eq([])
-    expect(DocMermaidSpec::EXPECTED_FAILURES.values.flat_map(&:values).map(&:first) - DocMermaidSpec::REASONS)
-      .to eq([])
+    reasons = expected_failures.values.flat_map(&:values).map(&:first)
+    unknown = (listed - existing) + (reasons - DocMermaidSpec::REASONS)
+    expect(unknown).to eq([])
   end
 
-  DocMermaidBlocks.diagrams.each do |diagram|
-    if described_class.expected(diagram)
-      it "#{diagram.file} #{diagram.key} still fails as #{described_class.expected(diagram).first}" do
-        expect { Sirena.render(diagram.source) }.to raise_error(described_class.expected(diagram).last)
+  described_class.diagrams.each do |diagram|
+    if DocMermaidSpec.expected(diagram)
+      it "#{diagram.file} #{diagram.key} still fails as " \
+         "#{DocMermaidSpec.expected(diagram).first}" do
+        expect { Sirena.render(diagram.source) }
+          .to raise_error(DocMermaidSpec.expected(diagram).last)
       end
     else
       it "#{diagram.file} #{diagram.key} renders an SVG document" do
-        expect(Sirena.render(diagram.source)).to match(/\A\s*<svg\b.*<\/svg>\s*\z/m)
+        svg = Sirena.render(diagram.source)
+        expect(svg).to match(%r{\A\s*<svg\b.*</svg>\s*\z}m)
       end
     end
   end
