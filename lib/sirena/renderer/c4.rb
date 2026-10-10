@@ -35,6 +35,13 @@ module Sirena
 
       protected
 
+      # Keeps the scene's own view box: the title shifts its origin above 0.
+      def create_document(scene, overflow: nil)
+        super.tap do |svg|
+          svg.view_box = scene.view_box if scene.view_box
+        end
+      end
+
       def render_boundaries(nodes, svg)
         nodes.each do |node|
           next unless node.kind == "boundary"
@@ -125,14 +132,14 @@ module Sirena
         group.children << Svg::Circle.new.tap do |circle|
           circle.cx = node.head_center.x
           circle.cy = node.head_center.y
-          circle.r = 16
+          circle.r = 10
           circle.fill = colours[:text]
         end
         group.children << Svg::Ellipse.new.tap do |ellipse|
           ellipse.cx = node.body_center.x
           ellipse.cy = node.body_center.y
-          ellipse.rx = 24
-          ellipse.ry = 28
+          ellipse.rx = 18
+          ellipse.ry = 12
           ellipse.fill = colours[:text]
         end
       end
@@ -147,6 +154,7 @@ module Sirena
           text.font_size = label.font_size.to_s
           text.font_weight = label.font_weight
           text.font_style = label.font_style
+          text.dominant_baseline = label.baseline
           text.text_anchor = "middle" unless label.font_size == 16
         end
       end
@@ -154,7 +162,7 @@ module Sirena
       def render_relationship(edge, svg)
         section = edge.sections.first
         group = Svg::Group.new.tap { |item| item.id = edge.id }
-        group.children << relationship_line(section.start_point, edge.line_end)
+        group.children << relationship_stroke(section)
         edge.arrowheads.each do |points|
           group.children << arrowhead(points)
         end
@@ -162,6 +170,25 @@ module Sirena
           group.children << label_element(label, theme_color(:label_text))
         end
         svg << group
+      end
+
+      def relationship_stroke(section)
+        control = section.bend_points.first
+        return relationship_curve(section, control) if control
+
+        relationship_line(section.start_point, section.end_point)
+      end
+
+      def relationship_curve(section, control)
+        start_point = section.start_point
+        end_point = section.end_point
+        Svg::Path.new.tap do |path|
+          path.d = "M#{start_point.x},#{start_point.y} " \
+                   "Q#{control.x},#{control.y} #{end_point.x},#{end_point.y}"
+          path.fill = "none"
+          path.stroke = theme_color(:edge_stroke)
+          path.stroke_width = "2"
+        end
       end
 
       def relationship_line(start_point, end_point)
