@@ -3,6 +3,7 @@
 require_relative "../../diagram/sequence_text"
 require_relative "geometry"
 require_relative "text_width"
+require_relative "text_wrap"
 
 module Sirena
   module Layout
@@ -14,8 +15,6 @@ module Sirena
       class ActorGaps
         LINE_BREAK = Diagram::SequenceText::LINE_BREAK
         TEXT_PADDING = 10
-        WRAP_ON = /\A\s*wrap:/i
-        WRAP_OFF = /\A\s*nowrap:/i
         # `wrap:` text is broken into lines this wide at most.
         WRAP_LIMIT = Geometry::ACTOR_WIDTH - (2 * TEXT_PADDING)
 
@@ -116,16 +115,17 @@ module Sirena
         end
 
         def text_width(source)
-          body = source.to_s.sub(Diagram::SequenceText::WRAP_PREFIX, "")
-          width = TextWidth.widest(body.split(LINE_BREAK, -1), @font_size)
-          width = [width, WRAP_LIMIT].min if wrapped?(source.to_s)
+          width = TextWidth.widest(shown_lines(source.to_s), @font_size)
           width + (2 * TEXT_PADDING)
         end
 
-        def wrapped?(source)
-          return true if source.match?(WRAP_ON)
+        def shown_lines(source)
+          body = TextWrap.body(source)
+          unless TextWrap.wrapped?(source, @wrap)
+            return body.split(LINE_BREAK, -1)
+          end
 
-          @wrap && !source.match?(WRAP_OFF)
+          TextWrap.lines(body, WRAP_LIMIT, @font_size)
         end
       end
     end

@@ -2,6 +2,7 @@
 
 require_relative "../../diagram/sequence_text"
 require_relative "geometry"
+require_relative "note_box"
 require_relative "text_width"
 require_relative "frame_placement"
 
@@ -16,9 +17,12 @@ module Sirena
         ROW_SPACING = Geometry::MESSAGE_PITCH
         TOP_GAP = Geometry::NOTE_MARGIN
         SLOT_GAP = Geometry::NOTE_MARGIN
-        PADDING = 20
-        SIDE_GAP = 25
-        MIN_WIDTH = Geometry::ACTOR_WIDTH
+        PADDING = NoteBox::PADDING
+        NO_ROWS = Class.new do
+          def extra_before(_index) = 0
+
+          def wrap? = false
+        end.new.freeze
         LINE_SPACING = 1.2
 
         # @param graph [Sirena::IR::Graph] the sequence graph
@@ -56,12 +60,14 @@ module Sirena
         # @param positions [Hash] participant id to its x/center_x
         # @param font_size [Numeric] note text size
         # @param frames [FramePlacement] frame room the notes sit between
+        # @param rows [MessageRows] height the messages' extra lines add
         def initialize(entries, positions, font_size:,
-                       frames: FramePlacement.new)
+                       frames: FramePlacement.new, rows: NO_ROWS)
           @entries = entries || []
           @positions = positions
           @font_size = font_size
           @frames = frames
+          @rows = rows
         end
 
         # @return [Array<Note>] placed notes; ones naming no known
@@ -83,14 +89,14 @@ module Sirena
 
         # @return [Numeric] height all note slots add to the diagram
         def total_height
-          @entries.sum { |entry| slot(entry) }
+          slots.sum
         end
 
         # @param index [Integer] message index
         # @return [Numeric] how far the note slots above it push it down
         def shift_for(index)
-          @entries.sum do |entry|
-            entry[:message_index] <= index ? slot(entry) : 0
+          @entries.each_index.sum do |at|
+            @entries[at][:message_index] <= index ? slots[at] : 0
           end
         end
 
@@ -99,9 +105,10 @@ module Sirena
         # @return [Numeric] height of the note slots at `index` that
         #   come before that edge in the source
         def slots_before(index, order)
-          @entries.sum do |entry|
+          @entries.each_index.sum do |at|
+            entry = @entries[at]
             at_index = entry[:message_index] == index
-            at_index && entry[:order] < order ? slot(entry) : 0
+            at_index && entry[:order] < order ? slots[at] : 0
           end
         end
 
@@ -136,11 +143,10 @@ module Sirena
         end
 
         def build_note(index)
-          entry = @entries[index]
-          centers = centers_of(entry)
+          centers = centers_of(@entries[index])
           return if centers.empty?
 
-          place(index, entry, centers)
+          place(index, boxes.fetch(index))
         end
 
         def centers_of(entry)
@@ -149,17 +155,29 @@ module Sirena
           end
         end
 
-        def place(index, entry, centers)
-          lines = text_lines(entry)
-          width, left = box_horizontal(entry[:position], centers, lines)
+        def place(index, box)
           top = top_of(index)
-          Note.new(x: left, y: top, width: width, height: height(lines),
-                   lines: line_labels(lines, left + (width / 2), top))
+          Note.new(x: box.left, y: top, width: box.width,
+                   height: height(box.lines),
+                   lines: line_labels(box.lines, box.left + (box.width / 2),
+                                      top))
         end
 
-        def text_lines(entry)
-          shown = entry[:text].sub(Diagram::SequenceText::WRAP_PREFIX, "")
-          shown.split(LINE_BREAK, -1)
+        def boxes
+          @boxes ||= @entries.map { |entry| box_for(entry) }
+        end
+
+        def box_for(entry)
+          NoteBox.new(entry, centers_of(entry), size: @font_size,
+                                                wrap: @rows.wrap?,
+                                                actor_width: actor_width(entry))
+        end
+
+        def actor_width(entry)
+          position = @positions[entry[:participant_ids].first] || {}
+          return NoteBox::MIN_WIDTH unless position[:x] && position[:center_x]
+
+          2 * (position[:center_x] - position[:x])
         end
 
         def line_height
@@ -170,16 +188,17 @@ module Sirena
           (lines.length * line_height) + PADDING
         end
 
-        def slot(entry)
-          height(text_lines(entry)) + SLOT_GAP
+        def slots
+          @slots ||= boxes.map { |box| height(box.lines) + SLOT_GAP }
         end
 
         def top_of(index)
           own = @entries[index][:message_index]
-          above = @entries.first(index).sum do |entry|
-            entry[:message_index] <= own ? slot(entry) : 0
+          above = @entries.first(index).each_index.sum do |at|
+            @entries[at][:message_index] <= own ? slots[at] : 0
           end
           FIRST_ROW + (own * ROW_SPACING) + above + TOP_GAP +
+            @rows.extra_before(own) +
             frame_offset(own, @entries[index][:order])
         end
 
@@ -187,25 +206,6 @@ module Sirena
           lead = @frames.lead(own, order)
           @frames.top_inset + @frames.row_shift(own - 1) + lead +
             (lead.zero? ? 0 : TOP_GAP)
-        end
-
-        def text_width(lines)
-          TextWidth.widest(lines, @font_size).to_f
-        end
-
-        def box_horizontal(position, centers, lines)
-          wide = [text_width(lines) + PADDING, MIN_WIDTH].max
-          case position
-          when "left_of" then [wide, centers.first - SIDE_GAP - wide]
-          when "right_of" then [wide, centers.first + SIDE_GAP]
-          else over_box(centers, wide)
-          end
-        end
-
-        def over_box(centers, wide)
-          span = centers.max - centers.min
-          width = [wide, span + (2 * SIDE_GAP)].max
-          [width, ((centers.min + centers.max) / 2.0) - (width / 2)]
         end
 
         def line_labels(lines, center, top)

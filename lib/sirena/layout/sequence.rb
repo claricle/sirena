@@ -7,6 +7,8 @@ require_relative "../notation/mermaid/ir_adapters/sequence"
 require_relative "sequence/geometry"
 require_relative "sequence/actor_gaps"
 require_relative "sequence/text_width"
+require_relative "sequence/text_wrap"
+require_relative "sequence/message_rows"
 require_relative "sequence/note_placement"
 require_relative "sequence/frame_reader"
 require_relative "sequence/frame_placement"
@@ -60,6 +62,10 @@ module Sirena
         attribute :x, :float
         attribute :y, :float
         attribute :font_size, :float
+        # Drawn lines when the text wraps or holds a `<br>`; empty for
+        # a one-line text. Line i sits `line_pitch * i` below `y`.
+        attribute :lines, :string, collection: true, default: -> { [] }
+        attribute :line_pitch, :float
       end
 
       class Head < Lutaml::Model::Serializable
@@ -149,6 +155,7 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(diagram)
+        @wrap = graph.dig(:metadata, :wrap) || false
         @frame_layout = frame_placement(graph)
         @gaps = build_gaps(graph)
         build_scene(graph, *shifted_placement(graph))
@@ -159,6 +166,8 @@ module Sirena
       def shifted_placement(graph)
         entries = graph.dig(:metadata, :note_entries)
         positions = participant_positions(graph[:children])
+        @rows = MessageRows.new(graph[:edges], positions,
+                                font_size: message_font_size, wrap: @wrap)
         placement = note_placement(entries, positions)
         @shift = placement.overhang
         return [positions, placement] if @shift.zero?
@@ -182,6 +191,16 @@ module Sirena
         @gaps ||= ActorGaps.new([], [], [], font_size: message_font_size)
       end
 
+      def rows
+        @rows ||= MessageRows.new([], {}, font_size: message_font_size,
+                                  wrap: @wrap)
+      end
+
+      # Height the notes and the messages' extra lines add to the diagram.
+      def stack_height(placement)
+        placement.total_height + rows.total_extra
+      end
+
       def frame_placement(graph)
         metadata = graph[:metadata]
         spans = graph[:edges].map { |e| [e[:sources].first, e[:targets].first] }
@@ -203,7 +222,7 @@ module Sirena
         count = graph.dig(:metadata, :message_count) || 0
         {
           lifelines: lifeline_geometry(positions, count,
-                                       placement.total_height),
+                                       stack_height(placement)),
           messages: typed_messages(graph[:edges], positions, placement),
           notes: placement.notes,
           frames: frame_shapes(positions, placement),
@@ -213,17 +232,21 @@ module Sirena
 
       def note_placement(entries, positions)
         NotePlacement.new(entries, positions, font_size: message_font_size,
-                                              frames: frame_layout)
+                                              frames: frame_layout,
+                                              rows: rows)
       end
 
       def frame_shapes(positions, notes)
-        rows = ->(index) { message_vertical(index) + notes.shift_for(index) }
-        frame_layout.frame_shapes(positions, rows, notes)
+        row_y = lambda do |index|
+          message_vertical(index) + notes.shift_for(index) +
+            rows.extra_before(index)
+        end
+        frame_layout.frame_shapes(positions, row_y, notes)
       end
 
       def box_shapes(children, positions, count, notes)
         widths = children.to_h { |child| [child[:id], child[:width]] }
-        bottom = lifeline_bottom(count, notes.total_height)
+        bottom = lifeline_bottom(count, stack_height(notes))
         bottom += FramePlacement::BOX_BOTTOM_PAD
         frame_layout.box_shapes(positions, widths, bottom)
       end
@@ -233,7 +256,7 @@ module Sirena
         count = graph.dig(:metadata, :message_count) || 0
         wide = canvas_width(children) + CANVAS_PAD + @shift
         [[wide, notes_right_edge(placement)].max,
-         canvas_height(children, count) + placement.total_height + CANVAS_PAD]
+         canvas_height(children, count) + stack_height(placement) + CANVAS_PAD]
       end
 
       def notes_right_edge(placement)
@@ -535,7 +558,7 @@ module Sirena
         source, target = message_endpoints(edge, positions)
         return unless source && target
 
-        vertical = message_vertical(index) + shift
+        vertical = message_vertical(index) + shift + rows.extra_through(index)
         build_typed_message(edge, index, source, target, vertical)
       end
 
@@ -557,7 +580,7 @@ module Sirena
           shaft: arrow[:shaft], loop_path: arrow[:loop_path],
           heads: arrow[:heads],
           label: typed_message_label(edge, source[:center_x],
-                                     target[:center_x], vertical)
+                                     target[:center_x], vertical, index)
         )
       end
 
@@ -576,7 +599,7 @@ module Sirena
         }
       end
 
-      def typed_message_label(edge, source_x, target_x, vertical)
+      def typed_message_label(edge, source_x, target_x, vertical, index = nil)
         text = edge.dig(:metadata, :message_text)
         return if text.nil? || text.empty?
 
@@ -585,9 +608,23 @@ module Sirena
           text: text, width: source_label[:width],
           height: source_label[:height],
           x: midpoint(source_x, target_x),
-          y: vertical - message_label_offset(source_x, target_x),
-          font_size: message_font_size
+          y: label_top(source_x, target_x, vertical, index),
+          font_size: message_font_size, **drawn_lines(index)
         )
+      end
+
+      # Baseline of the first line: a many-line text starts higher so that
+      # its last line, not its first, sits just above the arrow.
+      def label_top(source_x, target_x, vertical, index)
+        vertical - message_label_offset(source_x, target_x) -
+          rows.extra(index)
+      end
+
+      def drawn_lines(index)
+        shown = rows.lines(index)
+        return {} unless shown.length > 1
+
+        { lines: shown, line_pitch: rows.line_pitch }
       end
 
       def midpoint(source_x, target_x)
