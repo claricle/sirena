@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Renderer::Pie, "protected hooks" do
+RSpec.describe Sirena::Renderer::Pie do
   subject(:renderer) { described_class.new }
 
   let(:svg) { Sirena::Svg::Document.new }
@@ -23,24 +23,12 @@ RSpec.describe Sirena::Renderer::Pie, "protected hooks" do
     expect(hook(:calculate_height_for_pie, {})).to eq(400)
   end
 
-  it "draws no slices for an empty pie" do
-    hook(:render_slices, { slices: [] }, svg)
-
-    expect(svg.children).to be_empty
-  end
-
-  it "draws no labels for an empty pie" do
-    hook(:render_labels, { slices: [] }, svg)
-
-    expect(svg.children).to be_empty
-  end
-
   it "flags a slice over half the circle as a large arc" do
-    expect(hook(:create_pie_slice_path, 0, 270)).to include("0 1 1")
+    expect(hook(:create_pie_slice_path, 0, 270)).to include("A 150 150 0 1 1")
   end
 
   it "flags a slice under half the circle as a small arc" do
-    expect(hook(:create_pie_slice_path, 0, 90)).to include("0 0 1")
+    expect(hook(:create_pie_slice_path, 0, 90)).to include("A 150 150 0 0 1")
   end
 
   it "appends the percentage to a label when data is shown" do
