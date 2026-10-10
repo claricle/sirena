@@ -2,6 +2,7 @@
 
 require_relative "../../../layout/base"
 require_relative "edge"
+require_relative "ir_reader"
 require_relative "message_wrap"
 require_relative "note"
 require_relative "note_geometry"
@@ -44,9 +45,10 @@ module Sirena
                            :BANNER_HEIGHT, :BANNER_STEP, :BANNER_PADDING,
                            :MONOSPACE_ADVANCE
 
-          def scene(diagram)
-            @diagram = diagram
-            @widths = diagram.participants.map { |p| head_width(p) }
+          # @param graph [IR::Graph] from {IRAdapter}
+          def scene(graph)
+            @diagram = IRReader.call(graph)
+            @widths = @diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
             @head_height = head_height
             @origin = MARGIN + banner_room
