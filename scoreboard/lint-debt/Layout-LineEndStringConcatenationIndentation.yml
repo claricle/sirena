@@ -1,20 +1,6 @@
 ---
 cop: Layout/LineEndStringConcatenationIndentation
 rows:
-- file: lib/sirena/parser/grammars/er_diagram.rb
-  count: 1
-- file: lib/sirena/parser/grammars/flowchart.rb
-  count: 1
-- file: lib/sirena/parser/grammars/requirement.rb
-  count: 1
-- file: lib/sirena/parser/user_journey.rb
-  count: 1
-- file: scripts/mermaid_fuzz.rb
-  count: 1
-- file: scripts/sequence_fuzz.rb
-  count: 1
-- file: scripts/verify_docs_site.rb
-  count: 1
 - file: spec/scripts/docs_site_verifier_spec.rb
   count: 12
 - file: spec/scripts/mermaid_diff_spec.rb
@@ -26,6 +12,4 @@ rows:
 - file: spec/sirena/renderer/er_diagram_spec.rb
   count: 1
 - file: spec/sirena/svg/registry_spec.rb
-  count: 1
-- file: tasks/example_tasks.rb
   count: 1
