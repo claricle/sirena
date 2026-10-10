@@ -2,94 +2,130 @@
 
 require_relative "base"
 require_relative "line_break_text"
+require_relative "timeline_palette"
 require_relative "../layout/timeline"
 require_relative "../svg/document"
-require_relative "../svg/rect"
+require_relative "../svg/group"
+require_relative "../svg/line"
+require_relative "../svg/path"
 require_relative "../svg/text"
-require_relative "../svg/circle"
 
 module Sirena
   module Renderer
     # Emits SVG from final, typed timeline geometry.
     class Timeline < Base
-      SECTION_COLORS = [
-        "#4472C4", "#ED7D31", "#A5A5A5", "#FFC000", "#5B9BD5", "#70AD47"
-      ].freeze
+      FONT_FAMILY = "Trebuchet MS, Verdana, Arial, sans-serif"
+      LINE_PITCH = 17.6
+      # Baseline of the first text line inside a card's text group.
+      FIRST_BASELINE = 21
+      CARD_WRAPPERS = {
+        "section" => nil, "period" => "taskWrapper", "event" => "eventWrapper"
+      }.freeze
+      ARROW = "url(#arrowhead)"
 
       # @param scene [Layout::Timeline::Scene] final timeline geometry
       # @return [Svg::Document] rendered SVG document
       def render(scene)
         svg = create_document(scene)
-        svg << text_element(scene.title) if scene.title
-        scene.tracks.each { |track| render_track(track, svg) }
+        scene.cards.each { |card| render_card(card, svg) }
+        svg << title_element(scene) if scene.title
+        svg << line_group(scene.axis)
         svg
       end
 
       protected
 
-      def render_track(track, svg)
-        svg << text_element(track.header) if track.header
-        svg << axis_element(track.axis)
-        track.entries.each { |entry| render_entry(entry, svg) }
-        track.range_labels.each { |label| svg << text_element(label) }
+      def render_card(card, svg)
+        svg << card_group(card)
+        svg << line_group(card.connector) if card.connector
       end
 
-      def render_entry(entry, svg)
-        svg << marker_element(entry.marker)
-        entry.labels.each { |label| svg << text_element(label) }
+      def card_group(card)
+        wrapper = Svg::Group.new(
+          class_name: CARD_WRAPPERS.fetch(card.kind),
+          transform: "translate(#{number(card.x)}, #{number(card.y)})",
+        )
+        wrapper.tap { |group| group << node_group(card) }
       end
 
-      def axis_element(axis)
-        Svg::Rect.new.tap do |rect|
-          rect.x = axis.x
-          rect.y = axis.y
-          rect.width = axis.width
-          rect.height = axis.height
-          rect.fill = theme_color(:node_fill) || "#cccccc"
-          rect.stroke = "none"
-          rect.rx = axis.corner_radius
-          rect.ry = axis.corner_radius
+      def node_group(card)
+        fill, text, rule = TimelinePalette.for(card.color_index)
+        Svg::Group.new(class_name: "timeline-node").tap do |node|
+          node << background(card, fill, rule)
+          node << text_group(card, text)
         end
       end
 
-      def marker_element(marker)
-        Svg::Circle.new.tap do |circle|
-          circle.cx = marker.x
-          circle.cy = marker.y
-          circle.r = marker.radius
-          circle.fill = section_color(marker.section_index)
-          circle.stroke = theme_color(:node_stroke) || "#ffffff"
-          circle.stroke_width = "2"
+      def background(card, fill, rule)
+        Svg::Group.new.tap do |group|
+          group << card_path(card, fill)
+          group << rule_line(card, rule)
         end
       end
 
-      def text_element(label)
-        text = Svg::Text.new.tap do |node|
-          node.x = label.x
-          node.y = label.y
-          node.fill = label_color(label)
-          node.font_family =
-            theme_typography(:font_family) || "Arial, sans-serif"
-          node.font_size = number_string(label.font_size)
-          node.text_anchor = label.text_anchor if label.text_anchor
-          node.font_weight = label.font_weight if label.font_weight
+      def card_path(card, fill)
+        height = card.height
+        width = card.width
+        Svg::Path.new(
+          d: "M0 #{number(height - 5)} v#{number(5 - height + 5)} " \
+             "q0,-5 5,-5 h#{number(width - 10)} q5,0 5,5 " \
+             "v#{number(height - 5)} H0 Z",
+          fill: fill, class_name: "node-bkg"
+        )
+      end
+
+      def rule_line(card, rule)
+        Svg::Line.new(
+          x1: 0, y1: card.height, x2: card.width, y2: card.height,
+          stroke: rule, stroke_width: "3", class_name: "node-line"
+        )
+      end
+
+      def text_group(card, color)
+        group = Svg::Group.new(
+          transform: "translate(#{number(card.width / 2)}, 10)",
+        )
+        group.tap { |text| text << text_element(card, color) }
+      end
+
+      def text_element(card, color)
+        lines = card.lines
+        text = Svg::Text.new(
+          x: 0, y: FIRST_BASELINE, fill: color, font_family: FONT_FAMILY,
+          font_size: number(card.font_size), text_anchor: "middle"
+        )
+        return LineBreakText.fill(text, lines.first.to_s) if lines.length < 2
+
+        LineBreakText.fill_lines(text, lines, pitch: LINE_PITCH)
+      end
+
+      def title_element(scene)
+        text = Svg::Text.new(
+          x: scene.title_x, y: scene.title_y, fill: "#333333",
+          font_family: FONT_FAMILY, font_size: number(scene.title_size),
+          font_weight: "bold"
+        )
+        LineBreakText.fill(text, scene.title)
+      end
+
+      def line_group(line)
+        Svg::Group.new(class_name: "lineWrapper").tap do |group|
+          group << arrow_path(line)
         end
-        LineBreakText.fill(text, label.text)
       end
 
-      def label_color(label)
-        return section_color(label.section_index) if label.style == "section"
-        return theme_color(:label_text) || "#666666" if label.style == "muted"
-
-        theme_color(:label_text) || "#000000"
+      def arrow_path(line)
+        Svg::Path.new(
+          d: "M #{number(line.x1)} #{number(line.y1)} " \
+             "L #{number(line.x2)} #{number(line.y2)}",
+          fill: "none", stroke: "#000000", marker_end: ARROW,
+          stroke_width: number(line.stroke_width),
+          stroke_dasharray: ("5,5" if line.dashed)
+        )
       end
 
-      def section_color(index)
-        SECTION_COLORS[index % SECTION_COLORS.length]
-      end
-
-      def number_string(value)
-        value.to_i == value ? value.to_i.to_s : value.to_s
+      def number(value)
+        value.to_i == value ? value.to_i.to_s : value.round(4).to_s
       end
     end
   end
