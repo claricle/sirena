@@ -32,6 +32,13 @@ RSpec.describe Sirena::Layout::Gantt do
         .to eq([Date.new(2024, 1, 3), Date.new(2024, 1, 10)])
     end
 
+    it "ends a dated task where its until task starts" do
+      body = "#{first_task}T2 :2024-01-05, until c\nT3 :c, 2024-01-10, 2d\n"
+
+      expect(helper.spans(helper.scene(body))[1])
+        .to eq([Date.new(2024, 1, 5), Date.new(2024, 1, 10)])
+    end
+
     it "leaves the end open when the until task is unknown" do
       body = "#{first_task}T2 :after a, until zz\n"
 
