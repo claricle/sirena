@@ -143,6 +143,7 @@ module Sirena
             C4Deployment|C4\s+diagram)/ix,
           keyword: "C4Context, C4Container, C4Component, C4Dynamic, " \
                    "C4Deployment, or a C4 diagram",
+          ir_adapter: true,
         },
         info: {
           pattern: /\A\s*info/i,
