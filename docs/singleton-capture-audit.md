@@ -19,7 +19,7 @@ ruby scripts/audit_singleton_captures.rb --check
 | Sub-track | Corpus types | Files scanned | Result |
 | --- | --- | ---: | ---: |
 | 07a | class, class_diagram | 3 | 1 hit |
-| 07b | sequence | 3 | 4 hits |
+| 07b | sequence | 3 | 1 hit |
 | 07c | git, gitgraph | 3 | 2 hits |
 | 07d | gantt, radar, kanban, user_journey | 10 | 5 hits |
 | 07e | architecture, c4, block | 9 | zero hits |
@@ -35,7 +35,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/class_diagram.rb:172` — `statements = Array(stmt[:namespace_body])`
+- `lib/sirena/parser/builders/class_diagram.rb:166` — `statements = Array(stmt[:namespace_body])`
 
 ## 07b — sequence
 
@@ -45,12 +45,9 @@ ruby scripts/audit_singleton_captures.rb --check
 - `lib/sirena/parser/grammars/sequence.rb`
 - `lib/sirena/parser/sequence.rb`
 
-**Result:** 4 executable `Array(...)` hits
+**Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/sequence.rb:85` — `Array(statements).each do |stmt|`
-- `lib/sirena/parser/builders/sequence.rb:362` — `Array(stmt[:else_blocks]).each do |else_block|`
-- `lib/sirena/parser/builders/sequence.rb:391` — `Array(stmt[:and_blocks]).each do |and_block|`
-- `lib/sirena/parser/builders/sequence.rb:407` — `Array(stmt[:option_blocks]).each do |option_block|`
+- `lib/sirena/parser/builders/sequence.rb:86` — `Array(statements).each do |stmt|`
 
 ## 07c — git, gitgraph
 
