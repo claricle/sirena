@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/pie"
 require_relative "../svg/document"
 require_relative "../svg/circle"
 require_relative "../svg/path"
@@ -37,21 +38,67 @@ module Sirena
       # @param graph [Hash] the pie chart graph structure from transform
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document_for_pie(graph)
-
-        # Render title if present
-        render_title(graph, svg) if graph[:title]
-
-        # Render pie slices
-        render_slices(graph, svg)
-
-        # Render labels
-        render_labels(graph, svg)
-
+        scene = typed_scene(graph)
+        svg = typed_document(scene)
+        svg << typed_label(scene.title) if scene.title
+        scene.slices.each do |slice|
+          svg << typed_slice(slice)
+          svg << typed_label(slice.label)
+        end
         svg
       end
 
       protected
+
+      def typed_scene(graph)
+        return graph if graph.is_a?(Layout::Pie::Scene)
+
+        Layout::Pie.from_graph(graph, theme: theme)
+      end
+
+      def typed_document(scene)
+        Svg::Document.new.tap do |doc|
+          doc.width = scene.width
+          doc.height = scene.height
+          doc.view_box = scene.view_box
+        end
+      end
+
+      def typed_slice(slice)
+        Svg::Path.new.tap do |path|
+          path.d = slice.path
+          path.fill = get_slice_color(slice.color_index)
+          path.stroke = theme_color(:node_stroke) || "#ffffff"
+          path.stroke_width = "2"
+          path.id = slice.id.sub("_", "-")
+        end
+      end
+
+      def typed_label(label)
+        Svg::Text.new.tap do |text|
+          set_label_geometry(text, label)
+          set_label_style(text, label)
+        end
+      end
+
+      def set_label_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.text_anchor = label.text_anchor
+        text.dominant_baseline = label.dominant_baseline
+      end
+
+      def set_label_style(text, label)
+        text.content = label.text
+        text.fill = theme_color(:label_text) || "#000000"
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
+      end
 
       def create_document_for_pie(graph)
         width = calculate_width_for_pie(graph)

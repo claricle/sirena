@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/packet"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
@@ -27,22 +28,119 @@ module Sirena
       # @param layout [Hash] layout data from Layout::Packet
       # @return [Svg::Document] rendered SVG document
       def render(layout)
-        svg = create_document_from_layout(layout)
-
-        # Store layout parameters for rendering
-        @layout = layout
-        @title_offset = layout[:title_height] + layout[:title_margin]
-
-        # Render components in order
-        render_title(layout, svg) if layout[:title]
-        render_bit_markers(layout, svg)
-        render_grid_lines(layout, svg)
-        render_fields(layout, svg)
-
+        scene = typed_scene(layout)
+        svg = create_document_from_layout(scene)
+        render_scene_title(scene, svg)
+        render_scene_markers(scene, svg)
+        render_scene_grid(scene, svg)
+        render_scene_fields(scene, svg)
         svg
       end
 
       protected
+
+      def typed_scene(layout)
+        return layout if layout.is_a?(Layout::Packet::Scene)
+
+        Layout::Packet.from_graph(layout, theme: theme)
+      end
+
+      def document(scene)
+        Svg::Document.new.tap do |svg|
+          svg.width = scene.width
+          svg.height = scene.height
+          svg.view_box = scene.view_box
+        end
+      end
+
+      def create_document_from_layout(layout)
+        return super unless layout.is_a?(Layout::Packet::Scene)
+
+        document(layout)
+      end
+
+      def label_element(label)
+        Svg::Text.new.tap do |text|
+          set_label_geometry(text, label)
+          set_label_style(text, label)
+        end
+      end
+
+      def set_label_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.text_anchor = label.text_anchor
+        text.dominant_baseline = label.dominant_baseline
+      end
+
+      def set_label_style(text, label)
+        text.fill = label_color(label.style)
+        text.font_size = number_string(label.font_size)
+        text.font_family = theme_typography(:font_family) || "Arial, sans-serif"
+        text.font_weight = label.font_weight if label.font_weight
+        text.content = label.text
+      end
+
+      def label_color(style)
+        case style
+        when "title" then theme_color(:title_text) || "#000000"
+        when "marker", "range" then theme_color(:label_text) || "#666666"
+        else theme_color(:field_text) || "#000000"
+        end
+      end
+
+      def line_element(line)
+        Svg::Line.new.tap do |element|
+          element.x1 = line.x1
+          element.y1 = line.y1
+          element.x2 = line.x2
+          element.y2 = line.y2
+          element.stroke = theme_color(:grid_line) || "#cccccc"
+          element.stroke_width = "1"
+        end
+      end
+
+      def render_typed_field(field, svg)
+        svg << field_box(field.box)
+        svg << label_element(field.label)
+        svg << label_element(field.range_label) if field.range_label
+      end
+
+      def field_box(box)
+        Svg::Rect.new.tap do |rect|
+          set_box_geometry(rect, box)
+          rect.fill = theme_color(:field_background) || "#e0f2fe"
+          rect.stroke = theme_color(:field_border) || "#0284c7"
+          rect.stroke_width = "1.5"
+        end
+      end
+
+      def set_box_geometry(rect, box)
+        rect.x = box.x
+        rect.y = box.y
+        rect.width = box.width
+        rect.height = box.height
+      end
+
+      def render_scene_title(scene, svg)
+        svg << label_element(scene.title) if scene.title
+      end
+
+      def render_scene_markers(scene, svg)
+        scene.bit_markers.each { |label| svg << label_element(label) }
+      end
+
+      def render_scene_grid(scene, svg)
+        scene.grid_lines.each { |line| svg << line_element(line) }
+      end
+
+      def render_scene_fields(scene, svg)
+        scene.fields.each { |field| render_typed_field(field, svg) }
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
+      end
 
       # Renders the diagram title.
       #
@@ -171,7 +269,7 @@ module Sirena
       # @param layout [Hash] layout data
       # @param svg [Svg::Document] SVG document
       # @return [void]
-      def render_field(field, layout, svg)
+      def render_field(field, _layout, svg)
         # Adjust y position for title offset
         y = field[:y] + @title_offset
 

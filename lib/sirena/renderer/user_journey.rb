@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../layout/user_journey"
 
 module Sirena
   module Renderer
@@ -47,20 +48,12 @@ module Sirena
       # @param graph [Hash] laid-out graph with node positions
       # @return [Svg::Document] the rendered SVG document
       def render(graph)
-        svg = create_document(graph)
-
-        metadata = graph[:metadata] || {}
-
-        # Render title if present
-        current_y = TITLE_PADDING
-        current_y = render_title(svg, metadata[:title], current_y) if metadata[:title] && !metadata[:title].empty?
-
-        # Render section headers and tasks
-        render_sections_and_tasks(svg, graph, current_y)
-
-        # Render timeline connections
-        render_timeline(graph, svg) if graph[:edges]
-
+        scene = typed_scene(graph)
+        svg = typed_document(scene)
+        render_scene_title(svg, scene)
+        scene.sections.each { |label| svg << label_element(label) }
+        scene.tasks.each { |task| render_typed_task(svg, task) }
+        scene.arrows.each { |arrow| render_typed_arrow(arrow, svg) }
         svg
       end
 
@@ -325,6 +318,112 @@ module Sirena
         return nil unless graph[:children] && node_id
 
         graph[:children].find { |n| n[:id] == node_id }
+      end
+
+      def typed_scene(graph)
+        return graph if graph.is_a?(Layout::UserJourney::Scene)
+
+        Layout::UserJourney.from_graph(graph, theme: theme)
+      end
+
+      def typed_document(scene)
+        Svg::Document.new(width: scene.width, height: scene.height,
+                          view_box: scene.view_box)
+      end
+
+      def render_scene_title(svg, scene)
+        svg << label_element(scene.title) if scene.title
+      end
+
+      def render_typed_task(svg, task)
+        group = Svg::Group.new.tap { |item| item.id = "task-#{task.id}" }
+        group << task_box(task.box)
+        task.labels.each { |label| group << label_element(label) }
+        svg << group
+      end
+
+      def task_box(box)
+        Svg::Rect.new.tap do |rect|
+          set_box_geometry(rect, box)
+          set_box_style(rect, box)
+        end
+      end
+
+      def set_box_geometry(rect, box)
+        rect.x = box.x
+        rect.y = box.y
+        rect.width = box.width
+        rect.height = box.height
+      end
+
+      def set_box_style(rect, box)
+        rect.fill = SCORE_COLORS.fetch(box.style.to_sym)
+        rect.stroke = "#333333"
+        rect.stroke_width = "2"
+        rect.rx = box.corner_radius
+        rect.ry = box.corner_radius
+      end
+
+      def label_element(label)
+        Svg::Text.new.tap do |text|
+          set_label_geometry(text, label)
+          set_label_style(text, label)
+        end
+      end
+
+      def set_label_geometry(text, label)
+        text.x = label.x
+        text.y = label.y
+        text.text_anchor = label.text_anchor if label.text_anchor
+      end
+
+      def set_label_style(text, label)
+        text.content = label.text
+        text.fill = label_color(label.style)
+        text.font_family = "Arial, sans-serif"
+        text.font_size = number_string(label.font_size)
+        text.font_weight = label.font_weight if label.font_weight
+      end
+
+      def render_typed_arrow(arrow, svg)
+        group = Svg::Group.new.tap { |item| item.id = "arrow-#{arrow.id}" }
+        group << typed_arrow_line(arrow.line)
+        group << typed_arrow_head(arrow.head_path)
+        svg << group
+      end
+
+      def typed_arrow_line(source)
+        Svg::Line.new.tap do |line|
+          line.x1 = source.x1
+          line.y1 = source.y1
+          line.x2 = source.x2
+          line.y2 = source.y2
+          set_arrow_style(line)
+        end
+      end
+
+      def typed_arrow_head(path_data)
+        Svg::Path.new.tap do |path|
+          path.d = path_data
+          path.fill = "none"
+          set_arrow_style(path)
+        end
+      end
+
+      def set_arrow_style(element)
+        element.stroke = "#666666"
+        element.stroke_width = "2"
+      end
+
+      def label_color(style)
+        return "#666666" if style == "section"
+        return "#333333" if style == "actors"
+
+        "#000000"
+      end
+
+      def number_string(value)
+        value.to_i == value ? value.to_i.to_s : value.to_s
       end
     end
   end

@@ -157,16 +157,16 @@ RSpec.describe Sirena::Renderer::Treemap do
 
         layout = transform.to_graph(diagram)
 
-        expect(layout[:cells].map { |cell| cell[:label] }).to eq(["Positive"])
+        expect(layout.cells.map { |cell| cell.label.text }).to eq(["Positive"])
       end
 
       it "skips valueless and negative children" do
         add_root_with_children([["Positive", 10], ["Valueless"],
                                 ["Negative", -2]])
 
-        children = transform.to_graph(diagram)[:cells].first[:children]
+        children = transform.to_graph(diagram).cells.first.children
 
-        expect(children.map { |cell| cell[:label] }).to eq(["Positive"])
+        expect(children.map { |cell| cell.label.text }).to eq(["Positive"])
       end
     end
 

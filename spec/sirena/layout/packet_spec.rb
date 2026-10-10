@@ -5,16 +5,14 @@ require "sirena/layout/packet"
 require "sirena/diagram/packet"
 
 RSpec.describe Sirena::Layout::Packet do
-  subject(:graph) { described_class.new.to_graph(packet) }
+  subject(:scene) { described_class.new.to_graph(packet) }
 
   let(:packet) { Sirena::Diagram::Packet.new }
 
   it "returns the compact empty canvas" do
-    expect(graph).to eq(
-      fields: [], row_count: 0, bits_per_row: 32, cell_width: 30,
-      cell_height: 40, padding: 40, header_height: 30, title_height: 0,
-      title_margin: 0, width: 80, height: 80, title: nil
-    )
+    expect([scene.class, scene.width, scene.height, scene.title,
+            scene.fields, scene.bit_markers, scene.grid_lines.length])
+      .to eq([described_class::Scene, 80.0, 80.0, nil, [], [], 34])
   end
 
   context "with a title and one row" do
@@ -24,43 +22,38 @@ RSpec.describe Sirena::Layout::Packet do
     end
 
     it "includes title framing and complete canvas dimensions" do
-      expect(graph).to include(
-        title: "Header", title_height: 40, title_margin: 20,
-        width: 1040, height: 210, row_count: 1
-      )
+      expect([scene.title.text, scene.title.x, scene.title.y,
+              scene.width, scene.height, scene.bit_markers.length])
+        .to eq(["Header", 520.0, 60.0, 1040.0, 210.0, 32])
     end
 
     it "positions a single-row field from its inclusive bit range" do
-      expect(graph[:fields]).to contain_exactly(
-        include(label: "flags", bit_start: 4, bit_end: 7, x: 160, y: 70,
-                width: 120, height: 40, row: 0, start_col: 4, end_col: 7),
-      )
+      field = scene.fields.first
+      expect([field.box.x, field.box.y, field.box.width, field.box.height,
+              field.label.text, field.range_label.text])
+        .to eq([160.0, 130.0, 120.0, 40.0, "flags", "4-7"])
     end
   end
 
   context "with a field crossing a row boundary" do
-    let(:expected_segments) do
-      [
-        include(label: "boundary", bit_start: 30, bit_end: 31, row: 0,
-                start_col: 30, end_col: 31, x: 940, y: 70, width: 60,
-                is_continuation: false, is_final: false),
-        include(label: "boundary", bit_start: 32, bit_end: 34, row: 1,
-                start_col: 0, end_col: 2, x: 40, y: 110, width: 90,
-                is_continuation: true, is_final: true),
-      ]
-    end
-
     before do
       packet.add_field(Sirena::Diagram::PacketField.new(30, 34, "boundary"))
     end
 
     it "splits the field into labeled segments with exact bit ranges" do
-      expect(graph[:fields]).to match(expected_segments)
+      expect(scene.fields.map { |field| field_geometry(field) })
+        .to eq([["boundary", 940.0, 70.0, 60.0, nil],
+                ["boundary", 40.0, 110.0, 90.0, nil]])
     end
 
     it "sizes the untitled two-row canvas" do
-      expect(graph).to include(row_count: 2, width: 1040, height: 190,
-                               title_height: 0, title_margin: 0)
+      expect([scene.width, scene.height, scene.bit_markers.length])
+        .to eq([1040.0, 190.0, 64])
     end
+  end
+
+  def field_geometry(field)
+    [field.label.text, field.box.x, field.box.y, field.box.width,
+     field.range_label&.text]
   end
 end
