@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/block"
+require_relative "../notation/mermaid/ir_adapters/block"
 
 module Sirena
   module Layout
@@ -68,26 +69,74 @@ module Sirena
 
       # Converts a block diagram to a positioned layout structure.
       #
-      # @param diagram [Diagram::Block] the block diagram to transform
+      # @param diagram [Diagram::Block, IR::Prepositioned] source structure
       # @return [Hash] positioned layout hash
       def build_graph(diagram)
-        blocks_layout = calculate_column_layout(diagram)
-        connections_layout = calculate_connections(diagram, blocks_layout)
-
-        {
-          blocks: blocks_layout,
-          connections: connections_layout,
-          columns: diagram.columns,
-          width: calculate_total_width(blocks_layout, diagram.columns),
-          height: calculate_total_height(blocks_layout),
-        }
+        document = ir_document(diagram)
+        items = block_items(document)
+        @children_by_parent = items.group_by(&:parent_id)
+        top_level = @children_by_parent.fetch(nil, [])
+        columns = column_count(document)
+        blocks_layout = calculate_column_layout(top_level, columns)
+        graph(document, top_level, columns, blocks_layout)
       end
 
       private
 
+      def graph(document, source_items, columns, blocks)
+        {
+          blocks: blocks,
+          connections: calculate_connections(document.connections, blocks),
+          source_items: source_items,
+          columns: columns,
+          width: calculate_total_width(blocks),
+          height: calculate_total_height(blocks),
+        }
+      end
+
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Block.call(diagram)
+      end
+
+      def block_items(document)
+        document.items.reject { |item| item.role == "layout_settings" }
+      end
+
+      def column_count(document)
+        settings = document.items.find { |item| item.role == "layout_settings" }
+        value(settings, "column_count").to_i
+      end
+
+      def value(item, dimension)
+        return unless item
+
+        placement = item.placements.find do |candidate|
+          candidate.dimension == dimension
+        end
+        placement&.value&.value
+      end
+
+      def children(block)
+        @children_by_parent.fetch(block.id, [])
+      end
+
+      def compound?(block)
+        value(block, "compound") || !children(block).empty?
+      end
+
+      def space?(block)
+        block.role == "space"
+      end
+
+      def arrow?(block)
+        block.role == "arrow"
+      end
+
       def scene(diagram)
         graph = build_graph(diagram)
-        nodes = typed_nodes(diagram.blocks, graph[:blocks])
+        nodes = typed_nodes(graph[:source_items], graph[:blocks])
         Scene.new(
           width: graph[:width], height: graph[:height],
           view_box: "0 0 #{graph[:width]} #{graph[:height]}",
@@ -98,7 +147,7 @@ module Sirena
 
       def typed_nodes(blocks, positioned)
         blocks.filter_map do |block|
-          next if block.space?
+          next if space?(block)
 
           typed_node(block, positioned)
         end
@@ -109,9 +158,9 @@ module Sirena
         Node.new(
           id: block.id, x: geometry[:x], y: geometry[:y],
           width: geometry[:width], height: geometry[:height],
-          labels: block_label(block, geometry), shape: block.shape,
-          direction: block.direction, compound: block.compound?,
-          children: typed_nodes(block.children, positioned)
+          labels: block_label(block, geometry), shape: value(block, "shape"),
+          direction: value(block, "direction"), compound: compound?(block),
+          children: typed_nodes(children(block), positioned)
         )
       end
 
@@ -142,9 +191,7 @@ module Sirena
         )
       end
 
-      def calculate_column_layout(diagram)
-        columns = diagram.columns
-        blocks = diagram.blocks
+      def calculate_column_layout(blocks, columns)
         positioned_blocks = {}
 
         current_row = 0
@@ -154,7 +201,7 @@ module Sirena
 
         blocks.each do |block|
           # Handle space blocks
-          if block.space?
+          if space?(block)
             current_col += 1
             if current_col >= columns
               current_col = 0
@@ -165,7 +212,7 @@ module Sirena
 
           # Calculate block dimensions
           dims = calculate_block_dimensions(block)
-          block_width = block.width || 1
+          block_width = value(block, "column_span").to_i
 
           # Check if block fits in current row
           if current_col + block_width > columns
@@ -197,7 +244,7 @@ module Sirena
           row_heights[current_row] = [row_heights[current_row] || 0, dims[:height]].max
 
           # Handle compound blocks
-          if block.compound? && !block.children.empty?
+          if compound?(block) && !children(block).empty?
             child_layout = layout_compound_children(block, x, y)
             positioned_blocks.merge!(child_layout)
           end
@@ -217,7 +264,7 @@ module Sirena
         positioned = {}
         child_y = parent_y + DEFAULT_COMPOUND_PADDING
 
-        parent_block.children.each do |child|
+        children(parent_block).each do |child|
           geometry = compound_child_geometry(child, parent_block, parent_x,
                                              child_y)
           positioned[child.id] = geometry
@@ -238,13 +285,13 @@ module Sirena
       end
 
       def nested_compound_children(child, geometry)
-        return {} unless child.compound? && !child.children.empty?
+        return {} unless compound?(child) && !children(child).empty?
 
         layout_compound_children(child, geometry[:x], geometry[:y])
       end
 
       def calculate_block_dimensions(block)
-        if block.arrow?
+        if arrow?(block)
           return {
             width: DEFAULT_BLOCK_WIDTH / 2,
             height: DEFAULT_BLOCK_HEIGHT / 2,
@@ -258,9 +305,9 @@ module Sirena
         width = [label_dims[:width] + 40, DEFAULT_BLOCK_WIDTH].max
         height = [label_dims[:height] + 30, DEFAULT_BLOCK_HEIGHT].max
 
-        if block.compound?
+        if compound?(block)
           # Compound blocks need more space
-          child_height = block.children.reduce(0) do |sum, child|
+          child_height = children(block).reduce(0) do |sum, child|
             child_dims = calculate_block_dimensions(child)
             sum + child_dims[:height] + DEFAULT_SPACING
           end
@@ -289,26 +336,26 @@ module Sirena
         row_heights[0...row].compact.sum + (DEFAULT_SPACING * (row + 1))
       end
 
-      def calculate_connections(diagram, blocks_layout)
-        diagram.connections.filter_map do |conn|
-          from_block = blocks_layout[conn.from]
-          to_block = blocks_layout[conn.to]
+      def calculate_connections(connections, blocks_layout)
+        connections.filter_map do |connection|
+          from_block = blocks_layout[connection.source_id]
+          to_block = blocks_layout[connection.target_id]
 
           next unless from_block && to_block
 
           {
-            from: conn.from,
-            to: conn.to,
+            from: connection.source_id,
+            to: connection.target_id,
             from_x: from_block[:x] + from_block[:width] / 2,
             from_y: from_block[:y] + from_block[:height],
             to_x: to_block[:x] + to_block[:width] / 2,
             to_y: to_block[:y],
-            connection_type: conn.connection_type,
+            connection_type: connection.role,
           }
         end
       end
 
-      def calculate_total_width(blocks_layout, columns)
+      def calculate_total_width(blocks_layout)
         return DEFAULT_SPACING * 2 if blocks_layout.empty?
 
         max_x = blocks_layout.values.map { |b| b[:x] + b[:width] }.max || 0

@@ -28,6 +28,14 @@ RSpec.describe Sirena::Layout::Block do
   end
 
   describe "#call" do
+    it "lays out shared pre-positioned IR identically to the private model" do
+      diagram = parser.parse(ir_equivalence_source)
+      ir = Sirena::Notation::Mermaid::IRAdapters::Block.call(diagram)
+
+      expect(scene_signature(transform.call(ir)))
+        .to eq(scene_signature(transform.call(diagram)))
+    end
+
     it "filters space nodes from typed final geometry" do
       expect(basic_scene.children.map(&:id))
         .to eq(%w[Frontend Backend Database Cache Queue])
@@ -83,5 +91,38 @@ RSpec.describe Sirena::Layout::Block do
         expect(blocks["G"].y).to eq(600)
       end
     end
+  end
+
+  def ir_equivalence_source
+    <<~MERMAID
+      block-beta
+        columns 3
+        block:outer
+          A["Service"]
+          blockArrowId<["Next"]>(down)
+        end
+        space
+        B(("Database")):2
+        A --> B
+    MERMAID
+  end
+
+  def scene_signature(scene)
+    [scene.width, scene.height, scene.view_box,
+     scene.children.map { |node| node_signature(node) },
+     scene.edges.map { |edge| edge_signature(edge) }]
+  end
+
+  def node_signature(node)
+    [node.id, node.x, node.y, node.width, node.height, node.shape,
+     node.direction, node.compound, node.labels.map(&:text),
+     node.children.map { |child| node_signature(child) }]
+  end
+
+  def edge_signature(edge)
+    section = edge.sections.first
+    [edge.source, edge.target, edge.connection_type,
+     section.start_point.x, section.start_point.y,
+     section.end_point.x, section.end_point.y]
   end
 end
