@@ -23,6 +23,41 @@ RSpec.describe Sirena::Layout::Requirement do
     )
   end
 
+  def unlabeled_relationship_scene
+    layout.call(
+      diagram(
+        requirements: [requirement("source"), requirement("target")],
+        relationships: [relationship("source", "target", type: nil)],
+      ),
+    )
+  end
+
+  def cyclic_node_ys
+    requirements = [requirement("first"), requirement("second")]
+    relationships = [relationship("first", "second"),
+                     relationship("second", "first")]
+    layout.call(
+      diagram(requirements: requirements, relationships: relationships),
+    ).children.map(&:y)
+  end
+
+  def default_property
+    scene = layout.call(
+      diagram(requirements: [requirement("plain", id: "R-1")]),
+      theme: Sirena::Theme.new,
+    )
+    scene.children.first.labels.find { |label| label.role == "property" }
+  end
+
+  def missing_endpoint_graph
+    ir_graph(
+      id: "requirements",
+      nodes: [ir_node(id: "present", label: "Present", role: "requirement")],
+      edges: [ir_edge(id: "missing", source_id: "present",
+                      target_id: "absent", role: "satisfies")],
+    )
+  end
+
   it "omits absent requirement properties" do
     scene = layout.call(diagram(requirements: [requirement("minimal")]))
 
@@ -31,28 +66,12 @@ RSpec.describe Sirena::Layout::Requirement do
   end
 
   it "draws an unlabeled relationship without label geometry" do
-    source = requirement("source")
-    target = requirement("target")
-    scene = layout.call(
-      diagram(
-        requirements: [source, target],
-        relationships: [relationship("source", "target", type: nil)],
-      ),
-    )
-
-    expect(scene.edges.first)
+    expect(unlabeled_relationship_scene.edges.first)
       .to have_attributes(labels: [], label_background: nil)
   end
 
   it "places cyclic dependencies together after bounded resolution" do
-    requirements = [requirement("first"), requirement("second")]
-    relationships = [relationship("first", "second"),
-                     relationship("second", "first")]
-    nodes = layout.call(
-      diagram(requirements: requirements, relationships: relationships),
-    ).children
-
-    expect(nodes.map(&:y).uniq.one?).to be(true)
+    expect(cyclic_node_ys.uniq.one?).to be(true)
   end
 
   it "keeps an overlong word intact" do
@@ -65,24 +84,12 @@ RSpec.describe Sirena::Layout::Requirement do
   end
 
   it "uses default typography when the injected theme has none" do
-    scene = layout.call(
-      diagram(requirements: [requirement("plain", id: "R-1")]),
-      theme: Sirena::Theme.new,
-    )
-    property = scene.children.first.labels.find { |label| label.role == "property" }
-
-    expect(property.font_size)
+    expect(default_property.font_size)
       .to eq(Sirena::Theme::Registry.get(:default).typography.font_size_small)
   end
 
   it "ignores an IR relationship whose endpoint is absent" do
-    graph = ir_graph(
-      id: "requirements",
-      nodes: [ir_node(id: "present", label: "Present", role: "requirement")],
-      edges: [ir_edge(id: "missing", source_id: "present",
-                      target_id: "absent", role: "satisfies")],
-    )
-
-    expect(layout.build_graph(graph)[:relationships]).to be_empty
+    expect(layout.build_graph(missing_endpoint_graph)[:relationships])
+      .to be_empty
   end
 end

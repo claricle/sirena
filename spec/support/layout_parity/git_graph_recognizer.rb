@@ -115,12 +115,16 @@ module SpecSupport
         orientation = orientation(markers)
         labels.select { |label| label.kind == :branch_label }.map do |label|
           anchor = nearest_element(label.bbox, markers)
-          lane_markers = markers.select do |marker|
-            same_lane?(marker.bbox, anchor.bbox, orientation)
-          end
+          lane_markers = markers_on_lane(markers, anchor, orientation)
           logical_element(
             :lane, label.key, Bbox.union(lane_markers.map(&:bbox))
           )
+        end
+      end
+
+      def markers_on_lane(markers, anchor, orientation)
+        markers.select do |marker|
+          same_lane?(marker.bbox, anchor.bbox, orientation)
         end
       end
 

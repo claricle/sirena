@@ -43,8 +43,7 @@ RSpec.describe SpecSupport::LayoutParity::InfoRecognizer do
   it "matches the fixed role instead of the producer-specific wording" do
     result = matched_real_pair
 
-    expect(result[:failures]).to be_empty
-    expect(result[:pairs].map { |pair| pair.map(&:key) })
-      .to eq([["info-text", "info-text"]])
+    expect([result[:failures], result[:pairs].map { |pair| pair.map(&:key) }])
+      .to eq([[], [["info-text", "info-text"]]])
   end
 end
