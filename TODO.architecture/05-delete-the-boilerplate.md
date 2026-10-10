@@ -1,5 +1,10 @@
 # 05 — Delete the boilerplate
 
+Status (2026-10-10): **Part A complete; Parts B and C remain open.** The
+declarative parser base, single positioned-error formatter, instance builder
+convention, and distinct journey `ScoreError` are all present on `main` and
+covered across every registered type.
+
 **Goal:** parse errors that name the line, column and offending source
 for all 24 types; themes that actually work; about 1,500 fewer lines.
 **Size:** 3 PRs, one per part. All three are deletions.
@@ -258,11 +263,11 @@ headings silently drop everything after the first block.
 
 ## Done when
 
-- [ ] A — no parser contains the boilerplate `parse` body; 12 files are gone or reduced to a two-line declaration. `flowchart` is NOT one of them — see the group table above
-- [ ] A — one parse-error format for all 24 types, asserted by a spec that feeds each type deliberately broken source and checks the message names a line and a column
-- [ ] A — `grep -rn "def format_parse_error" lib/` returns one hit, in `Parser::Base`
-- [ ] A — `user_journey`'s score check raises something other than `ParseError`
-- [ ] A — one builder calling convention: `block`, `flowchart` and `requirement`'s
+- [x] A — no parser contains the boilerplate `parse` body; 12 files are gone or reduced to a two-line declaration. `flowchart` is NOT one of them — see the group table above
+- [x] A — one parse-error format for all 24 types, asserted by a spec that feeds each type deliberately broken source and checks the message names a line and a column
+- [x] A — `grep -rn "def format_parse_error" lib/` returns one hit, in `Parser::Base`
+- [x] A — `user_journey`'s score check raises something other than `ParseError`
+- [x] A — one builder calling convention: `block`, `flowchart` and `requirement`'s
       `self.apply` class methods are migrated to instance methods, not merely called
       differently — `grep -rn "def self.apply" lib/sirena/parser/builders/` returns
       nothing
