@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/pie"
+require_relative "../notation/mermaid/ir_adapters/pie"
 
 module Sirena
   module Layout
@@ -64,17 +65,18 @@ module Sirena
       # @param diagram [Diagram::Pie] the pie diagram to transform
       # @return [Hash] data structure for rendering
       def build_graph(diagram)
+        data = ir_data(diagram)
+        slices = transform_slices(data)
         {
-          id: diagram.id || "pie",
-          title: diagram.title,
-          show_data: diagram.show_data || false,
-          acc_title: diagram.acc_title,
-          acc_description: diagram.acc_description,
-          slices: transform_slices(diagram),
+          id: data.id, title: data.label,
+          show_data: data_value(data, "show_values", false),
+          acc_title: data.accessibility_title,
+          acc_description: data.accessibility_description,
+          slices: slices,
           metadata: {
-            total_value: diagram.total_value,
-            slice_count: (diagram.slices || []).length,
-          },
+            total_value: slices.sum { |slice| slice[:value] },
+            slice_count: slices.length,
+          }
         }
       end
 
@@ -82,6 +84,12 @@ module Sirena
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
+      end
+
+      def ir_data(diagram)
+        return diagram if diagram.is_a?(IR::Data)
+
+        Notation::Mermaid::IRAdapters::Pie.call(diagram)
       end
 
       def scene_from_graph(graph)
@@ -161,19 +169,36 @@ module Sirena
         value&.positive? ? value : fallback
       end
 
-      def transform_slices(diagram)
-        return [] if diagram.slices.nil? || diagram.slices.empty?
-
-        diagram.slices.map.with_index do |slice, index|
+      def transform_slices(data)
+        segments = segment_values(data)
+        total = segment_total(segments)
+        segments.map.with_index do |segment, index|
+          value = segment.value.value
+          share = proportional_share(value, total)
           {
-            id: "slice_#{index}",
-            label: slice.label,
-            value: slice.value,
-            percentage: slice.percentage(diagram.total_value),
-            angle: diagram.slice_angle(slice),
-            index: index,
+            id: segment.id, label: segment.label, value: value,
+            percentage: share * 100.0,
+            angle: share * 360.0,
+            index: index
           }
         end
+      end
+
+      def segment_values(data)
+        data.values.select { |value| value.role == "segment" }
+      end
+
+      def segment_total(segments)
+        segments.sum { |segment| segment.value.value }
+      end
+
+      def proportional_share(value, total)
+        total.zero? ? 0.0 : value / total
+      end
+
+      def data_value(data, role, fallback)
+        entry = data.values.find { |value| value.role == role }
+        entry ? entry.value.value : fallback
       end
     end
   end

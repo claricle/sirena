@@ -2,6 +2,7 @@
 
 require_relative "base"
 require_relative "../diagram/info"
+require_relative "../notation/mermaid/ir_adapters/info"
 
 module Sirena
   module Layout
@@ -53,13 +54,13 @@ module Sirena
       # @param diagram [Diagram::Info] the info diagram to transform
       # @return [Hash] data structure for rendering
       def build_graph(diagram)
+        data = ir_data(diagram)
         {
-          id: diagram.id || "info",
-          title: diagram.title,
-          show_info: diagram.show_info || false,
+          id: data.id, title: data.label,
+          show_info: data_value(data, "show_information", false),
           metadata: {
             diagram_type: :info,
-          },
+          }
         }
       end
 
@@ -67,6 +68,17 @@ module Sirena
 
       def scene(diagram)
         scene_from_graph(build_graph(diagram))
+      end
+
+      def ir_data(diagram)
+        return diagram if diagram.is_a?(IR::Data)
+
+        Notation::Mermaid::IRAdapters::Info.call(diagram)
+      end
+
+      def data_value(data, role, fallback)
+        entry = data.values.find { |value| value.role == role }
+        entry ? entry.value.value : fallback
       end
 
       def scene_from_graph(graph)

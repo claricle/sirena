@@ -18,6 +18,14 @@ RSpec.describe Sirena::Layout::Pie do
     expect(populated_geometry).to match(expected_geometry)
   end
 
+  it "lays out shared data IR identically to the private model" do
+    populate_diagram
+    ir = Sirena::Notation::Mermaid::IRAdapters::Pie.call(diagram)
+    ir_scene = described_class.new.call(ir)
+
+    expect(populated_geometry(ir_scene)).to eq(populated_geometry)
+  end
+
   def populate_diagram
     diagram.slices = [slice("Small", 1), slice("Large", 3)]
     diagram.id = "share"
@@ -31,17 +39,17 @@ RSpec.describe Sirena::Layout::Pie do
     diagram.acc_description = "One quarter and three quarters"
   end
 
-  def populated_geometry
-    scene_identity + [slice_geometry]
+  def populated_geometry(value = scene)
+    scene_identity(value) + [slice_geometry(value)]
   end
 
-  def scene_identity
-    [scene.id, scene.width, scene.height, scene.title.text,
-     scene.acc_title, scene.acc_description]
+  def scene_identity(value)
+    [value.id, value.width, value.height, value.title.text,
+     value.acc_title, value.acc_description]
   end
 
-  def slice_geometry
-    scene.slices.map { |slice| [slice.id, slice.label.text, slice.path] }
+  def slice_geometry(value)
+    value.slices.map { |slice| [slice.id, slice.label.text, slice.path] }
   end
 
   def slice(label, value)
