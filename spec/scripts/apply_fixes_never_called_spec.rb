@@ -17,7 +17,9 @@ module ApplyFixesScan
   # The gemspec decides what ships; code is the subset a token scan can read.
   def shipped_files(root)
     gemspec = Gem::Specification.load(File.join(root, "sirena.gemspec"))
-    gemspec.files.grep(SHIPPED_CODE).map { |f| File.join(root, f) }.select { |f| File.file?(f) }.sort
+    gemspec.files.grep(SHIPPED_CODE).map do |f|
+      File.join(root, f)
+    end.select { |f| File.file?(f) }.sort
   end
 
   def apply_fixes_references(paths)
@@ -39,7 +41,9 @@ module ApplyFixesScan
   end
 
   def trap_new_instances(klass, raised_methods, error, returned_methods = {})
-    allow(klass).to receive(:new).and_wrap_original do |constructor, *args, **kwargs, &block|
+    allow(klass)
+      .to receive(:new)
+      .and_wrap_original do |constructor, *args, **kwargs, &block|
       instance = constructor.call(*args, **kwargs, &block)
       trap_instance(instance, raised_methods, error, returned_methods)
       instance
@@ -53,6 +57,18 @@ module ApplyFixesScan
     return if returned_methods.empty?
 
     allow(instance).to receive_messages(returned_methods)
+  end
+
+  def validate_broken_svg
+    SvgConform.validate(broken_svg, profile: profile, fix: true)
+  end
+
+  def validate_broken_file
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "broken.svg")
+      File.write(path, broken_svg)
+      SvgConform.validate_file(path, profile: profile, fix: true)
+    end
   end
 end
 
@@ -85,65 +101,77 @@ RSpec.describe "svg_conform apply_fixes", type: :task do
     # fails here instead of hiding from the token scan.
     let(:fixes_called) { Class.new(StandardError) }
     let(:profile) { Sirena::Svg::CONFORMANCE_PROFILE }
+    let(:broken_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>' }
     let(:conformant_svgs) do
-      %w[flowchart sequence class_diagram state_diagram er_diagram user_journey xy_chart sankey].map do |type|
-        Sirena::Engine.new.render(File.read(File.join(repo_root, "spec", "fixtures", type, "input.mmd")))
+      %w[flowchart sequence class_diagram state_diagram er_diagram user_journey
+         xy_chart sankey].map do |type|
+        input = File.join(repo_root, "spec", "fixtures", type, "input.mmd")
+        Sirena::Engine.new.render(File.read(input))
       end
     end
 
     before do
       require "svg_conform"
-      { SvgConform::ValidationResult => [:apply_fixes],
+      guarded_methods = {
+        SvgConform::ValidationResult => [:apply_fixes],
         SvgConform::Fixer => %i[apply_fix apply_fixes apply_validation_fixes],
         SvgConform::Profile => [:apply_remediations],
-        SvgConform::RemediationEngine => [:apply_remediations] }.each do |klass, names|
+        SvgConform::RemediationEngine => [:apply_remediations],
+      }
+      guarded_methods.each do |klass, names|
         trap_new_instances(klass, names, fixes_called)
       end
+      trap_new_instances(
+        SvgConform::ValidationResult,
+        [:apply_fixes],
+        fixes_called,
+        fixable?: true,
+      )
       allow(SvgConform::Profiles.get(profile))
         .to receive(:apply_remediations).and_raise(fixes_called)
     end
 
-    it "is not reached when fix: true validates Sirena output, as a string or a file" do
+    it "does not invoke fixes while validating Sirena output" do
       Dir.mktmpdir do |dir|
         conformant_svgs.each_with_index do |svg, i|
           path = File.join(dir, "#{i}.svg")
           File.write(path, svg)
 
-          expect(SvgConform.validate(svg, profile: profile, fix: true)).to be_valid
-          expect(SvgConform.validate_file(path, profile: profile, fix: true)).to be_valid
+          expect(SvgConform.validate(svg, profile: profile,
+                                          fix: true)).to be_valid
+          expect(SvgConform.validate_file(path, profile: profile,
+                                                fix: true)).to be_valid
         end
       end
     end
 
     it "raises when a fixable violation reaches it, so the trap is live" do
-      trap_new_instances(SvgConform::ValidationResult, [:apply_fixes], fixes_called, fixable?: true)
-      broken = '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>'
-
-      expect { SvgConform.validate(broken, profile: profile, fix: true) }.to raise_error(fixes_called)
+      expect { validate_broken_svg }.to raise_error(fixes_called)
     end
 
     # The file path skips apply_fixes and rewrites through the profile.
     it "raises through the file path too" do
-      Dir.mktmpdir do |dir|
-        path = File.join(dir, "broken.svg")
-        File.write(path, '<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>')
-
-        expect { SvgConform.validate_file(path, profile: profile, fix: true) }.to raise_error(fixes_called)
-      end
+      expect { validate_broken_file }.to raise_error(fixes_called)
     end
   end
 
   describe "the scan itself" do
     it "flags a direct call" do
-      expect(apply_fixes_reference_count("validator.apply_fixes(svg)\n")).to eq(1)
+      source = "validator.apply_fixes(svg)\n"
+
+      expect(apply_fixes_reference_count(source)).to eq(1)
     end
 
     it "flags a dynamic send by symbol" do
-      expect(apply_fixes_reference_count("validator.send(:apply_fixes, svg)\n")).to eq(1)
+      source = "validator.send(:apply_fixes, svg)\n"
+
+      expect(apply_fixes_reference_count(source)).to eq(1)
     end
 
     it "ignores a comment that only mentions the name" do
-      expect(apply_fixes_reference_count("# never call apply_fixes here\n")).to eq(0)
+      source = "# never call apply_fixes here\n"
+
+      expect(apply_fixes_reference_count(source)).to eq(0)
     end
   end
 end

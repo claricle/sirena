@@ -16,7 +16,8 @@ require_relative "../../scripts/hardened_mmdc"
 # script when both run together in one suite.
 unless defined?(CorpusVerdicts)
   CorpusVerdicts = Module.new
-  load File.expand_path("../../scripts/corpus_verdicts.rb", __dir__), CorpusVerdicts
+  load File.expand_path("../../scripts/corpus_verdicts.rb", __dir__),
+       CorpusVerdicts
 end
 
 # Every process tree uses real processes — a stub would only prove that the
@@ -25,6 +26,12 @@ RSpec.describe HardenedMmdc do
   include MermaidDiffSpecSupport::Helpers
 
   let(:spawned) { [] }
+  let(:wait_with_deadline) { described_class.method(:wait_with_deadline) }
+  let(:finishing_pid) do
+    Process.spawn("/bin/sh", "-c", "/bin/sleep 0.4; exit 7", pgroup: true)
+      .tap { spawned << _1 }
+  end
+  let(:hang_cmd) { ["/bin/sh", "-c", "sleep 20.61"] }
 
   before { skip("the harness is POSIX-only") if Gem.win_platform? }
 
@@ -38,13 +45,15 @@ RSpec.describe HardenedMmdc do
     {
       "is not on PATH at all" => nil,
       "never answers" => "#!/bin/sh\nexec /bin/sleep 30 2>/dev/null\n",
-      "prints bytes that are not UTF-8" => "#!/bin/sh\nprintf '\\377\\376 1 0\\n'\n",
+      "prints bytes that are not UTF-8" =>
+        "#!/bin/sh\nprintf '\\377\\376 1 0\\n'\n",
     }.each do |trouble, script|
       it "kills the group anyway when ps #{trouble}" do
         stub_const("HardenedMmdc::PS_TIMEOUT", 0.3)
         parent, _child = spawn_tree
+        kill = proc { described_class.send(:kill_group, parent) }
 
-        only("ps", script) { Timeout.timeout(guard) { described_class.send(:kill_group, parent) } }
+        only("ps", script) { Timeout.timeout(guard, &kill) }
 
         expect(dies?(parent)).to be(true)
       end
@@ -73,10 +82,9 @@ RSpec.describe HardenedMmdc do
     # measured, the sweep returned in 0.30s and the reader waited 21.29s.
     it "kills a ps that never answers rather than leave its pipe open" do
       stub_const("HardenedMmdc::PS_TIMEOUT", 1)
+      query = proc { described_class.send(:descendants_of, Process.pid) }
 
-      only("ps", wedge("20.17")) do
-        Timeout.timeout(guard) { described_class.send(:descendants_of, Process.pid) }
-      end
+      only("ps", wedge("20.17")) { Timeout.timeout(guard, &query) }
 
       expect(gone?("20.17")).to be(true)
     end
@@ -88,10 +96,10 @@ RSpec.describe HardenedMmdc do
   describe "waiting out the deadline" do
     it "keeps the status of a program that finished while ps was running" do
       stub_const("HardenedMmdc::CASE_TIMEOUT", 0)
-      pid = Process.spawn("/bin/sh", "-c", "sleep 0.4; exit 7", pgroup: true)
-      spawned << pid
 
-      status = only("ps", slow_ps) { Timeout.timeout(guard) { described_class.send(:wait_with_deadline, pid) } }
+      status = only("ps", slow_ps) do
+        Timeout.timeout(guard) { wait_with_deadline.call(finishing_pid) }
+      end
 
       expect(status.exitstatus).to eq(7)
     end
@@ -100,10 +108,9 @@ RSpec.describe HardenedMmdc do
     # and handing back its status would read as mermaid rejecting the source.
     it "gives no status for a program the deadline killed" do
       stub_const("HardenedMmdc::CASE_TIMEOUT", 0)
-      pid = Process.spawn("/bin/sh", "-c", "sleep 20.61", pgroup: true)
-      spawned << pid
+      pid = Process.spawn(*hang_cmd, pgroup: true).tap { spawned << _1 }
 
-      status = Timeout.timeout(guard) { described_class.send(:wait_with_deadline, pid) }
+      status = Timeout.timeout(guard) { wait_with_deadline.call(pid) }
 
       expect(status).to be_nil
     end
@@ -118,7 +125,8 @@ RSpec.describe HardenedMmdc do
       status, output = Dir.mktmpdir do |dir|
         prefix_path(fake_mmdc(dir, "#!/bin/sh\nexec /bin/sleep 26.43\n")) do
           Timeout.timeout(guard) do
-            described_class.run_mmdc(File.join(dir, "in.mmd"), File.join(dir, "out.svg"))
+            described_class.run_mmdc(File.join(dir, "in.mmd"),
+                                     File.join(dir, "out.svg"))
           end
         end
       end
@@ -163,15 +171,17 @@ RSpec.describe HardenedMmdc do
     # BEFORE its child escapes and holds the pipe open. Giving up on EOF must
     # not throw away what was already read — that diagnostic is the one
     # piece of evidence explaining why the case is being abandoned.
-    it "keeps a diagnostic already read even when a child escapes and the drain never reaches EOF" do
+    it "keeps a diagnostic when an escaped child prevents EOF" do
       stub_const("HardenedMmdc::DRAIN_GRACE", 0.3)
 
       Dir.mktmpdir do |dir|
         pidfile = File.join(dir, "child.pid")
+        script = escaping_child_with_output(pidfile, "syntax error")
 
-        prefix_path(fake_mmdc(dir, escaping_child_with_output(pidfile, "syntax error"))) do
+        prefix_path(fake_mmdc(dir, script)) do
           _status, output = Timeout.timeout(guard) do
-            described_class.run_mmdc(File.join(dir, "in.mmd"), File.join(dir, "out.svg"))
+            described_class.run_mmdc(File.join(dir, "in.mmd"),
+                                     File.join(dir, "out.svg"))
           end
 
           expect(output).to eq("syntax error")
@@ -235,9 +245,13 @@ RSpec.describe HardenedMmdc do
             wait_for_pid.call
             result
           end
-          allow(described_class).to receive(:wait_with_deadline).and_raise(Interrupt)
+          allow(described_class)
+            .to receive(:wait_with_deadline)
+            .and_raise(Interrupt)
 
-          expect { described_class.run_mmdc(input, output) }.to raise_error(Interrupt)
+          expect do
+            described_class.run_mmdc(input, output)
+          end.to raise_error(Interrupt)
           pid = File.read(pidfile).to_i
           expect(dies?(pid)).to be(true)
         ensure
@@ -255,7 +269,7 @@ RSpec.describe HardenedMmdc do
   describe "protecting a second call site the same way" do
     let(:corpus_harness) { Class.new { include CorpusVerdicts }.new }
 
-    it "kills a hanging mmdc reached through corpus_verdicts.rb, not just mermaid_diff.rb" do
+    it "kills a hanging mmdc reached through corpus verdicts" do
       stub_const("HardenedMmdc::CASE_TIMEOUT", 0.3)
 
       Dir.mktmpdir do |dir|
