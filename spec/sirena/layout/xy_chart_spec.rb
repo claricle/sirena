@@ -26,7 +26,7 @@ RSpec.describe Sirena::Layout::XyChart do
   end
 
   it "lays out direct shared IR identically to the private diagram" do
-    ir = Sirena::Notation::Mermaid::IRAdapters::Xychart.call(diagram)
+    ir = Sirena::Notation::Mermaid::IRAdapters::XyChart.call(diagram)
     scenes = [diagram, ir].map { |input| described_class.new.call(input) }
 
     expect(scenes.map { |result| Marshal.dump(result) }.uniq.one?).to be(true)

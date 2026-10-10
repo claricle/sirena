@@ -97,6 +97,7 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
   def opted_in_types
     %i[
       mindmap sankey pie info error packet timeline kanban radar treemap
+      quadrant xychart block
     ].to_h do |type|
       source = File.read("spec/fixtures/contract/#{type}.mmd")
       [type, Sirena::Notation::Mermaid.parse(source).diagram.class]
@@ -110,7 +111,10 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapter do
       kanban: Sirena::IR::Data, radar: Sirena::IR::Data,
       treemap: Sirena::IR::Data,
       packet: Sirena::IR::Prepositioned,
-      timeline: Sirena::IR::Prepositioned
+      timeline: Sirena::IR::Prepositioned,
+      quadrant: Sirena::IR::Prepositioned,
+      xychart: Sirena::IR::Prepositioned,
+      block: Sirena::IR::Prepositioned
     }
   end
 end

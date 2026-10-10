@@ -88,14 +88,14 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `gantt` | `pre-positioned` | `lib/sirena/layout/gantt.rb` | Dates, durations, declaration order, and dependencies determine task intervals before drawing (21–31, 60–101). |
 | `pie` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/pie.rb` | Ordered slice values and visibility become shared data; layout alone computes percentages, angles, paths, and labels. |
 | `timeline` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/timeline.rb` | Sections, events, descriptions, and tasks map to ordered contained placements; layout owns all canvas geometry. |
-| `quadrant` | `pre-positioned` | `lib/sirena/layout/quadrant.rb` | Each point's source x/y values determine its place in the fixed 2x2 chart (28–48, 138–158). |
+| `quadrant` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/quadrant.rb` | Axis and region labels plus contained point coordinates and source styles map to shared placements; layout owns canvas geometry. |
 | `git_graph` | `graph-shaped` | `lib/sirena/layout/git_graph.rb` | Commits identify parents and emitted connections identify from/to commits (45–82, 226–257); branch order only influences layout. |
 | `mindmap` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/mindmap.rb` | Tree nodes map to shared identities, containment, and resolved parent/child edges; layout owns their geometry. |
 | `kanban` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/kanban.rb` | Columns, cards, metadata, and style references map to ordered contained items and values; layout owns stacking and dimensions. |
 | `radar` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/radar.rb` | Axes, datasets, measurements, options, and accessibility map to ordered shared data; layout derives all polar geometry. |
-| `block` | `pre-positioned` | `lib/sirena/layout/block.rb` | The grammar's column count, spaces, order, and spans fix the grid (28–38, 43–109); its from/to connections do not override the first test (182–198). |
+| `block` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/block.rb` | Grid columns, ordered spans and spaces, nesting, shapes, and connections map to shared placements and edges; layout owns canvas geometry. |
 | `requirement` | `graph-shaped` | `lib/sirena/layout/requirement.rb` | Requirements/elements are identified nodes and relationships name source and target (31–41, 113–133, 199–224). |
-| `xychart` | `pre-positioned` | `lib/sirena/layout/xy_chart.rb` | Axis domains and data values determine plot positions in source-domain coordinates (33–58, 190–224). |
+| `xychart` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/xychart.rb` | Axes, categories, ranges, series, samples, and colors map to ordered shared placements; layout owns canvas geometry. |
 | `architecture` | `graph-shaped` | `lib/sirena/layout/architecture.rb` | Services/junctions have ids and each embedded edge model retains `from_id`/`to_id` even though the output also has routed coordinates (24–41, 296–317). |
 | `sankey` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/sankey.rb` | Flows map to shared nodes and resolved weighted edges; layout owns layering, positions, and paths. |
 | `packet` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/packet.rb` | Fields map to ordered bit-start placements with inclusive spans; layout owns row, column, and pixel geometry. |
@@ -106,10 +106,10 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **10 of 24 Mermaid types use the shared IR boundary** — 2
+Migration status: **13 of 24 Mermaid types use the shared IR boundary** — 2
 graph-shaped (`mindmap`, `sankey`), 6 data-shaped (`pie`, `info`, `error`,
-`kanban`, `radar`, `treemap`), and 2 pre-positioned (`packet`, `timeline`); 14
-types remain on their private layout inputs.
+`kanban`, `radar`, `treemap`), and 5 pre-positioned (`packet`, `timeline`,
+`quadrant`, `xychart`, `block`); 11 types remain on their private layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
 summary and recalculates all four counts from the table. The generated adapter

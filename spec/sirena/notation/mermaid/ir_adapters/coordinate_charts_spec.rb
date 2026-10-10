@@ -52,7 +52,7 @@ RSpec.describe Sirena::Notation::Mermaid::IRAdapters::CoordinateCharts do
     end
   end
 
-  describe Sirena::Notation::Mermaid::IRAdapters::Xychart do
+  describe Sirena::Notation::Mermaid::IRAdapters::XyChart do
     subject(:ir) { described_class.call(diagram) }
 
     let(:diagram) do
