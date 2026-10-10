@@ -25,6 +25,7 @@ module PlantUmlSequenceCorpus
     846af1d12917 920d4bcaa3e9 d783321e2c62
     559333843e38 184d55bcfb9c 2dd4eecfa67b f985a9b8f0de
     0385427ea4be 24072f84b995 577feb6055fb
+    6893700e037a 18d6381b866f f602d00329ee
   ].freeze
 
   def case_named(suffix)
@@ -112,6 +113,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     fills = matches(svg, "//rect/@fill").map(&:value)
 
     expect(fills).to include("red", "green")
+  end
+
+  it "draws the parallel notes of a rendered case at one height" do
+    svg = Sirena.render(source_of("f602d00329ee"), notation: :plantuml)
+    ys = matches(svg, "//text[starts-with(., 'n')]/@y").map(&:value)
+
+    expect([ys.size, ys.uniq.size]).to eq([4, 1])
   end
 
   it "refuses every other case instead of rendering part of it" do

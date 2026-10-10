@@ -19,6 +19,11 @@ module Sirena
             freeze
           end
 
+          # True for a message written after `&`; see {ParallelMessage}.
+          def parallel?
+            false
+          end
+
           def self_message?
             from == to
           end

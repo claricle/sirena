@@ -48,6 +48,50 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
   end
 
+  describe "parallel lines" do
+    def parallel_flags(*lines)
+      parse("!pragma teoz true", *lines).items.map(&:parallel?)
+    end
+
+    it "marks a message, a note and a block that start with &" do
+      lines = ["A -> B", "& B -> A", "& note over A: n", "& opt", "end"]
+
+      expect(parallel_flags(*lines)).to eq([false, true, true, true, false])
+    end
+
+    it "reads the note body of a block note that starts with &" do
+      note = parse("!pragma teoz true", "A -> B", "& note over A", "x",
+                   "end note").items.last
+
+      expect([note.parallel?, note.text]).to eq([true, "x"])
+    end
+
+    it "marks a message written after a closed block" do
+      expect(parallel_flags("opt", "A -> B", "end", "& A -> B").last)
+        .to be(true)
+    end
+
+    it "keeps the activation written on a parallel message" do
+      diagram = parse("!pragma teoz true", "A -> B", "& B -> C ++")
+
+      expect(activations(diagram).map(&:participant)).to eq(["C"])
+    end
+
+    {
+      "without the teoz pragma" => ["A -> B", "& B -> A"],
+      "with nothing to share a row with" => ["!pragma teoz true", "& A -> B"],
+      "after a divider" => ["!pragma teoz true", "A -> B", "== d ==",
+                            "& B -> A"],
+      "before something that takes no row" => ["!pragma teoz true", "A -> B",
+                                               "& activate A"],
+    }.each do |situation, lines|
+      it "refuses & #{situation} as a parallel message" do
+        expect(refusal_of(*lines))
+          .to have_attributes(construct: "parallel message")
+      end
+    end
+  end
+
   describe "activation" do
     let(:phases) do
       ->(diagram) { diagram.items.grep(Sirena::Notation::PlantUML::Sequence::Activation).map(&:phase) }

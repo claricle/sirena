@@ -13,6 +13,14 @@ module PlantUmlSequenceSceneHelpers
   def top_heads(scene)
     scene.heads.first(scene.lifelines.size)
   end
+
+  def teoz_scene(*lines)
+    scene_of("!pragma teoz true", *lines)
+  end
+
+  def arrow_ys(scene)
+    scene.arrows.map { |arrow| arrow.path[/M \S+ (\S+)/, 1].to_f }
+  end
 end
 
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
@@ -217,6 +225,59 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
 
       expect(scene.crosses.map { |line| (line.y1 + line.y2) / 2 })
         .to all(eq(arrow_y))
+    end
+  end
+
+  describe "parallel rows" do
+    it "draws a message on the row of the one before it" do
+      scene = teoz_scene("A -> B", "& C -> D")
+
+      expect(arrow_ys(scene).uniq.size).to eq(1)
+    end
+
+    it "continues below the row after a chain of parallel messages" do
+      parallel = teoz_scene("A -> B", "& C -> D", "A -> B")
+      single = teoz_scene("A -> B", "A -> B")
+
+      expect(arrow_ys(parallel).last).to eq(arrow_ys(single).last)
+    end
+
+    it "continues below a taller parallel item" do
+      scene = teoz_scene("A -> B", "& C -> C", "A -> B")
+
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
+    end
+
+    it "continues below a taller message before a shorter parallel one" do
+      scene = teoz_scene("A -> A", "& B -> C", "A -> B")
+
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
+    end
+
+    it "puts a note beside the note before it at the same height" do
+      scene = teoz_scene("A -> B", "note over A: a", "& note over B: b")
+      tops = scene.notes.map { |note| note.texts.first.y }
+
+      expect(tops.uniq.size).to eq(1)
+    end
+
+    it "opens a block level with the message before it" do
+      scene = teoz_scene("A -> B", "& opt", "C -> D", "end")
+
+      expect(scene.fragments.first.y).to eq(arrow_ys(scene).first)
+    end
+
+    it "draws a message beside a block that has just closed" do
+      scene = teoz_scene("opt", "A -> B", "end", "& C -> C")
+
+      expect(scene.arrows.last.path[/M \S+ (\S+)/, 1].to_f)
+        .to eq(scene.fragments.first.y)
+    end
+
+    it "continues below a taller message beside a short block" do
+      scene = teoz_scene("A -> A", "& opt", "end", "B -> C")
+
+      expect(arrow_ys(scene).last - arrow_ys(scene).first).to eq(60.0)
     end
   end
 

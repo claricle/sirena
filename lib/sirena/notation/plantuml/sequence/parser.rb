@@ -9,6 +9,7 @@ require_relative "diagram"
 require_relative "message"
 require_relative "note"
 require_relative "outline"
+require_relative "parallel_message"
 require_relative "participant"
 require_relative "refusals"
 require_relative "style"
@@ -70,10 +71,12 @@ module Sirena
           DIVIDER = /\A==[ \t]*(.*?)[ \t]*==\z/
           BOX = /\Abox(?:[ \t]+(#{QUOTED}))?\z/io
           END_BOX = /\A(?:endbox|end[ \t]+box)\z/i
-          PRAGMA = /\A!pragma[ \t]+(?:teoz|svginteractive)[ \t]+true\z/i
+          PRAGMA = /\A!pragma[ \t]+(teoz|svginteractive)[ \t]+true\z/i
           STARTUML = /\A@startuml(?![A-Za-z0-9_])/
           LINE_END = /\r\n|\r|\n/
+          PARALLEL = /\A&[ \t]*(.*)\z/
 
+          PARALLEL_KINDS = [MESSAGE, NOTE, BLOCK].freeze
           TIMELINE = [[MESSAGE, :message], [NOTE, :note], [BLOCK, :block],
                       [BRANCH, :branch], [ACTIVATION, :activation],
                       [RETURN, :reply], [DIVIDER, :divider],
@@ -84,7 +87,8 @@ module Sirena
                            :LINE_END, :PRAGMA, :ACTIVATION, :MARKS, :TARGET,
                            :NOTE, :END_NOTE, :BLOCK, :BRANCH, :RETURN, :DIVIDER,
                            :DESTROY, :COLOUR, :SKINPARAM_WIDTH, :STYLE_OPEN,
-                           :STYLE_CLOSE
+                           :STYLE_CLOSE, :PARALLEL,
+                           :PARALLEL_KINDS
 
           # @param source [String] PlantUML source
           # @return [Diagram] the frozen diagram
@@ -111,6 +115,8 @@ module Sirena
             @pending_note = nil
             @pending_style = nil
             @min_head_width = nil
+            @teoz = false
+            @parallel = false
           end
 
           def lines_of(source)
@@ -152,9 +158,14 @@ module Sirena
             return collect_note(text) if @pending_note
             return collect_style(text) if @pending_style
             return end_of_diagram(text, number) if text == "@enduml"
-            return :statements if PRAGMA.match?(text)
+            return pragma(PRAGMA.match(text)) if PRAGMA.match?(text)
 
             read(text, number)
+            :statements
+          end
+
+          def pragma(match)
+            @teoz ||= match[1].casecmp?("teoz")
             :statements
           end
 
@@ -213,6 +224,25 @@ module Sirena
           # Reads one line that belongs in the item sequence; false when it
           # is not one, or when it is out of place.
           def timeline(text)
+            parallel = PARALLEL.match(text)
+            return parallel_line(parallel[1]) if parallel
+
+            read_timeline(text)
+          end
+
+          # Only teoz draws `&` on the row above; without it PlantUML
+          # stacks the line as an ordinary one, so it stays refused.
+          def parallel_line(text)
+            return false unless @teoz && @outline.anchored?
+            return false unless PARALLEL_KINDS.any? { |kind| kind.match?(text) }
+
+            @parallel = true
+            read_timeline(text)
+          ensure
+            @parallel = false
+          end
+
+          def read_timeline(text)
             TIMELINE.each do |pattern, reader|
               match = pattern.match(text)
               return send(reader, match) if match
@@ -221,7 +251,8 @@ module Sirena
           end
 
           def block(match)
-            @outline.open_block(match[1].downcase, match[2].to_s.strip)
+            @outline.open_block(match[1].downcase, match[2].to_s.strip,
+                                parallel: @parallel)
           end
 
           def branch(match)
@@ -257,7 +288,7 @@ module Sirena
 
           def pending_note_from(match)
             { shape: match[1].downcase.to_sym, side: match[2].downcase.to_sym,
-              targets: targets_of(match[3]), lines: [] }
+              targets: targets_of(match[3]), lines: [], parallel: @parallel }
           end
 
           def targets_of(list)
@@ -282,7 +313,8 @@ module Sirena
             @pending_note = nil
             @outline.note(Note.new(shape: pending[:shape],
                                    side: pending[:side],
-                                   targets: pending[:targets], text: text))
+                                   targets: pending[:targets], text: text,
+                                   parallel: pending[:parallel]))
           end
 
           def open_box(match, text, number)
@@ -326,8 +358,9 @@ module Sirena
             from, to = [match[1], match[3]].map { |name| mention(name) }
             arrow = ARROWS.fetch(match[2])
             from, to = to, from if arrow[:reversed]
-            Message.new(from: from, to: to, label: match[7],
-                        head: arrow[:head], dashed: arrow[:dashed])
+            kind = @parallel ? ParallelMessage : Message
+            kind.new(from: from, to: to, label: match[7],
+                     head: arrow[:head], dashed: arrow[:dashed])
           end
 
           # `--` deactivates the sender, `++` activates the receiver and `!!`
