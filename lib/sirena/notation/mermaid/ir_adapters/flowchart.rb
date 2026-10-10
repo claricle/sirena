@@ -19,8 +19,8 @@ module Sirena
           def adapt(diagram)
             occupied = []
             boxes = drawable_boxes(diagram)
-            box_ids = identity_map(boxes, occupied, "group")
-            node_ids = identity_map(diagram.nodes, occupied, "node")
+            box_ids = identity_map(boxes, occupied)
+            node_ids = identity_map(diagram.nodes, occupied)
             nodes = entity_nodes(diagram, boxes, box_ids, node_ids, occupied)
             edges = edge_nodes(diagram.edges || [], node_ids, box_ids, occupied)
             settings = settings_nodes(diagram, occupied)
@@ -142,12 +142,9 @@ module Sirena
             end
           end
 
-          def identity_map(items, occupied, fallback)
-            identities = {}.compare_by_identity
-            enumerated = items.each_with_index
-            enumerated.with_object(identities) do |(item, index), result|
-              preferred = item.id.to_s.empty? ? "#{fallback}_#{index}" : item.id
-              result[item] = reserve_id(preferred, occupied)
+          def identity_map(items, occupied)
+            items.each_with_object({}.compare_by_identity) do |item, result|
+              result[item] = reserve_id(item.id, occupied)
             end
           end
 
