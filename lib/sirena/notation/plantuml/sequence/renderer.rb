@@ -15,6 +15,7 @@ module Sirena
           LAYERS = [
             %i[frames frame_group], %i[lifelines lifeline],
             %i[bars activation_bar], %i[crosses cross_line],
+            %i[page_breaks page_break_line],
             %i[fragments fragment_group], %i[dividers divider_group],
             %i[arrows arrow_group], %i[notes note_group],
             %i[heads head_group]
@@ -72,6 +73,10 @@ module Sirena
 
           def cross_line(segment)
             solid(segment).tap { |line| line.stroke = edge_colour }
+          end
+
+          def page_break_line(segment)
+            lifeline(segment).tap { |line| line.stroke_dasharray = "2,2" }
           end
 
           def lifeline(segment)

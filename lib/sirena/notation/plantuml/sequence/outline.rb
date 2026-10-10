@@ -6,6 +6,7 @@ require_relative "destroy"
 require_relative "divider"
 require_relative "fragment"
 require_relative "message"
+require_relative "page_break"
 
 module Sirena
   module Notation
@@ -16,13 +17,18 @@ module Sirena
         # answers, which block an `else` or `end` belongs to. Each query
         # returns false instead of adding an item it cannot place.
         class Outline
-          attr_reader :items
-
           def initialize
             @items = []
             @calls = []
             @blocks = []
             @depth = Hash.new(0)
+          end
+
+          # @return [Array] the items of the first page, which ends with its
+          #   {PageBreak}; later pages are read but not kept.
+          def items
+            cut = @items.index { |item| item.is_a?(PageBreak) }
+            cut ? @items.first(cut + 1) : @items
           end
 
           # `marks` are the changes written on the same line, as
@@ -85,6 +91,13 @@ module Sirena
             end
             last.is_a?(Message) || last.is_a?(Note) ||
               (last.is_a?(Fragment) && last.phase == :close)
+          end
+
+          # False inside a block, which a page would have to cut in two.
+          def newpage
+            return false if open_block?
+
+            @items << PageBreak.new
           end
 
           def divider(label)
