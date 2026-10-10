@@ -222,7 +222,7 @@ module PlantumlOracle
   def probe(runner, command, pattern)
     run = runner.call(command, "", 30)
     match = pattern.match("#{run.stdout}\n#{run.stderr}")
-    unless match && !run.spawn_error && !run.timed_out
+    unless match && run.status&.zero? && !run.spawn_error && !run.timed_out
       raise InfrastructureFailure,
             "cannot read version from `#{command.join(' ')}`"
     end
@@ -230,11 +230,12 @@ module PlantumlOracle
     match[1].strip
   end
 
-  def record(id, source, result, versions)
+  def record(id, source, result, versions, binary: DEFAULT_BINARY)
     { "id" => id, "verdict" => result.state.to_s, "reason" => result.reason }
       .merge(hashes(source, result),
              versions.slice("plantuml", "java", "graphviz"),
-             "command" => command.join(" "), "contract" => CONTRACT_VERSION)
+             "command" => command(binary).join(" "),
+             "contract" => CONTRACT_VERSION)
   end
 
   def hashes(source, result)
@@ -257,13 +258,14 @@ module PlantumlOracle
   end
 
   def verdict_records(cases, versions, **options)
+    binary = options.fetch(:binary, DEFAULT_BINARY)
     cases.sort.map do |id, source|
       result = judge(source, **options)
       unless result.verdict?
         raise InfrastructureFailure, "#{id}: #{result.reason}"
       end
 
-      record(id, source, result, versions)
+      record(id, source, result, versions, binary: binary)
     end
   end
 

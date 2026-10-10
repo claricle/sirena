@@ -282,6 +282,17 @@ RSpec.describe PlantumlOracle do
         expect(records.last.values_at(*fields))
           .to eq(["1.2026.6 / abc", "21.0.2", "15.1.1", *hashes])
       end
+
+      it "records the configured rendering command" do
+        binary = "/opt/pinned/plantuml"
+        described_class.refresh(
+          cases, path, runner: alive_runner, binary: binary
+        )
+        commands = YAML.load_file(path).fetch("verdicts")
+          .map { |record| record.fetch("command") }
+
+        expect(commands).to all(eq("#{binary} --svg --pipe --charset UTF-8"))
+      end
     end
 
     context "when one case hits an infrastructure failure" do
@@ -358,6 +369,25 @@ RSpec.describe PlantumlOracle do
         refresh_failure(cases, path, runner)
 
         expect(File.read(path)).to eq(prior)
+      end
+    end
+
+    context "when a version probe fails after printing matching text" do
+      let(:runner) do
+        failed_dot = run_of(status: 1,
+                            stderr: "dot - graphviz version 15.1.1 (2026)")
+        lambda do |command, input, timeout|
+          next failed_dot if command.first == "dot"
+
+          alive_runner.call(command, input, timeout)
+        end
+      end
+
+      it "treats the probe as infrastructure and preserves prior verdicts" do
+        failure = refresh_failure(cases, path, runner)
+
+        expect([failure.class, failure.message, File.read(path)])
+          .to match([PlantumlOracle::InfrastructureFailure, /dot/, prior])
       end
     end
   end
