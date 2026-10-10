@@ -37,18 +37,14 @@ module SpecSupport
       end
 
       def candidate_elements(extractor, doc)
-        sections = candidate_sections(doc).filter_map do |text|
-          element(extractor, text, text, :journey_section)
-        end
+        sections = wrapper_elements(
+          extractor, doc, "journey-section", :journey_section
+        )
         task_groups = doc.xpath("//g[starts-with(@id, 'task-')]")
         tasks = task_groups.filter_map do |group|
           element(extractor, group, group.xpath("./text").first, :journey_task)
         end
         sections + tasks
-      end
-
-      def candidate_sections(doc)
-        nodes_with_class(doc, "journey-section", tag: "text")
       end
 
       def element(extractor, node, label_node, kind)
