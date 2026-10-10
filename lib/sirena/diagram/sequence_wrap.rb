@@ -14,7 +14,7 @@ module Sirena
       # @param source [String] the whole Mermaid source
       # @return [Boolean] whether every sequence text wraps by default
       def self.on?(source)
-        source.scan(DIRECTIVE).flatten.any? do |body|
+        source.scrub.scan(DIRECTIVE).flatten.any? do |body|
           body.match?(BARE) || body.match?(INIT_WRAP)
         end
       end
