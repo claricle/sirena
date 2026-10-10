@@ -3,8 +3,6 @@ cop: Naming/MethodParameterName
 rows:
 - file: lib/sirena/layout/mindmap.rb
   count: 1
-- file: lib/sirena/layout/treemap.rb
-  count: 2
 - file: lib/sirena/markdown_text/emphasis_simulator.rb
   count: 6
 - file: lib/sirena/renderer/architecture_edge_router.rb
@@ -16,8 +14,6 @@ rows:
 - file: lib/sirena/renderer/er_diagram.rb
   count: 2
 - file: lib/sirena/renderer/markdown_text.rb
-  count: 2
-- file: lib/sirena/renderer/pie.rb
   count: 2
 - file: lib/sirena/renderer/sequence.rb
   count: 19

@@ -1,62 +1,98 @@
 <svg
- width="2429.376"
- height="520.0"
- viewBox="0 0 2429.376 520.0"
+ width="2461.568"
+ height="643.84"
+ viewBox="0 0 2461.568 643.84"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<path fill="none" stroke="#007bff" stroke-width="2" d="M 1214.688 80.0 C 1214.688 130.0, 330.0 130.0, 330.0 180.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 330.0 200.0 C 330.0 250.0, 110.0 250.0, 110.0 300.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 330.0 200.0 C 330.0 250.0, 330.0 250.0, 330.0 300.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 330.0 200.0 C 330.0 250.0, 550.0 250.0, 550.0 300.0"/>
-<path fill="none" stroke="#007bff" stroke-width="2" d="M 1214.688 80.0 C 1214.688 130.0, 1100.0 130.0, 1100.0 180.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1100.0 200.0 C 1100.0 250.0, 880.0 250.0, 880.0 300.0"/>
-<path fill="none" stroke="#28a745" stroke-width="2" d="M 880.0 320.0 C 880.0 370.0, 770.0 370.0, 770.0 420.0"/>
-<path fill="none" stroke="#28a745" stroke-width="2" d="M 880.0 320.0 C 880.0 370.0, 990.0 370.0, 990.0 420.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1100.0 200.0 C 1100.0 250.0, 1320.0 250.0, 1320.0 300.0"/>
-<path fill="none" stroke="#28a745" stroke-width="2" d="M 1320.0 320.0 C 1320.0 370.0, 1210.0 370.0, 1210.0 420.0"/>
-<path fill="none" stroke="#28a745" stroke-width="2" d="M 1320.0 320.0 C 1320.0 370.0, 1430.0 370.0, 1430.0 420.0"/>
-<path fill="none" stroke="#007bff" stroke-width="2" d="M 1214.688 80.0 C 1214.688 130.0, 1764.688 130.0, 1764.688 180.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1764.688 200.0 C 1764.688 250.0, 1650.0 250.0, 1650.0 300.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1764.688 200.0 C 1764.688 250.0, 1874.688 250.0, 1874.688 300.0"/>
-<path fill="none" stroke="#007bff" stroke-width="2" d="M 1214.688 80.0 C 1214.688 130.0, 2209.376 130.0, 2209.376 180.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2209.376 200.0 C 2209.376 250.0, 2099.376 250.0, 2099.376 300.0"/>
-<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2209.376 200.0 C 2209.376 250.0, 2319.376 250.0, 2319.376 300.0"/>
-<circle fill="#e6f2ff" stroke="#007bff" stroke-width="2" cx="1214.688" cy="144.82799999999997" r="84.82799999999999"/>
-<text fill="#000000" x="1214.688" y="149.82799999999997" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Software Development</text>
-<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="280.0" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="330.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Planning</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="60.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="110.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Requirements</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="280.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="330.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Design</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="500.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="550.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Architecture</text>
-<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1050.0" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1100.0" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Development</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="830.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="880.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Frontend</text>
-<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="720.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="770.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">React</text>
-<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="940.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="990.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Vue</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1270.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1320.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Backend</text>
-<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1160.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1210.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Ruby</text>
-<rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1380.0" y="420.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1430.0" y="445.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Python</text>
-<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1714.688" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1764.688" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Testing</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1600.0" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1650.0" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Unit Tests</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1820.0" y="300.0" width="109.376" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="1874.688" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Integration Tests</text>
-<rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="2159.376" y="180.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="2209.376" y="205.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Deployment</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2049.376" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="2099.376" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">CI/CD</text>
-<rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2269.376" y="300.0" width="100.0" height="40.0" rx="5.0" ry="5.0"/>
-<text fill="#000000" x="2319.376" y="325.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12">Monitoring</text>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1230.784 150.92000000000002 C 1230.784 236.38000000000002, 357.368 236.38000000000002, 357.368 321.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 357.368 338.84000000000003 C 357.368 387.34000000000003, 129.792 387.34000000000003, 129.792 435.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 357.368 338.84000000000003 C 357.368 387.34000000000003, 364.48 387.34000000000003, 364.48 435.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 357.368 338.84000000000003 C 357.368 387.34000000000003, 592.0559999999999 387.34000000000003, 592.0559999999999 435.84000000000003"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1230.784 150.92000000000002 C 1230.784 236.38000000000002, 1113.44 236.38000000000002, 1113.44 321.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1113.44 338.84000000000003 C 1113.44 387.34000000000003, 909.864 387.34000000000003, 909.864 435.84000000000003"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 909.864 452.84000000000003 C 909.864 501.34000000000003, 815.6320000000001 501.34000000000003, 815.6320000000001 549.84"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 909.864 452.84000000000003 C 909.864 501.34000000000003, 1010.7600000000001 501.34000000000003, 1010.7600000000001 549.84"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1113.44 338.84000000000003 C 1113.44 387.34000000000003, 1308.5680000000002 387.34000000000003, 1308.5680000000002 435.84000000000003"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 1308.5680000000002 452.84000000000003 C 1308.5680000000002 501.34000000000003, 1203.6640000000002 501.34000000000003, 1203.6640000000002 549.84"/>
+<path fill="none" stroke="#28a745" stroke-width="2" d="M 1308.5680000000002 452.84000000000003 C 1308.5680000000002 501.34000000000003, 1407.2400000000002 501.34000000000003, 1407.2400000000002 549.84"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1230.784 150.92000000000002 C 1230.784 236.38000000000002, 1767.7359999999999 236.38000000000002, 1767.7359999999999 321.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1767.7359999999999 338.84000000000003 C 1767.7359999999999 387.34000000000003, 1628.1519999999998 387.34000000000003, 1628.1519999999998 435.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 1767.7359999999999 338.84000000000003 C 1767.7359999999999 387.34000000000003, 1883.744 387.34000000000003, 1883.744 435.84000000000003"/>
+<path fill="none" stroke="#007bff" stroke-width="2" d="M 1230.784 150.92000000000002 C 1230.784 236.38000000000002, 2242.448 236.38000000000002, 2242.448 321.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2242.448 338.84000000000003 C 2242.448 387.34000000000003, 2125.104 387.34000000000003, 2125.104 435.84000000000003"/>
+<path fill="none" stroke="#6c757d" stroke-width="2" d="M 2242.448 338.84000000000003 C 2242.448 387.34000000000003, 2344.224 387.34000000000003, 2344.224 435.84000000000003"/>
+<g class="node mindmap-node">
+  <circle fill="#e6f2ff" stroke="#007bff" stroke-width="2" cx="1230.784" cy="150.92000000000002" r="90.92"/>
+  <text fill="#000000" x="1230.784" y="155.92000000000002" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Software Development</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="306.24" y="321.84000000000003" width="102.256" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="357.368" y="343.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Planning</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="60.0" y="435.84000000000003" width="139.584" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="129.792" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Requirements</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="319.584" y="435.84000000000003" width="89.792" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="364.48" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Design</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="529.376" y="435.84000000000003" width="125.36" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="592.0559999999999" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Architecture</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1046.3120000000001" y="321.84000000000003" width="134.256" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1113.44" y="343.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Development</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="857.8480000000001" y="435.84000000000003" width="104.032" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="909.864" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Frontend</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="774.7360000000001" y="549.84" width="81.792" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="815.6320000000001" y="571.84" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">React</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="976.5280000000001" y="549.84" width="68.464" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1010.7600000000001" y="571.84" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Vue</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1257.4400000000003" y="435.84000000000003" width="102.256" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1308.5680000000002" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Backend</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1164.9920000000002" y="549.84" width="77.344" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1203.6640000000002" y="571.84" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Ruby</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#fdeee7" stroke="#ea580c" stroke-width="2" x="1362.3360000000002" y="549.84" width="89.80799999999999" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1407.2400000000002" y="571.84" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Python</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="1721.504" y="321.84000000000003" width="92.464" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1767.7359999999999" y="343.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Testing</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1572.1439999999998" y="435.84000000000003" width="112.016" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1628.1519999999998" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Unit Tests</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="1804.1599999999999" y="435.84000000000003" width="159.168" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="1883.744" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Integration Tests</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#f0f1f2" stroke="#6c757d" stroke-width="2" x="2179.768" y="321.84000000000003" width="125.36" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="2242.448" y="343.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Deployment</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2083.328" y="435.84000000000003" width="83.55199999999999" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="2125.104" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">CI/CD</text>
+</g>
+<g class="node mindmap-node">
+  <rect fill="#eaf6ec" stroke="#28a745" stroke-width="2" x="2286.88" y="435.84000000000003" width="114.688" height="34.0" rx="5.0" ry="5.0"/>
+  <text fill="#000000" x="2344.224" y="457.84000000000003" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16.0">Monitoring</text>
+</g>
 </svg>
