@@ -48,7 +48,8 @@ module Sirena
         # is ASCII-only and out of scope to widen here (common.rb is shared
         # by every diagram type); this local override shadows it for the
         # three accTitle/accDescr rules below only.
-        ACC_WHITESPACE_CHARS = '\t\v\f\r\n\x20\u00A0\u1680' \
+        ACC_WHITESPACE_CHARS =
+          '\t\v\f\r\n\x20\u00A0\u1680' \
           '\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF'
         private_constant :ACC_WHITESPACE_CHARS
 
