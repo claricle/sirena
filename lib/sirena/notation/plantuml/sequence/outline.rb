@@ -65,14 +65,24 @@ module Sirena
             @items.last.is_a?(Message)
           end
 
+          # Whether a line starting with `&` has an element to share a row
+          # with: a message, a note or a block that has just closed.
+          def anchored?
+            last = @items.reverse_each.find do |item|
+              !item.is_a?(Activation) && !item.is_a?(Destroy)
+            end
+            last.is_a?(Message) || last.is_a?(Note) ||
+              (last.is_a?(Fragment) && last.phase == :close)
+          end
+
           def divider(label)
             @items << Divider.new(label: label)
           end
 
-          def open_block(keyword, label)
+          def open_block(keyword, label, parallel: false)
             @blocks << keyword
             @items << Fragment.new(phase: :open, keyword: keyword,
-                                   label: label)
+                                   label: label, parallel: parallel)
           end
 
           def branch(label)

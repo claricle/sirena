@@ -27,6 +27,7 @@ module Sirena
           ARROW_HALF_WIDTH = 4.0
           TAB_HEIGHT = 20.0
           CROSS_HALF = 9.0
+          TOP_OFFSET = 20.0
 
           attr_reader :arrows, :notes, :fragments, :dividers, :crosses, :left,
                       :right, :y
@@ -79,7 +80,43 @@ module Sirena
             [Message, Activation, Destroy].any? { |kind| item.is_a?(kind) }
           end
 
+          # A parallel item starts on the row of the one before it, and the
+          # page continues below whichever of the two reaches further down.
           def visit(item, previous)
+            @resume = nil
+            offset = row_offset(item)
+            begin_row(item, offset) if offset
+            place(item, previous)
+            @y = [@y, @resume].max if @resume && !opens_block?(item)
+          end
+
+          # How far below its top edge an item's first line sits; nil for an
+          # item that does not take a row of its own.
+          def row_offset(item)
+            case item
+            when Message then 0.0
+            when Note then TOP_OFFSET
+            when Fragment then TOP_OFFSET if item.phase == :open
+            end
+          end
+
+          def opens_block?(item)
+            item.is_a?(Fragment) && item.phase == :open
+          end
+
+          # Records the line a following `&` item aligns its top with, or
+          # moves a `&` item up to the line the one before it recorded.
+          def begin_row(item, offset)
+            if item.parallel?
+              @resume = @y
+              @y = @row_line + offset
+            else
+              attached = item.is_a?(Note) && item.attached?
+              @row_line = attached ? @last_y : @y - offset
+            end
+          end
+
+          def place(item, previous)
             case item
             when Message then message(item)
             when Activation then activation(item)
@@ -237,7 +274,8 @@ module Sirena
           def open_block(item)
             @blocks << { keyword: item.keyword, label: item.label.to_s,
                          top: @y - 20, low: Float::INFINITY,
-                         high: -Float::INFINITY, branches: [], depth: 0 }
+                         high: -Float::INFINITY, branches: [], depth: 0,
+                         resume: @resume }
             @y += TAB_HEIGHT
           end
 
@@ -249,7 +287,8 @@ module Sirena
           def close_block
             block = @blocks.pop
             bottom = @y - 20
-            @y += 10
+            @y = [@y + 10, block[:resume]].compact.max
+            @row_line = block[:top]
             emit_fragment(block, bottom)
           end
 
