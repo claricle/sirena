@@ -20,10 +20,19 @@ module SpecSupport
           kind = reference_kind(group)
           next unless kind
 
-          label = extractor.label(group)
+          label = reference_label(extractor, group, kind)
           box = extractor.bbox(group)
           logical_element(kind, label, box) if box && !label.empty?
         end
+      end
+
+      def reference_label(extractor, group, kind)
+        return extractor.label(group) unless kind == :card
+
+        primary = group.xpath("./g").find do |child|
+          child["class"].to_s.split.include?("label")
+        end
+        extractor.label(primary || group)
       end
 
       def reference_kind(group)
