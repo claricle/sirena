@@ -6,7 +6,10 @@ require "sirena/ir"
 RSpec.describe Sirena::IR::Item do
   it "defines the shared notation-neutral vocabulary" do
     expect(described_class.attributes.keys)
-      .to eq(%i[id label role parent_id properties])
+      .to eq(%i[
+               id label role parent_id accessibility_title
+               accessibility_description properties
+             ])
   end
 
   it "does not share default property sets between items" do

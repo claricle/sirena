@@ -57,6 +57,18 @@ RSpec.describe Sirena::Layout::Sankey do
     { self_loop: true, path: nil, label: nil, colour_index: 2 }
   end
 
+  def scene_summary(input)
+    scene = described_class.new.call(input)
+    [scene.nodes.map { |item| [item.id, item.x, item.y] },
+     scene.flows.map { |item| [item.source, item.target, item.width] }]
+  end
+
+  def compatibility_summaries(nodes:, flows:)
+    direct = diagram(nodes: nodes, flows: flows)
+    graph = Sirena::Notation::Mermaid::IRAdapter.call(:sankey, direct)
+    [direct, graph].map { |input| scene_summary(input) }
+  end
+
   it "builds the empty accessibility canvas" do
     expect(empty_scene).to have_attributes(empty_canvas)
   end
@@ -106,5 +118,13 @@ RSpec.describe Sirena::Layout::Sankey do
     expect(cyclic_scene.flows.first).to have_attributes(
       self_loop: false, colour_index: 0,
     )
+  end
+
+  it "lays out shared IR without changing direct Diagram compatibility" do
+    summaries = compatibility_summaries(
+      nodes: [node("source"), node("sink")],
+      flows: [flow("source", "sink", 10)],
+    )
+    expect(summaries.uniq.one?).to be(true)
   end
 end
