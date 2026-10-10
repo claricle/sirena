@@ -527,8 +527,9 @@ module Sirena
         ids = [id]
         ids.each do |current|
           diagram.groups.each do |group|
-            ids << group.id if group.parent_id == current &&
-                               !ids.include?(group.id)
+            next if group.parent_id != current || ids.include?(group.id)
+
+            ids << group.id
           end
         end
         ids
@@ -546,10 +547,13 @@ module Sirena
       end
 
       def boxes_overlap?(first, second)
-        first[:x] < second[:x] + second[:width] &&
-          second[:x] < first[:x] + first[:width] &&
-          first[:y] < second[:y] + second[:height] &&
-          second[:y] < first[:y] + first[:height]
+        spans_overlap?(first, second, :x, :width) &&
+          spans_overlap?(first, second, :y, :height)
+      end
+
+      def spans_overlap?(first, second, start, size)
+        first[start] < second[start] + second[size] &&
+          second[start] < first[start] + first[size]
       end
 
       def position_by_rows(diagram, hierarchy)
@@ -560,14 +564,14 @@ module Sirena
       def position_on_grid(diagram)
         nodes = grid_nodes(diagram)
         cells = grid_cells(nodes, diagram.edges)
-        services = {}
-        junctions = {}
-        cells.each do |id, (x_coord, y_coord)|
-          node = nodes.fetch(id)
-          entry = grid_entry(node, x_coord, y_coord)
-          (node[:service] ? services : junctions)[id] = entry
+        entries = cells.to_h do |id, (x_coord, y_coord)|
+          [id, grid_entry(nodes.fetch(id), x_coord, y_coord)]
         end
-        [services, junctions]
+        services_and_junctions(nodes, entries)
+      end
+
+      def services_and_junctions(nodes, entries)
+        entries.partition { |id, _| nodes.fetch(id)[:service] }.map(&:to_h)
       end
 
       # Each top-level group is laid out as its own grid block, and the blocks
@@ -580,17 +584,22 @@ module Sirena
           owner[edge.from_id] == owner[edge.to_id]
         end
         shifts = block_shifts(nodes, owner, inner, outer)
-        services = {}
-        junctions = {}
-        shifts.each do |block, (shift_x, shift_y)|
-          members = nodes.select { |id, _| owner[id] == block }
-          grid_cells(members, inner).each do |id, (x_coord, y_coord)|
-            entry = grid_entry(nodes.fetch(id), x_coord + shift_x,
-                               y_coord + shift_y)
-            (nodes.fetch(id)[:service] ? services : junctions)[id] = entry
+        entries = block_entries(nodes, owner, inner, shifts)
+        services_and_junctions(nodes, entries)
+      end
+
+      def block_entries(nodes, owner, inner, shifts)
+        shifts.flat_map do |block, (shift_x, shift_y)|
+          members = block_members(nodes, owner, block)
+          grid_cells(members, inner).map do |id, (x_coord, y_coord)|
+            [id, grid_entry(nodes.fetch(id), x_coord + shift_x,
+                            y_coord + shift_y)]
           end
-        end
-        [services, junctions]
+        end.to_h
+      end
+
+      def block_members(nodes, owner, block)
+        nodes.select { |id, _| owner[id] == block }
       end
 
       def block_owners(diagram, nodes)
@@ -606,16 +615,20 @@ module Sirena
       # largest block.
       def block_shifts(nodes, owner, inner, outer)
         blocks = owner.values.uniq
-        extents = blocks.to_h do |block|
-          members = nodes.select { |id, _| owner[id] == block }
-          [block, block_extent(members, grid_cells(members, inner))]
-        end
+        extents = block_extents(blocks, nodes, owner, inner)
         cells = place_blocks(blocks, owner, outer)
         x_starts = block_starts(cells, extents, 0, :right)
         y_starts = block_starts(cells, extents, 1, :bottom)
         blocks.to_h do |block|
           col, row = cells.fetch(block)
           [block, [x_starts.fetch(col), y_starts.fetch(row)]]
+        end
+      end
+
+      def block_extents(blocks, nodes, owner, inner)
+        blocks.to_h do |block|
+          members = block_members(nodes, owner, block)
+          [block, block_extent(members, grid_cells(members, inner))]
         end
       end
 
@@ -627,39 +640,30 @@ module Sirena
       end
 
       def place_blocks(blocks, owner, outer)
-        links = Hash.new { |hash, key| hash[key] = [] }
-        outer.each do |edge|
-          from = owner[edge.from_id]
-          to = owner[edge.to_id]
-          step = SIDE_STEPS.fetch(valid_side(edge.from_position, "R"))
-          links[from] << [to, step]
-          links[to] << [from, step.map(&:-@)]
+        links = edge_links(outer) do |edge|
+          [owner[edge.from_id], owner[edge.to_id]]
         end
         cells = {}
         offset = 0
-        components(blocks, links).each do |component|
-          placed = place_component(component, links)
-          min_col = placed.values.map(&:first).min
-          min_row = placed.values.map(&:last).min
-          placed.each do |block, (col, row)|
-            cells[block] = [offset + col - min_col, row - min_row]
-          end
-          offset += placed.values.map(&:first).max - min_col + 1
+        each_placed_component(blocks, links) do |placed|
+          placed.each { |block, (col, row)| cells[block] = [offset + col, row] }
+          offset += placed.values.map(&:first).max + 1
         end
         cells
       end
 
       def block_starts(cells, extents, axis, edge)
-        ends = Hash.new(0)
-        cells.each do |block, cell|
-          ends[cell[axis]] = [ends[cell[axis]], extents[block][edge]].max
-        end
+        tracks = cells.group_by { |_, cell| cell[axis] }
         start = 0
-        ends.keys.sort.to_h do |index|
+        tracks.sort.to_h do |index, members|
           at = start
-          start += ends[index] + BLOCK_GAP
+          start += track_size(members, extents, edge) + BLOCK_GAP
           [index, at]
         end
+      end
+
+      def track_size(members, extents, edge)
+        members.map { |block, _| extents[block][edge] }.max
       end
 
       def grid_nodes(diagram)
@@ -686,19 +690,35 @@ module Sirena
         links = grid_links(nodes, edges)
         cells = {}
         offset = GRID_ORIGIN
-        components(nodes.keys, links).each do |component|
-          placed = place_component(component, links)
-          min_col = placed.values.map(&:first).min
-          min_row = placed.values.map(&:last).min
-          cols = placed.values.map(&:first).max - min_col
-          placed.each do |id, (col, row)|
-            cells[id] = [offset + ((col - min_col) * GRID_PITCH_X),
-                         GRID_ORIGIN + ((row - min_row) * GRID_PITCH_Y)]
-          end
-          offset += (cols * GRID_PITCH_X) + DEFAULT_SERVICE_WIDTH +
-                    COMPONENT_GAP
+        each_placed_component(nodes.keys, links) do |placed|
+          cells.merge!(pixel_cells(placed, offset))
+          offset += pixel_width(placed) + COMPONENT_GAP
         end
         cells
+      end
+
+      def pixel_cells(placed, offset)
+        placed.transform_values do |(col, row)|
+          [offset + (col * GRID_PITCH_X), GRID_ORIGIN + (row * GRID_PITCH_Y)]
+        end
+      end
+
+      def pixel_width(placed)
+        (placed.values.map(&:first).max * GRID_PITCH_X) + DEFAULT_SERVICE_WIDTH
+      end
+
+      # Yields each connected component's cells, moved so that its leftmost
+      # column and topmost row are 0.
+      def each_placed_component(ids, links)
+        components(ids, links).each do |component|
+          yield from_origin(place_component(component, links))
+        end
+      end
+
+      def from_origin(placed)
+        min_col = placed.values.map(&:first).min
+        min_row = placed.values.map(&:last).min
+        placed.transform_values { |(col, row)| [col - min_col, row - min_row] }
       end
 
       SIDE_STEPS = {
@@ -708,34 +728,41 @@ module Sirena
 
       # id => [[neighbour id, [dx, dy] from id to neighbour], ...]
       def grid_links(nodes, edges)
+        known = edges.select do |edge|
+          nodes.key?(edge.from_id) && nodes.key?(edge.to_id)
+        end
+        edge_links(known) { |edge| [edge.from_id, edge.to_id] }
+      end
+
+      # The block returns the [from, to] keys that an edge joins.
+      def edge_links(edges)
         links = Hash.new { |hash, key| hash[key] = [] }
         edges.each do |edge|
-          next unless nodes.key?(edge.from_id) && nodes.key?(edge.to_id)
-
+          from, to = yield(edge)
           step = SIDE_STEPS.fetch(valid_side(edge.from_position, "R"))
-          links[edge.from_id] << [edge.to_id, step]
-          links[edge.to_id] << [edge.from_id, step.map(&:-@)]
+          links[from] << [to, step]
+          links[to] << [from, step.map(&:-@)]
         end
         links
       end
 
       def components(ids, links)
         seen = {}
-        ids.filter_map do |id|
-          next if seen[id]
+        ids.filter_map { |id| reachable_from(id, links, seen) unless seen[id] }
+      end
 
-          queue = [id]
-          seen[id] = true
-          queue.each do |current|
-            links[current].map(&:first).each do |neighbour|
-              next if seen[neighbour]
+      def reachable_from(start, links, seen)
+        queue = [start]
+        seen[start] = true
+        queue.each do |current|
+          links[current].map(&:first).each do |neighbour|
+            next if seen[neighbour]
 
-              seen[neighbour] = true
-              queue << neighbour
-            end
+            seen[neighbour] = true
+            queue << neighbour
           end
-          queue
         end
+        queue
       end
 
       def place_component(component, links)
@@ -745,17 +772,16 @@ module Sirena
           links[id].each do |neighbour, step|
             next if placed.key?(neighbour)
 
-            cell = free_cell(placed.fetch(id), step, taken)
-            placed[neighbour] = cell
-            taken[cell] = true
+            placed[neighbour] = claim_free_cell(placed.fetch(id), step, taken)
           end
         end
         placed
       end
 
-      def free_cell(from, step, taken)
+      def claim_free_cell(from, step, taken)
         cell = [from[0] + step[0], from[1] + step[1]]
         cell = [cell[0] + step[0], cell[1] + step[1]] while taken[cell]
+        taken[cell] = true
         cell
       end
 
@@ -891,11 +917,15 @@ module Sirena
         members = service_positions.values + junction_positions.values
 
         deepest_groups_first(diagram.groups).each do |group|
-          boxes = members.select { |pos| pos[:group_id] == group.id } +
-                  child_group_bounds(diagram, group, bounds)
+          boxes = group_boxes(diagram, group, members, bounds)
           bounds[group.id] = padded_bounds(group, boxes) if boxes.any?
         end
         place_empty_groups(diagram, bounds, members)
+      end
+
+      def group_boxes(diagram, group, members, bounds)
+        members.select { |pos| pos[:group_id] == group.id } +
+          child_group_bounds(diagram, group, bounds)
       end
 
       def child_group_bounds(diagram, group, bounds)
@@ -904,27 +934,30 @@ module Sirena
       end
 
       def padded_bounds(group, boxes)
-        min_x = boxes.map { |box| box[:x] }.min
-        min_y = boxes.map { |box| box[:y] }.min
-        max_x = boxes.map { |box| box[:x] + box[:width] }.max
-        max_y = boxes.map { |box| box[:y] + box[:height] }.max
+        min_x, width = span(boxes, :x, :width)
+        min_y, height = span(boxes, :y, :height)
         pad = DEFAULT_GROUP_PADDING
         {
           group: group,
           x: min_x - pad,
           y: min_y - pad,
-          width: max_x - min_x + (pad * 2),
-          height: max_y - min_y + (pad * 2) + GROUP_LABEL_ALLOWANCE,
+          width: width + (pad * 2),
+          height: height + (pad * 2) + GROUP_LABEL_ALLOWANCE,
         }
+      end
+
+      # [lowest start, length] covered by the boxes along one axis.
+      def span(boxes, start, size)
+        low = boxes.map { |box| box[start] }.min
+        high = boxes.map { |box| box[start] + box[size] }.max
+        [low, high - low]
       end
 
       # mmdc draws a group with nothing in it as a small box beside the
       # diagram. A chain of empty nested groups stays undrawn: only an
       # isolated empty group (no parent, no child groups) is placed.
       def place_empty_groups(diagram, bounds, members)
-        right = (members + bounds.values).map do |box|
-          box[:x] + box[:width]
-        end.max
+        right = right_edge(members + bounds.values)
         centre_y = members_centre_y(members)
         diagram.groups.each do |group|
           next unless isolated_empty_group?(diagram, group, bounds)
@@ -934,6 +967,10 @@ module Sirena
           right = x_coord + EMPTY_GROUP_SIZE
         end
         bounds
+      end
+
+      def right_edge(boxes)
+        boxes.map { |box| box[:x] + box[:width] }.max
       end
 
       def members_centre_y(members)

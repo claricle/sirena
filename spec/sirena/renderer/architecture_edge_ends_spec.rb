@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Architecture do
-  # The diagram model keeps no arrow flag, and mmdc draws none for "--".
-  it "draws an edge as a bare line with no arrowhead" do
+  let(:xml) do
     diagram = Sirena::Parser::Architecture.new.parse(<<~MMD)
       architecture-beta
           service a(server)[A]
@@ -12,8 +11,11 @@ RSpec.describe Sirena::Renderer::Architecture do
           a:R -- L:b
     MMD
     scene = Sirena::Layout::Architecture.new.call(diagram)
-    xml = described_class.new.render(scene).to_xml
+    described_class.new.render(scene).to_xml
+  end
 
+  # The diagram model keeps no arrow flag, and mmdc draws none for "--".
+  it "draws an edge as a bare line with no arrowhead" do
     expect([xml.include?("<polygon"), xml.include?("marker-end")])
       .to eq([false, false])
   end
