@@ -171,8 +171,6 @@ rows:
   count: 8
 - file: lib/sirena/renderer/state_diagram.rb
   count: 6
-- file: lib/sirena/renderer/timeline.rb
-  count: 3
 - file: lib/sirena/renderer/treemap.rb
   count: 2
 - file: lib/sirena/renderer/xy_chart.rb

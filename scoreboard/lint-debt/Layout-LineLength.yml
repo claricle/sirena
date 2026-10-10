@@ -19,8 +19,6 @@ rows:
   count: 10
 - file: lib/sirena/layout/requirement.rb
   count: 6
-- file: lib/sirena/layout/timeline.rb
-  count: 2
 - file: lib/sirena/parser/builders/kanban.rb
   count: 3
 - file: lib/sirena/parser/builders/mindmap.rb
