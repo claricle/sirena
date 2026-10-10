@@ -39,29 +39,20 @@ module Sirena
             fields: [],
           }
 
-          # Handle nil or empty statements
-          stmts = statements.nil? ? [] : Array(statements)
-
-          stmts.each do |stmt|
+          # A body of only comments and blank lines parses to one string,
+          # not an Array of statements.
+          Array(statements).each do |stmt|
             next unless stmt.is_a?(Hash)
 
             case stmt[:type]
             when :title
               result[:title] = stmt[:title]
-            when :field
+            else
               result[:fields] << stmt
             end
           end
 
           result
-        end
-
-        # Handle empty diagram (no statements)
-        rule(statements: nil) do
-          {
-            title: nil,
-            fields: [],
-          }
         end
       end
     end

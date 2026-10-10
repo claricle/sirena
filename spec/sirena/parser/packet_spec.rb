@@ -96,6 +96,12 @@ RSpec.describe Sirena::Parser::Packet do
         expect(diagram.title).to eq("My Packet")
         expect(diagram.fields.size).to eq(1)
       end
+
+      it "reads a body of only comments and blank lines as empty" do
+        diagram = parser.parse("packet-beta\n%% only a comment\n\n")
+
+        expect([diagram.title, diagram.fields]).to eq([nil, []])
+      end
     end
 
     context "with fixture files" do
