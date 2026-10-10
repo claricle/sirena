@@ -29,7 +29,7 @@ module Sirena
       # and this grammar isn't part of that hierarchy.
       def word_ci(word)
         word.each_char
-          .map { |ch| ch.match?(/[a-z]/i) ? match["#{ch.downcase}#{ch.upcase}"] : str(ch) }
+          .map { |ch| match["#{ch.downcase}#{ch.upcase}"] }
           .reduce(:>>)
       end
 
@@ -180,8 +180,6 @@ module Sirena
         lines = Array(tree[:lines])
 
         lines.each do |line|
-          next unless line.is_a?(Hash)
-
           if line[:title]
             diagram.title = line[:title].to_s.strip
           elsif line[:section]
