@@ -4,6 +4,7 @@ require_relative "../../error"
 require_relative "../../error/diagram_type_error"
 require_relative "../../error/parse_error"
 require_relative "arrow"
+require_relative "class_name"
 require_relative "diagram_builder"
 require_relative "directives"
 require_relative "junction"
@@ -48,15 +49,19 @@ module Sirena
                       (#{NAME}(?:\.#{NAME})*))
                    (?:[ \t]*<<([^<>]+)>>)?(?:[ \t]+(\#[A-Za-z0-9]+))?
                    [ \t]*\{\z/xio
+        QUOTED_DECLARATION =
+          /\A(abstract[ \t]+class|static[ \t]+class|class|interface)
+           [ \t]+"([^"]+)"\z/xo
+        QUOTED_NAME = '"[^"]+"'
         HIDE_TAG = /\Ahide[ \t]+\$(#{NAME})\z/io
         NOTE = /\Anote[ \t]+(left|right|top|bottom)[ \t]+of[ \t]+(#{NAME})
                 (?:::(#{NAME}))?(?:[ \t]+(\#[A-Za-z0-9]+))?
                 (?:[ \t]*(#{STEREOTYPE}))?(?:[ \t]*:[ \t]*(.+))?\z/xio
         END_NOTE = /\Aend[ \t]?note\z/i
         END_TEXT = '(?:"([^"]+)"(?:/"([^"]+)")?|/"([^"]+)"|(\[[^\]]+\]))'
-        RELATION = /\A(#{NAME})[ \t]+(?:#{END_TEXT}[ \t]+)?
+        RELATION = /\A(#{NAME}|#{QUOTED_NAME})[ \t]+(?:#{END_TEXT}[ \t]+)?
                     #{Arrow::PATTERN}
-                    [ \t]*(?:#{END_TEXT}[ \t]+)?(#{NAME})
+                    [ \t]*(?:#{END_TEXT}[ \t]+)?(#{NAME}|#{QUOTED_NAME})
                     (?:[ \t]*:[ \t]*(.+))?\z/xo
         JUNCTION = /\A\((#{NAME})[ \t]*,[ \t]*(#{NAME})\)[ \t]*
                     \.{1,2}[ \t]*(#{NAME})\z/xo
@@ -72,8 +77,8 @@ module Sirena
                             "Source must start with one of: @startuml"
 
         private_constant :NAME, :VISIBILITY, :KINDS, :STARTUML, :END_TEXT,
-                         :STEREOTYPE, :CLASS_DECLARATION, :HIDE_TAG, :PACKAGE,
-                         :NOTE, :END_NOTE,
+                         :STEREOTYPE, :CLASS_DECLARATION, :QUOTED_DECLARATION,
+                         :QUOTED_NAME, :HIDE_TAG, :PACKAGE, :NOTE, :END_NOTE,
                          :RELATION, :JUNCTION, :METHOD, :FIELD,
                          :TYPED_FIELD, :TYPED_METHOD, :MODIFIERS, :LINE_END,
                          :NOT_FOUND_MESSAGE
@@ -146,6 +151,7 @@ module Sirena
           return record(builder, text) if Directives.match?(text)
 
           block_line(builder, text, number) ||
+            quoted_declaration(builder, text, number) ||
             declaration_or_relation(builder, text, number)
         end
 
@@ -288,6 +294,25 @@ module Sirena
           entry[:body] ? :body : :statements
         end
 
+        # nil unless the line declares a class by a quoted name.
+        def quoted_declaration(builder, text, number)
+          match = QUOTED_DECLARATION.match(text)
+          return unless match
+
+          if ClassName.escapes?(match[2])
+            raise refusal(text, number, "unicode escape in a name")
+          end
+
+          builder.declare(quoted_entry(match), number, text)
+          :statements
+        end
+
+        def quoted_entry(match)
+          { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
+            body: false, generics: nil, stereotypes: [].freeze,
+            tags: [].freeze }
+        end
+
         def declaration_entry(match)
           { name: match[2], kind: KINDS.fetch(match[1].split.join(" ")),
             body: !match[6].nil?, generics: match[3],
@@ -388,8 +413,13 @@ module Sirena
         end
 
         def relation_from(match, arrow)
-          Relation.new(left: match[1], right: match[11], arrow: arrow,
+          Relation.new(left: unquoted(match[1]), right: unquoted(match[11]),
+                       arrow: arrow,
                        ends: end_texts(match), label: match[12])
+        end
+
+        def unquoted(name)
+          name.delete_prefix('"').delete_suffix('"')
         end
 
         def end_texts(match)

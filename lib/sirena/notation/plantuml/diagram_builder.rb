@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "class_name"
 require_relative "diagram"
 require_relative "klass"
 require_relative "member"
@@ -56,7 +57,7 @@ module Sirena
             refuse(text, number, "package declared twice")
           end
 
-          parent = implicit_parents(package, number, text)
+          parent = implicit_parents(package.id, number, text)
           @packages << package.inside(parent)
           scopes.push([package, number, text])
         end
@@ -128,15 +129,19 @@ module Sirena
         # `entry` holds :name, :kind, :body, :generics and :stereotypes.
         def declare(entry, number, text)
           name, kind = entry.values_at(:name, :kind)
-          refuse_package_clash(name, number, text)
+          home = home_of(name, number, text)
+          refuse_package_clash(name, home, number, text)
           mention(name)
           refuse_redeclaration(name, kind, number, text)
+          record_class(name, kind, entry.merge(package: home))
+          @open = [name, number] if entry[:body]
+        end
+
+        def record_class(name, kind, entry)
           @kinds[name] = kind
           @explicit[name] = true
           @class_evidence = true
-          @extras[name] = entry.slice(:generics, :stereotypes, :tags)
-            .merge(package: scope_id)
-          @open = [name, number] if entry[:body]
+          @extras[name] = entry.slice(:generics, :stereotypes, :tags, :package)
         end
 
         def add_member(member)
@@ -145,6 +150,7 @@ module Sirena
 
         def relate(relation, number, text)
           refuse_new_class_in_package(relation, number, text)
+          refuse_new_qualified_class(relation, number, text)
           [relation.left, relation.right].each { |name| mention_end(name) }
           @sequence_arrow ||= [number, text] if sequence_arrow?(relation, text)
           @class_evidence ||= class_only?(relation)
@@ -209,8 +215,8 @@ module Sirena
 
         # `package a.b.c` also opens `a` and `a.b`, each inside the one
         # before. Returns the id the package itself sits inside.
-        def implicit_parents(package, number, text)
-          *outer, _leaf = package.id.split(".")
+        def implicit_parents(id, number, text)
+          *outer, _leaf = id.split(".")
           outer.each_index.reduce(scope_id) do |parent, index|
             id = outer.first(index + 1).join(".")
             open_implicit(id, parent, number, text)
@@ -227,6 +233,24 @@ module Sirena
           elsif known.parent != parent
             refuse(text, number, "package name shared by two packages")
           end
+        end
+
+        # The package a class lives in. A name written with dots lives in
+        # the namespaces before its last dot, which PlantUML opens itself.
+        def home_of(name, number, text)
+          return scope_id unless name.include?(".")
+
+          refuse_misplaced_qualified(name, number, text)
+          implicit_parents(name, number, text)
+        end
+
+        def refuse_misplaced_qualified(name, number, text)
+          unless scopes.empty? && name.split(".", -1).none?(&:empty?)
+            refuse(text, number, "qualified class name here")
+          end
+          return unless ClassName.namespaces(name).any? { _1.include?("\\") }
+
+          refuse(text, number, "escape in a namespace name")
         end
 
         def package?(name)
@@ -292,10 +316,10 @@ module Sirena
 
         # A class lives in one place; a name met outside its package would
         # be a second class to PlantUML.
-        def refuse_package_clash(name, number, text)
+        def refuse_package_clash(name, home, number, text)
           refuse(text, number, "class named like a package") if package?(name)
           return unless @kinds.key?(name)
-          return if @extras.dig(name, :package) == scope_id
+          return if @extras.dig(name, :package) == home
 
           refuse(text, number, "class declared in more than one place")
         end
@@ -305,6 +329,17 @@ module Sirena
           return if [relation.left, relation.right].all? { |name| @kinds[name] }
 
           refuse(text, number, "class first mentioned in a package")
+        end
+
+        # A qualified name met before it is declared would put the class
+        # outside the namespaces PlantUML gives it.
+        def refuse_new_qualified_class(relation, number, text)
+          [relation.left, relation.right].each do |name|
+            next if !name.include?(".") || @kinds.key?(name) || package?(name)
+
+            refuse(text, number, "qualified class name first mentioned " \
+                                 "in a relation")
+          end
         end
 
         def refuse_redeclaration(name, kind, number, text)

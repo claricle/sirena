@@ -109,6 +109,7 @@ RSpec.describe Sirena::Notation::PlantUML do
     resources.vega.nonreg.group2917.smetana_hide_class--cda3c6a5e269
     resources.vega.nonreg.simple.QualifiedAssoc001--8c3b78057dc3
     resources.vega.nonreg.simple.QualifiedAssoc002--d57fb49a9920
+    resources.vega.svg.interactive.SVG0004_Svek--d500aa856a7e
     resources.vega.svg.interactive.SVG0006_Svek--70f5757ed2ca
     resources.vega.xmi.clazz.XMI0002_class--9616cd0e75d4
     resources.vega.xmi.clazz.XMI0003_class--d50636ffecaf
@@ -241,7 +242,7 @@ RSpec.describe Sirena::Notation::PlantUML do
   end
 
   describe "quoted class names" do
-    ['class "pkg.Name"', 'abstract class "A B"'].each do |line|
+    ['class "Long name" as Long', 'class "A B" {'].each do |line|
       it "names #{line.inspect} as a quoted class name" do
         expect { parse_corpus(line) }
           .to raise_error(described_class::UnsupportedConstructError,
