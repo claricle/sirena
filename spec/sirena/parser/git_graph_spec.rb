@@ -375,4 +375,18 @@ RSpec.describe Sirena::Parser::GitGraph do
       expect(out.strip).to eq("release/1.0")
     end
   end
+
+  describe "#parse redeclaring the implicit main branch" do
+    let(:main) do
+      parser.parse("gitGraph\n  commit\n  branch main\n").branches.first
+    end
+
+    it "keeps one branch named main" do
+      expect(main.name).to eq("main")
+    end
+
+    it "keeps main without a parent" do
+      expect(main.parent_branch).to be_nil
+    end
+  end
 end
