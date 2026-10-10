@@ -95,9 +95,6 @@ module Sirena
         def apply(tree, source)
           @source = source
           @diagram = Diagram::ClassDiagram.new
-          # Classes given an explicit label, so a later generic on the same id
-          # does not append to it.
-          @labelled_ids = []
           # Which statement created each class: mmdc keeps only the generic
           # written on the mention that creates it.
           @statement_count = 0
@@ -106,9 +103,7 @@ module Sirena
 
           # Tree is an array: [header, direction, ...statements]
           if tree.is_a?(Array)
-            tree.each do |item|
-              process_item(item) if item.is_a?(Hash)
-            end
+            tree.each { |item| process_item(item) }
           elsif tree.is_a?(Hash)
             process_item(tree)
           end
@@ -119,8 +114,6 @@ module Sirena
         private
 
         def process_item(item)
-          return unless item.is_a?(Hash)
-
           # Process header to get direction
           if item[:direction] && item[:direction][:dir_value]
             @diagram.direction = extract_text(item[:direction][:dir_value])
@@ -131,8 +124,6 @@ module Sirena
         end
 
         def process_statement(stmt)
-          return unless stmt.is_a?(Hash)
-
           @statement_count += 1
           if stmt[:namespace_keyword]
             # Namespace block
@@ -170,9 +161,7 @@ module Sirena
           # Process namespace body
           if stmt[:namespace_body]
             statements = Array(stmt[:namespace_body])
-            statements.each do |s|
-              process_statement(s) if s.is_a?(Hash)
-            end
+            statements.each { |s| process_statement(s) }
           end
 
           @current_namespace = old_namespace
@@ -198,10 +187,9 @@ module Sirena
           # Appended to the name for display, but only when there is no
           # explicit label. mermaid renders `class Animal~T~["A label"]` as
           # "A label", not "A label~T~", so a label wins outright.
-          # Skipped when a label is present on THIS declaration, and also when
-          # an earlier declaration already labelled this class — otherwise
-          # `class C1["Label"]` followed by `class C1~T~` produced `Label~T~`
-          # where mmdc renders `Label`.
+          # Skipped when a label is present on THIS declaration. A later
+          # `class C1~T~` after `class C1["Label"]` is skipped by
+          # apply_generic, which only honours the creating statement.
           apply_generic(entity, stmt[:generic]) unless label
 
           # An explicit text label replaces the display name. The id is
@@ -209,10 +197,7 @@ module Sirena
           # assignment is unconditional on purpose, because
           # find_or_create_entity may have already set name to the id when a
           # relationship mentioned this class first.
-          if label
-            entity.name = label
-            @labelled_ids << entity.id
-          end
+          entity.name = label if label
 
           # Handle class body
           process_class_body(entity, stmt[:body]) if stmt[:body]
@@ -223,9 +208,7 @@ module Sirena
 
           entity = find_or_create_entity(class_id)
 
-          if stmt[:stereotype][:stereotype_value]
-            entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
-          end
+          entity.stereotype ||= extract_text(stmt[:stereotype][:stereotype_value])
         end
 
         def process_colon_member(stmt)
@@ -241,8 +224,6 @@ module Sirena
           return unless body_data.is_a?(Array)
 
           body_data.each do |member_item|
-            next unless member_item.is_a?(Hash)
-
             add_member(entity, member_item)
           end
         end
@@ -274,8 +255,6 @@ module Sirena
         def member_source(item)
           slices = []
           collect_slices(item, slices)
-          return nil if slices.empty?
-
           first = slices.min_by(&:offset)
           last = slices.max_by { |slice| slice.offset + slice.size }
           @source[first.offset...(last.offset + last.size)]
@@ -284,7 +263,6 @@ module Sirena
         def collect_slices(node, slices)
           case node
           when Hash then node.each_value { |v| collect_slices(v, slices) }
-          when Array then node.each { |v| collect_slices(v, slices) }
           when Parslet::Slice then slices << node
           end
         end
@@ -391,7 +369,7 @@ module Sirena
           if stmt[:pipe_label] && stmt[:pipe_label][:label_text]
             label = extract_text(stmt[:pipe_label][:label_text])
             # Strip surrounding quotes if present
-            label = label.gsub(/^["']|["']$/, "") if label
+            label = label.gsub(/^["']|["']$/, "")
           elsif stmt[:colon_label] && stmt[:colon_label][:label_text]
             label = extract_text(stmt[:colon_label][:label_text]).strip
           end
@@ -478,7 +456,6 @@ module Sirena
         def apply_generic(entity, generic)
           creating = @created_in.delete(entity.id) == @statement_count
           return unless creating && generic.is_a?(Hash) && generic[:generic_type]
-          return if @labelled_ids.include?(entity.id)
 
           entity.name = "#{entity.name}~#{extract_text(generic[:generic_type])}~"
         end
@@ -497,35 +474,10 @@ module Sirena
           VISIBILITY_SYMBOLS[symbol] || "public"
         end
 
+        # Every capture reaching here is a Slice (or the `[]` of an empty
+        # repeat); no rule nests another name inside the one it passes.
         def extract_text(value)
-          case value
-          when Hash
-            if value[:string]
-              value[:string].to_s
-            elsif value[:arrow]
-              value[:arrow].to_s
-            elsif value[:stereotype_value]
-              value[:stereotype_value].to_s
-            elsif value[:dir_value]
-              value[:dir_value].to_s
-            elsif value[:label_text]
-              value[:label_text].to_s
-            elsif value[:vis_symbol]
-              value[:vis_symbol].to_s
-            elsif value[:type]
-              value[:type].to_s
-            elsif value[:attr_name]
-              value[:attr_name].to_s
-            elsif value[:method_name]
-              value[:method_name].to_s
-            else
-              value.values.first.to_s
-            end
-          when String
-            value
-          else
-            value.to_s
-          end
+          value.to_s
         end
       end
     end
