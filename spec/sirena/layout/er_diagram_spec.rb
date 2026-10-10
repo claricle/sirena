@@ -80,8 +80,15 @@ RSpec.describe Sirena::Layout::ErDiagram, :aggregate_failures do
       expect(scene).to be_a(described_class::Scene)
       expect(scene.children).to all(be_a(described_class::Node))
       expect(scene.edges).to all(be_a(described_class::Edge))
-      expect([scene.width, scene.height, scene.view_box])
-        .to eq([550.0, 210.0, "0 0 550 210"])
+      expect(scene.view_box).to eq("0 0 #{scene.width} #{scene.height}")
+    end
+
+    it "closes the canvas 8px past the farthest entity edge, as mmdc does" do
+      scene = layout.call(diagram)
+      right = scene.children.map { |node| node.x + node.width }.max
+      bottom = scene.children.map { |node| node.y + node.height }.max
+
+      expect([scene.width, scene.height]).to eq([right + 8, bottom + 8])
     end
 
     it "lays out direct graph IR byte-identically to its private model" do

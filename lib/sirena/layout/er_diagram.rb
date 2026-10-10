@@ -19,6 +19,8 @@ module Sirena
       CARDINALITY_SIZE = 15
       DIAGRAM_PADDING = 20
       EMPTY_DIAGRAM_PADDING = 8
+      # Space mmdc leaves between the entities and the canvas edge.
+      CANVAS_MARGIN = 8
       ONE_CARDINALITIES = %w[one one_or_more zero_or_one].freeze
       MANY_CARDINALITIES = %w[zero_or_more one_or_more].freeze
       ZERO_CARDINALITIES = %w[zero_or_more zero_or_one].freeze
@@ -665,9 +667,12 @@ module Sirena
       end
 
       def scene_dimensions(graph)
-        padding = empty_graph?(graph) ? EMPTY_DIAGRAM_PADDING : DIAGRAM_PADDING
-        [content_width(graph), content_height(graph)].map do |extent|
-          extent + (padding * 2)
+        return [EMPTY_DIAGRAM_PADDING * 2] * 2 if empty_graph?(graph)
+
+        [[:x, :width, 150], [:y, :height, 100]].map do |coordinate, dimension, size|
+          (graph[:children] || []).map do |node|
+            node_extent(node, coordinate, dimension, size)
+          end.max.to_f + CANVAS_MARGIN
         end
       end
 
