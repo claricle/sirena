@@ -95,7 +95,7 @@ RSpec.describe Sirena::Layout::Flowchart do
     end
 
     it "sizes the page for the deeper of the two loops" do
-      expect(scene.height).to be >= 285
+      expect(scene.height).to be >= 250
     end
   end
 

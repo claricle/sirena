@@ -137,8 +137,8 @@ RSpec.describe Sirena::Layout::Flowchart do
       expect(scene.edges.first.labels.first.y).to be >= 0
     end
 
-    it "expands the page dimensions" do
-      expect([scene.width, scene.height]).to all(be > 100)
+    it "expands the page to hold the label" do
+      expect(scene.width).to be >= 70
     end
   end
 end

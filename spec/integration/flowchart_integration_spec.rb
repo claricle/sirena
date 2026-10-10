@@ -102,11 +102,9 @@ RSpec.describe "Flowchart Integration", :aggregate_failures do
       "class without a matching classDef" => "graph TD\nclass A foo\n",
     }.freeze
 
-    # `create_document`'s own padding (`Renderer::Base#create_document`, 20
-    # per side) is the only contributor once `calculate_width`/
-    # `calculate_height` return 0 for a graph with nothing drawn -- see
-    # `Renderer::Flowchart`.
-    empty_canvas_attributes = { "width" => "40.0", "height" => "40.0", "viewBox" => "0 0 40 40" }.freeze
+    # mmdc draws the same source 16px square (its 8px padding either side)
+    # at viewBox `-8 -8 16 16`; sirena's viewBox origin is always 0 0.
+    empty_canvas_attributes = { "width" => "16.0", "height" => "16.0", "viewBox" => "0 0 16.0 16.0" }.freeze
 
     empty_sources.each do |description, source|
       context "with #{description}" do

@@ -193,8 +193,9 @@ module Sirena
         flat = flatten(graph)
         dx, dy = self_loop_overflow(flat)
         page = shift_page(flat, dx, dy)
-        width = calculate_width(page) + 40
-        height = calculate_height(page) + 40
+        edges = typed_edges(page)
+        width = [calculate_width(page), route_reach(edges, :x)].max
+        height = [calculate_height(page), route_reach(edges, :y)].max
 
         Scene.new(
           id: graph[:id] || "flowchart",
@@ -202,8 +203,20 @@ module Sirena
           height: height,
           view_box: "0 0 #{width} #{height}",
           children: typed_children(graph[:children] || [], 0, 0, dx, dy),
-          edges: typed_edges(page),
+          edges: edges,
         )
+      end
+
+      # How far a routed edge reaches along :x or :y, plus the page margin,
+      # so a route that detours round a box stays on the page.
+      def route_reach(edges, axis)
+        points = edges.flat_map do |edge|
+          edge.sections.flat_map do |section|
+            [section.start_point, *section.bend_points, section.end_point]
+          end
+        end
+        (points.map { |point| point.public_send(axis) }.max || 0) +
+          DirectedPlacement::PAGE_MARGIN
       end
 
       def flatten(graph)
@@ -454,18 +467,18 @@ module Sirena
 
       def calculate_width(graph)
         boxes = drawn(graph)
-        return 0 if boxes.empty?
+        return DirectedPlacement::PAGE_MARGIN * 2 if boxes.empty?
 
         max_x = boxes.map { |node| (node[:x] || 0) + (node[:width] || 100) }.max
-        [max_x, self_loop_reach(graph)[0]].max + 40
+        [max_x, self_loop_reach(graph)[0]].max + DirectedPlacement::PAGE_MARGIN
       end
 
       def calculate_height(graph)
         boxes = drawn(graph)
-        return 0 if boxes.empty?
+        return DirectedPlacement::PAGE_MARGIN * 2 if boxes.empty?
 
         max_y = boxes.map { |node| (node[:y] || 0) + (node[:height] || 50) }.max
-        [max_y, self_loop_reach(graph)[1]].max + 40
+        [max_y, self_loop_reach(graph)[1]].max + DirectedPlacement::PAGE_MARGIN
       end
 
       def drawn(graph)

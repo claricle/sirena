@@ -237,12 +237,23 @@ RSpec.describe Sirena::Layout::Flowchart, :aggregate_failures do
       expect(edge.sections.first.end_point).to be_a(described_class::Point)
     end
 
-    # The page padding elkrb leaves round the first node.
+    # mmdc leaves 8px round the diagram (reference 001: node A at y 8).
     it "places nodes in final canvas coordinates" do
       node = transform.to_graph(diagram).children.first
 
-      expect(node.x).to eq(12.0)
-      expect(node.y).to eq(12.0)
+      expect(node.x).to eq(8.0)
+      expect(node.y).to eq(8.0)
+    end
+
+    # Reference 001: viewBox 437.8125 x 521.28125 round a node ending at
+    # 429.8125 x 513.28125.
+    it "ends the page 8px after the last node" do
+      scene = transform.to_graph(diagram)
+      rights = scene.children.map { |node| node.x + node.width }
+      bottoms = scene.children.map { |node| node.y + node.height }
+
+      expect([scene.width, scene.height])
+        .to eq([rights.max + 8.0, bottoms.max + 8.0])
     end
 
     it "flattens nested coordinates into the final canvas frame" do
