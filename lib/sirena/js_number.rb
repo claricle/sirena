@@ -35,7 +35,7 @@ module Sirena
       combined = whole + fraction
       digits = combined.sub(/\A0+/, "")
       point = whole.length - (combined.length - digits.length) +
-              exponent.to_i
+        exponent.to_i
       [digits.sub(/0+\z/, ""), point]
     end
     private_class_method :decompose

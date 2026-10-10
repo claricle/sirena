@@ -177,7 +177,7 @@ module Sirena
         return false if states.nil?
         return false unless states.all?(&:valid?)
         return false unless transitions.nil? ||
-                            transitions.all?(&:valid?)
+          transitions.all?(&:valid?)
 
         # Validate transition references
         state_ids = states.map(&:id)

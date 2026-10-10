@@ -365,7 +365,7 @@ module Sirena
         )
         compartments = 1 + present_compartments(entity)
         lines = (entity.stereotype ? 2 : 1) + entity.attributes.length +
-                entity.class_methods.length
+          entity.class_methods.length
 
         {
           width: widths.max + (COMPARTMENT_PADDING * 2),

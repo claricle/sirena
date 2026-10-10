@@ -280,7 +280,7 @@ module Sirena
         return empty_node(node.tag) if empty_node?(node)
         return tagged_scalar(node.tag, node.value) if explicit_tag?(node)
         return node.value if node.style != PLAIN_SCALAR ||
-                             node.tag == NON_SPECIFIC_TAG
+          node.tag == NON_SPECIFIC_TAG
 
         plain_scalar(node.value)
       end
@@ -372,7 +372,7 @@ module Sirena
       # there and is an unknown tag rather than a string.
       def collection_tag(node, own)
         return if node.tag.nil? || node.tag == NON_SPECIFIC_TAG ||
-                  node.tag == own
+          node.tag == own
 
         unsupported(node.tag)
       end
@@ -393,7 +393,7 @@ module Sirena
         # draws `A@{#}` with the label the node already had.
         return unless first&.anchor || first&.tag
         return unless first.start_line == node.start_line &&
-                      first.start_column == node.start_column
+          first.start_column == node.start_column
 
         raise ParseError, "Node property on a block mapping key."
       end

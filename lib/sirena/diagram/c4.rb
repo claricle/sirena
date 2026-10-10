@@ -263,7 +263,7 @@ module Sirena
                                Deployment].include?(level)
         return false unless elements.nil? || elements.all?(&:valid?)
         return false unless relationships.nil? ||
-                            relationships.all?(&:valid?)
+          relationships.all?(&:valid?)
         return false unless boundaries.nil? || boundaries.all?(&:valid?)
 
         # Validate relationship references
