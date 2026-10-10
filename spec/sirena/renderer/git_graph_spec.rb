@@ -110,10 +110,11 @@ RSpec.describe Sirena::Renderer::GitGraph do
     expect(paths.map(&:stroke_dasharray)).to include("2,4")
   end
 
-  it "uses Scene canvas dimensions verbatim" do
+  it "uses the base document contract for its Scene canvas" do
     svg = renderer.render(scene)
 
     expect([svg.width, svg.height, svg.view_box])
-      .to eq([scene.width, scene.height, scene.view_box])
+      .to eq([scene.width, scene.height,
+              "0 0 #{scene.width} #{scene.height}"])
   end
 end

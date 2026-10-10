@@ -24,14 +24,9 @@ module Sirena
 
       protected
 
-      # Kept as the one-argument protected extension point from 0.1.0.
-      def create_document_from_layout(scene)
-        Svg::Document.new.tap do |svg|
-          svg.width = scene.width
-          svg.height = scene.height
-          svg.view_box = scene.view_box
-        end
-      end
+      # Keep the 0.1.0 protected extension point without duplicating the
+      # document construction owned by Renderer::Base.
+      alias create_document_from_layout create_document
 
       def render_connections(scene, svg)
         branch_colours = scene.branches.to_h do |branch|
