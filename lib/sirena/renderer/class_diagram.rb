@@ -101,13 +101,17 @@ module Sirena
 
       def render_scene_namespace(box, svg)
         group = Svg::Group.new.tap { |item| item.id = "namespace-#{box.title}" }
-        group.children << Svg::Rect.new(
+        group.children << scene_namespace_rect(box)
+        group.children << scene_namespace_title(box)
+        svg << group
+      end
+
+      def scene_namespace_rect(box)
+        Svg::Rect.new(
           x: svg_number(box.x), y: svg_number(box.y),
           width: svg_number(box.width), height: svg_number(box.height),
           fill: "none", stroke: "#000000", stroke_width: "1"
         )
-        group.children << scene_namespace_title(box)
-        svg << group
       end
 
       def scene_namespace_title(box)
@@ -121,10 +125,13 @@ module Sirena
 
       def render_scene_note(note, svg)
         group = Svg::Group.new.tap { |item| item.id = "note-#{note.id}" }
-        group.children << scene_note_link(note) if note.linked?
-        group.children << scene_note_box(note)
-        group.children << scene_note_text(note)
+        group.children.concat(scene_note_parts(note))
         svg << group
+      end
+
+      def scene_note_parts(note)
+        parts = [scene_note_box(note), scene_note_text(note)]
+        note.linked? ? [scene_note_link(note), *parts] : parts
       end
 
       def scene_note_link(note)

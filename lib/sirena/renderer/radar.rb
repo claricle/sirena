@@ -21,9 +21,7 @@ module Sirena
       #   positioned-Hash input
       # @return [Svg::Document] rendered SVG document
       def render(scene)
-        unless scene.is_a?(Layout::Radar::Scene)
-          scene = Layout::Radar.from_graph(scene, theme: theme)
-        end
+        scene = typed_scene(scene)
         svg = create_document(scene)
         scene.grid_circles.each { |circle| svg << grid_circle(circle) }
         scene.axes.each { |axis| render_axis(axis, svg) }
@@ -34,6 +32,12 @@ module Sirena
       end
 
       protected
+
+      def typed_scene(scene)
+        return scene if scene.is_a?(Layout::Radar::Scene)
+
+        Layout::Radar.from_graph(scene, theme: theme)
+      end
 
       def grid_circle(circle)
         Svg::Circle.new.tap do |element|
