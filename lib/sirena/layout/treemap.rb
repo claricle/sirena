@@ -117,9 +117,20 @@ module Sirena
         {
           label: node[:label], value: node[:value], depth: depth,
           x: node[:x0], y: node[:y0], css_class: node[:css_class],
-          width: node[:x1] - node[:x0], height: node[:y1] - node[:y0],
-          children: node[:children].map { |kid| cell_from(kid, depth + 1) }
+          **cell_dimensions(node),
+          children: child_cells(node, depth)
         }
+      end
+
+      def cell_dimensions(node)
+        {
+          width: node[:x1] - node[:x0],
+          height: node[:y1] - node[:y0],
+        }
+      end
+
+      def child_cells(node, depth)
+        node[:children].map { |child| cell_from(child, depth + 1) }
       end
 
       def ir_data(diagram)
