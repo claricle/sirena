@@ -3,7 +3,7 @@
 require "spec_helper"
 require "rexml/document"
 
-RSpec.describe "Flowchart Integration" do
+RSpec.describe "Flowchart Integration", :aggregate_failures do
   describe "complete flowchart pipeline" do
     let(:parser) { Sirena::Parser::Flowchart.new }
     let(:transform) { Sirena::Layout::Flowchart.new }
