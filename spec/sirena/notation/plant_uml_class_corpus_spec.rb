@@ -686,6 +686,36 @@ RSpec.describe Sirena::Notation::PlantUML do
     end
   end
 
+  describe "a relation that ends at a package" do
+    let(:source) { "package p {\nclass A\n}\nclass B\np --> B" }
+    let(:svg) { rendered_document(source) }
+
+    it "keeps the package as an end instead of declaring a class" do
+      expect(parse_corpus(source).classes.map(&:name)).to eq(%w[A B])
+    end
+
+    it "draws the line from the package frame to the class" do
+      frame = bounds(svg, "package-p")
+      path = REXML::XPath.first(svg, "//g[@id='relation-0']/path/@d").value
+      start = path.scan(/-?[\d.]+/).first(2).map(&:to_f)
+
+      expect(start.last)
+        .to be_between(frame["y"], frame["y"] + frame["height"])
+    end
+
+    it "drops the relation when every class of the package is hidden" do
+      hidden = "package p {\nclass A $x\n}\nclass B\np --> B\nhide $x"
+
+      expect(group_ids(rendered_document(hidden))).not_to include("relation-0")
+    end
+
+    it "refuses a class later declared with the package's name" do
+      expect { parse_corpus("package p {\nclass A\n}\nclass p") }
+        .to raise_error(described_class::UnsupportedConstructError,
+                        /named like a package/)
+    end
+  end
+
   describe "a package whose classes are all hidden" do
     let(:source) do
       ["package p {", "class A $x", "}", "package q {", "class C", "}",

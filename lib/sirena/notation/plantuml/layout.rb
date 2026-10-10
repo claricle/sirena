@@ -40,10 +40,11 @@ module Sirena
         private
 
         def build_scene(diagram, boxes, box_width)
+          frames = scene_frames(diagram, boxes)
           Scene.new(width: canvas_width(boxes, box_width),
                     height: scene_height(diagram, boxes), boxes: boxes,
-                    relations: scene_relations(diagram, boxes),
-                    frames: scene_frames(diagram, boxes))
+                    relations: scene_relations(diagram, boxes + frames),
+                    frames: frames)
         end
 
         def scene_height(diagram, boxes)
@@ -289,7 +290,7 @@ module Sirena
         end
 
         def build_relations(relations, boxes)
-          by_name = boxes.to_h { |box| [box.id, box] }
+          by_name = boxes.to_h { |box| [box.id.delete_prefix("package-"), box] }
           relations.each_with_index.map do |relation, index|
             build_relation(relation, index, by_name)
           end

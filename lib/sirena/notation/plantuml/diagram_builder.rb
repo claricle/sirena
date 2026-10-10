@@ -145,8 +145,7 @@ module Sirena
 
         def relate(relation, number, text)
           refuse_new_class_in_package(relation, number, text)
-          mention(relation.left)
-          mention(relation.right)
+          [relation.left, relation.right].each { |name| mention_end(name) }
           @sequence_arrow ||= [number, text] if sequence_arrow?(relation, text)
           @class_evidence ||= class_only?(relation)
           @relations << relation
@@ -176,8 +175,9 @@ module Sirena
         def visible(classes)
           hidden = classes.select { |klass| hidden?(klass) }.map(&:name)
           refuse_attachments_to(hidden)
-          assemble(classes.reject { |klass| hidden.include?(klass.name) },
-                   @relations.reject { |rel| touches?(rel, hidden) })
+          kept = classes.reject { |klass| hidden.include?(klass.name) }
+          gone = hidden + unoccupied_ids(kept)
+          assemble(kept, @relations.reject { |rel| touches?(rel, gone) })
         end
 
         def assemble(classes, relations)
@@ -191,8 +191,16 @@ module Sirena
 
         # A package whose every class is hidden draws no frame.
         def occupied_packages(classes)
-          named = classes.flat_map { |klass| chain_of(klass.package) }
+          named = occupied_ids(classes)
           @packages.select { |package| named.include?(package.id) }
+        end
+
+        def unoccupied_ids(classes)
+          @packages.map(&:id) - occupied_ids(classes)
+        end
+
+        def occupied_ids(classes)
+          classes.flat_map { |klass| chain_of(klass.package) }
         end
 
         def chain_of(id)
@@ -219,6 +227,10 @@ module Sirena
           elsif known.parent != parent
             refuse(text, number, "package name shared by two packages")
           end
+        end
+
+        def package?(name)
+          @packages.any? { |package| package.id == name }
         end
 
         def scopes
@@ -281,6 +293,7 @@ module Sirena
         # A class lives in one place; a name met outside its package would
         # be a second class to PlantUML.
         def refuse_package_clash(name, number, text)
+          refuse(text, number, "class named like a package") if package?(name)
           return unless @kinds.key?(name)
           return if @extras.dig(name, :package) == scope_id
 
@@ -314,6 +327,14 @@ module Sirena
           return true if relation.right_multiplicity
 
           !relation.plain?
+        end
+
+        # A name that is a package's id, with no class of that name, is the
+        # package: the relation runs to its frame.
+        def mention_end(name)
+          return if !@kinds.key?(name) && package?(name)
+
+          mention(name)
         end
 
         def mention(name)
