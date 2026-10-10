@@ -6,17 +6,19 @@ module Sirena
       module Sequence
         # What skinparam and `<style>` set for a sequence diagram: the
         # narrowest participant head, how a head's lines sit against each
-        # other, and the fill and text colour of a fragment's keyword tab.
+        # other, and the fill, text colour and text size of a fragment's
+        # keyword tab.
         # A setting the source never made is nil, except `alignment`.
         class Appearance
-          attr_reader :min_width, :tab_fill, :tab_colour
+          attr_reader :min_width, :tab_fill, :tab_colour, :tab_size
 
           def initialize(min_width: nil, alignment: nil, tab_fill: nil,
-                         tab_colour: nil)
+                         tab_colour: nil, tab_size: nil)
             @min_width = min_width
             @alignment = alignment
             @tab_fill = tab_fill
             @tab_colour = tab_colour
+            @tab_size = tab_size
             freeze
           end
 
@@ -32,6 +34,7 @@ module Sirena
               alignment: other.explicit_alignment || @alignment,
               tab_fill: other.tab_fill || tab_fill,
               tab_colour: other.tab_colour || tab_colour,
+              tab_size: other.tab_size || tab_size,
             )
           end
 

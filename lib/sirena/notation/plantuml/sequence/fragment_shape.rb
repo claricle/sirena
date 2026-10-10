@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "scene"
+require_relative "tab_size"
 
 module Sirena
   module Notation
@@ -18,10 +19,10 @@ module Sirena
           attr_reader :x, :width
 
           # The keyword tab hanging in the top left corner of a frame.
-          def self.tab_outline(left, top, width)
+          def self.tab_outline(left, top, width, height = TAB_HEIGHT)
             right = left + width
-            bottom = top + TAB_HEIGHT
-            "M #{left} #{top} L #{right} #{top} L #{right} #{top + 14} " \
+            bottom = top + height
+            "M #{left} #{top} L #{right} #{top} L #{right} #{bottom - 6} " \
               "L #{right - 6} #{bottom} L #{left} #{bottom} Z"
           end
 
@@ -72,8 +73,12 @@ module Sirena
             label.empty? || group? ? nil : "[#{label}]"
           end
 
+          def tab
+            @block.fetch(:tab) { TabSize.new(nil, 1) }
+          end
+
           def tab_width
-            @measure.call(tab_text) + (2 * TAB_PAD)
+            (@measure.call(tab_text) * tab.scale) + (2 * TAB_PAD)
           end
 
           def minimum_width
@@ -82,7 +87,8 @@ module Sirena
           end
 
           def tab_path
-            self.class.tab_outline(x, @block[:top], tab_width)
+            self.class.tab_outline(x, @block[:top], tab_width,
+                                   TAB_HEIGHT + tab.height_growth)
           end
 
           def separators
@@ -92,13 +98,14 @@ module Sirena
           end
 
           def texts
-            top = @block[:top] + 14
+            top = @block[:top] + 14 + tab.baseline_growth
             [tab_label(top), *guard_texts(top), *branch_texts]
           end
 
           def tab_label(top)
             text(tab_text, x + TAB_PAD, top, "fragment_tab").tap do |label|
               label.colour = @appearance.tab_colour
+              label.size = tab.size if tab.custom?
             end
           end
 

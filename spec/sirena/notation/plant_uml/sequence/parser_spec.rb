@@ -240,7 +240,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
     end
 
     [
-      ["FontSize 20"],
+      ["FontSize 0"],
+      ["FontSize big"],
       ["FontColor notacolour"],
       ["FontColor add"],
       ["FontColor"],
@@ -251,11 +252,32 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       end
     end
 
-    it "refuses the nested group { header } form, which 1.2026.6 ignores" do
-      nested = ["<style>", "sequenceDiagram {", "group {", "header {",
-                "FontColor red", "}", "}", "}", "</style>", "A -> B"]
+    it "reads FontSize of groupHeader" do
+      expect(parse(*header.call("FontSize 20")).appearance.tab_size).to eq(20)
+    end
 
-      expect { parse(*nested) }.to raise_error(unsupported, /style block/)
+    [%w[group header], %w[reference header]].each do |path|
+      it "reads #{path.join(' { ')} { ... } and sets nothing" do
+        lines = ["<style>", "sequenceDiagram {", *path.map { |n| "#{n} {" },
+                 "FontColor red", "BackGroundColor lightgreen", "}", "}", "}",
+                 "</style>", "A -> B"]
+
+        expect(parse(*lines).appearance.tab_fill).to be_nil
+      end
+    end
+
+    [
+      ["group {", "FontColor red"],
+      ["group {", "header {", "FontSize 20"],
+      ["reference {", "header {", "Shadowing true"],
+    ].each do |opening|
+      it "refuses #{opening.last} under #{opening.join(' ')}" do
+        lines = ["<style>", "sequenceDiagram {", *opening,
+                 *Array.new(opening.count { |l| l.end_with?("{") } + 1, "}"),
+                 "</style>", "A -> B"]
+
+        expect { parse(*lines) }.to raise_error(unsupported, /style block/)
+      end
     end
 
     it "refuses a block that closes more than it opened" do

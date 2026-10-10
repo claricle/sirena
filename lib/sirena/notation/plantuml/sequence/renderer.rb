@@ -180,7 +180,7 @@ module Sirena
                                text_anchor: scene_text.anchor,
                                fill: scene_text.colour || text_colour,
                                font_family: font_family,
-                               font_size: font_size(scene_text.role),
+                               font_size: text_size(scene_text),
                                font_style: text_style(scene_text.role),
                                font_weight: text_weight(scene_text.role))
           end
@@ -195,6 +195,12 @@ module Sirena
 
           def text_weight(role)
             "bold" if role == "fragment_tab"
+          end
+
+          def text_size(scene_text)
+            return scene_text.size.to_s if scene_text.size
+
+            font_size(scene_text.role)
           end
 
           def font_size(role)

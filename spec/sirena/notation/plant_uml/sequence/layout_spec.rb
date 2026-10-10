@@ -33,6 +33,37 @@ end
 RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
   include PlantUmlSequenceSceneHelpers
 
+  describe "groupHeader FontSize" do
+    let(:body) { ["group Setup", "A -> B", "end"] }
+    let(:plain) { scene_of(*body) }
+    let(:big) do
+      scene_of("<style>", "sequenceDiagram {", "groupHeader {", "FontSize 20",
+               "}", "}", "</style>", *body)
+    end
+
+    it "sizes the tab text" do
+      label = big.fragments.first.texts.first
+
+      expect(label.size).to eq(20)
+    end
+
+    it "leaves a default tab text size unset" do
+      expect(plain.fragments.first.texts.first.size).to be_nil
+    end
+
+    it "pushes the rows below the tab down" do
+      expect(arrow_ys(big).first).to be > arrow_ys(plain).first
+    end
+
+    it "widens the tab" do
+      rights = [big, plain].map do |scene|
+        scene.fragments.first.tab_path[/L (\S+) /, 1].to_f
+      end
+
+      expect(rights.first).to be > rights.last
+    end
+  end
+
   it "places a head at the top and at the foot of each lifeline" do
     expect(scene_of("A -> B").heads.size).to eq(4)
   end
