@@ -237,7 +237,9 @@ module Sirena
             return "cloud" if node_data[:shape_cloud]
             return "hexagon" if node_data[:shape_hexagon]
 
-            node_data[:shape_square] ? "square" : "default"
+            return "square" if node_data[:shape_square]
+
+            node_data[:shape_round] ? "round" : "default"
           end
 
           def find_parent(level)

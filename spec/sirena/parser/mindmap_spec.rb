@@ -163,11 +163,7 @@ RSpec.describe Sirena::Parser::Mindmap do
         MERMAID
 
         diagram = parser.parse(source)
-        # Round is mermaid's own default shape spelled out explicitly, so it
-        # maps to "default" (the renderer's rounded-rectangle node), not a
-        # distinct "round" value -- there is no separate round case in
-        # extract_shape/render_node.
-        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.shape).to eq("round")
         expect(diagram.root.content).to eq("root")
       end
 
@@ -178,7 +174,7 @@ RSpec.describe Sirena::Parser::Mindmap do
         MERMAID
 
         diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.shape).to eq("round")
         expect(diagram.root.content).to eq("The root")
       end
 
@@ -186,7 +182,7 @@ RSpec.describe Sirena::Parser::Mindmap do
         source = "mindmap\n    root(\n      The root\n    )"
 
         diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("default")
+        expect(diagram.root.shape).to eq("round")
         expect(diagram.root.content).to eq("      The root\n    ")
       end
 
@@ -196,7 +192,7 @@ RSpec.describe Sirena::Parser::Mindmap do
         diagram = parser.parse(source)
         a = diagram.root.children.first
         expect(a.content).to eq("a")
-        expect(a.shape).to eq("default")
+        expect(a.shape).to eq("round")
         expect(diagram.root.children.last.content).to eq("New Stuff")
       end
 
