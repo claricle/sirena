@@ -48,7 +48,7 @@ RSpec.describe Sirena::Layout::UserJourney do
       expect(scene.id).to eq("user_journey")
       expect(scene.tasks).to be_a(Array)
       expect(scene.arrows).to be_a(Array)
-      expect(scene.view_box).to eq("0 0 270 290")
+      expect(scene.view_box).to eq("0 -25 500 540")
     end
 
     it "creates task nodes with dimensions" do
@@ -73,70 +73,56 @@ RSpec.describe Sirena::Layout::UserJourney do
       expect(task.box.height).to be > 0
     end
 
-    it "creates sequential edges between tasks" do
-      diagram = Sirena::Diagram::UserJourney.new.tap do |d|
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Select"
-            t.score = 4
-            t.actors = ["Customer"]
-          end
-        end
-        d.sections << section
-      end
+    it "draws one timeline arrow at the mmdc height" do
+      scene = transform.to_graph(representative_journey)
 
-      scene = transform.to_graph(diagram)
-
-      expect(scene.arrows.length).to eq(1)
-      arrow = scene.arrows.first
-      expect(arrow.id).to eq("flow_0")
-      expect([arrow.line.x1, arrow.line.x2]).to eq([190.0, 300.0])
+      expect(scene.arrows.map { |arrow| arrow.line.y1 }).to eq([200])
     end
 
-    it "includes task metadata" do
-      diagram = Sirena::Diagram::UserJourney.new.tap do |d|
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
-        d.sections << section
-      end
+    it "ends the timeline arrow short of the right margin" do
+      scene = transform.to_graph(representative_journey)
 
-      scene = transform.to_graph(diagram)
-
-      expect(scene.tasks.first.labels.map(&:text)).to eq(
-        ["Browse", "5", "Customer"],
-      )
-      expect(scene.sections.map(&:text)).to eq(["Shopping"])
+      expect(scene.arrows.first.line.x2).to eq(546)
     end
 
-    it "publishes final grid positions" do
-      diagram = Sirena::Diagram::UserJourney.new.tap do |d|
-        section = Sirena::Diagram::JourneySection.new.tap do |s|
-          s.name = "Shopping"
-          s.tasks << Sirena::Diagram::JourneyTask.new.tap do |t|
-            t.name = "Browse"
-            t.score = 5
-            t.actors = ["Customer"]
-          end
-        end
-        d.sections << section
-      end
+    it "names each task after its label" do
+      scene = transform.to_graph(representative_journey)
 
-      scene = transform.to_graph(diagram)
+      expect(scene.tasks.map { |task| task.labels.map(&:text) })
+        .to eq([["Browse"], ["Pay"]])
+    end
+
+    it "gives each task one dot per actor, in written order" do
+      scene = transform.to_graph(representative_journey)
+
+      expect(scene.tasks.last.dots.map(&:name)).to eq(["Buyer", "Bank"])
+    end
+
+    it "labels each section band" do
+      scene = transform.to_graph(representative_journey)
+
+      expect(scene.sections.flat_map { |s| s.labels.map(&:text) })
+        .to eq(["Find", "Buy"])
+    end
+
+    it "lists the actors alphabetically in the legend" do
+      scene = transform.to_graph(representative_journey)
+
+      expect(scene.legend.map { |actor| actor.dot.name })
+        .to eq(["Bank", "Buyer"])
+    end
+
+    it "puts the first task at the left margin below the bands" do
+      scene = transform.to_graph(representative_journey)
 
       expect([scene.tasks.first.box.x, scene.tasks.first.box.y])
-        .to eq([50.0, 50.0])
+        .to eq([150.0, 110.0])
+    end
+
+    it "spaces task columns 200px apart" do
+      scene = transform.to_graph(representative_journey)
+
+      expect(scene.tasks.map { |task| task.box.x }).to eq([150.0, 350.0])
     end
 
     it "raises error for invalid diagram" do
