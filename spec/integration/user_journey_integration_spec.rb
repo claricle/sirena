@@ -3,7 +3,7 @@
 require "spec_helper"
 require "sirena"
 
-RSpec.describe "UserJourney Integration" do
+RSpec.describe "UserJourney Integration", :aggregate_failures do
   describe "complete user journey pipeline" do
     it "parses, transforms, and renders a simple user journey" do
       source = <<~MERMAID
