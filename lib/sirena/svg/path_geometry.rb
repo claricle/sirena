@@ -220,7 +220,7 @@ module Sirena
         when "q"
           @quadratic_control = [args[0], args[1]]
           [@quadratic_control, @quadratic_control, [args[2], args[3]]]
-        when "t"
+        else # "t": ARITY and TOKEN admit no other letter here
           @quadratic_control = reflection(@quadratic_control)
           [@quadratic_control, @quadratic_control, [args[0], args[1]]]
         end
