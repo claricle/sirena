@@ -18,7 +18,8 @@ namespace :benchmark do
     # Save results
     benchmarker.save_results(results, "docs/PERFORMANCE_BENCHMARK.adoc")
 
-    puts "\n✅ Benchmark complete! Results saved to docs/PERFORMANCE_BENCHMARK.adoc"
+    puts "\n✅ Benchmark complete! " \
+         "Results saved to docs/PERFORMANCE_BENCHMARK.adoc"
   end
 
   desc "Quick benchmark with sample diagrams"
@@ -175,12 +176,14 @@ class PerformanceBenchmarker
   end
 
   def gather_system_info
+    cpu_info = `sysctl -n machdep.cpu.brand_string 2>/dev/null || \
+                lscpu 2>/dev/null | grep 'Model name' || echo 'Unknown'`.strip
     {
       ruby_version: RUBY_VERSION,
       platform: RUBY_PLATFORM,
       sirena_version: Sirena::VERSION,
       mermaid_cli_version: mermaid_cli_version,
-      cpu_info: `sysctl -n machdep.cpu.brand_string 2>/dev/null || lscpu 2>/dev/null | grep 'Model name' || echo 'Unknown'`.strip,
+      cpu_info: cpu_info,
       timestamp: Time.now.iso8601,
     }
   end
@@ -207,10 +210,13 @@ class PerformanceBenchmarker
         mermaid_ok = true
         mermaid_time = Benchmark.realtime do
           10.times do
-            mermaid_ok = false unless system("mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null")
+            mermaid_ok = false unless system(
+              "mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null",
+            )
           end
         end
-        # A failed mmdc invocation (e.g. Chrome unavailable) still exits `system`
+        # A failed mmdc invocation (e.g. Chrome unavailable) still exits
+        # `system`
         # near-instantly -- timing that as a successful render would publish
         # failure latency as a real speedup (TODO.foundation/11: unattributable
         # benchmarks). Report nothing for mermaid rather than a bogus number.
@@ -255,7 +261,9 @@ class PerformanceBenchmarker
     mermaid_time = Benchmark.realtime do
       Dir.glob(File.join(batch_dir, "*.mmd")).each do |file|
         output = file.sub(".mmd", ".svg")
-        mermaid_ok = false unless system("mmdc -i '#{file}' -o '#{output}' 2>/dev/null")
+        mermaid_ok = false unless system(
+          "mmdc -i '#{file}' -o '#{output}' 2>/dev/null",
+        )
       end
     end
 
@@ -264,7 +272,8 @@ class PerformanceBenchmarker
       sirena_total: sirena_time,
       sirena_per_diagram: sirena_time / 50,
     }
-    # See benchmark_single_renders: a failed mmdc invocation still exits `system`
+    # See benchmark_single_renders: a failed mmdc invocation still exits
+    # `system`
     # near-instantly, so never publish its timing as a real batch speedup.
     return result unless mermaid_ok
 
@@ -294,12 +303,15 @@ class PerformanceBenchmarker
     sirena_startup = Benchmark.realtime do
       10.times do
         # Simulate fresh start by requiring in subprocess
-        sirena_ok = false unless system("ruby -r sirena -e 'Sirena.render(\"graph TD\\nA-->B\")' 2>/dev/null")
+        sirena_ok = false unless system(
+          "ruby -r sirena -e 'Sirena.render(\"graph TD\\nA-->B\")' 2>/dev/null",
+        )
       end
     end
     unless sirena_ok
-      raise "Sirena subprocess startup benchmark failed -- a fresh `ruby -r sirena` " \
-            "process could not render; this is not the external mmdc tool, so fix " \
+      raise "Sirena subprocess startup benchmark failed -- a fresh " \
+            "`ruby -r sirena` process could not render; this is not the " \
+            "external mmdc tool, so fix " \
             "the gem load rather than trusting any number from this run"
     end
 
@@ -313,7 +325,9 @@ class PerformanceBenchmarker
       mermaid_ok = true
       mermaid_startup = Benchmark.realtime do
         10.times do
-          mermaid_ok = false unless system("mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null")
+          mermaid_ok = false unless system(
+            "mmdc -i '#{input_file}' -o '#{output_file}' 2>/dev/null",
+          )
         end
       end
       # See benchmark_single_renders: don't publish a failed mmdc invocation's

@@ -26,7 +26,8 @@ module GitRepoHelpers
   def commit(dir, name)
     File.write(File.join(dir, name), name)
     sh(dir, "git", "add", name)
-    sh(dir, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", name)
+    sh(dir, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q",
+       "-m", name)
     sh(dir, "git", "rev-parse", "HEAD")
   end
 

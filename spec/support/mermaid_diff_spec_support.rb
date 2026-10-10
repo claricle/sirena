@@ -28,7 +28,10 @@ module MermaidDiffSpecSupport
     # genuine stderr line from the harness itself still reaches the
     # assertion. yeptris 0.6.15.2 adds a second startup line on platforms
     # without a precompiled native materializer; both are stripped.
-    YEPTRIS_NOTICE = /^yeptris: (?:"yeptris\/psych" defines the namespace only|no precompiled native materializer for Ruby \S+ on this platform).*\n/
+    YEPTRIS_NOTICE = Regexp.new(
+      '^yeptris: (?:"yeptris/psych" defines the namespace only|' \
+      'no precompiled native materializer for Ruby \S+ on this platform).*\n',
+    )
     private_constant :YEPTRIS_NOTICE
 
     def run_harness(source, *options, mmdc: accepting_mmdc, relative: false)
@@ -56,7 +59,10 @@ module MermaidDiffSpecSupport
         end
 
         stdout, stderr, status = if relative
-                                   Dir.chdir(File.expand_path("../..", __dir__), &capture)
+                                   Dir.chdir(
+                                     File.expand_path("../..", __dir__),
+                                     &capture
+                                   )
                                  else
                                    capture.call
                                  end
@@ -72,7 +78,8 @@ module MermaidDiffSpecSupport
     end
 
     def intentional_error_svg
-      '<svg aria-roledescription="error"><style>.error-icon{fill:#552222;}</style></svg>'
+      '<svg aria-roledescription="error">' \
+        "<style>.error-icon{fill:#552222;}</style></svg>"
     end
 
     def syntax_error_svg
@@ -171,7 +178,9 @@ module MermaidDiffSpecSupport
 
     def await_pid(pidfile)
       Timeout.timeout(guard) do
-        sleep 0.01 until File.exist?(pidfile) && File.read(pidfile).match?(/\A\d+\z/)
+        until File.exist?(pidfile) && File.read(pidfile).match?(/\A\d+\z/)
+          sleep 0.01
+        end
       end
       File.read(pidfile).to_i
     end
@@ -180,7 +189,9 @@ module MermaidDiffSpecSupport
     # by the time the examples run. It is checked because kill_group signals a
     # whole group: a parent still in ours would take the suite down with it.
     def own_group_leader(pid)
-      raise "pid #{pid} is not its own process group leader" unless Process.getpgid(pid) == pid
+      unless Process.getpgid(pid) == pid
+        raise "pid #{pid} is not its own process group leader"
+      end
 
       pid
     end
@@ -193,7 +204,8 @@ module MermaidDiffSpecSupport
 
       prefix_path(fake_mmdc(dir, script)) do
         Timeout.timeout(guard) do
-          HardenedMmdc.run_mmdc(File.join(dir, "in.mmd"), File.join(dir, "out.svg"))
+          HardenedMmdc.run_mmdc(File.join(dir, "in.mmd"),
+                                File.join(dir, "out.svg"))
         end
       end
     end

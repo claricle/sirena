@@ -19,7 +19,9 @@ module ErTildeTiming
   MAX_LINEAR_SCALING_RATIO = 30
 
   def min_tilde_parse_time(char_count, attempts: 3, position: :prefix)
-    min_call_time(attempts: attempts) { time_tilde_parse(char_count, position: position) }
+    min_call_time(attempts: attempts) do
+      time_tilde_parse(char_count, position: position)
+    end
   end
 
   # Ratio of parse time at `large` chars over parse time at `small`
@@ -28,8 +30,10 @@ module ErTildeTiming
   # -- not an absolute duration -- the thing worth asserting: it stays
   # discriminating regardless of how fast or loaded the machine is.
   def tilde_parse_scaling_ratio(small, large, position: :prefix, attempts: 5)
-    small_time = min_tilde_parse_time(small, attempts: attempts, position: position)
-    large_time = min_tilde_parse_time(large, attempts: attempts, position: position)
+    small_time = min_tilde_parse_time(small, attempts: attempts,
+                                             position: position)
+    large_time = min_tilde_parse_time(large, attempts: attempts,
+                                             position: position)
     large_time / small_time
   end
 
@@ -39,12 +43,14 @@ module ErTildeTiming
   # Parslet rules, so a regression that reverted only one of them needs
   # a long run on each side to be caught.
   def time_tilde_parse(char_count, position: :prefix)
-    long_run = "a" * char_count
-    body = position == :prefix ? "#{long_run}~foo bar~x" : "foo~bar baz~#{long_run}"
-    source = "erDiagram\n  ENTITY {\n    #{body} rental_date\n  }\n"
+    body = tilde_body("a" * char_count, position)
 
     diagram = nil
-    elapsed = cpu_time { diagram = parser.parse(source) }
+    elapsed = cpu_time do
+      diagram = parser.parse(
+        "erDiagram\n  ENTITY {\n    #{body} rental_date\n  }\n",
+      )
+    end
 
     attr = diagram.find_entity("ENTITY").attributes.first
     # `body` has 2 tildes, so `extract_attribute_type` pairs them into
@@ -53,6 +59,12 @@ module ErTildeTiming
     # correctness check and not just a speed check.
     expect(attr.attribute_type).to eq(body.sub("~", "<").sub("~", ">"))
     elapsed
+  end
+
+  def tilde_body(long_run, position)
+    return "#{long_run}~foo bar~x" if position == :prefix
+
+    "foo~bar baz~#{long_run}"
   end
 
   # Ratio of parse time at `large` PAIRS of adjacent tildes over `small`
