@@ -305,4 +305,17 @@ RSpec.describe Sirena::Parser::Gantt do
       expect(task.end_date).to eq("20240103")
     end
   end
+
+  describe "#parse settings lines" do
+    {
+      "tick_interval" => ["tickInterval 1week", "1week"],
+      "today_marker" => ["todayMarker off", "off"],
+    }.each do |attribute, (line, expected)|
+      it "reads #{attribute} from #{line.inspect}" do
+        source = "gantt\n  #{line}\n  section A\n  T :a, 2024-01-01, 2d\n"
+
+        expect(parser.parse(source).public_send(attribute)).to eq(expected)
+      end
+    end
+  end
 end
