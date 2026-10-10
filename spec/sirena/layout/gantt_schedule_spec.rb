@@ -41,14 +41,16 @@ RSpec.describe Sirena::Layout::Gantt do
   end
 
   it "draws the bar to the end before an excluded stretch" do
-    body = "excludes weekends\nsection S\nA :2024-03-07, 2d\nB :2024-03-11, 2d\n"
+    body = "excludes weekends\nsection S\n" \
+           "A :2024-03-07, 2d\nB :2024-03-11, 2d\n"
     drawn, whole = widths(body)
 
     expect(drawn / whole).to be_within(0.001).of(1.0)
   end
 
   it "starts the next task after the excluded stretch" do
-    body = "excludes weekends\nsection S\nA :a, 2024-03-07, 2d\nB :after a, 1d\n"
+    body = "excludes weekends\nsection S\n" \
+           "A :a, 2024-03-07, 2d\nB :after a, 1d\n"
 
     expect(helper.spans(helper.scene(body)).last.first.iso8601)
       .to eq("2024-03-11")
