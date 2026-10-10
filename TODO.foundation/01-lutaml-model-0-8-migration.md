@@ -1,13 +1,15 @@
 # 01 — lutaml-model 0.8 migration
 
-Status (2026-10-10): **partially complete; card remains open.** The 0.8
+Status (2026-10-10): **complete.** The 0.8
 namespace migration, full-suite/corpus repair, exact `lutaml-model ~> 0.8.0`
 constraint, `svg_conform ~> 0.2.0` development dependency, and lockfile-free
 fresh-resolution lane are on `main` through PRs #8 and #179. All four
-version-bearing files consistently declare Ruby 3.2. The remaining closeout
-gap is execution at that declared minimum: the full CI suite currently starts
-at Ruby 3.3, while Ruby 3.2 runs lint only. This item is not complete until a
-Ruby 3.2 full-suite lane proves the stated floor.
+version-bearing files consistently declare Ruby 3.2. PR #248 closes the final
+gap: terminal-green run `38022334412` executes the full suite on Ruby 3.2 on
+Ubuntu (job `114125810756`), macOS (job `114125810776`), and Windows (job
+`114125810801`). The same exact-head run also passes `fresh-resolution`, the
+latest-stable Ruby jobs, `full-lane`, and `fast-lane`; it merged as
+`fefc7c8c6cc3c90d5f9139c2b9e75f7169126330`.
 
 Critical path, and the FIRST thing that lands — nothing else can be
 green before it. `bundle exec rspec` today reports "0 examples, 1 error
