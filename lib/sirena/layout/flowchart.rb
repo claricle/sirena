@@ -458,8 +458,6 @@ module Sirena
           next bounds unless node
 
           bends = edge_bends(edge, node, node, side)
-          next bounds if bends.empty?
-
           label_x, label_y = loop_label_anchor(node, bends)
           half_width, height = loop_label_extent(edge)
           xs = bends.map { |point| point[:x] } +

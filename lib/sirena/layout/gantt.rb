@@ -267,8 +267,6 @@ module Sirena
 
       def timeline_geometry(graph)
         timeline = graph[:timeline]
-        return unless timeline
-
         Timeline.new(
           background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
                                width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
@@ -525,7 +523,7 @@ module Sirena
       # "after") converges once the predecessor does, instead of reading
       # a stale nil on the first pass.
       def chain_from_previous_task(task, previous_task)
-        return false unless previous_task&.calculated_end
+        return false unless previous_task.calculated_end
 
         task.calculated_start = previous_task.calculated_end
         task.calculated_end = end_for(task.calculated_start, task.duration)
@@ -533,19 +531,13 @@ module Sirena
       end
 
       def calculate_task_date(task)
-        return if task.calculated_start
-
-        if task.start_date
-          task.calculated_start = parse_date(task.start_date)
-        end
+        task.calculated_start = parse_date(task.start_date)
 
         if task.end_date
           task.calculated_end = parse_date(task.end_date)
         elsif task.duration && task.calculated_start
           task.calculated_end = end_for(task.calculated_start, task.duration)
         end
-
-        task.calculated_start
       end
 
       def resolve_task_dependency(task)
