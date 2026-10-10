@@ -1337,4 +1337,45 @@ RSpec.describe Sirena::Parser::Flowchart do
       expect(node.label).to eq("A")
     end
   end
+
+  describe "@{ } YAML tags" do
+    {
+      "a bool that is not one" => ["!!bool nope", /does not fit .*bool/],
+      "a float that is not one" => ["!!float x", /does not fit .*float/],
+      "a null that is not one" => ["!!null x", /does not fit .*null/],
+      "an empty int" => ["!!int", /does not fit .*int/],
+      "a tag that is not in the schema" => ["!!foo x", /Unsupported tag.*foo/],
+      "an empty unknown tag" => ["!!foo", /Unsupported tag.*foo/],
+    }.each do |name, (value, message)|
+      it "refuses #{name}" do
+        expect { node_for("graph TD\nD@{ label: #{value} }\n") }
+          .to raise_error(Sirena::Parser::ParseError, message)
+      end
+    end
+
+    it "reads an explicit null as no label" do
+      expect(node_for("graph TD\nD@{ label: !!null ~ }\n").label).to eq("D")
+    end
+
+    it "reads an empty !!str shape as no shape" do
+      expect(node_for("graph TD\nD@{ shape: !!str }\n").shape).to eq("rect")
+    end
+
+    it "refuses an array nested inside a key" do
+      expect { node_for("graph TD\nD@{ ? [[a]]: 1 }\n") }
+        .to raise_error(Sirena::Parser::ParseError, /Nested array/)
+    end
+
+    it "takes a one-element array key as the key it holds" do
+      node = node_for("graph TD\nD@{ ? [shape]: hexagon }\n")
+
+      expect(node.shape).to eq("hexagon")
+    end
+
+    it "ignores a key made of an array holding a null" do
+      node = node_for("graph TD\nD@{ ? [shape, ~]: hexagon }\n")
+
+      expect(node.shape).to eq("rect")
+    end
+  end
 end
