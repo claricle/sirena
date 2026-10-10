@@ -43,6 +43,12 @@ RSpec.describe Sirena::Layout::Architecture do
     end
   end
 
+  # Left, top, right and bottom room a box leaves around its member.
+  def margins(member, box)
+    [member.x - box.x, member.y - box.y,
+     box.width - member.width, box.height - member.height]
+  end
+
   def nodes(scene)
     scene.children.to_h { |node| [node.id, node] }
   end
@@ -83,9 +89,7 @@ RSpec.describe Sirena::Layout::Architecture do
     scene = scene_for(services: [service("a", group_id: "g")],
                       groups: [group("g")])
     member, box = nodes(scene).values_at("a", "g")
-    expect([member.x - box.x, member.y - box.y,
-            box.width - member.width, box.height - member.height])
-      .to eq([42.5, 42.5, 85, 102])
+    expect(margins(member, box)).to eq([42.5, 42.5, 85, 102])
   end
 
   it "draws an isolated empty group as a 112x112 box beside the services" do
