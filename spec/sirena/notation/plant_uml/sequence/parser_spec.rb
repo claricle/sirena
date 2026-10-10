@@ -344,6 +344,9 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       {
         "[-> A : hi" => [:from, :left, false],
         "A ->] : hi" => [:to, :right, false],
+        "?->A : hi" => [:from, :left, true],
+        "A ->? : hi" => [:to, :right, true],
+        "A <-? : hi" => [:from, :right, true],
       }.each do |line, (end_name, side, local)|
         it "reads #{line.inspect} as an edge on the #{end_name} end" do
           message = edge_message(line)

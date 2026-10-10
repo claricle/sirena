@@ -5,7 +5,8 @@ module Sirena
     module PlantUML
       module Sequence
         # The missing end of a message with no participant there: `[->` and
-        # `->]` run to the edge of the diagram.
+        # `->]` run to the edge of the diagram, `?->` and `->?` run a label's
+        # length from the participant they are written beside.
         class Edge
           # Room between the participant and the end of such an arrow, on top
           # of the label.
@@ -13,12 +14,12 @@ module Sirena
           # A ring at the edge sits this far inside it.
           RING_INSET = 8.0
 
-          TOKENS = { "[" => false, "]" => false }.freeze
+          TOKENS = { "[" => false, "]" => false, "?" => true }.freeze
           private_constant :TOKENS
 
           attr_reader :side
 
-          # @param token [String] `[` or `]` as written
+          # @param token [String] `[`, `]` or `?` as written
           # @param side [Symbol] :left or :right, by position in the line
           # @return [Edge, nil] nil for a token that is not an edge
           def self.read(token, side)
