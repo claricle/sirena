@@ -250,7 +250,7 @@ module Sirena
 
         # Line terminator
         rule(:line_end) do
-          space? >> (comment.maybe >> newline | eof)
+          space? >> ((comment.maybe >> newline) | eof)
         end
       end
     end

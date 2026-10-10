@@ -374,7 +374,10 @@ module FlowchartClusterSpecHelpers
   # from a real triangle. Area is what actually says the head has a
   # visible shape.
   def triangle_area(a, b, c)
-    ((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])).abs / 2.0
+    (
+      ((b[0] - a[0]) * (c[1] - a[1])) -
+      ((b[1] - a[1]) * (c[0] - a[0]))
+    ).abs / 2.0
   end
 
   # Used by "an edge from a box to itself" only.
