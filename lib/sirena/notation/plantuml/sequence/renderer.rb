@@ -191,7 +191,8 @@ module Sirena
                                height: head.height, rx: 3, ry: 3,
                                fill: head.fill || node_fill,
                                fill_opacity: head.fill_opacity&.to_s,
-                               stroke: node_stroke, stroke_width: stroke_width)
+                               stroke: head.stroke || node_stroke,
+                               stroke_width: stroke_width)
           end
 
           def text_element(scene_text)
@@ -199,10 +200,16 @@ module Sirena
                                content: scene_text.content,
                                text_anchor: scene_text.anchor,
                                fill: scene_text.colour || text_colour,
-                               font_family: font_family(scene_text.role),
+                               font_family: text_family(scene_text),
                                font_size: text_size(scene_text),
-                               font_style: text_style(scene_text.role),
-                               font_weight: text_weight(scene_text.role))
+                               font_style: scene_text.font_style ||
+                                         text_style(scene_text.role),
+                               font_weight: scene_text.weight ||
+                                         text_weight(scene_text.role))
+          end
+
+          def text_family(scene_text)
+            scene_text.family || font_family(scene_text.role)
           end
 
           def font_family(role = nil)

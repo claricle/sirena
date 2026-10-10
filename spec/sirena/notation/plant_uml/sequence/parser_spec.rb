@@ -326,15 +326,36 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
 
     [
       "MinimumWidth 90\nHorizontalAlignment middle",
-      "MinimumWidth 90\nFontColor red",
-      "MinimumWidth: 90;",
-      "FontColor red",
       "MinimumWidth wide",
+      "FontStyle bold",
+      "FontWeight heavy",
+      "FontSize 0",
     ].each do |body|
       it "refuses the style block holding #{body.inspect}" do
         expect { parse(*style.call(body), "A -> B") }
           .to raise_error(unsupported, /style block/)
       end
+    end
+
+    it "reads the colon and semicolon form" do
+      lines = style.call("MinimumWidth: 90; /* wide */")
+
+      expect(parse(*lines, "A -> B").min_head_width).to eq(90)
+    end
+
+    it "reads the font and line of a head" do
+      lines = style.call("FontColor: green; FontSize: 26; LineColor: #E00")
+      head = parse(*lines, "A -> B").appearance.head_style
+
+      expect([head.colour, head.size, head.line]).to eq(["#008000", 26, "#EE0000"])
+    end
+
+    it "reads the style, family and weight of a head" do
+      lines = style.call("FontStyle italic\nFontName Roboto\nFontWeight 900")
+      head = parse(*lines, "A -> B").appearance.head_style
+
+      expect([head.style, head.family, head.weight])
+        .to eq(%w[italic Roboto 900])
     end
 
     it "reads HorizontalAlignment" do

@@ -31,6 +31,7 @@ module PlantUmlSequenceCorpus
     ddc664f08110 d918f796209f ae1299794d0b fcaf69429c9c
     bea0f11e448b 2bd5234bfbfe 2018ad068c81 f0cb24bd16e0
     ad11bf4b448a 793d6e993975 1f75ab64bf5e e6d99fb6ac3c 1f8e5fb51e4d
+    a13609de5404
   ].freeze
 
   def case_named(suffix)
@@ -198,6 +199,19 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence do
     plain = Sirena.render(bare, notation: :plantuml)
 
     expect(rect_count(svg) - rect_count(plain)).to eq(3)
+  end
+
+  it "draws the head labels of the Roboto case in its font" do
+    svg = Sirena.render(source_of("a13609de5404"), notation: :plantuml)
+    labels = matches(svg, "//text[@font-family='Roboto'][@font-weight='900']")
+
+    expect(labels.size).to eq(4)
+  end
+
+  it "draws the heads of the Roboto case in its line colour" do
+    svg = Sirena.render(source_of("a13609de5404"), notation: :plantuml)
+
+    expect(matches(svg, "//rect[@stroke='#EE0000']").size).to eq(4)
   end
 
   it "draws no fill for the transparent heads of the alpha case" do

@@ -683,6 +683,41 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "head style" do
+    let(:block) do
+      ["<style>", "sequenceDiagram {", "participant {", "FontSize: 26",
+       "FontColor: green", "FontWeight: 900", "LineColor: #E00", "}", "}",
+       "</style>"]
+    end
+    let(:head) { top_heads(scene_of(*block, "Alice -> Bobby")).first }
+    let(:plain) { top_heads(scene_of("Alice -> Bobby")).first }
+
+    it "grows the head with the font size" do
+      expect(head.height).to be_within(0.001).of(36 + (12 * 1.1776))
+    end
+
+    it "widens the head to fit the larger label" do
+      expect(head.width).to be > plain.width
+    end
+
+    it "colours the head's line" do
+      expect(head.stroke).to eq("#EE0000")
+    end
+
+    it "colours and sizes the label" do
+      expect([head.texts.first.colour, head.texts.first.size])
+        .to eq(["#008000", 26.0])
+    end
+
+    it "sets the weight of the label" do
+      expect(head.texts.first.weight).to eq("900")
+    end
+
+    it "leaves an unstyled head alone" do
+      expect([plain.stroke, plain.texts.first.size]).to eq([nil, nil])
+    end
+  end
+
   describe "participant fills" do
     let(:head) { top_heads(scene_of("participant A #CCCCCC01")).first }
 
