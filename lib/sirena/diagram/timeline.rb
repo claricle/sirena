@@ -31,6 +31,13 @@ module Sirena
         descriptions.first
       end
 
+      # A period written without descriptions (a bare task line).
+      #
+      # @return [Boolean] true if there are no descriptions
+      def bare?
+        descriptions.empty?
+      end
+
       # Check if event has multiple descriptions.
       #
       # @return [Boolean] true if more than one description
@@ -47,18 +54,22 @@ module Sirena
       # Name/title of this section
       attribute :name, :string
 
-      # Events within this section
+      # Periods in source order: events and bare tasks interleaved as
+      # written. A bare task is an event without descriptions.
       attribute :events, TimelineEvent, collection: true,
                                         default: -> { [] }
-
-      # Task names (for sections without timestamps)
-      attribute :tasks, :string, collection: true, default: -> { [] }
 
       def initialize(name = nil)
         super()
         @name = name
         @events = []
-        @tasks = []
+      end
+
+      # Names of the bare tasks, in source order.
+      #
+      # @return [Array<String>] task names
+      def tasks
+        events.select(&:bare?).map(&:time)
       end
 
       # Validates the section.
@@ -70,16 +81,16 @@ module Sirena
 
       # Check if section has events.
       #
-      # @return [Boolean] true if section has events
+      # @return [Boolean] true if section has events with descriptions
       def has_events?
-        !events.empty?
+        events.any? { |event| !event.bare? }
       end
 
       # Check if section has tasks.
       #
       # @return [Boolean] true if section has tasks
       def has_tasks?
-        !tasks.empty?
+        events.any?(&:bare?)
       end
     end
 
@@ -105,7 +116,8 @@ module Sirena
       attribute :sections, TimelineSection, collection: true,
                                             default: -> { [] }
 
-      # Collection of events not in any section
+      # Periods (events and bare tasks, in source order) written before
+      # the first section
       attribute :events, TimelineEvent, collection: true,
                                         default: -> { [] }
 
@@ -142,7 +154,7 @@ module Sirena
       #
       # @return [Boolean] true if has events (in sections or standalone)
       def has_events?
-        !events.empty? || sections.any?(&:has_events?)
+        events.any? { |event| !event.bare? } || sections.any?(&:has_events?)
       end
 
       # Check if timeline has sections.

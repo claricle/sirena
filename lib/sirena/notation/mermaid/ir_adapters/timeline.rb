@@ -32,8 +32,7 @@ module Sirena
                 value: IR::Scalar.new(number: index)
               )
               [section_item,
-               *event_items(section.events, section_id, occupied),
-               *task_items(section.tasks, section_id, occupied)]
+               *event_items(section.events, section_id, occupied)]
             end
           end
 
@@ -57,17 +56,6 @@ module Sirena
                 label: description, role: "description",
                 parent_id: parent_id, dimension: "description",
                 ordinal: index, value: IR::Scalar.new(number: index)
-              )
-            end
-          end
-
-          def task_items(tasks, parent_id, occupied)
-            tasks.map.with_index do |task, index|
-              placed_item(
-                id: reserve_id("task_#{index}", occupied),
-                label: task, role: "task", parent_id: parent_id,
-                dimension: "task", ordinal: index,
-                value: IR::Scalar.new(number: index)
               )
             end
           end
@@ -96,7 +84,7 @@ module Sirena
             candidate
           end
           private_class_method :section_items, :event_items,
-                               :description_items, :task_items, :placed_item,
+                               :description_items, :placed_item,
                                :reserve_id
         end
       end

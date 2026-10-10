@@ -6,7 +6,7 @@ require "sirena/diagram/timeline"
 RSpec.describe Sirena::Diagram::Timeline do
   def task_only_timeline
     section = Sirena::Diagram::TimelineSection.new("Delivery")
-    section.tasks << "Ship"
+    section.events << Sirena::Diagram::TimelineEvent.new(time: "Ship")
     timeline = described_class.new
     timeline.sections << section
     [timeline, section]

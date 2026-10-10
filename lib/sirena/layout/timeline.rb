@@ -132,12 +132,9 @@ module Sirena
       end
 
       def periods(document, parent_id)
-        events = items(document, "event", parent_id).map do |event|
+        items(document, "event", parent_id).map do |event|
           { name: event_time(event),
             events: items(document, "description", event.id).map(&:label) }
-        end
-        events + items(document, "task", parent_id).map do |task|
-          { name: task.label, events: [] }
         end
       end
 
