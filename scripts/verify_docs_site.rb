@@ -3,8 +3,9 @@
 # Verifies that docs/_site (Jekyll's build output) actually contains what the
 # source config and content claim it should. `jekyll build` exits 0 even when
 # a page is missing, mis-themed, unstyled, or references a dead asset -- this
-# checks the OUTPUT, not the exit code. See TODO.foundation/15-docs-site-build.md
-# for the full rationale. (A local planning doc used to be cited here too --
+# checks the OUTPUT, not the exit code. See
+# TODO.foundation/15-docs-site-build.md for the full rationale. (A local
+# planning doc used to be cited here too --
 # docs/plans/ is untracked and local-only, per this repo's own convention, so
 # that reference resolved on exactly one machine and nowhere else, including
 # CI and a fresh checkout.)
@@ -113,7 +114,9 @@ module Sirena
       # `a4_theme_assets` needs to see that a `<script>` tag exists.
       RAW_TEXT_ELEMENTS = %w[script style textarea].freeze
       NESTABLE_INERT_ELEMENTS = %w[template].freeze
-      SKIPPED_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS).freeze
+      SKIPPED_CONTENT_ELEMENTS = (
+        RAW_TEXT_ELEMENTS + NESTABLE_INERT_ELEMENTS
+      ).freeze
 
       # NOT the same set as SKIPPED_CONTENT_ELEMENTS above, on purpose.
       # `script`/`style`/`template` content never reaches the visible page --
@@ -127,16 +130,21 @@ module Sirena
       # only content is that textarea, which the shared list wrongly
       # classified as content-empty. `rendered_text` must strip only the
       # elements that are genuinely invisible, not everything that happens to
-      # parse as raw text. Derived from RAW_TEXT_ELEMENTS/NESTABLE_INERT_ELEMENTS
-      # above, not a second hardcoded literal -- so a future addition to
+      # parse as raw text. Derived from RAW_TEXT_ELEMENTS and
+      # NESTABLE_INERT_ELEMENTS above, not a second hardcoded literal -- so
+      # a future addition to
       # either of those (e.g. a new raw-text element) is visible-by-default
       # here too, instead of silently staying invisible until this list is
       # separately remembered and updated.
-      INVISIBLE_CONTENT_ELEMENTS = (RAW_TEXT_ELEMENTS - %w[textarea] + NESTABLE_INERT_ELEMENTS).freeze
+      INVISIBLE_CONTENT_ELEMENTS = (
+        RAW_TEXT_ELEMENTS - %w[textarea] + NESTABLE_INERT_ELEMENTS
+      ).freeze
 
       def self.tags(markup)
         document = Nokogiri::HTML5.parse(markup)
-        document.css(SKIPPED_CONTENT_ELEMENTS.join(",")).each { |el| el.children.unlink }
+        document.css(SKIPPED_CONTENT_ELEMENTS.join(",")).each do |element|
+          element.children.unlink
+        end
         document.css("*").map do |el|
           { name: el.name.downcase, attrs: attributes_of(el) }
         end
@@ -153,7 +161,8 @@ module Sirena
     class Page
       def initialize(path, site_dir)
         @path = path
-        @rel_path = Pathname.new(path).relative_path_from(Pathname.new(site_dir)).to_s
+        @rel_path = Pathname.new(path)
+          .relative_path_from(Pathname.new(site_dir)).to_s
       end
 
       attr_reader :rel_path
@@ -293,7 +302,9 @@ module Sirena
       def stylesheet_hrefs
         return @stylesheet_hrefs if @stylesheet_hrefs
 
-        @stylesheet_hrefs = tags.select { |tag| tag[:name] == "link" && tag[:attrs]["rel"] == "stylesheet" }
+        @stylesheet_hrefs = tags.select do |tag|
+          tag[:name] == "link" && tag[:attrs]["rel"] == "stylesheet"
+        end
           .filter_map { |tag| tag[:attrs]["href"] }
           .grep(String)
       end
@@ -334,7 +345,7 @@ module Sirena
       # `Psych::AliasesNotEnabled` instead of returning a Hash, so a
       # `_config.yml` Jekyll itself builds successfully would crash this
       # verifier instead of being checked.
-      @config = YAML.safe_load_file(@docs_dir.join("_config.yml").to_s, aliases: true)
+      @config = load_config
       @baseurl = (baseurl || @config["baseurl"]).to_s
     end
 
@@ -351,6 +362,11 @@ module Sirena
     end
 
     private
+
+    def load_config
+      path = @docs_dir.join("_config.yml").to_s
+      YAML.safe_load_file(path, aliases: true)
+    end
 
     def html_pages
       # `.select { File.file? }` because a DIRECTORY named `index.html`
@@ -374,14 +390,17 @@ module Sirena
       # TypeError instead of returning nil, so the guard is required
       # before digging any further, not just an optimization.
       collections = @config["collections"]
-      permalink = collections.is_a?(Hash) ? collections.dig("diagram_types", "permalink") : nil
+      permalink = if collections.is_a?(Hash)
+                    collections.dig("diagram_types", "permalink")
+                  end
       if permalink != REQUIRED_DIAGRAM_PERMALINK
-        failures << "config: collections.diagram_types.permalink is #{permalink.inspect}, " \
-                    "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"
+        failures << "config: collections.diagram_types.permalink is " \
+                    "#{permalink.inspect}, expected " \
+                    "#{REQUIRED_DIAGRAM_PERMALINK.inspect}"
       end
 
       theme = @config["theme"]
-      failures << "config: theme is absent or empty" if theme.nil? || theme.to_s.empty?
+      failures << "config: theme is absent or empty" if theme.to_s.empty?
 
       failures
     end
@@ -394,14 +413,16 @@ module Sirena
       diagram_sources.each do |rel|
         collection_path = "diagram_types/#{rel}/index.html"
         unless @site_dir.join(collection_path).file?
-          failures << "manifest: _diagram_types/#{rel}.adoc missing at #{collection_path}"
+          failures << "manifest: _diagram_types/#{rel}.adoc missing at " \
+                      "#{collection_path}"
         end
 
         next unless include_active
 
         include_path = include_path_for(rel)
         unless @site_dir.join(include_path).file?
-          failures << "manifest: _diagram_types/#{rel}.adoc missing at #{include_path}"
+          failures << "manifest: _diagram_types/#{rel}.adoc missing at " \
+                      "#{include_path}"
         end
       end
 
@@ -415,15 +436,17 @@ module Sirena
       end
     end
 
-    # Pretty-permalink path for a diagram source, given as its collection-relative
-    # path with no extension (e.g. "mindmap", "index", "examples/flowchart-examples").
+    # Pretty-permalink path for a diagram source, given as its
+    # collection-relative path with no extension (e.g. "mindmap", "index",
+    # "examples/flowchart-examples").
     # `index` is literal under the collection permalink but collapses under
     # `permalink: pretty`.
     def include_path_for(rel)
       dir = File.dirname(rel)
       base = File.basename(rel)
       if base == "index"
-        dir == "." ? "_diagram_types/index.html" : "_diagram_types/#{dir}/index.html"
+        nested_index = "_diagram_types/#{dir}/index.html"
+        dir == "." ? "_diagram_types/index.html" : nested_index
       else
         "_diagram_types/#{rel}/index.html"
       end
@@ -435,16 +458,25 @@ module Sirena
       theme = @config["theme"].to_s
 
       pages.each do |page|
-        unless page.has_class_token?(LAYOUT_BODY_MARKER)
-          failures << "layout: #{page.rel_path} missing layout marker #{LAYOUT_BODY_MARKER.inspect}"
-        end
+        has_marker = page.has_class_token?(LAYOUT_BODY_MARKER)
+        failures << missing_layout_marker(page) unless has_marker
 
         next if page.stylesheet_hrefs.any? { |href| href.include?(theme) }
 
-        failures << "layout: #{page.rel_path} links no stylesheet naming theme #{theme.inspect}"
+        failures << missing_theme_stylesheet(page, theme)
       end
 
       failures
+    end
+
+    def missing_layout_marker(page)
+      "layout: #{page.rel_path} missing layout marker " \
+        "#{LAYOUT_BODY_MARKER.inspect}"
+    end
+
+    def missing_theme_stylesheet(page, theme)
+      "layout: #{page.rel_path} links no stylesheet naming " \
+        "theme #{theme.inspect}"
     end
 
     # R12-R16
@@ -463,13 +495,16 @@ module Sirena
                     "Asciidoctor block marker"
       end
       unless page.renders_content?
-        failures << "content: #{page.rel_path} renders no text in #{page.rendered_text_region}"
+        failures << "content: #{page.rel_path} renders no text in " \
+                    "#{page.rendered_text_region}"
       end
       failures
     end
 
     def diagram_pages(pages)
-      pages.select { |page| page.rel_path.start_with?("diagram_types/", "_diagram_types/") }
+      pages.select do |page|
+        page.rel_path.start_with?("diagram_types/", "_diagram_types/")
+      end
     end
 
     # R17-R24
@@ -483,7 +518,8 @@ module Sirena
 
         resolved = strip_baseurl(ref)
         if resolved.nil?
-          failures << "asset: #{ref} (referenced by #{referencing_page}) does not begin with baseurl #{@baseurl.inspect}"
+          failures << "asset: #{ref} (referenced by #{referencing_page}) " \
+                      "does not begin with baseurl #{@baseurl.inspect}"
           next
         end
 
@@ -492,10 +528,12 @@ module Sirena
         file_path = resolved.split(/[?#]/, 2).first.to_s
         next if resolves_within_site_dir?(file_path)
 
-        failures << "asset: #{ref} (referenced by #{referencing_page}) does not resolve to #{file_path}"
+        failures << "asset: #{ref} (referenced by #{referencing_page}) " \
+                    "does not resolve to #{file_path}"
       end
 
-      if @config["search_enabled"] == true && !@site_dir.join(SEARCH_INDEX_PATH).file?
+      search_enabled = @config["search_enabled"] == true
+      if search_enabled && !@site_dir.join(SEARCH_INDEX_PATH).file?
         failures << "asset: search index #{SEARCH_INDEX_PATH.inspect} missing"
       end
 
@@ -546,7 +584,9 @@ module Sirena
     # Segment-bounded: `/sirenax/...` must not match a `/sirena` baseurl.
     def strip_baseurl(ref)
       return ref if @baseurl.empty?
-      return ref[@baseurl.length..] if ref == @baseurl || ref.start_with?("#{@baseurl}/")
+
+      inside_baseurl = ref == @baseurl || ref.start_with?("#{@baseurl}/")
+      return ref[@baseurl.length..] if inside_baseurl
 
       nil
     end
@@ -558,12 +598,26 @@ if __FILE__ == $PROGRAM_NAME
 
   OptionParser.new do |opts|
     opts.banner = "Usage: ruby scripts/verify_docs_site.rb [options]"
-    opts.on("--docs-dir DIR", "Path to the docs directory (default: docs)") { |v| options[:docs_dir] = v }
-    opts.on("--baseurl BASEURL", "Baseurl used to resolve site-absolute asset refs") { |v| options[:baseurl] = v }
+    opts.on(
+      "--docs-dir DIR",
+      "Path to the docs directory (default: docs)",
+    ) do |value|
+      options[:docs_dir] = value
+    end
+    opts.on(
+      "--baseurl BASEURL",
+      "Baseurl used to resolve site-absolute asset refs",
+    ) do |value|
+      options[:baseurl] = value
+    end
   end.parse!
 
   site_dir = File.join(options[:docs_dir], "_site")
-  verifier = Sirena::DocsSiteVerifier.new(docs_dir: options[:docs_dir], site_dir: site_dir, baseurl: options[:baseurl])
+  verifier = Sirena::DocsSiteVerifier.new(
+    docs_dir: options[:docs_dir],
+    site_dir: site_dir,
+    baseurl: options[:baseurl],
+  )
   failures = verifier.failures
 
   if failures.empty?
