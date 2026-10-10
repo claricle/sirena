@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
-require_relative "../diagram/quadrant"
+require_relative "../notation/mermaid/ir_adapters/quadrant"
 
 module Sirena
   module Layout
@@ -61,15 +61,14 @@ module Sirena
 
       # Retains the pre-Scene structure for direct callers during conversion.
       def build_graph(diagram)
-        margin = DEFAULT_MARGIN
-        chart_width = DEFAULT_WIDTH - (margin * 2)
-        chart_height = DEFAULT_HEIGHT - (margin * 2)
+        data = ir_document(diagram)
+        margin, chart_width, chart_height = chart_dimensions
         {
-          id: diagram.id || "quadrant", title: diagram.title,
+          id: data.id, title: data.label,
           dimensions: dimensions(margin, chart_width, chart_height),
-          axes: axes(diagram),
-          quadrants: quadrants(diagram, margin, chart_width, chart_height),
-          points: transform_points(diagram, margin, chart_width, chart_height)
+          axes: axes(data),
+          quadrants: quadrants(data, margin, chart_width, chart_height),
+          points: transform_points(data, margin, chart_width, chart_height)
         }
       end
 
@@ -109,20 +108,34 @@ module Sirena
         }
       end
 
-      def axes(diagram)
-        {
-          x_left: diagram.x_axis_left || "",
-          x_right: diagram.x_axis_right || "",
-          y_bottom: diagram.y_axis_bottom || "", y_top: diagram.y_axis_top || ""
-        }
+      def chart_dimensions
+        [DEFAULT_MARGIN, DEFAULT_WIDTH - (DEFAULT_MARGIN * 2),
+         DEFAULT_HEIGHT - (DEFAULT_MARGIN * 2)]
       end
 
-      def quadrants(diagram, margin, width, height)
-        labels = [diagram.quadrant_1_label, diagram.quadrant_2_label,
-                  diagram.quadrant_3_label, diagram.quadrant_4_label]
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Quadrant.call(diagram)
+      end
+
+      def axes(data)
+        labels = axis_labels_for(data)
+        { x_left: labels["x_min"] || "", x_right: labels["x_max"] || "",
+          y_bottom: labels["y_min"] || "", y_top: labels["y_max"] || "" }
+      end
+
+      def axis_labels_for(data)
+        data.items.select { |item| item.role == "axis_label" }
+          .to_h { |item| [placement_value(item, "axis_position"), item.label] }
+      end
+
+      def quadrants(data, margin, width, height)
+        labels = data.items.select { |item| item.role == "region_label" }
+          .to_h { |item| [placement_value(item, "region").to_i, item.label] }
         (1..4).to_h do |number|
           [:"q#{number}", {
-            label: labels[number - 1], number: number,
+            label: labels[number], number: number,
             bounds: calculate_quadrant_bounds(number, margin, width, height)
           }]
         end
@@ -237,17 +250,47 @@ module Sirena
         { x: x, y: y, width: half_width, height: half_height }
       end
 
-      def transform_points(diagram, margin, width, height)
-        diagram.points.map.with_index do |point, index|
-          {
-            id: "point_#{index}", label: point.label,
-            svg_x: margin + (point.x * width),
-            svg_y: margin + ((1.0 - point.y) * height),
-            quadrant: point.quadrant, radius: point.radius || 6,
-            color: point.color, stroke_color: point.stroke_color,
-            stroke_width: point.stroke_width || 2
-          }
+      def transform_points(data, margin, width, height)
+        point_items(data).map do |point|
+          transform_point(point, margin, width, height)
         end
+      end
+
+      def transform_point(point, margin, width, height)
+        {
+          id: point.id, label: point.label,
+          svg_x: margin + (placement_value(point, "x_value") * width),
+          svg_y: margin + ((1.0 - placement_value(point, "y_value")) * height),
+          quadrant: point_quadrant(point),
+          radius: placement_value(point, "marker_size").to_f,
+          color: placement_value(point, "fill_color"),
+          stroke_color: placement_value(point, "stroke_color"),
+          stroke_width: placement_value(point, "stroke_width").to_f
+        }
+      end
+
+      def point_quadrant(point)
+        quadrant_number(placement_value(point, "x_value"),
+                        placement_value(point, "y_value"))
+      end
+
+      def point_items(data)
+        data.items.select { |item| item.role == "point" }
+          .sort_by { |item| placement(item, "x_value").ordinal }
+      end
+
+      def placement_value(item, dimension)
+        placement(item, dimension)&.value&.value
+      end
+
+      def placement(item, dimension)
+        item.placements.find { |candidate| candidate.dimension == dimension }
+      end
+
+      def quadrant_number(x_value, y_value)
+        return x_value >= 0.5 ? 1 : 2 if y_value >= 0.5
+
+        x_value < 0.5 ? 3 : 4
       end
     end
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "../notation/mermaid/ir_adapters/xychart"
 
 module Sirena
   module Layout
@@ -64,6 +65,7 @@ module Sirena
         attribute :id, :string
         attribute :label, :string
         attribute :chart_type, :symbol
+        attribute :color, :string
         attribute :colour_index, :integer
         attribute :polyline, :string
         attribute :points, Point, collection: true, default: -> { [] }
@@ -93,17 +95,22 @@ module Sirena
       # @param diagram [Diagram::XyChart] the XY chart diagram
       # @return [Hash] layout data with axes, datasets, and dimensions
       def build_graph(diagram)
+        data = ir_document(diagram)
         # Calculate plot area
         plot_width = DEFAULT_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
         plot_height = DEFAULT_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
         # Position axes
-        x_axis_layout = position_x_axis(diagram.x_axis, plot_width)
-        y_axis_layout = position_y_axis(diagram.y_axis, plot_height)
+        x_axis_layout = position_x_axis(
+          axis_data(data, "horizontal_axis"), plot_width
+        )
+        y_axis_layout = position_y_axis(
+          axis_data(data, "vertical_axis"), plot_height
+        )
 
         # Position datasets
         datasets_layout = position_datasets(
-          diagram.datasets,
+          datasets(data),
           x_axis_layout,
           y_axis_layout,
           plot_width,
@@ -120,7 +127,7 @@ module Sirena
           x_axis: x_axis_layout,
           y_axis: y_axis_layout,
           datasets: datasets_layout,
-          title: diagram.title,
+          title: data.label,
         }
       end
 
@@ -273,7 +280,8 @@ module Sirena
         points = dataset_points(graph, dataset)
         Series.new(
           id: dataset[:id], label: dataset[:label],
-          chart_type: dataset[:chart_type], colour_index: index,
+          chart_type: dataset[:chart_type], color: dataset[:color],
+          colour_index: index,
           polyline: points.map { |point| "#{point.x},#{point.y}" }.join(" "),
           points: dataset[:chart_type] == :bar ? [] : points,
           bars: dataset[:chart_type] == :bar ? bars(graph, dataset) : []
@@ -342,6 +350,54 @@ module Sirena
           Theme::Registry.get(:default).typography.font_size_small
       end
 
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Xychart.call(diagram)
+      end
+
+      def axis_data(data, role)
+        axis = data.items.find { |item| item.role == role }
+        return unless axis
+
+        {
+          label: axis.label,
+          type: placement_value(axis, "axis_kind").to_sym,
+          min: placement_value(axis, "minimum"),
+          max: placement_value(axis, "maximum"),
+          values: child_values(data, axis.id, "category"),
+        }
+      end
+
+      def datasets(data)
+        data.items.select { |item| item.role == "data_series" }
+          .sort_by { |item| placement_value(item, "series_order") }
+          .map { |item| dataset(data, item) }
+      end
+
+      def dataset(data, item)
+        {
+          id: item.id, label: item.label,
+          chart_type: placement_value(item, "chart_kind").to_sym,
+          color: placement_value(item, "series_color"),
+          values: child_values(data, item.id, "value")
+        }
+      end
+
+      def child_values(data, parent_id, dimension)
+        data.items.select { |item| item.parent_id == parent_id }
+          .filter_map { |item| placement(item, dimension) }
+          .sort_by(&:ordinal).map { |value| value.value.value }
+      end
+
+      def placement_value(item, dimension)
+        placement(item, dimension)&.value&.value
+      end
+
+      def placement(item, dimension)
+        item.placements.find { |candidate| candidate.dimension == dimension }
+      end
+
       # Positions the X-axis.
       #
       # @param axis [Diagram::XYAxis] X-axis
@@ -350,7 +406,7 @@ module Sirena
       def position_x_axis(axis, width)
         return default_x_axis(width) unless axis
 
-        if axis.categorical?
+        if axis[:type] == :categorical
           position_categorical_axis(axis, width)
         else
           position_numeric_axis(axis, width)
@@ -363,14 +419,14 @@ module Sirena
       # @param width [Numeric] plot width
       # @return [Hash] axis layout
       def position_categorical_axis(axis, width)
-        num_categories = axis.values.length
+        num_categories = axis[:values].length
         return default_x_axis(width) if num_categories.zero?
 
         # Calculate spacing between categories
         spacing = width / [num_categories, 1].max
 
         # Position each category
-        positions = axis.values.map.with_index do |label, idx|
+        positions = axis[:values].map.with_index do |label, idx|
           {
             label: label,
             position: idx * spacing + spacing / 2,
@@ -379,7 +435,7 @@ module Sirena
         end
 
         {
-          label: axis.label,
+          label: axis[:label],
           type: :categorical,
           positions: positions,
           min: 0,
@@ -394,10 +450,11 @@ module Sirena
       # @param width [Numeric] plot width
       # @return [Hash] axis layout
       def position_numeric_axis(axis, width)
-        min, max = axis.range
+        min = axis[:min]
+        max = axis[:max]
 
         {
-          label: axis.label,
+          label: axis[:label],
           type: :numeric,
           min: min,
           max: max,
@@ -429,11 +486,11 @@ module Sirena
       def position_y_axis(axis, height)
         return default_y_axis(height) unless axis
 
-        min = axis.min || 0
-        max = axis.max || 100
+        min = axis[:min] || 0
+        max = axis[:max] || 100
 
         {
-          label: axis.label,
+          label: axis[:label],
           min: min,
           max: max,
           height: height,
@@ -474,9 +531,10 @@ module Sirena
           )
 
           {
-            id: dataset.id,
-            label: dataset.label,
-            chart_type: dataset.chart_type,
+            id: dataset[:id],
+            label: dataset[:label],
+            chart_type: dataset[:chart_type],
+            color: dataset[:color],
             points: points,
           }
         end
@@ -491,7 +549,7 @@ module Sirena
       # @param height [Numeric] plot height
       # @return [Array<Hash>] positioned points
       def position_dataset_points(dataset, x_axis, y_axis, width, height)
-        dataset.values.map.with_index do |y_value, idx|
+        dataset[:values].map.with_index do |y_value, idx|
           x = calculate_x_position(idx, x_axis, width)
           y = calculate_y_position(y_value, y_axis, height)
 

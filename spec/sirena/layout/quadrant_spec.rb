@@ -34,6 +34,13 @@ RSpec.describe Sirena::Layout::Quadrant do
     expect(bounds).to eq(expected_bounds)
   end
 
+  it "lays out direct shared IR identically to the private diagram" do
+    ir = Sirena::Notation::Mermaid::IRAdapters::Quadrant.call(diagram)
+    scenes = [diagram, ir].map { |input| described_class.new.call(input) }
+
+    expect(scenes.map { |scene| Marshal.dump(scene) }.uniq.one?).to be(true)
+  end
+
   context "with points" do
     subject(:themed_point_geometry) do
       contrast = described_class.new.call(
