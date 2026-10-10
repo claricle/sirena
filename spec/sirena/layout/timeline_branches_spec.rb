@@ -3,48 +3,44 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::Timeline do
+  include TimelineSceneHelpers
+
   subject(:layout) { described_class.new }
 
-  def nonnumeric_entries
-    named = Sirena::Diagram::TimelineEvent.new(
-      time: "Now", descriptions: ["  shipped  "],
-    )
-    missing = Sirena::Diagram::TimelineEvent.new(
-      time: nil, descriptions: ["Unknown"],
-    )
+  let(:untimed) do
     diagram = Sirena::Diagram::Timeline.new
-    diagram.events.push(named, missing)
-    layout.call(diagram).tracks.fetch(0).entries
+    diagram.events.push(
+      Sirena::Diagram::TimelineEvent.new(time: "Now", descriptions: [" a "]),
+      Sirena::Diagram::TimelineEvent.new(time: nil, descriptions: ["b"]),
+    )
+    layout.call(diagram)
   end
-
-  def empty_section_scene
+  let(:quiet) do
     diagram = Sirena::Diagram::Timeline.new
     diagram.sections << Sirena::Diagram::TimelineSection.new("Quiet")
     layout.call(diagram)
   end
 
-  it "uses a titleless default track and range for an empty timeline" do
+  # mmdc 016_spec_diagram-orchestration_spec_15: viewBox 100 50 400 100
+  it "draws only the base arrow for an empty timeline" do
     scene = layout.call(Sirena::Diagram::Timeline.new)
-    track = scene.tracks.fetch(0)
 
-    expect([scene.width, scene.height, scene.title, track.entries,
-            track.range_labels.map(&:text)])
-      .to eq([960.0, 260.0, nil, [], %w[2000 2024 2012]])
+    expect([scene.width, scene.height, scene.cards]).to eq([400, 100, []])
   end
 
-  it "places standalone nonnumeric and missing times at the track origin" do
-    entries = nonnumeric_entries
-    expect([entries.map { |entry| entry.marker.x },
-            entries.map { |entry| entry.labels.map(&:text) }])
-      .to eq([[80.0, 80.0], [["shipped", "Now"], ["Unknown", ""]]])
+  it "trims the text of a standalone event" do
+    expect(cards_of(untimed, "event").map(&:lines)).to eq([["a"], ["b"]])
   end
 
-  it "renders an empty section without manufacturing entries" do
-    scene = empty_section_scene
-    track = scene.tracks.fetch(0)
+  it "gives a period without a time no text" do
+    expect(cards_of(untimed, "period").map(&:lines)).to eq([["Now"], []])
+  end
 
-    expect([scene.height, track.header.text, track.header.section_index,
-            track.entries, track.range_labels.map(&:text)])
-      .to eq([320.0, "Quiet", 0, [], %w[2000 2024 2012]])
+  it "draws an empty section as one card without periods" do
+    expect(quiet.cards.map(&:kind)).to eq(["section"])
+  end
+
+  it "gives an empty section the width of one column" do
+    expect(box(quiet.cards.first)).to eq([100, 50, 190, 67.8])
   end
 end

@@ -3,86 +3,88 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Layout::Timeline do
-  let(:source) do
-    <<~MERMAID
-      timeline
-        title Launch history
-        section History
-        2020 : Started
-        section Work
-        Research
-        Build
-    MERMAID
+  include TimelineSceneHelpers
+
+  # Expected numbers come from the mmdc references under
+  # spec/fixtures_mermaid/timeline, whose viewBox starts at x=100 where the
+  # scene starts at 0; 007 and 002 start 61 higher, so their y values here
+  # are mmdc's plus 61 (the title).
+  let(:sections) { lay_out(File.read(mmd("010"))) }
+  let(:untitled) { lay_out(File.read(mmd("007"))) }
+  let(:titled) { lay_out(File.read(mmd("002"))) }
+  let(:linked) { lay_out(File.read(mmd("012"))) }
+  let(:diagram) do
+    Sirena::Parser::Timeline.new.parse("timeline\n  title T\n  2020 : A\n")
   end
-  let(:diagram) { Sirena::Parser::Timeline.new.parse(source) }
-  let(:scene) { described_class.new.to_graph(diagram) }
+
+  def mmd(prefix)
+    Dir[File.join(__dir__, "../../mermaid/timeline", "#{prefix}*.mmd")].first
+  end
 
   it "lays out shared pre-positioned IR identically to the private model" do
     diagram.acc_title = "Accessible history"
-    diagram.acc_description = "Launches over time"
     ir = Sirena::Notation::Mermaid::IRAdapters::Timeline.call(diagram)
     actual = Marshal.dump(described_class.new.call(ir))
 
-    expect(actual).to eq(Marshal.dump(scene))
+    expect(actual).to eq(Marshal.dump(described_class.new.call(diagram)))
   end
 
-  describe "final geometry" do
-    subject(:geometry_evidence) do
-      history, work = scene.tracks
-      actual = [scene.class, scene.width, scene.height, scene.view_box,
-                [history.header.text, history.header.x, history.header.y],
-                [history.axis.x, history.axis.y, history.axis.width],
-                [history.entries.first.marker.x,
-                 history.entries.first.marker.y],
-                history.entries.first.labels.map do |label|
-                  [label.text, label.x, label.y]
-                end,
-                [work.header.text, work.header.y, work.axis.y],
-                work.entries.map do |entry|
-                  [entry.marker.x, entry.marker.y, entry.labels.first.text]
-                end]
-      expected = [described_class::Scene, 960.0, 380.0, "0 0 960 380",
-                  ["History", 80.0, 100.0], [80.0, 140.0, 800.0],
-                  [480.0, 143.0],
-                  [["Started", 480.0, 175.0], ["2020", 480.0, 125.0]],
-                  ["Work", 160.0, 200.0],
-                  [[346.6666666666667, 203.0, "Research"],
-                   [613.3333333333334, 203.0, "Build"]]]
-
-      [actual, expected]
-    end
-
-    it "returns typed final-canvas geometry for events and tasks" do
-      expect(geometry_evidence.first).to eq(geometry_evidence.last)
-    end
+  it "sizes the canvas as mmdc does for sections" do
+    expect([sections.width, sections.height]).to eq([1190, 485.6])
   end
 
-  describe "theme typography" do
-    subject(:typography_evidence) do
-      theme = Sirena::Theme::Registry.get(:high_contrast)
-      themed = described_class.new.call(diagram, theme: theme)
-      actual = [themed.title.font_size,
-                themed.tracks.first.header.font_size,
-                themed.tracks.first.entries.first.labels.map(&:font_size)]
-      expected = [theme.typography.font_size_large,
-                  theme.typography.font_size_normal,
-                  [theme.typography.font_size_small,
-                   theme.typography.font_size_small]]
+  it "sizes the canvas as mmdc does for a title and wrapped events" do
+    expect([titled.width, titled.height]).to eq([1390, 629.6])
+  end
 
-      [actual, expected]
-    end
+  it "keeps the viewBox in step with the size" do
+    expect(titled.view_box).to eq("0 0 1390.0 629.6")
+  end
 
-    it "stores theme typography in the scene" do
-      expect(typography_evidence.first).to eq(typography_evidence.last)
-    end
+  it "widens the canvas for a card text wider than its card" do
+    expect(linked.width).to be_within(0.1).of(805.859)
+  end
+
+  it "places the section cards where mmdc does" do
+    expect(cards_of(sections, "section").map { |card| box(card) })
+      .to eq([[100, 50, 390, 67.8], [500, 50, 390, 67.8]])
+  end
+
+  it "places the period cards where mmdc does" do
+    expect(cards_of(sections, "period").map { |card| box(card)[0, 2] })
+      .to eq([[100, 167.8], [300, 167.8], [500, 167.8], [700, 167.8]])
+  end
+
+  it "places the events under their period" do
+    expect(cards_of(untitled, "event").map { |card| box(card)[0, 2] })
+      .to eq([[100, 311], [300, 311], [300, 371], [500, 311], [700, 311]])
+  end
+
+  it "drops the dashed line below the events" do
+    expect(drop_line(cards_of(untitled, "period").first))
+      .to eq([195, 178.8, 195, 484.4])
+  end
+
+  it "draws the base arrow across the cards" do
+    axis = sections.axis
+
+    expect([axis.x1, axis.y1, axis.x2]).to eq([50, 285.6, 1140])
+  end
+
+  it "centres the title over the cards" do
+    expect([titled.title_x, titled.title_y]).to eq([245, 81])
+  end
+
+  it "keeps the card text size mmdc uses" do
+    expect(cards_of(sections, "period").first.font_size).to eq(16)
   end
 
   it "does not send its hand-laid-out scene through Grid" do
     calls = []
     allow(Sirena::Layout::Grid).to receive(:apply) { calls << :apply }
 
-    result = described_class.new.call(diagram)
+    described_class.new.call(diagram)
 
-    expect([result.class, calls]).to eq([described_class::Scene, []])
+    expect(calls).to be_empty
   end
 end
