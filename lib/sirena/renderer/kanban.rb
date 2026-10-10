@@ -139,7 +139,7 @@ module Sirena
         case style
         when "header", "badge" then "#ffffff"
         when "metadata_label" then theme_color(:secondary)
-        else theme_color(:text) || "#1f2937"
+        else theme_color(:card_text)
         end
       end
 
