@@ -189,7 +189,8 @@ module Sirena
             # Create new section
             current_section = Diagram::JourneySection.new
             current_section.name = line[:section].to_s.strip
-          elsif line[:task] && current_section
+          elsif line[:task]
+            current_section ||= Diagram::JourneySection.new(name: "")
             # Parse task
             task = Diagram::JourneyTask.new
             task.name = line[:task].to_s.strip
