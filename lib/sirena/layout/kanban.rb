@@ -9,14 +9,16 @@ module Sirena
   module Layout
     # Builds final-canvas Kanban board geometry.
     class Kanban < Base
-      COLUMN_HORIZONTAL_SPACING = 60
-      CARD_VERTICAL_SPACING = 15
+      COLUMN_HORIZONTAL_SPACING = 5
+      CARD_VERTICAL_SPACING = 5
       COLUMN_WIDTH = 200
-      COLUMN_HEADER_HEIGHT = 50
+      COLUMN_HEADER_HEIGHT = 25
       COLUMN_PADDING = 10
-      CARD_HEIGHT = 80
+      CARD_HORIZONTAL_INSET = 7.5
+      CARD_HEIGHT = 44
       CARD_PADDING = 10
-      EXTRA_LINE_HEIGHT = 18
+      CARD_FONT_SIZE = 16
+      EXTRA_LINE_HEIGHT = 24
       CANVAS_PADDING = 40
 
       METADATA_KEYS = {
@@ -169,14 +171,18 @@ module Sirena
       def badge_box(column, position)
         return unless column[:card_count].positive?
 
-        badge_position = [position[0] + column[:width] - 25, position[1] + 15]
+        badge_position = [
+          position[0] + column[:width] - 25, position[1] + 2.5
+        ]
         box(badge_position, 20, 20, radius: 10, style: "badge")
       end
 
       def badge_label(column, position)
         return unless column[:card_count].positive?
 
-        badge_position = [position[0] + column[:width] - 15, position[1] + 29]
+        badge_position = [
+          position[0] + column[:width] - 15, position[1] + 16.5
+        ]
         label(
           column[:card_count].to_s, badge_position,
           font_size(:font_size_small, 11), "badge",
@@ -199,9 +205,15 @@ module Sirena
       def card_label(card, position)
         label_position = [position[0] + 10, position[1] + 25]
         label(
-          card[:text], label_position, font_size(:font_size_normal, 13), "card",
+          card[:text], label_position, card_font_size, "card",
           wrap_width: text_width(card[:width])
         )
+      end
+
+      def card_font_size
+        return CARD_FONT_SIZE if theme.equal?(Theme::Registry.get(:default))
+
+        font_size(:font_size_normal, CARD_FONT_SIZE)
       end
 
       def text_width(card_width)
@@ -219,7 +231,7 @@ module Sirena
 
       def metadata_start_y(text, y_position)
         extra_lines = [rendered_lines(text).length - 1, 0].max
-        y_position + 50 + (extra_lines * line_height)
+        y_position + 50 + (extra_lines * EXTRA_LINE_HEIGHT)
       end
 
       def metadata_label_pair(key, value, x_position, start_y, index)
@@ -290,7 +302,7 @@ module Sirena
       end
 
       def positioned_cards(column_data, data)
-        current_y = column_data[:header_height] + COLUMN_PADDING
+        current_y = column_data[:header_height]
         column_data[:cards].map do |card|
           positioned = positioned_card(card, column_data, current_y, data)
           current_y += positioned[:height] + CARD_VERTICAL_SPACING
@@ -302,8 +314,8 @@ module Sirena
         metadata = metadata_for(data, card)
         {
           id: card.id, text: card.label, column_id: column_data[:id],
-          x: column_data[:x] + COLUMN_PADDING, y: y_position,
-          width: COLUMN_WIDTH - (COLUMN_PADDING * 2),
+          x: column_data[:x] + CARD_HORIZONTAL_INSET, y: y_position,
+          width: COLUMN_WIDTH - (CARD_HORIZONTAL_INSET * 2),
           height: calculate_card_height(card.label, metadata),
           metadata: metadata, has_metadata: !metadata.empty?
         }
@@ -317,7 +329,7 @@ module Sirena
       end
 
       def calculate_header_height(title)
-        COLUMN_HEADER_HEIGHT + (title.to_s.count("\n") * line_height)
+        COLUMN_HEADER_HEIGHT + (title.to_s.count("\n") * EXTRA_LINE_HEIGHT)
       end
 
       def calculate_column_height(cards, header_height, data)
@@ -327,19 +339,19 @@ module Sirena
           calculate_card_height(card.label, metadata_for(data, card))
         end
         spacing = (cards.size - 1) * CARD_VERTICAL_SPACING
-        header_height + COLUMN_PADDING + card_height + spacing + COLUMN_PADDING
+        header_height + card_height + spacing + COLUMN_PADDING
       end
 
       def calculate_card_height(text, metadata)
         height = CARD_HEIGHT
         height += metadata.size * line_height unless metadata.empty?
-        height + ((rendered_lines(text).length - 1) * line_height)
+        height + ((rendered_lines(text).length - 1) * EXTRA_LINE_HEIGHT)
       end
 
       def rendered_lines(text)
         KanbanCardText.lines(
-          text, width: text_width(COLUMN_WIDTH - (COLUMN_PADDING * 2)),
-                font_size: font_size(:font_size_normal, 13)
+          text, width: text_width(COLUMN_WIDTH - (CARD_HORIZONTAL_INSET * 2)),
+                font_size: card_font_size
         )
       end
 
