@@ -12,6 +12,8 @@ require_relative "note"
 require_relative "fragment_shape"
 require_relative "note_geometry"
 require_relative "note_shape"
+require_relative "ref"
+require_relative "ref_shape"
 require_relative "scene"
 
 module Sirena
@@ -99,7 +101,7 @@ module Sirena
           def row_offset(item)
             case item
             when Message then 0.0
-            when Note then TOP_OFFSET
+            when Note, Ref then TOP_OFFSET
             when Fragment then TOP_OFFSET if item.phase == :open
             end
           end
@@ -127,6 +129,7 @@ module Sirena
             when Destroy then destroy(item)
             when Note then note(item, previous)
             when Fragment then fragment(item)
+            when Ref then ref(item)
             else divider(item)
             end
           end
@@ -321,6 +324,14 @@ module Sirena
               baseline = top + 7 + (index * step) + @font_size
               text(line, left, baseline, "note", "start")
             end
+          end
+
+          def ref(item)
+            span = item.targets.map { |id| centre(id) }.minmax
+            shape = RefShape.new(item, @y - 20, span, @measure)
+            @fragments << shape.scene
+            touch(shape.x, shape.x + shape.width)
+            @y += RefShape::HEIGHT + 10
           end
 
           def fragment(item)

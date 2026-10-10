@@ -17,6 +17,13 @@ module Sirena
 
           attr_reader :x, :width
 
+          # The keyword tab hanging in the top left corner of a frame.
+          def self.tab_outline(left, top, width)
+            right = left + width
+            "M #{left} #{top} L #{right} #{top} L #{right} #{top + 14} " \
+              "L #{right - 6} #{top + TAB_HEIGHT} L #{left} #{top + TAB_HEIGHT} Z"
+          end
+
           def initialize(block, bottom, centers, measure)
             @block = block
             @bottom = bottom
@@ -72,10 +79,7 @@ module Sirena
           end
 
           def tab_path
-            top = @block[:top]
-            right = x + tab_width
-            "M #{x} #{top} L #{right} #{top} L #{right} #{top + 14} " \
-              "L #{right - 6} #{top + TAB_HEIGHT} L #{x} #{top + TAB_HEIGHT} Z"
+            self.class.tab_outline(x, @block[:top], tab_width)
           end
 
           def separators

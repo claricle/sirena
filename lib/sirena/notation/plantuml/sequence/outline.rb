@@ -64,6 +64,10 @@ module Sirena
             @items << note
           end
 
+          def ref(ref)
+            @items << ref
+          end
+
           def after_message?
             @items.last.is_a?(Message)
           end

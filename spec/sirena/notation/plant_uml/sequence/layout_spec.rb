@@ -480,6 +480,36 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "ref over" do
+    let(:scene) { scene_of("A -> B", "ref over B, C : x", "C -> A") }
+    let(:frame) { scene.fragments.first }
+
+    def centres(scene)
+      scene.lifelines.map(&:x1)
+    end
+
+    it "frames the named lifelines with 14 to spare on each side" do
+      b, c = centres(scene).values_at(1, 2)
+
+      expect([frame.x, frame.x + frame.width]).to eq([b - 14, c + 14])
+    end
+
+    it "takes a row of its own between the arrows around it" do
+      ys = arrow_ys(scene)
+
+      expect([frame.y, frame.y + frame.height]).to satisfy do |top, bottom|
+        ys.first < top && bottom < ys.last
+      end
+    end
+
+    it "pushes the lifelines apart for a text wider than they are" do
+      wide = scene_of("A -> B", "ref over A, B : #{'long ' * 12}")
+
+      expect(centres(wide).then { |a, b| b - a })
+        .to be > centres(scene_of("A -> B")).then { |a, b| b - a }
+    end
+  end
+
   describe "hide footbox" do
     let(:shown) { scene_of("A -> B") }
     let(:hidden) { scene_of("hide footbox", "A -> B") }
