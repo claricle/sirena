@@ -675,9 +675,9 @@ module Sirena
       end
 
       def children_extent(graph)
-        [[:x, :width, 150], [:y, :height, 100]].map do |coordinate, dimension, size|
+        [[:x, :width, 150], [:y, :height, 100]].map do |axis, dimension, size|
           (graph[:children] || []).map do |node|
-            node_extent(node, coordinate, dimension, size)
+            node_extent(node, axis, dimension, size)
           end.max || 0
         end
       end
