@@ -5,7 +5,8 @@ require "json"
 # Renders the per-type pass table in docs/_pages/compatibility.adoc from
 # scoreboard/corpus.json. Only the region between the BEGIN/END markers is
 # owned by this task; `rake docs:compatibility` rewrites it, and
-# spec/tasks/compatibility_spec.rb fails when the page and scoreboard differ.
+# spec/sirena/docs_compatibility_spec.rb fails when the page and
+# scoreboard differ.
 module Sirena
   module DocsCompatibility
     ROOT = File.expand_path("..", __dir__)
