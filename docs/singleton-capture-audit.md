@@ -35,7 +35,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 1 executable `Array(...)` hit
 
-- `lib/sirena/parser/builders/class_diagram.rb:166` — `Array(stmt[:namespace_body]).each { |s| process_statement(s) }`
+- `lib/sirena/parser/builders/class_diagram.rb:201` — `Array(stmt[:namespace_body]).each { |s| process_statement(s) }`
 
 ## 07b — sequence
 
@@ -79,7 +79,7 @@ ruby scripts/audit_singleton_captures.rb --check
 
 **Result:** 5 executable `Array(...)` hits
 
-- `lib/sirena/parser/builders/gantt.rb:186` — `Array(parts.is_a?(Array) ? parts : [parts]).map do |part|`
+- `lib/sirena/parser/builders/gantt.rb:187` — `Array(parts.is_a?(Array) ? parts : [parts]).map do |part|`
 - `lib/sirena/parser/builders/kanban.rb:389` — `lines_array = Array(lines)`
 - `lib/sirena/parser/builders/radar.rb:117` — `Array(statements).grep(Hash).each do |statement|`
 - `lib/sirena/parser/radar.rb:65` — `assign_curve_values(curve, Array(data[:values]), axes)`
