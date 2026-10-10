@@ -710,10 +710,9 @@ module Sirena
           node.merge(metadata: metadata), theme: theme
         )
         emit_entity_header(entity, group, @compatibility_styles || {})
-        current_y = entity.separator.y1 + Layout::ErDiagram::ENTITY_PADDING
-        (metadata[:attributes] || []).each do |attribute|
-          current_y = render_attribute(
-            entity.x, current_y, entity.width, attribute, group
+        (metadata[:attributes] || []).zip(entity.attributes) do |attribute, row|
+          render_attribute(
+            entity.x, row.y - row.font_size, entity.width, attribute, group
           )
         end
       end
