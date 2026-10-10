@@ -38,7 +38,7 @@ list must confirm case by case rather than assume.
 
 ## Do
 
-1. Build the per-case failure list from the scoreboard's `detect-fail`
+1. Build the per-case failure list from the scoreboard's `stage: "detect"`
    rows (item 02b step 3 — a plain pass/fail schema cannot produce this
    list, which is why 02b records `stage` and `error_class`). Bucket by
    syntactic cause. No pattern edits before the list exists.

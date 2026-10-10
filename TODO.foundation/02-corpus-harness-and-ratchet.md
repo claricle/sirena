@@ -118,7 +118,7 @@ the rename, under this pin.
    ONLY as oracle-invalid — no judgment statuses.
 3. Corpus spec: render every case and record **structured `stage` and
    `error_class`** per case, not just pass/fail. `DiagramTypeError` from
-   `Engine` must be distinguishable as `detect-fail` — item 05's failure
+   `Engine` must be distinguishable as `stage: "detect"` — item 05's failure
    list is derived from that field, and `engine.rb:101` already keeps
    that exception separate from later pipeline failures. Wire into
    default rake + CI.
@@ -198,7 +198,7 @@ adapter, drift/canary specs, and the CI `oracle-toolchain` job.
 - Scoreboard guard: a guard spec seeds one regression and one
   unrecorded improvement; both seeded runs exit non-zero.
 - A seeded `DiagramTypeError` case lands in the scoreboard as
-  `detect-fail`, proving item 05's input exists.
+  `stage: "detect"`, proving item 05's input exists.
 - Zero cases without an oracle verdict and provenance — including
   `unknown/` (fixing or reclassifying those cases is item 05's job;
   this item only guarantees every one carries a verdict).
