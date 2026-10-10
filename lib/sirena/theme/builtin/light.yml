@@ -26,6 +26,20 @@ colors:
   active_fill: "#eeeeee"
   disabled_fill: "#e0e0e0"
 
+  # Colours renderers drew from a hardcoded fallback; same in every theme.
+  border: "#d1d5db"
+  edge_color: "#666"
+  field_background: "#e0f2fe"
+  field_border: "#0284c7"
+  field_text: "#000000"
+  group_background: "#f0f0f0"
+  highlight: "#fbbf24"
+  node_bg: "#E3F2FD"
+  node_text: "#FFFFFF"
+  note_fill: "#fefecd"
+  section_bg: "#f0f0f0"
+  title_text: "#000000"
+
 typography:
   font_family: "Arial, Helvetica, sans-serif"
   font_family_monospace: "Courier New, monospace"
