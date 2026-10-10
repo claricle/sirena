@@ -17,13 +17,9 @@ module Sirena
     #   layout = Info.new
     #   scene = layout.call(info_diagram)
     class Info < Base
-      class Box < Lutaml::Model::Serializable
-        attribute :x, :float
-        attribute :y, :float
-        attribute :width, :float
-        attribute :height, :float
-        attribute :corner_radius, :float
-      end
+      WIDTH = 400
+      HEIGHT = 100
+      VERSION_TEXT = "v11.12.0"
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -38,7 +34,6 @@ module Sirena
         attribute :id, :string
         attribute :title, :string
         attribute :view_box, :string
-        attribute :box, Box
         attribute :label, Label
       end
 
@@ -83,31 +78,21 @@ module Sirena
         entry ? entry.value.value : fallback
       end
 
+      # mmdc draws only the mermaid version, centred at (100, 40) in a
+      # 400x100 canvas (mermaid's infoRenderer: configureSvgSize(svg, 100, 400)).
       def scene_from_graph(graph)
         Scene.new(
           id: graph[:id] || "info", title: graph[:title],
-          width: 500, height: 200, view_box: "0 0 500 200",
-          box: info_box, label: info_label(graph)
+          width: WIDTH, height: HEIGHT, view_box: "0 0 #{WIDTH} #{HEIGHT}",
+          label: version_label
         )
       end
 
-      def info_box
-        Box.new(x: 50, y: 50, width: 400, height: 100, corner_radius: 8)
-      end
-
-      def info_label(graph)
-        text = graph[:show_info] ? "Info: showInfo enabled" : "Info"
+      def version_label
         Label.new(
-          text: text, x: 250, y: 105, font_size: font_size,
-          text_anchor: "middle", font_weight: "bold"
+          text: VERSION_TEXT, x: 100, y: 40, font_size: 32,
+          text_anchor: "middle", font_weight: nil
         )
-      end
-
-      def font_size
-        value = theme.typography&.font_size_base
-        value&.positive? ? value : 16
-      rescue NoMethodError
-        16
       end
     end
   end
