@@ -33,7 +33,7 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantPointGeometry do
 
   def expected_default_values
     ("A".."F").map do |letter|
-      ["Campaign #{letter}", 5.0, 6.0, be_within(0.000_001).of(0.2)]
+      ["Campaign #{letter}", 5.0, 5.0, be_within(0.000_001).of(0.0)]
     end
   end
 
@@ -80,7 +80,7 @@ RSpec.describe SpecSupport::LayoutParity::QuadrantPointGeometry do
     SVG
   end
 
-  it "preserves the real default-radius mismatch by semantic label" do
+  it "matches the real default radius by semantic label" do
     expect(comparison_values("001_example_quadrant-chart_0"))
       .to match(expected_default_values)
   end
