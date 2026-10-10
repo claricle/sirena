@@ -92,10 +92,12 @@ module Sirena
         kanban: {
           pattern: /\A\s*kanban/i,
           keyword: "kanban",
+          ir_adapter: true,
         },
         radar: {
           pattern: /\A\s*radar-beta/i,
           keyword: "radar-beta",
+          ir_adapter: true,
         },
         block: {
           pattern: /\A\s*block-beta/i,
@@ -127,6 +129,7 @@ module Sirena
         treemap: {
           pattern: /\A\s*treemap(-beta)?/i,
           keyword: "treemap or treemap-beta",
+          ir_adapter: true,
         },
         c4: {
           pattern: /\A\s*(C4Context|C4Container|C4Component|C4Dynamic|
