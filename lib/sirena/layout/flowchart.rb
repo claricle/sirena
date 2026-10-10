@@ -24,6 +24,8 @@ module Sirena
       # exists to close, just for the no-typography case instead of the
       # has-typography one.
       DEFAULT_FONT_SIZE = 16.0
+      NODE_PADDING = 15.0
+      NODE_LINE_HEIGHT = 1.5
 
       CLUSTER_CORNER = FlowchartEdgeRouter::CLUSTER_CORNER
       CLUSTER_TITLE_BASELINE = 20
@@ -817,23 +819,32 @@ module Sirena
       end
 
       def calculate_dimensions(label, shape)
-        label_dims = measure_text(
-          display_text(label),
-          font_size: layout_font_size,
-        )
-
-        node_dims = calculate_node_dimensions(
-          label_dims[:width],
-          label_dims[:height],
-          shape_to_type(shape),
-        )
+        text = display_text(label)
+        label_dims = measure_text(text, font_size: layout_font_size)
+        line_height = label_dims[:height] * NODE_LINE_HEIGHT
+        node_dims = node_box(label_dims[:width], line_height,
+                             shape_to_type(shape))
 
         {
           width: node_dims[:width],
           height: node_dims[:height],
           label_width: label_dims[:width],
-          label_height: label_dims[:height],
+          label_height: line_height,
         }
+      end
+
+      # mermaid sizes a box node as its label plus 30 either side
+      # horizontally and 15 vertically; a diamond is a square whose side is
+      # label width + label height + 30.
+      def node_box(label_width, label_height, type)
+        case type
+        when :diamond
+          side = label_width + label_height + (2 * NODE_PADDING)
+          { width: side, height: side }
+        else
+          { width: label_width + (4 * NODE_PADDING),
+            height: label_height + (2 * NODE_PADDING) }
+        end
       end
 
       # The size node and cluster-title measure_text calls size against:
