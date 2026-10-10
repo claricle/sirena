@@ -1,5 +1,0 @@
----
-cop: Style/MapIntoArray
-rows:
-- file: lib/sirena/layout/requirement.rb
-  count: 1
