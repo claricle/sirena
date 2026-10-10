@@ -10,6 +10,9 @@ RSpec.describe Sirena::Layout::Sequence do
   let(:plain) { layout_scene("A->>B: one\nB->>A: two\nA->>B: three") }
   let(:noted) { layout_scene("A->>B: one\nNote right of B: n\nB->>A: two") }
   let(:looped) { layout_scene("A->>B: one\nloop L\nB->>A: two\nend") }
+  let(:after_loop) do
+    layout_scene("A->>B: one\nloop L\nB->>A: two\nend\nA->>B: three")
+  end
   let(:alted) do
     layout_scene("A->>B: one\nalt X\nB->>A: two\nelse Y\nA->>B: three\nend")
   end
@@ -66,5 +69,20 @@ RSpec.describe Sirena::Layout::Sequence do
 
   it "puts an alt divider 15 below the message before it" do
     expect(alted.frames.first.dividers.first.y).to eq(message_rows(alted)[1] + 15)
+  end
+
+  it "puts the first row of a loop 89 below the message before it" do
+    expect(message_rows(looped)).to eq([119, 208])
+  end
+
+  it "restarts the pitch from the bottom of a closed loop" do
+    frame = after_loop.frames.first
+
+    expect(message_rows(after_loop).last).to eq(frame.y + frame.height + 44)
+  end
+
+  it "puts the next row 74 below an alt divider" do
+    expect(message_rows(alted).last - alted.frames.first.dividers.first.y)
+      .to eq(74)
   end
 end
