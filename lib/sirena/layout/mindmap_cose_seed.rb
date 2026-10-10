@@ -41,37 +41,16 @@ module Sirena
         order
       end
 
-      # Peels leaves layer by layer; the survivor is the centre. The pass
-      # removes every other node of the remaining list as it walks, so the
-      # survivor depends on that order.
+      # cose-base names the centre by peeling leaves layer by layer, but its
+      # loop walks the whole node list instead of the leaves and drops every
+      # other node on each pass. The survivor depends only on that order, so
+      # the degree bookkeeping is left out.
       def tree_centre(tree)
-        remaining = tree.dup
-        return remaining.first if remaining.length <= 2
-
-        degrees = tree.to_h { |body| [body, body.neighbors.length] }
-        removed = tree.select { |body| degrees[body] == 1 }
-        peel(remaining, degrees, removed) until remaining.length <= 2
+        remaining = tree
+        while remaining.length > 2
+          remaining = remaining.select.with_index { |_, index| index.odd? }
+        end
         remaining.first
-      end
-
-      def peel(remaining, degrees, removed)
-        fresh = []
-        index = 0
-        while index < remaining.length
-          fresh.concat(release(remaining.delete_at(index), degrees, removed))
-          index += 1
-        end
-        removed.concat(fresh)
-      end
-
-      # @return [Array] the neighbours of body that just became leaves
-      def release(body, degrees, removed)
-        body.neighbors.filter_map do |other|
-          next if removed.include?(other)
-
-          degrees[other] -= 1
-          other if degrees[other] == 1
-        end
       end
 
       def move_to_origin
@@ -99,14 +78,15 @@ module Sirena
 
       # The children start after the parent's link and wrap around.
       def children_in_order(body, parent)
-        links = parent ? rotate_past(body.links, body, parent) : body.links
+        links = parent ? parent_first(body.links, body, parent) : body.links
         others = links.map { |link| link.other_end(body) }
         others.reject { |other| other.equal?(parent) }
       end
 
-      def rotate_past(links, body, parent)
-        index = links.index { |link| link.other_end(body).equal?(parent) }
-        links.rotate((index + 1) % links.length)
+      # Rotates the parent's link to the front, so the others keep their
+      # order after it.
+      def parent_first(links, body, parent)
+        links.rotate(links.index { |link| link.other_end(body).equal?(parent) })
       end
     end
   end
