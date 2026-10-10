@@ -5,7 +5,6 @@ require_relative "../layout/packet"
 require_relative "../svg/document"
 require_relative "../svg/rect"
 require_relative "../svg/text"
-require_relative "../svg/line"
 require_relative "../svg/group"
 
 module Sirena
