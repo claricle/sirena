@@ -22,7 +22,7 @@ end
 
 # Every process tree uses real processes — a stub would only prove that the
 # rescue matches what the stub was told to raise.
-RSpec.describe HardenedMmdc do
+RSpec.describe HardenedMmdc, :aggregate_failures do
   include MermaidDiffSpecSupport::Helpers
 
   let(:spawned) { [] }

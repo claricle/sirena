@@ -32,7 +32,7 @@ unless defined?(CorpusSweep)
   load File.expand_path("../../scripts/corpus_sweep.rb", __dir__), CorpusSweep
 end
 
-RSpec.describe CorpusSweep do
+RSpec.describe CorpusSweep, :aggregate_failures do
   include CorpusSweepSpecHelpers
 
   # The script's top-level defs load as private instance methods.
