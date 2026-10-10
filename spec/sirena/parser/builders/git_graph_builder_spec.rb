@@ -9,7 +9,7 @@ RSpec.describe Sirena::Parser::Builders::GitGraph do
     [
       { commit: { options: [{ id: "c1" }, { message: "m" },
                             { type: "HIGHLIGHT" }, { tag: "v1" }, "junk"] } },
-      { branch: { name: "dev", options: { order: "2" } } },
+      { branch: { name: "dev", options: [{ order: "2" }] } },
       { branch: { name: "b2", options: [{ order: "3" }, "x"] } },
       { branch: { name: "b3", options: nil } },
       { checkout: { branch: "dev" } },
@@ -52,7 +52,7 @@ RSpec.describe Sirena::Parser::Builders::GitGraph do
     ]
   end
 
-  it "records branch orders from hash, array and absent options" do
+  it "records branch orders from options and absent options" do
     expect(graph[:branches]).to eq(expected_branches)
   end
 

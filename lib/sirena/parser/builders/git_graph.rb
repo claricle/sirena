@@ -144,15 +144,9 @@ module Sirena
               state.add_commit(options)
             elsif stmt.key?(:branch)
               name = State.unquote(stmt[:branch][:name])
+              # The grammar yields nil, or an Array of { order: } hashes.
               options = stmt[:branch][:options]
-              order = nil
-
-              if options.is_a?(Array)
-                order_opt = options.find { |o| o.is_a?(Hash) && o.key?(:order) }
-                order = order_opt[:order].to_i if order_opt
-              elsif options.is_a?(Hash) && options.key?(:order)
-                order = options[:order].to_i
-              end
+              order = options.first[:order].to_i if options
 
               state.add_branch(name, order)
             elsif stmt.key?(:checkout)
@@ -168,7 +162,7 @@ module Sirena
               state.cherry_pick(options)
             elsif stmt.key?(:acc_title)
               state.acc_title = State.directive_text(stmt[:acc_title])
-            elsif stmt.key?(:acc_descr)
+            else
               state.acc_description = State.directive_text(stmt[:acc_descr])
             end
           end
