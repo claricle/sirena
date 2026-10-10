@@ -43,6 +43,8 @@ module Sirena
         attribute :stroke, :string
         attribute :label, Label
         attribute :value_label, Label
+        # Anchor of the section total; sections only, text is the renderer's.
+        attribute :total_label, Label
         attribute :children, Cell, collection: true, default: -> { [] }
       end
 
@@ -171,6 +173,7 @@ module Sirena
           stroke: cell_stroke_color(cell, class_defs),
           label: cell_label(cell, label_y),
           value_label: value_label(cell, label_y),
+          total_label: total_label(cell, label_y),
           children: typed_children(cell, class_defs),
         )
       end
@@ -200,6 +203,15 @@ module Sirena
         Label.new(
           text: format_value(cell[:value]), x: cell[:x] + 5,
           y: y_position + 15, font_size: 10, style: "value"
+        )
+      end
+
+      def total_label(cell, y_position)
+        return if cell[:children].empty?
+
+        Label.new(
+          x: cell[:x] + cell[:width] - 5, y: y_position,
+          font_size: 10, style: "value", text_anchor: "end"
         )
       end
 
