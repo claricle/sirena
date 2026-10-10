@@ -24,25 +24,27 @@ module Sirena
             @measure.call(message.number.to_s) + GAP
           end
 
-          # @param anchor [String] where the unit sits at `x`: "start",
+          # @param anchor [String] where the unit sits at `at_x`: "start",
           #   "middle" or "end"
           # @return [Array<Scene::Text>] the number, then the label
-          def texts(message, x, y, anchor)
-            left = left_of(message, x, anchor)
-            [piece(message.number.to_s, left, y, "message_number", "bold"),
-             piece(message.label, left + extra(message), y, "message_label")]
+          def texts(message, at_x, at_y, anchor)
+            left = left_of(message, at_x, anchor)
+            [piece(message.number.to_s, left, at_y, "message_number", "bold"),
+             piece(message.label, left + extra(message), at_y, "message_label")]
           end
 
           private
 
-          def left_of(message, x, anchor)
+          def left_of(message, at_x, anchor)
             total = extra(message) + @measure.call(message.label)
-            { "middle" => x - (total / 2), "end" => x - total }.fetch(anchor, x)
+            { "middle" => at_x - (total / 2), "end" => at_x - total }
+              .fetch(anchor, at_x)
           end
 
-          def piece(content, x, y, role, weight = nil)
-            PlantUML::Scene::Text.new(content: content, x: x, y: y, role: role,
-                                      anchor: "start", weight: weight)
+          def piece(content, at_x, at_y, role, weight = nil)
+            PlantUML::Scene::Text.new(content: content, x: at_x, y: at_y,
+                                      role: role, anchor: "start",
+                                      weight: weight)
           end
         end
       end

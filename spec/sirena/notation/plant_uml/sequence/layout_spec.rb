@@ -760,6 +760,13 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       scene_of("skinparam maxmessagesize 100", "A -> B : #{label}",
                "B -> A : x")
     end
+    let(:run_of) do
+      lambda do |*lines|
+        path = scene_of(*lines).arrows.first.path
+        start, stop = path.match(/M (\S+) \S+ L (\S+)/).captures.map(&:to_f)
+        (start - stop).abs
+      end
+    end
 
     it "breaks the label into lines" do
       expect(wrapped.arrows.first.texts.size).to be > 1
@@ -785,14 +792,10 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
 
     it "shortens the run of a wrapped ->? message" do
-      run = lambda do |*setting|
-        scene = scene_of(*setting, "A ->? : #{label}")
-        start, stop = scene.arrows.first.path.match(/M (\S+) \S+ L (\S+)/)
-          .captures.map(&:to_f)
-        (start - stop).abs
-      end
+      message = "A ->? : #{label}"
 
-      expect(run.call("skinparam maxmessagesize 100")).to be < run.call
+      expect(run_of.call("skinparam maxmessagesize 100", message))
+        .to be < run_of.call(message)
     end
 
     it "stacks the lines above the arrow" do
