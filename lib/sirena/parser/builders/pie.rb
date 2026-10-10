@@ -20,37 +20,17 @@ module Sirena
         def apply(tree)
           diagram = Diagram::Pie.new
 
-          # Tree structure: array with header and statements
-          if tree.is_a?(Array)
-            tree.each do |item|
-              next unless item.is_a?(Hash)
-
-              process_header(diagram, item) if item.key?(:header)
-              process_title(diagram, item) if item.key?(:title)
-              process_show_data(diagram, item) if item.key?(:show_data)
-              process_statement(diagram, item) if statement?(item)
-            end
-          elsif tree.is_a?(Hash)
-            process_header(diagram, tree) if tree.key?(:header)
-            process_title(diagram, tree) if tree.key?(:title)
-            process_show_data(diagram, tree) if tree.key?(:show_data)
+          # A bare header parses to one Hash; header plus statements to an Array.
+          [tree].flatten(1).each do |item|
+            process_title(diagram, item) if item.key?(:title)
+            process_show_data(diagram, item) if item.key?(:show_data)
+            process_statement(diagram, item)
           end
 
           diagram
         end
 
         private
-
-        def statement?(item)
-          item.key?(:data_entry) ||
-            item.key?(:acc_title) ||
-            item.key?(:acc_descr) ||
-            item.key?(:standalone_title)
-        end
-
-        def process_header(diagram, item)
-          # Header is just the 'pie' keyword, nothing to extract
-        end
 
         def process_title(diagram, item)
           title_data = item[:title]
@@ -75,8 +55,6 @@ module Sirena
         end
 
         def process_statement(diagram, stmt)
-          return unless stmt.is_a?(Hash)
-
           if stmt[:data_entry]
             add_data_entry(diagram, stmt)
           elsif stmt[:acc_title]
@@ -102,31 +80,14 @@ module Sirena
 
         def extract_text(value)
           case value
-          when Hash
-            if value[:string]
-              capture_string(value[:string])
-            elsif value[:title]
-              value[:title].to_s
-            else
-              value.values.first.to_s
-            end
-          when String
-            value
-          else
-            value.to_s
+          when Hash then capture_string(value[:string])
+          when String then value
+          else value.to_s
           end.strip
         end
 
         def extract_numeric_value(value)
-          # Value can be a simple string or a complex structure
-          value_str = if value.is_a?(Hash)
-                        value.values.first.to_s
-                      else
-                        value.to_s
-                      end
-
-          # Parse as float to handle both integers and decimals
-          value_str.to_f
+          value.to_s.to_f
         end
       end
     end
