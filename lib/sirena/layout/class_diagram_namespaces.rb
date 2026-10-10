@@ -13,9 +13,13 @@ module Sirena
       def call(graph)
         children = graph.nodes.group_by(&:parent_id)
         graph.nodes.select { |node| node.role == "namespace" }.map do |node|
-          members = Array(children[node.id]).select { |n| n.role == "member" }
-          Namespace.new(name: node.label, class_ids: members.map(&:label))
+          namespace_for(node, children[node.id])
         end
+      end
+
+      def namespace_for(node, parts)
+        members = Array(parts).select { |n| n.role == "member" }
+        Namespace.new(name: node.label, class_ids: members.map(&:label))
       end
     end
   end

@@ -102,11 +102,14 @@ module Sirena
         Scene.new(
           id: graph[:id] || "pie", width: width, height: height,
           view_box: "0 0 #{width} #{height}",
-          acc_title: graph[:acc_title],
-          acc_description: graph[:acc_description],
           title: title_label(graph[:title]), slices: typed_slices(graph),
-          legend: legend
+          legend: legend, **accessibility(graph)
         )
+      end
+
+      def accessibility(graph)
+        { acc_title: graph[:acc_title],
+          acc_description: graph[:acc_description] }
       end
 
       def legend_entries(graph)

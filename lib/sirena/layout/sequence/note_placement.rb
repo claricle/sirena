@@ -74,9 +74,7 @@ module Sirena
         # @return [Array<Numeric>, nil] left and right edge of the notes
         #   written between the two, nil when there are none
         def x_range(from, to)
-          inside = pairs.select do |entry, _note|
-            entry[:order] > from && entry[:order] < to
-          end.map(&:last)
+          inside = notes_between(from, to)
           return if inside.empty?
 
           [inside.map(&:x).min, inside.map { |n| n.x + n.width }.max]
@@ -112,6 +110,13 @@ module Sirena
         end
 
         private
+
+        def notes_between(from, to)
+          inside = pairs.select do |entry, _note|
+            entry[:order] > from && entry[:order] < to
+          end
+          inside.map(&:last)
+        end
 
         def pairs
           @pairs ||= @entries.each_index.filter_map do |index|

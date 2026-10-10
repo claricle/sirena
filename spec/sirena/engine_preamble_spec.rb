@@ -78,7 +78,7 @@ RSpec.describe Sirena::Engine do
     it "leaves the title unset when the frontmatter has none" do
       titles = titles_in("---\nconfig:\n  theme: base\n---\npie\n#{slices}")
 
-      expect(titles).to eq(%w[Dogs Cats])
+      expect(titles).to eq(%w[63% 38% Dogs Cats])
     end
   end
 
