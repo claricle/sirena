@@ -69,11 +69,10 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     expect(missing_summary).to eq(missing_reference_summary)
   end
 
-  it "rejects conflicting references for byte-identical selected cases" do
+  it "keeps a reference missing when byte-identical sources conflict" do
     seed_conflicting_references
-    expect { runner.candidate_cases }.to raise_error(
-      ArgumentError, /conflicting references for duplicate corpus source/
-    )
+    results
+    expect(conflicting_summary).to eq(conflicting_reference_summary)
   end
 
   it "detects the real Mermaid type for an unknown-directory case" do
@@ -164,6 +163,7 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
     end
     write_scoreboard(row("class/first.mmd"), row("class/second.mmd"),
                      row("class_diagram/missing.mmd"))
+    allow(renderer).to receive(:render).with(source).and_return(candidate_svg)
     write_reference("class/first.svg", candidate_svg)
     write_reference("class/second.svg", '<svg viewBox="0 0 2 2"/>')
   end
@@ -210,6 +210,15 @@ RSpec.describe SpecSupport::LayoutParity::CohortRunner do
 
   def missing_reference_summary
     ["spec/fixtures_mermaid/flowchart/missing.svg", nil, nil]
+  end
+
+  def conflicting_summary
+    captured_arguments.fetch(2)
+      .values_at(:reference, :reference_svg, :sirena_svg)
+  end
+
+  def conflicting_reference_summary
+    ["spec/fixtures_mermaid/class/missing.svg", nil, nil]
   end
 
   def seed_render_failure

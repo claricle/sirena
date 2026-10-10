@@ -121,7 +121,8 @@ module SpecSupport
         end
         return if matches.empty?
 
-        reject_conflicting_references(matches)
+        return unless references_agree?(matches)
+
         selected = matches.min_by { |candidate| candidate.fetch(:relative) }
         selected.values_at(:relative, :path)
       end
@@ -151,16 +152,11 @@ module SpecSupport
         { source: source, relative: paths.first, path: paths.last }
       end
 
-      def reject_conflicting_references(matches)
+      def references_agree?(matches)
         contents = matches.map do |candidate|
           File.binread(candidate.fetch(:path))
         end
-        return if contents.uniq.one?
-
-        paths = matches.map { |candidate| candidate.fetch(:relative) }.sort
-        message = "conflicting references for duplicate corpus source: " \
-                  "#{paths.join(', ')}"
-        raise ArgumentError, message
+        contents.uniq.one?
       end
 
       def validate_case_id!(case_id)
