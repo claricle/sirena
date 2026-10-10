@@ -84,7 +84,7 @@ rows:
 - file: spec/sirena/layout/user_journey_spec.rb
   count: 5
 - file: spec/sirena/markdown_text_spec.rb
-  count: 13
+  count: 12
 - file: spec/sirena/parser/architecture_spec.rb
   count: 4
 - file: spec/sirena/parser/block_spec.rb
