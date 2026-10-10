@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "zlib"
 require_relative "../../../renderer/base"
 require_relative "../../../svg"
 require_relative "scene"
@@ -153,7 +154,7 @@ module Sirena
           def note_group(note)
             paths = [note.path, note.fold_path].compact
             children = paths.map { |data| note_path(data, note) }
-            group("note-#{note.path.hash.abs}", children, note.texts)
+            group("note-#{Zlib.crc32(note.path)}", children, note.texts)
           end
 
           def note_path(data, note)
