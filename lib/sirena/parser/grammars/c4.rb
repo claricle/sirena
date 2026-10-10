@@ -32,13 +32,13 @@ module Sirena
             str("C4Deployment") |
             str("C4 diagram")
           ).as(:header) >>
-          # Allow optional ${whitespace}, ${variable}, or semicolon after the
-          # header.
-          (
-            (dollar >> lbrace >> identifier >> rbrace) |
-            str(";")
-          ).maybe >>
-          ws?
+            # Allow optional ${whitespace}, ${variable}, or semicolon after
+            # the header.
+            (
+              (dollar >> lbrace >> identifier >> rbrace) |
+              str(";")
+            ).maybe >>
+            ws?
         end
 
         rule(:statements) do
