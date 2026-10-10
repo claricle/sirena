@@ -9,12 +9,9 @@ module Sirena
       module FrameDrawing
         FRAME_STROKE = "#333333"
         TAB_FILL = "#eaeaea"
-        TAB_SLANT = 8
-        TAB_HEIGHT = 20
         DEFAULT_BOX_FILL = "none"
         DEFAULT_RECT_FILL = "#cccccc"
         FRAME_FONT_SIZE = "16"
-        TITLE_PITCH = 19
 
         private
 
@@ -37,7 +34,7 @@ module Sirena
         end
 
         def box_title(box)
-          frame_text(box.title, box.x + (box.width / 2), box.title_y)
+          frame_text(box.title, box.title_x, box.title_y)
         end
 
         def draw_frames(scene, svg)
@@ -90,7 +87,7 @@ module Sirena
 
         def frame_tab(frame)
           tab = [frame_tab_polygon(frame),
-                 frame_text(frame.kind, kind_center(frame), frame.y + 14)]
+                 frame_text(frame.kind, frame.kind_x, frame.kind_y)]
           return tab unless frame.title
 
           tab.concat(title_texts(frame))
@@ -98,51 +95,31 @@ module Sirena
 
         def title_texts(frame)
           lines = frame.title_lines.empty? ? [frame.title] : frame.title_lines
-          lines.each_with_index.map do |line, index|
-            frame_text(line, title_center(frame),
-                       frame.y + 18 + (TITLE_PITCH * index))
+          lines.zip(frame.title_ys).map do |line, y|
+            frame_text(line, frame.title_x, y)
           end
         end
 
-        def kind_center(frame)
-          frame.x + (frame.tab_width / 2)
-        end
-
-        def title_center(frame)
-          rest = frame.width - frame.tab_width
-          frame.x + frame.tab_width + (rest / 2)
-        end
-
         def frame_tab_polygon(frame)
-          left = frame.x
-          right = left + frame.tab_width
-          top = frame.y
           Svg::Polygon.new.tap do |polygon|
-            polygon.points = tab_points(left, right, top)
+            polygon.points = frame.tab_points
             polygon.fill = TAB_FILL
             polygon.stroke = FRAME_STROKE
           end
         end
 
-        def tab_points(left, right, top)
-          bottom = top + TAB_HEIGHT
-          "#{left},#{top} #{right},#{top} #{right},#{top + 13} " \
-            "#{right - TAB_SLANT},#{bottom} #{left},#{bottom}"
-        end
-
         def frame_dividers(frame)
-          center = frame.x + (frame.width / 2)
           frame.dividers.flat_map do |divider|
-            [divider_line(frame, divider),
-             frame_text(divider.text, center, divider.text_y)]
+            [divider_line(divider),
+             frame_text(divider.text, divider.text_x, divider.text_y)]
           end
         end
 
-        def divider_line(frame, divider)
+        def divider_line(divider)
           Svg::Line.new.tap do |line|
-            line.x1 = frame.x
+            line.x1 = divider.x1
             line.y1 = divider.y
-            line.x2 = frame.x + frame.width
+            line.x2 = divider.x2
             line.y2 = divider.y
             style_divider(line)
           end

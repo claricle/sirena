@@ -11,6 +11,11 @@ module Sirena
         attribute :y, :float
         attribute :text, :string
         attribute :text_y, :float
+
+        # Left and right ends of the line, and the text's centre
+        attribute :x1, :float
+        attribute :x2, :float
+        attribute :text_x, :float
       end
     end
   end

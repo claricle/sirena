@@ -26,6 +26,16 @@ module Sirena
         # The title as drawn, one entry per wrapped line
         attribute :title_lines, :string, collection: true,
                                          default: -> { [] }
+
+        # Final positions of the tab text: the keyword's centre, the title
+        # lines' shared centre and each line's baseline
+        attribute :kind_x, :float
+        attribute :kind_y, :float
+        attribute :title_x, :float
+        attribute :title_ys, :float, collection: true, default: -> { [] }
+
+        # The `points` of the keyword tab polygon
+        attribute :tab_points, :string
         attribute :dividers, FrameDivider, collection: true,
                                            default: -> { [] }
       end
