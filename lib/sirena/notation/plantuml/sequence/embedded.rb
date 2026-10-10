@@ -42,15 +42,21 @@ module Sirena
             return false unless lines.size > 1
             return false unless opens?(lines.first) && closes?(lines.last)
 
-            depth = 0
-            lines.each_with_index do |line, index|
-              depth += 1 if opens?(line)
-              depth -= 1 if closes?(line)
-              return false if depth.zero? && index < lines.size - 1
-            end
-            true
+            early_close(lines).nil?
           end
           private_class_method :whole?
+
+          # @return [Integer, nil] the index of a line before the last that
+          #   closes the opening line's block
+          def self.early_close(lines)
+            depth = 0
+            lines[0..-2].each_index.find do |index|
+              depth += 1 if opens?(lines[index])
+              depth -= 1 if closes?(lines[index])
+              depth.zero?
+            end
+          end
+          private_class_method :early_close
 
           attr_reader :body, :scale
 

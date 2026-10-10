@@ -442,8 +442,9 @@ module Sirena
           def track_embedded(text)
             pending = @pending_note
             pending[:depth] += 1 if Embedded.opens?(text)
-            pending[:depth] -= 1 if Embedded.closes?(text) &&
-                                    pending[:depth].positive?
+            return unless Embedded.closes?(text) && pending[:depth].positive?
+
+            pending[:depth] -= 1
           end
 
           # A body with a `{{` line is one embedded diagram and nothing

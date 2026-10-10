@@ -66,13 +66,7 @@ module Sirena
           def run(items, edge_right: nil, appearance: Appearance.new)
             @edge_right = edge_right
             @appearance = appearance
-            previous = nil
-            items.each_with_index do |item, index|
-              @mark_y = nil unless anchoring?(item)
-              @headroom = headroom(items, index)
-              visit(item, previous)
-              previous = item unless item.is_a?(Activation)
-            end
+            walk_items(items)
             @tracker.finish(@y - 20)
             self
           end
@@ -83,18 +77,32 @@ module Sirena
 
           private
 
+          def walk_items(items)
+            previous = nil
+            items.each_with_index do |item, index|
+              @mark_y = nil unless anchoring?(item)
+              @headroom = headroom(items, index)
+              visit(item, previous)
+              previous = item unless item.is_a?(Activation)
+            end
+          end
+
           def start_empty
+            start_collections
+            @headroom = 0.0
+            @tracker = BarTracker.new(method(:centre))
+            @blocks = []
+            @left = Float::INFINITY
+            @right = -Float::INFINITY
+          end
+
+          def start_collections
             @arrows = []
             @notes = []
             @fragments = []
             @dividers = []
             @crosses = []
             @page_breaks = []
-            @headroom = 0.0
-            @tracker = BarTracker.new(method(:centre))
-            @blocks = []
-            @left = Float::INFINITY
-            @right = -Float::INFINITY
           end
 
           def anchoring?(item)

@@ -53,14 +53,18 @@ module Sirena
           def scene(graph)
             @diagram = pictured(IRReader.call(graph))
             measure_heads
-            @origin = MARGIN + banner_room + TitleRow.room(@diagram.title)
-            @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
+            place_origin
             @flow = walk
             recentre if @flow.left < MARGIN
             build(@widths)
           end
 
           private
+
+          def place_origin
+            @origin = MARGIN + banner_room + TitleRow.room(@diagram.title)
+            @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
+          end
 
           # Lays out each note's embedded diagram, so the notes know their
           # size before the participants are spaced.
