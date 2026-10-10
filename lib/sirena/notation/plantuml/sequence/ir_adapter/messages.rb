@@ -22,14 +22,20 @@ module Sirena
             def details(message, node, sink)
               style = message.style
               sink.detail(node, "number", message.number)
-              flags = { "parallel" => message.parallel?,
-                        "dashed" => style.dashed,
-                        "leftward" => style.leftward,
-                        "hidden" => style.hidden,
-                        "head_circle" => style.head.circle,
-                        "tail_circle" => style.tail.circle }
-              flags.each { |role, on| sink.detail(node, role, "true") if on }
+              flags(message).each do |role, on|
+                sink.detail(node, role, "true") if on
+              end
               sink.detail(node, "colour", style.colour)
+            end
+
+            def flags(message)
+              style = message.style
+              { "parallel" => message.parallel?,
+                "dashed" => style.dashed,
+                "leftward" => style.leftward,
+                "hidden" => style.hidden,
+                "head_circle" => style.head.circle,
+                "tail_circle" => style.tail.circle }
             end
 
             def markers(style)
