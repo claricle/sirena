@@ -20,12 +20,20 @@ module Sirena
       POINT_TEXT_PADDING = 5
       EXTERNAL_BORDER = 2
       INTERNAL_BORDER = 1
+      HALF_BORDER = EXTERNAL_BORDER / 2.0
+      PLOT_SIZE = CHART_SIZE - (2 * PADDING)
 
       # The plotted area inside the chart's padding, axes and title.
       Space = Data.define(:left, :top, :width, :height, :title, :x_axis,
                           :x_axis_below) do
         def half_width = width / 2.0
         def half_height = height / 2.0
+        def right = left + width
+        def bottom = top + height
+        def mid_x = left + half_width
+        def mid_y = top + half_height
+        def across(grow) = [left - grow, right + grow]
+        def down(grow) = [top - grow, bottom + grow]
       end
 
       class Rect < Lutaml::Model::Serializable
@@ -115,20 +123,26 @@ module Sirena
       end
 
       def chart_space(data)
-        axes = axes(data)
         title = title_space(data)
-        x_axis = axes.values_at(:x_left, :x_right).any? { |t| !t.empty? }
-        y_axis = axes.values_at(:y_bottom, :y_top).any? { |t| !t.empty? }
-        x_space = x_axis ? (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE : 0
-        y_space = y_axis ? (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE : 0
-        x_top = points?(data) ? 0 : x_space
-        x_bottom = points?(data) ? x_space : 0
+        x_room, y_room = axis_rooms(axes(data))
+        below = points?(data)
         Space.new(
-          left: PADDING + y_space, top: PADDING + x_top + title,
-          width: CHART_SIZE - (2 * PADDING) - y_space,
-          height: CHART_SIZE - (2 * PADDING) - x_top - x_bottom - title,
-          title: title, x_axis: x_axis, x_axis_below: points?(data)
+          left: PADDING + y_room, top: PADDING + (below ? 0 : x_room) + title,
+          width: PLOT_SIZE - y_room, height: PLOT_SIZE - x_room - title,
+          title: title, x_axis: x_room.positive?, x_axis_below: below
         )
+      end
+
+      # Room taken beside the plot by the x axis labels, then the y axis
+      # labels; zero for an axis with no label written.
+      def axis_rooms(axes)
+        [axis_room(axes, :x_left, :x_right), axis_room(axes, :y_bottom, :y_top)]
+      end
+
+      def axis_room(axes, first, second)
+        return 0 if axes.values_at(first, second).all?(&:empty?)
+
+        (2 * AXIS_LABEL_PADDING) + AXIS_FONT_SIZE
       end
 
       def title_space(data)
@@ -188,27 +202,36 @@ module Sirena
         end
       end
 
-      # The six border lines mmdc draws: four outer edges, then the two dividers.
+      # The six border lines mmdc draws: four outer edges, then the two
+      # dividers.
       def border_lines(space)
-        half = EXTERNAL_BORDER / 2.0
-        left = space.left
-        top = space.top
-        right = left + space.width
-        bottom = top + space.height
-        mid_x = left + space.half_width
-        mid_y = top + space.half_height
-        [
-          line(left - half, top, right + half, top, EXTERNAL_BORDER),
-          line(right, top + half, right, bottom - half, EXTERNAL_BORDER),
-          line(left - half, bottom, right + half, bottom, EXTERNAL_BORDER),
-          line(left, top + half, left, bottom - half, EXTERNAL_BORDER),
-          line(mid_x, top + half, mid_x, bottom - half, INTERNAL_BORDER),
-          line(left + half, mid_y, right - half, mid_y, INTERNAL_BORDER),
-        ]
+        outer_borders(space) + dividers(space)
       end
 
-      def line(x1, y1, x2, y2, width)
-        Line.new(x1: x1, y1: y1, x2: x2, y2: y2, stroke_width: width)
+      def outer_borders(space)
+        across = space.across(HALF_BORDER)
+        down = space.down(-HALF_BORDER)
+        [horizontal_line(space.top, *across, EXTERNAL_BORDER),
+         vertical_line(space.right, *down, EXTERNAL_BORDER),
+         horizontal_line(space.bottom, *across, EXTERNAL_BORDER),
+         vertical_line(space.left, *down, EXTERNAL_BORDER)]
+      end
+
+      def dividers(space)
+        across = space.across(-HALF_BORDER)
+        down = space.down(-HALF_BORDER)
+        [vertical_line(space.mid_x, *down, INTERNAL_BORDER),
+         horizontal_line(space.mid_y, *across, INTERNAL_BORDER)]
+      end
+
+      def horizontal_line(y_pos, x_start, x_end, width)
+        Line.new(x1: x_start, y1: y_pos, x2: x_end, y2: y_pos,
+                 stroke_width: width)
+      end
+
+      def vertical_line(x_pos, y_start, y_end, width)
+        Line.new(x1: x_pos, y1: y_start, x2: x_pos, y2: y_end,
+                 stroke_width: width)
       end
 
       # Only axis labels that were written are drawn, as in mmdc.
@@ -218,13 +241,18 @@ module Sirena
 
       def x_labels(axes, space)
         middle = !axes[:x_right].empty?
-        y = x_label_y(space)
         centre = space.left + (middle ? space.half_width / 2 : 0)
-        [[axes[:x_left], centre],
-         [axes[:x_right], centre + space.half_width]].filter_map do |text, x|
-          next if text.empty?
+        y_pos = x_label_y(space)
+        written_labels([[axes[:x_left], centre],
+                        [axes[:x_right], centre + space.half_width]],
+                       middle, 0) { |x_pos| [x_pos, y_pos] }
+      end
 
-          axis_label(text, [x, y], middle, 0)
+      # Each pair is [text, position along the axis]; the block turns that
+      # position into the label's [x, y].
+      def written_labels(pairs, middle, rotation)
+        pairs.reject { |text, _| text.empty? }.map do |text, along|
+          axis_label(text, yield(along), middle, rotation)
         end
       end
 
@@ -238,13 +266,9 @@ module Sirena
       def y_labels(axes, space)
         middle = !axes[:y_top].empty?
         lift = middle ? space.half_height / 2 : 0
-        [[axes[:y_bottom], space.top + space.height - lift],
-         [axes[:y_top], space.top + space.half_height - lift]]
-          .filter_map do |text, y|
-            next if text.empty?
-
-            axis_label(text, [AXIS_LABEL_PADDING, y], middle, -90)
-          end
+        written_labels([[axes[:y_bottom], space.bottom - lift],
+                        [axes[:y_top], space.mid_y - lift]],
+                       middle, -90) { |y_pos| [AXIS_LABEL_PADDING, y_pos] }
       end
 
       def axis_label(text, position, middle, rotation)
@@ -254,23 +278,28 @@ module Sirena
       end
 
       def quadrant_labels(quadrants, points)
-        quadrants.values.filter_map do |quadrant|
-          next unless quadrant[:label]
-
-          bounds = quadrant[:bounds]
-          x = bounds[:x] + (bounds[:width] / 2.0)
-          next top_label(quadrant[:label], x, bounds) unless points.empty?
-
-          label(quadrant[:label], [x, bounds[:y] + (bounds[:height] / 2.0)],
-                QUADRANT_FONT_SIZE, "quadrant",
-                anchor: "middle", baseline: "middle")
+        labelled = quadrants.values.select { |quadrant| quadrant[:label] }
+        labelled.map do |quadrant|
+          points.empty? ? centred_label(quadrant) : top_label(quadrant)
         end
       end
 
-      def top_label(text, x, bounds)
-        label(text, [x, bounds[:y] + QUADRANT_TEXT_TOP_PADDING],
+      def top_label(quadrant)
+        top = quadrant[:bounds][:y] + QUADRANT_TEXT_TOP_PADDING
+        quadrant_label(quadrant, top, "hanging")
+      end
+
+      def centred_label(quadrant)
+        bounds = quadrant[:bounds]
+        middle = bounds[:y] + (bounds[:height] / 2.0)
+        quadrant_label(quadrant, middle, "middle")
+      end
+
+      def quadrant_label(quadrant, y_pos, baseline)
+        bounds = quadrant[:bounds]
+        label(quadrant[:label], [bounds[:x] + (bounds[:width] / 2.0), y_pos],
               QUADRANT_FONT_SIZE, "quadrant",
-              anchor: "middle", baseline: "hanging")
+              anchor: "middle", baseline: baseline)
       end
 
       def typed_points(points)
