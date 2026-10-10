@@ -391,7 +391,7 @@ module Sirena
 
           direction = header[:direction]
           value = direction[:dir_value] || direction
-          diagram.direction = canonical_direction(value.to_s) if value
+          diagram.direction = canonical_direction(value.to_s)
         end
         private :apply_header
 
