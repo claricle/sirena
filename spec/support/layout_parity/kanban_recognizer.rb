@@ -109,14 +109,8 @@ module SpecSupport
         anchor = extractor.bbox(text)
         return unless anchor && box.contain?(anchor)
 
-        label = normalized_text(text)
+        label = text.text.gsub(/\s+/, " ").strip
         { box: anchor, label: label } unless label.empty?
-      end
-
-      def normalized_text(text)
-        lines = text.xpath("./tspan")
-        content = lines.empty? ? text.text : lines.map(&:text).join(" ")
-        content.gsub(/\s+/, " ").strip
       end
 
       def distance(left, right)
