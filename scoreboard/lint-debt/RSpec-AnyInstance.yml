@@ -1,5 +1,0 @@
----
-cop: RSpec/AnyInstance
-rows:
-- file: spec/scripts/apply_fixes_never_called_spec.rb
-  count: 2
