@@ -18,9 +18,9 @@
 # back ninety-four times: `bang`, `cloud` and `triangle` all came out as
 # plain rectangles, and five curated aliases were wrong outright — mermaid
 # draws `h-cyl` lying down and `stop` as a circle inside a ring, and
-# neither is the cylinder or the double circle they were pointed at. Drawing the wrong
-# shape is worse than refusing the name, so a name now earns its place only
-# by matching, exactly, what mermaid draws for a shape sirena can name.
+# neither is the cylinder or the double circle they were pointed at. Drawing
+# the wrong shape is worse than refusing the name, so a name earns its place
+# only by matching, exactly, what mermaid draws for a shape sirena can name.
 #
 # Usage:
 #   ruby scripts/generate_shape_table.rb candidates.txt > table.rb

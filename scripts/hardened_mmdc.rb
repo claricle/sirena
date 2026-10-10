@@ -146,7 +146,9 @@ module HardenedMmdc
   def subtree_of(pid)
     parents = Hash.new { |hash, key| hash[key] = [] }
     capture(["ps", "-eo", "pid=,ppid="], PS_TIMEOUT).each_line do |line|
-      child, parent = line.split.map { |field| Integer(field, exception: false) }
+      child, parent = line.split.map do |field|
+        Integer(field, exception: false)
+      end
       parents[parent] << child if child&.positive? && parent&.positive?
     end
 

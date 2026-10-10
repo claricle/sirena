@@ -17,7 +17,8 @@
 # most people.
 #
 # One case is known to differ between the two:
-# er_diagram/037_parser_should_handle_complex_diagram_with_special_entity_names_36
+# er_diagram/037_parser_should_handle_complex_diagram_with_special_
+# entity_names_36
 # carries an .error from an older mermaid that rejected a numeric entity name,
 # and mmdc 11.12.0 renders it. Running --verify promotes it, moving the valid
 # rate 42.3% -> 42.4%. Recorded here rather than baked in, because the sidecars
@@ -136,7 +137,8 @@ def artifact_reason(source)
   return "indented frontmatter closer" if source.match?(INDENTED_FRONTMATTER)
 
   stripped = source.rstrip
-  return "truncated source" if TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
+  truncated = TRUNCATIONS.any? { |pattern| stripped.match?(pattern) }
+  return "truncated source" if truncated
 
   nil
 end
@@ -192,7 +194,9 @@ def rendered?(entry)
   sidecar = "#{entry[:base]}.svg"
   reference = File.join(REFERENCE_ROOT, entry[:type], "#{name}.svg")
 
-  [sidecar, reference].any? { |path| File.exist?(path) && !error_graphic?(path) }
+  [sidecar, reference].any? do |path|
+    File.exist?(path) && !error_graphic?(path)
+  end
 end
 
 # mermaid rejected it, by either route: an .error sidecar, or an SVG that is
@@ -240,7 +244,10 @@ def classify(entry, group, oracle = {})
   artifact = artifact_reason(entry[:source])
 
   if rendered?(entry)
-    return ["valid", "mmdc rendered it (source also looks damaged: #{artifact})"] if artifact
+    if artifact
+      return ["valid", "mmdc rendered it (source also looks damaged: " \
+                       "#{artifact})"]
+    end
 
     return ["valid", "mmdc rendered it"]
   end
@@ -369,16 +376,20 @@ rows = entries.map do |entry|
 end
 
 verification_errors = verify_invalid!(rows, entries) if verify
-abort "mmdc verification failed for #{verification_errors} case(s)" if verification_errors&.positive?
+if verification_errors&.positive?
+  abort "mmdc verification failed for #{verification_errors} case(s)"
+end
 
 tally = rows.group_by { |r| r["verdict"] }.transform_values(&:size)
 puts "TYPE       VALID    INVALID  ARTIFACT  UNKNOWN"
 rows.group_by { |r| r["case"].split("/").first }.sort.each do |type, list|
   t = list.group_by { |r| r["verdict"] }.transform_values(&:size)
-  puts format("%<type>-10s %<valid>-8d %<invalid>-8d %<artifact>-9d %<unknown>d",
-              type: type, valid: t.fetch("valid", 0),
-              invalid: t.fetch("invalid", 0),
-              artifact: t.fetch("artifact", 0), unknown: t.fetch("unknown", 0))
+  puts format(
+    "%<type>-10s %<valid>-8d %<invalid>-8d %<artifact>-9d %<unknown>d",
+    type: type, valid: t.fetch("valid", 0),
+    invalid: t.fetch("invalid", 0),
+    artifact: t.fetch("artifact", 0), unknown: t.fetch("unknown", 0)
+  )
 end
 puts format("\nTOTAL %<total>d cases: valid=%<valid>d invalid=%<invalid>d " \
             "artifact=%<artifact>d unknown=%<unknown>d",

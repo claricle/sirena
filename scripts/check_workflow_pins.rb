@@ -18,24 +18,33 @@ module WorkflowPins
   end
 
   def unpinned(workflow)
-    uses_of(workflow).reject { |ref| ref.start_with?("./") || ref.match?(SHA_REF) }
+    uses_of(workflow).reject do |ref|
+      ref.start_with?("./") || ref.match?(SHA_REF)
+    end
   end
 
   # Jobs that call a reusable workflow cannot carry timeout-minutes.
   def without_timeout(workflow)
-    (workflow["jobs"] || {}).reject { |_, job| job.key?("uses") || job.key?("timeout-minutes") }.keys
+    jobs = workflow["jobs"] || {}
+    jobs.reject do |_, job|
+      job.key?("uses") || job.key?("timeout-minutes")
+    end.keys
   end
 
   def problems(path)
     workflow = YAML.safe_load_file(path)
-    unpinned(workflow).map { |ref| "#{path}: unpinned #{ref}" } +
-      without_timeout(workflow).map { |job| "#{path}: job #{job} has no timeout-minutes" }
+    pin_problems = unpinned(workflow).map { |ref| "#{path}: unpinned #{ref}" }
+    timeout_problems = without_timeout(workflow).map do |job|
+      "#{path}: job #{job} has no timeout-minutes"
+    end
+    pin_problems + timeout_problems
   end
 end
 
 if __FILE__ == $PROGRAM_NAME
   root = File.expand_path("..", __dir__)
-  found = Dir[File.join(root, ".github/workflows/*.{yml,yaml}")].flat_map { |f| WorkflowPins.problems(f) }
+  workflow_glob = File.join(root, ".github/workflows/*.{yml,yaml}")
+  found = Dir[workflow_glob].flat_map { |file| WorkflowPins.problems(file) }
   found.each { |line| warn line }
   puts "workflow pins: clean" if found.empty?
   exit(found.empty? ? 0 : 1)

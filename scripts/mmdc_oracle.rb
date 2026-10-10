@@ -70,11 +70,15 @@ module MmdcOracle
   end
 
   def disambiguate(probe, canary)
-    return Result.new(:rejects, probe.diagnostic) if source_error?(probe.diagnostic)
+    if source_error?(probe.diagnostic)
+      return Result.new(:rejects, probe.diagnostic)
+    end
     return Result.new(:error, probe.diagnostic) if canary.verdict == :accepts
 
     messages = [probe.diagnostic, canary.diagnostic].reject(&:empty?).uniq
-    messages << "mmdc also failed its known-valid health check" if messages.empty?
+    if messages.empty?
+      messages << "mmdc also failed its known-valid health check"
+    end
     Result.new(:error, messages.join("\n"))
   end
 
