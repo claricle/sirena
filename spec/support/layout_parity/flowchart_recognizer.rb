@@ -39,8 +39,7 @@ module SpecSupport
       end
 
       def reference_kind(id, classes)
-        key = id[REFERENCE_NODE, 1] if classes.include?("node")
-        return [:node, key] if key
+        return [:node, id[REFERENCE_NODE, 1] || id] if classes.include?("node")
 
         [:cluster, id] if classes.include?("cluster")
       end
