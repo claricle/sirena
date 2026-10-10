@@ -155,22 +155,12 @@ module Sirena
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
         diagram = semantic_diagram(ir_graph(diagram))
-        # Build hierarchy with boundaries as containers
-        root_elements = diagram.elements.select { |e| e.boundary_id.nil? }
-        root_boundaries = diagram.boundaries.select { |b| b.parent_id.nil? }
-
         {
           id: diagram.id || "c4",
-          children: transform_root_nodes(diagram, root_elements,
-                                         root_boundaries),
+          children: transform_root_nodes(diagram, *root_items(diagram)),
           edges: transform_relationships(diagram),
           layoutOptions: layout_options(diagram),
-          metadata: {
-            level: diagram.level,
-            title: diagram.title,
-            element_count: diagram.elements.length,
-            relationship_count: diagram.relationships.length,
-          },
+          metadata: graph_metadata(diagram),
         }
       end
 
@@ -182,6 +172,20 @@ module Sirena
       ].freeze
       BOUNDARY_ROLES = %w[enterprise_boundary system_boundary boundary].freeze
       private_constant :ELEMENT_ROLES, :BOUNDARY_ROLES
+
+      def root_items(diagram)
+        elements = diagram.elements.select { |item| item.boundary_id.nil? }
+        boundaries = diagram.boundaries.select { |item| item.parent_id.nil? }
+        [elements, boundaries]
+      end
+
+      def graph_metadata(diagram)
+        {
+          level: diagram.level, title: diagram.title,
+          element_count: diagram.elements.length,
+          relationship_count: diagram.relationships.length
+        }
+      end
 
       def ir_graph(diagram)
         return diagram if diagram.is_a?(IR::Graph)
@@ -541,189 +545,158 @@ module Sirena
       end
 
       def transform_boundary(diagram, boundary)
-        # Get elements in this boundary
-        elements = diagram.elements_in_boundary(boundary.id)
-        child_boundaries = diagram.boundaries_in_boundary(boundary.id)
+        children = boundary_children(diagram, boundary)
+        dims = calculate_boundary_dimensions(children)
+        {
+          id: boundary.id, width: dims[:width], height: dims[:height],
+          labels: [graph_boundary_label(boundary)], children: children,
+          layoutOptions: boundary_layout_options,
+          metadata: boundary_metadata(boundary)
+        }
+      end
 
-        # Add child boundaries first
-        children = child_boundaries.map do |child_boundary|
-          transform_boundary(diagram, child_boundary)
+      def boundary_children(diagram, boundary)
+        children = diagram.boundaries_in_boundary(boundary.id).map do |child|
+          transform_boundary(diagram, child)
         end
-
-        # Add elements in this boundary
-        elements.each do |element|
+        diagram.elements_in_boundary(boundary.id).each do |element|
           children << transform_element(element)
         end
+        children
+      end
 
-        # Calculate boundary dimensions based on contents
-        dims = calculate_boundary_dimensions(children)
+      def graph_boundary_label(boundary)
+        dims = measure_text(boundary.label, font_size: large_font_size)
+        { text: boundary.label, width: dims[:width], height: dims[:height] }
+      end
 
+      def boundary_metadata(boundary)
         {
-          id: boundary.id,
-          width: dims[:width],
-          height: dims[:height],
-          labels: [
-            {
-              text: boundary.label,
-              width: measure_text(boundary.label,
-                                  font_size: large_font_size)[:width],
-              height: measure_text(boundary.label,
-                                   font_size: large_font_size)[:height],
-            },
-          ],
-          children: children,
-          layoutOptions: boundary_layout_options,
-          metadata: {
-            boundary_type: boundary.boundary_type,
-            type_param: boundary.type_param,
-            link: boundary.link,
-            tags: boundary.tags,
-          },
+          boundary_type: boundary.boundary_type,
+          type_param: boundary.type_param,
+          link: boundary.link, tags: boundary.tags
         }
       end
 
       def transform_element(element)
         dims = element_dimensions(element)
-
-        labels = []
-
-        # Main label
-        label_dims = measure_text(element.label, font_size: large_font_size)
-        labels << {
-          text: element.label,
-          width: label_dims[:width],
-          height: label_dims[:height],
-        }
-
-        # Description (if present)
-        if element.description && !element.description.empty?
-          desc_dims = measure_text(element.description,
-                                   font_size: small_font_size)
-          labels << {
-            text: element.description,
-            width: desc_dims[:width],
-            height: desc_dims[:height],
-          }
-        end
-
-        # Technology (if present)
-        if element.technology && !element.technology.empty?
-          tech_dims = measure_text(element.technology,
-                                   font_size: small_font_size)
-          labels << {
-            text: "[#{element.technology}]",
-            width: tech_dims[:width],
-            height: tech_dims[:height],
-          }
-        end
-
         {
-          id: element.id,
-          width: dims[:width],
-          height: dims[:height],
-          labels: labels,
+          id: element.id, width: dims[:width], height: dims[:height],
+          labels: element_labels(element),
           stereotype: C4Stereotype.text(element.element_type),
-          metadata: {
-            element_type: element.element_type,
-            base_type: element.base_type,
-            external: element.external,
-            sprite: element.sprite,
-            link: element.link,
-            tags: element.tags,
-            person: element.person?,
-            system: element.system?,
-            container: element.container?,
-            component: element.component?,
-          },
+          metadata: element_metadata(element)
+        }
+      end
+
+      def element_labels(element)
+        [
+          measured_label(element.label, large_font_size),
+          optional_label(element.description),
+          optional_technology_label(element.technology),
+        ].compact
+      end
+
+      def measured_label(text, size, rendered_text = text)
+        dims = measure_text(text, font_size: size)
+        { text: rendered_text, width: dims[:width], height: dims[:height] }
+      end
+
+      def optional_label(text)
+        measured_label(text, small_font_size) if text && !text.empty?
+      end
+
+      def optional_technology_label(text)
+        return unless text && !text.empty?
+
+        measured_label(text, small_font_size, "[#{text}]")
+      end
+
+      def element_metadata(element)
+        {
+          element_type: element.element_type, base_type: element.base_type,
+          external: element.external, sprite: element.sprite,
+          link: element.link, tags: element.tags,
+          person: element.person?, system: element.system?,
+          container: element.container?, component: element.component?
         }
       end
 
       def transform_relationships(diagram)
-        return [] if diagram.relationships.nil? || diagram.relationships.empty?
-
-        diagram.relationships.map.with_index do |rel, index|
-          labels = []
-
-          if rel.label && !rel.label.empty?
-            label_dims = measure_text(rel.label, font_size: normal_font_size)
-            labels << {
-              text: rel.label,
-              width: label_dims[:width],
-              height: label_dims[:height],
-            }
-          end
-
-          if rel.technology && !rel.technology.empty?
-            tech_dims = measure_text("[#{rel.technology}]",
-                                     font_size: small_font_size)
-            labels << {
-              text: "[#{rel.technology}]",
-              width: tech_dims[:width],
-              height: tech_dims[:height],
-            }
-          end
-
-          {
-            id: "rel_#{index}",
-            sources: [rel.from_id],
-            targets: [rel.to_id],
-            labels: labels,
-            metadata: {
-              rel_type: rel.rel_type,
-              bidirectional: rel.bidirectional?,
-            },
-          }
+        Array(diagram.relationships).map.with_index do |relationship, index|
+          transform_relationship(relationship, index)
         end
       end
 
+      def transform_relationship(relationship, index)
+        {
+          id: "rel_#{index}", sources: [relationship.from_id],
+          targets: [relationship.to_id],
+          labels: graph_relationship_labels(relationship),
+          metadata: {
+            rel_type: relationship.rel_type,
+            bidirectional: relationship.bidirectional?,
+          }
+        }
+      end
+
+      def graph_relationship_labels(relationship)
+        [
+          optional_relationship_label(relationship.label),
+          optional_relationship_technology(relationship.technology),
+        ].compact
+      end
+
+      def optional_relationship_label(text)
+        measured_label(text, normal_font_size) if text && !text.empty?
+      end
+
+      def optional_relationship_technology(text)
+        return unless text && !text.empty?
+
+        rendered = "[#{text}]"
+        measured_label(rendered, small_font_size)
+      end
+
       def element_dimensions(element)
-        # Base dimensions on element type
-        if element.person?
-          { width: PERSON_WIDTH, height: PERSON_HEIGHT }
-        elsif element.system?
-          { width: SYSTEM_WIDTH, height: SYSTEM_HEIGHT }
-        elsif element.container?
-          { width: CONTAINER_WIDTH, height: CONTAINER_HEIGHT }
-        elsif element.component?
-          { width: COMPONENT_WIDTH, height: COMPONENT_HEIGHT }
-        else
-          { width: SYSTEM_WIDTH, height: SYSTEM_HEIGHT }
+        return { width: PERSON_WIDTH, height: PERSON_HEIGHT } if element.person?
+        if element.container?
+          return { width: CONTAINER_WIDTH, height: CONTAINER_HEIGHT }
         end
+        if element.component?
+          return { width: COMPONENT_WIDTH, height: COMPONENT_HEIGHT }
+        end
+
+        { width: SYSTEM_WIDTH, height: SYSTEM_HEIGHT }
       end
 
       def calculate_boundary_dimensions(children)
         return { width: 300, height: 200 } if children.empty?
 
-        # Calculate based on child count and type
-        # Simple heuristic: arrange in grid
-        count = children.length
-        cols = Math.sqrt(count).ceil
-        rows = (count.to_f / cols).ceil
-
-        max_width = children.map { |c| c[:width] || 160 }.max
-        max_height = children.map { |c| c[:height] || 120 }.max
-
-        width = (cols * max_width) + ((cols + 1) * ELEMENT_SPACING) +
-                (2 * BOUNDARY_PADDING)
-        height = (rows * max_height) + ((rows + 1) * ELEMENT_SPACING) +
-                 (2 * BOUNDARY_PADDING) + 30 # Extra for title
-
+        columns, rows = boundary_grid(children.length)
+        width = boundary_extent(columns, child_extent(children, :width, 160))
+        child_height = child_extent(children, :height, 120)
+        height = boundary_extent(rows, child_height) + 30
         { width: [width, 300].max, height: [height, 200].max }
       end
 
-      def layout_options(diagram)
-        # C4 diagrams use hierarchical layout
-        # Top-down for Context/Container, can be left-right for Component
-        direction = case diagram.level
-                    when "Component", "Code"
-                      DIRECTION_RIGHT
-                    else
-                      DIRECTION_DOWN
-                    end
+      def boundary_grid(count)
+        columns = Math.sqrt(count).ceil
+        [columns, (count.to_f / columns).ceil]
+      end
 
+      def child_extent(children, dimension, fallback)
+        children.map { |child| child[dimension] || fallback }.max
+      end
+
+      def boundary_extent(item_count, item_extent)
+        (item_count * item_extent) + ((item_count + 1) * ELEMENT_SPACING) +
+          (2 * BOUNDARY_PADDING)
+      end
+
+      def layout_options(diagram)
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
-          direction: direction,
+          direction: layout_direction(diagram.level),
           ElkOptions::NODE_NODE_SPACING => ELEMENT_SPACING,
           ElkOptions::LAYER_SPACING => LEVEL_SPACING,
           ElkOptions::EDGE_NODE_SPACING => 25,
@@ -731,6 +704,10 @@ module Sirena
           ElkOptions::HIERARCHY_HANDLING => "INCLUDE_CHILDREN",
           ElkOptions::NODE_PLACEMENT => "NETWORK_SIMPLEX",
         )
+      end
+
+      def layout_direction(level)
+        %w[Component Code].include?(level) ? DIRECTION_RIGHT : DIRECTION_DOWN
       end
 
       def boundary_layout_options

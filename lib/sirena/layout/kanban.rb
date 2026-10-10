@@ -211,11 +211,15 @@ module Sirena
       def metadata_labels(card, position)
         return [] unless card[:has_metadata]
 
-        line_count = rendered_lines(card[:text]).length
-        start_y = position[1] + 50 + ([line_count - 1, 0].max * line_height)
+        start_y = metadata_start_y(card[:text], position[1])
         card[:metadata].each_with_index.flat_map do |(key, value), index|
           metadata_label_pair(key, value, position[0], start_y, index)
         end
+      end
+
+      def metadata_start_y(text, y_position)
+        extra_lines = [rendered_lines(text).length - 1, 0].max
+        y_position + 50 + (extra_lines * line_height)
       end
 
       def metadata_label_pair(key, value, x_position, start_y, index)
@@ -263,16 +267,20 @@ module Sirena
 
       def position_columns(data)
         board_columns(data).map.with_index do |column, index|
-          cards = column_cards(data, column)
-          header_height = calculate_header_height(column.label)
-          {
-            id: column.id, title: column.label,
-            x: index * (COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING), y: 0,
-            width: COLUMN_WIDTH,
-            height: calculate_column_height(cards, header_height, data),
-            header_height: header_height, card_count: cards.size, cards: cards
-          }
+          positioned_column(data, column, index)
         end
+      end
+
+      def positioned_column(data, column, index)
+        cards = column_cards(data, column)
+        header_height = calculate_header_height(column.label)
+        {
+          id: column.id, title: column.label,
+          x: index * (COLUMN_WIDTH + COLUMN_HORIZONTAL_SPACING), y: 0,
+          width: COLUMN_WIDTH,
+          height: calculate_column_height(cards, header_height, data),
+          header_height: header_height, card_count: cards.size, cards: cards
+        }
       end
 
       def position_cards(columns, data)
