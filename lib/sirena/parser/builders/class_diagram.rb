@@ -94,6 +94,18 @@ module Sirena
           "~" => "package",
         }.freeze
 
+        STATEMENT_HANDLERS = [
+          %i[namespace_statement? process_namespace],
+          %i[class_declaration? process_class_declaration],
+          %i[standalone_stereotype? process_standalone_stereotype],
+          %i[colon_member? process_colon_member],
+          %i[relationship? process_relationship],
+          %i[direction_statement? process_direction],
+          %i[ignored_statement? ignore_statement],
+          %i[standalone_class? process_standalone_class],
+        ].freeze
+        private_constant :STATEMENT_HANDLERS
+
         # Transform parse tree into Class diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -106,18 +118,18 @@ module Sirena
           # written on the mention that creates it.
           @statement_count = 0
           @created_in = {}
-
-          # Tree is an array: [header, direction, ...statements]
-          if tree.is_a?(Array)
-            tree.each { |item| process_item(item) }
-          elsif tree.is_a?(Hash)
-            process_item(tree)
-          end
-
+          process_tree(tree)
           @diagram
         end
 
         private
+
+        # Tree is an array: [header, direction, ...statements]
+        def process_tree(tree)
+          return tree.each { |item| process_item(item) } if tree.is_a?(Array)
+
+          process_item(tree) if tree.is_a?(Hash)
+        end
 
         def process_item(item)
           # Process header to get direction
@@ -131,33 +143,56 @@ module Sirena
 
         def process_statement(stmt)
           @statement_count += 1
-          if stmt[:namespace_keyword]
-            # Namespace block
-            process_namespace(stmt)
-          elsif stmt[:keyword] == "class" && stmt[:class_id]
-            # Class declaration
-            process_class_declaration(stmt)
-          elsif stmt[:stereotype] && stmt[:class_id] && !stmt[:keyword]
-            # Standalone stereotype
-            process_standalone_stereotype(stmt)
-          elsif stmt[:class_id] &&
-              (stmt[:member] || stmt[:raw_member] || stmt[:body_stereotype])
-            # Colon member definition
-            process_colon_member(stmt)
-          elsif stmt[:from_id] && stmt[:to_id] && stmt[:operator]
-            # Relationship
-            process_relationship(stmt)
-          elsif stmt[:direction_keyword]
-            @diagram.direction = extract_text(stmt[:dir_value])
-          elsif stmt[:link_keyword] || stmt[:callback_keyword] || stmt[:ignored]
-            # Link, callback, click, styling, accessibility text and notes
-            # parse but carry nothing the model keeps (yet).
-            nil
-          elsif stmt[:class_id] && !stmt[:keyword]
-            # Standalone class
-            entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
-            apply_generic(entity, stmt[:generic])
+          handler = STATEMENT_HANDLERS.find do |predicate, _action|
+            send(predicate, stmt)
           end
+          send(handler.last, stmt) if handler
+        end
+
+        def namespace_statement?(stmt)
+          stmt[:namespace_keyword]
+        end
+
+        def class_declaration?(stmt)
+          stmt[:keyword] == "class" && stmt[:class_id]
+        end
+
+        def standalone_stereotype?(stmt)
+          stmt[:stereotype] && stmt[:class_id] && !stmt[:keyword]
+        end
+
+        def colon_member?(stmt)
+          stmt[:class_id] &&
+            (stmt[:member] || stmt[:raw_member] || stmt[:body_stereotype])
+        end
+
+        def relationship?(stmt)
+          stmt[:from_id] && stmt[:to_id] && stmt[:operator]
+        end
+
+        def direction_statement?(stmt)
+          stmt[:direction_keyword]
+        end
+
+        def ignored_statement?(stmt)
+          stmt[:link_keyword] || stmt[:callback_keyword] || stmt[:ignored]
+        end
+
+        def standalone_class?(stmt)
+          stmt[:class_id] && !stmt[:keyword]
+        end
+
+        def process_direction(stmt)
+          @diagram.direction = extract_text(stmt[:dir_value])
+        end
+
+        # Link, callback, click, styling, accessibility text and notes parse
+        # but carry nothing the model keeps (yet).
+        def ignore_statement(_stmt); end
+
+        def process_standalone_class(stmt)
+          entity = ensure_entity_exists(class_id_text(stmt[:class_id]))
+          apply_generic(entity, stmt[:generic])
         end
 
         # Namespace members keep their plain, global ids; the parser's
@@ -168,40 +203,25 @@ module Sirena
 
         def process_class_declaration(stmt)
           class_id = class_id_text(stmt[:class_id])
-
           entity = find_or_create_entity(class_id)
-
-          # `class C1[]` is an empty label and must fall back to the id, so an
-          # empty string counts as absent here.
-          label = extract_text(stmt[:text_label][:string]) if
-            stmt[:text_label].is_a?(Hash)
-          label = nil if label.nil? || label.empty?
-
-          # Handle stereotype
-          if stmt[:stereotype] && stmt[:stereotype][:stereotype_value]
-            entity.stereotype ||=
-              extract_text(stmt[:stereotype][:stereotype_value])
-          end
-
-          # Handle generic parameters.
-          #
-          # Appended to the name for display, but only when there is no
-          # explicit label. mermaid renders `class Animal~T~["A label"]` as
-          # "A label", not "A label~T~", so a label wins outright.
-          # Skipped when a label is present on THIS declaration. A later
-          # `class C1~T~` after `class C1["Label"]` is skipped by
-          # apply_generic, which only honours the creating statement.
+          label = declaration_label(stmt)
+          apply_declaration_stereotype(entity, stmt)
           apply_generic(entity, stmt[:generic]) unless label
-
-          # An explicit text label replaces the display name. The id is
-          # untouched, which is what keeps relationships resolving — and the
-          # assignment is unconditional on purpose, because
-          # find_or_create_entity may have already set name to the id when a
-          # relationship mentioned this class first.
           entity.name = label if label
-
-          # Handle class body
           process_class_body(entity, stmt[:body]) if stmt[:body]
+        end
+
+        # An empty explicit label falls back to the class id.
+        def declaration_label(stmt)
+          return unless stmt[:text_label].is_a?(Hash)
+
+          label = extract_text(stmt[:text_label][:string])
+          label unless label.empty?
+        end
+
+        def apply_declaration_stereotype(entity, stmt)
+          stereotype = stmt.dig(:stereotype, :stereotype_value)
+          entity.stereotype ||= extract_text(stereotype) if stereotype
         end
 
         def process_standalone_stereotype(stmt)
@@ -276,14 +296,23 @@ module Sirena
         def add_raw_member(entity, text)
           source_text = text.strip
           visibility, text = split_visibility(source_text)
+          member = parse_raw_member(text, visibility, source_text)
+          raw_member_collection(entity, member) << member
+        end
+
+        def parse_raw_member(text, visibility, source_text)
           call = text.match(RAW_METHOD)
-          if call && !call[:name].strip.empty?
-            entity.class_methods << raw_method(call, visibility, source_text)
-          elsif text.include?(")")
-            unreadable_member!(text)
-          else
-            entity.attributes << raw_attribute(text, visibility, source_text)
-          end
+          return raw_method(call, visibility, source_text) if
+            call && !call[:name].strip.empty?
+
+          unreadable_member!(text) if text.include?(")")
+          raw_attribute(text, visibility, source_text)
+        end
+
+        def raw_member_collection(entity, member)
+          return entity.class_methods if member.is_a?(Diagram::ClassMethod)
+
+          entity.attributes
         end
 
         def unreadable_member!(text)
@@ -322,27 +351,24 @@ module Sirena
         end
 
         def add_method_to_entity(entity, method_data, visibility, source_text)
-          method_name = extract_text(method_data[:method_name])
-          parameters = if method_data[:parameters]
-                         extract_text(method_data[:parameters])
-                       else
-                         ""
-                       end
-          return_type = nil
+          entity.class_methods << Diagram::ClassMethod.new(
+            name: extract_text(method_data[:method_name]),
+            parameters: method_parameters(method_data),
+            return_type: method_return_type(method_data),
+            visibility: visibility,
+            text: source_text,
+          )
+        end
 
-          if method_data[:return_type] && method_data[:return_type][:type]
-            return_type = extract_text(method_data[:return_type][:type])
-          end
+        def method_parameters(method_data)
+          return "" unless method_data[:parameters]
 
-          method = Diagram::ClassMethod.new.tap do |m|
-            m.name = method_name
-            m.parameters = parameters
-            m.return_type = return_type
-            m.visibility = visibility
-            m.text = source_text
-          end
+          extract_text(method_data[:parameters])
+        end
 
-          entity.class_methods << method
+        def method_return_type(method_data)
+          type = method_data.dig(:return_type, :type)
+          extract_text(type) if type
         end
 
         def add_attribute_to_entity(entity, attr_data, visibility, source_text)
@@ -355,72 +381,82 @@ module Sirena
         end
 
         def process_relationship(stmt)
-          from_id = class_id_text(stmt[:from_id])
-          to_id = class_id_text(stmt[:to_id])
-          operator = extract_text(stmt[:operator][:arrow])
+          ids = relationship_ids(stmt)
+          operator = relationship_operator(stmt)
+          ensure_relationship_entities(ids, stmt)
+          append_relationship(stmt, operator, ids)
+        end
 
-          # Ensure both entities exist
-          apply_generic(ensure_entity_exists(from_id), stmt[:from_generic])
-          apply_generic(ensure_entity_exists(to_id), stmt[:to_generic])
+        def relationship_ids(stmt)
+          [class_id_text(stmt[:from_id]), class_id_text(stmt[:to_id])]
+        end
 
-          # Get relationship type
-          relationship_type = RELATIONSHIP_TYPES[operator]
-          relationship_type ||= "association"
+        def relationship_operator(stmt)
+          extract_text(stmt[:operator][:arrow])
+        end
 
-          # Parse cardinality
-          source_card = nil
-          target_card = nil
+        def ensure_relationship_entities(ids, stmt)
+          apply_generic(ensure_entity_exists(ids[0]), stmt[:from_generic])
+          apply_generic(ensure_entity_exists(ids[1]), stmt[:to_generic])
+        end
 
-          if stmt[:source_card]
-            source_card = extract_text(stmt[:source_card][:string])
+        def append_relationship(stmt, operator, ids)
+          cards = relationship_cardinalities(stmt)
+          ends = relationship_ends(*ids, operator, *cards)
+          @diagram.relationships << build_relationship(stmt, operator, ends)
+        end
+
+        def relationship_cardinalities(stmt)
+          %i[source_card target_card].map do |key|
+            extract_text(stmt[key][:string]) if stmt[key]
           end
+        end
 
-          if stmt[:target_card]
-            target_card = extract_text(stmt[:target_card][:string])
-          end
+        def relationship_ends(
+          from_id, to_id, operator, source_card, target_card
+        )
+          return [from_id, to_id, source_card, target_card] unless
+            LEFT_POINTING.include?(operator)
 
-          # Parse label
-          label = nil
-          if stmt[:pipe_label] && stmt[:pipe_label][:label_text]
-            label = extract_text(stmt[:pipe_label][:label_text])
-            # Strip surrounding quotes if present
-            label = label.gsub(/^["']|["']$/, "")
-          elsif stmt[:colon_label] && stmt[:colon_label][:label_text]
-            label = extract_text(stmt[:colon_label][:label_text]).strip
-          end
+          [to_id, from_id, target_card, source_card]
+        end
 
-          # Determine direction
-          # For left-pointing arrows, reverse the relationship
-          if LEFT_POINTING.include?(operator)
-            actual_from = to_id
-            actual_to = from_id
-            # Swap cardinalities
-            actual_source_card = target_card
-            actual_target_card = source_card
-          else
-            actual_from = from_id
-            actual_to = to_id
-            actual_source_card = source_card
-            actual_target_card = target_card
-          end
+        def relationship_label(stmt)
+          pipe_label = stmt.dig(:pipe_label, :label_text)
+          return extract_text(pipe_label).gsub(/^["']|["']$/, "") if pipe_label
 
-          mixed_markers = mixed_markers_for(operator)
+          colon_label = stmt.dig(:colon_label, :label_text)
+          extract_text(colon_label).strip if colon_label
+        end
 
-          relationship = Diagram::ClassRelationship.new.tap do |rel|
-            rel.from_id = actual_from
-            rel.to_id = actual_to
-            rel.relationship_type = relationship_type
-            rel.label = label
-            rel.source_cardinality = actual_source_card
-            rel.target_cardinality = actual_target_card
-            if mixed_markers
-              rel.start_marker = mixed_markers[:start_marker]
-              rel.end_marker = mixed_markers[:end_marker]
-              rel.dashed = mixed_markers[:dashed]
-            end
-          end
+        def build_relationship(stmt, operator, ends)
+          relationship = Diagram::ClassRelationship.new(
+            **relationship_attributes(stmt, operator, ends),
+          )
+          apply_mixed_markers(relationship, operator)
+          relationship
+        end
 
-          @diagram.relationships << relationship
+        def relationship_attributes(stmt, operator, ends)
+          from_id, to_id, source_card, target_card = ends
+          {
+            from_id: from_id, to_id: to_id,
+            relationship_type: RELATIONSHIP_TYPES.fetch(
+              operator, "association"
+            ),
+            label: relationship_label(stmt),
+            source_cardinality: source_card,
+            target_cardinality: target_card
+          }
+        end
+
+        def apply_mixed_markers(relationship, operator)
+          markers = mixed_markers_for(operator)
+          return unless markers
+
+          relationship.start_marker = markers[:start_marker]
+          relationship.end_marker = markers[:end_marker]
+          relationship.dashed = markers[:dashed]
         end
 
         # Looks up an `o..`-style single-marker operator by literal string,
