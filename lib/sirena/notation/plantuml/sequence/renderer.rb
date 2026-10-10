@@ -209,10 +209,16 @@ module Sirena
                                fill: scene_text.colour || text_colour,
                                font_family: text_family(scene_text),
                                font_size: text_size(scene_text),
-                               font_style: scene_text.font_style ||
-                                         text_style(scene_text.role),
-                               font_weight: scene_text.weight ||
-                                         text_weight(scene_text.role))
+                               font_style: text_font_style(scene_text),
+                               font_weight: text_font_weight(scene_text))
+          end
+
+          def text_font_style(scene_text)
+            scene_text.font_style || text_style(scene_text.role)
+          end
+
+          def text_font_weight(scene_text)
+            scene_text.weight || text_weight(scene_text.role)
           end
 
           def text_family(scene_text)
