@@ -79,7 +79,8 @@ module Sirena
       end
 
       # mmdc draws only the mermaid version, centred at (100, 40) in a
-      # 400x100 canvas (mermaid's infoRenderer: configureSvgSize(svg, 100, 400)).
+      # 400x100 canvas (mermaid's infoRenderer:
+      # configureSvgSize(svg, 100, 400)).
       def scene_from_graph(graph)
         Scene.new(
           id: graph[:id] || "info", title: graph[:title],
