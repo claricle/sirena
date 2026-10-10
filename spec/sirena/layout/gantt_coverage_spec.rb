@@ -86,18 +86,18 @@ RSpec.describe Sirena::Layout::Gantt do
   end
 
   describe "the time axis" do
-    let(:weekly) do
-      helper.scene("tickInterval 1week\nsection A\nT1 :a, 2024-01-02, 40d\n")
+    let(:every_third) do
+      helper.scene("tickInterval 3day\nsection A\nT1 :a, 2024-01-02, 40d\n")
     end
 
     it "follows the tickInterval setting" do
-      expect(weekly.timeline.labels.map(&:text).first(2))
-        .to eq(%w[2024-01-07 2024-01-14])
+      expect(every_third.timeline.labels.map(&:text).first(2))
+        .to eq(%w[2024-01-04 2024-01-07])
     end
 
     it "draws one grid line per label" do
-      expect(weekly.timeline.grid_lines.size)
-        .to eq(weekly.timeline.labels.size)
+      expect(every_third.timeline.grid_lines.size)
+        .to eq(every_third.timeline.labels.size)
     end
   end
 
