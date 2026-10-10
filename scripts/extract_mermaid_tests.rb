@@ -459,7 +459,7 @@ class MermaidTestExtractor
       FileUtils.mkdir_p(type_dir)
 
       cases.each_with_index do |test_case, idx|
-        filename = "#{type_dir}/#{sprintf('%03d', idx+1)}_#{test_case.to_mmd_filename}"
+        filename = "#{type_dir}/#{sprintf('%03d', idx + 1)}_#{test_case.to_mmd_filename}"
         File.write(filename, test_case.source)
 
         # Write metadata

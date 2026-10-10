@@ -1,5 +1,0 @@
----
-cop: Style/MultipleComparison
-rows:
-- file: spec/sirena/renderer/radar_spec.rb
-  count: 1

@@ -124,7 +124,6 @@ Layout/MultilineOperationIndentation:
 Layout/SpaceAroundOperators:
   Exclude:
     - 'lib/sirena/renderer/requirement.rb'
-    - 'scripts/extract_mermaid_tests.rb'
 
 # Offense count: 264
 # This cop supports safe autocorrection (--autocorrect).
@@ -295,19 +294,6 @@ Style/MapIntoArray:
   Exclude:
     - 'lib/sirena/layout/c4.rb'
     - 'lib/sirena/layout/requirement.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowMethodComparison, ComparisonsThreshold.
-Style/MultipleComparison:
-  Exclude:
-    - 'spec/sirena/renderer/radar_spec.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-Style/NegatedIfElseCondition:
-  Exclude:
-    - 'tasks/generate_mermaid_fixtures.rake'
 
 # Offense count: 5
 # This cop supports unsafe autocorrection (--autocorrect-all).
