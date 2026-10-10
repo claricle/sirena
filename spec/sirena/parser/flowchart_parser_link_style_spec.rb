@@ -43,8 +43,12 @@ RSpec.describe Sirena::Parser::Flowchart do
 
     # The grammar stops at the space, column 13. An out-of-bounds error
     # instead would mean the space got through to the index check.
-    ["linkStyle 0, 1 stroke:red", "linkStyle 0 ,1 stroke:red",
-     "linkStyle 0\u00A0,1 stroke:red", "linkStyle 0,\u00A01 stroke:red"].each do |statement|
+    [
+      "linkStyle 0, 1 stroke:red",
+      "linkStyle 0 ,1 stroke:red",
+      "linkStyle 0\u00A0,1 stroke:red",
+      "linkStyle 0,\u00A01 stroke:red",
+    ].each do |statement|
       it "refuses the space around the comma in #{statement.inspect}" do
         source = "graph TD\nA-->B\nB-->C\n#{statement}\n"
 
@@ -126,7 +130,9 @@ RSpec.describe Sirena::Parser::Flowchart do
   describe "the flowchart corpus cases that carry a linkStyle" do
     cases = Dir[File.join(__dir__, "../../mermaid/flowchart/*.mmd")]
       .select { |f| File.read(f).include?("linkStyle") }
-    valid, invalid = cases.partition { |f| File.read(f).include?("linkStyle 0 ") }
+    valid, invalid = cases.partition do |file|
+      File.read(file).include?("linkStyle 0 ")
+    end
 
     valid.each do |path|
       it "renders #{File.basename(path, '.mmd')}" do

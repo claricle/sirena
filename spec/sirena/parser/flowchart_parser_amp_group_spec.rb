@@ -51,7 +51,8 @@ RSpec.describe Sirena::Parser::Flowchart do
     it "gives every member of a three-node group its own label" do
       source = File.read(File.join(corpus_dir,
                                    "059_parser_should_be_possible_to_use_" \
-                                   "syntax_to_add_labels_on_multi_nodes_54.mmd"))
+                                   "syntax_to_add_labels_on_multi_nodes_" \
+                                   "54.mmd"))
       nodes = parse_flowchart(source, header: "").nodes
 
       expect(nodes.map { |n| [n.id, n.label] })

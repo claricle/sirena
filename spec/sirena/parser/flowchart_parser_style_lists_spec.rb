@@ -14,7 +14,9 @@ RSpec.describe Sirena::Parser::Flowchart do
       "classDef x fill:#f9f,stroke:#333,stroke-width:4px",
     ].each do |declaration|
       it "takes #{declaration.inspect}" do
-        expect(node_ids.call("graph TD\nA-->B\n#{declaration}\n")).to eq(%w[A B])
+        source = "graph TD\nA-->B\n#{declaration}\n"
+
+        expect(node_ids.call(source)).to eq(%w[A B])
       end
     end
   end
@@ -113,7 +115,8 @@ RSpec.describe Sirena::Parser::Flowchart do
       end
     end
 
-    it "still swallows the `;` after a space run then an ordinary run before `#`" do
+    it "still swallows the `;` after a space run then " \
+       "an ordinary run before `#`" do
       source = "graph TD\nA\nstyle A fill:#{' ' * 4_000}#{'x' * 4_000}#f9f;B\n"
       elapsed = wall_time { expect(node_ids.call(source)).to eq(%w[A]) }
       expect(elapsed).to be < 2

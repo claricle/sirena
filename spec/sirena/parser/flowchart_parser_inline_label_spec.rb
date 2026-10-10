@@ -63,8 +63,10 @@ RSpec.describe Sirena::Parser::Flowchart do
       "A x-- t x--x B" => "an x opening repeated on the closing half",
       "A o-- t o--o B" => "an o opening repeated on the closing half",
       "A x-. t x.-x B" => "a dotted x opening repeated on the closing half",
-      "A -- one\n%%{ bad }\ntwo\n--> B" => "a directive line inside a label",
-      "A -- \"one\n%%{ bad }\ntwo\" --> B" => "a directive inside a quoted label",
+      "A -- one\n%%{ bad }\ntwo\n--> B" =>
+        "a directive line inside a label",
+      "A -- \"one\n%%{ bad }\ntwo\" --> B" =>
+        "a directive inside a quoted label",
     }.each do |source, reason|
       it "refuses #{source.inspect}, #{reason}" do
         expect { edge_tuples(source) }.to raise_error(Sirena::Parser::ParseError)
@@ -72,7 +74,8 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "keeps a marker matched at both ends" do
-      expect(edge_tuples("A x-- t --x B")).to eq([["A", "B", "t", "cross_both"]])
+      expect(edge_tuples("A x-- t --x B"))
+        .to eq([["A", "B", "t", "cross_both"]])
     end
 
     {

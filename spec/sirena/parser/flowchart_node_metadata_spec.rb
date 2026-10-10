@@ -36,7 +36,9 @@ RSpec.describe Sirena::Parser::Flowchart do
 
   describe "@{ } node metadata" do
     it "sets the shape" do
-      expect(node_for("graph TD\nD@{ shape: rounded }\n").shape).to eq("rounded")
+      node = node_for("graph TD\nD@{ shape: rounded }\n")
+
+      expect(node.shape).to eq("rounded")
     end
 
     it "sets the label" do
@@ -84,7 +86,9 @@ RSpec.describe Sirena::Parser::Flowchart do
     end
 
     it "wins over the bracket form when a node carries both" do
-      node = node_for(%(graph TD\nD[bracket]@{ shape: hexagon, label: "meta" }\n))
+      source = "graph TD\nD[bracket]@{ shape: hexagon, " \
+               "label: \"meta\" }\n"
+      node = node_for(source)
 
       expect(node.shape).to eq("hexagon")
       expect(node.label).to eq("meta")
@@ -1064,7 +1068,10 @@ RSpec.describe Sirena::Parser::Flowchart do
   # empty mapping. A `%%` comment body does not — mermaid takes that line
   # away before the block is read, and what is left has no entries.
   describe "a body with no entries in it" do
-    ["graph TD\nA(keep)@{#}\n", "graph TD\nA(keep)@{ # note }\n"].each do |source|
+    [
+      "graph TD\nA(keep)@{#}\n",
+      "graph TD\nA(keep)@{ # note }\n",
+    ].each do |source|
       it "keeps the node's own label for #{source.lines.last.strip}" do
         # mmdc draws both. Reaching for the first key of a mapping that has
         # none raised NoMethodError straight out of the parser.
