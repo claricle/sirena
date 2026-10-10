@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "notation/mermaid"
+require_relative "corpus_type_names"
 
 module Sirena
   # Registry for Mermaid diagram type handlers.
@@ -22,6 +23,11 @@ module Sirena
 
       def registered?(type)
         Notation::Mermaid.type_registered?(type)
+      end
+
+      # @return [Array<String>] spec/mermaid directories holding a type
+      def corpus_directories(type)
+        CorpusTypeNames.directories_for(type)
       end
     end
   end

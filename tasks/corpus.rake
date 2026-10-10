@@ -10,6 +10,7 @@ require "yaml"
 require "json"
 require "fileutils"
 require "timeout"
+require_relative "../lib/sirena/corpus_type_names"
 
 # TODO.architecture/01-safety-net.md, Part B ("Corpus check"). `rake corpus`
 # renders every spec/mermaid case through Sirena.render and writes
@@ -40,6 +41,11 @@ module Sirena
       Dir.children(CORPUS_ROOT)
         .select { |entry| File.directory?(File.join(CORPUS_ROOT, entry)) }
         .sort
+    end
+
+    # The registry type a corpus directory holds, nil when it holds none.
+    def registry_type(directory)
+      Sirena::CorpusTypeNames.registry_type(directory)
     end
 
     # Every case, or one type's, as paths relative to CORPUS_ROOT -- the
