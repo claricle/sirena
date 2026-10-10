@@ -122,6 +122,14 @@ RSpec.describe PlantumlExtractor do
         expect(cases.values.first[:meta][:occurrences]).to eq(2)
       end
     end
+
+    it "rejects distinct sources that resolve to one case ID" do
+      allow(described_class::CaseId).to receive(:call).and_return("collision")
+
+      expect { described_class::Cases.build(block("#{diagram_a}\n#{diagram_b}\n")) }
+        .to raise_error(described_class::CaseIdCollision,
+                        /case ID collision.*collision/i)
+    end
   end
 
   describe "selection" do
