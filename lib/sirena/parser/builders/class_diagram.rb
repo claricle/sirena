@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "capture_string"
 require_relative "../../diagram/class_diagram"
 
 module Sirena
@@ -11,6 +12,8 @@ module Sirena
       # fully-formed Diagram::ClassDiagram object with entities and
       # relationships.
       class ClassDiagram
+        include CaptureString
+
         # Relationship type mappings from operators
         RELATIONSHIP_TYPES = {
           "<|--" => "inheritance",
@@ -477,7 +480,7 @@ module Sirena
         # Every capture reaching here is a Slice (or the `[]` of an empty
         # repeat); no rule nests another name inside the one it passes.
         def extract_text(value)
-          value.to_s
+          capture_string(value)
         end
       end
     end

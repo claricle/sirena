@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "capture_string"
 require_relative "../../diagram/sequence"
 
 module Sirena
@@ -11,6 +12,8 @@ module Sirena
       # fully-formed Diagram::Sequence object with participants, messages,
       # notes, and activations.
       class Sequence
+        include CaptureString
+
         # Every arrow mmdc 11.12.0 renders, read off its own SVG: a line
         # class (messageLine0/1 -> solid/dotted), a marker, and which end
         # of the line carries it. The reversed spellings differ from their
@@ -137,6 +140,7 @@ module Sirena
                   else
                     id
                   end
+          label = id if label.empty?
 
           participant = Diagram::SequenceParticipant.new.tap do |p|
             p.id = id
@@ -405,7 +409,7 @@ module Sirena
           case value
           when Hash
             if value[:string]
-              value[:string].to_s
+              capture_string(value[:string])
             else
               extract_text(value[:message_text])
             end
