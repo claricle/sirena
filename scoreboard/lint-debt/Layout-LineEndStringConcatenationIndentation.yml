@@ -2,14 +2,12 @@
 cop: Layout/LineEndStringConcatenationIndentation
 rows:
 - file: spec/scripts/docs_site_verifier_spec.rb
-  count: 12
+  count: 5
 - file: spec/scripts/mermaid_diff_spec.rb
   count: 4
 - file: spec/sirena/parser/kanban_spec.rb
   count: 1
 - file: spec/sirena/parser/sequence_spec.rb
   count: 2
-- file: spec/sirena/renderer/er_diagram_spec.rb
-  count: 1
 - file: spec/sirena/svg/registry_spec.rb
   count: 1

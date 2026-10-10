@@ -113,8 +113,6 @@ rows:
   count: 3
 - file: spec/scripts/corpus_sweep_task_spec.rb
   count: 6
-- file: spec/scripts/docs_site_verifier_spec.rb
-  count: 179
 - file: spec/scripts/hardened_mmdc_spec.rb
   count: 13
 - file: spec/scripts/lane_verdict_spec.rb
@@ -237,8 +235,6 @@ rows:
   count: 15
 - file: spec/sirena/renderer/class_diagram_spec.rb
   count: 17
-- file: spec/sirena/renderer/er_diagram_spec.rb
-  count: 25
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 9
 - file: spec/sirena/renderer/flowchart_link_spec.rb
