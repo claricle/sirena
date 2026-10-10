@@ -106,7 +106,8 @@ module Sirena
 
         def statement_handler(stmt)
           match = STATEMENT_HANDLERS.find do |keys, _|
-            Array(keys).all? { |key| stmt[key] }
+            required_keys = keys.is_a?(Array) ? keys : [keys]
+            required_keys.all? { |key| stmt[key] }
           end
           match&.last
         end
