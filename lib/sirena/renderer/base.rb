@@ -77,15 +77,20 @@ module Sirena
       #   for the root element, e.g. `'hidden'`
       # @return [Svg::Document] new SVG document
       def create_document(scene, overflow: nil)
-        dimensions = [scene.width, scene.height]
-          .map { |value| value.to_i == value ? value.to_i : value }
-        existing = scene.view_box.to_s.split.last(2)
-        dimensions = { existing.map(&:to_f) => existing }.fetch(
-          [scene.width, scene.height], dimensions
-        )
+        dimensions = document_dimensions(scene)
         Svg::Document.new(
           width: scene.width, height: scene.height,
           view_box: "0 0 #{dimensions.join(' ')}", overflow: overflow
+        )
+      end
+
+      def document_dimensions(scene)
+        dimensions = [scene.width, scene.height].map do |value|
+          value.to_i == value ? value.to_i : value
+        end
+        existing = scene.view_box.to_s.split.last(2)
+        { existing.map(&:to_f) => existing }.fetch(
+          [scene.width, scene.height], dimensions
         )
       end
 
@@ -217,30 +222,39 @@ module Sirena
       def default_style(element_type)
         case element_type
         when :node
-          Svg::Style.new.tap do |style|
-            style.fill = theme_color(:node_fill) || "#ffffff"
-            style.stroke = theme_color(:node_stroke) || "#000000"
-            style.stroke_width =
-              (theme_shape(:stroke_width) || 2).to_s
-          end
+          default_node_style
         when :edge
-          Svg::Style.new.tap do |style|
-            style.fill = "none"
-            style.stroke = theme_color(:edge_stroke) || "#000000"
-            style.stroke_width =
-              (theme_shape(:stroke_width) || 2).to_s
-          end
+          default_edge_style
         when :text
-          Svg::Style.new.tap do |style|
-            style.fill = theme_color(:label_text) || "#000000"
-            style.font_family =
-              theme_typography(:font_family) || "Arial, sans-serif"
-            style.font_size =
-              (theme_typography(:font_size_normal) || 14).to_s
-            style.text_anchor = "middle"
-          end
+          default_text_style
         else
           Svg::Style.new
+        end
+      end
+
+      def default_node_style
+        Svg::Style.new.tap do |style|
+          style.fill = theme_color(:node_fill) || "#ffffff"
+          style.stroke = theme_color(:node_stroke) || "#000000"
+          style.stroke_width = (theme_shape(:stroke_width) || 2).to_s
+        end
+      end
+
+      def default_edge_style
+        Svg::Style.new.tap do |style|
+          style.fill = "none"
+          style.stroke = theme_color(:edge_stroke) || "#000000"
+          style.stroke_width = (theme_shape(:stroke_width) || 2).to_s
+        end
+      end
+
+      def default_text_style
+        Svg::Style.new.tap do |style|
+          style.fill = theme_color(:label_text) || "#000000"
+          style.font_family =
+            theme_typography(:font_family) || "Arial, sans-serif"
+          style.font_size = (theme_typography(:font_size_normal) || 14).to_s
+          style.text_anchor = "middle"
         end
       end
 
