@@ -552,9 +552,9 @@ RSpec.describe Sirena::Parser::StateDiagram do
     end
   end
 
-  describe "#parse a later mention of a labelled state" do
+  describe "#parse a later declaration of a labelled state" do
     let(:states) do
-      source = "stateDiagram-v2\n  state \"Long\" as s1\n  s1 --> s2\n"
+      source = "stateDiagram-v2\n  state \"Long\" as s1\n  state s1\n"
       described_class.new.parse(source).states.to_h { [_1.id, _1.label] }
     end
 
