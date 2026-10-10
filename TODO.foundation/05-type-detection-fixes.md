@@ -3,8 +3,9 @@
 Status (reconciled 2026-10-10): **complete.** The current corpus scoreboard
 records all 37 oracle-valid cases in `unknown/` as passing. Its other 48 rows
 are classified, not unresolved: 44 extraction artifacts and four
-oracle-invalid sources. The only detection-stage failures are those artifacts
-plus the oracle-invalid `unknown/055`; no oracle-valid case fails detection.
+oracle-invalid sources. In `unknown/`, the only detection-stage failures are
+those artifacts and the oracle-invalid `unknown/055`. Across the corpus, 20
+oracle-invalid rows fail detection and no oracle-valid case does.
 
 The implementation also carries the required evidence. `Source.split` removes
 frontmatter, directives and comments before `Notation::Mermaid.detect_type`
