@@ -36,4 +36,10 @@ RSpec.describe Sirena::Diagram::FlowchartLabelText do
       expect(drawn).to include("go now")
     end
   end
+
+  describe ".display" do
+    it "returns nil for a missing label" do
+      expect(described_class.display(nil)).to be_nil
+    end
+  end
 end
