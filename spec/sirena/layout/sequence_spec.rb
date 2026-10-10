@@ -82,6 +82,33 @@ RSpec.describe Sirena::Layout::Sequence do
     end
   end
 
+  describe "participant with an odd width" do
+    let(:diagram) do
+      Sirena::Parser::Sequence.new.parse(
+        "sequenceDiagram\nparticipant WWWWWWWWWWi\nparticipant B\n",
+      )
+    end
+
+    it "centres its label on the half pixel" do
+      expect(described_class.new.call(diagram).participants.first.label.x)
+        .to eq(137.5)
+    end
+  end
+
+  describe "note with an odd width" do
+    let(:diagram) do
+      Sirena::Parser::Sequence.new.parse(
+        "sequenceDiagram\nparticipant A\nparticipant B\nA->>B: x\n" \
+        "Note right of A: WWWWWWWWWWi\n",
+      )
+    end
+
+    it "centres its text on the half pixel" do
+      expect(described_class.new.call(diagram).notes.first.lines.first.x)
+        .to eq(237.5)
+    end
+  end
+
   describe "default text size" do
     it "sets participant and message text at mmdc's 16px" do
       labels = [scene.participants.first.label, scene.messages.first.label]
@@ -96,8 +123,9 @@ RSpec.describe Sirena::Layout::Sequence do
       label_left = first.label.x - (first.label.width / 2)
       label_right = first.label.x + (first.label.width / 2)
       {
-        measured_width: first.width == first.label.width +
-          described_class::PARTICIPANT_LABEL_PADDING,
+        measured_width: first.width == described_class::TextWidth.of(
+          "WWWWWWWWW", 18
+        ) + described_class::PARTICIPANT_LABEL_PADDING,
         next_position: second.x == first.x + first.width +
           described_class::PARTICIPANT_MARGIN,
         label_center: first.label.x == first.x + (first.width / 2),

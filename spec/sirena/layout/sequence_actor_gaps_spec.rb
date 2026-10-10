@@ -3,8 +3,9 @@
 require "spec_helper"
 
 # mmdc widens the gap after an actor so the longest message to its right
-# neighbour fits (calculateActorMargins). The text is measured in Arial,
-# the font sirena draws in, so widths differ from the reference SVGs.
+# neighbour fits (calculateActorMargins). The text is measured in Times
+# New Roman, as mmdc does: "Hello Bob, how are you?" is 160 wide, which
+# gives 250 + 160 + 20 - 150 = 280 (mmdc case 009).
 RSpec.describe Sirena::Layout::Sequence do
   include SequenceFrameHelpers
 
@@ -17,17 +18,23 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "widens the gap to fit a long message" do
-    expect(last_actor_x("A->>B: #{long}")).to eq(294)
+    expect(last_actor_x("A->>B: #{long}")).to eq(280)
+  end
+
+  it "measures a character reference in its encoded form" do
+    text = "I #9829; you #infin; times more!"
+
+    expect(last_actor_x("A->>B: #{text}")).to eq(372)
   end
 
   it "widens it the same for a message sent back" do
     body = "participant A\nparticipant B\nB->>A: #{long}"
 
-    expect(last_actor_x(body)).to eq(294)
+    expect(last_actor_x(body)).to eq(280)
   end
 
   it "widens it to the widest line of a <br> message" do
-    expect(last_actor_x("A->>B: #{long}<br/>hi")).to eq(294)
+    expect(last_actor_x("A->>B: #{long}<br/>hi")).to eq(280)
   end
 
   it "does not let a wrapped message pass the actor width" do
@@ -35,13 +42,13 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "widens the canvas by the same amount" do
-    expect(layout_scene("A->>B: #{long}").width).to eq(494)
+    expect(layout_scene("A->>B: #{long}").width).to eq(480)
   end
 
   it "gives a self message half its width" do
     body = "participant A\nparticipant B\nA->>A: #{four_times}"
 
-    expect(last_actor_x(body)).to eq(465.5)
+    expect(last_actor_x(body)).to eq(437)
   end
 
   it "ignores a message that skips an actor" do
@@ -51,19 +58,19 @@ RSpec.describe Sirena::Layout::Sequence do
   end
 
   it "widens the gap after the actor a note sits right of" do
-    expect(last_actor_x("A->>B: x\nNote right of A: #{long}")).to eq(294)
+    expect(last_actor_x("A->>B: x\nNote right of A: #{long}")).to eq(280)
   end
 
   it "widens the gap before the actor a note sits left of" do
-    expect(last_actor_x("A->>B: x\nNote left of B: #{long}")).to eq(294)
+    expect(last_actor_x("A->>B: x\nNote left of B: #{long}")).to eq(280)
   end
 
   it "gives half of a note over two actors to the gap before the last" do
-    expect(last_actor_x("A->>B: x\nNote over A,B: #{twice}")).to eq(286.5)
+    expect(last_actor_x("A->>B: x\nNote over A,B: #{twice}")).to eq(272.5)
   end
 
   it "gives half of a note over one actor to the gap after it" do
-    expect(last_actor_x("A->>B: x\nNote over A: #{four_times}")).to eq(465.5)
+    expect(last_actor_x("A->>B: x\nNote over A: #{four_times}")).to eq(437)
   end
 
   it "leaves the gaps alone for a note right of the last actor" do
@@ -73,7 +80,7 @@ RSpec.describe Sirena::Layout::Sequence do
   it "moves every later actor along with a widened gap" do
     body = "A->>B: x\nB->>C: #{long}"
 
-    expect(actor_xs(layout_scene(body))).to eq([50, 250, 494])
+    expect(actor_xs(layout_scene(body))).to eq([50, 250, 480])
   end
 
   describe "with the global wrap setting" do
@@ -99,7 +106,7 @@ RSpec.describe Sirena::Layout::Sequence do
     it "leaves a nowrap: message at its full width" do
       source = "#{head}%%{wrap}%%\nA->>B: nowrap: #{long}"
 
-      expect(mermaid_last_x(source)).to eq(294)
+      expect(mermaid_last_x(source)).to eq(280)
     end
 
     it "does not wrap without the setting" do
