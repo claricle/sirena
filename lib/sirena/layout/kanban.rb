@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "kanban_card_text"
 require_relative "../markdown_text"
 require_relative "../notation/mermaid/ir_adapters/kanban"
 
@@ -44,6 +45,7 @@ module Sirena
         attribute :text_anchor, :string
         attribute :font_weight, :string
         attribute :style, :string
+        attribute :wrap_width, :float
       end
 
       class Column < Lutaml::Model::Serializable
@@ -197,8 +199,13 @@ module Sirena
       def card_label(card, position)
         label_position = [position[0] + 10, position[1] + 25]
         label(
-          card[:text], label_position, font_size(:font_size_normal, 13), "card"
+          card[:text], label_position, font_size(:font_size_normal, 13), "card",
+          wrap_width: text_width(card[:width])
         )
+      end
+
+      def text_width(card_width)
+        card_width - (CARD_PADDING * 2)
       end
 
       def metadata_labels(card, position)
@@ -235,7 +242,8 @@ module Sirena
         Label.new(
           text: text, x: position[0], y: position[1],
           font_size: size, style: style,
-          text_anchor: options[:anchor], font_weight: options[:weight]
+          text_anchor: options[:anchor], font_weight: options[:weight],
+          wrap_width: options[:wrap_width]
         )
       end
 
@@ -321,9 +329,9 @@ module Sirena
       end
 
       def rendered_lines(text)
-        Sirena::MarkdownText.truncate_runs(
-          Sirena::MarkdownText.parse_lines(text),
-          Sirena::MarkdownText::CARD_TEXT_CHAR_BUDGET,
+        KanbanCardText.lines(
+          text, width: text_width(COLUMN_WIDTH - (COLUMN_PADDING * 2)),
+                font_size: font_size(:font_size_normal, 13)
         )
       end
 

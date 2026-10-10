@@ -29,31 +29,20 @@ RSpec.describe Sirena::Layout::Kanban do
       expect(broken_height - plain_height).to eq(2 * described_class::EXTRA_LINE_HEIGHT)
     end
 
-    # Card height must not be sized from a raw `count("\n")`, which assumes
-    # every embedded line renders: `Renderer::Kanban#render_card_text`
-    # truncates to `CARD_TEXT_CHAR_BUDGET` visible characters and drops
-    # whole lines past it. This fixture's 3 lines sum to 26 visible
-    # characters (one over budget), so only 2 render — height should grow
-    # by ONE `EXTRA_LINE_HEIGHT`, not two. Doesn't alone pin the
-    # truncation-aware count specifically (a naive cap-at-2 also passes
-    # it) — the sibling example above, an under-budget 3-line card, catches
-    # that narrower case; the two together pin the real property.
-    it "grows a card's height only by the lines the renderer's own truncation actually keeps" do
+    # A card whose text wraps gets one EXTRA_LINE_HEIGHT per wrapped line,
+    # and the full text is kept (no truncation).
+    it "grows a card's height by one EXTRA_LINE_HEIGHT per wrapped line" do
       diagram = Sirena::Diagram::Kanban.new.tap do |d|
         d.add_column(Sirena::Diagram::KanbanColumn.new(id: "todo", title: "Todo").tap do |column|
           column.add_card(Sirena::Diagram::KanbanCard.new(id: "plain", text: "Plain card"))
-          column.add_card(Sirena::Diagram::KanbanCard.new(id: "over_budget", text: "Line one\nLine two\nLine three"))
+          column.add_card(Sirena::Diagram::KanbanCard.new(id: "wrapped", text: "Create Blog about the new diagram"))
         end)
       end
 
       graph = transform.to_graph(diagram)
+      heights = graph.cards.to_h { |card| [card.id, card.background.height] }
 
-      plain_height = graph.cards.find { |card| card.id == "plain" }.background.height
-      over_budget_height = graph.cards.find do |card|
-        card.id == "over_budget"
-      end.background.height
-
-      expect(over_budget_height - plain_height).to eq(described_class::EXTRA_LINE_HEIGHT)
+      expect(heights["wrapped"] - heights["plain"]).to eq(described_class::EXTRA_LINE_HEIGHT)
     end
 
     # Round 3 Codex High: a multi-line column title (the same `count("\n")`

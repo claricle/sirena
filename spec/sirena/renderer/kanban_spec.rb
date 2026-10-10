@@ -242,31 +242,35 @@ RSpec.describe Sirena::Renderer::Kanban do
         expect(xml).not_to include("**")
       end
 
-      # Truncation must cut on run boundaries (`truncate_runs`), not the
-      # raw markup string, even when the cut falls INSIDE a bold run: a
-      # naive `text[0...22]` on "Hello **xxxx...xxx**" would slice through
-      # the closing `**`, leaving a stray asterisk and an unclosed style.
-      it "truncates a markdown card label on run boundaries, never mid-marker" do
+      # A bold run wider than the card wraps into bold tspans and keeps every
+      # character; it must not be cut or leave a stray marker.
+      it "wraps a long bold run into bold tspans without losing a character" do
+        long_text = "Hello **#{'x' * 30}**"
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
+        bold_text = REXML::Document.new(xml).get_elements('//tspan[@font-weight="bold"]').map(&:text).join
+
+        expect(bold_text).to eq("x" * 30)
+      end
+
+      it "never truncates a card label with an ellipsis" do
         long_text = "Hello **#{'x' * 30}**"
         xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
 
-        expect(xml).not_to match(/(?<!\*)\*(?!\*)/) # no lone, unpaired '*'
-        expect(xml).to match(%r{<tspan[^>]*font-weight="bold"[^>]*>x{16}\.\.\.</tspan>})
-        expect { REXML::Document.new(xml) }.not_to raise_error
+        expect(xml).not_to include("...")
       end
 
-      # A hard line break composes with truncation the same way: when the
-      # SECOND line alone overflows the remaining budget, it is dropped
-      # whole, never cut partway through. Only the first line ever gets a
-      # partial "..." cut.
-      it "drops a later line whole on overflow, never truncating it mid-line" do
-        long_text = "Short\n#{'q' * 30}"
-        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: long_text)).to_xml
+      it "keeps a long later line in full instead of dropping it" do
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: "Short\n#{'q' * 30}")).to_xml
 
-        expect(xml).to include("Short")
-        expect(xml).not_to include("q")
-        expect(xml).not_to include("...")
-        expect { REXML::Document.new(xml) }.not_to raise_error
+        expect(REXML::Document.new(xml).get_elements("//tspan").map(&:text).join.count("q")).to eq(30)
+      end
+
+      it "wraps a long card title onto several lines at word boundaries" do
+        text = "Create Blog about the new diagram"
+        xml = renderer.render(KanbanSpecHelpers.layout_with(card_text: text)).to_xml
+        lines = REXML::Document.new(xml).get_elements("//tspan").map(&:text)
+
+        expect(lines).to eq(["Create Blog about the", "new diagram"])
       end
 
       # A markdown-styled run is the first attacker-facing markdown-to-XML
