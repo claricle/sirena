@@ -78,4 +78,27 @@ RSpec.describe Sirena::Renderer::C4 do
       dark.colors.primary, dark.colors.edge_stroke, dark.colors.background
     )
   end
+
+  it "draws the first relationship as a line and a later one as a curve" do
+    expect([context_xml.scan("<line").size, context_xml.scan("<path").size])
+      .to eq([1, 2])
+  end
+
+  it "ends the first relationship on the target's edge" do
+    edge = context_scene.edges.first.sections.first.end_point
+    expect(context_xml).to include(%(x2="#{edge.x}" y2="#{edge.y}"))
+  end
+
+  it "keeps the title's shifted view box origin" do
+    expect(renderer.render(context_scene).view_box).to start_with("0 -70 ")
+  end
+
+  it "shifts a middle-baseline label's y to centre it on its line" do
+    label = context_scene.edges.first.labels.first
+    expect(context_xml).not_to include(%(y="#{label.y}"))
+  end
+
+  it "draws the person icon inside the 48 px image box" do
+    expect(context_xml).to include('r="10.0"')
+  end
 end
