@@ -111,7 +111,7 @@ the foundation close with the architecture issue #2 asks for half-built.
    that this file, not the prose, carries the per-type rulings.
 4. [x] Migrate Mermaid's layout adapters onto the IR one type at a time, corpus
    pass set unchanged at each step.
-5. [ ] Migrate the PlantUML class spike onto it — the proof the IR is not
+5. [x] Migrate the PlantUML class spike onto it — the proof the IR is not
    Mermaid-shaped.
 6. [x] Update item 10's boundary spec. The boundary moves: adapter output
    is no longer private per plugin, because the IR is deliberately
