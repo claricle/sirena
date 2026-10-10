@@ -48,10 +48,11 @@ RSpec.describe Sirena::Notation::Mermaid do
   end
 
   # A misnamed layout must fail the render, not draw an unlaid-out diagram.
+  # Only the layout is missing, so the parser and renderer still resolve.
   it "fails a render whose layout constant does not resolve" do
-    stub_const("Sirena::Notation::Mermaid::TYPES", types_with_misnamed_pie)
+    hide_const("Sirena::Layout::Pie")
 
     expect { Sirena.render("pie\n\"a\": 1") }
-      .to raise_error(Sirena::Parser::ParseError, /NoSuchClass/)
+      .to raise_error(Sirena::Layout::LayoutError, /Layout::Pie/)
   end
 end
