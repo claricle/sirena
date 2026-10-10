@@ -74,14 +74,30 @@ RSpec.describe Sirena::Layout::Gantt do
     end
 
     {
-      "up to 120 days" => ["100d", 8],
-      "up to 1200 days" => ["200d", 7],
+      "a 100-day span (weekly)" => ["100d", 14],
+      "a 200-day span (monthly)" => ["200d", 7],
     }.each do |name, (duration, count)|
-      it "spaces labels for a span of #{name}" do
+      it "spaces labels for #{name}" do
         scene = helper.scene("section A\nT1 :a, 2024-01-01, #{duration}\n")
 
         expect(scene.timeline.labels.size).to eq(count)
       end
+    end
+  end
+
+  describe "the time axis" do
+    let(:weekly) do
+      helper.scene("tickInterval 1week\nsection A\nT1 :a, 2024-01-02, 40d\n")
+    end
+
+    it "follows the tickInterval setting" do
+      expect(weekly.timeline.labels.map(&:text).first(2))
+        .to eq(%w[2024-01-07 2024-01-14])
+    end
+
+    it "draws one grid line per label" do
+      expect(weekly.timeline.grid_lines.size)
+        .to eq(weekly.timeline.labels.size)
     end
   end
 
@@ -113,8 +129,8 @@ RSpec.describe Sirena::Layout::Gantt do
       expect(helper.spans(scene)).to eq([[jan_first, Date.new(2024, 1, 3)]])
     end
 
-    it "labels dates in month-day form" do
-      expect(scene.timeline.labels.first.text).to eq("12-31")
+    it "labels dates in year-month-day form" do
+      expect(scene.timeline.labels.first.text).to eq("2024-01-01")
     end
   end
 end

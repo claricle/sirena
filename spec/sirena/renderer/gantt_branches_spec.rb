@@ -82,12 +82,14 @@ RSpec.describe Sirena::Renderer::Gantt do
     expect(xml_for(scene(timeline: empty_timeline))).not_to include("<text")
   end
 
-  it "lays out a 10-day timeline every 7 days in month-day form" do
-    expect(date_labels(nil).map(&:text)).to eq(%w[01-01 01-08])
+  it "lays out a 10-day timeline daily, trimming the one-day padding" do
+    expect(date_labels(nil).map(&:text))
+      .to eq((2..10).map { |day| format("2024-01-%02d", day) })
   end
 
   it "applies the graph axis format while laying out date labels" do
-    expect(date_labels("%d/%m").map(&:text)).to eq(%w[01/01 08/01])
+    expect(date_labels("%d/%m").map(&:text).first(2))
+      .to eq(%w[02/01 03/01])
   end
 
   it "colours bars by status and draws no bar without geometry" do

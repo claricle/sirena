@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "base"
+require_relative "gantt_ticks"
 require_relative "../diagram/gantt"
 require_relative "../notation/mermaid/ir_adapters/gantt"
 require "date"
@@ -25,7 +26,9 @@ module Sirena
       TIMELINE_WIDTH = 800
       TIMELINE_HEIGHT = 40
       TITLE_Y = 40
-      MAX_TIMELINE_LABELS = 40
+      TIMELINE_PADDING_DAYS = 1
+      DAY_SECONDS = 86_400
+      DEFAULT_AXIS_FORMAT = "%Y-%m-%d"
       SCHEDULE_SETTINGS = %i[
         date_format axis_format tick_interval weekend inclusive_end_dates
         today_marker
@@ -270,17 +273,32 @@ module Sirena
           background: Rect.new(x: MARGIN_LEFT, y: MARGIN_TOP,
                                width: TIMELINE_WIDTH, height: TIMELINE_HEIGHT,
                                kind: "timeline"),
-          labels: date_labels(timeline, graph[:axis_format]),
-          grid_lines: timeline_grid_lines(timeline, graph[:sections]),
+          labels: date_labels(timeline, graph[:axis_format],
+                              graph[:tick_interval]),
+          grid_lines: timeline_grid_lines(timeline, graph[:sections],
+                                          graph[:tick_interval]),
         )
       end
 
-      def date_labels(timeline, format)
+      def date_labels(timeline, format, interval = nil)
+        tick_positions(timeline, interval).map do |tick, position|
+          date_label(tick, position, format)
+        end
+      end
+
+      # [tick time, fraction of the timeline] pairs. The timeline is padded
+      # by a day each side; mermaid's axis spans only the tasks, so ticks
+      # are chosen from the unpadded range.
+      def tick_positions(timeline, interval)
         days = timeline[:total_days]
         return [] if days <= 0
 
-        (0..days).step(label_interval(days)).map do |day|
-          date_label(timeline[:start_date] + day, day.to_f / days, format)
+        start = timeline[:start_date]
+        origin = Time.utc(start.year, start.month, start.day)
+        pad = TIMELINE_PADDING_DAYS * DAY_SECONDS
+        stop = origin + (days * DAY_SECONDS) - pad
+        GanttTicks.times(origin + pad, stop, interval).map do |tick|
+          [tick, (tick - origin) / (days * DAY_SECONDS)]
         end
       end
 
@@ -293,13 +311,10 @@ module Sirena
         )
       end
 
-      def timeline_grid_lines(timeline, sections)
-        days = timeline[:total_days]
-        return [] if days <= 0
-
+      def timeline_grid_lines(timeline, sections, interval)
         rows = sections.sum { |section| section[:tasks].length + 1 }
-        (0..days).step(label_interval(days)).map do |day|
-          timeline_grid_line(day.to_f / days, rows)
+        tick_positions(timeline, interval).map do |_tick, position|
+          timeline_grid_line(position, rows)
         end
       end
 
@@ -422,21 +437,12 @@ module Sirena
         "default"
       end
 
-      def label_interval(total_days)
-        return 1 if total_days <= 7
-        return 7 if total_days <= 60
-        return 14 if total_days <= 120
-        return 30 if total_days <= 30 * MAX_TIMELINE_LABELS
-
-        (total_days.to_f / MAX_TIMELINE_LABELS).ceil
-      end
-
       def format_date(date, format)
-        return date.strftime("%m-%d") unless format
+        return date.strftime(DEFAULT_AXIS_FORMAT) unless format
 
         date.strftime(format)
       rescue StandardError
-        date.strftime("%m-%d")
+        date.strftime(DEFAULT_AXIS_FORMAT)
       end
 
       def large_font_size
