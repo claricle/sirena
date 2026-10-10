@@ -19,8 +19,6 @@ rows:
   count: 3
 - file: lib/sirena/parser/builders/gantt.rb
   count: 2
-- file: lib/sirena/parser/builders/mindmap.rb
-  count: 3
 - file: lib/sirena/renderer/packet.rb
   count: 1
 - file: scripts/corpus_sweep.rb
@@ -35,13 +33,9 @@ rows:
   count: 1
 - file: scripts/mermaid_fuzz.rb
   count: 1
-- file: scripts/verify_docs_site.rb
-  count: 1
 - file: spec/sirena/renderer/flowchart_cluster_spec.rb
   count: 1
 - file: spec/sirena/svg/registry_spec.rb
-  count: 1
-- file: tasks/benchmark.rake
   count: 1
 - file: tasks/example_tasks.rb
   count: 3

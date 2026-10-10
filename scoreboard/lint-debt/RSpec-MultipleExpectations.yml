@@ -71,8 +71,6 @@ rows:
   count: 21
 - file: spec/sirena/parser/packet_spec.rb
   count: 6
-- file: spec/sirena/parser/pie_spec.rb
-  count: 8
 - file: spec/sirena/parser/quadrant_spec.rb
   count: 6
 - file: spec/sirena/parser/requirement_spec.rb

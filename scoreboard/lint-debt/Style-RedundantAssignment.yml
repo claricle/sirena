@@ -1,5 +1,0 @@
----
-cop: Style/RedundantAssignment
-rows:
-- file: tasks/benchmark.rake
-  count: 1

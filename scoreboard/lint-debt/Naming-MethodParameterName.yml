@@ -1,8 +1,6 @@
 ---
 cop: Naming/MethodParameterName
 rows:
-- file: lib/sirena/layout/mindmap.rb
-  count: 1
 - file: lib/sirena/renderer/sequence.rb
   count: 19
 - file: spec/sirena/renderer/architecture_edge_router_spec.rb
