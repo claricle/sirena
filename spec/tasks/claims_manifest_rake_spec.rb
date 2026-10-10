@@ -4,6 +4,8 @@ require "rake"
 require "spec_helper"
 
 module ClaimsManifestRake
+  include UnshardedRakefile
+
   def with_rake_application
     original = Rake.application
     Rake.application = Rake::Application.new
@@ -41,7 +43,7 @@ RSpec.describe ClaimsManifestRake do
 
   it "wires the check into the default rake task" do
     with_rake_application do
-      load File.expand_path("../../Rakefile", __dir__)
+      load_unsharded_rakefile
 
       prerequisites = Rake::Task[:default].prerequisites
       expect(prerequisites).to include("claims_manifest:check")
