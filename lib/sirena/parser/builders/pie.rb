@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "capture_string"
 require_relative "../../diagram/pie"
 
 module Sirena
@@ -10,6 +11,8 @@ module Sirena
       # Converts the parse tree output from Grammars::Pie into a
       # fully-formed Diagram::Pie object with slices and metadata.
       class Pie
+        include CaptureString
+
         # Transform parse tree into Pie diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -89,8 +92,6 @@ module Sirena
           label = extract_text(stmt[:label])
           value = extract_numeric_value(stmt[:value])
 
-          return if label.empty?
-
           slice = Diagram::PieSlice.new.tap do |s|
             s.label = label
             s.value = value
@@ -103,7 +104,7 @@ module Sirena
           case value
           when Hash
             if value[:string]
-              value[:string].to_s
+              capture_string(value[:string])
             elsif value[:title]
               value[:title].to_s
             else

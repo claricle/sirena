@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "capture_string"
 require_relative "../../diagram/quadrant"
 
 module Sirena
@@ -10,6 +11,8 @@ module Sirena
       # Converts the parse tree output from Grammars::Quadrant into a
       # fully-formed Diagram::Quadrant object with points and labels.
       class Quadrant
+        include CaptureString
+
         # Transform parse tree into Quadrant diagram.
         #
         # @param tree [Array, Hash] Parslet parse tree
@@ -135,7 +138,7 @@ module Sirena
           case value
           when Hash
             if value[:string]
-              value[:string].to_s
+              capture_string(value[:string])
             else
               value.values.first.to_s
             end

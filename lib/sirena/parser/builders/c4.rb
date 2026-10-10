@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "capture_string"
 require_relative "../../diagram/c4"
 
 module Sirena
@@ -11,6 +12,8 @@ module Sirena
       # fully-formed Diagram::C4 object with elements, relationships, and
       # boundaries.
       class C4
+        include CaptureString
+
         def initialize
           @boundary_stack = []
           @current_boundary = nil
@@ -329,7 +332,7 @@ module Sirena
           case value
           when Hash
             if value[:string]
-              value[:string].to_s
+              capture_string(value[:string])
             elsif value[:var]
               # Variable reference like ${macroName}
               value[:var].to_s
