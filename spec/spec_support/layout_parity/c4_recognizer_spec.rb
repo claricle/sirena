@@ -43,12 +43,10 @@ RSpec.describe SpecSupport::LayoutParity::C4Recognizer do
   end
 
   it "keys an element declared with an empty name by its description" do
-    name = "028_parser_should_parse_the_description_27"
-    reference = summaries(reference_svg("c4/#{name}.svg"))
-    sirena = summaries(Sirena.render(corpus_source("c4/#{name}.mmd")))
+    name = "c4/028_parser_should_parse_the_description_27"
     key = "A customer of the bank, with personal bank accounts."
-
-    expect([identities(reference), identities(sirena)])
+    expect([identities(summaries(reference_svg("#{name}.svg"))),
+            identities(summaries(Sirena.render(corpus_source("#{name}.mmd"))))])
       .to all(eq([[:c4_element, key]]))
   end
 end

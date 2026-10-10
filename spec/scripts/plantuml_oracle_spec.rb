@@ -277,12 +277,10 @@ RSpec.describe PlantumlOracle do
       end
 
       it "records all five hashes and versions on a rejected record too" do
-        expect(records.last).to include(
-          "plantuml" => "1.2026.6 / abc", "java" => "21.0.2",
-          "graphviz" => "15.1.1",
-          "source_sha256" => Digest::SHA256.hexdigest(bad),
-          "svg_sha256" => Digest::SHA256.hexdigest(error_svg)
-        )
+        fields = %w[plantuml java graphviz source_sha256 svg_sha256]
+        hashes = [bad, error_svg].map { |s| Digest::SHA256.hexdigest(s) }
+        expect(records.last.values_at(*fields))
+          .to eq(["1.2026.6 / abc", "21.0.2", "15.1.1", *hashes])
       end
     end
 
