@@ -32,7 +32,7 @@ rows:
 - file: lib/sirena/layout/gantt.rb
   count: 4
 - file: lib/sirena/layout/git_graph.rb
-  count: 2
+  count: 1
 - file: lib/sirena/layout/grid.rb
   count: 1
 - file: lib/sirena/layout/requirement.rb

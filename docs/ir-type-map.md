@@ -89,7 +89,7 @@ layout behavior; the older survey's `transform/*` wording refers to these
 | `pie` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/pie.rb` | Ordered slice values and visibility become shared data; layout alone computes percentages, angles, paths, and labels. |
 | `timeline` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/timeline.rb` | Sections, events, descriptions, and tasks map to ordered contained placements; layout owns all canvas geometry. |
 | `quadrant` | `pre-positioned` | `lib/sirena/notation/mermaid/ir_adapters/quadrant.rb` | Axis and region labels plus contained point coordinates and source styles map to shared placements; layout owns canvas geometry. |
-| `git_graph` | `graph-shaped` | `lib/sirena/layout/git_graph.rb` | Commits identify parents and emitted connections identify from/to commits (45–82, 226–257); branch order only influences layout. |
+| `git_graph` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/git_graph.rb` | Commits and branches map to ordered identities with resolved parent, merge, and cherry-pick edges and normalized metadata; layout owns all geometry. |
 | `mindmap` | `graph-shaped` | `lib/sirena/notation/mermaid/ir_adapters/mindmap.rb` | Tree nodes map to shared identities, containment, and resolved parent/child edges; layout owns their geometry. |
 | `kanban` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/kanban.rb` | Columns, cards, metadata, and style references map to ordered contained items and values; layout owns stacking and dimensions. |
 | `radar` | `data-shaped` | `lib/sirena/notation/mermaid/ir_adapters/radar.rb` | Axes, datasets, measurements, options, and accessibility map to ordered shared data; layout derives all polar geometry. |
@@ -106,10 +106,10 @@ layout behavior; the older survey's `transform/*` wording refers to these
 
 Summary: **6 pre-positioned, 12 graph-shaped, 6 data-shaped; 24 total.**
 
-Migration status: **16 of 24 Mermaid types use the shared IR boundary** — 4
-graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`), 6 data-shaped (`pie`, `info`, `error`,
+Migration status: **17 of 24 Mermaid types use the shared IR boundary** — 5
+graph-shaped (`mindmap`, `sankey`, `requirement`, `user_journey`, `git_graph`), 6 data-shaped (`pie`, `info`, `error`,
 `kanban`, `radar`, `treemap`), and 6 pre-positioned (`packet`, `timeline`,
-`quadrant`, `xychart`, `block`, `gantt`); 8 types remain on their private
+`quadrant`, `xychart`, `block`, `gantt`); 7 types remain on their private
 layout inputs.
 
 `rake type:new[<type>]` adds a data-shaped row immediately above this
