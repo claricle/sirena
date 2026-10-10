@@ -144,6 +144,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       expect(colours).to eq(["red", "#ff8800"])
     end
 
+    it "reads -[hidden]> in any case, either way round, as a hidden arrow" do
+      lines = ["A -[hidden]> B", "A -[HIDDEN]-> B", "B <-[hidden]- A"]
+      hidden = lines.map { |line| parse(line).messages.first.style.hidden }
+
+      expect(hidden).to eq([true, true, true])
+    end
+
+    it "does not hide an ordinary arrow" do
+      expect(message_of("->").style.hidden).to be(false)
+    end
+
     it "gives the colour on a message line to the bar ++ opens" do
       diagram = parse("A -> B ++ #green : hi", "B -> A --++ #blue")
       colours = activations(diagram).map { |a| [a.phase, a.color] }

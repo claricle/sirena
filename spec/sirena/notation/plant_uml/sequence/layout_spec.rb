@@ -432,6 +432,30 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
     end
   end
 
+  describe "a hidden arrow" do
+    let(:plain) { scene_of("A -> B : one", "A -> B : two", "B -> A : three") }
+    let(:hidden) do
+      scene_of("A -> B : one", "A -[hidden]> B : two", "B -> A : three")
+    end
+
+    it "draws no arrow and no label for itself" do
+      expect(hidden.arrows.size).to eq(plain.arrows.size - 1)
+    end
+
+    it "keeps the row it takes between the arrows around it" do
+      expect(arrow_ys(hidden)).to eq([arrow_ys(plain).first,
+                                      arrow_ys(plain).last])
+    end
+
+    it "keeps the room its label needs between the lifelines" do
+      wide = scene_of("A -[hidden]-> B : a label much wider than both heads")
+      narrow = scene_of("A -> B")
+
+      expect(wide.lifelines.last.x1 - wide.lifelines.first.x1)
+        .to be > narrow.lifelines.last.x1 - narrow.lifelines.first.x1
+    end
+  end
+
   describe "hide footbox" do
     let(:shown) { scene_of("A -> B") }
     let(:hidden) { scene_of("hide footbox", "A -> B") }

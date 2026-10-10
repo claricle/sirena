@@ -15,10 +15,11 @@ module Sirena
           # The arrow as a part of a longer pattern. A leading or trailing
           # o/x is a decoration only when blanks, or a `[` or `]` or `?` edge,
           # separate it from the names.
-          SOURCE = '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?--?' \
+          SOURCE = '(?:(?<=[ \t\[])[oxOX])?(?:<<|<|//|/|\\\\\\\\|\\\\)?-(?i:\[hidden\])?-?' \
                    '(?:>>|>|\\\\\\\\|\\\\|//|/)?(?:[oxOX](?=[ \t\]?]|\z))?'
           TOKEN = /\A([oxOX])?(<<|<|\/\/|\/|\\\\|\\)?(--?)
                    (>>|>|\\\\|\\|\/\/|\/)?([oxOX])?\z/x
+          HIDDEN = /\[hidden\]/i
           LEFT = { "<<" => :open, "<" => :filled, "//" => :upper_open,
                    "/" => :upper, "\\\\" => :lower_open,
                    "\\" => :lower }.freeze
@@ -26,15 +27,18 @@ module Sirena
                     "\\" => :upper, "//" => :lower_open,
                     "/" => :lower }.freeze
 
+          # `-[hidden]>` takes its row and its label's room but draws nothing.
+          #
           # @return [Array(ArrowStyle, Boolean), nil] the style and whether
           #   the arrow is written pointing at the sender's name
           def read(token)
-            match = TOKEN.match(token) or return
+            hidden = HIDDEN.match?(token)
+            match = TOKEN.match(token.sub(HIDDEN, "")) or return
             lead, left, shaft, right, trail = match.captures
             return unless fits?(lead, left, right, trail)
 
             build(ends(lead, left, LEFT), ends(trail, right, RIGHT),
-                  shaft.length == 2, !left.nil? && right.nil?)
+                  shaft.length == 2, !left.nil? && right.nil?, hidden)
           end
 
           private
@@ -48,10 +52,10 @@ module Sirena
                          circle: mark&.downcase == "o")
           end
 
-          def build(left, right, dashed, reversed)
+          def build(left, right, dashed, reversed, hidden)
             head, tail = reversed ? [left, right] : [right, left]
             [ArrowStyle.new(head: head, tail: tail, dashed: dashed,
-                            leftward: reversed), reversed]
+                            leftward: reversed, hidden: hidden), reversed]
           end
 
           # Only the combinations measured against PlantUML.
