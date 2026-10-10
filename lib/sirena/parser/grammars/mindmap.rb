@@ -63,9 +63,9 @@ module Sirena
 
         rule(:node) do
           node_with_icon |
-          node_with_class |
-          node_with_shape |
-          node_plain
+            node_with_class |
+            node_with_shape |
+            node_plain
         end
 
         # Node with icon: ::icon(fa fa-book)
