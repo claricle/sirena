@@ -377,7 +377,7 @@ module Sirena
       permalink = collections.is_a?(Hash) ? collections.dig("diagram_types", "permalink") : nil
       if permalink != REQUIRED_DIAGRAM_PERMALINK
         failures << "config: collections.diagram_types.permalink is #{permalink.inspect}, " \
-                     "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"
+                    "expected #{REQUIRED_DIAGRAM_PERMALINK.inspect}"
       end
 
       theme = @config["theme"]

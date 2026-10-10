@@ -158,7 +158,7 @@ module ExampleTasks
         puts "    listed as known unrenderable but rendered successfully"
       end
       raise ValidationFailed, "validation failed: #{failed.size} failing, " \
-                             "#{unexpectedly_renderable.size} unexpectedly renderable"
+                              "#{unexpectedly_renderable.size} unexpectedly renderable"
     else
       puts "\n✅ All renderable examples validated successfully!"
     end
