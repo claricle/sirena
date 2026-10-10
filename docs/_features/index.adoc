@@ -19,7 +19,7 @@ In-depth coverage of:
 * **Parslet Parsing** - Grammar-based parsing architecture
 * **SVG Generation** - Professional-quality output
 * **Error Handling** - Clear, actionable error messages
-* **Layout Engine** - Built-in fallback grid layout (ELK via elkrb is planned, not yet called)
+* **Layout Engine** - Built-in fallback grid layout; flowcharts can opt in to elkrb with `layout_engine: :elk`
 * **Text Measurement** - Accurate text rendering
 * **Color Palettes** - Theme color system
 * **Typography** - Font and text styling
@@ -46,7 +46,7 @@ these are described inline rather than linked.
 === Rendering & Output
 
 * **SVG Generation** - High-quality scalable graphics
-* **Layout Engine** - Built-in fallback grid layout (ELK via elkrb is planned, not yet called)
+* **Layout Engine** - Built-in fallback grid layout; flowcharts can opt in to elkrb with `layout_engine: :elk`
 * **Text Measurement** - Character-based approximation, not font-metric accurate
 
 === Theming & Styling

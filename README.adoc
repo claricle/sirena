@@ -243,9 +243,8 @@ compared to traditional lexer-based approaches. The 3-layer Parslet architecture
 `Parslet::Transform`, the rest are plain classes, and User Journey builds its
 model directly in the parser.
 
-Layout currently uses a built-in fallback grid (`Layout::Grid`, see the TODO in
-`Engine#layout_graph`); the
-elkrb gem is a declared dependency but is not called yet. Sirena is a pure Ruby
+Layout uses a built-in fallback grid (`Layout::Grid`) by default. Flowcharts
+can be placed by the elkrb gem instead with `layout_engine: :elk`. Sirena is a pure Ruby
 implementation with no JavaScript dependencies, generating standards-compliant
 SVG 1.2 output suitable for direct integration with Metanorma documentation
 frameworks.
