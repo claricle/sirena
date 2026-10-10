@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grid"
 require_relative "../diagram/state_diagram"
+require_relative "../notation/mermaid/ir_adapters/state_diagram"
 
 module Sirena
   module Layout
@@ -10,6 +11,21 @@ module Sirena
     class StateDiagram < Base
       DEFAULT_FONT_SIZE = 14.0
       DEFAULT_SMALL_FONT_SIZE = 12.0
+
+      State = Data.define(
+        :id, :label, :state_type, :description, :descriptions
+      )
+      private_constant :State
+
+      STATE_TYPES = {
+        "state" => "normal",
+        "initial_state" => "start",
+        "final_state" => "end",
+        "choice_state" => "choice",
+        "fork_state" => "fork",
+        "join_state" => "join",
+      }.freeze
+      private_constant :STATE_TYPES
 
       class Point < Lutaml::Model::Serializable
         attribute :x, :float
@@ -194,12 +210,72 @@ module Sirena
       # @param diagram [Diagram::StateDiagram] the state diagram to transform
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
+        graph = ir_graph(diagram)
+        semantics = graph.nodes.group_by(&:parent_id)
+        states = layout_states(graph, semantics)
         {
-          id: diagram.id || "state_diagram",
-          children: transform_states(diagram),
-          edges: transform_transitions(diagram),
-          layoutOptions: layout_options(diagram),
+          id: diagram_identifier(graph, semantics),
+          children: transform_states(states),
+          edges: transform_transitions(graph, semantics),
+          layoutOptions: layout_options(layout_direction(graph, semantics)),
         }
+      end
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::StateDiagram.call(diagram)
+      end
+
+      def layout_states(graph, semantics)
+        graph.nodes.filter_map do |node|
+          next unless STATE_TYPES.key?(node.role) && node.parent_id.nil?
+
+          state_from(node, semantics)
+        end
+      end
+
+      def state_from(node, semantics)
+        State.new(
+          id: state_identifier(node, semantics),
+          label: node.label,
+          state_type: declared_state_type(node, semantics),
+          description: semantic_value(semantics, node.id,
+                                      "latest_description"),
+          descriptions: semantic_values(semantics, node.id, "display_text"),
+        )
+      end
+
+      def declared_state_type(node, semantics)
+        semantic_value(semantics, node.id, "declared_state_type") ||
+          STATE_TYPES.fetch(node.role)
+      end
+
+      def settings_node(graph)
+        graph.nodes.find { |node| node.role == "diagram_settings" }
+      end
+
+      def diagram_identifier(graph, semantics)
+        settings = settings_node(graph)
+        return "state_diagram" unless settings
+
+        semantic_value(semantics, settings.id, "diagram_identifier") ||
+          "state_diagram"
+      end
+
+      def layout_direction(graph, semantics)
+        settings = settings_node(graph)
+        semantic_value(semantics, settings&.id, "layout_direction")
+      end
+
+      def semantic_value(semantics, parent_id, role)
+        semantic_values(semantics, parent_id, role).first
+      end
+
+      def semantic_values(semantics, parent_id, role)
+        Array(semantics[parent_id]).filter_map do |node|
+          node.label if node.role == role
+        end
       end
 
       def scene_from_graph(graph)
@@ -340,8 +416,8 @@ module Sirena
         end.max || 600
       end
 
-      def transform_states(diagram)
-        diagram.states.map do |state|
+      def transform_states(states)
+        states.map do |state|
           dims = calculate_state_dimensions(state)
 
           {
@@ -358,21 +434,45 @@ module Sirena
         end
       end
 
-      def transform_transitions(diagram)
-        return [] if diagram.transitions.nil? || diagram.transitions.empty?
+      def transform_transitions(graph, semantics)
+        states = graph.nodes.to_h { |node| [node.id, node] }
+        graph.edges.filter_map do |transition|
+          next unless transition.role == "state_transition"
 
-        diagram.transitions.map do |transition|
-          {
-            id: "#{transition.from_id}_to_#{transition.to_id}",
-            sources: [transition.from_id],
-            targets: [transition.to_id],
-            labels: transition_labels(transition),
-            metadata: {
-              trigger: transition.trigger,
-              guard_condition: transition.guard_condition,
-            },
-          }
+          transition_hash(transition, states, semantics)
         end
+      end
+
+      def transition_hash(transition, states, semantics)
+        {
+          id: transition_identifier(transition, semantics),
+          sources: [state_identifier(states[transition.source_id], semantics)],
+          targets: [state_identifier(states[transition.target_id], semantics)],
+          labels: transition_labels(transition.label),
+          metadata: transition_metadata(transition, semantics),
+        }
+      end
+
+      def transition_identifier(transition, semantics)
+        semantic_value(
+          semantics, transition.parent_id, "transition_identifier"
+        ) || transition.id
+      end
+
+      def transition_metadata(transition, semantics)
+        parent_id = transition.parent_id
+        {
+          trigger: semantic_value(semantics, parent_id, "trigger"),
+          guard_condition: semantic_value(
+            semantics, parent_id, "guard_condition"
+          ),
+        }
+      end
+
+      def state_identifier(state, semantics)
+        return unless state
+
+        semantic_value(semantics, state.id, "original_identifier") || state.id
       end
 
       def state_labels(state)
@@ -389,8 +489,7 @@ module Sirena
         end
       end
 
-      def transition_labels(transition)
-        label = transition.label
+      def transition_labels(label)
         return [] if label.nil? || label.empty?
 
         label_dims = measure_text(label, font_size: small_font_size)
@@ -537,13 +636,13 @@ module Sirena
         value if value.is_a?(Numeric) && value.positive?
       end
 
-      def layout_options(diagram)
+      def layout_options(direction)
         # State diagrams use layered algorithm for state machine flow
         # This ensures proper hierarchical layout of states with clear
         # transition paths from start to end states
         build_elk_options(
           algorithm: ALGORITHM_LAYERED,
-          direction: direction_to_layout(diagram.direction),
+          direction: direction_to_layout(direction),
           ElkOptions::NODE_NODE_SPACING => 60,
           ElkOptions::LAYER_SPACING => 60,
           ElkOptions::EDGE_NODE_SPACING => 40,

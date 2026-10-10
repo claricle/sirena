@@ -43,6 +43,47 @@ RSpec.describe Sirena::Layout::StateDiagram do
      state.width > default_state.width]
   end
 
+  def scene_bytes(input)
+    Marshal.dump(described_class.new.to_graph(input))
+  end
+
+  def parsed_ir_compatibility
+    diagram = Sirena::Parser::StateDiagram.new.parse(<<~MERMAID)
+      stateDiagram-v2
+      direction LR
+      [*] --> Parent
+      state "Container" as Parent {
+        state "Child label" as Child
+        Child --> Done : finish [ready]
+      }
+      state Decision <<choice>>
+      Parent --> Decision : decide
+      note right of Parent : current state
+      Decision --> [*]
+    MERMAID
+    before = Marshal.dump(diagram)
+    graph = Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(diagram)
+    [scene_bytes(graph) == scene_bytes(diagram),
+     Marshal.dump(diagram) == before]
+  end
+
+  def direct_child_compatibility
+    child = Sirena::Diagram::StateNode.new(id: "child", label: "Child")
+    parent = Sirena::Diagram::StateNode.new(
+      id: "parent", label: "Parent", children: [child],
+    )
+    sink = Sirena::Diagram::StateNode.new(id: "sink", label: "Sink")
+    transition = Sirena::Diagram::StateTransition.new(
+      from_id: "parent", to_id: "sink", trigger: "leave",
+    )
+    diagram = Sirena::Diagram::StateDiagram.new(
+      states: [parent, sink], transitions: [transition],
+    )
+    graph = Sirena::Notation::Mermaid::IRAdapters::StateDiagram.call(diagram)
+    [scene_bytes(graph) == scene_bytes(diagram),
+     transform.to_graph(graph).children.map(&:id) == %w[parent sink]]
+  end
+
   describe "#to_graph" do
     let(:diagram) do
       Sirena::Diagram::StateDiagram.new(direction: "TD").tap do |d|
@@ -289,6 +330,14 @@ RSpec.describe Sirena::Layout::StateDiagram do
       scene = transform.call(diagram, theme: high_contrast)
       default_scene = described_class.new.to_graph(diagram)
       expect(theme_geometry(scene, default_scene)).to eq([[16.0], 14.0, true])
+    end
+
+    it "keeps parsed nesting, transitions, and notes byte-identical via IR" do
+      expect(parsed_ir_compatibility).to all(be(true))
+    end
+
+    it "accepts shared IR while retaining direct child layout behavior" do
+      expect(direct_child_compatibility).to all(be(true))
     end
   end
 end
