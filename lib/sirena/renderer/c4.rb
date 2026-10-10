@@ -29,6 +29,7 @@ module Sirena
         render_boundaries(scene.children, svg)
         scene.edges.each { |edge| render_relationship(edge, svg) }
         render_elements(scene.children, svg)
+        add_title(svg, scene.title)
         svg
       end
 
@@ -83,10 +84,21 @@ module Sirena
           colours = element_colours(node)
           group.children << element_box(node, colours)
           add_person_icon(group, node, colours) if node.kind == "person"
+          add_stereotype(group, node, colours)
           node.labels.each do |label|
             group.children << label_element(label, colours[:text])
           end
         end
+      end
+
+      def add_title(svg, title)
+        svg << label_element(title, theme_color(:foreground)) if title
+      end
+
+      def add_stereotype(group, node, colours)
+        return unless node.stereotype
+
+        group.children << label_element(node.stereotype, colours[:text])
       end
 
       def element_colours(node)
