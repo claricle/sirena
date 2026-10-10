@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "sirena/notation/mermaid/ir_adapters/c4"
 
 RSpec.describe Sirena::Layout::C4 do
   subject(:layout) { described_class.new }
@@ -44,6 +45,50 @@ RSpec.describe Sirena::Layout::C4 do
     layout.call(Sirena::Parser::C4.new.parse(source))
   end
   let(:container_nodes) { flatten(container_scene.children) }
+  let(:nested_diagram) { build_nested_diagram }
+
+  def build_nested_diagram
+    outer, inner = nested_boundaries
+    user, api = nested_elements(outer, inner)
+    relation = nested_relationship(user, api)
+    Sirena::Diagram::C4.new(
+      id: "landscape", title: "Ordering", level: "Container",
+      layout_config: "shapeInRow=2", boundaries: [outer, inner],
+      elements: [user, api], relationships: [relation]
+    )
+  end
+
+  def nested_boundaries
+    outer = Sirena::Diagram::C4Boundary.new(
+      id: "company", label: "Company", boundary_type: "Enterprise_Boundary",
+      link: "https://example.test/company", tags: "owned"
+    )
+    inner = Sirena::Diagram::C4Boundary.new(
+      id: "platform", label: "Platform", boundary_type: "System_Boundary",
+      parent_id: outer.id
+    )
+    [outer, inner]
+  end
+
+  def nested_elements(outer, inner)
+    user = Sirena::Diagram::C4Element.new(
+      id: "user", label: "User", element_type: "Person_Ext",
+      description: "Places orders", boundary_id: outer.id, external: true
+    )
+    api = Sirena::Diagram::C4Element.new(
+      id: "api", label: "API", element_type: "Container",
+      description: "Accepts orders", technology: "Ruby",
+      boundary_id: inner.id
+    )
+    [user, api]
+  end
+
+  def nested_relationship(user, api)
+    Sirena::Diagram::C4Relationship.new(
+      from_id: user.id, to_id: api.id, label: "Places order",
+      technology: "HTTPS", rel_type: "BiRel"
+    )
+  end
 
   it "returns a typed Scene" do
     expect(context_scene).to be_a(described_class::Scene)
@@ -74,6 +119,17 @@ RSpec.describe Sirena::Layout::C4 do
   it "keeps nested boundary children" do
     boundary = container_scene.children.find { |node| node.id == "ecommerce" }
     expect(boundary.children).not_to be_empty
+  end
+
+  it "lays out direct graph IR byte-identically to the private diagram" do
+    private_scene = layout.call(nested_diagram)
+    shared_scene = layout.call(c4_graph)
+
+    expect(Marshal.dump(shared_scene)).to eq(Marshal.dump(private_scene))
+  end
+
+  it "retains nested elements and relationship labels through IR" do
+    expect(nested_scene_evidence).to eq(expected_nested_scene_evidence)
   end
 
   it "normalizes an unclassified valid element to a system node" do
@@ -107,5 +163,29 @@ RSpec.describe Sirena::Layout::C4 do
       from_id: "a", to_id: "missing",
     )
     diagram(elements: [element("a")], relationships: [relation])
+  end
+
+  def c4_graph
+    Sirena::Notation::Mermaid::IRAdapters::C4.call(nested_diagram)
+  end
+
+  def nested_scene_evidence
+    scene = layout.call(c4_graph)
+    edge = scene.edges.fetch(0)
+    [scene_node_signature(scene), *scene_edge_signature(edge)]
+  end
+
+  def scene_node_signature(scene)
+    flatten(scene.children).map { |node| [node.id, node.kind] }
+  end
+
+  def scene_edge_signature(edge)
+    [edge.source, edge.target, edge.labels.map(&:text), edge.arrowheads.length]
+  end
+
+  def expected_nested_scene_evidence
+    nodes = [["company", "boundary"], ["platform", "boundary"],
+             ["api", "container"], ["user", "person"]]
+    [nodes, "user", "api", ["Places order", "[HTTPS]"], 2]
   end
 end

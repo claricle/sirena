@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grid"
 require_relative "../diagram/c4"
+require_relative "../notation/mermaid/ir_adapters/c4"
 
 module Sirena
   module Layout
@@ -16,6 +17,56 @@ module Sirena
     #   transform = C4.new
     #   graph = transform.to_graph(c4_diagram)
     class C4 < Base
+      SemanticElement = Struct.new(
+        :id, :label, :element_type, :description, :technology, :sprite, :link,
+        :tags, :external, :boundary_id, keyword_init: true
+      ) do
+        def base_type
+          element_type&.gsub(/_Ext$/, "") || element_type
+        end
+
+        def person?
+          base_type == "Person"
+        end
+
+        def system?
+          %w[System SystemDb SystemQueue].include?(base_type)
+        end
+
+        def container?
+          %w[Container ContainerDb ContainerQueue].include?(base_type)
+        end
+
+        def component?
+          base_type == "Component"
+        end
+      end
+      SemanticRelationship = Struct.new(
+        :from_id, :to_id, :label, :technology, :rel_type, keyword_init: true
+      ) do
+        def bidirectional?
+          rel_type == "BiRel"
+        end
+      end
+      SemanticBoundary = Struct.new(
+        :id, :label, :boundary_type, :type_param, :link, :tags, :parent_id,
+        keyword_init: true
+      )
+      SemanticDiagram = Struct.new(
+        :id, :level, :title, :layout_config, :elements, :relationships,
+        :boundaries, keyword_init: true
+      ) do
+        def elements_in_boundary(boundary_id)
+          elements.select { |element| element.boundary_id == boundary_id }
+        end
+
+        def boundaries_in_boundary(boundary_id)
+          boundaries.select { |boundary| boundary.parent_id == boundary_id }
+        end
+      end
+      private_constant :SemanticElement, :SemanticRelationship,
+                       :SemanticBoundary, :SemanticDiagram
+
       # Element dimensions based on type
       PERSON_WIDTH = 140
       PERSON_HEIGHT = 180
@@ -92,6 +143,7 @@ module Sirena
       # @param diagram [Diagram::C4] the C4 diagram to transform
       # @return [Hash] elkrb-compatible graph hash
       def build_graph(diagram)
+        diagram = semantic_diagram(ir_graph(diagram))
         # Build hierarchy with boundaries as containers
         root_elements = diagram.elements.select { |e| e.boundary_id.nil? }
         root_boundaries = diagram.boundaries.select { |b| b.parent_id.nil? }
@@ -112,6 +164,130 @@ module Sirena
       end
 
       private
+
+      ELEMENT_ROLES = %w[
+        person system system_database system_queue container
+        container_database container_queue component element
+      ].freeze
+      BOUNDARY_ROLES = %w[enterprise_boundary system_boundary boundary].freeze
+      private_constant :ELEMENT_ROLES, :BOUNDARY_ROLES
+
+      def ir_graph(diagram)
+        return diagram if diagram.is_a?(IR::Graph)
+
+        Notation::Mermaid::IRAdapters::C4.call(diagram)
+      end
+
+      def semantic_diagram(graph)
+        children, nodes_by_id = semantic_context(graph)
+        settings = diagram_settings(graph, children)
+        collections = semantic_collections(graph, children, nodes_by_id)
+        SemanticDiagram.new(
+          **diagram_metadata(graph, settings), **collections,
+        )
+      end
+
+      def semantic_context(graph)
+        children = graph.nodes.group_by(&:parent_id)
+        nodes_by_id = graph.nodes.to_h { |node| [node.id, node] }
+        [children, nodes_by_id]
+      end
+
+      def diagram_settings(graph, children)
+        settings = graph.nodes.find { |node| node.role == "diagram_settings" }
+        semantic_fields(children[settings&.id])
+      end
+
+      def diagram_metadata(graph, settings)
+        {
+          id: settings["diagram_identifier"], level: settings["level"],
+          title: graph.label, layout_config: settings["layout_intent"]
+        }
+      end
+
+      def semantic_collections(graph, children, nodes_by_id)
+        {
+          boundaries: semantic_boundaries(graph, children, nodes_by_id),
+          elements: semantic_elements(graph, children, nodes_by_id),
+          relationships: semantic_relationships(graph, children, nodes_by_id),
+        }
+      end
+
+      def semantic_boundaries(graph, children, nodes_by_id)
+        graph.nodes.select { |node| BOUNDARY_ROLES.include?(node.role) }
+          .map { |node| semantic_boundary(node, children, nodes_by_id) }
+      end
+
+      def semantic_boundary(node, children, nodes_by_id)
+        fields = semantic_fields(children[node.id])
+        SemanticBoundary.new(
+          id: source_identifier(node, children), label: node.label,
+          boundary_type: fields["boundary_type"],
+          type_param: fields["type_label"], link: fields["link"],
+          tags: fields["tags"],
+          parent_id: source_parent(fields, node, nodes_by_id, children)
+        )
+      end
+
+      def semantic_elements(graph, children, nodes_by_id)
+        graph.nodes.select { |node| ELEMENT_ROLES.include?(node.role) }
+          .map { |node| semantic_element(node, children, nodes_by_id) }
+      end
+
+      def semantic_element(node, children, nodes_by_id)
+        fields = semantic_fields(children[node.id])
+        SemanticElement.new(
+          id: source_identifier(node, children), label: node.label,
+          element_type: fields["element_type"],
+          description: fields["description"],
+          technology: fields["technology"], sprite: fields["sprite"],
+          link: fields["link"], tags: fields["tags"],
+          external: fields["external"] == "true",
+          boundary_id: source_boundary(fields, node, nodes_by_id, children)
+        )
+      end
+
+      def semantic_relationships(graph, children, nodes_by_id)
+        graph.edges.map do |edge|
+          semantic_relationship(edge, children, nodes_by_id)
+        end
+      end
+
+      def semantic_relationship(edge, children, nodes_by_id)
+        details = semantic_fields(children[edge.parent_id])
+        SemanticRelationship.new(
+          from_id: source_identifier(nodes_by_id[edge.source_id], children),
+          to_id: source_identifier(nodes_by_id[edge.target_id], children),
+          label: edge.label, technology: details["technology"],
+          rel_type: details["relationship_type"]
+        )
+      end
+
+      def semantic_fields(nodes)
+        Array(nodes).to_h { |node| [node.role, node.label] }
+      end
+
+      def source_identifier(node, children)
+        return unless node
+
+        semantic_fields(children[node.id]).fetch("original_identifier", node.id)
+      end
+
+      def parent_source_identifier(node, nodes_by_id, children)
+        source_identifier(nodes_by_id[node.parent_id], children)
+      end
+
+      def source_parent(fields, node, nodes_by_id, children)
+        fields.fetch("parent_identifier") do
+          parent_source_identifier(node, nodes_by_id, children)
+        end
+      end
+
+      def source_boundary(fields, node, nodes_by_id, children)
+        fields.fetch("boundary_identifier") do
+          parent_source_identifier(node, nodes_by_id, children)
+        end
+      end
 
       def scene(diagram)
         graph = build_graph(diagram)
