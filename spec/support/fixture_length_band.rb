@@ -27,6 +27,7 @@ module FixtureLengthBand
   end
 
   def within_length_band?(actual_svg, expected_svg, baseline)
-    length_ratio(actual_svg, expected_svg).between?(baseline / FACTOR, baseline * FACTOR)
+    length_ratio(actual_svg, expected_svg).between?(baseline / FACTOR,
+                                                    baseline * FACTOR)
   end
 end

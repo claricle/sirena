@@ -34,18 +34,29 @@ namespace :examples do
     puts "=" * 60
   end
 
-  desc "Delete example SVGs whose source is gone or never renders (destructive, deliberate)"
+  desc "Delete example SVGs whose source is gone or never renders " \
+       "(destructive, deliberate)"
   task :prune do
     examples_dir = File.expand_path("../examples", __dir__)
 
     ExampleTasks.with_examples_lock(examples_dir) do
       puts "Pruning example SVGs with no source..."
       removed = ExampleTasks.prune_orphan_svgs(examples_dir)
-      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} orphaned SVG(s)."
+      message = if removed.zero?
+                  "Nothing to prune."
+                else
+                  "Removed #{removed} orphaned SVG(s)."
+                end
+      puts message
 
       puts "\nPruning example SVGs beside a source that never renders..."
       removed = ExampleTasks.prune_known_unrenderable_svgs(examples_dir)
-      puts removed.zero? ? "Nothing to prune." : "Removed #{removed} stale SVG(s)."
+      message = if removed.zero?
+                  "Nothing to prune."
+                else
+                  "Removed #{removed} stale SVG(s)."
+                end
+      puts message
     end
   end
 
@@ -69,7 +80,9 @@ namespace :examples do
       puts "✓ Copied #{count} #{diagram_type} examples to docs/assets/examples/"
     end
 
-    puts "\n✅ #{copied.sum { |_, count| count }} examples copied to documentation!"
+    puts "\n✅ #{copied.sum do |_, count|
+      count
+    end} examples copied to documentation!"
   end
 
   desc "Generate AsciiDoc include files for documentation"
@@ -78,11 +91,14 @@ namespace :examples do
     require "fileutils"
 
     examples_dir = File.expand_path("../examples", __dir__)
-    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples", __dir__)
+    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples",
+                                         __dir__)
 
     FileUtils.mkdir_p(docs_examples_dir)
 
-    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select { |f| File.directory?(f) }
+    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select do |f|
+      File.directory?(f)
+    end
 
     diagram_dirs.sort.each do |dir|
       diagram_type = File.basename(dir)
@@ -105,7 +121,9 @@ namespace :examples do
 
         # Read metadata
         metadata = File.exist?(yml_file) ? YAML.load_file(yml_file) : {}
-        title = metadata["title"] || basename.split("-").map(&:capitalize).join(" ")
+        title = metadata["title"] || basename.split("-")
+          .map(&:capitalize)
+          .join(" ")
         description = metadata["description"] || "Example diagram"
         complexity = metadata["complexity"] || "basic"
         use_cases = metadata["use_cases"] || []
@@ -133,14 +151,16 @@ namespace :examples do
         content << "----"
         content << ""
         content << ".Rendered Output"
-        content << "image::../../../assets/examples/#{diagram_type}/#{basename}.svg[#{title},600]"
+        content << "image::../../../assets/examples/#{diagram_type}/" \
+                   "#{basename}.svg[#{title},600]"
         content << ""
         content << "'''"
         content << ""
       end
 
       File.write(adoc_file, content.join("\n"))
-      puts "✓ Generated #{diagram_type}-examples.adoc (#{mmd_files.size} examples)"
+      puts "✓ Generated #{diagram_type}-examples.adoc " \
+           "(#{mmd_files.size} examples)"
     end
 
     puts "\n✅ Documentation includes generated!"
@@ -224,7 +244,9 @@ namespace :examples do
       exit 1
     end
 
-    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select { |f| File.directory?(f) }
+    diagram_dirs = Dir.glob(File.join(examples_dir, "*")).select do |f|
+      File.directory?(f)
+    end
 
     total_examples = 0
 
@@ -259,7 +281,8 @@ namespace :examples do
     end
 
     puts "\n#{'=' * 60}"
-    puts "Total: #{total_examples} examples across #{diagram_dirs.size} diagram types"
+    puts "Total: #{total_examples} examples across #{diagram_dirs.size} " \
+         "diagram types"
     puts "=" * 60
   end
 
@@ -377,7 +400,8 @@ namespace :examples do
 
     examples_dir = File.expand_path("../examples", __dir__)
     docs_assets_dir = File.expand_path("../docs/assets/examples", __dir__)
-    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples", __dir__)
+    docs_examples_dir = File.expand_path("../docs/_diagram_types/examples",
+                                         __dir__)
 
     # Clean the stale generated/ directories older checkouts left behind.
     # The tracked SVGs sit beside their sources now and are not touched.

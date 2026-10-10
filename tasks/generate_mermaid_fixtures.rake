@@ -86,6 +86,7 @@ end
 # Fixture generator class
 class MermaidFixtureGenerator
   FIXTURE_DIR = "spec/fixtures_mermaid"
+  FAIL_NOTE = "Should have failed but succeeded"
 
   # Supported diagram types in Sirena
   DIAGRAM_TYPES = %w[
@@ -150,7 +151,7 @@ class MermaidFixtureGenerator
         if success
           # Succeeded but should have failed - UNEXPECTED
           stats[:error_unexpected_success] += 1
-          unexpected_successes << { file: basename, note: "Should have failed but succeeded" }
+          unexpected_successes << { file: basename, note: FAIL_NOTE }
           print "U"  # U = Unexpected success (fail)
         else
           # Failed as expected - this is CORRECT
@@ -183,11 +184,12 @@ class MermaidFixtureGenerator
     puts "\n#{'=' * 60}"
     puts "RESULTS SUMMARY"
     puts "=" * 60
-    puts "✅ Correct behaviors: #{stats[:correct_success] + stats[:error_expected_fail]}"
+    correct = stats[:correct_success] + stats[:error_expected_fail]
+    puts "✅ Correct behaviors: #{correct}"
     puts "   - Generated fixtures: #{stats[:correct_success]}"
     puts "   - Failed as expected: #{stats[:error_expected_fail]}"
 
-    total_unexpected = stats[:correct_unexpected_fail] + stats[:error_unexpected_success]
+    total_unexpected = unexpected_count(stats)
     if total_unexpected.positive?
       puts "\n⚠️  Unexpected behaviors: #{total_unexpected}"
       puts "   - Should succeed but failed: #{stats[:correct_unexpected_fail]}"
@@ -210,13 +212,15 @@ class MermaidFixtureGenerator
       # Save detailed logs
       if stats[:correct_unexpected_fail].positive?
         fail_log = File.join(output_dir, "_unexpected_failures.log")
-        File.write(fail_log, unexpected_failures.map { |f| "#{f[:file]}: #{f[:error]}" }.join("\n"))
+        failure_lines = format_log_lines(unexpected_failures, :error)
+        File.write(fail_log, failure_lines.join("\n"))
         puts "\n📝 Failure log: #{fail_log}"
       end
 
       if stats[:error_unexpected_success].positive?
         success_log = File.join(output_dir, "_unexpected_successes.log")
-        File.write(success_log, unexpected_successes.map { |f| "#{f[:file]}: #{f[:note]}" }.join("\n"))
+        success_lines = format_log_lines(unexpected_successes, :note)
+        File.write(success_log, success_lines.join("\n"))
         puts "📝 Success log: #{success_log}"
       end
     end
@@ -230,6 +234,14 @@ class MermaidFixtureGenerator
 
   private
 
+  def unexpected_count(stats)
+    stats.values_at(:correct_unexpected_fail, :error_unexpected_success).sum
+  end
+
+  def format_log_lines(entries, field)
+    entries.map { "#{_1[:file]}: #{_1[field]}" }
+  end
+
   def generate_svg_with_error(input_file, output_file)
     stdout, stderr, status = Open3.capture3(
       MermaidToolchain.environment,
@@ -242,7 +254,9 @@ class MermaidFixtureGenerator
     else
       # Extract meaningful error message
       error_msg = (stderr + stdout).lines
-                    .reject { |l| l.include?("Generating single mermaid chart") }
+                    .reject do |line|
+                      line.include?("Generating single mermaid chart")
+                    end
                     .first&.strip || "Unknown error"
       [false, error_msg]
     end
