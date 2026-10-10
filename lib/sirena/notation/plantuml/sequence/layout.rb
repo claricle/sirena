@@ -23,6 +23,7 @@ module Sirena
           BOX_PADDING = 8.0
           BOX_TITLE_HEIGHT = 26.0
           MIN_WIDTH_PADDING = 14.0
+          HEAD_LEADING = 1.1776
           EDGE_GAP = 5.0
           EDGE_MARGIN = 10.0
           PAGE_BREAK_INSET = 6.0
@@ -35,7 +36,8 @@ module Sirena
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
-                           :MIN_WIDTH_PADDING, :EDGE_GAP, :EDGE_MARGIN,
+                           :MIN_WIDTH_PADDING, :HEAD_LEADING, :EDGE_GAP,
+                           :EDGE_MARGIN,
                            :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
                            :BANNER_HEIGHT, :BANNER_STEP, :BANNER_PADDING,
                            :MONOSPACE_ADVANCE
@@ -138,11 +140,24 @@ module Sirena
             plain = @diagram.participants.all? do |p|
               p.kind == :participant && p.stereotype.nil?
             end
-            plain ? 36.0 : 56.0
+            (plain ? 36.0 : 56.0) + head_growth
+          end
+
+          def head_style
+            @diagram.appearance.head_style
+          end
+
+          def head_font_size
+            head_style.size || font_size
+          end
+
+          # PlantUML grows a head by 1.1776 for each point its text grows.
+          def head_growth
+            (head_font_size - font_size) * HEAD_LEADING
           end
 
           def head_width(participant)
-            text = measure_text(participant.label, font_size: font_size)
+            text = measure_text(participant.label, font_size: head_font_size)
             [MIN_HEAD_WIDTH, text[:width] + (2 * HEAD_PADDING),
              boxed_title_width(participant), requested_width].max
           end
@@ -365,18 +380,30 @@ module Sirena
               x: centre - (width / 2), y: top, width: width,
               height: @head_height, fill: participant.fill&.colour,
               fill_opacity: participant.fill&.opacity,
+              stroke: head_style.line,
               texts: head_texts(participant, centre, top)
             )
           end
 
           def head_texts(participant, centre, top)
-            label = text(participant.label, centre, top + @head_height - 12,
-                         "participant")
+            label = head_label(participant, centre, top)
             name = above_label(participant)
             return [label] unless name
 
             lines = [text(name, centre, top + 14, "kind"), label]
             participant.stereotype ? align(lines, centre) : lines
+          end
+
+          def head_label(participant, centre, top)
+            label = text(participant.label, centre, top + @head_height - 12,
+                         "participant")
+            style = head_style
+            label.colour = style.colour
+            label.size = style.size
+            label.family = style.family
+            label.font_style = style.style
+            label.weight = style.weight
+            label
           end
 
           # Lines of a stereotyped head sit against the edge of the block

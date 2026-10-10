@@ -24,7 +24,10 @@ module Sirena
           PROPERTIES = {
             %w[sequencediagram participant] =>
               { "minimumwidth" => :min_width,
-                "horizontalalignment" => :alignment },
+                "horizontalalignment" => :alignment,
+                "fontcolor" => :head_colour, "fontsize" => :head_size,
+                "fontstyle" => :head_style, "fontname" => :head_family,
+                "fontweight" => :head_weight, "linecolor" => :head_line },
             %w[sequencediagram groupheader] =>
               { "fontcolor" => :tab_colour, "backgroundcolor" => :tab_fill,
                 "fontsize" => :tab_size },
@@ -39,14 +42,19 @@ module Sirena
           PARENTS = [%w[sequencediagram], %w[sequencediagram group],
                      %w[sequencediagram reference]].freeze
           ALIGNMENTS = %w[left center right].freeze
+          WEIGHT = /\A(?:[1-9]00|bold|normal)\z/i
+          FAMILY = /\A[\w-]+\z/
+          COMMENT = %r{/\*.*?\*/}m
           NAMED = { "lightyellow" => "#FFFFE0" }.freeze
           private_constant :TOKEN, :PROPERTIES, :NESTED, :INERT, :PARENTS,
-                           :ALIGNMENTS, :NAMED
+                           :ALIGNMENTS, :NAMED, :WEIGHT, :FAMILY, :COMMENT
 
           # @param text [String] what lies between `<style>` and `</style>`
           # @return [Appearance, nil] nil when the block sets anything else
           def self.read(text)
-            new(text.scan(TOKEN)).read
+            plain = text.gsub(COMMENT, " ").gsub(/(\w):(?=\s)/, "\\1")
+              .gsub(/;(?=\s|\z)/, "")
+            new(plain.scan(TOKEN)).read
           end
 
           def initialize(tokens)
@@ -58,11 +66,17 @@ module Sirena
           def read
             catch(:refused) do
               step until @tokens.empty?
-              @path.empty? ? Appearance.new(**@values) : nil
+              @path.empty? ? appearance : nil
             end
           end
 
           private
+
+          def appearance
+            head, rest = @values.partition { |key, _| key.start_with?("head_") }
+            style = head.to_h { |k, v| [k.to_s[5..].to_sym, v] }
+            Appearance.new(**rest.to_h, head_style: HeadStyle.new(**style))
+          end
 
           def step
             token = @tokens.shift
@@ -95,15 +109,24 @@ module Sirena
           end
 
           def convert(key, value)
-            return size(value) if %i[min_width tab_size].include?(key)
+            return size(value) if %i[min_width tab_size head_size].include?(key)
             return alignment(value) if key == :alignment
 
-            colour(value)
+            text_or_colour(key, value)
           end
 
           def size(value)
             number = Integer(value, 10, exception: false)
             number if number&.positive?
+          end
+
+          def text_or_colour(key, value)
+            case key
+            when :head_style then value.downcase if value.casecmp?("italic")
+            when :head_family then value if FAMILY.match?(value)
+            when :head_weight then value.downcase if WEIGHT.match?(value)
+            else colour(value)
+            end
           end
 
           def alignment(value)

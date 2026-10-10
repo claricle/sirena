@@ -20,6 +20,7 @@ module Sirena
             attribute :height, :float
             attribute :fill, :string
             attribute :fill_opacity, :float
+            attribute :stroke, :string
             attribute :texts, PlantUML::Scene::Text, collection: true
           end
 

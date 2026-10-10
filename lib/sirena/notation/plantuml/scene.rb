@@ -18,6 +18,9 @@ module Sirena
           attribute :anchor, :string
           attribute :colour, :string
           attribute :size, :float
+          attribute :family, :string
+          attribute :font_style, :string
+          attribute :weight, :string
         end
 
         class Segment < Lutaml::Model::Serializable
