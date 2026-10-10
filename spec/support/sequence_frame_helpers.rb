@@ -18,6 +18,20 @@ module SequenceFrameHelpers
     Sirena::Layout::Sequence.new.call(parse_sequence(body))
   end
 
+  def mermaid_scene(source)
+    parsed = Sirena::Notation::Mermaid.parse(source)
+    Sirena::Layout::Sequence.new.call(parsed.diagram)
+  end
+
+  def mermaid_last_x(source)
+    mermaid_scene(source).participants.last.x
+  end
+
+  def note_line_texts(text)
+    scene = layout_scene("A->>B: x\nNote right of A: #{text}")
+    scene.notes.first.lines.map(&:text)
+  end
+
   def actor_xs(scene)
     scene.participants.map(&:x)
   end

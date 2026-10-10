@@ -75,4 +75,51 @@ RSpec.describe Sirena::Layout::Sequence do
 
     expect(actor_xs(layout_scene(body))).to eq([50, 250, 494])
   end
+
+  describe "with the global wrap setting" do
+    let(:head) { "sequenceDiagram\n" }
+    let(:message) { "A->>B: #{four_times}" }
+
+    it "caps a message at the wrap width for the bare directive" do
+      expect(mermaid_last_x("#{head}%%{wrap}%%\n#{message}")).to eq(250)
+    end
+
+    it "caps it for init wrap at the top level" do
+      source = %(%%{init: {"wrap": true}}%%\n#{head}#{message})
+
+      expect(mermaid_last_x(source)).to eq(250)
+    end
+
+    it "caps it for init wrap under sequence" do
+      source = %(%%{init: {"sequence": {"wrap": true}}}%%\n#{head}#{message})
+
+      expect(mermaid_last_x(source)).to eq(250)
+    end
+
+    it "leaves a nowrap: message at its full width" do
+      source = "#{head}%%{wrap}%%\nA->>B: nowrap: #{long}"
+
+      expect(mermaid_last_x(source)).to eq(294)
+    end
+
+    it "does not wrap without the setting" do
+      expect(mermaid_last_x("#{head}#{message}")).to be > 400
+    end
+
+    it "caps a note too" do
+      source = "#{head}%%{wrap}%%\nA->>B: x\nNote right of A: #{four_times}"
+
+      expect(mermaid_last_x(source)).to eq(250)
+    end
+  end
+
+  describe "the wrap prefix on a note" do
+    it "is not drawn for wrap:" do
+      expect(note_line_texts("wrap: hi")).to eq(["hi"])
+    end
+
+    it "is not drawn for nowrap:" do
+      expect(note_line_texts("nowrap: hi")).to eq(["hi"])
+    end
+  end
 end

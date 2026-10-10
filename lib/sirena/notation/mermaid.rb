@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../source"
+require_relative "../diagram/sequence_wrap"
 require_relative "../error/diagram_type_error"
 require_relative "../error/pipeline_error"
 require_relative "parsed"
@@ -286,6 +287,7 @@ module Sirena
         logger&.debug("Detected diagram type: #{type}")
         reject_degenerate_preamble(type, preamble[:degenerate])
         diagram = parse_diagram(type, preamble[:body], title, logger)
+        diagram.wrap = true if sequence_wrap?(type, source)
         diagram = IRAdapter.call(type, diagram)
         Parsed.new(type: type, diagram: diagram,
                    transform: layer_class(Layout, type, Layout::LayoutError),
@@ -309,6 +311,10 @@ module Sirena
           return type if body.match?(row[:pattern])
         end
         nil
+      end
+
+      def sequence_wrap?(type, source)
+        type == :sequence && Diagram::SequenceWrap.on?(source)
       end
 
       def parse_diagram(type, body, title, logger)
