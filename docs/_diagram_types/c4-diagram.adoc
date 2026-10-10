@@ -402,81 +402,9 @@ This creates a hierarchical diagram showing:
 
 == Visual Styling
 
-=== C4 Color Scheme
+=== Colors and Sizes
 
-Sirena uses the standard C4-PlantUML color scheme:
-
-* **Person** - Dark blue (#08427B)
-* **Person_Ext** - Gray (#6C6477)
-* **System** - Blue (#1168BD)
-* **System_Ext** - Gray (#8F8F8F)
-* **Container** - Light blue (#438DD5)
-* **Component** - Lighter blue (#85BBF0)
-* **Boundary** - Dashed border (#9BA7B4)
-
-=== Element Dimensions
-
-Default element sizes:
-
-* Person: 140x180 px
-* System: 160x120 px
-* Container: 160x120 px
-* Component: 160x100 px
-
-=== Text Formatting
-
-* **Labels** - Bold, 14-16pt
-* **Descriptions** - Normal, 11pt
-* **Technology** - Italic, 10pt
-
-== Best Practices
-
-=== When to Use Each Level
-
-* **C4Context** - For stakeholders, showing external dependencies
-* **C4Container** - For architects, showing deployment units
-* **C4Component** - For developers, showing internal structure
-* **C4Dynamic** - For runtime scenarios and workflows
-* **C4Deployment** - For infrastructure and DevOps teams
-
-=== Naming Conventions
-
-* Use clear, descriptive labels
-* Keep descriptions concise (1-2 lines)
-* Specify technology for containers/components
-* Use consistent naming across diagrams
-
-=== Diagram Organization
-
-* Start with Context, drill down to Container, then Component
-* Use boundaries to group related elements
-* Limit elements per diagram (5-15 for readability)
-* Show only relevant relationships
-
-=== Common Patterns
-
-.Microservices Architecture
-[example]
-====
-[source,mermaid]
-----
-C4Container
-    title Microservices System
-
-    Container(gateway, "API Gateway", "Kong", "Entry point")
-    Container(auth, "Auth Service", "OAuth2", "Authentication")
-    Container(users, "User Service", "Node.js", "User management")
-    Container(orders, "Order Service", "Java", "Order processing")
-    ContainerDb(userdb, "User DB", "PostgreSQL")
-    ContainerDb(orderdb, "Order DB", "MongoDB")
-
-    Rel(gateway, auth, "Validates")
-    Rel(gateway, users, "Routes")
-    Rel(gateway, orders, "Routes")
-    Rel(users, userdb, "Stores")
-    Rel(orders, orderdb, "Stores")
-----
-====
+Element colors come from the active theme and element boxes are sized from their text, so the exact colors and dimensions are not fixed values.
 
 == Implementation Details
 
