@@ -27,6 +27,13 @@ module Sirena
       SEQ_TAG = "tag:yaml.org,2002:seq"
       MAP_TAG = "tag:yaml.org,2002:map"
 
+      TAGGED_SCALAR_READERS = {
+        INT_TAG => :tagged_int,
+        FLOAT_TAG => :tagged_float,
+        BOOL_TAG => :tagged_bool,
+        NULL_TAG => :tagged_null,
+      }.freeze
+
       # What JavaScript writes when it needs a string for a plain object.
       OBJECT_STRING = "[object Object]"
 
@@ -316,14 +323,12 @@ module Sirena
       # document when it says no, so `!!int nope` is an error rather than
       # the string it looks like.
       def tagged_scalar(tag, text)
-        case tag
-        when STR_TAG then text
-        when INT_TAG then tagged_int(text)
-        when FLOAT_TAG then tagged_float(text)
-        when BOOL_TAG then BOOL_WORDS.fetch(text) { unresolvable(BOOL_TAG) }
-        when NULL_TAG then tagged_null(text)
-        else unsupported(tag)
-        end
+        return text if tag == STR_TAG
+
+        reader = TAGGED_SCALAR_READERS[tag]
+        return unsupported(tag) unless reader
+
+        send(reader, text)
       end
 
       def tagged_int(text)
@@ -331,7 +336,13 @@ module Sirena
       end
 
       def tagged_float(text)
-        json_float?(text) ? json_float(text.delete("_")) : unresolvable(FLOAT_TAG)
+        return json_float(text.delete("_")) if json_float?(text)
+
+        unresolvable(FLOAT_TAG)
+      end
+
+      def tagged_bool(text)
+        BOOL_WORDS.fetch(text) { unresolvable(BOOL_TAG) }
       end
 
       def tagged_null(text)

@@ -37,39 +37,38 @@ module Sirena
       def create_diagram(result)
         diagram = Diagram::XyChart.new
         diagram.title = result[:title]
-
-        # Create X-axis
-        if result[:x_axis]
-          diagram.x_axis = create_x_axis(result[:x_axis])
-        end
-
-        # Create Y-axis
-        if result[:y_axis]
-          diagram.y_axis = create_y_axis(result[:y_axis])
-        end
-
-        # Create datasets
-        result[:datasets].each_with_index do |dataset_data, idx|
-          dataset = Diagram::XYDataset.new(
-            "dataset_#{idx}",
-            dataset_data[:label],
-            dataset_data[:chart_type],
-          )
-          dataset.values = dataset_data[:values]
-          diagram.add_dataset(dataset)
-        end
-
+        assign_axes(diagram, result)
+        append_datasets(diagram, result[:datasets])
         diagram
+      end
+
+      def assign_axes(diagram, result)
+        diagram.x_axis = create_x_axis(result[:x_axis]) if result[:x_axis]
+        diagram.y_axis = create_y_axis(result[:y_axis]) if result[:y_axis]
+      end
+
+      def append_datasets(diagram, datasets)
+        datasets.each_with_index do |data, index|
+          diagram.add_dataset(build_dataset(data, index))
+        end
+      end
+
+      def build_dataset(data, index)
+        dataset = Diagram::XYDataset.new(
+          "dataset_#{index}", data[:label], data[:chart_type]
+        )
+        dataset.values = data[:values]
+        dataset
       end
 
       def create_x_axis(axis_data)
         axis = Diagram::XYAxis.new
         axis.label = axis_data[:label]
+        assign_x_values(axis, axis_data[:values])
+        axis
+      end
 
-        # Extract values and determine if categorical or numeric
-        values = axis_data[:values]
-
-        # Check if all values are numeric
+      def assign_x_values(axis, values)
         if values.all?(Numeric)
           axis.type = :numeric
           axis.values = values
@@ -77,8 +76,6 @@ module Sirena
           axis.type = :categorical
           axis.values = values.map(&:to_s)
         end
-
-        axis
       end
 
       def create_y_axis(axis_data)

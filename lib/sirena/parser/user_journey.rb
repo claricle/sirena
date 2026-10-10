@@ -14,9 +14,13 @@ module Sirena
       rule(:nl) { str("\n") }
 
       rule(:journey) { str("journey") >> sp? >> (nl | any.absent?) }
-      rule(:title_decl) { sp? >> str("title") >> sp >> text_line.as(:title) >> (nl | any.absent?) }
+      rule(:title_decl) do
+        sp? >> str("title") >> sp >> text_line.as(:title) >>
+          (nl | any.absent?)
+      end
       rule(:section_decl) do
-        sp? >> str("section") >> sp >> text_line.as(:section) >> (nl | any.absent?)
+        sp? >> str("section") >> sp >> text_line.as(:section) >>
+          (nl | any.absent?)
       end
       # accTitle/accDescr text is parsed and discarded: no Diagram::UserJourney
       # attribute holds it yet.
@@ -70,7 +74,9 @@ module Sirena
       # to `task_line` -- the fallthrough re-scans the rest of the source per
       # line and is quadratic. This deliberately refuses some sources the
       # oracle also refuses, so it never narrows what the grammar accepts.
-      rule(:acc_descr_unclosed) { acc_descr_open >> acc_block_body >> any.absent? }
+      rule(:acc_descr_unclosed) do
+        acc_descr_open >> acc_block_body >> any.absent?
+      end
 
       # Mermaid strips directive lines, then comment lines, before parsing
       # anything, so a `}` inside either must not act as a delimiter here.
@@ -138,7 +144,9 @@ module Sirena
         title_decl | section_decl | accessibility_decl |
           (acc_descr_unclosed.absent? >> task_line) | comment_line | blank_line
       end
-      rule(:comment_line) { sp? >> str("%%") >> (nl.absent? >> any).repeat >> nl }
+      rule(:comment_line) do
+        sp? >> str("%%") >> (nl.absent? >> any).repeat >> nl
+      end
       rule(:blank_line) { sp? >> nl }
 
       rule(:journey_doc) do
@@ -151,23 +159,13 @@ module Sirena
 
     # User Journey diagram parser using Parslet
     class UserJourney < Base
+      # Both fixed-encoding grammar failures and invalid byte indexing can
+      # escape as core encoding errors. Normalize them into ParseError across
+      # the whole parse/build operation so callers see the parser contract.
       def parse(source)
         tree = parse_with_grammar(UserJourneyGrammar.new, source)
         build_diagram_from_tree(tree)
       rescue EncodingError, ArgumentError => e
-        # Two distinct routes land here, both re-raised the same way. (1) The
-        # accessibility rules' \uXXXX-escaped regexps carry a fixed encoding,
-        # so a non-UTF-8 source can reach them and Parslet lets the
-        # EncodingError escape raw; a UTF-8-tagged string with an invalid
-        # byte sequence never reaches a grammar rule at all --
-        # Parslet::Source.new raises ArgumentError from StringScanner while
-        # indexing line endings, before parsing starts. (2) A source valid in
-        # some OTHER encoding (e.g. Big5-HKSCS) can pass grammar parsing, then
-        # raise ArgumentError from build_diagram_from_tree's `String#strip`
-        # calls -- so this rescue must wrap the whole method, not just
-        # grammar.parse. Re-raise as ParseError rather than let a Ruby core
-        # class escape raw: that's the contract parse_with_grammar documents
-        # for the other parsers in this gem.
         raise ParseError, "Parse error: #{e.message}"
       end
 
@@ -176,48 +174,57 @@ module Sirena
       def build_diagram_from_tree(tree)
         diagram = Diagram::UserJourney.new
         current_section = nil
-
-        lines = Array(tree[:lines])
-
-        lines.each do |line|
-          if line[:title]
-            diagram.title = line[:title].to_s.strip
-          elsif line[:section]
-            # Save previous section
-            diagram.sections << current_section if current_section
-
-            # Create new section
-            current_section = Diagram::JourneySection.new
-            current_section.name = line[:section].to_s.strip
-          elsif line[:task]
-            current_section ||= Diagram::JourneySection.new(name: "")
-            # Parse task
-            task = Diagram::JourneyTask.new
-            task.name = line[:task].to_s.strip
-            task.score = line[:score].to_s.to_i
-
-            validate_score!(task.score)
-
-            # Extract actors
-            actors_data = line[:actors]
-            task.actors = if actors_data.is_a?(Array)
-                            actors_data.map do |a|
-                              a[:actor].to_s.strip
-                            end.reject(&:empty?)
-                          elsif actors_data.is_a?(Hash) && actors_data[:actor]
-                            [actors_data[:actor].to_s.strip]
-                          else
-                            []
-                          end
-
-            current_section.tasks << task
-          end
+        Array(tree[:lines]).each do |line|
+          current_section = consume_line(line, diagram, current_section)
         end
-
-        # Add final section
         diagram.sections << current_section if current_section
-
         diagram
+      end
+
+      def consume_line(line, diagram, current_section)
+        return record_title(line, diagram, current_section) if line[:title]
+        return start_section(line, diagram, current_section) if line[:section]
+        return current_section unless line[:task]
+
+        add_task(line, current_section)
+      end
+
+      def record_title(line, diagram, current_section)
+        diagram.title = line[:title].to_s.strip
+        current_section
+      end
+
+      def start_section(line, diagram, current_section)
+        diagram.sections << current_section if current_section
+        Diagram::JourneySection.new(name: line[:section].to_s.strip)
+      end
+
+      def add_task(line, current_section)
+        section = current_section || Diagram::JourneySection.new(name: "")
+        section.tasks << build_task(line)
+        section
+      end
+
+      def build_task(line)
+        task = Diagram::JourneyTask.new
+        task.name = line[:task].to_s.strip
+        task.score = line[:score].to_s.to_i
+        validate_score!(task.score)
+        task.actors = actor_names(line[:actors])
+        task
+      end
+
+      def actor_names(data)
+        if data.is_a?(Array)
+          return data.filter_map { |actor| actor_name(actor) }
+        end
+        return [data[:actor].to_s.strip] if data.is_a?(Hash) && data[:actor]
+
+        []
+      end
+
+      def actor_name(data)
+        data[:actor].to_s.strip.then { |name| name unless name.empty? }
       end
 
       def validate_score!(score)

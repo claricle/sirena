@@ -29,6 +29,11 @@ module Sirena
     #   MERMAID
     #   diagram = parser.parse(source)
     class Kanban < Base
+      COLUMN_ATTRIBUTES = %i[id title icon classes].freeze
+      CARD_ATTRIBUTES = %i[
+        id text assigned ticket icon label priority classes
+      ].freeze
+
       grammar Grammars::Kanban
       builder Builders::Kanban
 
@@ -93,37 +98,14 @@ module Sirena
       end
 
       def build_column(column_data)
-        column = Diagram::KanbanColumn.new(
-          id: column_data[:id],
-          title: column_data[:title],
-          icon: column_data[:icon],
-          # No `|| []` fallback here: BoardBuilder#normalize_classes already
-          # guarantees an Array, so `column_data[:classes]` is never nil.
-          classes: column_data[:classes],
-        )
-
-        # Add cards to column
-        column_data[:cards].each do |card_data|
-          card = build_card(card_data)
-          column.add_card(card)
-        end
-
+        attributes = column_data.slice(*COLUMN_ATTRIBUTES)
+        column = Diagram::KanbanColumn.new(**attributes)
+        column_data[:cards].each { |data| column.add_card(build_card(data)) }
         column
       end
 
       def build_card(card_data)
-        Diagram::KanbanCard.new(
-          id: card_data[:id],
-          text: card_data[:text],
-          assigned: card_data[:assigned],
-          ticket: card_data[:ticket],
-          icon: card_data[:icon],
-          label: card_data[:label],
-          priority: card_data[:priority],
-          # No `|| []` fallback here either: BoardBuilder#add_card always
-          # merges a normalize_classes result, so this is never nil either.
-          classes: card_data[:classes],
-        )
+        Diagram::KanbanCard.new(**card_data.slice(*CARD_ATTRIBUTES))
       end
     end
   end
