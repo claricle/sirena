@@ -37,6 +37,10 @@ module Sirena
         attribute :height, :float
         attribute :labels, Label, collection: true, default: -> { [] }
         attribute :shape, :string
+        attribute :center_x, :float
+        attribute :center_y, :float
+        attribute :radius, :float
+        attribute :shape_points, :string
         attribute :direction, :string
         attribute :compound, :boolean, default: false
         attribute :children, Node, collection: true, default: -> { [] }
@@ -156,13 +160,72 @@ module Sirena
 
       def typed_node(block, positioned)
         geometry = positioned.fetch(block.id)
+        shape = value(block, "shape")
+        direction = value(block, "direction")
         Node.new(
           id: block.id, x: geometry[:x], y: geometry[:y],
           width: geometry[:width], height: geometry[:height],
-          labels: block_label(block, geometry), shape: value(block, "shape"),
-          direction: value(block, "direction"), compound: compound?(block),
-          children: typed_nodes(children(block), positioned)
+          labels: block_label(block, geometry), shape: shape,
+          direction: direction, compound: compound?(block),
+          children: typed_nodes(children(block), positioned),
+          **shape_geometry(shape, direction, geometry)
         )
+      end
+
+      def shape_geometry(shape, direction, box)
+        case shape
+        when "circle" then circle_geometry(box)
+        when "arrow" then { shape_points: arrow_points(box, direction) }
+        else {}
+        end
+      end
+
+      def circle_geometry(box)
+        {
+          center_x: box[:x] + (box[:width] / 2),
+          center_y: box[:y] + (box[:height] / 2),
+          radius: [box[:width], box[:height]].min / 2,
+        }
+      end
+
+      def arrow_points(box, direction)
+        points = case direction
+                 when "up" then up_arrow_points(box)
+                 when "down" then down_arrow_points(box)
+                 when "left" then left_arrow_points(box)
+                 else right_arrow_points(box)
+                 end
+        points.join(" ")
+      end
+
+      def up_arrow_points(box)
+        x, y, width, height = float_box(box)
+        center_x = x + (width / 2)
+        bottom = y + height
+        ["#{center_x},#{y}", "#{x + width},#{bottom}", "#{x},#{bottom}"]
+      end
+
+      def down_arrow_points(box)
+        x, y, width, height = float_box(box)
+        center_x = x + (width / 2)
+        ["#{x},#{y}", "#{x + width},#{y}", "#{center_x},#{y + height}"]
+      end
+
+      def left_arrow_points(box)
+        x, y, width, height = float_box(box)
+        center_y = y + (height / 2)
+        right = x + width
+        ["#{x},#{center_y}", "#{right},#{y}", "#{right},#{y + height}"]
+      end
+
+      def right_arrow_points(box)
+        x, y, width, height = float_box(box)
+        center_y = y + (height / 2)
+        ["#{x},#{y}", "#{x + width},#{center_y}", "#{x},#{y + height}"]
+      end
+
+      def float_box(box)
+        box.values_at(:x, :y, :width, :height).map(&:to_f)
       end
 
       def block_label(block, geometry)
