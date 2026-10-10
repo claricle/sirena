@@ -6,60 +6,46 @@ require "sirena/parser/mindmap"
 RSpec.describe Sirena::Parser::Mindmap do
   let(:parser) { described_class.new }
 
+  def hierarchy(node)
+    [node.content, node.children.map { |child| hierarchy(child) }]
+  end
+
   describe "#parse" do
     context "with simple root" do
       it "parses a simple root node" do
-        source = <<~MERMAID
-          mindmap
-            root
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram).to be_a(Sirena::Diagram::Mindmap)
-        expect(diagram.root).not_to be_nil
-        expect(diagram.root.content).to eq("root")
-        expect(diagram.root.level).to eq(0)
+        diagram = parser.parse("mindmap\n  root")
+        expect(diagram).to be_a(Sirena::Diagram::Mindmap).and(
+          have_attributes(root: have_attributes(content: "root", level: 0)),
+        )
       end
 
       it "parses a root with indentation" do
-        source = <<~MERMAID
-          mindmap
-              root
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root).not_to be_nil
-        expect(diagram.root.content).to eq("root")
+        root = parser.parse("mindmap\n    root").root
+        expect(root).to have_attributes(content: "root")
       end
     end
 
     context "with hierarchical structure" do
-      it "parses a simple hierarchy" do
-        source = <<~MERMAID
-          mindmap
-              root
-                child1
-                child2
-        MERMAID
+      let(:dedented_source) do
+        "mindmap\n    " \
+          "root\n        " \
+          "branch1\n            " \
+          "mid1\n                " \
+          "leaf1\n        " \
+          "branch2\n"
+      end
 
-        diagram = parser.parse(source)
-        expect(diagram.root.children.size).to eq(2)
-        expect(diagram.root.children.map(&:content)).to eq(["child1", "child2"])
+      it "parses a simple hierarchy" do
+        source = "mindmap\n    root\n      child1\n      child2"
+        children = parser.parse(source).root.children
+        expect(children.map(&:content)).to eq(["child1", "child2"])
       end
 
       it "parses a deeper hierarchy" do
-        source = <<~MERMAID
-          mindmap
-              root
-                child1
-                  leaf1
-                child2
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.children.size).to eq(2)
-        expect(diagram.root.children.first.children.size).to eq(1)
-        expect(diagram.root.children.first.children.first.content).to eq("leaf1")
+        source = "mindmap\n    root\n      child1\n        leaf1\n      child2"
+        root = parser.parse(source).root
+        expected = ["root", [["child1", [["leaf1", []]]], ["child2", []]]]
+        expect(hierarchy(root)).to eq(expected)
       end
 
       it "dedents past multiple levels back to a shallower sibling" do
@@ -68,23 +54,10 @@ RSpec.describe Sirena::Parser::Mindmap do
         # (relative_indent / 2 skipped a level on every 4-space step), so a
         # regression to that calculator fails here even though the 2-space
         # specs above stay green against it.
-        source = "mindmap\n    " \
-                 "root\n        " \
-                 "branch1\n            " \
-                 "mid1\n                " \
-                 "leaf1\n        " \
-                 "branch2\n"
-
-        diagram = parser.parse(source)
-        expect(diagram.root.children.map(&:content)).to eq(["branch1", "branch2"])
-
-        branch1 = diagram.root.children.first
-        expect(branch1.children.size).to eq(1)
-        expect(branch1.children.first.content).to eq("mid1")
-        expect(branch1.children.first.children.map(&:content)).to eq(["leaf1"])
-
-        branch2 = diagram.root.children.last
-        expect(branch2.children).to be_empty
+        root = parser.parse(dedented_source).root
+        expected = ["root", [["branch1", [["mid1", [["leaf1", []]]]]],
+                             ["branch2", []]]]
+        expect(hierarchy(root)).to eq(expected)
       end
 
       it "rejects a second node with nothing above it in the stack" do
@@ -101,99 +74,62 @@ RSpec.describe Sirena::Parser::Mindmap do
     end
 
     context "with node shapes" do
-      it "parses circle nodes" do
-        source = <<~MERMAID
-          mindmap
-           root((the root))
-        MERMAID
+      let(:commented_round_source) do
+        "mindmap\n  root(Root)\n    a(a) %% This is a comment\n    " \
+          "b[New Stuff]\n"
+      end
 
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("circle")
-        expect(diagram.root.content).to eq("the root")
+      it "parses circle nodes" do
+        root = parser.parse("mindmap\n root((the root))").root
+        expect(root).to have_attributes(shape: "circle", content: "the root")
       end
 
       it "parses cloud nodes" do
-        source = <<~MERMAID
-          mindmap
-           root)the root(
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("cloud")
-        expect(diagram.root.content).to eq("the root")
+        root = parser.parse("mindmap\n root)the root(").root
+        expect(root).to have_attributes(shape: "cloud", content: "the root")
       end
 
       it "parses bang nodes" do
-        source = <<~MERMAID
-          mindmap
-           root))the root((
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("bang")
-        expect(diagram.root.content).to eq("the root")
+        root = parser.parse("mindmap\n root))the root((").root
+        expect(root).to have_attributes(shape: "bang", content: "the root")
       end
 
       it "parses hexagon nodes" do
-        source = <<~MERMAID
-          mindmap
-           root{{the root}}
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("hexagon")
-        expect(diagram.root.content).to eq("the root")
+        root = parser.parse("mindmap\n root{{the root}}").root
+        expect(root).to have_attributes(shape: "hexagon", content: "the root")
       end
 
       it "parses square nodes" do
-        source = <<~MERMAID
-          mindmap
-              root[The root]
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("square")
-        expect(diagram.root.content).to eq("The root")
+        root = parser.parse("mindmap\n    root[The root]").root
+        expect(root).to have_attributes(shape: "square", content: "The root")
       end
 
       it "parses a round node (corpus 029, no id prefix)" do
-        source = <<~MERMAID
-          mindmap
-              (root)
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("round")
-        expect(diagram.root.content).to eq("root")
+        root = parser.parse("mindmap\n    (root)").root
+        expect(root).to have_attributes(shape: "round", content: "root")
       end
 
       it "parses a round node with an id prefix" do
-        source = <<~MERMAID
-          mindmap
-              root(The root)
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("round")
-        expect(diagram.root.content).to eq("The root")
+        root = parser.parse("mindmap\n    root(The root)").root
+        expect(root).to have_attributes(shape: "round", content: "The root")
       end
 
-      it "strips exactly one leading newline from multi-line round content (corpus 014)" do
+      it "strips exactly one leading newline from multi-line round content " \
+         "(corpus 014)" do
         source = "mindmap\n    root(\n      The root\n    )"
-
-        diagram = parser.parse(source)
-        expect(diagram.root.shape).to eq("round")
-        expect(diagram.root.content).to eq("      The root\n    ")
+        root = parser.parse(source).root
+        expect(root).to have_attributes(
+          shape: "round", content: "      The root\n    ",
+        )
       end
 
-      it "tolerates a trailing %% comment after a round node's close paren (corpus 049)" do
-        source = "mindmap\n  root(Root)\n    a(a) %% This is a comment\n    b[New Stuff]\n"
-
-        diagram = parser.parse(source)
-        a = diagram.root.children.first
-        expect(a.content).to eq("a")
-        expect(a.shape).to eq("round")
-        expect(diagram.root.children.last.content).to eq("New Stuff")
+      it "tolerates a trailing %% comment after a round node's close paren " \
+         "(corpus 049)" do
+        children = parser.parse(commented_round_source).root.children
+        expect(children).to match(
+          [have_attributes(content: "a", shape: "round"),
+           have_attributes(content: "New Stuff")],
+        )
       end
 
       it "drops a whole-line %% comment, not a node (corpus 048)" do
@@ -235,7 +171,8 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("\nfoo")
       end
 
-      it "strips an embedded %% comment-only line from multi-line round content" do
+      it "strips an embedded %% comment-only line from multi-line round " \
+         "content" do
         source = "mindmap\n  root(\n    one\n    %% hidden\n    two\n  )"
 
         diagram = parser.parse(source)
@@ -273,7 +210,8 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("    one\n    %%\n    two\n  ")
       end
 
-      it "strips an embedded %% comment-only line from quoted multi-line round content" do
+      it "strips an embedded %% comment-only line from quoted multi-line " \
+         "round content" do
         source = "mindmap\n  root(\"\n    %% keep this\n    foo\")"
 
         diagram = parser.parse(source)
@@ -285,7 +223,8 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("\n    foo")
       end
 
-      it "strips a quoted %% comment line even when it contains a literal quote" do
+      it "strips a quoted %% comment line even when it contains a literal " \
+         "quote" do
         source = "mindmap\n  root(\"\n    %% hidden \"\n    foo\")"
 
         diagram = parser.parse(source)
@@ -310,7 +249,8 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("    foo\n  ")
       end
 
-      it "strips a CRLF-terminated leading newline from multi-line round content" do
+      it "strips a CRLF-terminated leading newline from multi-line round " \
+         "content" do
         source = "mindmap\r\n  root(\r\n    The root\r\n  )"
 
         diagram = parser.parse(source)
@@ -323,59 +263,37 @@ RSpec.describe Sirena::Parser::Mindmap do
 
     context "with icons" do
       it "parses nodes with icons" do
-        source = <<~MERMAID
-          mindmap
-              root[The root]
-              ::icon(bomb)
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.icon).to eq("bomb")
+        source = "mindmap\n    root[The root]\n    ::icon(bomb)"
+        root = parser.parse(source).root
+        expect(root.icon).to eq("bomb")
       end
 
       it "parses multiple nodes with icons" do
-        source = <<~MERMAID
-          mindmap
-            root((mindmap))
-              Origins
-                ::icon(fa fa-book)
-        MERMAID
-
-        diagram = parser.parse(source)
-        child = diagram.root.children.first
+        source = "mindmap\n  root((mindmap))\n    Origins\n      " \
+                 "::icon(fa fa-book)"
+        child = parser.parse(source).root.children.first
         expect(child.icon).to eq("fa fa-book")
       end
     end
 
     context "with classes" do
       it "parses nodes with classes" do
-        source = <<~MERMAID
-          mindmap
-              root[The root]
-              :::m-4 p-8
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.classes).to include("m-4", "p-8")
+        root = parser.parse("mindmap\n    root[The root]\n    :::m-4 p-8").root
+        expect(root.classes).to include("m-4", "p-8")
       end
 
       it "parses nodes with both classes and icons" do
-        source = <<~MERMAID
-          mindmap
-              root[The root]
-              :::m-4 p-8
-              ::icon(bomb)
-        MERMAID
-
-        diagram = parser.parse(source)
-        expect(diagram.root.classes).to include("m-4", "p-8")
-        expect(diagram.root.icon).to eq("bomb")
+        source = "mindmap\n    root[The root]\n    :::m-4 p-8\n    ::icon(bomb)"
+        root = parser.parse(source).root
+        expect(root).to have_attributes(
+          classes: include("m-4", "p-8"), icon: "bomb",
+        )
       end
     end
 
     context "with complex structures" do
-      it "parses a full example mindmap" do
-        source = <<~MERMAID
+      let(:full_example_source) do
+        <<~MERMAID
           mindmap
             root((mindmap))
               Origins
@@ -394,58 +312,54 @@ RSpec.describe Sirena::Parser::Mindmap do
                 Pen and paper
                 Mermaid
         MERMAID
+      end
 
-        diagram = parser.parse(source)
-        expect(diagram.root).not_to be_nil
-        expect(diagram.root.content).to eq("mindmap")
-        expect(diagram.root.shape).to eq("circle")
-        expect(diagram.root.children.size).to eq(3)
-
-        origins = diagram.root.children[0]
-        expect(origins.content).to eq("Origins")
-        expect(origins.children.size).to eq(2)
+      it "parses a full example mindmap" do
+        root = parser.parse(full_example_source).root
+        origins = root.children.first
+        values = [root.content, root.shape, root.children.size,
+                  origins.content, origins.children.size]
+        expect(values).to eq(["mindmap", "circle", 3, "Origins", 2])
       end
     end
 
     context "with content on the header line (corpus 019)" do
       it "treats text right after the keyword as the root node" do
-        source = "mindmap-node section-root"
-
-        diagram = parser.parse(source)
-        expect(diagram.root).not_to be_nil
-        expect(diagram.root.content).to eq("-node section-root")
-        expect(diagram.root.level).to eq(0)
+        root = parser.parse("mindmap-node section-root").root
+        expect(root).to have_attributes(content: "-node section-root", level: 0)
       end
     end
 
     context "with no real newline after the header (corpus 054)" do
       it "takes the whole remainder of the line as the root node" do
         source = 'mindmap\n  root\n    Photograph\n      Waterfall'
-
-        diagram = parser.parse(source)
-        expect(diagram.root).not_to be_nil
-        expect(diagram.root.content).to eq(source.sub("mindmap", ""))
+        root = parser.parse(source).root
+        expect(root).to have_attributes(content: source.sub("mindmap", ""))
       end
     end
 
     context "with the header keyword boundary" do
+      let(:header_comment_sources) do
+        ["mindmap %% comment\n  root", "mindmap\t%% comment\n  root"]
+      end
+
       # Keep this: it is the only check on the `match['a-zA-Z0-9_'].absent?`
       # guard in grammars/mindmap.rb's header rule. A whole-file revert of
       # that rule stays green here too (the old rule rejected the same inputs
       # for an unrelated reason), so it becomes the only check once a future
       # change loosens header_tail further and that coincidence stops holding.
       it "rejects an identifier that merely starts with mindmap" do
-        %w[mindmapfoo mindmap_foo mindmap1].each do |source|
-          expect { parser.parse(source) }.to raise_error(Sirena::Parser::ParseError)
+        attempts = %w[mindmapfoo mindmap_foo mindmap1].map do |source|
+          proc { parser.parse(source) }
         end
+        expect(attempts).to all(raise_error(Sirena::Parser::ParseError))
       end
 
       it "still accepts a space or hyphen right after the keyword" do
-        diagram = parser.parse("mindmap foo")
-        expect(diagram.root.content).to eq("foo")
-
-        diagram = parser.parse("mindmap-foo")
-        expect(diagram.root.content).to eq("-foo")
+        contents = ["mindmap foo", "mindmap-foo"].map do |source|
+          parser.parse(source).root.content
+        end
+        expect(contents).to eq(["foo", "-foo"])
       end
 
       it "treats a tab after the keyword as an inert separator" do
@@ -453,28 +367,28 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("root")
       end
 
-      it "discards a comment trailing the header and reads root from the next line" do
-        [
-          "mindmap %% comment\n  root",
-          "mindmap\t%% comment\n  root",
-        ].each do |source|
-          diagram = parser.parse(source)
-          expect(diagram.root.content).to eq("root")
+      it "discards a comment trailing the header and reads root from the " \
+         "next line" do
+        contents = header_comment_sources.map do |source|
+          parser.parse(source).root.content
         end
+        expect(contents).to eq(["root", "root"])
       end
 
-      it "still finds the root when two or more separators follow the keyword" do
-        diagram = parser.parse("mindmap  root\n    child")
-
-        expect(diagram.root.content).to eq("root")
-        expect(diagram.root.children.map(&:content)).to eq(["child"])
+      it "still finds the root when two or more separators follow the " \
+         "keyword" do
+        root = parser.parse("mindmap  root\n    child").root
+        expect(root).to have_attributes(
+          content: "root", children: match([have_attributes(content: "child")]),
+        )
       end
 
       it "discards a comment even when several separators precede it" do
         diagram = parser.parse("mindmap  %% comment\n  root")
-
-        expect(diagram.root.content).to eq("root")
-        expect(diagram.nodes.size).to eq(1)
+        expect(diagram).to have_attributes(
+          root: have_attributes(content: "root"),
+          nodes: have_attributes(size: 1),
+        )
       end
 
       it "does not leave a trailing separator inside the root's label" do
@@ -483,7 +397,8 @@ RSpec.describe Sirena::Parser::Mindmap do
         expect(diagram.root.content).to eq("foo")
       end
 
-      it "counts the separator after the keyword as the inline root's indent, " \
+      it "counts the separator after the keyword as the inline root's " \
+         "indent, " \
          "so a later line at the same indent is a second root" do
         # Mermaid's own lexer turns the run of spaces right after "mindmap"
         # into the root's SPACELIST token, and mindmapDb.addNode sets
