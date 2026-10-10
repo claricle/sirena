@@ -40,6 +40,15 @@ RSpec.describe SpecSupport::LayoutParity::GanttRecognizer do
     [first, last, first, last]
   end
 
+  def repeated_task_counts
+    name = "005_platform_click_security_loose_gantt_4"
+    svg = reference_svg("gantt/#{name}.svg")
+    labels = recognized(svg).filter_map do |kind, label, _identity|
+      label if kind == :task && label.include?("diagram to demo page")
+    end
+    labels.tally
+  end
+
   it "keys the real task by its row label on both sides" do
     task = [[:task, "Design jison grammar", :label]]
 
@@ -48,5 +57,12 @@ RSpec.describe SpecSupport::LayoutParity::GanttRecognizer do
 
   it "reads the same first and last date tick on both sides" do
     expect(tick_extremes).to eq(expected_tick_extremes)
+  end
+
+  it "keeps repeated task labels on their own adjacent rows" do
+    expect(repeated_task_counts).to eq(
+      "Add gantt diagram to demo page" => 2,
+      "Add another diagram to demo page" => 2,
+    )
   end
 end
