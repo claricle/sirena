@@ -29,6 +29,7 @@ module Sirena
         scene.axes.each { |axis| render_axis(axis, svg) }
         scene.curves.each { |curve| render_curve(curve, svg) }
         scene.legend.each { |entry| render_legend(entry, svg) }
+        svg << label_element(scene.title) if scene.title
         svg
       end
 
