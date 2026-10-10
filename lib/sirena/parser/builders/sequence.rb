@@ -62,6 +62,7 @@ module Sirena
           if tree.is_a?(Array)
             tree.each do |item|
               next if item[:header] # Skip header
+
               process_statement(diagram, item)
             end
           end
