@@ -76,9 +76,18 @@ RSpec.describe Sirena::Renderer::Requirement do
   context "with a layout that has no sections" do
     it "renders an empty document and wraps empty text to no lines",
        :aggregate_failures do
-      renderer = described_class.new(theme: Sirena::Theme::Registry.get(:default))
-      expect(renderer.render({}).to_xml).not_to include("<text")
-      expect(renderer.send(:wrap_text, "", 100, 12)).to eq([])
+      expect(empty_layout_evidence).to eq([false, []])
     end
+  end
+
+  def empty_layout_evidence
+    theme = Sirena::Theme::Registry.get(:default)
+    renderer = described_class.new(theme: theme)
+    scene = Sirena::Layout::Requirement::Scene.new(
+      width: 800, height: 600, view_box: "0 0 800 600",
+    )
+    layout = Sirena::Layout::Requirement.new
+    [renderer.render(scene).to_xml.include?("<text"),
+     layout.send(:wrap_text, "", 100, 12)]
   end
 end

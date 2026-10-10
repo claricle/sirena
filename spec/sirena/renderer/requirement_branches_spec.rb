@@ -3,6 +3,15 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Renderer::Requirement do
+  subject(:renderer) { described_class.new(theme: Sirena::Theme.new) }
+
+  def diagram(requirements: [], elements: [], relationships: [])
+    Sirena::Diagram::Requirement.new(
+      requirements: requirements, elements: elements,
+      relationships: relationships
+    )
+  end
+
   def requirement(**attributes)
     Sirena::Diagram::RequirementNode.new({ name: "need" }.merge(attributes))
   end
@@ -11,92 +20,87 @@ RSpec.describe Sirena::Renderer::Requirement do
     Sirena::Diagram::RequirementElement.new({ name: "part" }.merge(attributes))
   end
 
-  def positioned(item, x_position: 10, y_position: 20, width: 180, height: 120)
-    {
-      requirement: item,
-      x: x_position,
-      y: y_position,
-      width: width,
-      height: height,
-    }
+  def relationship(**attributes)
+    Sirena::Diagram::RequirementRelationship.new(attributes)
   end
 
-  def positioned_element(item)
-    { element: item, x: 220, y: 20, width: 160, height: 100 }
+  it "uses an explicit typed empty canvas without drawing sections" do
+    svg = renderer.render(empty_scene)
+    contains_drawing = svg.to_xml.match?(/<(?:g|text|rect|path|polygon)\b/)
+    expect([svg.width, svg.height, contains_drawing]).to eq([800, 600, false])
   end
 
-  let(:renderer) { described_class.new(theme: Sirena::Theme.new) }
-  let(:empty_svg) { renderer.render({}) }
-  let(:fallback_xml) do
-    item = requirement(type: "customNeed", risk: "surprising")
-    renderer.render(
-      width: 400,
-      height: 180,
-      requirements: { "need" => positioned(item) },
-      elements: { "part" => positioned_element(element) },
-    ).to_xml
+  it "falls back for an unknown type and risk while title-casing the risk" do
+    evidence = xml_evidence(unknown_requirement_xml,
+                            "&lt;&lt;customNeed&gt;&gt;", "Risk: Surprising",
+                            'stroke="#666"')
+    expect(evidence).to eq([true, true, true])
   end
-  let(:relationships) do
-    [
-      {
-        source: "part", target: "need", type: "satisfies",
-        from_x: 300, from_y: 120, to_x: 100, to_y: 140
-      },
-      {
-        source: nil, target: nil,
-        from_x: 20, from_y: 160, to_x: 180, to_y: 160
-      },
+
+  it "emits the element fallback stereotype without absent properties" do
+    xml = bare_element_xml
+    evidence = [xml.include?("&lt;&lt;Element&gt;&gt;"),
+                xml.match?(/>(?:ID|Text|Verification|Type|Doc Ref):/)]
+    expect(evidence).to eq([true, false])
+  end
+
+  it "keeps only relationships whose named endpoints resolve" do
+    expect(filtered_scene.edges.map { |edge| [edge.source, edge.target] })
+      .to eq([%w[part need]])
+  end
+
+  it "renders each typed relationship path, label, and head" do
+    xml = rendered_relationship_xml
+    evidence = xml_evidence(xml, 'id="relationship-part-need"',
+                            "&lt;&lt;satisfies&gt;&gt;")
+    expect([*evidence, xml.scan("<path").size, xml.scan("<polygon").size])
+      .to eq([true, true, 1, 2])
+  end
+
+  def empty_scene
+    Sirena::Layout::Requirement::Scene.new(
+      width: 800, height: 600, view_box: "0 0 800 600",
+    )
+  end
+
+  def unknown_requirement_xml
+    scene = Sirena::Layout::Requirement.new.call(
+      diagram(requirements: [requirement(type: "customNeed",
+                                         risk: "surprising")]),
+    )
+    renderer.render(scene).to_xml
+  end
+
+  def bare_element_xml
+    scene = Sirena::Layout::Requirement.new.call(
+      diagram(elements: [element]),
+    )
+    renderer.render(scene).to_xml
+  end
+
+  def filtered_scene
+    relations = [
+      relationship(source: "part", target: "need", type: "satisfies"),
+      relationship(source: "missing", target: "need", type: "verifies"),
     ]
-  end
-  let(:relationships_xml) do
-    renderer.render(
-      width: 400, height: 200, relationships: relationships,
-    ).to_xml
-  end
-
-  it "uses the default canvas when sections are absent" do
-    expect(empty_svg).to have_attributes(width: 800.0, height: 600.0)
+    Sirena::Layout::Requirement.new.call(
+      diagram(requirements: [requirement], elements: [element],
+              relationships: relations),
+    )
   end
 
-  it "leaves the default canvas empty" do
-    expect(empty_svg.to_xml).not_to match(/<(?:g|text|rect|path|polygon)\b/)
+  def rendered_relationship_xml
+    relation = relationship(
+      source: "part", target: "need", type: "satisfies",
+    )
+    scene = Sirena::Layout::Requirement.new.call(
+      diagram(requirements: [requirement], elements: [element],
+              relationships: [relation]),
+    )
+    renderer.render(scene).to_xml
   end
 
-  it "falls back for an unknown requirement type" do
-    expect(fallback_xml)
-      .to include("&lt;&lt;customNeed&gt;&gt;", 'stroke="#666"')
-  end
-
-  it "title-cases an unknown risk" do
-    expect(fallback_xml).to include("Risk: Surprising")
-  end
-
-  it "uses the element fallback type" do
-    expect(fallback_xml).to include("&lt;&lt;Element&gt;&gt;")
-  end
-
-  it "omits absent optional properties" do
-    pattern = />(?:ID|Text|Verification|Type|Doc Ref):/
-    expect(fallback_xml).not_to match(pattern)
-  end
-
-  it "identifies relationships with named endpoints" do
-    expect(relationships_xml).to include('id="relationship-part-need"')
-  end
-
-  it "identifies relationships with missing endpoints" do
-    expect(relationships_xml).to include('id="relationship--"')
-  end
-
-  it "labels typed relationships" do
-    expect(relationships_xml).to include("&lt;&lt;satisfies&gt;&gt;")
-  end
-
-  it "draws each relationship path" do
-    expect(relationships_xml.scan("<path").size).to eq(2)
-  end
-
-  it "draws each relationship head" do
-    expect(relationships_xml.scan("<polygon").size).to eq(2)
+  def xml_evidence(xml, *fragments)
+    fragments.map { |fragment| xml.include?(fragment) }
   end
 end

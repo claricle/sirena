@@ -1,0 +1,111 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Sirena::Layout::C4 do
+  subject(:layout) { described_class.new }
+
+  def flatten(nodes)
+    nodes.flat_map { |node| [node, *flatten(node.children)] }
+  end
+
+  def diagram(elements: [], relationships: [], boundaries: [])
+    Sirena::Diagram::C4.new(
+      level: "Context", elements: elements, relationships: relationships,
+      boundaries: boundaries
+    )
+  end
+
+  def element(id, type: "System", boundary_id: nil)
+    Sirena::Diagram::C4Element.new(
+      id: id, label: id.upcase, element_type: type,
+      boundary_id: boundary_id
+    )
+  end
+
+  def boundary_endpoint_diagram
+    boundary = Sirena::Diagram::C4Boundary.new(
+      id: "scope", label: "Scope", boundary_type: "System_Boundary",
+    )
+    relationship = Sirena::Diagram::C4Relationship.new(
+      from_id: "scope", to_id: "a", label: "bad",
+    )
+    diagram(elements: [element("a")], relationships: [relationship],
+            boundaries: [boundary])
+  end
+
+  let(:context_scene) do
+    source = File.read("examples/c4/01-context-diagram.mmd")
+    layout.call(Sirena::Parser::C4.new.parse(source))
+  end
+  let(:context_nodes) { context_scene.children.to_h { |node| [node.id, node] } }
+  let(:container_scene) do
+    source = File.read("examples/c4/02-container-diagram.mmd")
+    layout.call(Sirena::Parser::C4.new.parse(source))
+  end
+  let(:container_nodes) { flatten(container_scene.children) }
+
+  it "returns a typed Scene" do
+    expect(context_scene).to be_a(described_class::Scene)
+  end
+
+  it "stores a person's final default dimensions" do
+    expect(context_nodes["user"]).to have_attributes(
+      kind: "person", width: described_class::PERSON_WIDTH.to_f,
+      height: described_class::PERSON_HEIGHT.to_f
+    )
+  end
+
+  it "stores a system's final default dimensions" do
+    expect(context_nodes["webapp"]).to have_attributes(
+      kind: "system", width: described_class::SYSTEM_WIDTH.to_f,
+      height: described_class::SYSTEM_HEIGHT.to_f
+    )
+  end
+
+  it "sizes the final canvas from recursively nested children plus padding" do
+    width = container_nodes.map { |node| node.x + node.width }.max
+    height = container_nodes.map { |node| node.y + node.height }.max
+    padding = described_class::DIAGRAM_PADDING
+    expect([container_scene.width, container_scene.height])
+      .to eq([width, height].map { |size| size + padding })
+  end
+
+  it "keeps nested boundary children" do
+    boundary = container_scene.children.find { |node| node.id == "ecommerce" }
+    expect(boundary.children).not_to be_empty
+  end
+
+  it "normalizes an unclassified valid element to a system node" do
+    scene = layout.call(diagram(elements: [element("x", type: "Unknown")]))
+
+    expect(scene.children.first).to have_attributes(
+      id: "x", kind: "system", width: described_class::SYSTEM_WIDTH.to_f,
+      height: described_class::SYSTEM_HEIGHT.to_f
+    )
+  end
+
+  it "refuses a relationship with a missing endpoint" do
+    relation = Sirena::Diagram::C4Relationship.new(from_id: nil, to_id: "b")
+    invalid = diagram(elements: [element("b")], relationships: [relation])
+    expect { layout.call(invalid) }
+      .to raise_error(Sirena::Layout::LayoutError)
+  end
+
+  it "refuses a relationship with an unknown endpoint" do
+    expect { layout.call(unknown_endpoint_diagram) }
+      .to raise_error(Sirena::Layout::LayoutError)
+  end
+
+  it "does not accept a boundary as a relationship endpoint" do
+    expect { layout.call(boundary_endpoint_diagram) }
+      .to raise_error(Sirena::Layout::LayoutError)
+  end
+
+  def unknown_endpoint_diagram
+    relation = Sirena::Diagram::C4Relationship.new(
+      from_id: "a", to_id: "missing",
+    )
+    diagram(elements: [element("a")], relationships: [relation])
+  end
+end

@@ -2,482 +2,348 @@
 
 require "spec_helper"
 
-module LayoutArchitectureSpecHelpers
-  module_function
-
-  def rectangles_overlap?(a, b)
-    a[:x] < b[:x] + b[:width] && b[:x] < a[:x] + a[:width] &&
-      a[:y] < b[:y] + b[:height] && b[:y] < a[:y] + a[:height]
-  end
-
-  def group_double(id)
-    Sirena::Diagram::Architecture::Group.new(id: id, label: id, icon: "cloud")
-  end
-
-  def junction_double(id)
-    Sirena::Diagram::Architecture::Junction.new(id: id, group_id: nil)
-  end
-end
-
 RSpec.describe Sirena::Layout::Architecture do
-  let(:transform) { described_class.new }
+  subject(:layout) { described_class.new }
 
-  describe "#to_graph" do
-    context "with a junction routing an edge between two services" do
-      # Mirrors spec/mermaid/architecture/011: services connect through a
-      # junction rather than to each other directly.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "left", label: "Left", icon: "server"),
-            Sirena::Diagram::Architecture::Service.new(id: "right", label: "Right", icon: "server"),
-          ],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "mid", group_id: nil),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "left", to_id: "mid", from_position: "R", to_position: "L"),
-            Sirena::Diagram::Architecture::Edge.new(from_id: "mid", to_id: "right", from_position: "R", to_position: "L"),
-          ],
-        )
-      end
+  def service(id, group_id: nil)
+    Sirena::Diagram::Architecture::Service.new(
+      id: id, label: id.upcase, icon: "server", group_id: group_id,
+    )
+  end
 
-      it "positions the junction alongside the services" do
-        graph = transform.to_graph(diagram)
+  def junction(id, group_id: nil)
+    Sirena::Diagram::Architecture::Junction.new(id: id, group_id: group_id)
+  end
 
-        expect(graph[:junctions]).to have_key("mid")
-        mid = graph[:junctions]["mid"]
-        expect(mid[:width]).to eq(described_class::DEFAULT_JUNCTION_SIZE)
-        expect(mid[:height]).to eq(described_class::DEFAULT_JUNCTION_SIZE)
-      end
+  def group(id, parent_id: nil)
+    Sirena::Diagram::Architecture::Group.new(
+      id: id, label: id.upcase, icon: "cloud", parent_id: parent_id,
+    )
+  end
 
-      it "resolves edges that connect to the junction, not only services" do
-        graph = transform.to_graph(diagram)
+  def edge(source, target, from: "R", to: "L", label: nil)
+    Sirena::Diagram::Architecture::Edge.new(
+      from_id: source, to_id: target, from_position: from,
+      to_position: to, label: label
+    )
+  end
 
-        # Both edges route through "mid" - if position_edges only looked up
-        # service_positions, neither would resolve and both would be dropped.
-        expect(graph[:edges].length).to eq(2)
-        expect(graph[:edges].map { |e| [e[:edge].from_id, e[:edge].to_id] })
-          .to eq([%w[left mid], %w[mid right]])
-      end
-    end
+  def diagram(services: [], junctions: [], groups: [], edges: [])
+    Sirena::Diagram::Architecture.new(
+      services: services, junctions: junctions, groups: groups, edges: edges,
+    )
+  end
 
-    context "with only a junction and no services or groups" do
-      let(:junction_only_diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [],
-          junctions: [Sirena::Diagram::Architecture::Junction.new(id: "mid", group_id: nil)],
-          groups: [],
-          edges: [],
-        )
-      end
+  def overlap?(left, right)
+    left.x < right.x + right.width && right.x < left.x + left.width &&
+      left.y < right.y + right.height && right.y < left.y + left.height
+  end
 
-      it "sizes the canvas from the junction, not only services and groups" do
-        graph = transform.to_graph(junction_only_diagram)
-        mid = graph[:junctions]["mid"]
+  def points(edge)
+    section = edge.sections.first
+    [section.start_point, *section.bend_points, section.end_point]
+  end
 
-        # With no service or group extents, an unaccounted-for junction
-        # would leave width/height at the bare DEFAULT_SPACING floor.
-        expect(graph[:width]).to eq(mid[:x] + mid[:width] + described_class::DEFAULT_SPACING)
-        expect(graph[:height]).to eq(mid[:y] + mid[:height] + described_class::DEFAULT_SPACING)
-      end
-    end
-
-    context "with a junction in the same group as a service" do
-      # Mirrors the constructed input from the round-5 Codex review:
-      # service a(server)[A] / junction j / a:R -- L:j
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server"),
-          ],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "j", group_id: nil),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "j", from_position: "R", to_position: "L"),
-          ],
-        )
-      end
-
-      it "does not place the junction on top of the service" do
-        graph = transform.to_graph(diagram)
-        service = graph[:services]["a"]
-        junction = graph[:junctions]["j"]
-
-        expect(LayoutArchitectureSpecHelpers.rectangles_overlap?(service, junction)).to be(false)
-      end
-    end
-
-    context "with a junction in a group that has no services of its own" do
-      # Mirrors the round-2 Codex review: group g(cloud)[G] / service a(server)[A]
-      # (outside g) / junction j in g. The junction's own group has no
-      # services to anchor its row against, so it falls back to a shared
-      # cursor - which must clear every service in the WHOLE diagram, not
-      # just start at DEFAULT_SPACING regardless of what other groups
-      # already placed there.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server"),
-          ],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "j", group_id: "g"),
-          ],
-          groups: [
-            Sirena::Diagram::Architecture::Group.new(id: "g", label: "G", icon: "cloud"),
-          ],
-          edges: [],
-        )
-      end
-
-      it "does not place the junction on a service positioned under a different group" do
-        graph = transform.to_graph(diagram)
-        service = graph[:services]["a"]
-        junction = graph[:junctions]["j"]
-
-        expect(LayoutArchitectureSpecHelpers.rectangles_overlap?(service, junction)).to be(false)
-      end
-    end
-
-    context "with a junction naming a group nobody declared" do
-      # service s1(server)[S1] / junction j1 in nosuchgroup / s1:R --> L:j1.
-      # `in <group>` names a group_id, not a reference to a declared
-      # Group — nothing upstream checks it resolves. position_junctions
-      # only walks [:root] + diagram.groups.map(&:id), so a group_id
-      # matching no declared group used to make the junction (and its
-      # edge) vanish from the graph with no error at all. Refused up
-      # front by Architecture#valid? instead.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "s1", label: "S1", icon: "server"),
-          ],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "j1", group_id: "nosuchgroup"),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "s1", to_id: "j1", from_position: "R", to_position: "L"),
-          ],
-        )
-      end
-
-      it "raises instead of silently dropping the junction and its edge" do
-        expect { transform.to_graph(diagram) }
-          .to raise_error(Sirena::Layout::LayoutError)
-      end
-    end
-
-    context "with a junction positioned on the wrong side of a directional edge" do
-      # service a(server)[A] / junction j / j:R -- L:a. The junction's
-      # default placement lands to the RIGHT of a, but the edge hint asks
-      # for j's right face to meet a's left face.
-      #
-      # The transform does NOT mirror which face a line attaches to -
-      # ArchitectureEdgeRouter draws around the obstacle instead (see
-      # architecture_edge_router_spec.rb's obstacle-routing contexts), so
-      # this spec only needs to check the transform hands back the literal
-      # declared side, unmirrored.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server"),
-          ],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "j", group_id: nil),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "j", to_id: "a", from_position: "R", to_position: "L"),
-          ],
-        )
-      end
-
-      it "resolves to the literal declared side, never a mirrored one" do
-        graph = transform.to_graph(diagram)
-        edge = graph[:edges].first
-
-        expect(edge[:from_side]).to eq("R")
-        expect(edge[:to_side]).to eq("L")
-      end
-    end
-
-    context "with a grammar-valid but multi-character position token" do
-      # a:RT -- L:b. The grammar's match("[LRTB]").repeat(1) has no upper
-      # bound, so "RT" parses cleanly - grammar-valid input, not something
-      # this diagram type refuses. ArchitectureEdgeRouter::FACE_NORMAL only
-      # has single-character keys ("L"/"R"/"T"/"B"), so passing "RT" through
-      # raises the moment the router's search actually runs (the straight
-      # line short-circuit hides it when nothing forces a detour). The old
-      # pre-router code never raised here - calculate_connection_point's
-      # case/when/else silently defaulted an unrecognized value - so this
-      # is a regression the router's stricter FACE_NORMAL lookup
-      # introduced, fixed at the boundary where the raw token first meets
-      # a real diagram: never hand the router something it cannot look up.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "a", label: "A", icon: "server"),
-            Sirena::Diagram::Architecture::Service.new(id: "b", label: "B", icon: "server"),
-          ],
-          groups: [],
-          edges: [
-            Sirena::Diagram::Architecture::Edge.new(from_id: "a", to_id: "b", from_position: "RT",
-                                                    to_position: "L"),
-          ],
-        )
-      end
-
-      it "falls back to a recognized face rather than passing the raw token through" do
-        graph = transform.to_graph(diagram)
-        edge = graph[:edges].first
-
-        expect(%w[L R T B].include?(edge[:from_side])).to be(true)
-        expect(%w[L R T B].include?(edge[:to_side])).to be(true)
-      end
-    end
-
-    context "with a group whose only member is a junction" do
-      # Mirrors the round-5 Codex review: group g(cloud)[G] / junction j in g
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [],
-          junctions: [
-            Sirena::Diagram::Architecture::Junction.new(id: "j", group_id: "g"),
-          ],
-          groups: [
-            Sirena::Diagram::Architecture::Group.new(id: "g", label: "G", icon: "cloud"),
-          ],
-          edges: [],
-        )
-      end
-
-      it "draws a boundary around the group instead of dropping it" do
-        graph = transform.to_graph(diagram)
-
-        expect(graph[:groups]).to have_key("g")
-      end
-
-      it "sizes the boundary to actually contain the junction" do
-        graph = transform.to_graph(diagram)
-        bounds = graph[:groups]["g"]
-        junction = graph[:junctions]["j"]
-
-        expect(bounds[:x]).to be <= junction[:x]
-        expect(bounds[:y]).to be <= junction[:y]
-        expect(bounds[:x] + bounds[:width]).to be >= junction[:x] + junction[:width]
-        expect(bounds[:y] + bounds[:height]).to be >= junction[:y] + junction[:height]
-      end
-    end
-
-    context "with a parent group declared before its childless-of-its-own child" do
-      # A parent group with no direct service/junction reads its child's
-      # bounds in calculate_group_bounds. diagram.groups is source order,
-      # and mermaid's natural nesting syntax declares the parent group
-      # first (`group outer` then `group inner in outer`) - if bounds are
-      # built in that same order, the parent reads bounds["inner"] before
-      # "inner" has been processed, gets nil, and its min/max stay at their
-      # Float::INFINITY/-INFINITY seed forever, which later NaNs out in
-      # calculate_total_width/height's Infinity + -Infinity arithmetic.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "s", label: "S", icon: "server", group_id: "inner"),
-          ],
-          junctions: [],
-          groups: [
-            Sirena::Diagram::Architecture::Group.new(id: "outer", label: "Outer", icon: "cloud"),
-            Sirena::Diagram::Architecture::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "outer"),
-          ],
-          edges: [],
-        )
-      end
-
-      it "does not crash rendering the width and height" do
-        graph = transform.to_graph(diagram)
-
-        expect(graph[:width]).to be_a(Numeric).and be_finite
-        expect(graph[:height]).to be_a(Numeric).and be_finite
-      end
-
-      it "gives the outer group a bounding box that contains the inner group" do
-        graph = transform.to_graph(diagram)
-        outer = graph[:groups]["outer"]
-        inner = graph[:groups]["inner"]
-
-        expect(outer[:x]).to be <= inner[:x]
-        expect(outer[:y]).to be <= inner[:y]
-        expect(outer[:x] + outer[:width]).to be >= inner[:x] + inner[:width]
-        expect(outer[:y] + outer[:height]).to be >= inner[:y] + inner[:height]
-      end
-    end
-
-    context "with a chain of nested groups that have no services or junctions anywhere" do
-      # The single-level fix above lets a parent read an already-bounded
-      # child. A THREE-deep chain where every group is empty exercises a
-      # different path: the middle group has no members of its own but a
-      # non-empty child_groups list, so it does not hit the direct-leaf
-      # skip either - it falls into the "use child group bounds" branch,
-      # finds its own child has no bounds entry, and (before this fix)
-      # wrote an Infinity/-Infinity entry of its own, which then NaN'd out
-      # the outermost group's max_x/max_y comparison one level further up.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [],
-          junctions: [],
-          groups: [
-            Sirena::Diagram::Architecture::Group.new(id: "outer", label: "Outer", icon: "cloud"),
-            Sirena::Diagram::Architecture::Group.new(id: "mid", label: "Mid", icon: "cloud", parent_id: "outer"),
-            Sirena::Diagram::Architecture::Group.new(id: "inner", label: "Inner", icon: "cloud", parent_id: "mid"),
-          ],
-          edges: [],
-        )
-      end
-
-      it "does not crash rendering the width and height" do
-        graph = transform.to_graph(diagram)
-
-        expect(graph[:width]).to be_a(Numeric).and be_finite
-        expect(graph[:height]).to be_a(Numeric).and be_finite
-      end
-
-      it "draws no bounding box for any of the three empty groups" do
-        graph = transform.to_graph(diagram)
-
-        expect(graph[:groups]).to be_empty
-      end
-    end
-
-    context "with a cyclic group parent chain" do
-      # group a in b / group b in a - grammar-valid (nothing upstream
-      # validates that Group#parent_id chains terminate). A group being
-      # its own ancestor is malformed regardless of whether each cyclic
-      # group happens to carry its own service, so
-      # Architecture#valid? refuses the whole shape up front
-      # (Containment.looping_pair, the same check Flowchart#parent_cycle?
-      # uses) rather than letting group_depth's recursion-cutoff produce a
-      # bounding box for it. That cutoff still exists to keep group_depth
-      # itself from looping forever on a diagram built by hand that
-      # bypasses #valid? — see spec/sirena/renderer/architecture_spec.rb,
-      # "with a cyclic group parent chain", which proves the renderer's
-      # own equivalent guard the same way, on a hand-built layout that
-      # never goes through #valid?.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [
-            Sirena::Diagram::Architecture::Service.new(id: "s1", label: "S1", icon: "server", group_id: "a"),
-            Sirena::Diagram::Architecture::Service.new(id: "s2", label: "S2", icon: "server", group_id: "b"),
-          ],
-          junctions: [],
-          groups: [
-            Sirena::Diagram::Architecture::Group.new(id: "a", label: "A", icon: "cloud", parent_id: "b"),
-            Sirena::Diagram::Architecture::Group.new(id: "b", label: "B", icon: "cloud", parent_id: "a"),
-          ],
-          edges: [],
-        )
-      end
-
-      it "refuses the diagram instead of rendering a nonsensical hierarchy" do
-        expect { Timeout.timeout(2) { transform.to_graph(diagram) } }
-          .to raise_error(Sirena::Layout::LayoutError)
-      end
+  def segment_crosses?(node, first, last)
+    (0..200).any? do |index|
+      ratio = index / 200.0
+      point_inside?(node, *point_on_segment(first, last, ratio))
     end
   end
 
-  describe "#position_junctions (direct)" do
-    # These call the private method directly with hand-built inputs so the
-    # cursor arithmetic can be pinned exactly, independent of what
-    # position_services would ever actually produce.
-    let(:transform) { described_class.new }
-    let(:root_group) { :root }
+  def point_on_segment(first, last, ratio)
+    [first.x + ((last.x - first.x) * ratio),
+     first.y + ((last.y - first.y) * ratio)]
+  end
 
-    context "when a group has zero junctions but does have services" do
-      # Mirrors the `next if junctions.empty?` guard at position_junctions.
-      # Without it, a junction-less group would still fall into the
-      # group_services.any? branch and shift the cursor for every group
-      # that follows, using a row computed for junctions that don't exist.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [], groups: [LayoutArchitectureSpecHelpers.group_double("g1")], junctions: [], edges: [],
-        )
-      end
-      let(:hierarchy) do
-        { junctions_by_group: { root: [], "g1" => [LayoutArchitectureSpecHelpers.junction_double("j1")] } }
-      end
-      let(:service_positions) do
-        { "svcA" => { x: 0, y: 0, width: 20, height: 0, group_id: root_group } }
-      end
+  def point_inside?(node, x_coord, y_coord)
+    x_coord > node.x && x_coord < node.x + node.width &&
+      y_coord > node.y && y_coord < node.y + node.height
+  end
 
-      it "leaves the cursor untouched by the empty group" do
-        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+  def routed_scene
+    layout.call(
+      diagram(services: [service("a"), service("b")],
+              edges: [edge("a", "b", label: "HTTP")]),
+    )
+  end
 
-        # junction_fallback_floor(service_positions) = 0 + 0 + DEFAULT_SPACING = 40.
-        # If the empty root group were not skipped, its phantom row (built
-        # from svcA) would push this to 86 before g1 is ever reached.
-        expect(positions["j1"][:y]).to eq(40)
-      end
+  def junction_scene
+    layout.call(
+      diagram(services: [service("a")], junctions: [junction("mid")],
+              edges: [edge("a", "mid")]),
+    )
+  end
+
+  def junction_route_scene
+    layout.call(
+      diagram(services: [service("left"), service("right")],
+              junctions: [junction("mid")],
+              edges: [edge("left", "mid"), edge("mid", "right")]),
+    )
+  end
+
+  def mixed_group_nodes
+    layout.call(
+      diagram(services: [service("a")],
+              junctions: [junction("j", group_id: "g")],
+              groups: [group("g")]),
+    ).children.to_h { |node| [node.id, node] }
+  end
+
+  def same_group_junction_nodes
+    layout.call(
+      diagram(services: [service("svc", group_id: "g")],
+              junctions: [junction("j1", group_id: "g"),
+                          junction("j2", group_id: "g")],
+              groups: [group("g")]),
+    ).children.to_h { |node| [node.id, node] }
+  end
+
+  def separate_group_junction_nodes
+    layout.call(
+      diagram(junctions: [junction("j3", group_id: "g3"),
+                          junction("j4", group_id: "g4")],
+              groups: [group("g3"), group("g4")]),
+    ).children.to_h { |node| [node.id, node] }
+  end
+
+  def service_face_route
+    scene = layout.call(
+      diagram(services: [service("a"), service("b")],
+              edges: [edge("a", "b", from: "RT")]),
+    )
+    [scene.edges.first.sections.first,
+     scene.children.to_h { |node| [node.id, node] }]
+  end
+
+  def junction_face_route
+    scene = layout.call(
+      diagram(services: [service("a")], junctions: [junction("j")],
+              edges: [edge("j", "a", from: "R", to: "L")]),
+    )
+    [scene.edges.first.sections.first,
+     scene.children.to_h { |node| [node.id, node] }]
+  end
+
+  def missing_group_diagram
+    diagram(junctions: [junction("j", group_id: "missing")])
+  end
+
+  def cyclic_group_diagram
+    diagram(
+      services: [service("a", group_id: "one")],
+      groups: [group("one", parent_id: "two"),
+               group("two", parent_id: "one")],
+    )
+  end
+
+  def obstacle_fallback_scene
+    transform = described_class.new
+    allow(transform).to receive(:obstacles_for).and_raise("boom")
+    transform.call(
+      diagram(services: [service("a"), service("b")],
+              edges: [edge("a", "b")]),
+    )
+  end
+
+  def unrelated_group_route
+    scene = layout.call(
+      diagram(
+        services: [service("a", group_id: "ga"),
+                   service("middle", group_id: "gm"),
+                   service("b", group_id: "gb")],
+        groups: [group("ga"), group("gm"), group("gb")],
+        edges: [edge("a", "b", from: "B", to: "T")],
+      ),
+    )
+    [scene, scene.children.find { |node| node.id == "gm" }]
+  end
+
+  it "returns a typed final Scene" do
+    expect(routed_scene).to be_a(described_class::Scene)
+  end
+
+  it "returns typed final nodes" do
+    expect(routed_scene.children).to all(be_a(described_class::Node))
+  end
+
+  it "stores routed edge endpoints" do
+    expect(routed_scene.edges.first)
+      .to have_attributes(source: "a", target: "b")
+  end
+
+  it "stores routed edge labels" do
+    expect(routed_scene.edges.first.labels.first.text).to eq("HTTP")
+  end
+
+  it "positions junctions outside service boxes" do
+    nodes = junction_scene.children.to_h { |node| [node.id, node] }
+    expect(overlap?(nodes["a"], nodes["mid"])).to be(false)
+  end
+
+  it "stores final junction dimensions" do
+    mid = junction_scene.children.find { |node| node.id == "mid" }
+    expect(mid).to have_attributes(
+      width: described_class::DEFAULT_JUNCTION_SIZE.to_f,
+      height: described_class::DEFAULT_JUNCTION_SIZE.to_f,
+    )
+  end
+
+  it "sizes the canvas around positioned junctions" do
+    scene = junction_scene
+    mid = scene.children.find { |node| node.id == "mid" }
+    expect(scene.width).to be >= mid.x + mid.width
+  end
+
+  it "keeps both typed edges that route through a junction" do
+    expect(junction_route_scene.edges.map { |item| [item.source, item.target] })
+      .to eq([%w[left mid], %w[mid right]])
+  end
+
+  it "stores junction routes as typed sections" do
+    expect(junction_route_scene.edges.flat_map(&:sections))
+      .to all(be_a(described_class::Section))
+  end
+
+  it "sizes a junction-only canvas from the junction plus spacing" do
+    scene = layout.call(diagram(junctions: [junction("mid")]))
+    mid = scene.children.fetch(0)
+
+    expect(scene.width).to eq(mid.x + mid.width + described_class::DEFAULT_SPACING)
+    expect(scene.height).to eq(mid.y + mid.height + described_class::DEFAULT_SPACING)
+  end
+
+  it "keeps a junction-only group separate from other services" do
+    expect(overlap?(mixed_group_nodes["a"], mixed_group_nodes["j"]))
+      .to be(false)
+  end
+
+  it "positions a junction-only group below other services" do
+    nodes = mixed_group_nodes
+    expected_y = nodes["a"].y + nodes["a"].height + described_class::DEFAULT_SPACING
+    expect(nodes["j"].y).to eq(expected_y)
+  end
+
+  it "advances junction rows horizontally" do
+    same_group = same_group_junction_nodes
+    expect(same_group["j2"].x - same_group["j1"].x)
+      .to eq(described_class::DEFAULT_JUNCTION_SIZE + described_class::DEFAULT_SPACING)
+  end
+
+  it "keeps junctions in one row vertically aligned" do
+    same_group = same_group_junction_nodes
+    expect(same_group["j2"].y).to eq(same_group["j1"].y)
+  end
+
+  it "advances junction-only groups vertically" do
+    separate_groups = separate_group_junction_nodes
+    expect(separate_groups["j4"].y - separate_groups["j3"].y)
+      .to eq(described_class::DEFAULT_JUNCTION_SIZE + described_class::DEFAULT_SPACING)
+  end
+
+  it "bounds junction-only and nested groups" do
+    scene = layout.call(
+      diagram(junctions: [junction("j", group_id: "inner")],
+              groups: [group("outer"), group("inner", parent_id: "outer")]),
+    )
+    nodes = scene.children.to_h { |node| [node.id, node] }
+    expect(nodes.keys).to include("outer", "inner", "j")
+    expect(overlap?(nodes["inner"], nodes["j"])).to be(true)
+    expect(nodes["inner"].x).to be <= nodes["j"].x
+    expect(nodes["inner"].y).to be <= nodes["j"].y
+    expect(nodes["inner"].x + nodes["inner"].width)
+      .to be >= nodes["j"].x + nodes["j"].width
+    expect(nodes["inner"].y + nodes["inner"].height)
+      .to be >= nodes["j"].y + nodes["j"].height
+    expect(nodes["outer"].x).to be <= nodes["inner"].x
+    expect(nodes["outer"].y).to be <= nodes["inner"].y
+    expect(nodes["outer"].x + nodes["outer"].width)
+      .to be >= nodes["inner"].x + nodes["inner"].width
+    expect(nodes["outer"].y + nodes["outer"].height)
+      .to be >= nodes["inner"].y + nodes["inner"].height
+  end
+
+  it "omits empty group chains without non-finite dimensions" do
+    scene = layout.call(
+      diagram(groups: [group("a"), group("b", parent_id: "a")]),
+    )
+    expect(scene.children).to be_empty
+    expect([scene.width, scene.height]).to all(be_finite)
+  end
+
+  it "stores multi-character face routes as typed points" do
+    section, = service_face_route
+    expect([section.start_point, section.end_point])
+      .to all(be_a(described_class::Point))
+  end
+
+  it "starts multi-character face routes on the recognized source side" do
+    section, nodes = service_face_route
+    expect(section.start_point.x).to eq(nodes["a"].x + nodes["a"].width)
+  end
+
+  it "ends multi-character face routes on the recognized target side" do
+    section, nodes = service_face_route
+    expect(section.end_point.x).to eq(nodes["b"].x)
+  end
+
+  it "uses the literal declared source face even when it points away" do
+    section, nodes = junction_face_route
+    expect(section.start_point.x).to eq(nodes["j"].x + nodes["j"].width)
+  end
+
+  it "uses the literal declared target face even when it points away" do
+    section, nodes = junction_face_route
+    expect(section.end_point.x).to eq(nodes["a"].x)
+  end
+
+  it "refuses missing groups" do
+    expect { layout.call(missing_group_diagram) }
+      .to raise_error(Sirena::Layout::LayoutError)
+  end
+
+  it "refuses cyclic group ancestry" do
+    expect { layout.call(cyclic_group_diagram) }
+      .to raise_error(Sirena::Layout::LayoutError)
+  end
+
+  it "isolates a router failure to its edge and preserves later routing" do
+    transform = described_class.new
+    router = instance_double(Sirena::Renderer::ArchitectureEdgeRouter)
+    calls = 0
+    allow(router).to receive(:route) do |from:, to:, **|
+      calls += 1
+      raise "boom" if calls == 1
+
+      [from[:point], { x: from[:point][:x], y: from[:point][:y] + 10 },
+       to[:point]]
     end
+    allow(transform).to receive(:architecture_edge_router).and_return(router)
+    scene = transform.call(
+      diagram(services: [service("a"), service("b"), service("c")],
+              edges: [edge("a", "b"), edge("b", "c")]),
+    )
 
-    context "with a group with services, then two junction-only groups after it" do
-      # Exercises: per-junction row_x advancement within one group, the
-      # group_services.any? cursor update (row-relative), and the
-      # group_services.empty? cursor update (shared-floor fallback),
-      # chained so each group's effect is visible in the next group's
-      # position rather than only in its own.
-      let(:diagram) do
-        Sirena::Diagram::Architecture.new(
-          services: [],
-          groups: %w[g1 g2 g3].map { |id| LayoutArchitectureSpecHelpers.group_double(id) },
-          junctions: [],
-          edges: [],
-        )
-      end
-      let(:hierarchy) do
-        {
-          junctions_by_group: {
-            root: [],
-            "g1" => %w[j1 j1b].map { |id| LayoutArchitectureSpecHelpers.junction_double(id) },
-            "g2" => [LayoutArchitectureSpecHelpers.junction_double("j2")],
-            "g3" => [LayoutArchitectureSpecHelpers.junction_double("j3")],
-          },
-        }
-      end
-      let(:service_positions) do
-        # height: 0 (unlike any real service, which is always
-        # DEFAULT_SERVICE_HEIGHT) so the group's own row sits below the
-        # global junction_fallback_floor, making the row-relative branch
-        # (group_services.any?) actually raise the cursor instead of being
-        # dominated by the floor every time.
-        { "svcA" => { x: 0, y: 0, width: 20, height: 0, group_id: "g1" } }
-      end
+    expect(scene.edges.length).to eq(2)
+    expect(scene.edges.first.sections.first.bend_points).to be_empty
+    expect(scene.edges.last.sections.first.bend_points.length).to eq(1)
+  end
 
-      it "advances row_x across junctions in the same group" do
-        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
+  it "does not raise when obstacle discovery fails" do
+    expect { obstacle_fallback_scene }.not_to raise_error
+  end
 
-        expect(positions["j1"][:x]).to eq(60)
-        expect(positions["j1b"][:x]).to eq(112)
-      end
+  it "falls back to a straight section when obstacle discovery fails" do
+    expect(obstacle_fallback_scene.edges.first.sections.first.bend_points)
+      .to be_empty
+  end
 
-      it "raises the cursor from the row a group's own services sit on" do
-        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
-
-        # row_top (0) + (DEFAULT_SERVICE_HEIGHT - DEFAULT_JUNCTION_SIZE) / 2.0 (34) = 34
-        expect(positions["j1"][:y]).to eq(34)
-        # group_services.any? branch: current_y = max(40, 34 + 12 + 40) = 86.
-        # g2 has no services of its own, so it falls back to this cursor.
-        expect(positions["j2"][:y]).to eq(86)
-      end
-
-      it "advances the shared cursor again after a junction-only group" do
-        positions = transform.send(:position_junctions, diagram, hierarchy, service_positions)
-
-        # g2 (junction-only) pushes current_y to 86 + 12 + 40 = 138 for g3.
-        expect(positions["j3"][:y]).to eq(138)
-        expect(positions["j3"][:y]).not_to eq(positions["j2"][:y])
-      end
+  it "routes around an unrelated group boundary" do
+    scene, middle = unrelated_group_route
+    crossings = points(scene.edges.first).each_cons(2).map do |first, last|
+      segment_crosses?(middle, first, last)
     end
+    expect(crossings).to all(be(false))
   end
 end

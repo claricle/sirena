@@ -21,6 +21,51 @@ module Sirena
       DEFAULT_SPACING = 20
       DEFAULT_COMPOUND_PADDING = 20
 
+      class Label < Lutaml::Model::Serializable
+        attribute :text, :string
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Node < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :x, :float
+        attribute :y, :float
+        attribute :width, :float
+        attribute :height, :float
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :shape, :string
+        attribute :direction, :string
+        attribute :compound, :boolean, default: false
+        attribute :children, Node, collection: true, default: -> { [] }
+      end
+
+      class Point < Lutaml::Model::Serializable
+        attribute :x, :float
+        attribute :y, :float
+      end
+
+      class Section < Lutaml::Model::Serializable
+        attribute :start_point, Point
+        attribute :end_point, Point
+        attribute :bend_points, Point, collection: true, default: -> { [] }
+      end
+
+      class Edge < Lutaml::Model::Serializable
+        attribute :id, :string
+        attribute :source, :string
+        attribute :target, :string
+        attribute :sections, Section, collection: true, default: -> { [] }
+        attribute :labels, Label, collection: true, default: -> { [] }
+        attribute :connection_type, :string
+      end
+
+      class Scene < Layout::Scene
+        attribute :view_box, :string
+        attribute :children, Node, collection: true, default: -> { [] }
+        attribute :edges, Edge, collection: true, default: -> { [] }
+      end
+
       # Converts a block diagram to a positioned layout structure.
       #
       # @param diagram [Diagram::Block] the block diagram to transform
@@ -39,6 +84,63 @@ module Sirena
       end
 
       private
+
+      def scene(diagram)
+        graph = build_graph(diagram)
+        nodes = typed_nodes(diagram.blocks, graph[:blocks])
+        Scene.new(
+          width: graph[:width], height: graph[:height],
+          view_box: "0 0 #{graph[:width]} #{graph[:height]}",
+          children: nodes,
+          edges: typed_edges(graph[:connections])
+        )
+      end
+
+      def typed_nodes(blocks, positioned)
+        blocks.filter_map do |block|
+          next if block.space?
+
+          typed_node(block, positioned)
+        end
+      end
+
+      def typed_node(block, positioned)
+        geometry = positioned.fetch(block.id)
+        Node.new(
+          id: block.id, x: geometry[:x], y: geometry[:y],
+          width: geometry[:width], height: geometry[:height],
+          labels: block_label(block, geometry), shape: block.shape,
+          direction: block.direction, compound: block.compound?,
+          children: typed_nodes(block.children, positioned)
+        )
+      end
+
+      def block_label(block, geometry)
+        return [] unless block.label && !block.label.empty?
+
+        [Label.new(text: block.label,
+                   x: geometry[:x] + (geometry[:width] / 2),
+                   y: geometry[:y] + (geometry[:height] / 2))]
+      end
+
+      def typed_edges(connections)
+        connections.map.with_index do |connection, index|
+          typed_edge(connection, index)
+        end
+      end
+
+      def typed_edge(connection, index)
+        start_point = Point.new(x: connection[:from_x], y: connection[:from_y])
+        end_point = Point.new(x: connection[:to_x], y: connection[:to_y])
+        Edge.new(
+          id: "edge_#{index}", source: connection[:from],
+          target: connection[:to],
+          sections: [Section.new(
+            start_point: start_point, end_point: end_point,
+          )],
+          connection_type: connection[:connection_type]
+        )
+      end
 
       def calculate_column_layout(diagram)
         columns = diagram.columns
@@ -142,7 +244,7 @@ module Sirena
         end
 
         label = block.label || block.id
-        label_dims = measure_text(label, font_size: 14)
+        label_dims = measure_text(label, font_size: normal_font_size)
 
         # Add padding
         width = [label_dims[:width] + 40, DEFAULT_BLOCK_WIDTH].max
@@ -210,6 +312,11 @@ module Sirena
 
         max_y = blocks_layout.values.map { |b| b[:y] + b[:height] }.max || 0
         max_y + DEFAULT_SPACING
+      end
+
+      def normal_font_size
+        theme.typography&.font_size_normal ||
+          Theme::Registry.get(:default).typography.font_size_normal
       end
     end
   end
