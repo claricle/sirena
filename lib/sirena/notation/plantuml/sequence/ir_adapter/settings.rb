@@ -6,7 +6,7 @@ module Sirena
       module Sequence
         module IRAdapter
           # Encodes what applies to the whole diagram: the footbox, the
-          # appearance skinparam and `<style>` set, and the banners.
+          # appearance skinparam and `<style>` set, the banners and the title.
           module Settings
             KEYS = %i[min_width alignment tab_fill tab_colour tab_size
                       max_message].freeze
@@ -19,6 +19,7 @@ module Sirena
               sink.node("no_footbox") unless diagram.footbox?
               appearance(diagram.appearance, sink)
               diagram.warnings.each { |line| sink.node("warning", line) }
+              sink.node("title", diagram.title) if diagram.title
             end
 
             def appearance(appearance, sink)

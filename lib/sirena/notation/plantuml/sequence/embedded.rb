@@ -1,0 +1,71 @@
+# frozen_string_literal: true
+
+module Sirena
+  module Notation
+    module PlantUML
+      module Sequence
+        # A sequence diagram written inside a note between `{{` and `}}`
+        # lines. The block is the whole note body, and its first line may be
+        # `scale N`.
+        class Embedded
+          OPEN = /\A\{\{\z/
+          CLOSE = /\A\}\}\z/
+          SCALE = /\Ascale[ \t]+(\d+(?:\.\d+)?)\z/i
+          private_constant :OPEN, :CLOSE, :SCALE
+
+          # @return [Boolean] whether a note body line opens an embedded
+          #   block
+          def self.opens?(line)
+            OPEN.match?(line.strip)
+          end
+
+          # @return [Boolean] whether a note body line closes one
+          def self.closes?(line)
+            CLOSE.match?(line.strip)
+          end
+
+          # @param text [String] the note body
+          # @return [Embedded, nil] nil when the body is not exactly one
+          #   block
+          def self.read(text)
+            lines = text.split("\n", -1).map(&:strip)
+            return unless whole?(lines)
+
+            body = lines[1..-2]
+            scale = SCALE.match(body.first.to_s)
+            body = body.drop(1) if scale
+            new(body.join("\n"), scale ? scale[1].to_f : 1.0)
+          end
+
+          # The block opens on the first line and only closes on the last.
+          def self.whole?(lines)
+            return false unless lines.size > 1
+            return false unless opens?(lines.first) && closes?(lines.last)
+
+            depth = 0
+            lines.each_with_index do |line, index|
+              depth += 1 if opens?(line)
+              depth -= 1 if closes?(line)
+              return false if depth.zero? && index < lines.size - 1
+            end
+            true
+          end
+          private_class_method :whole?
+
+          attr_reader :body, :scale
+
+          def initialize(body, scale)
+            @body = body
+            @scale = scale
+            freeze
+          end
+
+          # @return [String] the block as a diagram of its own
+          def document
+            "@startuml\n#{body}\n@enduml\n"
+          end
+        end
+      end
+    end
+  end
+end

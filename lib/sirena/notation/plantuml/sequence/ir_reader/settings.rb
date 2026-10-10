@@ -8,7 +8,7 @@ module Sirena
     module PlantUML
       module Sequence
         module IRReader
-          # Rebuilds the footbox, the appearance and the banners.
+          # Rebuilds the footbox, the appearance, the banners and the title.
           module Settings
             NUMBERS = %i[min_width tab_size max_message].freeze
             TEXTS = %i[tab_fill tab_colour].freeze
@@ -22,7 +22,8 @@ module Sirena
             def call(index)
               { appearance: appearance(index),
                 footbox: index.with_role("no_footbox").empty?,
-                warnings: index.with_role("warning").map(&:label).freeze }
+                warnings: index.with_role("warning").map(&:label).freeze,
+                title: index.with_role("title").first&.label }
             end
 
             def appearance(index)

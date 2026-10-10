@@ -32,6 +32,7 @@ module PlantUmlSequenceCorpus
     bea0f11e448b 2bd5234bfbfe 2018ad068c81 f0cb24bd16e0
     ad11bf4b448a 793d6e993975 1f75ab64bf5e e6d99fb6ac3c 1f8e5fb51e4d
     a13609de5404 990470abe6d9 c35d69988621
+    2539f518bd84
   ].freeze
 
   def case_named(suffix)

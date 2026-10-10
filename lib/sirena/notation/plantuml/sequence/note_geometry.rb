@@ -16,6 +16,8 @@ module Sirena
 
           # Width the text needs, without regard to the participants.
           def natural_width(note, measure)
+            return note.picture.width + (2 * PAD) if note.picture
+
             note.lines.map { |line| measure.call(line) }.max + (2 * PAD)
           end
 
@@ -24,6 +26,8 @@ module Sirena
           end
 
           def height(note, font_size)
+            return note.picture.height + 14 if note.picture
+
             (note.lines.size * line_height(font_size)) + 14
           end
 
