@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "rake"
-
-load File.expand_path("../../tasks/corpus.rake", __dir__) unless defined?(Sirena::Corpus)
 
 RSpec.describe Sirena::CorpusTypeNames do
+  include CorpusRakeProbe
+
   let(:table) { described_class::DIRECTORIES }
+  let(:rake_answers) { corpus_rake_answers }
 
   describe "the table" do
-    it "names exactly the directories under spec/mermaid" do
-      expect(table.keys).to match_array(Sirena::Corpus.types)
+    it "names exactly the corpus directories the rake task lists" do
+      expect(table.keys).to match_array(rake_answers[0])
     end
 
     it "maps every directory to a registered type or nil" do
@@ -33,8 +33,8 @@ RSpec.describe Sirena::CorpusTypeNames do
   end
 
   describe "the readers" do
-    it "gives the rake task the registry type of a directory" do
-      expect(Sirena::Corpus.registry_type("gitgraph")).to eq(:git_graph)
+    it "gives the rake task a directory's registry type, nil for none" do
+      expect(rake_answers[1..2]).to eq(%w[git_graph] + [nil])
     end
 
     it "gives the registry the directories of a type" do
@@ -46,13 +46,9 @@ RSpec.describe Sirena::CorpusTypeNames do
       stub_const("#{described_class}::DIRECTORIES",
                  table.merge("gitgraph" => :pie).freeze)
 
-      expect([Sirena::Corpus.registry_type("gitgraph"),
+      expect([rake_answers[3],
               Sirena::DiagramRegistry.corpus_directories(:git_graph)])
-        .to eq([:pie, %w[git]])
-    end
-
-    it "resolves a directory with no registered type to nil" do
-      expect(Sirena::Corpus.registry_type("unknown")).to be_nil
+        .to eq(["pie", %w[git]])
     end
   end
 end
