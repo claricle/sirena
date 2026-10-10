@@ -296,6 +296,17 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(scene.notes.first.texts.first.x).to be > head.x + (head.width / 2)
     end
 
+    it "hangs a right note beside a message that opened a bar" do
+      scene = scene_of("A -> B ++", "note right: x")
+      head = top_heads(scene).last
+
+      expect(scene.notes.first.texts.first.x).to be > head.x + (head.width / 2)
+    end
+
+    it "leaves a deactivate with no open bar out of the picture" do
+      expect(scene_of("A -> B", "deactivate B").bars).to be_empty
+    end
+
     context "when it follows the end of a block" do
       let(:lines) { ["A -> B", "alt x", "B -> A", "end", "NOTE: x"] }
 
