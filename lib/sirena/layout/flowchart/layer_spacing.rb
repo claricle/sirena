@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "route_points"
-
 module Sirena
   module Layout
     class Flowchart < Base
@@ -30,7 +28,6 @@ module Sirena
           return @flat if @shifts.all?(&:zero?)
 
           @flat[:children].each { |box| box[:y] += shift_at(box[:y]) }
-          RoutePoints.of(@flat).each { |point| point[:y] += shift_between(point[:y]) }
           @flat
         end
 
@@ -81,12 +78,6 @@ module Sirena
 
         def shift_at(top)
           @shifts[@tops.index(top)]
-        end
-
-        # A point between two layers moves with the layer above it.
-        def shift_between(y_pos)
-          index = @tops.rindex { |top| top <= y_pos } || 0
-          @shifts[index]
         end
       end
     end

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "route_points"
-
 module Sirena
   module Layout
     class Flowchart < Base
@@ -19,24 +17,22 @@ module Sirena
         end
 
         def apply
-          @rows = @flat[:children].group_by { |box| box[:y] }
-          widest = @rows.values.map { |row| span(row) }.max
-          @shifts = @rows.transform_values { |row| (widest - span(row)) / 2.0 }
-          @flat[:children].each { |box| box[:x] += @shifts[box[:y]] }
-          RoutePoints.of(@flat).each { |point| point[:x] += shift_at(point[:y]) }
+          rows = @flat[:children].group_by { |box| box[:y] }
+          widest = rows.values.map { |row| span(row) }.max
+          rows.each_value { |row| centre(row, widest) }
           @flat
         end
 
         private
 
-        def span(row)
-          row.map { |box| box[:x] + box[:width] }.max - row.map { |box| box[:x] }.min
+        def centre(row, widest)
+          shift = (widest - span(row)) / 2.0
+          row.each { |box| box[:x] += shift }
         end
 
-        # A point between two layers moves with the layer above it.
-        def shift_at(y_pos)
-          top = @shifts.keys.sort.reverse.find { |key| key <= y_pos }
-          @shifts.fetch(top || @shifts.keys.min)
+        def span(row)
+          left = row.map { |box| box[:x] }.min
+          row.map { |box| box[:x] + box[:width] }.max - left
         end
       end
     end
