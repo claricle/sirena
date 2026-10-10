@@ -20,17 +20,22 @@ RSpec.describe Sirena::Theme::Completion do
       .to eq(["mine", "#101010"])
   end
 
-  it "takes every unset colour and palette from the default theme" do
-    unset = Sirena::Theme::ColorPalette.attributes.keys - [:background]
+  it "takes every unset palette from the default theme" do
+    keys = described_class::PALETTE_KEYS
 
-    expect(unset.map { |key| completed.colors.public_send(key) })
-      .to eq(unset.map { |key| default.colors.public_send(key) })
+    expect(keys.map { |key| completed.colors.public_send(key) })
+      .to eq(keys.map { |key| default.colors.public_send(key) })
+  end
+
+  it "leaves unset single colours unpainted" do
+    expect([completed.colors.edge_stroke, completed.colors.card_text])
+      .to eq([nil, nil])
   end
 
   it "leaves the caller's theme partial" do
     completed
 
-    expect(partial.colors.card_text).to be_nil
+    expect(partial.colors.flow_palette).to be_nil.or eq([])
   end
 
   it "returns a theme that sets every colour unchanged" do

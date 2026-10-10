@@ -5,16 +5,18 @@ require_relative "registry"
 
 module Sirena
   class Theme
-    # Fills every colour a theme leaves unset from the default theme.
-    # Renderers read colours and palettes with no hardcoded fallback, so a
-    # partial custom theme would otherwise draw unfilled shapes or raise on a
-    # missing palette.
+    # Fills the categorical palettes a theme leaves unset from the default
+    # theme: a chart cannot pick series colours from an empty list. Single
+    # colours stay as given, so a theme that names no colour for something
+    # still draws it unpainted.
     module Completion
+      PALETTE_KEYS = ColorPalette::PALETTES.map { |name| :"#{name}_palette" }.freeze
+
       module_function
 
       # @param theme [Theme, nil] the caller's theme, possibly partial
-      # @param base [Theme, nil] where unset colours come from
-      # @return [Theme, nil] the theme itself when every colour is set,
+      # @param base [Theme, nil] where unset palettes come from
+      # @return [Theme, nil] the theme itself when every palette is set,
       #   otherwise a filled copy; the caller's theme is never modified
       def call(theme, base = Registry.get(:default))
         return base if theme.nil?
@@ -26,15 +28,13 @@ module Sirena
       end
 
       def complete?(colors)
-        ColorPalette.attributes.keys.all? do |key|
-          set_value(colors&.public_send(key))
-        end
+        PALETTE_KEYS.all? { |key| set_value(colors&.public_send(key)) }
       end
 
       def filled_colors(colors, defaults)
         values = ColorPalette.attributes.keys.to_h do |key|
           given = set_value(colors&.public_send(key))
-          [key, given || defaults.public_send(key)]
+          [key, PALETTE_KEYS.include?(key) ? given || defaults.public_send(key) : given]
         end
         ColorPalette.new(**values)
       end
