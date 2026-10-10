@@ -69,6 +69,7 @@ module Sirena
         pie: {
           pattern: /\A\s*pie(\s|\z)/i,
           keyword: "pie",
+          ir_adapter: true,
         },
         timeline: {
           pattern: /\A\s*timeline(\s|$)/i,
@@ -134,10 +135,12 @@ module Sirena
         info: {
           pattern: /\A\s*info/i,
           keyword: "info",
+          ir_adapter: true,
         },
         error: {
           pattern: /\A\s*(error|Error)/i,
           keyword: "error",
+          ir_adapter: true,
         },
       }.freeze
 
