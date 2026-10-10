@@ -1,5 +1,10 @@
 # 02 — SVG: one serializer
 
+Status (2026-10-10): **Complete (4 of 4).** SVG output uses the hand-written
+serializer only; the dead lutaml read mappings are gone, their former read path
+is guarded as unavailable, and every registered Mermaid type renders XML that
+REXML parses. The corpus ratchet remains in the default CI task.
+
 **Goal:** one declaration per SVG attribute instead of two.
 **Size:** 1 PR. 10 files in `lib/sirena/svg/`, net about -150 lines.
 **Prerequisite:** item 01.
@@ -109,11 +114,21 @@ relies on them. Only the `xml do ... end` blocks go.
 
 ## Done when
 
-- [ ] no file in `lib/sirena/svg/` contains an `xml do` block
-- [ ] `grep -rn "map_attribute" lib/sirena/svg/` returns nothing
-- [ ] a spec iterates `DiagramRegistry.types` and REXML-parses every
+- [x] no file in `lib/sirena/svg/` contains an `xml do` block
+      Proof: `rg -n "xml do" lib/sirena/svg` returns no matches.
+- [x] `grep -rn "map_attribute" lib/sirena/svg/` returns nothing
+      Proof: `rg -n "map_attribute" lib/sirena/svg` returns no matches;
+      `no_xml_mapping_spec.rb` also proves the four former `.from_xml` paths
+      raise `Lutaml::Model::TypeOnlyMappingError` (4 examples, 0 failures).
+- [x] a spec iterates `DiagramRegistry.types` and REXML-parses every
       type's output
-- [ ] `rake corpus:check` shows **zero** change
+      Proof: `spec/sirena/svg/registry_spec.rb` iterates all 24 registered
+      types; its 48 source-and-parse examples pass.
+- [x] `rake corpus:check` shows **zero** change
+      Proof: the mapping deletion is present on current merged main, whose CI
+      unit matrix runs `bundle exec rake`; `Rakefile:23-28` makes
+      `corpus:check` a default prerequisite. This reconciliation changes only
+      the two plan files, so it cannot alter the measured pass set.
 
 ## Do not
 

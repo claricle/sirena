@@ -1,5 +1,11 @@
 # 01 — Safety net
 
+Status (2026-10-10): **Complete (17 of 17).** The contract guard has
+survived both the typed-Scene conversion and the registry-driven dispatch:
+Engine invokes the durable `Layout::Base#call`, and the contract spec rejects
+any registered layout that overrides it. CI now runs the default Rake task,
+whose prerequisites include `corpus:check`.
+
 **Goal:** make it impossible to break something silently, and close a
 crash that is already waiting in the code.
 **Size:** 2 PRs. Part A touches ~12 model files. Part B is one rake file
@@ -280,7 +286,7 @@ first block.
 
 ## Done when
 
-Status: 15 of 17 true at ba8e1917 on 2026-09-21 (2 unticked: CI, survives 04 and 06); each line below names its proof.
+Status: 17 of 17 true on 2026-10-10; each line below names its proof.
 
 - [x] A — `bundle exec rspec spec/contract_spec.rb` passes for all 24 types
       Proof: `bundle exec rspec spec/contract_spec.rb` -> 198 examples, 0 failures.
@@ -294,13 +300,18 @@ Status: 15 of 17 true at ba8e1917 on 2026-09-21 (2 unticked: CI, survives 04 and
       Proof: `contract_spec.rb` 'registers exactly the types Engine can detect' is green.
 - [x] A — deleting one registry row turns `contract_spec.rb` red
       Proof: mutation: deleted the `:pie` register block -> that same example fails.
-- [ ] A — the guard runs ONCE for every type, and survives items 04 and 06.
-      `Transform::Base` alone does not satisfy this: item 04 sends converted
+- [x] A — the guard runs ONCE for every type, and survives items 04 and 06.
+      `Layout::Base` alone does not satisfy this: item 04 sends converted
       layouts straight to `scene(diagram)` and item 06 deletes `to_graph`, so a
       guard living only in `to_graph` disappears with it. Put it on the durable
       entry point (`Base#call`), or preserve an explicit Engine-side check
       through 04 and 06
-      Proof: `Transform::Base#call` holds the guard, `to_graph` delegates to it; `instance_method(:call).owner` is `Base` for all 24; 'has no registered transform overriding the guarded entry point' is green. Engine still calls `to_graph` (engine.rb:291); surviving items 04 and 06 is not testable yet.
+      Proof: `Layout::Base#call` holds the guard (`layout/base.rb:124`), and
+      `Engine#transform_diagram` invokes it (`engine.rb:215`) after the typed-Scene
+      and registry dispatch changes. `contract_spec.rb` reflects over every
+      Mermaid type and requires `instance_method(:call).owner` to be
+      `Layout::Base`; the focused four-spec command passed 362 examples with
+      0 failures (4 existing pending examples).
 - [x] A — an INVALID model driven through `Engine` raises, asserted by a spec —
       not a unit test on the transform. That is the only form that keeps
       holding after 04 and 06 move the pipeline
@@ -323,5 +334,7 @@ Status: 15 of 17 true at ba8e1917 on 2026-09-21 (2 unticked: CI, survives 04 and
       Proof: mutation: one passing scoreboard row edited to fail -> `corpus:check: FAILED`, IMPROVED BUT NOT RECORDED.
 - [x] B — `rake 'corpus[pie]'` prints only pie results
       Proof: `bundle exec rake 'corpus[pie]'` -> `corpus[pie]: 48/49`, only pie cases listed.
-- [ ] B — CI runs `corpus:check`
-      Proof: INFERRED, not shown: `Rakefile:24` is `task default: [:spec, :benchmark, 'corpus:check']`; `.github/workflows/rake.yml` only calls `metanorma/ci` `generic-rake.yml@main`, which is not in this repo, so CI running the default task is unconfirmed.
+- [x] B — CI runs `corpus:check`
+      Proof: `Rakefile:23-28` includes `corpus:check` in the default task, and
+      `.github/workflows/ci.yml:50` runs `bundle exec rake` in every required
+      unit-matrix cell (the fresh-resolution job repeats it at line 159).
