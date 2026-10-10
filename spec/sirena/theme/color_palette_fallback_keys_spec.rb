@@ -55,7 +55,8 @@ RSpec.describe Sirena::Theme::ColorPalette do
 
     it "has every palette at its full length in every builtin theme" do
       drawn = builtin_themes.map do |theme|
-        sizes.keys.to_h { |name| [name, theme.colors.public_send(:"#{name}_palette")&.size] }
+        colors = theme.colors
+        sizes.keys.to_h { |n| [n, colors.public_send("#{n}_palette")&.size] }
       end
       expect(drawn).to all(eq(sizes))
     end

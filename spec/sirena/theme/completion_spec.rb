@@ -7,6 +7,9 @@ RSpec.describe Sirena::Theme::Completion do
   include PartialThemeRenders
 
   let(:default) { Sirena::Theme::Registry.get(:default) }
+  let(:default_firsts) do
+    %i[flow xy timeline_fill].map { |name| default.colors.palette(name, 0) }
+  end
   let(:partial) do
     Sirena::Theme.new(name: "mine", colors: { background: "#101010" })
   end
@@ -36,10 +39,7 @@ RSpec.describe Sirena::Theme::Completion do
   end
 
   it "lets a partial theme draw each palette diagram in default colours" do
-    firsts = %i[flow xy timeline_fill].map do |name|
-      default.colors.palette(name, 0)
-    end
-    drawn = partial_theme_fills.zip(firsts).map do |fills, colour|
+    drawn = partial_theme_fills.zip(default_firsts).map do |fills, colour|
       fills.include?(colour)
     end
 
