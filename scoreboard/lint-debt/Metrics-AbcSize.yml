@@ -16,7 +16,7 @@ rows:
 - file: lib/sirena/renderer/architecture.rb
   count: 6
 - file: lib/sirena/renderer/c4.rb
-  count: 5
+  count: 4
 - file: lib/sirena/renderer/error.rb
   count: 3
 - file: lib/sirena/renderer/info.rb
@@ -26,7 +26,7 @@ rows:
 - file: lib/sirena/renderer/packet.rb
   count: 4
 - file: lib/sirena/renderer/radar.rb
-  count: 5
+  count: 4
 - file: lib/sirena/renderer/sequence.rb
   count: 8
 - file: lib/sirena/renderer/state_diagram.rb

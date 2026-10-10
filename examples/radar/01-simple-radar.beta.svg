@@ -1,45 +1,45 @@
 <svg
- width="560.0"
- height="560.0"
- viewBox="0 0 560 560"
+ width="700.0"
+ height="700.0"
+ viewBox="0 0 700 700"
  version="1.2"
  baseProfile="tiny"
  xmlns="http://www.w3.org/2000/svg"
 >
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="40.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="80.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="120.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="160.0"/>
-<circle fill="none" stroke="#e5e7eb" stroke-width="1" cx="280.0" cy="280.0" r="200.0"/>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="80.0"/>
-<text fill="#000000" x="280.0" y="54.9" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Frontend</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="180.0"/>
-<text fill="#000000" x="479.1858428704209" y="165.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Backend</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="453.20508075688775" y2="380.0"/>
-<text fill="#000000" x="479.1858428704209" y="395.0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Database</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="280.0" y2="480.0"/>
-<text fill="#000000" x="280.0" y="514.9" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">DevOps</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311225" y2="380.0"/>
-<text fill="#000000" x="80.81415712957909" y="406.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Testing</text>
-<line stroke="#9ca3af" stroke-width="1" x1="280.0" y1="280.0" x2="106.79491924311228" y2="179.99999999999997"/>
-<text fill="#000000" x="80.81415712957912" y="176.2" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold">Documentation</text>
-<polygon fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" points="280.0,146.66666666666669 337.7350269189626,246.66666666666669 424.3375672974065,363.3333333333333 280.0,313.3333333333333 193.39745962155612,330.0 280.0,280.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="146.66666666666669" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="337.7350269189626" cy="246.66666666666669" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="424.3375672974065" cy="363.3333333333333" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="313.3333333333333" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="193.39745962155612" cy="330.0" r="3.0"/>
-<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="280.0" cy="280.0" r="3.0"/>
-<polygon fill="#7c3aed" fill-opacity="0.3" stroke="#7c3aed" stroke-width="2" points="280.0,113.33333333333331 395.47005383792515,213.33333333333337 453.20508075688775,380.0 280.0,446.6666666666667 106.79491924311225,380.0 164.52994616207485,213.33333333333331"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="113.33333333333331" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="395.47005383792515" cy="213.33333333333337" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="453.20508075688775" cy="380.0" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="280.0" cy="446.6666666666667" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="106.79491924311225" cy="380.0" r="3.0"/>
-<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="164.52994616207485" cy="213.33333333333331" r="3.0"/>
-<circle fill="#2563eb" stroke="none" cx="20.0" cy="520.0" r="5.0"/>
-<text fill="#000000" x="35.0" y="524.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Current State</text>
-<circle fill="#7c3aed" stroke="none" cx="20.0" cy="540.0" r="5.0"/>
-<text fill="#000000" x="35.0" y="544.0" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Target State</text>
-<text fill="#000000" x="280.0" y="28.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16">Technology Stack Assessment</text>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="60.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="120.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="180.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="240.0"/>
+<circle class="radarGraticule" fill="none" stroke="#e5e7eb" stroke-width="1" cx="350.0" cy="350.0" r="300.0"/>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="50.0"/>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="39.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Frontend</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="200.00000000000003"/>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Backend</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="609.8076211353316" y2="500.0"/>
+<text class="radarAxisLabel" fill="#000000" x="622.7980021920982" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Database</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="350.0" y2="650.0"/>
+<text class="radarAxisLabel" fill="#000000" x="350.0" y="669.9" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">DevOps</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="500.0"/>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="512.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Testing</text>
+<line class="radarAxisLine" stroke="#9ca3af" stroke-width="1" x1="350.0" y1="350.0" x2="90.1923788646684" y2="199.99999999999997"/>
+<text class="radarAxisLabel" fill="#000000" x="77.20199780790182" y="197.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14">Documentation</text>
+<path class="radarCurve-0" fill="#2563eb" fill-opacity="0.3" stroke="#2563eb" stroke-width="2" d="M350.0,81.57894736842104 C415.088646137062,78.89473684210526 513.2685787555715,161.78947368421055 555.1112798436828,231.57894736842107 C596.9539809317941,301.36842105263156 631.0024533858456,434.3947368421052 596.1335358124195,492.1052631578947 C561.2646182389934,549.8157894736842 429.0362131664325,573.7368421052632 350.0,571.0526315789474 C270.9637868335675,568.3684210526316 161.4343633970409,531.3421052631579 131.21463483340497,476.31578947368416 C100.99490626976903,421.28947368421046 135.04337872382038,314.4736842105263 172.23689080214155,247.36842105263156 C209.4304028804627,180.26315789473682 284.911353862938,84.26315789473682 350.0,81.57894736842104 Z"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="81.57894736842104" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="555.1112798436828" cy="231.57894736842107" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="596.1335358124195" cy="492.1052631578947" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="350.0" cy="571.0526315789474" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="131.21463483340497" cy="476.31578947368416" r="3.0"/>
+<circle fill="#2563eb" stroke="#ffffff" stroke-width="1" cx="172.23689080214155" cy="247.36842105263156" r="3.0"/>
+<path class="radarCurve-1" fill="#7c3aed" fill-opacity="0.3" stroke="#7c3aed" stroke-width="2" d="M350.0,65.78947368421052 C429.0362131664325,65.78947368421053 538.292154896501,141.97368421052633 582.4594504895073,215.78947368421055 C626.6267460825136,289.6052631578948 649.3257277185478,428.86842105263156 609.8076211353316,500.0 C570.2895145521154,571.1315789473684 438.33459118601274,634.2105263157895 350.0,634.2105263157895 C261.66540881398726,634.2105263157895 129.71048544788462,571.1315789473684 90.1923788646684,500.0 C50.67427228145217,428.86842105263156 73.37325391748641,289.6052631578947 117.54054951049278,215.7894736842105 C161.70784510349915,141.97368421052627 270.9637868335675,65.7894736842105 350.0,65.78947368421052 Z"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="350.0" cy="65.78947368421052" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="582.4594504895073" cy="215.78947368421055" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="609.8076211353316" cy="500.0" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="350.0" cy="634.2105263157895" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="90.1923788646684" cy="500.0" r="3.0"/>
+<circle fill="#7c3aed" stroke="#ffffff" stroke-width="1" cx="117.54054951049278" cy="215.7894736842105" r="3.0"/>
+<circle fill="#2563eb" stroke="none" cx="618.5" cy="93.5" r="6.0"/>
+<text class="radarLegendText" fill="#000000" x="628.5" y="97.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Current State</text>
+<circle fill="#7c3aed" stroke="none" cx="618.5" cy="113.5" r="6.0"/>
+<text class="radarLegendText" fill="#000000" x="628.5" y="117.1" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-size="12">Target State</text>
+<text class="radarTitle" fill="#000000" x="350.0" y="12.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16">Technology Stack Assessment</text>
 </svg>
