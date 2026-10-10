@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "sequence/ir_adapter"
 require_relative "sequence/layout"
 require_relative "sequence/parser"
 require_relative "sequence/renderer"
@@ -34,7 +35,7 @@ module Sirena
         def parse(source)
           Notation::Parsed.new(
             type: :sequence_diagram,
-            diagram: Parser.new.parse(source),
+            diagram: IRAdapter.call(Parser.new.parse(source)),
             transform: Layout,
             renderer: Renderer,
           )
