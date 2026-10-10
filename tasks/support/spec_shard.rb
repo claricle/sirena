@@ -61,11 +61,15 @@ module Sirena
       loads = Array.new(count) { |i| i == count - 1 ? TAIL_SECONDS : 0 }
       groups = Array.new(count) { [] }
       all.sort_by { |file| [-weight(file), file] }.each do |file|
-        slot = loads.index(loads.min)
-        groups[slot] << file
-        loads[slot] += weight(file)
+        assign(file, groups, loads)
       end
       groups
+    end
+
+    def assign(file, groups, loads)
+      slot = loads.index(loads.min)
+      groups[slot] << file
+      loads[slot] += weight(file)
     end
 
     def weight(file)
