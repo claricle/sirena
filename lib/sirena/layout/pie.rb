@@ -24,6 +24,12 @@ module Sirena
       LABEL_OFFSET = RADIUS * 0.75
       TITLE_Y = CENTER_Y - 200
       HEIGHT = 450
+      # mmdc draws slice labels, legend rows and the title at fixed sizes,
+      # whatever the theme says.
+      TEXT_SIZE = 17
+      TITLE_SIZE = 25
+      # mmdc drops a slice under this share of the total, label and all.
+      MIN_PERCENT = 1.0
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -119,7 +125,7 @@ module Sirena
 
       def pie_legend
         PieLegend.new(center_y: CENTER_Y,
-                      font_size: font_size(:font_size_small, 12))
+                      font_size: TEXT_SIZE)
       end
 
       def title_label(title)
@@ -127,27 +133,45 @@ module Sirena
 
         Label.new(
           text: title, x: CENTER_X, y: TITLE_Y,
-          font_size: font_size(:font_size_large, 18),
+          font_size: TITLE_SIZE,
           text_anchor: "middle", font_weight: "bold"
         )
       end
 
       # mmdc lays slices out largest first (stable); the legend keeps
-      # input order.
+      # input order. A slice under MIN_PERCENT of the total is not drawn
+      # (sweep 0), and the slices that are drawn share the whole circle.
       def ranked(graph)
         slices = graph[:slices] || []
         order = slices.each_index.sort_by { |i| [-slices[i][:value].to_f, i] }
+        scale = sweep_scale(slices)
         slices.each_with_index.map do |slice, index|
-          slice.merge(input_index: index, rank: order.index(index))
+          slice.merge(input_index: index, rank: order.index(index),
+                      sweep: scale * (shown?(slice) ? weight(slice) : 0.0))
         end
       end
 
+      def shown?(slice)
+        slice[:percentage] >= MIN_PERCENT
+      end
+
+      def sweep_scale(slices)
+        shown_total = slices.select { |slice| shown?(slice) }
+                            .sum { |slice| weight(slice) }
+        shown_total.zero? ? 0.0 : 360.0 / shown_total
+      end
+
+      # A hand-built graph may carry only the angle.
+      def weight(slice)
+        slice[:value] || slice[:angle]
+      end
+
       # Angles accumulate in rank order; slices are emitted in input order
-      # so document order matches the legend order. mmdc draws no zero slice.
+      # so document order matches the legend order.
       def typed_slices(graph)
         start_angle = -90.0
         typed = ranked(graph).sort_by { |slice| slice[:rank] }.map do |slice|
-          finish_angle = start_angle + slice[:angle]
+          finish_angle = start_angle + slice[:sweep]
           result = typed_slice(slice, start_angle, finish_angle)
           start_angle = finish_angle
           [slice[:input_index], result]
@@ -156,13 +180,13 @@ module Sirena
       end
 
       def typed_slice(slice, start_angle, finish_angle)
-        return if slice[:angle].zero?
+        return if slice[:sweep].zero?
 
         Slice.new(
           id: slice[:id] || "slice_#{slice[:input_index]}",
           path: slice_path(start_angle, finish_angle),
           color_index: slice[:rank],
-          percentage: slice[:percentage], angle: slice[:angle],
+          percentage: slice[:percentage], angle: slice[:sweep],
           label: slice_label(slice, (start_angle + finish_angle) / 2.0)
         )
       end
@@ -182,7 +206,7 @@ module Sirena
         x_position, y_position = circle_point(angle, LABEL_OFFSET)
         Label.new(
           text: "#{slice[:percentage].round}%", x: x_position, y: y_position,
-          font_size: font_size(:font_size_small, 12),
+          font_size: TEXT_SIZE,
           text_anchor: "middle", dominant_baseline: "middle"
         )
       end
@@ -191,11 +215,6 @@ module Sirena
         radians = angle * Math::PI / 180.0
         [CENTER_X + (radius * Math.cos(radians)),
          CENTER_Y + (radius * Math.sin(radians))]
-      end
-
-      def font_size(name, fallback)
-        value = theme.typography&.public_send(name)
-        value&.positive? ? value : fallback
       end
 
       def transform_slices(data)

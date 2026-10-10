@@ -8,10 +8,9 @@ RSpec.describe Sirena::Renderer::Pie do
 
   let(:graph) { { slices: [] } }
 
-  it "uses the compact canvas and emits no marks for an empty pie" do
-    expect([svg.width, svg.height, svg.view_box, svg.children]).to eq(
-      [450.0, 450.0, "0 0 450 450", []],
-    )
+  it "uses the compact canvas and draws only the ring for an empty pie" do
+    expect([svg.width, svg.height, svg.view_box, svg.children.map(&:class)])
+      .to eq([450.0, 450.0, "0 0 450 450", [Sirena::Svg::Circle]])
   end
 
   it "centers the title above the pie" do
