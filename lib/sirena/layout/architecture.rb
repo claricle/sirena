@@ -10,9 +10,21 @@ module Sirena
     # Transforms architecture diagram models into positioned layouts.
     class Architecture < Base
       # Default dimensions
-      DEFAULT_SERVICE_WIDTH = 120
+      # Service icon boxes are 80x80 in mmdc; the label sits below the box.
+      DEFAULT_SERVICE_WIDTH = 80
       DEFAULT_SERVICE_HEIGHT = 80
-      DEFAULT_GROUP_PADDING = 30
+      SERVICE_LABEL_OFFSET = 16
+      # Group padding measured from mmdc: 42.5 on three sides, 17 more below
+      # for the service labels.
+      DEFAULT_GROUP_PADDING = 42.5
+      GROUP_LABEL_ALLOWANCE = 17
+      EMPTY_GROUP_SIZE = 112
+      EMPTY_GROUP_GAP = 98
+      # Centre-to-centre spacing of the grid that edge sides imply.
+      GRID_PITCH_X = 201
+      GRID_PITCH_Y = 201
+      GRID_ORIGIN = 60
+      COMPONENT_GAP = 100
       DEFAULT_SPACING = 40
       DEFAULT_ICON_SIZE = 24
       DEFAULT_JUNCTION_SIZE = 12
@@ -93,17 +105,8 @@ module Sirena
         hierarchy = build_hierarchy(diagram)
 
         # Calculate positions
-        service_positions = position_services(diagram, hierarchy)
-        junction_positions = position_junctions(
-          diagram,
-          hierarchy,
-          service_positions,
-        )
-        group_bounds = calculate_group_bounds(
-          diagram,
-          service_positions,
-          junction_positions,
-        )
+        service_positions, junction_positions, group_bounds =
+          position_nodes(diagram, hierarchy)
         edge_positions = position_edges(
           diagram,
           service_positions.merge(junction_positions),
@@ -286,7 +289,7 @@ module Sirena
         attributes = node_geometry(info).merge(
           id: service.id, kind: "service",
           icon: service.icon, icon_x: horizontal_center(info),
-          icon_y: info[:y] + (info[:height] / 3),
+          icon_y: info[:y] + (info[:height] / 2),
           group_id: normalized_group_id(info[:group_id]),
           labels: service_labels(service, info)
         )
@@ -295,7 +298,7 @@ module Sirena
 
       def service_labels(service, info)
         positioned_label(service.label, horizontal_center(info),
-                         info[:y] + (info[:height] * 2 / 3))
+                         info[:y] + info[:height] + SERVICE_LABEL_OFFSET)
       end
 
       def horizontal_center(info)
@@ -482,6 +485,184 @@ module Sirena
         hierarchy
       end
 
+      # Edge sides imply a grid, as in mmdc: "a:R -- L:b" puts b to the right
+      # of a. A diagram without edges, or whose grid would put a group box
+      # over a node or group that is not inside it, keeps the row layout.
+      # @return [Array(Hash, Hash, Hash)] services, junctions, group bounds
+      def position_nodes(diagram, hierarchy)
+        unless diagram.edges.empty?
+          placed = bounded(diagram, *position_on_grid(diagram))
+          return placed if groups_separate?(diagram, *placed)
+        end
+        bounded(diagram, *position_by_rows(diagram, hierarchy))
+      end
+
+      def bounded(diagram, services, junctions)
+        [services, junctions,
+         calculate_group_bounds(diagram, services, junctions)]
+      end
+
+      def groups_separate?(diagram, services, junctions, bounds)
+        nodes = services.values + junctions.values
+        bounds.all? do |id, box|
+          inside = descendant_group_ids(diagram, id)
+          nodes.all? do |node|
+            inside.include?(node[:group_id]) || !boxes_overlap?(box, node)
+          end && sibling_groups_clear?(diagram, bounds, id, inside)
+        end
+      end
+
+      def sibling_groups_clear?(diagram, bounds, id, inside)
+        related = inside | ancestor_ids(diagram, id)
+        bounds.none? do |other_id, other|
+          !related.include?(other_id) && boxes_overlap?(bounds[id], other)
+        end
+      end
+
+      def descendant_group_ids(diagram, id)
+        ids = [id]
+        ids.each do |current|
+          diagram.groups.each do |group|
+            ids << group.id if group.parent_id == current &&
+                               !ids.include?(group.id)
+          end
+        end
+        ids
+      end
+
+      def ancestor_ids(diagram, id)
+        by_id = diagram.groups.to_h { |group| [group.id, group] }
+        ids = []
+        current = by_id[id]&.parent_id
+        while current && !ids.include?(current)
+          ids << current
+          current = by_id[current]&.parent_id
+        end
+        ids
+      end
+
+      def boxes_overlap?(first, second)
+        first[:x] < second[:x] + second[:width] &&
+          second[:x] < first[:x] + first[:width] &&
+          first[:y] < second[:y] + second[:height] &&
+          second[:y] < first[:y] + first[:height]
+      end
+
+      def position_by_rows(diagram, hierarchy)
+        services = position_services(diagram, hierarchy)
+        [services, position_junctions(diagram, hierarchy, services)]
+      end
+
+      def position_on_grid(diagram)
+        nodes = grid_nodes(diagram)
+        cells = grid_cells(nodes, diagram.edges)
+        services = {}
+        junctions = {}
+        cells.each do |id, (x_coord, y_coord)|
+          node = nodes.fetch(id)
+          entry = grid_entry(node, x_coord, y_coord)
+          (node[:service] ? services : junctions)[id] = entry
+        end
+        [services, junctions]
+      end
+
+      def grid_nodes(diagram)
+        services = diagram.services.to_h do |service|
+          dims = calculate_service_dimensions(service)
+          [service.id, dims.merge(service: service,
+                                  group_id: service.group_id || :root)]
+        end
+        junctions = diagram.junctions.to_h do |junction|
+          [junction.id, { junction: junction, width: DEFAULT_JUNCTION_SIZE,
+                          height: DEFAULT_JUNCTION_SIZE,
+                          group_id: junction.group_id || :root }]
+        end
+        services.merge(junctions)
+      end
+
+      def grid_entry(node, x_coord, y_coord)
+        node.merge(x: x_coord - (node[:width] / 2.0),
+                   y: y_coord - (node[:height] / 2.0))
+      end
+
+      # Pixel cell centres per node id; components sit side by side.
+      def grid_cells(nodes, edges)
+        links = grid_links(nodes, edges)
+        cells = {}
+        offset = GRID_ORIGIN
+        components(nodes.keys, links).each do |component|
+          placed = place_component(component, links)
+          min_col = placed.values.map(&:first).min
+          min_row = placed.values.map(&:last).min
+          cols = placed.values.map(&:first).max - min_col
+          placed.each do |id, (col, row)|
+            cells[id] = [offset + ((col - min_col) * GRID_PITCH_X),
+                         GRID_ORIGIN + ((row - min_row) * GRID_PITCH_Y)]
+          end
+          offset += (cols * GRID_PITCH_X) + DEFAULT_SERVICE_WIDTH +
+                    COMPONENT_GAP
+        end
+        cells
+      end
+
+      SIDE_STEPS = {
+        "R" => [1, 0], "L" => [-1, 0], "T" => [0, -1], "B" => [0, 1]
+      }.freeze
+      private_constant :SIDE_STEPS
+
+      # id => [[neighbour id, [dx, dy] from id to neighbour], ...]
+      def grid_links(nodes, edges)
+        links = Hash.new { |hash, key| hash[key] = [] }
+        edges.each do |edge|
+          next unless nodes.key?(edge.from_id) && nodes.key?(edge.to_id)
+
+          step = SIDE_STEPS.fetch(valid_side(edge.from_position, "R"))
+          links[edge.from_id] << [edge.to_id, step]
+          links[edge.to_id] << [edge.from_id, step.map(&:-@)]
+        end
+        links
+      end
+
+      def components(ids, links)
+        seen = {}
+        ids.filter_map do |id|
+          next if seen[id]
+
+          queue = [id]
+          seen[id] = true
+          queue.each do |current|
+            links[current].each do |neighbour, _step|
+              next if seen[neighbour]
+
+              seen[neighbour] = true
+              queue << neighbour
+            end
+          end
+          queue
+        end
+      end
+
+      def place_component(component, links)
+        placed = { component.first => [0, 0] }
+        taken = { [0, 0] => true }
+        component.each do |id|
+          links[id].each do |neighbour, step|
+            next if placed.key?(neighbour)
+
+            cell = free_cell(placed.fetch(id), step, taken)
+            placed[neighbour] = cell
+            taken[cell] = true
+          end
+        end
+        placed
+      end
+
+      def free_cell(from, step, taken)
+        cell = [from[0] + step[0], from[1] + step[1]]
+        cell = [cell[0] + step[0], cell[1] + step[1]] while taken[cell]
+        cell
+      end
+
       def position_services(diagram, hierarchy)
         positions = {}
         current_x = DEFAULT_SPACING
@@ -605,82 +786,77 @@ module Sirena
         end.max + DEFAULT_SPACING
       end
 
-      def calculate_service_dimensions(service)
-        label = service.label || service.id
-        label_dims = measure_text(label, font_size: normal_font_size)
-
-        width = [label_dims[:width] + 40, DEFAULT_SERVICE_WIDTH].max
-        height = DEFAULT_SERVICE_HEIGHT
-
-        {
-          width: width,
-          height: height,
-        }
+      def calculate_service_dimensions(_service)
+        { width: DEFAULT_SERVICE_WIDTH, height: DEFAULT_SERVICE_HEIGHT }
       end
 
       def calculate_group_bounds(diagram, service_positions, junction_positions)
         bounds = {}
+        members = service_positions.values + junction_positions.values
 
         deepest_groups_first(diagram.groups).each do |group|
-          # Find all services and junctions in this group - a group made
-          # entirely of junctions still needs a boundary drawn around them.
-          group_services = service_positions.values.select do |pos|
-            pos[:group_id] == group.id
-          end
-          group_junctions = junction_positions.values.select do |pos|
-            pos[:group_id] == group.id
-          end
-          group_members = group_services + group_junctions
-
-          # Find all child groups
-          child_groups = diagram.groups.select { |g| g.parent_id == group.id }
-
-          if group_members.empty? && child_groups.empty?
-            next
-          end
-
-          # Calculate bounding box
-          if group_members.any?
-            min_x = group_members.map { |m| m[:x] }.min
-            min_y = group_members.map { |m| m[:y] }.min
-            max_x = group_members.map { |m| m[:x] + m[:width] }.max
-            max_y = group_members.map { |m| m[:y] + m[:height] }.max
-          else
-            # Use child group bounds
-            min_x = Float::INFINITY
-            min_y = Float::INFINITY
-            max_x = -Float::INFINITY
-            max_y = -Float::INFINITY
-
-            child_groups.each do |child|
-              child_bounds = bounds[child.id]
-              next unless child_bounds
-
-              min_x = [min_x, child_bounds[:x]].min
-              min_y = [min_y, child_bounds[:y]].min
-              max_x = [max_x, child_bounds[:x] + child_bounds[:width]].max
-              max_y = [max_y, child_bounds[:y] + child_bounds[:height]].max
-            end
-
-            # None of this group's children had bounds either (a chain of
-            # nested groups with no services/junctions anywhere in the
-            # subtree) - min_x is still its Float::INFINITY seed. Skip this
-            # group the same way a directly-empty leaf group already does,
-            # instead of writing an Infinity/-Infinity entry that would
-            # NaN out a level further up the same way the leaf case used to.
-            next if min_x == Float::INFINITY
-          end
-
-          bounds[group.id] = {
-            group: group,
-            x: min_x - DEFAULT_GROUP_PADDING,
-            y: min_y - DEFAULT_GROUP_PADDING,
-            width: max_x - min_x + (DEFAULT_GROUP_PADDING * 2),
-            height: max_y - min_y + (DEFAULT_GROUP_PADDING * 2),
-          }
+          boxes = members.select { |pos| pos[:group_id] == group.id } +
+                  child_group_bounds(diagram, group, bounds)
+          bounds[group.id] = padded_bounds(group, boxes) if boxes.any?
         end
+        place_empty_groups(diagram, bounds, members)
+      end
 
+      def child_group_bounds(diagram, group, bounds)
+        diagram.groups.select { |child| child.parent_id == group.id }
+          .filter_map { |child| bounds[child.id] }
+      end
+
+      def padded_bounds(group, boxes)
+        min_x = boxes.map { |box| box[:x] }.min
+        min_y = boxes.map { |box| box[:y] }.min
+        max_x = boxes.map { |box| box[:x] + box[:width] }.max
+        max_y = boxes.map { |box| box[:y] + box[:height] }.max
+        pad = DEFAULT_GROUP_PADDING
+        {
+          group: group,
+          x: min_x - pad,
+          y: min_y - pad,
+          width: max_x - min_x + (pad * 2),
+          height: max_y - min_y + (pad * 2) + GROUP_LABEL_ALLOWANCE,
+        }
+      end
+
+      # mmdc draws a group with nothing in it as a small box beside the
+      # diagram. A chain of empty nested groups stays undrawn: only an
+      # isolated empty group (no parent, no child groups) is placed.
+      def place_empty_groups(diagram, bounds, members)
+        right = (members + bounds.values).map do |box|
+          box[:x] + box[:width]
+        end.max
+        centre_y = members_centre_y(members)
+        diagram.groups.each do |group|
+          next unless isolated_empty_group?(diagram, group, bounds)
+
+          x_coord = right ? right + EMPTY_GROUP_GAP : GRID_ORIGIN
+          bounds[group.id] = empty_group_bounds(group, x_coord, centre_y)
+          right = x_coord + EMPTY_GROUP_SIZE
+        end
         bounds
+      end
+
+      def members_centre_y(members)
+        return GRID_ORIGIN + (EMPTY_GROUP_SIZE / 2) if members.empty?
+
+        top = members.map { |box| box[:y] }.min
+        bottom = members.map { |box| box[:y] + box[:height] }.max
+        (top + bottom) / 2.0
+      end
+
+      def isolated_empty_group?(diagram, group, bounds)
+        return false if bounds.key?(group.id) || group.parent_id
+
+        diagram.groups.none? { |other| other.parent_id == group.id }
+      end
+
+      def empty_group_bounds(group, x_coord, centre_y)
+        { group: group, x: x_coord, y: centre_y - (EMPTY_GROUP_SIZE / 2.0),
+          width: EMPTY_GROUP_SIZE, height: EMPTY_GROUP_SIZE }
       end
 
       # A parent group with no direct service/junction of its own must read
