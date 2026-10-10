@@ -122,4 +122,22 @@ RSpec.describe Sirena::Layout::ErDiagram do
       expect(scene.edges.first.sections.first.end_point.x).to eq(3.0)
     end
   end
+
+  describe "the entity name font" do
+    let(:graph) do
+      ir_graph(id: "er", nodes: [ir_node(id: "A", label: "A", role: "entity")])
+    end
+    let(:layout) { described_class.new }
+    let(:size) { layout.to_graph(graph).children.first.labels.first.font_size }
+
+    it "falls back to 16 when the theme has no typography" do
+      layout.theme = Struct.new(:typography).new(nil)
+      expect(size).to eq(16.0)
+    end
+
+    it "falls back to 16 when no theme is registered at all" do
+      allow(Sirena::Theme::Registry).to receive(:get).and_return(nil)
+      expect(size).to eq(16.0)
+    end
+  end
 end
