@@ -35,8 +35,16 @@ RSpec.describe Sirena::Renderer::ClassDiagram do
 
   it "steps each later line down by one line height" do
     group = ClassNoteSvg.group(three, "note-0")
+    baseline = ClassNoteSvg.elements(group, "text").first.attributes["y"]
     runs = ClassNoteSvg.elements(group, "tspan")
-    expect(runs.map { |run| run.attributes["dy"] }).to eq([nil, "24", "24"])
+    ys = [baseline] + runs.drop(1).map { |run| run.attributes["y"] }
+    expect(ys.map(&:to_f).each_cons(2).map { |a, b| b - a }).to eq([24, 24])
+  end
+
+  it "leaves the first line on the text baseline" do
+    group = ClassNoteSvg.group(three, "note-0")
+    first = ClassNoteSvg.elements(group, "tspan").first
+    expect(first.attributes["y"]).to be_nil
   end
 
   it "draws a one-line note without tspans" do

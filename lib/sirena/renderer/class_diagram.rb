@@ -31,7 +31,7 @@ module Sirena
       LINE_HEIGHT = 18
 
       # Gap between the lines of a note, as mmdc draws them
-      NOTE_LINE_HEIGHT = Layout::ClassNoteNodes::LINE_HEIGHT.to_s
+      NOTE_LINE_HEIGHT = Layout::ClassNoteNodes::LINE_HEIGHT
 
       # Padding within class boxes
       BOX_PADDING = 10
@@ -167,7 +167,7 @@ module Sirena
       def fill_note_lines(text, lines)
         return text.tap { text.content = lines.first } if lines.one?
 
-        LineBreakText.fill_lines(text, lines, height: NOTE_LINE_HEIGHT)
+        LineBreakText.fill_lines(text, lines, pitch: NOTE_LINE_HEIGHT)
       end
 
       def scene_node_box(node)
