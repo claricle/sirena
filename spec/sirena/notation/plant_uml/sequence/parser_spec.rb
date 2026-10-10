@@ -422,7 +422,8 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Parser do
       lines = style.call("FontColor: green; FontSize: 26; LineColor: #E00")
       head = parse(*lines, "A -> B").appearance.head_style
 
-      expect([head.colour, head.size, head.line]).to eq(["#008000", 26, "#EE0000"])
+      expect([head.colour, head.size, head.line])
+        .to eq(["#008000", 26, "#EE0000"])
     end
 
     it "reads the style, family and weight of a head" do
