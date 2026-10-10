@@ -18,6 +18,14 @@ module SequenceFrameHelpers
     Sirena::Layout::Sequence.new.call(parse_sequence(body))
   end
 
+  def actor_xs(scene)
+    scene.participants.map(&:x)
+  end
+
+  def last_actor_x(body)
+    actor_xs(layout_scene(body)).last
+  end
+
   def box_of(shape)
     [shape.x, shape.y, shape.width, shape.height]
   end
