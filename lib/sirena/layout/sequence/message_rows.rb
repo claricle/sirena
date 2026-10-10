@@ -16,6 +16,7 @@ module Sirena
         ACTIVATION_EDGE = 2
         HEAD_INSET = 3
         PADDING = 20
+        SELF_DROP = 30
         MIN_LIMIT = Geometry::ACTOR_WIDTH
         FLAT_HEADS = %w[none stick_top stick_bottom].freeze
         TURNED_HEADS = %w[half_top half_bottom].freeze
@@ -24,11 +25,14 @@ module Sirena
         # @param positions [Hash] participant id to its center_x
         # @param font_size [Numeric] message text size
         # @param wrap [Boolean] the diagram's wrap setting
-        def initialize(edges, positions, font_size:, wrap: false)
+        # @param closers [Array<Integer>] messages a frame ends right after
+        def initialize(edges, positions, font_size:, wrap: false,
+                       closers: [])
           @edges = edges || []
           @positions = positions
           @font_size = font_size
           @wrap = wrap
+          @closers = closers
         end
 
         # @return [Boolean] the diagram's wrap setting
@@ -52,12 +56,13 @@ module Sirena
 
         # @return [Numeric] height added by the messages above `index`
         def extra_before(index)
-          (0...index).sum { |at| extra(at) }
+          (0...index).sum { |at| extra(at) + self_drop(at) }
         end
 
-        # @return [Numeric] height added by `index` and the ones above it
+        # @return [Numeric] height added above and within `index`'s own row;
+        #   its self-loop pushes down the rows below it, not its own
         def extra_through(index)
-          extra_before(index + 1)
+          extra_before(index) + extra(index)
         end
 
         # @return [Numeric] height added by every message
@@ -71,6 +76,15 @@ module Sirena
         end
 
         private
+
+        # mmdc leaves 30 below a message to itself, for the loop, and 30
+        # more when a frame ends right after it.
+        def self_drop(index)
+          edge = @edges[index]
+          return 0 unless edge && edge[:sources].first == edge[:targets].first
+
+          @closers.include?(index) ? 2 * SELF_DROP : SELF_DROP
+        end
 
         def line_advance
           (@font_size * LINE_ADVANCE_RATIO).round
