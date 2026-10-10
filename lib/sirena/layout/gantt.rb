@@ -2,13 +2,14 @@
 
 require_relative "base"
 require_relative "../diagram/gantt"
+require_relative "../notation/mermaid/ir_adapters/gantt"
 require "date"
 
 module Sirena
   module Layout
-    # Gantt chart transformer for converting gantt models to renderable structure.
+    # Gantt chart transformer for converting models to renderable structure.
     #
-    # Handles date calculations, dependency resolution, and timeline positioning.
+    # Handles date calculations, dependency resolution, and positioning.
     #
     # @example Transform a Gantt chart
     #   transform = Gantt.new
@@ -25,6 +26,45 @@ module Sirena
       TIMELINE_HEIGHT = 40
       TITLE_Y = 40
       MAX_TIMELINE_LABELS = 40
+      SCHEDULE_SETTINGS = %i[
+        date_format axis_format tick_interval weekend inclusive_end_dates
+        today_marker
+      ].freeze
+      TASK_PLACEMENTS = {
+        id: "source_id", start_date: "start_date", end_date: "end_date",
+        duration: "duration", after_task: "after_tasks",
+        until_task: "until_task", click_href: "click_href",
+        click_callback: "click_callback"
+      }.freeze
+
+      SourceDocument = Struct.new(
+        :id, :title, :date_format, :axis_format, :tick_interval, :excludes,
+        :weekend, :inclusive_end_dates, :today_marker, :acc_title,
+        :acc_description, :sections, keyword_init: true
+      )
+      SourceSection = Struct.new(:name, :tasks, keyword_init: true)
+      SourceTask = Struct.new(
+        :description, :id, :start_date, :end_date, :duration, :after_task,
+        :until_task, :tags, :click_href, :click_callback, :calculated_start,
+        :calculated_end, keyword_init: true
+      ) do
+        def done?
+          tags.include?("done")
+        end
+
+        def active?
+          tags.include?("active")
+        end
+
+        def critical?
+          tags.include?("crit")
+        end
+
+        def milestone?
+          tags.include?("milestone")
+        end
+      end
+      private_constant :SourceDocument, :SourceSection, :SourceTask
 
       class Label < Lutaml::Model::Serializable
         attribute :text, :string
@@ -75,74 +115,138 @@ module Sirena
       end
 
       class Scene < Layout::Scene
+        attribute :id, :string
         attribute :view_box, :string
+        attribute :acc_title, :string
+        attribute :acc_description, :string
         attribute :title, Label
         attribute :timeline, Timeline
         attribute :sections, Section, collection: true, default: -> { [] }
       end
 
-      # Converts a Gantt diagram to a layout structure with calculated positions.
+      # Converts a Gantt diagram to a layout structure with calculated
+      # positions.
       #
       # @param diagram [Diagram::Gantt] the Gantt diagram to transform
       # @return [Hash] data structure for rendering
       def build_graph(diagram)
-        @diagram = diagram
-        @task_map = build_task_map(diagram)
-
-        # Calculate dates for all tasks
+        @diagram = source_document(ir_document(diagram))
+        @task_map = build_task_map(@diagram)
         calculate_task_dates
-
-        # Determine timeline range
         timeline = calculate_timeline
-
-        {
-          id: "gantt",
-          title: diagram.title,
-          date_format: diagram.date_format,
-          axis_format: diagram.axis_format,
-          tick_interval: diagram.tick_interval,
-          excludes: diagram.excludes,
-          today_marker: diagram.today_marker,
-          sections: transform_sections(diagram, timeline),
+        schedule_attributes.merge(
+          sections: transform_sections(@diagram, timeline),
           timeline: timeline,
-          metadata: {
-            section_count: diagram.sections.length,
-            task_count: total_task_count(diagram),
-          },
-        }
+          metadata: graph_metadata,
+        )
       end
 
       private
 
       def scene(diagram)
-        graph = build_graph(calculation_copy(diagram))
+        graph = build_graph(diagram)
         width = MARGIN_LEFT + TIMELINE_WIDTH + MARGIN_RIGHT
         height = scene_height(graph[:sections])
-        Scene.new(
-          width: width, height: height, view_box: "0 0 #{width} #{height}",
+        Scene.new(**scene_attributes(graph, width, height))
+      end
+
+      def scene_attributes(graph, width, height)
+        {
+          id: graph[:id], width: width, height: height,
+          view_box: "0 0 #{width} #{height}",
+          acc_title: graph[:acc_title],
+          acc_description: graph[:acc_description],
           title: title_geometry(graph[:title]),
           timeline: timeline_geometry(graph),
           sections: section_geometry(graph[:sections])
+        }
+      end
+
+      def ir_document(diagram)
+        return diagram if diagram.is_a?(IR::Prepositioned)
+
+        Notation::Mermaid::IRAdapters::Gantt.call(diagram)
+      end
+
+      def source_document(document)
+        settings = document.items.find do |item|
+          item.role == "schedule_settings"
+        end
+        SourceDocument.new(
+          **root_source_attributes(document),
+          **schedule_setting_attributes(settings),
+          excludes: children(document, settings&.id, "exclusion").map(&:label),
+          sections: source_sections(document),
         )
       end
 
-      def calculation_copy(diagram)
-        copy = diagram.dup
-        copy.sections = diagram.sections.map { |section| section_copy(section) }
-        copy
+      def root_source_attributes(document)
+        {
+          id: document.id, title: document.label,
+          acc_title: document.accessibility_title,
+          acc_description: document.accessibility_description
+        }
       end
 
-      def section_copy(section)
-        copy = section.dup
-        copy.tasks = section.tasks.map { |task| task_copy(task) }
-        copy
-      end
-
-      def task_copy(task)
-        task.dup.tap do |copy|
-          copy.calculated_start = nil
-          copy.calculated_end = nil
+      def schedule_setting_attributes(settings)
+        SCHEDULE_SETTINGS.to_h do |name|
+          [name, placement_value(settings, name.to_s)]
         end
+      end
+
+      def source_sections(document)
+        children(document, nil, "section").sort_by { |item| source_order(item) }
+          .map do |section|
+            tasks = children(document, section.id, "task")
+              .sort_by { |item| source_order(item) }
+              .map { |task| source_task(document, task) }
+            SourceSection.new(name: section.label, tasks: tasks)
+          end
+      end
+
+      def source_task(document, item)
+        attributes = TASK_PLACEMENTS.to_h do |name, dimension|
+          [name, placement_value(item, dimension)]
+        end
+        attributes[:description] = item.label
+        attributes[:tags] = source_tags(document, item)
+        SourceTask.new(**attributes)
+      end
+
+      def source_tags(document, item)
+        children(document, item.id, "status_flag")
+          .sort_by { |status| source_order(status) }.map(&:label)
+      end
+
+      def schedule_attributes
+        @diagram.to_h.slice(
+          :id, :title, :acc_title, :acc_description, *SCHEDULE_SETTINGS,
+          :excludes
+        )
+      end
+
+      def graph_metadata
+        {
+          section_count: @diagram.sections.length,
+          task_count: total_task_count(@diagram),
+        }
+      end
+
+      def children(document, parent_id, role)
+        document.items.select do |item|
+          item.parent_id == parent_id && item.role == role
+        end
+      end
+
+      def source_order(item)
+        placement_value(item, "source_order") || 0
+      end
+
+      def placement_value(item, dimension)
+        placement = item&.placements&.find do |candidate|
+          candidate.dimension == dimension
+        end
+        placement&.value&.value
       end
 
       def scene_height(sections)
