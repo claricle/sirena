@@ -22,7 +22,6 @@ module Sirena
       TIMELINE_WIDTH = Layout::Gantt::TIMELINE_WIDTH
       TIMELINE_HEIGHT = Layout::Gantt::TIMELINE_HEIGHT
       TITLE_Y = Layout::Gantt::TITLE_Y
-      MAX_TIMELINE_LABELS = Layout::Gantt::MAX_TIMELINE_LABELS
 
       TASK_COLORS = {
         done: "#5CB85C",
