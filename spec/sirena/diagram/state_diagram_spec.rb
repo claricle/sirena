@@ -15,17 +15,26 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       let(:valid_state) do
         Sirena::Diagram::StateNode.new(id: "idle", state_type: "normal")
       end
+      let(:labeled_valid_state) do
+        Sirena::Diagram::StateNode.new(
+          id: "idle", label: "Idle", state_type: "normal",
+        )
+      end
       let(:invalid_transition) do
         Sirena::Diagram::StateTransition.new(from_id: "idle")
       end
+      let(:missing_state_transition) do
+        Sirena::Diagram::StateTransition.new(from_id: "idle", to_id: "active")
+      end
+
+      def state_diagram(states:, transitions: [])
+        described_class.new(
+          direction: "TD", states: states, transitions: transitions,
+        )
+      end
 
       it "returns true for valid state diagram with states" do
-        diagram = described_class.new(direction: "TD")
-        diagram.states << Sirena::Diagram::StateNode.new(
-          id: "idle",
-          label: "Idle",
-          state_type: "normal",
-        )
+        diagram = state_diagram(states: [labeled_valid_state])
 
         expect(diagram.valid?).to be true
       end
@@ -46,15 +55,9 @@ RSpec.describe Sirena::Diagram::StateDiagram do
       end
 
       it "returns false when transition references non-existent state" do
-        diagram = described_class.new(direction: "TD")
-        diagram.states << Sirena::Diagram::StateNode.new(
-          id: "idle",
-          label: "Idle",
-          state_type: "normal",
-        )
-        diagram.transitions << Sirena::Diagram::StateTransition.new(
-          from_id: "idle",
-          to_id: "active",
+        diagram = state_diagram(
+          states: [labeled_valid_state],
+          transitions: [missing_state_transition],
         )
 
         expect(diagram.valid?).to be false
@@ -219,13 +222,13 @@ RSpec.describe Sirena::Diagram::StateDiagram do
   end
 
   describe Sirena::Diagram::StateNode do
+    def state_node(id: "idle", state_type: "normal", **attributes)
+      described_class.new(id: id, state_type: state_type, **attributes)
+    end
+
     describe "#valid?" do
       it "returns true for valid state node" do
-        node = described_class.new(
-          id: "idle",
-          label: "Idle",
-          state_type: "normal",
-        )
+        node = state_node(label: "Idle")
 
         expect(node.valid?).to be true
       end
@@ -290,14 +293,8 @@ RSpec.describe Sirena::Diagram::StateDiagram do
 
     describe "#composite_state?" do
       it "returns true when state has children" do
-        node = described_class.new(
-          id: "composite",
-          state_type: "normal",
-        )
-        node.children << described_class.new(
-          id: "child",
-          state_type: "normal",
-        )
+        node = state_node(id: "composite")
+        node.children << state_node(id: "child")
         expect(node.composite_state?).to be true
       end
 
@@ -312,6 +309,11 @@ RSpec.describe Sirena::Diagram::StateDiagram do
   end
 
   describe Sirena::Diagram::StateTransition do
+    def transition(**attributes)
+      defaults = { from_id: "idle", to_id: "active" }
+      described_class.new(**defaults, **attributes)
+    end
+
     describe "#valid?" do
       it "returns true for valid transition" do
         transition = described_class.new(
@@ -335,22 +337,13 @@ RSpec.describe Sirena::Diagram::StateDiagram do
 
     describe "#label" do
       it "returns trigger only when no guard" do
-        transition = described_class.new(
-          from_id: "idle",
-          to_id: "active",
-          trigger: "start",
-        )
+        transition = transition(trigger: "start")
 
         expect(transition.label).to eq("start")
       end
 
       it "returns trigger and guard when both present" do
-        transition = described_class.new(
-          from_id: "idle",
-          to_id: "active",
-          trigger: "start",
-          guard_condition: "ready",
-        )
+        transition = transition(trigger: "start", guard_condition: "ready")
 
         expect(transition.label).to eq("start [ready]")
       end

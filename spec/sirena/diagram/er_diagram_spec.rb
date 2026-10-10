@@ -3,6 +3,34 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Diagram::ErDiagram do
+  def er_entity(id)
+    Sirena::Diagram::ErEntity.new(id: id, name: id)
+  end
+
+  def er_relationship(**attributes)
+    defaults = {
+      from_id: "CUSTOMER", to_id: "ORDER",
+      relationship_type: "non-identifying",
+      cardinality_from: "one", cardinality_to: "zero_or_more"
+    }
+    Sirena::Diagram::ErRelationship.new(**defaults, **attributes)
+  end
+
+  def er_diagram(entities: [], relationships: [])
+    described_class.new(entities: entities, relationships: relationships)
+  end
+
+  def diagram_with_mixed_relationships
+    er_diagram(
+      relationships: [
+        er_relationship(relationship_type: "identifying"),
+        er_relationship(
+          from_id: "ORDER", to_id: "PRODUCT", cardinality_to: "one_or_more",
+        ),
+      ],
+    )
+  end
+
   describe "#diagram_type" do
     it "returns :er_diagram" do
       diagram = described_class.new
@@ -12,11 +40,7 @@ RSpec.describe Sirena::Diagram::ErDiagram do
 
   describe "#valid?" do
     it "returns true for valid diagram with entities" do
-      diagram = described_class.new
-      diagram.entities << Sirena::Diagram::ErEntity.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
-      )
+      diagram = er_diagram(entities: [er_entity("CUSTOMER")])
 
       expect(diagram.valid?).to be true
     end
@@ -40,20 +64,9 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     end
 
     it "returns false when an embedded relationship is invalid" do
-      diagram = described_class.new
-      diagram.entities << Sirena::Diagram::ErEntity.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
-      )
-      diagram.entities << Sirena::Diagram::ErEntity.new(
-        id: "ORDER",
-        name: "ORDER",
-      )
-      diagram.relationships << Sirena::Diagram::ErRelationship.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_to: "zero_or_more",
+      diagram = er_diagram(
+        entities: %w[CUSTOMER ORDER].map { |id| er_entity(id) },
+        relationships: [er_relationship(cardinality_from: nil)],
       )
 
       expect(diagram.valid?).to be false
@@ -61,10 +74,8 @@ RSpec.describe Sirena::Diagram::ErDiagram do
 
     # The valid entity is needed to reach the relationship branch at all.
     it "returns false when a relationship member is nil" do
-      diagram = described_class.new(relationships: [nil])
-      diagram.entities << Sirena::Diagram::ErEntity.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
+      diagram = er_diagram(
+        entities: [er_entity("CUSTOMER")], relationships: [nil],
       )
 
       expect(diagram.valid?).to be false
@@ -77,30 +88,15 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     end
 
     it "returns false when an empty diagram has dangling relationships" do
-      diagram = described_class.new
-      diagram.relationships << Sirena::Diagram::ErRelationship.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
+      diagram = er_diagram(relationships: [er_relationship])
 
       expect(diagram.valid?).to be false
     end
 
     it "returns false when relationship references non-existent entity" do
-      diagram = described_class.new
-      diagram.entities << Sirena::Diagram::ErEntity.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
-      )
-      diagram.relationships << Sirena::Diagram::ErRelationship.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
+      diagram = er_diagram(
+        entities: [er_entity("CUSTOMER")],
+        relationships: [er_relationship],
       )
 
       expect(diagram.valid?).to be false
@@ -182,30 +178,20 @@ RSpec.describe Sirena::Diagram::ErDiagram do
     let(:diagram) { described_class.new }
 
     it "returns only identifying relationships" do
-      diagram.relationships << Sirena::Diagram::ErRelationship.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
-      diagram.relationships << Sirena::Diagram::ErRelationship.new(
-        from_id: "ORDER",
-        to_id: "PRODUCT",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "one_or_more",
-      )
-
-      expect(diagram.identifying_relationships.length).to eq(1)
-      expect(diagram.identifying_relationships.first.relationship_type).to eq(
-        "identifying",
-      )
+      relationships = diagram_with_mixed_relationships.identifying_relationships
+      expect(relationships.length).to eq(1)
+      expect(relationships.first.relationship_type).to eq("identifying")
     end
   end
 end
 
 RSpec.describe Sirena::Diagram::ErEntity do
+  def entity_with(attributes)
+    described_class.new(
+      id: "CUSTOMER", name: "CUSTOMER", attributes: attributes,
+    )
+  end
+
   describe "#valid?" do
     it "returns true for entity with id and name" do
       entity = described_class.new(id: "CUSTOMER", name: "CUSTOMER")
@@ -223,21 +209,13 @@ RSpec.describe Sirena::Diagram::ErEntity do
     end
 
     it "returns false when the attribute collection is missing" do
-      entity = described_class.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
-        attributes: nil,
-      )
+      entity = entity_with(nil)
 
       expect(entity.valid?).to be false
     end
 
     it "returns false when an attribute member is nil" do
-      entity = described_class.new(
-        id: "CUSTOMER",
-        name: "CUSTOMER",
-        attributes: [nil],
-      )
+      entity = entity_with([nil])
 
       expect(entity.valid?).to be false
     end
@@ -289,72 +267,42 @@ RSpec.describe Sirena::Diagram::ErAttribute do
 end
 
 RSpec.describe Sirena::Diagram::ErRelationship do
+  def relationship(**attributes)
+    defaults = {
+      from_id: "CUSTOMER", to_id: "ORDER",
+      relationship_type: "non-identifying",
+      cardinality_from: "one", cardinality_to: "zero_or_more"
+    }
+    described_class.new(**defaults, **attributes)
+  end
+
   describe "#valid?" do
     it "returns true for relationship with all required fields" do
-      relationship = described_class.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
       expect(relationship.valid?).to be true
     end
 
     it "returns false without from_id" do
-      relationship = described_class.new(
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
-      expect(relationship.valid?).to be false
+      expect(relationship(from_id: nil).valid?).to be false
     end
 
     it "returns false without cardinality_from" do
-      relationship = described_class.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_to: "zero_or_more",
-      )
-      expect(relationship.valid?).to be false
+      expect(relationship(cardinality_from: nil).valid?).to be false
     end
   end
 
   describe "#identifying?" do
     it "returns true for identifying type" do
-      relationship = described_class.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
-      expect(relationship.identifying?).to be true
+      identifying = relationship(relationship_type: "identifying")
+      expect(identifying.identifying?).to be true
     end
 
     it "returns false for other types" do
-      relationship = described_class.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
       expect(relationship.identifying?).to be false
     end
   end
 
   describe "#non_identifying?" do
     it "returns true for non-identifying type" do
-      relationship = described_class.new(
-        from_id: "CUSTOMER",
-        to_id: "ORDER",
-        relationship_type: "non-identifying",
-        cardinality_from: "one",
-        cardinality_to: "zero_or_more",
-      )
       expect(relationship.non_identifying?).to be true
     end
   end
