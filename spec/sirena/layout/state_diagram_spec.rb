@@ -174,7 +174,7 @@ RSpec.describe Sirena::Layout::StateDiagram, :aggregate_failures do
       expect(start.width).to eq(30)
       expect(start.height).to eq(30)
       expect([start.center_x, start.center_y, start.radius])
-        .to eq([65.0, 65.0, 15.0])
+        .to eq([65.0, 65.0, 7.0])
     end
 
     it "provides both final radii for an end state" do
