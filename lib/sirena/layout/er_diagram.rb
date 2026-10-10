@@ -3,6 +3,7 @@
 require_relative "base"
 require_relative "grid"
 require_relative "er_diagram_entity_size"
+require_relative "er_diagram_placement"
 require_relative "../diagram/er_diagram"
 require_relative "../notation/mermaid/ir_adapters/er_diagram"
 
@@ -245,7 +246,7 @@ module Sirena
 
       def scene(diagram)
         graph = build_graph(diagram)
-        Grid.apply(graph)
+        ErDiagramPlacement.apply(graph)
         scene_from_graph(graph)
       end
 
@@ -669,10 +670,15 @@ module Sirena
       def scene_dimensions(graph)
         return [EMPTY_DIAGRAM_PADDING * 2] * 2 if empty_graph?(graph)
 
+        extent = graph[:extent] || children_extent(graph)
+        extent.map { |far| far.to_f + CANVAS_MARGIN }
+      end
+
+      def children_extent(graph)
         [[:x, :width, 150], [:y, :height, 100]].map do |coordinate, dimension, size|
           (graph[:children] || []).map do |node|
             node_extent(node, coordinate, dimension, size)
-          end.max.to_f + CANVAS_MARGIN
+          end.max || 0
         end
       end
 
