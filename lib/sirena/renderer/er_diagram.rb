@@ -402,19 +402,16 @@ module Sirena
 
       # Whether VALUE is syntactically valid CSS for PROPERTY. A small
       # table, not a CSS grammar — enough to tell a real declaration from
-      # `FILL:bogus`, not to validate every legal `rgb()` argument. A
-      # property this table has no opinion on is always valid, so
-      # `box_style` never rejects a property it does not model.
+      # `FILL:bogus`, not to validate every legal `rgb()` argument.
+      # `box_property` only asks about `fill`, `stroke` and `stroke-width`.
       #
-      # @param property [String] lowercase property name
+      # @param property [String] "fill", "stroke" or "stroke-width"
       # @param value [String]
       # @return [Boolean]
       def css_valid?(property, value)
-        case property
-        when "fill", "stroke" then css_color?(value)
-        when "stroke-width" then css_length?(value)
-        else true
-        end
+        return css_length?(value) if property == "stroke-width"
+
+        css_color?(value)
       end
 
       CSS_HEX_COLOR = /\A#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\z/i
