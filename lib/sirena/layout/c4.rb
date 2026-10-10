@@ -376,11 +376,14 @@ module Sirena
 
       def node_label(label, node)
         Label.new(
-          **label_measurements(label), x: node[:x] + (node[:width] / 2.0),
-                                       y: node[:y] + label[:offset], baseline: "middle",
-                                       font_size: label[:font_size], font_weight: label[:font_weight],
-                                       font_style: label[:font_style]
+          **label_measurements(label), **label_style(label),
+          x: node[:x] + (node[:width] / 2.0), y: node[:y] + label[:offset],
+          baseline: "middle"
         )
+      end
+
+      def label_style(label)
+        label.slice(:font_size, :font_weight, :font_style)
       end
 
       def positioned_stereotype(node, kind)
@@ -444,12 +447,17 @@ module Sirena
           start_point: start_point, end_point: end_point,
           bend_points: bend_points(start_point, end_point, position)
         )
-        Edge.new(
+        Edge.new(**edge_attributes(edge, source, target, section))
+      end
+
+      def edge_attributes(edge, source, target, section)
+        ends = [section.start_point, section.end_point]
+        {
           id: edge[:id], source: source.id, target: target.id,
-          sections: [section], line_end: end_point,
+          sections: [section], line_end: section.end_point,
           arrowheads: edge_arrowheads(edge, section),
-          labels: relationship_labels(edge[:labels], start_point, end_point)
-        )
+          labels: relationship_labels(edge[:labels], *ends),
+        }
       end
 
       def edge_ends(source, target)

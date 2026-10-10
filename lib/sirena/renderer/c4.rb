@@ -129,18 +129,26 @@ module Sirena
       end
 
       def add_person_icon(group, node, colours)
-        group.children << Svg::Circle.new.tap do |circle|
+        group.children << person_head(node, colours[:text])
+        group.children << person_body(node, colours[:text])
+      end
+
+      def person_head(node, colour)
+        Svg::Circle.new.tap do |circle|
           circle.cx = node.head_center.x
           circle.cy = node.head_center.y
           circle.r = 10
-          circle.fill = colours[:text]
+          circle.fill = colour
         end
-        group.children << Svg::Ellipse.new.tap do |ellipse|
+      end
+
+      def person_body(node, colour)
+        Svg::Ellipse.new.tap do |ellipse|
           ellipse.cx = node.body_center.x
           ellipse.cy = node.body_center.y
           ellipse.rx = 18
           ellipse.ry = 12
-          ellipse.fill = colours[:text]
+          ellipse.fill = colour
         end
       end
 
@@ -150,13 +158,17 @@ module Sirena
           text.y = label.y
           text.content = label.text
           text.fill = colour
-          text.font_family = "Arial, sans-serif"
-          text.font_size = label.font_size.to_s
-          text.font_weight = label.font_weight
-          text.font_style = label.font_style
-          text.dominant_baseline = label.baseline
-          text.text_anchor = "middle" unless label.font_size == 16
+          style_label(text, label)
         end
+      end
+
+      def style_label(text, label)
+        text.font_family = "Arial, sans-serif"
+        text.font_size = label.font_size.to_s
+        text.font_weight = label.font_weight
+        text.font_style = label.font_style
+        text.dominant_baseline = label.baseline
+        text.text_anchor = "middle" unless label.font_size == 16
       end
 
       def render_relationship(edge, svg)
