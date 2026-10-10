@@ -212,34 +212,9 @@ module Sirena
       #
       # @return [Boolean] true if sequence diagram is valid
       def valid?
-        return false if participants.nil?
-        return false unless participants.all?(&:valid?)
-        return false unless messages.nil? || messages.all?(&:valid?)
-        return false unless activations.nil? || activations.all?(&:valid?)
-        return false unless notes.nil? || notes.all?(&:valid?)
+        return false unless components_valid?
 
-        # Validate message references
-        participant_ids = participants.map(&:id)
-        messages&.each do |message|
-          return false unless participant_ids.include?(message.from_id)
-          return false unless participant_ids.include?(message.to_id)
-        end
-
-        # Validate activation references
-        activations&.each do |activation|
-          return false unless participant_ids.include?(
-            activation.participant_id,
-          )
-        end
-
-        # Validate note references
-        notes&.each do |note|
-          note.participant_ids.each do |pid|
-            return false unless participant_ids.include?(pid)
-          end
-        end
-
-        true
+        references_valid?(participants.map(&:id))
       end
 
       # Finds a participant by its identifier.
@@ -273,6 +248,43 @@ module Sirena
       # @return [Array<SequenceActivation>] activations for the participant
       def activations_for(participant_id)
         activations.select { |a| a.participant_id == participant_id }
+      end
+
+      private
+
+      def components_valid?
+        !participants.nil? && participants.all?(&:valid?) &&
+          collection_valid?(messages) && collection_valid?(activations) &&
+          collection_valid?(notes)
+      end
+
+      def collection_valid?(collection)
+        collection.nil? || collection.all?(&:valid?)
+      end
+
+      def references_valid?(participant_ids)
+        message_references_valid?(participant_ids) &&
+          activation_references_valid?(participant_ids) &&
+          note_references_valid?(participant_ids)
+      end
+
+      def message_references_valid?(participant_ids)
+        messages.nil? || messages.all? do |message|
+          participant_ids.include?(message.from_id) &&
+            participant_ids.include?(message.to_id)
+        end
+      end
+
+      def activation_references_valid?(participant_ids)
+        activations.nil? || activations.all? do |activation|
+          participant_ids.include?(activation.participant_id)
+        end
+      end
+
+      def note_references_valid?(participant_ids)
+        notes.nil? || notes.all? do |note|
+          note.participant_ids.all? { |id| participant_ids.include?(id) }
+        end
       end
     end
   end
