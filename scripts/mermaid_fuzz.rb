@@ -89,7 +89,9 @@ module MermaidFuzz
 
     def cases(count)
       @last_ids = Array.new(count) { random_id }
-      @last_ids.each_with_index.map { |id, i| Case.new("gen-#{i + 1}", @template.call(id)) }
+      @last_ids.each_with_index.map do |id, i|
+        Case.new("gen-#{i + 1}", @template.call(id))
+      end
     end
 
     # Health-check hook Runner calls after generating a batch: true if the
@@ -156,11 +158,18 @@ module MermaidFuzz
         preflight: preflight,
         cases: cases.map { |c| { id: c.id, source: c.source } },
       }.to_json
-      stdout, stderr, status = Open3.capture3("node", MERMAID_RUNNER, stdin_data: payload)
-      raise "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}" unless status.success?
+      stdout, stderr, status = Open3.capture3(
+        "node", MERMAID_RUNNER, stdin_data: payload
+      )
+      error = "mermaid runner failed (exit #{status.exitstatus}):\n#{stderr}"
+      raise error unless status.success?
 
       JSON.parse(stdout, symbolize_names: true).to_h do |r|
-        verdict = r[:accepted] ? { accepted: true, ids: r[:ids] } : { accepted: false, error: r[:error] }
+        verdict = if r[:accepted]
+                    { accepted: true, ids: r[:ids] }
+                  else
+                    { accepted: false, error: r[:error] }
+                  end
         [r[:id].to_s, verdict]
       end
     end
@@ -223,7 +232,9 @@ module MermaidFuzz
     private
 
     def classify
-      return accept_reject_mismatch unless @sirena[:accepted] == @mermaid[:accepted]
+      unless @sirena[:accepted] == @mermaid[:accepted]
+        return accept_reject_mismatch
+      end
       return [:agree, "both rejected"] unless @sirena[:accepted]
 
       id_mismatch
@@ -232,7 +243,8 @@ module MermaidFuzz
     def accept_reject_mismatch
       [
         :accept_reject_mismatch,
-        "sirena accepted=#{@sirena[:accepted]} mermaid accepted=#{@mermaid[:accepted]} " \
+        "sirena accepted=#{@sirena[:accepted]} " \
+        "mermaid accepted=#{@mermaid[:accepted]} " \
         "(sirena: #{@sirena[:error] || @sirena[:ids].inspect}, " \
         "mermaid: #{@mermaid[:error] || @mermaid[:ids].inspect})",
       ]
@@ -242,7 +254,9 @@ module MermaidFuzz
       if same_ids?
         [:agree, "both accepted, ids=#{@sirena[:ids].inspect}"]
       else
-        [:id_mismatch, "sirena ids=#{@sirena[:ids].inspect} mermaid ids=#{@mermaid[:ids].inspect}"]
+        detail = "sirena ids=#{@sirena[:ids].inspect} " \
+                 "mermaid ids=#{@mermaid[:ids].inspect}"
+        [:id_mismatch, detail]
       end
     end
 
@@ -268,7 +282,9 @@ module MermaidFuzz
   # corpus did not reproduce -- see Runner's class doc for why `divergences`
   # and `cases_total` are still meaningful to LOOK at in that case (they are
   # printed either way) but not meaningful to TRUST or aggregate.
-  Result = Struct.new(:label, :proven, :cases_total, :divergences, keyword_init: true)
+  Result = Struct.new(
+    :label, :proven, :cases_total, :divergences, keyword_init: true
+  )
 
   # Parses CLI options, runs both sides for ONE diagram type, prints the
   # report, and returns a Result (rather than exiting directly) so an
@@ -299,8 +315,10 @@ module MermaidFuzz
     # @param mermaid_getter [String, nil] mermaid db getter name, or nil
     # @param mermaid_preflight [String] a fixed, known-valid source for
     #   this diagram type -- see MermaidSide's doc on why it must be fixed
-    def initialize(label:, generator_factory:, known_divergences:, sirena_verdict_for:, mermaid_getter:,
-                   mermaid_preflight:)
+    def initialize(
+      label:, generator_factory:, known_divergences:, sirena_verdict_for:,
+      mermaid_getter:, mermaid_preflight:
+    )
       @label = label
       @generator_factory = generator_factory
       @known_divergences = known_divergences
@@ -330,15 +348,26 @@ module MermaidFuzz
       agreement_comparison = comparisons.first
       known_comparisons = comparisons[1, @known_divergences.size]
       divergences = comparisons.select(&:divergence?)
-      proven = proven?(agreement_comparison, known_comparisons, generator, generated)
+      proven = proven?(
+        agreement_comparison, known_comparisons, generator, generated
+      )
 
       puts "== #{@label} (seed=#{seed}) =="
-      warn_unproven(agreement_comparison, known_comparisons, generator, generated) unless proven
+      unless proven
+        warn_unproven(
+          agreement_comparison, known_comparisons, generator, generated
+        )
+      end
       (verbose ? comparisons : divergences).each { |c| puts c }
       puts "#{@label}: #{cases.size} cases, #{divergences.size} divergences " \
            "#{divergences.group_by(&:kind).transform_values(&:size)}"
 
-      Result.new(label: @label, proven: proven, cases_total: cases.size, divergences: divergences)
+      Result.new(
+        label: @label,
+        proven: proven,
+        cases_total: cases.size,
+        divergences: divergences,
+      )
     end
 
     private
@@ -362,15 +391,18 @@ module MermaidFuzz
       return false if agreement_comparison.divergence?
       return false if @known_divergences.empty?
       return false unless known_comparisons.all?(&:divergence?)
-      return false if generated.any? && generator.respond_to?(:exercised_both_pools?) && !generator.exercised_both_pools?
+      return false if generator_unproven?(generator, generated)
 
       true
     end
 
-    def warn_unproven(agreement_comparison, known_comparisons, generator, generated)
+    def warn_unproven(
+      agreement_comparison, known_comparisons, generator, generated
+    )
       if agreement_comparison.divergence?
-        warn "#{@label}: NEGATIVE CONTROL FAILED -- a known-valid source was flagged as a " \
-             "divergence: #{agreement_comparison}. The checker itself is untrustworthy."
+        warn "#{@label}: NEGATIVE CONTROL FAILED -- a known-valid source was " \
+             "flagged as a divergence: #{agreement_comparison}. The checker " \
+             "itself is untrustworthy."
       end
 
       if @known_divergences.empty?
@@ -379,22 +411,36 @@ module MermaidFuzz
              "See mermaid_fuzz.rb banner."
       elsif !known_comparisons.all?(&:divergence?)
         caught = known_comparisons.count(&:divergence?)
-        warn "#{@label}: #{caught}/#{@known_divergences.size} known divergences caught -- " \
-             "a regression case stopped diverging. Investigate before trusting this run."
-        known_comparisons.reject(&:divergence?).each { |c| warn "  NOT caught: #{c}" }
+        warn "#{@label}: #{caught}/#{@known_divergences.size} known " \
+             "divergences caught -- a regression case stopped diverging. " \
+             "Investigate before trusting this run."
+        known_comparisons.reject(&:divergence?).each do |comparison|
+          warn "  NOT caught: #{comparison}"
+        end
       end
 
-      if generated.any? && generator.respond_to?(:exercised_both_pools?) && !generator.exercised_both_pools?
-        warn "#{@label}: GENERATOR NEVER EXPLORED ITS WILD CHARACTER POOL across " \
-             "#{generated.size} generated cases -- the reported numbers test nothing beyond " \
-             "safe identifiers. Check the generator_factory wiring."
+      if generator_unproven?(generator, generated)
+        warn "#{@label}: GENERATOR NEVER EXPLORED ITS WILD CHARACTER POOL " \
+             "across #{generated.size} generated cases -- the reported " \
+             "numbers test nothing beyond safe identifiers. Check the " \
+             "generator_factory wiring."
       end
+    end
+
+    def generator_unproven?(generator, generated)
+      generated.any? &&
+        generator.respond_to?(:exercised_both_pools?) &&
+        !generator.exercised_both_pools?
     end
 
     def compare(cases)
       sirena_results = SirenaSide.run(cases, @sirena_verdict_for)
-      mermaid_results = MermaidSide.run(cases, getter: @mermaid_getter, preflight: @mermaid_preflight)
-      cases.map { |c| Comparison.new(c, sirena_results[c.id], mermaid_results[c.id]) }
+      mermaid_results = MermaidSide.run(
+        cases, getter: @mermaid_getter, preflight: @mermaid_preflight
+      )
+      cases.map do |kase|
+        Comparison.new(kase, sirena_results[kase.id], mermaid_results[kase.id])
+      end
     end
   end
 
