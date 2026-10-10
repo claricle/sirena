@@ -28,7 +28,7 @@ module Sirena
 
         # mmdc's timeline lexer gives ";" no meaning, so it stays in text.
         rule(:line_end) do
-          space? >> (comment.maybe >> newline | eof)
+          space? >> ((comment.maybe >> newline) | eof)
         end
 
         # Main diagram structure
