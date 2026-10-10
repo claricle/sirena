@@ -4,6 +4,8 @@ require "spec_helper"
 require "sirena/theme/completion"
 
 RSpec.describe Sirena::Theme::Completion do
+  include PartialThemeRenders
+
   let(:default) { Sirena::Theme::Registry.get(:default) }
   let(:partial) do
     Sirena::Theme.new(name: "mine", colors: { background: "#101010" })
@@ -26,6 +28,22 @@ RSpec.describe Sirena::Theme::Completion do
     completed
 
     expect(partial.colors.card_text).to be_nil
+  end
+
+  it "returns a theme that sets every colour unchanged" do
+    expect(described_class.call(Sirena::Theme::Registry.get(:dark)))
+      .to be(Sirena::Theme::Registry.get(:dark))
+  end
+
+  it "lets a partial theme draw each palette diagram in default colours" do
+    firsts = %i[flow xy timeline_fill].map do |name|
+      default.colors.palette(name, 0)
+    end
+    drawn = partial_theme_fills.zip(firsts).map do |fills, colour|
+      fills.include?(colour)
+    end
+
+    expect(drawn).to eq([true, true, true])
   end
 
   it "uses the default theme when there is none" do

@@ -14,15 +14,21 @@ module Sirena
 
       # @param theme [Theme, nil] the caller's theme, possibly partial
       # @param base [Theme, nil] where unset colours come from
-      # @return [Theme, nil] a copy whose every colour is set; the caller's
-      #   theme is not modified
+      # @return [Theme, nil] the theme itself when every colour is set,
+      #   otherwise a filled copy; the caller's theme is never modified
       def call(theme, base = Registry.get(:default))
         return base if theme.nil?
-        return theme if base.nil? || theme.equal?(base)
+        return theme if base.nil? || complete?(theme.colors)
 
         completed = theme.dup
         completed.colors = filled_colors(theme.colors, base.colors)
         completed
+      end
+
+      def complete?(colors)
+        ColorPalette.attributes.keys.all? do |key|
+          set_value(colors&.public_send(key))
+        end
       end
 
       def filled_colors(colors, defaults)

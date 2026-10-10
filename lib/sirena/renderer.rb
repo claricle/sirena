@@ -2,6 +2,7 @@
 
 require_relative "renderer/base"
 require_relative "notation/mermaid"
+require_relative "theme/completion"
 
 module Sirena
   module Renderer
@@ -9,11 +10,13 @@ module Sirena
     # (`:pie` -> `Renderer::Pie`). Never cached.
     #
     # @param type [Symbol] a key of {Notation::Mermaid::TYPES}
-    # @param theme [Theme, nil] the theme the renderer draws with
+    # @param theme [Theme, nil] the theme the renderer draws with; colours it
+    #   leaves unset come from the default theme
     # @raise [Engine::DiagramTypeError] when the type is unknown
     # @raise [RenderError] when the type has no renderer class
     def self.for(type, theme: nil)
-      Notation::Mermaid.layer_class(self, type, RenderError).new(theme: theme)
+      renderer = Notation::Mermaid.layer_class(self, type, RenderError)
+      renderer.new(theme: Theme::Completion.call(theme))
     end
   end
 end

@@ -6,6 +6,7 @@ require_relative "error/diagram_type_error"
 require_relative "error/pipeline_error"
 require_relative "notation"
 require_relative "notation/mermaid"
+require_relative "theme/completion"
 
 module Sirena
   # Orchestrates the complete diagram rendering pipeline.
@@ -260,6 +261,10 @@ module Sirena
     # @param theme_spec [String, Symbol, Theme, Hash, nil] theme specification
     # @return [Theme] loaded theme
     def load_theme(theme_spec)
+      Theme::Completion.call(resolve_theme_spec(theme_spec))
+    end
+
+    def resolve_theme_spec(theme_spec)
       return Theme::Registry.get(:default) if theme_spec.nil?
 
       case theme_spec

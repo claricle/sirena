@@ -165,7 +165,7 @@ module Sirena
       end
 
       def dataset_colour(index)
-        theme_palette(:xy, index)
+        theme.colors.palette(:xy, index)
       end
     end
   end
