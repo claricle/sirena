@@ -2,6 +2,7 @@
 
 require_relative "../elk_placement"
 require_relative "layer_spacing"
+require_relative "level_edges"
 require_relative "row_centering"
 
 module Sirena
@@ -37,7 +38,7 @@ module Sirena
           @options = graph[:layoutOptions] || {}
           @direction = @options[Base::ElkOptions::DIRECTION]
           @graph = graph
-          @level_edges = edges_by_level(graph)
+          @level_edges = LevelEdges.new(graph)
           place_level(graph[:children] || [], nil)
           margin_page(graph[:children] || [])
           graph
@@ -57,50 +58,11 @@ module Sirena
           box.dig(:metadata, :cluster) == true
         end
 
-        # Maps a container id (nil for the page) to the edges laid out there,
-        # each as [edge, source box id, target box id].
-        def edges_by_level(graph)
-          paths = {}
-          index_paths(graph[:children] || [], [], paths)
-          levels = Hash.new { |hash, key| hash[key] = [] }
-          (graph[:edges] || []).each do |edge|
-            level = level_of(edge, paths)
-            levels[level[0]] << [edge, level[1], level[2]] if level
-          end
-          levels
-        end
-
-        def index_paths(boxes, ancestors, paths)
-          boxes.each do |box|
-            paths[box[:id]] = [*ancestors, box[:id]]
-            index_paths(box[:children] || [], paths[box[:id]], paths)
-          end
-        end
-
-        def level_of(edge, paths)
-          source = paths[edge[:sources]&.first]
-          target = paths[edge[:targets]&.first]
-          divergence(source, target) if source && target
-        end
-
-        # Where two box paths part: [container id, source box id, target box
-        # id]. When one box holds the other, one end is nil and flat_edges
-        # drops the edge.
-        def divergence(source, target)
-          shared = common_prefix(source, target)
-          [shared.zero? ? nil : source[shared - 1], source[shared],
-           target[shared]]
-        end
-
-        def common_prefix(source, target)
-          source.zip(target).take_while { |a, b| a == b }.length
-        end
-
         def place_level(boxes, container)
           boxes.each { |box| place_cluster(box) if cluster?(box) }
           return if boxes.empty?
 
-          flat = flat_graph(boxes, @level_edges[container])
+          flat = flat_graph(boxes, @level_edges.at(container))
           place_flat(flat)
           boxes.zip(flat[:children]) do |box, placed|
             box.merge!(x: placed[:x], y: placed[:y])
