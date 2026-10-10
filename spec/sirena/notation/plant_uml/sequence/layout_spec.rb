@@ -643,4 +643,28 @@ RSpec.describe Sirena::Notation::PlantUML::Sequence::Layout do
       expect(scene.page_breaks.first.y1).to be > arrow_ys(scene).first
     end
   end
+
+  describe "warning banners" do
+    let(:warned) { scene_of("A -> B", "ref over A : r", "note top: x") }
+    let(:plain) { scene_of("A -> B", "ref over A : r") }
+
+    it "draws one banner per warning" do
+      expect(warned.banners.size).to eq(1)
+    end
+
+    it "draws no banner without a warning" do
+      expect(plain.banners).to be_empty
+    end
+
+    it "moves the heads below the banner" do
+      expect(top_heads(warned).first.y)
+        .to be > warned.banners.first.y + warned.banners.first.height
+    end
+
+    it "widens the canvas to hold the banner" do
+      banner = warned.banners.first
+
+      expect(warned.width).to be >= banner.x + banner.width
+    end
+  end
 end

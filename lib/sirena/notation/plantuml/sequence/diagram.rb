@@ -12,17 +12,20 @@ module Sirena
         # source order and the boxes around neighbouring participants.
         # Private to this notation.
         class Diagram
-          attr_reader :participants, :items, :boxes, :appearance
+          attr_reader :participants, :items, :boxes, :appearance, :warnings
 
           # @param appearance [Appearance] what skinparam and `<style>` set
           # @param footbox [Boolean] false after `hide footbox`
+          # @param warnings [Array<String>] drawn as banners above the heads
           def initialize(participants:, items:, boxes: [].freeze,
-                         appearance: Appearance.new, footbox: true)
+                         appearance: Appearance.new, footbox: true,
+                         warnings: [].freeze)
             @participants = participants
             @items = items
             @boxes = boxes
             @appearance = appearance
             @footbox = footbox
+            @warnings = warnings
             freeze
           end
 

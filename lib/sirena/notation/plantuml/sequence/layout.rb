@@ -26,18 +26,27 @@ module Sirena
           EDGE_GAP = 5.0
           EDGE_MARGIN = 10.0
           PAGE_BREAK_INSET = 6.0
+          BANNER_LEFT = 3.0
+          BANNER_TOP = 8.0
+          BANNER_HEIGHT = 16.64
+          BANNER_STEP = 21.64
+          BANNER_PADDING = 7.0
+          MONOSPACE_ADVANCE = 6.02
           SELF_WIDTH = Walker::SELF_WIDTH
           private_constant :MARGIN, :HEAD_PADDING, :MIN_HEAD_WIDTH, :MIN_GAP,
                            :SELF_WIDTH, :BOX_PADDING, :BOX_TITLE_HEIGHT,
                            :MIN_WIDTH_PADDING, :EDGE_GAP, :EDGE_MARGIN,
-                           :PAGE_BREAK_INSET
+                           :PAGE_BREAK_INSET, :BANNER_LEFT, :BANNER_TOP,
+                           :BANNER_HEIGHT, :BANNER_STEP, :BANNER_PADDING,
+                           :MONOSPACE_ADVANCE
 
           def scene(diagram)
             @diagram = diagram
             @widths = diagram.participants.map { |p| head_width(p) }
             @centers = centers(@widths)
             @head_height = head_height
-            @top = MARGIN + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
+            @origin = MARGIN + banner_room
+            @top = @origin + (@diagram.boxes.empty? ? 0 : BOX_TITLE_HEIGHT)
             @flow = walk
             recentre if @flow.left < MARGIN
             build(@widths)
@@ -94,7 +103,8 @@ module Sirena
           def build(widths)
             Scene.new(width: canvas_width(widths),
                       height: @flow.y + foot_height + MARGIN,
-                      frames: frames(widths), heads: heads(widths),
+                      banners: banners, frames: frames(widths),
+                      heads: heads(widths),
                       lifelines: lifelines, page_breaks: page_breaks(widths),
                       **flow_items)
           end
@@ -290,7 +300,38 @@ module Sirena
 
           def canvas_width(widths)
             padded = [head_extent(widths), @flow.right].max + MARGIN
-            [padded, edge_extent].max
+            [padded, edge_extent, banner_extent].max
+          end
+
+          def banner_room
+            @diagram.warnings.size * BANNER_STEP
+          end
+
+          def banner_extent
+            widest = @diagram.warnings.map { |line| banner_width(line) }.max
+            widest ? BANNER_LEFT + widest + BANNER_LEFT : 0.0
+          end
+
+          def banner_width(line)
+            text = line.length * MONOSPACE_ADVANCE
+            (text + (2 * BANNER_PADDING)).round(2)
+          end
+
+          def banners
+            @diagram.warnings.each_with_index.map do |line, index|
+              banner(line, BANNER_TOP + (index * BANNER_STEP))
+            end
+          end
+
+          def banner(line, top)
+            width = banner_width(line)
+            Scene::Banner.new(
+              x: BANNER_LEFT, y: top, width: width, height: BANNER_HEIGHT,
+              texts: [PlantUML::Scene::Text.new(
+                content: line, x: BANNER_LEFT + BANNER_PADDING,
+                y: top + BANNER_HEIGHT - 6, role: "warning", anchor: "start"
+              )]
+            )
           end
 
           def head_extent(widths)
@@ -370,9 +411,9 @@ module Sirena
           def frame(box, widths)
             left, right = frame_edges(box, widths)
             Scene::Frame.new(
-              x: left, y: MARGIN, width: right - left,
-              height: @flow.y + foot_height + BOX_PADDING - MARGIN,
-              texts: [text(box.title, (left + right) / 2, MARGIN + 17, "box")]
+              x: left, y: @origin, width: right - left,
+              height: @flow.y + foot_height + BOX_PADDING - @origin,
+              texts: [text(box.title, (left + right) / 2, @origin + 17, "box")]
             )
           end
 
