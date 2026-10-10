@@ -85,4 +85,10 @@ RSpec.describe Sirena::Layout::UserJourneyLegend do
       expect(described_class.new([]).left_margin).to eq(150)
     end
   end
+
+  it "does not render a blank line after boundary-width whitespace" do
+    label = "x" * 45
+
+    expect(described_class.new(["#{label} "]).rows.first[3]).to eq([label])
+  end
 end

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Sirena::Parser::Builders::Radar, ".build" do
+RSpec.describe Sirena::Parser::Builders::Radar do
   it "ignores an unsupported statement type" do
     result = described_class.build([{ type: :future_statement }])
 

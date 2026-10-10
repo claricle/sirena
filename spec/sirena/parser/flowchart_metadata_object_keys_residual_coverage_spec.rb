@@ -3,8 +3,8 @@
 require "spec_helper"
 
 RSpec.describe Sirena::Parser::Flowchart do
-  it "stringifies mapping-valued metadata keys like JavaScript" do
-    sources = [
+  let(:sources) do
+    [
       <<~MERMAID,
         graph TD
         A@{
@@ -24,11 +24,14 @@ RSpec.describe Sirena::Parser::Flowchart do
         }
       MERMAID
     ]
-
-    shapes = sources.map do |source|
+  end
+  let(:shapes) do
+    sources.map do |source|
       described_class.new.parse(source).nodes.fetch(0).shape
     end
+  end
 
+  it "stringifies mapping-valued metadata keys like JavaScript" do
     expect(shapes).to eq(%w[hexagon rounded])
   end
 end

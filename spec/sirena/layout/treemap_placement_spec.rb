@@ -33,4 +33,13 @@ RSpec.describe Sirena::Layout::TreemapPlacement do
     expect(edges(placed[:children].first[:children].first))
       .to eq([20, 70, 351, 380])
   end
+
+  it "collapses a child that is narrower than its inset" do
+    tiny = leaf(1)
+    root = section(tiny, leaf(100))
+
+    described_class.call(root, 1000, 400)
+
+    expect(tiny.values_at(:x0, :x1)).to eq([10, 10])
+  end
 end

@@ -57,4 +57,11 @@ RSpec.describe Sirena::Layout::GanttTicks do
     ticks = described_class.times(Time.utc(2024), Time.utc(2025), "1day")
     expect(ticks.length).to eq(367)
   end
+
+  it "uses the first hourly ladder rung for a sub-hour range" do
+    start_time = Time.utc(2024, 1, 1, 12)
+
+    expect(described_class.times(start_time, start_time + 600))
+      .to eq([start_time])
+  end
 end
