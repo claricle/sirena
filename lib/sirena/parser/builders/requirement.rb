@@ -30,6 +30,39 @@ module Sirena
           "requirement" => "requirement",
         }.freeze
 
+        STATEMENT_HANDLERS = {
+          req_type: %i[add_requirement create_requirement],
+          elem_keyword: %i[add_element create_element],
+          relationship: %i[add_relationship create_relationship],
+          style_keyword: %i[add_style create_style],
+          classdef_keyword: %i[add_class create_class_definition],
+          class_keyword: %i[add_class_assignment create_class_assignment],
+          acc_title: %i[acc_title= create_accessibility_title],
+          acc_descr: %i[acc_description= create_accessibility_description],
+        }.freeze
+        private_constant :STATEMENT_HANDLERS
+
+        REQUIREMENT_PROPERTIES = {
+          "id" => :id=,
+          "text" => :text=,
+          "risk" => :risk=,
+          "verifymethod" => :verifymethod=,
+        }.freeze
+        private_constant :REQUIREMENT_PROPERTIES
+
+        ELEMENT_PROPERTIES = {
+          "type" => :type=,
+          "docref" => :docref=,
+        }.freeze
+        private_constant :ELEMENT_PROPERTIES
+
+        STYLE_PROPERTIES = {
+          "fill:" => :fill=,
+          "stroke:" => :stroke=,
+          "stroke-width:" => :stroke_width=,
+        }.freeze
+        private_constant :STYLE_PROPERTIES
+
         # Process parsed diagram
         def apply(tree, diagram = nil)
           diagram ||= Diagram::Requirement.new
@@ -46,39 +79,35 @@ module Sirena
         end
 
         def process_statements(diagram, statements)
-          statements.each do |stmt|
-            next unless stmt.is_a?(Hash)
+          statements.grep(Hash).each do |statement|
+            process_statement(diagram, statement)
+          end
+        end
 
-            if stmt[:req_type]
-              # Requirement statement
-              requirement = create_requirement(stmt)
-              diagram.add_requirement(requirement)
-            elsif stmt[:elem_keyword]
-              # Element statement
-              element = create_element(stmt)
-              diagram.add_element(element)
-            elsif stmt[:rel_source] && stmt[:rel_target]
-              # Relationship statement
-              relationship = create_relationship(stmt)
-              diagram.add_relationship(relationship)
-            elsif stmt[:style_keyword]
-              # Style statement
-              style = create_style(stmt)
-              diagram.add_style(style)
-            elsif stmt[:classdef_keyword]
-              # Class definition
-              klass = create_class_definition(stmt)
-              diagram.add_class(klass)
-            elsif stmt[:class_keyword]
-              # Class assignment
-              assignment = create_class_assignment(stmt)
-              diagram.add_class_assignment(assignment)
-            elsif stmt[:acc_title]
-              diagram.acc_title = acc_value(stmt[:acc_title])
-            elsif stmt[:acc_descr]
-              diagram.acc_description = acc_value(stmt[:acc_descr])
+        def process_statement(diagram, statement)
+          kind = statement_kind(statement)
+          return unless kind
+
+          writer, builder = STATEMENT_HANDLERS.fetch(kind)
+          diagram.public_send(writer, send(builder, statement))
+        end
+
+        def statement_kind(statement)
+          STATEMENT_HANDLERS.keys.find do |kind|
+            if kind == :relationship
+              statement[:rel_source] && statement[:rel_target]
+            else
+              statement[kind]
             end
           end
+        end
+
+        def create_accessibility_title(statement)
+          acc_value(statement.fetch(:acc_title))
+        end
+
+        def create_accessibility_description(statement)
+          acc_value(statement.fetch(:acc_descr))
         end
 
         # A zero-length accDescr capture (e.g. "accDescr {}", the only
@@ -98,68 +127,18 @@ module Sirena
           Diagram::RequirementNode.new.tap do |req|
             req.name = stmt[:req_name].to_s
             req.type = stmt[:req_type].to_s
-
-            # Process properties
-            if stmt[:req_properties]
-              props = stmt[:req_properties]
-              props = [props] unless props.is_a?(Array)
-
-              props.each do |prop|
-                next unless prop.is_a?(Hash)
-
-                key = prop[:key][:prop_key].to_s if prop[:key]
-                value = prop[:value].to_s.strip if prop[:value]
-
-                case key
-                when "id"
-                  req.id = value
-                when "text"
-                  req.text = value
-                when "risk"
-                  req.risk = value
-                when "verifymethod"
-                  req.verifymethod = value
-                end
-              end
-            end
-
-            # Process class shorthand
-            if stmt[:req_classes]
-              classes = extract_class_names(stmt[:req_classes])
-              classes.each { |c| req.add_class(c) }
-            end
+            assign_properties(
+              req, stmt[:req_properties], REQUIREMENT_PROPERTIES
+            )
+            assign_classes(req, stmt[:req_classes])
           end
         end
 
         def create_element(stmt)
           Diagram::RequirementElement.new.tap do |elem|
             elem.name = stmt[:elem_name].to_s
-
-            # Process properties
-            if stmt[:elem_properties]
-              props = stmt[:elem_properties]
-              props = [props] unless props.is_a?(Array)
-
-              props.each do |prop|
-                next unless prop.is_a?(Hash)
-
-                key = prop[:key][:prop_key].to_s if prop[:key]
-                value = prop[:value].to_s.strip if prop[:value]
-
-                case key
-                when "type"
-                  elem.type = value
-                when "docref"
-                  elem.docref = value
-                end
-              end
-            end
-
-            # Process class shorthand
-            if stmt[:elem_classes]
-              classes = extract_class_names(stmt[:elem_classes])
-              classes.each { |c| elem.add_class(c) }
-            end
+            assign_properties(elem, stmt[:elem_properties], ELEMENT_PROPERTIES)
+            assign_classes(elem, stmt[:elem_classes])
           end
         end
 
@@ -167,105 +146,73 @@ module Sirena
           Diagram::RequirementRelationship.new.tap do |rel|
             rel.source = stmt[:rel_source].to_s
             rel.target = stmt[:rel_target].to_s
-
-            if stmt[:rel_type] && stmt[:rel_type][:type]
-              rel.type = stmt[:rel_type][:type].to_s
-            end
+            type = stmt.dig(:rel_type, :type)
+            rel.type = type.to_s if type
           end
         end
 
         def create_style(stmt)
           Diagram::RequirementStyle.new.tap do |style|
-            # Process targets
-            if stmt[:style_targets]
-              targets = stmt[:style_targets]
-              targets = [targets] unless targets.is_a?(Array)
-
-              targets.each do |target|
-                split_list(target).each { |t| style.add_target(t) }
-              end
-            end
-
-            # Process properties
-            if stmt[:style_props]
-              props = stmt[:style_props]
-              props = [props] unless props.is_a?(Array)
-
-              props.each do |prop|
-                prop_str = prop.to_s.strip
-                # Split by comma if it contains multiple properties
-                prop_parts = prop_str.split(",")
-
-                prop_parts.each do |part|
-                  part = part.strip
-                  if part.start_with?("fill:")
-                    style.fill = part.sub("fill:", "").strip
-                  elsif part.start_with?("stroke:")
-                    style.stroke = part.sub("stroke:", "").strip
-                  elsif part.start_with?("stroke-width:")
-                    style.stroke_width = part.sub("stroke-width:", "").strip
-                  else
-                    style.add_property(part) unless part.empty?
-                  end
-                end
-              end
-            end
+            assign_list(style, stmt[:style_targets], :add_target)
+            assign_style_properties(style, stmt[:style_props])
           end
         end
 
         def create_class_definition(stmt)
           Diagram::RequirementClass.new.tap do |klass|
             klass.name = stmt[:class_name].to_s
-
-            # Process properties
-            if stmt[:class_props]
-              props = stmt[:class_props]
-              props = [props] unless props.is_a?(Array)
-
-              props.each do |prop|
-                prop_str = prop.to_s.strip
-                # Split by comma if it contains multiple properties
-                prop_parts = prop_str.split(",")
-
-                prop_parts.each do |part|
-                  part = part.strip
-                  if part.start_with?("fill:")
-                    klass.fill = part.sub("fill:", "").strip
-                  elsif part.start_with?("stroke:")
-                    klass.stroke = part.sub("stroke:", "").strip
-                  elsif part.start_with?("stroke-width:")
-                    klass.stroke_width = part.sub("stroke-width:", "").strip
-                  else
-                    klass.add_property(part) unless part.empty?
-                  end
-                end
-              end
-            end
+            assign_style_properties(klass, stmt[:class_props])
           end
         end
 
         def create_class_assignment(stmt)
           Diagram::RequirementClassAssignment.new.tap do |assignment|
-            # Process targets
-            if stmt[:class_targets]
-              targets = stmt[:class_targets]
-              targets = [targets] unless targets.is_a?(Array)
+            assign_list(assignment, stmt[:class_targets], :add_target)
+            assign_list(assignment, stmt[:class_names], :add_class)
+          end
+        end
 
-              targets.each do |target|
-                split_list(target).each { |t| assignment.add_target(t) }
-              end
-            end
+        def assign_properties(target, captures, writers)
+          arrayify(captures).grep(Hash).each do |property|
+            key = property.dig(:key, :prop_key).to_s
+            writer = writers[key]
+            value = property[:value]&.to_s&.strip
+            target.public_send(writer, value) if writer
+          end
+        end
 
-            # Process class names
-            if stmt[:class_names]
-              names = stmt[:class_names]
-              names = [names] unless names.is_a?(Array)
+        def assign_classes(target, captures)
+          extract_class_names(captures).each { |name| target.add_class(name) }
+        end
 
-              names.each do |name|
-                split_list(name).each { |n| assignment.add_class(n) }
-              end
+        def assign_list(target, captures, writer)
+          arrayify(captures).each do |capture|
+            split_list(capture).each do |value|
+              target.public_send(writer, value)
             end
           end
+        end
+
+        def assign_style_properties(target, captures)
+          parts = arrayify(captures).flat_map { |capture| split_list(capture) }
+          parts.each do |part|
+            assign_style_property(target, part)
+          end
+        end
+
+        def assign_style_property(target, property)
+          prefix, writer = STYLE_PROPERTIES.find do |candidate, _method|
+            property.start_with?(candidate)
+          end
+          return target.add_property(property) unless writer
+
+          target.public_send(writer, property.delete_prefix(prefix).strip)
+        end
+
+        def arrayify(value)
+          return [] unless value
+
+          value.is_a?(Array) ? value : [value]
         end
 
         def split_list(value)
