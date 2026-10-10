@@ -5,6 +5,7 @@ require_relative "../diagram/sequence"
 require_relative "../diagram/sequence_text"
 require_relative "../notation/mermaid/ir_adapters/sequence"
 require_relative "sequence/geometry"
+require_relative "sequence/actor_gaps"
 require_relative "sequence/note_placement"
 require_relative "sequence/frame_reader"
 require_relative "sequence/frame_placement"
@@ -143,11 +144,22 @@ module Sirena
       def scene(diagram)
         graph = build_graph(diagram)
         @frame_layout = frame_placement(graph)
+        @gaps = build_gaps(graph)
         build_scene(graph, participant_positions(graph[:children]))
       end
 
       def frame_layout
         @frame_layout ||= FramePlacement.new
+      end
+
+      def build_gaps(graph)
+        ActorGaps.new(graph[:children], graph[:edges],
+                      graph.dig(:metadata, :note_entries),
+                      font_size: message_font_size)
+      end
+
+      def gaps
+        @gaps ||= ActorGaps.new([], [], [], font_size: message_font_size)
       end
 
       def frame_placement(graph)
@@ -251,16 +263,17 @@ module Sirena
         {
           id: message.id, sources: [message.source_id],
           targets: [message.target_id], labels: message_labels(text),
-          metadata: message_metadata(semantics, text, index)
+          metadata: message_metadata(semantics, text, index, message.label.to_s)
         }
       end
 
-      def message_metadata(semantics, text, index)
+      def message_metadata(semantics, text, index, source)
         {
           line_style: semantics["line_style"],
           head_style: semantics["head_style"],
           head_side: semantics["head_side"],
-          message_index: index, message_text: text
+          message_index: index, message_text: text,
+          message_source: source
         }
       end
 
@@ -332,8 +345,15 @@ module Sirena
           participant_width_value(participant)
         end
         total_width + ((participants.length - 1) * PARTICIPANT_MARGIN) +
+          inner_gaps(participants) +
           (2 * Geometry::DIAGRAM_MARGIN_X) - CANVAS_PAD +
           frame_layout.extra_width
+      end
+
+      def inner_gaps(participants)
+        participants.first(participants.length - 1).sum do |participant|
+          gaps.extra_after(participant_id(participant))
+        end
       end
 
       def canvas_height(participants, message_count)
@@ -350,7 +370,8 @@ module Sirena
           id = participant_id(participant)
           left = cursor + frame_layout.gap_before(id)
           width = participant_width_value(participant)
-          advance = width + PARTICIPANT_MARGIN + frame_layout.gap_after(id)
+          advance = width + PARTICIPANT_MARGIN + frame_layout.gap_after(id) +
+                    gaps.extra_after(id)
           cursor = left + advance
           [id, participant_position(left, width)]
         end
